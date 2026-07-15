@@ -465,11 +465,21 @@ final class Kidia_Mobile_Library {
         				)
         				: array();
 
-        		$schema   = $this->load_schema();
-        		$settings = $this->sanitize_settings(
-        			$submitted_settings,
-        			$schema
-        		);
+			$schema   = $this->load_schema();
+			$settings = $this->sanitize_settings(
+				$submitted_settings,
+				$schema
+			);
+
+			$validation_failed = false;
+
+			if (
+				'published' === $status
+				&& ! empty( $this->validate_for_publishing( $settings, $schema ) )
+			) {
+				$status             = 'draft';
+				$validation_failed = true;
+			}
 
         		$items = $this->get_items();
         		$found = false;
@@ -514,12 +524,11 @@ final class Kidia_Mobile_Library {
         			$items
         		);
 
-        		$this->redirect_to_editor(
-        			$id,
-        			array(
-        				'updated' => '1',
-        			)
-        		);
+			$redirect_arguments = $validation_failed
+				? array( 'validation_error' => '1' )
+				: array( 'updated' => '1' );
+
+			$this->redirect_to_editor( $id, $redirect_arguments );
         	}
 
         	/**
@@ -609,8 +618,9 @@ final class Kidia_Mobile_Library {
         			)
         			: '';
 
-        		$items = $this->get_items();
-        		$found = false;
+			$items = $this->get_items();
+			$found = false;
+			$validation_failed = false;
 
         		foreach ( $items as &$item ) {
 
@@ -621,13 +631,38 @@ final class Kidia_Mobile_Library {
         				continue;
         			}
 
-        			$current_status = isset( $item['status'] )
-        				? sanitize_key( (string) $item['status'] )
-        				: 'draft';
+				$current_status = isset( $item['status'] )
+					? sanitize_key( (string) $item['status'] )
+					: 'published';
 
-        			$item['status'] = 'published' === $current_status
-        				? 'draft'
-        				: 'published';
+				if ( ! in_array( $current_status, array( 'draft', 'published' ), true ) ) {
+					$current_status = 'published';
+				}
+
+				$next_status = 'published' === $current_status
+					? 'draft'
+					: 'published';
+
+				if (
+					'published' === $next_status
+					&& ! empty(
+						$this->validate_for_publishing(
+							$this->sanitize_settings(
+								isset( $item['settings'] ) && is_array( $item['settings'] )
+									? $item['settings']
+									: array(),
+								$this->load_schema()
+							),
+							$this->load_schema()
+						)
+					)
+				) {
+					$validation_failed = true;
+					$found              = true;
+					break;
+				}
+
+				$item['status'] = $next_status;
 
         			$item['updated_at'] = current_time(
         				'mysql',
@@ -640,16 +675,25 @@ final class Kidia_Mobile_Library {
 
         		unset( $item );
 
-        		if ( ! $found ) {
+			if ( ! $found ) {
         			wp_die(
         				esc_html__(
         					'Item not found.',
         					'kidia-mobile-cms'
         				)
         			);
-        		}
+			}
 
-        		$this->update_items( $items );
+			if ( $validation_failed ) {
+				$this->redirect_to_editor(
+					$id,
+					array(
+						'validation_error' => '1',
+					)
+				);
+			}
+
+			$this->update_items( $items );
 
         		$this->redirect_to_library(
         			array(
@@ -809,84 +853,232 @@ final class Kidia_Mobile_Library {
             			return $settings;
             		}
 
-            		$clean = array();
+	            		$clean = array();
 
-            		foreach ( $schema['fields'] as $field ) {
+	            		foreach ( $schema['fields'] as $field ) {
 
-            			if (
-            				empty( $field['key'] )
-            			) {
-            				continue;
-            			}
+	            			if ( empty( $field['key'] ) ) {
+	            				continue;
+	            			}
 
-            			$key = (string) $field['key'];
+	            			$key   = sanitize_key( (string) $field['key'] );
+	            			$type  = sanitize_key( (string) ( $field['type'] ?? 'text' ) );
+	            			$value = 'checkbox' === $type
+	            				? ( $settings[ $key ] ?? false )
+	            				: ( $settings[ $key ] ?? ( $field['default'] ?? '' ) );
 
-            			$value = $settings[ $key ] ?? '';
+	            			if ( 'slides' === $type ) {
+	            				$clean[ $key ] = $this->sanitize_slides( $value );
+	            				continue;
+	            			}
 
-            			if ( 'gallery' === ( $field['type'] ?? '' ) ) {
-            				$clean[ $key ] = array();
+	            			if ( 'gallery' === $type ) {
+	            				$clean[ $key ] = array();
 
-            				if ( is_array( $value ) ) {
-            					foreach ( $value as $index => $gallery_item ) {
-            						$image_url = is_array( $gallery_item )
-            							? esc_url_raw( (string) ( $gallery_item['image_url'] ?? '' ) )
-            							: esc_url_raw( (string) $gallery_item );
+	            				if ( is_array( $value ) ) {
+	            					foreach ( $value as $gallery_item ) {
+	            						$image_url = is_array( $gallery_item )
+	            							? esc_url_raw( (string) ( $gallery_item['image_url'] ?? '' ) )
+	            							: esc_url_raw( (string) $gallery_item );
 
-            						if ( '' === $image_url ) {
-            							continue;
-            						}
+	            						if ( '' !== $image_url ) {
+	            							$clean[ $key ][] = array( 'image_url' => $image_url );
+	            						}
+	            					}
+	            				}
 
-            						$clean[ $key ][] = array(
-            							'id'           => 'hero_slide_' . ( absint( $index ) + 1 ),
-            							'enabled'      => true,
-            							'image_url'    => $image_url,
-            							'title'        => '',
-            							'subtitle'     => '',
-            							'action_type'  => '',
-            							'action_value' => '',
-            						);
-            					}
-            				}
+	            				continue;
+	            			}
 
-            				continue;
-            			}
+	            			switch ( $type ) {
 
-            			switch ( $field['type'] ?? 'text' ) {
+	            				case 'number':
+	            					$number = (float) $value;
 
-            				case 'number':
-            					$clean[ $key ] = (float) $value;
-            					break;
+	            					if ( isset( $field['min'] ) ) {
+	            						$number = max( (float) $field['min'], $number );
+	            					}
 
-            				case 'checkbox':
-            					$clean[ $key ] = ! empty( $value );
-            					break;
+	            					if ( isset( $field['max'] ) ) {
+	            						$number = min( (float) $field['max'], $number );
+	            					}
 
-            				case 'url':
-            				case 'image':
-            					$clean[ $key ] =
-            						esc_url_raw(
-            							(string) $value
-            						);
-            					break;
+	            					$clean[ $key ] = $number;
+	            					break;
 
-            				case 'textarea':
-            					$clean[ $key ] =
-            						sanitize_textarea_field(
-            							(string) $value
-            						);
-            					break;
+	            				case 'checkbox':
+	            					$clean[ $key ] = ! empty( $value );
+	            					break;
 
-            				default:
-            					$clean[ $key ] =
-            						sanitize_text_field(
-            							(string) $value
-            						);
-            					break;
-            			}
-            		}
+	            				case 'url':
+	            				case 'image':
+	            				case 'media':
+	            					$clean[ $key ] = esc_url_raw( (string) $value );
+	            					break;
 
-            		return $clean;
-            	}
+	            				case 'color':
+	            					$clean[ $key ] = sanitize_hex_color( (string) $value )
+	            						?: (string) ( $field['default'] ?? '' );
+	            					break;
+
+	            				case 'select':
+	            					$options = isset( $field['options'] ) && is_array( $field['options'] )
+	            						? $field['options']
+	            						: array();
+	            					$selected = sanitize_text_field( (string) $value );
+	            					$clean[ $key ] = array_key_exists( $selected, $options )
+	            						? $selected
+	            						: sanitize_text_field( (string) ( $field['default'] ?? '' ) );
+	            					break;
+
+	            				case 'textarea':
+	            					$clean[ $key ] = sanitize_textarea_field( (string) $value );
+	            					break;
+
+	            				default:
+	            					$clean[ $key ] = sanitize_text_field( (string) $value );
+	            					break;
+	            			}
+	            		}
+
+	            		return $clean;
+	            	}
+
+			/**
+			 * Validates settings that are about to become public API content.
+			 *
+			 * @param array<string,mixed> $settings Sanitized settings.
+			 * @param array<string,mixed> $schema   Element schema.
+			 *
+			 * @return array<int,string> Invalid field keys.
+			 */
+			private function validate_for_publishing(
+				array $settings,
+				array $schema
+			): array {
+				$fields = isset( $schema['fields'] ) && is_array( $schema['fields'] )
+					? $schema['fields']
+					: array();
+				$defaults = isset( $schema['defaults'] ) && is_array( $schema['defaults'] )
+					? $schema['defaults']
+					: array();
+				$invalid = array();
+
+				foreach ( $fields as $field ) {
+					if ( ! is_array( $field ) || empty( $field['key'] ) ) {
+						continue;
+					}
+
+					$key   = sanitize_key( (string) $field['key'] );
+					$type  = sanitize_key( (string) ( $field['type'] ?? 'text' ) );
+					$value = $settings[ $key ] ?? ( $defaults[ $key ] ?? null );
+
+					if (
+						! empty( $field['required'] )
+						&& (
+							null === $value
+							|| ( is_string( $value ) && '' === trim( $value ) )
+							|| ( is_array( $value ) && empty( $value ) )
+						)
+					) {
+						$invalid[] = $key;
+						continue;
+					}
+
+					if (
+						in_array( $type, array( 'url', 'image', 'media' ), true )
+						&& is_string( $value )
+						&& '' !== trim( $value )
+						&& false === wp_http_validate_url( $value )
+					) {
+						$invalid[] = $key;
+						continue;
+					}
+
+					if ( 'slides' === $type && is_array( $value ) ) {
+						$valid_slides = array_filter(
+							$value,
+							static function ( $slide ): bool {
+								return is_array( $slide )
+									&& ! empty( $slide['enabled'] )
+									&& ! empty( $slide['image_url'] )
+									&& false !== wp_http_validate_url(
+										(string) $slide['image_url']
+									);
+							}
+						);
+
+						if ( ! empty( $field['required'] ) && empty( $valid_slides ) ) {
+							$invalid[] = $key;
+						}
+					}
+				}
+
+				return array_values( array_unique( $invalid ) );
+			}
+
+			/**
+			 * Sanitizes Hero Slider repeatable items without discarding metadata.
+			 *
+			 * @param mixed $value Submitted slides.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			private function sanitize_slides( $value ): array {
+
+				if ( ! is_array( $value ) ) {
+					return array();
+				}
+
+				$allowed_actions = array(
+					'',
+					'product',
+					'category',
+					'collection',
+					'brand',
+					'brands',
+					'search',
+					'external',
+				);
+				$slides = array();
+
+				foreach ( array_values( $value ) as $index => $slide ) {
+					if ( ! is_array( $slide ) ) {
+						continue;
+					}
+
+					$image_url = esc_url_raw( (string) ( $slide['image_url'] ?? '' ) );
+
+					if ( '' === $image_url ) {
+						continue;
+					}
+
+					$action_type = sanitize_key( (string) ( $slide['action_type'] ?? '' ) );
+
+					if ( ! in_array( $action_type, $allowed_actions, true ) ) {
+						$action_type = '';
+					}
+
+					$action_value = 'external' === $action_type
+						? esc_url_raw( (string) ( $slide['action_value'] ?? '' ) )
+						: sanitize_text_field( (string) ( $slide['action_value'] ?? '' ) );
+
+					$slides[] = array(
+						'id'           => ! empty( $slide['id'] )
+							? sanitize_key( (string) $slide['id'] )
+							: 'hero_slide_' . ( absint( $index ) + 1 ),
+						'enabled'      => ! array_key_exists( 'enabled', $slide )
+							|| ! empty( $slide['enabled'] ),
+						'image_url'    => $image_url,
+						'title'        => sanitize_text_field( (string) ( $slide['title'] ?? '' ) ),
+						'subtitle'     => sanitize_textarea_field( (string) ( $slide['subtitle'] ?? '' ) ),
+						'action_type'  => $action_type,
+						'action_value' => $action_value,
+					);
+				}
+
+				return $slides;
+			}
             		/**
                 	 * Verifies current user capability.
                 	 *
