@@ -235,6 +235,29 @@
     	);
 
     	document.querySelectorAll(
+    		'.kidia-library-status-toggle'
+    	).forEach(function (button) {
+
+    		button.addEventListener(
+    			'click',
+    			function () {
+
+    				actionInput.value =
+    					button.dataset.action || '';
+
+    				idInput.value =
+    					button.dataset.id || '';
+
+    				nameInput.value = '';
+
+    				form.submit();
+
+    			}
+    		);
+
+    	});
+
+    	document.querySelectorAll(
     		'.kidia-library-duplicate'
     	).forEach(function (button) {
 
