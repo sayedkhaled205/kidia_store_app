@@ -72,7 +72,7 @@ foreach ( $library_options as $type => $option_name ) {
 			<h1>
 				<?php
 				esc_html_e(
-					'Kidia Home Builder',
+					'Woo Mobile Home Builder',
 					'kidia-mobile-cms'
 				);
 				?>
