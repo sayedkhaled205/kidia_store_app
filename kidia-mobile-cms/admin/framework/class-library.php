@@ -166,6 +166,14 @@ final class Kidia_Mobile_Library {
 				'delete',
 			)
 		);
+
+		add_action(
+			'admin_post_' . $this->save_action . '_toggle_status',
+			array(
+				$this,
+				'toggle_status',
+			)
+		);
 	}
 		/**
     	 * Registers submenu page.
@@ -238,6 +246,7 @@ final class Kidia_Mobile_Library {
     		$create_action    = $this->create_action;
     		$duplicate_action = $this->duplicate_action;
     		$delete_action    = $this->delete_action;
+    		$status_action    = $this->save_action . '_toggle_status';
 
     		require
     			KIDIA_MOBILE_CMS_PATH .
@@ -575,10 +584,80 @@ final class Kidia_Mobile_Library {
         			$items
         		);
 
-        		$this->redirect_to_editor(
-        			(string) $copy['id']
+        		$this->redirect_to_library(
+        			array(
+        				'duplicated' => '1',
+        			)
         		);
         	}
+        		/**
+        	 * Toggles an item's publishing status.
+        	 *
+        	 * @return void
+        	 */
+        	public function toggle_status(): void {
+
+        		$this->assert_permission();
+
+        		check_admin_referer(
+        			'kidia_library_action'
+        		);
+
+        		$id = isset( $_POST['id'] )
+        			? sanitize_text_field(
+        				wp_unslash( $_POST['id'] )
+        			)
+        			: '';
+
+        		$items = $this->get_items();
+        		$found = false;
+
+        		foreach ( $items as &$item ) {
+
+        			if (
+        				! isset( $item['id'] )
+        				|| $item['id'] !== $id
+        			) {
+        				continue;
+        			}
+
+        			$current_status = isset( $item['status'] )
+        				? sanitize_key( (string) $item['status'] )
+        				: 'draft';
+
+        			$item['status'] = 'published' === $current_status
+        				? 'draft'
+        				: 'published';
+
+        			$item['updated_at'] = current_time(
+        				'mysql',
+        				true
+        			);
+
+        			$found = true;
+        			break;
+        		}
+
+        		unset( $item );
+
+        		if ( ! $found ) {
+        			wp_die(
+        				esc_html__(
+        					'Item not found.',
+        					'kidia-mobile-cms'
+        				)
+        			);
+        		}
+
+        		$this->update_items( $items );
+
+        		$this->redirect_to_library(
+        			array(
+        				'status_updated' => '1',
+        			)
+        		);
+        	}
+
         		/**
             	 * Deletes a library item.
             	 *
