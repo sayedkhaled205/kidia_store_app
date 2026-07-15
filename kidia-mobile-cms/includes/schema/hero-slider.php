@@ -26,6 +26,16 @@ return array(
 
 		'interval_ms' => 4500,
 
+		'loop' => true,
+
+		'show_arrows' => true,
+
+		'show_dots' => true,
+
+		'transition' => 'slide',
+
+		'slide_direction' => 'horizontal',
+
 		'items' => array(),
 
 	),
@@ -74,6 +84,54 @@ return array(
 			'max' => 15000,
 			'step' => 500,
 			'default' => 4500,
+		),
+
+		array(
+			'key' => 'transition',
+			'label' => __( 'Transition', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'general',
+			'default' => 'slide',
+			'options' => array(
+				'slide' => __( 'Slide', 'kidia-mobile-cms' ),
+				'fade'  => __( 'Fade', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'slide_direction',
+			'label' => __( 'Slide Direction', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'general',
+			'default' => 'horizontal',
+			'options' => array(
+				'horizontal' => __( 'Horizontal', 'kidia-mobile-cms' ),
+				'vertical'   => __( 'Vertical', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'loop',
+			'label' => __( 'Loop Slides', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'general',
+			'default' => true,
+		),
+
+		array(
+			'key' => 'show_arrows',
+			'label' => __( 'Show Navigation Arrows', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'general',
+			'default' => true,
+		),
+
+		array(
+			'key' => 'show_dots',
+			'label' => __( 'Show Pagination Dots', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'general',
+			'default' => true,
 		),
 
 		array(

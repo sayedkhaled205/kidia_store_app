@@ -15,6 +15,8 @@ final class Kidia_Mobile_Layout_Store {
 
 	private const OPTION_NAME = 'kidia_mobile_home_layout_v3';
 
+	private const UPDATED_AT_OPTION = 'kidia_mobile_home_layout_updated_at';
+
 	/**
 	 * Maps block types to their Library option names.
 	 *
@@ -109,6 +111,22 @@ final class Kidia_Mobile_Layout_Store {
 		return $this->save_layout_references(
 			$new_layout
 		);
+	}
+
+	/**
+	 * Returns the last time the effective mobile layout changed.
+	 *
+	 * @return string ISO-8601 UTC timestamp.
+	 */
+	public function get_updated_at(): string {
+		$updated_at = get_option( self::UPDATED_AT_OPTION, '' );
+
+		if ( ! is_string( $updated_at ) || '' === $updated_at ) {
+			$updated_at = current_time( 'c', true );
+			update_option( self::UPDATED_AT_OPTION, $updated_at, false );
+		}
+
+		return $updated_at;
 	}
 
 	/**
@@ -236,12 +254,18 @@ final class Kidia_Mobile_Layout_Store {
 				);
 			}
 
-			$settings = isset( $raw_block['settings'] )
-				&& is_array( $raw_block['settings'] )
-					? $this->sanitize_settings(
-						$raw_block['settings']
-					)
-					: array();
+			$raw_settings = isset( $raw_block['settings'] ) && is_array( $raw_block['settings'] )
+				? $raw_block['settings']
+				: array();
+
+			if ( empty( $raw_settings ) && ! empty( $raw_block['settings_json'] ) && is_string( $raw_block['settings_json'] ) ) {
+				$decoded_settings = json_decode( wp_unslash( $raw_block['settings_json'] ), true );
+				if ( is_array( $decoded_settings ) ) {
+					$raw_settings = $decoded_settings;
+				}
+			}
+
+			$settings = $this->sanitize_settings( $raw_settings );
 
 			$settings = wp_parse_args(
 				$settings,
@@ -250,12 +274,21 @@ final class Kidia_Mobile_Layout_Store {
 				)
 			);
 
+			$status = isset( $raw_block['status'] )
+				? sanitize_key( (string) $raw_block['status'] )
+				: 'published';
+
+			if ( ! in_array( $status, array( 'draft', 'published' ), true ) ) {
+				$status = 'draft';
+			}
+
 			$normalized[] = array(
 				'id'         => $id,
 				'library_id' => $library_id,
 				'type'       => $type,
 				'name'       => $name,
 				'enabled'    => ! empty( $raw_block['enabled'] ),
+				'status'     => $status,
 				'order'      => $index + 1,
 				'settings'   => $settings,
 			);
@@ -298,11 +331,10 @@ final class Kidia_Mobile_Layout_Store {
 				)
 				: $block['name'];
 
-			$block['enabled'] =
-				! empty( $library_item['enabled'] )
-				&& 'published' === (
-					$library_item['status'] ?? 'draft'
-				);
+			$block['enabled'] = ! empty( $library_item['enabled'] );
+			$block['status']  = 'published' === ( $library_item['status'] ?? 'draft' )
+				? 'published'
+				: 'draft';
 
 			$library_settings =
 				isset( $library_item['settings'] )
@@ -392,10 +424,10 @@ final class Kidia_Mobile_Layout_Store {
 							(string) $item['name']
 						)
 						: $this->get_default_name( $type ),
-					'enabled'    => ! empty( $item['enabled'] )
-						&& 'published' === (
-							$item['status'] ?? 'draft'
-						),
+					'enabled'    => ! empty( $item['enabled'] ),
+					'status'     => 'published' === ( $item['status'] ?? 'draft' )
+						? 'published'
+						: 'draft',
 					'order'      => count( $layout ) + 1,
 					'settings'   => wp_parse_args(
 						$settings,
@@ -464,11 +496,6 @@ final class Kidia_Mobile_Layout_Store {
 				$item['enabled'] =
 					! empty( $block['enabled'] );
 
-				$item['settings'] =
-					$this->sanitize_settings(
-						(array) $block['settings']
-					);
-
 				$item['updated_at'] = current_time(
 					'mysql',
 					true
@@ -490,7 +517,9 @@ final class Kidia_Mobile_Layout_Store {
 				'name'       => sanitize_text_field(
 					(string) $block['name']
 				),
-				'status'     => 'published',
+				'status'     => isset( $block['status'] ) && 'draft' === $block['status']
+					? 'draft'
+					: 'published',
 				'enabled'    => ! empty( $block['enabled'] ),
 				'created_at' => current_time(
 					'mysql',
@@ -610,6 +639,9 @@ final class Kidia_Mobile_Layout_Store {
 					(string) $block['name']
 				),
 				'enabled'    => ! empty( $block['enabled'] ),
+				'status'     => isset( $block['status'] ) && 'draft' === $block['status']
+					? 'draft'
+					: 'published',
 				'order'      => $index + 1,
 				'settings'   => $this->sanitize_settings(
 					(array) $block['settings']
@@ -617,11 +649,23 @@ final class Kidia_Mobile_Layout_Store {
 			);
 		}
 
-		return update_option(
-			self::OPTION_NAME,
-			$references,
-			false
-		);
+		$current = get_option( self::OPTION_NAME, array() );
+
+		if ( $current === $references ) {
+			return true;
+		}
+
+		$updated = update_option( self::OPTION_NAME, $references, false );
+
+		if ( $updated ) {
+			update_option(
+				self::UPDATED_AT_OPTION,
+				current_time( 'c', true ),
+				false
+			);
+		}
+
+		return $updated;
 	}
 
 	/**

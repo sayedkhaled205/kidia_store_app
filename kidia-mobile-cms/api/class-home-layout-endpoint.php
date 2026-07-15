@@ -169,6 +169,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 			if (
 				! is_array( $instance )
 				|| empty( $instance['enabled'] )
+				|| 'published' !== ( $instance['status'] ?? 'draft' )
 			) {
 				continue;
 			}
@@ -200,10 +201,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 
 				'locale'     => $locale,
 
-				'updated_at' => current_time(
-					'c',
-					true
-				),
+				'updated_at' => $this->layout_store->get_updated_at(),
 
 				'blocks'     => array_values(
 					$blocks

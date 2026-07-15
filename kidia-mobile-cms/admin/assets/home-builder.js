@@ -680,10 +680,15 @@
         						'.kidia-block-id'
         					);
 
-        				const libraryInput =
+						const libraryInput =
         					clone.querySelector(
         						'.kidia-block-library-id'
-        					);
+							);
+
+						const statusInput =
+							clone.querySelector(
+								'.kidia-block-status'
+							);
 
         				const type =
         					typeInput
@@ -697,9 +702,13 @@
         					idInput.value = newId;
         				}
 
-        				if (libraryInput) {
-        					libraryInput.value = newId;
-        				}
+						if (libraryInput) {
+							libraryInput.value = newId;
+						}
+
+						if (statusInput) {
+							statusInput.value = 'draft';
+						}
 
         				clone.dataset.libraryId =
         					newId;

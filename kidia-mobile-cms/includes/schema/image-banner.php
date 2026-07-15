@@ -21,8 +21,16 @@ return array(
 	'defaults' => array(
 		'image_url'      => '',
 		'semantic_label' => '',
+		'title'          => '',
+		'subtitle'       => '',
+		'button_label'   => '',
 		'aspect_ratio'   => 2.4,
 		'border_radius'  => 20,
+		'image_fit'      => 'cover',
+		'focal_x'        => 50,
+		'focal_y'        => 50,
+		'overlay_color'  => '#000000',
+		'overlay_opacity' => 0,
 		'action_type'    => '',
 		'action_value'   => '',
 	),
@@ -34,6 +42,10 @@ return array(
 				'General',
 				'kidia-mobile-cms'
 			),
+		),
+		array(
+			'id'    => 'content',
+			'label' => __( 'Content', 'kidia-mobile-cms' ),
 		),
 		array(
 			'id'    => 'action',
@@ -86,6 +98,34 @@ return array(
 		),
 
 		array(
+			'key'        => 'title',
+			'label'      => __( 'Title', 'kidia-mobile-cms' ),
+			'type'       => 'text',
+			'tab'        => 'content',
+			'default'    => '',
+			'full_width' => true,
+		),
+
+		array(
+			'key'        => 'subtitle',
+			'label'      => __( 'Subtitle', 'kidia-mobile-cms' ),
+			'type'       => 'textarea',
+			'tab'        => 'content',
+			'default'    => '',
+			'rows'       => 3,
+			'full_width' => true,
+		),
+
+		array(
+			'key'        => 'button_label',
+			'label'      => __( 'Button Label', 'kidia-mobile-cms' ),
+			'type'       => 'text',
+			'tab'        => 'content',
+			'default'    => '',
+			'full_width' => true,
+		),
+
+		array(
 			'key'     => 'aspect_ratio',
 			'label'   => __(
 				'Aspect Ratio',
@@ -111,6 +151,61 @@ return array(
 			'min'     => 0,
 			'max'     => 48,
 			'step'    => 1,
+		),
+
+		array(
+			'key'     => 'image_fit',
+			'label'   => __( 'Image Fit', 'kidia-mobile-cms' ),
+			'type'    => 'select',
+			'tab'     => 'style',
+			'default' => 'cover',
+			'options' => array(
+				'cover'   => __( 'Cover', 'kidia-mobile-cms' ),
+				'contain' => __( 'Contain', 'kidia-mobile-cms' ),
+				'fill'    => __( 'Fill', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key'     => 'focal_x',
+			'label'   => __( 'Horizontal Focus (%)', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'style',
+			'default' => 50,
+			'min'     => 0,
+			'max'     => 100,
+			'step'    => 1,
+		),
+
+		array(
+			'key'     => 'focal_y',
+			'label'   => __( 'Vertical Focus (%)', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'style',
+			'default' => 50,
+			'min'     => 0,
+			'max'     => 100,
+			'step'    => 1,
+		),
+
+		array(
+			'key'     => 'overlay_color',
+			'label'   => __( 'Overlay Color', 'kidia-mobile-cms' ),
+			'type'    => 'color',
+			'tab'     => 'style',
+			'default' => '#000000',
+		),
+
+		array(
+			'key'         => 'overlay_opacity',
+			'label'       => __( 'Overlay Opacity', 'kidia-mobile-cms' ),
+			'description' => __( 'Use a value from 0 (transparent) to 1 (opaque).', 'kidia-mobile-cms' ),
+			'type'        => 'number',
+			'tab'         => 'style',
+			'default'     => 0,
+			'min'         => 0,
+			'max'         => 1,
+			'step'        => 0.05,
 		),
 
 		array(

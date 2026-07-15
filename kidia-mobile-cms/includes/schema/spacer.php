@@ -25,6 +25,10 @@ return array(
 
 		'height' => 24,
 
+		'height_tablet' => 24,
+
+		'height_desktop' => 24,
+
 	),
 
 	'tabs' => array(
@@ -44,9 +48,31 @@ return array(
 		array(
 			'key' => 'height',
 			'label' => __(
-				'Height',
+				'Mobile Height',
 				'kidia-mobile-cms'
 			),
+			'type' => 'number',
+			'tab' => 'general',
+			'default' => 24,
+			'min' => 0,
+			'max' => 300,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'height_tablet',
+			'label' => __( 'Tablet Height', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'general',
+			'default' => 24,
+			'min' => 0,
+			'max' => 300,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'height_desktop',
+			'label' => __( 'Desktop Height', 'kidia-mobile-cms' ),
 			'type' => 'number',
 			'tab' => 'general',
 			'default' => 24,

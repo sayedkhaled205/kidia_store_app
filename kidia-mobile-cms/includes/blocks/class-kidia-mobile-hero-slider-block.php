@@ -62,6 +62,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'aspect_ratio' => 1.8,
 			'auto_play'    => true,
 			'interval_ms'  => 4500,
+			'loop'         => true,
+			'show_arrows'  => true,
+			'show_dots'    => true,
+			'transition'   => 'slide',
+			'slide_direction' => 'horizontal',
 			'items'        => array(),
 		);
 	}
@@ -93,6 +98,22 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			2000,
 			min( 15000, $interval_ms )
 		);
+
+		$transition = isset( $settings['transition'] )
+			? sanitize_key( (string) $settings['transition'] )
+			: 'slide';
+
+		if ( ! in_array( $transition, array( 'slide', 'fade' ), true ) ) {
+			$transition = 'slide';
+		}
+
+		$slide_direction = isset( $settings['slide_direction'] )
+			? sanitize_key( (string) $settings['slide_direction'] )
+			: 'horizontal';
+
+		if ( ! in_array( $slide_direction, array( 'horizontal', 'vertical' ), true ) ) {
+			$slide_direction = 'horizontal';
+		}
 
 		$items = isset( $settings['items'] )
 			&& is_array( $settings['items'] )
@@ -158,6 +179,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				? (bool) $settings['auto_play']
 				: false,
 			'interval_ms'  => $interval_ms,
+			'loop'         => ! empty( $settings['loop'] ),
+			'show_arrows'  => ! empty( $settings['show_arrows'] ),
+			'show_dots'    => ! empty( $settings['show_dots'] ),
+			'transition'   => $transition,
+			'slide_direction' => $slide_direction,
 			'items'        => $sanitized_items,
 		);
 	}
@@ -213,6 +239,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'aspect_ratio' => $settings['aspect_ratio'],
 			'auto_play'    => $settings['auto_play'],
 			'interval_ms'  => $settings['interval_ms'],
+			'loop'         => $settings['loop'],
+			'show_arrows'  => $settings['show_arrows'],
+			'show_dots'    => $settings['show_dots'],
+			'transition'   => $settings['transition'],
+			'slide_direction' => $settings['slide_direction'],
 			'items'        => $items,
 		);
 	}
@@ -242,10 +273,42 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Interval (ms)', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="2000" max="15000" step="500" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][interval_ms]" value="<?php echo esc_attr( (string) $settings['interval_ms'] ); ?>">
 			</div>
-			<div class="kidia-builder-field kidia-builder-field--full">
+			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Transition', 'kidia-mobile-cms' ); ?></label>
+				<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition]">
+					<option value="slide" <?php selected( 'slide', $settings['transition'] ); ?>><?php esc_html_e( 'Slide', 'kidia-mobile-cms' ); ?></option>
+					<option value="fade" <?php selected( 'fade', $settings['transition'] ); ?>><?php esc_html_e( 'Fade', 'kidia-mobile-cms' ); ?></option>
+				</select>
+			</div>
+			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Slide Direction', 'kidia-mobile-cms' ); ?></label>
+				<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][slide_direction]">
+					<option value="horizontal" <?php selected( 'horizontal', $settings['slide_direction'] ); ?>><?php esc_html_e( 'Horizontal', 'kidia-mobile-cms' ); ?></option>
+					<option value="vertical" <?php selected( 'vertical', $settings['slide_direction'] ); ?>><?php esc_html_e( 'Vertical', 'kidia-mobile-cms' ); ?></option>
+				</select>
+			</div>
+			<div class="kidia-builder-field">
 				<label>
 					<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][auto_play]" value="1" <?php checked( true, $settings['auto_play'] ); ?>>
 					<?php esc_html_e( 'Auto Play', 'kidia-mobile-cms' ); ?>
+				</label>
+			</div>
+			<div class="kidia-builder-field">
+				<label>
+					<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][loop]" value="1" <?php checked( true, $settings['loop'] ); ?>>
+					<?php esc_html_e( 'Loop Slides', 'kidia-mobile-cms' ); ?>
+				</label>
+			</div>
+			<div class="kidia-builder-field">
+				<label>
+					<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_arrows]" value="1" <?php checked( true, $settings['show_arrows'] ); ?>>
+					<?php esc_html_e( 'Show Navigation Arrows', 'kidia-mobile-cms' ); ?>
+				</label>
+			</div>
+			<div class="kidia-builder-field">
+				<label>
+					<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_dots]" value="1" <?php checked( true, $settings['show_dots'] ); ?>>
+					<?php esc_html_e( 'Show Pagination Dots', 'kidia-mobile-cms' ); ?>
 				</label>
 			</div>
 		</div>

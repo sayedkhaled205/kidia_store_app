@@ -5,6 +5,7 @@ import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:kidia_store_app/features/home/presentation/home_action_launcher.dart';
 import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_renderer.dart';
 
@@ -24,25 +25,18 @@ class HomePage extends ConsumerWidget {
         bottom: false,
         child: RefreshIndicator(
           onRefresh: () {
-            return ref.refresh(
-              homeLayoutProvider(locale).future,
-            );
+            return ref.refresh(homeLayoutProvider(locale).future);
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              const SliverToBoxAdapter(
-                child: _HomeHeader(),
-              ),
+              const SliverToBoxAdapter(child: _HomeHeader()),
               homeLayoutAsync.when(
                 data: (HomeLayout layout) {
                   return HomeBlockRenderer(
                     blocks: layout.enabledBlocks,
-                    onAction: (HomeAction action) {
-                      _handleHomeAction(
-                        context: context,
-                        action: action,
-                      );
+                    onAction: (HomeAction action) async {
+                      await _handleHomeAction(context: context, action: action);
                     },
                   );
                 },
@@ -58,17 +52,13 @@ class HomePage extends ConsumerWidget {
                     child: _HomeErrorState(
                       message: _resolveErrorMessage(error),
                       onRetry: () {
-                        ref.invalidate(
-                          homeLayoutProvider(locale),
-                        );
+                        ref.invalidate(homeLayoutProvider(locale));
                       },
                     ),
                   );
                 },
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
@@ -84,67 +74,58 @@ class HomePage extends ConsumerWidget {
     return 'تعذر تحميل الصفحة الرئيسية حاليًا.';
   }
 
-  static void _handleHomeAction({
+  static Future<void> _handleHomeAction({
     required BuildContext context,
     required HomeAction action,
-  }) {
-    final String encodedValue = Uri.encodeComponent(
-      action.value,
-    );
+  }) async {
+    final String encodedValue = Uri.encodeComponent(action.value);
 
     switch (action.type) {
       case 'product':
-        context.push('/product/$encodedValue');
+        await context.push<void>('/product/$encodedValue');
+        return;
 
       case 'category':
-        context.push('/categories/$encodedValue');
+        await context.push<void>('/categories/$encodedValue');
+        return;
 
       case 'collection':
-        context.push(
-          '/products?collection=$encodedValue',
-        );
+        await context.push<void>('/products?collection=$encodedValue');
+        return;
 
       case 'brand':
-        context.push(
-          '/products?brand=$encodedValue',
-        );
+        await context.push<void>('/products?brand=$encodedValue');
+        return;
 
       case 'brands':
-        context.push('/brands');
+        await context.push<void>('/brands');
+        return;
 
       case 'search':
-        context.push(
-          '/search?q=$encodedValue',
-        );
+        await context.push<void>('/search?q=$encodedValue');
+        return;
 
       case 'external':
-        _showMessage(
-          context,
-          'سيتم دعم الروابط الخارجية في مرحلة لاحقة.',
+        final bool launched = await HomeActionLauncher.launchExternal(
+          action.value,
         );
+        if (!launched && context.mounted) {
+          _showMessage(context, 'تعذر فتح الرابط الخارجي.');
+        }
+        return;
 
       default:
-        _showMessage(
-          context,
-          'هذا الإجراء غير مدعوم حاليًا.',
-        );
+        _showMessage(context, 'هذا الإجراء غير مدعوم حاليًا.');
+        return;
     }
   }
 
-  static void _showMessage(
-      BuildContext context,
-      String message,
-      ) {
-    final ScaffoldMessengerState messenger =
-    ScaffoldMessenger.of(context);
+  static void _showMessage(BuildContext context, String message) {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
 
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -157,12 +138,7 @@ class _HomeHeader extends StatelessWidget {
     final ColorScheme colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
           Expanded(
@@ -191,9 +167,7 @@ class _HomeHeader extends StatelessWidget {
             onPressed: () {
               context.push('/search');
             },
-            icon: const Icon(
-              Icons.search_rounded,
-            ),
+            icon: const Icon(Icons.search_rounded),
           ),
         ],
       ),
@@ -216,10 +190,7 @@ class _HomeLoadingState extends StatelessWidget {
 }
 
 class _HomeErrorState extends StatelessWidget {
-  const _HomeErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _HomeErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -257,12 +228,8 @@ class _HomeErrorState extends StatelessWidget {
             const SizedBox(height: 18),
             FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh_rounded,
-              ),
-              label: const Text(
-                'إعادة المحاولة',
-              ),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
             ),
           ],
         ),

@@ -33,6 +33,24 @@ return array(
 
 		'muted' => true,
 
+		'loop' => false,
+
+		'show_controls' => true,
+
+		'title' => '',
+
+		'subtitle' => '',
+
+		'button_label' => '',
+
+		'overlay_color' => '#000000',
+
+		'overlay_opacity' => 0,
+
+		'action_type' => '',
+
+		'action_value' => '',
+
 	),
 
 	'tabs' => array(
@@ -53,6 +71,16 @@ return array(
 			),
 		),
 
+		array(
+			'id' => 'content',
+			'label' => __( 'Content', 'kidia-mobile-cms' ),
+		),
+
+		array(
+			'id' => 'action',
+			'label' => __( 'Action', 'kidia-mobile-cms' ),
+		),
+
 	),
 
 	'fields' => array(
@@ -63,7 +91,7 @@ return array(
 				'Video URL',
 				'kidia-mobile-cms'
 			),
-			'type' => 'url',
+			'type' => 'video',
 			'tab' => 'general',
 			'default' => '',
 			'full_width' => true,
@@ -116,6 +144,92 @@ return array(
 			'type' => 'checkbox',
 			'tab' => 'playback',
 			'default' => true,
+		),
+
+		array(
+			'key' => 'loop',
+			'label' => __( 'Loop', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'playback',
+			'default' => false,
+		),
+
+		array(
+			'key' => 'show_controls',
+			'label' => __( 'Show Player Controls', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'playback',
+			'default' => true,
+		),
+
+		array(
+			'key' => 'title',
+			'label' => __( 'Title', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'content',
+			'default' => '',
+			'full_width' => true,
+		),
+
+		array(
+			'key' => 'subtitle',
+			'label' => __( 'Subtitle', 'kidia-mobile-cms' ),
+			'type' => 'textarea',
+			'tab' => 'content',
+			'default' => '',
+			'full_width' => true,
+		),
+
+		array(
+			'key' => 'button_label',
+			'label' => __( 'Button Label', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'content',
+			'default' => '',
+		),
+
+		array(
+			'key' => 'overlay_color',
+			'label' => __( 'Overlay Color', 'kidia-mobile-cms' ),
+			'type' => 'color',
+			'tab' => 'content',
+			'default' => '#000000',
+		),
+
+		array(
+			'key' => 'overlay_opacity',
+			'label' => __( 'Overlay Opacity', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'content',
+			'default' => 0,
+			'min' => 0,
+			'max' => 1,
+			'step' => 0.05,
+		),
+
+		array(
+			'key' => 'action_type',
+			'label' => __( 'Action Type', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'action',
+			'default' => '',
+			'options' => array(
+				'' => __( 'No Action', 'kidia-mobile-cms' ),
+				'collection' => __( 'Collection', 'kidia-mobile-cms' ),
+				'category' => __( 'Category', 'kidia-mobile-cms' ),
+				'product' => __( 'Product', 'kidia-mobile-cms' ),
+				'search' => __( 'Search', 'kidia-mobile-cms' ),
+				'external' => __( 'External URL', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'action_value',
+			'label' => __( 'Action Value', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'action',
+			'default' => '',
+			'full_width' => true,
 		),
 
 	),

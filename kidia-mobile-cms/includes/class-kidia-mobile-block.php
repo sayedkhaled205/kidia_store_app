@@ -321,6 +321,318 @@ abstract class Kidia_Mobile_Block {
 	}
 
 	/**
+	 * Queries WooCommerce products for a CMS product block.
+	 *
+	 * A null result means that WooCommerce is unavailable or that the chosen
+	 * source is incomplete/invalid. An empty array means that the source is
+	 * valid but currently contains no published products.
+	 *
+	 * @param array<string,mixed> $settings Sanitized block settings.
+	 *
+	 * @return array<int,object>|null
+	 */
+	protected function query_products(
+		array $settings
+	): ?array {
+		if ( ! function_exists( 'wc_get_products' ) ) {
+			return null;
+		}
+
+		$source = sanitize_key(
+			(string) ( $settings['source'] ?? 'latest' )
+		);
+
+		$limit = max(
+			1,
+			min( 50, absint( $settings['limit'] ?? 10 ) )
+		);
+
+		$args = array(
+			'status' => 'publish',
+			'limit'  => $limit,
+			'return' => 'objects',
+		);
+
+		switch ( $source ) {
+			case 'featured':
+				$args['featured'] = true;
+				break;
+
+			case 'on_sale':
+				if ( ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
+					return null;
+				}
+
+				$product_ids = array_values(
+					array_unique(
+						array_filter(
+							array_map(
+								'absint',
+								wc_get_product_ids_on_sale()
+							)
+						)
+					)
+				);
+
+				if ( empty( $product_ids ) ) {
+					return array();
+				}
+
+				$args['include'] = $product_ids;
+				break;
+
+			case 'best_selling':
+			case 'top_rated':
+				if ( ! function_exists( 'get_posts' ) ) {
+					return null;
+				}
+
+				$ranked_ids = get_posts(
+					array(
+						'post_type'              => 'product',
+						'post_status'            => 'publish',
+						'fields'                 => 'ids',
+						'posts_per_page'         => $limit,
+						'no_found_rows'          => true,
+						'ignore_sticky_posts'    => true,
+						'update_post_meta_cache' => false,
+						'update_post_term_cache' => false,
+						'meta_key'               => 'best_selling' === $source
+							? 'total_sales'
+							: '_wc_average_rating',
+						'orderby'                => array(
+							'meta_value_num' => 'DESC',
+							'date'           => 'DESC',
+						),
+					)
+				);
+
+				$ranked_ids = array_values(
+					array_filter(
+						array_map( 'absint', (array) $ranked_ids )
+					)
+				);
+
+				if ( empty( $ranked_ids ) ) {
+					return array();
+				}
+
+				$args['include'] = $ranked_ids;
+				$args['orderby'] = 'include';
+				break;
+
+			case 'random':
+				$args['orderby'] = 'rand';
+				break;
+
+			case 'category':
+				$category_id = absint( $settings['category_id'] ?? 0 );
+
+				if ( 0 === $category_id || ! function_exists( 'get_term' ) ) {
+					return null;
+				}
+
+				$term = get_term( $category_id, 'product_cat' );
+
+				if (
+					! $term instanceof WP_Term
+					|| ( function_exists( 'is_wp_error' ) && is_wp_error( $term ) )
+				) {
+					return null;
+				}
+
+				$args['category'] = array( $term->slug );
+				break;
+
+			case 'manual':
+				$product_ids = array_values(
+					array_unique(
+						array_filter(
+							array_map(
+								'absint',
+								preg_split(
+									'/[\s,]+/',
+									(string) ( $settings['product_ids'] ?? '' )
+								)
+							)
+						)
+					)
+				);
+
+				if ( empty( $product_ids ) ) {
+					return array();
+				}
+
+				$args['include'] = array_slice( $product_ids, 0, $limit );
+				$args['orderby'] = 'include';
+				break;
+
+			case 'latest':
+			default:
+				$args['orderby'] = 'date';
+				$args['order']   = 'DESC';
+				break;
+		}
+
+		$products = wc_get_products( $args );
+
+		if ( ! is_array( $products ) ) {
+			return array();
+		}
+
+		return array_values(
+			array_filter(
+				$products,
+				static function ( $product ): bool {
+					return is_object( $product )
+						&& is_a( $product, 'WC_Product' );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Converts WooCommerce products to the Flutter product-item contract.
+	 *
+	 * @param array<int,object>     $products WooCommerce product objects.
+	 * @param array<string,mixed>   $display  Optional display settings.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	protected function build_product_items(
+		array $products,
+		array $display = array()
+	): array {
+		$items = array();
+		$show_badge = ! array_key_exists( 'show_badge', $display )
+			|| ! empty( $display['show_badge'] );
+
+		foreach ( $products as $product ) {
+			if ( ! is_object( $product ) || ! is_a( $product, 'WC_Product' ) ) {
+				continue;
+			}
+
+			$product_id = absint( $product->get_id() );
+			$price      = (string) $product->get_price();
+
+			if ( 0 === $product_id || '' === trim( $price ) ) {
+				continue;
+			}
+
+			$image_id  = absint( $product->get_image_id() );
+			$image_url = $image_id
+				? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' )
+				: '';
+
+			if ( ! $image_url && function_exists( 'wc_placeholder_img_src' ) ) {
+				$image_url = wc_placeholder_img_src();
+			}
+
+			$image_url = esc_url_raw( (string) $image_url );
+
+			if ( '' === $image_url ) {
+				continue;
+			}
+
+			$regular_price = trim( (string) $product->get_regular_price() );
+			$category_name = '';
+			$category_ids  = method_exists( $product, 'get_category_ids' )
+				? array_filter( array_map( 'absint', (array) $product->get_category_ids() ) )
+				: array();
+
+			if ( ! empty( $category_ids ) && function_exists( 'get_term' ) ) {
+				$category_term = get_term( (int) reset( $category_ids ), 'product_cat' );
+				if (
+					$category_term instanceof WP_Term
+					&& ( ! function_exists( 'is_wp_error' ) || ! is_wp_error( $category_term ) )
+				) {
+					$category_name = sanitize_text_field( (string) $category_term->name );
+				}
+			}
+
+			$rating       = method_exists( $product, 'get_average_rating' )
+				? (float) $product->get_average_rating()
+				: 0.0;
+			$review_count = method_exists( $product, 'get_review_count' )
+				? absint( $product->get_review_count() )
+				: 0;
+			$rating_count = method_exists( $product, 'get_rating_count' )
+				? absint( $product->get_rating_count() )
+				: $review_count;
+			$stock_status = method_exists( $product, 'get_stock_status' )
+				? sanitize_key( (string) $product->get_stock_status() )
+				: ( $product->is_in_stock() ? 'instock' : 'outofstock' );
+			$currency_code = function_exists( 'get_woocommerce_currency' )
+				? (string) get_woocommerce_currency()
+				: '';
+			$currency_symbol = function_exists( 'get_woocommerce_currency_symbol' )
+				? html_entity_decode(
+					(string) get_woocommerce_currency_symbol(),
+					ENT_QUOTES | ENT_HTML5,
+					'UTF-8'
+				)
+				: '';
+
+			if ( '' === $currency_code || '' === $currency_symbol ) {
+				continue;
+			}
+
+			$items[] = array(
+				'id'              => $product_id,
+				'name'            => sanitize_text_field( (string) $product->get_name() ),
+				'image_url'       => $image_url,
+				'price'           => $price,
+				'regular_price'   => '' !== $regular_price ? $regular_price : null,
+				'currency_code'   => sanitize_text_field( $currency_code ),
+				'currency_symbol' => sanitize_text_field( $currency_symbol ),
+				'in_stock'        => (bool) $product->is_in_stock(),
+				'stock_status'    => $stock_status,
+				'rating'          => $rating,
+				'review_count'    => $review_count,
+				'rating_count'    => $rating_count,
+				'category'        => $category_name ?: null,
+				'badge'           => $show_badge && $product->is_on_sale()
+					? __( 'Sale', 'kidia-mobile-cms' )
+					: null,
+				'action'          => $this->build_action(
+					'product',
+					(string) $product_id
+				),
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Builds a useful View All action for a product source.
+	 *
+	 * @param array<string,mixed> $settings Sanitized block settings.
+	 *
+	 * @return array<string,string>|null
+	 */
+	protected function build_product_view_all_action(
+		array $settings
+	): ?array {
+		$source = sanitize_key(
+			(string) ( $settings['source'] ?? '' )
+		);
+
+		if ( 'category' === $source ) {
+			return $this->build_action(
+				'category',
+				(string) absint( $settings['category_id'] ?? 0 )
+			);
+		}
+
+		if ( 'manual' === $source ) {
+			return null;
+		}
+
+		return $this->build_action( 'collection', $source );
+	}
+
+	/**
 	 * Builds a Flutter navigation action.
 	 *
 	 * @param mixed $type  Action type.
@@ -344,6 +656,8 @@ abstract class Kidia_Mobile_Block {
 			'product',
 			'category',
 			'collection',
+			'brand',
+			'brands',
 			'search',
 			'external',
 		);

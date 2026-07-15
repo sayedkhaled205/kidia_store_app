@@ -132,6 +132,20 @@ $library_id = isset( $block_data['library_id'] )
 			value="<?php echo esc_attr( (string) $block_data['order'] ); ?>"
 		>
 
+		<input
+			type="hidden"
+			class="kidia-block-status"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][status]"
+			value="<?php echo esc_attr( 'draft' === ( $block_data['status'] ?? 'published' ) ? 'draft' : 'published' ); ?>"
+		>
+
+		<input
+			type="hidden"
+			class="kidia-block-settings-json"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings_json]"
+			value="<?php echo esc_attr( wp_json_encode( $settings ) ); ?>"
+		>
+
 		<div class="kidia-builder-field">
 
 			<label>
@@ -185,14 +199,12 @@ $library_id = isset( $block_data['library_id'] )
 
 		</div>
 
-		<?php
-		$block->render_settings(
-			is_numeric( $index )
-				? (int) $index
-				: 0,
-			$settings
-		);
-		?>
+		<p class="description kidia-builder-block__editor-note">
+			<?php esc_html_e(
+				'Use the Edit button to manage this element’s content and design settings.',
+				'kidia-mobile-cms'
+			); ?>
+		</p>
 
 	</div>
 

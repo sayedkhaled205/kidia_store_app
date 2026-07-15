@@ -34,8 +34,13 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			'title'      => '',
 			'source'     => 'all',
 			'brand_ids'  => '',
-			'limit'      => 20,
-			'item_width' => 92,
+			'limit'      => 12,
+			'item_width' => 90,
+			'layout'     => 'carousel',
+			'columns'    => 4,
+			'columns_mobile' => 3,
+			'gap'        => 12,
+			'show_names' => true,
 		);
 	}
 
@@ -44,6 +49,12 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 
 		if ( ! in_array( $source, array( 'all', 'manual' ), true ) ) {
 			$source = 'all';
+		}
+
+		$layout = sanitize_key( (string) ( $settings['layout'] ?? 'carousel' ) );
+
+		if ( ! in_array( $layout, array( 'carousel', 'grid' ), true ) ) {
+			$layout = 'carousel';
 		}
 
 		return array(
@@ -58,8 +69,13 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 					)
 				)
 			),
-			'limit'      => max( 1, min( 100, absint( $settings['limit'] ?? 20 ) ) ),
-			'item_width' => max( 60, min( 180, absint( $settings['item_width'] ?? 92 ) ) ),
+			'limit'      => max( 1, min( 100, absint( $settings['limit'] ?? 12 ) ) ),
+			'item_width' => max( 60, min( 180, absint( $settings['item_width'] ?? 90 ) ) ),
+			'layout'     => $layout,
+			'columns'    => max( 1, min( 8, absint( $settings['columns'] ?? 4 ) ) ),
+			'columns_mobile' => max( 1, min( 4, absint( $settings['columns_mobile'] ?? 3 ) ) ),
+			'gap'        => max( 0, min( 48, absint( $settings['gap'] ?? 12 ) ) ),
+			'show_names' => ! empty( $settings['show_names'] ),
 		);
 	}
 
@@ -83,6 +99,7 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 		);
 
 		if ( 'manual' === $settings['source'] ) {
+			$args['hide_empty'] = false;
 			$args['include'] = array_values(
 				array_filter(
 					array_map( 'absint', explode( ',', $settings['brand_ids'] ) )
@@ -94,6 +111,11 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				return array(
 					'title'      => $settings['title'],
 					'item_width' => $settings['item_width'],
+					'layout'     => $settings['layout'],
+					'columns'    => $settings['columns'],
+					'columns_mobile' => $settings['columns_mobile'],
+					'gap'        => $settings['gap'],
+					'show_names' => $settings['show_names'],
 					'items'      => array(),
 				);
 			}
@@ -112,10 +134,12 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				continue;
 			}
 
-			$image_id = absint( get_term_meta( $term->term_id, 'thumbnail_id', true ) );
-
-			if ( ! $image_id ) {
-				$image_id = absint( get_term_meta( $term->term_id, 'brand_image_id', true ) );
+			$image_id = 0;
+			foreach ( array( 'thumbnail_id', 'brand_image_id', 'brand_logo_id', 'pwb_brand_image', 'yith_wcbr_logo' ) as $image_meta_key ) {
+				$image_id = absint( get_term_meta( $term->term_id, $image_meta_key, true ) );
+				if ( $image_id ) {
+					break;
+				}
 			}
 
 			$logo_url = $image_id
@@ -123,7 +147,16 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				: '';
 
 			if ( ! $logo_url ) {
-				continue;
+				foreach ( array( 'brand_image', 'logo', 'image_url' ) as $url_meta_key ) {
+					$logo_url = esc_url_raw( (string) get_term_meta( $term->term_id, $url_meta_key, true ) );
+					if ( $logo_url ) {
+						break;
+					}
+				}
+			}
+
+			if ( ! $logo_url && function_exists( 'wc_placeholder_img_src' ) ) {
+				$logo_url = wc_placeholder_img_src();
 			}
 
 			$items[] = array(
@@ -137,6 +170,11 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 		return array(
 			'title'      => $settings['title'],
 			'item_width' => $settings['item_width'],
+			'layout'     => $settings['layout'],
+			'columns'    => $settings['columns'],
+			'columns_mobile' => $settings['columns_mobile'],
+			'gap'        => $settings['gap'],
+			'show_names' => $settings['show_names'],
 			'items'      => $items,
 		);
 	}
@@ -167,6 +205,31 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				<input type="number" min="60" max="180" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_width]" value="<?php echo esc_attr( (string) $settings['item_width'] ); ?>">
 			</div>
 			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label>
+				<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]">
+					<option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Carousel', 'kidia-mobile-cms' ); ?></option>
+					<option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Grid', 'kidia-mobile-cms' ); ?></option>
+				</select>
+			</div>
+			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Visible Columns', 'kidia-mobile-cms' ); ?></label>
+				<input type="number" min="1" max="8" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>">
+			</div>
+			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Mobile Columns', 'kidia-mobile-cms' ); ?></label>
+				<input type="number" min="1" max="4" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns_mobile]" value="<?php echo esc_attr( (string) $settings['columns_mobile'] ); ?>">
+			</div>
+			<div class="kidia-builder-field">
+				<label><?php esc_html_e( 'Item Gap', 'kidia-mobile-cms' ); ?></label>
+				<input type="number" min="0" max="48" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>">
+			</div>
+			<div class="kidia-builder-field">
+				<label>
+					<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_names]" value="1" <?php checked( true, $settings['show_names'] ); ?>>
+					<?php esc_html_e( 'Show Brand Names', 'kidia-mobile-cms' ); ?>
+				</label>
+			</div>
+			<div class="kidia-builder-field">
 				<label><?php esc_html_e( 'Brand IDs', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][brand_ids]" value="<?php echo esc_attr( $settings['brand_ids'] ); ?>" placeholder="4, 8, 15">
 			</div>
@@ -179,14 +242,32 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			'product_brand',
 			'pwb-brand',
 			'yith_product_brand',
+			'pa_brand',
 		);
 
+		$fallback = '';
+
 		foreach ( $candidates as $taxonomy ) {
-			if ( taxonomy_exists( $taxonomy ) ) {
+			if ( ! taxonomy_exists( $taxonomy ) ) {
+				continue;
+			}
+
+			if ( '' === $fallback ) {
+				$fallback = $taxonomy;
+			}
+
+			$count = wp_count_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+				)
+			);
+
+			if ( ! is_wp_error( $count ) && 0 < (int) $count ) {
 				return $taxonomy;
 			}
 		}
 
-		return '';
+		return $fallback;
 	}
 }

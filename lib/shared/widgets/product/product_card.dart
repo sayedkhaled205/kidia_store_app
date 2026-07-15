@@ -20,6 +20,14 @@ class ProductCard extends StatelessWidget {
     this.onFavoritePressed,
     this.imageAspectRatio = 1,
     this.compact = false,
+    this.rating = 0,
+    this.ratingCount = 0,
+    this.showRating = false,
+    this.showBadge = true,
+    this.showStock = true,
+    this.cardStyle = 'standard',
+    this.category,
+    this.showCategory = false,
   });
 
   final String name;
@@ -39,6 +47,14 @@ class ProductCard extends StatelessWidget {
 
   final double imageAspectRatio;
   final bool compact;
+  final double rating;
+  final int ratingCount;
+  final bool showRating;
+  final bool showBadge;
+  final bool showStock;
+  final String cardStyle;
+  final String? category;
+  final bool showCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +69,9 @@ class ProductCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: colorScheme.outlineVariant,
+            color: cardStyle == 'outlined'
+                ? colorScheme.outline
+                : colorScheme.outlineVariant,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -72,6 +90,8 @@ class ProductCard extends StatelessWidget {
                   isFavorite: isFavorite,
                   onFavoritePressed: onFavoritePressed,
                   imageAspectRatio: imageAspectRatio,
+                  showBadge: showBadge,
+                  showStock: showStock,
                 ),
               ),
               _ProductInformation(
@@ -81,6 +101,11 @@ class ProductCard extends StatelessWidget {
                 currencySymbol: currencySymbol,
                 inStock: inStock,
                 compact: compact,
+                rating: rating,
+                ratingCount: ratingCount,
+                showRating: showRating,
+                category: category,
+                showCategory: showCategory,
               ),
             ],
           ),
@@ -100,6 +125,8 @@ class _ProductImageSection extends StatelessWidget {
     required this.isFavorite,
     required this.onFavoritePressed,
     required this.imageAspectRatio,
+    required this.showBadge,
+    required this.showStock,
   });
 
   final String imageUrl;
@@ -110,6 +137,8 @@ class _ProductImageSection extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback? onFavoritePressed;
   final double imageAspectRatio;
+  final bool showBadge;
+  final bool showStock;
 
   @override
   Widget build(BuildContext context) {
@@ -125,12 +154,8 @@ class _ProductImageSection extends StatelessWidget {
             fit: BoxFit.cover,
             semanticLabel: productName,
           ),
-          if (!inStock)
-            ColoredBox(
-              color: colorScheme.surface.withValues(
-                alpha: 0.68,
-              ),
-            ),
+          if (!inStock && showStock)
+            ColoredBox(color: colorScheme.surface.withValues(alpha: 0.68)),
           PositionedDirectional(
             top: 10,
             start: 10,
@@ -138,6 +163,8 @@ class _ProductImageSection extends StatelessWidget {
               inStock: inStock,
               badgeLabel: badgeLabel,
               badgeType: badgeType,
+              showBadge: showBadge,
+              showStock: showStock,
             ),
           ),
           if (onFavoritePressed != null)
@@ -160,19 +187,27 @@ class _ProductStatusBadge extends StatelessWidget {
     required this.inStock,
     required this.badgeLabel,
     required this.badgeType,
+    required this.showBadge,
+    required this.showStock,
   });
 
   final bool inStock;
   final String? badgeLabel;
   final ProductBadgeType badgeType;
+  final bool showBadge;
+  final bool showStock;
 
   @override
   Widget build(BuildContext context) {
-    if (!inStock) {
+    if (!inStock && showStock) {
       return const ProductBadge(
         label: 'نفد المخزون',
         type: ProductBadgeType.outOfStock,
       );
+    }
+
+    if (!showBadge) {
+      return const SizedBox.shrink();
     }
 
     final String? normalizedLabel = badgeLabel?.trim();
@@ -181,18 +216,12 @@ class _ProductStatusBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return ProductBadge(
-      label: normalizedLabel,
-      type: badgeType,
-    );
+    return ProductBadge(label: normalizedLabel, type: badgeType);
   }
 }
 
 class _FavoriteButton extends StatelessWidget {
-  const _FavoriteButton({
-    required this.isFavorite,
-    required this.onPressed,
-  });
+  const _FavoriteButton({required this.isFavorite, required this.onPressed});
 
   final bool isFavorite;
   final VoidCallback onPressed;
@@ -208,28 +237,18 @@ class _FavoriteButton extends StatelessWidget {
           ? 'إزالة المنتج من المفضلة'
           : 'إضافة المنتج إلى المفضلة',
       child: Material(
-        color: colorScheme.surface.withValues(
-          alpha: 0.92,
-        ),
+        color: colorScheme.surface.withValues(alpha: 0.92),
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: IconButton(
-          tooltip: isFavorite
-              ? 'إزالة من المفضلة'
-              : 'إضافة إلى المفضلة',
+          tooltip: isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
           onPressed: onPressed,
           visualDensity: VisualDensity.compact,
           iconSize: 20,
           icon: AnimatedSwitcher(
             duration: const Duration(milliseconds: 180),
-            transitionBuilder: (
-                Widget child,
-                Animation<double> animation,
-                ) {
-              return ScaleTransition(
-                scale: animation,
-                child: child,
-              );
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(scale: animation, child: child);
             },
             child: Icon(
               isFavorite
@@ -255,6 +274,11 @@ class _ProductInformation extends StatelessWidget {
     required this.currencySymbol,
     required this.inStock,
     required this.compact,
+    required this.rating,
+    required this.ratingCount,
+    required this.showRating,
+    required this.category,
+    required this.showCategory,
   });
 
   final String name;
@@ -263,6 +287,11 @@ class _ProductInformation extends StatelessWidget {
   final String currencySymbol;
   final bool inStock;
   final bool compact;
+  final double rating;
+  final int ratingCount;
+  final bool showRating;
+  final String? category;
+  final bool showCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -279,6 +308,18 @@ class _ProductInformation extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (showCategory && category != null) ...[
+            Text(
+              category!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 3),
+          ],
           Text(
             name,
             maxLines: 2,
@@ -291,6 +332,33 @@ class _ProductInformation extends StatelessWidget {
               height: 1.35,
             ),
           ),
+          if (showRating && rating > 0) ...[
+            SizedBox(height: compact ? 4 : 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star_rounded,
+                  size: compact ? 15 : 17,
+                  color: const Color(0xFFF59E0B),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  rating.toStringAsFixed(1),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (ratingCount > 0)
+                  Text(
+                    ' ($ratingCount)',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+          ],
           SizedBox(height: compact ? 6 : 8),
           ProductPrice(
             price: price,

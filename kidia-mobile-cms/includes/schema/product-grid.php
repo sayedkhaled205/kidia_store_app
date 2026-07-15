@@ -1,6 +1,6 @@
 <?php
 /**
- * Category Grid Schema.
+ * Product Grid Schema.
  *
  * @package Kidia_Mobile_CMS
  */
@@ -8,146 +8,176 @@
 defined( 'ABSPATH' ) || exit;
 
 return array(
-
-	'title' => __(
-		'Category Grid',
-		'kidia-mobile-cms'
+	'title'       => __( 'Product Grid', 'kidia-mobile-cms' ),
+	'description' => __( 'Display WooCommerce products in a configurable mobile grid.', 'kidia-mobile-cms' ),
+	'icon'        => 'dashicons-grid-view',
+	'defaults'    => array(
+		'title'          => '',
+		'source'         => 'latest',
+		'limit'          => 8,
+		'card_style'     => 'standard',
+		'columns'        => 2,
+		'columns_mobile' => 2,
+		'gap'            => 12,
+		'image_ratio'    => 1,
+		'category_id'    => 0,
+		'product_ids'    => '',
+		'show_view_all'  => true,
+		'show_rating'    => true,
+		'show_badge'     => true,
+		'show_stock'     => true,
 	),
-
-	'description' => __(
-		'Display WooCommerce categories in a grid.',
-		'kidia-mobile-cms'
-	),
-
-	'icon' => 'dashicons-grid-view',
-
-	'defaults' => array(
-
-		'title' => '',
-
-		'subtitle' => '',
-
-		'columns' => 4,
-
-		'limit' => 8,
-
-		'parent_id' => 0,
-
-		'show_names' => true,
-
-		'hide_empty' => true,
-
-	),
-
-	'tabs' => array(
-
+	'tabs'        => array(
 		array(
-			'id' => 'general',
-			'label' => __(
-				'General',
-				'kidia-mobile-cms'
-			),
+			'id'    => 'general',
+			'label' => __( 'General', 'kidia-mobile-cms' ),
 		),
-
 		array(
-			'id' => 'display',
-			'label' => __(
-				'Display',
-				'kidia-mobile-cms'
-			),
+			'id'    => 'layout',
+			'label' => __( 'Layout', 'kidia-mobile-cms' ),
 		),
-
-	),
-
-	'fields' => array(
-
 		array(
-			'key' => 'title',
-			'label' => __(
-				'Section Title',
-				'kidia-mobile-cms'
-			),
-			'type' => 'text',
-			'tab' => 'general',
-			'default' => '',
+			'id'    => 'source',
+			'label' => __( 'Source', 'kidia-mobile-cms' ),
+		),
+	),
+	'fields'      => array(
+		array(
+			'key'        => 'title',
+			'label'      => __( 'Section Title', 'kidia-mobile-cms' ),
+			'type'       => 'text',
+			'tab'        => 'general',
+			'default'    => '',
 			'full_width' => true,
 		),
-
 		array(
-			'key' => 'subtitle',
-			'label' => __(
-				'Subtitle',
-				'kidia-mobile-cms'
-			),
-			'type' => 'text',
-			'tab' => 'general',
-			'default' => '',
-			'full_width' => true,
+			'key'     => 'show_view_all',
+			'label'   => __( 'Show View All', 'kidia-mobile-cms' ),
+			'type'    => 'checkbox',
+			'tab'     => 'general',
+			'default' => true,
 		),
-
 		array(
-			'key' => 'columns',
-			'label' => __(
-				'Columns',
-				'kidia-mobile-cms'
+			'key'     => 'card_style',
+			'label'   => __( 'Card Style', 'kidia-mobile-cms' ),
+			'type'    => 'select',
+			'tab'     => 'layout',
+			'default' => 'standard',
+			'options' => array(
+				'standard' => __( 'Standard', 'kidia-mobile-cms' ),
+				'compact'  => __( 'Compact', 'kidia-mobile-cms' ),
+				'outlined' => __( 'Outlined', 'kidia-mobile-cms' ),
 			),
-			'type' => 'number',
-			'tab' => 'display',
-			'default' => 4,
-			'min' => 2,
-			'max' => 6,
-			'step' => 1,
 		),
-
 		array(
-			'key' => 'limit',
-			'label' => __(
-				'Categories Limit',
-				'kidia-mobile-cms'
-			),
-			'type' => 'number',
-			'tab' => 'display',
-			'default' => 8,
-			'min' => 1,
-			'max' => 50,
-			'step' => 1,
+			'key'     => 'columns',
+			'label'   => __( 'Columns', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'layout',
+			'default' => 2,
+			'min'     => 1,
+			'max'     => 4,
+			'step'    => 1,
 		),
-
 		array(
-			'key' => 'parent_id',
-			'label' => __(
-				'Parent Category ID',
-				'kidia-mobile-cms'
+			'key'     => 'columns_mobile',
+			'label'   => __( 'Mobile Columns', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'layout',
+			'default' => 2,
+			'min'     => 1,
+			'max'     => 4,
+			'step'    => 1,
+		),
+		array(
+			'key'     => 'gap',
+			'label'   => __( 'Gap (px)', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'layout',
+			'default' => 12,
+			'min'     => 0,
+			'max'     => 40,
+			'step'    => 1,
+		),
+		array(
+			'key'     => 'image_ratio',
+			'label'   => __( 'Image Ratio', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'layout',
+			'default' => 1,
+			'min'     => 0.5,
+			'max'     => 2,
+			'step'    => 0.1,
+		),
+		array(
+			'key'     => 'show_rating',
+			'label'   => __( 'Show Rating', 'kidia-mobile-cms' ),
+			'type'    => 'checkbox',
+			'tab'     => 'layout',
+			'default' => true,
+		),
+		array(
+			'key'     => 'show_badge',
+			'label'   => __( 'Show Badge', 'kidia-mobile-cms' ),
+			'type'    => 'checkbox',
+			'tab'     => 'layout',
+			'default' => true,
+		),
+		array(
+			'key'     => 'show_stock',
+			'label'   => __( 'Show Stock Status', 'kidia-mobile-cms' ),
+			'type'    => 'checkbox',
+			'tab'     => 'layout',
+			'default' => true,
+		),
+		array(
+			'key'     => 'source',
+			'label'   => __( 'Products Source', 'kidia-mobile-cms' ),
+			'type'    => 'select',
+			'tab'     => 'source',
+			'default' => 'latest',
+			'options' => array(
+				'latest'       => __( 'Latest Products', 'kidia-mobile-cms' ),
+				'featured'     => __( 'Featured Products', 'kidia-mobile-cms' ),
+				'on_sale'      => __( 'On Sale', 'kidia-mobile-cms' ),
+				'best_selling' => __( 'Best Selling', 'kidia-mobile-cms' ),
+				'top_rated'    => __( 'Top Rated', 'kidia-mobile-cms' ),
+				'random'       => __( 'Random', 'kidia-mobile-cms' ),
+				'category'     => __( 'Specific Category', 'kidia-mobile-cms' ),
+				'manual'       => __( 'Manual Selection', 'kidia-mobile-cms' ),
 			),
-			'type' => 'number',
-			'tab' => 'display',
+		),
+		array(
+			'key'     => 'category_id',
+			'label'   => __( 'Product Category', 'kidia-mobile-cms' ),
+			'type'    => 'entity_select',
+			'entity'  => 'term',
+			'taxonomy' => 'product_cat',
+			'tab'     => 'source',
 			'default' => 0,
-			'min' => 0,
-			'step' => 1,
+			'show_if' => array( 'source' => 'category' ),
 		),
-
 		array(
-			'key' => 'show_names',
-			'label' => __(
-				'Show Category Names',
-				'kidia-mobile-cms'
-			),
-			'type' => 'checkbox',
-			'tab' => 'display',
-			'default' => true,
+			'key'         => 'product_ids',
+			'label'       => __( 'Products', 'kidia-mobile-cms' ),
+			'type'        => 'entity_select',
+			'entity'      => 'product',
+			'multiple'    => true,
+			'tab'         => 'source',
+			'default'     => '',
+			'description' => __( 'For Manual Selection, add products one by one in the order you want.', 'kidia-mobile-cms' ),
+			'full_width'  => true,
+			'show_if'     => array( 'source' => 'manual' ),
 		),
-
 		array(
-			'key' => 'hide_empty',
-			'label' => __(
-				'Hide Empty Categories',
-				'kidia-mobile-cms'
-			),
-			'type' => 'checkbox',
-			'tab' => 'display',
-			'default' => true,
+			'key'     => 'limit',
+			'label'   => __( 'Products Limit', 'kidia-mobile-cms' ),
+			'type'    => 'number',
+			'tab'     => 'source',
+			'default' => 8,
+			'min'     => 1,
+			'max'     => 50,
+			'step'    => 1,
 		),
-
 	),
-
 );

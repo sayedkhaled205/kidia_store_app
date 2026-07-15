@@ -31,6 +31,14 @@ return array(
 
 		'background' => '',
 
+		'text_color' => '#111111',
+
+		'font_size' => 16,
+
+		'padding' => 16,
+
+		'border_radius' => 12,
+
 	),
 
 	'tabs' => array(
@@ -73,7 +81,7 @@ return array(
 				'Content',
 				'kidia-mobile-cms'
 			),
-			'type' => 'textarea',
+			'type' => 'richtext',
 			'tab' => 'general',
 			'default' => '',
 			'rows' => 8,
@@ -106,6 +114,47 @@ return array(
 			'type' => 'color',
 			'tab' => 'style',
 			'default' => '',
+		),
+
+		array(
+			'key' => 'text_color',
+			'label' => __( 'Text Color', 'kidia-mobile-cms' ),
+			'type' => 'color',
+			'tab' => 'style',
+			'default' => '#111111',
+		),
+
+		array(
+			'key' => 'font_size',
+			'label' => __( 'Font Size', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 16,
+			'min' => 10,
+			'max' => 40,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'padding',
+			'label' => __( 'Inner Spacing', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 16,
+			'min' => 0,
+			'max' => 48,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'border_radius',
+			'label' => __( 'Corner Radius', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 12,
+			'min' => 0,
+			'max' => 40,
+			'step' => 1,
 		),
 
 	),
