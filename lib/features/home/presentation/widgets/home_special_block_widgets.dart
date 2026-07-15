@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show FontFeature;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -470,8 +469,8 @@ class _VideoBannerBlockWidgetState extends State<VideoBannerBlockWidget> {
                         fit: BoxFit.cover,
                         child: SizedBox(
                           width: controller!.value.size.width,
-                          height: controller!.value.size.height,
-                          child: VideoPlayer(controller!),
+                          height: controller.value.size.height,
+                          child: VideoPlayer(controller),
                         ),
                       )
                     : block.posterUrl != null

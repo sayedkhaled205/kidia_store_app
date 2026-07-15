@@ -392,7 +392,7 @@ class CategoryGridBlockWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           scrollDirection: Axis.horizontal,
           itemCount: block.items.length,
-          separatorBuilder: (_, __) => SizedBox(width: block.gap),
+	          separatorBuilder: (_, _) => SizedBox(width: block.gap),
           itemBuilder: (BuildContext context, int index) {
             return SizedBox(
               width: imageSize + 18,
@@ -645,7 +645,7 @@ class _ProductCarouselBlockWidgetState
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       scrollDirection: Axis.horizontal,
                       itemCount: block.items.length,
-                      separatorBuilder: (_, __) => SizedBox(width: display.gap),
+	                      separatorBuilder: (_, _) => SizedBox(width: display.gap),
                       itemBuilder: (BuildContext context, int index) {
                         return SizedBox(
                           width: itemWidth,
@@ -927,7 +927,7 @@ class BrandCarouselBlockWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               scrollDirection: Axis.horizontal,
               itemCount: block.items.length,
-              separatorBuilder: (_, __) => SizedBox(width: block.gap),
+	              separatorBuilder: (_, _) => SizedBox(width: block.gap),
               itemBuilder: (_, int index) => SizedBox(
                 width: block.itemWidth,
                 child: _BrandCard(
