@@ -4,6 +4,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val storeAppName = providers.gradleProperty("APP_NAME")
+    .orElse("Woo Mobile Store")
+
 android {
     namespace = "com.example.kidia_store_app"
     compileSdk = flutter.compileSdkVersion
@@ -23,6 +26,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "app_name", storeAppName.get())
     }
 
     buildTypes {
