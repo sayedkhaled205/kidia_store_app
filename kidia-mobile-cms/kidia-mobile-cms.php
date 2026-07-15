@@ -3,7 +3,7 @@
  * Plugin Name:       Kidia Mobile CMS
  * Plugin URI:        https://kidiastore.com/
  * Description:       Native mobile application content management and REST API platform for Kidia Store.
- * Version:           1.3.0
+ * Version:           1.3.1
  * Requires at least: 6.4
  * Requires PHP:      8.0
  * Author:            Kidia Store
@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'KIDIA_MOBILE_CMS_VERSION',
-	'1.3.0'
+	'1.3.1'
 );
 
 define(
