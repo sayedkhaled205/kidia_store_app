@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+
+APP_DISPLAY_NAME = Woo Mobile Store
+APP_BUNDLE_NAME = woo_mobile_store
+
+#include? "Store.local.xcconfig"
