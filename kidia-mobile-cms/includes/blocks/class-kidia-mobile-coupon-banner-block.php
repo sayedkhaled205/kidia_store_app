@@ -56,7 +56,7 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 				$settings['coupon_code'] ?? ''
 			),
 
-			'image_url' => esc_url_raw(
+			'image_url' => $this->sanitize_http_url(
 				$settings['image_url'] ?? ''
 			),
 
@@ -138,4 +138,28 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 
     <?php
     	}
+
+	/**
+	 * Sanitizes an HTTP(S) URL for the mobile API contract.
+	 *
+	 * @param mixed $value Raw URL.
+	 *
+	 * @return string
+	 */
+	private function sanitize_http_url( $value ): string {
+		$url = esc_url_raw(
+			(string) $value,
+			array( 'http', 'https' )
+		);
+
+		$scheme = strtolower(
+			(string) wp_parse_url( $url, PHP_URL_SCHEME )
+		);
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+
+		return '' !== $host
+			&& in_array( $scheme, array( 'http', 'https' ), true )
+			? $url
+			: '';
+	}
     }
