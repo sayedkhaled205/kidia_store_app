@@ -89,6 +89,14 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				)
 			);
 			$args['orderby'] = 'include';
+
+			if ( empty( $args['include'] ) ) {
+				return array(
+					'title'      => $settings['title'],
+					'item_width' => $settings['item_width'],
+					'items'      => array(),
+				);
+			}
 		}
 
 		$terms = get_terms( $args );
