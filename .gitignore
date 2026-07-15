@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Per-store local configuration must never be committed.
+/config/store.local.json
+/ios/Flutter/Store.local.xcconfig
+
 # Symbolication related
 app.*.symbols
 
