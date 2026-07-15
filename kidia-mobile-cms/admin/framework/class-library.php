@@ -823,6 +823,34 @@ final class Kidia_Mobile_Library {
 
             			$value = $settings[ $key ] ?? '';
 
+            			if ( 'gallery' === ( $field['type'] ?? '' ) ) {
+            				$clean[ $key ] = array();
+
+            				if ( is_array( $value ) ) {
+            					foreach ( $value as $index => $gallery_item ) {
+            						$image_url = is_array( $gallery_item )
+            							? esc_url_raw( (string) ( $gallery_item['image_url'] ?? '' ) )
+            							: esc_url_raw( (string) $gallery_item );
+
+            						if ( '' === $image_url ) {
+            							continue;
+            						}
+
+            						$clean[ $key ][] = array(
+            							'id'           => 'hero_slide_' . ( absint( $index ) + 1 ),
+            							'enabled'      => true,
+            							'image_url'    => $image_url,
+            							'title'        => '',
+            							'subtitle'     => '',
+            							'action_type'  => '',
+            							'action_value' => '',
+            						);
+            					}
+            				}
+
+            				continue;
+            			}
+
             			switch ( $field['type'] ?? 'text' ) {
 
             				case 'number':
