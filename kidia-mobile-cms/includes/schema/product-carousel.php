@@ -33,6 +33,8 @@ return array(
 
 		'category_id' => 0,
 
+		'product_ids' => '',
+
 	),
 
 	'tabs' => array(
@@ -102,6 +104,12 @@ return array(
 					'kidia-mobile-cms'
 				),
 
+				'best_selling' => __( 'Best Selling', 'kidia-mobile-cms' ),
+
+				'top_rated' => __( 'Top Rated', 'kidia-mobile-cms' ),
+
+				'random' => __( 'Random', 'kidia-mobile-cms' ),
+
 				'on_sale' => __(
 					'On Sale',
 					'kidia-mobile-cms'
@@ -132,6 +140,16 @@ return array(
 			'default' => 0,
 			'min' => 0,
 			'step' => 1,
+		),
+
+		array(
+			'key' => 'product_ids',
+			'label' => __( 'Product IDs', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'source',
+			'default' => '',
+			'description' => __( 'For Manual Selection, enter IDs separated by commas.', 'kidia-mobile-cms' ),
+			'full_width' => true,
 		),
 
 		array(
