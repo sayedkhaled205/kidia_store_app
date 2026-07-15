@@ -298,3 +298,118 @@
 		justify-content: flex-end;
 	}
 }
+
+/* Compact library-style cards. */
+.kidia-builder-list {
+	gap: 16px;
+}
+
+.kidia-builder-block {
+	border: 1px solid #dcdcde;
+	border-radius: 14px;
+	background: #fff;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.kidia-builder-block:hover {
+	border-color: #2271b1;
+	box-shadow: 0 10px 28px rgba(34, 113, 177, 0.10);
+}
+
+.kidia-builder-block__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	min-height: 0;
+	padding: 18px 20px;
+	background: #fff;
+}
+
+.kidia-builder-block__left {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-width: 0;
+	flex: 1;
+}
+
+.kidia-builder-drag {
+	width: 46px;
+	height: 46px;
+	flex: 0 0 46px;
+	border-radius: 11px;
+	background: #f0f6fc;
+	color: #2271b1;
+}
+
+.kidia-builder-block__title {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.kidia-builder-block__title strong {
+	max-width: 100%;
+	overflow: hidden;
+	font-size: 17px;
+	line-height: 1.35;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kidia-builder-block__type {
+	padding: 4px 9px;
+	border-radius: 999px;
+	background: #f6f7f7;
+	color: #646970;
+	font-size: 11px;
+	line-height: 1.5;
+}
+
+.kidia-builder-block__actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.kidia-builder-block__actions .button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 36px;
+	margin: 0;
+}
+
+.kidia-builder-block__actions .kidia-toggle-block-settings {
+	width: 40px;
+	padding: 0;
+}
+
+.kidia-builder-block__body {
+	padding: 20px;
+	border-top: 1px solid #e2e4e7;
+	background: #fbfcfd;
+}
+
+.kidia-builder-block.is-collapsed .kidia-builder-block__body {
+	display: none;
+}
+
+@media (max-width: 782px) {
+	.kidia-builder-block__header {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.kidia-builder-block__actions {
+		width: 100%;
+		justify-content: flex-start;
+	}
+}
