@@ -444,3 +444,40 @@
 	justify-content: space-between;
 	grid-column: 1 / -1;
 }
+
+
+.kidia-hero-gallery {
+	margin-top: 18px;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #f6f7f7;
+}
+
+.kidia-hero-gallery__items {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.kidia-hero-gallery__item {
+	overflow: hidden;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.kidia-hero-gallery__item img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.kidia-hero-gallery__remove {
+	display: block;
+	width: 100%;
+	padding: 8px;
+	text-align: center;
+}
