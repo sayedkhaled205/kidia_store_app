@@ -413,3 +413,34 @@
 		justify-content: flex-start;
 	}
 }
+
+
+/* Final builder sizing and footer flow. */
+.kidia-builder-wrap {
+	max-width: 1320px;
+	margin-inline: auto;
+}
+
+#wpfooter {
+	position: static;
+	margin-top: 40px;
+}
+
+.kidia-hero-block-item,
+.kidia-builder-repeater-item {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+	padding: 18px;
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.kidia-hero-block-item__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	grid-column: 1 / -1;
+}
