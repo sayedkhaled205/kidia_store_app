@@ -100,9 +100,21 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				break;
 
 			case 'on_sale':
-				$args['include'] = function_exists( 'wc_get_product_ids_on_sale' )
-					? wc_get_product_ids_on_sale()
+				$product_ids = function_exists( 'wc_get_product_ids_on_sale' )
+					? array_values(
+						array_unique(
+							array_filter(
+								array_map( 'absint', wc_get_product_ids_on_sale() )
+							)
+						)
+					)
 					: array();
+
+				if ( empty( $product_ids ) ) {
+					return $this->build_empty_data( $settings );
+				}
+
+				$args['include'] = $product_ids;
 				break;
 
 			case 'best_selling':
@@ -118,13 +130,16 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 			case 'category':
 				$term = get_term( $settings['category_id'], 'product_cat' );
-				if ( $term instanceof WP_Term ) {
-					$args['category'] = array( $term->slug );
+
+				if ( is_wp_error( $term ) || ! $term instanceof WP_Term ) {
+					return $this->build_empty_data( $settings );
 				}
+
+				$args['category'] = array( $term->slug );
 				break;
 
 			case 'manual':
-				$args['include'] = array_values(
+				$product_ids = array_values(
 					array_filter(
 						array_map(
 							'absint',
@@ -132,6 +147,12 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 						)
 					)
 				);
+
+				if ( empty( $product_ids ) ) {
+					return $this->build_empty_data( $settings );
+				}
+
+				$args['include'] = $product_ids;
 				$args['orderby'] = 'include';
 				break;
 
@@ -143,6 +164,10 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		}
 
 		$products = wc_get_products( $args );
+
+		if ( ! is_array( $products ) ) {
+			return $this->build_empty_data( $settings );
+		}
 
 		if ( 'best_selling' === $settings['source'] ) {
 			usort(
@@ -162,6 +187,12 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 		$products = array_slice( $products, 0, $settings['limit'] );
 		$items    = array();
+		$currency_code = function_exists( 'get_woocommerce_currency' )
+			? get_woocommerce_currency()
+			: '';
+		$currency_symbol = function_exists( 'get_woocommerce_currency_symbol' )
+			? get_woocommerce_currency_symbol( $currency_code )
+			: '';
 
 		foreach ( $products as $product ) {
 			if ( ! $product instanceof WC_Product ) {
@@ -172,17 +203,43 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			$image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '';
 
 			if ( ! $image_url && function_exists( 'wc_placeholder_img_src' ) ) {
-				$image_url = wc_placeholder_img_src();
+				$image_url = wc_placeholder_img_src( 'woocommerce_thumbnail' );
 			}
 
+			$image_url = esc_url_raw(
+				(string) $image_url,
+				array( 'http', 'https' )
+			);
+			$image_host = (string) wp_parse_url( $image_url, PHP_URL_HOST );
+
+			$name = sanitize_text_field(
+				wp_specialchars_decode( (string) $product->get_name(), ENT_QUOTES )
+			);
+			$price = trim( (string) $product->get_price() );
+
+			if (
+				0 >= (int) $product->get_id()
+				|| '' === $name
+				|| '' === $price
+				|| ! is_numeric( $price )
+				|| ! $image_url
+				|| '' === $image_host
+				|| '' === $currency_code
+				|| '' === $currency_symbol
+			) {
+				continue;
+			}
+
+			$regular_price = trim( (string) $product->get_regular_price() );
+
 			$items[] = array(
-				'id'              => $product->get_id(),
-				'name'            => $product->get_name(),
-				'image_url'       => esc_url_raw( (string) $image_url ),
-				'price'           => (string) $product->get_price(),
-				'regular_price'   => (string) $product->get_regular_price(),
-				'currency_code'   => get_woocommerce_currency(),
-				'currency_symbol' => get_woocommerce_currency_symbol(),
+				'id'              => (int) $product->get_id(),
+				'name'            => $name,
+				'image_url'       => $image_url,
+				'price'           => $price,
+				'regular_price'   => '' === $regular_price ? null : $regular_price,
+				'currency_code'   => sanitize_text_field( (string) $currency_code ),
+				'currency_symbol' => sanitize_text_field( (string) $currency_symbol ),
 				'in_stock'        => $product->is_in_stock(),
 				'badge'           => $product->is_on_sale() ? __( 'Sale', 'kidia-mobile-cms' ) : null,
 				'action'          => $this->build_action( 'product', (string) $product->get_id() ),
@@ -192,6 +249,22 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		return array(
 			'title'           => $settings['title'],
 			'items'           => $items,
+			'show_view_all'   => $settings['show_view_all'],
+			'view_all_action' => $this->build_action( 'collection', $settings['source'] ),
+		);
+	}
+
+	/**
+	 * Returns a contract-safe empty result for a source with no matches.
+	 *
+	 * @param array<string, mixed> $settings Sanitized settings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function build_empty_data( array $settings ): array {
+		return array(
+			'title'           => $settings['title'],
+			'items'           => array(),
 			'show_view_all'   => $settings['show_view_all'],
 			'view_all_action' => $this->build_action( 'collection', $settings['source'] ),
 		);
