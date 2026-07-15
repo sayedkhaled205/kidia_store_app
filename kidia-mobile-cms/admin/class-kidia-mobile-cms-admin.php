@@ -19,6 +19,50 @@ final class Kidia_Mobile_CMS_Admin {
 	private const CAPABILITY = 'manage_options';
 
 	/**
+	 * Library editor page slugs keyed by element type.
+	 *
+	 * @var array<string,string>
+	 */
+	private const EDITOR_PAGES = array(
+		'hero_slider'     => 'kidia-mobile-hero-sliders',
+		'image_banner'    => 'kidia-mobile-image-banners',
+		'product_carousel' => 'kidia-mobile-product-carousels',
+		'brand_carousel'  => 'kidia-mobile-brand-carousels',
+		'category_grid'   => 'kidia-mobile-category-grids',
+		'product_grid'    => 'kidia-mobile-product-grids',
+		'section_header'  => 'kidia-mobile-section-headers',
+		'promo_strip'     => 'kidia-mobile-promo-strips',
+		'coupon_banner'   => 'kidia-mobile-coupon-banners',
+		'countdown'       => 'kidia-mobile-countdowns',
+		'video_banner'    => 'kidia-mobile-video-banners',
+		'text_block'      => 'kidia-mobile-text-blocks',
+		'divider'         => 'kidia-mobile-dividers',
+		'spacer'          => 'kidia-mobile-spacers',
+	);
+
+	/**
+	 * Library storage options keyed by element type.
+	 *
+	 * @var array<string,string>
+	 */
+	private const LIBRARY_OPTIONS = array(
+		'hero_slider'      => 'kidia_mobile_hero_sliders',
+		'image_banner'     => 'kidia_mobile_image_banners',
+		'product_carousel' => 'kidia_mobile_product_carousels',
+		'brand_carousel'   => 'kidia_mobile_brand_carousels',
+		'category_grid'    => 'kidia_mobile_category_grids',
+		'product_grid'     => 'kidia_mobile_product_grids',
+		'section_header'   => 'kidia_mobile_section_headers',
+		'promo_strip'      => 'kidia_mobile_promo_strips',
+		'coupon_banner'    => 'kidia_mobile_coupon_banners',
+		'countdown'        => 'kidia_mobile_countdowns',
+		'video_banner'     => 'kidia_mobile_video_banners',
+		'text_block'       => 'kidia_mobile_text_blocks',
+		'divider'          => 'kidia_mobile_dividers',
+		'spacer'           => 'kidia_mobile_spacers',
+	);
+
+	/**
 	 * Registers hooks.
 	 *
 	 * @return void
@@ -198,9 +242,36 @@ final class Kidia_Mobile_CMS_Admin {
 
         		$store = new Kidia_Mobile_Layout_Store();
 
-        		$store->save_layout(
-        			$submitted_blocks
-        		);
+			$store->save_layout(
+				$submitted_blocks
+			);
+
+			$edit_type = isset( $_POST['edit_after_save_type'] )
+				? sanitize_key( wp_unslash( $_POST['edit_after_save_type'] ) )
+				: '';
+
+			$edit_id = isset( $_POST['edit_after_save_id'] )
+				? sanitize_key( wp_unslash( $_POST['edit_after_save_id'] ) )
+				: '';
+
+			if (
+				'' !== $edit_id
+				&& isset( self::EDITOR_PAGES[ $edit_type ] )
+				&& $this->library_item_exists( $edit_type, $edit_id )
+			) {
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'page'    => self::EDITOR_PAGES[ $edit_type ],
+							'id'      => $edit_id,
+							'created' => '1',
+						),
+						admin_url( 'admin.php' )
+					)
+				);
+
+				exit;
+			}
 
         		wp_safe_redirect(
         			add_query_arg(
@@ -215,9 +286,40 @@ final class Kidia_Mobile_CMS_Admin {
         			)
         		);
 
-        		exit;
-        	}
-        		/**
+				exit;
+			}
+
+			/**
+			 * Checks that a Library item exists before an editor redirect.
+			 *
+			 * @param string $type Element type.
+			 * @param string $id   Library item ID.
+			 *
+			 * @return bool
+			 */
+			private function library_item_exists( string $type, string $id ): bool {
+				if ( ! isset( self::LIBRARY_OPTIONS[ $type ] ) ) {
+					return false;
+				}
+
+				$items = get_option( self::LIBRARY_OPTIONS[ $type ], array() );
+
+				if ( ! is_array( $items ) ) {
+					return false;
+				}
+
+				foreach ( $items as $item ) {
+					if (
+						is_array( $item )
+						&& sanitize_key( (string) ( $item['id'] ?? '' ) ) === $id
+					) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+				/**
             	 * Loads Home Builder assets.
             	 *
             	 * @param string $hook_suffix Current admin page hook.
@@ -258,17 +360,27 @@ final class Kidia_Mobile_CMS_Admin {
             			'kidia-mobile-home-builder',
             			'kidiaHomeBuilder',
             			array(
-            				'labels' => array(
+						'labels' => array(
             					'deleteConfirm' => __(
             						'Delete this element?',
             						'kidia-mobile-cms'
             					),
-            					'untitled'      => __(
-            						'Untitled Element',
-            						'kidia-mobile-cms'
-            					),
-            				),
-            			)
+							'untitled'      => __(
+								'Untitled Element',
+								'kidia-mobile-cms'
+							),
+							'createPrefix'   => __( 'Create', 'kidia-mobile-cms' ),
+							'draft'          => __( 'Draft', 'kidia-mobile-cms' ),
+							'copySuffix'     => __( ' Copy', 'kidia-mobile-cms' ),
+							'noElements'     => __( 'No elements on the Home Page', 'kidia-mobile-cms' ),
+							'noElementsDescription' => __(
+								'Add an element to start building the application Home Page.',
+								'kidia-mobile-cms'
+							),
+							'addFirst'       => __( 'Add First Element', 'kidia-mobile-cms' ),
+						),
+						'editorPages' => self::EDITOR_PAGES,
+					)
             		);
             	}
             }
