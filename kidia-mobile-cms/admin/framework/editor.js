@@ -177,4 +177,103 @@
 
                 	});
 
+
+
+                function reindexGallery(gallery) {
+                	const key = gallery.dataset.fieldKey || 'items';
+                	gallery.querySelectorAll(
+                		'.kidia-editor-gallery__item'
+                	).forEach(function (item, index) {
+                		const input = item.querySelector('input[type="hidden"]');
+                		if (input) {
+                			input.name =
+                				'settings[' + key + '][' + index + '][image_url]';
+                		}
+                	});
+                }
+
+                document.addEventListener('click', function (event) {
+                	const target = event.target;
+
+                	if (!(target instanceof HTMLElement)) {
+                		return;
+                	}
+
+                	const removeButton = target.closest(
+                		'.kidia-editor-gallery__remove'
+                	);
+
+                	if (removeButton) {
+                		const gallery = removeButton.closest(
+                			'.kidia-editor-gallery'
+                		);
+                		removeButton.closest(
+                			'.kidia-editor-gallery__item'
+                		)?.remove();
+                		if (gallery) {
+                			reindexGallery(gallery);
+                		}
+                		return;
+                	}
+
+                	const selectButton = target.closest(
+                		'.kidia-editor-gallery__select'
+                	);
+
+                	if (!selectButton || typeof wp === 'undefined' || !wp.media) {
+                		return;
+                	}
+
+                	const gallery = selectButton.closest(
+                		'.kidia-editor-gallery'
+                	);
+
+                	if (!gallery) {
+                		return;
+                	}
+
+                	const items = gallery.querySelector(
+                		'.kidia-editor-gallery__items'
+                	);
+
+                	const frame = wp.media({
+                		title: 'Select Images',
+                		button: { text: 'Add Images' },
+                		library: { type: 'image' },
+                		multiple: true
+                	});
+
+                	frame.on('select', function () {
+                		frame.state().get('selection').each(function (model) {
+                			const attachment = model.toJSON();
+                			if (!attachment.url || !items) {
+                				return;
+                			}
+
+                			const item = document.createElement('div');
+                			item.className = 'kidia-editor-gallery__item';
+
+                			const image = document.createElement('img');
+                			image.src = attachment.url;
+                			image.alt = '';
+
+                			const input = document.createElement('input');
+                			input.type = 'hidden';
+                			input.value = attachment.url;
+
+                			const remove = document.createElement('button');
+                			remove.type = 'button';
+                			remove.className =
+                				'button-link-delete kidia-editor-gallery__remove';
+                			remove.textContent = 'Remove';
+
+                			item.append(image, input, remove);
+                			items.appendChild(item);
+                		});
+
+                		reindexGallery(gallery);
+                	});
+
+                	frame.open();
+                });
                 })();
