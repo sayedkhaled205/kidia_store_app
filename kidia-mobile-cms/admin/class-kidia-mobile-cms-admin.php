@@ -58,8 +58,8 @@ final class Kidia_Mobile_CMS_Admin {
     	public function register_menu(): void {
 
     		add_menu_page(
-    			__( 'Kidia Mobile CMS', 'kidia-mobile-cms' ),
-    			__( 'Kidia Mobile CMS', 'kidia-mobile-cms' ),
+    			__( 'Woo Mobile CMS', 'kidia-mobile-cms' ),
+    			__( 'Woo Mobile CMS', 'kidia-mobile-cms' ),
     			self::CAPABILITY,
     			'kidia-mobile-cms',
     			array(
