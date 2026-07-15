@@ -11,32 +11,49 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$type = (string) $block_data['type'];
+$type = isset( $block_data['type'] )
+	? (string) $block_data['type']
+	: '';
 
-$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] )
-	? $block_data['settings']
-	: array();
+$name = isset( $block_data['name'] )
+	? (string) $block_data['name']
+	: $block->get_label();
+
+$settings = isset( $block_data['settings'] )
+	&& is_array( $block_data['settings'] )
+		? $block_data['settings']
+		: array();
+
+$library_id = isset( $block_data['library_id'] )
+	? (string) $block_data['library_id']
+	: (string) $block_data['id'];
 ?>
 
 <div
-	class="kidia-builder-block"
+	class="kidia-builder-block is-collapsed"
 	draggable="true"
+	data-type="<?php echo esc_attr( $type ); ?>"
+	data-library-id="<?php echo esc_attr( $library_id ); ?>"
 	data-label="<?php echo esc_attr( $block->get_label() ); ?>"
 >
 
 	<div class="kidia-builder-block__header">
 
-		<span class="dashicons dashicons-move kidia-builder-drag"></span>
+		<div class="kidia-builder-block__left">
 
-		<div class="kidia-builder-block__title">
+			<span class="dashicons dashicons-move kidia-builder-drag"></span>
 
-			<strong>
-				<?php echo esc_html( $block->get_label() ); ?>
-			</strong>
+			<div class="kidia-builder-block__title">
 
-			<span class="kidia-builder-block__type">
-				<?php echo esc_html( $type ); ?>
-			</span>
+				<strong class="kidia-block-name">
+					<?php echo esc_html( $name ); ?>
+				</strong>
+
+				<span class="kidia-builder-block__type">
+					<?php echo esc_html( $block->get_label() ); ?>
+				</span>
+
+			</div>
 
 		</div>
 
@@ -46,21 +63,39 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 				type="button"
 				class="button kidia-toggle-block-settings"
 			>
-				⚙
+				<span class="dashicons dashicons-arrow-down-alt2"></span>
+			</button>
+
+			<button
+				type="button"
+				class="button kidia-edit-library-item"
+				data-library-id="<?php echo esc_attr( $library_id ); ?>"
+				data-type="<?php echo esc_attr( $type ); ?>"
+			>
+				<?php esc_html_e(
+					'Edit',
+					'kidia-mobile-cms'
+				); ?>
 			</button>
 
 			<button
 				type="button"
 				class="button kidia-duplicate-block"
 			>
-				Duplicate
+				<?php esc_html_e(
+					'Duplicate',
+					'kidia-mobile-cms'
+				); ?>
 			</button>
 
 			<button
 				type="button"
 				class="button button-link-delete kidia-delete-block"
 			>
-				Delete
+				<?php esc_html_e(
+					'Delete',
+					'kidia-mobile-cms'
+				); ?>
 			</button>
 
 		</div>
@@ -78,6 +113,13 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 		<input
 			type="hidden"
+			class="kidia-block-library-id"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][library_id]"
+			value="<?php echo esc_attr( $library_id ); ?>"
+		>
+
+		<input
+			type="hidden"
 			class="kidia-block-type"
 			name="blocks[<?php echo esc_attr( (string) $index ); ?>][type]"
 			value="<?php echo esc_attr( $type ); ?>"
@@ -90,7 +132,29 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 			value="<?php echo esc_attr( (string) $block_data['order'] ); ?>"
 		>
 
-		<p>
+		<div class="kidia-builder-field">
+
+			<label>
+
+				<?php
+				esc_html_e(
+					'Element Name',
+					'kidia-mobile-cms'
+				);
+				?>
+
+			</label>
+
+			<input
+				type="text"
+				class="kidia-block-name-input"
+				name="blocks[<?php echo esc_attr( (string) $index ); ?>][name]"
+				value="<?php echo esc_attr( $name ); ?>"
+			>
+
+		</div>
+
+		<div class="kidia-builder-field">
 
 			<label class="kidia-builder-switch">
 
@@ -100,7 +164,7 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 					value="1"
 					<?php checked(
 						true,
-						(bool) $block_data['enabled']
+						! empty( $block_data['enabled'] )
 					); ?>
 				>
 
@@ -108,11 +172,24 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 			</label>
 
-		</p>
+			<span>
+
+				<?php
+				esc_html_e(
+					'Enabled',
+					'kidia-mobile-cms'
+				);
+				?>
+
+			</span>
+
+		</div>
 
 		<?php
 		$block->render_settings(
-			is_numeric( $index ) ? (int) $index : 0,
+			is_numeric( $index )
+				? (int) $index
+				: 0,
 			$settings
 		);
 		?>
