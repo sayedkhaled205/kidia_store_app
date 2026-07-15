@@ -29,6 +29,12 @@ return array(
 
 		'margin' => 16,
 
+		'style' => 'solid',
+
+		'width_percent' => 100,
+
+		'alignment' => 'center',
+
 	),
 
 	'tabs' => array(
@@ -82,6 +88,43 @@ return array(
 			'min' => 0,
 			'max' => 100,
 			'step' => 1,
+		),
+
+		array(
+			'key' => 'style',
+			'label' => __( 'Line Style', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'style',
+			'default' => 'solid',
+			'options' => array(
+				'solid' => __( 'Solid', 'kidia-mobile-cms' ),
+				'dashed' => __( 'Dashed', 'kidia-mobile-cms' ),
+				'dotted' => __( 'Dotted', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'width_percent',
+			'label' => __( 'Width (%)', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 100,
+			'min' => 10,
+			'max' => 100,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'alignment',
+			'label' => __( 'Alignment', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'style',
+			'default' => 'center',
+			'options' => array(
+				'left' => __( 'Left', 'kidia-mobile-cms' ),
+				'center' => __( 'Center', 'kidia-mobile-cms' ),
+				'right' => __( 'Right', 'kidia-mobile-cms' ),
+			),
 		),
 
 	),

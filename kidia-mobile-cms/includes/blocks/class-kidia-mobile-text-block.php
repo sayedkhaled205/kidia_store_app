@@ -67,6 +67,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'alignment'  => 'right',
 			'background' => '',
 			'text_color' => '#111111',
+			'font_size' => 16,
+			'padding' => 16,
+			'border_radius' => 12,
 		);
 	}
 
@@ -118,7 +121,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 				$settings['title'] ?? ''
 			),
 
-			'content' => sanitize_textarea_field(
+			'content' => wp_kses_post(
 				$settings['content'] ?? ''
 			),
 
@@ -127,6 +130,12 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'background' => $background ?: '',
 
 			'text_color' => $text_color ?: '#111111',
+
+			'font_size' => max( 10, min( 40, absint( $settings['font_size'] ?? 16 ) ) ),
+
+			'padding' => max( 0, min( 48, absint( $settings['padding'] ?? 16 ) ) ),
+
+			'border_radius' => max( 0, min( 40, absint( $settings['border_radius'] ?? 12 ) ) ),
 		);
 	}
 
@@ -161,6 +170,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'alignment'  => $settings['alignment'],
 			'background' => $settings['background'],
 			'text_color' => $settings['text_color'],
+			'font_size' => $settings['font_size'],
+			'padding' => $settings['padding'],
+			'border_radius' => $settings['border_radius'],
 		);
 	}
 

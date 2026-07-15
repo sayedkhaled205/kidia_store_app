@@ -61,6 +61,127 @@ $page_slug = isset( $_GET['page'] )
 		wp_unslash( $_GET['page'] )
 	)
 	: '';
+
+/**
+ * Resolves selectable WooCommerce entities for schema entity fields.
+ *
+ * The editor deliberately uses a one-at-a-time picker. It is easier to use
+ * than comma-separated IDs while keeping the saved value backward compatible.
+ *
+ * @param array<string,mixed> $field       Field definition.
+ * @param mixed               $field_value Saved field value.
+ *
+ * @return array<int,string>
+ */
+$resolve_entity_options = static function ( array $field, $field_value ): array {
+	$options = array();
+	$entity  = sanitize_key( (string) ( $field['entity'] ?? '' ) );
+
+	if ( 'product' === $entity && post_type_exists( 'product' ) ) {
+		$product_ids = get_posts(
+			array(
+				'post_type'              => 'product',
+				'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+				'fields'                 => 'ids',
+				'posts_per_page'         => 250,
+				'orderby'                => 'title',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		foreach ( (array) $product_ids as $product_id ) {
+			$product_id = absint( $product_id );
+
+			if ( 0 === $product_id ) {
+				continue;
+			}
+
+			$options[ $product_id ] = sprintf(
+				'#%1$d — %2$s',
+				$product_id,
+				get_the_title( $product_id ) ?: __( 'Untitled Product', 'kidia-mobile-cms' )
+			);
+		}
+	}
+
+	if ( in_array( $entity, array( 'term', 'brand' ), true ) ) {
+		$taxonomy = sanitize_key( (string) ( $field['taxonomy'] ?? '' ) );
+
+		if ( 'brand' === $entity ) {
+			$brand_candidates = array(
+				'product_brand',
+				'pwb-brand',
+				'yith_product_brand',
+				'pa_brand',
+			);
+			$fallback_taxonomy = '';
+
+			foreach ( $brand_candidates as $candidate ) {
+				if ( ! taxonomy_exists( $candidate ) ) {
+					continue;
+				}
+
+				if ( '' === $fallback_taxonomy ) {
+					$fallback_taxonomy = $candidate;
+				}
+
+				$count = wp_count_terms( array( 'taxonomy' => $candidate, 'hide_empty' => false ) );
+				if ( ! is_wp_error( $count ) && 0 < (int) $count ) {
+					$taxonomy = $candidate;
+					break;
+				}
+			}
+
+			if ( '' === $taxonomy ) {
+				$taxonomy = $fallback_taxonomy;
+			}
+		}
+
+		if ( '' !== $taxonomy && taxonomy_exists( $taxonomy ) ) {
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+					'number'     => 250,
+					'orderby'    => 'name',
+					'order'      => 'ASC',
+				)
+			);
+
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$options[ (int) $term->term_id ] = sprintf(
+						'#%1$d — %2$s',
+						(int) $term->term_id,
+						(string) $term->name
+					);
+				}
+			}
+		}
+	}
+
+	$saved_ids = is_array( $field_value )
+		? $field_value
+		: preg_split( '/[\s,]+/', (string) $field_value );
+
+	foreach ( array_filter( array_map( 'absint', (array) $saved_ids ) ) as $saved_id ) {
+		if ( isset( $options[ $saved_id ] ) ) {
+			continue;
+		}
+
+		$label = get_the_title( $saved_id );
+		$options[ $saved_id ] = sprintf(
+			'#%1$d — %2$s',
+			$saved_id,
+			$label ?: __( 'Saved item', 'kidia-mobile-cms' )
+		);
+	}
+
+	return $options;
+};
 ?>
 
 <div class="wrap kidia-editor">
@@ -299,12 +420,22 @@ $page_slug = isset( $_GET['page'] )
 
                     													$field_class = 'kidia-editor-field kidia-editor-field--' . $field_type;
 
-                    													if ( ! empty( $field['full_width'] ) ) {
-                    														$field_class .= ' kidia-editor-field--full';
-                    													}
-                    													?>
+															if ( ! empty( $field['full_width'] ) ) {
+																$field_class .= ' kidia-editor-field--full';
+															}
 
-                    													<div class="<?php echo esc_attr( $field_class ); ?>">
+															$show_if_key = '';
+															$show_if_value = '';
+															if ( ! empty( $field['show_if'] ) && is_array( $field['show_if'] ) ) {
+																$show_if_key = sanitize_key( (string) array_key_first( $field['show_if'] ) );
+																$show_if_value = (string) reset( $field['show_if'] );
+															}
+															?>
+
+															<div
+																class="<?php echo esc_attr( $field_class ); ?>"
+																<?php echo '' !== $show_if_key ? 'data-show-if-key="' . esc_attr( $show_if_key ) . '" data-show-if-value="' . esc_attr( $show_if_value ) . '"' : ''; ?>
+															>
 
                     														<label for="<?php echo esc_attr( $field_id ); ?>">
 
@@ -316,7 +447,54 @@ $page_slug = isset( $_GET['page'] )
 
                     														</label>
 
-                    														<?php if ( 'gallery' === $field_type ) : ?>
+														<?php if ( 'entity_select' === $field_type ) : ?>
+
+															<?php
+															$entity_options = $resolve_entity_options( $field, $field_value );
+															$is_multiple    = ! empty( $field['multiple'] );
+															$selected_ids   = is_array( $field_value )
+																? $field_value
+																: preg_split( '/[\s,]+/', (string) $field_value );
+															$selected_ids   = array_values(
+																array_unique(
+																	array_filter( array_map( 'absint', (array) $selected_ids ) )
+																)
+															);
+															if ( ! $is_multiple && ! empty( $selected_ids ) ) {
+																$selected_ids = array( reset( $selected_ids ) );
+															}
+															?>
+
+															<div class="kidia-entity-picker" data-multiple="<?php echo $is_multiple ? '1' : '0'; ?>">
+																<input
+																	type="hidden"
+																	id="<?php echo esc_attr( $field_id ); ?>"
+																	class="kidia-entity-picker__value"
+																	name="settings[<?php echo esc_attr( $field_key ); ?>]"
+																	value="<?php echo esc_attr( implode( ',', $selected_ids ) ); ?>"
+																>
+
+																<div class="kidia-entity-picker__controls">
+																	<select class="kidia-entity-picker__select" aria-label="<?php echo esc_attr( $field_label ); ?>">
+																		<option value=""><?php esc_html_e( 'Choose an item…', 'kidia-mobile-cms' ); ?></option>
+																		<?php foreach ( $entity_options as $entity_id => $entity_label ) : ?>
+																			<option value="<?php echo esc_attr( (string) $entity_id ); ?>"><?php echo esc_html( $entity_label ); ?></option>
+																		<?php endforeach; ?>
+																	</select>
+																	<button type="button" class="button kidia-entity-picker__add"><?php esc_html_e( 'Add', 'kidia-mobile-cms' ); ?></button>
+																</div>
+
+																<ul class="kidia-entity-picker__selected">
+																	<?php foreach ( $selected_ids as $selected_id ) : ?>
+																		<li data-id="<?php echo esc_attr( (string) $selected_id ); ?>">
+																			<span><?php echo esc_html( $entity_options[ $selected_id ] ?? ( '#' . $selected_id ) ); ?></span>
+																			<button type="button" class="button-link-delete kidia-entity-picker__remove" aria-label="<?php esc_attr_e( 'Remove', 'kidia-mobile-cms' ); ?>">×</button>
+																		</li>
+																	<?php endforeach; ?>
+																</ul>
+															</div>
+
+														<?php elseif ( 'gallery' === $field_type ) : ?>
 
                     															<?php
                     															$gallery_items = is_array( $field_value )
@@ -338,7 +516,8 @@ $page_slug = isset( $_GET['page'] )
                     																			continue;
                     																		}
                     																		?>
-                    																		<div class="kidia-editor-gallery__item">
+																						<div class="kidia-editor-gallery__item" draggable="true">
+																							<span class="dashicons dashicons-move kidia-editor-gallery__drag" aria-hidden="true"></span>
                     																			<img src="<?php echo esc_url( $image_url ); ?>" alt="">
                     																			<input type="hidden" name="settings[<?php echo esc_attr( $field_key ); ?>][<?php echo esc_attr( (string) $gallery_index ); ?>][image_url]" value="<?php echo esc_attr( $image_url ); ?>">
                     																			<button type="button" class="button-link-delete kidia-editor-gallery__remove"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
@@ -348,7 +527,22 @@ $page_slug = isset( $_GET['page'] )
                     																<button type="button" class="button button-primary kidia-editor-gallery__select"><?php esc_html_e( 'Select Images', 'kidia-mobile-cms' ); ?></button>
                     															</div>
 
-                    														<?php elseif ( 'textarea' === $field_type ) : ?>
+														<?php elseif ( 'richtext' === $field_type ) : ?>
+
+															<?php
+															wp_editor(
+																(string) $field_value,
+																$field_id,
+																array(
+																	'textarea_name' => 'settings[' . $field_key . ']',
+																	'textarea_rows' => absint( $field['rows'] ?? 10 ),
+																	'media_buttons' => false,
+																	'quicktags'     => true,
+																)
+															);
+															?>
+
+														<?php elseif ( 'textarea' === $field_type ) : ?>
 
                     															<textarea
                     																id="<?php echo esc_attr( $field_id ); ?>"
@@ -357,7 +551,17 @@ $page_slug = isset( $_GET['page'] )
                     																<?php echo ! empty( $field['required'] ) ? 'required' : ''; ?>
                     															><?php echo esc_textarea( (string) $field_value ); ?></textarea>
 
-                    														<?php elseif ( 'number' === $field_type ) : ?>
+														<?php elseif ( 'datetime' === $field_type ) : ?>
+
+															<input
+																type="datetime-local"
+																id="<?php echo esc_attr( $field_id ); ?>"
+																name="settings[<?php echo esc_attr( $field_key ); ?>]"
+																value="<?php echo esc_attr( (string) $field_value ); ?>"
+																<?php echo ! empty( $field['required'] ) ? 'required' : ''; ?>
+															>
+
+														<?php elseif ( 'number' === $field_type ) : ?>
 
                     															<input
                     																type="number"
@@ -417,10 +621,11 @@ $page_slug = isset( $_GET['page'] )
 
                     															</select>
 
-                    														<?php elseif (
-                    															'image' === $field_type
-                    															|| 'media' === $field_type
-                    														) : ?>
+														<?php elseif (
+															'image' === $field_type
+															|| 'media' === $field_type
+															|| 'video' === $field_type
+														) : ?>
 
                     															<div class="kidia-editor-media">
 
@@ -436,8 +641,9 @@ $page_slug = isset( $_GET['page'] )
 
                     																	<button
                     																		type="button"
-                    																		class="button kidia-editor-select-media"
-                    																		data-target="<?php echo esc_attr( $field_id ); ?>"
+																				class="button kidia-editor-select-media"
+																				data-target="<?php echo esc_attr( $field_id ); ?>"
+																				data-media-type="<?php echo esc_attr( 'video' === $field_type ? 'video' : ( 'image' === $field_type ? 'image' : '' ) ); ?>"
                     																	>
                     																		<?php esc_html_e(
                     																			'Select Media',
@@ -458,13 +664,15 @@ $page_slug = isset( $_GET['page'] )
 
                     																</div>
 
-                    																<img
-                    																	class="kidia-editor-media__preview"
+																<?php if ( 'video' !== $field_type ) : ?>
+																<img
+																	class="kidia-editor-media__preview"
                     																	data-preview-for="<?php echo esc_attr( $field_id ); ?>"
                     																	src="<?php echo esc_url( (string) $field_value ); ?>"
                     																	alt=""
-                    																	<?php echo empty( $field_value ) ? 'hidden' : ''; ?>
-                    																>
+																	<?php echo empty( $field_value ) ? 'hidden' : ''; ?>
+																>
+																<?php endif; ?>
 
                     															</div>
 

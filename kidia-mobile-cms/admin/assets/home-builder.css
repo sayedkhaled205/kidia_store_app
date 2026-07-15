@@ -417,8 +417,15 @@
 
 /* Final builder sizing and footer flow. */
 .kidia-builder-wrap {
-	max-width: 1320px;
+	max-width: 1200px;
 	margin-inline: auto;
+}
+
+.kidia-builder-block__editor-note {
+	margin: 4px 0 0;
+	padding: 12px 14px;
+	border-left: 3px solid #2271b1;
+	background: #f0f6fc;
 }
 
 #wpfooter {

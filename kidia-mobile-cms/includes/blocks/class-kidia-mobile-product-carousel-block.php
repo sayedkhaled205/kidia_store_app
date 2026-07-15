@@ -37,6 +37,16 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'category_id'    => 0,
 			'product_ids'    => '',
 			'show_view_all'  => true,
+			'cards_visible'  => 2.2,
+			'gap'            => 12,
+			'card_style'     => 'default',
+			'image_ratio'    => 1,
+			'show_rating'    => true,
+			'show_category'  => false,
+			'show_badge'     => true,
+			'show_stock'     => true,
+			'show_arrows'    => false,
+			'show_dots'      => false,
 		);
 	}
 
@@ -58,6 +68,12 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			$source = 'latest';
 		}
 
+		$card_style = sanitize_key( (string) ( $settings['card_style'] ?? 'default' ) );
+
+		if ( ! in_array( $card_style, array( 'default', 'compact', 'minimal' ), true ) ) {
+			$card_style = 'default';
+		}
+
 		return array(
 			'title'         => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
 			'source'        => $source,
@@ -76,6 +92,16 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				)
 			),
 			'show_view_all' => ! empty( $settings['show_view_all'] ),
+			'cards_visible' => max( 1, min( 6, (float) ( $settings['cards_visible'] ?? 2.2 ) ) ),
+			'gap'           => max( 0, min( 48, absint( $settings['gap'] ?? 12 ) ) ),
+			'card_style'    => $card_style,
+			'image_ratio'   => max( 0.5, min( 2, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
+			'show_rating'   => ! empty( $settings['show_rating'] ),
+			'show_category' => ! empty( $settings['show_category'] ),
+			'show_badge'    => ! empty( $settings['show_badge'] ),
+			'show_stock'    => ! empty( $settings['show_stock'] ),
+			'show_arrows'   => ! empty( $settings['show_arrows'] ),
+			'show_dots'     => ! empty( $settings['show_dots'] ),
 		);
 	}
 
@@ -84,116 +110,35 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			wp_parse_args( $settings, $this->get_default_settings() )
 		);
 
-		if ( ! function_exists( 'wc_get_products' ) ) {
+		$products = $this->query_products( $settings );
+
+		if ( null === $products ) {
 			return null;
 		}
 
-		$args = array(
-			'status' => 'publish',
-			'limit'  => $settings['limit'],
-			'return' => 'objects',
-		);
+		$items = $this->build_product_items( $products, $settings );
 
-		switch ( $settings['source'] ) {
-			case 'featured':
-				$args['featured'] = true;
-				break;
-
-			case 'on_sale':
-				$args['include'] = function_exists( 'wc_get_product_ids_on_sale' )
-					? wc_get_product_ids_on_sale()
-					: array();
-				break;
-
-			case 'best_selling':
-			case 'top_rated':
-				$args['limit'] = max( 50, $settings['limit'] );
-				$args['orderby'] = 'date';
-				$args['order'] = 'DESC';
-				break;
-
-			case 'random':
-				$args['orderby'] = 'rand';
-				break;
-
-			case 'category':
-				$term = get_term( $settings['category_id'], 'product_cat' );
-				if ( $term instanceof WP_Term ) {
-					$args['category'] = array( $term->slug );
-				}
-				break;
-
-			case 'manual':
-				$args['include'] = array_values(
-					array_filter(
-						array_map(
-							'absint',
-							explode( ',', $settings['product_ids'] )
-						)
-					)
-				);
-				$args['orderby'] = 'include';
-				break;
-
-			case 'latest':
-			default:
-				$args['orderby'] = 'date';
-				$args['order'] = 'DESC';
-				break;
-		}
-
-		$products = wc_get_products( $args );
-
-		if ( 'best_selling' === $settings['source'] ) {
-			usort(
-				$products,
-				static fn ( WC_Product $a, WC_Product $b ): int =>
-					$b->get_total_sales() <=> $a->get_total_sales()
-			);
-		}
-
-		if ( 'top_rated' === $settings['source'] ) {
-			usort(
-				$products,
-				static fn ( WC_Product $a, WC_Product $b ): int =>
-					(float) $b->get_average_rating() <=> (float) $a->get_average_rating()
-			);
-		}
-
-		$products = array_slice( $products, 0, $settings['limit'] );
-		$items    = array();
-
-		foreach ( $products as $product ) {
-			if ( ! $product instanceof WC_Product ) {
-				continue;
-			}
-
-			$image_id  = $product->get_image_id();
-			$image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '';
-
-			if ( ! $image_url && function_exists( 'wc_placeholder_img_src' ) ) {
-				$image_url = wc_placeholder_img_src();
-			}
-
-			$items[] = array(
-				'id'              => $product->get_id(),
-				'name'            => $product->get_name(),
-				'image_url'       => esc_url_raw( (string) $image_url ),
-				'price'           => (string) $product->get_price(),
-				'regular_price'   => (string) $product->get_regular_price(),
-				'currency_code'   => get_woocommerce_currency(),
-				'currency_symbol' => get_woocommerce_currency_symbol(),
-				'in_stock'        => $product->is_in_stock(),
-				'badge'           => $product->is_on_sale() ? __( 'Sale', 'kidia-mobile-cms' ) : null,
-				'action'          => $this->build_action( 'product', (string) $product->get_id() ),
-			);
+		if ( empty( $items ) ) {
+			return null;
 		}
 
 		return array(
 			'title'           => $settings['title'],
 			'items'           => $items,
 			'show_view_all'   => $settings['show_view_all'],
-			'view_all_action' => $this->build_action( 'collection', $settings['source'] ),
+			'view_all_action' => $this->build_product_view_all_action( $settings ),
+			'layout'          => array(
+				'cards_visible' => $settings['cards_visible'],
+				'gap'           => $settings['gap'],
+				'card_style'    => $settings['card_style'],
+				'image_ratio'   => $settings['image_ratio'],
+				'show_rating'   => $settings['show_rating'],
+				'show_category' => $settings['show_category'],
+				'show_badge'    => $settings['show_badge'],
+				'show_stock'    => $settings['show_stock'],
+				'show_arrows'   => $settings['show_arrows'],
+				'show_dots'     => $settings['show_dots'],
+			),
 		);
 	}
 

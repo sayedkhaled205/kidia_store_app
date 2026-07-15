@@ -191,8 +191,8 @@ const String mockHomeLayoutJson = '''
         "items": [
           {
             "id": 201,
-            "name": "Kidia",
-            "logo_url": "https://placehold.co/300x180/F6F1FF/5D3FD3.png?text=Kidia",
+            "name": "Woo Store",
+            "logo_url": "https://placehold.co/300x180/F6F1FF/5D3FD3.png?text=Woo+Store",
             "action": {
               "type": "brand",
               "value": "201"

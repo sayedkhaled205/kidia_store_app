@@ -1,24 +1,28 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/kidia_colors.dart';
 import '../core/theme/kidia_typography.dart';
 import '../features/account/presentation/account_screen.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/categories/presentation/categories_screen.dart';
-import 'package:kidia_store_app/features/home/presentation/pages/home_page.dart';
+import '../features/home/presentation/pages/home_page.dart';
+import '../features/home/presentation/providers/home_providers.dart';
 import '../features/search/presentation/search_screen.dart';
 
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
+  String _locale = 'ar';
 
-  static const List<Widget> _screens = [
+  static const List<Widget> _screens = <Widget>[
     HomePage(),
     CategoriesScreen(),
     SearchScreen(),
@@ -26,7 +30,7 @@ class _MainShellState extends State<MainShell> {
     AccountScreen(),
   ];
 
-  static const List<_NavigationItem> _items = [
+  static const List<_NavigationItem> _items = <_NavigationItem>[
     _NavigationItem(
       label: 'الرئيسية',
       icon: Icons.home_outlined,
@@ -56,6 +60,31 @@ class _MainShellState extends State<MainShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _locale = Localizations.localeOf(context).languageCode;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.invalidate(homeLayoutProvider(_locale));
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
@@ -68,19 +97,15 @@ class _MainShellState extends State<MainShell> {
           decoration: const BoxDecoration(
             color: KidiaColors.surface,
             border: Border(
-              top: BorderSide(
-                color: KidiaColors.divider,
-              ),
+              top: BorderSide(color: KidiaColors.divider),
             ),
           ),
           child: NavigationBar(
             selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+            onDestinationSelected: (int index) {
+              setState(() => _currentIndex = index);
             },
-            destinations: _items.map((item) {
+            destinations: _items.map((_NavigationItem item) {
               return NavigationDestination(
                 icon: _NavigationIcon(
                   icon: item.icon,
@@ -114,11 +139,9 @@ class _NavigationIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconWidget = Icon(
+    final Widget iconWidget = Icon(
       icon,
-      color: selected
-          ? KidiaColors.primaryDark
-          : KidiaColors.textSecondary,
+      color: selected ? KidiaColors.primaryDark : KidiaColors.textSecondary,
     );
 
     if (!showBadge) {

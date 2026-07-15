@@ -821,9 +821,12 @@ final class Kidia_Mobile_Library {
 
             			$key = (string) $field['key'];
 
-            			$value = $settings[ $key ] ?? '';
+							$field_type = (string) ( $field['type'] ?? 'text' );
+							$value      = array_key_exists( $key, $settings )
+								? $settings[ $key ]
+								: ( $field['default'] ?? '' );
 
-            			if ( 'gallery' === ( $field['type'] ?? '' ) ) {
+							if ( 'gallery' === $field_type ) {
             				$clean[ $key ] = array();
 
             				if ( is_array( $value ) ) {
@@ -836,45 +839,83 @@ final class Kidia_Mobile_Library {
             							continue;
             						}
 
-            						$clean[ $key ][] = array(
-            							'id'           => 'hero_slide_' . ( absint( $index ) + 1 ),
-            							'enabled'      => true,
-            							'image_url'    => $image_url,
-            							'title'        => '',
-            							'subtitle'     => '',
-            							'action_type'  => '',
-            							'action_value' => '',
-            						);
+											$clean[ $key ][] = array(
+												'id'           => sanitize_key( (string) ( is_array( $gallery_item ) ? ( $gallery_item['id'] ?? '' ) : '' ) ) ?: 'hero_slide_' . substr( md5( $image_url ), 0, 12 ),
+												'enabled'      => ! is_array( $gallery_item ) || ! array_key_exists( 'enabled', $gallery_item ) || ! empty( $gallery_item['enabled'] ),
+												'image_url'    => $image_url,
+												'attachment_id'=> absint( is_array( $gallery_item ) ? ( $gallery_item['attachment_id'] ?? 0 ) : 0 ),
+												'title'        => sanitize_text_field( (string) ( is_array( $gallery_item ) ? ( $gallery_item['title'] ?? '' ) : '' ) ),
+												'subtitle'     => sanitize_textarea_field( (string) ( is_array( $gallery_item ) ? ( $gallery_item['subtitle'] ?? '' ) : '' ) ),
+												'action_type'  => sanitize_key( (string) ( is_array( $gallery_item ) ? ( $gallery_item['action_type'] ?? '' ) : '' ) ),
+												'action_value' => sanitize_text_field( (string) ( is_array( $gallery_item ) ? ( $gallery_item['action_value'] ?? '' ) : '' ) ),
+											);
             					}
             				}
 
             				continue;
             			}
 
-            			switch ( $field['type'] ?? 'text' ) {
+							if ( 'entity_select' === $field_type ) {
+								$ids = is_array( $value )
+									? $value
+									: preg_split( '/[\s,]+/', (string) $value );
+								$ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
+								$clean[ $key ] = ! empty( $field['multiple'] )
+									? implode( ',', $ids )
+									: ( ! empty( $ids ) ? (int) reset( $ids ) : 0 );
+								continue;
+							}
 
-            				case 'number':
-            					$clean[ $key ] = (float) $value;
+							switch ( $field_type ) {
+
+								case 'number':
+									$number = (float) $value;
+									if ( isset( $field['min'] ) ) {
+										$number = max( (float) $field['min'], $number );
+									}
+									if ( isset( $field['max'] ) ) {
+										$number = min( (float) $field['max'], $number );
+									}
+									$clean[ $key ] = $number;
             					break;
 
             				case 'checkbox':
             					$clean[ $key ] = ! empty( $value );
             					break;
 
-            				case 'url':
-            				case 'image':
+								case 'url':
+								case 'image':
+								case 'video':
             					$clean[ $key ] =
             						esc_url_raw(
             							(string) $value
             						);
             					break;
 
-            				case 'textarea':
+								case 'textarea':
             					$clean[ $key ] =
             						sanitize_textarea_field(
             							(string) $value
             						);
-            					break;
+									break;
+
+								case 'richtext':
+									$clean[ $key ] = wp_kses_post( (string) $value );
+									break;
+
+								case 'color':
+									$clean[ $key ] = sanitize_hex_color( (string) $value ) ?: '';
+									break;
+
+								case 'select':
+									$select_value = sanitize_key( (string) $value );
+									$options = isset( $field['options'] ) && is_array( $field['options'] )
+										? $field['options']
+										: array();
+									$clean[ $key ] = array_key_exists( $select_value, $options )
+										? $select_value
+										: sanitize_key( (string) ( $field['default'] ?? '' ) );
+									break;
 
             				default:
             					$clean[ $key ] =
@@ -885,7 +926,15 @@ final class Kidia_Mobile_Library {
             			}
             		}
 
-            		return $clean;
+							if ( class_exists( 'Kidia_Mobile_Block_Registry' ) ) {
+								$block = Kidia_Mobile_Block_Registry::get_block( $this->schema );
+
+								if ( $block instanceof Kidia_Mobile_Block ) {
+									return $block->sanitize_settings( $clean );
+								}
+							}
+
+							return $clean;
             	}
             		/**
                 	 * Verifies current user capability.

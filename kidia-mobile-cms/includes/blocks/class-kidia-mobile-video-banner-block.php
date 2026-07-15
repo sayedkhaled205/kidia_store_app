@@ -68,6 +68,12 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 			'auto_play'    => false,
 			'muted'        => true,
 			'loop'         => false,
+			'show_controls'=> true,
+			'title'        => '',
+			'subtitle'     => '',
+			'button_label' => '',
+			'overlay_color'=> '#000000',
+			'overlay_opacity' => 0,
 			'action_type'  => '',
 			'action_value' => '',
 		);
@@ -139,6 +145,18 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 				$settings['loop']
 			),
 
+			'show_controls' => ! empty( $settings['show_controls'] ),
+
+			'title' => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
+
+			'subtitle' => sanitize_textarea_field( (string) ( $settings['subtitle'] ?? '' ) ),
+
+			'button_label' => sanitize_text_field( (string) ( $settings['button_label'] ?? '' ) ),
+
+			'overlay_color' => sanitize_hex_color( (string) ( $settings['overlay_color'] ?? '#000000' ) ) ?: '#000000',
+
+			'overlay_opacity' => max( 0, min( 1, (float) ( $settings['overlay_opacity'] ?? 0 ) ) ),
+
 			'action_type' => $action_type,
 
 			'action_value' => sanitize_text_field(
@@ -169,13 +187,29 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 			return null;
 		}
 
+		$provider = 'file';
+		$host     = wp_parse_url( $settings['video_url'], PHP_URL_HOST );
+
+		if ( is_string( $host ) && ( false !== strpos( $host, 'youtube.com' ) || false !== strpos( $host, 'youtu.be' ) ) ) {
+			$provider = 'youtube';
+		} elseif ( is_string( $host ) && false !== strpos( $host, 'vimeo.com' ) ) {
+			$provider = 'vimeo';
+		}
+
 		return array(
 			'video_url'    => $settings['video_url'],
+			'provider'     => $provider,
 			'poster_url'   => $settings['poster_url'],
 			'aspect_ratio' => $settings['aspect_ratio'],
 			'auto_play'    => $settings['auto_play'],
 			'muted'        => $settings['muted'],
 			'loop'         => $settings['loop'],
+			'show_controls'=> $settings['show_controls'],
+			'title'        => $settings['title'],
+			'subtitle'     => $settings['subtitle'],
+			'button_label' => $settings['button_label'],
+			'overlay_color'=> $settings['overlay_color'],
+			'overlay_opacity' => $settings['overlay_opacity'],
 			'action'       => $this->build_action(
 				$settings['action_type'],
 				$settings['action_value']

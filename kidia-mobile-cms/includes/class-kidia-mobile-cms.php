@@ -90,19 +90,13 @@ final class Kidia_Mobile_CMS {
 
 		$this->started = true;
 
+		$this->load_textdomain();
+
 		$this->register_blocks();
 
 		$this->register_admin_modules();
 
 		$this->register_api_modules();
-
-		add_action(
-			'init',
-			array(
-				$this,
-				'load_textdomain',
-			)
-		);
 
 		add_filter(
 			'plugin_action_links_' .

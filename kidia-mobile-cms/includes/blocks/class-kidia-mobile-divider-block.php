@@ -34,12 +34,25 @@ final class Kidia_Mobile_Divider_Block extends Kidia_Mobile_Block {
 			'color' => '#e5e7eb',
 			'thickness' => 1,
 			'margin' => 16,
+			'style' => 'solid',
+			'width_percent' => 100,
+			'alignment' => 'center',
 		);
 	}
 
 	public function sanitize_settings(
 		array $settings
 	): array {
+
+		$style = sanitize_key( (string) ( $settings['style'] ?? 'solid' ) );
+		if ( ! in_array( $style, array( 'solid', 'dashed', 'dotted' ), true ) ) {
+			$style = 'solid';
+		}
+
+		$alignment = sanitize_key( (string) ( $settings['alignment'] ?? 'center' ) );
+		if ( ! in_array( $alignment, array( 'left', 'center', 'right' ), true ) ) {
+			$alignment = 'center';
+		}
 
 		return array(
 
@@ -66,6 +79,12 @@ final class Kidia_Mobile_Divider_Block extends Kidia_Mobile_Block {
 					)
 				)
 			),
+
+			'style' => $style,
+
+			'width_percent' => max( 10, min( 100, absint( $settings['width_percent'] ?? 100 ) ) ),
+
+			'alignment' => $alignment,
 
 		);
 	}

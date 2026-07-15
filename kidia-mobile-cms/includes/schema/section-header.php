@@ -27,7 +27,15 @@ return array(
 
 		'subtitle' => '',
 
-		'action_label' => '',
+		'show_view_all' => true,
+
+		'view_all_label' => '',
+
+		'alignment' => 'start',
+
+		'icon' => '',
+
+		'divider_style' => 'none',
 
 		'action_type' => '',
 
@@ -51,6 +59,11 @@ return array(
 				'Action',
 				'kidia-mobile-cms'
 			),
+		),
+
+		array(
+			'id' => 'style',
+			'label' => __( 'Style', 'kidia-mobile-cms' ),
 		),
 
 	),
@@ -84,9 +97,52 @@ return array(
 		),
 
 		array(
-			'key' => 'action_label',
+			'key' => 'alignment',
+			'label' => __( 'Alignment', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'style',
+			'default' => 'start',
+			'options' => array(
+				'start'  => __( 'Start', 'kidia-mobile-cms' ),
+				'center' => __( 'Center', 'kidia-mobile-cms' ),
+				'end'    => __( 'End', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'icon',
+			'label' => __( 'Icon', 'kidia-mobile-cms' ),
+			'description' => __( 'Optional app icon name, for example: star or tag.', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'style',
+			'default' => '',
+		),
+
+		array(
+			'key' => 'divider_style',
+			'label' => __( 'Divider', 'kidia-mobile-cms' ),
+			'type' => 'select',
+			'tab' => 'style',
+			'default' => 'none',
+			'options' => array(
+				'none'      => __( 'None', 'kidia-mobile-cms' ),
+				'line'      => __( 'Line', 'kidia-mobile-cms' ),
+				'underline' => __( 'Underline', 'kidia-mobile-cms' ),
+			),
+		),
+
+		array(
+			'key' => 'show_view_all',
+			'label' => __( 'Show View All', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'action',
+			'default' => true,
+		),
+
+		array(
+			'key' => 'view_all_label',
 			'label' => __(
-				'Action Label',
+				'View All Label',
 				'kidia-mobile-cms'
 			),
 			'type' => 'text',

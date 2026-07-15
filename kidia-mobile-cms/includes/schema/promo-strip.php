@@ -33,6 +33,14 @@ return array(
 
 		'action_value' => '',
 
+		'button_label' => '',
+
+		'dismissible' => false,
+
+		'border_radius' => 12,
+
+		'padding' => 12,
+
 	),
 
 	'tabs' => array(
@@ -102,6 +110,36 @@ return array(
 		),
 
 		array(
+			'key' => 'border_radius',
+			'label' => __( 'Corner Radius', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 12,
+			'min' => 0,
+			'max' => 40,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'padding',
+			'label' => __( 'Inner Spacing', 'kidia-mobile-cms' ),
+			'type' => 'number',
+			'tab' => 'style',
+			'default' => 12,
+			'min' => 4,
+			'max' => 32,
+			'step' => 1,
+		),
+
+		array(
+			'key' => 'dismissible',
+			'label' => __( 'Allow Customer to Dismiss', 'kidia-mobile-cms' ),
+			'type' => 'checkbox',
+			'tab' => 'general',
+			'default' => false,
+		),
+
+		array(
 			'key' => 'action_type',
 			'label' => __(
 				'Action Type',
@@ -130,6 +168,14 @@ return array(
 			'tab' => 'action',
 			'default' => '',
 			'full_width' => true,
+		),
+
+		array(
+			'key' => 'button_label',
+			'label' => __( 'Button Label', 'kidia-mobile-cms' ),
+			'type' => 'text',
+			'tab' => 'action',
+			'default' => '',
 		),
 
 	),

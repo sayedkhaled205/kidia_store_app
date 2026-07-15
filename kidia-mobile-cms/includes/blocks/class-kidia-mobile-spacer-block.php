@@ -32,6 +32,8 @@ final class Kidia_Mobile_Spacer_Block extends Kidia_Mobile_Block {
 	public function get_default_settings(): array {
 		return array(
 			'height' => 24,
+			'height_tablet' => 24,
+			'height_desktop' => 24,
 		);
 	}
 
@@ -43,12 +45,14 @@ final class Kidia_Mobile_Spacer_Block extends Kidia_Mobile_Block {
 			'height' => max(
 				0,
 				min(
-					200,
+					300,
 					absint(
 						$settings['height'] ?? 24
 					)
 				)
 			),
+			'height_tablet' => max( 0, min( 300, absint( $settings['height_tablet'] ?? ( $settings['height'] ?? 24 ) ) ) ),
+			'height_desktop' => max( 0, min( 300, absint( $settings['height_desktop'] ?? ( $settings['height'] ?? 24 ) ) ) ),
 		);
 	}
 		public function build_api_data(

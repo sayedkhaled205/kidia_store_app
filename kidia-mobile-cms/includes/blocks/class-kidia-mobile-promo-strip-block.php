@@ -36,6 +36,10 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 			'text_color' => '#ffffff',
 			'action_type' => '',
 			'action_value' => '',
+			'button_label' => '',
+			'dismissible' => false,
+			'border_radius' => 12,
+			'padding' => 12,
 		);
 	}
 
@@ -43,9 +47,15 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 		array $settings
 	): array {
 
+		$action_type = sanitize_key( (string) ( $settings['action_type'] ?? '' ) );
+
+		if ( ! in_array( $action_type, array( '', 'product', 'category', 'collection', 'search', 'external' ), true ) ) {
+			$action_type = '';
+		}
+
 		return array(
 
-			'text' => sanitize_text_field(
+			'text' => sanitize_textarea_field(
 				$settings['text'] ?? ''
 			),
 
@@ -57,13 +67,19 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 				$settings['text_color'] ?? '#ffffff'
 			),
 
-			'action_type' => sanitize_key(
-				$settings['action_type'] ?? ''
-			),
+			'action_type' => $action_type,
 
 			'action_value' => sanitize_text_field(
 				$settings['action_value'] ?? ''
 			),
+
+			'button_label' => sanitize_text_field( (string) ( $settings['button_label'] ?? '' ) ),
+
+			'dismissible' => ! empty( $settings['dismissible'] ),
+
+			'border_radius' => max( 0, min( 40, absint( $settings['border_radius'] ?? 12 ) ) ),
+
+			'padding' => max( 4, min( 32, absint( $settings['padding'] ?? 12 ) ) ),
 
 		);
 	}
@@ -71,23 +87,27 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     		array $settings
     	): ?array {
 
-    		return array(
-    			'text' => sanitize_text_field(
-    				$settings['text'] ?? ''
-    			),
+			$settings = $this->sanitize_settings(
+				wp_parse_args( $settings, $this->get_default_settings() )
+			);
 
-    			'background_color' => sanitize_hex_color(
-    				$settings['background_color'] ?? '#4f9f8f'
-    			),
+			if ( '' === trim( $settings['text'] ) ) {
+				return null;
+			}
 
-    			'text_color' => sanitize_hex_color(
-    				$settings['text_color'] ?? '#ffffff'
-    			),
+			return array(
+				'text'             => $settings['text'],
+				'background_color' => $settings['background_color'] ?: '#4f9f8f',
+				'text_color'       => $settings['text_color'] ?: '#ffffff',
+				'button_label'     => $settings['button_label'],
+				'dismissible'      => $settings['dismissible'],
+				'border_radius'    => $settings['border_radius'],
+				'padding'          => $settings['padding'],
 
-    			'action' => $this->build_action(
-    				$settings['action_type'] ?? '',
-    				$settings['action_value'] ?? ''
-    			),
+				'action' => $this->build_action(
+					$settings['action_type'],
+					$settings['action_value']
+				),
     		);
     	}
 
