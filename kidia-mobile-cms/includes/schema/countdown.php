@@ -27,7 +27,7 @@ return array(
 
 		'ends_at' => '',
 
-		'expired_text' => 'انتهى العرض',
+		'expired_text' => __( 'Offer ended', 'kidia-mobile-cms' ),
 
 	),
 
@@ -85,7 +85,7 @@ return array(
 			),
 			'type' => 'text',
 			'tab' => 'timer',
-			'default' => 'انتهى العرض',
+			'default' => __( 'Offer ended', 'kidia-mobile-cms' ),
 			'full_width' => true,
 		),
 
