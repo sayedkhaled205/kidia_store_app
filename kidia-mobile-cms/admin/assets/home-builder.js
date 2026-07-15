@@ -41,6 +41,80 @@
 		);
 
 	let currentCreateType = '';
+	function reindexHeroGallery(gallery) {
+		const block = gallery.closest('.kidia-builder-block');
+		if (!block) {
+			return;
+		}
+		const blocks = Array.from(
+			builder.querySelectorAll('.kidia-builder-block')
+		);
+		const blockIndex = blocks.indexOf(block);
+		gallery.querySelectorAll('.kidia-hero-gallery__item').forEach(
+			function (item, itemIndex) {
+				const input = item.querySelector('input[type="hidden"]');
+				if (input) {
+					input.name = 'blocks[' + blockIndex + '][settings][items][' + itemIndex + '][image_url]';
+				}
+			}
+		);
+	}
+
+	builder.addEventListener('click', function (event) {
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) {
+			return;
+		}
+		const remove = target.closest('.kidia-hero-gallery__remove');
+		if (remove) {
+			const gallery = remove.closest('.kidia-hero-gallery');
+			remove.closest('.kidia-hero-gallery__item')?.remove();
+			if (gallery) {
+				reindexHeroGallery(gallery);
+			}
+			return;
+		}
+		const select = target.closest('.kidia-hero-gallery__select');
+		if (!select || typeof wp === 'undefined' || !wp.media) {
+			return;
+		}
+		const gallery = select.closest('.kidia-hero-gallery');
+		const items = gallery?.querySelector('.kidia-hero-gallery__items');
+		if (!gallery || !items) {
+			return;
+		}
+		const frame = wp.media({
+			title: 'Select Slider Images',
+			button: { text: 'Add Images' },
+			library: { type: 'image' },
+			multiple: true
+		});
+		frame.on('select', function () {
+			frame.state().get('selection').each(function (model) {
+				const attachment = model.toJSON();
+				if (!attachment.url) {
+					return;
+				}
+				const item = document.createElement('div');
+				item.className = 'kidia-hero-gallery__item';
+				const image = document.createElement('img');
+				image.src = attachment.url;
+				image.alt = '';
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.value = attachment.url;
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'button-link-delete kidia-hero-gallery__remove';
+				button.textContent = 'Remove';
+				item.append(image, input, button);
+				items.appendChild(item);
+			});
+			reindexHeroGallery(gallery);
+		});
+		frame.open();
+	});
+
 
 	function generateId(type) {
 
