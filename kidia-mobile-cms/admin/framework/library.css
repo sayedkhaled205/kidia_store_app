@@ -162,6 +162,10 @@
 	color:#646970;
 }
 
+.kidia-library-modal[hidden]{
+	display:none;
+}
+
 .kidia-library-modal{
 	position:fixed;
 	inset:0;
