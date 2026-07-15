@@ -299,7 +299,10 @@ final class Kidia_Mobile_Layout_Store {
 				: $block['name'];
 
 			$block['enabled'] =
-				! empty( $library_item['enabled'] );
+				! empty( $library_item['enabled'] )
+				&& 'published' === (
+					$library_item['status'] ?? 'draft'
+				);
 
 			$library_settings =
 				isset( $library_item['settings'] )
@@ -389,7 +392,10 @@ final class Kidia_Mobile_Layout_Store {
 							(string) $item['name']
 						)
 						: $this->get_default_name( $type ),
-					'enabled'    => ! empty( $item['enabled'] ),
+					'enabled'    => ! empty( $item['enabled'] )
+						&& 'published' === (
+							$item['status'] ?? 'draft'
+						),
 					'order'      => count( $layout ) + 1,
 					'settings'   => wp_parse_args(
 						$settings,
