@@ -1,6 +1,6 @@
 <?php
 /**
- * Kidia Mobile CMS Dashboard.
+ * Woo Mobile CMS Dashboard.
  *
  * Available variables:
  *
@@ -35,7 +35,7 @@ $api_message = isset( $api['message'] )
 	<h1>
 		<?php
 		esc_html_e(
-			'Kidia Mobile CMS',
+			'Woo Mobile CMS',
 			'kidia-mobile-cms'
 		);
 		?>
@@ -336,7 +336,7 @@ $api_message = isset( $api['message'] )
 		<p>
 			<?php
 			esc_html_e(
-				'Kidia Mobile CMS initialized successfully.',
+				'Woo Mobile CMS initialized successfully.',
 				'kidia-mobile-cms'
 			);
 			?>
