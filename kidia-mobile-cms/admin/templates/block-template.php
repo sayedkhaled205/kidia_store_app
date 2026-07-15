@@ -19,14 +19,13 @@ $name = isset( $block_data['name'] )
 	? (string) $block_data['name']
 	: $block->get_label();
 
-$settings = isset( $block_data['settings'] )
-	&& is_array( $block_data['settings'] )
-		? $block_data['settings']
-		: array();
-
 $library_id = isset( $block_data['library_id'] )
 	? (string) $block_data['library_id']
 	: (string) $block_data['id'];
+
+$status = 'published' === ( $block_data['status'] ?? 'draft' )
+	? 'published'
+	: 'draft';
 ?>
 
 <div
@@ -51,6 +50,18 @@ $library_id = isset( $block_data['library_id'] )
 
 				<span class="kidia-builder-block__type">
 					<?php echo esc_html( $block->get_label() ); ?>
+				</span>
+
+				<span
+					class="kidia-builder-status kidia-builder-status--<?php echo esc_attr( $status ); ?>"
+				>
+					<?php
+					echo esc_html(
+						'published' === $status
+							? __( 'Published', 'kidia-mobile-cms' )
+							: __( 'Draft', 'kidia-mobile-cms' )
+					);
+					?>
 				</span>
 
 			</div>
@@ -120,6 +131,13 @@ $library_id = isset( $block_data['library_id'] )
 
 		<input
 			type="hidden"
+			class="kidia-block-source-library-id"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][source_library_id]"
+			value=""
+		>
+
+		<input
+			type="hidden"
 			class="kidia-block-type"
 			name="blocks[<?php echo esc_attr( (string) $index ); ?>][type]"
 			value="<?php echo esc_attr( $type ); ?>"
@@ -130,6 +148,13 @@ $library_id = isset( $block_data['library_id'] )
 			class="kidia-block-order"
 			name="blocks[<?php echo esc_attr( (string) $index ); ?>][order]"
 			value="<?php echo esc_attr( (string) $block_data['order'] ); ?>"
+		>
+
+		<input
+			type="hidden"
+			class="kidia-block-status"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][status]"
+			value="<?php echo esc_attr( $status ); ?>"
 		>
 
 		<div class="kidia-builder-field">
@@ -185,14 +210,16 @@ $library_id = isset( $block_data['library_id'] )
 
 		</div>
 
-		<?php
-		$block->render_settings(
-			is_numeric( $index )
-				? (int) $index
-				: 0,
-			$settings
-		);
-		?>
+		<p class="kidia-builder-canonical-note">
+			<span class="dashicons dashicons-admin-generic"></span>
+
+			<?php
+			esc_html_e(
+				'Element content and design settings are managed safely in Library Editor.',
+				'kidia-mobile-cms'
+			);
+			?>
+		</p>
 
 	</div>
 
