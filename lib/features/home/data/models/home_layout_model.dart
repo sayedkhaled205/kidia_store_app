@@ -70,11 +70,10 @@ abstract final class HomeLayoutModel {
         blocks.add(
           HomeBlockModel.fromJson(blockJson),
         );
-      } on FormatException catch (error) {
-        throw FormatException(
-          'Invalid home block at index $index: '
-              '${error.message}',
-        );
+      } on FormatException {
+        // A single unknown or incomplete CMS block must not prevent
+        // the remaining valid home blocks from rendering.
+        continue;
       }
     }
 
