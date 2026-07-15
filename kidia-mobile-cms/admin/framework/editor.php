@@ -23,7 +23,7 @@ $item_name = isset( $item['name'] )
 
 $item_status = isset( $item['status'] )
 	? sanitize_key( (string) $item['status'] )
-	: 'draft';
+	: 'published';
 
 $item_enabled = ! isset( $item['enabled'] )
 	|| ! empty( $item['enabled'] );
@@ -116,6 +116,26 @@ $page_slug = isset( $_GET['page'] )
 					'Item saved successfully.',
 					'kidia-mobile-cms'
 				); ?>
+			</p>
+		</div>
+
+	<?php endif; ?>
+
+	<?php if (
+		isset( $_GET['validation_error'] )
+		&& '1' === sanitize_key(
+			wp_unslash( $_GET['validation_error'] )
+		)
+	) : ?>
+
+		<div class="notice notice-error">
+			<p>
+				<?php
+				esc_html_e(
+					'Saved as draft. Complete the required fields and use valid HTTP/HTTPS media URLs before publishing.',
+					'kidia-mobile-cms'
+				);
+				?>
 			</p>
 		</div>
 
@@ -316,7 +336,113 @@ $page_slug = isset( $_GET['page'] )
 
                     														</label>
 
-                    														<?php if ( 'gallery' === $field_type ) : ?>
+																	<?php if ( 'slides' === $field_type ) : ?>
+
+																		<?php
+																		$slide_items = is_array( $field_value )
+																			? array_values( $field_value )
+																			: array();
+																		$action_options = array(
+																			''           => __( 'No action', 'kidia-mobile-cms' ),
+																			'product'    => __( 'Product', 'kidia-mobile-cms' ),
+																			'category'   => __( 'Category', 'kidia-mobile-cms' ),
+																			'collection' => __( 'Collection', 'kidia-mobile-cms' ),
+																			'brand'      => __( 'Brand', 'kidia-mobile-cms' ),
+																			'brands'     => __( 'All brands', 'kidia-mobile-cms' ),
+																			'search'     => __( 'Search', 'kidia-mobile-cms' ),
+																			'external'   => __( 'External URL', 'kidia-mobile-cms' ),
+																		);
+																		?>
+
+																		<div
+																			class="kidia-editor-slides"
+																			data-field-key="<?php echo esc_attr( $field_key ); ?>"
+																		>
+																			<div class="kidia-editor-slides__items">
+																				<?php foreach ( $slide_items as $slide_index => $slide_item ) : ?>
+																					<?php
+																					if ( ! is_array( $slide_item ) ) {
+																						continue;
+																					}
+
+																					$slide_image = (string) ( $slide_item['image_url'] ?? '' );
+																					$slide_id = (string) ( $slide_item['id'] ?? 'hero_slide_' . ( $slide_index + 1 ) );
+																					$image_field_id = $field_id . '-image-' . $slide_index;
+																					?>
+																					<article class="kidia-editor-slide" draggable="true">
+																						<header class="kidia-editor-slide__header">
+																							<span class="dashicons dashicons-move kidia-editor-slide__handle" aria-hidden="true"></span>
+																							<strong class="kidia-editor-slide__number">
+																								<?php
+																								printf(
+																									/* translators: %d: slide position. */
+																									esc_html__( 'Slide %d', 'kidia-mobile-cms' ),
+																									(int) $slide_index + 1
+																								);
+																								?>
+																							</strong>
+																							<div class="kidia-editor-slide__header-actions">
+																								<button type="button" class="button-link kidia-editor-slide__move-up" aria-label="<?php esc_attr_e( 'Move slide up', 'kidia-mobile-cms' ); ?>">↑</button>
+																								<button type="button" class="button-link kidia-editor-slide__move-down" aria-label="<?php esc_attr_e( 'Move slide down', 'kidia-mobile-cms' ); ?>">↓</button>
+																								<button type="button" class="button-link-delete kidia-editor-slide__remove"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
+																							</div>
+																						</header>
+
+																						<div class="kidia-editor-slide__grid">
+																							<div class="kidia-editor-slide__media">
+																								<img data-slide-preview src="<?php echo esc_url( $slide_image ); ?>" alt="" <?php echo '' === $slide_image ? 'hidden' : ''; ?>>
+																								<div class="kidia-editor-slide__placeholder" <?php echo '' !== $slide_image ? 'hidden' : ''; ?>>
+																									<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+																								</div>
+																								<input type="hidden" id="<?php echo esc_attr( $image_field_id ); ?>" data-slide-field="image_url" value="<?php echo esc_attr( $slide_image ); ?>">
+																								<input type="hidden" data-slide-field="id" value="<?php echo esc_attr( $slide_id ); ?>">
+																								<div class="kidia-editor-slide__media-actions">
+																									<button type="button" class="button kidia-editor-slide__select-media"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button>
+																									<button type="button" class="button-link-delete kidia-editor-slide__remove-media"><?php esc_html_e( 'Clear image', 'kidia-mobile-cms' ); ?></button>
+																								</div>
+																							</div>
+
+																							<div class="kidia-editor-slide__fields">
+																								<label>
+																									<span><?php esc_html_e( 'Title', 'kidia-mobile-cms' ); ?></span>
+																									<input type="text" data-slide-field="title" value="<?php echo esc_attr( (string) ( $slide_item['title'] ?? '' ) ); ?>">
+																								</label>
+																								<label>
+																									<span><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></span>
+																									<textarea rows="2" data-slide-field="subtitle"><?php echo esc_textarea( (string) ( $slide_item['subtitle'] ?? '' ) ); ?></textarea>
+																								</label>
+																								<div class="kidia-editor-slide__action-row">
+																									<label>
+																										<span><?php esc_html_e( 'Tap action', 'kidia-mobile-cms' ); ?></span>
+																										<select data-slide-field="action_type">
+																											<?php foreach ( $action_options as $action_value => $action_label ) : ?>
+																												<option value="<?php echo esc_attr( $action_value ); ?>" <?php selected( $action_value, (string) ( $slide_item['action_type'] ?? '' ) ); ?>><?php echo esc_html( $action_label ); ?></option>
+																											<?php endforeach; ?>
+																										</select>
+																									</label>
+																									<label>
+																										<span><?php esc_html_e( 'Action value', 'kidia-mobile-cms' ); ?></span>
+																										<input type="text" data-slide-field="action_value" value="<?php echo esc_attr( (string) ( $slide_item['action_value'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'ID, search term or URL', 'kidia-mobile-cms' ); ?>">
+																									</label>
+																								</div>
+																								<label class="kidia-editor-slide__enabled">
+																									<input type="hidden" data-slide-field="enabled" value="0">
+																									<input type="checkbox" data-slide-field="enabled" value="1" <?php checked( true, ! isset( $slide_item['enabled'] ) || ! empty( $slide_item['enabled'] ) ); ?>>
+																									<span><?php esc_html_e( 'Show this slide', 'kidia-mobile-cms' ); ?></span>
+																								</label>
+																							</div>
+																						</div>
+																					</article>
+																				<?php endforeach; ?>
+																			</div>
+
+																			<button type="button" class="button button-primary kidia-editor-slides__add">
+																				<span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+																				<?php esc_html_e( 'Add slides', 'kidia-mobile-cms' ); ?>
+																			</button>
+																		</div>
+
+																	<?php elseif ( 'gallery' === $field_type ) : ?>
 
                     															<?php
                     															$gallery_items = is_array( $field_value )
