@@ -316,7 +316,39 @@ $page_slug = isset( $_GET['page'] )
 
                     														</label>
 
-                    														<?php if ( 'textarea' === $field_type ) : ?>
+                    														<?php if ( 'gallery' === $field_type ) : ?>
+
+                    															<?php
+                    															$gallery_items = is_array( $field_value )
+                    																? array_values( $field_value )
+                    																: array();
+                    															?>
+
+                    															<div
+                    																class="kidia-editor-gallery"
+                    																data-field-key="<?php echo esc_attr( $field_key ); ?>"
+                    															>
+                    																<div class="kidia-editor-gallery__items">
+                    																	<?php foreach ( $gallery_items as $gallery_index => $gallery_item ) : ?>
+                    																		<?php
+                    																		$image_url = is_array( $gallery_item )
+                    																			? (string) ( $gallery_item['image_url'] ?? '' )
+                    																			: (string) $gallery_item;
+                    																		if ( '' === $image_url ) {
+                    																			continue;
+                    																		}
+                    																		?>
+                    																		<div class="kidia-editor-gallery__item">
+                    																			<img src="<?php echo esc_url( $image_url ); ?>" alt="">
+                    																			<input type="hidden" name="settings[<?php echo esc_attr( $field_key ); ?>][<?php echo esc_attr( (string) $gallery_index ); ?>][image_url]" value="<?php echo esc_attr( $image_url ); ?>">
+                    																			<button type="button" class="button-link-delete kidia-editor-gallery__remove"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
+                    																		</div>
+                    																	<?php endforeach; ?>
+                    																</div>
+                    																<button type="button" class="button button-primary kidia-editor-gallery__select"><?php esc_html_e( 'Select Images', 'kidia-mobile-cms' ); ?></button>
+                    															</div>
+
+                    														<?php elseif ( 'textarea' === $field_type ) : ?>
 
                     															<textarea
                     																id="<?php echo esc_attr( $field_id ); ?>"
