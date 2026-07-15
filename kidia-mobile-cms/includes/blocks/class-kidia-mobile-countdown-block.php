@@ -33,7 +33,7 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 		return array(
 			'title' => '',
 			'ends_at' => '',
-			'expired_text' => '',
+			'expired_text' => __( 'Offer ended', 'kidia-mobile-cms' ),
 		);
 	}
 
@@ -52,7 +52,7 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 			),
 
 			'expired_text' => sanitize_text_field(
-				$settings['expired_text'] ?? ''
+				$settings['expired_text'] ?? __( 'Offer ended', 'kidia-mobile-cms' )
 			),
 
 		);
