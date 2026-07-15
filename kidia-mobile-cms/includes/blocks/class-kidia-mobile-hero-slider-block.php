@@ -107,7 +107,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			}
 
 			$image_url = isset( $item['image_url'] )
-				? esc_url_raw( $item['image_url'] )
+				? $this->sanitize_http_url( $item['image_url'] )
 				: '';
 
 			if ( empty( $image_url ) ) {
@@ -123,6 +123,8 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				'product',
 				'category',
 				'collection',
+				'brand',
+				'brands',
 				'search',
 				'external',
 			);
@@ -147,7 +149,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 					: '',
 				'action_type'  => $action_type,
 				'action_value' => isset( $item['action_value'] )
-					? sanitize_text_field( $item['action_value'] )
+					? (
+						'external' === $action_type
+							? $this->sanitize_http_url( $item['action_value'] )
+							: sanitize_text_field( $item['action_value'] )
+					)
 					: '',
 			);
 		}
@@ -255,7 +261,13 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 					<?php if ( ! empty( $item['image_url'] ) ) : ?>
 						<div class="kidia-hero-gallery__item">
 							<img src="<?php echo esc_url( (string) $item['image_url'] ); ?>" alt="">
-							<input type="hidden" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>">
+							<input type="hidden" data-hero-field="id" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][id]" value="<?php echo esc_attr( (string) $item['id'] ); ?>">
+							<input type="hidden" data-hero-field="enabled" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="<?php echo ! empty( $item['enabled'] ) ? '1' : '0'; ?>">
+							<input type="hidden" data-hero-field="image_url" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>">
+							<input type="hidden" data-hero-field="title" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][title]" value="<?php echo esc_attr( (string) $item['title'] ); ?>">
+							<input type="hidden" data-hero-field="subtitle" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][subtitle]" value="<?php echo esc_attr( (string) $item['subtitle'] ); ?>">
+							<input type="hidden" data-hero-field="action_type" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_type]" value="<?php echo esc_attr( (string) $item['action_type'] ); ?>">
+							<input type="hidden" data-hero-field="action_value" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]" value="<?php echo esc_attr( (string) $item['action_value'] ); ?>">
 							<button type="button" class="button-link-delete kidia-hero-gallery__remove"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
 						</div>
 					<?php endif; ?>
@@ -265,5 +277,29 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			<p class="description"><?php esc_html_e( 'Each selected image becomes one slide. Drag the block to position the complete slider.', 'kidia-mobile-cms' ); ?></p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Sanitizes an HTTP(S) URL for the mobile API contract.
+	 *
+	 * @param mixed $value Raw URL.
+	 *
+	 * @return string
+	 */
+	private function sanitize_http_url( $value ): string {
+		$url = esc_url_raw(
+			(string) $value,
+			array( 'http', 'https' )
+		);
+
+		$scheme = strtolower(
+			(string) wp_parse_url( $url, PHP_URL_SCHEME )
+		);
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+
+		return '' !== $host
+			&& in_array( $scheme, array( 'http', 'https' ), true )
+			? $url
+			: '';
 	}
 }
