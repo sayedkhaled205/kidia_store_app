@@ -1,0 +1,8 @@
+{
+  "STORE_URL": "https://example.com",
+  "STORE_NAME": "Example Store",
+  "STORE_TAGLINE": "",
+  "STORE_LOCALE": "en",
+  "USE_MOCK_HOME_LAYOUT": false,
+  "HOME_LAYOUT_ENDPOINT": "/wp-json/woo-mobile/v1/home-layout"
+}
