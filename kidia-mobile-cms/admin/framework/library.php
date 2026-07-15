@@ -204,7 +204,7 @@ defined( 'ABSPATH' ) || exit;
 
 				$item_status = isset( $item['status'] )
 					? sanitize_key( (string) $item['status'] )
-					: 'draft';
+					: 'published';
 
 				if (
 					! in_array(
@@ -216,7 +216,7 @@ defined( 'ABSPATH' ) || exit;
 						true
 					)
 				) {
-					$item_status = 'draft';
+					$item_status = 'published';
 				}
 
 				$is_enabled = ! isset( $item['enabled'] )
