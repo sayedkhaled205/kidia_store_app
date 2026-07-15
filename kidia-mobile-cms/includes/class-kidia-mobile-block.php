@@ -340,10 +340,18 @@ abstract class Kidia_Mobile_Block {
 			(string) $value
 		);
 
+		// The all-brands screen has no entity ID, but Flutter actions require
+		// a non-empty value. Keep one canonical sentinel across the API.
+		if ( 'brands' === $type && '' === $value ) {
+			$value = 'all';
+		}
+
 		$allowed_types = array(
 			'product',
 			'category',
 			'collection',
+			'brand',
+			'brands',
 			'search',
 			'external',
 		);
@@ -361,9 +369,20 @@ abstract class Kidia_Mobile_Block {
 		}
 
 		if ( 'external' === $type ) {
-			$value = esc_url_raw( $value );
+			$value = esc_url_raw(
+				$value,
+				array( 'http', 'https' )
+			);
+			$scheme = strtolower(
+				(string) wp_parse_url( $value, PHP_URL_SCHEME )
+			);
+			$host = (string) wp_parse_url( $value, PHP_URL_HOST );
 
-			if ( empty( $value ) ) {
+			if (
+				empty( $value )
+				|| '' === $host
+				|| ! in_array( $scheme, array( 'http', 'https' ), true )
+			) {
 				return null;
 			}
 		} else {
