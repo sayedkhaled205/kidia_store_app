@@ -163,7 +163,7 @@
 }
 
 .kidia-library-modal[hidden]{
-	display:none;
+	display:none !important;
 }
 
 .kidia-library-modal{
