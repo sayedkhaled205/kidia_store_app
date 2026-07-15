@@ -121,15 +121,27 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			$logo_url = $image_id
 				? wp_get_attachment_image_url( $image_id, 'medium' )
 				: '';
+			$logo_url = esc_url_raw(
+				(string) $logo_url,
+				array( 'http', 'https' )
+			);
+			$name = sanitize_text_field(
+				wp_specialchars_decode( (string) $term->name, ENT_QUOTES )
+			);
 
-			if ( ! $logo_url ) {
+			if (
+				0 >= (int) $term->term_id
+				|| '' === $name
+				|| ! $logo_url
+				|| '' === (string) wp_parse_url( $logo_url, PHP_URL_HOST )
+			) {
 				continue;
 			}
 
 			$items[] = array(
-				'id'       => $term->term_id,
-				'name'     => $term->name,
-				'logo_url' => esc_url_raw( (string) $logo_url ),
+				'id'       => (int) $term->term_id,
+				'name'     => $name,
+				'logo_url' => $logo_url,
 				'action'   => $this->build_action( 'brand', (string) $term->term_id ),
 			);
 		}
