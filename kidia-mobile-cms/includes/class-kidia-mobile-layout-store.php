@@ -15,6 +15,8 @@ final class Kidia_Mobile_Layout_Store {
 
 	private const OPTION_NAME = 'kidia_mobile_home_layout_v3';
 
+	private const EXCLUSIONS_OPTION = 'kidia_mobile_home_layout_exclusions_v1';
+
 	/**
 	 * Maps block types to their Library option names.
 	 *
@@ -45,34 +47,45 @@ final class Kidia_Mobile_Layout_Store {
 	public function get_layout(): array {
 		$saved_layout = get_option(
 			self::OPTION_NAME,
-			array()
+			null
 		);
 
 		if ( ! is_array( $saved_layout ) ) {
-			$saved_layout = array();
+			$layout = $this->reorder_layout(
+				$this->get_default_layout()
+			);
+
+			$this->save_layout_references( $layout );
+
+			return $layout;
 		}
 
+		$normalized_layout = $this->normalize_layout(
+			$saved_layout
+		);
+
 		$layout = $this->hydrate_layout(
-			$this->normalize_layout(
-				$saved_layout
-			)
+			$normalized_layout
 		);
 
 		$layout = $this->append_missing_library_items(
 			$layout
 		);
 
-		if ( empty( $layout ) ) {
-			$layout = $this->get_default_layout();
-		}
-
 		$layout = $this->reorder_layout(
 			$layout
 		);
 
-		$this->save_layout_references(
-			$layout
-		);
+		if (
+			count( $saved_layout ) !== count( $normalized_layout )
+			||
+			$this->layout_requires_repair( $saved_layout )
+			||
+			$this->get_reference_keys( $normalized_layout )
+			!== $this->get_reference_keys( $layout )
+		) {
+			$this->save_layout_references( $layout );
+		}
 
 		return $layout;
 	}
@@ -97,12 +110,16 @@ final class Kidia_Mobile_Layout_Store {
 			$new_layout
 		);
 
-		$this->sync_layout_with_libraries(
+		$new_layout = $this->preserve_library_state(
 			$new_layout
 		);
 
-		$this->delete_removed_library_items(
+		$this->update_excluded_references(
 			$old_layout,
+			$new_layout
+		);
+
+		$this->sync_layout_with_libraries(
 			$new_layout
 		);
 
@@ -141,6 +158,7 @@ final class Kidia_Mobile_Layout_Store {
 			);
 
 			$block['library_id'] = $block['id'];
+			$block['status']     = 'draft';
 
 			$layout[] = $block;
 		}
@@ -182,7 +200,9 @@ final class Kidia_Mobile_Layout_Store {
 	private function normalize_layout(
 		array $layout
 	): array {
-		$normalized = array();
+		$normalized      = array();
+		$seen_ids        = array();
+		$seen_references = array();
 
 		foreach ( array_values( $layout ) as $index => $raw_block ) {
 			if ( ! is_array( $raw_block ) ) {
@@ -224,6 +244,18 @@ final class Kidia_Mobile_Layout_Store {
 				$library_id = $id;
 			}
 
+			$reference_key = $type . ':' . $library_id;
+
+			if (
+				isset( $seen_ids[ $id ] )
+				|| isset( $seen_references[ $reference_key ] )
+			) {
+				continue;
+			}
+
+			$seen_ids[ $id ]                    = true;
+			$seen_references[ $reference_key ] = true;
+
 			$name = isset( $raw_block['name'] )
 				? sanitize_text_field(
 					(string) $raw_block['name']
@@ -253,9 +285,15 @@ final class Kidia_Mobile_Layout_Store {
 			$normalized[] = array(
 				'id'         => $id,
 				'library_id' => $library_id,
+				'source_library_id' => isset( $raw_block['source_library_id'] )
+					? sanitize_key( (string) $raw_block['source_library_id'] )
+					: '',
 				'type'       => $type,
 				'name'       => $name,
 				'enabled'    => ! empty( $raw_block['enabled'] ),
+				'status'     => 'published' === ( $raw_block['status'] ?? 'draft' )
+					? 'published'
+					: 'draft',
 				'order'      => $index + 1,
 				'settings'   => $settings,
 			);
@@ -298,11 +336,12 @@ final class Kidia_Mobile_Layout_Store {
 				)
 				: $block['name'];
 
-			$block['enabled'] =
-				! empty( $library_item['enabled'] )
-				&& 'published' === (
-					$library_item['status'] ?? 'draft'
-				);
+			$block['enabled'] = ! isset( $library_item['enabled'] )
+				|| ! empty( $library_item['enabled'] );
+			$block['status'] = $this->normalize_status(
+				$library_item['status'] ?? null,
+				'published'
+			);
 
 			$library_settings =
 				isset( $library_item['settings'] )
@@ -336,6 +375,10 @@ final class Kidia_Mobile_Layout_Store {
 		array $layout
 	): array {
 		$existing = array();
+		$excluded = array_fill_keys(
+			$this->get_excluded_reference_keys(),
+			true
+		);
 
 		foreach ( $layout as $block ) {
 			$key = (string) $block['type']
@@ -372,7 +415,10 @@ final class Kidia_Mobile_Layout_Store {
 
 				$key = $type . ':' . $library_id;
 
-				if ( isset( $existing[ $key ] ) ) {
+				if (
+					isset( $existing[ $key ] )
+					|| isset( $excluded[ $key ] )
+				) {
 					continue;
 				}
 
@@ -392,10 +438,12 @@ final class Kidia_Mobile_Layout_Store {
 							(string) $item['name']
 						)
 						: $this->get_default_name( $type ),
-					'enabled'    => ! empty( $item['enabled'] )
-						&& 'published' === (
-							$item['status'] ?? 'draft'
-						),
+					'enabled'    => ! isset( $item['enabled'] )
+						|| ! empty( $item['enabled'] ),
+					'status'     => $this->normalize_status(
+						$item['status'] ?? null,
+						'published'
+					),
 					'order'      => count( $layout ) + 1,
 					'settings'   => wp_parse_args(
 						$settings,
@@ -464,11 +512,6 @@ final class Kidia_Mobile_Layout_Store {
 				$item['enabled'] =
 					! empty( $block['enabled'] );
 
-				$item['settings'] =
-					$this->sanitize_settings(
-						(array) $block['settings']
-					);
-
 				$item['updated_at'] = current_time(
 					'mysql',
 					true
@@ -490,8 +533,10 @@ final class Kidia_Mobile_Layout_Store {
 				'name'       => sanitize_text_field(
 					(string) $block['name']
 				),
-				'status'     => 'published',
 				'enabled'    => ! empty( $block['enabled'] ),
+				'status'     => 'draft' === ( $block['status'] ?? 'published' )
+					? 'draft'
+					: 'published',
 				'created_at' => current_time(
 					'mysql',
 					true
@@ -516,26 +561,36 @@ final class Kidia_Mobile_Layout_Store {
 	}
 
 	/**
-	 * Deletes Library records removed from Home Builder.
+	 * Tracks Library records intentionally removed from this Home Layout.
+	 *
+	 * Removing a placement must never destroy its reusable Library record.
+	 * A later "Add existing" save removes the exclusion automatically.
 	 *
 	 * @param array<int, array<string, mixed>> $old_layout Old layout.
 	 * @param array<int, array<string, mixed>> $new_layout New layout.
 	 *
 	 * @return void
 	 */
-	private function delete_removed_library_items(
+	private function update_excluded_references(
 		array $old_layout,
 		array $new_layout
 	): void {
+		$excluded = array_fill_keys(
+			$this->get_excluded_reference_keys(),
+			true
+		);
 		$new_keys = array();
 
 		foreach ( $new_layout as $block ) {
-			$new_keys[] = (string) $block['type']
+			$key = (string) $block['type']
 				. ':'
 				. (string) (
 					$block['library_id']
 					?? $block['id']
 				);
+
+			$new_keys[ $key ] = true;
+			unset( $excluded[ $key ] );
 		}
 
 		foreach ( $old_layout as $block ) {
@@ -552,32 +607,58 @@ final class Kidia_Mobile_Layout_Store {
 
 			$key = $type . ':' . $library_id;
 
-			if ( in_array( $key, $new_keys, true ) ) {
+			if ( isset( $new_keys[ $key ] ) ) {
 				continue;
 			}
 
-			$items = $this->get_library_items(
-				$type
-			);
-
-			$items = array_filter(
-				$items,
-				static function ( array $item ) use ( $library_id ): bool {
-					return empty( $item['id'] )
-						|| sanitize_key(
-							(string) $item['id']
-						) !== sanitize_key(
-							$library_id
-						);
-				}
-			);
-
-			update_option(
-				self::LIBRARY_OPTIONS[ $type ],
-				array_values( $items ),
-				false
-			);
+			$excluded[ $key ] = true;
 		}
+
+		update_option(
+			self::EXCLUSIONS_OPTION,
+			array_keys( $excluded ),
+			false
+		);
+	}
+
+	/**
+	 * Returns sanitized placement exclusions.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_excluded_reference_keys(): array {
+		$raw = get_option(
+			self::EXCLUSIONS_OPTION,
+			array()
+		);
+
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$keys = array();
+
+		foreach ( $raw as $value ) {
+			$parts = explode( ':', (string) $value, 2 );
+
+			if ( 2 !== count( $parts ) ) {
+				continue;
+			}
+
+			$type       = sanitize_key( $parts[0] );
+			$library_id = sanitize_key( $parts[1] );
+
+			if (
+				empty( $library_id )
+				|| ! isset( self::LIBRARY_OPTIONS[ $type ] )
+			) {
+				continue;
+			}
+
+			$keys[ $type . ':' . $library_id ] = true;
+		}
+
+		return array_keys( $keys );
 	}
 
 	/**
@@ -610,10 +691,10 @@ final class Kidia_Mobile_Layout_Store {
 					(string) $block['name']
 				),
 				'enabled'    => ! empty( $block['enabled'] ),
+				'status'     => 'published' === ( $block['status'] ?? 'draft' )
+					? 'published'
+					: 'draft',
 				'order'      => $index + 1,
-				'settings'   => $this->sanitize_settings(
-					(array) $block['settings']
-				),
 			);
 		}
 
@@ -622,6 +703,127 @@ final class Kidia_Mobile_Layout_Store {
 			$references,
 			false
 		);
+	}
+
+	/**
+	 * Returns stable keys for reference-change detection.
+	 *
+	 * @param array<int,array<string,mixed>> $layout Layout.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_reference_keys( array $layout ): array {
+		$keys = array();
+
+		foreach ( $layout as $block ) {
+			$keys[] = (string) $block['type']
+				. ':'
+				. (string) $block['id']
+				. ':'
+				. (string) ( $block['library_id'] ?? $block['id'] );
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Detects malformed saved references that need one-time repair.
+	 *
+	 * @param array<int|string,mixed> $layout Raw saved layout.
+	 *
+	 * @return bool
+	 */
+	private function layout_requires_repair( array $layout ): bool {
+		foreach ( $layout as $block ) {
+			if (
+				! is_array( $block )
+				|| empty( $block['id'] )
+				|| empty( $block['library_id'] )
+				|| empty( $block['type'] )
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Normalizes publishing status with an explicit legacy fallback.
+	 *
+	 * @param mixed  $value    Raw status.
+	 * @param string $fallback Fallback status.
+	 *
+	 * @return string
+	 */
+	private function normalize_status( $value, string $fallback ): string {
+		$status = sanitize_key( (string) $value );
+
+		return in_array( $status, array( 'draft', 'published' ), true )
+			? $status
+			: $fallback;
+	}
+
+	/**
+	 * Keeps the Library record as the canonical source for element settings.
+	 *
+	 * Home Builder owns placement, order, name and enabled state. Existing
+	 * element settings and publishing status are edited only in Library Editor,
+	 * so saving a compact Builder form can never erase fields it did not render.
+	 *
+	 * @param array<int,array<string,mixed>> $layout Submitted layout.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function preserve_library_state( array $layout ): array {
+		foreach ( $layout as &$block ) {
+			$type       = (string) $block['type'];
+			$library_id = (string) ( $block['library_id'] ?? $block['id'] );
+			$item       = $this->find_library_item( $type, $library_id );
+
+			if ( null === $item ) {
+				$source_id = (string) ( $block['source_library_id'] ?? '' );
+				$source    = '' !== $source_id
+					? $this->find_library_item( $type, $source_id )
+					: null;
+
+				if ( null !== $source ) {
+					$source_settings = isset( $source['settings'] )
+						&& is_array( $source['settings'] )
+							? $source['settings']
+							: array();
+
+					$block['settings'] = wp_parse_args(
+						$this->sanitize_settings( $source_settings ),
+						Kidia_Mobile_Block_Registry::defaults( $type )
+					);
+					$block['status'] = 'draft';
+					continue;
+				}
+
+				$block['status'] = 'published' === ( $block['status'] ?? 'draft' )
+					? 'published'
+					: 'draft';
+				continue;
+			}
+
+			$settings = isset( $item['settings'] ) && is_array( $item['settings'] )
+				? $this->sanitize_settings( $item['settings'] )
+				: array();
+
+			$block['settings'] = wp_parse_args(
+				$settings,
+				Kidia_Mobile_Block_Registry::defaults( $type )
+			);
+			$block['status'] = $this->normalize_status(
+				$item['status'] ?? null,
+				'published'
+			);
+		}
+
+		unset( $block );
+
+		return $layout;
 	}
 
 	/**
