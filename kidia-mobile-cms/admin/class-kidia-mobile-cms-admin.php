@@ -362,7 +362,7 @@ final class Kidia_Mobile_CMS_Admin {
             			array(
 						'labels' => array(
             					'deleteConfirm' => __(
-            						'Delete this element?',
+									'Remove this element from the Home page?',
             						'kidia-mobile-cms'
             					),
 							'untitled'      => __(
