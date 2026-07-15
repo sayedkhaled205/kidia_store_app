@@ -26,7 +26,7 @@ return array(
 
 		'interval_ms' => 4500,
 
-		'slides' => array(),
+		'items' => array(),
 
 	),
 
@@ -38,8 +38,8 @@ return array(
 		),
 
 		array(
-			'id'    => 'slides',
-			'label' => __( 'Slides', 'kidia-mobile-cms' ),
+			'id'    => 'items',
+			'label' => __( 'Images', 'kidia-mobile-cms' ),
 		),
 
 	),
@@ -77,10 +77,10 @@ return array(
 		),
 
 		array(
-			'key' => 'slides',
+			'key' => 'items',
 			'label' => __( 'Slides', 'kidia-mobile-cms' ),
-			'type' => 'repeater',
-			'tab' => 'slides',
+			'type' => 'gallery',
+			'tab' => 'items',
 			'default' => array(),
 		),
 
