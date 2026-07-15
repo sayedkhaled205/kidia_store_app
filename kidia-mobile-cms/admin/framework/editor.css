@@ -248,3 +248,86 @@
 	}
 
 }
+
+/* Refined compact editor layout. */
+.kidia-editor {
+	max-width: 1280px;
+}
+
+.kidia-editor-layout {
+	grid-template-columns: minmax(0, 1fr) 280px;
+	gap: 20px;
+}
+
+.kidia-editor-main {
+	gap: 18px;
+}
+
+.kidia-editor-sidebar {
+	gap: 16px;
+}
+
+.kidia-editor-card {
+	border-radius: 12px;
+	box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+}
+
+.kidia-editor-card__header {
+	padding: 15px 18px;
+	background: #f6f7f7;
+}
+
+.kidia-editor-card__header h2 {
+	font-size: 16px;
+}
+
+.kidia-editor-card__body {
+	padding: 18px;
+}
+
+.kidia-editor-fields {
+	gap: 16px 18px;
+}
+
+.kidia-editor-field {
+	gap: 6px;
+}
+
+.kidia-editor-field input,
+.kidia-editor-field select {
+	min-height: 38px;
+}
+
+.kidia-editor-tabs {
+	gap: 16px;
+}
+
+.kidia-editor-tabs__nav {
+	gap: 6px;
+	padding: 4px;
+	border-radius: 10px;
+	background: #e9ecef;
+}
+
+.kidia-editor-tab-button {
+	padding: 8px 15px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+}
+
+.kidia-editor-tab-button.is-active {
+	background: #fff;
+	color: #135e96;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+}
+
+.kidia-editor-actions {
+	margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+	.kidia-editor-layout {
+		grid-template-columns: 1fr;
+	}
+}
