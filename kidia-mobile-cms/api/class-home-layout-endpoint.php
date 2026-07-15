@@ -169,6 +169,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 			if (
 				! is_array( $instance )
 				|| empty( $instance['enabled'] )
+				|| 'published' !== ( $instance['status'] ?? 'published' )
 			) {
 				continue;
 			}
@@ -223,8 +224,10 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 	/**
 	 * Builds a generic API block for schema-based elements.
 	 *
-	 * This fallback allows every registered schema element to appear
-	 * in the API even when it does not have a custom block builder.
+	 * This fallback allows a schema-only element to appear in the API when it
+	 * does not have a custom block builder. A registered builder returning
+	 * null has deliberately rejected or omitted its payload and must never be
+	 * replaced with unspecialized raw settings.
 	 *
 	 * @param array<string, mixed> $instance Block instance.
 	 *
@@ -241,6 +244,9 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 
 		if (
 			'' === $type
+			|| Kidia_Mobile_Block_Registry::is_registered(
+				$type
+			)
 			|| ! Kidia_Mobile_Block_Registry::exists(
 				$type
 			)
