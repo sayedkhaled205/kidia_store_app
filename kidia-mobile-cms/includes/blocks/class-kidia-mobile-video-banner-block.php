@@ -93,6 +93,8 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 			'product',
 			'category',
 			'collection',
+			'brand',
+			'brands',
 			'search',
 			'external',
 		);
@@ -108,11 +110,11 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 		}
 
 		return array(
-			'video_url' => esc_url_raw(
+			'video_url' => $this->sanitize_http_url(
 				$settings['video_url'] ?? ''
 			),
 
-			'poster_url' => esc_url_raw(
+			'poster_url' => $this->sanitize_http_url(
 				$settings['poster_url'] ?? ''
 			),
 
@@ -141,9 +143,9 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 
 			'action_type' => $action_type,
 
-			'action_value' => sanitize_text_field(
-				$settings['action_value'] ?? ''
-			),
+			'action_value' => 'external' === $action_type
+				? $this->sanitize_http_url( $settings['action_value'] ?? '' )
+				: sanitize_text_field( (string) ( $settings['action_value'] ?? '' ) ),
 		);
 	}
 
@@ -414,6 +416,20 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					</option>
 
 					<option
+						value="brand"
+						<?php selected( 'brand', $settings['action_type'] ); ?>
+					>
+						<?php esc_html_e( 'Brand', 'kidia-mobile-cms' ); ?>
+					</option>
+
+					<option
+						value="brands"
+						<?php selected( 'brands', $settings['action_type'] ); ?>
+					>
+						<?php esc_html_e( 'All Brands', 'kidia-mobile-cms' ); ?>
+					</option>
+
+					<option
 						value="search"
 						<?php selected( 'search', $settings['action_type'] ); ?>
 					>
@@ -451,5 +467,29 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 
 		</div>
 		<?php
+	}
+
+	/**
+	 * Sanitizes an HTTP(S) URL for the mobile API contract.
+	 *
+	 * @param mixed $value Raw URL.
+	 *
+	 * @return string
+	 */
+	private function sanitize_http_url( $value ): string {
+		$url = esc_url_raw(
+			(string) $value,
+			array( 'http', 'https' )
+		);
+
+		$scheme = strtolower(
+			(string) wp_parse_url( $url, PHP_URL_SCHEME )
+		);
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+
+		return '' !== $host
+			&& in_array( $scheme, array( 'http', 'https' ), true )
+			? $url
+			: '';
 	}
 }
