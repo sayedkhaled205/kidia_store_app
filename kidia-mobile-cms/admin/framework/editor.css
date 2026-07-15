@@ -331,3 +331,44 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+
+/* Gallery editor and footer flow. */
+#wpfooter {
+	position: static;
+	margin-top: 40px;
+}
+
+.kidia-editor-gallery {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.kidia-editor-gallery__items {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 12px;
+}
+
+.kidia-editor-gallery__item {
+	position: relative;
+	overflow: hidden;
+	padding: 8px;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	background: #fff;
+}
+
+.kidia-editor-gallery__item img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: 7px;
+	object-fit: cover;
+}
+
+.kidia-editor-gallery__remove {
+	display: block;
+	margin: 8px auto 0;
+}
