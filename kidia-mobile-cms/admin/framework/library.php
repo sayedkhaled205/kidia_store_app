@@ -320,6 +320,25 @@ defined( 'ABSPATH' ) || exit;
 
 					<div class="kidia-library-card__actions">
 
+						<button
+							type="button"
+							class="button kidia-library-status-toggle <?php
+								echo 'published' === $item_status
+									? 'is-draft-action'
+									: 'button-primary';
+							?>"
+							data-action="<?php echo esc_attr( $status_action ); ?>"
+							data-id="<?php echo esc_attr( $item_id ); ?>"
+						>
+							<?php
+							echo esc_html(
+								'published' === $item_status
+									? __( 'Draft', 'kidia-mobile-cms' )
+									: __( 'Publish', 'kidia-mobile-cms' )
+							);
+							?>
+						</button>
+
 						<a
 							class="button button-primary"
 							href="<?php
