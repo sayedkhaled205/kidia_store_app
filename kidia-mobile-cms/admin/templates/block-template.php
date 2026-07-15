@@ -104,7 +104,7 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 				class="button button-link-delete kidia-delete-block"
 			>
 				<?php esc_html_e(
-					'Delete',
+					'Remove',
 					'kidia-mobile-cms'
 				); ?>
 			</button>
