@@ -125,6 +125,20 @@ foreach ( $library_options as $type => $option_name ) {
 			value="kidia_mobile_save_home_builder"
 		>
 
+		<input
+			type="hidden"
+			name="edit_after_save_type"
+			id="kidia-edit-after-save-type"
+			value=""
+		>
+
+		<input
+			type="hidden"
+			name="edit_after_save_id"
+			id="kidia-edit-after-save-id"
+			value=""
+		>
+
 		<?php
 		wp_nonce_field(
 			'kidia_mobile_save_home_builder',
@@ -759,6 +773,9 @@ foreach ( $library_options as $type => $option_name ) {
 	$default_block_data['order'] =
 		'__ORDER__';
 
+	$default_block_data['status'] =
+		'draft';
+
 	$index = '__INDEX__';
 
 	$block_data = $default_block_data;
@@ -800,6 +817,9 @@ foreach ( $library_options as $type => $option_name ) {
 				: $block->get_label(),
 			'enabled'    => ! isset( $library_item['enabled'] )
 				|| ! empty( $library_item['enabled'] ),
+			'status'     => 'published' === ( $library_item['status'] ?? 'published' )
+				? 'published'
+				: 'draft',
 			'order'      => '__ORDER__',
 			'settings'   => isset( $library_item['settings'] )
 				&& is_array( $library_item['settings'] )
