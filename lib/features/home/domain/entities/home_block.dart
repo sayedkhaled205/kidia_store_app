@@ -1,0 +1,236 @@
+enum HomeBlockType {
+  heroSlider('hero_slider'),
+  categoryGrid('category_grid'),
+  imageBanner('image_banner'),
+  productCarousel('product_carousel'),
+  productGrid('product_grid'),
+  sectionHeader('section_header'),
+  brandCarousel('brand_carousel'),
+  spacer('spacer');
+
+  const HomeBlockType(this.apiValue);
+
+  final String apiValue;
+
+  static HomeBlockType? tryParse(String value) {
+    for (final HomeBlockType type in HomeBlockType.values) {
+      if (type.apiValue == value) {
+        return type;
+      }
+    }
+
+    return null;
+  }
+}
+
+abstract class HomeBlock {
+  const HomeBlock({
+    required this.id,
+    required this.type,
+    required this.enabled,
+  });
+
+  final String id;
+  final HomeBlockType type;
+  final bool enabled;
+}
+
+class HomeAction {
+  const HomeAction({
+    required this.type,
+    required this.value,
+  });
+
+  final String type;
+  final String value;
+}
+
+class HeroSlide {
+  const HeroSlide({
+    required this.id,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+    required this.action,
+  });
+
+  final String id;
+  final String imageUrl;
+  final String? title;
+  final String? subtitle;
+  final HomeAction? action;
+}
+
+class HeroSliderBlock extends HomeBlock {
+  const HeroSliderBlock({
+    required super.id,
+    required super.enabled,
+    required this.items,
+    required this.aspectRatio,
+    required this.autoPlay,
+    required this.intervalMilliseconds,
+  }) : super(type: HomeBlockType.heroSlider);
+
+  final List<HeroSlide> items;
+  final double aspectRatio;
+  final bool autoPlay;
+  final int intervalMilliseconds;
+}
+
+class CategoryItem {
+  const CategoryItem({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+    required this.action,
+  });
+
+  final int id;
+  final String name;
+  final String imageUrl;
+  final HomeAction? action;
+}
+
+class CategoryGridBlock extends HomeBlock {
+  const CategoryGridBlock({
+    required super.id,
+    required super.enabled,
+    required this.items,
+    required this.columns,
+    required this.showNames,
+  }) : super(type: HomeBlockType.categoryGrid);
+
+  final List<CategoryItem> items;
+  final int columns;
+  final bool showNames;
+}
+
+class ImageBannerBlock extends HomeBlock {
+  const ImageBannerBlock({
+    required super.id,
+    required super.enabled,
+    required this.imageUrl,
+    required this.aspectRatio,
+    required this.borderRadius,
+    required this.semanticLabel,
+    required this.action,
+  }) : super(type: HomeBlockType.imageBanner);
+
+  final String imageUrl;
+  final double aspectRatio;
+  final double borderRadius;
+  final String? semanticLabel;
+  final HomeAction? action;
+}
+
+class HomeProductItem {
+  const HomeProductItem({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+    required this.price,
+    required this.regularPrice,
+    required this.currencyCode,
+    required this.currencySymbol,
+    required this.inStock,
+    required this.badge,
+    required this.action,
+  });
+
+  final int id;
+  final String name;
+  final String imageUrl;
+  final String price;
+  final String? regularPrice;
+  final String currencyCode;
+  final String currencySymbol;
+  final bool inStock;
+  final String? badge;
+  final HomeAction? action;
+}
+
+class ProductCarouselBlock extends HomeBlock {
+  const ProductCarouselBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.items,
+    required this.showViewAll,
+    required this.viewAllAction,
+  }) : super(type: HomeBlockType.productCarousel);
+
+  final String? title;
+  final List<HomeProductItem> items;
+  final bool showViewAll;
+  final HomeAction? viewAllAction;
+}
+
+class ProductGridBlock extends HomeBlock {
+  const ProductGridBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.items,
+    required this.columns,
+    required this.showViewAll,
+    required this.viewAllAction,
+  }) : super(type: HomeBlockType.productGrid);
+
+  final String? title;
+  final List<HomeProductItem> items;
+  final int columns;
+  final bool showViewAll;
+  final HomeAction? viewAllAction;
+}
+
+class SectionHeaderBlock extends HomeBlock {
+  const SectionHeaderBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.action,
+  }) : super(type: HomeBlockType.sectionHeader);
+
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final HomeAction? action;
+}
+
+class BrandItem {
+  const BrandItem({
+    required this.id,
+    required this.name,
+    required this.logoUrl,
+    required this.action,
+  });
+
+  final int id;
+  final String name;
+  final String logoUrl;
+  final HomeAction? action;
+}
+
+class BrandCarouselBlock extends HomeBlock {
+  const BrandCarouselBlock({
+    required super.id,
+    required super.enabled,
+    required this.items,
+    required this.itemWidth,
+  }) : super(type: HomeBlockType.brandCarousel);
+
+  final List<BrandItem> items;
+  final double itemWidth;
+}
+
+class SpacerBlock extends HomeBlock {
+  const SpacerBlock({
+    required super.id,
+    required super.enabled,
+    required this.height,
+  }) : super(type: HomeBlockType.spacer);
+
+  final double height;
+}
