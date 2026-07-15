@@ -428,7 +428,8 @@
 				block.querySelector('.kidia-block-name')?.textContent?.trim() ||
 				labels.untitled ||
 				'Untitled Element';
-			const message = labels.deleteConfirm || 'Delete this element?';
+			const message =
+				labels.deleteConfirm || 'Remove this element from the Home page?';
 
 			if (!window.confirm(message + '\n' + name)) {
 				return;
