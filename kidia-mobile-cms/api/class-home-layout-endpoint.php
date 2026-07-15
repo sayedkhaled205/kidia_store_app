@@ -91,6 +91,30 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 				),
 			)
 		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/home-layout',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array(
+					$this,
+					'get_home_layout',
+				),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'locale' => array(
+						'type'              => 'string',
+						'default'           => 'ar',
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => array(
+							$this,
+							'validate_locale',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
