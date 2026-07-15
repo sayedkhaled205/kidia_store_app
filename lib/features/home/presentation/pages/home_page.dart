@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
@@ -169,7 +170,7 @@ class _HomeHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kidia Store',
+                  AppConfig.storeName,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w900,
@@ -177,7 +178,7 @@ class _HomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'كل ما يحتاجه طفلك',
+                  AppConfig.storeTagline,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
