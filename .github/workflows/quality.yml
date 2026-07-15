@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint PHP
         run: find kidia-mobile-cms -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test Layout Store contract
+        run: php kidia-mobile-cms/tests/layout-store-contract-test.php
       - name: Check JavaScript syntax
         run: find kidia-mobile-cms -type f -name '*.js' -print0 | xargs -0 -n1 node --check
 
