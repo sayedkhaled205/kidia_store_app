@@ -106,13 +106,9 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				break;
 
 			case 'best_selling':
-				$args['orderby'] = 'meta_value_num';
-				$args['meta_key'] = 'total_sales';
-				$args['order'] = 'DESC';
-				break;
-
 			case 'top_rated':
-				$args['orderby'] = 'rating';
+				$args['limit'] = max( 50, $settings['limit'] );
+				$args['orderby'] = 'date';
 				$args['order'] = 'DESC';
 				break;
 
@@ -147,6 +143,24 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		}
 
 		$products = wc_get_products( $args );
+
+		if ( 'best_selling' === $settings['source'] ) {
+			usort(
+				$products,
+				static fn ( WC_Product $a, WC_Product $b ): int =>
+					$b->get_total_sales() <=> $a->get_total_sales()
+			);
+		}
+
+		if ( 'top_rated' === $settings['source'] ) {
+			usort(
+				$products,
+				static fn ( WC_Product $a, WC_Product $b ): int =>
+					(float) $b->get_average_rating() <=> (float) $a->get_average_rating()
+			);
+		}
+
+		$products = array_slice( $products, 0, $settings['limit'] );
 		$items    = array();
 
 		foreach ( $products as $product ) {
