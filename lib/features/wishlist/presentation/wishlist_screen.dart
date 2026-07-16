@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
@@ -27,6 +29,7 @@ class WishlistScreen extends StatefulWidget {
 
 class _WishlistScreenState extends State<WishlistScreen> {
   late WishlistController _controller;
+  Timer? _snackBarTimer;
 
   @override
   void initState() {
@@ -61,6 +64,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
   @override
   void dispose() {
+    _snackBarTimer?.cancel();
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
@@ -141,11 +145,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
       return;
     }
     final _WishlistCopy copy = _WishlistCopy.of(context);
-    ScaffoldMessenger.of(context)
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(copy.removed),
+          duration: const Duration(seconds: 3),
           action: SnackBarAction(
             label: copy.undo,
             onPressed: () {
@@ -154,6 +160,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
           ),
         ),
       );
+    _snackBarTimer?.cancel();
+    _snackBarTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        messenger.hideCurrentSnackBar();
+      }
+    });
   }
 }
 
