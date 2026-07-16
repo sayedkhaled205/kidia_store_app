@@ -20,6 +20,7 @@ void main() {
     expect(find.byKey(const Key('checkout-billing-firstName')), findsOneWidget);
     expect(find.byKey(const Key('checkout-billing-email')), findsNothing);
     expect(find.byKey(const Key('checkout-billing-phone')), findsOneWidget);
+    expect(find.byKey(const Key('checkout-billing-postcode')), findsNothing);
     expect(find.text('Phone *'), findsOneWidget);
     expect(find.text('Ada'), findsOneWidget);
     expect(find.text('Cash on delivery'), findsOneWidget);
@@ -52,9 +53,8 @@ void main() {
                 CheckoutFieldDefinition(
                   key: 'billing_postcode',
                   group: CheckoutFieldGroup.billing,
-                  type: CheckoutFieldType.text,
+                  type: CheckoutFieldType.hidden,
                   label: 'Postcode',
-                  required: true,
                 ),
               ],
             ),
@@ -71,9 +71,9 @@ void main() {
     expect(find.text('VAT number *'), findsOneWidget);
     expect(
       find.byKey(const Key('checkout-dynamic-billing_postcode')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('Postcode *'), findsOneWidget);
+    expect(find.text('Postcode'), findsNothing);
   });
 
   testWidgets(
@@ -176,6 +176,7 @@ void main() {
       find.byKey(const Key('checkout-shipping-firstName')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('checkout-shipping-postcode')), findsNothing);
   });
 
   testWidgets('places one order and reports success to the host app', (
