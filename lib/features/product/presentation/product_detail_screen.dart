@@ -558,7 +558,7 @@ class _ProductOptionPicker extends StatelessWidget {
           const SizedBox(height: 10),
           Wrap(
             spacing: 9,
-            runSpacing: 9,
+            runSpacing: 6,
             children: group.values
                 .map((ProductOptionValue option) {
                   final bool available = controller.isOptionAvailable(
@@ -606,36 +606,52 @@ class _QuantitySelector extends StatelessWidget {
             border: Border.all(
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            children: <Widget>[
-              IconButton(
-                key: const Key('quantity-decrement'),
-                tooltip: copy.decreaseQuantity,
-                onPressed: controller.quantity > 1
-                    ? controller.decrementQuantity
-                    : null,
-                icon: const Icon(Icons.remove_rounded),
-              ),
-              SizedBox(
-                width: 36,
-                child: Text(
-                  '${controller.quantity}',
-                  key: const Key('product-quantity'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+          child: SizedBox(
+            height: 42,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  key: const Key('quantity-decrement'),
+                  tooltip: copy.decreaseQuantity,
+                  onPressed: controller.quantity > 1
+                      ? controller.decrementQuantity
+                      : null,
+                  iconSize: 20,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints.tightFor(
+                    width: 40,
+                    height: 40,
+                  ),
+                  icon: const Icon(Icons.remove_rounded),
                 ),
-              ),
-              IconButton(
-                key: const Key('quantity-increment'),
-                tooltip: copy.increaseQuantity,
-                onPressed: controller.quantity < 99
-                    ? controller.incrementQuantity
-                    : null,
-                icon: const Icon(Icons.add_rounded),
-              ),
-            ],
+                SizedBox(
+                  width: 30,
+                  child: Text(
+                    '${controller.quantity}',
+                    key: const Key('product-quantity'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('quantity-increment'),
+                  tooltip: copy.increaseQuantity,
+                  onPressed: controller.quantity < 99
+                      ? controller.incrementQuantity
+                      : null,
+                  iconSize: 20,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints.tightFor(
+                    width: 40,
+                    height: 40,
+                  ),
+                  icon: const Icon(Icons.add_rounded),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -691,26 +707,24 @@ class _BrandSection extends StatelessWidget {
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
           children: <Widget>[
             Text(
-              copy.brand,
+              '${copy.brand}:',
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: product.brands
-                  .map(
-                    (brand) => Chip(
-                      avatar: const Icon(Icons.verified_outlined, size: 18),
-                      label: Text(brand.name),
-                    ),
-                  )
-                  .toList(growable: false),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                product.brands.map((brand) => brand.name).join('، '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ],
         ),
