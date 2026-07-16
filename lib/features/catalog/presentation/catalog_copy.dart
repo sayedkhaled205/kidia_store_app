@@ -44,7 +44,8 @@ class CatalogCopy {
   String get filters => isArabic ? 'الفلاتر' : 'Filters';
   String get apply => isArabic ? 'تطبيق' : 'Apply';
   String get reset => isArabic ? 'إعادة ضبط' : 'Reset';
-  String get inStockOnly => isArabic ? 'المتوفر فقط' : 'In stock only';
+  String get brand => isArabic ? 'البراند' : 'Brand';
+  String get allBrands => isArabic ? 'كل البراندات' : 'All brands';
   String get onSaleOnly => isArabic ? 'العروض فقط' : 'On sale only';
   String get minimumPrice => isArabic ? 'أقل سعر' : 'Minimum price';
   String get maximumPrice => isArabic ? 'أعلى سعر' : 'Maximum price';
