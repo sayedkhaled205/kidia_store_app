@@ -78,10 +78,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_controller.product?.name ?? copy.product),
-        actions: _buildActions(copy),
-      ),
+      appBar: AppBar(title: Text(copy.product), actions: _buildActions(copy)),
       body: _buildBody(copy),
       bottomNavigationBar:
           _controller.status == ProductDetailStatus.success &&
@@ -99,11 +96,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Widget> _buildActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <Widget>[
-      IconButton(
-        tooltip: 'البحث',
-        onPressed: () => context.push('/search'),
-        icon: const Icon(Icons.search_rounded),
-      ),
       IconButton(
         tooltip: 'السلة',
         onPressed: () => context.push('/cart'),
@@ -220,24 +212,6 @@ class _ProductContent extends StatelessWidget {
               ],
               const SizedBox(height: 14),
               _MoneyPrice(money: money),
-              const SizedBox(height: 18),
-              _ReviewSummary(
-                rating: product.averageRating,
-                reviewCount: product.reviewCount,
-                copy: copy,
-                onTap: onReviewsRequested == null
-                    ? null
-                    : () => onReviewsRequested!(product),
-              ),
-              if (product.summary.trim().isNotEmpty) ...<Widget>[
-                const SizedBox(height: 18),
-                Text(
-                  _plainText(product.summary),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(height: 1.55),
-                ),
-              ],
               if (controller.optionGroups.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 24),
                 for (final ProductOptionGroup group in controller.optionGroups)
@@ -488,54 +462,6 @@ class _MoneyPrice extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _ReviewSummary extends StatelessWidget {
-  const _ReviewSummary({
-    required this.rating,
-    required this.reviewCount,
-    required this.copy,
-    this.onTap,
-  });
-
-  final double rating;
-  final int reviewCount;
-  final _ProductCopy copy;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: const Key('product-reviews-summary'),
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.star_rounded, size: 22, color: Colors.amber.shade700),
-            const SizedBox(width: 5),
-            Text(
-              rating.toStringAsFixed(1),
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              copy.reviewCount(reviewCount),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (onTap != null) ...<Widget>[
-              const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded, size: 20),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
