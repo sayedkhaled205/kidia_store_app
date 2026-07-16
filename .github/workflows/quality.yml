@@ -33,7 +33,5 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - name: Emit resolved lockfile for dependency update
-        run: base64 -w0 pubspec.lock
       - run: flutter analyze
       - run: flutter test

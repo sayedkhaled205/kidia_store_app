@@ -66,10 +66,9 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
   StoreApiCheckoutTransport({
     required Uri storeUri,
     Dio? dio,
-    CheckoutAuthTokenReader? authTokenReader,
+    this._authTokenReader,
   })
     : _storeUri = _normalizeStoreUri(storeUri),
-      _authTokenReader = authTokenReader,
       _dio =
           dio ??
           Dio(

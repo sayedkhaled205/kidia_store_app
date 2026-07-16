@@ -53,10 +53,9 @@ class StoreApiCartTransport implements CartApiTransport {
   StoreApiCartTransport({
     required Uri storeUri,
     Dio? dio,
-    CartAuthTokenReader? authTokenReader,
+    this._authTokenReader,
   })
     : _storeUri = _normalizeAndValidateStoreUri(storeUri),
-      _authTokenReader = authTokenReader,
       _dio =
           dio ??
           Dio(
