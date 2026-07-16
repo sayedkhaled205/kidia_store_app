@@ -50,22 +50,30 @@ class CatalogProductCard extends StatelessWidget {
                     fit: StackFit.expand,
                     children: <Widget>[
                       if (imageUrl == null || imageUrl.isEmpty)
-                        const AppNetworkImageError()
+                        const Padding(
+                          padding: EdgeInsets.all(5),
+                          child: AppNetworkImageError(),
+                        )
                       else
                         Padding(
-                          padding: EdgeInsets.zero,
-                          child: AppNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.center,
-                            semanticLabel:
-                                product.primaryImage?.alt.isNotEmpty == true
-                                ? product.primaryImage!.alt
-                                : product.name,
+                          padding: const EdgeInsets.all(5),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: AppNetworkImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
+                              semanticLabel:
+                                  product.primaryImage?.alt.isNotEmpty == true
+                                  ? product.primaryImage!.alt
+                                  : product.name,
+                            ),
                           ),
                         ),
-                    if (!product.isInStock)
-                      ColoredBox(color: colors.surface.withValues(alpha: 0.68)),
+                      if (!product.isInStock)
+                        ColoredBox(
+                          color: colors.surface.withValues(alpha: 0.68),
+                        ),
                       PositionedDirectional(
                         start: 8,
                         top: 8,
