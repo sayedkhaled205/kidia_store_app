@@ -4,6 +4,7 @@ import 'package:kidia_store_app/features/auth/application/auth_controller.dart';
 import 'package:kidia_store_app/features/auth/data/network/auth_api_transport.dart';
 import 'package:kidia_store_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:kidia_store_app/features/auth/data/storage/auth_session_store.dart';
+import 'package:kidia_store_app/features/auth/data/storage/social_auth_pending_store.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 
@@ -27,10 +28,15 @@ final authSessionStoreProvider = Provider<AuthSessionStore>((Ref ref) {
   return SecureAuthSessionStore.forConfiguredStore();
 });
 
+final socialAuthPendingStoreProvider = Provider<SocialAuthPendingStore>((Ref ref) {
+  return SecureSocialAuthPendingStore.forConfiguredStore();
+});
+
 final authRepositoryProvider = Provider<AuthRepository>((Ref ref) {
   return AuthRepositoryImpl(
     transport: ref.watch(authApiTransportProvider),
     sessionStore: ref.watch(authSessionStoreProvider),
+    socialPendingStore: ref.watch(socialAuthPendingStoreProvider),
   );
 });
 

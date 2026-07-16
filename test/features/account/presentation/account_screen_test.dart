@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/account/presentation/account_screen.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:kidia_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
@@ -71,6 +72,22 @@ void main() {
 }
 
 class _SignedOutRepository implements AuthRepository {
+  @override
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String returnPath,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SocialAuthCompletion> completeSocialSignIn({
+    required String code,
+    required String state,
+  }) {
+    throw UnimplementedError();
+  }
+
   @override
   Future<AuthIdentity> identify(String email) async {
     return AuthIdentity(email: email, isRegistered: false);

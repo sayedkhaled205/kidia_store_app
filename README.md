@@ -35,23 +35,28 @@ The APK is written to `build/app/outputs/flutter-apk/app-debug.apk`.
 - Cart, coupons, local wishlist, brands, and standard Store API checkout
 - Progressive email sign-in/registration using the store's existing
   WooCommerce customer accounts
+- Google and Facebook sign-in through the store's configured Nextend Social
+  Login providers, returning securely to the app without embedding provider
+  secrets
 - Secure, store-scoped mobile sessions and mandatory authentication before
   checkout, with orders attached to the signed-in WooCommerce customer
 - Arabic/English direction support and responsive mobile layouts
 
 ## Store-specific integrations
 
-Social sign-in and payment gateways require credentials and server-side
-adapters owned by each store. Never commit Google, Meta, Apple, payment, or
-WooCommerce secrets to this repository. The generic checkout deliberately does
-not store or transmit raw card details.
+Google and Facebook sign-in reuse the store's existing Nextend Social Login
+configuration. Enable and verify each provider in WordPress before testing the
+app. Provider credentials remain in WordPress and are never committed to or
+embedded in the Flutter app. Payment gateways likewise require credentials and
+server-side adapters owned by each store. The generic checkout deliberately
+does not store or transmit raw card details.
 
 ## WordPress package
 
 `kidia-mobile-cms.zip` is the installable plugin archive. Replace the installed
 plugin only after backing up the site, then verify Library, Home Builder,
 Editor, and `/wp-json/kidia-mobile/v1/home-layout` on a staging site. App
-authentication requires plugin version 1.6.0 or newer and an HTTPS store.
+authentication requires plugin version 1.7.0 or newer and an HTTPS store.
 
 The app never embeds WooCommerce API secrets. The companion plugin validates
 the website email/password, stores only hashed mobile-session tokens in user
@@ -61,4 +66,7 @@ only for the mobile plugin and WooCommerce Store API namespaces.
 The same build works against staging or production: install the same plugin
 version on the target site and build with that site's `STORE_URL`. Customer
 accounts and orders always belong to the site selected by `STORE_URL`; staging
-sessions are kept separate from production sessions on the device.
+sessions are kept separate from production sessions on the device. Nextend's
+Google and Facebook providers must also be enabled for that exact site origin;
+configure and verify staging and production separately when they use different
+domains.

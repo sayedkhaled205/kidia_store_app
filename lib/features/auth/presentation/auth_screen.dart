@@ -6,6 +6,7 @@ import 'package:kidia_store_app/core/theme/kidia_colors.dart';
 import 'package:kidia_store_app/core/theme/kidia_radius.dart';
 import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:kidia_store_app/features/auth/presentation/auth_copy.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
@@ -116,6 +117,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         onPressed: _busy ? null : _openPasswordReset,
                         child: Text(copy.forgotPassword),
                       ),
+                    if (_step == _AuthStep.email) ...<Widget>[
+                      const SizedBox(height: KidiaSpacing.xl),
+                      _SocialAuthDivider(label: copy.or),
+                      const SizedBox(height: KidiaSpacing.md),
+                      _SocialAuthButtons(
+                        copy: copy,
+                        enabled: !_busy,
+                        onProvider: (SocialAuthProvider provider) =>
+                            _beginSocialSignIn(provider, copy),
+                      ),
+                    ],
                     const SizedBox(height: KidiaSpacing.xl),
                     _PrivacyNotice(
                       text: copy.privacyPrefix,
@@ -253,6 +265,42 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } catch (error) {
       if (mounted) {
         setState(() => _error = _messageFor(error, copy));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _beginSocialSignIn(
+    SocialAuthProvider provider,
+    AuthCopy copy,
+  ) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final Uri authorizeUri = await ref
+          .read(authControllerProvider.notifier)
+          .beginSocialSignIn(
+            provider: provider,
+            returnPath: widget.popOnSuccess ? '/account' : '/checkout',
+          );
+      final bool launched = await launchUrl(
+        authorizeUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw StateError('The social sign-in browser could not be opened.');
+      }
+    } catch (error) {
+      if (mounted) {
+        final String message = error is AuthRepositoryException
+            ? _messageFor(error, copy)
+            : copy.socialSignInError;
+        setState(() => _error = message);
       }
     } finally {
       if (mounted) {
@@ -650,6 +698,185 @@ class _SelectedEmail extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SocialAuthDivider extends StatelessWidget {
+  const _SocialAuthDivider({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      key: const Key('auth-social-or'),
+      children: <Widget>[
+        const Expanded(child: Divider(indent: 72, endIndent: 16)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: KidiaColors.textSecondary,
+          ),
+        ),
+        const Expanded(child: Divider(indent: 16, endIndent: 72)),
+      ],
+    );
+  }
+}
+
+class _SocialAuthButtons extends StatelessWidget {
+  const _SocialAuthButtons({
+    required this.copy,
+    required this.enabled,
+    required this.onProvider,
+  });
+
+  final AuthCopy copy;
+  final bool enabled;
+  final ValueChanged<SocialAuthProvider> onProvider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      textDirection: TextDirection.ltr,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        _SocialCircleButton(
+          key: const Key('auth-google'),
+          label: copy.continueWithGoogle,
+          enabled: enabled,
+          onTap: () => onProvider(SocialAuthProvider.google),
+          backgroundColor: Colors.white,
+          borderColor: const Color(0xFFE4E7EC),
+          child: const _GoogleMark(),
+        ),
+        const SizedBox(width: KidiaSpacing.lg),
+        _SocialCircleButton(
+          key: const Key('auth-facebook'),
+          label: copy.continueWithFacebook,
+          enabled: enabled,
+          onTap: () => onProvider(SocialAuthProvider.facebook),
+          backgroundColor: const Color(0xFF1877F2),
+          borderColor: const Color(0xFF1877F2),
+          child: const Text(
+            'f',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              height: 1.12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.square(
+      dimension: 30,
+      child: CustomPaint(painter: _GoogleMarkPainter()),
+    );
+  }
+}
+
+class _GoogleMarkPainter extends CustomPainter {
+  const _GoogleMarkPainter();
+
+  static const double _strokeWidth = 4.8;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect ring = Offset(_strokeWidth / 2, _strokeWidth / 2) &
+        Size(
+          size.width - _strokeWidth,
+          size.height - _strokeWidth,
+        );
+    void arc(Color color, double start, double sweep) {
+      canvas.drawArc(
+        ring,
+        start,
+        sweep,
+        false,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _strokeWidth
+          ..strokeCap = StrokeCap.butt,
+      );
+    }
+
+    arc(const Color(0xFFEA4335), -2.36, 2.22);
+    arc(const Color(0xFF4285F4), -0.14, 1.72);
+    arc(const Color(0xFF34A853), 1.58, 1.28);
+    arc(const Color(0xFFFBBC05), 2.86, 1.07);
+    canvas.drawLine(
+      Offset(size.width * 0.52, size.height * 0.5),
+      Offset(size.width - 1.2, size.height * 0.5),
+      Paint()
+        ..color = const Color(0xFF4285F4)
+        ..strokeWidth = _strokeWidth
+        ..strokeCap = StrokeCap.butt,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GoogleMarkPainter oldDelegate) => false;
+}
+
+class _SocialCircleButton extends StatelessWidget {
+  const _SocialCircleButton({
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.child,
+    super.key,
+  });
+
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: label,
+        child: Material(
+          color: backgroundColor,
+          shape: CircleBorder(side: BorderSide(color: borderColor)),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            customBorder: const CircleBorder(),
+            child: SizedBox.square(
+              dimension: 62,
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: enabled ? 1 : 0.45,
+                  duration: const Duration(milliseconds: 120),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

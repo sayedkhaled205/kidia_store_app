@@ -1,5 +1,6 @@
 import '../entities/auth_identity.dart';
 import '../entities/auth_session.dart';
+import '../entities/social_auth.dart';
 
 enum AuthFailureKind {
   configuration,
@@ -45,6 +46,16 @@ abstract interface class AuthRepository {
   Future<AuthSession> register({
     required String email,
     required String password,
+  });
+
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String returnPath,
+  });
+
+  Future<SocialAuthCompletion> completeSocialSignIn({
+    required String code,
+    required String state,
   });
 
   Future<AuthSession?> restoreSession();

@@ -6,6 +6,7 @@ import '../features/account/presentation/account_screen.dart';
 import '../features/auth/domain/entities/auth_session.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/auth/presentation/social_auth_callback_screen.dart';
 import '../features/brands/presentation/brands_screen.dart';
 import '../features/cart/data/network/cart_token_store.dart';
 import '../features/cart/domain/entities/cart_item.dart';
@@ -306,6 +307,13 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
       GoRoute(
         path: '/auth',
         builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/social-callback',
+        builder: (context, state) => SocialAuthCallbackScreen(
+          code: state.uri.queryParameters['code'] ?? '',
+          state: state.uri.queryParameters['state'] ?? '',
+        ),
       ),
       GoRoute(
         path: '/search',

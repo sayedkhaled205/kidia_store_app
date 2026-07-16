@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 
@@ -36,6 +37,26 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     );
     state = AsyncData<AuthSession?>(session);
     return session;
+  }
+
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String returnPath,
+  }) {
+    return _repository.beginSocialSignIn(
+      provider: provider,
+      returnPath: returnPath,
+    );
+  }
+
+  Future<SocialAuthCompletion> completeSocialSignIn({
+    required String code,
+    required String callbackState,
+  }) async {
+    final SocialAuthCompletion completion = await _repository
+        .completeSocialSignIn(code: code, state: callbackState);
+    state = AsyncData<AuthSession?>(completion.session);
+    return completion;
   }
 
   Future<void> signOut() async {

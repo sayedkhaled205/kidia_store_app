@@ -54,6 +54,16 @@ class AuthCopy {
   String get forgotPassword => isArabic
       ? 'نسيت كلمة المرور؟'
       : 'Forgot password?';
+  String get or => isArabic ? 'أو' : 'Or';
+  String get continueWithGoogle => isArabic
+      ? 'المتابعة باستخدام Google'
+      : 'Continue with Google';
+  String get continueWithFacebook => isArabic
+      ? 'المتابعة باستخدام Facebook'
+      : 'Continue with Facebook';
+  String get socialSignInError => isArabic
+      ? 'تعذر فتح تسجيل الدخول. حاول مرة أخرى.'
+      : 'Could not open social sign-in. Please try again.';
   String get privacyPrefix => isArabic
       ? 'بالمتابعة أنت توافق على سياسة الخصوصية.'
       : 'By continuing, you agree to the Privacy Policy.';

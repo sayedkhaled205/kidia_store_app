@@ -6,6 +6,7 @@ import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 abstract interface class AuthApiTransport {
@@ -19,6 +20,18 @@ abstract interface class AuthApiTransport {
   Future<AuthSession> register({
     required String email,
     required String password,
+  });
+
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String state,
+    required String verifier,
+  });
+
+  Future<AuthSession> exchangeSocialSignIn({
+    required String code,
+    required String state,
+    required String verifier,
   });
 
   Future<AuthUser> currentUser(String token);
@@ -128,6 +141,52 @@ class DioAuthApiTransport implements AuthApiTransport {
   }
 
   @override
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String state,
+    required String verifier,
+  }) async {
+    final Map<String, dynamic> json = await _request(
+      'social/start',
+      body: <String, dynamic>{
+        'provider': provider.apiName,
+        'state': state,
+        'verifier': verifier,
+      },
+    );
+    final Uri? authorizeUri = Uri.tryParse(
+      json['authorize_url']?.toString().trim() ?? '',
+    );
+    if (authorizeUri == null ||
+        authorizeUri.userInfo.isNotEmpty ||
+        !_hasSameOrigin(authorizeUri, _storeUri)) {
+      throw const AuthApiException(
+        kind: AuthFailureKind.invalidResponse,
+        message: 'The store returned an invalid social sign-in URL.',
+      );
+    }
+    return authorizeUri;
+  }
+
+  @override
+  Future<AuthSession> exchangeSocialSignIn({
+    required String code,
+    required String state,
+    required String verifier,
+  }) async {
+    return AuthSession.fromJson(
+      await _request(
+        'social/exchange',
+        body: <String, dynamic>{
+          'code': code,
+          'state': state,
+          'verifier': verifier,
+        },
+      ),
+    );
+  }
+
+  @override
   Future<AuthUser> currentUser(String token) async {
     final Map<String, dynamic> json = await _request(
       'me',
@@ -228,6 +287,8 @@ class DioAuthApiTransport implements AuthApiTransport {
       'register',
       'me',
       'logout',
+      'social/start',
+      'social/exchange',
     }.contains(endpoint)) {
       throw const AuthApiException(
         kind: AuthFailureKind.configuration,
