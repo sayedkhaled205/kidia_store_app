@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
@@ -25,6 +26,38 @@ void main() {
       expect(controller.shipToDifferentAddress, isFalse);
       expect(controller.paymentMethodId, 'cod');
       expect(controller.validate(), isTrue);
+    });
+
+    test('validates and submits a plugin-provided checkout field', () async {
+      final FakeCheckoutRepository repository = FakeCheckoutRepository(
+        state: CheckoutState(
+          cart: checkoutCart(),
+          fieldDefinitions: <CheckoutFieldDefinition>[
+            CheckoutFieldDefinition(
+              key: 'billing_vat_number',
+              group: CheckoutFieldGroup.billing,
+              type: CheckoutFieldType.text,
+              label: 'VAT number',
+              required: true,
+            ),
+          ],
+        ),
+      );
+      final CheckoutController controller = CheckoutController(
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+
+      expect(controller.validate(), isFalse);
+      expect(controller.errorFor('billing_vat_number'), isNotNull);
+      controller.setFieldValue('billing_vat_number', ' EG-123 ');
+      expect(controller.validate(), isTrue);
+      await controller.submit();
+
+      expect(repository.submissions.single.customFields, <String, String>{
+        'billing_vat_number': 'EG-123',
+      });
     });
 
     test(
