@@ -77,6 +77,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-spacer.php';
 */
 
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-home-layout-endpoint.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'api/class-product-brand-bridge.php';
 
 final class Kidia_Mobile_CMS {
 
@@ -212,6 +213,9 @@ final class Kidia_Mobile_CMS {
 	private function register_api_modules(): void {
 
 		(new Kidia_Mobile_CMS_Home_Layout_Endpoint_V4())
+			->register();
+
+		(new Kidia_Mobile_CMS_Product_Brand_Bridge())
 			->register();
 
 	}
