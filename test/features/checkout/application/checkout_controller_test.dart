@@ -13,6 +13,24 @@ import '../support/checkout_test_data.dart';
 
 void main() {
   group('CheckoutController', () {
+    test('uses the signed-in customer email when the cart has none', () async {
+      final Map<String, dynamic> cartJson = checkoutCartJson();
+      (cartJson['billing_address'] as Map<String, dynamic>)['email'] = '';
+      final CheckoutController controller = CheckoutController(
+        repository: FakeCheckoutRepository(
+          state: CheckoutState(
+            cart: CartModel.fromJson(cartJson).toEntity(),
+          ),
+        ),
+        initialEmail: 'customer@example.com',
+      );
+      addTearDown(controller.dispose);
+
+      await controller.load();
+
+      expect(controller.billingAddress.email, 'customer@example.com');
+    });
+
     test('loads addresses and auto-selects the only payment method', () async {
       final CheckoutController controller = CheckoutController(
         repository: FakeCheckoutRepository(),

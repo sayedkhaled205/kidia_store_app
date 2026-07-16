@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kidia_store_app/core/network/store_api_client.dart';
+import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:kidia_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
 import 'package:kidia_store_app/features/cart/data/network/cart_api_transport.dart';
 import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
@@ -28,6 +29,8 @@ final cartStoreApiClientProvider = Provider<StoreApiClient>((Ref ref) {
 final cartApiTransportProvider = Provider<CartApiTransport>((Ref ref) {
   return StoreApiCartTransport.forConfiguredStore(
     dio: ref.watch(cartDioProvider),
+    authTokenReader: () =>
+        ref.read(authControllerProvider).asData?.value?.token,
   );
 });
 

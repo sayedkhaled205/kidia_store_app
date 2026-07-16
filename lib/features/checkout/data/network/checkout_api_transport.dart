@@ -11,6 +11,8 @@ class CheckoutApiResponse {
   final int? statusCode;
 }
 
+typedef CheckoutAuthTokenReader = String? Function();
+
 abstract interface class CheckoutApiTransport {
   Future<CheckoutApiResponse> loadConfiguration();
 
@@ -61,7 +63,11 @@ class CheckoutApiTransportException implements Exception {
 /// It accepts one fixed endpoint and sends only the in-memory Cart-Token. No
 /// payment credentials are persisted or logged here.
 class StoreApiCheckoutTransport implements CheckoutApiTransport {
-  StoreApiCheckoutTransport({required Uri storeUri, Dio? dio})
+  StoreApiCheckoutTransport({
+    required Uri storeUri,
+    Dio? dio,
+    this._authTokenReader,
+  })
     : _storeUri = _normalizeStoreUri(storeUri),
       _dio =
           dio ??
@@ -73,11 +79,15 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
             ),
           );
 
-  factory StoreApiCheckoutTransport.forConfiguredStore({Dio? dio}) {
+  factory StoreApiCheckoutTransport.forConfiguredStore({
+    Dio? dio,
+    CheckoutAuthTokenReader? authTokenReader,
+  }) {
     AppConfig.validateStoreConnection();
     return StoreApiCheckoutTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
       dio: dio,
+      authTokenReader: authTokenReader,
     );
   }
 
@@ -101,11 +111,11 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: <String, String>{
+          headers: _headers(<String, String>{
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Cart-Token': token,
-          },
+          }),
         ),
       );
       _assertSameOrigin(response.realUri);
@@ -146,6 +156,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
 
   final Uri _storeUri;
   final Dio _dio;
+  final CheckoutAuthTokenReader? _authTokenReader;
 
   @override
   Future<CheckoutApiResponse> loadConfiguration() async {
@@ -155,7 +166,9 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: const <String, String>{'Accept': 'application/json'},
+          headers: _headers(const <String, String>{
+            'Accept': 'application/json',
+          }),
         ),
       );
       _assertSameOrigin(response.realUri);
@@ -217,12 +230,12 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: <String, String>{
+          headers: _headers(<String, String>{
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Cart-Token': token,
             'Idempotency-Key': requestKey,
-          },
+          }),
         ),
       );
       _assertSameOrigin(response.realUri);
@@ -291,6 +304,20 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
       query: null,
       fragment: null,
     );
+  }
+
+  Map<String, String> _headers(Map<String, String> base) {
+    final String token = _authTokenReader?.call()?.trim() ?? '';
+    if (token.isNotEmpty && !_safeHeaderValue(token, maxLength: 512)) {
+      throw const CheckoutApiTransportException(
+        kind: CheckoutTransportFailureKind.configuration,
+        message: 'The stored customer session is invalid.',
+      );
+    }
+    return <String, String>{
+      ...base,
+      if (token.isNotEmpty) 'X-Kidia-Session': token,
+    };
   }
 
   dynamic _normalizeJson(dynamic data) {

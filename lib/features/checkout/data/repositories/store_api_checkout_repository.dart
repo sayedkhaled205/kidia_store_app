@@ -407,9 +407,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         billingAddress: submission.billingAddress,
       ),
       'customer_note': submission.customerNote.trim(),
-      // The app uses WooCommerce guest checkout. Stores that require an
-      // account will return their authoritative registration error instead
-      // of being misclassified as an invalid address by the client.
+      // Registration is completed before this route. The companion plugin
+      // authenticates the Store API request with the app session, so Woo can
+      // attach the order to the existing customer without creating a second
+      // account during checkout.
       'create_account': false,
       if (paymentMethod.isNotEmpty) 'payment_method': paymentMethod,
 

@@ -14,10 +14,14 @@ import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_r
 enum CheckoutStatus { initial, loading, ready, submitting, success, failure }
 
 class CheckoutController extends ChangeNotifier {
-  CheckoutController({required this.repository, DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now;
+  CheckoutController({
+    required this.repository,
+    this.initialEmail = '',
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now;
 
   final CheckoutRepository repository;
+  final String initialEmail;
   final DateTime Function() _clock;
 
   CheckoutStatus _status = CheckoutStatus.initial;
@@ -99,6 +103,12 @@ class CheckoutController extends ChangeNotifier {
       _billingAddress = CheckoutAddress.fromCartAddress(
         loaded.cart.billingAddress,
       );
+      final String accountEmail = initialEmail.trim();
+      if (_isValidEmail(accountEmail) &&
+          (_billingAddress.email.trim().isEmpty ||
+              _billingAddress.email.trim().endsWith('@no-email.invalid'))) {
+        _billingAddress = _billingAddress.copyWith(email: accountEmail);
+      }
       _shippingAddress = CheckoutAddress.fromCartAddress(
         loaded.cart.shippingAddress,
       );
@@ -273,6 +283,10 @@ class CheckoutController extends ChangeNotifier {
     _submitError = null;
     _notify();
     return errors.isEmpty;
+  }
+
+  bool _isValidEmail(String value) {
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
   }
 
   Future<CheckoutOrderResult?> submit() {

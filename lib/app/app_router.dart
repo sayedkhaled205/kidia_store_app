@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/account/presentation/account_screen.dart';
+import '../features/auth/domain/entities/auth_session.dart';
+import '../features/auth/presentation/auth_screen.dart';
+import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/brands/presentation/brands_screen.dart';
 import '../features/cart/data/network/cart_token_store.dart';
 import '../features/cart/domain/entities/cart_item.dart';
@@ -301,6 +304,10 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         ],
       ),
       GoRoute(
+        path: '/auth',
+        builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
         path: '/search',
         builder: (context, state) =>
             SearchScreen(initialQuery: state.uri.queryParameters['q'] ?? ''),
@@ -314,15 +321,28 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         path: '/checkout',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            final AsyncValue<AuthSession?> authState = ref.watch(
+              authControllerProvider,
+            );
+            if (authState.isLoading) {
+              return const _CheckoutAuthLoading();
+            }
+            final AuthSession? session = authState.asData?.value;
+            if (session == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
             final CartTokenStore tokenStore = ref.watch(cartTokenStoreProvider);
             return CheckoutScreen(
               repository: StoreApiCheckoutRepository(
                 cartRepository: ref.watch(cartRepositoryProvider),
                 transport: StoreApiCheckoutTransport.forConfiguredStore(
                   dio: ref.watch(cartDioProvider),
+                  authTokenReader: () =>
+                      ref.read(authControllerProvider).asData?.value?.token,
                 ),
                 cartTokenStore: tokenStore,
               ),
+              customerEmail: session.user.email,
               onBackToCart: () => context.go('/cart'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
             );
@@ -331,6 +351,19 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
       ),
     ],
   );
+}
+
+class _CheckoutAuthLoading extends StatelessWidget {
+  const _CheckoutAuthLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(key: Key('checkout-auth-loading')),
+      ),
+    );
+  }
 }
 
 int? _positiveId(String value) {

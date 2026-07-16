@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
 import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
@@ -729,6 +730,41 @@ void main() {
       ),
     );
   });
+
+  test(
+    'attaches the signed-in customer session to checkout Store API requests',
+    () async {
+      RequestOptions? captured;
+      final Dio dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (RequestOptions options, handler) {
+              captured = options;
+              handler.resolve(
+                Response<dynamic>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: const <String, dynamic>{'fields': <dynamic>[]},
+                ),
+              );
+            },
+          ),
+        );
+      final StoreApiCheckoutTransport transport = StoreApiCheckoutTransport(
+        storeUri: Uri.parse('https://shop.example.com'),
+        dio: dio,
+        authTokenReader: () => 'customer-session',
+      );
+
+      await transport.loadConfiguration();
+
+      expect(captured?.headers['X-Kidia-Session'], 'customer-session');
+      expect(
+        captured?.uri.path,
+        '/wp-json/woo-mobile/v1/checkout-config',
+      );
+    },
+  );
 
   test(
     'rejects unsafe header tokens before making a network request',
