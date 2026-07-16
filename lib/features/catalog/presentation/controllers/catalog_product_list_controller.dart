@@ -56,30 +56,33 @@ class CatalogProductListRequest {
 
 class CatalogProductFilters {
   const CatalogProductFilters({
-    this.inStockOnly = false,
     this.onSaleOnly = false,
     this.minimumPriceMinor = '',
     this.maximumPriceMinor = '',
+    this.brandId,
+    this.brandLabel = '',
     this.sizeTaxonomy = '',
     this.sizeTerm = '',
     this.sizeLabel = '',
   });
 
-  final bool inStockOnly;
   final bool onSaleOnly;
   final String minimumPriceMinor;
   final String maximumPriceMinor;
+  final int? brandId;
+  final String brandLabel;
   final String sizeTaxonomy;
   final String sizeTerm;
   final String sizeLabel;
 
+  bool get hasBrand => brandId != null && brandId! > 0;
   bool get hasSize => sizeTaxonomy.isNotEmpty && sizeTerm.isNotEmpty;
 
   int get generalActiveCount {
-    return (inStockOnly ? 1 : 0) +
-        (onSaleOnly ? 1 : 0) +
+    return (onSaleOnly ? 1 : 0) +
         (minimumPriceMinor.isNotEmpty ? 1 : 0) +
-        (maximumPriceMinor.isNotEmpty ? 1 : 0);
+        (maximumPriceMinor.isNotEmpty ? 1 : 0) +
+        (hasBrand ? 1 : 0);
   }
 
   int get activeCount {
@@ -91,10 +94,11 @@ class CatalogProductFilters {
   @override
   bool operator ==(Object other) {
     return other is CatalogProductFilters &&
-        other.inStockOnly == inStockOnly &&
         other.onSaleOnly == onSaleOnly &&
         other.minimumPriceMinor == minimumPriceMinor &&
         other.maximumPriceMinor == maximumPriceMinor &&
+        other.brandId == brandId &&
+        other.brandLabel == brandLabel &&
         other.sizeTaxonomy == sizeTaxonomy &&
         other.sizeTerm == sizeTerm &&
         other.sizeLabel == sizeLabel;
@@ -102,10 +106,11 @@ class CatalogProductFilters {
 
   @override
   int get hashCode => Object.hash(
-    inStockOnly,
     onSaleOnly,
     minimumPriceMinor,
     maximumPriceMinor,
+    brandId,
+    brandLabel,
     sizeTaxonomy,
     sizeTerm,
     sizeLabel,
@@ -363,10 +368,11 @@ class CatalogProductListController extends ChangeNotifier {
     final CatalogProductFilters current = _state.filters;
     return applyFilters(
       CatalogProductFilters(
-        inStockOnly: current.inStockOnly,
         onSaleOnly: current.onSaleOnly,
         minimumPriceMinor: current.minimumPriceMinor,
         maximumPriceMinor: current.maximumPriceMinor,
+        brandId: current.brandId,
+        brandLabel: current.brandLabel,
         sizeTaxonomy: size?.taxonomy ?? '',
         sizeTerm: size?.term ?? '',
         sizeLabel: size?.label ?? '',
@@ -432,10 +438,9 @@ class CatalogProductListController extends ChangeNotifier {
           : const <int>[],
       brandIds: request.brandId != null
           ? <int>[request.brandId!]
+          : filters.hasBrand
+          ? <int>[filters.brandId!]
           : const <int>[],
-      stock: filters.inStockOnly
-          ? const <CatalogStockFilter>[CatalogStockFilter.inStock]
-          : const <CatalogStockFilter>[],
       minimumPriceMinor: filters.minimumPriceMinor,
       maximumPriceMinor: filters.maximumPriceMinor,
       attributes: filters.hasSize
