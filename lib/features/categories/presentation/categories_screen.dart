@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
-import 'package:kidia_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
-import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 
@@ -150,23 +149,26 @@ class _CategoryBranchState extends State<_CategoryBranch> {
             child: !_expanded
                 ? const SizedBox(width: double.infinity)
                 : Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(18, 0, 8, 10),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        border: BorderDirectional(
-                          start: BorderSide(color: colors.outlineVariant),
-                        ),
-                      ),
-                      child: Column(
-                        children: <Widget>[
-                          for (final CatalogCategoryNode child
-                              in widget.node.children)
-                            _CategoryBranch(
-                              node: child,
-                              depth: widget.depth + 1,
-                            ),
-                        ],
-                      ),
+                    padding: const EdgeInsetsDirectional.fromSTEB(12, 2, 12, 14),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: widget.node.children.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            childAspectRatio: 0.82,
+                          ),
+                      itemBuilder: (BuildContext context, int index) {
+                        final CatalogCategory child =
+                            widget.node.children[index].category;
+                        return _SubcategoryTile(
+                          category: child,
+                          onTap: () => _openProducts(context, child),
+                        );
+                      },
                     ),
                   ),
           ),
@@ -178,13 +180,65 @@ class _CategoryBranchState extends State<_CategoryBranch> {
   }
 
   void _openProducts(BuildContext context, CatalogCategory category) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => CatalogProductListScreen(
-          request: CatalogProductListRequest(
-            title: category.name,
-            categoryId: category.id,
-          ),
+    context.push('/categories/${category.id}');
+  }
+}
+
+class _SubcategoryTile extends StatelessWidget {
+  const _SubcategoryTile({required this.category, required this.onTap});
+
+  final CatalogCategory category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colors = theme.colorScheme;
+    final String? imageUrl =
+        category.image?.thumbnail?.toString() ??
+        category.image?.source.toString();
+    final Widget fallback = ColoredBox(
+      color: colors.secondaryContainer,
+      child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
+    );
+
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: SizedBox.expand(
+                child: imageUrl == null || imageUrl.isEmpty
+                    ? fallback
+                    : AppNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        semanticLabel: category.name,
+                        errorWidget: fallback,
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+              child: Text(
+                category.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
