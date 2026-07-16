@@ -35,6 +35,12 @@ class CatalogCopy {
       : 'The store could not load this catalog data.';
   String get sort => isArabic ? 'الترتيب' : 'Sort';
   String get filter => isArabic ? 'تصفية' : 'Filter';
+  String get size => isArabic ? 'المقاس' : 'Size';
+  String get chooseSize => isArabic ? 'اختاري المقاس' : 'Choose a size';
+  String get allSizes => isArabic ? 'كل المقاسات' : 'All sizes';
+  String get noSizes => isArabic
+      ? 'لا توجد مقاسات متاحة لهذه المجموعة.'
+      : 'No sizes are available for this collection.';
   String get filters => isArabic ? 'الفلاتر' : 'Filters';
   String get apply => isArabic ? 'تطبيق' : 'Apply';
   String get reset => isArabic ? 'إعادة ضبط' : 'Reset';
@@ -50,10 +56,6 @@ class CatalogCopy {
   String get loadingMore => isArabic ? 'جارٍ تحميل المزيد...' : 'Loading more…';
   String get loadMoreFailed =>
       isArabic ? 'تعذر تحميل المزيد' : 'Could not load more products';
-  String productCount(int count) =>
-      isArabic ? '$count منتج' : '$count products';
-  String categoryCount(int count) =>
-      isArabic ? '$count منتج' : '$count products';
   String get outOfStock => isArabic ? 'نفد المخزون' : 'Out of stock';
   String get sale => isArabic ? 'خصم' : 'Sale';
   String get details => isArabic ? 'عرض التفاصيل' : 'View details';
