@@ -79,6 +79,9 @@ class FakeCheckoutCartRepository implements CartRepository {
 }
 
 class FakeCheckoutTransport implements CheckoutApiTransport {
+  CheckoutApiResponse configurationResponse = const CheckoutApiResponse(
+    data: <String, dynamic>{'version': 1, 'fields': <dynamic>[]},
+  );
   CheckoutApiResponse response = const CheckoutApiResponse(
     data: <String, dynamic>{
       'order_id': 730,
@@ -92,9 +95,16 @@ class FakeCheckoutTransport implements CheckoutApiTransport {
   Object? error;
   Future<CheckoutApiResponse> Function()? onPlaceOrder;
   int calls = 0;
+  int configurationCalls = 0;
   final List<String> cartTokens = <String>[];
   final List<String> idempotencyKeys = <String>[];
   final List<Map<String, dynamic>> bodies = <Map<String, dynamic>>[];
+
+  @override
+  Future<CheckoutApiResponse> loadConfiguration() async {
+    configurationCalls++;
+    return configurationResponse;
+  }
 
   @override
   Future<CheckoutApiResponse> placeOrder({
