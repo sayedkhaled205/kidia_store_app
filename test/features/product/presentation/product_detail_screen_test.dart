@@ -26,6 +26,8 @@ void main() {
     expect(find.byKey(const Key('product-current-price')), findsOneWidget);
     expect(find.text(r'$79.99'), findsOneWidget);
     expect(find.text('Soft & comfortable.'), findsOneWidget);
+    expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
+    expect(find.text('Kidia'), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),
