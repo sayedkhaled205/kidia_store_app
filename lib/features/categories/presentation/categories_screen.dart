@@ -97,13 +97,20 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final CatalogCopy copy = CatalogCopy.of(context);
 
     final Widget tile = Material(
-      color: widget.depth == 0
-          ? colors.surfaceContainerLowest
-          : Colors.transparent,
+      color: Color.alphaBlend(
+        colors.primary.withValues(alpha: _expanded ? 0.09 : 0.045),
+        colors.surface,
+      ),
+      elevation: _expanded ? 2 : 0,
+      shadowColor: colors.primary.withValues(alpha: 0.18),
       shape: widget.depth == 0
           ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: BorderSide(color: colors.outlineVariant),
+              borderRadius: BorderRadius.circular(22),
+              side: BorderSide(
+                color: _expanded
+                    ? colors.primary.withValues(alpha: 0.4)
+                    : colors.outlineVariant,
+              ),
             )
           : null,
       clipBehavior: widget.depth == 0 ? Clip.antiAlias : Clip.none,
@@ -111,18 +118,19 @@ class _CategoryBranchState extends State<_CategoryBranch> {
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsetsDirectional.fromSTEB(
-              widget.depth == 0 ? 12 : 8,
-              6,
+              widget.depth == 0 ? 14 : 8,
+              10,
+              12,
               8,
-              6,
             ),
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.2,
               ),
             ),
             subtitle: category.count > 0
@@ -136,7 +144,19 @@ class _CategoryBranchState extends State<_CategoryBranch> {
               padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 10),
               child: SizedBox(
                 width: double.infinity,
-                child: FilledButton.tonalIcon(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                    backgroundColor: _expanded
+                        ? colors.primary
+                        : colors.primaryContainer,
+                    foregroundColor: _expanded
+                        ? colors.onPrimary
+                        : colors.onPrimaryContainer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: () => setState(() {
                     _expanded = !_expanded;
                   }),
@@ -275,7 +295,7 @@ class _CategoryImage extends StatelessWidget {
     );
 
     return SizedBox.square(
-      dimension: 54,
+      dimension: 72,
       child: imageUrl == null || imageUrl.isEmpty
           ? fallback
           : ColoredBox(
