@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:kidia_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 
@@ -8,6 +9,7 @@ class CatalogProductFilterSheet extends StatefulWidget {
     required this.currencyMinorUnit,
     required this.minimumAvailableMinor,
     required this.maximumAvailableMinor,
+    required this.brands,
     super.key,
   });
 
@@ -15,6 +17,7 @@ class CatalogProductFilterSheet extends StatefulWidget {
   final int currencyMinorUnit;
   final String minimumAvailableMinor;
   final String maximumAvailableMinor;
+  final List<StoreBrand> brands;
 
   static Future<CatalogProductFilters?> show(
     BuildContext context, {
@@ -22,6 +25,7 @@ class CatalogProductFilterSheet extends StatefulWidget {
     required int currencyMinorUnit,
     required String minimumAvailableMinor,
     required String maximumAvailableMinor,
+    required List<StoreBrand> brands,
   }) {
     return showModalBottomSheet<CatalogProductFilters>(
       context: context,
@@ -33,6 +37,7 @@ class CatalogProductFilterSheet extends StatefulWidget {
         currencyMinorUnit: currencyMinorUnit,
         minimumAvailableMinor: minimumAvailableMinor,
         maximumAvailableMinor: maximumAvailableMinor,
+        brands: brands,
       ),
     );
   }
@@ -46,8 +51,8 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _minimumController;
   late final TextEditingController _maximumController;
-  late bool _inStockOnly;
   late bool _onSaleOnly;
+  int? _brandId;
   String? _rangeError;
 
   @override
@@ -65,8 +70,8 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
         widget.currencyMinorUnit,
       ),
     );
-    _inStockOnly = widget.initialFilters.inStockOnly;
     _onSaleOnly = widget.initialFilters.onSaleOnly;
+    _brandId = widget.initialFilters.brandId;
   }
 
   @override
@@ -111,15 +116,6 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
               const SizedBox(height: 18),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: Text(copy.inStockOnly),
-                secondary: const Icon(Icons.inventory_2_outlined),
-                value: _inStockOnly,
-                onChanged: (bool value) => setState(() {
-                  _inStockOnly = value;
-                }),
-              ),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
                 title: Text(copy.onSaleOnly),
                 secondary: const Icon(Icons.local_offer_outlined),
                 value: _onSaleOnly,
@@ -127,6 +123,42 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   _onSaleOnly = value;
                 }),
               ),
+              if (widget.brands.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int?>(
+                  key: const Key('catalog-brand-filter'),
+                  initialValue:
+                      widget.brands.any(
+                        (StoreBrand brand) => brand.id == _brandId,
+                      )
+                      ? _brandId
+                      : null,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: copy.brand,
+                    prefixIcon: const Icon(Icons.verified_outlined),
+                  ),
+                  items: <DropdownMenuItem<int?>>[
+                    DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text(copy.allBrands),
+                    ),
+                    ...widget.brands.map(
+                      (StoreBrand brand) => DropdownMenuItem<int?>(
+                        value: brand.id,
+                        child: Text(
+                          brand.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (int? value) => setState(() {
+                    _brandId = value;
+                  }),
+                ),
+              ],
               const Divider(height: 32),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,15 +274,25 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
 
     Navigator.of(context).pop(
       CatalogProductFilters(
-        inStockOnly: _inStockOnly,
         onSaleOnly: _onSaleOnly,
         minimumPriceMinor: minimum,
         maximumPriceMinor: maximum,
+        brandId: _brandId,
+        brandLabel: _selectedBrandLabel(),
         sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
         sizeTerm: widget.initialFilters.sizeTerm,
         sizeLabel: widget.initialFilters.sizeLabel,
       ),
     );
+  }
+
+  String _selectedBrandLabel() {
+    for (final StoreBrand brand in widget.brands) {
+      if (brand.id == _brandId) {
+        return brand.name;
+      }
+    }
+    return '';
   }
 }
 
