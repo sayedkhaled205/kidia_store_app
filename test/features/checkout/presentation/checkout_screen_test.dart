@@ -18,7 +18,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('checkout-billing-firstName')), findsOneWidget);
-    expect(find.byKey(const Key('checkout-billing-email')), findsOneWidget);
+    expect(find.byKey(const Key('checkout-billing-email')), findsNothing);
+    expect(find.byKey(const Key('checkout-billing-phone')), findsOneWidget);
+    expect(find.text('Phone *'), findsOneWidget);
     expect(find.text('Ada'), findsOneWidget);
     expect(find.text('Cash on delivery'), findsOneWidget);
     expect(find.text(r'$125.00'), findsOneWidget);

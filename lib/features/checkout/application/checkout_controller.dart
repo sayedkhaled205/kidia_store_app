@@ -244,7 +244,8 @@ class CheckoutController extends ChangeNotifier {
       _validateAddress(
         _billingAddress,
         prefix: 'billing',
-        requiresEmail: true,
+        requiresEmail: false,
+        requiresPhone: true,
         errors: errors,
       );
       if (needsShipping && _shipToDifferentAddress) {
@@ -252,6 +253,7 @@ class CheckoutController extends ChangeNotifier {
           _shippingAddress,
           prefix: 'shipping',
           requiresEmail: false,
+          requiresPhone: false,
           errors: errors,
         );
       }
@@ -484,6 +486,7 @@ class CheckoutController extends ChangeNotifier {
     CheckoutAddress source, {
     required String prefix,
     required bool requiresEmail,
+    required bool requiresPhone,
     required Map<String, String> errors,
   }) {
     final CheckoutAddress address = source.trimmed();
@@ -514,6 +517,9 @@ class CheckoutController extends ChangeNotifier {
           !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(address.email)) {
         errors['$prefix.email'] = 'Enter a valid email address.';
       }
+    }
+    if (requiresPhone) {
+      requiredField('phone', address.phone, 'Phone is required.');
     }
   }
 

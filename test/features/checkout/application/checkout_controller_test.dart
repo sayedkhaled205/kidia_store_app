@@ -202,7 +202,8 @@ void main() {
 
         expect(controller.validate(), isFalse);
         expect(controller.errorFor('billing.firstName'), isNotNull);
-        expect(controller.errorFor('billing.email'), isNotNull);
+        expect(controller.errorFor('billing.phone'), isNotNull);
+        expect(controller.errorFor('billing.email'), isNull);
         expect(controller.errorFor('shipping.address1'), isNotNull);
         expect(controller.errorFor('shipping.country'), isNotNull);
         expect(controller.errorFor('paymentMethod'), isNotNull);

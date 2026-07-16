@@ -98,7 +98,7 @@ class _BrandsContent extends StatelessWidget {
                 autocorrect: false,
                 decoration: InputDecoration(
                   hintText: copy.searchHint,
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
                   suffixIcon: ListenableBuilder(
                     listenable: searchController,
                     builder: (BuildContext context, Widget? child) {

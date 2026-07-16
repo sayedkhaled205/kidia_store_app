@@ -42,7 +42,10 @@ class CartIconButton extends StatelessWidget {
         isLabelVisible: itemCount > 0,
         backgroundColor: colors.error,
         textColor: colors.onError,
-        child: Icon(Icons.shopping_bag_outlined, size: iconSize),
+        child: Icon(
+          Icons.shopping_bag_outlined,
+          size: iconSize ?? 26.4,
+        ),
       ),
     );
   }
