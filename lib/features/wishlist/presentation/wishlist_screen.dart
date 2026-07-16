@@ -97,7 +97,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
       ),
       body: Column(
         children: <Widget>[
-          _LocalOnlyNotice(copy: copy),
           if (_controller.mutationError != null)
             _MutationErrorNotice(
               message: _controller.mutationError!,
@@ -166,42 +165,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
         messenger.hideCurrentSnackBar();
       }
     });
-  }
-}
-
-class _LocalOnlyNotice extends StatelessWidget {
-  const _LocalOnlyNotice({required this.copy});
-
-  final _WishlistCopy copy;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      key: const Key('wishlist-local-only-notice'),
-      width: double.infinity,
-      color: colors.secondaryContainer,
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 9, 16, 9),
-      child: Row(
-        children: <Widget>[
-          Icon(
-            Icons.smartphone_outlined,
-            size: 18,
-            color: colors.onSecondaryContainer,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              copy.localOnly,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onSecondaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
