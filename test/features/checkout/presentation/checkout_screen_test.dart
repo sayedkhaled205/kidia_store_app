@@ -49,6 +49,13 @@ void main() {
                   label: 'VAT number',
                   required: true,
                 ),
+                CheckoutFieldDefinition(
+                  key: 'billing_postcode',
+                  group: CheckoutFieldGroup.billing,
+                  type: CheckoutFieldType.text,
+                  label: 'Postcode',
+                  required: true,
+                ),
               ],
             ),
           ),
@@ -62,6 +69,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('VAT number *'), findsOneWidget);
+    expect(
+      find.byKey(const Key('checkout-dynamic-billing_postcode')),
+      findsOneWidget,
+    );
+    expect(find.text('Postcode *'), findsOneWidget);
   });
 
   testWidgets(

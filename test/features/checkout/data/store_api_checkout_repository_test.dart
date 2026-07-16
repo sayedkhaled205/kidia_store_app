@@ -165,6 +165,74 @@ void main() {
   );
 
   test(
+    'mirrors missing required shipping address fields into billing',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport()
+        ..configurationResponse = const CheckoutApiResponse(
+          data: <String, dynamic>{
+            'version': 1,
+            'fields': <dynamic>[
+              <String, dynamic>{
+                'key': 'billing_phone',
+                'group': 'billing',
+                'type': 'tel',
+                'label': 'الهاتف',
+                'required': true,
+                'priority': 80,
+              },
+              <String, dynamic>{
+                'key': 'shipping_phone',
+                'group': 'shipping',
+                'type': 'tel',
+                'label': 'هاتف الشحن',
+                'required': true,
+                'priority': 80,
+              },
+              <String, dynamic>{
+                'key': 'shipping_postcode',
+                'group': 'shipping',
+                'type': 'text',
+                'label': 'الرمز البريدي',
+                'required': true,
+                'priority': 90,
+              },
+              <String, dynamic>{
+                'key': 'shipping_delivery_note',
+                'group': 'shipping',
+                'type': 'text',
+                'label': 'علامة مميزة',
+                'required': true,
+                'priority': 100,
+              },
+            ],
+          },
+        );
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: MemoryCartTokenStore(),
+      );
+
+      final state = await repository.loadCheckout();
+
+      final List<String> keys = state.fieldDefinitions
+          .map((CheckoutFieldDefinition field) => field.key)
+          .toList();
+      expect(keys.where((String key) => key == 'billing_phone'), hasLength(1));
+      expect(keys, contains('billing_postcode'));
+      expect(keys, isNot(contains('billing_delivery_note')));
+      final CheckoutFieldDefinition postcode = state.fieldDefinitions
+          .singleWhere(
+            (CheckoutFieldDefinition field) =>
+                field.key == 'billing_postcode',
+          );
+      expect(postcode.group, CheckoutFieldGroup.billing);
+      expect(postcode.required, isTrue);
+      expect(postcode.label, 'الرمز البريدي');
+    },
+  );
+
+  test(
     'updates the customer address and returns recalculated totals',
     () async {
       final MemoryCartTokenStore tokenStore = MemoryCartTokenStore()
@@ -189,7 +257,7 @@ void main() {
 
       final updated = await repository.updateCustomer(
         billingAddress: address,
-        shippingAddress: address,
+        shippingAddress: address.copyWith(phone: ''),
       );
 
       expect(updated.totals.priceMinor, '18000');
@@ -205,6 +273,20 @@ void main() {
         (body['billing_address'] as Map<String, String>)['email'],
         'guest-01000000000@no-email.invalid',
       );
+      expect(
+        (body['billing_address'] as Map<String, String>)['company'],
+        '-',
+      );
+      expect(
+        (body['billing_address'] as Map<String, String>)['address_2'],
+        '-',
+      );
+      final Map<String, String> shipping =
+          body['shipping_address'] as Map<String, String>;
+      expect(shipping['company'], '-');
+      expect(shipping['address_2'], '-');
+      expect(shipping['phone'], '01000000000');
+      expect(shipping, isNot(contains('email')));
     },
   );
 
@@ -374,6 +456,78 @@ void main() {
       ),
     );
   });
+
+  test(
+    'collects every WooCommerce address field error from one response',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport()
+        ..error = const CheckoutApiTransportException(
+          kind: CheckoutTransportFailureKind.rejected,
+          message: 'The store rejected the checkout request.',
+          statusCode: 400,
+          data: <String, dynamic>{
+            'code': 'rest_invalid_param',
+            'message':
+                'Invalid parameter(s): billing_address, shipping_address',
+            'data': <String, dynamic>{
+              'status': 400,
+              'details': <String, dynamic>{
+                'billing_address': <String, dynamic>{
+                  'code': 'woocommerce_required_checkout_field',
+                  'message': 'Company is required.',
+                  'data': <String, dynamic>{
+                    'key': 'company',
+                    'additional_errors': <dynamic>[
+                      <String, dynamic>{
+                        'code': 'woocommerce_required_checkout_field',
+                        'message': 'Address line 2 is required.',
+                        'data': <String, dynamic>{'key': 'address_2'},
+                      },
+                    ],
+                  },
+                },
+                'shipping_address': <String, dynamic>{
+                  'code': 'woocommerce_required_checkout_field',
+                  'message': 'Postcode is required.',
+                  'data': <String, dynamic>{
+                    'key': 'postcode',
+                    'additional_errors': <dynamic>[
+                      <String, dynamic>{
+                        'code': 'woocommerce_required_checkout_field',
+                        'message': 'Phone is required.',
+                        'data': <String, dynamic>{'key': 'phone'},
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        );
+      final StoreApiCheckoutRepository repository =
+          StoreApiCheckoutRepository(
+            cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+            transport: transport,
+            cartTokenStore: (MemoryCartTokenStore()..write('token')),
+          );
+
+      await expectLater(
+        repository.placeOrder(_submission('all-field-errors')),
+        throwsA(
+          isA<CheckoutRepositoryException>().having(
+            (CheckoutRepositoryException error) => error.fieldErrors,
+            'field errors',
+            <String, String>{
+              'billing_company': 'Company is required.',
+              'billing_address_2': 'Address line 2 is required.',
+              'shipping_postcode': 'Postcode is required.',
+              'shipping_phone': 'Phone is required.',
+            },
+          ),
+        ),
+      );
+    },
+  );
 
   test('rejects invalid standard fields before contacting the store', () async {
     final FakeCheckoutTransport transport = FakeCheckoutTransport();
