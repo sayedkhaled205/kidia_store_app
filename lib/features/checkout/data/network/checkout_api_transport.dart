@@ -12,6 +12,8 @@ class CheckoutApiResponse {
 }
 
 abstract interface class CheckoutApiTransport {
+  Future<CheckoutApiResponse> loadConfiguration();
+
   Future<CheckoutApiResponse> placeOrder({
     required String cartToken,
     required String idempotencyKey,
@@ -76,6 +78,52 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
 
   final Uri _storeUri;
   final Dio _dio;
+
+  @override
+  Future<CheckoutApiResponse> loadConfiguration() async {
+    try {
+      final Response<dynamic> response = await _dio.getUri<dynamic>(
+        _checkoutConfigurationUri(),
+        options: Options(
+          responseType: ResponseType.json,
+          followRedirects: false,
+          headers: const <String, String>{'Accept': 'application/json'},
+        ),
+      );
+      _assertSameOrigin(response.realUri);
+      return CheckoutApiResponse(
+        data: _normalizeJson(response.data),
+        statusCode: response.statusCode,
+      );
+    } on CheckoutApiTransportException {
+      rethrow;
+    } on DioException catch (error, stackTrace) {
+      final Response<dynamic>? response = error.response;
+      if (response != null) {
+        _assertSameOrigin(response.realUri);
+        Error.throwWithStackTrace(
+          CheckoutApiTransportException(
+            kind: CheckoutTransportFailureKind.rejected,
+            message: 'The store rejected the checkout configuration request.',
+            statusCode: response.statusCode,
+            data: _normalizeErrorData(response.data),
+            cause: error,
+          ),
+          stackTrace,
+        );
+      }
+      Error.throwWithStackTrace(_mapDioError(error), stackTrace);
+    } on FormatException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutApiTransportException(
+          kind: CheckoutTransportFailureKind.invalidResponse,
+          message: 'The store returned invalid checkout configuration.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
 
   @override
   Future<CheckoutApiResponse> placeOrder({
@@ -150,6 +198,17 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
       path: '$installPath/wp-json/wc/store/v1/checkout',
+      query: null,
+      fragment: null,
+    );
+  }
+
+  Uri _checkoutConfigurationUri() {
+    final String installPath = _storeUri.path == '/'
+        ? ''
+        : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
+    return _storeUri.replace(
+      path: '$installPath/wp-json/woo-mobile/v1/checkout-config',
       query: null,
       fragment: null,
     );
