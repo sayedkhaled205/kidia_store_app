@@ -335,7 +335,7 @@ class _CatalogProductGrid extends StatelessWidget {
         : 2;
     final double usableWidth = width - 32 - ((columns - 1) * 12);
     final double cardWidth = usableWidth / columns;
-    final double extent = (cardWidth * 1.25 + 132).clamp(300, 410).toDouble();
+    final double extent = (cardWidth * 1.05 + 108).clamp(260, 350).toDouble();
 
     return SliverPadding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 20),
@@ -374,7 +374,7 @@ class _CatalogLoadingGrid extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          mainAxisExtent: 330,
+          mainAxisExtent: 270,
         ),
         itemBuilder: (BuildContext context, int index) => DecoratedBox(
           decoration: BoxDecoration(
