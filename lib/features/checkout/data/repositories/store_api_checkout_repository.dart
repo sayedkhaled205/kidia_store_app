@@ -320,6 +320,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       'billing_address': _addressJson(submission.billingAddress),
       'shipping_address': _addressJson(submission.shippingAddress),
       'customer_note': submission.customerNote.trim(),
+      // The app uses WooCommerce guest checkout. Stores that require an
+      // account will return their authoritative registration error instead
+      // of being misclassified as an invalid address by the client.
+      'create_account': false,
       if (paymentMethod.isNotEmpty) 'payment_method': paymentMethod,
 
       // Gateway-specific fields (card data, tokens, nonces) are deliberately
@@ -327,7 +331,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       // them later without ever persisting secrets in this repository.
       'payment_data': const <Map<String, String>>[],
       if (submission.customFields.isNotEmpty) ...<String, dynamic>{
-        'additional_fields': submission.customFields,
+        // Classic checkout plugins do not register their fields in the Store
+        // API additional_fields schema. Sending those keys at the top level
+        // makes WooCommerce reject an otherwise valid order. Our registered
+        // extension validates and persists the filtered classic fields.
         'extensions': <String, dynamic>{
           'woo_mobile_cms': <String, dynamic>{
             'checkout_fields': submission.customFields,
@@ -348,7 +355,8 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         billing.city.isEmpty ||
         (states.isNotEmpty && !states.containsKey(billing.state)) ||
         !RegExp(r'^[A-Z]{2}$').hasMatch(billing.country) ||
-        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(billing.email) ||
+        (billing.email.isNotEmpty &&
+            !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(billing.email)) ||
         submission.customerNote.trim().length > 1000) {
       throw const CheckoutRepositoryException(
         kind: CheckoutFailureKind.invalidInput,

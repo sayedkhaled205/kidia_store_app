@@ -66,7 +66,10 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 
 			$attributes = array();
 			foreach ( $variation->get_attributes() as $taxonomy => $value ) {
-				$taxonomy = sanitize_key( (string) $taxonomy );
+				// Do not run non-Latin taxonomies through sanitize_key(). Arabic
+				// attribute slugs are percent encoded by WooCommerce; stripping the
+				// percent signs turns them into an unresolvable pa_d8... duplicate.
+				$taxonomy = sanitize_text_field( (string) $taxonomy );
 				$value    = sanitize_title( (string) $value );
 				if ( '' === $taxonomy || '' === $value ) {
 					continue;

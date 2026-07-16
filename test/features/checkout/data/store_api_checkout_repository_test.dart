@@ -208,6 +208,7 @@ void main() {
     expect(transport.idempotencyKeys.single, 'request-1');
     final Map<String, dynamic> body = transport.bodies.single;
     expect(body['payment_method'], 'cod');
+    expect(body['create_account'], isFalse);
     expect(body['customer_note'], 'Leave at reception');
     expect(body['payment_data'], isEmpty);
     expect(body, isNot(contains('card_number')));
@@ -235,9 +236,7 @@ void main() {
       );
 
       final Map<String, dynamic> body = transport.bodies.single;
-      expect(body['additional_fields'], <String, String>{
-        'billing_vat_number': 'EG-123',
-      });
+      expect(body, isNot(contains('additional_fields')));
       expect(
         ((body['extensions'] as Map<String, dynamic>)['woo_mobile_cms']
             as Map<String, dynamic>)['checkout_fields'],
@@ -373,6 +372,45 @@ void main() {
     );
     expect(transport.calls, 0);
   });
+
+  test(
+    'allows a guest order without email when the filtered checkout hides it',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport();
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: (MemoryCartTokenStore()..write('token')),
+      );
+      const CheckoutAddress address = CheckoutAddress(
+        firstName: 'Khaled',
+        lastName: 'Sayed',
+        address1: 'Nasr City',
+        city: 'Cairo',
+        state: 'EGC',
+        country: 'EG',
+        phone: '01000000000',
+      );
+
+      await repository.placeOrder(
+        const CheckoutSubmission(
+          billingAddress: address,
+          shippingAddress: address,
+          customerNote: '',
+          paymentMethodId: 'cod',
+          idempotencyKey: 'guest-without-email',
+        ),
+      );
+
+      expect(transport.calls, 1);
+      final Map<String, dynamic> body = transport.bodies.single;
+      expect(body['create_account'], isFalse);
+      expect(
+        (body['billing_address'] as Map<String, String>)['email'],
+        isEmpty,
+      );
+    },
+  );
 
   test(
     'rejects an Egypt order without a valid WooCommerce governorate code',

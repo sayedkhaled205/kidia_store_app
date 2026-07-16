@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 
@@ -115,6 +118,62 @@ void main() {
         expect(added, isFalse);
         expect(controller.isAdding, isFalse);
         expect(controller.addError, contains('Cart rejected the item'));
+      },
+    );
+
+    test(
+      'merges stripped Arabic taxonomy hex with the product attribute',
+      () async {
+        const CatalogProduct product = CatalogProduct(
+          id: 58,
+          name: 'Kids shoes',
+          slug: 'kids-shoes',
+        type: 'variable',
+        isPurchasable: true,
+        isInStock: true,
+        prices: testMoney,
+        attributes: <CatalogProductAttribute>[
+            CatalogProductAttribute(
+              id: 8,
+              name: 'المقاس',
+              taxonomy: 'pa_المقاس',
+              hasVariations: true,
+              terms: <CatalogAttributeTerm>[
+                CatalogAttributeTerm(id: 20, name: '20', slug: '20'),
+                CatalogAttributeTerm(id: 21, name: '21', slug: '21'),
+              ],
+            ),
+          ],
+          variations: <CatalogVariation>[
+            CatalogVariation(
+              id: 5801,
+              attributes: <CatalogVariationAttribute>[
+                CatalogVariationAttribute(
+                  name: 'pa_d8a7d984d985d982d8a7d8b3',
+                  taxonomy: 'pa_d8a7d984d985d982d8a7d8b3',
+                  value: '20',
+                ),
+              ],
+            ),
+          ],
+        );
+        final ProductDetailController controller = ProductDetailController(
+          repository: ProductFakeCatalogRepository(
+            product: product,
+            variations: product.variations,
+          ),
+          productId: product.id,
+        );
+        addTearDown(controller.dispose);
+
+        await controller.load();
+
+        expect(controller.optionGroups, hasLength(1));
+        expect(controller.optionGroups.single.label, 'المقاس');
+        expect(
+          controller.optionGroups.single.values.map((value) => value.label),
+          <String>['20', '21'],
+        );
       },
     );
 

@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
@@ -191,7 +192,7 @@ class ProductDetailController extends ChangeNotifier {
     if (_status != ProductDetailStatus.success) {
       return;
     }
-    final String normalizedKey = _normalize(key);
+    final String normalizedKey = _canonicalAttributeKey(key);
     final ProductOptionGroup? group = _findOptionGroup(normalizedKey);
     if (group == null ||
         !group.values.any((ProductOptionValue item) => item.value == value) ||
@@ -375,8 +376,9 @@ class ProductDetailController extends ChangeNotifier {
   }
 
   ProductOptionGroup? _findOptionGroup(String normalizedKey) {
+    final String canonicalKey = _canonicalAttributeKey(normalizedKey);
     for (final ProductOptionGroup group in optionGroups) {
-      if (_normalize(group.key) == normalizedKey) {
+      if (_canonicalAttributeKey(group.key) == canonicalKey) {
         return group;
       }
     }
@@ -463,19 +465,25 @@ class ProductDetailController extends ChangeNotifier {
   }
 
   String _productAttributeKey(CatalogProductAttribute attribute) {
-    final String taxonomy = _normalize(attribute.taxonomy);
-    return taxonomy.isNotEmpty ? taxonomy : _normalize(attribute.name);
+    final String taxonomy = _canonicalAttributeKey(attribute.taxonomy);
+    return taxonomy.isNotEmpty
+        ? taxonomy
+        : _canonicalAttributeKey(attribute.name);
   }
 
   String _variationAttributeKey(CatalogVariationAttribute attribute) {
-    final String taxonomy = _normalize(attribute.taxonomy);
-    final String name = _normalize(attribute.name);
+    final String taxonomy = _canonicalAttributeKey(attribute.taxonomy);
+    final String name = _canonicalAttributeKey(attribute.name);
     final CatalogProduct? currentProduct = _product;
     if (currentProduct != null) {
       for (final CatalogProductAttribute productAttribute
           in currentProduct.attributes) {
-        final String productTaxonomy = _normalize(productAttribute.taxonomy);
-        final String productName = _normalize(productAttribute.name);
+        final String productTaxonomy = _canonicalAttributeKey(
+          productAttribute.taxonomy,
+        );
+        final String productName = _canonicalAttributeKey(
+          productAttribute.name,
+        );
         if ((taxonomy.isNotEmpty && taxonomy == productTaxonomy) ||
             (name.isNotEmpty && name == productName)) {
           return _productAttributeKey(productAttribute);
@@ -483,6 +491,46 @@ class ProductDetailController extends ChangeNotifier {
       }
     }
     return taxonomy.isNotEmpty ? taxonomy : name;
+  }
+
+  /// WooCommerce stores non-Latin attribute taxonomies URL encoded. Some
+  /// extensions strip only the percent signs, so the same Arabic taxonomy can
+  /// arrive as both `pa_المقاس` and `pa_d8a7d984...`. Canonicalizing the wire
+  /// representation prevents a duplicate option group from being rendered.
+  static String _canonicalAttributeKey(String source) {
+    String value = _normalize(source);
+    if (value.isEmpty) {
+      return '';
+    }
+    if (value.contains('%')) {
+      try {
+        value = Uri.decodeComponent(value);
+      } on FormatException {
+        // Keep the original key when a third-party plugin sends malformed
+        // escaping; it remains safe and can still match by its display name.
+      }
+    }
+
+    const String prefix = 'pa_';
+    if (!value.startsWith(prefix)) {
+      return value;
+    }
+    final String compactHex = value.substring(prefix.length);
+    if (compactHex.length < 4 ||
+        compactHex.length.isOdd ||
+        !RegExp(r'^[0-9a-f]+$').hasMatch(compactHex)) {
+      return value;
+    }
+    try {
+      final List<int> bytes = <int>[
+        for (int index = 0; index < compactHex.length; index += 2)
+          int.parse(compactHex.substring(index, index + 2), radix: 16),
+      ];
+      final String decoded = utf8.decode(bytes).trim().toLowerCase();
+      return decoded.isEmpty ? value : '$prefix$decoded';
+    } on FormatException {
+      return value;
+    }
   }
 
   static String _normalize(String source) => source.trim().toLowerCase();
