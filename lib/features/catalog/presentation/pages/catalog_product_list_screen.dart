@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -259,15 +261,22 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _CatalogToolbar extends StatelessWidget {
+class _CatalogToolbar extends ConsumerWidget {
   const _CatalogToolbar({required this.state, required this.controller});
 
   final CatalogProductListState state;
   final CatalogProductListController controller;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final CatalogCopy copy = CatalogCopy.of(context);
+    final List<StoreBrand> brands = ref
+        .watch(catalogFilterBrandsProvider)
+        .when(
+          data: (List<StoreBrand> value) => value,
+          loading: () => const <StoreBrand>[],
+          error: (Object error, StackTrace stackTrace) => const <StoreBrand>[],
+        );
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 16, 10),
       child: Row(
@@ -293,6 +302,7 @@ class _CatalogToolbar extends StatelessWidget {
                             state.filterData?.minimumPriceMinor ?? '',
                         maximumAvailableMinor:
                             state.filterData?.maximumPriceMinor ?? '',
+                        brands: brands,
                       );
                   if (filters != null) {
                     await controller.applyFilters(filters);
