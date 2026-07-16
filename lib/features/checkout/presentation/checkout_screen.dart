@@ -532,13 +532,6 @@ class _AddressFields extends StatelessWidget {
             onChanged: (String value) =>
                 onChanged(address.copyWith(state: value)),
           ),
-          _field(
-            name: 'postcode',
-            label: copy.postcodeOptional,
-            value: address.postcode,
-            onChanged: (String value) =>
-                onChanged(address.copyWith(postcode: value)),
-          ),
           if (requiresEmail)
             _field(
               name: 'email',
@@ -1202,8 +1195,6 @@ class _CheckoutCopy {
   String get city => arabic ? 'المدينة' : 'City';
   String get state => arabic ? 'المحافظة *' : 'State *';
   String get chooseGovernorate => arabic ? 'اختر المحافظة' : 'Choose a state';
-  String get postcodeOptional =>
-      arabic ? 'الرمز البريدي (اختياري)' : 'Postcode (optional)';
   String get countryCode =>
       arabic ? 'كود الدولة من حرفين' : 'Two-letter country code';
   String get email => arabic ? 'البريد الإلكتروني' : 'Email';

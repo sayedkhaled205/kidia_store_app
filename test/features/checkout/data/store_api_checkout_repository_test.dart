@@ -165,7 +165,7 @@ void main() {
   );
 
   test(
-    'mirrors missing required shipping address fields into billing',
+    'hides postcode and mirrors other required shipping fields into billing',
     () async {
       final FakeCheckoutTransport transport = FakeCheckoutTransport()
         ..configurationResponse = const CheckoutApiResponse(
@@ -197,6 +197,14 @@ void main() {
                 'priority': 90,
               },
               <String, dynamic>{
+                'key': 'shipping_address_1',
+                'group': 'shipping',
+                'type': 'text',
+                'label': 'عنوان الشارع',
+                'required': true,
+                'priority': 95,
+              },
+              <String, dynamic>{
                 'key': 'shipping_delivery_note',
                 'group': 'shipping',
                 'type': 'text',
@@ -219,16 +227,26 @@ void main() {
           .map((CheckoutFieldDefinition field) => field.key)
           .toList();
       expect(keys.where((String key) => key == 'billing_phone'), hasLength(1));
-      expect(keys, contains('billing_postcode'));
+      expect(keys, isNot(contains('billing_postcode')));
+      expect(keys, contains('billing_address_1'));
       expect(keys, isNot(contains('billing_delivery_note')));
       final CheckoutFieldDefinition postcode = state.fieldDefinitions
           .singleWhere(
             (CheckoutFieldDefinition field) =>
-                field.key == 'billing_postcode',
+                field.key == 'shipping_postcode',
           );
-      expect(postcode.group, CheckoutFieldGroup.billing);
-      expect(postcode.required, isTrue);
+      expect(postcode.group, CheckoutFieldGroup.shipping);
+      expect(postcode.type, CheckoutFieldType.hidden);
+      expect(postcode.required, isFalse);
+      expect(postcode.isVisible, isFalse);
       expect(postcode.label, 'الرمز البريدي');
+      final CheckoutFieldDefinition address = state.fieldDefinitions
+          .singleWhere(
+            (CheckoutFieldDefinition field) =>
+                field.key == 'billing_address_1',
+          );
+      expect(address.group, CheckoutFieldGroup.billing);
+      expect(address.required, isTrue);
     },
   );
 
@@ -281,10 +299,15 @@ void main() {
         (body['billing_address'] as Map<String, String>)['address_2'],
         '-',
       );
+      expect(
+        (body['billing_address'] as Map<String, String>)['postcode'],
+        '-',
+      );
       final Map<String, String> shipping =
           body['shipping_address'] as Map<String, String>;
       expect(shipping['company'], '-');
       expect(shipping['address_2'], '-');
+      expect(shipping['postcode'], '-');
       expect(shipping['phone'], '01000000000');
       expect(shipping, isNot(contains('email')));
     },

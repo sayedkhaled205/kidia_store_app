@@ -128,6 +128,21 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       if (!seenKeys.add(field.key)) {
         continue;
       }
+      if (_isPostcodeField(field.key)) {
+        // The live store requires a shipping postcode at API level even
+        // though checkout does not use it to collect the customer's address.
+        // Keep the schema entry for payload compatibility, but never ask the
+        // customer to enter a value.
+        normalized.add(
+          field.copyWith(
+            type: CheckoutFieldType.hidden,
+            required: false,
+            options: const <String, String>{},
+            defaultValue: '',
+          ),
+        );
+        continue;
+      }
       if (_isCountryField(field.key)) {
         normalized.add(
           field.copyWith(
@@ -240,6 +255,9 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
 
   bool _isStateField(String key) =>
       key == 'billing_state' || key == 'shipping_state';
+
+  bool _isPostcodeField(String key) =>
+      key == 'billing_postcode' || key == 'shipping_postcode';
 
   @override
   Future<Cart> updateCustomer({
@@ -464,7 +482,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       'address_2': _optionalAddressValue(address.address2),
       'city': address.city,
       'state': address.state,
-      'postcode': address.postcode,
+      // WooCommerce may retain postcode as required in Store API even when
+      // the merchant removes it from checkout. The neutral fallback keeps
+      // order submission compatible without exposing a customer-facing field.
+      'postcode': _optionalAddressValue(address.postcode),
       'country': address.country,
       'phone': address.phone,
     };
