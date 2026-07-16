@@ -5,11 +5,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:kidia_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 
 void main() {
+  testWidgets('shows circular Google and Facebook actions on the email step', (
+    WidgetTester tester,
+  ) async {
+    await _pumpAuth(tester, _FakeAuthRepository(registered: true));
+
+    expect(find.byKey(const Key('auth-social-or')), findsOneWidget);
+    expect(find.byKey(const Key('auth-google')), findsOneWidget);
+    expect(find.byKey(const Key('auth-facebook')), findsOneWidget);
+    expect(find.text('أو'), findsOneWidget);
+  });
+
   testWidgets('existing email advances to the password sign-in step', (
     WidgetTester tester,
   ) async {
@@ -94,6 +106,20 @@ class _FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async => _session(email);
+
+  @override
+  Future<Uri> beginSocialSignIn({
+    required SocialAuthProvider provider,
+    required String returnPath,
+  }) async => Uri.parse('https://shop.example.com/social/${provider.apiName}');
+
+  @override
+  Future<SocialAuthCompletion> completeSocialSignIn({
+    required String code,
+    required String state,
+  }) {
+    throw UnimplementedError();
+  }
 
   @override
   Future<AuthSession?> restoreSession() async => null;

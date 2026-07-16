@@ -17,6 +17,7 @@ $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $GLOBALS['kidia_routes']     = array();
 $GLOBALS['kidia_transients'] = array();
 $GLOBALS['kidia_user_meta']  = array();
+$GLOBALS['kidia_social_tracker'] = '';
 $GLOBALS['kidia_users']      = array(
 	7 => array(
 		'email'        => 'customer@example.com',
@@ -50,17 +51,25 @@ class WP_REST_Request {
 }
 
 class WP_REST_Response {
-	public array $data;
+	public $data;
 	public int $status;
 	public array $headers = array();
 
-	public function __construct( array $data, int $status = 200 ) {
+	public function __construct( $data, int $status = 200 ) {
 		$this->data   = $data;
 		$this->status = $status;
 	}
 
 	public function header( string $name, string $value ): void {
 		$this->headers[ $name ] = $value;
+	}
+}
+
+class NextendSocialLogin {
+	public static string $tracker_data = '';
+
+	public static function getTrackerData(): string {
+		return self::$tracker_data;
 	}
 }
 
@@ -102,8 +111,8 @@ class WP_User {
 	}
 }
 
-function add_action( string $hook, $callback, int $priority = 10 ): void {
-	unset( $hook, $callback, $priority );
+function add_action( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void {
+	unset( $hook, $callback, $priority, $accepted_args );
 }
 
 function add_filter( string $hook, $callback, int $priority = 10 ): void {
@@ -163,6 +172,54 @@ function set_transient( string $key, $value, int $expiration ): bool {
 	unset( $expiration );
 	$GLOBALS['kidia_transients'][ $key ] = $value;
 	return true;
+}
+
+function delete_transient( string $key ): bool {
+	unset( $GLOBALS['kidia_transients'][ $key ] );
+	return true;
+}
+
+function shortcode_exists( string $tag ): bool {
+	return 'nextend_social_login' === $tag;
+}
+
+function esc_url_raw( string $url ): string {
+	return $url;
+}
+
+function rest_url( string $path = '' ): string {
+	return 'https://shop.example.com/wp-json/' . ltrim( $path, '/' );
+}
+
+function add_query_arg( string $key, string $value, string $url ): string {
+	$separator = str_contains( $url, '?' ) ? '&' : '?';
+	return $url . $separator . rawurlencode( $key ) . '=' . rawurlencode( $value );
+}
+
+function home_url( string $path = '' ): string {
+	return 'https://shop.example.com/' . ltrim( $path, '/' );
+}
+
+function wp_parse_url( string $url ) {
+	return parse_url( $url );
+}
+
+function do_shortcode( string $shortcode ): string {
+	preg_match( '/provider="([^"]+)"/', $shortcode, $provider );
+	preg_match( '/redirect="([^"]+)"/', $shortcode, $redirect );
+	preg_match( '/trackerdata="([^"]+)"/', $shortcode, $tracker );
+	$GLOBALS['kidia_social_tracker'] = html_entity_decode( (string) ( $tracker[1] ?? '' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$query = http_build_query(
+		array(
+			'loginSocial' => (string) ( $provider[1] ?? '' ),
+			'redirect'    => html_entity_decode( (string) ( $redirect[1] ?? '' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
+			'trackerdata' => $GLOBALS['kidia_social_tracker'],
+		),
+		'',
+		'&',
+		PHP_QUERY_RFC3986
+	);
+	return '<a href="https://shop.example.com/wp-login.php?' . htmlspecialchars( $query, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) . '">Continue</a>';
 }
 
 function email_exists( string $email ) {
@@ -240,7 +297,7 @@ require dirname( __DIR__ ) . '/api/class-customer-auth-endpoint.php';
 
 $endpoint = new Kidia_Mobile_CMS_Customer_Auth_Endpoint();
 $endpoint->register_routes();
-kidia_auth_assert( 5 === count( $GLOBALS['kidia_routes'] ), 'All five auth routes must be registered.' );
+kidia_auth_assert( 8 === count( $GLOBALS['kidia_routes'] ), 'All eight auth routes must be registered.' );
 
 $existing = $endpoint->identify( new WP_REST_Request( array( 'email' => 'customer@example.com' ) ) );
 kidia_auth_assert( $existing instanceof WP_REST_Response, 'Identify must return a REST response.' );
@@ -288,5 +345,56 @@ $registered = $endpoint->register_customer(
 );
 kidia_auth_assert( $registered instanceof WP_REST_Response, 'A new email and password must create a Woo customer.' );
 kidia_auth_assert( false !== email_exists( 'new@example.com' ), 'The new account must exist in the shared website user table.' );
+
+$social_state    = str_repeat( 's', 64 );
+$social_verifier = str_repeat( 'v', 64 );
+$social_start    = $endpoint->social_start(
+	new WP_REST_Request(
+		array(
+			'provider' => 'google',
+			'state'    => $social_state,
+			'verifier' => $social_verifier,
+		)
+	)
+);
+kidia_auth_assert( $social_start instanceof WP_REST_Response, 'Google sign-in must use the configured website provider.' );
+kidia_auth_assert( str_contains( $social_start->data['authorize_url'], 'loginSocial=google' ), 'The website Google provider URL must be returned.' );
+kidia_auth_assert( str_starts_with( $GLOBALS['kidia_social_tracker'], 'woo-mobile:' ), 'The social flow must include a mobile tracker.' );
+
+NextendSocialLogin::$tracker_data = $GLOBALS['kidia_social_tracker'];
+$endpoint->capture_social_login( 7, 'google' );
+$request_id      = substr( NextendSocialLogin::$tracker_data, strlen( 'woo-mobile:' ) );
+$social_callback = $endpoint->social_callback(
+	new WP_REST_Request( array( 'request_id' => $request_id ) )
+);
+kidia_auth_assert( $social_callback instanceof WP_REST_Response, 'A completed social login must redirect to the app.' );
+kidia_auth_assert( 302 === $social_callback->status, 'The social callback must return a redirect.' );
+$app_callback = parse_url( $social_callback->headers['Location'] );
+kidia_auth_assert( 'kidia-store-app' === ( $app_callback['scheme'] ?? '' ), 'The callback must target the registered app scheme.' );
+parse_str( (string) ( $app_callback['query'] ?? '' ), $app_query );
+kidia_auth_assert( $social_state === ( $app_query['state'] ?? '' ), 'The original social state must be returned unchanged.' );
+
+$social_exchange = $endpoint->social_exchange(
+	new WP_REST_Request(
+		array(
+			'code'     => (string) ( $app_query['code'] ?? '' ),
+			'state'    => $social_state,
+			'verifier' => $social_verifier,
+		)
+	)
+);
+kidia_auth_assert( $social_exchange instanceof WP_REST_Response, 'The one-time social handoff must create a mobile session.' );
+kidia_auth_assert( 'customer@example.com' === $social_exchange->data['user']['email'], 'Social login must use the same Woo customer.' );
+
+$reused_exchange = $endpoint->social_exchange(
+	new WP_REST_Request(
+		array(
+			'code'     => (string) ( $app_query['code'] ?? '' ),
+			'state'    => $social_state,
+			'verifier' => $social_verifier,
+		)
+	)
+);
+kidia_auth_assert( $reused_exchange instanceof WP_Error, 'A social handoff code must be single-use.' );
 
 fwrite( STDOUT, "Customer auth endpoint contract test passed.\n" );

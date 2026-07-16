@@ -12,6 +12,9 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 	private const SESSION_META_KEY = '_kidia_mobile_customer_sessions_v1';
 	private const TOKEN_PREFIX     = 'kma1';
 	private const MAX_SESSIONS     = 5;
+	private const SOCIAL_TTL       = 600;
+	private const SOCIAL_CODE_TTL  = 180;
+	private const SOCIAL_SCHEME    = 'kidia-store-app';
 
 	/** Register REST routes and Store API customer authentication. */
 	public function register(): void {
@@ -23,6 +26,12 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			'determine_current_user',
 			array( $this, 'determine_current_user' ),
 			20
+		);
+		add_action(
+			'nsl_login',
+			array( $this, 'capture_social_login' ),
+			10,
+			2
 		);
 	}
 
@@ -65,6 +74,49 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 				'args'                => array(
 					'email'    => $this->email_argument(),
 					'password' => $this->password_argument(),
+				),
+			)
+		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/auth/social/start',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'social_start' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'provider' => $this->social_provider_argument(),
+					'state'    => $this->social_secret_argument(),
+					'verifier' => $this->social_secret_argument(),
+				),
+			)
+		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/auth/social/callback',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'social_callback' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'request_id' => $this->social_secret_argument(),
+				),
+			)
+		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/auth/social/exchange',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'social_exchange' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'code'     => $this->social_secret_argument(),
+					'state'    => $this->social_secret_argument(),
+					'verifier' => $this->social_secret_argument(),
 				),
 			)
 		);
@@ -198,6 +250,185 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			);
 		}
 
+		return $this->issue_session_response( $user );
+	}
+
+	/** Start the website's Nextend Google or Facebook flow. */
+	public function social_start( WP_REST_Request $request ) {
+		$secure = $this->require_https();
+		if ( is_wp_error( $secure ) ) {
+			return $secure;
+		}
+
+		$provider = sanitize_key( (string) $request->get_param( 'provider' ) );
+		$state    = trim( (string) $request->get_param( 'state' ) );
+		$verifier = trim( (string) $request->get_param( 'verifier' ) );
+		$limited  = $this->rate_limit( 'social-start', $provider, 20, 10 * MINUTE_IN_SECONDS );
+		if ( is_wp_error( $limited ) ) {
+			return $limited;
+		}
+
+		$request_id = $this->random_secret( 32 );
+		if ( '' === $request_id ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_start_failed',
+				__( 'A secure social sign-in request could not be created.', 'kidia-mobile-cms' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$callback_url = add_query_arg(
+			'request_id',
+			$request_id,
+			rest_url( 'woo-mobile/v1/auth/social/callback' )
+		);
+		$authorize_url = $this->render_social_authorize_url(
+			$provider,
+			$callback_url,
+			$request_id
+		);
+		if ( is_wp_error( $authorize_url ) ) {
+			return $authorize_url;
+		}
+
+		set_transient(
+			$this->social_key( 'request', $request_id ),
+			array(
+				'provider'      => $provider,
+				'state'         => $state,
+				'state_hash'    => $this->social_secret_hash( $state ),
+				'verifier_hash' => $this->social_secret_hash( $verifier ),
+				'created'       => time(),
+			),
+			self::SOCIAL_TTL
+		);
+
+		return $this->no_store_response(
+			array(
+				'authorize_url' => $authorize_url,
+				'expires_in'    => self::SOCIAL_TTL,
+			)
+		);
+	}
+
+	/** Capture the authenticated WordPress user before Nextend redirects. */
+	public function capture_social_login( $user_id, $provider = null ): void {
+		if ( ! class_exists( 'NextendSocialLogin', false ) || ! is_callable( array( 'NextendSocialLogin', 'getTrackerData' ) ) ) {
+			return;
+		}
+
+		$tracker = (string) NextendSocialLogin::getTrackerData();
+		if ( ! preg_match( '/^woo-mobile:([A-Za-z0-9_-]{43,128})$/', $tracker, $matches ) ) {
+			return;
+		}
+
+		$request_id = $matches[1];
+		$request_key = $this->social_key( 'request', $request_id );
+		$pending     = get_transient( $request_key );
+		$user        = get_user_by( 'id', (int) $user_id );
+		if ( ! is_array( $pending ) || ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
+			return;
+		}
+		$provider_id = is_object( $provider ) && is_callable( array( $provider, 'getId' ) )
+			? sanitize_key( (string) $provider->getId() )
+			: ( is_string( $provider ) ? sanitize_key( $provider ) : '' );
+		if ( '' !== $provider_id && $provider_id !== (string) ( $pending['provider'] ?? '' ) ) {
+			return;
+		}
+		if ( isset( $pending['code'] ) && $this->is_social_secret( (string) $pending['code'] ) ) {
+			return;
+		}
+
+		$code = $this->random_secret( 32 );
+		if ( '' === $code ) {
+			return;
+		}
+
+		set_transient(
+			$this->social_key( 'code', $code ),
+			array(
+				'user_id'       => $user->ID,
+				'request_id'    => $request_id,
+				'state_hash'    => (string) ( $pending['state_hash'] ?? '' ),
+				'verifier_hash' => (string) ( $pending['verifier_hash'] ?? '' ),
+			),
+			self::SOCIAL_CODE_TTL
+		);
+		$pending['code']    = $code;
+		$pending['user_id'] = $user->ID;
+		set_transient( $request_key, $pending, self::SOCIAL_CODE_TTL );
+	}
+
+	/** Redirect the completed browser flow back to the installed mobile app. */
+	public function social_callback( WP_REST_Request $request ) {
+		$secure = $this->require_https();
+		if ( is_wp_error( $secure ) ) {
+			return $secure;
+		}
+
+		$request_id = trim( (string) $request->get_param( 'request_id' ) );
+		$pending    = get_transient( $this->social_key( 'request', $request_id ) );
+		$code       = is_array( $pending ) ? (string) ( $pending['code'] ?? '' ) : '';
+		$state      = is_array( $pending ) ? (string) ( $pending['state'] ?? '' ) : '';
+		if ( ! $this->is_social_secret( $code ) || ! $this->is_social_secret( $state ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_not_completed',
+				__( 'Social sign-in was not completed or has expired.', 'kidia-mobile-cms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$app_url = sprintf(
+			'%s://auth/social-callback?code=%s&state=%s',
+			self::SOCIAL_SCHEME,
+			rawurlencode( $code ),
+			rawurlencode( $state )
+		);
+		$response = new WP_REST_Response( null, 302 );
+		$response->header( 'Location', $app_url );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Pragma', 'no-cache' );
+		$response->header( 'Referrer-Policy', 'no-referrer' );
+		return $response;
+	}
+
+	/** Exchange the one-time browser handoff for a normal mobile session. */
+	public function social_exchange( WP_REST_Request $request ) {
+		$secure = $this->require_https();
+		if ( is_wp_error( $secure ) ) {
+			return $secure;
+		}
+
+		$code     = trim( (string) $request->get_param( 'code' ) );
+		$state    = trim( (string) $request->get_param( 'state' ) );
+		$verifier = trim( (string) $request->get_param( 'verifier' ) );
+		$limited  = $this->rate_limit( 'social-exchange', substr( $code, 0, 16 ), 15, 10 * MINUTE_IN_SECONDS );
+		if ( is_wp_error( $limited ) ) {
+			return $limited;
+		}
+
+		$code_key = $this->social_key( 'code', $code );
+		$handoff  = get_transient( $code_key );
+		if ( ! is_array( $handoff ) ||
+			! hash_equals( (string) ( $handoff['state_hash'] ?? '' ), $this->social_secret_hash( $state ) ) ||
+			! hash_equals( (string) ( $handoff['verifier_hash'] ?? '' ), $this->social_secret_hash( $verifier ) ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_invalid_handoff',
+				__( 'The social sign-in request is invalid or expired.', 'kidia-mobile-cms' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		$user = get_user_by( 'id', (int) ( $handoff['user_id'] ?? 0 ) );
+		if ( ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
+			return $this->unauthorized_error();
+		}
+
+		delete_transient( $code_key );
+		$request_id = (string) ( $handoff['request_id'] ?? '' );
+		if ( $this->is_social_secret( $request_id ) ) {
+			delete_transient( $this->social_key( 'request', $request_id ) );
+		}
 		return $this->issue_session_response( $user );
 	}
 
@@ -467,6 +698,95 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		return str_contains( $uri, '/wp-json/wc/store/' ) || str_contains( $uri, '/wp-json/woo-mobile/v1/' );
 	}
 
+	/** Render Nextend's own provider URL so its configured website app is reused. */
+	private function render_social_authorize_url( string $provider, string $callback_url, string $request_id ) {
+		if ( ! in_array( $provider, array( 'google', 'facebook' ), true ) || ! shortcode_exists( 'nextend_social_login' ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_unavailable',
+				__( 'Google or Facebook sign-in is not available on this store.', 'kidia-mobile-cms' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$shortcode = sprintf(
+			'[nextend_social_login provider="%s" redirect="%s" trackerdata="woo-mobile:%s"]',
+			$provider,
+			esc_url_raw( $callback_url ),
+			$request_id
+		);
+		$html = do_shortcode( $shortcode );
+		if ( ! preg_match( '/<a\b[^>]*\bhref=(["\'])(.*?)\1/i', $html, $matches ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_unavailable',
+				__( 'The selected social sign-in provider is not enabled.', 'kidia-mobile-cms' ),
+				array( 'status' => 503 )
+			);
+		}
+
+		$authorize_url = html_entity_decode( $matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		if ( str_starts_with( $authorize_url, '/' ) ) {
+			$authorize_url = home_url( $authorize_url );
+		}
+		$target = wp_parse_url( $authorize_url );
+		$home   = wp_parse_url( home_url( '/' ) );
+		if ( ! is_array( $target ) || ! is_array( $home ) || ! $this->same_origin_parts( $target, $home ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_invalid_url',
+				__( 'The social sign-in provider returned an unsafe URL.', 'kidia-mobile-cms' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$query = array();
+		parse_str( (string) ( $target['query'] ?? '' ), $query );
+		if ( $provider !== sanitize_key( (string) ( $query['loginSocial'] ?? '' ) ) ) {
+			return new WP_Error(
+				'woo_mobile_auth_social_invalid_url',
+				__( 'The social sign-in provider returned an invalid URL.', 'kidia-mobile-cms' ),
+				array( 'status' => 500 )
+			);
+		}
+		return $authorize_url;
+	}
+
+	private function same_origin_parts( array $left, array $right ): bool {
+		$left_scheme  = strtolower( (string) ( $left['scheme'] ?? '' ) );
+		$right_scheme = strtolower( (string) ( $right['scheme'] ?? '' ) );
+		$left_host    = strtolower( (string) ( $left['host'] ?? '' ) );
+		$right_host   = strtolower( (string) ( $right['host'] ?? '' ) );
+		$left_port    = isset( $left['port'] ) ? (int) $left['port'] : ( 'https' === $left_scheme ? 443 : 80 );
+		$right_port   = isset( $right['port'] ) ? (int) $right['port'] : ( 'https' === $right_scheme ? 443 : 80 );
+		return 'https' === $left_scheme &&
+			$left_scheme === $right_scheme &&
+			'' !== $left_host &&
+			$left_host === $right_host &&
+			$left_port === $right_port;
+	}
+
+	private function random_secret( int $byte_length ): string {
+		try {
+			return rtrim( strtr( base64_encode( random_bytes( $byte_length ) ), '+/', '-_' ), '=' );
+		} catch ( Throwable $error ) {
+			return '';
+		}
+	}
+
+	private function is_social_secret( string $value ): bool {
+		return 1 === preg_match( '/^[A-Za-z0-9_-]{43,128}$/', $value );
+	}
+
+	private function social_secret_hash( string $value ): string {
+		return hash_hmac( 'sha256', $value, wp_salt( 'auth' ) );
+	}
+
+	private function social_key( string $type, string $value ): string {
+		return 'kidia_auth_social_' . sanitize_key( $type ) . '_' . substr(
+			hash_hmac( 'sha256', $value, wp_salt( 'auth' ) ),
+			0,
+			40
+		);
+	}
+
 	private function request_email( WP_REST_Request $request ): string {
 		return strtolower( sanitize_email( (string) $request->get_param( 'email' ) ) );
 	}
@@ -485,6 +805,23 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			'required'          => true,
 			'type'              => 'string',
 			'validate_callback' => static fn( $value ): bool => is_string( $value ) && strlen( $value ) >= 1 && strlen( $value ) <= 4096,
+		);
+	}
+
+	private function social_provider_argument(): array {
+		return array(
+			'required'          => true,
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_key',
+			'validate_callback' => static fn( $value ): bool => in_array( sanitize_key( (string) $value ), array( 'google', 'facebook' ), true ),
+		);
+	}
+
+	private function social_secret_argument(): array {
+		return array(
+			'required'          => true,
+			'type'              => 'string',
+			'validate_callback' => static fn( $value ): bool => is_string( $value ) && 1 === preg_match( '/^[A-Za-z0-9_-]{43,128}$/', $value ),
 		);
 	}
 
