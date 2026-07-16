@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -59,18 +60,30 @@ class CatalogProductFilters {
     this.onSaleOnly = false,
     this.minimumPriceMinor = '',
     this.maximumPriceMinor = '',
+    this.sizeTaxonomy = '',
+    this.sizeTerm = '',
+    this.sizeLabel = '',
   });
 
   final bool inStockOnly;
   final bool onSaleOnly;
   final String minimumPriceMinor;
   final String maximumPriceMinor;
+  final String sizeTaxonomy;
+  final String sizeTerm;
+  final String sizeLabel;
 
-  int get activeCount {
+  bool get hasSize => sizeTaxonomy.isNotEmpty && sizeTerm.isNotEmpty;
+
+  int get generalActiveCount {
     return (inStockOnly ? 1 : 0) +
         (onSaleOnly ? 1 : 0) +
         (minimumPriceMinor.isNotEmpty ? 1 : 0) +
         (maximumPriceMinor.isNotEmpty ? 1 : 0);
+  }
+
+  int get activeCount {
+    return generalActiveCount + (hasSize ? 1 : 0);
   }
 
   bool get isEmpty => activeCount == 0;
@@ -81,7 +94,10 @@ class CatalogProductFilters {
         other.inStockOnly == inStockOnly &&
         other.onSaleOnly == onSaleOnly &&
         other.minimumPriceMinor == minimumPriceMinor &&
-        other.maximumPriceMinor == maximumPriceMinor;
+        other.maximumPriceMinor == maximumPriceMinor &&
+        other.sizeTaxonomy == sizeTaxonomy &&
+        other.sizeTerm == sizeTerm &&
+        other.sizeLabel == sizeLabel;
   }
 
   @override
@@ -90,7 +106,24 @@ class CatalogProductFilters {
     onSaleOnly,
     minimumPriceMinor,
     maximumPriceMinor,
+    sizeTaxonomy,
+    sizeTerm,
+    sizeLabel,
   );
+}
+
+class CatalogSizeOption {
+  const CatalogSizeOption({
+    required this.taxonomy,
+    required this.term,
+    required this.label,
+  });
+
+  final String taxonomy;
+  final String term;
+  final String label;
+
+  String get key => '$taxonomy|$term';
 }
 
 class CatalogProductListState {
@@ -108,6 +141,7 @@ class CatalogProductListState {
     this.error,
     this.loadMoreError,
     this.filterData,
+    this.availableSizes = const <CatalogSizeOption>[],
   });
 
   final String search;
@@ -123,6 +157,7 @@ class CatalogProductListState {
   final Object? error;
   final Object? loadMoreError;
   final CatalogFilterData? filterData;
+  final List<CatalogSizeOption> availableSizes;
 
   bool get hasNextPage => page < totalPages;
 
@@ -140,6 +175,7 @@ class CatalogProductListState {
     Object? error = _notProvided,
     Object? loadMoreError = _notProvided,
     Object? filterData = _notProvided,
+    List<CatalogSizeOption>? availableSizes,
   }) {
     return CatalogProductListState(
       search: search ?? this.search,
@@ -159,6 +195,7 @@ class CatalogProductListState {
       filterData: identical(filterData, _notProvided)
           ? this.filterData
           : filterData as CatalogFilterData?,
+      availableSizes: availableSizes ?? this.availableSizes,
     );
   }
 }
@@ -238,6 +275,10 @@ class CatalogProductListController extends ChangeNotifier {
           error: null,
           loadMoreError: null,
           filterData: result.last,
+          availableSizes: _mergeSizeOptions(
+            _state.availableSizes,
+            _discoverSizeOptions(page.items),
+          ),
         ),
       );
     } catch (error) {
@@ -286,6 +327,10 @@ class CatalogProductListController extends ChangeNotifier {
           totalPages: page.totalPages,
           isLoadingMore: false,
           loadMoreError: null,
+          availableSizes: _mergeSizeOptions(
+            _state.availableSizes,
+            _discoverSizeOptions(page.items),
+          ),
         ),
       );
     } catch (error) {
@@ -312,6 +357,21 @@ class CatalogProductListController extends ChangeNotifier {
     _operation++;
     _replace(_state.copyWith(filters: filters));
     await loadInitial();
+  }
+
+  Future<void> applySize(CatalogSizeOption? size) {
+    final CatalogProductFilters current = _state.filters;
+    return applyFilters(
+      CatalogProductFilters(
+        inStockOnly: current.inStockOnly,
+        onSaleOnly: current.onSaleOnly,
+        minimumPriceMinor: current.minimumPriceMinor,
+        maximumPriceMinor: current.maximumPriceMinor,
+        sizeTaxonomy: size?.taxonomy ?? '',
+        sizeTerm: size?.term ?? '',
+        sizeLabel: size?.label ?? '',
+      ),
+    );
   }
 
   Future<void> submitSearch(String value) async {
@@ -378,9 +438,77 @@ class CatalogProductListController extends ChangeNotifier {
           : const <CatalogStockFilter>[],
       minimumPriceMinor: filters.minimumPriceMinor,
       maximumPriceMinor: filters.maximumPriceMinor,
+      attributes: filters.hasSize
+          ? <CatalogAttributeFilter>[
+              CatalogAttributeFilter(
+                taxonomy: filters.sizeTaxonomy,
+                terms: <String>[filters.sizeTerm],
+              ),
+            ]
+          : const <CatalogAttributeFilter>[],
       onSale: filters.onSaleOnly || collectionIsSale ? true : null,
       featured: collectionIsFeatured ? true : null,
     );
+  }
+
+  static List<CatalogSizeOption> _discoverSizeOptions(
+    Iterable<CatalogProduct> products,
+  ) {
+    final Map<String, CatalogSizeOption> options =
+        <String, CatalogSizeOption>{};
+    for (final CatalogProduct product in products) {
+      for (final CatalogProductAttribute attribute in product.attributes) {
+        if (!_isSizeAttribute(attribute)) {
+          continue;
+        }
+        for (final CatalogAttributeTerm term in attribute.terms) {
+          final String taxonomy = attribute.taxonomy.trim();
+          final String slug = term.slug.trim();
+          final String label = term.name.trim();
+          if (taxonomy.isEmpty || slug.isEmpty) {
+            continue;
+          }
+          final CatalogSizeOption option = CatalogSizeOption(
+            taxonomy: taxonomy,
+            term: slug,
+            label: label.isEmpty ? slug : label,
+          );
+          options[option.key] = option;
+        }
+      }
+    }
+    final List<CatalogSizeOption> result = options.values.toList()
+      ..sort(
+        (CatalogSizeOption first, CatalogSizeOption second) =>
+            first.label.toLowerCase().compareTo(second.label.toLowerCase()),
+      );
+    return List<CatalogSizeOption>.unmodifiable(result);
+  }
+
+  static bool _isSizeAttribute(CatalogProductAttribute attribute) {
+    final String value = '${attribute.taxonomy} ${attribute.name}'
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ');
+    return RegExp(
+      r'(^|\s)(size|sizes|pa size|مقاس|المقاس|مقاسات|المقاسات|حجم|الحجم|أحجام|الاحجام)(\s|$)',
+    ).hasMatch(value);
+  }
+
+  static List<CatalogSizeOption> _mergeSizeOptions(
+    Iterable<CatalogSizeOption> current,
+    Iterable<CatalogSizeOption> discovered,
+  ) {
+    final Map<String, CatalogSizeOption> options = <String, CatalogSizeOption>{
+      for (final CatalogSizeOption option in current) option.key: option,
+      for (final CatalogSizeOption option in discovered) option.key: option,
+    };
+    final List<CatalogSizeOption> result = options.values.toList()
+      ..sort(
+        (CatalogSizeOption first, CatalogSizeOption second) =>
+            first.label.toLowerCase().compareTo(second.label.toLowerCase()),
+      );
+    return List<CatalogSizeOption>.unmodifiable(result);
   }
 
   bool _isCurrent(int operation) {
