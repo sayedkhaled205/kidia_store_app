@@ -9,6 +9,10 @@ import 'package:kidia_store_app/features/product/application/product_detail_cont
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 
+typedef ProductWishlistToggleCallback =
+    Future<bool> Function(CatalogProduct product);
+typedef ProductWishlistStatusCallback = Future<bool> Function(int productId);
+
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
     required this.productId,
@@ -18,7 +22,8 @@ class ProductDetailScreen extends StatefulWidget {
     this.onReviewsRequested,
     this.onRelatedProductsRequested,
     this.onShareRequested,
-    this.onWishlistRequested,
+    this.onWishlistToggle,
+    this.isWishlisted,
   });
 
   final int productId;
@@ -27,7 +32,8 @@ class ProductDetailScreen extends StatefulWidget {
   final ValueChanged<CatalogProduct>? onReviewsRequested;
   final ValueChanged<CatalogProduct>? onRelatedProductsRequested;
   final ValueChanged<CatalogProduct>? onShareRequested;
-  final ValueChanged<CatalogProduct>? onWishlistRequested;
+  final ProductWishlistToggleCallback? onWishlistToggle;
+  final ProductWishlistStatusCallback? isWishlisted;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -35,11 +41,14 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late ProductDetailController _controller;
+  bool _isWishlisted = false;
+  bool _isWishlistMutating = false;
 
   @override
   void initState() {
     super.initState();
     _createController();
+    _loadWishlistState();
   }
 
   @override
@@ -50,6 +59,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
       _createController();
+      _isWishlisted = false;
+      _loadWishlistState();
     }
   }
 
@@ -78,7 +89,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(copy.product), actions: _buildActions(copy)),
+      appBar: AppBar(actions: _buildActions(copy)),
       body: _buildBody(copy),
       bottomNavigationBar:
           _controller.status == ProductDetailStatus.success &&
@@ -107,11 +118,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           onPressed: () => widget.onShareRequested!(product),
           icon: const Icon(Icons.ios_share_outlined),
         ),
-      if (product != null && widget.onWishlistRequested != null)
+      if (product != null && widget.onWishlistToggle != null)
         IconButton(
+          key: const Key('product-wishlist-button'),
           tooltip: copy.save,
-          onPressed: () => widget.onWishlistRequested!(product),
-          icon: const Icon(Icons.favorite_border_rounded),
+          onPressed: _isWishlistMutating
+              ? null
+              : () => _toggleWishlist(product),
+          color: _isWishlisted ? Colors.red : null,
+          icon: Icon(
+            _isWishlisted
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
+          ),
         ),
     ];
   }
@@ -153,6 +172,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       SnackBar(content: Text(_ProductCopy.of(context).addedToCart)),
     );
   }
+
+  Future<void> _loadWishlistState() async {
+    final ProductWishlistStatusCallback? lookup = widget.isWishlisted;
+    if (lookup == null) {
+      return;
+    }
+    try {
+      final bool saved = await lookup(widget.productId);
+      if (mounted) {
+        setState(() => _isWishlisted = saved);
+      }
+    } catch (_) {
+      // Wishlist availability must never block product browsing.
+    }
+  }
+
+  Future<void> _toggleWishlist(CatalogProduct product) async {
+    final ProductWishlistToggleCallback? toggle = widget.onWishlistToggle;
+    if (toggle == null || _isWishlistMutating) {
+      return;
+    }
+    final bool previous = _isWishlisted;
+    setState(() {
+      _isWishlistMutating = true;
+      _isWishlisted = !previous;
+    });
+    try {
+      final bool saved = await toggle(product);
+      if (mounted) {
+        setState(() => _isWishlisted = saved);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isWishlisted = previous);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isWishlistMutating = false);
+      }
+    }
+  }
 }
 
 class _ProductContent extends StatelessWidget {
@@ -178,6 +238,7 @@ class _ProductContent extends StatelessWidget {
       controller.selectedImage,
     );
     final CatalogMoney money = controller.displayedPrice ?? product.prices;
+    final bool inStock = variation?.isInStock ?? product.isInStock;
 
     return CustomScrollView(
       key: const Key('product-detail-scroll'),
@@ -189,12 +250,14 @@ class _ProductContent extends StatelessWidget {
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
           sliver: SliverList.list(
             children: <Widget>[
-              _ProductBadges(
-                product: product,
-                variation: variation,
-                copy: copy,
-              ),
-              const SizedBox(height: 12),
+              if (product.isOnSale || !inStock) ...<Widget>[
+                _ProductBadges(
+                  product: product,
+                  variation: variation,
+                  copy: copy,
+                ),
+                const SizedBox(height: 12),
+              ],
               Text(
                 product.name,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -237,11 +300,11 @@ class _ProductContent extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 28),
-              _DetailsSection(product: product, copy: copy),
               if (product.brands.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 8),
                 _BrandSection(product: product, copy: copy),
+                const SizedBox(height: 12),
               ],
+              _DetailsSection(product: product, copy: copy),
               const SizedBox(height: 18),
               OutlinedButton.icon(
                 key: const Key('related-products-button'),
@@ -416,10 +479,11 @@ class _ProductBadges extends StatelessWidget {
       children: <Widget>[
         if (product.isOnSale)
           ProductBadge(label: copy.sale, type: ProductBadgeType.offer),
-        ProductBadge(
-          label: inStock ? copy.inStock : copy.outOfStock,
-          type: inStock ? ProductBadgeType.custom : ProductBadgeType.outOfStock,
-        ),
+        if (!inStock)
+          ProductBadge(
+            label: copy.outOfStock,
+            type: ProductBadgeType.outOfStock,
+          ),
       ],
     );
   }
@@ -618,31 +682,39 @@ class _BrandSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
       key: const Key('product-brand-section'),
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: const EdgeInsets.only(bottom: 12),
-      title: Text(
-        copy.brand,
-        style: const TextStyle(fontWeight: FontWeight.w800),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.outlineVariant),
       ),
-      children: <Widget>[
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: product.brands
-                .map(
-                  (brand) => Chip(
-                    avatar: const Icon(Icons.verified_outlined, size: 18),
-                    label: Text(brand.name),
-                  ),
-                )
-                .toList(growable: false),
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              copy.brand,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: product.brands
+                  .map(
+                    (brand) => Chip(
+                      avatar: const Icon(Icons.verified_outlined, size: 18),
+                      label: Text(brand.name),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
