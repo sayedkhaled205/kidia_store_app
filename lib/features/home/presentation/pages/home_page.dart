@@ -209,9 +209,15 @@ class _HomeHeader extends StatelessWidget {
           IconButton.filledTonal(
             tooltip: 'البحث',
             onPressed: () {
-              context.go('/search');
+              context.push('/search');
             },
             icon: const Icon(Icons.search_rounded),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            tooltip: 'السلة',
+            onPressed: () => context.push('/cart'),
+            icon: const Icon(Icons.shopping_bag_outlined),
           ),
         ],
       ),
