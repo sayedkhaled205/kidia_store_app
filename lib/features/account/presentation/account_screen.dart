@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key, this.onWishlist});
-
-  final VoidCallback? onWishlist;
+  const AccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('حسابي')),
+      appBar: AppBar(
+        title: const Text('حسابي'),
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'السلة',
+            onPressed: () => context.push('/cart'),
+            icon: const Icon(Icons.shopping_bag_outlined),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: <Widget>[
@@ -20,15 +28,6 @@ class AccountScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.favorite_border_rounded),
-              title: const Text('المفضلة'),
-              subtitle: const Text('المنتجات المحفوظة على هذا الجهاز'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: onWishlist,
-            ),
-          ),
           const Card(
             child: ListTile(
               enabled: false,
