@@ -56,7 +56,7 @@ class CategoriesScreen extends ConsumerWidget {
                     sliver: SliverList.separated(
                       itemCount: value.roots.length,
                       separatorBuilder: (BuildContext context, int index) =>
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                       itemBuilder: (BuildContext context, int index) =>
                           _CategoryBranch(node: value.roots[index]),
                     ),
@@ -101,7 +101,8 @@ class _CategoryBranchState extends State<_CategoryBranch> {
       child: Column(
         children: <Widget>[
           ListTile(
-            contentPadding: EdgeInsetsDirectional.fromSTEB(12, 6, 8, 6),
+            minTileHeight: 86,
+            contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 9, 8, 9),
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
@@ -255,7 +256,7 @@ class _CategoryImage extends StatelessWidget {
     );
 
     return SizedBox.square(
-      dimension: 54,
+      dimension: 64,
       child: imageUrl == null || imageUrl.isEmpty
           ? fallback
           : ColoredBox(
@@ -335,9 +336,9 @@ class _CategoryLoadingList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: 7,
       separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
       itemBuilder: (BuildContext context, int index) => Container(
-        height: 78,
+        height: 86,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(18),
