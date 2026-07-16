@@ -740,40 +740,38 @@ class _SocialAuthButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
+    return Row(
       textDirection: TextDirection.ltr,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          _SocialCircleButton(
-            key: const Key('auth-google'),
-            label: copy.continueWithGoogle,
-            enabled: enabled,
-            onTap: () => onProvider(SocialAuthProvider.google),
-            backgroundColor: Colors.white,
-            borderColor: const Color(0xFFE4E7EC),
-            child: const _GoogleMark(),
-          ),
-          const SizedBox(width: KidiaSpacing.lg),
-          _SocialCircleButton(
-            key: const Key('auth-facebook'),
-            label: copy.continueWithFacebook,
-            enabled: enabled,
-            onTap: () => onProvider(SocialAuthProvider.facebook),
-            backgroundColor: const Color(0xFF1877F2),
-            borderColor: const Color(0xFF1877F2),
-            child: const Text(
-              'f',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 36,
-                height: 1.12,
-                fontWeight: FontWeight.w900,
-              ),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        _SocialCircleButton(
+          key: const Key('auth-google'),
+          label: copy.continueWithGoogle,
+          enabled: enabled,
+          onTap: () => onProvider(SocialAuthProvider.google),
+          backgroundColor: Colors.white,
+          borderColor: const Color(0xFFE4E7EC),
+          child: const _GoogleMark(),
+        ),
+        const SizedBox(width: KidiaSpacing.lg),
+        _SocialCircleButton(
+          key: const Key('auth-facebook'),
+          label: copy.continueWithFacebook,
+          enabled: enabled,
+          onTap: () => onProvider(SocialAuthProvider.facebook),
+          backgroundColor: const Color(0xFF1877F2),
+          borderColor: const Color(0xFF1877F2),
+          child: const Text(
+            'f',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              height: 1.12,
+              fontWeight: FontWeight.w900,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
