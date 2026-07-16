@@ -6,6 +6,7 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_categor
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
+import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 
 class CategoriesScreen extends ConsumerWidget {
@@ -292,7 +293,7 @@ class _CategoryTopActions extends StatelessWidget {
               borderRadius: BorderRadius.circular(28),
               child: InkWell(
                 borderRadius: BorderRadius.circular(28),
-                onTap: () => context.push('/search'),
+                onTap: () async => showCatalogSearch(context),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -300,7 +301,7 @@ class _CategoryTopActions extends StatelessWidget {
                   ),
                   child: Row(
                     children: <Widget>[
-                      const Icon(Icons.search_rounded),
+                      const Icon(Icons.search_rounded, size: 26.4),
                       const SizedBox(width: 10),
                       Text(
                         'ابحثي عن منتج',
@@ -315,7 +316,7 @@ class _CategoryTopActions extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          CartIconButton(onPressed: () => context.go('/cart'), iconSize: 30),
+          CartIconButton(onPressed: () => context.go('/cart'), iconSize: 33),
         ],
       ),
     );

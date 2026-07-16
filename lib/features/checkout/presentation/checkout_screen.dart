@@ -202,7 +202,8 @@ class _CheckoutForm extends StatelessWidget {
             keyPrefix: 'billing',
             address: controller.billingAddress,
             enabled: enabled,
-            requiresEmail: true,
+            requiresEmail: false,
+            requiresPhone: true,
             copy: copy,
             errorFor: controller.errorFor,
             onChanged: controller.updateBillingAddress,
@@ -227,6 +228,7 @@ class _CheckoutForm extends StatelessWidget {
                 address: controller.shippingAddress,
                 enabled: enabled,
                 requiresEmail: false,
+                requiresPhone: false,
                 copy: copy,
                 errorFor: controller.errorFor,
                 onChanged: controller.updateShippingAddress,
@@ -459,6 +461,7 @@ class _AddressFields extends StatelessWidget {
     required this.address,
     required this.enabled,
     required this.requiresEmail,
+    required this.requiresPhone,
     required this.copy,
     required this.errorFor,
     required this.onChanged,
@@ -468,6 +471,7 @@ class _AddressFields extends StatelessWidget {
   final CheckoutAddress address;
   final bool enabled;
   final bool requiresEmail;
+  final bool requiresPhone;
   final _CheckoutCopy copy;
   final String? Function(String field) errorFor;
   final ValueChanged<CheckoutAddress> onChanged;
@@ -546,7 +550,7 @@ class _AddressFields extends StatelessWidget {
             ),
           _field(
             name: 'phone',
-            label: copy.phoneOptional,
+            label: requiresPhone ? copy.phone : copy.phoneOptional,
             value: address.phone,
             keyboardType: TextInputType.phone,
             onChanged: (String value) =>
@@ -1122,6 +1126,9 @@ String? _localizedError(_CheckoutCopy copy, String field, String? rawError) {
   if (field.endsWith('email')) {
     return rawError.contains('valid') ? copy.emailInvalid : copy.emailRequired;
   }
+  if (field.endsWith('phone')) {
+    return copy.phoneRequired;
+  }
   if (field == 'paymentMethod') {
     return copy.paymentRequired;
   }
@@ -1200,6 +1207,7 @@ class _CheckoutCopy {
   String get countryCode =>
       arabic ? 'كود الدولة من حرفين' : 'Two-letter country code';
   String get email => arabic ? 'البريد الإلكتروني' : 'Email';
+  String get phone => arabic ? 'الهاتف *' : 'Phone *';
   String get phoneOptional => arabic ? 'الهاتف (اختياري)' : 'Phone (optional)';
   String get orderNote => arabic ? 'ملاحظة الطلب' : 'Order note';
   String get orderNoteHint =>
@@ -1246,6 +1254,8 @@ class _CheckoutCopy {
   String get emailInvalid => arabic
       ? 'أدخل بريدًا إلكترونيًا صحيحًا.'
       : 'Enter a valid email address.';
+  String get phoneRequired =>
+      arabic ? 'رقم الهاتف مطلوب.' : 'Phone is required.';
   String get paymentRequired =>
       arabic ? 'اختر طريقة الدفع.' : 'Choose a payment method.';
   String get noteTooLong =>

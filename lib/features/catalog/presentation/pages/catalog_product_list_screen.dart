@@ -15,6 +15,7 @@ import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_pr
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_size_sheet.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_sort_sheet.dart';
+import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
 
 class CatalogProductListScreen extends StatelessWidget {
   const CatalogProductListScreen({
@@ -37,8 +38,11 @@ class CatalogProductListScreen extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             tooltip: copy.search,
-            onPressed: () => context.push('/search'),
-            icon: const Icon(Icons.search_rounded),
+            onPressed: () async => showCatalogSearch(
+              context,
+              initialQuery: request.search,
+            ),
+            icon: const Icon(Icons.search_rounded, size: 26.4),
           ),
           CartIconButton(onPressed: () => context.push('/cart')),
         ],
@@ -168,8 +172,11 @@ class _ProductListContent extends StatelessWidget {
               ),
             ),
           if (!controller.isAwaitingSearch)
-            SliverToBoxAdapter(
-              child: _CatalogToolbar(state: state, controller: controller),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _CatalogToolbarHeaderDelegate(
+                child: _CatalogToolbar(state: state, controller: controller),
+              ),
             ),
           if (controller.isAwaitingSearch)
             _StatusFill(
@@ -233,7 +240,7 @@ class _SearchField extends StatelessWidget {
         autocorrect: false,
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: const Icon(Icons.search_rounded),
+          prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
           suffixIcon: ListenableBuilder(
             listenable: controller,
             builder: (BuildContext context, Widget? child) {
@@ -351,6 +358,36 @@ class _CatalogToolbar extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+class _CatalogToolbarHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _CatalogToolbarHeaderDelegate({required this.child});
+
+  final Widget child;
+
+  @override
+  double get minExtent => 68;
+
+  @override
+  double get maxExtent => 68;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      elevation: overlapsContent ? 1 : 0,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _CatalogToolbarHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }
 

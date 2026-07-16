@@ -81,12 +81,44 @@ void main() {
     expect(find.byKey(const Key('catalog-filter-button')), findsOneWidget);
     expect(find.byKey(const Key('catalog-size-button')), findsOneWidget);
     expect(find.byKey(const Key('catalog-sort-button')), findsOneWidget);
+    final SliverPersistentHeader toolbar = tester.widget<SliverPersistentHeader>(
+      find.byType(SliverPersistentHeader),
+    );
+    expect(toolbar.pinned, isTrue);
 
     await tester.tap(find.byKey(const Key('catalog-size-button')));
     await tester.pumpAndSettle();
     expect(find.text('Choose a size'), findsOneWidget);
     expect(find.text('Small'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('search action opens a focused overlay on the current screen', (
+    WidgetTester tester,
+  ) async {
+    final _ScreenCatalogRepository repository = _ScreenCatalogRepository();
+    await tester.pumpWidget(
+      _app(
+        repository,
+        const CatalogProductListScreen(
+          request: CatalogProductListRequest(title: 'Shoes'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CatalogProductListScreen), findsOneWidget);
+    expect(
+      find.byKey(const Key('catalog-search-overlay-field')),
+      findsOneWidget,
+    );
+    final TextField field = tester.widget<TextField>(
+      find.byKey(const Key('catalog-search-overlay-field')),
+    );
+    expect(field.autofocus, isTrue);
   });
 }
 

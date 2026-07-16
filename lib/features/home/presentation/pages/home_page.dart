@@ -10,6 +10,7 @@ import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
 import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_renderer.dart';
+import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerWidget {
@@ -122,7 +123,11 @@ class HomePage extends ConsumerWidget {
         return;
 
       case 'search':
-        context.go(value.isEmpty ? '/search' : '/search?q=$encodedValue');
+        if (value.isEmpty) {
+          unawaited(showCatalogSearch(context));
+          return;
+        }
+        context.go('/search?q=$encodedValue');
         return;
 
       case 'external':
@@ -209,10 +214,8 @@ class _HomeHeader extends StatelessWidget {
           ),
           IconButton.filledTonal(
             tooltip: 'البحث',
-            onPressed: () {
-              context.push('/search');
-            },
-            icon: const Icon(Icons.search_rounded),
+            onPressed: () async => showCatalogSearch(context),
+            icon: const Icon(Icons.search_rounded, size: 26.4),
           ),
           const SizedBox(width: 6),
           CartIconButton(onPressed: () => context.push('/cart')),

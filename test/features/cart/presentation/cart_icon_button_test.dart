@@ -21,5 +21,9 @@ void main() {
 
     expect(find.text('4'), findsOneWidget);
     expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
+    final Icon icon = tester.widget<Icon>(
+      find.byIcon(Icons.shopping_bag_outlined),
+    );
+    expect(icon.size, 26.4);
   });
 }

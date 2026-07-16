@@ -122,6 +122,9 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         <CheckoutFieldDefinition>[];
     final Set<String> seenKeys = <String>{};
     for (final CheckoutFieldDefinition field in fields) {
+      if (field.key == 'billing_email' || field.key == 'shipping_email') {
+        continue;
+      }
       if (!seenKeys.add(field.key)) {
         continue;
       }
@@ -199,7 +202,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       final CheckoutApiResponse response = await transport.updateCustomer(
         cartToken: token,
         body: <String, dynamic>{
-          'billing_address': _addressJson(billingAddress),
+          'billing_address': _billingAddressJson(billingAddress),
           'shipping_address': _addressJson(shippingAddress),
         },
       );
@@ -317,7 +320,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
   Map<String, dynamic> _submissionJson(CheckoutSubmission submission) {
     final String paymentMethod = submission.paymentMethodId.trim();
     return <String, dynamic>{
-      'billing_address': _addressJson(submission.billingAddress),
+      'billing_address': _billingAddressJson(submission.billingAddress),
       'shipping_address': _addressJson(submission.shippingAddress),
       'customer_note': submission.customerNote.trim(),
       // The app uses WooCommerce guest checkout. Stores that require an
@@ -353,6 +356,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         billing.lastName.isEmpty ||
         billing.address1.isEmpty ||
         billing.city.isEmpty ||
+        billing.phone.isEmpty ||
         (states.isNotEmpty && !states.containsKey(billing.state)) ||
         !RegExp(r'^[A-Z]{2}$').hasMatch(billing.country) ||
         (billing.email.isNotEmpty &&
@@ -380,6 +384,35 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       'email': address.email,
       'phone': address.phone,
     };
+  }
+
+  Map<String, String> _billingAddressJson(CheckoutAddress source) {
+    final CheckoutAddress address = source.trimmed();
+    return _addressJson(
+      address.copyWith(
+        // Woo's Store API requires a billing email even when the classic
+        // checkout hides it. The reserved .invalid domain keeps guest orders
+        // non-deliverable without asking the customer for an email address.
+        email: address.email.isEmpty
+            ? _guestEmailForPhone(address.phone)
+            : address.email,
+      ),
+    );
+  }
+
+  String _guestEmailForPhone(String phone) {
+    final StringBuffer digits = StringBuffer();
+    for (final int rune in phone.runes) {
+      if (rune >= 0x30 && rune <= 0x39) {
+        digits.writeCharCode(rune);
+      } else if (rune >= 0x0660 && rune <= 0x0669) {
+        digits.write(rune - 0x0660);
+      } else if (rune >= 0x06F0 && rune <= 0x06F9) {
+        digits.write(rune - 0x06F0);
+      }
+    }
+    final String suffix = digits.isEmpty ? 'customer' : digits.toString();
+    return 'guest-$suffix@no-email.invalid';
   }
 
   CheckoutOrderResult _parseOrderResult(dynamic raw) {

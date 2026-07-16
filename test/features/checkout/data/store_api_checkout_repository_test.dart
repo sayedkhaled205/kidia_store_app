@@ -42,6 +42,22 @@ void main() {
             'version': 1,
             'fields': <dynamic>[
               <String, dynamic>{
+                'key': 'billing_email',
+                'group': 'billing',
+                'type': 'email',
+                'label': 'Email',
+                'required': true,
+                'priority': 25,
+              },
+              <String, dynamic>{
+                'key': 'billing_phone',
+                'group': 'billing',
+                'type': 'tel',
+                'label': 'Phone',
+                'required': true,
+                'priority': 30,
+              },
+              <String, dynamic>{
                 'key': 'billing_vat_number',
                 'group': 'billing',
                 'type': 'text',
@@ -61,8 +77,18 @@ void main() {
       final state = await repository.loadCheckout();
 
       expect(state.hasDynamicFields, isTrue);
-      expect(state.fieldDefinitions.single.key, 'billing_vat_number');
-      expect(state.fieldDefinitions.single.required, isTrue);
+      expect(
+        state.fieldDefinitions.map((CheckoutFieldDefinition field) => field.key),
+        <String>['billing_phone', 'billing_vat_number'],
+      );
+      expect(
+        state.fieldDefinitions
+            .singleWhere(
+              (CheckoutFieldDefinition field) => field.key == 'billing_phone',
+            )
+            .required,
+        isTrue,
+      );
       expect(transport.configurationCalls, 1);
     },
   );
@@ -174,6 +200,10 @@ void main() {
       expect(
         (body['shipping_address'] as Map<String, String>)['country'],
         'EG',
+      );
+      expect(
+        (body['billing_address'] as Map<String, String>)['email'],
+        'guest-01000000000@no-email.invalid',
       );
     },
   );
@@ -374,7 +404,7 @@ void main() {
   });
 
   test(
-    'allows a guest order without email when the filtered checkout hides it',
+    'uses a non-deliverable technical email for a guest without one',
     () async {
       final FakeCheckoutTransport transport = FakeCheckoutTransport();
       final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
@@ -407,10 +437,47 @@ void main() {
       expect(body['create_account'], isFalse);
       expect(
         (body['billing_address'] as Map<String, String>)['email'],
-        isEmpty,
+        'guest-01000000000@no-email.invalid',
       );
     },
   );
+
+  test('rejects a checkout without the required billing phone', () async {
+    final FakeCheckoutTransport transport = FakeCheckoutTransport();
+    final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+      cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+      transport: transport,
+      cartTokenStore: (MemoryCartTokenStore()..write('token')),
+    );
+    const CheckoutAddress address = CheckoutAddress(
+      firstName: 'Khaled',
+      lastName: 'Sayed',
+      address1: 'Nasr City',
+      city: 'Cairo',
+      state: 'EGC',
+      country: 'EG',
+    );
+
+    await expectLater(
+      repository.placeOrder(
+        const CheckoutSubmission(
+          billingAddress: address,
+          shippingAddress: address,
+          customerNote: '',
+          paymentMethodId: 'cod',
+          idempotencyKey: 'missing-phone',
+        ),
+      ),
+      throwsA(
+        isA<CheckoutRepositoryException>().having(
+          (CheckoutRepositoryException error) => error.kind,
+          'kind',
+          CheckoutFailureKind.invalidInput,
+        ),
+      ),
+    );
+    expect(transport.calls, 0);
+  });
 
   test(
     'rejects an Egypt order without a valid WooCommerce governorate code',
