@@ -44,35 +44,41 @@ class CatalogProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: <Widget>[
-                    if (imageUrl == null || imageUrl.isEmpty)
-                      const AppNetworkImageError()
-                    else
-                      AppNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
-                        semanticLabel:
-                            product.primaryImage?.alt.isNotEmpty == true
-                            ? product.primaryImage!.alt
-                            : product.name,
-                      ),
+                child: ColoredBox(
+                  color: colors.surface,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: <Widget>[
+                      if (imageUrl == null || imageUrl.isEmpty)
+                        const AppNetworkImageError()
+                      else
+                        Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: AppNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.contain,
+                            semanticLabel:
+                                product.primaryImage?.alt.isNotEmpty == true
+                                ? product.primaryImage!.alt
+                                : product.name,
+                          ),
+                        ),
                     if (!product.isInStock)
                       ColoredBox(color: colors.surface.withValues(alpha: 0.68)),
-                    PositionedDirectional(
-                      start: 8,
-                      top: 8,
-                      child: _ProductBadge(
-                        label: !product.isInStock
-                            ? copy.outOfStock
-                            : product.isOnSale
-                            ? copy.sale
-                            : '',
-                        isError: !product.isInStock,
+                      PositionedDirectional(
+                        start: 8,
+                        top: 8,
+                        child: _ProductBadge(
+                          label: !product.isInStock
+                              ? copy.outOfStock
+                              : product.isOnSale
+                              ? copy.sale
+                              : '',
+                          isError: !product.isInStock,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Padding(
