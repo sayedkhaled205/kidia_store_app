@@ -30,6 +30,18 @@ class CatalogProductListScreen extends StatelessWidget {
         title: Text(
           request.title.trim().isEmpty ? copy.products : request.title,
         ),
+        actions: <Widget>[
+          IconButton(
+            tooltip: copy.search,
+            onPressed: () => context.push('/search'),
+            icon: const Icon(Icons.search_rounded),
+          ),
+          IconButton(
+            tooltip: 'السلة',
+            onPressed: () => context.push('/cart'),
+            icon: const Icon(Icons.shopping_bag_outlined),
+          ),
+        ],
       ),
       body: CatalogProductListView(
         request: request,
