@@ -30,6 +30,7 @@ void main() {
       final StoreApiCartTransport transport = StoreApiCartTransport(
         storeUri: Uri.parse('https://shop.example.com/store/'),
         dio: dio,
+        authTokenReader: () => 'customer-session',
       );
 
       final response = await transport.request(
@@ -42,6 +43,7 @@ void main() {
       expect(captured?.uri.path, '/store/wp-json/wc/store/v1/cart/add-item');
       expect(captured?.method, 'POST');
       expect(captured?.headers['Cart-Token'], 'session-token');
+      expect(captured?.headers['X-Kidia-Session'], 'customer-session');
       expect(captured?.data, <String, dynamic>{'id': 42, 'quantity': 1});
       expect(response.header('cart-token'), 'rotated-token');
     });

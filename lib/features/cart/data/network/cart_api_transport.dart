@@ -8,6 +8,8 @@ import 'package:kidia_store_app/core/network/store_api_exception.dart';
 
 enum CartApiMethod { get, post }
 
+typedef CartAuthTokenReader = String? Function();
+
 abstract interface class CartApiTransport {
   Future<StoreApiResponse> request(
     CartApiMethod method,
@@ -48,8 +50,13 @@ class CartApiTransportException implements Exception {
 /// transport only fills its current mutation/header gap and deliberately
 /// accepts relative WooCommerce Store API paths—never arbitrary URLs.
 class StoreApiCartTransport implements CartApiTransport {
-  StoreApiCartTransport({required Uri storeUri, Dio? dio})
+  StoreApiCartTransport({
+    required Uri storeUri,
+    Dio? dio,
+    CartAuthTokenReader? authTokenReader,
+  })
     : _storeUri = _normalizeAndValidateStoreUri(storeUri),
+      _authTokenReader = authTokenReader,
       _dio =
           dio ??
           Dio(
@@ -60,16 +67,21 @@ class StoreApiCartTransport implements CartApiTransport {
             ),
           );
 
-  factory StoreApiCartTransport.forConfiguredStore({Dio? dio}) {
+  factory StoreApiCartTransport.forConfiguredStore({
+    Dio? dio,
+    CartAuthTokenReader? authTokenReader,
+  }) {
     AppConfig.validateStoreConnection();
     return StoreApiCartTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
       dio: dio,
+      authTokenReader: authTokenReader,
     );
   }
 
   final Uri _storeUri;
   final Dio _dio;
+  final CartAuthTokenReader? _authTokenReader;
 
   @override
   Future<StoreApiResponse> request(
@@ -80,10 +92,17 @@ class StoreApiCartTransport implements CartApiTransport {
     Map<String, String>? headers,
   }) async {
     final Uri requestUri = _buildRequestUri(path, queryParameters);
+    final String authToken = _authTokenReader?.call()?.trim() ?? '';
+    if (authToken.isNotEmpty && !_safeHeaderValue(authToken)) {
+      throw const CartApiTransportException(
+        message: 'The stored customer session is invalid.',
+      );
+    }
     final Map<String, dynamic> requestHeaders = <String, dynamic>{
       'Accept': 'application/json',
       if (method == CartApiMethod.post) 'Content-Type': 'application/json',
       ...?headers,
+      if (authToken.isNotEmpty) 'X-Kidia-Session': authToken,
     };
 
     try {
@@ -302,5 +321,10 @@ class StoreApiCartTransport implements CartApiTransport {
     return left.scheme.toLowerCase() == right.scheme.toLowerCase() &&
         left.host.toLowerCase() == right.host.toLowerCase() &&
         effectivePort(left) == effectivePort(right);
+  }
+
+  static bool _safeHeaderValue(String value) {
+    return value.length <= 512 &&
+        !value.codeUnits.any((int unit) => unit < 0x20 || unit == 0x7f);
   }
 }

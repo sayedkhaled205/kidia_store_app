@@ -12,11 +12,13 @@ class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({
     required this.repository,
     super.key,
+    this.customerEmail = '',
     this.onOrderSuccess,
     this.onBackToCart,
   });
 
   final CheckoutRepository repository;
+  final String customerEmail;
   final ValueChanged<CheckoutOrderResult>? onOrderSuccess;
   final VoidCallback? onBackToCart;
 
@@ -37,7 +39,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void didUpdateWidget(CheckoutScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.repository, widget.repository)) {
+    if (!identical(oldWidget.repository, widget.repository) ||
+        oldWidget.customerEmail != widget.customerEmail) {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
       _createController();
@@ -45,7 +48,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _createController() {
-    _controller = CheckoutController(repository: widget.repository)
+    _controller = CheckoutController(
+      repository: widget.repository,
+      initialEmail: widget.customerEmail,
+    )
       ..addListener(_onControllerChanged);
     _controller.load();
   }

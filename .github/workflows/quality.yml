@@ -20,6 +20,8 @@ jobs:
         run: find kidia-mobile-cms -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Check JavaScript syntax
         run: find kidia-mobile-cms -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Run PHP contract tests
+        run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
 
   flutter:
     name: Flutter app
@@ -31,5 +33,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Emit resolved lockfile for dependency update
+        run: base64 -w0 pubspec.lock
       - run: flutter analyze
       - run: flutter test
