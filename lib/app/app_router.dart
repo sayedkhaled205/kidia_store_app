@@ -122,17 +122,27 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                                     );
                                   }
                                 },
-                            onWishlistRequested: (product) async {
+                            isWishlisted: (int productId) async {
                               final repository = ref.read(
                                 wishlistRepositoryProvider,
                               );
                               final ids = await repository.loadProductIds();
-                              if (!ids.contains(product.id)) {
-                                await repository.saveProductIds(<int>[
-                                  ...ids,
-                                  product.id,
-                                ]);
-                              }
+                              return ids.contains(productId);
+                            },
+                            onWishlistToggle: (product) async {
+                              final repository = ref.read(
+                                wishlistRepositoryProvider,
+                              );
+                              final List<int> ids = await repository
+                                  .loadProductIds();
+                              final bool isSaved = ids.contains(product.id);
+                              final List<int> nextIds = isSaved
+                                  ? ids
+                                        .where((int id) => id != product.id)
+                                        .toList(growable: false)
+                                  : <int>[...ids, product.id];
+                              await repository.saveProductIds(nextIds);
+                              return !isSaved;
                             },
                           );
                         },
