@@ -13,7 +13,7 @@ abstract interface class BrandsRemoteDataSource {
 class StoreApiBrandsRemoteDataSource implements BrandsRemoteDataSource {
   const StoreApiBrandsRemoteDataSource(this._client);
 
-  static const String endpoint = '/wp-json/wc/store/v1/products/brands';
+  static const String endpoint = '/wp-json/woo-mobile/v1/brands';
 
   final StoreApiClient _client;
 
