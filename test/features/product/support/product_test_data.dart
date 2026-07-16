@@ -99,6 +99,9 @@ const CatalogProduct simpleProduct = CatalogProduct(
   averageRating: 4.6,
   reviewCount: 18,
   prices: testMoney,
+  brands: <CatalogCategory>[
+    CatalogCategory(id: 7, name: 'Kidia', slug: 'kidia'),
+  ],
 );
 
 const CatalogProductAttribute sizeAttribute = CatalogProductAttribute(
