@@ -25,8 +25,10 @@ void main() {
     expect(find.text('Everyday Dress'), findsWidgets);
     expect(find.byKey(const Key('product-current-price')), findsOneWidget);
     expect(find.text(r'$79.99'), findsOneWidget);
-    expect(find.text('Soft & comfortable.'), findsOneWidget);
+    expect(find.text('Soft & comfortable.'), findsNothing);
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('product-brand-section')));
+    await tester.pumpAndSettle();
     expect(find.text('Kidia'), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
@@ -108,6 +110,7 @@ void main() {
   });
 
   testWidgets('shows a retryable load error', (WidgetTester tester) async {
+    _useTallSurface(tester);
     final ProductFakeCatalogRepository repository =
         ProductFakeCatalogRepository(
           productError: const CatalogRepositoryException(
