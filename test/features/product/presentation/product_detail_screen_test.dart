@@ -27,9 +27,9 @@ void main() {
     expect(find.text(r'$79.99'), findsOneWidget);
     expect(find.text('Soft & comfortable.'), findsNothing);
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('product-brand-section')));
-    await tester.pumpAndSettle();
     expect(find.text('Kidia'), findsOneWidget);
+    expect(find.text('Product'), findsNothing);
+    expect(find.text('In stock'), findsNothing);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),
@@ -40,6 +40,41 @@ void main() {
       find.byKey(const Key('add-to-cart-button')),
     );
     expect(button.onPressed, isNull);
+  });
+
+  testWidgets('wishlist heart reflects add and remove state', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    bool saved = false;
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: ProductFakeCatalogRepository(),
+          isWishlisted: (int productId) async => saved,
+          onWishlistToggle: (_) async {
+            saved = !saved;
+            return saved;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    await tester.tap(find.byKey(const Key('product-wishlist-button')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    final IconButton added = tester.widget<IconButton>(
+      find.byKey(const Key('product-wishlist-button')),
+    );
+    expect(added.color, Colors.red);
+
+    await tester.tap(find.byKey(const Key('product-wishlist-button')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+    expect(saved, isFalse);
   });
 
   testWidgets('passes quantity to the add-to-cart integration callback', (
