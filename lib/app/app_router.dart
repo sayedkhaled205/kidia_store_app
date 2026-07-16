@@ -255,6 +255,7 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                       return CatalogProductListScreen(
                         request: CatalogProductListRequest(
                           categoryId: parsedCategoryId,
+                          title: state.uri.queryParameters['name'] ?? '',
                         ),
                       );
                     },
@@ -291,9 +292,8 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
       ),
       GoRoute(
         path: '/search',
-        builder: (context, state) => SearchScreen(
-          initialQuery: state.uri.queryParameters['q'] ?? '',
-        ),
+        builder: (context, state) =>
+            SearchScreen(initialQuery: state.uri.queryParameters['q'] ?? ''),
       ),
       GoRoute(
         path: '/cart',
