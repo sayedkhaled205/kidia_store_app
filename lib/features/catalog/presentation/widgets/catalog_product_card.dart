@@ -53,10 +53,11 @@ class CatalogProductCard extends StatelessWidget {
                         const AppNetworkImageError()
                       else
                         Padding(
-                          padding: const EdgeInsets.all(4),
+                          padding: EdgeInsets.zero,
                           child: AppNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.contain,
+                            alignment: Alignment.bottomCenter,
                             semanticLabel:
                                 product.primaryImage?.alt.isNotEmpty == true
                                 ? product.primaryImage!.alt
@@ -82,7 +83,7 @@ class CatalogProductCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(9, 8, 9, 10),
+                padding: const EdgeInsetsDirectional.fromSTEB(9, 5, 9, 9),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
