@@ -6,7 +6,7 @@ import 'package:kidia_store_app/features/wishlist/presentation/wishlist_screen.d
 import '../support/wishlist_test_data.dart';
 
 void main() {
-  testWidgets('shows an empty local-only wishlist', (
+  testWidgets('shows an empty wishlist without the local-only banner', (
     WidgetTester tester,
   ) async {
     bool continued = false;
@@ -21,10 +21,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('wishlist-local-only-notice')), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-local-only-notice')), findsNothing);
     expect(
       find.text('Saved on this device for this store only.'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.byKey(const Key('wishlist-empty')), findsOneWidget);
     expect(find.text('Your wishlist is empty'), findsOneWidget);
