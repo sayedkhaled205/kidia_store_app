@@ -56,8 +56,8 @@ class CatalogProductCard extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           child: AppNetworkImage(
                             imageUrl: imageUrl,
-                            fit: BoxFit.contain,
-                            alignment: Alignment.bottomCenter,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
                             semanticLabel:
                                 product.primaryImage?.alt.isNotEmpty == true
                                 ? product.primaryImage!.alt
