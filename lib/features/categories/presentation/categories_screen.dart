@@ -302,7 +302,7 @@ class _CategoryTopActions extends StatelessWidget {
               borderRadius: BorderRadius.circular(28),
               child: InkWell(
                 borderRadius: BorderRadius.circular(28),
-                onTap: () => context.go('/search'),
+                onTap: () => context.push('/search'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
