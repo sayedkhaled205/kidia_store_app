@@ -10,13 +10,14 @@ import 'package:kidia_store_app/features/catalog/presentation/controllers/catalo
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_product_list_provider.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
+import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_size_sheet.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_sort_sheet.dart';
 
 class CatalogProductListScreen extends StatelessWidget {
   const CatalogProductListScreen({
     required this.request,
     super.key,
-    this.showSearchField = true,
+    this.showSearchField = false,
   });
 
   final CatalogProductListRequest request;
@@ -267,67 +268,107 @@ class _CatalogToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
-    final ColorScheme colors = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 16, 10),
       child: Row(
         children: <Widget>[
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Text(
-                copy.productCount(state.totalItems),
-                key: ValueKey<int>(state.totalItems),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
+            child: Badge(
+              isLabelVisible: state.filters.generalActiveCount > 0,
+              label: Text('${state.filters.generalActiveCount}'),
+              child: _ToolbarButton(
+                key: const Key('catalog-filter-button'),
+                icon: Icons.tune_rounded,
+                label: copy.filter,
+                onPressed: () async {
+                  final int minorUnit = state.items.isEmpty
+                      ? 2
+                      : state.items.first.prices.currencyMinorUnit;
+                  final CatalogProductFilters? filters =
+                      await CatalogProductFilterSheet.show(
+                        context,
+                        initialFilters: state.filters,
+                        currencyMinorUnit: minorUnit,
+                        minimumAvailableMinor:
+                            state.filterData?.minimumPriceMinor ?? '',
+                        maximumAvailableMinor:
+                            state.filterData?.maximumPriceMinor ?? '',
+                      );
+                  if (filters != null) {
+                    await controller.applyFilters(filters);
+                  }
+                },
               ),
             ),
           ),
-          OutlinedButton.icon(
-            onPressed: () async {
-              final CatalogSort? selected = await CatalogSortSheet.show(
-                context,
-                selected: state.sort,
-              );
-              if (selected != null) {
-                await controller.changeSort(selected);
-              }
-            },
-            icon: const Icon(Icons.swap_vert_rounded, size: 19),
-            label: Text(copy.sort),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Badge(
+              isLabelVisible: state.filters.hasSize,
+              label: const Icon(Icons.check_rounded, size: 12),
+              child: _ToolbarButton(
+                key: const Key('catalog-size-button'),
+                icon: Icons.straighten_rounded,
+                label: copy.size,
+                onPressed: () async {
+                  final CatalogSizeSelection? selection =
+                      await CatalogSizeSheet.show(
+                        context,
+                        options: state.availableSizes,
+                        selectedFilters: state.filters,
+                      );
+                  if (selection != null) {
+                    await controller.applySize(selection.option);
+                  }
+                },
+              ),
+            ),
           ),
           const SizedBox(width: 8),
-          Badge(
-            isLabelVisible: state.filters.activeCount > 0,
-            label: Text('${state.filters.activeCount}'),
-            child: OutlinedButton.icon(
+          Expanded(
+            child: _ToolbarButton(
+              key: const Key('catalog-sort-button'),
+              icon: Icons.swap_vert_rounded,
+              label: copy.sort,
               onPressed: () async {
-                final int minorUnit = state.items.isEmpty
-                    ? 2
-                    : state.items.first.prices.currencyMinorUnit;
-                final CatalogProductFilters? filters =
-                    await CatalogProductFilterSheet.show(
-                      context,
-                      initialFilters: state.filters,
-                      currencyMinorUnit: minorUnit,
-                      minimumAvailableMinor:
-                          state.filterData?.minimumPriceMinor ?? '',
-                      maximumAvailableMinor:
-                          state.filterData?.maximumPriceMinor ?? '',
-                    );
-                if (filters != null) {
-                  await controller.applyFilters(filters);
+                final CatalogSort? selected = await CatalogSortSheet.show(
+                  context,
+                  selected: state.sort,
+                );
+                if (selected != null) {
+                  await controller.changeSort(selected);
                 }
               },
-              icon: const Icon(Icons.tune_rounded, size: 19),
-              label: Text(copy.filter),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ToolbarButton extends StatelessWidget {
+  const _ToolbarButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
     );
   }
 }
@@ -347,7 +388,10 @@ class _CatalogProductGrid extends StatelessWidget {
         : 2;
     final double usableWidth = width - 32 - ((columns - 1) * 12);
     final double cardWidth = usableWidth / columns;
-    final double extent = (cardWidth * 1.01 + 103).clamp(250, 336).toDouble();
+    final double baseExtent = (cardWidth * 1.01 + 103)
+        .clamp(250, 336)
+        .toDouble();
+    final double extent = baseExtent * 0.98;
 
     return SliverPadding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 20),
