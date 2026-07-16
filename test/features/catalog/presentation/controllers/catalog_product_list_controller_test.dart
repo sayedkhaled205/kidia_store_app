@@ -90,16 +90,18 @@ void main() {
       await controller.changeSort(CatalogSort.priceLowToHigh);
       await controller.applyFilters(
         const CatalogProductFilters(
-          inStockOnly: true,
           onSaleOnly: true,
           minimumPriceMinor: '1000',
           maximumPriceMinor: '9000',
+          brandId: 18,
+          brandLabel: 'Bonjor',
         ),
       );
 
       final CatalogProductQuery query = repository.productQueries.last;
       expect(query.sort, CatalogSort.priceLowToHigh);
-      expect(query.stock, <CatalogStockFilter>[CatalogStockFilter.inStock]);
+      expect(query.stock, isEmpty);
+      expect(query.brandIds, <int>[18]);
       expect(query.onSale, isTrue);
       expect(query.minimumPriceMinor, '1000');
       expect(query.maximumPriceMinor, '9000');
