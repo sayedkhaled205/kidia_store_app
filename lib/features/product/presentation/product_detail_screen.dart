@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -97,17 +98,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   List<Widget> _buildActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
-    if (product == null) {
-      return const <Widget>[];
-    }
     return <Widget>[
-      if (widget.onShareRequested != null)
+      IconButton(
+        tooltip: 'البحث',
+        onPressed: () => context.push('/search'),
+        icon: const Icon(Icons.search_rounded),
+      ),
+      IconButton(
+        tooltip: 'السلة',
+        onPressed: () => context.push('/cart'),
+        icon: const Icon(Icons.shopping_bag_outlined),
+      ),
+      if (product != null && widget.onShareRequested != null)
         IconButton(
           tooltip: copy.share,
           onPressed: () => widget.onShareRequested!(product),
           icon: const Icon(Icons.ios_share_outlined),
         ),
-      if (widget.onWishlistRequested != null)
+      if (product != null && widget.onWishlistRequested != null)
         IconButton(
           tooltip: copy.save,
           onPressed: () => widget.onWishlistRequested!(product),
@@ -256,6 +264,10 @@ class _ProductContent extends StatelessWidget {
               ],
               const SizedBox(height: 28),
               _DetailsSection(product: product, copy: copy),
+              if (product.brands.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                _BrandSection(product: product, copy: copy),
+              ],
               const SizedBox(height: 18),
               OutlinedButton.icon(
                 key: const Key('related-products-button'),
@@ -300,6 +312,21 @@ class _ProductGallery extends StatefulWidget {
 
 class _ProductGalleryState extends State<_ProductGallery> {
   int _page = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _initialPage());
+  }
+
+  int _initialPage() {
+    if (widget.images.length <= 1) {
+      return 0;
+    }
+    const int middle = 10000;
+    return middle - (middle % widget.images.length);
+  }
 
   @override
   void didUpdateWidget(_ProductGallery oldWidget) {
@@ -308,9 +335,17 @@ class _ProductGalleryState extends State<_ProductGallery> {
         widget.images.isNotEmpty &&
         oldWidget.images.first.source != widget.images.first.source) {
       _page = 0;
+      _pageController.dispose();
+      _pageController = PageController(initialPage: _initialPage());
     } else if (_page >= widget.images.length) {
       _page = 0;
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -333,12 +368,15 @@ class _ProductGalleryState extends State<_ProductGallery> {
           aspectRatio: 0.86,
           child: PageView.builder(
             key: ValueKey<String>(widget.images.first.source.toString()),
-            itemCount: widget.images.length,
-            onPageChanged: (int page) => setState(() => _page = page),
+            controller: _pageController,
+            itemCount: widget.images.length == 1 ? 1 : null,
+            onPageChanged: (int page) =>
+                setState(() => _page = page % widget.images.length),
             itemBuilder: (BuildContext context, int index) {
-              final CatalogImage image = widget.images[index];
+              final int imageIndex = index % widget.images.length;
+              final CatalogImage image = widget.images[imageIndex];
               return InteractiveViewer(
-                key: Key('product-image-$index'),
+                key: Key('product-image-$imageIndex'),
                 minScale: 1,
                 maxScale: 4,
                 clipBehavior: Clip.hardEdge,
@@ -646,6 +684,43 @@ class _DetailsSection extends StatelessWidget {
   }
 }
 
+class _BrandSection extends StatelessWidget {
+  const _BrandSection({required this.product, required this.copy});
+
+  final CatalogProduct product;
+  final _ProductCopy copy;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      key: const Key('product-brand-section'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 12),
+      title: Text(
+        copy.brand,
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+      children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: product.brands
+                .map(
+                  (brand) => Chip(
+                    avatar: const Icon(Icons.verified_outlined, size: 18),
+                    label: Text(brand.name),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PurchaseBar extends StatelessWidget {
   const _PurchaseBar({
     required this.controller,
@@ -852,6 +927,7 @@ class _ProductCopy {
   String get decreaseQuantity => arabic ? 'تقليل الكمية' : 'Decrease quantity';
   String get increaseQuantity => arabic ? 'زيادة الكمية' : 'Increase quantity';
   String get description => arabic ? 'تفاصيل المنتج' : 'Product details';
+  String get brand => arabic ? 'العلامة التجارية' : 'Brand';
   String get relatedProducts => arabic ? 'منتجات مشابهة' : 'Related products';
   String get addToCart => arabic ? 'أضف إلى السلة' : 'Add to cart';
   String get adding => arabic ? 'جارٍ الإضافة…' : 'Adding…';
