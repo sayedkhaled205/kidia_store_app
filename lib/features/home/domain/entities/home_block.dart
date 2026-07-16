@@ -6,6 +6,12 @@ enum HomeBlockType {
   productGrid('product_grid'),
   sectionHeader('section_header'),
   brandCarousel('brand_carousel'),
+  promoStrip('promo_strip'),
+  couponBanner('coupon_banner'),
+  countdown('countdown'),
+  videoBanner('video_banner'),
+  textBlock('text_block'),
+  divider('divider'),
   spacer('spacer');
 
   const HomeBlockType(this.apiValue);
@@ -36,10 +42,7 @@ abstract class HomeBlock {
 }
 
 class HomeAction {
-  const HomeAction({
-    required this.type,
-    required this.value,
-  });
+  const HomeAction({required this.type, required this.value});
 
   final String type;
   final String value;
@@ -95,11 +98,15 @@ class CategoryGridBlock extends HomeBlock {
   const CategoryGridBlock({
     required super.id,
     required super.enabled,
+    required this.title,
+    required this.subtitle,
     required this.items,
     required this.columns,
     required this.showNames,
   }) : super(type: HomeBlockType.categoryGrid);
 
+  final String? title;
+  final String? subtitle;
   final List<CategoryItem> items;
   final int columns;
   final bool showNames;
@@ -170,16 +177,20 @@ class ProductGridBlock extends HomeBlock {
     required super.id,
     required super.enabled,
     required this.title,
+    required this.subtitle,
     required this.items,
     required this.columns,
     required this.showViewAll,
+    required this.viewAllLabel,
     required this.viewAllAction,
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
+  final String? subtitle;
   final List<HomeProductItem> items;
   final int columns;
   final bool showViewAll;
+  final String? viewAllLabel;
   final HomeAction? viewAllAction;
 }
 
@@ -217,12 +228,130 @@ class BrandCarouselBlock extends HomeBlock {
   const BrandCarouselBlock({
     required super.id,
     required super.enabled,
+    required this.title,
     required this.items,
     required this.itemWidth,
   }) : super(type: HomeBlockType.brandCarousel);
 
+  final String? title;
   final List<BrandItem> items;
   final double itemWidth;
+}
+
+class PromoStripBlock extends HomeBlock {
+  const PromoStripBlock({
+    required super.id,
+    required super.enabled,
+    required this.text,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.action,
+  }) : super(type: HomeBlockType.promoStrip);
+
+  final String text;
+  final String backgroundColor;
+  final String textColor;
+  final HomeAction? action;
+}
+
+class CouponBannerBlock extends HomeBlock {
+  const CouponBannerBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.description,
+    required this.couponCode,
+    required this.imageUrl,
+  }) : super(type: HomeBlockType.couponBanner);
+
+  final String? title;
+  final String? description;
+  final String? couponCode;
+  final String? imageUrl;
+}
+
+class CountdownBlock extends HomeBlock {
+  const CountdownBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.endsAt,
+    required this.expiredText,
+  }) : super(type: HomeBlockType.countdown);
+
+  final String? title;
+  final DateTime? endsAt;
+  final String expiredText;
+}
+
+class VideoBannerBlock extends HomeBlock {
+  const VideoBannerBlock({
+    required super.id,
+    required super.enabled,
+    required this.videoUrl,
+    required this.posterUrl,
+    required this.aspectRatio,
+    required this.autoPlay,
+    required this.muted,
+    required this.loop,
+    required this.action,
+  }) : super(type: HomeBlockType.videoBanner);
+
+  final String videoUrl;
+  final String? posterUrl;
+  final double aspectRatio;
+  final bool autoPlay;
+  final bool muted;
+  final bool loop;
+  final HomeAction? action;
+}
+
+enum HomeTextAlignment {
+  left,
+  center,
+  right;
+
+  static HomeTextAlignment? tryParse(String value) {
+    for (final HomeTextAlignment alignment in values) {
+      if (alignment.name == value) {
+        return alignment;
+      }
+    }
+
+    return null;
+  }
+}
+
+class TextBlock extends HomeBlock {
+  const TextBlock({
+    required super.id,
+    required super.enabled,
+    required this.title,
+    required this.content,
+    required this.alignment,
+    required this.backgroundColor,
+    required this.textColor,
+  }) : super(type: HomeBlockType.textBlock);
+
+  final String? title;
+  final String? content;
+  final HomeTextAlignment alignment;
+  final String? backgroundColor;
+  final String textColor;
+}
+
+class DividerBlock extends HomeBlock {
+  const DividerBlock({
+    required super.id,
+    required super.enabled,
+    required this.color,
+    required this.thickness,
+    required this.margin,
+  }) : super(type: HomeBlockType.divider);
+
+  final String color;
+  final double thickness;
+  final double margin;
 }
 
 class SpacerBlock extends HomeBlock {

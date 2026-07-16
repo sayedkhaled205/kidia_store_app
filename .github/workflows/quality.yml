@@ -1,0 +1,39 @@
+name: Quality checks
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin:
+    name: WordPress plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint PHP
+        run: find kidia-mobile-cms -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test Layout Store contract
+        run: php kidia-mobile-cms/tests/layout-store-contract-test.php
+      - name: Test Library normalization contract
+        run: php kidia-mobile-cms/tests/library-contract-test.php
+      - name: Check JavaScript syntax
+        run: find kidia-mobile-cms -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+  flutter:
+    name: Flutter app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'kidia_colors.dart';
 import 'kidia_radius.dart';
@@ -46,9 +46,7 @@ abstract final class KidiaTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(KidiaRadius.lg),
-          side: const BorderSide(
-            color: KidiaColors.border,
-          ),
+          side: const BorderSide(color: KidiaColors.border),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -61,32 +59,23 @@ abstract final class KidiaTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(KidiaRadius.md),
-          borderSide: const BorderSide(
-            color: KidiaColors.border,
-          ),
+          borderSide: const BorderSide(color: KidiaColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(KidiaRadius.md),
-          borderSide: const BorderSide(
-            color: KidiaColors.border,
-          ),
+          borderSide: const BorderSide(color: KidiaColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(KidiaRadius.md),
-          borderSide: const BorderSide(
-            color: KidiaColors.primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: KidiaColors.primary, width: 1.5),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(64, 52),
           backgroundColor: KidiaColors.primary,
           foregroundColor: Colors.white,
-          textStyle: KidiaTypography.labelLarge.copyWith(
-            color: Colors.white,
-          ),
+          textStyle: KidiaTypography.labelLarge.copyWith(color: Colors.white),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(KidiaRadius.md),
           ),
@@ -94,14 +83,12 @@ abstract final class KidiaTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(64, 52),
           foregroundColor: KidiaColors.primary,
           textStyle: KidiaTypography.labelLarge.copyWith(
             color: KidiaColors.primary,
           ),
-          side: const BorderSide(
-            color: KidiaColors.primary,
-          ),
+          side: const BorderSide(color: KidiaColors.primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(KidiaRadius.md),
           ),
@@ -121,9 +108,9 @@ abstract final class KidiaTheme {
 
           return selected
               ? KidiaTypography.labelMedium.copyWith(
-            color: KidiaColors.primaryDark,
-            fontWeight: FontWeight.w700,
-          )
+                  color: KidiaColors.primaryDark,
+                  fontWeight: FontWeight.w700,
+                )
               : KidiaTypography.labelMedium;
         }),
       ),

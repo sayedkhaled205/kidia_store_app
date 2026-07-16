@@ -22,28 +22,39 @@ abstract final class HomeBlockFactory {
         block: imageBannerBlock,
         onAction: onAction,
       ),
-      ProductCarouselBlock productCarouselBlock =>
-          ProductCarouselBlockWidget(
-            block: productCarouselBlock,
-            onAction: onAction,
-          ),
+      ProductCarouselBlock productCarouselBlock => ProductCarouselBlockWidget(
+        block: productCarouselBlock,
+        onAction: onAction,
+      ),
       ProductGridBlock productGridBlock => ProductGridBlockWidget(
         block: productGridBlock,
         onAction: onAction,
       ),
-      SectionHeaderBlock sectionHeaderBlock =>
-          SectionHeaderBlockWidget(
-            block: sectionHeaderBlock,
-            onAction: onAction,
-          ),
-      BrandCarouselBlock brandCarouselBlock =>
-          BrandCarouselBlockWidget(
-            block: brandCarouselBlock,
-            onAction: onAction,
-          ),
-      SpacerBlock spacerBlock => SizedBox(
-        height: spacerBlock.height,
+      SectionHeaderBlock sectionHeaderBlock => SectionHeaderBlockWidget(
+        block: sectionHeaderBlock,
+        onAction: onAction,
       ),
+      BrandCarouselBlock brandCarouselBlock => BrandCarouselBlockWidget(
+        block: brandCarouselBlock,
+        onAction: onAction,
+      ),
+      PromoStripBlock promoStripBlock => PromoStripBlockWidget(
+        block: promoStripBlock,
+        onAction: onAction,
+      ),
+      CouponBannerBlock couponBannerBlock => CouponBannerBlockWidget(
+        block: couponBannerBlock,
+      ),
+      CountdownBlock countdownBlock => CountdownBlockWidget(
+        block: countdownBlock,
+      ),
+      VideoBannerBlock videoBannerBlock => VideoBannerBlockWidget(
+        block: videoBannerBlock,
+        onAction: onAction,
+      ),
+      TextBlock textBlock => TextBlockWidget(block: textBlock),
+      DividerBlock dividerBlock => DividerBlockWidget(block: dividerBlock),
+      SpacerBlock spacerBlock => SizedBox(height: spacerBlock.height),
       _ => const SizedBox.shrink(),
     };
   }

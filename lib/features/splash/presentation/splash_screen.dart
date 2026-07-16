@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/kidia_colors.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/theme/kidia_colors.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -13,24 +14,17 @@ class SplashScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              KidiaColors.primary,
-              KidiaColors.primaryDark,
-            ],
+            colors: [KidiaColors.primary, KidiaColors.primaryDark],
           ),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.child_friendly,
-                color: Colors.white,
-                size: 76,
-              ),
+              Icon(Icons.storefront_outlined, color: Colors.white, size: 76),
               SizedBox(height: 18),
               Text(
-                'Kidia Store',
+                AppConfig.storeName,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 30,
@@ -38,9 +32,7 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 24),
-              CircularProgressIndicator(
-                color: Colors.white,
-              ),
+              CircularProgressIndicator(color: Colors.white),
             ],
           ),
         ),

@@ -7,17 +7,11 @@ abstract final class HomeBlockModel {
     final String id = _requiredString(json, 'id');
     final String rawType = _requiredString(json, 'type');
     final HomeBlockType? type = HomeBlockType.tryParse(rawType);
-    final bool enabled = _optionalBool(
-      json,
-      'enabled',
-      fallback: true,
-    );
+    final bool enabled = _optionalBool(json, 'enabled', fallback: true);
     final Map<String, dynamic> data = _requiredMap(json, 'data');
 
     if (type == null) {
-      throw FormatException(
-        'Unsupported home block type: $rawType',
-      );
+      throw FormatException('Unsupported home block type: $rawType');
     }
 
     return switch (type) {
@@ -56,6 +50,36 @@ abstract final class HomeBlockModel {
         enabled: enabled,
         data: data,
       ),
+      HomeBlockType.promoStrip => _parsePromoStrip(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.couponBanner => _parseCouponBanner(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.countdown => _parseCountdown(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.videoBanner => _parseVideoBanner(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.textBlock => _parseTextBlock(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.divider => _parseDivider(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
       HomeBlockType.spacer => _parseSpacer(
         id: id,
         enabled: enabled,
@@ -69,10 +93,7 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
-    final List<Map<String, dynamic>> items = _requiredMapList(
-      data,
-      'items',
-    );
+    final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
 
     if (items.isEmpty) {
       throw const FormatException(
@@ -84,21 +105,9 @@ abstract final class HomeBlockModel {
       id: id,
       enabled: enabled,
       items: items.map(_parseHeroSlide).toList(growable: false),
-      aspectRatio: _positiveDouble(
-        data,
-        'aspect_ratio',
-        fallback: 1.8,
-      ),
-      autoPlay: _optionalBool(
-        data,
-        'auto_play',
-        fallback: true,
-      ),
-      intervalMilliseconds: _positiveInt(
-        data,
-        'interval_ms',
-        fallback: 4500,
-      ),
+      aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 1.8),
+      autoPlay: _optionalBool(data, 'auto_play', fallback: true),
+      intervalMilliseconds: _positiveInt(data, 'interval_ms', fallback: 4500),
     );
   }
 
@@ -117,14 +126,13 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
-    final List<Map<String, dynamic>> items = _requiredMapList(
-      data,
-      'items',
-    );
+    final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
 
     return CategoryGridBlock(
       id: id,
       enabled: enabled,
+      title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
       items: items.map(_parseCategoryItem).toList(growable: false),
       columns: _boundedInt(
         data,
@@ -133,17 +141,11 @@ abstract final class HomeBlockModel {
         minimum: 2,
         maximum: 6,
       ),
-      showNames: _optionalBool(
-        data,
-        'show_names',
-        fallback: true,
-      ),
+      showNames: _optionalBool(data, 'show_names', fallback: true),
     );
   }
 
-  static CategoryItem _parseCategoryItem(
-      Map<String, dynamic> json,
-      ) {
+  static CategoryItem _parseCategoryItem(Map<String, dynamic> json) {
     return CategoryItem(
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
@@ -161,20 +163,9 @@ abstract final class HomeBlockModel {
       id: id,
       enabled: enabled,
       imageUrl: _requiredUrl(data, 'image_url'),
-      aspectRatio: _positiveDouble(
-        data,
-        'aspect_ratio',
-        fallback: 2.4,
-      ),
-      borderRadius: _nonNegativeDouble(
-        data,
-        'border_radius',
-        fallback: 16,
-      ),
-      semanticLabel: _optionalString(
-        data,
-        'semantic_label',
-      ),
+      aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 2.4),
+      borderRadius: _nonNegativeDouble(data, 'border_radius', fallback: 16),
+      semanticLabel: _optionalString(data, 'semantic_label'),
       action: _parseAction(data['action']),
     );
   }
@@ -189,14 +180,8 @@ abstract final class HomeBlockModel {
       enabled: enabled,
       title: _optionalString(data, 'title'),
       items: _parseProducts(data),
-      showViewAll: _optionalBool(
-        data,
-        'show_view_all',
-        fallback: false,
-      ),
-      viewAllAction: _parseAction(
-        data['view_all_action'],
-      ),
+      showViewAll: _optionalBool(data, 'show_view_all', fallback: false),
+      viewAllAction: _parseAction(data['view_all_action']),
     );
   }
 
@@ -209,6 +194,7 @@ abstract final class HomeBlockModel {
       id: id,
       enabled: enabled,
       title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
       items: _parseProducts(data),
       columns: _boundedInt(
         data,
@@ -217,53 +203,28 @@ abstract final class HomeBlockModel {
         minimum: 1,
         maximum: 4,
       ),
-      showViewAll: _optionalBool(
-        data,
-        'show_view_all',
-        fallback: false,
-      ),
-      viewAllAction: _parseAction(
-        data['view_all_action'],
-      ),
+      showViewAll: _optionalBool(data, 'show_view_all', fallback: false),
+      viewAllLabel: _optionalString(data, 'view_all_label'),
+      viewAllAction: _parseAction(data['view_all_action']),
     );
   }
 
-  static List<HomeProductItem> _parseProducts(
-      Map<String, dynamic> data,
-      ) {
-    final List<Map<String, dynamic>> items = _requiredMapList(
-      data,
-      'items',
-    );
+  static List<HomeProductItem> _parseProducts(Map<String, dynamic> data) {
+    final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
 
     return items.map(_parseProductItem).toList(growable: false);
   }
 
-  static HomeProductItem _parseProductItem(
-      Map<String, dynamic> json,
-      ) {
+  static HomeProductItem _parseProductItem(Map<String, dynamic> json) {
     return HomeProductItem(
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
       imageUrl: _requiredUrl(json, 'image_url'),
       price: _requiredNumericString(json, 'price'),
-      regularPrice: _optionalNumericString(
-        json,
-        'regular_price',
-      ),
-      currencyCode: _requiredString(
-        json,
-        'currency_code',
-      ),
-      currencySymbol: _requiredString(
-        json,
-        'currency_symbol',
-      ),
-      inStock: _optionalBool(
-        json,
-        'in_stock',
-        fallback: true,
-      ),
+      regularPrice: _optionalNumericString(json, 'regular_price'),
+      currencyCode: _requiredString(json, 'currency_code'),
+      currencySymbol: _requiredString(json, 'currency_symbol'),
+      inStock: _optionalBool(json, 'in_stock', fallback: true),
       badge: _optionalString(json, 'badge'),
       action: _parseAction(json['action']),
     );
@@ -279,10 +240,7 @@ abstract final class HomeBlockModel {
       enabled: enabled,
       title: _requiredString(data, 'title'),
       subtitle: _optionalString(data, 'subtitle'),
-      actionLabel: _optionalString(
-        data,
-        'action_label',
-      ),
+      actionLabel: _optionalString(data, 'action_label'),
       action: _parseAction(data['action']),
     );
   }
@@ -292,31 +250,151 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
-    final List<Map<String, dynamic>> items = _requiredMapList(
-      data,
-      'items',
-    );
+    final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
 
     return BrandCarouselBlock(
       id: id,
       enabled: enabled,
+      title: _optionalString(data, 'title'),
       items: items.map(_parseBrandItem).toList(growable: false),
-      itemWidth: _positiveDouble(
-        data,
-        'item_width',
-        fallback: 92,
-      ),
+      itemWidth: _positiveDouble(data, 'item_width', fallback: 92),
     );
   }
 
-  static BrandItem _parseBrandItem(
-      Map<String, dynamic> json,
-      ) {
+  static BrandItem _parseBrandItem(Map<String, dynamic> json) {
     return BrandItem(
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
       logoUrl: _requiredUrl(json, 'logo_url'),
       action: _parseAction(json['action']),
+    );
+  }
+
+  static PromoStripBlock _parsePromoStrip({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    return PromoStripBlock(
+      id: id,
+      enabled: enabled,
+      text: _requiredString(data, 'text'),
+      backgroundColor: _hexColor(data, 'background_color', fallback: '#4f9f8f'),
+      textColor: _hexColor(data, 'text_color', fallback: '#ffffff'),
+      action: _parseAction(data['action']),
+    );
+  }
+
+  static CouponBannerBlock _parseCouponBanner({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    return CouponBannerBlock(
+      id: id,
+      enabled: enabled,
+      title: _optionalString(data, 'title'),
+      description: _optionalString(data, 'description'),
+      couponCode: _optionalString(data, 'coupon_code'),
+      imageUrl: _optionalUrl(data, 'image_url'),
+    );
+  }
+
+  static CountdownBlock _parseCountdown({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    return CountdownBlock(
+      id: id,
+      enabled: enabled,
+      title: _optionalString(data, 'title'),
+      endsAt: _optionalDateTime(data, 'ends_at'),
+      expiredText: _optionalString(data, 'expired_text') ?? 'Offer ended',
+    );
+  }
+
+  static VideoBannerBlock _parseVideoBanner({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    return VideoBannerBlock(
+      id: id,
+      enabled: enabled,
+      videoUrl: _requiredUrl(data, 'video_url'),
+      posterUrl: _optionalUrl(data, 'poster_url'),
+      aspectRatio: _boundedDouble(
+        data,
+        'aspect_ratio',
+        fallback: 1.8,
+        minimum: 1,
+        maximum: 4,
+      ),
+      autoPlay: _optionalBool(data, 'auto_play', fallback: false),
+      muted: _optionalBool(data, 'muted', fallback: true),
+      loop: _optionalBool(data, 'loop', fallback: false),
+      action: _parseAction(data['action']),
+    );
+  }
+
+  static TextBlock _parseTextBlock({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    final String? title = _optionalString(data, 'title');
+    final String? content = _optionalString(data, 'content');
+    final String alignmentValue =
+        _optionalString(data, 'alignment') ?? HomeTextAlignment.right.name;
+    final HomeTextAlignment? alignment = HomeTextAlignment.tryParse(
+      alignmentValue,
+    );
+
+    if (title == null && content == null) {
+      throw const FormatException(
+        'Text block must contain a title or content.',
+      );
+    }
+
+    if (alignment == null) {
+      throw FormatException('Unsupported text alignment: $alignmentValue');
+    }
+
+    return TextBlock(
+      id: id,
+      enabled: enabled,
+      title: title,
+      content: content,
+      alignment: alignment,
+      backgroundColor: _optionalHexColor(data, 'background'),
+      textColor: _hexColor(data, 'text_color', fallback: '#111111'),
+    );
+  }
+
+  static DividerBlock _parseDivider({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    return DividerBlock(
+      id: id,
+      enabled: enabled,
+      color: _hexColor(data, 'color', fallback: '#e5e7eb'),
+      thickness: _boundedDouble(
+        data,
+        'thickness',
+        fallback: 1,
+        minimum: 1,
+        maximum: 10,
+      ),
+      margin: _boundedDouble(
+        data,
+        'margin',
+        fallback: 16,
+        minimum: 0,
+        maximum: 100,
+      ),
     );
   }
 
@@ -328,11 +406,7 @@ abstract final class HomeBlockModel {
     return SpacerBlock(
       id: id,
       enabled: enabled,
-      height: _nonNegativeDouble(
-        data,
-        'height',
-        fallback: 16,
-      ),
+      height: _nonNegativeDouble(data, 'height', fallback: 16),
     );
   }
 
@@ -342,13 +416,10 @@ abstract final class HomeBlockModel {
     }
 
     if (value is! Map) {
-      throw const FormatException(
-        'Home action must be a JSON object.',
-      );
+      throw const FormatException('Home action must be a JSON object.');
     }
 
-    final Map<String, dynamic> json =
-    Map<String, dynamic>.from(value);
+    final Map<String, dynamic> json = Map<String, dynamic>.from(value);
 
     return HomeAction(
       type: _requiredString(json, 'type'),
@@ -357,70 +428,56 @@ abstract final class HomeBlockModel {
   }
 
   static Map<String, dynamic> _requiredMap(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+    Map<String, dynamic> json,
+    String key,
+  ) {
     final dynamic value = json[key];
 
     if (value is! Map) {
-      throw FormatException(
-        'Missing or invalid object field: $key',
-      );
+      throw FormatException('Missing or invalid object field: $key');
     }
 
     return Map<String, dynamic>.from(value);
   }
 
   static List<Map<String, dynamic>> _requiredMapList(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+    Map<String, dynamic> json,
+    String key,
+  ) {
     final dynamic value = json[key];
 
     if (value is! List) {
-      throw FormatException(
-        'Missing or invalid list field: $key',
-      );
+      throw FormatException('Missing or invalid list field: $key');
     }
 
-    return value.map((dynamic item) {
-      if (item is! Map) {
-        throw FormatException(
-          'Invalid item inside list field: $key',
-        );
-      }
+    return value
+        .map((dynamic item) {
+          if (item is! Map) {
+            throw FormatException('Invalid item inside list field: $key');
+          }
 
-      return Map<String, dynamic>.from(item);
-    }).toList(growable: false);
+          return Map<String, dynamic>.from(item);
+        })
+        .toList(growable: false);
   }
 
-  static String _requiredString(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static String _requiredString(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value is! String) {
-      throw FormatException(
-        'Missing or invalid string field: $key',
-      );
+      throw FormatException('Missing or invalid string field: $key');
     }
 
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
-      throw FormatException(
-        'String field cannot be empty: $key',
-      );
+      throw FormatException('String field cannot be empty: $key');
     }
 
     return normalized;
   }
 
-  static String? _optionalString(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static String? _optionalString(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -428,9 +485,7 @@ abstract final class HomeBlockModel {
     }
 
     if (value is! String) {
-      throw FormatException(
-        'Invalid string field: $key',
-      );
+      throw FormatException('Invalid string field: $key');
     }
 
     final String normalized = value.trim();
@@ -438,10 +493,7 @@ abstract final class HomeBlockModel {
     return normalized.isEmpty ? null : normalized;
   }
 
-  static String _requiredNumericString(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static String _requiredNumericString(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value is num) {
@@ -452,15 +504,10 @@ abstract final class HomeBlockModel {
       return value.trim();
     }
 
-    throw FormatException(
-      'Missing or invalid numeric string field: $key',
-    );
+    throw FormatException('Missing or invalid numeric string field: $key');
   }
 
-  static String? _optionalNumericString(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static String? _optionalNumericString(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -476,15 +523,10 @@ abstract final class HomeBlockModel {
       return normalized.isEmpty ? null : normalized;
     }
 
-    throw FormatException(
-      'Invalid numeric string field: $key',
-    );
+    throw FormatException('Invalid numeric string field: $key');
   }
 
-  static int _requiredInt(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static int _requiredInt(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value is int) {
@@ -503,16 +545,14 @@ abstract final class HomeBlockModel {
       }
     }
 
-    throw FormatException(
-      'Missing or invalid integer field: $key',
-    );
+    throw FormatException('Missing or invalid integer field: $key');
   }
 
   static int _positiveInt(
-      Map<String, dynamic> json,
-      String key, {
-        required int fallback,
-      }) {
+    Map<String, dynamic> json,
+    String key, {
+    required int fallback,
+  }) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -522,21 +562,19 @@ abstract final class HomeBlockModel {
     final int parsed = _requiredInt(json, key);
 
     if (parsed <= 0) {
-      throw FormatException(
-        'Integer field must be greater than zero: $key',
-      );
+      throw FormatException('Integer field must be greater than zero: $key');
     }
 
     return parsed;
   }
 
   static int _boundedInt(
-      Map<String, dynamic> json,
-      String key, {
-        required int fallback,
-        required int minimum,
-        required int maximum,
-      }) {
+    Map<String, dynamic> json,
+    String key, {
+    required int fallback,
+    required int minimum,
+    required int maximum,
+  }) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -548,7 +586,7 @@ abstract final class HomeBlockModel {
     if (parsed < minimum || parsed > maximum) {
       throw FormatException(
         'Integer field $key must be between '
-            '$minimum and $maximum.',
+        '$minimum and $maximum.',
       );
     }
 
@@ -556,10 +594,10 @@ abstract final class HomeBlockModel {
   }
 
   static double _positiveDouble(
-      Map<String, dynamic> json,
-      String key, {
-        required double fallback,
-      }) {
+    Map<String, dynamic> json,
+    String key, {
+    required double fallback,
+  }) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -569,19 +607,17 @@ abstract final class HomeBlockModel {
     final double parsed = _requiredDouble(json, key);
 
     if (parsed <= 0) {
-      throw FormatException(
-        'Number field must be greater than zero: $key',
-      );
+      throw FormatException('Number field must be greater than zero: $key');
     }
 
     return parsed;
   }
 
   static double _nonNegativeDouble(
-      Map<String, dynamic> json,
-      String key, {
-        required double fallback,
-      }) {
+    Map<String, dynamic> json,
+    String key, {
+    required double fallback,
+  }) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -591,18 +627,38 @@ abstract final class HomeBlockModel {
     final double parsed = _requiredDouble(json, key);
 
     if (parsed < 0) {
+      throw FormatException('Number field cannot be negative: $key');
+    }
+
+    return parsed;
+  }
+
+  static double _boundedDouble(
+    Map<String, dynamic> json,
+    String key, {
+    required double fallback,
+    required double minimum,
+    required double maximum,
+  }) {
+    final dynamic value = json[key];
+
+    if (value == null) {
+      return fallback;
+    }
+
+    final double parsed = _requiredDouble(json, key);
+
+    if (parsed < minimum || parsed > maximum) {
       throw FormatException(
-        'Number field cannot be negative: $key',
+        'Number field $key must be between '
+        '$minimum and $maximum.',
       );
     }
 
     return parsed;
   }
 
-  static double _requiredDouble(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static double _requiredDouble(Map<String, dynamic> json, String key) {
     final dynamic value = json[key];
 
     if (value is num) {
@@ -617,16 +673,14 @@ abstract final class HomeBlockModel {
       }
     }
 
-    throw FormatException(
-      'Missing or invalid number field: $key',
-    );
+    throw FormatException('Missing or invalid number field: $key');
   }
 
   static bool _optionalBool(
-      Map<String, dynamic> json,
-      String key, {
-        required bool fallback,
-      }) {
+    Map<String, dynamic> json,
+    String key, {
+    required bool fallback,
+  }) {
     final dynamic value = json[key];
 
     if (value == null) {
@@ -659,26 +713,83 @@ abstract final class HomeBlockModel {
       }
     }
 
-    throw FormatException(
-      'Invalid boolean field: $key',
-    );
+    throw FormatException('Invalid boolean field: $key');
   }
 
-  static String _requiredUrl(
-      Map<String, dynamic> json,
-      String key,
-      ) {
+  static String _requiredUrl(Map<String, dynamic> json, String key) {
     final String value = _requiredString(json, key);
     final Uri? uri = Uri.tryParse(value);
 
     if (uri == null ||
         !uri.hasScheme ||
+        uri.host.isEmpty ||
         (uri.scheme != 'http' && uri.scheme != 'https')) {
-      throw FormatException(
-        'Invalid URL field: $key',
-      );
+      throw FormatException('Invalid URL field: $key');
     }
 
     return value;
+  }
+
+  static String? _optionalUrl(Map<String, dynamic> json, String key) {
+    final String? value = _optionalString(json, key);
+
+    if (value == null) {
+      return null;
+    }
+
+    final Uri? uri = Uri.tryParse(value);
+
+    if (uri == null ||
+        !uri.hasScheme ||
+        uri.host.isEmpty ||
+        (uri.scheme != 'http' && uri.scheme != 'https')) {
+      throw FormatException('Invalid URL field: $key');
+    }
+
+    return value;
+  }
+
+  static DateTime? _optionalDateTime(Map<String, dynamic> json, String key) {
+    final String? value = _optionalString(json, key);
+
+    if (value == null) {
+      return null;
+    }
+
+    final DateTime? parsed = DateTime.tryParse(value);
+
+    if (parsed == null) {
+      throw FormatException('Invalid date field: $key');
+    }
+
+    return parsed.toUtc();
+  }
+
+  static String _hexColor(
+    Map<String, dynamic> json,
+    String key, {
+    required String fallback,
+  }) {
+    final String? value = _optionalHexColor(json, key);
+
+    return value ?? fallback;
+  }
+
+  static String? _optionalHexColor(Map<String, dynamic> json, String key) {
+    final String? value = _optionalString(json, key);
+
+    if (value == null) {
+      return null;
+    }
+
+    final bool isValid = RegExp(
+      r'^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$',
+    ).hasMatch(value);
+
+    if (!isValid) {
+      throw FormatException('Invalid hexadecimal color field: $key');
+    }
+
+    return value.toLowerCase();
   }
 }

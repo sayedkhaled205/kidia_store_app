@@ -1,18 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
 import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_renderer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String locale = Localizations.localeOf(context).languageCode;
+    final String locale = Localizations.localeOf(context).toLanguageTag();
 
     final AsyncValue<HomeLayout> homeLayoutAsync = ref.watch(
       homeLayoutProvider(locale),
@@ -23,25 +27,18 @@ class HomePage extends ConsumerWidget {
         bottom: false,
         child: RefreshIndicator(
           onRefresh: () {
-            return ref.refresh(
-              homeLayoutProvider(locale).future,
-            );
+            return ref.refresh(homeLayoutProvider(locale).future);
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              const SliverToBoxAdapter(
-                child: _HomeHeader(),
-              ),
+              const SliverToBoxAdapter(child: _HomeHeader()),
               homeLayoutAsync.when(
                 data: (HomeLayout layout) {
                   return HomeBlockRenderer(
                     blocks: layout.enabledBlocks,
                     onAction: (HomeAction action) {
-                      _handleHomeAction(
-                        context: context,
-                        action: action,
-                      );
+                      _handleHomeAction(context: context, action: action);
                     },
                   );
                 },
@@ -57,17 +54,13 @@ class HomePage extends ConsumerWidget {
                     child: _HomeErrorState(
                       message: _resolveErrorMessage(error),
                       onRetry: () {
-                        ref.invalidate(
-                          homeLayoutProvider(locale),
-                        );
+                        ref.invalidate(homeLayoutProvider(locale));
                       },
                     ),
                   );
                 },
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
@@ -87,63 +80,96 @@ class HomePage extends ConsumerWidget {
     required BuildContext context,
     required HomeAction action,
   }) {
-    final String encodedValue = Uri.encodeComponent(
-      action.value,
-    );
+    final String value = action.value.trim();
+    final String encodedValue = Uri.encodeComponent(value);
 
     switch (action.type) {
       case 'product':
+        if (value.isEmpty) {
+          _showMissingActionValue(context);
+          return;
+        }
         context.push('/product/$encodedValue');
+        return;
 
       case 'category':
-        context.push('/categories/$encodedValue');
+        if (value.isEmpty) {
+          _showMissingActionValue(context);
+          return;
+        }
+        context.go('/categories/$encodedValue');
+        return;
 
       case 'collection':
-        context.push(
-          '/products?collection=$encodedValue',
-        );
+        if (value.isEmpty) {
+          _showMissingActionValue(context);
+          return;
+        }
+        context.push('/collection/$encodedValue');
+        return;
 
       case 'brand':
-        context.push(
-          '/products?brand=$encodedValue',
-        );
+        if (value.isEmpty) {
+          _showMissingActionValue(context);
+          return;
+        }
+        context.push('/brand/$encodedValue');
+        return;
 
       case 'brands':
         context.push('/brands');
+        return;
 
       case 'search':
-        context.push(
-          '/search?q=$encodedValue',
-        );
+        context.go(value.isEmpty ? '/search' : '/search?q=$encodedValue');
+        return;
 
       case 'external':
-        _showMessage(
-          context,
-          'سيتم دعم الروابط الخارجية في مرحلة لاحقة.',
-        );
+        unawaited(_openExternalUrl(context, value));
+        return;
 
       default:
-        _showMessage(
-          context,
-          'هذا الإجراء غير مدعوم حاليًا.',
-        );
+        _showMessage(context, 'هذا الإجراء غير مدعوم حاليًا.');
+        return;
     }
   }
 
-  static void _showMessage(
-      BuildContext context,
-      String message,
-      ) {
-    final ScaffoldMessengerState messenger =
-    ScaffoldMessenger.of(context);
+  static void _showMissingActionValue(BuildContext context) {
+    _showMessage(context, 'بيانات الوجهة غير مكتملة.');
+  }
+
+  static Future<void> _openExternalUrl(
+    BuildContext context,
+    String value,
+  ) async {
+    final Uri? uri = Uri.tryParse(value);
+
+    if (uri == null ||
+        !uri.hasScheme ||
+        (uri.scheme != 'https' && uri.scheme != 'http')) {
+      _showMessage(context, 'الرابط الخارجي غير صالح.');
+      return;
+    }
+
+    bool launched = false;
+
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on Object {
+      launched = false;
+    }
+
+    if (!launched && context.mounted) {
+      _showMessage(context, 'تعذر فتح الرابط الخارجي.');
+    }
+  }
+
+  static void _showMessage(BuildContext context, String message) {
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
 
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -156,12 +182,7 @@ class _HomeHeader extends StatelessWidget {
     final ColorScheme colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
           Expanded(
@@ -169,7 +190,7 @@ class _HomeHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kidia Store',
+                  AppConfig.storeName,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w900,
@@ -177,7 +198,7 @@ class _HomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'كل ما يحتاجه طفلك',
+                  AppConfig.storeTagline,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -188,11 +209,9 @@ class _HomeHeader extends StatelessWidget {
           IconButton.filledTonal(
             tooltip: 'البحث',
             onPressed: () {
-              context.push('/search');
+              context.go('/search');
             },
-            icon: const Icon(
-              Icons.search_rounded,
-            ),
+            icon: const Icon(Icons.search_rounded),
           ),
         ],
       ),
@@ -215,10 +234,7 @@ class _HomeLoadingState extends StatelessWidget {
 }
 
 class _HomeErrorState extends StatelessWidget {
-  const _HomeErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _HomeErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -256,12 +272,8 @@ class _HomeErrorState extends StatelessWidget {
             const SizedBox(height: 18),
             FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh_rounded,
-              ),
-              label: const Text(
-                'إعادة المحاولة',
-              ),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('إعادة المحاولة'),
             ),
           ],
         ),

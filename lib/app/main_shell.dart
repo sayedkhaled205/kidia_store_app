@@ -1,30 +1,15 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
 import '../core/theme/kidia_typography.dart';
-import '../features/account/presentation/account_screen.dart';
-import '../features/cart/presentation/cart_screen.dart';
-import '../features/categories/presentation/categories_screen.dart';
-import 'package:kidia_store_app/features/home/presentation/pages/home_page.dart';
-import '../features/search/presentation/search_screen.dart';
+import '../features/cart/presentation/providers/cart_state_providers.dart';
 
-class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+class MainShell extends ConsumerWidget {
+  const MainShell({super.key, required this.navigationShell});
 
-  @override
-  State<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
-
-  static const List<Widget> _screens = [
-    HomePage(),
-    CategoriesScreen(),
-    SearchScreen(),
-    CartScreen(),
-    AccountScreen(),
-  ];
+  final StatefulNavigationShell navigationShell;
 
   static const List<_NavigationItem> _items = [
     _NavigationItem(
@@ -56,39 +41,31 @@ class _MainShellState extends State<MainShell> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final int cartCount = ref.watch(cartBadgeCountProvider);
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: navigationShell,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
           decoration: const BoxDecoration(
             color: KidiaColors.surface,
-            border: Border(
-              top: BorderSide(
-                color: KidiaColors.divider,
-              ),
-            ),
+            border: Border(top: BorderSide(color: KidiaColors.divider)),
           ),
           child: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: _openBranch,
             destinations: _items.map((item) {
               return NavigationDestination(
                 icon: _NavigationIcon(
                   icon: item.icon,
                   showBadge: item.showBadge,
+                  badgeCount: cartCount,
                 ),
                 selectedIcon: _NavigationIcon(
                   icon: item.selectedIcon,
                   showBadge: item.showBadge,
+                  badgeCount: cartCount,
                   selected: true,
                 ),
                 label: item.label,
@@ -99,6 +76,13 @@ class _MainShellState extends State<MainShell> {
       ),
     );
   }
+
+  void _openBranch(int index) {
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
 }
 
 class _NavigationIcon extends StatelessWidget {
@@ -106,28 +90,28 @@ class _NavigationIcon extends StatelessWidget {
     required this.icon,
     this.showBadge = false,
     this.selected = false,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final bool showBadge;
   final bool selected;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
     final iconWidget = Icon(
       icon,
-      color: selected
-          ? KidiaColors.primaryDark
-          : KidiaColors.textSecondary,
+      color: selected ? KidiaColors.primaryDark : KidiaColors.textSecondary,
     );
 
-    if (!showBadge) {
+    if (!showBadge || badgeCount <= 0) {
       return iconWidget;
     }
 
     return Badge(
       label: Text(
-        '0',
+        badgeCount > 99 ? '99+' : '$badgeCount',
         style: KidiaTypography.labelMedium.copyWith(
           color: Colors.white,
           fontSize: 10,

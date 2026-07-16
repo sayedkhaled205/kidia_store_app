@@ -1,28 +1,21 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:kidia_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
+import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 
 class SearchScreen extends StatelessWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialQuery = ''});
+
+  final String initialQuery;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('البحث')),
-      body: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'ابحث عن منتج',
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-            SizedBox(height: 32),
-            Icon(Icons.manage_search, size: 60),
-            SizedBox(height: 12),
-            Text('اكتب اسم المنتج الذي تبحث عنه'),
-          ],
-        ),
+    final CatalogCopy copy = CatalogCopy.of(context);
+    return CatalogProductListScreen(
+      request: CatalogProductListRequest(
+        title: copy.search,
+        search: initialQuery,
+        searchOnly: true,
       ),
     );
   }
