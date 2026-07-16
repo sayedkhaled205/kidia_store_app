@@ -78,10 +78,24 @@ class CatalogProductModel extends CatalogProduct {
       prices: CatalogMoneyModel.fromJson(json['prices']),
       images: _parseImages(json['images']),
       categories: _parseCategories(json['categories']),
-      brands: _parseCategories(json['brands']),
+      brands: _parseCategories(_brandPayload(json)),
       attributes: _parseAttributes(json['attributes']),
       variations: _parseVariations(json['variations']),
     );
+  }
+
+  static dynamic _brandPayload(Map<String, dynamic> json) {
+    final List<CatalogCategory> nativeBrands = _parseCategories(json['brands']);
+    if (nativeBrands.isNotEmpty) {
+      return json['brands'];
+    }
+    final Map<String, dynamic>? extensions = CatalogJson.object(
+      json['extensions'],
+    );
+    final Map<String, dynamic>? bridge = CatalogJson.object(
+      extensions?['woo_mobile_cms'],
+    );
+    return bridge?['brands'];
   }
 
   CatalogProduct toEntity() {
