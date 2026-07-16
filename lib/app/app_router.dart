@@ -266,21 +266,16 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/search',
-                builder: (context, state) {
-                  return SearchScreen(
-                    initialQuery: state.uri.queryParameters['q'] ?? '',
-                  );
-                },
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/cart',
-                builder: (context, state) =>
-                    const CartScreen(checkoutRoute: '/checkout'),
+                path: '/wishlist',
+                builder: (context, state) => Consumer(
+                  builder: (context, ref, child) => WishlistScreen(
+                    repository: ref.watch(wishlistRepositoryProvider),
+                    catalogRepository: ref.watch(catalogRepositoryProvider),
+                    onProductTap: (product) =>
+                        context.push('/product/${product.id}'),
+                    onContinueShopping: () => context.go('/'),
+                  ),
+                ),
               ),
             ],
           ),
@@ -288,23 +283,22 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/account',
-                builder: (context, state) =>
-                    AccountScreen(onWishlist: () => context.push('/wishlist')),
+                builder: (context, state) => const AccountScreen(),
               ),
             ],
           ),
         ],
       ),
       GoRoute(
-        path: '/wishlist',
-        builder: (context, state) => Consumer(
-          builder: (context, ref, child) => WishlistScreen(
-            repository: ref.watch(wishlistRepositoryProvider),
-            catalogRepository: ref.watch(catalogRepositoryProvider),
-            onProductTap: (product) => context.push('/product/${product.id}'),
-            onContinueShopping: () => context.go('/'),
-          ),
+        path: '/search',
+        builder: (context, state) => SearchScreen(
+          initialQuery: state.uri.queryParameters['q'] ?? '',
         ),
+      ),
+      GoRoute(
+        path: '/cart',
+        builder: (context, state) =>
+            const CartScreen(checkoutRoute: '/checkout'),
       ),
       GoRoute(
         path: '/checkout',
