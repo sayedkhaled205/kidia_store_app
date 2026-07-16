@@ -5,6 +5,7 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.d
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
@@ -107,11 +108,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Widget> _buildActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <Widget>[
-      IconButton(
-        tooltip: 'السلة',
-        onPressed: () => context.push('/cart'),
-        icon: const Icon(Icons.shopping_bag_outlined),
-      ),
+      CartIconButton(onPressed: () => context.push('/cart')),
       if (product != null && widget.onShareRequested != null)
         IconButton(
           tooltip: copy.share,

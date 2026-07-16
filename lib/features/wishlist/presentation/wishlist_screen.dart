@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -77,11 +78,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       appBar: AppBar(
         title: Text(copy.title),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'السلة',
-            onPressed: () => context.push('/cart'),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
+          CartIconButton(onPressed: () => context.push('/cart')),
           if (_controller.status == WishlistStatus.ready)
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 16),

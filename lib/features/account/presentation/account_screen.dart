@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -10,11 +11,7 @@ class AccountScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('حسابي'),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'السلة',
-            onPressed: () => context.push('/cart'),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
+          CartIconButton(onPressed: () => context.push('/cart')),
         ],
       ),
       body: ListView(

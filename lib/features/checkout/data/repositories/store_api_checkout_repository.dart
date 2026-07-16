@@ -90,6 +90,63 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
   }
 
   @override
+  Future<Cart> updateCustomer({
+    required CheckoutAddress billingAddress,
+    required CheckoutAddress shippingAddress,
+  }) async {
+    try {
+      String token = cartTokenStore.read()?.trim() ?? '';
+      if (token.isEmpty) {
+        await cartRepository.getCart();
+        token = cartTokenStore.read()?.trim() ?? '';
+      }
+      if (token.isEmpty) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message: 'The store did not issue a Cart-Token for checkout.',
+        );
+      }
+
+      final CheckoutApiResponse response = await transport.updateCustomer(
+        cartToken: token,
+        body: <String, dynamic>{
+          'billing_address': _addressJson(billingAddress),
+          'shipping_address': _addressJson(shippingAddress),
+        },
+      );
+      return CartModel.fromJson(
+        CartJson.object(response.data, 'updated_cart'),
+      ).toEntity();
+    } on CheckoutRepositoryException {
+      rethrow;
+    } on CheckoutApiTransportException catch (error, stackTrace) {
+      Error.throwWithStackTrace(_transportFailure(error), stackTrace);
+    } on CartRepositoryException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: _cartFailureKind(error.kind),
+          message: error.message,
+          statusCode: error.statusCode,
+          apiError: error.apiError,
+          authoritativeCart: error.serverCart,
+          cause: error,
+        ),
+        stackTrace,
+      );
+    } on FormatException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: CheckoutFailureKind.invalidResponse,
+          message:
+              'The store returned invalid cart data after the address update.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  @override
   Future<CheckoutOrderResult> placeOrder(CheckoutSubmission submission) {
     final Completer<CheckoutOrderResult> completer =
         Completer<CheckoutOrderResult>();

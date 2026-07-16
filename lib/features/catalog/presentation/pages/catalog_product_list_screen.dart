@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
 import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -39,11 +40,7 @@ class CatalogProductListScreen extends StatelessWidget {
             onPressed: () => context.push('/search'),
             icon: const Icon(Icons.search_rounded),
           ),
-          IconButton(
-            tooltip: 'السلة',
-            onPressed: () => context.push('/cart'),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
+          CartIconButton(onPressed: () => context.push('/cart')),
         ],
       ),
       body: CatalogProductListView(

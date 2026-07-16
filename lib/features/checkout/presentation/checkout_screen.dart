@@ -533,14 +533,6 @@ class _AddressFields extends StatelessWidget {
             onChanged: (String value) =>
                 onChanged(address.copyWith(postcode: value)),
           ),
-          _field(
-            name: 'country',
-            label: copy.countryCode,
-            value: address.country,
-            capitalization: TextCapitalization.characters,
-            onChanged: (String value) =>
-                onChanged(address.copyWith(country: value)),
-          ),
           if (requiresEmail)
             _field(
               name: 'email',
@@ -764,6 +756,19 @@ class _OrderSummary extends StatelessWidget {
               cart.totals.currency,
             ),
           ),
+          if (controller.isUpdatingCustomer) ...<Widget>[
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(),
+            const SizedBox(height: 6),
+            Text(
+              copy.calculatingShipping,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          if (controller.addressUpdateError != null) ...<Widget>[
+            const SizedBox(height: 10),
+            _InlineError(message: controller.addressUpdateError!),
+          ],
           const Divider(height: 26),
           _SummaryLine(
             label: copy.total,
@@ -784,7 +789,10 @@ class _OrderSummary extends StatelessWidget {
           const SizedBox(height: 18),
           FilledButton.icon(
             key: const Key('checkout-place-order'),
-            onPressed: controller.canSubmit && !controller.isSubmitting
+            onPressed:
+                controller.canSubmit &&
+                    !controller.isSubmitting &&
+                    !controller.isUpdatingCustomer
                 ? onSubmit
                 : null,
             icon: controller.isSubmitting
@@ -1166,6 +1174,9 @@ class _CheckoutCopy {
   String get summary => arabic ? 'ملخص الطلب' : 'Order summary';
   String get discount => arabic ? 'الخصم' : 'Discount';
   String get shipping => arabic ? 'الشحن' : 'Shipping';
+  String get calculatingShipping => arabic
+      ? 'جارٍ حساب الشحن حسب المحافظة والعنوان…'
+      : 'Calculating shipping for this address…';
   String get total => arabic ? 'الإجمالي' : 'Total';
   String get placeOrder => arabic ? 'تأكيد الطلب' : 'Place order';
   String get placingOrder => arabic ? 'جارٍ تأكيد الطلب…' : 'Placing order…';

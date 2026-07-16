@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
@@ -214,11 +215,7 @@ class _HomeHeader extends StatelessWidget {
             icon: const Icon(Icons.search_rounded),
           ),
           const SizedBox(width: 6),
-          IconButton(
-            tooltip: 'السلة',
-            onPressed: () => context.push('/cart'),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
+          CartIconButton(onPressed: () => context.push('/cart')),
         ],
       ),
     );

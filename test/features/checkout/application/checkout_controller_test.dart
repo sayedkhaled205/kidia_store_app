@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
 import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
@@ -27,6 +28,67 @@ void main() {
       expect(controller.paymentMethodId, 'cod');
       expect(controller.validate(), isTrue);
     });
+
+    test(
+      'defaults hidden country and updates WooCommerce before checkout',
+      () async {
+        final Map<String, dynamic> cartJson = checkoutCartJson();
+        (cartJson['billing_address'] as Map<String, dynamic>)['country'] = '';
+        (cartJson['shipping_address'] as Map<String, dynamic>)['country'] = '';
+        late CheckoutAddress updatedBilling;
+        late CheckoutAddress updatedShipping;
+        final FakeCheckoutRepository repository = FakeCheckoutRepository(
+          state: CheckoutState(
+            cart: CartModel.fromJson(cartJson).toEntity(),
+            fieldDefinitions: <CheckoutFieldDefinition>[
+              CheckoutFieldDefinition(
+                key: 'billing_country',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.hidden,
+                label: 'Country',
+                defaultValue: 'EG',
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_state',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.select,
+                label: 'المحافظة',
+                required: true,
+                options: const <String, String>{'C': 'القاهرة'},
+              ),
+            ],
+          ),
+          onUpdateCustomer:
+              (CheckoutAddress billing, CheckoutAddress shipping) async {
+                updatedBilling = billing;
+                updatedShipping = shipping;
+                return checkoutCart(totalPrice: '15000');
+              },
+        );
+        final CheckoutController controller = CheckoutController(
+          repository: repository,
+        );
+        addTearDown(controller.dispose);
+        await controller.load();
+
+        expect(controller.billingAddress.country, 'EG');
+        expect(
+          controller
+              .fieldsFor(CheckoutFieldGroup.billing)
+              .map((CheckoutFieldDefinition field) => field.key),
+          isNot(contains('billing_country')),
+        );
+
+        controller.setFieldValue('billing_state', 'C');
+        expect((await controller.submit())?.orderId, 730);
+        expect(repository.updateCustomerCalls, 1);
+        expect(updatedBilling.country, 'EG');
+        expect(updatedBilling.state, 'C');
+        expect(updatedShipping.country, 'EG');
+        expect(updatedShipping.state, 'C');
+        expect(controller.cart?.totals.priceMinor, '15000');
+      },
+    );
 
     test('validates and submits a plugin-provided checkout field', () async {
       final FakeCheckoutRepository repository = FakeCheckoutRepository(

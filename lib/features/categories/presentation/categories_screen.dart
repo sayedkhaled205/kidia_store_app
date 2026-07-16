@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
@@ -56,7 +57,7 @@ class CategoriesScreen extends ConsumerWidget {
                     sliver: SliverList.separated(
                       itemCount: value.roots.length,
                       separatorBuilder: (BuildContext context, int index) =>
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                       itemBuilder: (BuildContext context, int index) =>
                           _CategoryBranch(node: value.roots[index]),
                     ),
@@ -94,21 +95,21 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final Widget tile = Material(
       color: colors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(17),
         side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: <Widget>[
           ListTile(
-            minTileHeight: 86,
-            contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 9, 8, 9),
+            minTileHeight: 82,
+            contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -256,7 +257,7 @@ class _CategoryImage extends StatelessWidget {
     );
 
     return SizedBox.square(
-      dimension: 64,
+      dimension: 68,
       child: imageUrl == null || imageUrl.isEmpty
           ? fallback
           : ColoredBox(
@@ -314,11 +315,7 @@ class _CategoryTopActions extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          IconButton(
-            tooltip: 'السلة',
-            onPressed: () => context.go('/cart'),
-            icon: const Icon(Icons.shopping_bag_outlined, size: 30),
-          ),
+          CartIconButton(onPressed: () => context.go('/cart'), iconSize: 30),
         ],
       ),
     );
@@ -336,12 +333,12 @@ class _CategoryLoadingList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: 7,
       separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
       itemBuilder: (BuildContext context, int index) => Container(
-        height: 86,
+        height: 82,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(17),
         ),
       ),
     );

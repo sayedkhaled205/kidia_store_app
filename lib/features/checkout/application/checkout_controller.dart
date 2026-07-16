@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
@@ -31,9 +32,15 @@ class CheckoutController extends ChangeNotifier {
   String? _submitError;
   CheckoutOrderResult? _orderResult;
   Future<CheckoutOrderResult?>? _activeSubmission;
+  Future<void>? _activeCustomerUpdate;
+  Timer? _customerUpdateDebounce;
   String? _pendingIdempotencyKey;
+  String? _addressUpdateError;
   int _submissionSequence = 0;
   int _requestSerial = 0;
+  int _customerUpdateSerial = 0;
+  bool _customerUpdateDirty = false;
+  bool _isUpdatingCustomer = false;
   bool _isDisposed = false;
 
   CheckoutStatus get status => _status;
@@ -50,8 +57,10 @@ class CheckoutController extends ChangeNotifier {
       UnmodifiableMapView<String, String>(_fieldErrors);
   String? get loadError => _loadError;
   String? get submitError => _submitError;
+  String? get addressUpdateError => _addressUpdateError;
   CheckoutOrderResult? get orderResult => _orderResult;
   bool get isSubmitting => _status == CheckoutStatus.submitting;
+  bool get isUpdatingCustomer => _isUpdatingCustomer;
   bool get needsPayment => _checkout?.needsPayment ?? false;
   bool get needsShipping => _checkout?.needsShipping ?? false;
   bool get hasDynamicFields => _checkout?.hasDynamicFields ?? false;
@@ -92,6 +101,7 @@ class CheckoutController extends ChangeNotifier {
       _shippingAddress = CheckoutAddress.fromCartAddress(
         loaded.cart.shippingAddress,
       );
+      _applyDefaultCountries(loaded.fieldDefinitions);
       _shipToDifferentAddress =
           loaded.needsShipping &&
           _hasAddress(_shippingAddress) &&
@@ -106,6 +116,8 @@ class CheckoutController extends ChangeNotifier {
             field.key: field.defaultValue,
       };
       _pendingIdempotencyKey = null;
+      _addressUpdateError = null;
+      _customerUpdateDirty = false;
       _orderResult = null;
       _status = CheckoutStatus.ready;
       _notify();
@@ -119,11 +131,13 @@ class CheckoutController extends ChangeNotifier {
   void updateBillingAddress(CheckoutAddress address) {
     _billingAddress = address;
     _onFormChanged('billing.');
+    _scheduleCustomerUpdate();
   }
 
   void updateShippingAddress(CheckoutAddress address) {
     _shippingAddress = address;
     _onFormChanged('shipping.');
+    _scheduleCustomerUpdate();
   }
 
   void setShipToDifferentAddress(bool value) {
@@ -132,6 +146,7 @@ class CheckoutController extends ChangeNotifier {
     }
     _shipToDifferentAddress = value;
     _onFormChanged('shipping.');
+    _scheduleCustomerUpdate();
   }
 
   void setCustomerNote(String value) {
@@ -210,6 +225,9 @@ class CheckoutController extends ChangeNotifier {
         });
     }
     _onFormChanged(fieldKey);
+    if (fieldKey.startsWith('billing_') || fieldKey.startsWith('shipping_')) {
+      _scheduleCustomerUpdate();
+    }
   }
 
   bool validate() {
@@ -259,12 +277,29 @@ class CheckoutController extends ChangeNotifier {
     if (active != null) {
       return active;
     }
-    if (_status != CheckoutStatus.ready || !validate()) {
-      return Future<CheckoutOrderResult?>.value(null);
-    }
-    final Future<CheckoutOrderResult?> submission = _performSubmit();
+    final Future<CheckoutOrderResult?> submission = _prepareAndSubmit();
     _activeSubmission = submission;
+    submission.whenComplete(() {
+      if (identical(_activeSubmission, submission)) {
+        _activeSubmission = null;
+      }
+    });
     return submission;
+  }
+
+  Future<CheckoutOrderResult?> _prepareAndSubmit() async {
+    if (_status != CheckoutStatus.ready) {
+      return null;
+    }
+    _customerUpdateDebounce?.cancel();
+    await _syncCustomerNow();
+    if (_status != CheckoutStatus.ready || _addressUpdateError != null) {
+      return null;
+    }
+    if (!validate()) {
+      return null;
+    }
+    return _performSubmit();
   }
 
   Future<CheckoutOrderResult?> _performSubmit() async {
@@ -318,8 +353,85 @@ class CheckoutController extends ChangeNotifier {
       _status = CheckoutStatus.ready;
       _notify();
       return null;
+    }
+  }
+
+  void _scheduleCustomerUpdate() {
+    if (_status != CheckoutStatus.ready || cart?.isEmpty != false) {
+      return;
+    }
+    _customerUpdateDirty = true;
+    _addressUpdateError = null;
+    _customerUpdateDebounce?.cancel();
+    _customerUpdateDebounce = Timer(
+      const Duration(milliseconds: 500),
+      () => unawaited(_syncCustomerNow()),
+    );
+  }
+
+  Future<void> _syncCustomerNow() async {
+    _customerUpdateDebounce?.cancel();
+    final Future<void>? active = _activeCustomerUpdate;
+    if (active != null) {
+      await active;
+      if (_customerUpdateDirty) {
+        await _syncCustomerNow();
+      }
+      return;
+    }
+    if (!_customerUpdateDirty || _isDisposed || cart?.isEmpty != false) {
+      return;
+    }
+
+    _customerUpdateDirty = false;
+    final int serial = ++_customerUpdateSerial;
+    final Future<void> operation = _performCustomerUpdate(serial);
+    _activeCustomerUpdate = operation;
+    try {
+      await operation;
     } finally {
-      _activeSubmission = null;
+      if (identical(_activeCustomerUpdate, operation)) {
+        _activeCustomerUpdate = null;
+      }
+    }
+    if (_customerUpdateDirty) {
+      await _syncCustomerNow();
+    }
+  }
+
+  Future<void> _performCustomerUpdate(int serial) async {
+    _isUpdatingCustomer = true;
+    _addressUpdateError = null;
+    _notify();
+    try {
+      final Cart updatedCart = await repository.updateCustomer(
+        billingAddress: _billingAddress.trimmed(),
+        shippingAddress: _effectiveShippingAddress().trimmed(),
+      );
+      if (_isDisposed || serial != _customerUpdateSerial) {
+        return;
+      }
+      _applyAuthoritativeCart(updatedCart);
+    } on CheckoutRepositoryException catch (error) {
+      if (_isDisposed || serial != _customerUpdateSerial) {
+        return;
+      }
+      if (error.authoritativeCart != null) {
+        _applyAuthoritativeCart(error.authoritativeCart!);
+      }
+      _addressUpdateError = error.message.trim().isEmpty
+          ? 'Unable to calculate shipping for this address.'
+          : error.message.trim();
+    } catch (_) {
+      if (_isDisposed || serial != _customerUpdateSerial) {
+        return;
+      }
+      _addressUpdateError = 'Unable to calculate shipping for this address.';
+    } finally {
+      if (!_isDisposed && serial == _customerUpdateSerial) {
+        _isUpdatingCustomer = false;
+        _notify();
+      }
     }
   }
 
@@ -341,6 +453,30 @@ class CheckoutController extends ChangeNotifier {
           ? paymentMethodIds.single
           : '';
     }
+  }
+
+  void _applyDefaultCountries(List<CheckoutFieldDefinition> definitions) {
+    String defaultFor(String key) {
+      for (final CheckoutFieldDefinition field in definitions) {
+        if (field.key == key && field.defaultValue.trim().isNotEmpty) {
+          return field.defaultValue.trim().toUpperCase();
+        }
+      }
+      return '';
+    }
+
+    final String billingCountry = _billingAddress.country.trim().isNotEmpty
+        ? _billingAddress.country.trim().toUpperCase()
+        : (defaultFor('billing_country').isNotEmpty
+              ? defaultFor('billing_country')
+              : 'EG');
+    final String shippingCountry = _shippingAddress.country.trim().isNotEmpty
+        ? _shippingAddress.country.trim().toUpperCase()
+        : (defaultFor('shipping_country').isNotEmpty
+              ? defaultFor('shipping_country')
+              : billingCountry);
+    _billingAddress = _billingAddress.copyWith(country: billingCountry);
+    _shippingAddress = _shippingAddress.copyWith(country: shippingCountry);
   }
 
   void _validateAddress(
@@ -521,6 +657,8 @@ class CheckoutController extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _customerUpdateDebounce?.cancel();
+    _customerUpdateSerial++;
     _requestSerial++;
     super.dispose();
   }

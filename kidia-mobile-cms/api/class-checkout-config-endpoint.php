@@ -63,11 +63,18 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 				array( 'status' => 503 )
 			);
 		}
+		$default_country = $this->get_default_country();
 
 		return rest_ensure_response(
 			array(
-				'version' => 1,
-				'fields'  => $this->normalize_fields( $checkout->get_checkout_fields() ),
+				'version'  => 2,
+				'defaults' => array(
+					'country' => $default_country,
+				),
+				'fields'   => $this->normalize_fields(
+					$checkout->get_checkout_fields(),
+					$default_country
+				),
 			)
 		);
 	}
@@ -116,12 +123,17 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 			is_array( $extensions['woo_mobile_cms']['checkout_fields'] )
 			? $extensions['woo_mobile_cms']['checkout_fields']
 			: array();
-		if ( empty( $values ) || ! function_exists( 'WC' ) || ! WC() ) {
+		if ( empty( $values ) || ! function_exists( 'WC' ) || ! WC() || ! method_exists( WC(), 'checkout' ) ) {
+			return;
+		}
+
+		$checkout = WC()->checkout();
+		if ( ! $checkout instanceof WC_Checkout ) {
 			return;
 		}
 
 		$definitions = array();
-		foreach ( $this->normalize_fields( WC()->checkout()->get_checkout_fields() ) as $definition ) {
+		foreach ( $this->normalize_fields( $checkout->get_checkout_fields(), $this->get_default_country() ) as $definition ) {
 			$definitions[ $definition['key'] ] = $definition;
 		}
 
@@ -136,7 +148,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 	}
 
 	/** Flatten billing, shipping and order groups while preserving priorities. */
-	private function normalize_fields( array $groups ): array {
+	private function normalize_fields( array $groups, string $default_country ): array {
 		$normalized = array();
 		foreach ( array( 'billing', 'shipping', 'order' ) as $group ) {
 			$fields = isset( $groups[ $group ] ) && is_array( $groups[ $group ] )
@@ -146,26 +158,42 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 				if ( ! is_array( $field ) ) {
 					continue;
 				}
+				$key     = sanitize_key( (string) $key );
 				$type    = sanitize_key( (string) ( $field['type'] ?? 'text' ) );
 				$options = array();
-				if ( isset( $field['options'] ) && is_array( $field['options'] ) ) {
+				if ( isset( $field['options'] ) && is_array( $field['options'] ) && ! empty( $field['options'] ) ) {
 					foreach ( $field['options'] as $option_key => $option_label ) {
 						$options[ (string) $option_key ] = wp_strip_all_tags( (string) $option_label );
 					}
-				} elseif ( 'country' === $type && isset( WC()->countries ) ) {
-					$options = WC()->countries->get_countries();
+				} elseif ( ( 'state' === $type || str_ends_with( $key, '_state' ) ) && isset( WC()->countries ) ) {
+					$states = WC()->countries->get_states( $default_country );
+					if ( is_array( $states ) && ! empty( $states ) ) {
+						$options = $states;
+						$type    = 'select';
+					} else {
+						$type = 'text';
+					}
+				}
+
+				$default  = is_scalar( $field['default'] ?? '' ) ? (string) $field['default'] : '';
+				$required = ! empty( $field['required'] );
+				if ( in_array( $key, array( 'billing_country', 'shipping_country' ), true ) ) {
+					$type     = 'hidden';
+					$options  = array();
+					$default  = $default_country;
+					$required = false;
 				}
 
 				$normalized[] = array(
-					'key'          => sanitize_key( (string) $key ),
+					'key'          => $key,
 					'group'        => $group,
 					'type'         => $type,
 					'label'        => wp_strip_all_tags( (string) ( $field['label'] ?? $key ) ),
 					'placeholder'  => wp_strip_all_tags( (string) ( $field['placeholder'] ?? '' ) ),
-					'required'     => ! empty( $field['required'] ),
+					'required'     => $required,
 					'priority'     => isset( $field['priority'] ) ? (int) $field['priority'] : 100,
 					'options'      => $options,
-					'default'      => is_scalar( $field['default'] ?? '' ) ? (string) $field['default'] : '',
+					'default'      => $default,
 					'autocomplete' => sanitize_text_field( (string) ( $field['autocomplete'] ?? '' ) ),
 				);
 			}
@@ -175,7 +203,40 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 			$normalized,
 			static fn( array $first, array $second ): int => $first['priority'] <=> $second['priority']
 		);
-		return array_values( $normalized );
+		return $this->remove_duplicate_visible_fields( $normalized );
+	}
+
+	/** Keep one visible field per label and group, preferring Woo core fields. */
+	private function remove_duplicate_visible_fields( array $fields ): array {
+		$deduplicated = array();
+		$positions    = array();
+		foreach ( $fields as $field ) {
+			if ( 'hidden' === $field['type'] ) {
+				$deduplicated[] = $field;
+				continue;
+			}
+			$label     = strtolower( preg_replace( '/\s+/u', ' ', trim( (string) $field['label'] ) ) ?? '' );
+			$signature = $field['group'] . '|' . $label;
+			if ( '' === $label || ! isset( $positions[ $signature ] ) ) {
+				$positions[ $signature ] = count( $deduplicated );
+				$deduplicated[]          = $field;
+				continue;
+			}
+
+			$position = $positions[ $signature ];
+			if ( $this->is_core_field( $field['key'] ) && ! $this->is_core_field( $deduplicated[ $position ]['key'] ) ) {
+				$deduplicated[ $position ] = $field;
+			}
+		}
+
+		return array_values( $deduplicated );
+	}
+
+	/** Store base country used by native checkout when the field is hidden. */
+	private function get_default_country(): string {
+		$location = function_exists( 'wc_get_base_location' ) ? wc_get_base_location() : array();
+		$country  = isset( $location['country'] ) ? strtoupper( sanitize_key( (string) $location['country'] ) ) : '';
+		return preg_match( '/^[A-Z]{2}$/', $country ) ? $country : 'EG';
 	}
 
 	/** Sanitize a custom value according to the filtered Woo field type. */

@@ -5,6 +5,7 @@ import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
 import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
 import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
@@ -13,16 +14,27 @@ import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_r
 typedef CheckoutLoadCallback = Future<CheckoutState> Function();
 typedef CheckoutSubmitCallback =
     Future<CheckoutOrderResult> Function(CheckoutSubmission submission);
+typedef CheckoutCustomerUpdateCallback =
+    Future<Cart> Function(
+      CheckoutAddress billingAddress,
+      CheckoutAddress shippingAddress,
+    );
 
 class FakeCheckoutRepository implements CheckoutRepository {
-  FakeCheckoutRepository({CheckoutState? state, this.onLoad, this.onSubmit})
-    : state = state ?? CheckoutState(cart: checkoutCart());
+  FakeCheckoutRepository({
+    CheckoutState? state,
+    this.onLoad,
+    this.onSubmit,
+    this.onUpdateCustomer,
+  }) : state = state ?? CheckoutState(cart: checkoutCart());
 
   CheckoutState state;
   CheckoutLoadCallback? onLoad;
   CheckoutSubmitCallback? onSubmit;
+  CheckoutCustomerUpdateCallback? onUpdateCustomer;
   int loadCalls = 0;
   int submitCalls = 0;
+  int updateCustomerCalls = 0;
   final List<CheckoutSubmission> submissions = <CheckoutSubmission>[];
 
   @override
@@ -30,6 +42,18 @@ class FakeCheckoutRepository implements CheckoutRepository {
     loadCalls++;
     final CheckoutLoadCallback? callback = onLoad;
     return callback == null ? state : callback();
+  }
+
+  @override
+  Future<Cart> updateCustomer({
+    required CheckoutAddress billingAddress,
+    required CheckoutAddress shippingAddress,
+  }) async {
+    updateCustomerCalls++;
+    final CheckoutCustomerUpdateCallback? callback = onUpdateCustomer;
+    return callback == null
+        ? state.cart
+        : callback(billingAddress, shippingAddress);
   }
 
   @override
@@ -94,16 +118,37 @@ class FakeCheckoutTransport implements CheckoutApiTransport {
   );
   Object? error;
   Future<CheckoutApiResponse> Function()? onPlaceOrder;
+  Future<CheckoutApiResponse> Function()? onUpdateCustomer;
   int calls = 0;
+  int updateCustomerCalls = 0;
   int configurationCalls = 0;
   final List<String> cartTokens = <String>[];
   final List<String> idempotencyKeys = <String>[];
   final List<Map<String, dynamic>> bodies = <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> customerBodies = <Map<String, dynamic>>[];
 
   @override
   Future<CheckoutApiResponse> loadConfiguration() async {
     configurationCalls++;
     return configurationResponse;
+  }
+
+  @override
+  Future<CheckoutApiResponse> updateCustomer({
+    required String cartToken,
+    required Map<String, dynamic> body,
+  }) async {
+    updateCustomerCalls++;
+    cartTokens.add(cartToken);
+    customerBodies.add(Map<String, dynamic>.from(body));
+    final Object? currentError = error;
+    if (currentError != null) {
+      throw currentError;
+    }
+    final Future<CheckoutApiResponse> Function()? callback = onUpdateCustomer;
+    return callback == null
+        ? CheckoutApiResponse(data: checkoutCartJson())
+        : callback();
   }
 
   @override

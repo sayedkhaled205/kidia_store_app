@@ -66,6 +66,46 @@ void main() {
     },
   );
 
+  test(
+    'updates the customer address and returns recalculated totals',
+    () async {
+      final MemoryCartTokenStore tokenStore = MemoryCartTokenStore()
+        ..write('cart-token-address');
+      final FakeCheckoutTransport transport = FakeCheckoutTransport()
+        ..onUpdateCustomer = () async =>
+            CheckoutApiResponse(data: checkoutCartJson(totalPrice: '18000'));
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: tokenStore,
+      );
+      const CheckoutAddress address = CheckoutAddress(
+        firstName: 'Khaled',
+        lastName: 'Sayed',
+        address1: 'Nasr City',
+        city: 'Cairo',
+        state: 'C',
+        country: 'EG',
+        phone: '01000000000',
+      );
+
+      final updated = await repository.updateCustomer(
+        billingAddress: address,
+        shippingAddress: address,
+      );
+
+      expect(updated.totals.priceMinor, '18000');
+      expect(transport.updateCustomerCalls, 1);
+      expect(transport.cartTokens.single, 'cart-token-address');
+      final Map<String, dynamic> body = transport.customerBodies.single;
+      expect((body['shipping_address'] as Map<String, String>)['state'], 'C');
+      expect(
+        (body['shipping_address'] as Map<String, String>)['country'],
+        'EG',
+      );
+    },
+  );
+
   test('places a standard checkout without card or gateway secrets', () async {
     final MemoryCartTokenStore tokenStore = MemoryCartTokenStore()
       ..write('cart-token-1');
