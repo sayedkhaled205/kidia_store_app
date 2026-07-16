@@ -105,6 +105,28 @@ void main() {
       expect(product.prices.hasPrice, isFalse);
     });
 
+    test('reads third-party brands from the CMS Store API extension', () {
+      final CatalogProductModel product = CatalogProductModel.fromJson(
+        <String, dynamic>{
+          'id': 19,
+          'name': 'Branded product',
+          'slug': 'branded-product',
+          'type': 'simple',
+          'prices': <String, dynamic>{'price': '100'},
+          'brands': <dynamic>[],
+          'extensions': <String, dynamic>{
+            'woo_mobile_cms': <String, dynamic>{
+              'brands': <dynamic>[
+                <String, dynamic>{'id': 7, 'name': 'Shose', 'slug': 'shose'},
+              ],
+            },
+          },
+        },
+      );
+
+      expect(product.brands.single.name, 'Shose');
+    });
+
     test('rejects an unusable product record', () {
       expect(
         () => CatalogProductModel.fromJson(<String, dynamic>{'id': 0}),
