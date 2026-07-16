@@ -109,33 +109,21 @@ void main() {
     );
 
     test(
-      'hydrates variable-product options with purchasable variation data',
+      'hydrates exact purchasable variation data from the mobile bridge',
       () async {
         final _QueueStoreApiClient client = _QueueStoreApiClient(
           <StoreApiResponse>[
             const StoreApiResponse(
-              data: <String, dynamic>{
-                'id': 50,
-                'name': 'Variable product',
-                'type': 'variable',
-                'prices': <String, dynamic>{'price': '1000'},
-                'variations': <dynamic>[
-                  <String, dynamic>{
-                    'id': 501,
-                    'attributes': <dynamic>[
-                      <String, dynamic>{'name': 'Size', 'value': 'M'},
-                    ],
-                  },
-                ],
-              },
-            ),
-            const StoreApiResponse(
               data: <dynamic>[
                 <String, dynamic>{
                   'id': 501,
-                  'parent': 50,
-                  'name': 'Variable product - M',
-                  'type': 'variation',
+                  'attributes': <dynamic>[
+                    <String, dynamic>{
+                      'name': 'Size',
+                      'taxonomy': 'pa_size',
+                      'value': 'm',
+                    },
+                  ],
                   'is_purchasable': true,
                   'is_in_stock': false,
                   'prices': <String, dynamic>{
@@ -154,12 +142,14 @@ void main() {
         final variations = await source.fetchVariations(50);
 
         expect(variations.single.id, 501);
-        expect(variations.single.attributes.single.value, 'M');
+        expect(variations.single.attributes.single.value, 'm');
         expect(variations.single.prices?.priceMinor, '1250');
         expect(variations.single.isPurchasable, isTrue);
         expect(variations.single.isInStock, isFalse);
-        expect(client.queries.last['type'], 'variation');
-        expect(client.queries.last['parent'], '50');
+        expect(
+          client.paths.single,
+          '/wp-json/woo-mobile/v1/products/50/variations',
+        );
       },
     );
   });
@@ -190,6 +180,7 @@ class _QueueStoreApiClient implements StoreApiClient {
 
   final List<StoreApiResponse> _responses;
   final List<Map<String, dynamic>> queries = <Map<String, dynamic>>[];
+  final List<String> paths = <String>[];
   int _index = 0;
 
   @override
@@ -197,6 +188,7 @@ class _QueueStoreApiClient implements StoreApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
+    paths.add(path);
     queries.add(Map<String, dynamic>.from(queryParameters ?? const {}));
     if (_index >= _responses.length) {
       throw StateError('No fake Store API response is available.');
