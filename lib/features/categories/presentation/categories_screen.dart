@@ -18,58 +18,54 @@ class CategoriesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      body: tree.when(
-        loading: _CategoryLoadingList.new,
-        error: (Object error, StackTrace stackTrace) => _CategoryStatus(
-          icon: Icons.cloud_off_outlined,
-          title: copy.connectionError,
-          actionLabel: copy.retry,
-          onAction: () => ref.invalidate(catalogCategoryTreeProvider),
-        ),
-        data: (CatalogCategoryTree value) {
-          if (value.isEmpty) {
-            return _CategoryStatus(
-              icon: Icons.category_outlined,
-              title: copy.noCategories,
-              actionLabel: copy.refresh,
-              onAction: () => ref.invalidate(catalogCategoryTreeProvider),
-            );
-          }
+      body: SafeArea(
+        bottom: false,
+        child: tree.when(
+          loading: _CategoryLoadingList.new,
+          error: (Object error, StackTrace stackTrace) => _CategoryStatus(
+            icon: Icons.cloud_off_outlined,
+            title: copy.connectionError,
+            actionLabel: copy.retry,
+            onAction: () => ref.invalidate(catalogCategoryTreeProvider),
+          ),
+          data: (CatalogCategoryTree value) {
+            if (value.isEmpty) {
+              return _CategoryStatus(
+                icon: Icons.category_outlined,
+                title: copy.noCategories,
+                actionLabel: copy.refresh,
+                onAction: () => ref.invalidate(catalogCategoryTreeProvider),
+              );
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => ref
-                .refresh(catalogCategoryTreeProvider.future)
-                .then<void>((CatalogCategoryTree _) {}),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[
-                const SliverToBoxAdapter(child: _CategoryTopActions()),
-                SliverPadding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Text(
-                      '${value.totalCategories} ${copy.categories}',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
+            return RefreshIndicator(
+              onRefresh: () => ref
+                  .refresh(catalogCategoryTreeProvider.future)
+                  .then<void>((CatalogCategoryTree _) {}),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: <Widget>[
+                  const SliverToBoxAdapter(child: _CategoryTopActions()),
+                  SliverPadding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      16,
+                      14,
+                      16,
+                      24,
+                    ),
+                    sliver: SliverList.separated(
+                      itemCount: value.roots.length,
+                      separatorBuilder: (BuildContext context, int index) =>
+                          const SizedBox(height: 10),
+                      itemBuilder: (BuildContext context, int index) =>
+                          _CategoryBranch(node: value.roots[index]),
                     ),
                   ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 24),
-                  sliver: SliverList.separated(
-                    itemCount: value.roots.length,
-                    separatorBuilder: (BuildContext context, int index) =>
-                        const SizedBox(height: 10),
-                    itemBuilder: (BuildContext context, int index) =>
-                        _CategoryBranch(node: value.roots[index]),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -115,9 +111,6 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            subtitle: category.count > 0
-                ? Text(copy.categoryCount(category.count))
-                : null,
             onTap: () => _openProducts(context, category),
             trailing: hasChildren
                 ? IconButton(
