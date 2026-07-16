@@ -32,6 +32,40 @@ void main() {
     },
   );
 
+  test(
+    'loads checkout fields filtered by installed WooCommerce plugins',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport()
+        ..configurationResponse = const CheckoutApiResponse(
+          data: <String, dynamic>{
+            'version': 1,
+            'fields': <dynamic>[
+              <String, dynamic>{
+                'key': 'billing_vat_number',
+                'group': 'billing',
+                'type': 'text',
+                'label': 'VAT number',
+                'required': true,
+                'priority': 35,
+              },
+            ],
+          },
+        );
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: MemoryCartTokenStore(),
+      );
+
+      final state = await repository.loadCheckout();
+
+      expect(state.hasDynamicFields, isTrue);
+      expect(state.fieldDefinitions.single.key, 'billing_vat_number');
+      expect(state.fieldDefinitions.single.required, isTrue);
+      expect(transport.configurationCalls, 1);
+    },
+  );
+
   test('places a standard checkout without card or gateway secrets', () async {
     final MemoryCartTokenStore tokenStore = MemoryCartTokenStore()
       ..write('cart-token-1');
@@ -70,6 +104,35 @@ void main() {
       'ada@example.com',
     );
   });
+
+  test(
+    'submits safe custom checkout plugin fields through Store API',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport();
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: (MemoryCartTokenStore()..write('token')),
+      );
+
+      await repository.placeOrder(
+        _submission(
+          'custom-fields',
+          customFields: const <String, String>{'billing_vat_number': 'EG-123'},
+        ),
+      );
+
+      final Map<String, dynamic> body = transport.bodies.single;
+      expect(body['additional_fields'], <String, String>{
+        'billing_vat_number': 'EG-123',
+      });
+      expect(
+        ((body['extensions'] as Map<String, dynamic>)['woo_mobile_cms']
+            as Map<String, dynamic>)['checkout_fields'],
+        <String, String>{'billing_vat_number': 'EG-123'},
+      );
+    },
+  );
 
   test('bootstraps the shared Cart-Token once when needed', () async {
     final MemoryCartTokenStore tokenStore = MemoryCartTokenStore();
@@ -256,7 +319,10 @@ void main() {
   );
 }
 
-CheckoutSubmission _submission(String key) {
+CheckoutSubmission _submission(
+  String key, {
+  Map<String, String> customFields = const <String, String>{},
+}) {
   const CheckoutAddress address = CheckoutAddress(
     firstName: 'Ada',
     lastName: 'Lovelace',
@@ -273,5 +339,6 @@ CheckoutSubmission _submission(String key) {
     customerNote: 'Leave at reception',
     paymentMethodId: 'cod',
     idempotencyKey: key,
+    customFields: customFields,
   );
 }
