@@ -182,8 +182,13 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(const CatalogProductFilters()),
+                onPressed: () => Navigator.of(context).pop(
+                  CatalogProductFilters(
+                    sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
+                    sizeTerm: widget.initialFilters.sizeTerm,
+                    sizeLabel: widget.initialFilters.sizeLabel,
+                  ),
+                ),
                 child: Text(copy.reset),
               ),
             ],
@@ -241,6 +246,9 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
         onSaleOnly: _onSaleOnly,
         minimumPriceMinor: minimum,
         maximumPriceMinor: maximum,
+        sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
+        sizeTerm: widget.initialFilters.sizeTerm,
+        sizeLabel: widget.initialFilters.sizeLabel,
       ),
     );
   }
