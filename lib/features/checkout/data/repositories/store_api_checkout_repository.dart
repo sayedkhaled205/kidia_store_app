@@ -8,7 +8,9 @@ import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
 import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
 import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:kidia_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
@@ -34,7 +36,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
   @override
   Future<CheckoutState> loadCheckout() async {
     try {
-      return CheckoutState(cart: await cartRepository.getCart());
+      final Cart cart = await cartRepository.getCart();
+      final List<CheckoutFieldDefinition> definitions =
+          await _loadFieldDefinitions();
+      return CheckoutState(cart: cart, fieldDefinitions: definitions);
     } on CartRepositoryException catch (error, stackTrace) {
       Error.throwWithStackTrace(
         CheckoutRepositoryException(
@@ -56,6 +61,31 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         ),
         stackTrace,
       );
+    }
+  }
+
+  Future<List<CheckoutFieldDefinition>> _loadFieldDefinitions() async {
+    try {
+      final CheckoutApiResponse response = await transport.loadConfiguration();
+      final Map<String, dynamic>? json = _objectOrNull(response.data);
+      final dynamic rawFields = json?['fields'];
+      if (rawFields is! List) {
+        return const <CheckoutFieldDefinition>[];
+      }
+      final List<CheckoutFieldDefinition> fields = <CheckoutFieldDefinition>[];
+      for (final dynamic rawField in rawFields) {
+        final CheckoutFieldDefinition? field =
+            CheckoutFieldDefinitionModel.tryParse(rawField);
+        if (field != null) {
+          fields.add(field);
+        }
+      }
+      return List<CheckoutFieldDefinition>.unmodifiable(fields);
+    } catch (_) {
+      // Older plugin versions keep the safe built-in checkout fields. The
+      // shopping flow must not fail merely because dynamic styling metadata
+      // is not yet installed.
+      return const <CheckoutFieldDefinition>[];
     }
   }
 
@@ -150,6 +180,14 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       // outside this generic checkout. A dedicated gateway adapter can provide
       // them later without ever persisting secrets in this repository.
       'payment_data': const <Map<String, String>>[],
+      if (submission.customFields.isNotEmpty) ...<String, dynamic>{
+        'additional_fields': submission.customFields,
+        'extensions': <String, dynamic>{
+          'woo_mobile_cms': <String, dynamic>{
+            'checkout_fields': submission.customFields,
+          },
+        },
+      },
     };
   }
 
