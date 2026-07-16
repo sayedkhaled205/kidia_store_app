@@ -18,7 +18,6 @@ class CategoriesScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(copy.categories)),
       body: tree.when(
         loading: _CategoryLoadingList.new,
         error: (Object error, StackTrace stackTrace) => _CategoryStatus(
@@ -77,10 +76,9 @@ class CategoriesScreen extends ConsumerWidget {
 }
 
 class _CategoryBranch extends StatefulWidget {
-  const _CategoryBranch({required this.node, this.depth = 0});
+  const _CategoryBranch({required this.node});
 
   final CatalogCategoryNode node;
-  final int depth;
 
   @override
   State<_CategoryBranch> createState() => _CategoryBranchState();
@@ -98,25 +96,16 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final CatalogCopy copy = CatalogCopy.of(context);
 
     final Widget tile = Material(
-      color: widget.depth == 0
-          ? colors.surfaceContainerLowest
-          : Colors.transparent,
-      shape: widget.depth == 0
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: BorderSide(color: colors.outlineVariant),
-            )
-          : null,
-      clipBehavior: widget.depth == 0 ? Clip.antiAlias : Clip.none,
+      color: colors.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: <Widget>[
           ListTile(
-            contentPadding: EdgeInsetsDirectional.fromSTEB(
-              widget.depth == 0 ? 12 : 8,
-              6,
-              8,
-              6,
-            ),
+            contentPadding: EdgeInsetsDirectional.fromSTEB(12, 6, 8, 6),
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
@@ -150,7 +139,12 @@ class _CategoryBranchState extends State<_CategoryBranch> {
             child: !_expanded
                 ? const SizedBox(width: double.infinity)
                 : Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(12, 2, 12, 14),
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      12,
+                      2,
+                      12,
+                      14,
+                    ),
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -181,7 +175,8 @@ class _CategoryBranchState extends State<_CategoryBranch> {
   }
 
   void _openProducts(BuildContext context, CatalogCategory category) {
-    context.push('/categories/${category.id}');
+    final String name = Uri.encodeQueryComponent(category.name);
+    context.push('/categories/${category.id}?name=$name');
   }
 }
 
