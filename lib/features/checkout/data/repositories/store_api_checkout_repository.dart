@@ -7,6 +7,7 @@ import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart
 import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
 import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
 import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
 import 'package:kidia_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
@@ -80,7 +81,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
           fields.add(field);
         }
       }
-      return List<CheckoutFieldDefinition>.unmodifiable(fields);
+      return _normalizeFieldDefinitions(fields, json!);
     } catch (_) {
       // Older plugin versions keep the safe built-in checkout fields. The
       // shopping flow must not fail merely because dynamic styling metadata
@@ -88,6 +89,94 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       return const <CheckoutFieldDefinition>[];
     }
   }
+
+  List<CheckoutFieldDefinition> _normalizeFieldDefinitions(
+    List<CheckoutFieldDefinition> fields,
+    Map<String, dynamic> configuration,
+  ) {
+    final Map<String, dynamic>? defaults = _objectOrNull(
+      configuration['defaults'],
+    );
+    String country =
+        defaults?['country']?.toString().trim().toUpperCase() ?? '';
+    if (country.isEmpty) {
+      for (final CheckoutFieldDefinition field in fields) {
+        if ((field.key == 'billing_country' ||
+                field.key == 'shipping_country') &&
+            field.defaultValue.trim().isNotEmpty) {
+          country = field.defaultValue.trim().toUpperCase();
+          break;
+        }
+      }
+    }
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(country)) {
+      country = 'EG';
+    }
+
+    Map<String, String> states = _stringMap(defaults?['states']);
+    if (states.isEmpty) {
+      states = CheckoutCountryData.statesFor(country);
+    }
+
+    final List<CheckoutFieldDefinition> normalized =
+        <CheckoutFieldDefinition>[];
+    final Set<String> seenKeys = <String>{};
+    for (final CheckoutFieldDefinition field in fields) {
+      if (!seenKeys.add(field.key)) {
+        continue;
+      }
+      if (_isCountryField(field.key)) {
+        normalized.add(
+          field.copyWith(
+            type: CheckoutFieldType.hidden,
+            required: false,
+            options: const <String, String>{},
+            defaultValue: country,
+          ),
+        );
+        continue;
+      }
+      if (_isStateField(field.key)) {
+        final Map<String, String> availableStates = field.options.isNotEmpty
+            ? field.options
+            : states;
+        normalized.add(
+          field.copyWith(
+            type: availableStates.isEmpty
+                ? CheckoutFieldType.text
+                : CheckoutFieldType.select,
+            required: availableStates.isNotEmpty ? true : field.required,
+            options: availableStates,
+          ),
+        );
+        continue;
+      }
+      normalized.add(field);
+    }
+
+    return List<CheckoutFieldDefinition>.unmodifiable(normalized);
+  }
+
+  Map<String, String> _stringMap(dynamic raw) {
+    if (raw is! Map) {
+      return const <String, String>{};
+    }
+    final Map<String, String> values = <String, String>{};
+    for (final MapEntry<dynamic, dynamic> entry in raw.entries) {
+      final String key = entry.key?.toString().trim() ?? '';
+      final String value = entry.value?.toString().trim() ?? '';
+      if (key.isNotEmpty && value.isNotEmpty) {
+        values[key] = value;
+      }
+    }
+    return Map<String, String>.unmodifiable(values);
+  }
+
+  bool _isCountryField(String key) =>
+      key == 'billing_country' || key == 'shipping_country';
+
+  bool _isStateField(String key) =>
+      key == 'billing_state' || key == 'shipping_state';
 
   @override
   Future<Cart> updateCustomer({
@@ -250,10 +339,14 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
 
   void _validateSubmission(CheckoutSubmission submission) {
     final CheckoutAddress billing = submission.billingAddress.trimmed();
+    final Map<String, String> states = CheckoutCountryData.statesFor(
+      billing.country,
+    );
     if (billing.firstName.isEmpty ||
         billing.lastName.isEmpty ||
         billing.address1.isEmpty ||
         billing.city.isEmpty ||
+        (states.isNotEmpty && !states.containsKey(billing.state)) ||
         !RegExp(r'^[A-Z]{2}$').hasMatch(billing.country) ||
         !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(billing.email) ||
         submission.customerNote.trim().length > 1000) {

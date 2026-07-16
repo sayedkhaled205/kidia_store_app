@@ -54,7 +54,7 @@ void main() {
                 type: CheckoutFieldType.select,
                 label: 'المحافظة',
                 required: true,
-                options: const <String, String>{'C': 'القاهرة'},
+                options: const <String, String>{'EGC': 'القاهرة'},
               ),
             ],
           ),
@@ -79,16 +79,76 @@ void main() {
           isNot(contains('billing_country')),
         );
 
-        controller.setFieldValue('billing_state', 'C');
+        controller.setFieldValue('billing_state', 'EGC');
         expect((await controller.submit())?.orderId, 730);
         expect(repository.updateCustomerCalls, 1);
         expect(updatedBilling.country, 'EG');
-        expect(updatedBilling.state, 'C');
+        expect(updatedBilling.state, 'EGC');
         expect(updatedShipping.country, 'EG');
-        expect(updatedShipping.state, 'C');
+        expect(updatedShipping.state, 'EGC');
         expect(controller.cart?.totals.priceMinor, '15000');
       },
     );
+
+    test('requires an Egypt governorate before updating or ordering', () async {
+      final Map<String, dynamic> cartJson = checkoutCartJson();
+      (cartJson['billing_address'] as Map<String, dynamic>)
+        ..['country'] = 'EG'
+        ..['state'] = '';
+      (cartJson['shipping_address'] as Map<String, dynamic>)
+        ..['country'] = 'EG'
+        ..['state'] = '';
+      final FakeCheckoutRepository repository = FakeCheckoutRepository(
+        state: CheckoutState(cart: CartModel.fromJson(cartJson).toEntity()),
+      );
+      final CheckoutController controller = CheckoutController(
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+
+      expect(controller.validate(), isFalse);
+      expect(controller.errorFor('billing.state'), isNotNull);
+      expect(await controller.submit(), isNull);
+      expect(repository.submitCalls, 0);
+
+      controller.updateBillingAddress(
+        controller.billingAddress.copyWith(state: 'EGGZ'),
+      );
+      expect((await controller.submit())?.orderId, 730);
+      expect(repository.updateCustomerCalls, 1);
+      expect(repository.submissions.single.billingAddress.state, 'EGGZ');
+      expect(repository.submissions.single.shippingAddress.state, 'EGGZ');
+    });
+
+    test('rejects a stale state value that is not in the dropdown', () async {
+      final Map<String, dynamic> cartJson = checkoutCartJson();
+      (cartJson['billing_address'] as Map<String, dynamic>)
+        ..['country'] = 'EG'
+        ..['state'] = 'C';
+      final CheckoutController controller = CheckoutController(
+        repository: FakeCheckoutRepository(
+          state: CheckoutState(
+            cart: CartModel.fromJson(cartJson).toEntity(),
+            fieldDefinitions: <CheckoutFieldDefinition>[
+              CheckoutFieldDefinition(
+                key: 'billing_state',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.select,
+                label: 'المحافظة',
+                required: true,
+                options: const <String, String>{'EGC': 'القاهرة'},
+              ),
+            ],
+          ),
+        ),
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+
+      expect(controller.validate(), isFalse);
+      expect(controller.errorFor('billing_state'), isNotNull);
+    });
 
     test('validates and submits a plugin-provided checkout field', () async {
       final FakeCheckoutRepository repository = FakeCheckoutRepository(

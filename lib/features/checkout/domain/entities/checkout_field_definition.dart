@@ -36,4 +36,28 @@ class CheckoutFieldDefinition {
   final String autocomplete;
 
   bool get isVisible => type != CheckoutFieldType.hidden;
+
+  CheckoutFieldDefinition copyWith({
+    CheckoutFieldType? type,
+    String? label,
+    String? placeholder,
+    bool? required,
+    int? priority,
+    Map<String, String>? options,
+    String? defaultValue,
+    String? autocomplete,
+  }) {
+    return CheckoutFieldDefinition(
+      key: key,
+      group: group,
+      type: type ?? this.type,
+      label: label ?? this.label,
+      placeholder: placeholder ?? this.placeholder,
+      required: required ?? this.required,
+      priority: priority ?? this.priority,
+      options: options ?? this.options,
+      defaultValue: defaultValue ?? this.defaultValue,
+      autocomplete: autocomplete ?? this.autocomplete,
+    );
+  }
 }

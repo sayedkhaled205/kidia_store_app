@@ -5,6 +5,7 @@ import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart
 import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
 import 'package:kidia_store_app/features/checkout/data/repositories/store_api_checkout_repository.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
@@ -67,6 +68,77 @@ void main() {
   );
 
   test(
+    'repairs legacy Egypt checkout fields for native shipping calculation',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport()
+        ..configurationResponse = const CheckoutApiResponse(
+          data: <String, dynamic>{
+            'version': 2,
+            'defaults': <String, dynamic>{'country': 'EG'},
+            'fields': <dynamic>[
+              <String, dynamic>{
+                'key': 'billing_state',
+                'group': 'billing',
+                'type': 'text',
+                'label': 'المنطقة',
+                'required': true,
+                'priority': 30,
+              },
+              <String, dynamic>{
+                'key': 'billing_country',
+                'group': 'billing',
+                'type': 'country',
+                'label': 'الدولة / المنطقة',
+                'required': true,
+                'priority': 40,
+                'options': <String, String>{'EG': 'مصر'},
+                'default': 'EG',
+              },
+              <String, dynamic>{
+                'key': 'billing_city',
+                'group': 'billing',
+                'type': 'text',
+                'label': 'اسم المنطقة',
+                'required': true,
+                'priority': 50,
+              },
+            ],
+          },
+        );
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: MemoryCartTokenStore(),
+      );
+
+      final state = await repository.loadCheckout();
+      final CheckoutFieldDefinition country = state.fieldDefinitions
+          .singleWhere(
+            (CheckoutFieldDefinition field) => field.key == 'billing_country',
+          );
+      final CheckoutFieldDefinition governorate = state.fieldDefinitions
+          .singleWhere(
+            (CheckoutFieldDefinition field) => field.key == 'billing_state',
+          );
+      final CheckoutFieldDefinition city = state.fieldDefinitions.singleWhere(
+        (CheckoutFieldDefinition field) => field.key == 'billing_city',
+      );
+
+      expect(country.type, CheckoutFieldType.hidden);
+      expect(country.required, isFalse);
+      expect(country.defaultValue, 'EG');
+      expect(country.options, isEmpty);
+      expect(governorate.type, CheckoutFieldType.select);
+      expect(governorate.required, isTrue);
+      expect(governorate.options, hasLength(27));
+      expect(governorate.options['EGC'], 'القاهرة');
+      expect(governorate.options['EGGZ'], 'الجيزة');
+      expect(city.type, CheckoutFieldType.text);
+      expect(city.isVisible, isTrue);
+    },
+  );
+
+  test(
     'updates the customer address and returns recalculated totals',
     () async {
       final MemoryCartTokenStore tokenStore = MemoryCartTokenStore()
@@ -84,7 +156,7 @@ void main() {
         lastName: 'Sayed',
         address1: 'Nasr City',
         city: 'Cairo',
-        state: 'C',
+        state: 'EGC',
         country: 'EG',
         phone: '01000000000',
       );
@@ -98,7 +170,7 @@ void main() {
       expect(transport.updateCustomerCalls, 1);
       expect(transport.cartTokens.single, 'cart-token-address');
       final Map<String, dynamic> body = transport.customerBodies.single;
-      expect((body['shipping_address'] as Map<String, String>)['state'], 'C');
+      expect((body['shipping_address'] as Map<String, String>)['state'], 'EGC');
       expect(
         (body['shipping_address'] as Map<String, String>)['country'],
         'EG',
@@ -301,6 +373,48 @@ void main() {
     );
     expect(transport.calls, 0);
   });
+
+  test(
+    'rejects an Egypt order without a valid WooCommerce governorate code',
+    () async {
+      final FakeCheckoutTransport transport = FakeCheckoutTransport();
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: (MemoryCartTokenStore()..write('token')),
+      );
+      const CheckoutAddress address = CheckoutAddress(
+        firstName: 'Khaled',
+        lastName: 'Sayed',
+        address1: 'Nasr City',
+        city: 'Cairo',
+        state: 'C',
+        country: 'EG',
+        email: 'khaled@example.com',
+        phone: '01000000000',
+      );
+
+      await expectLater(
+        repository.placeOrder(
+          const CheckoutSubmission(
+            billingAddress: address,
+            shippingAddress: address,
+            customerNote: '',
+            paymentMethodId: 'cod',
+            idempotencyKey: 'missing-governorate',
+          ),
+        ),
+        throwsA(
+          isA<CheckoutRepositoryException>().having(
+            (CheckoutRepositoryException error) => error.kind,
+            'kind',
+            CheckoutFailureKind.invalidInput,
+          ),
+        ),
+      );
+      expect(transport.calls, 0);
+    },
+  );
 
   test('turns a malformed 409 body into a safe conflict error', () async {
     final FakeCheckoutTransport transport = FakeCheckoutTransport()

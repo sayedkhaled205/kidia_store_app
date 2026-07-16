@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
+import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
@@ -497,6 +498,12 @@ class CheckoutController extends ChangeNotifier {
     requiredField('address1', address.address1, 'Street address is required.');
     requiredField('city', address.city, 'City is required.');
     requiredField('country', address.country, 'Country code is required.');
+    final Map<String, String> states = CheckoutCountryData.statesFor(
+      address.country,
+    );
+    if (states.isNotEmpty && !states.containsKey(address.state)) {
+      errors['$prefix.state'] = 'Choose a valid state.';
+    }
     if (address.country.isNotEmpty &&
         !RegExp(r'^[A-Za-z]{2}$').hasMatch(address.country)) {
       errors['$prefix.country'] = 'Use a two-letter country code.';
@@ -530,6 +537,13 @@ class CheckoutController extends ChangeNotifier {
           field.type == CheckoutFieldType.email &&
           !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) {
         errors[field.key] = 'Enter a valid email address.';
+        continue;
+      }
+      if (value.isNotEmpty &&
+          field.type == CheckoutFieldType.select &&
+          field.options.isNotEmpty &&
+          !field.options.containsKey(value)) {
+        errors[field.key] = 'Choose a valid option.';
       }
     }
   }

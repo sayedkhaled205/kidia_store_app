@@ -64,12 +64,14 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 			);
 		}
 		$default_country = $this->get_default_country();
+		$states          = $this->get_country_states( $default_country );
 
-		return rest_ensure_response(
+		$response = rest_ensure_response(
 			array(
-				'version'  => 2,
+				'version'  => 3,
 				'defaults' => array(
 					'country' => $default_country,
+					'states'  => $states,
 				),
 				'fields'   => $this->normalize_fields(
 					$checkout->get_checkout_fields(),
@@ -77,6 +79,9 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 				),
 			)
 		);
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Pragma', 'no-cache' );
+		return $response;
 	}
 
 	/** Allow the app to submit custom plugin fields inside Store API extensions. */
@@ -150,6 +155,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 	/** Flatten billing, shipping and order groups while preserving priorities. */
 	private function normalize_fields( array $groups, string $default_country ): array {
 		$normalized = array();
+		$states     = $this->get_country_states( $default_country );
 		foreach ( array( 'billing', 'shipping', 'order' ) as $group ) {
 			$fields = isset( $groups[ $group ] ) && is_array( $groups[ $group ] )
 				? $groups[ $group ]
@@ -165,23 +171,21 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 					foreach ( $field['options'] as $option_key => $option_label ) {
 						$options[ (string) $option_key ] = wp_strip_all_tags( (string) $option_label );
 					}
-				} elseif ( ( 'state' === $type || str_ends_with( $key, '_state' ) ) && isset( WC()->countries ) ) {
-					$states = WC()->countries->get_states( $default_country );
-					if ( is_array( $states ) && ! empty( $states ) ) {
-						$options = $states;
-						$type    = 'select';
-					} else {
-						$type = 'text';
-					}
 				}
 
 				$default  = is_scalar( $field['default'] ?? '' ) ? (string) $field['default'] : '';
 				$required = ! empty( $field['required'] );
-				if ( in_array( $key, array( 'billing_country', 'shipping_country' ), true ) ) {
+				$is_country = 'country' === $type || str_ends_with( $key, '_country' );
+				$is_state   = 'state' === $type || str_ends_with( $key, '_state' );
+				if ( $is_country ) {
 					$type     = 'hidden';
 					$options  = array();
 					$default  = $default_country;
 					$required = false;
+				} elseif ( $is_state ) {
+					$options  = ! empty( $states ) ? $states : $options;
+					$type     = ! empty( $options ) ? 'select' : 'text';
+					$required = ! empty( $options ) ? true : $required;
 				}
 
 				$normalized[] = array(
@@ -237,6 +241,36 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 		$location = function_exists( 'wc_get_base_location' ) ? wc_get_base_location() : array();
 		$country  = isset( $location['country'] ) ? strtoupper( sanitize_key( (string) $location['country'] ) ) : '';
 		return preg_match( '/^[A-Z]{2}$/', $country ) ? $country : 'EG';
+	}
+
+	/** WooCommerce state codes and localized labels for the store country. */
+	private function get_country_states( string $country ): array {
+		$countries = null;
+		if ( function_exists( 'WC' ) && WC() ) {
+			$candidate = WC()->countries;
+			if ( $candidate instanceof WC_Countries ) {
+				$countries = $candidate;
+			}
+		}
+		if ( ! $countries instanceof WC_Countries && class_exists( 'WC_Countries' ) ) {
+			$countries = new WC_Countries();
+		}
+		if ( ! $countries instanceof WC_Countries ) {
+			return array();
+		}
+
+		$raw_states = $countries->get_states( $country );
+		if ( ! is_array( $raw_states ) ) {
+			return array();
+		}
+		$states = array();
+		foreach ( $raw_states as $code => $label ) {
+			$code = sanitize_text_field( (string) $code );
+			if ( '' !== $code ) {
+				$states[ $code ] = wp_strip_all_tags( (string) $label );
+			}
+		}
+		return $states;
 	}
 
 	/** Sanitize a custom value according to the filtered Woo field type. */

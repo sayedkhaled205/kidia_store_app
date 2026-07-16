@@ -62,6 +62,61 @@ void main() {
     expect(find.text('VAT number *'), findsOneWidget);
   });
 
+  testWidgets(
+    'hides Egypt country and renders governorate as a WooCommerce dropdown',
+    (WidgetTester tester) async {
+      _useTallSurface(tester);
+      await tester.pumpWidget(
+        _testApp(
+          CheckoutScreen(
+            repository: FakeCheckoutRepository(
+              state: CheckoutState(
+                cart: checkoutCart(),
+                fieldDefinitions: <CheckoutFieldDefinition>[
+                  CheckoutFieldDefinition(
+                    key: 'billing_country',
+                    group: CheckoutFieldGroup.billing,
+                    type: CheckoutFieldType.hidden,
+                    label: 'الدولة / المنطقة',
+                    defaultValue: 'EG',
+                  ),
+                  CheckoutFieldDefinition(
+                    key: 'billing_state',
+                    group: CheckoutFieldGroup.billing,
+                    type: CheckoutFieldType.select,
+                    label: 'المحافظة',
+                    required: true,
+                    options: const <String, String>{
+                      'EGC': 'القاهرة',
+                      'EGGZ': 'الجيزة',
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('checkout-dynamic-billing_country')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('checkout-dynamic-billing_state')),
+        findsOneWidget,
+      );
+      expect(find.text('المحافظة *'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('checkout-dynamic-billing_state')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('الجيزة').last);
+      await tester.pumpAndSettle();
+      expect(find.text('الجيزة'), findsOneWidget);
+    },
+  );
+
   testWidgets('validates payment selection using Store API method ids', (
     WidgetTester tester,
   ) async {

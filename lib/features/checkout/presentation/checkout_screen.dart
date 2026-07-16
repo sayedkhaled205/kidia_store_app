@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
 import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
+import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
@@ -519,10 +520,11 @@ class _AddressFields extends StatelessWidget {
             onChanged: (String value) =>
                 onChanged(address.copyWith(city: value)),
           ),
-          _field(
+          _stateField(
             name: 'state',
-            label: copy.stateOptional,
+            label: copy.state,
             value: address.state,
+            country: address.country,
             onChanged: (String value) =>
                 onChanged(address.copyWith(state: value)),
           ),
@@ -595,6 +597,44 @@ class _AddressFields extends StatelessWidget {
       onChanged: onChanged,
       validator: (_) => _localizedError(copy, fieldKey, errorFor(fieldKey)),
       decoration: InputDecoration(labelText: label),
+    );
+  }
+
+  Widget _stateField({
+    required String name,
+    required String label,
+    required String value,
+    required String country,
+    required ValueChanged<String> onChanged,
+  }) {
+    final String fieldKey = '$keyPrefix.$name';
+    final Map<String, String> states = CheckoutCountryData.statesFor(country);
+    if (states.isEmpty) {
+      return _field(
+        name: name,
+        label: label,
+        value: value,
+        onChanged: onChanged,
+      );
+    }
+    return DropdownButtonFormField<String>(
+      key: Key('checkout-$keyPrefix-$name'),
+      initialValue: states.containsKey(value) ? value : null,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        errorText: _localizedError(copy, fieldKey, errorFor(fieldKey)),
+      ),
+      hint: Text(copy.chooseGovernorate),
+      items: states.entries
+          .map(
+            (MapEntry<String, String> state) => DropdownMenuItem<String>(
+              value: state.key,
+              child: Text(state.value, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(growable: false),
+      onChanged: enabled ? (String? next) => onChanged(next ?? '') : null,
     );
   }
 }
@@ -1071,6 +1111,9 @@ String? _localizedError(_CheckoutCopy copy, String field, String? rawError) {
   if (field.endsWith('city')) {
     return copy.cityRequired;
   }
+  if (field.endsWith('state')) {
+    return copy.stateRequired;
+  }
   if (field.endsWith('country')) {
     return rawError.contains('two-letter')
         ? copy.countryInvalid
@@ -1150,8 +1193,8 @@ class _CheckoutCopy {
       ? 'تفاصيل إضافية للعنوان (اختياري)'
       : 'Apartment, suite, etc. (optional)';
   String get city => arabic ? 'المدينة' : 'City';
-  String get stateOptional =>
-      arabic ? 'المحافظة (اختياري)' : 'State (optional)';
+  String get state => arabic ? 'المحافظة *' : 'State *';
+  String get chooseGovernorate => arabic ? 'اختر المحافظة' : 'Choose a state';
   String get postcodeOptional =>
       arabic ? 'الرمز البريدي (اختياري)' : 'Postcode (optional)';
   String get countryCode =>
@@ -1193,6 +1236,7 @@ class _CheckoutCopy {
   String get addressRequired =>
       arabic ? 'عنوان الشارع مطلوب.' : 'Street address is required.';
   String get cityRequired => arabic ? 'المدينة مطلوبة.' : 'City is required.';
+  String get stateRequired => arabic ? 'اختر المحافظة.' : 'Choose a state.';
   String get countryRequired =>
       arabic ? 'كود الدولة مطلوب.' : 'Country code is required.';
   String get countryInvalid =>
