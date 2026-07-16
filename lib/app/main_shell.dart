@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
 import '../core/theme/kidia_typography.dart';
-import '../features/cart/presentation/providers/cart_state_providers.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -23,15 +22,9 @@ class MainShell extends ConsumerWidget {
       selectedIcon: Icons.grid_view_rounded,
     ),
     _NavigationItem(
-      label: 'البحث',
-      icon: Icons.search_outlined,
-      selectedIcon: Icons.search_rounded,
-    ),
-    _NavigationItem(
-      label: 'السلة',
-      icon: Icons.shopping_cart_outlined,
-      selectedIcon: Icons.shopping_cart_rounded,
-      showBadge: true,
+      label: 'المفضلة',
+      icon: Icons.favorite_border_rounded,
+      selectedIcon: Icons.favorite_rounded,
     ),
     _NavigationItem(
       label: 'حسابي',
@@ -42,7 +35,6 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final int cartCount = ref.watch(cartBadgeCountProvider);
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: SafeArea(
@@ -64,13 +56,11 @@ class MainShell extends ConsumerWidget {
               return NavigationDestination(
                 icon: _NavigationIcon(
                   icon: item.icon,
-                  showBadge: item.showBadge,
-                  badgeCount: cartCount,
+                  showBadge: false,
                 ),
                 selectedIcon: _NavigationIcon(
                   icon: item.selectedIcon,
-                  showBadge: item.showBadge,
-                  badgeCount: cartCount,
+                  showBadge: false,
                   selected: true,
                 ),
                 label: item.label,
@@ -85,7 +75,8 @@ class MainShell extends ConsumerWidget {
   void _openBranch(int index) {
     navigationShell.goBranch(
       index,
-      initialLocation: index == 1 || index == navigationShell.currentIndex,
+      initialLocation:
+          index == 1 || index == navigationShell.currentIndex,
     );
   }
 }
