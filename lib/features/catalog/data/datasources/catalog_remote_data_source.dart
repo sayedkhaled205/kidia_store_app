@@ -35,6 +35,7 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
       '/wp-json/wc/store/v1/products/categories';
   static const String _collectionDataPath =
       '/wp-json/wc/store/v1/products/collection-data';
+  static const String _variationBridgePath = '/wp-json/woo-mobile/v1/products';
 
   final StoreApiClient _client;
 
@@ -76,6 +77,37 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
 
   @override
   Future<List<CatalogVariationModel>> fetchVariations(int productId) async {
+    if (productId <= 0) {
+      throw const FormatException('A product id must be positive.');
+    }
+
+    try {
+      final StoreApiResponse bridgeResponse = await _client.get(
+        '$_variationBridgePath/$productId/variations',
+      );
+      if (bridgeResponse.data is! List) {
+        throw const FormatException(
+          'The variation bridge response must be an array.',
+        );
+      }
+      final List<CatalogVariationModel> bridged = <CatalogVariationModel>[];
+      for (final dynamic rawVariation in bridgeResponse.data as List<dynamic>) {
+        final Map<String, dynamic>? variation = CatalogJson.object(
+          rawVariation,
+        );
+        if (variation != null) {
+          bridged.add(CatalogVariationModel.fromJson(variation));
+        }
+      }
+      if (bridged.isNotEmpty) {
+        return List<CatalogVariationModel>.unmodifiable(bridged);
+      }
+    } catch (_) {
+      // Older plugin versions do not expose the exact variation matrix. Keep
+      // the Store API fallback so catalog browsing remains backwards
+      // compatible while the new bridge supplies authoritative stock data.
+    }
+
     final CatalogProductModel parent = await fetchProduct(productId);
     if (parent.variations.isEmpty) {
       return const <CatalogVariationModel>[];
