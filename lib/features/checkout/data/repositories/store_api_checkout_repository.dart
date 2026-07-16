@@ -475,17 +475,17 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       'last_name': address.lastName,
       // Some WooCommerce versions incorrectly retain old Customizer flags
       // that make hidden company/address-line-2 fields required by Store API.
-      // A neutral marker satisfies that API-only contract without adding
-      // fields the merchant deliberately removed from classic checkout.
-      'company': _optionalAddressValue(address.company),
+      // A valid text fallback satisfies that API-only contract without adding
+      // customer-facing fields the merchant removed from classic checkout.
+      'company': _hiddenTextAddressValue(address.company),
       'address_1': address.address1,
-      'address_2': _optionalAddressValue(address.address2),
+      'address_2': _hiddenTextAddressValue(address.address2),
       'city': address.city,
       'state': address.state,
       // WooCommerce may retain postcode as required in Store API even when
-      // the merchant removes it from checkout. The neutral fallback keeps
+      // the merchant removes it from checkout. A valid numeric fallback keeps
       // order submission compatible without exposing a customer-facing field.
-      'postcode': _optionalAddressValue(address.postcode),
+      'postcode': _hiddenPostcodeValue(address.postcode),
       'country': address.country,
       'phone': address.phone,
     };
@@ -515,8 +515,11 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
     return _addressJson(address.copyWith(phone: phone));
   }
 
-  String _optionalAddressValue(String value) =>
-      value.trim().isEmpty ? '-' : value.trim();
+  String _hiddenTextAddressValue(String value) =>
+      value.trim().isEmpty ? 'N/A' : value.trim();
+
+  String _hiddenPostcodeValue(String value) =>
+      value.trim().isEmpty ? '00000' : value.trim();
 
   String _guestEmailForPhone(String phone) {
     final StringBuffer digits = StringBuffer();
