@@ -12,6 +12,7 @@ class SearchScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
     return CatalogProductListScreen(
+      showSearchField: true,
       request: CatalogProductListRequest(
         title: copy.search,
         search: initialQuery,
