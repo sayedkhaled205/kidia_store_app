@@ -295,11 +295,16 @@ class CheckoutController extends ChangeNotifier {
       return null;
     }
     _customerUpdateDebounce?.cancel();
-    await _syncCustomerNow();
-    if (_status != CheckoutStatus.ready || _addressUpdateError != null) {
+    // Validate the complete local contract before asking WooCommerce to
+    // recalculate shipping. Sending a partially entered address makes Store
+    // API reveal one required field at a time as a global error.
+    if (!validate()) {
       return null;
     }
-    if (!validate()) {
+    await _syncCustomerNow();
+    if (_status != CheckoutStatus.ready ||
+        _addressUpdateError != null ||
+        _fieldErrors.isNotEmpty) {
       return null;
     }
     return _performSubmit();
@@ -342,9 +347,14 @@ class CheckoutController extends ChangeNotifier {
       if (error.authoritativeCart != null) {
         _applyAuthoritativeCart(error.authoritativeCart!);
       }
-      _submitError = error.message.trim().isEmpty
-          ? 'Unable to place this order.'
-          : error.message.trim();
+      final bool hasFieldErrors = _applyRepositoryFieldErrors(
+        error.fieldErrors,
+      );
+      _submitError = hasFieldErrors
+          ? null
+          : (error.message.trim().isEmpty
+                ? 'Unable to place this order.'
+                : error.message.trim());
       _status = CheckoutStatus.ready;
       _notify();
       return null;
@@ -386,6 +396,14 @@ class CheckoutController extends ChangeNotifier {
       return;
     }
 
+    if (!_hasCompleteAddressForCustomerUpdate()) {
+      // The next form edit marks the address dirty again. Avoid retaining a
+      // queued partial update that would only produce another server error.
+      _customerUpdateDirty = false;
+      _addressUpdateError = null;
+      return;
+    }
+
     _customerUpdateDirty = false;
     final int serial = ++_customerUpdateSerial;
     final Future<void> operation = _performCustomerUpdate(serial);
@@ -422,9 +440,14 @@ class CheckoutController extends ChangeNotifier {
       if (error.authoritativeCart != null) {
         _applyAuthoritativeCart(error.authoritativeCart!);
       }
-      _addressUpdateError = error.message.trim().isEmpty
-          ? 'Unable to calculate shipping for this address.'
-          : error.message.trim();
+      final bool hasFieldErrors = _applyRepositoryFieldErrors(
+        error.fieldErrors,
+      );
+      _addressUpdateError = hasFieldErrors
+          ? null
+          : (error.message.trim().isEmpty
+                ? 'Unable to calculate shipping for this address.'
+                : error.message.trim());
     } catch (_) {
       if (_isDisposed || serial != _customerUpdateSerial) {
         return;
@@ -442,7 +465,34 @@ class CheckoutController extends ChangeNotifier {
     if (!needsShipping || !_shipToDifferentAddress) {
       return _billingAddress;
     }
-    return _shippingAddress;
+    return _shippingAddress.phone.trim().isEmpty
+        ? _shippingAddress.copyWith(phone: _billingAddress.phone)
+        : _shippingAddress;
+  }
+
+  bool _hasCompleteAddressForCustomerUpdate() {
+    final Map<String, String> errors = <String, String>{};
+    if (hasDynamicFields) {
+      _validateDynamicFields(errors, addressOnly: true);
+    } else {
+      _validateAddress(
+        _billingAddress,
+        prefix: 'billing',
+        requiresEmail: false,
+        requiresPhone: true,
+        errors: errors,
+      );
+      if (needsShipping && _shipToDifferentAddress) {
+        _validateAddress(
+          _effectiveShippingAddress(),
+          prefix: 'shipping',
+          requiresEmail: false,
+          requiresPhone: true,
+          errors: errors,
+        );
+      }
+    }
+    return errors.isEmpty;
   }
 
   void _applyAuthoritativeCart(Cart authoritativeCart) {
@@ -523,36 +573,70 @@ class CheckoutController extends ChangeNotifier {
     }
   }
 
-  void _validateDynamicFields(Map<String, String> errors) {
+  void _validateDynamicFields(
+    Map<String, String> errors, {
+    bool addressOnly = false,
+  }) {
     final List<CheckoutFieldDefinition> definitions =
         _checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[];
     for (final CheckoutFieldDefinition field in definitions) {
       if (!field.isVisible ||
-          (field.group == CheckoutFieldGroup.shipping &&
-              (!needsShipping || !_shipToDifferentAddress))) {
+          (addressOnly && !_isCoreAddressField(field.key)) ||
+          (field.group == CheckoutFieldGroup.shipping && !needsShipping) ||
+          (addressOnly && field.group == CheckoutFieldGroup.order)) {
         continue;
       }
-      final String value = valueForField(field).trim();
+
+      String errorKey = field.key;
+      String value = valueForField(field).trim();
+      if (field.group == CheckoutFieldGroup.shipping &&
+          !_shipToDifferentAddress) {
+        final String? billingKey = _billingKeyForShippingField(field.key);
+        if (billingKey == null) {
+          // Classic checkout does not require shipping-only custom fields
+          // when one address is used for billing and shipping.
+          continue;
+        }
+        errorKey = billingKey;
+        value = _valueForKey(
+          billingKey,
+          fallback: field.defaultValue,
+        ).trim();
+      }
       if (field.required &&
           (value.isEmpty ||
               (field.type == CheckoutFieldType.checkbox && value != '1'))) {
-        errors[field.key] = '${field.label} is required.';
+        errors.putIfAbsent(errorKey, () => '${field.label} is required.');
         continue;
       }
       if (value.isNotEmpty &&
           field.type == CheckoutFieldType.email &&
           !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) {
-        errors[field.key] = 'Enter a valid email address.';
+        errors.putIfAbsent(errorKey, () => 'Enter a valid email address.');
         continue;
       }
       if (value.isNotEmpty &&
           field.type == CheckoutFieldType.select &&
           field.options.isNotEmpty &&
           !field.options.containsKey(value)) {
-        errors[field.key] = 'Choose a valid option.';
+        errors.putIfAbsent(errorKey, () => 'Choose a valid option.');
       }
     }
   }
+
+  String? _billingKeyForShippingField(String key) {
+    if (!key.startsWith('shipping_')) {
+      return null;
+    }
+    final String billingKey = 'billing_${key.substring('shipping_'.length)}';
+    return _isCoreAddressField(billingKey) ? billingKey : null;
+  }
+
+  static bool _isCoreAddressField(String key) =>
+      (key.startsWith('billing_') || key.startsWith('shipping_')) &&
+      _isCoreCheckoutField(key) &&
+      key != 'billing_email' &&
+      key != 'shipping_email';
 
   String _valueForKey(String key, {String fallback = ''}) {
     return switch (key) {
@@ -611,6 +695,74 @@ class CheckoutController extends ChangeNotifier {
     }.contains(key);
   }
 
+  bool _applyRepositoryFieldErrors(Map<String, String> serverErrors) {
+    if (serverErrors.isEmpty) {
+      return false;
+    }
+    final Set<String> visibleDynamicKeys = <String>{
+      for (final CheckoutFieldDefinition field
+          in _checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[])
+        if (field.isVisible) field.key,
+    };
+    final Map<String, String> mapped = <String, String>{};
+    for (final MapEntry<String, String> entry in serverErrors.entries) {
+      String? key;
+      if (hasDynamicFields) {
+        if (!_shipToDifferentAddress && entry.key.startsWith('shipping_')) {
+          final String? billingKey = _billingKeyForShippingField(entry.key);
+          if (billingKey != null && visibleDynamicKeys.contains(billingKey)) {
+            key = billingKey;
+          }
+        } else if (visibleDynamicKeys.contains(entry.key)) {
+          key = entry.key;
+        }
+      } else {
+        final String effectiveKey = !_shipToDifferentAddress &&
+                entry.key.startsWith('shipping_')
+            ? 'billing_${entry.key.substring('shipping_'.length)}'
+            : entry.key;
+        key = _builtInFieldKey(effectiveKey);
+      }
+      if (key != null) {
+        mapped.putIfAbsent(key, () => entry.value);
+      }
+    }
+    if (mapped.isEmpty) {
+      return false;
+    }
+    _fieldErrors = Map<String, String>.unmodifiable(<String, String>{
+      ..._fieldErrors,
+      ...mapped,
+    });
+    return true;
+  }
+
+  String? _builtInFieldKey(String key) {
+    return switch (key) {
+      'billing_first_name' => 'billing.firstName',
+      'billing_last_name' => 'billing.lastName',
+      'billing_company' => 'billing.company',
+      'billing_address_1' => 'billing.address1',
+      'billing_address_2' => 'billing.address2',
+      'billing_city' => 'billing.city',
+      'billing_state' => 'billing.state',
+      'billing_postcode' => 'billing.postcode',
+      'billing_country' => 'billing.country',
+      'billing_phone' => 'billing.phone',
+      'shipping_first_name' => 'shipping.firstName',
+      'shipping_last_name' => 'shipping.lastName',
+      'shipping_company' => 'shipping.company',
+      'shipping_address_1' => 'shipping.address1',
+      'shipping_address_2' => 'shipping.address2',
+      'shipping_city' => 'shipping.city',
+      'shipping_state' => 'shipping.state',
+      'shipping_postcode' => 'shipping.postcode',
+      'shipping_country' => 'shipping.country',
+      'shipping_phone' => 'shipping.phone',
+      _ => null,
+    };
+  }
+
   void _onFormChanged(String fieldPrefix) {
     _pendingIdempotencyKey = null;
     _submitError = null;
@@ -647,9 +799,13 @@ class CheckoutController extends ChangeNotifier {
   bool _hasAddress(CheckoutAddress address) {
     return address.firstName.trim().isNotEmpty ||
         address.lastName.trim().isNotEmpty ||
+        address.company.trim().isNotEmpty ||
         address.address1.trim().isNotEmpty ||
+        address.address2.trim().isNotEmpty ||
         address.city.trim().isNotEmpty ||
-        address.country.trim().isNotEmpty;
+        address.state.trim().isNotEmpty ||
+        address.postcode.trim().isNotEmpty ||
+        address.phone.trim().isNotEmpty;
   }
 
   bool _sameAddress(CheckoutAddress left, CheckoutAddress right) {

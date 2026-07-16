@@ -157,7 +157,67 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       normalized.add(field);
     }
 
+    // A legacy checkout configuration can expose a required shipping field
+    // without its billing counterpart. When the customer uses one address,
+    // the app sends billing values as the shipping address, so that missing
+    // counterpart would otherwise be impossible to enter. Mirror every
+    // required standard shipping field into billing while keeping custom
+    // plugin fields in their original group.
+    final List<CheckoutFieldDefinition> shippingFields =
+        List<CheckoutFieldDefinition>.of(normalized);
+    for (final CheckoutFieldDefinition field in shippingFields) {
+      final String? billingKey = _billingCounterpartFor(field);
+      if (billingKey == null || !seenKeys.add(billingKey)) {
+        continue;
+      }
+      normalized.add(
+        CheckoutFieldDefinition(
+          key: billingKey,
+          group: CheckoutFieldGroup.billing,
+          type: field.type,
+          label: field.label,
+          placeholder: field.placeholder,
+          required: true,
+          priority: field.priority,
+          options: field.options,
+          defaultValue: field.defaultValue,
+          autocomplete: field.autocomplete
+              .replaceAll('section-shipping', 'section-billing')
+              .replaceAll('shipping ', 'billing '),
+        ),
+      );
+    }
+    normalized.sort(
+      (CheckoutFieldDefinition first, CheckoutFieldDefinition second) =>
+          first.priority.compareTo(second.priority),
+    );
+
     return List<CheckoutFieldDefinition>.unmodifiable(normalized);
+  }
+
+  String? _billingCounterpartFor(CheckoutFieldDefinition field) {
+    if (field.group != CheckoutFieldGroup.shipping ||
+        !field.required ||
+        !field.isVisible ||
+        !field.key.startsWith('shipping_')) {
+      return null;
+    }
+    final String suffix = field.key.substring('shipping_'.length);
+    if (!<String>{
+      'first_name',
+      'last_name',
+      'company',
+      'address_1',
+      'address_2',
+      'city',
+      'state',
+      'postcode',
+      'country',
+      'phone',
+    }.contains(suffix)) {
+      return null;
+    }
+    return 'billing_$suffix';
   }
 
   Map<String, String> _stringMap(dynamic raw) {
@@ -203,7 +263,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         cartToken: token,
         body: <String, dynamic>{
           'billing_address': _billingAddressJson(billingAddress),
-          'shipping_address': _addressJson(shippingAddress),
+          'shipping_address': _shippingAddressJson(
+            shippingAddress,
+            billingAddress: billingAddress,
+          ),
         },
       );
       return CartModel.fromJson(
@@ -321,7 +384,10 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
     final String paymentMethod = submission.paymentMethodId.trim();
     return <String, dynamic>{
       'billing_address': _billingAddressJson(submission.billingAddress),
-      'shipping_address': _addressJson(submission.shippingAddress),
+      'shipping_address': _shippingAddressJson(
+        submission.shippingAddress,
+        billingAddress: submission.billingAddress,
+      ),
       'customer_note': submission.customerNote.trim(),
       // The app uses WooCommerce guest checkout. Stores that require an
       // account will return their authoritative registration error instead
@@ -349,16 +415,15 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
 
   void _validateSubmission(CheckoutSubmission submission) {
     final CheckoutAddress billing = submission.billingAddress.trimmed();
-    final Map<String, String> states = CheckoutCountryData.statesFor(
-      billing.country,
-    );
-    if (billing.firstName.isEmpty ||
-        billing.lastName.isEmpty ||
-        billing.address1.isEmpty ||
-        billing.city.isEmpty ||
-        billing.phone.isEmpty ||
-        (states.isNotEmpty && !states.containsKey(billing.state)) ||
-        !RegExp(r'^[A-Z]{2}$').hasMatch(billing.country) ||
+    final CheckoutAddress shipping = submission.shippingAddress
+        .trimmed()
+        .copyWith(
+          phone: submission.shippingAddress.phone.trim().isEmpty
+              ? billing.phone
+              : submission.shippingAddress.phone.trim(),
+        );
+    if (!_isValidStandardAddress(billing, requiresPhone: true) ||
+        !_isValidStandardAddress(shipping, requiresPhone: true) ||
         (billing.email.isNotEmpty &&
             !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(billing.email)) ||
         submission.customerNote.trim().length > 1000) {
@@ -369,36 +434,68 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
     }
   }
 
+  bool _isValidStandardAddress(
+    CheckoutAddress address, {
+    required bool requiresPhone,
+  }) {
+    final Map<String, String> states = CheckoutCountryData.statesFor(
+      address.country,
+    );
+    return address.firstName.isNotEmpty &&
+        address.lastName.isNotEmpty &&
+        address.address1.isNotEmpty &&
+        address.city.isNotEmpty &&
+        (!requiresPhone || address.phone.isNotEmpty) &&
+        (states.isEmpty || states.containsKey(address.state)) &&
+        RegExp(r'^[A-Z]{2}$').hasMatch(address.country);
+  }
+
   Map<String, String> _addressJson(CheckoutAddress source) {
     final CheckoutAddress address = source.trimmed();
     return <String, String>{
       'first_name': address.firstName,
       'last_name': address.lastName,
-      'company': address.company,
+      // Some WooCommerce versions incorrectly retain old Customizer flags
+      // that make hidden company/address-line-2 fields required by Store API.
+      // A neutral marker satisfies that API-only contract without adding
+      // fields the merchant deliberately removed from classic checkout.
+      'company': _optionalAddressValue(address.company),
       'address_1': address.address1,
-      'address_2': address.address2,
+      'address_2': _optionalAddressValue(address.address2),
       'city': address.city,
       'state': address.state,
       'postcode': address.postcode,
       'country': address.country,
-      'email': address.email,
       'phone': address.phone,
     };
   }
 
   Map<String, String> _billingAddressJson(CheckoutAddress source) {
     final CheckoutAddress address = source.trimmed();
-    return _addressJson(
-      address.copyWith(
-        // Woo's Store API requires a billing email even when the classic
-        // checkout hides it. The reserved .invalid domain keeps guest orders
-        // non-deliverable without asking the customer for an email address.
-        email: address.email.isEmpty
-            ? _guestEmailForPhone(address.phone)
-            : address.email,
-      ),
-    );
+    return <String, String>{
+      ..._addressJson(address),
+      // Woo's Store API requires a billing email even when the classic
+      // checkout hides it. The reserved .invalid domain keeps guest orders
+      // non-deliverable without asking the customer for an email address.
+      'email': address.email.isEmpty
+          ? _guestEmailForPhone(address.phone)
+          : address.email,
+    };
   }
+
+  Map<String, String> _shippingAddressJson(
+    CheckoutAddress source, {
+    required CheckoutAddress billingAddress,
+  }) {
+    final CheckoutAddress address = source.trimmed();
+    final String phone = address.phone.isEmpty
+        ? billingAddress.phone.trim()
+        : address.phone;
+    return _addressJson(address.copyWith(phone: phone));
+  }
+
+  String _optionalAddressValue(String value) =>
+      value.trim().isEmpty ? '-' : value.trim();
 
   String _guestEmailForPhone(String phone) {
     final StringBuffer digits = StringBuffer();
@@ -469,9 +566,76 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
           : error.message,
       statusCode: error.statusCode,
       apiError: apiError?.toEntity(),
+      fieldErrors: _checkoutFieldErrors(json),
       authoritativeCart: authoritativeCart,
       cause: error,
     );
+  }
+
+  Map<String, String> _checkoutFieldErrors(Map<String, dynamic>? json) {
+    final Map<String, dynamic>? data = _objectOrNull(json?['data']);
+    final Map<String, dynamic>? details = _objectOrNull(data?['details']);
+    if (details == null) {
+      return const <String, String>{};
+    }
+
+    final Map<String, String> errors = <String, String>{};
+    for (final MapEntry<String, dynamic> context in details.entries) {
+      final String? prefix = switch (context.key) {
+        'billing_address' => 'billing',
+        'shipping_address' => 'shipping',
+        _ => null,
+      };
+      _collectCheckoutFieldErrors(context.value, prefix: prefix, into: errors);
+    }
+    return Map<String, String>.unmodifiable(errors);
+  }
+
+  void _collectCheckoutFieldErrors(
+    dynamic raw, {
+    required String? prefix,
+    required Map<String, String> into,
+  }) {
+    if (raw is List) {
+      for (final dynamic item in raw) {
+        _collectCheckoutFieldErrors(item, prefix: prefix, into: into);
+      }
+      return;
+    }
+    final Map<String, dynamic>? error = _objectOrNull(raw);
+    if (error == null) {
+      return;
+    }
+    final Map<String, dynamic>? errorData = _objectOrNull(error['data']);
+    final String rawKey = errorData?['key']?.toString().trim() ?? '';
+    if (rawKey.isNotEmpty) {
+      final String fieldKey = _canonicalCheckoutFieldKey(rawKey, prefix);
+      final String message = error['message']?.toString().trim() ?? '';
+      into.putIfAbsent(
+        fieldKey,
+        () => message.isEmpty ? 'This field is required.' : message,
+      );
+    }
+    _collectCheckoutFieldErrors(
+      error['additional_errors'],
+      prefix: prefix,
+      into: into,
+    );
+    _collectCheckoutFieldErrors(
+      errorData?['additional_errors'],
+      prefix: prefix,
+      into: into,
+    );
+  }
+
+  String _canonicalCheckoutFieldKey(String key, String? prefix) {
+    if (key.startsWith('billing_') || key.startsWith('shipping_')) {
+      return key;
+    }
+    if (prefix != null && RegExp(r'^[a-z0-9_]+$').hasMatch(key)) {
+      return '${prefix}_$key';
+    }
+    return key;
   }
 
   Map<String, dynamic>? _objectOrNull(dynamic value) {

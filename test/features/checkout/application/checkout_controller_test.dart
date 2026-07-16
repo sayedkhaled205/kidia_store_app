@@ -30,6 +30,31 @@ void main() {
     });
 
     test(
+      'does not treat a default country as a separate shipping address',
+      () async {
+        final Map<String, dynamic> cartJson = checkoutCartJson();
+        final Map<String, dynamic> shipping =
+            cartJson['shipping_address'] as Map<String, dynamic>;
+        for (final String key in shipping.keys.toList()) {
+          shipping[key] = '';
+        }
+        final CheckoutController controller = CheckoutController(
+          repository: FakeCheckoutRepository(
+            state: CheckoutState(
+              cart: CartModel.fromJson(cartJson).toEntity(),
+            ),
+          ),
+        );
+        addTearDown(controller.dispose);
+
+        await controller.load();
+
+        expect(controller.shippingAddress.country, 'GB');
+        expect(controller.shipToDifferentAddress, isFalse);
+      },
+    );
+
+    test(
       'defaults hidden country and updates WooCommerce before checkout',
       () async {
         final Map<String, dynamic> cartJson = checkoutCartJson();
@@ -210,6 +235,174 @@ void main() {
         expect(controller.errorFor('customerNote'), isNotNull);
       },
     );
+
+    test(
+      'reports every incomplete dynamic address field before network sync',
+      () async {
+        final Map<String, dynamic> cartJson = checkoutCartJson();
+        for (final String group in <String>[
+          'billing_address',
+          'shipping_address',
+        ]) {
+          final Map<String, dynamic> address =
+              cartJson[group] as Map<String, dynamic>;
+          for (final String key in address.keys.toList()) {
+            address[key] = '';
+          }
+        }
+        final FakeCheckoutRepository repository = FakeCheckoutRepository(
+          state: CheckoutState(
+            cart: CartModel.fromJson(cartJson).toEntity(),
+            fieldDefinitions: <CheckoutFieldDefinition>[
+              CheckoutFieldDefinition(
+                key: 'billing_first_name',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.text,
+                label: 'First name',
+                required: true,
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_last_name',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.text,
+                label: 'Last name',
+                required: true,
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_address_1',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.text,
+                label: 'Address',
+                required: true,
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_city',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.text,
+                label: 'City',
+                required: true,
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_state',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.select,
+                label: 'Governorate',
+                required: true,
+                options: const <String, String>{'EGC': 'Cairo'},
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_country',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.hidden,
+                label: 'Country',
+                defaultValue: 'EG',
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_postcode',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.text,
+                label: 'Postcode',
+                required: true,
+              ),
+              CheckoutFieldDefinition(
+                key: 'billing_phone',
+                group: CheckoutFieldGroup.billing,
+                type: CheckoutFieldType.telephone,
+                label: 'Phone',
+                required: true,
+              ),
+            ],
+          ),
+        );
+        final CheckoutController controller = CheckoutController(
+          repository: repository,
+        );
+        addTearDown(controller.dispose);
+        await controller.load();
+
+        controller.setFieldValue('billing_first_name', '');
+        expect(await controller.submit(), isNull);
+
+        expect(repository.updateCustomerCalls, 0);
+        expect(repository.submitCalls, 0);
+        expect(
+          controller.fieldErrors.keys,
+          containsAll(<String>[
+            'billing_first_name',
+            'billing_last_name',
+            'billing_address_1',
+            'billing_city',
+            'billing_state',
+            'billing_postcode',
+            'billing_phone',
+          ]),
+        );
+        expect(controller.addressUpdateError, isNull);
+      },
+    );
+
+    test('maps all Store API address errors back to visible fields', () async {
+      final FakeCheckoutRepository repository = FakeCheckoutRepository(
+        state: CheckoutState(
+          cart: checkoutCart(),
+          fieldDefinitions: <CheckoutFieldDefinition>[
+            CheckoutFieldDefinition(
+              key: 'billing_phone',
+              group: CheckoutFieldGroup.billing,
+              type: CheckoutFieldType.telephone,
+              label: 'Phone',
+              required: true,
+            ),
+            CheckoutFieldDefinition(
+              key: 'billing_postcode',
+              group: CheckoutFieldGroup.billing,
+              type: CheckoutFieldType.text,
+              label: 'Postcode',
+              required: true,
+            ),
+            CheckoutFieldDefinition(
+              key: 'shipping_phone',
+              group: CheckoutFieldGroup.shipping,
+              type: CheckoutFieldType.telephone,
+              label: 'Shipping phone',
+              required: true,
+            ),
+            CheckoutFieldDefinition(
+              key: 'shipping_postcode',
+              group: CheckoutFieldGroup.shipping,
+              type: CheckoutFieldType.text,
+              label: 'Shipping postcode',
+              required: true,
+            ),
+          ],
+        ),
+        onUpdateCustomer:
+            (CheckoutAddress billing, CheckoutAddress shipping) async {
+              throw const CheckoutRepositoryException(
+                kind: CheckoutFailureKind.invalidInput,
+                message: 'Invalid shipping address.',
+                fieldErrors: <String, String>{
+                  'shipping_phone': 'Phone is required.',
+                  'shipping_postcode': 'Postcode is required.',
+                },
+              );
+            },
+      );
+      final CheckoutController controller = CheckoutController(
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+
+      controller.setFieldValue('billing_phone', '12345');
+      expect(await controller.submit(), isNull);
+
+      expect(repository.updateCustomerCalls, 1);
+      expect(repository.submitCalls, 0);
+      expect(controller.errorFor('billing_phone'), 'Phone is required.');
+      expect(controller.errorFor('billing_postcode'), 'Postcode is required.');
+      expect(controller.addressUpdateError, isNull);
+    });
 
     test('coalesces a double submit into one order request', () async {
       final Completer<CheckoutOrderResult> order =

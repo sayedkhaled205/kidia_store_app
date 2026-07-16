@@ -34,6 +34,7 @@ class CheckoutRepositoryException implements Exception {
     required this.message,
     this.statusCode,
     this.apiError,
+    this.fieldErrors = const <String, String>{},
     this.authoritativeCart,
     this.cause,
   });
@@ -42,6 +43,13 @@ class CheckoutRepositoryException implements Exception {
   final String message;
   final int? statusCode;
   final CartError? apiError;
+
+  /// WooCommerce validation errors keyed by canonical checkout field names.
+  ///
+  /// Core address keys use the classic WooCommerce form (for example,
+  /// `billing_first_name` and `shipping_postcode`) so presentation layers can
+  /// map the same server response to either dynamic or built-in checkout UI.
+  final Map<String, String> fieldErrors;
 
   /// WooCommerce can return the authoritative cart with a 409 response.
   final Cart? authoritativeCart;
