@@ -293,21 +293,21 @@ void main() {
       );
       expect(
         (body['billing_address'] as Map<String, String>)['company'],
-        '-',
+        'N/A',
       );
       expect(
         (body['billing_address'] as Map<String, String>)['address_2'],
-        '-',
+        'N/A',
       );
       expect(
         (body['billing_address'] as Map<String, String>)['postcode'],
-        '-',
+        '00000',
       );
       final Map<String, String> shipping =
           body['shipping_address'] as Map<String, String>;
-      expect(shipping['company'], '-');
-      expect(shipping['address_2'], '-');
-      expect(shipping['postcode'], '-');
+      expect(shipping['company'], 'N/A');
+      expect(shipping['address_2'], 'N/A');
+      expect(shipping['postcode'], '00000');
       expect(shipping['phone'], '01000000000');
       expect(shipping, isNot(contains('email')));
     },
