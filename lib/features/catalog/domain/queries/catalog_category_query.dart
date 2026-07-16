@@ -33,7 +33,11 @@ class CatalogCategoryQuery {
       case CatalogCategorySort.count:
         orderBy = 'count';
       case CatalogCategorySort.menuOrder:
-        orderBy = 'menu_order';
+        // WooCommerce Store API category endpoints do not consistently
+        // support `menu_order` (older/current stores return rest_invalid_param).
+        // `name` is supported across Store API versions and keeps the generic
+        // mobile client compatible with any connected WooCommerce store.
+        orderBy = 'name';
       case CatalogCategorySort.id:
         orderBy = 'id';
       case CatalogCategorySort.include:
