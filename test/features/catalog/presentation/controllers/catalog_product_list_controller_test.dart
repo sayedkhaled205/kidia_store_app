@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
@@ -104,6 +105,42 @@ void main() {
       expect(query.maximumPriceMinor, '9000');
       controller.dispose();
     });
+
+    test(
+      'discovers sizes and sends the selected size to WooCommerce',
+      () async {
+        final _FakeCatalogRepository repository = _FakeCatalogRepository(
+          products: (CatalogProductQuery query) async => _page(
+            query,
+            items: <CatalogProduct>[_product(1, withSizes: true)],
+            totalItems: 1,
+            totalPages: 1,
+          ),
+        );
+        final CatalogProductListController controller =
+            CatalogProductListController(
+              repository,
+              request: const CatalogProductListRequest(),
+            );
+
+        await controller.loadInitial();
+        expect(
+          controller.state.availableSizes.map(
+            (CatalogSizeOption item) => item.label,
+          ),
+          <String>['Medium', 'Small'],
+        );
+
+        await controller.applySize(controller.state.availableSizes.last);
+
+        final CatalogAttributeFilter selected =
+            repository.productQueries.last.attributes.single;
+        expect(selected.taxonomy, 'pa_size');
+        expect(selected.terms, <String>['s']);
+        expect(controller.state.filters.hasSize, isTrue);
+        controller.dispose();
+      },
+    );
   });
 }
 
@@ -122,7 +159,7 @@ CatalogPage<CatalogProduct> _page(
   );
 }
 
-CatalogProduct _product(int id) {
+CatalogProduct _product(int id, {bool withSizes = false}) {
   return CatalogProduct(
     id: id,
     name: 'Product $id',
@@ -135,6 +172,20 @@ CatalogProduct _product(int id) {
       priceMinor: '2500',
     ),
     isInStock: true,
+    attributes: withSizes
+        ? const <CatalogProductAttribute>[
+            CatalogProductAttribute(
+              id: 1,
+              name: 'Size',
+              taxonomy: 'pa_size',
+              hasVariations: true,
+              terms: <CatalogAttributeTerm>[
+                CatalogAttributeTerm(id: 1, name: 'Small', slug: 's'),
+                CatalogAttributeTerm(id: 2, name: 'Medium', slug: 'm'),
+              ],
+            ),
+          ]
+        : const <CatalogProductAttribute>[],
   );
 }
 
