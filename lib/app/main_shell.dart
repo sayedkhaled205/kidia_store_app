@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
-import '../core/theme/kidia_typography.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -54,13 +53,9 @@ class MainShell extends ConsumerWidget {
             onDestinationSelected: _openBranch,
             destinations: _items.map((item) {
               return NavigationDestination(
-                icon: _NavigationIcon(
-                  icon: item.icon,
-                  showBadge: false,
-                ),
+                icon: _NavigationIcon(icon: item.icon),
                 selectedIcon: _NavigationIcon(
                   icon: item.selectedIcon,
-                  showBadge: false,
                   selected: true,
                 ),
                 label: item.label,
@@ -75,46 +70,22 @@ class MainShell extends ConsumerWidget {
   void _openBranch(int index) {
     navigationShell.goBranch(
       index,
-      initialLocation:
-          index == 1 || index == navigationShell.currentIndex,
+      initialLocation: index == 1 || index == navigationShell.currentIndex,
     );
   }
 }
 
 class _NavigationIcon extends StatelessWidget {
-  const _NavigationIcon({
-    required this.icon,
-    this.showBadge = false,
-    this.selected = false,
-    this.badgeCount = 0,
-  });
+  const _NavigationIcon({required this.icon, this.selected = false});
 
   final IconData icon;
-  final bool showBadge;
   final bool selected;
-  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
-    final iconWidget = Icon(
+    return Icon(
       icon,
       color: selected ? KidiaColors.primaryDark : KidiaColors.textSecondary,
-    );
-
-    if (!showBadge || badgeCount <= 0) {
-      return iconWidget;
-    }
-
-    return Badge(
-      label: Text(
-        badgeCount > 99 ? '99+' : '$badgeCount',
-        style: KidiaTypography.labelMedium.copyWith(
-          color: Colors.white,
-          fontSize: 10,
-        ),
-      ),
-      backgroundColor: KidiaColors.secondary,
-      child: iconWidget,
     );
   }
 }
@@ -124,11 +95,9 @@ class _NavigationItem {
     required this.label,
     required this.icon,
     required this.selectedIcon,
-    this.showBadge = false,
   });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
-  final bool showBadge;
 }
