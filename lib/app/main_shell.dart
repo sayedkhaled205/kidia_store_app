@@ -53,6 +53,11 @@ class MainShell extends ConsumerWidget {
             border: Border(top: BorderSide(color: KidiaColors.divider)),
           ),
           child: NavigationBar(
+            height: 72,
+            elevation: 0,
+            backgroundColor: KidiaColors.surface,
+            indicatorColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: _openBranch,
             destinations: _items.map((item) {
@@ -80,7 +85,7 @@ class MainShell extends ConsumerWidget {
   void _openBranch(int index) {
     navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == 1 || index == navigationShell.currentIndex,
     );
   }
 }
