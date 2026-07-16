@@ -29,9 +29,10 @@ abstract interface class StoreApiClient {
   });
 }
 
-/// Read-only client for WooCommerce's public Store API.
+/// Read-only client for WooCommerce's public Store API and the companion
+/// Woo Mobile CMS bridge.
 ///
-/// Only relative `/wp-json/wc/store/...` paths are accepted. This keeps the
+/// Only relative, same-origin public API paths are accepted. This keeps the
 /// catalog layer tied to the configured store and prevents a response or a
 /// caller from turning the client into an arbitrary URL fetcher.
 class DioStoreApiClient implements StoreApiClient {
@@ -138,10 +139,14 @@ class DioStoreApiClient implements StoreApiClient {
         ? parsedPath.path.substring(1)
         : parsedPath.path;
 
-    if (!relativePath.startsWith('wp-json/wc/store/')) {
+    final bool isWooStoreApi = relativePath.startsWith('wp-json/wc/store/');
+    final bool isMobileCmsApi = relativePath.startsWith(
+      'wp-json/woo-mobile/v1/',
+    );
+    if (!isWooStoreApi && !isMobileCmsApi) {
       throw const StoreApiException(
         kind: StoreApiFailureKind.configuration,
-        message: 'Only WooCommerce Store API paths are allowed.',
+        message: 'Only approved WooCommerce mobile API paths are allowed.',
       );
     }
 
