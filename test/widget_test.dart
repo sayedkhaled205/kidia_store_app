@@ -118,10 +118,24 @@ void main() {
     );
     expect(textField.controller?.text, 'dresses');
 
-    final NavigationBar navigationBar = tester.widget<NavigationBar>(
-      find.byType(NavigationBar),
-    );
-    expect(navigationBar.selectedIndex, 2);
+    expect(find.byType(NavigationBar), findsNothing);
+
+    await _disposeApp(tester, router);
+  });
+
+  testWidgets('bottom navigation exposes wishlist instead of search and cart', (
+    tester,
+  ) async {
+    final GoRouter router = createAppRouter();
+
+    await _pumpStartedApp(tester, router: router);
+
+    expect(find.text('الرئيسية'), findsOneWidget);
+    expect(find.text('الأقسام'), findsOneWidget);
+    expect(find.text('المفضلة'), findsOneWidget);
+    expect(find.text('حسابي'), findsOneWidget);
+    expect(find.text('البحث'), findsNothing);
+    expect(find.text('السلة'), findsNothing);
 
     await _disposeApp(tester, router);
   });
