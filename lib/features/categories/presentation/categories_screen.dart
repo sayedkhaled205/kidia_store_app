@@ -129,20 +129,29 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                 ? Text(copy.categoryCount(category.count))
                 : null,
             onTap: () => _openProducts(context, category),
-            trailing: hasChildren
-                ? IconButton(
-                    tooltip: _expanded ? copy.collapse : copy.expand,
-                    onPressed: () => setState(() {
-                      _expanded = !_expanded;
-                    }),
-                    icon: AnimatedRotation(
-                      turns: _expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 180),
-                      child: const Icon(Icons.keyboard_arrow_down_rounded),
-                    ),
-                  )
-                : const Icon(Icons.chevron_right_rounded),
+            trailing: const Icon(Icons.chevron_right_rounded),
           ),
+          if (hasChildren)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.tonalIcon(
+                  onPressed: () => setState(() {
+                    _expanded = !_expanded;
+                  }),
+                  icon: AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: const Icon(Icons.keyboard_arrow_down_rounded),
+                  ),
+                  label: Text(
+                    '${_expanded ? copy.collapse : copy.expand} '
+                    '(${widget.node.children.length})',
+                  ),
+                ),
+              ),
+            ),
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
             alignment: Alignment.topCenter,
@@ -195,8 +204,8 @@ class _SubcategoryTile extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final String? imageUrl =
-        category.image?.thumbnail?.toString() ??
-        category.image?.source.toString();
+        category.image?.source.toString() ??
+        category.image?.thumbnail?.toString();
     final Widget fallback = ColoredBox(
       color: colors.secondaryContainer,
       child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
@@ -217,11 +226,15 @@ class _SubcategoryTile extends StatelessWidget {
               child: SizedBox.expand(
                 child: imageUrl == null || imageUrl.isEmpty
                     ? fallback
-                    : AppNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
-                        semanticLabel: category.name,
-                        errorWidget: fallback,
+                    : Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: AppNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.contain,
+                          backgroundColor: colors.surface,
+                          semanticLabel: category.name,
+                          errorWidget: fallback,
+                        ),
                       ),
               ),
             ),
@@ -254,8 +267,8 @@ class _CategoryImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final String? imageUrl =
-        category.image?.thumbnail?.toString() ??
-        category.image?.source.toString();
+        category.image?.source.toString() ??
+        category.image?.thumbnail?.toString();
     final Widget fallback = ColoredBox(
       color: colors.secondaryContainer,
       child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
@@ -263,16 +276,20 @@ class _CategoryImage extends StatelessWidget {
 
     return SizedBox.square(
       dimension: 54,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: imageUrl == null || imageUrl.isEmpty
-            ? fallback
-            : AppNetworkImage(
-                imageUrl: imageUrl,
-                semanticLabel: category.name,
-                errorWidget: fallback,
+      child: imageUrl == null || imageUrl.isEmpty
+          ? fallback
+          : ColoredBox(
+              color: colors.surface,
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: AppNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  semanticLabel: category.name,
+                  errorWidget: fallback,
+                ),
               ),
-      ),
+            ),
     );
   }
 }
