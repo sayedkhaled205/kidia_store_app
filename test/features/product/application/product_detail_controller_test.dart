@@ -102,7 +102,8 @@ void main() {
         controller.selectOption('pa_color', 'red');
         expect(controller.isOptionAvailable('pa_size', 'm'), isFalse);
         controller.selectOption('pa_size', 'm');
-        expect(controller.selectedVariation?.id, 102);
+        expect(controller.selectedAttributes.containsKey('pa_size'), isFalse);
+        expect(controller.selectedVariation, isNull);
         expect(controller.canAddToCart, isFalse);
 
         controller.selectOption('pa_size', 's');
