@@ -48,58 +48,79 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
     final CartViewState? current = cartState.asData?.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(copy.title),
-        actions: <Widget>[
-          IconButton(
-            key: const Key('cart-refresh-button'),
-            tooltip: copy.refresh,
-            onPressed:
-                current == null ||
-                    current.isRefreshing ||
-                    current.hasPendingMutation
-                ? null
-                : ref.read(cartControllerProvider.notifier).refreshCart,
-            icon: current?.isRefreshing == true
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.refresh_rounded),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (!didPop) {
+          _goBack();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: _goBack,
+            icon: const Icon(Icons.arrow_back_rounded),
           ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: cartState.when(
-        loading: () => _CartLoading(copy: copy),
-        error: (Object error, StackTrace stackTrace) => _CartLoadError(
-          copy: copy,
-          onRetry: ref.read(cartControllerProvider.notifier).retry,
-        ),
-        data: (CartViewState state) => _CartLoadedBody(
-          state: state,
-          copy: copy,
-          couponController: _couponController,
-          onRefresh: ref.read(cartControllerProvider.notifier).refreshCart,
-          onUpdateQuantity: _updateQuantity,
-          onRemove: _confirmRemove,
-          onApplyCoupon: _applyCoupon,
-          onRemoveCoupon: _removeCoupon,
-          onDismissError: ref
-              .read(cartControllerProvider.notifier)
-              .clearActionError,
-        ),
-      ),
-      bottomNavigationBar: current == null || current.cart.isEmpty
-          ? null
-          : _CartCheckoutBar(
-              cart: current.cart,
-              copy: copy,
-              enabled: !current.hasPendingMutation,
-              onCheckout: () => _checkout(current.cart),
+          title: Text(copy.title),
+          actions: <Widget>[
+            IconButton(
+              key: const Key('cart-refresh-button'),
+              tooltip: copy.refresh,
+              onPressed:
+                  current == null ||
+                      current.isRefreshing ||
+                      current.hasPendingMutation
+                  ? null
+                  : ref.read(cartControllerProvider.notifier).refreshCart,
+              icon: current?.isRefreshing == true
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
             ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        body: cartState.when(
+          loading: () => _CartLoading(copy: copy),
+          error: (Object error, StackTrace stackTrace) => _CartLoadError(
+            copy: copy,
+            onRetry: ref.read(cartControllerProvider.notifier).retry,
+          ),
+          data: (CartViewState state) => _CartLoadedBody(
+            state: state,
+            copy: copy,
+            couponController: _couponController,
+            onRefresh: ref.read(cartControllerProvider.notifier).refreshCart,
+            onUpdateQuantity: _updateQuantity,
+            onRemove: _confirmRemove,
+            onApplyCoupon: _applyCoupon,
+            onRemoveCoupon: _removeCoupon,
+            onDismissError: ref
+                .read(cartControllerProvider.notifier)
+                .clearActionError,
+          ),
+        ),
+        bottomNavigationBar: current == null || current.cart.isEmpty
+            ? null
+            : _CartCheckoutBar(
+                cart: current.cart,
+                copy: copy,
+                enabled: !current.hasPendingMutation,
+                onCheckout: () => _checkout(current.cart),
+              ),
+      ),
     );
+  }
+
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      context.pop();
+    } else {
+      context.go('/');
+    }
   }
 
   Future<void> _updateQuantity(CartItem item, int quantity) async {
