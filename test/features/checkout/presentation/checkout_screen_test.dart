@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:kidia_store_app/features/checkout/presentation/checkout_screen.dart';
 
@@ -26,6 +27,39 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('checkout-place-order')), findsOneWidget);
+  });
+
+  testWidgets('renders checkout fields supplied by the WordPress plugin', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    await tester.pumpWidget(
+      _testApp(
+        CheckoutScreen(
+          repository: FakeCheckoutRepository(
+            state: CheckoutState(
+              cart: checkoutCart(),
+              fieldDefinitions: <CheckoutFieldDefinition>[
+                CheckoutFieldDefinition(
+                  key: 'billing_vat_number',
+                  group: CheckoutFieldGroup.billing,
+                  type: CheckoutFieldType.text,
+                  label: 'VAT number',
+                  required: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('checkout-dynamic-billing_vat_number')),
+      findsOneWidget,
+    );
+    expect(find.text('VAT number *'), findsOneWidget);
   });
 
   testWidgets('validates payment selection using Store API method ids', (
