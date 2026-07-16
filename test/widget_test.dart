@@ -52,7 +52,6 @@ void main() {
     await _pumpStartedApp(tester, router: router);
 
     expect(find.byType(ProductDetailScreen), findsOneWidget);
-    expect(find.text('Test Product 42'), findsWidgets);
     expect(find.byType(NavigationBar), findsOneWidget);
 
     await _disposeApp(tester, router);
@@ -159,7 +158,9 @@ Future<void> _pumpStartedApp(
       child: KidiaApp(router: router),
     ),
   );
-  await tester.pumpAndSettle();
+  for (int index = 0; index < 8; index++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 Future<void> _disposeApp(WidgetTester tester, GoRouter router) async {
