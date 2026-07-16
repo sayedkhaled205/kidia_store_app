@@ -19,8 +19,8 @@ class CatalogProductCard extends StatelessWidget {
     final ColorScheme colors = theme.colorScheme;
     final CatalogCopy copy = CatalogCopy.of(context);
     final String? imageUrl =
-        product.primaryImage?.thumbnail?.toString() ??
-        product.primaryImage?.source.toString();
+        product.primaryImage?.source.toString() ??
+        product.primaryImage?.thumbnail?.toString();
     final String currentPrice = product.prices.displayAmount(
       product.prices.priceMinor,
     );
@@ -55,18 +55,21 @@ class CatalogProductCard extends StatelessWidget {
                           child: AppNetworkImageError(),
                         )
                       else
-                        Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: AppNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              alignment: Alignment.center,
-                              semanticLabel:
-                                  product.primaryImage?.alt.isNotEmpty == true
-                                  ? product.primaryImage!.alt
-                                  : product.name,
+                        Center(
+                          child: FractionallySizedBox(
+                            widthFactor: 0.95,
+                            heightFactor: 0.95,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: AppNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.center,
+                                semanticLabel:
+                                    product.primaryImage?.alt.isNotEmpty == true
+                                    ? product.primaryImage!.alt
+                                    : product.name,
+                              ),
                             ),
                           ),
                         ),
