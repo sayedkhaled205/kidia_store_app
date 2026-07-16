@@ -66,6 +66,13 @@ void main() {
     expect(wishlist.ids, isEmpty);
     expect(find.byKey(const Key('wishlist-empty')), findsOneWidget);
     expect(find.text('Removed from wishlist'), findsOneWidget);
+    expect(
+      tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+      const Duration(seconds: 3),
+    );
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    expect(find.text('Removed from wishlist'), findsNothing);
   });
 
   testWidgets('renders a responsive RTL grid', (WidgetTester tester) async {
