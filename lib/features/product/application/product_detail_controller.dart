@@ -194,7 +194,8 @@ class ProductDetailController extends ChangeNotifier {
     final String normalizedKey = _normalize(key);
     final ProductOptionGroup? group = _findOptionGroup(normalizedKey);
     if (group == null ||
-        !group.values.any((ProductOptionValue item) => item.value == value)) {
+        !group.values.any((ProductOptionValue item) => item.value == value) ||
+        !isOptionAvailable(group.key, value)) {
       return;
     }
 
@@ -267,13 +268,23 @@ class ProductDetailController extends ChangeNotifier {
       return true;
     } catch (error) {
       _isAdding = false;
-      final String message = error.toString().trim();
+      final String message = _cleanActionError(error);
       _addError = message.isEmpty
           ? 'Unable to add this item to the cart.'
           : message;
       _notify();
       return false;
     }
+  }
+
+  static String _cleanActionError(Object error) {
+    return error
+        .toString()
+        .replaceFirst(RegExp(r'^(Bad state|Exception):\s*'), '')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&#039;', "'")
+        .trim();
   }
 
   void clearAddError() {
