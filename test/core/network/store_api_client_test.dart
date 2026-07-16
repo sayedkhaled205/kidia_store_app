@@ -75,6 +75,36 @@ void main() {
       );
     });
 
+    test('allows the same-origin Woo Mobile CMS bridge', () async {
+      RequestOptions? capturedRequest;
+      final Dio dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (RequestOptions options, handler) {
+            capturedRequest = options;
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                data: const <dynamic>[],
+                statusCode: 200,
+              ),
+            );
+          },
+        ),
+      );
+      final DioStoreApiClient client = DioStoreApiClient(
+        storeUri: Uri.parse('https://shop.example.com/store/'),
+        dio: dio,
+      );
+
+      await client.get('/wp-json/woo-mobile/v1/products/12/variations');
+
+      expect(
+        capturedRequest?.uri.path,
+        '/store/wp-json/woo-mobile/v1/products/12/variations',
+      );
+    });
+
     test('rejects non-HTTPS public store origins', () {
       expect(
         () => DioStoreApiClient(
