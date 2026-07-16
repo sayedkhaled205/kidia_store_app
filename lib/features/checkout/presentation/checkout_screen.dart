@@ -3,6 +3,7 @@ import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
 import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
@@ -183,6 +184,13 @@ class _CheckoutForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool enabled = !controller.isSubmitting;
+    if (controller.hasDynamicFields) {
+      return _DynamicCheckoutForm(
+        controller: controller,
+        copy: copy,
+        enabled: enabled,
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
@@ -249,6 +257,197 @@ class _CheckoutForm extends StatelessWidget {
         const SizedBox(height: 16),
         _PaymentSection(controller: controller, copy: copy),
       ],
+    );
+  }
+}
+
+class _DynamicCheckoutForm extends StatelessWidget {
+  const _DynamicCheckoutForm({
+    required this.controller,
+    required this.copy,
+    required this.enabled,
+  });
+
+  final CheckoutController controller;
+  final _CheckoutCopy copy;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<CheckoutFieldDefinition> billing = controller.fieldsFor(
+      CheckoutFieldGroup.billing,
+    );
+    final List<CheckoutFieldDefinition> shipping = controller.fieldsFor(
+      CheckoutFieldGroup.shipping,
+    );
+    final List<CheckoutFieldDefinition> order = controller.fieldsFor(
+      CheckoutFieldGroup.order,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (billing.isNotEmpty)
+          _CheckoutSection(
+            title: copy.billingAddress,
+            icon: Icons.receipt_long_outlined,
+            child: _DynamicFieldList(
+              fields: billing,
+              controller: controller,
+              enabled: enabled,
+            ),
+          ),
+        if (controller.needsShipping && shipping.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 16),
+          SwitchListTile.adaptive(
+            key: const Key('checkout-different-shipping-toggle'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(copy.differentShipping),
+            subtitle: Text(copy.differentShippingHint),
+            value: controller.shipToDifferentAddress,
+            onChanged: enabled ? controller.setShipToDifferentAddress : null,
+          ),
+          if (controller.shipToDifferentAddress)
+            _CheckoutSection(
+              title: copy.shippingAddress,
+              icon: Icons.local_shipping_outlined,
+              child: _DynamicFieldList(
+                fields: shipping,
+                controller: controller,
+                enabled: enabled,
+              ),
+            ),
+        ],
+        if (order.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 16),
+          _CheckoutSection(
+            title: copy.orderNote,
+            icon: Icons.edit_note_outlined,
+            child: _DynamicFieldList(
+              fields: order,
+              controller: controller,
+              enabled: enabled,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        _PaymentSection(controller: controller, copy: copy),
+      ],
+    );
+  }
+}
+
+class _DynamicFieldList extends StatelessWidget {
+  const _DynamicFieldList({
+    required this.fields,
+    required this.controller,
+    required this.enabled,
+  });
+
+  final List<CheckoutFieldDefinition> fields;
+  final CheckoutController controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        for (int index = 0; index < fields.length; index++) ...<Widget>[
+          _DynamicCheckoutField(
+            field: fields[index],
+            controller: controller,
+            enabled: enabled,
+          ),
+          if (index != fields.length - 1) const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+}
+
+class _DynamicCheckoutField extends StatelessWidget {
+  const _DynamicCheckoutField({
+    required this.field,
+    required this.controller,
+    required this.enabled,
+  });
+
+  final CheckoutFieldDefinition field;
+  final CheckoutController controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final String value = controller.valueForField(field);
+    final String label = field.required ? '${field.label} *' : field.label;
+    final String? error = controller.errorFor(field.key);
+    if (field.type == CheckoutFieldType.checkbox) {
+      return SwitchListTile.adaptive(
+        key: Key('checkout-dynamic-${field.key}'),
+        contentPadding: EdgeInsets.zero,
+        title: Text(label),
+        subtitle: error == null
+            ? null
+            : Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+        value: value == '1' || value.toLowerCase() == 'yes',
+        onChanged: enabled
+            ? (bool selected) =>
+                  controller.setFieldValue(field.key, selected ? '1' : '0')
+            : null,
+      );
+    }
+    if (field.type == CheckoutFieldType.select && field.options.isNotEmpty) {
+      final String? selected = field.options.containsKey(value) ? value : null;
+      return DropdownButtonFormField<String>(
+        key: Key('checkout-dynamic-${field.key}'),
+        initialValue: selected,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: field.placeholder.isEmpty ? null : field.placeholder,
+          errorText: error,
+        ),
+        items: field.options.entries
+            .map(
+              (MapEntry<String, String> option) => DropdownMenuItem<String>(
+                value: option.key,
+                child: Text(
+                  option.value.isEmpty ? option.key : option.value,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+            .toList(growable: false),
+        onChanged: enabled
+            ? (String? selectedValue) =>
+                  controller.setFieldValue(field.key, selectedValue ?? '')
+            : null,
+      );
+    }
+
+    return TextFormField(
+      key: Key('checkout-dynamic-${field.key}'),
+      initialValue: value,
+      enabled: enabled,
+      minLines: field.type == CheckoutFieldType.textarea ? 3 : 1,
+      maxLines: field.type == CheckoutFieldType.textarea ? 5 : 1,
+      keyboardType: switch (field.type) {
+        CheckoutFieldType.email => TextInputType.emailAddress,
+        CheckoutFieldType.telephone => TextInputType.phone,
+        _ => TextInputType.text,
+      },
+      autofillHints: field.autocomplete.isEmpty
+          ? null
+          : <String>[field.autocomplete],
+      onChanged: (String next) => controller.setFieldValue(field.key, next),
+      validator: (_) => controller.errorFor(field.key),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: field.placeholder.isEmpty ? null : field.placeholder,
+        errorText: error,
+      ),
     );
   }
 }
