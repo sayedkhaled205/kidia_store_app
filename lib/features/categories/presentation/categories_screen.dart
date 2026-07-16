@@ -44,6 +44,7 @@ class CategoriesScreen extends ConsumerWidget {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
+                const SliverToBoxAdapter(child: _CategoryTopActions()),
                 SliverPadding(
                   padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 8),
                   sliver: SliverToBoxAdapter(
@@ -97,20 +98,13 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final CatalogCopy copy = CatalogCopy.of(context);
 
     final Widget tile = Material(
-      color: Color.alphaBlend(
-        colors.primary.withValues(alpha: _expanded ? 0.09 : 0.045),
-        colors.surface,
-      ),
-      elevation: _expanded ? 2 : 0,
-      shadowColor: colors.primary.withValues(alpha: 0.18),
+      color: widget.depth == 0
+          ? colors.surfaceContainerLowest
+          : Colors.transparent,
       shape: widget.depth == 0
           ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(22),
-              side: BorderSide(
-                color: _expanded
-                    ? colors.primary.withValues(alpha: 0.4)
-                    : colors.outlineVariant,
-              ),
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: colors.outlineVariant),
             )
           : null,
       clipBehavior: widget.depth == 0 ? Clip.antiAlias : Clip.none,
@@ -118,60 +112,38 @@ class _CategoryBranchState extends State<_CategoryBranch> {
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsetsDirectional.fromSTEB(
-              widget.depth == 0 ? 14 : 8,
-              10,
-              12,
+              widget.depth == 0 ? 12 : 8,
+              6,
               8,
+              6,
             ),
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.2,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
               ),
             ),
             subtitle: category.count > 0
                 ? Text(copy.categoryCount(category.count))
                 : null,
             onTap: () => _openProducts(context, category),
-            trailing: const Icon(Icons.chevron_right_rounded),
-          ),
-          if (hasChildren)
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 10),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    backgroundColor: _expanded
-                        ? colors.primary
-                        : colors.primaryContainer,
-                    foregroundColor: _expanded
-                        ? colors.onPrimary
-                        : colors.onPrimaryContainer,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+            trailing: hasChildren
+                ? IconButton(
+                    tooltip: _expanded ? copy.collapse : copy.expand,
+                    onPressed: () => setState(() {
+                      _expanded = !_expanded;
+                    }),
+                    icon: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: const Icon(Icons.keyboard_arrow_down_rounded),
                     ),
-                  ),
-                  onPressed: () => setState(() {
-                    _expanded = !_expanded;
-                  }),
-                  icon: AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 180),
-                    child: const Icon(Icons.keyboard_arrow_down_rounded),
-                  ),
-                  label: Text(
-                    '${_expanded ? copy.collapse : copy.expand} '
-                    '(${widget.node.children.length})',
-                  ),
-                ),
-              ),
-            ),
+                  )
+                : const Icon(Icons.chevron_right_rounded),
+          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
             alignment: Alignment.topCenter,
@@ -295,7 +267,7 @@ class _CategoryImage extends StatelessWidget {
     );
 
     return SizedBox.square(
-      dimension: 72,
+      dimension: 54,
       child: imageUrl == null || imageUrl.isEmpty
           ? fallback
           : ColoredBox(
@@ -310,6 +282,56 @@ class _CategoryImage extends StatelessWidget {
                 ),
               ),
             ),
+    );
+  }
+}
+
+class _CategoryTopActions extends StatelessWidget {
+  const _CategoryTopActions();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 2),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Material(
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(28),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(28),
+                onTap: () => context.go('/search'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(Icons.search_rounded),
+                      const SizedBox(width: 10),
+                      Text(
+                        'ابحثي عن منتج',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          IconButton(
+            tooltip: 'السلة',
+            onPressed: () => context.go('/cart'),
+            icon: const Icon(Icons.shopping_bag_outlined, size: 30),
+          ),
+        ],
+      ),
     );
   }
 }
