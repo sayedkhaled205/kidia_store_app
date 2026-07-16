@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name:       Kidia Mobile CMS
- * Plugin URI:        https://kidiastore.com/
- * Description:       Native mobile application content management and REST API platform for Kidia Store.
- * Version:           1.3.2
+ * Plugin Name:       Woo Mobile CMS
+ * Plugin URI:        https://wordpress.org/
+ * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
+ * Version:           1.5.2
  * Requires at least: 6.4
  * Requires PHP:      8.0
- * Author:            Kidia Store
- * Author URI:        https://kidiastore.com/
+ * Author:            Woo Mobile CMS
+ * Author URI:        https://woocommerce.com/
  * Text Domain:       kidia-mobile-cms
  * Domain Path:       /languages
  * License:           GPL-2.0-or-later
@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'KIDIA_MOBILE_CMS_VERSION',
-	'1.3.2'
+	'1.5.2'
 );
 
 define(
