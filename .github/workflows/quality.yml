@@ -35,3 +35,9 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+      - name: Build Android debug APK
+        run: >-
+          flutter build apk --debug
+          --dart-define=STORE_URL=https://example.com
+          --dart-define=STORE_NAME=Kidia
+          --dart-define=STORE_LOCALE=ar

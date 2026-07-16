@@ -12,6 +12,12 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    buildFeatures {
+        // AGP 9 disables generated resource values by default. The app name
+        // below is supplied through resValue, so this feature must stay on.
+        resValues = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -24,7 +30,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // flutter_secure_storage 10 uses Android Keystore ciphers available
         // from Android 6.0 (API 23).
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
