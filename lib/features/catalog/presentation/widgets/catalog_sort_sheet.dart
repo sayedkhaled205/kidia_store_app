@@ -21,13 +21,18 @@ abstract final class CatalogSortSheet {
     return showModalBottomSheet<CatalogSort>(
       context: context,
       useSafeArea: true,
+      isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext context) => Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
+      builder: (BuildContext context) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 8),
               child: Text(
@@ -48,7 +53,8 @@ abstract final class CatalogSortSheet {
                 selected: option == selected,
                 onTap: () => Navigator.of(context).pop(option),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
