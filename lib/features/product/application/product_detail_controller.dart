@@ -145,28 +145,45 @@ class ProductDetailController extends ChangeNotifier {
       final CatalogProduct loadedProduct = await repository.getProduct(
         productId,
       );
-      List<CatalogVariation> loadedVariations = loadedProduct.variations;
-      if (loadedProduct.hasVariations) {
-        final List<CatalogVariation> detailedVariations = await repository
-            .getVariations(productId);
-        if (detailedVariations.isNotEmpty) {
-          loadedVariations = detailedVariations;
-        }
-      }
       if (!_canCommit(serial)) {
         return;
       }
 
       _product = loadedProduct;
-      _variations = List<CatalogVariation>.unmodifiable(loadedVariations);
+      _variations = List<CatalogVariation>.unmodifiable(
+        loadedProduct.variations,
+      );
       _selectedAttributes = const <String, String>{};
       _quantity = 1;
       _status = ProductDetailStatus.success;
       _notify();
+
+      // The Store API already embeds the variation ids and attributes in the
+      // product response. Render that native product page immediately, then
+      // enrich stock, prices and images without keeping the whole screen on a
+      // loading spinner while extra network requests finish.
+      if (loadedProduct.hasVariations) {
+        _loadDetailedVariations(serial);
+      }
     } on CatalogRepositoryException catch (error) {
       _commitFailure(serial, error.message);
     } catch (_) {
       _commitFailure(serial, 'Unable to load this product. Please try again.');
+    }
+  }
+
+  Future<void> _loadDetailedVariations(int serial) async {
+    try {
+      final List<CatalogVariation> detailedVariations = await repository
+          .getVariations(productId);
+      if (!_canCommit(serial) || detailedVariations.isEmpty) {
+        return;
+      }
+      _variations = List<CatalogVariation>.unmodifiable(detailedVariations);
+      _notify();
+    } catch (_) {
+      // The product response remains usable when optional variation
+      // enrichment is unavailable or blocked by store security rules.
     }
   }
 
