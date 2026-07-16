@@ -11,6 +11,11 @@ final class Kidia_Mobile_CMS_Product_Brand_Bridge {
 
 	/** Register the Store API schema extension after WooCommerce Blocks loads. */
 	public function register(): void {
+		if ( did_action( 'woocommerce_blocks_loaded' ) > 0 ) {
+			$this->register_store_api_data();
+			return;
+		}
+
 		add_action(
 			'woocommerce_blocks_loaded',
 			array( $this, 'register_store_api_data' )
