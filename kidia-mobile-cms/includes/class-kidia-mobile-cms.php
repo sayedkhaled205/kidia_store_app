@@ -78,6 +78,8 @@ require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-spacer.php';
 
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-home-layout-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-product-brand-bridge.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'api/class-product-variation-endpoint.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'api/class-checkout-config-endpoint.php';
 
 final class Kidia_Mobile_CMS {
 
@@ -216,6 +218,12 @@ final class Kidia_Mobile_CMS {
 			->register();
 
 		(new Kidia_Mobile_CMS_Product_Brand_Bridge())
+			->register();
+
+		(new Kidia_Mobile_CMS_Product_Variation_Endpoint())
+			->register();
+
+		(new Kidia_Mobile_CMS_Checkout_Config_Endpoint())
 			->register();
 
 	}
