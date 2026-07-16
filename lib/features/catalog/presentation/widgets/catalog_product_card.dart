@@ -34,7 +34,7 @@ class CatalogProductCard extends StatelessWidget {
       child: Material(
         color: colors.surfaceContainerLowest,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: colors.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
@@ -76,7 +76,7 @@ class CatalogProductCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(12, 11, 12, 13),
+                padding: const EdgeInsetsDirectional.fromSTEB(9, 8, 9, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -86,10 +86,10 @@ class CatalogProductCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        height: 1.35,
+                        height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 5),
                     if (product.averageRating > 0)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
