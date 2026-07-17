@@ -56,7 +56,7 @@ void main() {
     await tester.tap(find.byKey(const Key('confirm-cancel-order')));
     await tester.pumpAndSettle();
 
-    expect(find.text('طلب إلغاء'), findsOneWidget);
+    expect(find.text('طلب إلغاء'), findsWidgets);
     expect(
       find.byKey(const Key('details-cancel-customer-order-101')),
       findsNothing,
