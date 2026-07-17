@@ -26,6 +26,7 @@ final class Kidia_Mobile_Block_Registry {
 	 * @var array<string, string>
 	 */
 	private const SCHEMA_FILES = array(
+		'app_header'      => 'app-header',
 		'hero_slider'     => 'hero-slider',
 		'image_banner'    => 'image-banner',
 		'product_carousel'=> 'product-carousel',
@@ -146,7 +147,10 @@ final class Kidia_Mobile_Block_Registry {
 				$block_definition,
 				array(
 					'type'     => $type,
-					'defaults' => $block->get_default_settings(),
+					'defaults' => array_merge(
+						$block->get_presentation_defaults(),
+						$block->get_default_settings()
+					),
 				)
 			);
 		}
@@ -212,8 +216,11 @@ final class Kidia_Mobile_Block_Registry {
     		$type  = sanitize_key( $type );
     		$block = self::get_block( $type );
 
-    		if ( $block instanceof Kidia_Mobile_Block ) {
-    			return $block->get_default_settings();
+		if ( $block instanceof Kidia_Mobile_Block ) {
+				return array_merge(
+					$block->get_presentation_defaults(),
+					$block->get_default_settings()
+				);
     		}
 
     		$schema = self::load_schema( $type );
@@ -476,12 +483,86 @@ final class Kidia_Mobile_Block_Registry {
         			return array();
         		}
 
-        		$schema = require $file;
+			$schema = require $file;
 
-        		return is_array( $schema )
-        			? $schema
-        			: array();
-        	}
+			if ( ! is_array( $schema ) ) {
+				return array();
+			}
+
+			$schema['defaults'] = array_merge(
+				array(
+					'margin_top'        => 0,
+					'margin_bottom'     => 0,
+					'margin_horizontal' => 0,
+					'padding_vertical'   => 0,
+					'padding_horizontal' => 0,
+					'block_background'  => '',
+					'block_radius'      => 0,
+					'content_scale'     => 100,
+				),
+				is_array( $schema['defaults'] ?? null )
+					? $schema['defaults']
+					: array()
+			);
+
+			$schema['tabs']   = is_array( $schema['tabs'] ?? null ) ? $schema['tabs'] : array();
+			$schema['tabs'][] = array(
+				'id'    => 'responsive',
+				'label' => __( 'Responsive layout', 'kidia-mobile-cms' ),
+			);
+			$schema['fields'] = array_merge(
+				is_array( $schema['fields'] ?? null ) ? $schema['fields'] : array(),
+				self::responsive_fields()
+			);
+
+			return $schema;
+		}
+
+		/**
+		 * Shared responsive controls appended to every Home Builder block.
+		 *
+		 * @return array<int, array<string, mixed>>
+		 */
+		private static function responsive_fields(): array {
+			$number = static function ( string $key, string $label, int $max, int $default = 0 ): array {
+				return array(
+					'key'     => $key,
+					'label'   => $label,
+					'type'    => 'number',
+					'tab'     => 'responsive',
+					'min'     => 0,
+					'max'     => $max,
+					'step'    => 1,
+					'default' => $default,
+				);
+			};
+
+			return array(
+				$number( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 80 ),
+				$number( 'margin_bottom', __( 'Space below', 'kidia-mobile-cms' ), 80 ),
+				$number( 'margin_horizontal', __( 'Outer side space', 'kidia-mobile-cms' ), 40 ),
+				$number( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 40 ),
+				$number( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 40 ),
+				array(
+					'key'     => 'block_background',
+					'label'   => __( 'Block background', 'kidia-mobile-cms' ),
+					'type'    => 'color',
+					'tab'     => 'responsive',
+					'default' => '',
+				),
+				$number( 'block_radius', __( 'Block corner radius', 'kidia-mobile-cms' ), 50 ),
+				array(
+					'key'     => 'content_scale',
+					'label'   => __( 'Responsive content scale (%)', 'kidia-mobile-cms' ),
+					'type'    => 'number',
+					'tab'     => 'responsive',
+					'min'     => 80,
+					'max'     => 120,
+					'step'    => 1,
+					'default' => 100,
+				),
+			);
+		}
 
         	/**
         	 * Returns default display name.

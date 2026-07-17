@@ -46,6 +46,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 * @var array<string,string>
 	 */
 	private const LIBRARY_OPTIONS = array(
+		'app_header'       => 'kidia_mobile_app_headers',
 		'hero_slider'      => 'kidia_mobile_hero_sliders',
 		'image_banner'     => 'kidia_mobile_image_banners',
 		'product_carousel' => 'kidia_mobile_product_carousels',

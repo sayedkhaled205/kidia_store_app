@@ -26,6 +26,48 @@ void main() {
       expect((layout.blocks.single as SpacerBlock).height, 24);
     });
 
+    test('parses the app header and shared responsive presentation', () {
+      final AppHeaderBlock header =
+          HomeBlockModel.fromJson(<String, dynamic>{
+                'id': 'header-1',
+                'type': 'app_header',
+                'enabled': true,
+                'data': <String, dynamic>{
+                  'logo_url': 'https://example.com/logo.png',
+                  'title': 'Kidia',
+                  'subtitle': 'Kids fashion',
+                  'layout': 'center',
+                  'height': 72,
+                  'logo_height': 42,
+                  'show_search': true,
+                  'show_cart': true,
+                  'show_account': true,
+                  'title_color': '#123456',
+                  'icon_color': '#654321',
+                  'presentation': <String, dynamic>{
+                    'margin_top': 8,
+                    'margin_bottom': 12,
+                    'margin_horizontal': 10,
+                    'padding_vertical': 6,
+                    'padding_horizontal': 14,
+                    'background_color': '#FAFAFA',
+                    'block_radius': 18,
+                    'content_scale': 110,
+                  },
+                },
+              })
+              as AppHeaderBlock;
+
+      expect(header.title, 'Kidia');
+      expect(header.logoHeight, 42);
+      expect(header.showAccount, isTrue);
+      expect(header.presentation.marginHorizontal, 10);
+      expect(header.presentation.paddingHorizontal, 14);
+      expect(header.presentation.backgroundColor, '#fafafa');
+      expect(header.presentation.borderRadius, 18);
+      expect(header.presentation.contentScale, 1.1);
+    });
+
     test('skips an unsupported block without breaking valid blocks', () {
       final layout = HomeLayoutModel.fromJson(<String, dynamic>{
         'version': 4,

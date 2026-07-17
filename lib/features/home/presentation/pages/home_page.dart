@@ -34,31 +34,49 @@ class HomePage extends ConsumerWidget {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              const SliverToBoxAdapter(child: _HomeHeader()),
               homeLayoutAsync.when(
                 data: (HomeLayout layout) {
-                  return HomeBlockRenderer(
-                    blocks: layout.enabledBlocks,
-                    onAction: (HomeAction action) {
-                      _handleHomeAction(context: context, action: action);
-                    },
+                  final bool hasManagedHeader = layout.enabledBlocks.any(
+                    (HomeBlock block) => block is AppHeaderBlock,
+                  );
+                  return SliverMainAxisGroup(
+                    slivers: <Widget>[
+                      if (!hasManagedHeader)
+                        const SliverToBoxAdapter(child: _HomeHeader()),
+                      HomeBlockRenderer(
+                        blocks: layout.enabledBlocks,
+                        onAction: (HomeAction action) {
+                          _handleHomeAction(context: context, action: action);
+                        },
+                      ),
+                    ],
                   );
                 },
                 loading: () {
-                  return const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _HomeLoadingState(),
+                  return const SliverMainAxisGroup(
+                    slivers: <Widget>[
+                      SliverToBoxAdapter(child: _HomeHeader()),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _HomeLoadingState(),
+                      ),
+                    ],
                   );
                 },
                 error: (Object error, StackTrace stackTrace) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _HomeErrorState(
-                      message: _resolveErrorMessage(error),
-                      onRetry: () {
-                        ref.invalidate(homeLayoutProvider(locale));
-                      },
-                    ),
+                  return SliverMainAxisGroup(
+                    slivers: <Widget>[
+                      const SliverToBoxAdapter(child: _HomeHeader()),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _HomeErrorState(
+                          message: _resolveErrorMessage(error),
+                          onRetry: () {
+                            ref.invalidate(homeLayoutProvider(locale));
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -128,6 +146,14 @@ class HomePage extends ConsumerWidget {
           return;
         }
         context.go('/search?q=$encodedValue');
+        return;
+
+      case 'cart':
+        context.push('/cart');
+        return;
+
+      case 'account':
+        context.go('/account');
         return;
 
       case 'external':

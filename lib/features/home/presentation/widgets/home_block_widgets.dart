@@ -2,11 +2,124 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
+import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
 import 'package:kidia_store_app/shared/widgets/banner/app_image_banner.dart';
 import 'package:kidia_store_app/shared/widgets/category/category_card.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_card.dart';
+
+class AppHeaderBlockWidget extends StatelessWidget {
+  const AppHeaderBlockWidget({
+    required this.block,
+    required this.onAction,
+    super.key,
+  });
+
+  final AppHeaderBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final double responsive = HomeResponsiveScope.of(context);
+    final Color titleColor = _parseHexColor(
+      block.titleColor,
+      fallback: Theme.of(context).colorScheme.onSurface,
+    );
+    final Color iconColor = _parseHexColor(
+      block.iconColor,
+      fallback: Theme.of(context).colorScheme.onSurface,
+    );
+    final Widget identity = block.logoUrl != null
+        ? AppNetworkImage(
+            imageUrl: block.logoUrl!,
+            height: block.logoHeight * responsive,
+            fit: BoxFit.contain,
+            semanticLabel: block.title,
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: block.layout == 'center'
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                block.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: titleColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (block.subtitle != null)
+                Text(
+                  block.subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: titleColor.withValues(alpha: 0.72),
+                  ),
+                ),
+            ],
+          );
+
+    final List<Widget> actions = <Widget>[
+      if (block.showAccount)
+        IconButton(
+          tooltip: 'حسابي',
+          onPressed: () => onAction(
+            const HomeAction(type: 'account', value: 'account'),
+          ),
+          color: iconColor,
+          icon: Icon(Icons.person_outline_rounded, size: 24 * responsive),
+        ),
+      if (block.showSearch)
+        IconButton(
+          tooltip: 'البحث',
+          onPressed: () => onAction(
+            const HomeAction(type: 'search', value: ''),
+          ),
+          color: iconColor,
+          icon: Icon(Icons.search_rounded, size: 24 * responsive),
+        ),
+      if (block.showCart)
+        IconButton(
+          tooltip: 'السلة',
+          onPressed: () => onAction(
+            const HomeAction(type: 'cart', value: 'cart'),
+          ),
+          color: iconColor,
+          icon: Icon(Icons.shopping_bag_outlined, size: 24 * responsive),
+        ),
+    ];
+
+    return SizedBox(
+      key: Key('app-header-${block.id}'),
+      height: block.height * responsive,
+      child: block.layout == 'center'
+          ? Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 112 * responsive),
+                  child: identity,
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: actions),
+                ),
+              ],
+            )
+          : Row(
+              children: <Widget>[
+                Expanded(child: identity),
+                ...actions,
+              ],
+            ),
+    );
+  }
+}
 
 class HeroSliderBlockWidget extends StatefulWidget {
   const HeroSliderBlockWidget({

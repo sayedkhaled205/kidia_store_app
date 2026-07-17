@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_widgets.dart';
+import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
 
 void main() {
   Future<void> pumpBlock(WidgetTester tester, Widget block) {
@@ -48,6 +49,79 @@ void main() {
 
     expect(receivedAction?.type, 'collection');
     expect(receivedAction?.value, 'summer');
+  });
+
+  testWidgets('app header renders configured actions and dispatches them', (
+    WidgetTester tester,
+  ) async {
+    final List<String> actions = <String>[];
+    await pumpBlock(
+      tester,
+      AppHeaderBlockWidget(
+        block: const AppHeaderBlock(
+          id: 'header-1',
+          enabled: true,
+          logoUrl: null,
+          title: 'Kidia',
+          subtitle: 'Kids fashion',
+          layout: 'center',
+          height: 72,
+          logoHeight: 40,
+          showSearch: true,
+          showCart: true,
+          showAccount: true,
+          titleColor: '#123456',
+          iconColor: '#654321',
+        ),
+        onAction: (HomeAction action) => actions.add(action.type),
+      ),
+    );
+
+    expect(find.text('Kidia'), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.tap(find.byIcon(Icons.shopping_bag_outlined));
+    await tester.tap(find.byIcon(Icons.person_outline_rounded));
+    expect(actions, <String>['search', 'cart', 'account']);
+  });
+
+  testWidgets('shared block frame adapts spacing to the screen width', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const SpacerBlock block = SpacerBlock(
+      id: 'space-1',
+      enabled: true,
+      height: 20,
+      presentation: HomeBlockPresentation(
+        marginTop: 8,
+        marginBottom: 12,
+        marginHorizontal: 10,
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        backgroundColor: '#FAFAFA',
+        borderRadius: 18,
+      ),
+    );
+    await pumpBlock(
+      tester,
+      const HomeBlockFrame(block: block, child: SizedBox(height: 20)),
+    );
+
+    final Padding frame = tester.widget<Padding>(
+      find.byKey(const Key('home-block-frame-space-1')),
+    );
+    expect(
+      frame.padding.resolve(TextDirection.ltr),
+      const EdgeInsets.fromLTRB(10, 8, 10, 12),
+    );
+    expect(find.byType(HomeResponsiveScope), findsOneWidget);
   });
 
   testWidgets('video banner exposes an accessible playable fallback action', (

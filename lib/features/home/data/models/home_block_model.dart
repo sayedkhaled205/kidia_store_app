@@ -15,6 +15,11 @@ abstract final class HomeBlockModel {
     }
 
     return switch (type) {
+      HomeBlockType.appHeader => _parseAppHeader(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
       HomeBlockType.heroSlider => _parseHeroSlider(
         id: id,
         enabled: enabled,
@@ -88,6 +93,45 @@ abstract final class HomeBlockModel {
     };
   }
 
+  static AppHeaderBlock _parseAppHeader({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    final String layout = _optionalString(data, 'layout') ?? 'center';
+    if (layout != 'center' && layout != 'start') {
+      throw FormatException('Unsupported app header layout: $layout');
+    }
+    return AppHeaderBlock(
+      id: id,
+      enabled: enabled,
+      presentation: _parsePresentation(data),
+      logoUrl: _optionalUrl(data, 'logo_url'),
+      title: _requiredString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
+      layout: layout,
+      height: _boundedDouble(
+        data,
+        'height',
+        fallback: 64,
+        minimum: 48,
+        maximum: 120,
+      ),
+      logoHeight: _boundedDouble(
+        data,
+        'logo_height',
+        fallback: 38,
+        minimum: 20,
+        maximum: 80,
+      ),
+      showSearch: _optionalBool(data, 'show_search', fallback: true),
+      showCart: _optionalBool(data, 'show_cart', fallback: true),
+      showAccount: _optionalBool(data, 'show_account', fallback: false),
+      titleColor: _hexColor(data, 'title_color', fallback: '#1F2933'),
+      iconColor: _hexColor(data, 'icon_color', fallback: '#1F2933'),
+    );
+  }
+
   static HeroSliderBlock _parseHeroSlider({
     required String id,
     required bool enabled,
@@ -104,6 +148,7 @@ abstract final class HomeBlockModel {
     return HeroSliderBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       items: items.map(_parseHeroSlide).toList(growable: false),
       aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 1.8),
       autoPlay: _optionalBool(data, 'auto_play', fallback: true),
@@ -131,6 +176,7 @@ abstract final class HomeBlockModel {
     return CategoryGridBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       subtitle: _optionalString(data, 'subtitle'),
       items: items.map(_parseCategoryItem).toList(growable: false),
@@ -162,6 +208,7 @@ abstract final class HomeBlockModel {
     return ImageBannerBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       imageUrl: _requiredUrl(data, 'image_url'),
       aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 2.4),
       borderRadius: _nonNegativeDouble(data, 'border_radius', fallback: 16),
@@ -178,6 +225,7 @@ abstract final class HomeBlockModel {
     return ProductCarouselBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       items: _parseProducts(data),
       showViewAll: _optionalBool(data, 'show_view_all', fallback: false),
@@ -193,6 +241,7 @@ abstract final class HomeBlockModel {
     return ProductGridBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       subtitle: _optionalString(data, 'subtitle'),
       items: _parseProducts(data),
@@ -238,6 +287,7 @@ abstract final class HomeBlockModel {
     return SectionHeaderBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _requiredString(data, 'title'),
       subtitle: _optionalString(data, 'subtitle'),
       actionLabel: _optionalString(data, 'action_label'),
@@ -255,6 +305,7 @@ abstract final class HomeBlockModel {
     return BrandCarouselBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       items: items.map(_parseBrandItem).toList(growable: false),
       itemWidth: _positiveDouble(data, 'item_width', fallback: 92),
@@ -278,6 +329,7 @@ abstract final class HomeBlockModel {
     return PromoStripBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       text: _requiredString(data, 'text'),
       backgroundColor: _hexColor(data, 'background_color', fallback: '#4f9f8f'),
       textColor: _hexColor(data, 'text_color', fallback: '#ffffff'),
@@ -293,6 +345,7 @@ abstract final class HomeBlockModel {
     return CouponBannerBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       description: _optionalString(data, 'description'),
       couponCode: _optionalString(data, 'coupon_code'),
@@ -308,6 +361,7 @@ abstract final class HomeBlockModel {
     return CountdownBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
       endsAt: _optionalDateTime(data, 'ends_at'),
       expiredText: _optionalString(data, 'expired_text') ?? 'Offer ended',
@@ -322,6 +376,7 @@ abstract final class HomeBlockModel {
     return VideoBannerBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       videoUrl: _requiredUrl(data, 'video_url'),
       posterUrl: _optionalUrl(data, 'poster_url'),
       aspectRatio: _boundedDouble(
@@ -364,6 +419,7 @@ abstract final class HomeBlockModel {
     return TextBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       title: title,
       content: content,
       alignment: alignment,
@@ -380,6 +436,7 @@ abstract final class HomeBlockModel {
     return DividerBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       color: _hexColor(data, 'color', fallback: '#e5e7eb'),
       thickness: _boundedDouble(
         data,
@@ -406,6 +463,7 @@ abstract final class HomeBlockModel {
     return SpacerBlock(
       id: id,
       enabled: enabled,
+      presentation: _parsePresentation(data),
       height: _nonNegativeDouble(data, 'height', fallback: 16),
     );
   }
@@ -424,6 +482,71 @@ abstract final class HomeBlockModel {
     return HomeAction(
       type: _requiredString(json, 'type'),
       value: _requiredString(json, 'value'),
+    );
+  }
+
+  static HomeBlockPresentation _parsePresentation(
+    Map<String, dynamic> data,
+  ) {
+    final Map<String, dynamic> presentation = data['presentation'] is Map
+        ? Map<String, dynamic>.from(data['presentation'] as Map)
+        : const <String, dynamic>{};
+
+    return HomeBlockPresentation(
+      marginTop: _boundedDouble(
+        presentation,
+        'margin_top',
+        fallback: 0,
+        minimum: 0,
+        maximum: 80,
+      ),
+      marginBottom: _boundedDouble(
+        presentation,
+        'margin_bottom',
+        fallback: 0,
+        minimum: 0,
+        maximum: 80,
+      ),
+      marginHorizontal: _boundedDouble(
+        presentation,
+        'margin_horizontal',
+        fallback: 0,
+        minimum: 0,
+        maximum: 40,
+      ),
+      paddingVertical: _boundedDouble(
+        presentation,
+        'padding_vertical',
+        fallback: 0,
+        minimum: 0,
+        maximum: 40,
+      ),
+      paddingHorizontal: _boundedDouble(
+        presentation,
+        'padding_horizontal',
+        fallback: 0,
+        minimum: 0,
+        maximum: 40,
+      ),
+      backgroundColor: _optionalHexColor(
+        presentation,
+        'background_color',
+      ),
+      borderRadius: _boundedDouble(
+        presentation,
+        'block_radius',
+        fallback: 0,
+        minimum: 0,
+        maximum: 50,
+      ),
+      contentScale: _boundedDouble(
+            presentation,
+            'content_scale',
+            fallback: 100,
+            minimum: 80,
+            maximum: 120,
+          ) /
+          100,
     );
   }
 

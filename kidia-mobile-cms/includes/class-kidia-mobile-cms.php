@@ -24,6 +24,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-layout-store.p
 */
 
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-hero-slider-block.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-app-header-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-image-banner-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-product-carousel-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-brand-carousel-block.php';
@@ -56,6 +57,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'admin/framework/class-editor.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-admin.php';
 
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-hero-slider.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-app-header.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-image-banner.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-product-carousel.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-brand-carousel.php';
@@ -125,6 +127,10 @@ final class Kidia_Mobile_CMS {
 	private function register_blocks(): void {
 
 		Kidia_Mobile_Block_Registry::register(
+			new Kidia_Mobile_App_Header_Block()
+		);
+
+		Kidia_Mobile_Block_Registry::register(
 			new Kidia_Mobile_Hero_Slider_Block()
 		);
 
@@ -185,6 +191,8 @@ final class Kidia_Mobile_CMS {
 	private function register_admin_modules(): void {
 
 		(new Kidia_Mobile_CMS_Admin())->register();
+
+		(new Kidia_Mobile_CMS_App_Header())->register();
 
 		(new Kidia_Mobile_CMS_Hero_Slider())->register();
 
