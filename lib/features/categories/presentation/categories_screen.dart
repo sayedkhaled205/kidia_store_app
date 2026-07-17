@@ -316,7 +316,7 @@ class _CategoryTopActions extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          CartIconButton(onPressed: () => context.go('/cart'), iconSize: 33),
+          CartIconButton(onPressed: () => context.go('/cart')),
         ],
       ),
     );

@@ -25,5 +25,17 @@ void main() {
       find.byIcon(Icons.shopping_bag_outlined),
     );
     expect(icon.size, 26.4);
+    final Padding edgePadding = tester.widget<Padding>(
+      find
+          .descendant(
+            of: find.byType(CartIconButton),
+            matching: find.byType(Padding),
+          )
+          .first,
+    );
+    expect(
+      edgePadding.padding,
+      const EdgeInsetsDirectional.only(end: CartIconButton.edgeInset),
+    );
   });
 }

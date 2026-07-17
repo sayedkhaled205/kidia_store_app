@@ -128,6 +128,10 @@ class AccountScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
+    if (action.id == 'orders') {
+      await context.push<void>('/orders');
+      return;
+    }
     final String label = action.label(isArabic);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
