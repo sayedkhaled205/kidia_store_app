@@ -30,7 +30,8 @@ void main() {
     expect(find.text('Soft & comfortable.'), findsNothing);
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
     expect(find.text('Kidia'), findsOneWidget);
-    expect(find.text('Product'), findsOneWidget);
+    expect(find.text('Product'), findsNothing);
+    expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CommerceAppBar), findsOneWidget);
     final AppBar appBar = tester.widget<AppBar>(
       find.descendant(

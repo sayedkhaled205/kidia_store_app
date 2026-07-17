@@ -52,17 +52,22 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
     required String alternatePhone,
   }) async {
     try {
+      final Map<String, String> values = <String, String>{
+        'first_name': firstName.trim(),
+        'last_name': lastName.trim(),
+        'display_name': displayName.trim(),
+        'email': email.trim(),
+        'phone': phone.trim(),
+        'alternate_phone': alternatePhone.trim(),
+      };
       final Map<String, dynamic> response = await transport.updateProfile(
-        <String, String>{
-          'first_name': firstName.trim(),
-          'last_name': lastName.trim(),
-          'display_name': displayName.trim(),
-          'email': email.trim(),
-          'phone': phone.trim(),
-          'alternate_phone': alternatePhone.trim(),
-        },
+        values,
       );
-      return _profile(_object(response['profile'], 'profile'));
+      final CustomerProfile saved = _profile(
+        _object(response['profile'], 'profile'),
+      );
+      _verifyProfileWrite(values, saved);
+      return saved;
     } on CustomerAccountTransportException catch (error, stackTrace) {
       Error.throwWithStackTrace(_transportFailure(error), stackTrace);
     } on FormatException catch (error, stackTrace) {
@@ -83,18 +88,23 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       final String prefix = address.type == CustomerAddressType.billing
           ? 'billing'
           : 'shipping';
+      final Map<String, String> values = <String, String>{
+        ...address.values,
+        // The store deliberately disables postcode. Clear an old saved
+        // value without ever showing or requiring this field in the app.
+        '${prefix}_postcode': '',
+      };
       final Map<String, dynamic> response = await transport.updateAddress(
         address.type,
-        <String, String>{
-          ...address.values,
-          // The store deliberately disables postcode. Clear an old saved
-          // value without ever showing or requiring this field in the app.
-          '${prefix}_postcode': '',
-        },
+        values,
       );
+      final Map<String, String> savedValues = _stringMap(
+        _object(response['address'], 'address'),
+      );
+      _verifyAddressWrite(prefix, values, savedValues);
       return CustomerAddress(
         type: address.type,
-        values: _stringMap(_object(response['address'], 'address')),
+        values: savedValues,
       );
     } on CustomerAccountTransportException catch (error, stackTrace) {
       Error.throwWithStackTrace(_transportFailure(error), stackTrace);
@@ -154,6 +164,74 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       phone: _text(json['phone']),
       alternatePhone: _text(json['alternate_phone']),
     );
+  }
+
+  void _verifyProfileWrite(
+    Map<String, String> expected,
+    CustomerProfile saved,
+  ) {
+    final Map<String, String> actual = <String, String>{
+      'first_name': saved.firstName,
+      'last_name': saved.lastName,
+      'display_name': saved.displayName,
+      'email': saved.email,
+      'phone': saved.phone,
+      'alternate_phone': saved.alternatePhone,
+    };
+    for (final MapEntry<String, String> entry in expected.entries) {
+      if (!_samePersistedValue(entry.key, entry.value, actual[entry.key] ?? '')) {
+        throw FormatException(
+          'The store did not persist customer profile field ${entry.key}.',
+        );
+      }
+    }
+  }
+
+  void _verifyAddressWrite(
+    String prefix,
+    Map<String, String> expected,
+    Map<String, String> saved,
+  ) {
+    final String keyPrefix = '${prefix}_';
+    for (final MapEntry<String, String> entry in expected.entries) {
+      if (!entry.key.startsWith(keyPrefix)) {
+        continue;
+      }
+      if (!saved.containsKey(entry.key) ||
+          !_samePersistedValue(
+            entry.key.substring(keyPrefix.length),
+            entry.value,
+            saved[entry.key] ?? '',
+          )) {
+        throw FormatException(
+          'The store did not persist customer address field ${entry.key}.',
+        );
+      }
+    }
+  }
+
+  bool _samePersistedValue(String key, String expected, String actual) {
+    if (key == 'phone' || key == 'alternate_phone') {
+      return _phoneFingerprint(expected) == _phoneFingerprint(actual);
+    }
+    if (key == 'email') {
+      return expected.trim().toLowerCase() == actual.trim().toLowerCase();
+    }
+    if (key == 'country') {
+      return expected.trim().toUpperCase() == actual.trim().toUpperCase();
+    }
+    return expected.trim() == actual.trim();
+  }
+
+  String _phoneFingerprint(String value) {
+    String digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('00')) {
+      digits = digits.substring(2);
+    }
+    if (digits.startsWith('201') && digits.length == 12) {
+      return '0${digits.substring(2)}';
+    }
+    return digits;
   }
 
   List<CustomerAddressField> _addressFields(

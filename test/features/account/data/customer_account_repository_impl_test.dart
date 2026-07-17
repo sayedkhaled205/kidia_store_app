@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/account/data/network/customer_account_api_transport.dart';
 import 'package:kidia_store_app/features/account/data/repositories/customer_account_repository_impl.dart';
 import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
 
 void main() {
   test('parses profile, addresses, support and hides postcode', () async {
@@ -52,9 +53,55 @@ void main() {
     expect(transport.addressType, CustomerAddressType.shipping);
     expect(address.valueFor('shipping_address_1'), '2 New Street');
   });
+
+  test('rejects update responses that were not persisted', () async {
+    final CustomerAccountRepositoryImpl repository =
+        CustomerAccountRepositoryImpl(
+          _FakeAccountTransport(persistWrites: false),
+        );
+
+    await expectLater(
+      repository.updateProfile(
+        firstName: 'Updated',
+        lastName: 'Customer',
+        displayName: 'Updated Customer',
+        email: 'updated@example.com',
+        phone: '01000000000',
+        alternatePhone: '01100000000',
+      ),
+      throwsA(
+        isA<CustomerAccountRepositoryException>().having(
+          (CustomerAccountRepositoryException error) => error.kind,
+          'kind',
+          CustomerAccountFailureKind.invalidResponse,
+        ),
+      ),
+    );
+
+    await expectLater(
+      repository.updateAddress(
+        CustomerAddress(
+          type: CustomerAddressType.shipping,
+          values: const <String, String>{
+            'shipping_address_1': '2 New Street',
+          },
+        ),
+      ),
+      throwsA(
+        isA<CustomerAccountRepositoryException>().having(
+          (CustomerAccountRepositoryException error) => error.kind,
+          'kind',
+          CustomerAccountFailureKind.invalidResponse,
+        ),
+      ),
+    );
+  });
 }
 
 class _FakeAccountTransport implements CustomerAccountApiTransport {
+  _FakeAccountTransport({this.persistWrites = true});
+
+  final bool persistWrites;
   Map<String, String>? profileValues;
   CustomerAddressType? addressType;
 
@@ -113,15 +160,18 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
   @override
   Future<Map<String, dynamic>> updateProfile(Map<String, String> values) async {
     profileValues = values;
+    final Map<String, String> stored = persistWrites
+        ? values
+        : <String, String>{...values, 'display_name': 'Old name'};
     return <String, dynamic>{
       'profile': <String, dynamic>{
         'id': 7,
-        'email': values['email'],
-        'first_name': values['first_name'],
-        'last_name': values['last_name'],
-        'display_name': values['display_name'],
-        'phone': values['phone'],
-        'alternate_phone': values['alternate_phone'],
+        'email': stored['email'],
+        'first_name': stored['first_name'],
+        'last_name': stored['last_name'],
+        'display_name': stored['display_name'],
+        'phone': stored['phone'],
+        'alternate_phone': stored['alternate_phone'],
       },
     };
   }
@@ -132,6 +182,13 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
     Map<String, String> values,
   ) async {
     addressType = type;
-    return <String, dynamic>{'address': values};
+    return <String, dynamic>{
+      'address': persistWrites
+          ? values
+          : <String, String>{
+              ...values,
+              'shipping_address_1': 'Old address',
+            },
+    };
   }
 }

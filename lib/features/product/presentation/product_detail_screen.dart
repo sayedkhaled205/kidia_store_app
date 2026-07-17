@@ -91,10 +91,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
     return Scaffold(
-      appBar: CommerceAppBar(
-        title: copy.product,
-        actions: _buildActions(copy),
-      ),
+      appBar: CommerceAppBar(actions: _buildActions(copy)),
       body: _buildBody(copy),
       bottomNavigationBar:
           _controller.status == ProductDetailStatus.success &&
@@ -932,7 +929,6 @@ class _ProductCopy {
     arabic: Localizations.localeOf(context).languageCode.toLowerCase() == 'ar',
   );
 
-  String get product => arabic ? 'المنتج' : 'Product';
   String get share => arabic ? 'مشاركة' : 'Share';
   String get save => arabic ? 'حفظ' : 'Save';
   String get sku => arabic ? 'رمز المنتج' : 'SKU';

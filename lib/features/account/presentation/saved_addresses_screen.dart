@@ -6,6 +6,7 @@ import 'package:kidia_store_app/core/theme/kidia_radius.dart';
 import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
 import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
 import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:kidia_store_app/features/account/presentation/customer_phone_format.dart';
 import 'package:kidia_store_app/features/account/presentation/providers/customer_account_providers.dart';
 import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 
@@ -206,7 +207,7 @@ class _AddressCard extends StatelessWidget {
       value('address_1'),
       value('address_2'),
       area,
-      value('phone'),
+      localEgyptianPhoneNumber(value('phone')),
       value('email'),
     ].where((String line) => line.isNotEmpty).toList(growable: false);
   }
@@ -239,6 +240,11 @@ class _AddressEditorState extends State<_AddressEditor> {
   void initState() {
     super.initState();
     _values = <String, String>{...widget.address.values};
+    for (final String key in _values.keys.toList(growable: false)) {
+      if (key.endsWith('_phone')) {
+        _values[key] = localEgyptianPhoneNumber(_values[key] ?? '');
+      }
+    }
     for (final CustomerAddressField field in widget.fields) {
       if ((_values[field.key]?.trim() ?? '').isEmpty &&
           field.defaultValue.trim().isNotEmpty) {
