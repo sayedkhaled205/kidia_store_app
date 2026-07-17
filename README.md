@@ -59,7 +59,7 @@ does not store or transmit raw card details.
 plugin only after backing up the site, then verify Library, Home Builder,
 Editor, and `/wp-json/kidia-mobile/v1/home-layout` on a staging site. App
 authentication, customer orders, saved addresses, profile editing, and
-customer service require plugin version 1.9.3 or newer and an HTTPS store.
+customer service require plugin version 1.10.0 or newer and an HTTPS store.
 
 The app never embeds WooCommerce API secrets. The companion plugin validates
 the website email/password, stores only hashed mobile-session tokens in user
