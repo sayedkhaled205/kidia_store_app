@@ -204,7 +204,7 @@ void main() {
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     final Finder cart = find.byKey(const Key('product-cart-button'));
     final Finder heart = find.byKey(const Key('product-wishlist-button'));
-    expect(tester.getCenter(cart).dx, greaterThan(tester.getCenter(heart).dx));
+    expect(tester.getCenter(cart).dx, lessThan(tester.getCenter(heart).dx));
     expect(tester.widget<CartIconButton>(cart).endInset, 0);
   });
 }

@@ -24,6 +24,14 @@ $GLOBALS['kidia_users']      = array(
 		'password'     => 'correct-password',
 		'display_name' => 'Test Customer',
 		'roles'        => array( 'customer' ),
+		'allcaps'      => array(),
+	),
+	8 => array(
+		'email'        => 'manager@example.com',
+		'password'     => 'manager-password',
+		'display_name' => 'Store Manager',
+		'roles'        => array( 'customer', 'shop_manager' ),
+		'allcaps'      => array( 'manage_woocommerce' => true ),
 	),
 );
 
@@ -102,12 +110,14 @@ class WP_User {
 	public string $user_email;
 	public string $display_name;
 	public array $roles;
+	public array $allcaps;
 
 	public function __construct( int $id, array $record ) {
 		$this->ID           = $id;
 		$this->user_email   = (string) $record['email'];
 		$this->display_name = (string) $record['display_name'];
 		$this->roles        = (array) $record['roles'];
+		$this->allcaps      = (array) ( $record['allcaps'] ?? array() );
 	}
 }
 
@@ -260,6 +270,7 @@ function wc_create_new_customer( string $email, string $username = '', string $p
 		'password'     => $password,
 		'display_name' => $email,
 		'roles'        => array( 'customer' ),
+		'allcaps'      => array(),
 	);
 	return $id;
 }
@@ -279,7 +290,7 @@ function update_user_meta( int $user_id, string $key, $value ): bool {
 
 function user_can( WP_User $user, string $capability ): bool {
 	unset( $user, $capability );
-	return false;
+	throw new RuntimeException( 'Session resolution must not call capability filters.' );
 }
 
 function apply_filters( string $hook, $value, ...$args ) {
@@ -320,6 +331,16 @@ $token = (string) $login->data['token'];
 kidia_auth_assert( 1 === preg_match( '/^kma1\.7\.[a-f0-9]{64}$/', $token ), 'Session token format must be opaque and strong.' );
 $stored_sessions = $GLOBALS['kidia_user_meta'][7]['_kidia_mobile_customer_sessions_v1'];
 kidia_auth_assert( false === str_contains( serialize( $stored_sessions ), $token ), 'Only the session hash may be stored.' );
+
+$elevated = $endpoint->login(
+	new WP_REST_Request(
+		array(
+			'email'    => 'manager@example.com',
+			'password' => 'manager-password',
+		)
+	)
+);
+kidia_auth_assert( $elevated instanceof WP_Error, 'Elevated store accounts must not receive customer sessions.' );
 
 $profile = $endpoint->current_customer(
 	new WP_REST_Request( array(), array( 'X-Kidia-Session' => $token ) )
