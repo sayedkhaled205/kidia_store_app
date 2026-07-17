@@ -51,7 +51,7 @@ void main() {
     expect(find.text('Dresses'), findsNothing);
     expect(
       tester.getSize(find.byKey(const Key('categories-search-action'))).height,
-      lessThan(50),
+      lessThan(40),
     );
 
     await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));

@@ -71,7 +71,7 @@ void main() {
     }
   });
 
-  testWidgets('signed-in orders action opens the real orders destination', (
+  testWidgets('signed-in account actions open their real destinations', (
     WidgetTester tester,
   ) async {
     final GoRouter router = GoRouter(
@@ -86,6 +86,21 @@ void main() {
           path: '/orders',
           builder: (BuildContext context, GoRouterState state) =>
               const Scaffold(body: SizedBox(key: Key('orders-destination'))),
+        ),
+        GoRoute(
+          path: '/addresses',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: SizedBox(key: Key('addresses-destination'))),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: SizedBox(key: Key('profile-destination'))),
+        ),
+        GoRoute(
+          path: '/support',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: SizedBox(key: Key('support-destination'))),
         ),
         GoRoute(
           path: '/cart',
@@ -110,10 +125,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('account-action-orders')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('orders-destination')), findsOneWidget);
+    final Map<Key, Key> destinations = <Key, Key>{
+      const Key('account-action-orders'): const Key('orders-destination'),
+      const Key('account-action-addresses'): const Key('addresses-destination'),
+      const Key('account-action-profile'): const Key('profile-destination'),
+      const Key('account-action-support'): const Key('support-destination'),
+    };
+    for (final MapEntry<Key, Key> destination in destinations.entries) {
+      router.go('/account');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(destination.key));
+      await tester.pumpAndSettle();
+      expect(find.byKey(destination.value), findsOneWidget);
+    }
     expect(find.textContaining('الخطوة التالية'), findsNothing);
   });
 }

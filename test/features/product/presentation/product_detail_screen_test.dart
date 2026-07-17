@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
@@ -189,6 +190,8 @@ void main() {
         home: ProductDetailScreen(
           productId: simpleProduct.id,
           repository: ProductFakeCatalogRepository(),
+          isWishlisted: (int productId) async => false,
+          onWishlistToggle: (product) async => true,
         ),
       ),
     );
@@ -199,6 +202,10 @@ void main() {
     );
     expect(Directionality.of(productContext), TextDirection.rtl);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
+    final Finder cart = find.byKey(const Key('product-cart-button'));
+    final Finder heart = find.byKey(const Key('product-wishlist-button'));
+    expect(tester.getCenter(cart).dx, greaterThan(tester.getCenter(heart).dx));
+    expect(tester.widget<CartIconButton>(cart).endInset, 0);
   });
 }
 

@@ -40,8 +40,8 @@ The APK is written to `build/app/outputs/flutter-apk/app-debug.apk`.
   secrets
 - Secure, store-scoped mobile sessions and mandatory authentication before
   checkout, with orders attached to the signed-in WooCommerce customer
-- Native customer order history backed by each signed-in customer's own
-  WooCommerce orders
+- Native customer order history, WooCommerce-controlled cancellation, saved
+  addresses, profile editing, and store-controlled customer-service details
 - Arabic/English direction support and responsive mobile layouts
 
 ## Store-specific integrations
@@ -58,8 +58,8 @@ does not store or transmit raw card details.
 `kidia-mobile-cms.zip` is the installable plugin archive. Replace the installed
 plugin only after backing up the site, then verify Library, Home Builder,
 Editor, and `/wp-json/kidia-mobile/v1/home-layout` on a staging site. App
-authentication and customer order history require plugin version 1.8.0 or
-newer and an HTTPS store.
+authentication, customer orders, saved addresses, profile editing, and
+customer service require plugin version 1.9.0 or newer and an HTTPS store.
 
 The app never embeds WooCommerce API secrets. The companion plugin validates
 the website email/password, stores only hashed mobile-session tokens in user

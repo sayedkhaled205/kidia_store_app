@@ -12,9 +12,11 @@ define( 'ABSPATH', __DIR__ );
 $GLOBALS['kidia_routes']          = array();
 $GLOBALS['kidia_current_user_id'] = 7;
 $GLOBALS['kidia_order_query']     = array();
+$GLOBALS['kidia_owned_order']     = null;
 
 class WP_REST_Server {
 	public const READABLE = 'GET';
+	public const CREATABLE = 'POST';
 }
 
 class WP_REST_Request {
@@ -129,6 +131,11 @@ final class Kidia_Test_Order {
 			)
 		);
 	}
+
+	public function update_status( string $status, string $note = '' ): void {
+		unset( $note );
+		$this->status = $status;
+	}
 }
 
 function add_action( string $hook, $callback ): void {
@@ -181,21 +188,40 @@ function wc_get_order_status_name( string $status ): string {
 	return 'processing' === $status ? 'Processing' : ucfirst( $status );
 }
 
+function wc_get_account_orders_actions( Kidia_Test_Order $order ): array {
+	return in_array( $order->get_status(), array( 'pending', 'processing' ), true )
+		? array( 'cancel' => array( 'name' => 'Cancel' ) )
+		: array();
+}
+
+function apply_filters( string $hook, $value ) {
+	unset( $hook );
+	return $value;
+}
+
+function wc_get_order( int $order_id ) {
+	$order = $GLOBALS['kidia_owned_order'];
+	return $order instanceof Kidia_Test_Order && $order->get_id() === $order_id
+		? $order
+		: false;
+}
+
 function wc_get_orders( array $args ): object {
 	$GLOBALS['kidia_order_query'] = $args;
+	$GLOBALS['kidia_owned_order'] = new Kidia_Test_Order(
+		101,
+		7,
+		'101',
+		'processing',
+		'1320',
+		array(
+			new Kidia_Test_Order_Item( 'Kids chair', 1 ),
+			new Kidia_Test_Order_Item( 'Toy', 2 ),
+		)
+	);
 	return (object) array(
 		'orders'        => array(
-			new Kidia_Test_Order(
-				101,
-				7,
-				'101',
-				'processing',
-				'1320',
-				array(
-					new Kidia_Test_Order_Item( 'Kids chair', 1 ),
-					new Kidia_Test_Order_Item( 'Toy', 2 ),
-				)
-			),
+			$GLOBALS['kidia_owned_order'],
 			// The endpoint must still reject a mismatched object even if a bad
 			// extension ever injects it into WooCommerce's customer query.
 			new Kidia_Test_Order( 202, 8, '202', 'completed', '99', array() ),
@@ -215,9 +241,11 @@ require dirname( __DIR__ ) . '/api/class-customer-orders-endpoint.php';
 
 $endpoint = new Kidia_Mobile_CMS_Customer_Orders_Endpoint();
 $endpoint->register_routes();
-kidia_orders_assert( 1 === count( $GLOBALS['kidia_routes'] ), 'The customer orders route must be registered.' );
+kidia_orders_assert( 2 === count( $GLOBALS['kidia_routes'] ), 'The history and cancellation routes must be registered.' );
 $route = $GLOBALS['kidia_routes']['woo-mobile/v1/customer/orders'];
 kidia_orders_assert( WP_REST_Server::READABLE === $route['methods'], 'Order history must be read-only.' );
+$cancel_route = $GLOBALS['kidia_routes']['woo-mobile/v1/customer/orders/(?P<id>\d+)/cancel'];
+kidia_orders_assert( WP_REST_Server::CREATABLE === $cancel_route['methods'], 'Order cancellation must use POST.' );
 
 $GLOBALS['kidia_current_user_id'] = 0;
 $unauthorized = $endpoint->authenticate_customer( new WP_REST_Request() );
@@ -234,7 +262,7 @@ $response = $endpoint->get_orders(
 	)
 );
 kidia_orders_assert( $response instanceof WP_REST_Response, 'A customer must receive an order history response.' );
-kidia_orders_assert( 7 === $GLOBALS['kidia_order_query']['customer_id'], 'WooCommerce must be queried with the authenticated customer id.' );
+kidia_orders_assert( 7 === $GLOBALS['kidia_order_query']['customer'], 'WooCommerce must mirror the My Account customer query.' );
 kidia_orders_assert( true === $GLOBALS['kidia_order_query']['paginate'], 'Order history must use WooCommerce pagination.' );
 kidia_orders_assert( 1 === count( $response->data['orders'] ), 'Only the current customer order may be returned.' );
 $order = $response->data['orders'][0];
@@ -244,7 +272,13 @@ kidia_orders_assert( str_starts_with( $order['date_created'], '2026-07-16T20:30:
 kidia_orders_assert( 2 === $order['items'][1]['quantity'], 'Line-item quantities must be included.' );
 kidia_orders_assert( ! isset( $order['billing_address'], $order['shipping_address'] ), 'Private addresses must not be exposed.' );
 kidia_orders_assert( str_contains( $order['total_display'], 'EGP' ), 'The WooCommerce-formatted total must be included.' );
+kidia_orders_assert( true === $order['can_cancel'], 'The API must mirror WooCommerce My Account cancellation actions.' );
 kidia_orders_assert( str_contains( $response->headers['Cache-Control'], 'no-store' ), 'Customer order history must never be cached.' );
 kidia_orders_assert( '1' === $response->headers['X-WP-TotalPages'], 'Pagination headers must match the payload.' );
+
+$cancelled = $endpoint->cancel_order( new WP_REST_Request( array( 'id' => 101 ) ) );
+kidia_orders_assert( $cancelled instanceof WP_REST_Response, 'An owned cancellable order must be cancelled.' );
+kidia_orders_assert( 'cancelled' === $cancelled->data['order']['status'], 'The authoritative cancelled status must be returned.' );
+kidia_orders_assert( false === $cancelled->data['order']['can_cancel'], 'A cancelled order must no longer expose cancellation.' );
 
 fwrite( STDOUT, "Customer orders endpoint contract test passed.\n" );

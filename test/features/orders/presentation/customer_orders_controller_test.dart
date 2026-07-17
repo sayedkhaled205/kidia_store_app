@@ -27,6 +27,25 @@ void main() {
     ]);
     controller.dispose();
   });
+
+  test('replaces a cancellable order with the server result', () async {
+    final _CancellableOrdersRepository repository =
+        _CancellableOrdersRepository();
+    final CustomerOrdersController controller = CustomerOrdersController(
+      repository,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.loadInitial();
+    final CustomerOrder order = controller.state.items.single;
+    expect(order.canCancel, isTrue);
+
+    expect(await controller.cancelOrder(order), isTrue);
+    expect(repository.cancelledOrderId, 9);
+    expect(controller.state.items.single.status, 'cancelled');
+    expect(controller.state.items.single.canCancel, isFalse);
+    expect(controller.state.cancellingOrderIds, isEmpty);
+  });
 }
 
 class _FakeCustomerOrdersRepository implements CustomerOrdersRepository {
@@ -81,6 +100,50 @@ class _FakeCustomerOrdersRepository implements CustomerOrdersRepository {
       perPage: perPage,
       totalItems: 3,
       totalPages: 2,
+    );
+  }
+}
+
+class _CancellableOrdersRepository
+    implements CustomerOrdersRepository, CustomerOrderCancellationRepository {
+  int? cancelledOrderId;
+
+  @override
+  Future<CustomerOrderPage> getOrders({
+    required int page,
+    required int perPage,
+  }) async {
+    return CustomerOrderPage(
+      items: const <CustomerOrder>[
+        CustomerOrder(
+          id: 9,
+          number: '9',
+          status: 'processing',
+          statusName: 'Processing',
+          totalDisplay: 'EGP 90',
+          itemCount: 1,
+          items: <CustomerOrderItem>[],
+          canCancel: true,
+        ),
+      ],
+      page: 1,
+      perPage: perPage,
+      totalItems: 1,
+      totalPages: 1,
+    );
+  }
+
+  @override
+  Future<CustomerOrder> cancelOrder(int orderId) async {
+    cancelledOrderId = orderId;
+    return const CustomerOrder(
+      id: 9,
+      number: '9',
+      status: 'cancelled',
+      statusName: 'Cancelled',
+      totalDisplay: 'EGP 90',
+      itemCount: 1,
+      items: <CustomerOrderItem>[],
     );
   }
 }

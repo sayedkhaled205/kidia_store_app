@@ -85,7 +85,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
               padding: const EdgeInsetsDirectional.only(end: 16),
               child: Center(
                 child: Text(
-                  copy.itemCount(_controller.length),
+                  '${_controller.length}',
                   key: const Key('wishlist-count'),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
@@ -575,10 +575,4 @@ class _WishlistCopy {
   String get outOfStock => arabic ? 'غير متوفر' : 'Out of stock';
   String get dismiss => arabic ? 'إغلاق' : 'Dismiss';
 
-  String itemCount(int count) {
-    if (arabic) {
-      return '$count منتج';
-    }
-    return count == 1 ? '1 item' : '$count items';
-  }
 }

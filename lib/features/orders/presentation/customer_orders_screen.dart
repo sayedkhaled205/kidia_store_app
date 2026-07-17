@@ -42,6 +42,47 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
     }
   }
 
+  Future<void> _cancelOrder(
+    CustomerOrder order,
+    CustomerOrdersController controller,
+    _OrdersCopy copy,
+  ) async {
+    final bool confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: Text(copy.cancelTitle),
+            content: Text(copy.cancelConfirmation(order.number)),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(copy.keepOrder),
+              ),
+              FilledButton(
+                key: const Key('confirm-cancel-order'),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(copy.confirmCancel),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    final bool cancelled = await controller.cancelOrder(order);
+    if (!mounted) {
+      return;
+    }
+    final String message = cancelled
+        ? copy.cancelled
+        : copy.cancelError(controller.state.mutationError);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final CustomerOrdersController controller = ref.watch(
@@ -62,6 +103,8 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
           controller: controller,
           scrollController: _scrollController,
           copy: copy,
+          onCancel: (CustomerOrder order) =>
+              _cancelOrder(order, controller, copy),
         ),
       ),
     );
@@ -73,11 +116,13 @@ class _OrdersContent extends StatelessWidget {
     required this.controller,
     required this.scrollController,
     required this.copy,
+    required this.onCancel,
   });
 
   final CustomerOrdersController controller;
   final ScrollController scrollController;
   final _OrdersCopy copy;
+  final ValueChanged<CustomerOrder> onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +187,8 @@ class _OrdersContent extends StatelessWidget {
                     key: ValueKey<int>(order.id),
                     order: order,
                     copy: copy,
+                    isCancelling: controller.isCancelling(order.id),
+                    onCancel: () => onCancel(order),
                   );
                 },
               ),
@@ -161,10 +208,18 @@ class _OrdersContent extends StatelessWidget {
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.order, required this.copy, super.key});
+  const _OrderCard({
+    required this.order,
+    required this.copy,
+    required this.isCancelling,
+    required this.onCancel,
+    super.key,
+  });
 
   final CustomerOrder order;
   final _OrdersCopy copy;
+  final bool isCancelling;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +265,7 @@ class _OrderCard extends StatelessWidget {
                 const SizedBox(width: KidiaSpacing.sm),
                 _OrderStatusChip(
                   status: order.status,
-                  label: order.statusName,
+                  label: copy.status(order),
                 ),
               ],
             ),
@@ -290,6 +345,22 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (order.canCancel) ...<Widget>[
+              const SizedBox(height: KidiaSpacing.sm),
+              OutlinedButton.icon(
+                key: Key('cancel-customer-order-${order.id}'),
+                onPressed: isCancelling ? null : onCancel,
+                icon: isCancelling
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.close_rounded),
+                label: Text(
+                  isCancelling ? copy.cancelling : copy.cancelOrder,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -479,6 +550,14 @@ class _OrdersCopy {
       : 'Orders placed with this account will appear here automatically.';
   String get errorTitle =>
       arabic ? 'تعذر تحميل طلباتك' : 'Could not load your orders';
+  String get cancelOrder => arabic ? 'إلغاء الطلب' : 'Cancel order';
+  String get cancelling => arabic ? 'جارٍ إلغاء الطلب…' : 'Cancelling…';
+  String get cancelTitle => arabic ? 'إلغاء الطلب' : 'Cancel order';
+  String get keepOrder => arabic ? 'الاحتفاظ بالطلب' : 'Keep order';
+  String get confirmCancel => arabic ? 'تأكيد الإلغاء' : 'Confirm cancellation';
+  String get cancelled => arabic
+      ? 'تم إلغاء الطلب بنجاح.'
+      : 'The order was cancelled successfully.';
 
   String errorMessage(Object error) {
     if (error is CustomerOrdersRepositoryException) {
@@ -507,6 +586,38 @@ class _OrdersCopy {
       arabic ? '$count منتج' : '$count ${count == 1 ? 'item' : 'items'}';
   String moreItems(int count) =>
       arabic ? '+ $count منتجات أخرى' : '+ $count more items';
+
+  String cancelConfirmation(String number) => arabic
+      ? 'هل تريد إلغاء الطلب #$number؟ لا يمكن التراجع بعد التأكيد.'
+      : 'Cancel order #$number? This cannot be undone after confirmation.';
+
+  String cancelError(Object? error) {
+    if (error is CustomerOrdersRepositoryException &&
+        error.statusCode == 409) {
+      return arabic
+          ? 'لم يعد هذا الطلب متاحًا للإلغاء.'
+          : 'This order can no longer be cancelled.';
+    }
+    return arabic
+        ? 'تعذر إلغاء الطلب الآن. حاول مرة أخرى.'
+        : 'Could not cancel the order. Please try again.';
+  }
+
+  String status(CustomerOrder order) {
+    if (!arabic) {
+      return order.statusName;
+    }
+    return switch (order.status) {
+      'pending' => 'بانتظار الدفع',
+      'processing' => 'قيد التنفيذ',
+      'on-hold' => 'قيد الانتظار',
+      'completed' => 'مكتمل',
+      'cancelled' => 'ملغي',
+      'refunded' => 'مسترد',
+      'failed' => 'فشل',
+      _ => order.statusName,
+    };
+  }
 
   String date(DateTime value) {
     final DateTime local = value.toLocal();

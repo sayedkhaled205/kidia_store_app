@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/account/presentation/account_screen.dart';
+import '../features/account/presentation/customer_profile_screen.dart';
+import '../features/account/presentation/customer_support_screen.dart';
+import '../features/account/presentation/saved_addresses_screen.dart';
 import '../features/auth/domain/entities/auth_session.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
@@ -323,6 +326,57 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
               return const AuthScreen(popOnSuccess: false);
             }
             return const CustomerOrdersScreen();
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/addresses',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, child) {
+            final AsyncValue<AuthSession?> authState = ref.watch(
+              authControllerProvider,
+            );
+            if (authState.isLoading) {
+              return const _ProtectedAccountLoading();
+            }
+            if (authState.asData?.value == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
+            return const SavedAddressesScreen();
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, child) {
+            final AsyncValue<AuthSession?> authState = ref.watch(
+              authControllerProvider,
+            );
+            if (authState.isLoading) {
+              return const _ProtectedAccountLoading();
+            }
+            if (authState.asData?.value == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
+            return const CustomerProfileScreen();
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/support',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, child) {
+            final AsyncValue<AuthSession?> authState = ref.watch(
+              authControllerProvider,
+            );
+            if (authState.isLoading) {
+              return const _ProtectedAccountLoading();
+            }
+            if (authState.asData?.value == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
+            return const CustomerSupportScreen();
           },
         ),
       ),

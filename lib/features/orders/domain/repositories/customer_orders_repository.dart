@@ -7,6 +7,10 @@ abstract interface class CustomerOrdersRepository {
   });
 }
 
+abstract interface class CustomerOrderCancellationRepository {
+  Future<CustomerOrder> cancelOrder(int orderId);
+}
+
 enum CustomerOrdersFailureKind {
   configuration,
   unauthorized,

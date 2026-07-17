@@ -60,7 +60,8 @@ void main() {
     expect(find.byKey(const Key('wishlist-grid')), findsOneWidget);
     expect(find.text('Everyday Jacket'), findsOneWidget);
     expect(find.text(r'$85.00'), findsOneWidget);
-    expect(find.text('1 item'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1 item'), findsNothing);
     expect(find.byType(CommerceAppBar), findsOneWidget);
     final AppBar appBar = tester.widget<AppBar>(
       find.descendant(

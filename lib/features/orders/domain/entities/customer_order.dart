@@ -15,6 +15,7 @@ class CustomerOrder {
     required this.itemCount,
     required this.items,
     this.dateCreated,
+    this.canCancel = false,
   });
 
   final int id;
@@ -25,6 +26,7 @@ class CustomerOrder {
   final int itemCount;
   final List<CustomerOrderItem> items;
   final DateTime? dateCreated;
+  final bool canCancel;
 }
 
 class CustomerOrderPage {
