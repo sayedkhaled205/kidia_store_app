@@ -14,6 +14,7 @@ class CatalogCategoryModel extends CatalogCategory {
     super.permalink,
     super.imageSize,
     super.imageShape,
+    super.imageRadius,
     super.imageFit,
     super.imageEffect,
     super.imageScale,
@@ -21,6 +22,13 @@ class CatalogCategoryModel extends CatalogCategory {
     super.imageBorderWidth,
     super.imageBorderColor,
     super.imageBackgroundColor,
+    super.imageTextGap,
+    super.fontSize,
+    super.fontColor,
+    super.fontWeight,
+    super.textAlign,
+    super.textMaxLines,
+    super.lineHeight,
   });
 
   factory CatalogCategoryModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +54,8 @@ class CatalogCategoryModel extends CatalogCategory {
         const <String>{'square', 'rounded', 'circle'},
         'rounded',
       ),
+      imageRadius:
+          _boundedDouble(presentation['image_radius'], 0, 50, 18) / 100,
       imageFit: _choice(
         presentation['image_fit'],
         const <String>{'contain', 'cover'},
@@ -77,6 +87,28 @@ class CatalogCategoryModel extends CatalogCategory {
         presentation['background_color'],
         '#FFFFFF',
       ),
+      imageTextGap: _boundedDouble(
+        presentation['image_text_gap'],
+        0,
+        40,
+        10,
+      ),
+      fontSize: _boundedDouble(presentation['font_size'], 10, 30, 16),
+      fontColor: _hexColor(presentation['font_color'], '#1F2933'),
+      fontWeight: _fontWeight(presentation['font_weight']),
+      textAlign: _choice(
+        presentation['text_align'],
+        const <String>{'start', 'center', 'end'},
+        'start',
+      ),
+      textMaxLines: _boundedDouble(
+        presentation['text_max_lines'],
+        1,
+        3,
+        2,
+      ).round(),
+      lineHeight:
+          _boundedDouble(presentation['line_height'], 100, 200, 125) / 100,
     );
   }
 
@@ -92,6 +124,7 @@ class CatalogCategoryModel extends CatalogCategory {
       permalink: permalink,
       imageSize: imageSize,
       imageShape: imageShape,
+      imageRadius: imageRadius,
       imageFit: imageFit,
       imageEffect: imageEffect,
       imageScale: imageScale,
@@ -99,6 +132,13 @@ class CatalogCategoryModel extends CatalogCategory {
       imageBorderWidth: imageBorderWidth,
       imageBorderColor: imageBorderColor,
       imageBackgroundColor: imageBackgroundColor,
+      imageTextGap: imageTextGap,
+      fontSize: fontSize,
+      fontColor: fontColor,
+      fontWeight: fontWeight,
+      textAlign: textAlign,
+      textMaxLines: textMaxLines,
+      lineHeight: lineHeight,
     );
   }
 
@@ -134,5 +174,12 @@ class CatalogCategoryModel extends CatalogCategory {
   static String _hexColor(dynamic value, String fallback) {
     final String parsed = CatalogJson.string(value).toUpperCase();
     return RegExp(r'^#[0-9A-F]{6}$').hasMatch(parsed) ? parsed : fallback;
+  }
+
+  static int _fontWeight(dynamic value) {
+    final int parsed = CatalogJson.integer(value, fallback: 800);
+    return const <int>{400, 500, 600, 700, 800, 900}.contains(parsed)
+        ? parsed
+        : 800;
   }
 }

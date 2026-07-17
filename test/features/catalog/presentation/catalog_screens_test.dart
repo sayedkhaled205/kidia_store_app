@@ -22,6 +22,10 @@ void main() {
   testWidgets('empty search waits for a customer query', (
     WidgetTester tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final _ScreenCatalogRepository repository = _ScreenCatalogRepository();
     await tester.pumpWidget(_app(repository, const SearchScreen()));
     await tester.pumpAndSettle();
@@ -49,6 +53,13 @@ void main() {
 
     expect(find.text('Women'), findsOneWidget);
     expect(find.text('Dresses'), findsNothing);
+    final Text categoryTitle = tester.widget<Text>(
+      find.byKey(const Key('category-title-1')),
+    );
+    expect(categoryTitle.style?.fontSize, 20);
+    expect(categoryTitle.style?.color, const Color(0xFF123456));
+    final ListTile categoryTile = tester.widget<ListTile>(find.byType(ListTile));
+    expect(categoryTile.horizontalTitleGap, 24);
     expect(
       tester.getSize(find.byKey(const Key('categories-search-action'))).height,
       lessThan(40),
@@ -210,7 +221,18 @@ class _ScreenCatalogRepository implements CatalogRepository {
   ) async {
     return CatalogPage<CatalogCategory>(
       items: const <CatalogCategory>[
-        CatalogCategory(id: 1, name: 'Women', slug: 'women', count: 8),
+        CatalogCategory(
+          id: 1,
+          name: 'Women',
+          slug: 'women',
+          count: 8,
+          imageTextGap: 24,
+          fontSize: 20,
+          fontColor: '#123456',
+          fontWeight: 600,
+          textAlign: 'center',
+          lineHeight: 1.4,
+        ),
         CatalogCategory(
           id: 2,
           name: 'Dresses',

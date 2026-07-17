@@ -165,6 +165,7 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
         queryParameters: <String, dynamic>{
           'page': query.page,
           'per_page': query.perPage,
+          '_mobile_cache_bust': DateTime.now().millisecondsSinceEpoch,
         },
       );
     } catch (_) {
