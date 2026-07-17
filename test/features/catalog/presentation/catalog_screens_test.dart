@@ -22,10 +22,6 @@ void main() {
   testWidgets('empty search waits for a customer query', (
     WidgetTester tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
     final _ScreenCatalogRepository repository = _ScreenCatalogRepository();
     await tester.pumpWidget(_app(repository, const SearchScreen()));
     await tester.pumpAndSettle();
@@ -56,10 +52,17 @@ void main() {
     final Text categoryTitle = tester.widget<Text>(
       find.byKey(const Key('category-title-1')),
     );
-    expect(categoryTitle.style?.fontSize, 20);
+    final double screenWidth = MediaQuery.sizeOf(
+      tester.element(find.byType(CategoriesScreen)),
+    ).width;
+    final double responsiveScale = (screenWidth / 390).clamp(0.82, 1.22);
+    expect(categoryTitle.style?.fontSize, closeTo(20 * responsiveScale, 0.001));
     expect(categoryTitle.style?.color, const Color(0xFF123456));
     final ListTile categoryTile = tester.widget<ListTile>(find.byType(ListTile));
-    expect(categoryTile.horizontalTitleGap, 24);
+    expect(
+      categoryTile.horizontalTitleGap,
+      closeTo(24 * responsiveScale, 0.001),
+    );
     expect(
       tester.getSize(find.byKey(const Key('categories-search-action'))).height,
       lessThan(40),
