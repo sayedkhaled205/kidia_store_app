@@ -33,6 +33,8 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
   static const String _productsPath = '/wp-json/wc/store/v1/products';
   static const String _categoriesPath =
       '/wp-json/wc/store/v1/products/categories';
+  static const String _categoryPagePath =
+      '/wp-json/woo-mobile/v1/category-page';
   static const String _collectionDataPath =
       '/wp-json/wc/store/v1/products/collection-data';
   static const String _variationBridgePath = '/wp-json/woo-mobile/v1/products';
@@ -156,10 +158,24 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
   Future<CatalogPage<CatalogCategoryModel>> fetchCategories(
     CatalogCategoryQuery query,
   ) async {
-    final StoreApiResponse response = await _client.get(
-      _categoriesPath,
-      queryParameters: query.toStoreApiQuery(),
-    );
+    StoreApiResponse response;
+    try {
+      response = await _client.get(
+        _categoryPagePath,
+        queryParameters: <String, dynamic>{
+          'page': query.page,
+          'per_page': query.perPage,
+        },
+      );
+    } catch (_) {
+      // Stores without the CMS category builder continue to use the standard
+      // WooCommerce endpoint, so the same app build can move between staging
+      // and live installations safely.
+      response = await _client.get(
+        _categoriesPath,
+        queryParameters: query.toStoreApiQuery(),
+      );
+    }
 
     return _parsePage<CatalogCategoryModel>(
       response: response,

@@ -45,7 +45,7 @@ void main() {
       },
     );
 
-    test('parses categories and keeps endpoint generic', () async {
+    test('parses categories from the CMS category page builder', () async {
       final _FakeStoreApiClient client = _FakeStoreApiClient(
         response: const StoreApiResponse(
           data: <dynamic>[
@@ -63,7 +63,22 @@ void main() {
       final page = await source.fetchCategories(CatalogCategoryQuery());
 
       expect(page.items.single.slug, 'accessories');
-      expect(client.lastPath, '/wp-json/wc/store/v1/products/categories');
+      expect(client.lastPath, '/wp-json/woo-mobile/v1/category-page');
+      expect(client.lastQuery?['per_page'], 100);
+    });
+
+    test('falls back to WooCommerce categories without the plugin', () async {
+      final _FallbackCategoryClient client = _FallbackCategoryClient();
+      final StoreApiCatalogRemoteDataSource source =
+          StoreApiCatalogRemoteDataSource(client);
+
+      final page = await source.fetchCategories(CatalogCategoryQuery());
+
+      expect(page.items.single.id, 8);
+      expect(client.paths, <String>[
+        '/wp-json/woo-mobile/v1/category-page',
+        '/wp-json/wc/store/v1/products/categories',
+      ]);
     });
 
     test(
@@ -194,5 +209,25 @@ class _QueueStoreApiClient implements StoreApiClient {
       throw StateError('No fake Store API response is available.');
     }
     return _responses[_index++];
+  }
+}
+
+class _FallbackCategoryClient implements StoreApiClient {
+  final List<String> paths = <String>[];
+
+  @override
+  Future<StoreApiResponse> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    paths.add(path);
+    if (path == '/wp-json/woo-mobile/v1/category-page') {
+      throw StateError('Plugin endpoint is unavailable.');
+    }
+    return const StoreApiResponse(
+      data: <dynamic>[
+        <String, dynamic>{'id': 8, 'name': 'Fallback', 'slug': 'fallback'},
+      ],
+    );
   }
 }
