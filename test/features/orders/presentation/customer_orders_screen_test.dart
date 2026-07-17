@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
@@ -21,6 +22,8 @@ void main() {
         ],
         child: const MaterialApp(
           locale: Locale('ar'),
+          supportedLocales: <Locale>[Locale('ar')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
           home: CustomerOrdersScreen(),
         ),
       ),
