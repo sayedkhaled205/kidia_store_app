@@ -103,7 +103,8 @@ class _CategoryBranchState extends State<_CategoryBranch> {
       child: Column(
         children: <Widget>[
           ListTile(
-            minTileHeight: 82,
+            minTileHeight:
+                category.imageSize.clamp(32, 120).toDouble() + 14,
             contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
             leading: _CategoryImage(category: category),
             title: Text(
@@ -186,14 +187,6 @@ class _SubcategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
-    final String? imageUrl =
-        category.image?.source.toString() ??
-        category.image?.thumbnail?.toString();
-    final Widget fallback = ColoredBox(
-      color: colors.secondaryContainer,
-      child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
-    );
-
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
@@ -206,19 +199,11 @@ class _SubcategoryTile extends StatelessWidget {
         child: Column(
           children: <Widget>[
             Expanded(
-              child: SizedBox.expand(
-                child: imageUrl == null || imageUrl.isEmpty
-                    ? fallback
-                    : Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: AppNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.contain,
-                          backgroundColor: colors.surface,
-                          semanticLabel: category.name,
-                          errorWidget: fallback,
-                        ),
-                      ),
+              child: Center(
+                child: _CategoryArtwork(
+                  category: category,
+                  maximumSize: 120,
+                ),
               ),
             ),
             Padding(
@@ -248,6 +233,18 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _CategoryArtwork(category: category, maximumSize: 120);
+  }
+}
+
+class _CategoryArtwork extends StatelessWidget {
+  const _CategoryArtwork({required this.category, required this.maximumSize});
+
+  final CatalogCategory category;
+  final double maximumSize;
+
+  @override
+  Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final String? imageUrl =
         category.image?.source.toString() ??
@@ -256,25 +253,88 @@ class _CategoryImage extends StatelessWidget {
       color: colors.secondaryContainer,
       child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
     );
-
-    return SizedBox.square(
-      dimension: 68,
-      child: imageUrl == null || imageUrl.isEmpty
-          ? fallback
-          : ColoredBox(
-              color: colors.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: AppNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.contain,
-                  semanticLabel: category.name,
-                  errorWidget: fallback,
-                ),
+    final double size = category.imageSize.clamp(32, maximumSize).toDouble();
+    final double radius = switch (category.imageShape) {
+      'circle' => size / 2,
+      'rounded' => size * 0.18,
+      _ => 0,
+    };
+    final Alignment alignment = switch (category.imagePosition) {
+      'top' => Alignment.topCenter,
+      'bottom' => Alignment.bottomCenter,
+      'left' => Alignment.centerLeft,
+      'right' => Alignment.centerRight,
+      _ => Alignment.center,
+    };
+    Widget artwork = imageUrl == null || imageUrl.isEmpty
+        ? fallback
+        : Transform.scale(
+            scale: category.imageScale,
+            child: AppNetworkImage(
+              imageUrl: imageUrl,
+              fit: category.imageFit == 'cover' ? BoxFit.cover : BoxFit.contain,
+              alignment: alignment,
+              backgroundColor: _categoryColor(
+                category.imageBackgroundColor,
+                colors.surface,
               ),
+              semanticLabel: category.name,
+              errorWidget: fallback,
             ),
+          );
+    if (category.imageEffect == 'grayscale') {
+      artwork = ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0, 0, 0, 1, 0,
+        ]),
+        child: artwork,
+      );
+    }
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(category.imageBorderWidth),
+      decoration: BoxDecoration(
+        color: _categoryColor(category.imageBackgroundColor, colors.surface),
+        borderRadius: BorderRadius.circular(radius),
+        border: category.imageBorderWidth <= 0
+            ? null
+            : Border.all(
+                color: _categoryColor(
+                  category.imageBorderColor,
+                  colors.outlineVariant,
+                ),
+                width: category.imageBorderWidth,
+              ),
+        boxShadow: category.imageEffect == 'shadow'
+            ? const <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(
+          (radius - category.imageBorderWidth).clamp(0, radius).toDouble(),
+        ),
+        child: SizedBox.expand(child: artwork),
+      ),
     );
   }
+}
+
+Color _categoryColor(String value, Color fallback) {
+  final String hex = value.replaceFirst('#', '');
+  final int? parsed = int.tryParse(hex, radix: 16);
+  return parsed == null || hex.length != 6
+      ? fallback
+      : Color(0xFF000000 | parsed);
 }
 
 class _CategoryTopActions extends StatelessWidget {

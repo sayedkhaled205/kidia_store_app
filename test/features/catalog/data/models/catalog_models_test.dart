@@ -143,11 +143,31 @@ void main() {
         'slug': 'shoes',
         'count': -4,
         'image': <String, dynamic>{'src': 'file:///private/image.png'},
+        'presentation': <String, dynamic>{
+          'image_size': 104,
+          'image_shape': 'circle',
+          'image_fit': 'cover',
+          'image_effect': 'shadow',
+          'image_scale': 125,
+          'image_position': 'top',
+          'border_width': 3,
+          'border_color': '#112233',
+          'background_color': '#F5F5F5',
+        },
       },
     );
 
     expect(category.count, 0);
     expect(category.image, isNull);
+    expect(category.imageSize, 104);
+    expect(category.imageShape, 'circle');
+    expect(category.imageFit, 'cover');
+    expect(category.imageEffect, 'shadow');
+    expect(category.imageScale, 1.25);
+    expect(category.imagePosition, 'top');
+    expect(category.imageBorderWidth, 3);
+    expect(category.imageBorderColor, '#112233');
+    expect(category.imageBackgroundColor, '#F5F5F5');
   });
 
   test(

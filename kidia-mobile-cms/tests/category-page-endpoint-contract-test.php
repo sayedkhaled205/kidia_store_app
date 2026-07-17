@@ -38,6 +38,7 @@ function get_terms( array $args ): array {
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function get_option( string $name, $default ) { return $GLOBALS['settings']; }
 function absint( $value ): int { return abs( (int) $value ); }
+function sanitize_hex_color( $value ) { return preg_match( '/^#[0-9A-Fa-f]{6}$/', (string) $value ) ? strtoupper( (string) $value ) : null; }
 function get_term_meta( int $id, string $key, bool $single ) { return 0; }
 function wp_get_attachment_image_url( int $id, string $size ) { return 99 === $id ? 'https://example.com/' . $size . '.jpg' : false; }
 function get_post_meta( int $id, string $key, bool $single ) { return 'Override'; }
@@ -50,5 +51,7 @@ assert( isset( $GLOBALS['routes']['woo-mobile/v1/category-page'] ) );
 $response = $endpoint->get_categories( new WP_REST_Request( array( 'page' => 1, 'per_page' => 100 ) ) );
 assert( array_column( $response->data, 'id' ) === array( 2, 4, 1 ) );
 assert( 'https://example.com/full.jpg' === $response->data[0]['image']['src'] );
+assert( 'rounded' === $response->data[0]['presentation']['image_shape'] );
+assert( 68 === $response->data[0]['presentation']['image_size'] );
 assert( '3' === $response->headers['X-WP-Total'] );
 echo "category-page-endpoint-contract-test: ok\n";

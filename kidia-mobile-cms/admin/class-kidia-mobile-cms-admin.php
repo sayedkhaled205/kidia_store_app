@@ -204,6 +204,23 @@ final class Kidia_Mobile_CMS_Admin {
 					'order'    => max( 0, absint( $row['order'] ?? 0 ) ),
 					'hidden'   => ! empty( $row['hidden'] ),
 					'image_id' => absint( $row['image_id'] ?? 0 ),
+					'image_size' => min( 120, max( 32, absint( $row['image_size'] ?? 68 ) ) ),
+					'image_shape' => in_array( $row['image_shape'] ?? '', array( 'square', 'rounded', 'circle' ), true )
+						? sanitize_key( $row['image_shape'] )
+						: 'rounded',
+					'image_fit' => in_array( $row['image_fit'] ?? '', array( 'contain', 'cover' ), true )
+						? sanitize_key( $row['image_fit'] )
+						: 'contain',
+					'image_effect' => in_array( $row['image_effect'] ?? '', array( 'none', 'shadow', 'grayscale' ), true )
+						? sanitize_key( $row['image_effect'] )
+						: 'none',
+					'image_scale' => min( 150, max( 80, absint( $row['image_scale'] ?? 100 ) ) ),
+					'image_position' => in_array( $row['image_position'] ?? '', array( 'center', 'top', 'bottom', 'left', 'right' ), true )
+						? sanitize_key( $row['image_position'] )
+						: 'center',
+					'border_width' => min( 8, max( 0, absint( $row['border_width'] ?? 0 ) ) ),
+					'border_color' => sanitize_hex_color( $row['border_color'] ?? '' ) ?: '#DDE5E2',
+					'background_color' => sanitize_hex_color( $row['background_color'] ?? '' ) ?: '#FFFFFF',
 				);
 			}
 		}

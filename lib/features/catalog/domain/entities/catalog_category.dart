@@ -10,6 +10,15 @@ class CatalogCategory {
     this.count = 0,
     this.image,
     this.permalink,
+    this.imageSize = 68,
+    this.imageShape = 'rounded',
+    this.imageFit = 'contain',
+    this.imageEffect = 'none',
+    this.imageScale = 1,
+    this.imagePosition = 'center',
+    this.imageBorderWidth = 0,
+    this.imageBorderColor = '#DDE5E2',
+    this.imageBackgroundColor = '#FFFFFF',
   });
 
   final int id;
@@ -20,6 +29,15 @@ class CatalogCategory {
   final int count;
   final CatalogImage? image;
   final Uri? permalink;
+  final double imageSize;
+  final String imageShape;
+  final String imageFit;
+  final String imageEffect;
+  final double imageScale;
+  final String imagePosition;
+  final double imageBorderWidth;
+  final String imageBorderColor;
+  final String imageBackgroundColor;
 
   bool get isRoot => parentId == 0;
 }
