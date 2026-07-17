@@ -8,6 +8,7 @@ import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_rep
 import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 
 typedef ProductWishlistToggleCallback =
@@ -90,7 +91,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
     return Scaffold(
-      appBar: AppBar(actions: _buildActions(copy)),
+      appBar: CommerceAppBar(
+        title: copy.product,
+        actions: _buildActions(copy),
+      ),
       body: _buildBody(copy),
       bottomNavigationBar:
           _controller.status == ProductDetailStatus.success &&

@@ -16,6 +16,7 @@ import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_pr
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_size_sheet.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_sort_sheet.dart';
 import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 
 class CatalogProductListScreen extends StatelessWidget {
   const CatalogProductListScreen({
@@ -31,10 +32,8 @@ class CatalogProductListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          request.title.trim().isEmpty ? copy.products : request.title,
-        ),
+      appBar: CommerceAppBar(
+        title: request.title.trim().isEmpty ? copy.products : request.title,
         actions: <Widget>[
           IconButton(
             tooltip: copy.search,

@@ -9,6 +9,7 @@ import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_rep
 import 'package:kidia_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({
@@ -75,8 +76,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
   Widget build(BuildContext context) {
     final _WishlistCopy copy = _WishlistCopy.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(copy.title),
+      appBar: CommerceAppBar(
+        title: copy.title,
         actions: <Widget>[
           CartIconButton(onPressed: () => context.push('/cart')),
           if (_controller.status == WishlistStatus.ready)
