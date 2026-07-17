@@ -93,14 +93,6 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final ColorScheme colors = theme.colorScheme;
     final CatalogCopy copy = CatalogCopy.of(context);
     final double responsive = _categoryResponsiveScale(context);
-    final double imageHeight =
-        category.imageSize.clamp(32, 120).toDouble() * responsive;
-    final double textHeight =
-        category.fontSize * responsive * category.lineHeight *
-        category.textMaxLines;
-    final double tileHeight =
-        (imageHeight > textHeight ? imageHeight : textHeight) + 14;
-
     final Widget tile = Material(
       color: colors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
@@ -110,38 +102,55 @@ class _CategoryBranchState extends State<_CategoryBranch> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: <Widget>[
-          ListTile(
-            minTileHeight: tileHeight,
-            contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
-            horizontalTitleGap: category.imageTextGap * responsive,
-            leading: _CategoryImage(category: category),
-            title: Text(
-              category.name,
-              key: Key('category-title-${category.id}'),
-              maxLines: category.textMaxLines,
-              overflow: TextOverflow.ellipsis,
-              textAlign: _categoryTextAlign(category.textAlign),
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: _categoryColor(category.fontColor, colors.onSurface),
-                fontSize: category.fontSize * responsive,
-                fontWeight: _categoryFontWeight(category.fontWeight),
-                height: category.lineHeight,
+          InkWell(
+            onTap: () => _openProducts(context, category),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
+              child: Row(
+                children: <Widget>[
+                  _CategoryArtwork(
+                    category: category,
+                    maximumSize: 120 * responsive,
+                  ),
+                  SizedBox(
+                    key: Key('category-image-text-gap-${category.id}'),
+                    width: category.imageTextGap * responsive,
+                  ),
+                  Expanded(
+                    child: Text(
+                      category.name,
+                      key: Key('category-title-${category.id}'),
+                      maxLines: category.textMaxLines,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: _categoryTextAlign(category.textAlign),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: _categoryColor(
+                          category.fontColor,
+                          colors.onSurface,
+                        ),
+                        fontSize: category.fontSize * responsive,
+                        fontWeight: _categoryFontWeight(category.fontWeight),
+                        height: category.lineHeight,
+                      ),
+                    ),
+                  ),
+                  if (hasChildren)
+                    IconButton(
+                      tooltip: _expanded ? copy.collapse : copy.expand,
+                      onPressed: () => setState(() {
+                        _expanded = !_expanded;
+                      }),
+                      icon: AnimatedRotation(
+                        turns: _expanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 180),
+                        child: const Icon(Icons.keyboard_arrow_down_rounded),
+                      ),
+                    )
+                  else
+                    const Icon(Icons.chevron_right_rounded),
+                ],
               ),
             ),
-            onTap: () => _openProducts(context, category),
-            trailing: hasChildren
-                ? IconButton(
-                    tooltip: _expanded ? copy.collapse : copy.expand,
-                    onPressed: () => setState(() {
-                      _expanded = !_expanded;
-                    }),
-                    icon: AnimatedRotation(
-                      turns: _expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 180),
-                      child: const Icon(Icons.keyboard_arrow_down_rounded),
-                    ),
-                  )
-                : const Icon(Icons.chevron_right_rounded),
           ),
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
@@ -155,23 +164,54 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                       12,
                       14,
                     ),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: widget.node.children.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 0.55,
-                          ),
-                      itemBuilder: (BuildContext context, int index) {
-                        final CatalogCategory child =
-                            widget.node.children[index].category;
-                        return _SubcategoryTile(
-                          category: child,
-                          onTap: () => _openProducts(context, child),
+                    child: LayoutBuilder(
+                      builder: (BuildContext context, BoxConstraints constraints) {
+                        const int columns = 3;
+                        const double spacing = 10;
+                        final double cardWidth =
+                            (constraints.maxWidth - spacing * (columns - 1)) /
+                            columns;
+                        final double maximumImageSize = cardWidth - 10;
+                        final double cardHeight = widget.node.children.fold(
+                          0,
+                          (double height, CatalogCategoryNode node) {
+                            final CatalogCategory child = node.category;
+                            final double imageHeight = (child.imageSize * responsive)
+                                .clamp(32 * responsive, maximumImageSize)
+                                .toDouble();
+                            final double textHeight =
+                                child.fontSize *
+                                responsive *
+                                child.lineHeight *
+                                child.textMaxLines;
+                            final double requested =
+                                imageHeight +
+                                child.imageTextGap * responsive +
+                                textHeight +
+                                16;
+                            return requested > height ? requested : height;
+                          },
+                        );
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: widget.node.children.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: columns,
+                                mainAxisSpacing: spacing,
+                                crossAxisSpacing: spacing,
+                                mainAxisExtent: cardHeight,
+                              ),
+                          itemBuilder: (BuildContext context, int index) {
+                            final CatalogCategory child =
+                                widget.node.children[index].category;
+                            return _SubcategoryTile(
+                              category: child,
+                              maximumImageSize: maximumImageSize,
+                              onTap: () => _openProducts(context, child),
+                            );
+                          },
                         );
                       },
                     ),
@@ -191,9 +231,14 @@ class _CategoryBranchState extends State<_CategoryBranch> {
 }
 
 class _SubcategoryTile extends StatelessWidget {
-  const _SubcategoryTile({required this.category, required this.onTap});
+  const _SubcategoryTile({
+    required this.category,
+    required this.maximumImageSize,
+    required this.onTap,
+  });
 
   final CatalogCategory category;
+  final double maximumImageSize;
   final VoidCallback onTap;
 
   @override
@@ -212,14 +257,12 @@ class _SubcategoryTile extends StatelessWidget {
         onTap: onTap,
         child: Column(
           children: <Widget>[
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Center(
-                  child: _CategoryArtwork(
-                    category: category,
-                    maximumSize: 120,
-                  ),
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Center(
+                child: _CategoryArtwork(
+                  category: category,
+                  maximumSize: maximumImageSize,
                 ),
               ),
             ),
@@ -246,17 +289,6 @@ class _SubcategoryTile extends StatelessWidget {
   }
 }
 
-class _CategoryImage extends StatelessWidget {
-  const _CategoryImage({required this.category});
-
-  final CatalogCategory category;
-
-  @override
-  Widget build(BuildContext context) {
-    return _CategoryArtwork(category: category, maximumSize: 120);
-  }
-}
-
 class _CategoryArtwork extends StatelessWidget {
   const _CategoryArtwork({required this.category, required this.maximumSize});
 
@@ -274,8 +306,9 @@ class _CategoryArtwork extends StatelessWidget {
       color: colors.secondaryContainer,
       child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
     );
-    final double size =
-        category.imageSize.clamp(32, maximumSize).toDouble() * responsive;
+    final double size = (category.imageSize * responsive)
+        .clamp(32 * responsive, maximumSize)
+        .toDouble();
     final double radius = switch (category.imageShape) {
       'circle' => size / 2,
       'rounded' => size * category.imageRadius,
@@ -292,6 +325,7 @@ class _CategoryArtwork extends StatelessWidget {
         ? fallback
         : Transform.scale(
             scale: category.imageScale,
+            alignment: alignment,
             child: AppNetworkImage(
               imageUrl: imageUrl,
               fit: category.imageFit == 'cover' ? BoxFit.cover : BoxFit.contain,
@@ -319,7 +353,6 @@ class _CategoryArtwork extends StatelessWidget {
       key: Key('category-artwork-${category.id}'),
       width: size,
       height: size,
-      padding: EdgeInsets.all(category.imageBorderWidth * responsive),
       decoration: BoxDecoration(
         color: _categoryColor(category.imageBackgroundColor, colors.surface),
         borderRadius: BorderRadius.circular(radius),
