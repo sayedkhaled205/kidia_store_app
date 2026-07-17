@@ -36,16 +36,39 @@ void main() {
     expect(find.text('كرسي أطفال'), findsOneWidget);
     expect(find.text('EGP 1,320.00'), findsOneWidget);
     expect(find.byKey(const Key('cancel-customer-order-101')), findsOneWidget);
+    expect(find.text('طلب إلغاء'), findsOneWidget);
     expect(find.textContaining('الخطوة التالية'), findsNothing);
 
-    await tester.tap(find.byKey(const Key('cancel-customer-order-101')));
+    await tester.tap(find.byKey(const Key('open-customer-order-101')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('تفاصيل الطلب'), findsOneWidget);
+    expect(
+      find.byKey(const Key('customer-order-details-101')),
+      findsOneWidget,
+    );
+    expect(find.text('منتجات الطلب'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('details-cancel-customer-order-101')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-cancel-order')));
     await tester.pumpAndSettle();
 
-    expect(find.text('ملغي'), findsOneWidget);
-    expect(find.byKey(const Key('cancel-customer-order-101')), findsNothing);
-    expect(find.text('تم إلغاء الطلب بنجاح.'), findsOneWidget);
+    expect(find.text('طلب إلغاء'), findsWidgets);
+    expect(
+      find.byKey(const Key('details-cancel-customer-order-101')),
+      findsNothing,
+    );
+    expect(
+      find.text('تم إرسال طلب الإلغاء للمراجعة.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('order-cancellation-requested-notice')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows a clean empty state when the customer has no orders', (
@@ -97,6 +120,7 @@ class _ScreenOrdersRepository
           ],
           dateCreated: DateTime.parse('2026-07-16T20:30:00+03:00'),
           canCancel: true,
+          cancellationType: CustomerOrderCancellationType.request,
         ),
       ],
       page: 1,
@@ -111,8 +135,8 @@ class _ScreenOrdersRepository
     return const CustomerOrder(
       id: 101,
       number: '101',
-      status: 'cancelled',
-      statusName: 'Cancelled',
+      status: 'cancel-request',
+      statusName: 'Cancellation requested',
       totalDisplay: 'EGP 1,320.00',
       itemCount: 1,
       items: <CustomerOrderItem>[

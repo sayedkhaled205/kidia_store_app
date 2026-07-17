@@ -18,6 +18,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('العناوين المحفوظة'), findsOneWidget);
+    expect(find.text('عنوان الشحن'), findsOneWidget);
+    expect(find.text('عنوان الفاتورة'), findsNothing);
+    expect(find.byKey(const Key('shipping-address-card')), findsOneWidget);
     expect(find.text('1 Test Street'), findsOneWidget);
     await tester.tap(find.text('تعديل'));
     await tester.pumpAndSettle();
@@ -43,6 +46,14 @@ void main() {
       find.byKey(const Key('profile-email')),
     );
     expect(email.controller?.text, 'customer@example.com');
+    final TextFormField phone = tester.widget<TextFormField>(
+      find.byKey(const Key('profile-phone')),
+    );
+    final TextFormField alternatePhone = tester.widget<TextFormField>(
+      find.byKey(const Key('profile-alternate-phone')),
+    );
+    expect(phone.controller?.text, '01000000000');
+    expect(alternatePhone.controller?.text, '01100000000');
     expect(find.byKey(const Key('save-customer-profile')), findsOneWidget);
   });
 
@@ -83,6 +94,8 @@ final CustomerAccount _account = CustomerAccount(
     firstName: 'Kidia',
     lastName: 'Customer',
     displayName: 'Kidia Customer',
+    phone: '01000000000',
+    alternatePhone: '01100000000',
   ),
   billing: CustomerAddress(
     type: CustomerAddressType.billing,
@@ -132,6 +145,8 @@ class _FakeCustomerAccountRepository implements CustomerAccountRepository {
     required String lastName,
     required String displayName,
     required String email,
+    required String phone,
+    required String alternatePhone,
   }) async {
     return CustomerProfile(
       id: 7,
@@ -139,6 +154,8 @@ class _FakeCustomerAccountRepository implements CustomerAccountRepository {
       firstName: firstName,
       lastName: lastName,
       displayName: displayName,
+      phone: phone,
+      alternatePhone: alternatePhone,
     );
   }
 }

@@ -33,6 +33,8 @@ void main() {
       lastName: 'Customer',
       displayName: 'Updated Customer',
       email: 'updated@example.com',
+      phone: ' 01000000000 ',
+      alternatePhone: ' 01100000000 ',
     );
     final CustomerAddress address = await repository.updateAddress(
       CustomerAddress(
@@ -44,6 +46,8 @@ void main() {
     );
 
     expect(transport.profileValues?['first_name'], 'Updated');
+    expect(transport.profileValues?['phone'], '01000000000');
+    expect(transport.profileValues?['alternate_phone'], '01100000000');
     expect(profile.email, 'updated@example.com');
     expect(transport.addressType, CustomerAddressType.shipping);
     expect(address.valueFor('shipping_address_1'), '2 New Street');
@@ -63,6 +67,8 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
         'first_name': 'Kidia',
         'last_name': 'Customer',
         'display_name': 'Kidia Customer',
+        'phone': '01000000000',
+        'alternate_phone': '01100000000',
       },
       'billing': <String, dynamic>{
         'billing_address_1': '1 Test Street',
@@ -114,6 +120,8 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
         'first_name': values['first_name'],
         'last_name': values['last_name'],
         'display_name': values['display_name'],
+        'phone': values['phone'],
+        'alternate_phone': values['alternate_phone'],
       },
     };
   }

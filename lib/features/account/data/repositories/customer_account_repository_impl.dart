@@ -48,6 +48,8 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
     required String lastName,
     required String displayName,
     required String email,
+    required String phone,
+    required String alternatePhone,
   }) async {
     try {
       final Map<String, dynamic> response = await transport.updateProfile(
@@ -56,6 +58,8 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
           'last_name': lastName.trim(),
           'display_name': displayName.trim(),
           'email': email.trim(),
+          'phone': phone.trim(),
+          'alternate_phone': alternatePhone.trim(),
         },
       );
       return _profile(_object(response['profile'], 'profile'));
@@ -147,6 +151,8 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       firstName: _text(json['first_name']),
       lastName: _text(json['last_name']),
       displayName: _text(json['display_name']),
+      phone: _text(json['phone']),
+      alternatePhone: _text(json['alternate_phone']),
     );
   }
 

@@ -132,8 +132,8 @@ final class Kidia_Test_Order {
 		);
 	}
 
-	public function update_status( string $status, string $note = '' ): void {
-		unset( $note );
+	public function update_status( string $status, string $note = '', bool $notify = false ): void {
+		unset( $note, $notify );
 		$this->status = $status;
 	}
 }
@@ -185,13 +185,32 @@ function wc_price( $value, array $args = array() ): string {
 }
 
 function wc_get_order_status_name( string $status ): string {
-	return 'processing' === $status ? 'Processing' : ucfirst( $status );
+	return match ( $status ) {
+		'processing' => 'Processing',
+		'cancel-request' => 'Cancellation requested',
+		default => ucfirst( $status ),
+	};
 }
 
 function wc_get_account_orders_actions( Kidia_Test_Order $order ): array {
-	return in_array( $order->get_status(), array( 'pending', 'processing' ), true )
-		? array( 'cancel' => array( 'name' => 'Cancel' ) )
-		: array();
+	return match ( $order->get_status() ) {
+		'pending' => array( 'cancel' => array( 'name' => 'Cancel' ) ),
+		'processing' => array(
+			'cancel-request' => array(
+				'name' => 'Request cancellation',
+				'url'  => 'https://shop.example.com/my-account/orders/cancel-request',
+			),
+		),
+		default => array(),
+	};
+}
+
+function wc_get_order_statuses(): array {
+	return array(
+		'wc-processing'     => 'Processing',
+		'wc-cancel-request' => 'Cancellation requested',
+		'wc-cancelled'      => 'Cancelled',
+	);
 }
 
 function apply_filters( string $hook, $value ) {
@@ -273,12 +292,14 @@ kidia_orders_assert( 2 === $order['items'][1]['quantity'], 'Line-item quantities
 kidia_orders_assert( ! isset( $order['billing_address'], $order['shipping_address'] ), 'Private addresses must not be exposed.' );
 kidia_orders_assert( str_contains( $order['total_display'], 'EGP' ), 'The WooCommerce-formatted total must be included.' );
 kidia_orders_assert( true === $order['can_cancel'], 'The API must mirror WooCommerce My Account cancellation actions.' );
+kidia_orders_assert( 'request' === $order['cancellation_type'], 'Processing orders must expose the website cancellation request.' );
 kidia_orders_assert( str_contains( $response->headers['Cache-Control'], 'no-store' ), 'Customer order history must never be cached.' );
 kidia_orders_assert( '1' === $response->headers['X-WP-TotalPages'], 'Pagination headers must match the payload.' );
 
 $cancelled = $endpoint->cancel_order( new WP_REST_Request( array( 'id' => 101 ) ) );
-kidia_orders_assert( $cancelled instanceof WP_REST_Response, 'An owned cancellable order must be cancelled.' );
-kidia_orders_assert( 'cancelled' === $cancelled->data['order']['status'], 'The authoritative cancelled status must be returned.' );
-kidia_orders_assert( false === $cancelled->data['order']['can_cancel'], 'A cancelled order must no longer expose cancellation.' );
+kidia_orders_assert( $cancelled instanceof WP_REST_Response, 'An owned order must accept a cancellation request.' );
+kidia_orders_assert( 'cancel-request' === $cancelled->data['order']['status'], 'The website cancellation-request status must be returned.' );
+kidia_orders_assert( 'requested' === $cancelled->data['cancellation_result'], 'The API must distinguish a request from direct cancellation.' );
+kidia_orders_assert( false === $cancelled->data['order']['can_cancel'], 'A cancellation request must not be submitted twice.' );
 
 fwrite( STDOUT, "Customer orders endpoint contract test passed.\n" );

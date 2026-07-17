@@ -136,6 +136,14 @@ class CustomerOrdersRepositoryImpl
       'order.items',
     ).map<CustomerOrderItem>(_parseItem).toList(growable: false);
     final int itemCount = _nonNegativeInt(json['item_count'], 'item_count');
+    final bool canCancel = _boolean(json['can_cancel']);
+    final CustomerOrderCancellationType parsedCancellationType =
+        _cancellationType(json['cancellation_type']);
+    final CustomerOrderCancellationType cancellationType =
+        canCancel &&
+            parsedCancellationType == CustomerOrderCancellationType.none
+        ? CustomerOrderCancellationType.cancel
+        : parsedCancellationType;
     final String fallbackTotal = <String>[
       _text(json['currency_code']).trim(),
       _text(json['total']).trim(),
@@ -150,7 +158,8 @@ class CustomerOrdersRepositoryImpl
       itemCount: itemCount,
       items: List<CustomerOrderItem>.unmodifiable(items),
       dateCreated: dateCreated,
-      canCancel: _boolean(json['can_cancel']),
+      canCancel: canCancel,
+      cancellationType: cancellationType,
     );
   }
 
@@ -219,6 +228,14 @@ class CustomerOrdersRepositoryImpl
     return const <String>{'1', 'true', 'yes', 'on'}.contains(
       _text(value).trim().toLowerCase(),
     );
+  }
+
+  CustomerOrderCancellationType _cancellationType(dynamic value) {
+    return switch (_text(value).trim().toLowerCase()) {
+      'cancel' => CustomerOrderCancellationType.cancel,
+      'request' => CustomerOrderCancellationType.request,
+      _ => CustomerOrderCancellationType.none,
+    };
   }
 
   CustomerOrdersFailureKind _repositoryKind(

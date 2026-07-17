@@ -164,6 +164,15 @@ class CustomerOrdersController extends ChangeNotifier {
 
   bool isCancelling(int orderId) => _state.cancellingOrderIds.contains(orderId);
 
+  CustomerOrder? orderById(int orderId) {
+    for (final CustomerOrder order in _state.items) {
+      if (order.id == orderId) {
+        return order;
+      }
+    }
+    return null;
+  }
+
   Future<bool> cancelOrder(CustomerOrder order) async {
     if (!order.canCancel || isCancelling(order.id)) {
       return false;

@@ -8,6 +8,8 @@ abstract interface class CustomerAccountRepository {
     required String lastName,
     required String displayName,
     required String email,
+    required String phone,
+    required String alternatePhone,
   });
 
   Future<CustomerAddress> updateAddress(CustomerAddress address);

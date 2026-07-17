@@ -435,9 +435,11 @@ class _CatalogProductGrid extends StatelessWidget {
         .clamp(250, 336)
         .toDouble();
     final double extent = baseExtent * 0.98;
+    final double topSpacing = (width * 0.05).clamp(18, 24).toDouble();
 
     return SliverPadding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 16, 20),
+      key: const Key('catalog-product-grid-padding'),
+      padding: EdgeInsetsDirectional.fromSTEB(16, topSpacing, 16, 20),
       sliver: SliverGrid.builder(
         itemCount: items.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -465,8 +467,11 @@ class _CatalogLoadingGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final double topSpacing = (MediaQuery.sizeOf(context).width * 0.05)
+        .clamp(18, 24)
+        .toDouble();
     return SliverPadding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, topSpacing, 16, 16),
       sliver: SliverGrid.builder(
         itemCount: 6,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

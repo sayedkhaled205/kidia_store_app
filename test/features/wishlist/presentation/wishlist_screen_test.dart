@@ -129,6 +129,7 @@ void main() {
     final SliverGridDelegateWithFixedCrossAxisCount delegate =
         grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     expect(delegate.crossAxisCount, 5);
+    expect(grid.padding?.resolve(TextDirection.rtl).top, 24);
   });
 
   testWidgets('shows a retryable load error', (WidgetTester tester) async {

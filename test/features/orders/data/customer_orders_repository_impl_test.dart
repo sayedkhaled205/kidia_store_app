@@ -21,6 +21,7 @@ void main() {
                   'currency_code': 'EGP',
                   'item_count': 3,
                   'can_cancel': true,
+                  'cancellation_type': 'request',
                   'items': <dynamic>[
                     <String, dynamic>{'name': 'كرسي أطفال', 'quantity': 1},
                     <String, dynamic>{'name': 'لعبة', 'quantity': 2},
@@ -46,6 +47,10 @@ void main() {
     expect(page.items.single.totalDisplay, 'EGP 1,320.00');
     expect(page.items.single.items.last.quantity, 2);
     expect(page.items.single.canCancel, isTrue);
+    expect(
+      page.items.single.cancellationType,
+      CustomerOrderCancellationType.request,
+    );
   });
 
   test('returns the authoritative cancelled order from WooCommerce', () async {

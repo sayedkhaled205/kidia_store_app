@@ -5,6 +5,8 @@ class CustomerOrderItem {
   final int quantity;
 }
 
+enum CustomerOrderCancellationType { none, cancel, request }
+
 class CustomerOrder {
   const CustomerOrder({
     required this.id,
@@ -16,6 +18,7 @@ class CustomerOrder {
     required this.items,
     this.dateCreated,
     this.canCancel = false,
+    this.cancellationType = CustomerOrderCancellationType.none,
   });
 
   final int id;
@@ -27,6 +30,10 @@ class CustomerOrder {
   final List<CustomerOrderItem> items;
   final DateTime? dateCreated;
   final bool canCancel;
+  final CustomerOrderCancellationType cancellationType;
+
+  bool get isCancellationRequest =>
+      cancellationType == CustomerOrderCancellationType.request;
 }
 
 class CustomerOrderPage {
