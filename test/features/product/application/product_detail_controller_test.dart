@@ -178,6 +178,72 @@ void main() {
     );
 
     test(
+      'keeps embedded Arabic attributes when detailed endpoint sends pa_',
+      () async {
+        const CatalogVariation embedded = CatalogVariation(
+          id: 5801,
+          attributes: <CatalogVariationAttribute>[
+            CatalogVariationAttribute(
+              name: 'المقاس',
+              taxonomy: 'pa_المقاس',
+              value: '26',
+            ),
+          ],
+        );
+        const CatalogProduct product = CatalogProduct(
+          id: 58,
+          name: 'Kids shoes',
+          slug: 'kids-shoes',
+          type: 'variable',
+          isPurchasable: true,
+          isInStock: true,
+          prices: testMoney,
+          attributes: <CatalogProductAttribute>[
+            CatalogProductAttribute(
+              id: 8,
+              name: 'المقاس',
+              taxonomy: 'pa_المقاس',
+              hasVariations: true,
+              terms: <CatalogAttributeTerm>[
+                CatalogAttributeTerm(id: 26, name: '26', slug: '26'),
+              ],
+            ),
+          ],
+          variations: <CatalogVariation>[embedded],
+        );
+        const CatalogVariation malformedDetail = CatalogVariation(
+          id: 5801,
+          attributes: <CatalogVariationAttribute>[
+            CatalogVariationAttribute(
+              name: 'pa_',
+              taxonomy: 'pa_',
+              value: '26',
+            ),
+          ],
+          prices: blueMediumMoney,
+        );
+        final ProductDetailController controller = ProductDetailController(
+          repository: ProductFakeCatalogRepository(
+            product: product,
+            variations: const <CatalogVariation>[malformedDetail],
+          ),
+          productId: product.id,
+        );
+        addTearDown(controller.dispose);
+
+        await controller.load();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(controller.optionGroups, hasLength(1));
+        expect(controller.optionGroups.single.label, 'المقاس');
+        expect(controller.optionGroups.single.values.single.label, '26');
+        controller.selectOption('pa_المقاس', '26');
+        expect(controller.selectedVariation?.id, 5801);
+        expect(controller.displayedPrice, blueMediumMoney);
+      },
+    );
+
+    test(
       'uses empty state for invalid ids without calling the repository',
       () async {
         final ProductFakeCatalogRepository repository =

@@ -180,7 +180,9 @@ class ProductDetailController extends ChangeNotifier {
       if (!_canCommit(serial) || detailedVariations.isEmpty) {
         return;
       }
-      _variations = List<CatalogVariation>.unmodifiable(detailedVariations);
+      _variations = List<CatalogVariation>.unmodifiable(
+        _mergeDetailedVariations(detailedVariations),
+      );
       _notify();
     } catch (_) {
       // The product response remains usable when optional variation
@@ -347,7 +349,7 @@ class ProductDetailController extends ChangeNotifier {
           continue;
         }
         final String key = _variationAttributeKey(attribute);
-        if (key.isEmpty) {
+        if (key.isEmpty || _isBrokenTaxonomyKey(key)) {
           continue;
         }
         final _MutableOptionGroup group = groups.putIfAbsent(
@@ -373,6 +375,41 @@ class ProductDetailController extends ChangeNotifier {
         ),
       ),
     );
+  }
+
+  List<CatalogVariation> _mergeDetailedVariations(
+    List<CatalogVariation> detailedVariations,
+  ) {
+    final Map<int, CatalogVariation> embeddedById = <int, CatalogVariation>{
+      for (final CatalogVariation variation in _variations)
+        variation.id: variation,
+    };
+    final LinkedHashMap<int, CatalogVariation> merged =
+        LinkedHashMap<int, CatalogVariation>.from(embeddedById);
+
+    for (final CatalogVariation detailed in detailedVariations) {
+      final CatalogVariation? embedded = embeddedById[detailed.id];
+      final List<CatalogVariationAttribute> attributes =
+          embedded != null && embedded.attributes.isNotEmpty
+          ? embedded.attributes
+          : detailed.attributes
+                .where(
+                  (CatalogVariationAttribute attribute) =>
+                      !_isBrokenTaxonomyKey(
+                        _variationAttributeKey(attribute),
+                      ),
+                )
+                .toList(growable: false);
+      merged[detailed.id] = CatalogVariation(
+        id: detailed.id,
+        attributes: List<CatalogVariationAttribute>.unmodifiable(attributes),
+        isPurchasable: detailed.isPurchasable,
+        isInStock: detailed.isInStock,
+        prices: detailed.prices ?? embedded?.prices,
+        image: detailed.image ?? embedded?.image,
+      );
+    }
+    return List<CatalogVariation>.unmodifiable(merged.values);
   }
 
   ProductOptionGroup? _findOptionGroup(String normalizedKey) {
@@ -531,6 +568,11 @@ class ProductDetailController extends ChangeNotifier {
     } on FormatException {
       return value;
     }
+  }
+
+  static bool _isBrokenTaxonomyKey(String key) {
+    final String value = _normalize(key);
+    return value == 'pa_' || value == 'attribute_pa_';
   }
 
   static String _normalize(String source) => source.trim().toLowerCase();

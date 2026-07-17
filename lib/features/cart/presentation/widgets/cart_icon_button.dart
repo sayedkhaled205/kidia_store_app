@@ -8,10 +8,12 @@ class CartIconButton extends StatelessWidget {
     required this.onPressed,
     super.key,
     this.tooltip = 'السلة',
+    this.endInset = edgeInset,
   });
 
   final VoidCallback? onPressed;
   final String tooltip;
+  final double endInset;
 
   static const double iconSize = 26.4;
   static const double edgeInset = 6;
@@ -39,7 +41,7 @@ class CartIconButton extends StatelessWidget {
       // In Arabic this is the physical left edge. Keeping a small end inset
       // prevents the bag and its badge from touching the screen edge while
       // preserving one identical size in every header.
-      padding: const EdgeInsetsDirectional.only(end: edgeInset),
+      padding: EdgeInsetsDirectional.only(end: endInset),
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,

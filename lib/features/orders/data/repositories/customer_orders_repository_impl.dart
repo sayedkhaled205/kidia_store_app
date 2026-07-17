@@ -2,7 +2,8 @@ import 'package:kidia_store_app/features/orders/data/network/customer_orders_api
 import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
 import 'package:kidia_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
 
-class CustomerOrdersRepositoryImpl implements CustomerOrdersRepository {
+class CustomerOrdersRepositoryImpl
+    implements CustomerOrdersRepository, CustomerOrderCancellationRepository {
   const CustomerOrdersRepositoryImpl(this._transport);
 
   final CustomerOrdersApiTransport _transport;
@@ -44,6 +45,47 @@ class CustomerOrdersRepositoryImpl implements CustomerOrdersRepository {
         CustomerOrdersRepositoryException(
           kind: CustomerOrdersFailureKind.unknown,
           message: 'Loading customer orders failed unexpectedly.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<CustomerOrder> cancelOrder(int orderId) async {
+    if (_transport is! CustomerOrderCancellationTransport) {
+      throw const CustomerOrdersRepositoryException(
+        kind: CustomerOrdersFailureKind.configuration,
+        message: 'Customer order cancellation is unavailable.',
+      );
+    }
+    final CustomerOrderCancellationTransport transport =
+        _transport as CustomerOrderCancellationTransport;
+    try {
+      final CustomerOrdersApiResponse response = await transport.cancelOrder(
+        orderId,
+      );
+      final Map<String, dynamic> json = _object(
+        response.data,
+        'cancel order response',
+      );
+      return _parseOrder(json['order']);
+    } on CustomerOrdersTransportException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CustomerOrdersRepositoryException(
+          kind: _repositoryKind(error.kind),
+          message: error.message,
+          statusCode: error.statusCode,
+          cause: error,
+        ),
+        stackTrace,
+      );
+    } on FormatException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CustomerOrdersRepositoryException(
+          kind: CustomerOrdersFailureKind.invalidResponse,
+          message: 'The store returned invalid customer order data.',
           cause: error,
         ),
         stackTrace,
@@ -108,6 +150,7 @@ class CustomerOrdersRepositoryImpl implements CustomerOrdersRepository {
       itemCount: itemCount,
       items: List<CustomerOrderItem>.unmodifiable(items),
       dateCreated: dateCreated,
+      canCancel: _boolean(json['can_cancel']),
     );
   }
 
@@ -167,6 +210,15 @@ class CustomerOrdersRepositoryImpl implements CustomerOrdersRepository {
       throw FormatException('$field must be an integer.');
     }
     return parsed;
+  }
+
+  bool _boolean(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    return const <String>{'1', 'true', 'yes', 'on'}.contains(
+      _text(value).trim().toLowerCase(),
+    );
   }
 
   CustomerOrdersFailureKind _repositoryKind(

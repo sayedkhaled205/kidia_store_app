@@ -57,7 +57,8 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 			);
 		}
 
-		$variations = array();
+		$variations       = array();
+		$attribute_matrix = $this->get_parent_attribute_matrix( $product );
 		foreach ( $product->get_children() as $variation_id ) {
 			$variation = wc_get_product( $variation_id );
 			if ( ! $variation instanceof WC_Product_Variation ) {
@@ -66,11 +67,16 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 
 			$attributes = array();
 			foreach ( $variation->get_attributes() as $taxonomy => $value ) {
-				// Do not run non-Latin taxonomies through sanitize_key(). Arabic
-				// attribute slugs are percent encoded by WooCommerce; stripping the
-				// percent signs turns them into an unresolvable pa_d8... duplicate.
-				$taxonomy = sanitize_text_field( (string) $taxonomy );
+				// Neither sanitize_key() nor sanitize_text_field() is safe here. The
+				// latter removes percent-encoded octets, turning an Arabic taxonomy
+				// such as pa_%d8... into the broken key `pa_`.
+				$taxonomy = $this->normalize_taxonomy( $taxonomy );
 				$value    = sanitize_title( (string) $value );
+				$taxonomy = $this->resolve_attribute_taxonomy(
+					$taxonomy,
+					$value,
+					$attribute_matrix
+				);
 				if ( '' === $taxonomy || '' === $value ) {
 					continue;
 				}
@@ -92,6 +98,68 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 		}
 
 		return rest_ensure_response( array_values( $variations ) );
+	}
+
+	/**
+	 * Build a value-to-taxonomy map from the parent variable product.
+	 *
+	 * Some legacy stores contain a non-Latin variation meta key that reaches
+	 * WC_Product_Variation as only `pa_`. The parent still owns the complete
+	 * taxonomy, so matching a unique option value restores the real key and
+	 * prevents the app from rendering the same attribute twice.
+	 */
+	private function get_parent_attribute_matrix( WC_Product_Variable $product ): array {
+		if ( ! is_callable( array( $product, 'get_variation_attributes' ) ) ) {
+			return array();
+		}
+
+		$matrix = array();
+		foreach ( $product->get_variation_attributes() as $taxonomy => $values ) {
+			$taxonomy = $this->normalize_taxonomy( $taxonomy );
+			if ( '' === $taxonomy || ! is_array( $values ) ) {
+				continue;
+			}
+			$matrix[ $taxonomy ] = array_values(
+				array_filter(
+					array_map(
+						static fn( $value ): string => sanitize_title( (string) $value ),
+						$values
+					)
+				)
+			);
+		}
+		return $matrix;
+	}
+
+	/** Preserve WooCommerce's percent-encoded non-Latin taxonomy slugs. */
+	private function normalize_taxonomy( $taxonomy ): string {
+		$taxonomy = trim( wp_strip_all_tags( (string) $taxonomy ) );
+		if ( str_starts_with( $taxonomy, 'attribute_' ) ) {
+			$taxonomy = substr( $taxonomy, strlen( 'attribute_' ) );
+		}
+		return sanitize_title( $taxonomy );
+	}
+
+	/** Restore only an unambiguous broken taxonomy; valid keys stay untouched. */
+	private function resolve_attribute_taxonomy(
+		string $taxonomy,
+		string $value,
+		array $attribute_matrix
+	): string {
+		if ( '' !== $taxonomy && 'pa_' !== $taxonomy && 'attribute_pa_' !== $taxonomy ) {
+			return $taxonomy;
+		}
+		if ( '' === $value ) {
+			return $taxonomy;
+		}
+
+		$matches = array();
+		foreach ( $attribute_matrix as $candidate => $values ) {
+			if ( in_array( $value, $values, true ) ) {
+				$matches[] = $candidate;
+			}
+		}
+		return 1 === count( $matches ) ? $matches[0] : $taxonomy;
 	}
 
 	/** Normalize prices to the minor-unit contract used by Store API. */

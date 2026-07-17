@@ -11,8 +11,10 @@ class CustomerOrdersState {
     this.isInitialLoading = false,
     this.isRefreshing = false,
     this.isLoadingMore = false,
+    this.cancellingOrderIds = const <int>{},
     this.error,
     this.loadMoreError,
+    this.mutationError,
   });
 
   final List<CustomerOrder> items;
@@ -22,8 +24,10 @@ class CustomerOrdersState {
   final bool isInitialLoading;
   final bool isRefreshing;
   final bool isLoadingMore;
+  final Set<int> cancellingOrderIds;
   final Object? error;
   final Object? loadMoreError;
+  final Object? mutationError;
 
   bool get hasNextPage => page < totalPages;
 
@@ -35,8 +39,10 @@ class CustomerOrdersState {
     bool? isInitialLoading,
     bool? isRefreshing,
     bool? isLoadingMore,
+    Set<int>? cancellingOrderIds,
     Object? error = _notProvided,
     Object? loadMoreError = _notProvided,
+    Object? mutationError = _notProvided,
   }) {
     return CustomerOrdersState(
       items: items ?? this.items,
@@ -46,10 +52,14 @@ class CustomerOrdersState {
       isInitialLoading: isInitialLoading ?? this.isInitialLoading,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      cancellingOrderIds: cancellingOrderIds ?? this.cancellingOrderIds,
       error: identical(error, _notProvided) ? this.error : error,
       loadMoreError: identical(loadMoreError, _notProvided)
           ? this.loadMoreError
           : loadMoreError,
+      mutationError: identical(mutationError, _notProvided)
+          ? this.mutationError
+          : mutationError,
     );
   }
 }
@@ -149,6 +159,67 @@ class CustomerOrdersController extends ChangeNotifier {
           _state.copyWith(isLoadingMore: false, loadMoreError: error),
         );
       }
+    }
+  }
+
+  bool isCancelling(int orderId) => _state.cancellingOrderIds.contains(orderId);
+
+  Future<bool> cancelOrder(CustomerOrder order) async {
+    if (!order.canCancel || isCancelling(order.id)) {
+      return false;
+    }
+    if (_repository is! CustomerOrderCancellationRepository) {
+      _replace(
+        _state.copyWith(
+          mutationError: const CustomerOrdersRepositoryException(
+            kind: CustomerOrdersFailureKind.configuration,
+            message: 'Customer order cancellation is unavailable.',
+          ),
+        ),
+      );
+      return false;
+    }
+    final CustomerOrderCancellationRepository repository =
+        _repository as CustomerOrderCancellationRepository;
+
+    _replace(
+      _state.copyWith(
+        cancellingOrderIds: Set<int>.unmodifiable(<int>{
+          ..._state.cancellingOrderIds,
+          order.id,
+        }),
+        mutationError: null,
+      ),
+    );
+    try {
+      final CustomerOrder updated = await repository.cancelOrder(order.id);
+      _replace(
+        _state.copyWith(
+          items: List<CustomerOrder>.unmodifiable(<CustomerOrder>[
+            for (final CustomerOrder item in _state.items)
+              if (item.id == updated.id) updated else item,
+          ]),
+          mutationError: null,
+        ),
+      );
+      return true;
+    } catch (error) {
+      _replace(_state.copyWith(mutationError: error));
+      return false;
+    } finally {
+      _replace(
+        _state.copyWith(
+          cancellingOrderIds: Set<int>.unmodifiable(
+            _state.cancellingOrderIds.where((int id) => id != order.id),
+          ),
+        ),
+      );
+    }
+  }
+
+  void clearMutationError() {
+    if (_state.mutationError != null) {
+      _replace(_state.copyWith(mutationError: null));
     }
   }
 

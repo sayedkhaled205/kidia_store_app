@@ -20,6 +20,7 @@ void main() {
                   'total_display': 'EGP 1,320.00',
                   'currency_code': 'EGP',
                   'item_count': 3,
+                  'can_cancel': true,
                   'items': <dynamic>[
                     <String, dynamic>{'name': 'كرسي أطفال', 'quantity': 1},
                     <String, dynamic>{'name': 'لعبة', 'quantity': 2},
@@ -44,13 +45,48 @@ void main() {
     expect(page.items.single.statusName, 'قيد التنفيذ');
     expect(page.items.single.totalDisplay, 'EGP 1,320.00');
     expect(page.items.single.items.last.quantity, 2);
+    expect(page.items.single.canCancel, isTrue);
+  });
+
+  test('returns the authoritative cancelled order from WooCommerce', () async {
+    final CustomerOrdersRepositoryImpl repository =
+        CustomerOrdersRepositoryImpl(
+          _FakeOrdersTransport(
+            <String, dynamic>{
+              'orders': <dynamic>[],
+              'page': 1,
+              'per_page': 20,
+              'total': 0,
+              'total_pages': 0,
+            },
+            cancelledData: <String, dynamic>{
+              'order': <String, dynamic>{
+                'id': 101,
+                'number': '101',
+                'status': 'cancelled',
+                'status_name': 'Cancelled',
+                'total_display': 'EGP 1,320.00',
+                'item_count': 0,
+                'items': <dynamic>[],
+                'can_cancel': false,
+              },
+            },
+          ),
+        );
+
+    final CustomerOrder order = await repository.cancelOrder(101);
+
+    expect(order.status, 'cancelled');
+    expect(order.canCancel, isFalse);
   });
 }
 
-class _FakeOrdersTransport implements CustomerOrdersApiTransport {
-  const _FakeOrdersTransport(this.data);
+class _FakeOrdersTransport
+    implements CustomerOrdersApiTransport, CustomerOrderCancellationTransport {
+  const _FakeOrdersTransport(this.data, {this.cancelledData});
 
   final dynamic data;
+  final dynamic cancelledData;
 
   @override
   Future<CustomerOrdersApiResponse> fetchOrders({
@@ -58,5 +94,13 @@ class _FakeOrdersTransport implements CustomerOrdersApiTransport {
     required int perPage,
   }) async {
     return CustomerOrdersApiResponse(data: data, statusCode: 200);
+  }
+
+  @override
+  Future<CustomerOrdersApiResponse> cancelOrder(int orderId) async {
+    return CustomerOrdersApiResponse(
+      data: cancelledData,
+      statusCode: 200,
+    );
   }
 }

@@ -20,6 +20,10 @@ abstract interface class CustomerOrdersApiTransport {
   });
 }
 
+abstract interface class CustomerOrderCancellationTransport {
+  Future<CustomerOrdersApiResponse> cancelOrder(int orderId);
+}
+
 enum CustomerOrdersTransportFailureKind {
   configuration,
   unauthorized,
@@ -51,7 +55,10 @@ class CustomerOrdersTransportException implements Exception {
 }
 
 /// Same-origin client for the signed-in WooCommerce customer's order history.
-class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
+class DioCustomerOrdersApiTransport
+    implements
+        CustomerOrdersApiTransport,
+        CustomerOrderCancellationTransport {
   DioCustomerOrdersApiTransport({
     required Uri storeUri,
     required this.authTokenReader,
@@ -88,6 +95,29 @@ class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
     required int page,
     required int perPage,
   }) async {
+    final int safePage = page < 1 ? 1 : page;
+    final int safePerPage = perPage.clamp(1, 20);
+    return _request(
+      _ordersUri(page: safePage, perPage: safePerPage),
+      method: 'GET',
+    );
+  }
+
+  @override
+  Future<CustomerOrdersApiResponse> cancelOrder(int orderId) {
+    if (orderId <= 0) {
+      throw const CustomerOrdersTransportException(
+        kind: CustomerOrdersTransportFailureKind.configuration,
+        message: 'A valid customer order is required.',
+      );
+    }
+    return _request(_cancelOrderUri(orderId), method: 'POST');
+  }
+
+  Future<CustomerOrdersApiResponse> _request(
+    Uri uri, {
+    required String method,
+  }) async {
     final String token = authTokenReader()?.trim() ?? '';
     if (token.isEmpty) {
       throw const CustomerOrdersTransportException(
@@ -103,16 +133,16 @@ class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
       );
     }
 
-    final int safePage = page < 1 ? 1 : page;
-    final int safePerPage = perPage.clamp(1, 20);
     try {
-      final Response<dynamic> response = await _dio.getUri<dynamic>(
-        _ordersUri(page: safePage, perPage: safePerPage),
+      final Response<dynamic> response = await _dio.requestUri<dynamic>(
+        uri,
         options: Options(
+          method: method,
           responseType: ResponseType.json,
           followRedirects: false,
           headers: <String, String>{
             'Accept': 'application/json',
+            if (method != 'GET') 'Content-Type': 'application/json',
             'X-Kidia-Session': token,
           },
         ),
@@ -167,6 +197,18 @@ class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
         'page': '$page',
         'per_page': '$perPage',
       },
+      fragment: null,
+    );
+  }
+
+  Uri _cancelOrderUri(int orderId) {
+    final String installPath = _storeUri.path == '/'
+        ? ''
+        : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
+    return _storeUri.replace(
+      path:
+          '$installPath/wp-json/woo-mobile/v1/customer/orders/$orderId/cancel',
+      query: null,
       fragment: null,
     );
   }

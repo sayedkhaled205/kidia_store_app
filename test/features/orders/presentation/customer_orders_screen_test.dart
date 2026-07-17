@@ -35,11 +35,47 @@ void main() {
     expect(find.text('قيد التنفيذ'), findsOneWidget);
     expect(find.text('كرسي أطفال'), findsOneWidget);
     expect(find.text('EGP 1,320.00'), findsOneWidget);
+    expect(find.byKey(const Key('cancel-customer-order-101')), findsOneWidget);
     expect(find.textContaining('الخطوة التالية'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('cancel-customer-order-101')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-cancel-order')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ملغي'), findsOneWidget);
+    expect(find.byKey(const Key('cancel-customer-order-101')), findsNothing);
+    expect(find.text('تم إلغاء الطلب بنجاح.'), findsOneWidget);
+  });
+
+  testWidgets('shows a clean empty state when the customer has no orders', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          customerOrdersRepositoryProvider.overrideWithValue(
+            const _EmptyOrdersRepository(),
+          ),
+          cartBadgeCountProvider.overrideWithValue(0),
+        ],
+        child: const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: <Locale>[Locale('ar')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: CustomerOrdersScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('لا توجد طلبات حتى الآن'), findsOneWidget);
+    expect(find.text('تعذر تحميل طلباتك'), findsNothing);
   });
 }
 
-class _ScreenOrdersRepository implements CustomerOrdersRepository {
+class _ScreenOrdersRepository
+    implements CustomerOrdersRepository, CustomerOrderCancellationRepository {
   const _ScreenOrdersRepository();
 
   @override
@@ -60,12 +96,46 @@ class _ScreenOrdersRepository implements CustomerOrdersRepository {
             CustomerOrderItem(name: 'كرسي أطفال', quantity: 1),
           ],
           dateCreated: DateTime.parse('2026-07-16T20:30:00+03:00'),
+          canCancel: true,
         ),
       ],
       page: 1,
       perPage: perPage,
       totalItems: 1,
       totalPages: 1,
+    );
+  }
+
+  @override
+  Future<CustomerOrder> cancelOrder(int orderId) async {
+    return const CustomerOrder(
+      id: 101,
+      number: '101',
+      status: 'cancelled',
+      statusName: 'Cancelled',
+      totalDisplay: 'EGP 1,320.00',
+      itemCount: 1,
+      items: <CustomerOrderItem>[
+        CustomerOrderItem(name: 'كرسي أطفال', quantity: 1),
+      ],
+    );
+  }
+}
+
+class _EmptyOrdersRepository implements CustomerOrdersRepository {
+  const _EmptyOrdersRepository();
+
+  @override
+  Future<CustomerOrderPage> getOrders({
+    required int page,
+    required int perPage,
+  }) async {
+    return CustomerOrderPage(
+      items: const <CustomerOrder>[],
+      page: 1,
+      perPage: perPage,
+      totalItems: 0,
+      totalPages: 0,
     );
   }
 }

@@ -112,7 +112,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Widget> _buildActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <Widget>[
-      CartIconButton(onPressed: () => context.push('/cart')),
+      CartIconButton(
+        key: const Key('product-cart-button'),
+        endInset: 0,
+        onPressed: () => context.push('/cart'),
+      ),
       if (product != null && widget.onShareRequested != null)
         IconButton(
           tooltip: copy.share,

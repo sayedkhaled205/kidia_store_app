@@ -92,7 +92,6 @@ class AccountScreen extends ConsumerWidget {
                         context,
                         session: session,
                         action: _actions[index],
-                        isArabic: isArabic,
                       ),
                     ),
                     if (index < _actions.length - 1) const Divider(),
@@ -119,7 +118,6 @@ class AccountScreen extends ConsumerWidget {
     BuildContext context, {
     required AuthSession? session,
     required _AccountAction action,
-    required bool isArabic,
   }) async {
     if (session == null) {
       await context.push<bool>('/auth');
@@ -128,22 +126,16 @@ class AccountScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    if (action.id == 'orders') {
-      await context.push<void>('/orders');
-      return;
+    final String? route = switch (action.id) {
+      'orders' => '/orders',
+      'addresses' => '/addresses',
+      'profile' => '/profile',
+      'support' => '/support',
+      _ => null,
+    };
+    if (route != null) {
+      await context.push<void>(route);
     }
-    final String label = action.label(isArabic);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            isArabic
-                ? 'صفحة $label ستكون الخطوة التالية.'
-                : '$label will be added in the next step.',
-          ),
-        ),
-      );
   }
 
   Future<void> _signOut(
