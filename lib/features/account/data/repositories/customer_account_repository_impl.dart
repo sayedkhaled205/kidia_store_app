@@ -228,7 +228,7 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
     if (digits.startsWith('00')) {
       digits = digits.substring(2);
     }
-    if (digits.startsWith('201') && digits.length == 12) {
+    if (digits.startsWith('201')) {
       return '0${digits.substring(2)}';
     }
     return digits;

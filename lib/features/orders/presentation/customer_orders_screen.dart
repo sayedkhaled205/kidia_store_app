@@ -126,8 +126,6 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
           controller: controller,
           scrollController: _scrollController,
           copy: copy,
-          onCancel: (CustomerOrder order) =>
-              _cancelOrder(context, order, controller, copy),
           onOpen: (CustomerOrder order) =>
               _openOrder(order, controller, copy),
         ),
@@ -141,14 +139,12 @@ class _OrdersContent extends StatelessWidget {
     required this.controller,
     required this.scrollController,
     required this.copy,
-    required this.onCancel,
     required this.onOpen,
   });
 
   final CustomerOrdersController controller;
   final ScrollController scrollController;
   final _OrdersCopy copy;
-  final ValueChanged<CustomerOrder> onCancel;
   final ValueChanged<CustomerOrder> onOpen;
 
   @override
@@ -214,8 +210,6 @@ class _OrdersContent extends StatelessWidget {
                     key: ValueKey<int>(order.id),
                     order: order,
                     copy: copy,
-                    isCancelling: controller.isCancelling(order.id),
-                    onCancel: () => onCancel(order),
                     onTap: () => onOpen(order),
                   );
                 },
@@ -239,16 +233,12 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
     required this.copy,
-    required this.isCancelling,
-    required this.onCancel,
     required this.onTap,
     super.key,
   });
 
   final CustomerOrder order;
   final _OrdersCopy copy;
-  final bool isCancelling;
-  final VoidCallback onCancel;
   final VoidCallback onTap;
 
   @override
@@ -379,24 +369,6 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (order.canCancel) ...<Widget>[
-                const SizedBox(height: KidiaSpacing.sm),
-                OutlinedButton.icon(
-                  key: Key('cancel-customer-order-${order.id}'),
-                  onPressed: isCancelling ? null : onCancel,
-                  icon: isCancelling
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.close_rounded),
-                  label: Text(
-                    isCancelling
-                        ? copy.cancellationInProgress(order)
-                        : copy.cancellationAction(order),
-                  ),
-                ),
-              ],
               const SizedBox(height: KidiaSpacing.xs),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
@@ -609,21 +581,32 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
               ),
               if (order.canCancel) ...<Widget>[
                 const SizedBox(height: KidiaSpacing.md),
-                FilledButton.tonalIcon(
-                  key: Key('details-cancel-customer-order-${order.id}'),
-                  onPressed: isCancelling
-                      ? null
-                      : () => onCancel(context, order),
-                  icon: isCancelling
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.close_rounded),
-                  label: Text(
-                    isCancelling
-                        ? copy.cancellationInProgress(order)
-                        : copy.cancellationAction(order),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: OutlinedButton.icon(
+                    key: Key('details-cancel-customer-order-${order.id}'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      visualDensity: VisualDensity.compact,
+                      textStyle: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    onPressed: isCancelling
+                        ? null
+                        : () => onCancel(context, order),
+                    icon: isCancelling
+                        ? const SizedBox.square(
+                            dimension: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.close_rounded, size: 17),
+                    label: Text(
+                      isCancelling
+                          ? copy.cancellationInProgress(order)
+                          : copy.cancellationAction(order),
+                    ),
                   ),
                 ),
               ],

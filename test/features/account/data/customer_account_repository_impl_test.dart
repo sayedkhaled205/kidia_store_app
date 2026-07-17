@@ -54,6 +54,25 @@ void main() {
     expect(address.valueFor('shipping_address_1'), '2 New Street');
   });
 
+  test('accepts WooCommerce international phone formatting after save', () async {
+    final CustomerAccountRepositoryImpl repository =
+        CustomerAccountRepositoryImpl(
+          _FakeAccountTransport(internationalizePhones: true),
+        );
+
+    final CustomerProfile profile = await repository.updateProfile(
+      firstName: 'Updated',
+      lastName: 'Customer',
+      displayName: 'Updated Customer',
+      email: 'updated@example.com',
+      phone: '010694000065',
+      alternatePhone: '01155555555',
+    );
+
+    expect(profile.phone, '+2010694000065');
+    expect(profile.alternatePhone, '00201155555555');
+  });
+
   test('rejects update responses that were not persisted', () async {
     final CustomerAccountRepositoryImpl repository =
         CustomerAccountRepositoryImpl(
@@ -99,9 +118,13 @@ void main() {
 }
 
 class _FakeAccountTransport implements CustomerAccountApiTransport {
-  _FakeAccountTransport({this.persistWrites = true});
+  _FakeAccountTransport({
+    this.persistWrites = true,
+    this.internationalizePhones = false,
+  });
 
   final bool persistWrites;
+  final bool internationalizePhones;
   Map<String, String>? profileValues;
   CustomerAddressType? addressType;
 
@@ -160,9 +183,16 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
   @override
   Future<Map<String, dynamic>> updateProfile(Map<String, String> values) async {
     profileValues = values;
-    final Map<String, String> stored = persistWrites
+    Map<String, String> stored = persistWrites
         ? values
         : <String, String>{...values, 'display_name': 'Old name'};
+    if (persistWrites && internationalizePhones) {
+      stored = <String, String>{
+        ...stored,
+        'phone': '+20${values['phone']?.substring(1)}',
+        'alternate_phone': '0020${values['alternate_phone']?.substring(1)}',
+      };
+    }
     return <String, dynamic>{
       'profile': <String, dynamic>{
         'id': 7,

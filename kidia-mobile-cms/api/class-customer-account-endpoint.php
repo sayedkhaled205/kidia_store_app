@@ -343,11 +343,34 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 	/** Confirm a write by comparing it with a freshly loaded WC customer. */
 	private function payload_matches( array $payload, array $expected ): bool {
 		foreach ( $expected as $key => $value ) {
-			if ( ! array_key_exists( $key, $payload ) || (string) $payload[ $key ] !== (string) $value ) {
+			if ( ! array_key_exists( $key, $payload ) ) {
+				return false;
+			}
+			$actual = (string) $payload[ $key ];
+			if ( in_array( $key, array( 'phone', 'alternate_phone' ), true ) ) {
+				if ( $this->phone_fingerprint( $actual ) !== $this->phone_fingerprint( (string) $value ) ) {
+					return false;
+				}
+				continue;
+			}
+			if ( (string) $value !== $actual ) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	/** Normalizes Egyptian local/international formatting before verification. */
+	private function phone_fingerprint( string $value ): string {
+		$digits = preg_replace( '/[^0-9]/', '', $value );
+		$digits = is_string( $digits ) ? $digits : '';
+		if ( str_starts_with( $digits, '00' ) ) {
+			$digits = substr( $digits, 2 );
+		}
+		if ( str_starts_with( $digits, '201' ) ) {
+			$digits = '0' . substr( $digits, 2 );
+		}
+		return $digits;
 	}
 
 	private function persistence_error(): WP_Error {

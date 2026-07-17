@@ -35,8 +35,8 @@ void main() {
     expect(find.text('قيد التنفيذ'), findsOneWidget);
     expect(find.text('كرسي أطفال'), findsOneWidget);
     expect(find.text('EGP 1,320.00'), findsOneWidget);
-    expect(find.byKey(const Key('cancel-customer-order-101')), findsOneWidget);
-    expect(find.text('طلب إلغاء'), findsOneWidget);
+    expect(find.byKey(const Key('cancel-customer-order-101')), findsNothing);
+    expect(find.text('طلب إلغاء'), findsNothing);
     expect(find.textContaining('الخطوة التالية'), findsNothing);
 
     await tester.tap(find.byKey(const Key('open-customer-order-101')));
@@ -48,6 +48,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('منتجات الطلب'), findsOneWidget);
+    expect(
+      find.byKey(const Key('details-cancel-customer-order-101')),
+      findsOneWidget,
+    );
 
     await tester.tap(
       find.byKey(const Key('details-cancel-customer-order-101')),
