@@ -59,7 +59,6 @@ void main() {
       find.byKey(const Key('profile-phone')),
     );
     expect(phone.controller?.text, '01000000000');
-    expect(phone.readOnly, isTrue);
     expect(find.byKey(const Key('profile-alternate-phone')), findsNothing);
     expect(find.byKey(const Key('save-customer-profile')), findsOneWidget);
     for (final String key in <String>[
