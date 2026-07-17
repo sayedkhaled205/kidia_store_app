@@ -119,6 +119,13 @@ void main() {
       find.byKey(const Key('catalog-search-overlay-field')),
     );
     expect(field.autofocus, isTrue);
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(
+      tester
+          .getTopLeft(find.byKey(const Key('catalog-search-top-overlay')))
+          .dy,
+      lessThan(160),
+    );
   });
 }
 

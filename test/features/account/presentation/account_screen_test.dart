@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/account/presentation/account_screen.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:kidia_store_app/features/auth/presentation/auth_screen.dart';
@@ -69,6 +70,52 @@ void main() {
       expect(find.byType(AccountScreen), findsOneWidget);
     }
   });
+
+  testWidgets('signed-in orders action opens the real orders destination', (
+    WidgetTester tester,
+  ) async {
+    final GoRouter router = GoRouter(
+      initialLocation: '/account',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/account',
+          builder: (BuildContext context, GoRouterState state) =>
+              const AccountScreen(),
+        ),
+        GoRoute(
+          path: '/orders',
+          builder: (BuildContext context, GoRouterState state) =>
+              const Scaffold(body: SizedBox(key: Key('orders-destination'))),
+        ),
+        GoRoute(
+          path: '/cart',
+          builder: (BuildContext context, GoRouterState state) =>
+              const SizedBox.shrink(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_SignedInRepository()),
+        ],
+        child: MaterialApp.router(
+          locale: const Locale('ar'),
+          supportedLocales: const <Locale>[Locale('ar')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('account-action-orders')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('orders-destination')), findsOneWidget);
+    expect(find.textContaining('الخطوة التالية'), findsNothing);
+  });
 }
 
 class _SignedOutRepository implements AuthRepository {
@@ -114,4 +161,19 @@ class _SignedOutRepository implements AuthRepository {
 
   @override
   Future<void> signOut(AuthSession session) async {}
+}
+
+class _SignedInRepository extends _SignedOutRepository {
+  @override
+  Future<AuthSession?> restoreSession() async {
+    return AuthSession(
+      token: 'session-token',
+      expiresAt: DateTime.utc(2099),
+      user: const AuthUser(
+        id: 7,
+        email: 'customer@example.com',
+        displayName: 'Customer',
+      ),
+    );
+  }
 }

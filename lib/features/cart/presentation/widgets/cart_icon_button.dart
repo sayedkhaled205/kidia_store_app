@@ -8,12 +8,13 @@ class CartIconButton extends StatelessWidget {
     required this.onPressed,
     super.key,
     this.tooltip = 'السلة',
-    this.iconSize,
   });
 
   final VoidCallback? onPressed;
   final String tooltip;
-  final double? iconSize;
+
+  static const double iconSize = 26.4;
+  static const double edgeInset = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -34,17 +35,23 @@ class CartIconButton extends StatelessWidget {
   Widget _button(BuildContext context, int itemCount) {
     final ColorScheme colors = Theme.of(context).colorScheme;
 
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Badge.count(
-        count: itemCount > 99 ? 99 : itemCount,
-        isLabelVisible: itemCount > 0,
-        backgroundColor: colors.error,
-        textColor: colors.onError,
-        child: Icon(
-          Icons.shopping_bag_outlined,
-          size: iconSize ?? 26.4,
+    return Padding(
+      // In Arabic this is the physical left edge. Keeping a small end inset
+      // prevents the bag and its badge from touching the screen edge while
+      // preserving one identical size in every header.
+      padding: const EdgeInsetsDirectional.only(end: edgeInset),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Badge.count(
+          count: itemCount > 99 ? 99 : itemCount,
+          isLabelVisible: itemCount > 0,
+          backgroundColor: colors.error,
+          textColor: colors.onError,
+          child: const Icon(
+            Icons.shopping_bag_outlined,
+            size: iconSize,
+          ),
         ),
       ),
     );

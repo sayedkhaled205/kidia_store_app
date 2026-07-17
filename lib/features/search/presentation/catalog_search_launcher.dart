@@ -6,12 +6,41 @@ Future<void> showCatalogSearch(
   BuildContext context, {
   String initialQuery = '',
 }) async {
-  final String? query = await showModalBottomSheet<String>(
+  final String? query = await showGeneralDialog<String>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (BuildContext context) =>
-        _CatalogSearchSheet(initialQuery: initialQuery),
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: Colors.black54,
+    transitionDuration: const Duration(milliseconds: 180),
+    pageBuilder:
+        (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+        ) => _CatalogSearchOverlay(initialQuery: initialQuery),
+    transitionBuilder:
+        (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+          Widget child,
+        ) {
+          final Animation<double> curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, -0.12),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
   );
   final String normalizedQuery = query?.trim() ?? '';
   if (!context.mounted || normalizedQuery.isEmpty) {
@@ -21,16 +50,17 @@ Future<void> showCatalogSearch(
   context.push('/search?q=${Uri.encodeQueryComponent(normalizedQuery)}');
 }
 
-class _CatalogSearchSheet extends StatefulWidget {
-  const _CatalogSearchSheet({required this.initialQuery});
+class _CatalogSearchOverlay extends StatefulWidget {
+  const _CatalogSearchOverlay({required this.initialQuery});
 
   final String initialQuery;
 
   @override
-  State<_CatalogSearchSheet> createState() => _CatalogSearchSheetState();
+  State<_CatalogSearchOverlay> createState() =>
+      _CatalogSearchOverlayState();
 }
 
-class _CatalogSearchSheetState extends State<_CatalogSearchSheet> {
+class _CatalogSearchOverlayState extends State<_CatalogSearchOverlay> {
   late final TextEditingController _controller;
 
   @override
@@ -59,46 +89,50 @@ class _CatalogSearchSheetState extends State<_CatalogSearchSheet> {
   @override
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
-    final double keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsetsDirectional.fromSTEB(
-        16,
-        16,
-        16,
-        16 + keyboardInset,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            copy.search,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('catalog-search-overlay-field'),
-            controller: _controller,
-            autofocus: true,
-            autocorrect: false,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _submit(),
-            decoration: InputDecoration(
-              hintText: copy.searchHint,
-              prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
-              suffixIcon: IconButton(
-                key: const Key('catalog-search-overlay-submit'),
-                tooltip: copy.search,
-                onPressed: _submit,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 26.4),
+    final ColorScheme colors = Theme.of(context).colorScheme;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: SafeArea(
+        bottom: false,
+        child: Align(
+          alignment: AlignmentDirectional.topCenter,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 0),
+            child: Material(
+              key: const Key('catalog-search-top-overlay'),
+              color: colors.surface,
+              elevation: 8,
+              shadowColor: Colors.black26,
+              borderRadius: BorderRadius.circular(22),
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextField(
+                  key: const Key('catalog-search-overlay-field'),
+                  controller: _controller,
+                  autofocus: true,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _submit(),
+                  decoration: InputDecoration(
+                    hintText: copy.searchHint,
+                    prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
+                    suffixIcon: IconButton(
+                      key: const Key('catalog-search-overlay-submit'),
+                      tooltip: copy.search,
+                      onPressed: _submit,
+                      icon: const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 26.4,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

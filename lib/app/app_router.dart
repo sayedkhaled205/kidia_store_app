@@ -23,6 +23,7 @@ import '../features/checkout/data/network/checkout_api_transport.dart';
 import '../features/checkout/data/repositories/store_api_checkout_repository.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/home/presentation/pages/home_page.dart';
+import '../features/orders/presentation/customer_orders_screen.dart';
 import '../features/product/presentation/product_detail_screen.dart';
 import '../features/product/application/product_detail_controller.dart'
     as product_selection;
@@ -309,6 +310,23 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         builder: (context, state) => const AuthScreen(),
       ),
       GoRoute(
+        path: '/orders',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, child) {
+            final AsyncValue<AuthSession?> authState = ref.watch(
+              authControllerProvider,
+            );
+            if (authState.isLoading) {
+              return const _ProtectedAccountLoading();
+            }
+            if (authState.asData?.value == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
+            return const CustomerOrdersScreen();
+          },
+        ),
+      ),
+      GoRoute(
         path: '/social-callback',
         builder: (context, state) => SocialAuthCallbackScreen(
           code: state.uri.queryParameters['code'] ?? '',
@@ -369,6 +387,19 @@ class _CheckoutAuthLoading extends StatelessWidget {
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(key: Key('checkout-auth-loading')),
+      ),
+    );
+  }
+}
+
+class _ProtectedAccountLoading extends StatelessWidget {
+  const _ProtectedAccountLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(key: Key('account-auth-loading')),
       ),
     );
   }
