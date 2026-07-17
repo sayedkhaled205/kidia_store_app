@@ -38,11 +38,16 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			$default_image = absint( get_term_meta( $id, 'thumbnail_id', true ) );
 			$preview_id    = $image_id ?: $default_image;
 			$image_url     = $preview_id ? wp_get_attachment_image_url( $preview_id, 'thumbnail' ) : '';
+			$has_children  = ! empty( $by_parent[ $id ] );
+			$image_size    = min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) );
 			?>
 			<li class="kidia-category-row" data-term-id="<?php echo esc_attr( (string) $id ); ?>">
 				<div class="kidia-category-card">
 					<span class="dashicons dashicons-move kidia-category-handle" aria-hidden="true"></span>
-					<div class="kidia-category-image">
+					<?php if ( $has_children ) : ?>
+						<button type="button" class="button-link kidia-category-expand" aria-expanded="false" aria-label="<?php esc_attr_e( 'Expand subcategories', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-arrow-left-alt2"></span></button>
+					<?php else : ?><span class="kidia-category-expand-placeholder"></span><?php endif; ?>
+					<div class="kidia-category-image" style="--preview-size:<?php echo esc_attr( (string) min( 72, $image_size ) ); ?>px">
 						<?php if ( $image_url ) : ?><img src="<?php echo esc_url( $image_url ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?>
 					</div>
 					<div class="kidia-category-name">
@@ -51,14 +56,28 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 					</div>
 					<input class="kidia-category-order" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][order]" value="<?php echo esc_attr( (string) $index ); ?>">
 					<input class="kidia-category-image-id" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][image_id]" value="<?php echo esc_attr( (string) $image_id ); ?>">
-					<button type="button" class="button kidia-category-image-button"><?php esc_html_e( 'Change image', 'kidia-mobile-cms' ); ?></button>
-					<button type="button" class="button-link kidia-category-image-clear" <?php echo $image_id ? '' : 'hidden'; ?>><?php esc_html_e( 'Use store image', 'kidia-mobile-cms' ); ?></button>
+					<button type="button" class="button kidia-category-settings-toggle" aria-expanded="false"><span class="dashicons dashicons-format-image"></span> <?php esc_html_e( 'Image settings', 'kidia-mobile-cms' ); ?></button>
 					<label class="kidia-category-visibility">
 						<input type="checkbox" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="1" <?php checked( ! empty( $setting['hidden'] ) ); ?>>
 						<?php esc_html_e( 'Hide in app', 'kidia-mobile-cms' ); ?>
 					</label>
+					<div class="kidia-category-settings" hidden>
+						<div class="kidia-category-image-actions">
+							<button type="button" class="button button-secondary kidia-category-image-button"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button>
+							<button type="button" class="button-link kidia-category-image-clear" <?php echo $image_id ? '' : 'hidden'; ?>><?php esc_html_e( 'Use WooCommerce image', 'kidia-mobile-cms' ); ?></button>
+						</div>
+						<label><?php esc_html_e( 'Size', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $image_size ); ?>px</span><input type="range" min="32" max="120" step="4" name="categories[<?php echo esc_attr( (string) $id ); ?>][image_size]" value="<?php echo esc_attr( (string) $image_size ); ?>"></label>
+						<label><?php esc_html_e( 'Shape', 'kidia-mobile-cms' ); ?><select name="categories[<?php echo esc_attr( (string) $id ); ?>][image_shape]"><option value="square" <?php selected( $setting['image_shape'] ?? '', 'square' ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( $setting['image_shape'] ?? 'rounded', 'rounded' ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="circle" <?php selected( $setting['image_shape'] ?? '', 'circle' ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option></select></label>
+						<label><?php esc_html_e( 'Image fit', 'kidia-mobile-cms' ); ?><select name="categories[<?php echo esc_attr( (string) $id ); ?>][image_fit]"><option value="contain" <?php selected( $setting['image_fit'] ?? 'contain', 'contain' ); ?>><?php esc_html_e( 'Show complete image', 'kidia-mobile-cms' ); ?></option><option value="cover" <?php selected( $setting['image_fit'] ?? '', 'cover' ); ?>><?php esc_html_e( 'Fill and crop', 'kidia-mobile-cms' ); ?></option></select></label>
+						<label><?php esc_html_e( 'Effect', 'kidia-mobile-cms' ); ?><select name="categories[<?php echo esc_attr( (string) $id ); ?>][image_effect]"><option value="none" <?php selected( $setting['image_effect'] ?? 'none', 'none' ); ?>><?php esc_html_e( 'None', 'kidia-mobile-cms' ); ?></option><option value="shadow" <?php selected( $setting['image_effect'] ?? '', 'shadow' ); ?>><?php esc_html_e( 'Shadow', 'kidia-mobile-cms' ); ?></option><option value="grayscale" <?php selected( $setting['image_effect'] ?? '', 'grayscale' ); ?>><?php esc_html_e( 'Black and white', 'kidia-mobile-cms' ); ?></option></select></label>
+						<label><?php esc_html_e( 'Zoom', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) min( 150, max( 80, absint( $setting['image_scale'] ?? 100 ) ) ) ); ?>%</span><input type="range" min="80" max="150" step="5" name="categories[<?php echo esc_attr( (string) $id ); ?>][image_scale]" value="<?php echo esc_attr( (string) min( 150, max( 80, absint( $setting['image_scale'] ?? 100 ) ) ) ); ?>"></label>
+						<label><?php esc_html_e( 'Position', 'kidia-mobile-cms' ); ?><select name="categories[<?php echo esc_attr( (string) $id ); ?>][image_position]"><?php foreach ( array( 'center' => __( 'Center', 'kidia-mobile-cms' ), 'top' => __( 'Top', 'kidia-mobile-cms' ), 'bottom' => __( 'Bottom', 'kidia-mobile-cms' ), 'right' => __( 'Right', 'kidia-mobile-cms' ), 'left' => __( 'Left', 'kidia-mobile-cms' ) ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $setting['image_position'] ?? 'center', $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
+						<label><?php esc_html_e( 'Border width', 'kidia-mobile-cms' ); ?><input type="number" min="0" max="8" name="categories[<?php echo esc_attr( (string) $id ); ?>][border_width]" value="<?php echo esc_attr( (string) min( 8, absint( $setting['border_width'] ?? 0 ) ) ); ?>"></label>
+						<label><?php esc_html_e( 'Border color', 'kidia-mobile-cms' ); ?><input type="color" name="categories[<?php echo esc_attr( (string) $id ); ?>][border_color]" value="<?php echo esc_attr( sanitize_hex_color( $setting['border_color'] ?? '' ) ?: '#DDE5E2' ); ?>"></label>
+						<label><?php esc_html_e( 'Background', 'kidia-mobile-cms' ); ?><input type="color" name="categories[<?php echo esc_attr( (string) $id ); ?>][background_color]" value="<?php echo esc_attr( sanitize_hex_color( $setting['background_color'] ?? '' ) ?: '#FFFFFF' ); ?>"></label>
+					</div>
 				</div>
-				<?php $render_level( $id ); ?>
+				<?php if ( $has_children ) : ?><div class="kidia-category-children" hidden><?php $render_level( $id ); ?></div><?php endif; ?>
 			</li>
 		<?php endforeach; ?>
 	</ul>

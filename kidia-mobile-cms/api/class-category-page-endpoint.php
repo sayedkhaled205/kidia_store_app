@@ -93,6 +93,17 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			'count'       => (int) $term->count,
 			'image'       => $image,
 			'permalink'   => is_wp_error( $link ) ? '' : $link,
+			'presentation' => array(
+				'image_size'   => min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) ),
+				'image_shape'  => in_array( $setting['image_shape'] ?? '', array( 'square', 'rounded', 'circle' ), true ) ? $setting['image_shape'] : 'rounded',
+				'image_fit'    => in_array( $setting['image_fit'] ?? '', array( 'contain', 'cover' ), true ) ? $setting['image_fit'] : 'contain',
+				'image_effect' => in_array( $setting['image_effect'] ?? '', array( 'none', 'shadow', 'grayscale' ), true ) ? $setting['image_effect'] : 'none',
+				'image_scale'  => min( 150, max( 80, absint( $setting['image_scale'] ?? 100 ) ) ),
+				'image_position' => in_array( $setting['image_position'] ?? '', array( 'center', 'top', 'bottom', 'left', 'right' ), true ) ? $setting['image_position'] : 'center',
+				'border_width' => min( 8, max( 0, absint( $setting['border_width'] ?? 0 ) ) ),
+				'border_color' => sanitize_hex_color( $setting['border_color'] ?? '' ) ?: '#DDE5E2',
+				'background_color' => sanitize_hex_color( $setting['background_color'] ?? '' ) ?: '#FFFFFF',
+			),
 		);
 	}
 }
