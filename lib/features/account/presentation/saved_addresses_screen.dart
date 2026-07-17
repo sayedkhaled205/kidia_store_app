@@ -47,13 +47,13 @@ class SavedAddressesScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(KidiaSpacing.md),
             children: <Widget>[
               _AddressCard(
-                key: const Key('billing-address-card'),
-                icon: Icons.receipt_long_outlined,
-                title: isArabic ? 'عنوان الفاتورة' : 'Billing address',
+                key: const Key('shipping-address-card'),
+                icon: Icons.local_shipping_outlined,
+                title: isArabic ? 'عنوان الشحن' : 'Shipping address',
                 address: value.billing,
                 emptyText: isArabic
-                    ? 'لم يتم حفظ عنوان فاتورة بعد.'
-                    : 'No billing address has been saved yet.',
+                    ? 'لم يتم حفظ عنوان شحن بعد.'
+                    : 'No shipping address has been saved yet.',
                 editLabel: value.billing.isEmpty
                     ? isArabic
                           ? 'إضافة عنوان'
@@ -66,29 +66,7 @@ class SavedAddressesScreen extends ConsumerWidget {
                   ref,
                   account: value,
                   type: CustomerAddressType.billing,
-                ),
-              ),
-              const SizedBox(height: KidiaSpacing.md),
-              _AddressCard(
-                key: const Key('shipping-address-card'),
-                icon: Icons.local_shipping_outlined,
-                title: isArabic ? 'عنوان الشحن' : 'Shipping address',
-                address: value.shipping,
-                emptyText: isArabic
-                    ? 'لم يتم حفظ عنوان شحن بعد.'
-                    : 'No shipping address has been saved yet.',
-                editLabel: value.shipping.isEmpty
-                    ? isArabic
-                          ? 'إضافة عنوان'
-                          : 'Add address'
-                    : isArabic
-                    ? 'تعديل'
-                    : 'Edit',
-                onEdit: () => _editAddress(
-                  context,
-                  ref,
-                  account: value,
-                  type: CustomerAddressType.shipping,
+                  editorTitle: isArabic ? 'عنوان الشحن' : 'Shipping address',
                 ),
               ),
             ],
@@ -103,12 +81,14 @@ class SavedAddressesScreen extends ConsumerWidget {
     WidgetRef ref, {
     required CustomerAccount account,
     required CustomerAddressType type,
+    required String editorTitle,
   }) async {
     final bool? saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (BuildContext context) => _AddressEditor(
+        title: editorTitle,
         address: account.address(type),
         fields: account.fieldsFor(type),
         repository: ref.read(customerAccountRepositoryProvider),
@@ -234,11 +214,13 @@ class _AddressCard extends StatelessWidget {
 
 class _AddressEditor extends StatefulWidget {
   const _AddressEditor({
+    required this.title,
     required this.address,
     required this.fields,
     required this.repository,
   });
 
+  final String title;
   final CustomerAddress address;
   final List<CustomerAddressField> fields;
   final CustomerAccountRepository repository;
@@ -268,13 +250,6 @@ class _AddressEditorState extends State<_AddressEditor> {
   @override
   Widget build(BuildContext context) {
     final bool isArabic = _isArabic(context);
-    final String addressLabel = widget.address.type == CustomerAddressType.billing
-        ? isArabic
-              ? 'عنوان الفاتورة'
-              : 'Billing address'
-        : isArabic
-        ? 'عنوان الشحن'
-        : 'Shipping address';
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.88,
@@ -295,7 +270,7 @@ class _AddressEditorState extends State<_AddressEditor> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    addressLabel,
+                    widget.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),

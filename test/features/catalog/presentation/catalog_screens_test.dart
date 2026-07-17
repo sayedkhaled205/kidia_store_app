@@ -96,6 +96,10 @@ void main() {
     expect(find.byKey(const Key('catalog-filter-button')), findsOneWidget);
     expect(find.byKey(const Key('catalog-size-button')), findsOneWidget);
     expect(find.byKey(const Key('catalog-sort-button')), findsOneWidget);
+    final SliverPadding gridPadding = tester.widget<SliverPadding>(
+      find.byKey(const Key('catalog-product-grid-padding')),
+    );
+    expect(gridPadding.padding.resolve(TextDirection.ltr).top, 18);
     final SliverPersistentHeader toolbar = tester.widget<SliverPersistentHeader>(
       find.byType(SliverPersistentHeader),
     );

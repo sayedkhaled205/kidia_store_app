@@ -135,6 +135,20 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			);
 		}
 		$customer = new WC_Customer( (int) $updated );
+		if ( array_key_exists( 'phone', $values ) ) {
+			$phone = $this->sanitize_phone_value( $values['phone'] );
+			if ( is_callable( array( $customer, 'set_billing_phone' ) ) ) {
+				$customer->set_billing_phone( $phone );
+				$customer->save();
+			}
+		}
+		if ( array_key_exists( 'alternate_phone', $values ) ) {
+			update_user_meta(
+				(int) $updated,
+				'billing_phone1',
+				$this->sanitize_phone_value( $values['alternate_phone'] )
+			);
+		}
 		return $this->response(
 			array( 'profile' => $this->profile_payload( $customer ) )
 		);
@@ -210,12 +224,19 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 	}
 
 	private function profile_payload( $customer ): array {
+		$customer_id = (int) $customer->get_id();
+		$phone       = is_callable( array( $customer, 'get_billing_phone' ) )
+			? (string) $customer->get_billing_phone()
+			: '';
+		$alternate_phone = get_user_meta( $customer_id, 'billing_phone1', true );
 		return array(
-			'id'           => (int) $customer->get_id(),
+			'id'           => $customer_id,
 			'email'        => sanitize_email( (string) $customer->get_email() ),
 			'first_name'   => sanitize_text_field( (string) $customer->get_first_name() ),
 			'last_name'    => sanitize_text_field( (string) $customer->get_last_name() ),
 			'display_name' => sanitize_text_field( (string) $customer->get_display_name() ),
+			'phone'        => $this->sanitize_phone_value( $phone ),
+			'alternate_phone' => $this->sanitize_phone_value( $alternate_phone ),
 		);
 	}
 
@@ -282,6 +303,12 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			return wc_sanitize_phone_number( (string) $value );
 		}
 		return sanitize_text_field( (string) $value );
+	}
+
+	private function sanitize_phone_value( $value ): string {
+		return function_exists( 'wc_sanitize_phone_number' )
+			? wc_sanitize_phone_number( (string) $value )
+			: sanitize_text_field( (string) $value );
 	}
 
 	private function response( array $payload ): WP_REST_Response {

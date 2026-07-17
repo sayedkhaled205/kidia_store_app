@@ -143,7 +143,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		return $response;
 	}
 
-	/** Cancel an owned order only when WooCommerce exposes Cancel on My Account. */
+	/** Cancel an owned order or submit the store's registered cancellation request. */
 	public function cancel_order( WP_REST_Request $request ) {
 		$customer_id = get_current_user_id();
 		if ( $customer_id <= 0 ) {
@@ -167,7 +167,8 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 				array( 'status' => 404 )
 			);
 		}
-		if ( ! $this->can_cancel_order( $order ) ) {
+		$cancellation_type = $this->cancellation_type( $order );
+		if ( '' === $cancellation_type ) {
 			return new WP_Error(
 				'woo_mobile_order_cannot_cancel',
 				__( 'This order can no longer be cancelled.', 'kidia-mobile-cms' ),
@@ -182,12 +183,19 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			);
 		}
 
+		$is_request = 'request' === $cancellation_type;
 		$order->update_status(
-			'cancelled',
-			__( 'Order cancelled by customer.', 'woocommerce' )
+			$is_request ? 'cancel-request' : 'cancelled',
+			$is_request
+				? __( 'Cancellation requested by customer through the mobile app.', 'kidia-mobile-cms' )
+				: __( 'Order cancelled by customer.', 'woocommerce' ),
+			$is_request
 		);
 		$response = new WP_REST_Response(
-			array( 'order' => $this->order_payload( $order ) ),
+			array(
+				'order'               => $this->order_payload( $order ),
+				'cancellation_result' => $is_request ? 'requested' : 'cancelled',
+			),
 			200
 		);
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
@@ -229,7 +237,8 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			'UTF-8'
 		);
 
-		$status = sanitize_key( (string) $order->get_status() );
+		$status            = sanitize_key( (string) $order->get_status() );
+		$cancellation_type = $this->cancellation_type( $order );
 		return array(
 			'id'            => (int) $order->get_id(),
 			'number'        => sanitize_text_field( (string) $order->get_order_number() ),
@@ -241,8 +250,16 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			'currency_code' => $currency,
 			'item_count'    => max( 0, (int) $order->get_item_count() ),
 			'items'         => $items,
-			'can_cancel'    => $this->can_cancel_order( $order ),
+			'can_cancel'    => '' !== $cancellation_type,
+			'cancellation_type' => $cancellation_type,
 		);
+	}
+
+	private function cancellation_type( $order ): string {
+		if ( $this->can_cancel_order( $order ) ) {
+			return 'cancel';
+		}
+		return $this->can_request_cancel_order( $order ) ? 'request' : '';
 	}
 
 	/** Respect the exact cancel action and filters used by WooCommerce My Account. */
@@ -258,6 +275,48 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		$valid_statuses = apply_filters(
 			'woocommerce_valid_order_statuses_for_cancel',
 			array( 'pending', 'failed' ),
+			$order
+		);
+		return is_array( $valid_statuses ) && in_array( $status, $valid_statuses, true );
+	}
+
+	/** Match the website's cancel-request action and registered order status. */
+	private function can_request_cancel_order( $order ): bool {
+		$status = is_callable( array( $order, 'get_status' ) )
+			? sanitize_key( (string) $order->get_status() )
+			: '';
+		if ( '' === $status || 'cancel-request' === $status ) {
+			return false;
+		}
+
+		if ( function_exists( 'wc_get_account_orders_actions' ) ) {
+			$actions = wc_get_account_orders_actions( $order );
+			if ( is_array( $actions ) ) {
+				foreach ( $actions as $key => $action ) {
+					$action = is_array( $action ) ? $action : array();
+					$source = strtolower(
+						(string) $key . ' ' .
+						(string) ( $action['name'] ?? '' ) . ' ' .
+						(string) ( $action['url'] ?? '' )
+					);
+					if ( ( str_contains( $source, 'cancel' ) && str_contains( $source, 'request' ) ) ||
+						str_contains( $source, 'طلب-الغاء' ) ||
+						str_contains( $source, 'طلب_الغاء' ) ) {
+						return true;
+					}
+				}
+			}
+		}
+
+		$order_statuses = function_exists( 'wc_get_order_statuses' )
+			? wc_get_order_statuses()
+			: array();
+		if ( ! is_array( $order_statuses ) || ! array_key_exists( 'wc-cancel-request', $order_statuses ) ) {
+			return false;
+		}
+		$valid_statuses = apply_filters(
+			'woo_mobile_cms_valid_order_statuses_for_cancel_request',
+			array( 'processing', 'on-hold' ),
 			$order
 		);
 		return is_array( $valid_statuses ) && in_array( $status, $valid_statuses, true );

@@ -16,6 +16,8 @@ class CustomerProfile {
     this.firstName = '',
     this.lastName = '',
     this.displayName = '',
+    this.phone = '',
+    this.alternatePhone = '',
   });
 
   final int id;
@@ -23,6 +25,8 @@ class CustomerProfile {
   final String firstName;
   final String lastName;
   final String displayName;
+  final String phone;
+  final String alternatePhone;
 }
 
 class CustomerAddress {

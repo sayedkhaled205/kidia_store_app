@@ -236,6 +236,9 @@ class _WishlistGrid extends StatelessWidget {
             ? 3
             : 2;
         final double spacing = constraints.maxWidth >= 560 ? 16 : 12;
+        final double topSpacing = (constraints.maxWidth * 0.05)
+            .clamp(18, 24)
+            .toDouble();
         return RefreshIndicator(
           onRefresh: onRefresh,
           child: GridView.builder(
@@ -243,7 +246,7 @@ class _WishlistGrid extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsetsDirectional.fromSTEB(
               spacing,
-              spacing,
+              topSpacing,
               spacing,
               28,
             ),
