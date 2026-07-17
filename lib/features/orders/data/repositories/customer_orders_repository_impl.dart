@@ -54,13 +54,14 @@ class CustomerOrdersRepositoryImpl
 
   @override
   Future<CustomerOrder> cancelOrder(int orderId) async {
-    final CustomerOrdersApiTransport transport = _transport;
-    if (transport is! CustomerOrderCancellationTransport) {
+    if (_transport is! CustomerOrderCancellationTransport) {
       throw const CustomerOrdersRepositoryException(
         kind: CustomerOrdersFailureKind.configuration,
         message: 'Customer order cancellation is unavailable.',
       );
     }
+    final CustomerOrderCancellationTransport transport =
+        _transport as CustomerOrderCancellationTransport;
     try {
       final CustomerOrdersApiResponse response = await transport.cancelOrder(
         orderId,

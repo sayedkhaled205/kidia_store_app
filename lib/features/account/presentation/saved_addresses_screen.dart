@@ -403,7 +403,7 @@ class _AddressField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isArabic = _isArabic(context);
-    final String? Function(String?) validator = (String? value) {
+    String? validator(String? value) {
       final String text = value?.trim() ?? '';
       if (field.required && text.isEmpty) {
         return isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
@@ -414,7 +414,7 @@ class _AddressField extends StatelessWidget {
         return isArabic ? 'أدخل بريدًا إلكترونيًا صحيحًا' : 'Enter a valid email';
       }
       return null;
-    };
+    }
 
     if (field.type == CustomerAddressFieldType.select &&
         field.options.isNotEmpty) {

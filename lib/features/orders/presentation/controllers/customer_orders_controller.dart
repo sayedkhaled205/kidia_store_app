@@ -168,8 +168,7 @@ class CustomerOrdersController extends ChangeNotifier {
     if (!order.canCancel || isCancelling(order.id)) {
       return false;
     }
-    final CustomerOrdersRepository repository = _repository;
-    if (repository is! CustomerOrderCancellationRepository) {
+    if (_repository is! CustomerOrderCancellationRepository) {
       _replace(
         _state.copyWith(
           mutationError: const CustomerOrdersRepositoryException(
@@ -180,6 +179,8 @@ class CustomerOrdersController extends ChangeNotifier {
       );
       return false;
     }
+    final CustomerOrderCancellationRepository repository =
+        _repository as CustomerOrderCancellationRepository;
 
     _replace(
       _state.copyWith(
