@@ -1,4 +1,5 @@
 enum HomeBlockType {
+  appHeader('app_header'),
   heroSlider('hero_slider'),
   categoryGrid('category_grid'),
   imageBanner('image_banner'),
@@ -29,16 +30,71 @@ enum HomeBlockType {
   }
 }
 
+class AppHeaderBlock extends HomeBlock {
+  const AppHeaderBlock({
+    required super.id,
+    required super.enabled,
+    super.presentation,
+    required this.logoUrl,
+    required this.title,
+    required this.subtitle,
+    required this.layout,
+    required this.height,
+    required this.logoHeight,
+    required this.showSearch,
+    required this.showCart,
+    required this.showAccount,
+    required this.titleColor,
+    required this.iconColor,
+  }) : super(type: HomeBlockType.appHeader);
+
+  final String? logoUrl;
+  final String title;
+  final String? subtitle;
+  final String layout;
+  final double height;
+  final double logoHeight;
+  final bool showSearch;
+  final bool showCart;
+  final bool showAccount;
+  final String titleColor;
+  final String iconColor;
+}
+
 abstract class HomeBlock {
   const HomeBlock({
     required this.id,
     required this.type,
     required this.enabled,
+    this.presentation = const HomeBlockPresentation(),
   });
 
   final String id;
   final HomeBlockType type;
   final bool enabled;
+  final HomeBlockPresentation presentation;
+}
+
+class HomeBlockPresentation {
+  const HomeBlockPresentation({
+    this.marginTop = 0,
+    this.marginBottom = 0,
+    this.marginHorizontal = 0,
+    this.paddingVertical = 0,
+    this.paddingHorizontal = 0,
+    this.backgroundColor,
+    this.borderRadius = 0,
+    this.contentScale = 1,
+  });
+
+  final double marginTop;
+  final double marginBottom;
+  final double marginHorizontal;
+  final double paddingVertical;
+  final double paddingHorizontal;
+  final String? backgroundColor;
+  final double borderRadius;
+  final double contentScale;
 }
 
 class HomeAction {
@@ -68,6 +124,7 @@ class HeroSliderBlock extends HomeBlock {
   const HeroSliderBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.items,
     required this.aspectRatio,
     required this.autoPlay,
@@ -98,6 +155,7 @@ class CategoryGridBlock extends HomeBlock {
   const CategoryGridBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.subtitle,
     required this.items,
@@ -116,6 +174,7 @@ class ImageBannerBlock extends HomeBlock {
   const ImageBannerBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.imageUrl,
     required this.aspectRatio,
     required this.borderRadius,
@@ -160,6 +219,7 @@ class ProductCarouselBlock extends HomeBlock {
   const ProductCarouselBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.items,
     required this.showViewAll,
@@ -176,6 +236,7 @@ class ProductGridBlock extends HomeBlock {
   const ProductGridBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.subtitle,
     required this.items,
@@ -198,6 +259,7 @@ class SectionHeaderBlock extends HomeBlock {
   const SectionHeaderBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.subtitle,
     required this.actionLabel,
@@ -228,6 +290,7 @@ class BrandCarouselBlock extends HomeBlock {
   const BrandCarouselBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.items,
     required this.itemWidth,
@@ -242,6 +305,7 @@ class PromoStripBlock extends HomeBlock {
   const PromoStripBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.text,
     required this.backgroundColor,
     required this.textColor,
@@ -258,6 +322,7 @@ class CouponBannerBlock extends HomeBlock {
   const CouponBannerBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.description,
     required this.couponCode,
@@ -274,6 +339,7 @@ class CountdownBlock extends HomeBlock {
   const CountdownBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.endsAt,
     required this.expiredText,
@@ -288,6 +354,7 @@ class VideoBannerBlock extends HomeBlock {
   const VideoBannerBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.videoUrl,
     required this.posterUrl,
     required this.aspectRatio,
@@ -326,6 +393,7 @@ class TextBlock extends HomeBlock {
   const TextBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.title,
     required this.content,
     required this.alignment,
@@ -344,6 +412,7 @@ class DividerBlock extends HomeBlock {
   const DividerBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.color,
     required this.thickness,
     required this.margin,
@@ -358,6 +427,7 @@ class SpacerBlock extends HomeBlock {
   const SpacerBlock({
     required super.id,
     required super.enabled,
+    super.presentation,
     required this.height,
   }) : super(type: HomeBlockType.spacer);
 

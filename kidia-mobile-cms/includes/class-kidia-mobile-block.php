@@ -115,7 +115,10 @@ abstract class Kidia_Mobile_Block {
 			'type'     => $this->get_type(),
 			'enabled'  => true,
 			'order'    => max( 1, $order ),
-			'settings' => $this->get_default_settings(),
+			'settings' => array_merge(
+				$this->get_presentation_defaults(),
+				$this->get_default_settings()
+			),
 		);
 	}
 
@@ -146,9 +149,12 @@ abstract class Kidia_Mobile_Block {
 				? $block['settings']
 				: array();
 
-		$settings = wp_parse_args(
-			$this->sanitize_settings( $settings ),
-			$this->get_default_settings()
+		$settings = array_merge(
+			$this->sanitize_presentation_settings( $settings ),
+			wp_parse_args(
+				$this->sanitize_settings( $settings ),
+				$this->get_default_settings()
+			)
 		);
 
 		return array(
@@ -190,6 +196,18 @@ abstract class Kidia_Mobile_Block {
 			return null;
 		}
 
+		$presentation = $this->sanitize_presentation_settings( $settings );
+		$data['presentation'] = array(
+			'margin_top'        => $presentation['margin_top'],
+			'margin_bottom'     => $presentation['margin_bottom'],
+			'margin_horizontal' => $presentation['margin_horizontal'],
+			'padding_vertical'   => $presentation['padding_vertical'],
+			'padding_horizontal' => $presentation['padding_horizontal'],
+			'background_color'  => $presentation['block_background'],
+			'block_radius'      => $presentation['block_radius'],
+			'content_scale'     => $presentation['content_scale'],
+		);
+
 		$id = isset( $instance['id'] )
 			? sanitize_key(
 				(string) $instance['id']
@@ -201,6 +219,44 @@ abstract class Kidia_Mobile_Block {
 			'type'    => $this->get_type(),
 			'enabled' => true,
 			'data'    => $data,
+		);
+	}
+
+	/**
+	 * Shared responsive presentation defaults available to every block.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function get_presentation_defaults(): array {
+		return array(
+			'margin_top'        => 0,
+			'margin_bottom'     => 0,
+			'margin_horizontal' => 0,
+			'padding_vertical'   => 0,
+			'padding_horizontal' => 0,
+			'block_background'  => '',
+			'block_radius'      => 0,
+			'content_scale'     => 100,
+		);
+	}
+
+	/**
+	 * Sanitizes the shared responsive presentation settings.
+	 *
+	 * @param array<string, mixed> $settings Submitted settings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	protected function sanitize_presentation_settings( array $settings ): array {
+		return array(
+			'margin_top'        => min( 80, max( 0, absint( $settings['margin_top'] ?? 0 ) ) ),
+			'margin_bottom'     => min( 80, max( 0, absint( $settings['margin_bottom'] ?? 0 ) ) ),
+			'margin_horizontal' => min( 40, max( 0, absint( $settings['margin_horizontal'] ?? 0 ) ) ),
+			'padding_vertical'   => min( 40, max( 0, absint( $settings['padding_vertical'] ?? 0 ) ) ),
+			'padding_horizontal' => min( 40, max( 0, absint( $settings['padding_horizontal'] ?? 0 ) ) ),
+			'block_background'  => sanitize_hex_color( $settings['block_background'] ?? '' ) ?: '',
+			'block_radius'      => min( 50, max( 0, absint( $settings['block_radius'] ?? 0 ) ) ),
+			'content_scale'     => min( 120, max( 80, absint( $settings['content_scale'] ?? 100 ) ) ),
 		);
 	}
 
@@ -340,10 +396,18 @@ abstract class Kidia_Mobile_Block {
 			(string) $value
 		);
 
+		// The all-brands screen has no entity ID, but Flutter actions require
+		// a non-empty value. Keep one canonical sentinel across the API.
+		if ( 'brands' === $type && '' === $value ) {
+			$value = 'all';
+		}
+
 		$allowed_types = array(
 			'product',
 			'category',
 			'collection',
+			'brand',
+			'brands',
 			'search',
 			'external',
 		);
@@ -361,9 +425,20 @@ abstract class Kidia_Mobile_Block {
 		}
 
 		if ( 'external' === $type ) {
-			$value = esc_url_raw( $value );
+			$value = esc_url_raw(
+				$value,
+				array( 'http', 'https' )
+			);
+			$scheme = strtolower(
+				(string) wp_parse_url( $value, PHP_URL_SCHEME )
+			);
+			$host = (string) wp_parse_url( $value, PHP_URL_HOST );
 
-			if ( empty( $value ) ) {
+			if (
+				empty( $value )
+				|| '' === $host
+				|| ! in_array( $scheme, array( 'http', 'https' ), true )
+			) {
 				return null;
 			}
 		} else {

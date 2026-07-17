@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_factory.dart';
+import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
 
 class HomeBlockRenderer extends StatelessWidget {
   const HomeBlockRenderer({
@@ -32,9 +33,12 @@ class HomeBlockRenderer extends StatelessWidget {
 
         return KeyedSubtree(
           key: ValueKey<String>(block.id),
-          child: HomeBlockFactory.create(
+          child: HomeBlockFrame(
             block: block,
-            onAction: onAction,
+            child: HomeBlockFactory.create(
+              block: block,
+              onAction: onAction,
+            ),
           ),
         );
       },

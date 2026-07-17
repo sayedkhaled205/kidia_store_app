@@ -10,6 +10,10 @@ abstract final class HomeBlockFactory {
     required ValueChanged<HomeAction> onAction,
   }) {
     return switch (block) {
+      AppHeaderBlock appHeaderBlock => AppHeaderBlockWidget(
+        block: appHeaderBlock,
+        onAction: onAction,
+      ),
       HeroSliderBlock heroSliderBlock => HeroSliderBlockWidget(
         block: heroSliderBlock,
         onAction: onAction,
