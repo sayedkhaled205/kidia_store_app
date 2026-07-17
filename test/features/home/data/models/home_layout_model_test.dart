@@ -63,7 +63,7 @@ void main() {
       expect(header.showAccount, isTrue);
       expect(header.presentation.marginHorizontal, 10);
       expect(header.presentation.paddingHorizontal, 14);
-      expect(header.presentation.backgroundColor, '#FAFAFA');
+      expect(header.presentation.backgroundColor, '#fafafa');
       expect(header.presentation.borderRadius, 18);
       expect(header.presentation.contentScale, 1.1);
     });
