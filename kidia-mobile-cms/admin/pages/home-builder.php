@@ -352,7 +352,7 @@ foreach ( $library_options as $type => $option_name ) {
 				<p>
 					<?php
 						esc_html_e(
-							'Choose an existing saved element or create a new one.',
+							'Choose an element type. Expand it only when you need a saved item.',
 							'kidia-mobile-cms'
 						);
 						?>
@@ -429,33 +429,24 @@ foreach ( $library_options as $type => $option_name ) {
 					?? array();
 				?>
 
-				<section
+				<details
 					class="kidia-element-group"
 					data-element-group="<?php echo esc_attr( $type ); ?>"
 				>
-
-					<div class="kidia-element-group__header">
-
-						<div>
-
-							<h3>
+					<summary class="kidia-element-group__summary">
+						<span class="kidia-element-group__identity">
 								<span
 									class="dashicons <?php echo esc_attr( $icon ); ?>"
 								></span>
+							<strong><?php echo esc_html( $label ); ?></strong>
+						</span>
+						<span class="kidia-element-group__count">
+							<?php echo esc_html( (string) count( $type_items ) ); ?>
+						</span>
+					</summary>
 
-								<?php echo esc_html( $label ); ?>
-							</h3>
-
-							<?php if ( '' !== $description ) : ?>
-
-								<p>
-									<?php echo esc_html( $description ); ?>
-								</p>
-
-							<?php endif; ?>
-
-						</div>
-
+					<div class="kidia-element-group__body">
+						<div class="kidia-element-group__actions">
 						<button
 							type="button"
 							class="button kidia-create-element"
@@ -470,7 +461,7 @@ foreach ( $library_options as $type => $option_name ) {
 								?>
 						</button>
 
-					</div>
+						</div>
 
 					<?php if ( ! empty( $type_items ) ) : ?>
 
@@ -569,8 +560,9 @@ foreach ( $library_options as $type => $option_name ) {
 						</p>
 
 					<?php endif; ?>
+					</div>
 
-				</section>
+				</details>
 
 			<?php endforeach; ?>
 
