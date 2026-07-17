@@ -54,10 +54,9 @@ class CustomerOrdersTransportException implements Exception {
 class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
   DioCustomerOrdersApiTransport({
     required Uri storeUri,
-    required CustomerOrdersAuthTokenReader authTokenReader,
+    required this.authTokenReader,
     Dio? dio,
   }) : _storeUri = _normalizeStoreUri(storeUri),
-       _authTokenReader = authTokenReader,
        _dio =
            dio ??
            Dio(
@@ -81,7 +80,7 @@ class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
   }
 
   final Uri _storeUri;
-  final CustomerOrdersAuthTokenReader _authTokenReader;
+  final CustomerOrdersAuthTokenReader authTokenReader;
   final Dio _dio;
 
   @override
@@ -89,7 +88,7 @@ class DioCustomerOrdersApiTransport implements CustomerOrdersApiTransport {
     required int page,
     required int perPage,
   }) async {
-    final String token = _authTokenReader()?.trim() ?? '';
+    final String token = authTokenReader()?.trim() ?? '';
     if (token.isEmpty) {
       throw const CustomerOrdersTransportException(
         kind: CustomerOrdersTransportFailureKind.unauthorized,
