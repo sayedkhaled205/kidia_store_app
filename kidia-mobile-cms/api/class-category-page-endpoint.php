@@ -66,7 +66,8 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 		$response   = new WP_REST_Response( array_slice( $ordered, ( $page - 1 ) * $per_page, $per_page ), 200 );
 		$response->header( 'X-WP-Total', (string) $total );
 		$response->header( 'X-WP-TotalPages', (string) $total_page );
-		$response->header( 'Cache-Control', 'no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Pragma', 'no-cache' );
 		return $response;
 	}
 
@@ -96,6 +97,7 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			'presentation' => array(
 				'image_size'   => min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) ),
 				'image_shape'  => in_array( $setting['image_shape'] ?? '', array( 'square', 'rounded', 'circle' ), true ) ? $setting['image_shape'] : 'rounded',
+				'image_radius' => min( 50, max( 0, absint( $setting['image_radius'] ?? 18 ) ) ),
 				'image_fit'    => in_array( $setting['image_fit'] ?? '', array( 'contain', 'cover' ), true ) ? $setting['image_fit'] : 'contain',
 				'image_effect' => in_array( $setting['image_effect'] ?? '', array( 'none', 'shadow', 'grayscale' ), true ) ? $setting['image_effect'] : 'none',
 				'image_scale'  => min( 150, max( 80, absint( $setting['image_scale'] ?? 100 ) ) ),
@@ -103,6 +105,13 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 				'border_width' => min( 8, max( 0, absint( $setting['border_width'] ?? 0 ) ) ),
 				'border_color' => sanitize_hex_color( $setting['border_color'] ?? '' ) ?: '#DDE5E2',
 				'background_color' => sanitize_hex_color( $setting['background_color'] ?? '' ) ?: '#FFFFFF',
+				'image_text_gap' => min( 40, max( 0, absint( $setting['image_text_gap'] ?? 10 ) ) ),
+				'font_size' => min( 30, max( 10, absint( $setting['font_size'] ?? 16 ) ) ),
+				'font_color' => sanitize_hex_color( $setting['font_color'] ?? '' ) ?: '#1F2933',
+				'font_weight' => in_array( absint( $setting['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $setting['font_weight'] ) : 800,
+				'text_align' => in_array( $setting['text_align'] ?? '', array( 'start', 'center', 'end' ), true ) ? $setting['text_align'] : 'start',
+				'text_max_lines' => min( 3, max( 1, absint( $setting['text_max_lines'] ?? 2 ) ) ),
+				'line_height' => min( 200, max( 100, absint( $setting['line_height'] ?? 125 ) ) ),
 			),
 		);
 	}

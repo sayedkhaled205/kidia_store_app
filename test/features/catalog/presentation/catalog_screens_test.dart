@@ -49,6 +49,20 @@ void main() {
 
     expect(find.text('Women'), findsOneWidget);
     expect(find.text('Dresses'), findsNothing);
+    final Text categoryTitle = tester.widget<Text>(
+      find.byKey(const Key('category-title-1')),
+    );
+    final double screenWidth = MediaQuery.sizeOf(
+      tester.element(find.byType(CategoriesScreen)),
+    ).width;
+    final double responsiveScale = (screenWidth / 390).clamp(0.82, 1.22);
+    expect(categoryTitle.style?.fontSize, closeTo(20 * responsiveScale, 0.001));
+    expect(categoryTitle.style?.color, const Color(0xFF123456));
+    final ListTile categoryTile = tester.widget<ListTile>(find.byType(ListTile));
+    expect(
+      categoryTile.horizontalTitleGap,
+      closeTo(24 * responsiveScale, 0.001),
+    );
     expect(
       tester.getSize(find.byKey(const Key('categories-search-action'))).height,
       lessThan(40),
@@ -210,7 +224,18 @@ class _ScreenCatalogRepository implements CatalogRepository {
   ) async {
     return CatalogPage<CatalogCategory>(
       items: const <CatalogCategory>[
-        CatalogCategory(id: 1, name: 'Women', slug: 'women', count: 8),
+        CatalogCategory(
+          id: 1,
+          name: 'Women',
+          slug: 'women',
+          count: 8,
+          imageTextGap: 24,
+          fontSize: 20,
+          fontColor: '#123456',
+          fontWeight: 600,
+          textAlign: 'center',
+          lineHeight: 1.4,
+        ),
         CatalogCategory(
           id: 2,
           name: 'Dresses',

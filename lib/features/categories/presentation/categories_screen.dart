@@ -92,6 +92,14 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final CatalogCopy copy = CatalogCopy.of(context);
+    final double responsive = _categoryResponsiveScale(context);
+    final double imageHeight =
+        category.imageSize.clamp(32, 120).toDouble() * responsive;
+    final double textHeight =
+        category.fontSize * responsive * category.lineHeight *
+        category.textMaxLines;
+    final double tileHeight =
+        (imageHeight > textHeight ? imageHeight : textHeight) + 14;
 
     final Widget tile = Material(
       color: colors.surfaceContainerLowest,
@@ -103,16 +111,21 @@ class _CategoryBranchState extends State<_CategoryBranch> {
       child: Column(
         children: <Widget>[
           ListTile(
-            minTileHeight:
-                category.imageSize.clamp(32, 120).toDouble() + 14,
+            minTileHeight: tileHeight,
             contentPadding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
+            horizontalTitleGap: category.imageTextGap * responsive,
             leading: _CategoryImage(category: category),
             title: Text(
               category.name,
-              maxLines: 2,
+              key: Key('category-title-${category.id}'),
+              maxLines: category.textMaxLines,
               overflow: TextOverflow.ellipsis,
+              textAlign: _categoryTextAlign(category.textAlign),
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+                color: _categoryColor(category.fontColor, colors.onSurface),
+                fontSize: category.fontSize * responsive,
+                fontWeight: _categoryFontWeight(category.fontWeight),
+                height: category.lineHeight,
               ),
             ),
             onTap: () => _openProducts(context, category),
@@ -151,7 +164,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                             crossAxisCount: 3,
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
-                            childAspectRatio: 0.82,
+                            childAspectRatio: 0.55,
                           ),
                       itemBuilder: (BuildContext context, int index) {
                         final CatalogCategory child =
@@ -187,6 +200,7 @@ class _SubcategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
+    final double responsive = _categoryResponsiveScale(context);
     return Material(
       color: colors.surface,
       shape: RoundedRectangleBorder(
@@ -199,23 +213,29 @@ class _SubcategoryTile extends StatelessWidget {
         child: Column(
           children: <Widget>[
             Expanded(
-              child: Center(
-                child: _CategoryArtwork(
-                  category: category,
-                  maximumSize: 120,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Center(
+                  child: _CategoryArtwork(
+                    category: category,
+                    maximumSize: 120,
+                  ),
                 ),
               ),
             ),
+            SizedBox(height: category.imageTextGap * responsive),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(5, 0, 5, 8),
               child: Text(
                 category.name,
-                maxLines: 2,
+                maxLines: category.textMaxLines,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+                textAlign: _categoryTextAlign(category.textAlign),
                 style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.25,
+                  color: _categoryColor(category.fontColor, colors.onSurface),
+                  fontSize: category.fontSize * responsive,
+                  fontWeight: _categoryFontWeight(category.fontWeight),
+                  height: category.lineHeight,
                 ),
               ),
             ),
@@ -246,6 +266,7 @@ class _CategoryArtwork extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final double responsive = _categoryResponsiveScale(context);
     final String? imageUrl =
         category.image?.source.toString() ??
         category.image?.thumbnail?.toString();
@@ -253,10 +274,11 @@ class _CategoryArtwork extends StatelessWidget {
       color: colors.secondaryContainer,
       child: Icon(Icons.category_outlined, color: colors.onSecondaryContainer),
     );
-    final double size = category.imageSize.clamp(32, maximumSize).toDouble();
+    final double size =
+        category.imageSize.clamp(32, maximumSize).toDouble() * responsive;
     final double radius = switch (category.imageShape) {
       'circle' => size / 2,
-      'rounded' => size * 0.18,
+      'rounded' => size * category.imageRadius,
       _ => 0,
     };
     final Alignment alignment = switch (category.imagePosition) {
@@ -294,9 +316,10 @@ class _CategoryArtwork extends StatelessWidget {
       );
     }
     return Container(
+      key: Key('category-artwork-${category.id}'),
       width: size,
       height: size,
-      padding: EdgeInsets.all(category.imageBorderWidth),
+      padding: EdgeInsets.all(category.imageBorderWidth * responsive),
       decoration: BoxDecoration(
         color: _categoryColor(category.imageBackgroundColor, colors.surface),
         borderRadius: BorderRadius.circular(radius),
@@ -307,7 +330,7 @@ class _CategoryArtwork extends StatelessWidget {
                   category.imageBorderColor,
                   colors.outlineVariant,
                 ),
-                width: category.imageBorderWidth,
+                width: category.imageBorderWidth * responsive,
               ),
         boxShadow: category.imageEffect == 'shadow'
             ? const <BoxShadow>[
@@ -321,7 +344,9 @@ class _CategoryArtwork extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(
-          (radius - category.imageBorderWidth).clamp(0, radius).toDouble(),
+          (radius - category.imageBorderWidth * responsive)
+              .clamp(0, radius)
+              .toDouble(),
         ),
         child: SizedBox.expand(child: artwork),
       ),
@@ -336,6 +361,26 @@ Color _categoryColor(String value, Color fallback) {
       ? fallback
       : Color(0xFF000000 | parsed);
 }
+
+double _categoryResponsiveScale(BuildContext context) {
+  final double width = MediaQuery.sizeOf(context).width;
+  return (width / 390).clamp(0.82, 1.22).toDouble();
+}
+
+TextAlign _categoryTextAlign(String value) => switch (value) {
+  'center' => TextAlign.center,
+  'end' => TextAlign.end,
+  _ => TextAlign.start,
+};
+
+FontWeight _categoryFontWeight(int value) => switch (value) {
+  400 => FontWeight.w400,
+  500 => FontWeight.w500,
+  600 => FontWeight.w600,
+  700 => FontWeight.w700,
+  900 => FontWeight.w900,
+  _ => FontWeight.w800,
+};
 
 class _CategoryTopActions extends StatelessWidget {
   const _CategoryTopActions();

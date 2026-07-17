@@ -12,6 +12,7 @@ class CatalogCategory {
     this.permalink,
     this.imageSize = 68,
     this.imageShape = 'rounded',
+    this.imageRadius = 0.18,
     this.imageFit = 'contain',
     this.imageEffect = 'none',
     this.imageScale = 1,
@@ -19,6 +20,13 @@ class CatalogCategory {
     this.imageBorderWidth = 0,
     this.imageBorderColor = '#DDE5E2',
     this.imageBackgroundColor = '#FFFFFF',
+    this.imageTextGap = 10,
+    this.fontSize = 16,
+    this.fontColor = '#1F2933',
+    this.fontWeight = 800,
+    this.textAlign = 'start',
+    this.textMaxLines = 2,
+    this.lineHeight = 1.25,
   });
 
   final int id;
@@ -31,6 +39,7 @@ class CatalogCategory {
   final Uri? permalink;
   final double imageSize;
   final String imageShape;
+  final double imageRadius;
   final String imageFit;
   final String imageEffect;
   final double imageScale;
@@ -38,6 +47,13 @@ class CatalogCategory {
   final double imageBorderWidth;
   final String imageBorderColor;
   final String imageBackgroundColor;
+  final double imageTextGap;
+  final double fontSize;
+  final String fontColor;
+  final int fontWeight;
+  final String textAlign;
+  final int textMaxLines;
+  final double lineHeight;
 
   bool get isRoot => parentId == 0;
 }

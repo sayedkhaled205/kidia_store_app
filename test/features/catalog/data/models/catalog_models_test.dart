@@ -146,6 +146,7 @@ void main() {
         'presentation': <String, dynamic>{
           'image_size': 104,
           'image_shape': 'circle',
+          'image_radius': 32,
           'image_fit': 'cover',
           'image_effect': 'shadow',
           'image_scale': 125,
@@ -153,6 +154,13 @@ void main() {
           'border_width': 3,
           'border_color': '#112233',
           'background_color': '#F5F5F5',
+          'image_text_gap': 18,
+          'font_size': 19,
+          'font_color': '#445566',
+          'font_weight': 600,
+          'text_align': 'center',
+          'text_max_lines': 3,
+          'line_height': 145,
         },
       },
     );
@@ -161,6 +169,7 @@ void main() {
     expect(category.image, isNull);
     expect(category.imageSize, 104);
     expect(category.imageShape, 'circle');
+    expect(category.imageRadius, 0.32);
     expect(category.imageFit, 'cover');
     expect(category.imageEffect, 'shadow');
     expect(category.imageScale, 1.25);
@@ -168,6 +177,13 @@ void main() {
     expect(category.imageBorderWidth, 3);
     expect(category.imageBorderColor, '#112233');
     expect(category.imageBackgroundColor, '#F5F5F5');
+    expect(category.imageTextGap, 18);
+    expect(category.fontSize, 19);
+    expect(category.fontColor, '#445566');
+    expect(category.fontWeight, 600);
+    expect(category.textAlign, 'center');
+    expect(category.textMaxLines, 3);
+    expect(category.lineHeight, 1.45);
   });
 
   test(

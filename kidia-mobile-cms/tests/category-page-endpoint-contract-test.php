@@ -53,5 +53,8 @@ assert( array_column( $response->data, 'id' ) === array( 2, 4, 1 ) );
 assert( 'https://example.com/full.jpg' === $response->data[0]['image']['src'] );
 assert( 'rounded' === $response->data[0]['presentation']['image_shape'] );
 assert( 68 === $response->data[0]['presentation']['image_size'] );
+assert( 18 === $response->data[0]['presentation']['image_radius'] );
+assert( 10 === $response->data[0]['presentation']['image_text_gap'] );
+assert( 16 === $response->data[0]['presentation']['font_size'] );
 assert( '3' === $response->headers['X-WP-Total'] );
 echo "category-page-endpoint-contract-test: ok\n";
