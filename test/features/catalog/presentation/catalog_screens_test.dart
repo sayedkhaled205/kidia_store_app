@@ -48,6 +48,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Women'), findsOneWidget);
+    expect(find.text('Men'), findsOneWidget);
     expect(find.text('Dresses'), findsNothing);
     final Text categoryTitle = tester.widget<Text>(
       find.byKey(const Key('category-title-1')),
@@ -58,10 +59,25 @@ void main() {
     final double responsiveScale = (screenWidth / 390).clamp(0.82, 1.22);
     expect(categoryTitle.style?.fontSize, closeTo(20 * responsiveScale, 0.001));
     expect(categoryTitle.style?.color, const Color(0xFF123456));
-    final ListTile categoryTile = tester.widget<ListTile>(find.byType(ListTile));
     expect(
-      categoryTile.horizontalTitleGap,
+      tester
+          .getSize(
+            find.byKey(const Key('category-image-text-gap-1')),
+          )
+          .width,
       closeTo(24 * responsiveScale, 0.001),
+    );
+    final Finder artworkFinder = find.byKey(const Key('category-artwork-1'));
+    expect(
+      tester.getSize(artworkFinder),
+      Size.square(80 * responsiveScale),
+    );
+    final Container artwork = tester.widget<Container>(artworkFinder);
+    final BoxDecoration decoration = artwork.decoration! as BoxDecoration;
+    final BorderRadius borderRadius = decoration.borderRadius! as BorderRadius;
+    expect(
+      borderRadius.topLeft.x,
+      closeTo(40 * responsiveScale, 0.001),
     );
     expect(
       tester.getSize(find.byKey(const Key('categories-search-action'))).height,
@@ -72,6 +88,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Dresses'), findsOneWidget);
+    final Finder roundedArtworkFinder = find.byKey(
+      const Key('category-artwork-2'),
+    );
+    final Container roundedArtwork = tester.widget<Container>(
+      roundedArtworkFinder,
+    );
+    final BoxDecoration roundedDecoration =
+        roundedArtwork.decoration! as BoxDecoration;
+    final BorderRadius roundedRadius =
+        roundedDecoration.borderRadius! as BorderRadius;
+    expect(
+      roundedRadius.topLeft.x,
+      closeTo(68 * responsiveScale * 0.18, 0.001),
+    );
+    final Container squareArtwork = tester.widget<Container>(
+      find.byKey(const Key('category-artwork-3')),
+    );
+    final BoxDecoration squareDecoration =
+        squareArtwork.decoration! as BoxDecoration;
+    final BorderRadius squareRadius =
+        squareDecoration.borderRadius! as BorderRadius;
+    expect(squareRadius.topLeft.x, 0);
     expect(find.text('8 products'), findsNothing);
     expect(find.text('5 products'), findsNothing);
     expect(find.byType(SafeArea), findsWidgets);
@@ -229,6 +267,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
           name: 'Women',
           slug: 'women',
           count: 8,
+          imageSize: 80,
+          imageShape: 'circle',
           imageTextGap: 24,
           fontSize: 20,
           fontColor: '#123456',
@@ -243,10 +283,18 @@ class _ScreenCatalogRepository implements CatalogRepository {
           parentId: 1,
           count: 5,
         ),
+        CatalogCategory(
+          id: 3,
+          name: 'Men',
+          slug: 'men',
+          count: 3,
+          imageSize: 64,
+          imageShape: 'square',
+        ),
       ],
       page: query.page,
       perPage: query.perPage,
-      totalItems: 2,
+      totalItems: 3,
       totalPages: 1,
     );
   }
