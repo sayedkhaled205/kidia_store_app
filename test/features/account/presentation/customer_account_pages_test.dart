@@ -22,6 +22,8 @@ void main() {
     expect(find.text('عنوان الفاتورة'), findsNothing);
     expect(find.byKey(const Key('shipping-address-card')), findsOneWidget);
     expect(find.text('1 Test Street'), findsOneWidget);
+    expect(find.text('01000000000'), findsOneWidget);
+    expect(find.text('+201000000000'), findsNothing);
     await tester.tap(find.text('تعديل'));
     await tester.pumpAndSettle();
 
@@ -33,6 +35,13 @@ void main() {
       find.byKey(const Key('customer-address-billing_postcode')),
       findsNothing,
     );
+    final EditableText phoneEditor = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const Key('customer-address-billing_phone')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(phoneEditor.controller.text, '01000000000');
   });
 
   testWidgets('profile page loads the real customer fields', (
@@ -55,18 +64,34 @@ void main() {
     expect(phone.controller?.text, '01000000000');
     expect(alternatePhone.controller?.text, '01100000000');
     expect(find.byKey(const Key('save-customer-profile')), findsOneWidget);
+    for (final String key in <String>[
+      'profile-first-name',
+      'profile-last-name',
+      'profile-display-name',
+      'profile-phone',
+      'profile-alternate-phone',
+      'profile-email',
+    ]) {
+      expect(
+        Directionality.of(tester.element(find.byKey(Key(key)))),
+        TextDirection.rtl,
+      );
+    }
   });
 
-  testWidgets('customer service shows only configured contact methods', (
+  testWidgets('customer service shows the two official Kidia contacts', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_app(const CustomerSupportScreen()));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('support-action-whatsapp')), findsOneWidget);
-    expect(find.byKey(const Key('support-action-phone')), findsOneWidget);
     expect(find.byKey(const Key('support-action-email')), findsOneWidget);
-    expect(find.byKey(const Key('support-action-website')), findsOneWidget);
+    expect(find.byKey(const Key('support-action-phone')), findsNothing);
+    expect(find.byKey(const Key('support-action-website')), findsNothing);
+    expect(find.text('01208846445'), findsOneWidget);
+    expect(find.text('support@kidiastore.com'), findsOneWidget);
+    expect(find.byType(Card), findsNWidgets(2));
   });
 }
 
@@ -103,6 +128,7 @@ final CustomerAccount _account = CustomerAccount(
       'billing_first_name': 'Kidia',
       'billing_address_1': '1 Test Street',
       'billing_city': 'Cairo',
+      'billing_phone': '+201000000000',
     },
   ),
   shipping: CustomerAddress(type: CustomerAddressType.shipping),
@@ -118,6 +144,13 @@ final CustomerAccount _account = CustomerAccount(
       type: CustomerAddressFieldType.text,
       addressType: CustomerAddressType.billing,
       label: 'العنوان',
+      required: true,
+    ),
+    CustomerAddressField(
+      key: 'billing_phone',
+      type: CustomerAddressFieldType.telephone,
+      addressType: CustomerAddressType.billing,
+      label: 'رقم الهاتف',
       required: true,
     ),
     CustomerAddressField(

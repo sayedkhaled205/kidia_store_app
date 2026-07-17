@@ -100,10 +100,12 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		}
 		$values = $this->json_values( $request );
 		$user   = array( 'ID' => (int) $customer->get_id() );
+		$expected = array();
 
 		foreach ( array( 'first_name', 'last_name', 'display_name' ) as $field ) {
 			if ( array_key_exists( $field, $values ) ) {
-				$user[ $field ] = sanitize_text_field( (string) $values[ $field ] );
+				$user[ $field ]     = sanitize_text_field( (string) $values[ $field ] );
+				$expected[ $field ] = $user[ $field ];
 			}
 		}
 		if ( array_key_exists( 'email', $values ) ) {
@@ -124,6 +126,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 				);
 			}
 			$user['user_email'] = $email;
+			$expected['email']  = $email;
 		}
 
 		$updated = wp_update_user( $user );
@@ -137,20 +140,32 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		$customer = new WC_Customer( (int) $updated );
 		if ( array_key_exists( 'phone', $values ) ) {
 			$phone = $this->sanitize_phone_value( $values['phone'] );
-			if ( is_callable( array( $customer, 'set_billing_phone' ) ) ) {
-				$customer->set_billing_phone( $phone );
-				$customer->save();
+			$expected['phone'] = $phone;
+			if ( ! is_callable( array( $customer, 'set_billing_phone' ) ) ) {
+				return $this->persistence_error();
 			}
+			$customer->set_billing_phone( $phone );
+			$customer->save();
 		}
 		if ( array_key_exists( 'alternate_phone', $values ) ) {
+			$alternate_phone = $this->sanitize_phone_value( $values['alternate_phone'] );
 			update_user_meta(
 				(int) $updated,
 				'billing_phone1',
-				$this->sanitize_phone_value( $values['alternate_phone'] )
+				$alternate_phone
 			);
+			$expected['alternate_phone'] = $alternate_phone;
+		}
+		if ( function_exists( 'clean_user_cache' ) ) {
+			clean_user_cache( (int) $updated );
+		}
+		$stored  = new WC_Customer( (int) $updated );
+		$profile = $this->profile_payload( $stored );
+		if ( ! $this->payload_matches( $profile, $expected ) ) {
+			return $this->persistence_error();
 		}
 		return $this->response(
-			array( 'profile' => $this->profile_payload( $customer ) )
+			array( 'profile' => $profile )
 		);
 	}
 
@@ -169,7 +184,8 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			);
 		}
 
-		$values = $this->json_values( $request );
+		$values   = $this->json_values( $request );
+		$expected = array();
 		foreach ( self::ADDRESS_FIELDS as $field ) {
 			$key = $type . '_' . $field;
 			if ( ! array_key_exists( $key, $values ) ) {
@@ -177,19 +193,28 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			}
 			$setter = 'set_' . $key;
 			if ( ! is_callable( array( $customer, $setter ) ) ) {
-				continue;
+				return $this->persistence_error();
 			}
 			$value = $this->sanitize_address_value( $field, $values[ $key ] );
 			if ( is_wp_error( $value ) ) {
 				return $value;
 			}
 			$customer->$setter( $value );
+			$expected[ $key ] = $value;
 		}
 		$customer->save();
+		if ( function_exists( 'clean_user_cache' ) ) {
+			clean_user_cache( (int) $customer->get_id() );
+		}
+		$stored  = new WC_Customer( (int) $customer->get_id() );
+		$address = $this->address_payload( $stored, $type );
+		if ( ! $this->payload_matches( $address, $expected ) ) {
+			return $this->persistence_error();
+		}
 		return $this->response(
 			array(
 				'type'    => $type,
-				'address' => $this->address_payload( $customer, $type ),
+				'address' => $address,
 			)
 		);
 	}
@@ -254,9 +279,13 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 
 	/** Store-controlled contact details with filters for live deployments. */
 	private function support_payload(): array {
+		$default_email = (string) get_option( 'woocommerce_email_from_address', '' );
+		if ( '' === trim( $default_email ) ) {
+			$default_email = (string) get_option( 'admin_email', '' );
+		}
 		$email = apply_filters(
 			'woo_mobile_cms_support_email',
-			(string) get_option( 'admin_email', '' )
+			$default_email
 		);
 		$phone = apply_filters(
 			'woo_mobile_cms_support_phone',
@@ -309,6 +338,24 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		return function_exists( 'wc_sanitize_phone_number' )
 			? wc_sanitize_phone_number( (string) $value )
 			: sanitize_text_field( (string) $value );
+	}
+
+	/** Confirm a write by comparing it with a freshly loaded WC customer. */
+	private function payload_matches( array $payload, array $expected ): bool {
+		foreach ( $expected as $key => $value ) {
+			if ( ! array_key_exists( $key, $payload ) || (string) $payload[ $key ] !== (string) $value ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private function persistence_error(): WP_Error {
+		return new WP_Error(
+			'woo_mobile_account_persistence_failed',
+			__( 'WooCommerce did not persist the customer changes.', 'kidia-mobile-cms' ),
+			array( 'status' => 500 )
+		);
 	}
 
 	private function response( array $payload ): WP_REST_Response {

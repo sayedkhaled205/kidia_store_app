@@ -184,8 +184,16 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		}
 
 		$is_request = 'request' === $cancellation_type;
+		$request_status = $is_request ? $this->cancellation_request_status() : '';
+		if ( $is_request && '' === $request_status ) {
+			return new WP_Error(
+				'woo_mobile_order_cancel_unavailable',
+				__( 'The store cancellation-request status is unavailable.', 'kidia-mobile-cms' ),
+				array( 'status' => 503 )
+			);
+		}
 		$order->update_status(
-			$is_request ? 'cancel-request' : 'cancelled',
+			$is_request ? $request_status : 'cancelled',
 			$is_request
 				? __( 'Cancellation requested by customer through the mobile app.', 'kidia-mobile-cms' )
 				: __( 'Order cancelled by customer.', 'woocommerce' ),
@@ -285,7 +293,8 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		$status = is_callable( array( $order, 'get_status' ) )
 			? sanitize_key( (string) $order->get_status() )
 			: '';
-		if ( '' === $status || 'cancel-request' === $status ) {
+		$request_status = $this->cancellation_request_status();
+		if ( '' === $status || '' === $request_status || $request_status === $status ) {
 			return false;
 		}
 
@@ -308,18 +317,32 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			}
 		}
 
-		$order_statuses = function_exists( 'wc_get_order_statuses' )
-			? wc_get_order_statuses()
-			: array();
-		if ( ! is_array( $order_statuses ) || ! array_key_exists( 'wc-cancel-request', $order_statuses ) ) {
-			return false;
-		}
 		$valid_statuses = apply_filters(
 			'woo_mobile_cms_valid_order_statuses_for_cancel_request',
 			array( 'processing', 'on-hold' ),
 			$order
 		);
 		return is_array( $valid_statuses ) && in_array( $status, $valid_statuses, true );
+	}
+
+	/** Resolve the exact registered status used by the website request flow. */
+	private function cancellation_request_status(): string {
+		$order_statuses = function_exists( 'wc_get_order_statuses' )
+			? wc_get_order_statuses()
+			: array();
+		if ( ! is_array( $order_statuses ) ) {
+			return '';
+		}
+		if ( array_key_exists( 'wc-cancel-request', $order_statuses ) ) {
+			return 'cancel-request';
+		}
+		foreach ( array_keys( $order_statuses ) as $key ) {
+			$status = preg_replace( '/^wc-/', '', sanitize_key( (string) $key ) );
+			if ( is_string( $status ) && str_contains( $status, 'cancel' ) && str_contains( $status, 'request' ) ) {
+				return $status;
+			}
+		}
+		return '';
 	}
 
 	private function unauthorized_error(): WP_Error {

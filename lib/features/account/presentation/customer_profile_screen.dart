@@ -5,6 +5,7 @@ import 'package:kidia_store_app/core/theme/kidia_colors.dart';
 import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
 import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
 import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:kidia_store_app/features/account/presentation/customer_phone_format.dart';
 import 'package:kidia_store_app/features/account/presentation/providers/customer_account_providers.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
@@ -82,9 +83,11 @@ class _ProfileFormState extends State<_ProfileForm> {
     _lastName = TextEditingController(text: widget.profile.lastName);
     _displayName = TextEditingController(text: widget.profile.displayName);
     _email = TextEditingController(text: widget.profile.email);
-    _phone = TextEditingController(text: widget.profile.phone);
+    _phone = TextEditingController(
+      text: localEgyptianPhoneNumber(widget.profile.phone),
+    );
     _alternatePhone = TextEditingController(
-      text: widget.profile.alternatePhone,
+      text: localEgyptianPhoneNumber(widget.profile.alternatePhone),
     );
   }
 
@@ -157,70 +160,61 @@ class _ProfileFormState extends State<_ProfileForm> {
               ),
             ),
             const SizedBox(height: KidiaSpacing.sm),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: TextFormField(
-                key: const Key('profile-phone'),
-                controller: _phone,
-                enabled: !_saving,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                autofillHints: const <String>[AutofillHints.telephoneNumber],
-                validator: (String? value) => _phoneValidation(
-                  value,
-                  isArabic: isArabic,
-                  isRequired: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: isArabic ? 'رقم الهاتف' : 'Phone number',
-                  prefixIcon: const Icon(Icons.phone_outlined),
-                ),
+            TextFormField(
+              key: const Key('profile-phone'),
+              controller: _phone,
+              enabled: !_saving,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              autofillHints: const <String>[AutofillHints.telephoneNumber],
+              validator: (String? value) => _phoneValidation(
+                value,
+                isArabic: isArabic,
+                isRequired: true,
+              ),
+              decoration: InputDecoration(
+                labelText: isArabic ? 'رقم الهاتف' : 'Phone number',
+                prefixIcon: const Icon(Icons.phone_outlined),
               ),
             ),
             const SizedBox(height: KidiaSpacing.sm),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: TextFormField(
-                key: const Key('profile-alternate-phone'),
-                controller: _alternatePhone,
-                enabled: !_saving,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                validator: (String? value) => _phoneValidation(
-                  value,
-                  isArabic: isArabic,
-                ),
-                decoration: InputDecoration(
-                  labelText: isArabic
-                      ? 'رقم الهاتف الاحتياطي'
-                      : 'Alternate phone number',
-                  prefixIcon: const Icon(Icons.phone_in_talk_outlined),
-                ),
+            TextFormField(
+              key: const Key('profile-alternate-phone'),
+              controller: _alternatePhone,
+              enabled: !_saving,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              validator: (String? value) => _phoneValidation(
+                value,
+                isArabic: isArabic,
+              ),
+              decoration: InputDecoration(
+                labelText: isArabic
+                    ? 'رقم الهاتف الاحتياطي'
+                    : 'Alternate phone number',
+                prefixIcon: const Icon(Icons.phone_in_talk_outlined),
               ),
             ),
             const SizedBox(height: KidiaSpacing.sm),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: TextFormField(
-                key: const Key('profile-email'),
-                controller: _email,
-                enabled: !_saving,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.done,
-                autofillHints: const <String>[AutofillHints.email],
-                validator: (String? value) {
-                  final String email = value?.trim() ?? '';
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-                    return isArabic
-                        ? 'أدخل بريدًا إلكترونيًا صحيحًا'
-                        : 'Enter a valid email';
-                  }
-                  return null;
-                },
-                decoration: InputDecoration(
-                  labelText: isArabic ? 'البريد الإلكتروني' : 'Email',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                ),
+            TextFormField(
+              key: const Key('profile-email'),
+              controller: _email,
+              enabled: !_saving,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autofillHints: const <String>[AutofillHints.email],
+              validator: (String? value) {
+                final String email = value?.trim() ?? '';
+                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+                  return isArabic
+                      ? 'أدخل بريدًا إلكترونيًا صحيحًا'
+                      : 'Enter a valid email';
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                labelText: isArabic ? 'البريد الإلكتروني' : 'Email',
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
             if (_error != null) ...<Widget>[
@@ -267,7 +261,7 @@ class _ProfileFormState extends State<_ProfileForm> {
       _error = null;
     });
     try {
-      await widget.repository.updateProfile(
+      final CustomerProfile saved = await widget.repository.updateProfile(
         firstName: _firstName.text,
         lastName: _lastName.text,
         displayName: _displayName.text,
@@ -275,6 +269,12 @@ class _ProfileFormState extends State<_ProfileForm> {
         phone: _phone.text,
         alternatePhone: _alternatePhone.text,
       );
+      _firstName.text = saved.firstName;
+      _lastName.text = saved.lastName;
+      _displayName.text = saved.displayName;
+      _email.text = saved.email;
+      _phone.text = localEgyptianPhoneNumber(saved.phone);
+      _alternatePhone.text = localEgyptianPhoneNumber(saved.alternatePhone);
       widget.onSaved();
       if (!mounted) {
         return;

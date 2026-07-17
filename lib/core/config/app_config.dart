@@ -55,6 +55,18 @@ abstract final class AppConfig {
     defaultValue: 'en',
   );
 
+  /// Public Kidia customer-service contacts. Deployments can override either
+  /// value without changing application code.
+  static const String supportWhatsApp = String.fromEnvironment(
+    'STORE_SUPPORT_WHATSAPP',
+    defaultValue: '201208846445',
+  );
+
+  static const String supportEmail = String.fromEnvironment(
+    'STORE_SUPPORT_EMAIL',
+    defaultValue: 'support@kidiastore.com',
+  );
+
   static bool get isRightToLeft {
     final String languageCode = storeLocale
         .split(RegExp('[-_]'))

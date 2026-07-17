@@ -136,14 +136,25 @@ class CustomerOrdersRepositoryImpl
       'order.items',
     ).map<CustomerOrderItem>(_parseItem).toList(growable: false);
     final int itemCount = _nonNegativeInt(json['item_count'], 'item_count');
-    final bool canCancel = _boolean(json['can_cancel']);
+    final bool serverCanCancel = _boolean(json['can_cancel']);
     final CustomerOrderCancellationType parsedCancellationType =
         _cancellationType(json['cancellation_type']);
+    final bool websiteCancellationFallback = const <String>{
+      'processing',
+      'on-hold',
+    }.contains(status);
+    final bool canCancel =
+        serverCanCancel ||
+        parsedCancellationType != CustomerOrderCancellationType.none ||
+        websiteCancellationFallback;
     final CustomerOrderCancellationType cancellationType =
-        canCancel &&
-            parsedCancellationType == CustomerOrderCancellationType.none
+        parsedCancellationType != CustomerOrderCancellationType.none
+        ? parsedCancellationType
+        : websiteCancellationFallback
+        ? CustomerOrderCancellationType.request
+        : canCancel
         ? CustomerOrderCancellationType.cancel
-        : parsedCancellationType;
+        : CustomerOrderCancellationType.none;
     final String fallbackTotal = <String>[
       _text(json['currency_code']).trim(),
       _text(json['total']).trim(),

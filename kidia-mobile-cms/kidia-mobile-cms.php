@@ -3,7 +3,7 @@
  * Plugin Name:       Woo Mobile CMS
  * Plugin URI:        https://wordpress.org/
  * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
- * Version:           1.9.2
+ * Version:           1.9.3
  * Requires at least: 6.4
  * Requires PHP:      8.0
  * Author:            Woo Mobile CMS
@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'KIDIA_MOBILE_CMS_VERSION',
-	'1.9.2'
+	'1.9.3'
 );
 
 define(

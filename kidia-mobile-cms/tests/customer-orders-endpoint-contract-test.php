@@ -195,12 +195,6 @@ function wc_get_order_status_name( string $status ): string {
 function wc_get_account_orders_actions( Kidia_Test_Order $order ): array {
 	return match ( $order->get_status() ) {
 		'pending' => array( 'cancel' => array( 'name' => 'Cancel' ) ),
-		'processing' => array(
-			'cancel-request' => array(
-				'name' => 'Request cancellation',
-				'url'  => 'https://shop.example.com/my-account/orders/cancel-request',
-			),
-		),
 		default => array(),
 	};
 }

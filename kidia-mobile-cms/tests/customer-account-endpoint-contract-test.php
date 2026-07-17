@@ -31,6 +31,7 @@ $GLOBALS['kidia_customer']        = array(
 	),
 	'shipping'     => array(),
 );
+$GLOBALS['kidia_skip_customer_save'] = false;
 
 class WP_REST_Server {
 	public const READABLE  = 'GET';
@@ -122,6 +123,9 @@ class WC_Customer {
 	}
 
 	public function save(): void {
+		if ( $GLOBALS['kidia_skip_customer_save'] ) {
+			return;
+		}
 		$GLOBALS['kidia_customer'] = $this->data;
 	}
 }
@@ -192,8 +196,13 @@ function update_user_meta( int $user_id, string $key, $value ): void {
 	$GLOBALS['kidia_user_meta'][ $user_id ][ $key ] = (string) $value;
 }
 
+function clean_user_cache( int $user_id ): void {
+	unset( $user_id );
+}
+
 function get_option( string $key, $default = '' ) {
 	return match ( $key ) {
+		'woocommerce_email_from_address' => 'support@example.com',
 		'admin_email' => 'support@example.com',
 		'woocommerce_store_phone' => '+201000000000',
 		default => $default,
@@ -279,5 +288,16 @@ $address = $endpoint->update_address(
 );
 kidia_account_assert( '2 New Street' === $address->data['address']['shipping_address_1'], 'Shipping addresses must be saved in WooCommerce.' );
 kidia_account_assert( 'Giza' === $address->data['address']['shipping_city'], 'Address fields must be returned after saving.' );
+
+$GLOBALS['kidia_skip_customer_save'] = true;
+$not_persisted = $endpoint->update_address(
+	new WP_REST_Request(
+		array( 'type' => 'shipping' ),
+		array( 'shipping_city' => 'Alexandria' )
+	)
+);
+kidia_account_assert( $not_persisted instanceof WP_Error, 'An unpersisted address update must fail.' );
+kidia_account_assert( 'woo_mobile_account_persistence_failed' === $not_persisted->get_error_code(), 'The endpoint must report a persistence failure.' );
+$GLOBALS['kidia_skip_customer_save'] = false;
 
 fwrite( STDOUT, "Customer account endpoint contract test passed.\n" );
