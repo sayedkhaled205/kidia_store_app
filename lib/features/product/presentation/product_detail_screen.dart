@@ -112,11 +112,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Widget> _buildActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <Widget>[
-      CartIconButton(
-        key: const Key('product-cart-button'),
-        endInset: 0,
-        onPressed: () => context.push('/cart'),
-      ),
       if (product != null && widget.onShareRequested != null)
         IconButton(
           tooltip: copy.share,
@@ -137,6 +132,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 : Icons.favorite_border_rounded,
           ),
         ),
+      CartIconButton(
+        key: const Key('product-cart-button'),
+        endInset: 0,
+        onPressed: () => context.push('/cart'),
+      ),
     ];
   }
 

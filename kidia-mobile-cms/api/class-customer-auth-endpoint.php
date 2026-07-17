@@ -597,7 +597,18 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 
 	/** Keep elevated WordPress accounts out of the customer token surface. */
 	private function is_allowed_customer( WP_User $user ): bool {
-		if ( user_can( $user, 'manage_options' ) || user_can( $user, 'manage_woocommerce' ) ) {
+		// Do not call user_can() while determine_current_user is resolving a
+		// mobile token. Capability filters installed by another plugin may ask
+		// for the current user again, recursively re-entering this method until
+		// PHP-FPM is exhausted and Nginx returns 502. WP_User has already loaded
+		// its roles and primitive capabilities, so they are safe to inspect
+		// directly here.
+		$roles   = array_map( 'sanitize_key', (array) $user->roles );
+		$allcaps = is_array( $user->allcaps ?? null ) ? $user->allcaps : array();
+		if ( in_array( 'administrator', $roles, true ) ||
+			in_array( 'shop_manager', $roles, true ) ||
+			! empty( $allcaps['manage_options'] ) ||
+			! empty( $allcaps['manage_woocommerce'] ) ) {
 			return false;
 		}
 		$allowed_roles = (array) apply_filters(
@@ -605,7 +616,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			array( 'customer', 'subscriber' ),
 			$user
 		);
-		return ! empty( array_intersect( array_map( 'sanitize_key', $allowed_roles ), (array) $user->roles ) );
+		return ! empty( array_intersect( array_map( 'sanitize_key', $allowed_roles ), $roles ) );
 	}
 
 	/** Small customer profile used by the account header and future pages. */
