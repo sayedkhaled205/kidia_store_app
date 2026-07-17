@@ -72,7 +72,6 @@ class _ProfileFormState extends State<_ProfileForm> {
   late final TextEditingController _displayName;
   late final TextEditingController _email;
   late final TextEditingController _phone;
-  late final TextEditingController _alternatePhone;
   bool _saving = false;
   String? _error;
 
@@ -86,9 +85,6 @@ class _ProfileFormState extends State<_ProfileForm> {
     _phone = TextEditingController(
       text: localEgyptianPhoneNumber(widget.profile.phone),
     );
-    _alternatePhone = TextEditingController(
-      text: localEgyptianPhoneNumber(widget.profile.alternatePhone),
-    );
   }
 
   @override
@@ -98,7 +94,6 @@ class _ProfileFormState extends State<_ProfileForm> {
     _displayName.dispose();
     _email.dispose();
     _phone.dispose();
-    _alternatePhone.dispose();
     super.dispose();
   }
 
@@ -163,36 +158,16 @@ class _ProfileFormState extends State<_ProfileForm> {
             TextFormField(
               key: const Key('profile-phone'),
               controller: _phone,
-              enabled: !_saving,
+              readOnly: true,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
               autofillHints: const <String>[AutofillHints.telephoneNumber],
-              validator: (String? value) => _phoneValidation(
-                value,
-                isArabic: isArabic,
-                isRequired: true,
-              ),
               decoration: InputDecoration(
-                labelText: isArabic ? 'رقم الهاتف' : 'Phone number',
+                labelText: isArabic ? 'رقم هاتف الحساب' : 'Account phone',
+                helperText: isArabic
+                    ? 'رقم تسجيل الدخول ثابت ولا يتغير من بيانات الشحن.'
+                    : 'Your sign-in phone is separate from shipping details.',
                 prefixIcon: const Icon(Icons.phone_outlined),
-              ),
-            ),
-            const SizedBox(height: KidiaSpacing.sm),
-            TextFormField(
-              key: const Key('profile-alternate-phone'),
-              controller: _alternatePhone,
-              enabled: !_saving,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              validator: (String? value) => _phoneValidation(
-                value,
-                isArabic: isArabic,
-              ),
-              decoration: InputDecoration(
-                labelText: isArabic
-                    ? 'رقم الهاتف الاحتياطي'
-                    : 'Alternate phone number',
-                prefixIcon: const Icon(Icons.phone_in_talk_outlined),
               ),
             ),
             const SizedBox(height: KidiaSpacing.sm),
@@ -266,15 +241,14 @@ class _ProfileFormState extends State<_ProfileForm> {
         lastName: _lastName.text,
         displayName: _displayName.text,
         email: _email.text,
-        phone: _phone.text,
-        alternatePhone: _alternatePhone.text,
+        phone: widget.profile.phone,
+        alternatePhone: widget.profile.alternatePhone,
       );
       _firstName.text = saved.firstName;
       _lastName.text = saved.lastName;
       _displayName.text = saved.displayName;
       _email.text = saved.email;
       _phone.text = localEgyptianPhoneNumber(saved.phone);
-      _alternatePhone.text = localEgyptianPhoneNumber(saved.alternatePhone);
       widget.onSaved();
       if (!mounted) {
         return;
@@ -365,22 +339,3 @@ String _profileError(CustomerAccountRepositoryException error, bool isArabic) {
 
 bool _isArabic(BuildContext context) =>
     Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
-
-String? _phoneValidation(
-  String? value, {
-  required bool isArabic,
-  bool isRequired = false,
-}) {
-  final String phone = value?.trim() ?? '';
-  if (phone.isEmpty) {
-    if (!isRequired) {
-      return null;
-    }
-    return isArabic ? 'رقم الهاتف مطلوب' : 'Phone number is required';
-  }
-  final String digits = phone.replaceAll(RegExp(r'\D'), '');
-  if (digits.length < 8 || digits.length > 15) {
-    return isArabic ? 'أدخل رقم هاتف صحيحًا' : 'Enter a valid phone number';
-  }
-  return null;
-}

@@ -208,6 +208,7 @@ class _AddressCard extends StatelessWidget {
       value('address_2'),
       area,
       localEgyptianPhoneNumber(value('phone')),
+      localEgyptianPhoneNumber(value('phone1')),
       value('email'),
     ].where((String line) => line.isNotEmpty).toList(growable: false);
   }

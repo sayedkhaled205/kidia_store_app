@@ -57,8 +57,6 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
         'last_name': lastName.trim(),
         'display_name': displayName.trim(),
         'email': email.trim(),
-        'phone': phone.trim(),
-        'alternate_phone': alternatePhone.trim(),
       };
       final Map<String, dynamic> response = await transport.updateProfile(
         values,
@@ -357,6 +355,15 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
             required: true,
             priority: 100,
           ),
+        if (type == CustomerAddressType.billing)
+          CustomerAddressField(
+            key: 'billing_phone1',
+            type: CustomerAddressFieldType.telephone,
+            addressType: type,
+            label: 'رقم الهاتف الاحتياطي',
+            required: false,
+            priority: 110,
+          ),
       ]);
     }
     return List<CustomerAddressField>.unmodifiable(fields);
@@ -381,6 +388,7 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       'country',
       'email',
       'phone',
+      'phone1',
     }.contains(key.substring(prefix.length));
   }
 

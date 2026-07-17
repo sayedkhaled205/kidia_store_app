@@ -47,18 +47,16 @@ void main() {
     );
 
     expect(transport.profileValues?['first_name'], 'Updated');
-    expect(transport.profileValues?['phone'], '01000000000');
-    expect(transport.profileValues?['alternate_phone'], '01100000000');
+    expect(transport.profileValues?.containsKey('phone'), isFalse);
+    expect(transport.profileValues?.containsKey('alternate_phone'), isFalse);
     expect(profile.email, 'updated@example.com');
     expect(transport.addressType, CustomerAddressType.shipping);
     expect(address.valueFor('shipping_address_1'), '2 New Street');
   });
 
-  test('accepts WooCommerce international phone formatting after save', () async {
+  test('preserves fixed account phone while saving editable profile', () async {
     final CustomerAccountRepositoryImpl repository =
-        CustomerAccountRepositoryImpl(
-          _FakeAccountTransport(internationalizePhones: true),
-        );
+        CustomerAccountRepositoryImpl(_FakeAccountTransport());
 
     final CustomerProfile profile = await repository.updateProfile(
       firstName: 'Updated',
@@ -69,8 +67,8 @@ void main() {
       alternatePhone: '01155555555',
     );
 
-    expect(profile.phone, '+2010694000065');
-    expect(profile.alternatePhone, '00201155555555');
+    expect(profile.phone, '01000000000');
+    expect(profile.alternatePhone, isEmpty);
   });
 
   test('rejects update responses that were not persisted', () async {
@@ -120,11 +118,9 @@ void main() {
 class _FakeAccountTransport implements CustomerAccountApiTransport {
   _FakeAccountTransport({
     this.persistWrites = true,
-    this.internationalizePhones = false,
   });
 
   final bool persistWrites;
-  final bool internationalizePhones;
   Map<String, String>? profileValues;
   CustomerAddressType? addressType;
 
@@ -186,13 +182,6 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
     Map<String, String> stored = persistWrites
         ? values
         : <String, String>{...values, 'display_name': 'Old name'};
-    if (persistWrites && internationalizePhones) {
-      stored = <String, String>{
-        ...stored,
-        'phone': '+20${values['phone']?.substring(1)}',
-        'alternate_phone': '0020${values['alternate_phone']?.substring(1)}',
-      };
-    }
     return <String, dynamic>{
       'profile': <String, dynamic>{
         'id': 7,
@@ -200,8 +189,8 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
         'first_name': stored['first_name'],
         'last_name': stored['last_name'],
         'display_name': stored['display_name'],
-        'phone': stored['phone'],
-        'alternate_phone': stored['alternate_phone'],
+        'phone': '01000000000',
+        'alternate_phone': '',
       },
     };
   }

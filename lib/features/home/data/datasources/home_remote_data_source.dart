@@ -22,24 +22,45 @@ class DioHomeRemoteDataSource implements HomeRemoteDataSource {
   Future<Map<String, dynamic>> fetchHomeLayout({
     required String locale,
   }) async {
-    final Response<dynamic> response = await _dio.get<dynamic>(
-      _endpoint,
-      queryParameters: <String, dynamic>{
-        'locale': locale,
-      },
-      options: Options(
-        responseType: ResponseType.json,
-        headers: const <String, dynamic>{
-          'Accept': 'application/json',
-        },
-      ),
-    );
+    Response<dynamic> response;
+    try {
+      response = await _fetch(_endpoint, locale);
+    } on DioException catch (error) {
+      final String? legacyEndpoint = _legacyEndpoint();
+      if (error.response?.statusCode != 404 || legacyEndpoint == null) {
+        rethrow;
+      }
+      response = await _fetch(legacyEndpoint, locale);
+    }
 
     final Map<String, dynamic> responseJson = _normalizeJsonObject(
       response.data,
     );
 
     return _unwrapLayoutResponse(responseJson);
+  }
+
+  Future<Response<dynamic>> _fetch(String endpoint, String locale) =>
+      _dio.get<dynamic>(
+        endpoint,
+        queryParameters: <String, dynamic>{'locale': locale},
+        options: Options(
+          responseType: ResponseType.json,
+          headers: const <String, dynamic>{
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+  String? _legacyEndpoint() {
+    const String currentPath = '/wp-json/woo-mobile/v1/home-layout';
+    if (!_endpoint.contains(currentPath)) {
+      return null;
+    }
+    return _endpoint.replaceFirst(
+      currentPath,
+      '/wp-json/kidia/v1/home-layout',
+    );
   }
 
   Map<String, dynamic> _normalizeJsonObject(dynamic data) {

@@ -58,18 +58,14 @@ void main() {
     final TextFormField phone = tester.widget<TextFormField>(
       find.byKey(const Key('profile-phone')),
     );
-    final TextFormField alternatePhone = tester.widget<TextFormField>(
-      find.byKey(const Key('profile-alternate-phone')),
-    );
     expect(phone.controller?.text, '01000000000');
-    expect(alternatePhone.controller?.text, '01100000000');
+    expect(find.byKey(const Key('profile-alternate-phone')), findsNothing);
     expect(find.byKey(const Key('save-customer-profile')), findsOneWidget);
     for (final String key in <String>[
       'profile-first-name',
       'profile-last-name',
       'profile-display-name',
       'profile-phone',
-      'profile-alternate-phone',
       'profile-email',
     ]) {
       expect(
