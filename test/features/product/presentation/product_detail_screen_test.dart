@@ -4,6 +4,7 @@ import 'package:kidia_store_app/core/network/store_api_exception.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
+import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 
 import '../support/product_test_data.dart';
 
@@ -28,7 +29,15 @@ void main() {
     expect(find.text('Soft & comfortable.'), findsNothing);
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
     expect(find.text('Kidia'), findsOneWidget);
-    expect(find.text('Product'), findsNothing);
+    expect(find.text('Product'), findsOneWidget);
+    expect(find.byType(CommerceAppBar), findsOneWidget);
+    final AppBar appBar = tester.widget<AppBar>(
+      find.descendant(
+        of: find.byType(CommerceAppBar),
+        matching: find.byType(AppBar),
+      ),
+    );
+    expect(appBar.centerTitle, isTrue);
     expect(find.text('In stock'), findsNothing);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/wishlist/presentation/wishlist_screen.dart';
+import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 
 import '../support/wishlist_test_data.dart';
 
@@ -42,12 +43,15 @@ void main() {
     );
     await tester.pumpWidget(
       _testApp(
-        WishlistScreen(
-          repository: wishlist,
-          catalogRepository: FakeWishlistCatalogRepository(
-            products: const <CatalogProduct>[wishlistProductOne],
+        Directionality(
+          textDirection: TextDirection.rtl,
+          child: WishlistScreen(
+            repository: wishlist,
+            catalogRepository: FakeWishlistCatalogRepository(
+              products: const <CatalogProduct>[wishlistProductOne],
+            ),
+            onProductTap: (CatalogProduct product) => opened = product,
           ),
-          onProductTap: (CatalogProduct product) => opened = product,
         ),
       ),
     );
@@ -57,6 +61,22 @@ void main() {
     expect(find.text('Everyday Jacket'), findsOneWidget);
     expect(find.text(r'$85.00'), findsOneWidget);
     expect(find.text('1 item'), findsOneWidget);
+    expect(find.byType(CommerceAppBar), findsOneWidget);
+    final AppBar appBar = tester.widget<AppBar>(
+      find.descendant(
+        of: find.byType(CommerceAppBar),
+        matching: find.byType(AppBar),
+      ),
+    );
+    expect(appBar.centerTitle, isTrue);
+    final double logicalWidth =
+        tester.view.physicalSize.width / tester.view.devicePixelRatio;
+    expect(
+      tester
+          .getCenter(find.byKey(const Key('commerce-app-bar-title')))
+          .dx,
+      closeTo(logicalWidth / 2, 0.5),
+    );
 
     await tester.tap(find.byKey(const Key('wishlist-product-1')));
     expect(opened?.id, 1);

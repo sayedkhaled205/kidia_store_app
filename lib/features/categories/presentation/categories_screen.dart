@@ -289,19 +289,20 @@ class _CategoryTopActions extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Material(
+              key: const Key('categories-search-action'),
               color: colors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               child: InkWell(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 onTap: () async => showCatalogSearch(context),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 13,
+                    vertical: 9,
                   ),
                   child: Row(
                     children: <Widget>[
-                      const Icon(Icons.search_rounded, size: 26.4),
+                      const Icon(Icons.search_rounded, size: 24),
                       const SizedBox(width: 10),
                       Text(
                         'ابحثي عن منتج',

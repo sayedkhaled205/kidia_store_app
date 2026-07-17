@@ -104,27 +104,50 @@ class _CatalogSearchOverlayState extends State<_CatalogSearchOverlay> {
               color: colors.surface,
               elevation: 8,
               shadowColor: Colors.black26,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
               clipBehavior: Clip.antiAlias,
               child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: TextField(
-                  key: const Key('catalog-search-overlay-field'),
-                  controller: _controller,
-                  autofocus: true,
-                  autocorrect: false,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    hintText: copy.searchHint,
-                    prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
-                    suffixIcon: IconButton(
-                      key: const Key('catalog-search-overlay-submit'),
-                      tooltip: copy.search,
-                      onPressed: _submit,
-                      icon: const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 26.4,
+                padding: const EdgeInsets.all(6),
+                child: SizedBox(
+                  key: const Key('catalog-search-field-frame'),
+                  height: 48,
+                  child: TextField(
+                    key: const Key('catalog-search-overlay-field'),
+                    controller: _controller,
+                    autofocus: true,
+                    autocorrect: false,
+                    textAlignVertical: TextAlignVertical.center,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _submit(),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsetsDirectional.only(
+                        start: 12,
+                        end: 4,
+                      ),
+                      hintText: copy.searchHint,
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        size: 24,
+                      ),
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 42,
+                        minHeight: 40,
+                      ),
+                      suffixIconConstraints: const BoxConstraints.tightFor(
+                        width: 44,
+                        height: 44,
+                      ),
+                      suffixIcon: IconButton(
+                        key: const Key('catalog-search-overlay-submit'),
+                        tooltip: copy.search,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        onPressed: _submit,
+                        icon: const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
