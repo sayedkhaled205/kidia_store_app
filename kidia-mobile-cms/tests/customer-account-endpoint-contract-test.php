@@ -12,7 +12,10 @@ define( 'ABSPATH', __DIR__ );
 $GLOBALS['kidia_account_routes']  = array();
 $GLOBALS['kidia_current_user_id'] = 7;
 $GLOBALS['kidia_user_meta']       = array(
-	7 => array( 'billing_phone1' => '01100000000' ),
+	7 => array(
+		'_kidia_mobile_account_phone' => '01000000000',
+		'billing_phone1'              => '01100000000',
+	),
 );
 $GLOBALS['kidia_customer']        = array(
 	'id'           => 7,
@@ -251,8 +254,9 @@ $GLOBALS['kidia_current_user_id'] = 7;
 $account = $endpoint->get_account();
 kidia_account_assert( $account instanceof WP_REST_Response, 'Signed-in customers must receive account data.' );
 kidia_account_assert( 'customer@example.com' === $account->data['profile']['email'], 'The WooCommerce profile must be returned.' );
-kidia_account_assert( '01000000000' === $account->data['profile']['phone'], 'The billing phone must be returned with the profile.' );
-kidia_account_assert( '01100000000' === $account->data['profile']['alternate_phone'], 'The website alternate phone must be returned with the profile.' );
+kidia_account_assert( '01000000000' === $account->data['profile']['phone'], 'The fixed sign-in phone must be returned with the profile.' );
+kidia_account_assert( '' === $account->data['profile']['alternate_phone'], 'Shipping contact numbers must not leak into account identity.' );
+kidia_account_assert( '01100000000' === $account->data['billing']['billing_phone1'], 'The alternate phone must be returned with the shipping address.' );
 kidia_account_assert( '1 Test Street' === $account->data['billing']['billing_address_1'], 'Saved billing values must be returned.' );
 kidia_account_assert( 'support@example.com' === $account->data['support']['email'], 'Store-controlled support details must be returned.' );
 kidia_account_assert( str_contains( $account->headers['Cache-Control'], 'no-store' ), 'Private account data must not be cached.' );
@@ -272,8 +276,21 @@ $profile = $endpoint->update_profile(
 );
 kidia_account_assert( 'Updated' === $profile->data['profile']['first_name'], 'Profile updates must be persisted through WordPress.' );
 kidia_account_assert( 'updated@example.com' === $profile->data['profile']['email'], 'Email updates must be persisted through WordPress.' );
-kidia_account_assert( '01234567890' === $profile->data['profile']['phone'], 'Phone updates must be persisted through WooCommerce.' );
-kidia_account_assert( '01555555555' === $profile->data['profile']['alternate_phone'], 'Alternate phone updates must use the website billing_phone1 field.' );
+kidia_account_assert( '01000000000' === $profile->data['profile']['phone'], 'Profile edits must not replace the fixed sign-in phone.' );
+kidia_account_assert( '01100000000' === $GLOBALS['kidia_user_meta'][7]['billing_phone1'], 'Profile edits must not replace shipping contact numbers.' );
+
+$billing_address = $endpoint->update_address(
+	new WP_REST_Request(
+		array( 'type' => 'billing' ),
+		array(
+			'billing_phone'  => '012-345-67890',
+			'billing_phone1' => '015-555-55555',
+		)
+	)
+);
+kidia_account_assert( '01234567890' === $billing_address->data['address']['billing_phone'], 'The primary shipping phone must be saved with the address.' );
+kidia_account_assert( '01555555555' === $billing_address->data['address']['billing_phone1'], 'The alternate shipping phone must be saved with the address.' );
+kidia_account_assert( '01000000000' === $GLOBALS['kidia_user_meta'][7]['_kidia_mobile_account_phone'], 'Shipping edits must preserve account identity.' );
 
 $address = $endpoint->update_address(
 	new WP_REST_Request(

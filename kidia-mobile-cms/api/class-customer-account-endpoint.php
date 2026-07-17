@@ -8,6 +8,8 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
+	private const ACCOUNT_PHONE_META = '_kidia_mobile_account_phone';
+	private const ALTERNATE_PHONE_FIELD = 'billing_phone1';
 
 	private const ADDRESS_FIELDS = array(
 		'first_name',
@@ -138,24 +140,8 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			);
 		}
 		$customer = new WC_Customer( (int) $updated );
-		if ( array_key_exists( 'phone', $values ) ) {
-			$phone = $this->sanitize_phone_value( $values['phone'] );
-			$expected['phone'] = $phone;
-			if ( ! is_callable( array( $customer, 'set_billing_phone' ) ) ) {
-				return $this->persistence_error();
-			}
-			$customer->set_billing_phone( $phone );
-			$customer->save();
-		}
-		if ( array_key_exists( 'alternate_phone', $values ) ) {
-			$alternate_phone = $this->sanitize_phone_value( $values['alternate_phone'] );
-			update_user_meta(
-				(int) $updated,
-				'billing_phone1',
-				$alternate_phone
-			);
-			$expected['alternate_phone'] = $alternate_phone;
-		}
+		// The sign-in phone is account identity. Shipping/contact edits belong to
+		// the saved address endpoint and must never replace that identity.
 		if ( function_exists( 'clean_user_cache' ) ) {
 			clean_user_cache( (int) $updated );
 		}
@@ -201,6 +187,11 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			}
 			$customer->$setter( $value );
 			$expected[ $key ] = $value;
+		}
+		if ( 'billing' === $type && array_key_exists( self::ALTERNATE_PHONE_FIELD, $values ) ) {
+			$alternate_phone = $this->sanitize_phone_value( $values[ self::ALTERNATE_PHONE_FIELD ] );
+			update_user_meta( (int) $customer->get_id(), self::ALTERNATE_PHONE_FIELD, $alternate_phone );
+			$expected[ self::ALTERNATE_PHONE_FIELD ] = $alternate_phone;
 		}
 		$customer->save();
 		if ( function_exists( 'clean_user_cache' ) ) {
@@ -250,10 +241,14 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 
 	private function profile_payload( $customer ): array {
 		$customer_id = (int) $customer->get_id();
-		$phone       = is_callable( array( $customer, 'get_billing_phone' ) )
+		$billing_phone = is_callable( array( $customer, 'get_billing_phone' ) )
 			? (string) $customer->get_billing_phone()
 			: '';
-		$alternate_phone = get_user_meta( $customer_id, 'billing_phone1', true );
+		$phone = (string) get_user_meta( $customer_id, self::ACCOUNT_PHONE_META, true );
+		if ( '' === trim( $phone ) && '' !== trim( $billing_phone ) ) {
+			$phone = $this->sanitize_phone_value( $billing_phone );
+			update_user_meta( $customer_id, self::ACCOUNT_PHONE_META, $phone );
+		}
 		return array(
 			'id'           => $customer_id,
 			'email'        => sanitize_email( (string) $customer->get_email() ),
@@ -261,7 +256,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			'last_name'    => sanitize_text_field( (string) $customer->get_last_name() ),
 			'display_name' => sanitize_text_field( (string) $customer->get_display_name() ),
 			'phone'        => $this->sanitize_phone_value( $phone ),
-			'alternate_phone' => $this->sanitize_phone_value( $alternate_phone ),
+			'alternate_phone' => '',
 		);
 	}
 
@@ -273,6 +268,11 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			$address[ $key ] = is_callable( array( $customer, $getter ) )
 				? sanitize_text_field( (string) $customer->$getter() )
 				: '';
+		}
+		if ( 'billing' === $type ) {
+			$address[ self::ALTERNATE_PHONE_FIELD ] = $this->sanitize_phone_value(
+				get_user_meta( (int) $customer->get_id(), self::ALTERNATE_PHONE_FIELD, true )
+			);
 		}
 		return $address;
 	}
@@ -347,7 +347,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 				return false;
 			}
 			$actual = (string) $payload[ $key ];
-			if ( in_array( $key, array( 'phone', 'alternate_phone' ), true ) ) {
+			if ( in_array( $key, array( 'phone', 'alternate_phone', 'billing_phone', self::ALTERNATE_PHONE_FIELD ), true ) ) {
 				if ( $this->phone_fingerprint( $actual ) !== $this->phone_fingerprint( (string) $value ) ) {
 					return false;
 				}
