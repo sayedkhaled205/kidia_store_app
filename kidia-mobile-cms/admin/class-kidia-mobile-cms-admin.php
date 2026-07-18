@@ -456,22 +456,22 @@ final class Kidia_Mobile_CMS_Admin {
 						return;
 					}
 
-            		wp_enqueue_style(
-            			'kidia-mobile-home-builder',
-            			KIDIA_MOBILE_CMS_URL .
-            			'admin/assets/home-builder.css',
-            			array(),
-            			KIDIA_MOBILE_CMS_VERSION
-            		);
+					wp_enqueue_style(
+						'kidia-mobile-home-builder',
+						KIDIA_MOBILE_CMS_URL .
+						'admin/assets/home-builder.css',
+						array(),
+						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.css' )
+					);
 
             		wp_enqueue_script(
             			'kidia-mobile-home-builder',
-            			KIDIA_MOBILE_CMS_URL .
-            			'admin/assets/home-builder.js',
-            			array(),
-            			KIDIA_MOBILE_CMS_VERSION,
-            			true
-            		);
+						KIDIA_MOBILE_CMS_URL .
+						'admin/assets/home-builder.js',
+						array(),
+						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.js' ),
+						true
+					);
 
             		wp_localize_script(
             			'kidia-mobile-home-builder',
