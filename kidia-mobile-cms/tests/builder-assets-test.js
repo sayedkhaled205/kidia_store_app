@@ -366,7 +366,7 @@ function categoryRow(id, name, hasChildren = false) {
       <input class="kidia-category-order" name="categories[${id}][order]" value="0">
       <input class="kidia-category-image-id" name="categories[${id}][image_id]" value="0">
       <button type="button" class="kidia-category-settings-toggle" aria-expanded="false">Settings</button>
-      <label class="kidia-category-visibility"><input type="checkbox" name="categories[${id}][hidden]" value="1"></label>
+      <label class="kidia-category-visibility"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked></label>
       ${categorySettings(id)}
     </div>${child}
   </li>`;
@@ -430,10 +430,10 @@ function runCategoryBuilderTest() {
   click(window, window.document.querySelector(".kidia-category-image-clear"));
   assert.match(window.document.querySelector(".kidia-category-image img").src, /default-1\.jpg$/, "Clear must restore the WooCommerce image.");
 
-  const hidden = window.document.querySelector('[name="categories[2][hidden]"]');
-  hidden.checked = true;
-  hidden.dispatchEvent(new window.Event("change", { bubbles: true }));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 1, "Hide in app must remove the branch from preview.");
+  const shown = window.document.querySelector('[name="categories[2][hidden]"][type="checkbox"]');
+  shown.checked = false;
+  shown.dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 1, "Turning Show off must remove the branch from preview.");
 
   const rootList = window.document.querySelector(".kidia-category-editor form > .kidia-category-list");
   const rows = rootList.children;

@@ -36,6 +36,8 @@ require dirname( __DIR__ ) . '/includes/class-kidia-mobile-page-layout-store.php
 require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new Kidia_Mobile_Page_Layout_Store();
+$product_default = $store->get_layout( 'product' );
+kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
 $expected = array(
 	'catalog' => array( 'filter_bar', 'product_grid' ),
 	'product' => array( 'image_gallery', 'purchase_bar', 'reviews' ),
@@ -71,6 +73,7 @@ foreach ( array( 'home', 'category' ) as $page ) {
 	$saved = $store->save_layout( $page, array( 'header' => array( 'enabled' => '1', 'settings' => array( 'title' => strtoupper( $page ) ) ), 'footer' => array( 'enabled' => '1' ) ) );
 	kidia_page_assert( strtoupper( $page ) === $saved['header']['settings']['title'], "$page header settings must save." );
 }
+kidia_page_assert( $store->get_layout( 'home' )['header']['settings']['title'] !== $store->get_layout( 'category' )['header']['settings']['title'], 'Every page must keep independent header settings.' );
 
 $endpoint = new Kidia_Mobile_CMS_Page_Layout_Endpoint();
 $endpoint->register_routes();

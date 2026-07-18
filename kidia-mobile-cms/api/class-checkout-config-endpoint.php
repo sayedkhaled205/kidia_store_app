@@ -68,7 +68,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 3,
+				'version'  => 4,
 				'defaults' => array(
 					'country' => $default_country,
 					'states'  => $states,
@@ -77,11 +77,18 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 					$checkout->get_checkout_fields(),
 					$default_country
 				),
+				'suggestions' => $this->get_suggestions(),
 			)
 		);
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
 		$response->header( 'Pragma', 'no-cache' );
 		return $response;
+	}
+
+	private function get_suggestions(): array {
+		$defaults=array('enabled'=>false,'title'=>__('You may also need','kidia-mobile-cms'),'source'=>'featured','category_id'=>0,'manual_product_ids'=>'','limit'=>6,'columns'=>2,'card_style'=>'outlined','card_radius'=>14,'image_ratio'=>1,'show_price'=>true,'show_regular_price'=>true,'show_rating'=>false,'button_label'=>__('Add','kidia-mobile-cms'),'button_color'=>'#2F806E','button_text_color'=>'#FFFFFF'); $saved=get_option('kidia_mobile_checkout_suggestions',array()); $settings=array_merge($defaults,is_array($saved)?$saved:array()); $products=array();
+		if(!empty($settings['enabled'])&&function_exists('wc_get_products')){ $args=array('status'=>'publish','limit'=>(int)$settings['limit']); switch($settings['source']){case 'featured':$args['featured']=true;break;case 'on_sale':$args['include']=function_exists('wc_get_product_ids_on_sale')?wc_get_product_ids_on_sale():array();break;case 'category':$term=get_term(absint($settings['category_id']),'product_cat');if($term&&!is_wp_error($term)){$args['category']=array($term->slug);}break;case 'manual':$args['include']=array_values(array_filter(array_map('absint',preg_split('/[\s,]+/',(string)$settings['manual_product_ids']))));break;} foreach(wc_get_products($args) as $product){if(!is_object($product)||!method_exists($product,'get_id')){continue;}$image_id=absint($product->get_image_id());$products[]=array('id'=>(int)$product->get_id(),'name'=>(string)$product->get_name(),'price'=>(string)$product->get_price(),'regular_price'=>(string)$product->get_regular_price(),'currency'=>get_woocommerce_currency(),'image_url'=>$image_id?(string)wp_get_attachment_image_url($image_id,'woocommerce_thumbnail'):'','rating'=>(float)$product->get_average_rating(),'purchasable'=>(bool)$product->is_purchasable(),'in_stock'=>(bool)$product->is_in_stock());}}
+		$settings['products']=$products; return $settings;
 	}
 
 	/** Allow the app to submit custom plugin fields inside Store API extensions. */

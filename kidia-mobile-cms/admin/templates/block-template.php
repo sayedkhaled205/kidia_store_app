@@ -198,7 +198,7 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 
 				<?php
 				esc_html_e(
-					'Enabled',
+					'Show',
 					'kidia-mobile-cms'
 				);
 				?>

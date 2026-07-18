@@ -66,6 +66,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'api/class-customer-orders-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-customer-account-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-category-page-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-page-layout-endpoint.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'api/class-splash-screen-endpoint.php';
 
 final class Kidia_Mobile_CMS {
 
@@ -210,6 +211,8 @@ final class Kidia_Mobile_CMS {
 
 		(new Kidia_Mobile_CMS_Page_Layout_Endpoint())
 			->register();
+
+		(new Kidia_Mobile_CMS_Splash_Screen_Endpoint())->register();
 
 	}
 
