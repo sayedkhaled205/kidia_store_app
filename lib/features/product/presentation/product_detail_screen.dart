@@ -129,6 +129,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           key: const Key('product-wishlist-button'),
           type: 'wishlist',
           icon: _isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: _isWishlisted ? Colors.red : null,
           tooltip: copy.save,
           onPressed: _isWishlistMutating ? () {} : () => _toggleWishlist(product),
         ),

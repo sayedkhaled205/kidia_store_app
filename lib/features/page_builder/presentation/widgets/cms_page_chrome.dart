@@ -34,6 +34,7 @@ class CmsPageHeaderAction {
     required this.tooltip,
     required this.onPressed,
     this.key,
+    this.color,
   });
 
   final String type;
@@ -41,6 +42,7 @@ class CmsPageHeaderAction {
   final String tooltip;
   final VoidCallback onPressed;
   final Key? key;
+  final Color? color;
 }
 
 class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -102,7 +104,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             key: action.key,
             tooltip: action.tooltip,
             onPressed: action.onPressed,
-            color: iconColor,
+            color: action.color ?? iconColor,
             icon: Icon(action.icon, size: iconSize),
           ),
         )
@@ -165,6 +167,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : Text(
               _header.string('title', defaultTitle),
+              key: const Key('commerce-app-bar-title'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
