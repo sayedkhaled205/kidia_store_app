@@ -31,7 +31,7 @@ void main() {
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
     expect(find.text('Kidia'), findsOneWidget);
     expect(find.text('Product'), findsNothing);
-    expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
+    expect(find.byKey(const Key('commerce-app-bar-title')), findsOneWidget);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
     expect(find.text('In stock'), findsNothing);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);

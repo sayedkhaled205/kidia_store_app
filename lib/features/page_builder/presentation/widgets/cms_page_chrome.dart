@@ -110,6 +110,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         )
         .toList(growable: false);
     return AppBar(
+      centerTitle: true,
       toolbarHeight: preferredSize.height,
       elevation: _header.string('shadow', 'subtle') == 'none' ? 0 : 2,
       backgroundColor: _header.string('style', 'standard') == 'transparent'
