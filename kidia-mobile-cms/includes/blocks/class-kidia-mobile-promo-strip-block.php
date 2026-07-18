@@ -70,11 +70,16 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 		public function build_api_data(
     		array $settings
     	): ?array {
+			$text = sanitize_text_field(
+				$settings['text'] ?? ''
+			);
+
+			if ( '' === $text ) {
+				return null;
+			}
 
     		return array(
-    			'text' => sanitize_text_field(
-    				$settings['text'] ?? ''
-    			),
+				'text' => $text,
 
     			'background_color' => sanitize_hex_color(
     				$settings['background_color'] ?? '#4f9f8f'
@@ -140,6 +145,27 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     		>
 
     	</div>
+
+		<div class="kidia-builder-field">
+			<label><?php esc_html_e( 'Action Type', 'kidia-mobile-cms' ); ?></label>
+			<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_type]">
+				<option value="" <?php selected( '', $settings['action_type'] ); ?>><?php esc_html_e( 'No Action', 'kidia-mobile-cms' ); ?></option>
+				<option value="product" <?php selected( 'product', $settings['action_type'] ); ?>><?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?></option>
+				<option value="category" <?php selected( 'category', $settings['action_type'] ); ?>><?php esc_html_e( 'Category', 'kidia-mobile-cms' ); ?></option>
+				<option value="collection" <?php selected( 'collection', $settings['action_type'] ); ?>><?php esc_html_e( 'Collection', 'kidia-mobile-cms' ); ?></option>
+				<option value="search" <?php selected( 'search', $settings['action_type'] ); ?>><?php esc_html_e( 'Search', 'kidia-mobile-cms' ); ?></option>
+				<option value="external" <?php selected( 'external', $settings['action_type'] ); ?>><?php esc_html_e( 'External URL', 'kidia-mobile-cms' ); ?></option>
+			</select>
+		</div>
+
+		<div class="kidia-builder-field kidia-builder-field--full">
+			<label><?php esc_html_e( 'Action Value', 'kidia-mobile-cms' ); ?></label>
+			<input
+				type="text"
+				name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_value]"
+				value="<?php echo esc_attr( $settings['action_value'] ); ?>"
+			>
+		</div>
 
     </div>
 
