@@ -35,10 +35,15 @@ function homeBlock(type, index, settings, name = type) {
         <input class="kidia-block-type" name="blocks[${index}][type]" value="${type}">
         <input class="kidia-block-order" name="blocks[${index}][order]" value="${index + 1}">
         <input class="kidia-block-status" name="blocks[${index}][status]" value="published">
-        <input class="kidia-block-name-input" name="blocks[${index}][name]" value="${name}">
-        <input type="checkbox" name="blocks[${index}][enabled]" value="1" checked>
-        <select class="kidia-block-status-select"><option value="published" selected>Published</option><option value="draft">Draft</option></select>
-        <div class="kidia-builder-inline-settings">${settings.replaceAll("blocks[0]", `blocks[${index}]`)}</div>
+        <div class="kidia-builder-essentials">
+          <div class="kidia-builder-field kidia-builder-field--name"><input class="kidia-block-name-input" name="blocks[${index}][name]" value="${name}"></div>
+          <div class="kidia-builder-field kidia-builder-field--enabled"><input type="checkbox" name="blocks[${index}][enabled]" value="1" checked></div>
+          <div class="kidia-builder-field kidia-builder-field--visibility"><select class="kidia-block-status-select"><option value="published" selected>Published</option><option value="draft">Draft</option></select></div>
+        </div>
+        <div class="kidia-builder-inline-settings">
+          <div class="kidia-builder-settings-heading">Element Settings</div>
+          <div class="kidia-builder-settings-content">${settings.replaceAll("blocks[0]", `blocks[${index}]`)}</div>
+        </div>
       </div>
     </div>`;
 }
@@ -107,6 +112,7 @@ function click(window, element) {
 function runHomeBuilderTest() {
   const dom = new JSDOM(homeMarkup(), { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
+  const builderCss = readAsset("home-builder.css");
   window.HTMLElement.prototype.scrollIntoView = function () {};
   window.confirm = () => true;
   window.kidiaHomeBuilder = { labels: { copySuffix: " Copy" } };
@@ -114,6 +120,10 @@ function runHomeBuilderTest() {
 
   assert.equal(window.kidiaHomeBuilderBooted, true, "Home Builder must boot.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 15, "All 15 element editors must load.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 15, "Every editor must use the compact essentials panel.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 15, "Every editor must use the shared settings panel.");
+  assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must use the compact three-column grid.");
+  assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
 
   const previewSelectors = [
     ".kidia-preview-header", ".kidia-preview-hero", ".kidia-preview-category-grid",

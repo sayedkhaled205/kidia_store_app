@@ -384,7 +384,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				value="<?php echo esc_attr( (string) $item['id'] ); ?>"
 			>
 
-			<p>
+			<p class="kidia-builder-field kidia-builder-field--toggle">
 				<label>
 					<input
 						type="checkbox"
@@ -397,7 +397,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				</label>
 			</p>
 
-			<p>
+			<p class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media">
 				<label>
 					<?php echo esc_html__( 'Image URL', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -424,7 +424,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p>
+			<p class="kidia-builder-field">
 				<label>
 					<?php echo esc_html__( 'Title', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -436,7 +436,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p>
+			<p class="kidia-builder-field">
 				<label>
 					<?php echo esc_html__( 'Subtitle', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -448,7 +448,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p>
+			<p class="kidia-builder-field">
 				<label>
 					<?php echo esc_html__( 'Action Type', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -482,7 +482,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				</select>
 			</p>
 
-			<p>
+			<p class="kidia-builder-field">
 				<label>
 					<?php echo esc_html__( 'Action Value', 'kidia-mobile-cms' ); ?>
 				</label>

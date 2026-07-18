@@ -137,4 +137,11 @@ $promo_api = $promo->build_api_data(
 kidia_home_assert( 'Free shipping' === $promo_api['text'], 'Promo Strip must expose its required text.' );
 kidia_home_assert( 'search' === $promo_api['action']['type'], 'Promo Strip action settings must reach Flutter.' );
 
+$builder_template = file_get_contents(
+	dirname( __DIR__ ) . '/admin/templates/block-template.php'
+);
+kidia_home_assert( false !== $builder_template, 'Home Builder block template must be readable.' );
+kidia_home_assert( str_contains( $builder_template, 'kidia-builder-essentials' ), 'Every block must render the compact essentials panel.' );
+kidia_home_assert( str_contains( $builder_template, 'kidia-builder-settings-content' ), 'Every block must render settings inside the shared compact panel.' );
+
 fwrite( STDOUT, "Home block API contracts and App Header Builder regression test passed.\n" );

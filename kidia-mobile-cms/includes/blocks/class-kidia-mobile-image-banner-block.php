@@ -187,29 +187,31 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 
 		?>
 		<div class="kidia-builder-grid">
-			<div class="kidia-builder-field kidia-builder-field--full">
+			<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media">
 				<label>
 					<?php echo esc_html__( 'Banner Image', 'kidia-mobile-cms' ); ?>
 				</label>
 
-				<input
-					type="url"
-					class="kidia-banner-image-url"
-					name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_url]"
-					value="<?php echo esc_attr( $image_url ); ?>"
-				>
+				<div class="kidia-builder-media-field">
+					<input
+						type="url"
+						class="kidia-banner-image-url"
+						name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_url]"
+						value="<?php echo esc_attr( $image_url ); ?>"
+					>
 
-				<button
-					type="button"
-					class="button kidia-select-banner-image"
-				>
-					<?php
-					echo esc_html__(
-						'Select from Media Library',
-						'kidia-mobile-cms'
-					);
-					?>
-				</button>
+					<button
+						type="button"
+						class="button kidia-select-banner-image"
+					>
+						<?php
+						echo esc_html__(
+							'Select from Media Library',
+							'kidia-mobile-cms'
+						);
+						?>
+					</button>
+				</div>
 
 				<img
 					class="kidia-banner-image-preview"

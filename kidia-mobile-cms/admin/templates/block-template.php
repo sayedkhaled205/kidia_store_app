@@ -152,7 +152,9 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 			value="<?php echo esc_attr( $status ); ?>"
 		>
 
-		<div class="kidia-builder-field">
+		<div class="kidia-builder-essentials">
+
+			<div class="kidia-builder-field kidia-builder-field--name">
 
 			<label>
 
@@ -172,9 +174,9 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 				value="<?php echo esc_attr( $name ); ?>"
 			>
 
-		</div>
+			</div>
 
-		<div class="kidia-builder-field">
+			<div class="kidia-builder-field kidia-builder-field--enabled">
 
 			<label class="kidia-builder-switch">
 
@@ -203,25 +205,34 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 
 			</span>
 
-		</div>
+			</div>
 
-		<div class="kidia-builder-field">
-			<label for="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
-				<?php esc_html_e( 'Visibility', 'kidia-mobile-cms' ); ?>
-			</label>
-			<select class="kidia-block-status-select" id="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
-				<option value="published" <?php selected( 'published', $status ); ?>><?php esc_html_e( 'Published', 'kidia-mobile-cms' ); ?></option>
-				<option value="draft" <?php selected( 'draft', $status ); ?>><?php esc_html_e( 'Draft', 'kidia-mobile-cms' ); ?></option>
-			</select>
+			<div class="kidia-builder-field kidia-builder-field--visibility">
+				<label for="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
+					<?php esc_html_e( 'Visibility', 'kidia-mobile-cms' ); ?>
+				</label>
+				<select class="kidia-block-status-select" id="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
+					<option value="published" <?php selected( 'published', $status ); ?>><?php esc_html_e( 'Published', 'kidia-mobile-cms' ); ?></option>
+					<option value="draft" <?php selected( 'draft', $status ); ?>><?php esc_html_e( 'Draft', 'kidia-mobile-cms' ); ?></option>
+				</select>
+			</div>
+
 		</div>
 
 		<div class="kidia-builder-inline-settings">
-			<?php
-			$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] )
-				? $block_data['settings']
-				: $block->get_default_settings();
-			$block->render_settings( (int) $index, $settings );
-			?>
+			<div class="kidia-builder-settings-heading">
+				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
+				<strong><?php esc_html_e( 'Element Settings', 'kidia-mobile-cms' ); ?></strong>
+			</div>
+
+			<div class="kidia-builder-settings-content">
+				<?php
+				$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] )
+					? $block_data['settings']
+					: $block->get_default_settings();
+				$block->render_settings( (int) $index, $settings );
+				?>
+			</div>
 		</div>
 
 	</div>
