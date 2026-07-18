@@ -19,6 +19,7 @@
 	const editAfterSaveType = document.getElementById('kidia-edit-after-save-type');
 	const editAfterSaveId = document.getElementById('kidia-edit-after-save-id');
 	const blocksPayload = document.getElementById('kidia-home-builder-payload');
+	const previewContent = document.getElementById('kidia-mobile-preview-content');
 
 	let currentCreateType = '';
 	let draggedBlock = null;
@@ -105,6 +106,50 @@
 				settings: settings
 			};
 		});
+	}
+
+	function escapeHtml(value) {
+		return String(value ?? '').replace(/[&<>"]/g, function (character) {
+			return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[character];
+		});
+	}
+
+	function safeImage(value) {
+		const url = String(value ?? '').trim();
+		return /^https?:\/\//i.test(url) ? escapeHtml(url) : '';
+	}
+
+	function renderPreview() {
+		if (!previewContent) return;
+		const blocks = serializeBlocks().filter(function (block) {
+			return block.enabled && block.status === 'published';
+		});
+		if (!blocks.length) {
+			previewContent.innerHTML = '<div class="kidia-preview-empty">Add or publish an element to preview the Home Page.</div>';
+			return;
+		}
+		previewContent.innerHTML = blocks.map(function (block) {
+			const settings = block.settings || {};
+			const name = escapeHtml(block.name || block.type);
+			if (block.type === 'app_header') {
+				const logo = safeImage(settings.logo_url);
+				const title = escapeHtml(settings.title || name || 'Kidia Store');
+				return '<div class="kidia-preview-header"><span>♡</span>' + (logo ? '<img src="' + logo + '" alt="">' : '<strong>' + title + '</strong>') + '<span>⌕　♧</span></div>';
+			}
+			if (block.type === 'hero_slider') {
+				const items = Array.isArray(settings.items) ? settings.items : [];
+				const image = safeImage(items[0]?.image_url);
+				return '<div class="kidia-preview-block">' + (image ? '<img style="aspect-ratio:' + escapeHtml(settings.aspect_ratio || 1.7) + '" src="' + image + '" alt="">' : '<div class="kidia-preview-placeholder">' + name + '</div>') + '</div>';
+			}
+			if (block.type === 'image_banner' || block.type === 'coupon_banner') {
+				const image = safeImage(settings.image_url);
+				return '<div class="kidia-preview-block">' + (image ? '<img src="' + image + '" alt="">' : '<div class="kidia-preview-placeholder">' + name + '</div>') + '</div>';
+			}
+			if (block.type === 'text_block') return '<div class="kidia-preview-block"><div class="kidia-preview-block__label">' + escapeHtml(settings.title || name) + '</div><div style="padding:0 11px 12px;font-size:11px">' + escapeHtml(settings.content || '') + '</div></div>';
+			if (block.type === 'spacer') return '<div style="height:' + Math.min(80, Number(settings.height || 20)) + 'px"></div>';
+			if (block.type === 'divider') return '<div style="margin:12px;border-top:1px solid #dcdcde"></div>';
+			return '<div class="kidia-preview-block"><div class="kidia-preview-block__label">' + escapeHtml(settings.title || name) + '</div><div class="kidia-preview-placeholder">' + escapeHtml(block.type.replaceAll('_', ' ')) + '</div></div>';
+		}).join('');
 	}
 
 	function setCollapsed(block, collapsed) {
@@ -281,6 +326,7 @@
 
 		updateIndexes();
 		markDirty();
+		renderPreview();
 		closePicker();
 
 		return block;
@@ -375,6 +421,7 @@
 		block.insertAdjacentElement('afterend', clone);
 		updateIndexes();
 		markDirty();
+		renderPreview();
 		clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
 
@@ -474,6 +521,7 @@
 			updateIndexes();
 			ensureEmptyState();
 			markDirty();
+			renderPreview();
 			return;
 		}
 
@@ -482,18 +530,18 @@
 			return;
 		}
 
-		if (target.closest('.kidia-select-banner-image, .kidia-select-media')) {
+		if (target.closest('.kidia-select-banner-image, .kidia-select-media, .kidia-select-app-header-logo')) {
 			if (!window.wp?.media) return;
 			const frame = window.wp.media({ title: 'Choose image', button: { text: 'Use image' }, multiple: false });
 			frame.on('select', function () {
 				const attachment = frame.state().get('selection').first()?.toJSON();
 				if (!attachment?.url) return;
 				const field = target.closest('.kidia-builder-field');
-				const input = field?.querySelector('.kidia-banner-image-url, .kidia-media-url');
+				const input = field?.querySelector('.kidia-banner-image-url, .kidia-media-url, .kidia-app-header-logo-url');
 				const preview = field?.querySelector('.kidia-banner-image-preview, .kidia-media-preview');
 				if (input) input.value = attachment.url;
 				if (preview) { preview.src = attachment.url; preview.hidden = false; preview.style.display = ''; }
-				markDirty();
+				markDirty(); renderPreview();
 			});
 			frame.open();
 			return;
@@ -522,7 +570,7 @@
 					const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'button-link-delete kidia-hero-gallery__remove'; remove.textContent = 'Remove'; item.appendChild(remove);
 					gallery.appendChild(item);
 				});
-				updateIndexes(); markDirty();
+				updateIndexes(); markDirty(); renderPreview();
 			});
 			frame.open();
 			return;
@@ -530,7 +578,7 @@
 
 		if (target.closest('.kidia-hero-gallery__remove')) {
 			target.closest('.kidia-hero-gallery__item')?.remove();
-			updateIndexes(); markDirty();
+			updateIndexes(); markDirty(); renderPreview();
 			return;
 		}
 
@@ -550,6 +598,7 @@
 			}
 		}
 		markDirty();
+		renderPreview();
 	});
 
 	builder.addEventListener('input', function (event) {
@@ -570,6 +619,7 @@
 		}
 
 		markDirty();
+		renderPreview();
 	});
 
 	builder.addEventListener('pointerdown', function (event) {
@@ -643,6 +693,7 @@
 		draggedBlock = null;
 		updateIndexes();
 		markDirty();
+		renderPreview();
 	});
 
 	searchInput?.addEventListener('input', function () {
@@ -693,4 +744,5 @@
 		setCollapsed(block, true);
 	});
 	updateIndexes();
+	renderPreview();
 })();
