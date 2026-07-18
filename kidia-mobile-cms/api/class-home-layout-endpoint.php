@@ -54,6 +54,12 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		$default_locale = sanitize_key( (string) get_locale() );
+
+		if ( '' === $default_locale ) {
+			$default_locale = 'en';
+		}
+
 		register_rest_route(
 			'kidia/v1',
 			'/home-layout',
@@ -78,11 +84,35 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 
 						'type'              => 'string',
 
-						'default'           => 'ar',
+							'default'           => $default_locale,
 
 						'sanitize_callback' =>
 							'sanitize_key',
 
+						'validate_callback' => array(
+							$this,
+							'validate_locale',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/home-layout',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array(
+					$this,
+					'get_home_layout',
+				),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'locale' => array(
+						'type'              => 'string',
+							'default'           => $default_locale,
+						'sanitize_callback' => 'sanitize_key',
 						'validate_callback' => array(
 							$this,
 							'validate_locale',
@@ -134,10 +164,14 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 		);
 
 		if ( '' === $locale ) {
-			$locale = 'ar';
+			$locale = sanitize_key( (string) get_locale() );
 		}
 
-		$layout = $this->layout_store->get_layout();
+		if ( '' === $locale ) {
+			$locale = 'en';
+		}
+
+		$layout = $this->layout_store->get_runtime_layout();
 
 		$blocks = array();
 
@@ -145,6 +179,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 			if (
 				! is_array( $instance )
 				|| empty( $instance['enabled'] )
+				|| 'published' !== ( $instance['status'] ?? 'published' )
 			) {
 				continue;
 			}
@@ -199,8 +234,10 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 	/**
 	 * Builds a generic API block for schema-based elements.
 	 *
-	 * This fallback allows every registered schema element to appear
-	 * in the API even when it does not have a custom block builder.
+	 * This fallback allows a schema-only element to appear in the API when it
+	 * does not have a custom block builder. A registered builder returning
+	 * null has deliberately rejected or omitted its payload and must never be
+	 * replaced with unspecialized raw settings.
 	 *
 	 * @param array<string, mixed> $instance Block instance.
 	 *
@@ -217,6 +254,9 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 
 		if (
 			'' === $type
+			|| Kidia_Mobile_Block_Registry::is_registered(
+				$type
+			)
 			|| ! Kidia_Mobile_Block_Registry::exists(
 				$type
 			)
