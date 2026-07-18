@@ -25,6 +25,8 @@ import '../features/categories/presentation/categories_screen.dart';
 import '../features/checkout/data/network/checkout_api_transport.dart';
 import '../features/checkout/data/repositories/store_api_checkout_repository.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
+import '../features/checkout/presentation/checkout_suggestions_provider.dart';
+import '../features/checkout/domain/entities/checkout_suggestions.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/orders/presentation/customer_orders_screen.dart';
 import '../features/product/presentation/product_detail_screen.dart';
@@ -32,6 +34,8 @@ import '../features/product/application/product_detail_controller.dart'
     as product_selection;
 import '../features/search/presentation/search_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
+import '../features/splash/presentation/splash_providers.dart';
+import '../features/splash/domain/splash_config.dart';
 import '../features/wishlist/data/shared_preferences_wishlist_repository.dart';
 import '../features/wishlist/domain/repositories/wishlist_repository.dart';
 import '../features/wishlist/presentation/wishlist_screen.dart';
@@ -425,6 +429,8 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
               customerEmail: session.user.email,
               onBackToCart: () => context.go('/cart'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
+              suggestions: ref.watch(checkoutSuggestionsProvider).value ?? const CheckoutSuggestions(),
+              onAddSuggestion: ref.read(addProductPurchaseSelectionProvider),
             );
           },
         ),
@@ -474,7 +480,7 @@ class _AppStartupGate extends ConsumerWidget {
     final AsyncValue<void> startupState = ref.watch(appStartupProvider);
 
     return startupState.when(
-      loading: SplashScreen.new,
+      loading: () => SplashScreen(config: ref.watch(splashConfigProvider).value ?? const SplashConfig()),
       error: (error, stackTrace) => _StartupErrorScreen(
         error: error,
         onRetry: () => ref.invalidate(appStartupProvider),

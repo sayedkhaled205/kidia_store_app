@@ -32,7 +32,7 @@
 .kidia-category-handle { color: #646970; cursor: grab; }
 .kidia-category-expand { align-items: center; display: inline-flex; justify-content: center; }
 .kidia-category-expand .dashicons { transition: transform .18s ease; }
-.kidia-category-expand[aria-expanded="true"] .dashicons { transform: rotate(-90deg); }
+.kidia-category-expand[aria-expanded="true"] .dashicons { transform: rotate(180deg); }
 .kidia-category-expand-placeholder { display: block; width: 24px; }
 .kidia-category-image { align-items: center; background: #f0f6f4; border-radius: 6px; display: flex; height: min(52px,var(--preview-size)); justify-content: center; overflow: hidden; width: min(52px,var(--preview-size)); }
 .kidia-category-image img { height: 100%; object-fit: cover; width: 100%; }

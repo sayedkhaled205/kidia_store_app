@@ -167,7 +167,7 @@
 	}
 
 	function isHidden(card) {
-		return card.find('.kidia-category-visibility input[type="checkbox"]').is(":checked");
+		return !card.find('.kidia-category-visibility input[type="checkbox"]').is(":checked");
 	}
 
 	function buildChildCard(row) {

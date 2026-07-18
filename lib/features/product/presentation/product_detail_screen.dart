@@ -105,9 +105,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 _controller.product != null
             ? _PurchaseBar(
                 controller: _controller,
+                footer: layout.footer,
                 hasCartConnection: widget.onAddToCart != null,
                 copy: copy,
                 onPressed: _addToCart,
+                onShare: widget.onShareRequested == null ? null : () => widget.onShareRequested!(_controller.product!),
+                onLike: widget.onWishlistToggle == null || _isWishlistMutating ? null : () => _toggleWishlist(_controller.product!),
+                isLiked: _isWishlisted,
               )
             : null,
       ),
@@ -760,15 +764,23 @@ class _BrandSection extends StatelessWidget {
 class _PurchaseBar extends StatelessWidget {
   const _PurchaseBar({
     required this.controller,
+    required this.footer,
     required this.hasCartConnection,
     required this.copy,
     required this.onPressed,
+    required this.onShare,
+    required this.onLike,
+    required this.isLiked,
   });
 
   final ProductDetailController controller;
+  final CmsPageComponent footer;
   final bool hasCartConnection;
   final _ProductCopy copy;
   final VoidCallback onPressed;
+  final VoidCallback? onShare;
+  final VoidCallback? onLike;
+  final bool isLiked;
 
   @override
   Widget build(BuildContext context) {
@@ -786,12 +798,17 @@ class _PurchaseBar extends StatelessWidget {
       reason = copy.notPurchasable;
     }
 
+    if (!footer.enabled || !footer.boolean('show_add_to_cart', true)) { return const SizedBox.shrink(); }
+    final Color background = _cmsColor(footer.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
+    final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
+    final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
     return Material(
-      elevation: 12,
-      color: Theme.of(context).colorScheme.surface,
+      elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
+      color: background,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))),
       child: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        minimum: EdgeInsets.fromLTRB(footer.number('horizontal_padding', 16), 10, footer.number('horizontal_padding', 16), 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -816,25 +833,21 @@ class _PurchaseBar extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
-            FilledButton.icon(
-              key: const Key('add-to-cart-button'),
-              onPressed: hasCartConnection && controller.canAddToCart
-                  ? onPressed
-                  : null,
-              icon: controller.isAdding
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.shopping_bag_outlined),
-              label: Text(controller.isAdding ? copy.adding : copy.addToCart),
-            ),
+            Row(children: <Widget>[
+              if (footer.boolean('show_share', true)) _FooterAction(icon: Icons.ios_share_outlined, label: footer.string('share_label', copy.share), color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', 24), onPressed: onShare),
+              if (footer.boolean('show_like', true)) _FooterAction(icon: isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, label: footer.string('like_label', 'Like'), color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', 24), onPressed: onLike),
+              SizedBox(width: footer.number('item_gap', 10)),
+              Expanded(child: FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)))),
+            ]),
           ],
         ),
       ),
     );
   }
 }
+
+class _FooterAction extends StatelessWidget { const _FooterAction({required this.icon,required this.label,required this.color,required this.size,required this.onPressed}); final IconData icon; final String label; final Color color; final double size; final VoidCallback? onPressed; @override Widget build(BuildContext context)=>InkWell(onTap:onPressed,child:Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(icon,color:color,size:size),Text(label,style:TextStyle(color:color,fontSize:11))]))); }
+Color _cmsColor(String value, Color fallback) { final hex=value.replaceFirst('#',''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex)?Color(int.parse('FF$hex',radix:16)):fallback; }
 
 class _ProductLoading extends StatelessWidget {
   const _ProductLoading({required this.copy});

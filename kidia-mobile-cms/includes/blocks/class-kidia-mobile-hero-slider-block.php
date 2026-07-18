@@ -437,7 +437,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 						<?php checked( true, (bool) $item['enabled'] ); ?>
 					>
 
-					<?php echo esc_html__( 'Enabled', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Show', 'kidia-mobile-cms' ); ?>
 				</label>
 			</p>
 

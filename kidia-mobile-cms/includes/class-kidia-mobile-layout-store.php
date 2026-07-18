@@ -196,17 +196,28 @@ final class Kidia_Mobile_Layout_Store {
 		return $layout;
 	}
 
+	/** PatPat-inspired Kidia content order used by fresh stores and the preset action. */
+	public function get_kidia_patpat_layout(): array {
+		$types = array( 'hero_slider', 'quick_links', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
+		$names = array( 'Kidia Main Offers', 'Shop Fast', 'Shop by Category', 'Kidia Benefits', 'Flash Sale', 'New Arrivals', 'Seasonal Collections', 'Best Sellers', 'Our Brands', 'More for Kids' );
+		$layout = array();
+		foreach ( $types as $index => $type ) {
+			$block = Kidia_Mobile_Block_Registry::create( $type, $index + 1 );
+			if ( null === $block ) { continue; }
+			$block['name'] = $names[ $index ]; $block['library_id'] = $block['id']; $block['status'] = 'published'; $block['enabled'] = true;
+			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) { $block['settings']['source'] = 5 === $index ? 'latest' : 7 === $index ? 'featured' : 'on_sale'; $block['settings']['columns'] = 2; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true; }
+			$layout[] = $block;
+		}
+		return $layout;
+	}
+
 	/**
 	 * Builds default Home Page blocks without writing Library options.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function create_default_layout(): array {
-		$types = array(
-			'hero_slider',
-			'image_banner',
-			'product_carousel',
-		);
+		$types = array( 'hero_slider', 'quick_links', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
 
 		$layout = array();
 

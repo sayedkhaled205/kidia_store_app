@@ -7,6 +7,8 @@ import 'package:kidia_store_app/features/checkout/domain/entities/checkout_addre
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_suggestions.dart';
+import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({
@@ -15,12 +17,16 @@ class CheckoutScreen extends StatefulWidget {
     this.customerEmail = '',
     this.onOrderSuccess,
     this.onBackToCart,
+    this.suggestions = const CheckoutSuggestions(),
+    this.onAddSuggestion,
   });
 
   final CheckoutRepository repository;
   final String customerEmail;
   final ValueChanged<CheckoutOrderResult>? onOrderSuccess;
   final VoidCallback? onBackToCart;
+  final CheckoutSuggestions suggestions;
+  final AddProductPurchaseSelection? onAddSuggestion;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -102,6 +108,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           controller: _controller,
           copy: copy,
           onSubmit: _submit,
+          suggestions: widget.suggestions,
+          onAddSuggestion: widget.onAddSuggestion,
         );
     }
   }
@@ -126,12 +134,16 @@ class _CheckoutReady extends StatelessWidget {
     required this.controller,
     required this.copy,
     required this.onSubmit,
+    required this.suggestions,
+    required this.onAddSuggestion,
   });
 
   final GlobalKey<FormState> formKey;
   final CheckoutController controller;
   final _CheckoutCopy copy;
   final VoidCallback onSubmit;
+  final CheckoutSuggestions suggestions;
+  final AddProductPurchaseSelection? onAddSuggestion;
 
   @override
   Widget build(BuildContext context) {
@@ -173,14 +185,69 @@ class _CheckoutReady extends StatelessWidget {
         return SingleChildScrollView(
           key: const Key('checkout-form-scroll'),
           padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 36),
-          child: Column(
-            children: <Widget>[form, const SizedBox(height: 18), summary],
-          ),
+          child: Column(children: <Widget>[
+            form,
+            if (suggestions.enabled && suggestions.products.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 18),
+              _CheckoutSuggestionsSection(settings: suggestions, onAdd: onAddSuggestion),
+            ],
+            const SizedBox(height: 18),
+            summary,
+          ]),
         );
       },
     );
   }
 }
+
+class _CheckoutSuggestionsSection extends StatelessWidget {
+  const _CheckoutSuggestionsSection({required this.settings, required this.onAdd});
+  final CheckoutSuggestions settings;
+  final AddProductPurchaseSelection? onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = _suggestionColor(settings.buttonColor, Theme.of(context).colorScheme.primary);
+    return _CheckoutSection(
+      title: settings.title,
+      icon: Icons.add_shopping_cart_rounded,
+      child: SizedBox(
+        height: 190,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: settings.products.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (BuildContext context, int index) {
+            final CheckoutSuggestionProduct product = settings.products[index];
+            return SizedBox(
+              width: 135,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
+                    Expanded(child: product.imageUrl.isEmpty ? const Icon(Icons.inventory_2_outlined) : Image.network(product.imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined))),
+                    Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                    Text(product.price, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 30, child: FilledButton(
+                      style: FilledButton.styleFrom(backgroundColor: color, padding: EdgeInsets.zero),
+                      onPressed: product.inStock && onAdd != null ? () async {
+                        final result = await onAdd!(ProductPurchaseSelection(productId: product.id));
+                        if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.succeeded ? 'Added to cart' : result.message ?? 'Could not add product'))); }
+                      } : null,
+                      child: Text(settings.buttonLabel, style: const TextStyle(fontSize: 11)),
+                    )),
+                  ]),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+Color _suggestionColor(String value, Color fallback) { final String hex = value.replaceFirst('#', ''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex) ? Color(int.parse('FF$hex', radix: 16)) : fallback; }
 
 class _CheckoutForm extends StatelessWidget {
   const _CheckoutForm({required this.controller, required this.copy});

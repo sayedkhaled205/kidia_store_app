@@ -91,7 +91,11 @@
 			if (checked(card, "enabled", true)) { html += previewElement(card); }
 		});
 		if (footer && checked(footer, "enabled", true)) {
-			html += '<div class="kidia-page-preview-footer" style="min-height:' + number(footer, "height", 72) * .72 + 'px;background:' + color(footer, "background_color", "#FFFFFF") + ';color:' + color(footer, "inactive_color", "#6B7280") + '"><span>⌂<b>Home</b></span><span>▦<b>Categories</b></span><span>♡<b>Wishlist</b></span><span>♙<b>Account</b></span></div>';
+			if (field(footer, "style") && field(footer, "style").value === "product_action") {
+				html += '<div class="kidia-page-preview-footer kidia-page-preview-product-footer" style="background:' + color(footer, "background_color", "#FFFFFF") + '">' + (checked(footer, "show_share", true) ? '<span>⇧<b>' + escapeHtml(value(footer, "share_label", "Share")) + '</b></span>' : '') + (checked(footer, "show_like", true) ? '<span>♡<b>' + escapeHtml(value(footer, "like_label", "Like")) + '</b></span>' : '') + (checked(footer, "show_add_to_cart", true) ? '<button style="background:' + color(footer, "button_color", "#1F2933") + ';color:' + color(footer, "button_text_color", "#FFFFFF") + ';border-radius:' + number(footer, "button_radius", 28) + 'px">' + escapeHtml(value(footer, "add_to_cart_label", "Add to bag")) + '</button>' : '') + '</div>';
+			} else {
+				html += '<div class="kidia-page-preview-footer" style="min-height:' + number(footer, "height", 72) * .72 + 'px;background:' + color(footer, "background_color", "#FFFFFF") + ';color:' + color(footer, "inactive_color", "#6B7280") + '"><span>⌂<b>Home</b></span><span>▦<b>Categories</b></span><span>♡<b>Wishlist</b></span><span>♙<b>Account</b></span></div>';
+			}
 		}
 		preview.innerHTML = html;
 	}
@@ -125,7 +129,7 @@
 	root.addEventListener("change", function (event) {
 		if (event.target.type === "checkbox") {
 			var toggle = event.target.closest(".kidia-page-toggle");
-			if (toggle) { toggle.querySelector("b").textContent = event.target.checked ? "Visible" : "Hidden"; }
+			if (toggle) { toggle.querySelector("b").textContent = "Show"; }
 		}
 		renderPreview();
 	});

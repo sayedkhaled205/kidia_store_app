@@ -46,7 +46,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				<div class="kidia-category-card">
 					<span class="dashicons dashicons-move kidia-category-handle" aria-hidden="true"></span>
 					<?php if ( $has_children ) : ?>
-						<button type="button" class="button-link kidia-category-expand" aria-expanded="false" aria-label="<?php esc_attr_e( 'Expand subcategories', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-arrow-left-alt2"></span></button>
+						<button type="button" class="button kidia-category-expand" aria-expanded="false" aria-label="<?php esc_attr_e( 'Expand subcategories', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 					<?php else : ?><span class="kidia-category-expand-placeholder"></span><?php endif; ?>
 					<div class="kidia-category-image" style="--preview-size:<?php echo esc_attr( (string) min( 72, $image_size ) ); ?>px">
 						<?php if ( $image_url ) : ?><img src="<?php echo esc_url( $image_url ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?>
@@ -59,8 +59,9 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 					<input class="kidia-category-image-id" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][image_id]" value="<?php echo esc_attr( (string) $image_id ); ?>">
 					<button type="button" class="button kidia-category-settings-toggle" aria-expanded="false"><span class="dashicons dashicons-format-image"></span> <?php esc_html_e( 'Image settings', 'kidia-mobile-cms' ); ?></button>
 					<label class="kidia-category-visibility">
-						<input type="checkbox" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="1" <?php checked( ! empty( $setting['hidden'] ) ); ?>>
-						<?php esc_html_e( 'Hide in app', 'kidia-mobile-cms' ); ?>
+						<input type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="1">
+						<input type="checkbox" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="0" <?php checked( empty( $setting['hidden'] ) ); ?>>
+						<?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?>
 					</label>
 					<div class="kidia-category-settings" hidden>
 						<div class="kidia-category-image-actions">
