@@ -64,4 +64,9 @@ foreach ( $reloaded as $index => $block ) {
 $runtime = $store->get_runtime_layout();
 kidia_assert( count( $types ) === count( $runtime ), 'The mobile runtime must read the same complete Home Builder layout.' );
 kidia_assert( isset( $GLOBALS['kidia_test_options']['kidia_mobile_home_layout_v5'][0]['settings'] ), 'The saved Home Layout must contain settings, not Library references only.' );
+$preset = $store->get_kidia_patpat_layout();
+kidia_assert( 'app_header' === $preset[0]['type'], 'The PatPat preset must begin with the Kidia logo and search header.' );
+kidia_assert( 'bar' === $preset[0]['settings']['search_style'], 'The PatPat header must use a full search bar.' );
+kidia_assert( 'image_banner' === $preset[1]['type'], 'The PatPat preset must place the main Kidia banner directly under search.' );
+kidia_assert( 'https://example.com/image_banner.jpg' === $preset[1]['settings']['image_url'], 'The PatPat preset must preserve the store\'s real Kidia banner image.' );
 fwrite( STDOUT, "Inline Home Builder canonical-layout test passed for all 17 elements.\n" );
