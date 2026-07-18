@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
@@ -217,52 +215,6 @@ class HomePage extends ConsumerWidget {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
-  }
-}
-
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme colorScheme = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppConfig.storeName,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  AppConfig.storeTagline,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton.filledTonal(
-            tooltip: 'البحث',
-            onPressed: () async => showCatalogSearch(context),
-            icon: const Icon(Icons.search_rounded, size: 26.4),
-          ),
-          const SizedBox(width: 6),
-          CartIconButton(onPressed: () => context.push('/cart')),
-        ],
-      ),
-    );
   }
 }
 
