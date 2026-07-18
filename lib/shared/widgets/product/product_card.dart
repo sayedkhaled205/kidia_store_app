@@ -339,24 +339,33 @@ class _ProductInformation extends StatelessWidget {
             ),
           if (showRating && rating > 0) ...<Widget>[
             SizedBox(height: compact ? 4 : 6),
-            Row(
-              children: <Widget>[
-                const Icon(Icons.star_rounded, size: 16, color: Color(0xFFFFB300)),
-                const SizedBox(width: 3),
-                Text(
-                  rating.toStringAsFixed(1),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 16,
+                    color: Color(0xFFFFB300),
                   ),
-                ),
-                if (reviewCount > 0)
+                  const SizedBox(width: 3),
                   Text(
-                    ' ($reviewCount)',
+                    rating.toStringAsFixed(1),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-              ],
+                  if (reviewCount > 0)
+                    Text(
+                      ' ($reviewCount)',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
           if (showPrice) ...<Widget>[
