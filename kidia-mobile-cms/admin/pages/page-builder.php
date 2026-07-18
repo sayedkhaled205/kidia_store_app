@@ -2,8 +2,28 @@
 /** Shared builder UI for application content pages. */
 defined( 'ABSPATH' ) || exit;
 
-$render_fields = static function ( string $name_prefix, array $fields, array $settings ): void {
-	foreach ( $fields as $field ) {
+$field_section = static function ( string $key ): string {
+	if ( 0 === strpos( $key, 'show_' ) || in_array( $key, array( 'sticky', 'enabled' ), true ) ) { return 'Visibility & display'; }
+	if ( false !== strpos( $key, 'image' ) || false !== strpos( $key, 'logo' ) || false !== strpos( $key, 'thumbnail' ) ) { return 'Images'; }
+	if ( false !== strpos( $key, 'search' ) ) { return 'Search'; }
+	if ( false !== strpos( $key, 'cart' ) ) { return 'Cart'; }
+	if ( false !== strpos( $key, 'wishlist' ) || false !== strpos( $key, 'like' ) ) { return 'Wishlist & like'; }
+	if ( false !== strpos( $key, 'account' ) ) { return 'Account'; }
+	if ( false !== strpos( $key, 'share' ) ) { return 'Share'; }
+	if ( false !== strpos( $key, 'filter' ) || false !== strpos( $key, 'sort' ) ) { return 'Filters & sorting'; }
+	if ( in_array( $key, array( 'source', 'category_id', 'manual_product_ids', 'limit', 'products_per_page' ), true ) ) { return 'Products & data'; }
+	if ( false !== strpos( $key, 'color' ) || false !== strpos( $key, 'background' ) || false !== strpos( $key, 'shadow' ) || false !== strpos( $key, 'border' ) ) { return 'Colors & appearance'; }
+	if ( false !== strpos( $key, 'size' ) || false !== strpos( $key, 'height' ) || false !== strpos( $key, 'width' ) || false !== strpos( $key, 'radius' ) || false !== strpos( $key, 'gap' ) || false !== strpos( $key, 'padding' ) || in_array( $key, array( 'columns', 'aspect_ratio', 'fit' ), true ) ) { return 'Layout & dimensions'; }
+	if ( false !== strpos( $key, 'label' ) || false !== strpos( $key, 'title' ) || false !== strpos( $key, 'text' ) || false !== strpos( $key, 'placeholder' ) ) { return 'Text'; }
+	return 'General';
+};
+
+$render_fields = static function ( string $name_prefix, array $fields, array $settings ) use ( $field_section ): void {
+	$groups = array();
+	foreach ( $fields as $field ) { $groups[ $field_section( $field['key'] ) ][] = $field; }
+	foreach ( $groups as $section => $section_fields ) {
+		?><div class="kidia-settings-section-title"><?php echo esc_html( $section ); ?></div><?php
+	foreach ( $section_fields as $field ) {
 		$key = $field['key'];
 		$value = $settings[ $key ] ?? $field['default'];
 		$name = $name_prefix . '[settings][' . $key . ']';
@@ -26,6 +46,7 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 			<?php endif; ?>
 		</div>
 		<?php
+	}
 	}
 };
 
@@ -51,7 +72,7 @@ foreach ( $element_definitions as $definition ) {
 
 			<section class="kidia-page-card kidia-page-card--locked" data-element="header">
 				<div class="kidia-page-card__header"><div><span class="dashicons dashicons-lock"></span><strong><?php esc_html_e( 'Fixed Header', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Cannot be moved or removed', 'kidia-mobile-cms' ); ?></small></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[header][enabled]" value="0"><input type="checkbox" name="layout[header][enabled]" value="1" <?php checked( ! empty( $layout['header']['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php $render_fields( 'layout[header]', $header_fields, $layout['header']['settings'] ); ?></div></div>
+				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[header]', $header_fields, $layout['header']['settings'] ); ?></div></div>
 			</section>
 
 			<div id="kidia-page-elements" class="kidia-page-elements">
@@ -62,14 +83,14 @@ foreach ( $element_definitions as $definition ) {
 				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element['id'] ); ?>" draggable="false">
 					<input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element['id'] ); ?>">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php $render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] ); ?></div></div>
+					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] ); ?></div></div>
 				</section>
 			<?php endforeach; ?>
 			</div>
 
 			<section class="kidia-page-card kidia-page-card--locked" data-element="footer">
 				<div class="kidia-page-card__header"><div><span class="dashicons dashicons-lock"></span><strong><?php esc_html_e( 'Fixed Footer', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Cannot be moved or removed', 'kidia-mobile-cms' ); ?></small></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[footer][enabled]" value="0"><input type="checkbox" name="layout[footer][enabled]" value="1" <?php checked( ! empty( $layout['footer']['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php $render_fields( 'layout[footer]', $footer_fields, $layout['footer']['settings'] ); ?></div></div>
+				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[footer]', $footer_fields, $layout['footer']['settings'] ); ?></div></div>
 			</section>
 		</form>
 	</div>

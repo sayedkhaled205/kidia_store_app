@@ -10,6 +10,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
     required this.minimumAvailableMinor,
     required this.maximumAvailableMinor,
     required this.brands,
+    required this.showPrice,
+    required this.showSale,
+    required this.showBrand,
     super.key,
   });
 
@@ -18,6 +21,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
   final String minimumAvailableMinor;
   final String maximumAvailableMinor;
   final List<StoreBrand> brands;
+  final bool showPrice;
+  final bool showSale;
+  final bool showBrand;
 
   static Future<CatalogProductFilters?> show(
     BuildContext context, {
@@ -26,6 +32,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
     required String minimumAvailableMinor,
     required String maximumAvailableMinor,
     required List<StoreBrand> brands,
+    bool showPrice = true,
+    bool showSale = true,
+    bool showBrand = true,
   }) {
     return showModalBottomSheet<CatalogProductFilters>(
       context: context,
@@ -38,6 +47,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
         minimumAvailableMinor: minimumAvailableMinor,
         maximumAvailableMinor: maximumAvailableMinor,
         brands: brands,
+        showPrice: showPrice,
+        showSale: showSale,
+        showBrand: showBrand,
       ),
     );
   }
@@ -114,7 +126,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              SwitchListTile.adaptive(
+              if (widget.showSale) SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: Text(copy.onSaleOnly),
                 secondary: const Icon(Icons.local_offer_outlined),
@@ -123,7 +135,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   _onSaleOnly = value;
                 }),
               ),
-              if (widget.brands.isNotEmpty) ...<Widget>[
+              if (widget.showBrand && widget.brands.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
                   key: const Key('catalog-brand-filter'),
@@ -159,8 +171,8 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   }),
                 ),
               ],
-              const Divider(height: 32),
-              Row(
+              if (widget.showPrice) const Divider(height: 32),
+              if (widget.showPrice) Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Expanded(

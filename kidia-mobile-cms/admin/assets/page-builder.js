@@ -66,13 +66,20 @@
 		} else if (id === "logout_button" || id === "purchase_bar") {
 			body = '<div class="kidia-page-preview-button">' + title + '</div>';
 		} else if (id === "filter_bar") {
-			body = '<div class="kidia-page-preview-menu"><span>Filter</span><span>Sort</span></div>';
+			var filterItems = [];
+			if (checked(card, "show_filter", true)) { filterItems.push('<span>⚙ Filter</span>'); }
+			if (checked(card, "filter_size", true)) { filterItems.push('<span>↔ Size</span>'); }
+			if (checked(card, "show_sort", true)) { filterItems.push('<span>⇅ Sort</span>'); }
+			body = '<div class="kidia-page-preview-menu" style="width:' + number(card, "block_width", 100) + '%;gap:' + number(card, "button_gap", 8) * .4 + 'px">' + filterItems.join("") + '</div>';
 		} else if (id === "empty_state") {
 			body = '<div class="kidia-page-preview-profile"><span class="kidia-page-preview-avatar">♡</span><div><strong>' + title + '</strong><small>' + escapeHtml(value(card, "description", "Your wishlist is empty")) + '</small></div></div>';
 		} else if (id === "product_summary") {
 			body = '<div><strong>' + escapeHtml(products[0] ? products[0].name : "Product name") + '</strong><p style="color:#2f806e;font-weight:800">' + escapeHtml(products[0] ? products[0].price : "450") + '</p></div>';
 		} else {
 			body = '<div class="kidia-page-preview-lines"><i></i><i></i><i></i></div>';
+		}
+		if (id === "product_grid" && value(card, "pagination_mode", "load_more") !== "none") {
+			body += '<div class="kidia-page-preview-button" style="margin-top:' + number(card, "pagination_spacing", 16) * .4 + 'px;background:' + color(card, "pagination_color", "#1F6F61") + ';color:' + color(card, "pagination_text_color", "#FFFFFF") + ';border-radius:' + number(card, "pagination_radius", 14) * .5 + 'px">' + escapeHtml(value(card, "pagination_mode", "load_more") === "numbers" ? "1  2  3" : value(card, "pagination_label", "Load more")) + '</div>';
 		}
 		return '<section class="kidia-page-preview-element"><strong>' + title + '</strong>' + body + '</section>';
 	}

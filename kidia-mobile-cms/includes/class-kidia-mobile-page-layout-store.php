@@ -132,15 +132,39 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_badge', __( 'Show badge', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_wishlist', __( 'Show wishlist button', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'pagination_mode', __( 'Pagination mode', 'kidia-mobile-cms' ), 'select', 'load_more', array( 'numbers' => __( 'Page numbers', 'kidia-mobile-cms' ), 'load_more' => __( 'Load more button', 'kidia-mobile-cms' ), 'automatic' => __( 'Automatic loading', 'kidia-mobile-cms' ), 'none' => __( 'No pagination', 'kidia-mobile-cms' ) ) ),
+			self::field( 'products_per_page', __( 'Products per page', 'kidia-mobile-cms' ), 'number', 12, array(), 4, 48 ),
+			self::field( 'pagination_label', __( 'Load more label', 'kidia-mobile-cms' ), 'text', __( 'Load more', 'kidia-mobile-cms' ) ),
+			self::field( 'pagination_size', __( 'Pagination size', 'kidia-mobile-cms' ), 'number', 44, array(), 32, 64 ),
+			self::field( 'pagination_radius', __( 'Pagination radius', 'kidia-mobile-cms' ), 'number', 14, array(), 0, 32 ),
+			self::field( 'pagination_color', __( 'Pagination color', 'kidia-mobile-cms' ), 'color', '#1F6F61' ),
+			self::field( 'pagination_text_color', __( 'Pagination text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
 
 		$definitions = array(
 			'home' => array(),
 			'category' => array(),
 			'catalog' => array(
-				self::element( 'filter_bar', __( 'Filter and Sort Bar', 'kidia-mobile-cms' ), 'dashicons-filter', array( self::field( 'sticky', __( 'Sticky', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_filter', __( 'Show filter', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_sort', __( 'Show sort', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_result_count', __( 'Show result count', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ) ) ),
+				self::element( 'filter_bar', __( 'Filter and Sort Bar', 'kidia-mobile-cms' ), 'dashicons-filter', array(
+					self::field( 'sticky', __( 'Sticky', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'show_filter', __( 'Show filter button', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'show_sort', __( 'Show sort', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'show_result_count', __( 'Show result count', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'filter_price', __( 'Available filter: Price', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'filter_sale', __( 'Available filter: On sale', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'filter_brand', __( 'Available filter: Brand', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'filter_size', __( 'Available filter: Size', 'kidia-mobile-cms' ), 'checkbox', true ),
+					self::field( 'block_width', __( 'Filter block width (%)', 'kidia-mobile-cms' ), 'number', 100, array(), 40, 100 ),
+					self::field( 'block_height', __( 'Filter block height', 'kidia-mobile-cms' ), 'number', 68, array(), 48, 100 ),
+					self::field( 'icon_size', __( 'Icon size', 'kidia-mobile-cms' ), 'number', 22, array(), 14, 36 ),
+					self::field( 'button_radius', __( 'Button radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 28 ),
+					self::field( 'button_gap', __( 'Button spacing', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
+					self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+					self::field( 'icon_color', __( 'Icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+					self::field( 'border_color', __( 'Border color', 'kidia-mobile-cms' ), 'color', '#DDE3E8' )
+				) ),
 				self::element( 'product_grid', __( 'Product Grid', 'kidia-mobile-cms' ), 'dashicons-grid-view', $common_grid ),
-				self::element( 'pagination', __( 'Pagination', 'kidia-mobile-cms' ), 'dashicons-update', array( self::field( 'automatic', __( 'Load automatically', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'button_label', __( 'Button label', 'kidia-mobile-cms' ), 'text', __( 'Load more', 'kidia-mobile-cms' ) ), self::field( 'loader_color', __( 'Loader color', 'kidia-mobile-cms' ), 'color', '#1F6F61' ) ) ),
 			),
 			'product' => array(
 				self::element( 'image_gallery', __( 'Product Gallery', 'kidia-mobile-cms' ), 'dashicons-format-gallery', array( self::field( 'aspect_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 1, array(), 0.6, 1.8, 0.1 ), self::field( 'fit', __( 'Image fit', 'kidia-mobile-cms' ), 'select', 'contain', array( 'contain' => __( 'Contain', 'kidia-mobile-cms' ), 'cover' => __( 'Cover', 'kidia-mobile-cms' ) ) ), self::field( 'show_thumbnails', __( 'Show thumbnails', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_indicators', __( 'Show indicators', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'enable_zoom', __( 'Enable zoom', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
