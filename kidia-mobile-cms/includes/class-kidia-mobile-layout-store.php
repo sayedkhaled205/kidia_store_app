@@ -858,10 +858,6 @@ final class Kidia_Mobile_Layout_Store {
 			$item       = $this->find_library_item( $type, $library_id );
 
 			if ( null === $item ) {
-				if ( empty( $block['create_intent'] ) ) {
-					continue;
-				}
-
 				$source_id = (string) ( $block['source_library_id'] ?? '' );
 				$source    = '' !== $source_id
 					? $this->find_library_item( $type, $source_id )

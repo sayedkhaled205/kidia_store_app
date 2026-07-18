@@ -267,8 +267,8 @@ $store->save_layout(
 );
 
 $items = get_option( 'kidia_mobile_hero_sliders', array() );
-kidia_assert( 1 === count( $items ), 'A stale Builder tab must not recreate a deleted Library item.' );
-kidia_assert( 1 === count( $store->get_layout() ), 'A stale deleted reference must be removed from layout.' );
+kidia_assert( 2 === count( $items ), 'Every card explicitly submitted by Home Builder must remain saveable.' );
+kidia_assert( 2 === count( $store->get_layout() ), 'An explicitly submitted card must remain in the layout even if its Library record was missing.' );
 
 $store->save_layout(
 	array(
@@ -319,7 +319,6 @@ foreach ( $all_types as $index => $type ) {
 	$submitted[] = array(
 		'id'            => $type . '_roundtrip',
 		'library_id'    => $type . '_roundtrip',
-		'create_intent' => '1',
 		'type'          => $type,
 		'name'          => 'Test ' . $type,
 		'enabled'       => '1',
@@ -333,6 +332,10 @@ $decoded_payload = Kidia_Mobile_Layout_Store::decode_submission( $browser_payloa
 kidia_assert(
 	count( $submitted ) === count( $decoded_payload ),
 	'The browser JSON payload must reach WordPress with every element intact.'
+);
+kidia_assert(
+	empty( $decoded_payload[0]['create_intent'] ),
+	'A newly submitted card must not depend on the fragile create_intent browser flag.'
 );
 
 $store = new Kidia_Mobile_Layout_Store();
