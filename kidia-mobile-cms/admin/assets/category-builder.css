@@ -1,4 +1,20 @@
-.kidia-category-builder { direction: rtl; max-width: 1120px; text-align: right; }
+.kidia-category-builder { direction: rtl; max-width: 1380px; margin-inline: auto; text-align: right; }
+.kidia-category-workspace { direction: ltr; display: grid; grid-template-columns: 276px minmax(0,1fr); align-items: start; gap: 18px; }
+.kidia-category-editor { direction: rtl; min-width: 0; }
+.kidia-category-mobile-preview { position: sticky; top: 48px; direction: rtl; text-align: center; }
+.kidia-category-phone { width: 262px; padding: 5px; border: 3px solid #1d2327; border-radius: 29px; background: #1d2327; box-shadow: 0 16px 38px rgba(29,35,39,.18); }
+.kidia-category-phone__speaker { width: 68px; height: 4px; margin: 0 auto 5px; border-radius: 99px; background: #646970; }
+.kidia-category-phone__screen { min-height: 548px; max-height: calc(100vh - 150px); overflow-y: auto; border-radius: 21px; background: #f7f8fa; }
+.kidia-category-phone__status { display: flex; justify-content: space-between; padding: 10px 13px 7px; background: #fff; font-size: 10px; font-weight: 700; }
+.kidia-category-phone__header { padding: 13px; background: #fff; border-bottom: 1px solid #edf0f2; font-size: 17px; font-weight: 800; }
+.kidia-category-phone__content { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; padding: 10px; }
+.kidia-category-preview-card { min-width: 0; padding: 8px 5px; border-radius: 10px; background: #fff; text-align: center; }
+.kidia-category-preview-card.is-child { background: #edf7f4; }
+.kidia-category-preview-image { display: flex; align-items: center; justify-content: center; margin-inline: auto; overflow: hidden; }
+.kidia-category-preview-image img { width: 100%; height: 100%; }
+.kidia-category-preview-placeholder { display: grid; width: 100%; height: 100%; place-items: center; color: #2f806e; background: #edf7f4; }
+.kidia-category-preview-name { overflow: hidden; margin-top: var(--preview-gap,8px); word-break: break-word; }
+.kidia-category-mobile-preview > p { margin: 10px 6px; color: #646970; font-size: 12px; }
 .kidia-category-toolbar { align-items: center; background: #fff; border: 1px solid #dcdcde; display: flex; justify-content: space-between; margin: 20px 0 14px; padding: 14px 18px; width: 70%; }
 .kidia-category-list { list-style: none; margin: 0; padding: 0; }
 .kidia-category-children > .kidia-category-list { border-right: 3px solid #dbeee9; margin: 8px 42px 8px 0; padding-right: 18px; }
@@ -26,3 +42,4 @@
 .kidia-range-value { color: #2271b1; font-size: 12px; font-weight: 700; }
 .ui-sortable-helper .kidia-category-card { box-shadow: 0 8px 24px rgba(0,0,0,.15); }
 @media (max-width: 900px) { .kidia-category-toolbar,.kidia-category-card { width: auto; } .kidia-category-card { grid-template-columns: 24px 24px 52px 1fr; } .kidia-category-card > button,.kidia-category-visibility { grid-column: 4; justify-self: start; } .kidia-category-settings { grid-template-columns: 1fr; } .kidia-category-image-actions { grid-column: 1; } }
+@media (max-width: 1100px) { .kidia-category-workspace { grid-template-columns: 1fr; } .kidia-category-mobile-preview { position: relative; top: 0; } .kidia-category-phone { margin-inline: auto; } }

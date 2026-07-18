@@ -41,7 +41,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			$has_children  = ! empty( $by_parent[ $id ] );
 			$image_size    = min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) );
 			?>
-			<li class="kidia-category-row" data-term-id="<?php echo esc_attr( (string) $id ); ?>">
+			<li class="kidia-category-row" data-term-id="<?php echo esc_attr( (string) $id ); ?>" data-term-name="<?php echo esc_attr( $term->name ); ?>" data-default-image="<?php echo esc_url( $image_url ); ?>">
 				<div class="kidia-category-card">
 					<span class="dashicons dashicons-move kidia-category-handle" aria-hidden="true"></span>
 					<?php if ( $has_children ) : ?>
@@ -98,6 +98,19 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 	<h1><?php esc_html_e( 'Category Page Builder', 'kidia-mobile-cms' ); ?></h1>
 	<p class="description"><?php esc_html_e( 'Drag categories and subcategories within their level, replace their app image, or hide a complete branch.', 'kidia-mobile-cms' ); ?></p>
 	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Category page saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<div class="kidia-category-workspace">
+		<aside class="kidia-category-mobile-preview" aria-label="<?php echo esc_attr__( 'Live category preview', 'kidia-mobile-cms' ); ?>">
+			<div class="kidia-category-phone">
+				<div class="kidia-category-phone__speaker"></div>
+				<div class="kidia-category-phone__screen">
+					<div class="kidia-category-phone__status"><span>9:41</span><span>● ◒ ▰</span></div>
+					<div class="kidia-category-phone__header"><?php esc_html_e( 'Categories', 'kidia-mobile-cms' ); ?></div>
+					<div id="kidia-category-live-preview" class="kidia-category-phone__content"></div>
+				</div>
+			</div>
+			<p><?php esc_html_e( 'Live preview — category changes appear instantly.', 'kidia-mobile-cms' ); ?></p>
+		</aside>
+		<div class="kidia-category-editor">
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 		<input type="hidden" name="action" value="kidia_mobile_save_category_builder">
 		<?php wp_nonce_field( 'kidia_mobile_save_category_builder', 'kidia_mobile_category_builder_nonce' ); ?>
@@ -107,4 +120,6 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 		</div>
 		<?php if ( empty( $terms ) ) : ?><div class="notice notice-warning inline"><p><?php esc_html_e( 'No WooCommerce product categories were found.', 'kidia-mobile-cms' ); ?></p></div><?php else : ?><?php $render_level( 0 ); ?><?php endif; ?>
 	</form>
+		</div>
+	</div>
 </div>
