@@ -77,6 +77,8 @@ abstract final class AppConfig {
   }
 
   /// Validates the build-time connection without contacting the store.
+  /// Keep the `flutter run --dart-define=...` command in the terminal; it is
+  /// documentation input and must never be appended to this Dart expression.
   static void validateStoreConnection() {
     if (!hasConfiguredStore) {
       if (useMockHomeLayout) {
