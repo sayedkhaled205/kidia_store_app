@@ -321,8 +321,15 @@ foreach ( $all_types as $index => $type ) {
 	);
 }
 
+$browser_payload = json_encode( $submitted );
+$decoded_payload = Kidia_Mobile_Layout_Store::decode_submission( $browser_payload );
+kidia_assert(
+	count( $submitted ) === count( $decoded_payload ),
+	'The browser JSON payload must reach WordPress with every element intact.'
+);
+
 $store = new Kidia_Mobile_Layout_Store();
-$store->save_layout( $submitted );
+$store->save_layout( $decoded_payload );
 $reloaded = $store->get_layout();
 
 kidia_assert(
@@ -341,4 +348,4 @@ foreach ( $all_types as $index => $type ) {
 	);
 }
 
-fwrite( STDOUT, "Layout Store contract test passed for all 15 Home Builder elements.\n" );
+fwrite( STDOUT, "Browser payload and Layout Store test passed for all 15 Home Builder elements.\n" );

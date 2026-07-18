@@ -324,12 +324,19 @@ final class Kidia_Mobile_CMS_Admin {
         			'kidia_mobile_home_builder_nonce'
         		);
 
-        		$submitted_blocks =
-        			isset( $_POST['blocks'] )
-        				? wp_unslash(
-        					$_POST['blocks']
-        				)
-        				: array();
+				$payload = isset( $_POST['blocks_payload'] )
+					? wp_unslash( $_POST['blocks_payload'] )
+					: '';
+
+				$submitted_blocks = Kidia_Mobile_Layout_Store::decode_submission(
+					$payload
+				);
+
+				if ( '' === $payload ) {
+					$submitted_blocks = isset( $_POST['blocks'] )
+						? wp_unslash( $_POST['blocks'] )
+						: array();
+				}
 
         		if (
         			! is_array(
