@@ -802,6 +802,7 @@ class _PurchaseBar extends StatelessWidget {
     final Color background = _cmsColor(footer.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
     final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
+    final bool productAction = footer.string('style', 'navigation') == 'product_action';
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
       color: background,
@@ -834,8 +835,8 @@ class _PurchaseBar extends StatelessWidget {
               const SizedBox(height: 8),
             ],
             Row(children: <Widget>[
-              if (footer.boolean('show_share', true)) _FooterAction(icon: Icons.ios_share_outlined, label: footer.string('share_label', copy.share), color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', 24), onPressed: onShare),
-              if (footer.boolean('show_like', true)) _FooterAction(icon: isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, label: footer.string('like_label', 'Like'), color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', 24), onPressed: onLike),
+              if (productAction && footer.boolean('show_share', true)) _FooterAction(icon: Icons.ios_share_outlined, label: footer.string('share_label', copy.share), color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', 24), onPressed: onShare),
+              if (productAction && footer.boolean('show_like', true)) _FooterAction(icon: isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, label: footer.string('like_label', 'Like'), color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', 24), onPressed: onLike),
               SizedBox(width: footer.number('item_gap', 10)),
               Expanded(child: FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)))),
             ]),
