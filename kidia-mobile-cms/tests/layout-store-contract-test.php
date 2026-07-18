@@ -207,7 +207,7 @@ $store->save_layout(
 );
 
 $items = get_option( 'kidia_mobile_hero_sliders', array() );
-kidia_assert( 2 === count( $items ), 'Removing from Builder must preserve the reusable Library record.' );
+kidia_assert( 1 === count( $items ), 'Removing from Builder must delete the orphaned Library record.' );
 
 $layout = $store->get_layout();
 kidia_assert( 1 === count( $layout ), 'A removed Library item must stay excluded from this Home Layout.' );
