@@ -50,9 +50,9 @@ class CmsPageLayout {
 
   factory CmsPageLayout.fallback(String page) {
     const Map<String, List<String>> ids = <String, List<String>>{
+      'home': <String>[],
+      'category': <String>[],
       'catalog': <String>[
-        'page_title',
-        'search_bar',
         'filter_bar',
         'product_grid',
         'pagination',
@@ -66,7 +66,7 @@ class CmsPageLayout {
         'reviews',
         'related_products',
       ],
-      'wishlist': <String>['page_title', 'wishlist_grid', 'empty_state'],
+      'wishlist': <String>['wishlist_grid', 'empty_state'],
       'account': <String>[
         'account_summary',
         'account_menu',

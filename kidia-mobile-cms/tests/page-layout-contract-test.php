@@ -61,6 +61,13 @@ foreach ( $expected as $page => $required ) {
 	kidia_page_assert( end( $ids ) === $saved['elements'][0]['id'], "$page element order must save." );
 }
 
+foreach ( array( 'home', 'category' ) as $page ) {
+	$layout = $store->get_layout( $page );
+	kidia_page_assert( true === $layout['header']['locked'] && true === $layout['footer']['locked'], "$page fixed chrome must exist." );
+	$saved = $store->save_layout( $page, array( 'header' => array( 'enabled' => '1', 'settings' => array( 'title' => strtoupper( $page ) ) ), 'footer' => array( 'enabled' => '1' ) ) );
+	kidia_page_assert( strtoupper( $page ) === $saved['header']['settings']['title'], "$page header settings must save." );
+}
+
 $endpoint = new Kidia_Mobile_CMS_Page_Layout_Endpoint();
 $endpoint->register_routes();
 kidia_page_assert( isset( $GLOBALS['kidia_page_routes']['woo-mobile/v1/page-layout/(?P<page>[a-z-]+)'] ), 'The public page-layout route must register.' );
@@ -70,4 +77,4 @@ kidia_page_assert( 'no-store, no-cache, must-revalidate, max-age=0' === $respons
 kidia_page_assert( 'ar' === $response->data['locale'], 'The requested locale must be returned.' );
 kidia_page_assert( $endpoint->get_layout( new WP_REST_Request( array( 'page' => 'unknown' ) ) ) instanceof WP_Error, 'Unknown page builders must return 404 errors.' );
 
-fwrite( STDOUT, "Page-layout contract test passed for catalog, product, wishlist and account.\n" );
+fwrite( STDOUT, "Page-layout contract test passed for all application pages.\n" );

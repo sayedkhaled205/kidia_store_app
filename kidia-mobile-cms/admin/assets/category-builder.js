@@ -16,6 +16,16 @@
 
 	window.kidiaCategoryBuilderBooted = true;
 
+	builder.on("click", ".kidia-fixed-chrome-expand", function () {
+		var button = $(this);
+		var card = button.closest(".kidia-fixed-chrome-card");
+		var body = card.find(".kidia-page-card__body").first();
+		var opening = body.prop("hidden");
+		body.prop("hidden", !opening);
+		button.attr("aria-expanded", opening ? "true" : "false");
+		card.toggleClass("is-open", opening);
+	});
+
 	function numberInRange(value, fallback, minimum, maximum) {
 		var number = Number(value);
 		if (!isFinite(number)) {

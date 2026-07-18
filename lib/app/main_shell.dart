@@ -112,6 +112,8 @@ class MainShell extends ConsumerWidget {
   }
 
   String _pageForPath(String path) {
+    if (path == '/home' || path == '/') return 'home';
+    if (path == '/categories') return 'category';
     if (path.startsWith('/product/')) return 'product';
     if (path.startsWith('/wishlist')) return 'wishlist';
     if (path.startsWith('/account')) return 'account';
@@ -121,7 +123,11 @@ class MainShell extends ConsumerWidget {
         path.startsWith('/products')) {
       return 'catalog';
     }
-    return navigationShell.currentIndex == 2
+    return navigationShell.currentIndex == 0
+        ? 'home'
+        : navigationShell.currentIndex == 1
+        ? 'category'
+        : navigationShell.currentIndex == 2
         ? 'wishlist'
         : navigationShell.currentIndex == 3
         ? 'account'

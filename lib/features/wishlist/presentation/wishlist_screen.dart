@@ -80,7 +80,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
         appBar: CmsPageAppBar(
           layout: layout,
-          defaultTitle: layout.element('page_title').string('title', copy.title),
+          defaultTitle: copy.title,
           actions: <CmsPageHeaderAction>[
             CmsPageHeaderAction(
               type: 'cart',
@@ -92,9 +92,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
         ),
         body: Column(
           children: <Widget>[
-            if (_controller.status == WishlistStatus.ready &&
-                layout.element('page_title').boolean('show_count', true))
-              Text('${_controller.length}', key: const Key('wishlist-count')),
             if (_controller.mutationError != null)
               _MutationErrorNotice(
                 message: _controller.mutationError!,

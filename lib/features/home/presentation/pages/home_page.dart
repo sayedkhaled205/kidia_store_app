@@ -11,6 +11,9 @@ import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
 import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
 import 'package:kidia_store_app/features/home/presentation/widgets/home_block_renderer.dart';
 import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerWidget {
@@ -23,8 +26,21 @@ class HomePage extends ConsumerWidget {
     final AsyncValue<HomeLayout> homeLayoutAsync = ref.watch(
       homeLayoutProvider(locale),
     );
+    final CmsPageLayout chrome =
+        ref.watch(cmsPageLayoutProvider('home')).value ??
+        CmsPageLayout.fallback('home');
 
     return Scaffold(
+      appBar: CmsPageAppBar(
+        layout: chrome,
+        defaultTitle: 'Kidia',
+        actions: <CmsPageHeaderAction>[
+          CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
+          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
+          CmsPageHeaderAction(type: 'wishlist', icon: Icons.favorite_border_rounded, tooltip: 'المفضلة', onPressed: () => context.go('/wishlist')),
+          CmsPageHeaderAction(type: 'account', icon: Icons.person_outline_rounded, tooltip: 'حسابي', onPressed: () => context.go('/account')),
+        ],
+      ),
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -36,15 +52,12 @@ class HomePage extends ConsumerWidget {
             slivers: [
               homeLayoutAsync.when(
                 data: (HomeLayout layout) {
-                  final bool hasManagedHeader = layout.enabledBlocks.any(
-                    (HomeBlock block) => block is AppHeaderBlock,
-                  );
                   return SliverMainAxisGroup(
                     slivers: <Widget>[
-                      if (!hasManagedHeader)
-                        const SliverToBoxAdapter(child: _HomeHeader()),
                       HomeBlockRenderer(
-                        blocks: layout.enabledBlocks,
+                        blocks: layout.enabledBlocks
+                            .where((HomeBlock block) => block is! AppHeaderBlock)
+                            .toList(growable: false),
                         onAction: (HomeAction action) {
                           _handleHomeAction(context: context, action: action);
                         },
@@ -55,7 +68,6 @@ class HomePage extends ConsumerWidget {
                 loading: () {
                   return const SliverMainAxisGroup(
                     slivers: <Widget>[
-                      SliverToBoxAdapter(child: _HomeHeader()),
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: _HomeLoadingState(),
@@ -66,7 +78,6 @@ class HomePage extends ConsumerWidget {
                 error: (Object error, StackTrace stackTrace) {
                   return SliverMainAxisGroup(
                     slivers: <Widget>[
-                      const SliverToBoxAdapter(child: _HomeHeader()),
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: _HomeErrorState(

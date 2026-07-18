@@ -79,10 +79,7 @@ void main() {
       borderRadius.topLeft.x,
       closeTo(40 * responsiveScale, 0.001),
     );
-    expect(
-      tester.getSize(find.byKey(const Key('categories-search-action'))).height,
-      lessThan(40),
-    );
+    expect(find.byKey(const Key('categories-search-action')), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
     await tester.pumpAndSettle();

@@ -172,18 +172,6 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
-          if (showSearchField && pageLayout.element('search_bar').enabled)
-            SliverToBoxAdapter(
-              child: _SearchField(
-                controller: searchController,
-                hint: copy.searchHint,
-                onSubmitted: controller.submitSearch,
-                onClear: () {
-                  searchController.clear();
-                  controller.submitSearch('');
-                },
-              ),
-            ),
           if (!controller.isAwaitingSearch && pageLayout.element('filter_bar').enabled)
             SliverPersistentHeader(
               pinned: true,

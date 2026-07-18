@@ -248,6 +248,7 @@ foreach ( $library_options as $type => $option_name ) {
 			?>
 
 		</div>
+		<?php $chrome_layout = $home_chrome; $chrome_part = 'header'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 		<div
 			id="kidia-home-builder"
@@ -353,6 +354,7 @@ foreach ( $library_options as $type => $option_name ) {
 			<?php endforeach; ?>
 
 		</div>
+		<?php $chrome_layout = $home_chrome; $chrome_part = 'footer'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 	</form>
 		</div>

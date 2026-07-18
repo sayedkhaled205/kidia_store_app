@@ -1207,3 +1207,4 @@ body.kidia-modal-open {
 		transition: none !important;
 	}
 }
+.kidia-builder-field--product-source { order:-20; }

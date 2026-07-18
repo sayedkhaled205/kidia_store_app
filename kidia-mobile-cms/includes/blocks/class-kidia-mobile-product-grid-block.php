@@ -278,7 +278,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>">
 			</div>
-			<div class="kidia-builder-field">
+			<div class="kidia-builder-field kidia-builder-field--product-source">
 				<label><?php esc_html_e( 'Products Source', 'kidia-mobile-cms' ); ?></label>
 				<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][source]">
 					<?php foreach ( $sources as $value => $label ) : ?>
@@ -294,11 +294,11 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Columns', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="1" max="4" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>">
 			</div>
-			<div class="kidia-builder-field">
+			<div class="kidia-builder-field kidia-builder-field--product-source">
 				<label><?php esc_html_e( 'Category ID', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="0" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][category_id]" value="<?php echo esc_attr( (string) $settings['category_id'] ); ?>">
 			</div>
-			<div class="kidia-builder-field kidia-builder-field--full">
+			<div class="kidia-builder-field kidia-builder-field--product-source">
 				<label><?php esc_html_e( 'Product IDs', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_ids]" value="<?php echo esc_attr( $settings['product_ids'] ); ?>" placeholder="12, 34, 56">
 			</div>

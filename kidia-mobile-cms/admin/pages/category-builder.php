@@ -119,7 +119,9 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			<strong><?php echo esc_html( sprintf( __( '%d WooCommerce categories', 'kidia-mobile-cms' ), count( $terms ) ) ); ?></strong>
 			<?php submit_button( __( 'Save Category Page', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
 		</div>
+		<?php $chrome_layout = $category_layout; $chrome_part = 'header'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 		<?php if ( empty( $terms ) ) : ?><div class="notice notice-warning inline"><p><?php esc_html_e( 'No WooCommerce product categories were found.', 'kidia-mobile-cms' ); ?></p></div><?php else : ?><?php $render_level( 0 ); ?><?php endif; ?>
+		<?php $chrome_layout = $category_layout; $chrome_part = 'footer'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 	</form>
 		</div>
 	</div>

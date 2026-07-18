@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
 import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 
 class CategoriesScreen extends ConsumerWidget {
@@ -18,8 +20,19 @@ class CategoriesScreen extends ConsumerWidget {
     final AsyncValue<CatalogCategoryTree> tree = ref.watch(
       catalogCategoryTreeProvider,
     );
+    final CmsPageLayout layout =
+        ref.watch(cmsPageLayoutProvider('category')).value ??
+        CmsPageLayout.fallback('category');
 
     return Scaffold(
+      appBar: CmsPageAppBar(
+        layout: layout,
+        defaultTitle: copy.categories,
+        actions: <CmsPageHeaderAction>[
+          CmsPageHeaderAction(key: const Key('categories-search-action'), type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
+          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
+        ],
+      ),
       body: SafeArea(
         bottom: false,
         child: tree.when(
@@ -47,7 +60,6 @@ class CategoriesScreen extends ConsumerWidget {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: <Widget>[
-                  const SliverToBoxAdapter(child: _CategoryTopActions()),
                   SliverPadding(
                     padding: const EdgeInsetsDirectional.fromSTEB(
                       16,
@@ -414,53 +426,6 @@ FontWeight _categoryFontWeight(int value) => switch (value) {
   900 => FontWeight.w900,
   _ => FontWeight.w800,
 };
-
-class _CategoryTopActions extends StatelessWidget {
-  const _CategoryTopActions();
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 2),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Material(
-              key: const Key('categories-search-action'),
-              color: colors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () async => showCatalogSearch(context),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 5,
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      const Icon(Icons.search_rounded, size: 22),
-                      const SizedBox(width: 10),
-                      Text(
-                        'ابحثي عن منتج',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          CartIconButton(onPressed: () => context.go('/cart')),
-        ],
-      ),
-    );
-  }
-}
 
 class _CategoryLoadingList extends StatelessWidget {
   const _CategoryLoadingList();
