@@ -198,16 +198,27 @@ final class Kidia_Mobile_Layout_Store {
 
 	/** PatPat-inspired Kidia content order used by fresh stores and the preset action. */
 	public function get_kidia_patpat_layout(): array {
-		$types = array( 'hero_slider', 'quick_links', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
-		$names = array( 'Kidia Main Offers', 'Shop Fast', 'Shop by Category', 'Kidia Benefits', 'Flash Sale', 'New Arrivals', 'Seasonal Collections', 'Best Sellers', 'Our Brands', 'More for Kids' );
+		$types = array( 'app_header', 'image_banner', 'quick_links', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
+		$names = array( 'Kidia Header', 'Kidia Main Offer', 'Shop Fast', 'Shop by Category', 'Kidia Benefits', 'Flash Sale', 'New Arrivals', 'Seasonal Collections', 'Best Sellers', 'Our Brands', 'More for Kids' );
+		$existing = $this->get_layout();
+		$pool = array();
+		foreach ( $existing as $saved_block ) {
+			if ( isset( $saved_block['type'] ) ) { $pool[ $saved_block['type'] ][] = $saved_block; }
+		}
 		$layout = array();
 		foreach ( $types as $index => $type ) {
-			$block = Kidia_Mobile_Block_Registry::create( $type, $index + 1 );
+			$block = ! empty( $pool[ $type ] ) ? array_shift( $pool[ $type ] ) : Kidia_Mobile_Block_Registry::create( $type, $index + 1 );
 			if ( null === $block ) { continue; }
-			$block['name'] = $names[ $index ]; $block['library_id'] = $block['id']; $block['status'] = 'published'; $block['enabled'] = true;
+			$block['name'] = $names[ $index ]; $block['library_id'] = $block['id']; $block['status'] = 'published'; $block['enabled'] = true; $block['order'] = $index + 1;
 			switch ( $type ) {
-				case 'hero_slider':
-					$block['settings']['aspect_ratio'] = 0.82; $block['settings']['auto_play'] = true; $block['settings']['interval_ms'] = 4200;
+				case 'app_header':
+					$block['settings']['layout'] = 'start'; $block['settings']['height'] = 112; $block['settings']['logo_height'] = 36; $block['settings']['show_search'] = true; $block['settings']['search_style'] = 'bar'; $block['settings']['search_height'] = 42; $block['settings']['search_radius'] = 21; $block['settings']['search_background'] = '#F4F5F5'; $block['settings']['search_text_color'] = '#68737D'; $block['settings']['show_cart'] = true; $block['settings']['show_wishlist'] = false; $block['settings']['show_account'] = false; $block['settings']['background_color'] = '#FFFFFF'; $block['settings']['shadow'] = 'none'; $block['settings']['horizontal_padding'] = 16; $block['settings']['icon_gap'] = 10;
+					if ( empty( $block['settings']['logo_url'] ) && function_exists( 'get_theme_mod' ) && function_exists( 'wp_get_attachment_image_url' ) ) { $logo_id = absint( get_theme_mod( 'custom_logo' ) ); if ( $logo_id ) { $block['settings']['logo_url'] = (string) wp_get_attachment_image_url( $logo_id, 'full' ); } }
+					if ( empty( $block['settings']['title'] ) ) { $block['settings']['title'] = 'Kidia'; }
+					break;
+				case 'image_banner':
+					$block['settings']['aspect_ratio'] = 1.9; $block['settings']['border_radius'] = 18;
+					if ( empty( $block['settings']['image_url'] ) && ! empty( $pool['hero_slider'][0]['settings']['items'][0]['image_url'] ) ) { $block['settings']['image_url'] = $pool['hero_slider'][0]['settings']['items'][0]['image_url']; }
 					break;
 				case 'quick_links':
 					$block['settings']['title'] = __( 'Shop fast', 'kidia-mobile-cms' ); $block['settings']['columns'] = 5; $block['settings']['image_shape'] = 'circle'; $block['settings']['item_size'] = 58; $block['settings']['gap'] = 10;
@@ -230,9 +241,9 @@ final class Kidia_Mobile_Layout_Store {
 			}
 			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) {
 				$block['settings']['source'] = 'on_sale';
-				if ( 5 === $index ) { $block['settings']['source'] = 'latest'; }
-				if ( 7 === $index ) { $block['settings']['source'] = 'featured'; }
-				$block['settings']['title'] = 5 === $index ? __( 'New arrivals', 'kidia-mobile-cms' ) : ( 7 === $index ? __( 'Best sellers', 'kidia-mobile-cms' ) : __( 'More for kids', 'kidia-mobile-cms' ) );
+				if ( 6 === $index ) { $block['settings']['source'] = 'latest'; }
+				if ( 8 === $index ) { $block['settings']['source'] = 'featured'; }
+				$block['settings']['title'] = 6 === $index ? __( 'New arrivals', 'kidia-mobile-cms' ) : ( 8 === $index ? __( 'Best sellers', 'kidia-mobile-cms' ) : __( 'More for kids', 'kidia-mobile-cms' ) );
 				$block['settings']['columns'] = 2; $block['settings']['limit'] = 10; $block['settings']['card_style'] = 'minimal'; $block['settings']['image_ratio'] = 0.82; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true; $block['settings']['show_rating'] = true; $block['settings']['show_view_all'] = true;
 			}
 			$layout[] = $block;

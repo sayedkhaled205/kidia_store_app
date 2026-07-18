@@ -67,13 +67,28 @@
 		var choices = actionChoices[actionType] || [];
 		var replacement;
 		var selectedValue;
+		var label;
 
 		if (!current || !field) {
 			return;
 		}
 
 		selectedValue = String(current.value || current.dataset.savedValue || "");
-		field.hidden = actionType === "" || actionType === "brands";
+		if (actionType === "collection" && selectedValue === "on_sale") {
+			actionType = "on_sale";
+			typeField.value = "on_sale";
+		}
+		if (!toArray(typeField.options).some(function (option) { return option.value === "on_sale"; })) {
+			typeField.appendChild(new Option(labels.onSaleProducts || "Products on sale", "on_sale"));
+		}
+		if (actionType === "on_sale") {
+			typeField.value = "on_sale";
+		}
+		label = field.querySelector("label");
+		if (label) {
+			label.textContent = actionType === "product" ? (labels.productId || "Product ID") : (labels.actionValue || "Action Value");
+		}
+		field.hidden = actionType === "" || actionType === "brands" || actionType === "on_sale";
 		current.disabled = field.hidden;
 		if (field.hidden) {
 			current.dataset.savedValue = selectedValue;
@@ -221,6 +236,13 @@
 				serializedValue = inputType === "checkbox" && !input.checked ? "" : input.value;
 				assignSetting(settings, path, serializedValue);
 			});
+
+			// "Products on sale" is a friendly Builder action backed by the existing
+			// collection route, keeping old app versions and saved layouts compatible.
+			if (settings.action_type === "on_sale") {
+				settings.action_type = "collection";
+				settings.action_value = "on_sale";
+			}
 
 			return {
 				id: value(".kidia-block-id"),

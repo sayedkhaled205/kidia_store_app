@@ -3,6 +3,7 @@
 declare( strict_types=1 );
 define( 'ABSPATH', __DIR__ );
 $GLOBALS['kidia_test_options'] = array();
+function __( string $text, string $domain = '' ): string { unset( $domain ); return $text; }
 function sanitize_key( $value ): string { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) ) ?: ''; }
 function sanitize_text_field( $value ): string { return trim( strip_tags( (string) $value ) ); }
 function sanitize_textarea_field( $value ): string { return sanitize_text_field( $value ); }
@@ -17,7 +18,7 @@ function current_time( string $type, bool $gmt = false ): string { unset( $type,
 final class Kidia_Mobile_Block_Registry {
 	private const TYPES = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer', 'quick_links', 'banner_grid' );
 	public static function exists( string $type ): bool { return in_array( $type, self::TYPES, true ); }
-	public static function defaults( string $type ): array { unset( $type ); return array( 'title' => '', 'items' => array(), 'limit' => 8 ); }
+	public static function defaults( string $type ): array { unset( $type ); return array( 'title' => '', 'image_url' => '', 'items' => array(), 'limit' => 8 ); }
 	public static function generate_id( string $type ): string { return $type . '_generated'; }
 	public static function create( string $type, int $order ): array { return array( 'id' => $type . '_' . $order, 'type' => $type, 'enabled' => true, 'order' => $order, 'settings' => self::defaults( $type ) ); }
 	public static function get( string $type ): array { return array( 'label' => $type ); }
@@ -64,4 +65,10 @@ foreach ( $reloaded as $index => $block ) {
 $runtime = $store->get_runtime_layout();
 kidia_assert( count( $types ) === count( $runtime ), 'The mobile runtime must read the same complete Home Builder layout.' );
 kidia_assert( isset( $GLOBALS['kidia_test_options']['kidia_mobile_home_layout_v5'][0]['settings'] ), 'The saved Home Layout must contain settings, not Library references only.' );
+$preset = $store->get_kidia_patpat_layout();
+kidia_assert( 'app_header' === $preset[0]['type'], 'The PatPat preset must begin with the Kidia logo and search header.' );
+kidia_assert( 'bar' === $preset[0]['settings']['search_style'], 'The PatPat header must use a full search bar.' );
+kidia_assert( 'image_banner' === $preset[1]['type'], 'The PatPat preset must place the main Kidia banner directly under search.' );
+$saved_banner = array_values( array_filter( $reloaded, static fn ( array $block ): bool => 'image_banner' === $block['type'] ) )[0];
+kidia_assert( $saved_banner['id'] === $preset[1]['id'], 'The PatPat preset must reuse the store\'s real Kidia banner instead of creating an empty one.' );
 fwrite( STDOUT, "Inline Home Builder canonical-layout test passed for all 17 elements.\n" );

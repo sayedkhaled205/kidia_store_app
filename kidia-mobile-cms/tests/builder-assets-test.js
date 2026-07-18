@@ -92,7 +92,7 @@ function homeMarkup() {
     homeBlock("app_header", 0, `${mediaField("logo_url", "https://example.com/logo.png", "kidia-app-header-logo-url", "kidia-select-app-header-logo", "kidia-media-preview kidia-app-header-logo-preview")}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
     homeBlock("hero_slider", 1, `${input("aspect_ratio", "1.8")}<div class="kidia-hero-block-items">${heroItem}</div><button type="button" class="kidia-add-hero-block-item">Add Slide</button><script type="text/html" class="tmpl-kidia-hero-block-item">${heroTemplate}</script>`),
     homeBlock("category_grid", 2, `${input("title", "Categories")}${input("columns", "4")}${input("limit", "4")}<input type="checkbox" name="blocks[0][settings][show_names]" value="1" checked>`),
-    homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}<div class="kidia-builder-field"><select name="blocks[0][settings][action_type]"><option value="product" selected>Product</option><option value="category">Category</option></select></div><div class="kidia-builder-field">${input("action_value", "12")}</div>`),
+    homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}<div class="kidia-builder-field"><select name="blocks[0][settings][action_type]"><option value="product" selected>Product</option><option value="category">Category</option></select></div><div class="kidia-builder-field"><label>Action Value</label>${input("action_value", "12")}</div>`),
     homeBlock("product_carousel", 4, `${input("title", "Latest")}${input("limit", "3")}`),
     homeBlock("product_grid", 5, `${input("title", "Offers")}${input("columns", "2")}${input("limit", "4")}`),
     homeBlock("section_header", 6, `${input("title", "Featured")}${input("subtitle", "Chosen for you")}${input("view_all_label", "View all")}<input type="checkbox" name="blocks[0][settings][show_view_all]" value="1" checked>`),
@@ -219,6 +219,8 @@ function runHomeBuilderTest() {
   let actionValue = window.document.querySelector('[name="blocks[3][settings][action_value]"]');
   assert.equal(actionValue.tagName, "SELECT", "Product actions must replace Action Value with a product selector.");
   assert.equal(actionValue.value, "12", "The contextual selector must preserve the saved destination.");
+  assert.equal(actionValue.closest(".kidia-builder-field").querySelector("label").textContent, "Product ID", "Product actions must identify the destination as a Product ID.");
+  assert.match(actionType.textContent, /Products on sale/, "Every action selector must expose discounted products directly.");
   actionType.value = "category";
   actionType.dispatchEvent(new window.Event("change", { bubbles: true }));
   actionValue = window.document.querySelector('[name="blocks[3][settings][action_value]"]');
@@ -312,6 +314,13 @@ function runHomeBuilderTest() {
   window.document.getElementById("kidia-home-builder-form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   const saved = JSON.parse(Buffer.from(window.document.getElementById("kidia-home-builder-payload").value, "base64").toString("utf8"));
   assert.equal(saved.find((block) => block.type === "app_header").settings.show_cart, "", "Unchecked settings must be saved as false.");
+  actionType.value = "on_sale";
+  actionType.dispatchEvent(new window.Event("change", { bubbles: true }));
+  window.document.getElementById("kidia-home-builder-form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  const savedAgain = JSON.parse(Buffer.from(window.document.getElementById("kidia-home-builder-payload").value, "base64").toString("utf8"));
+  const savedBanner = savedAgain.find((block) => block.type === "image_banner");
+  assert.equal(savedBanner.settings.action_type, "collection", "The discounted-products action must save through the compatible collection route.");
+  assert.equal(savedBanner.settings.action_value, "on_sale", "A second save must rebuild the payload with the latest action change.");
 
   const dragHandle = firstBlock.querySelector(".kidia-builder-drag");
   dragHandle.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
