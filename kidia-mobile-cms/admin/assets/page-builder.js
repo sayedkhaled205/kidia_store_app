@@ -5,177 +5,151 @@
 	var list = document.getElementById("kidia-page-elements");
 	var preview = document.getElementById("kidia-page-live-preview");
 	var dragged = null;
+	var frame = 0;
 	var config = window.kidiaPageBuilder || {};
 	var products = Array.isArray(config.products) ? config.products : [];
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
-	function field(scope, suffix) { var items = scope.querySelectorAll('[name$="[' + suffix + ']"]'); return items.length ? items[items.length - 1] : null; }
+	function field(scope, suffix) { var items = scope ? scope.querySelectorAll('[name$="[' + suffix + ']"]') : []; return items.length ? items[items.length - 1] : null; }
 	function value(scope, suffix, fallback) { var item = field(scope, suffix); return item ? item.value : fallback; }
 	function checked(scope, suffix, fallback) { var item = field(scope, suffix); return item ? item.checked : fallback; }
 	function color(scope, suffix, fallback) { var result = value(scope, suffix, fallback); return /^#[0-9a-f]{6}$/i.test(result) ? result : fallback; }
 	function number(scope, suffix, fallback) { var result = Number(value(scope, suffix, fallback)); return isFinite(result) ? result : fallback; }
-	function productCards(columns, limit) {
-		var items = products.slice(0, Math.max(columns, Math.min(limit || 4, 6)));
-		if (!items.length) {
-			items = [
-				{name:"Kidia product",price:"450",image_url:""},
-				{name:"New collection",price:"390",image_url:""},
-				{name:"Kids outfit",price:"320",image_url:""}
-			];
-		}
-		return '<div class="kidia-page-preview-products" style="--columns:' + columns + '">' + items.map(function (item) {
-			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<div class="kidia-page-preview-avatar">K</div>';
-			return '<article class="kidia-page-preview-product">' + image + '<div><strong>' + escapeHtml(item.name) + '</strong><b>' + escapeHtml(item.price || "") + '</b></div></article>';
-		}).join("") + '</div>';
-	}
+	function icon(name) { return '<span class="kidia-app-icon kidia-app-icon--' + name + '" aria-hidden="true"></span>'; }
+	function money(item) { return escapeHtml(item && item.price ? item.price : "450 ج.م"); }
+	function sampleProducts() { return products.length ? products : [{name:"طقم أطفال كيديا",price:"450 ج.م",image_url:""},{name:"كوليكشن جديد",price:"390 ج.م",image_url:""},{name:"ملابس أطفال",price:"320 ج.م",image_url:""},{name:"عرض خاص",price:"275 ج.م",image_url:""}]; }
 
 	function updateIndexes() {
 		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
 			array(card.querySelectorAll("[name]")).forEach(function (input) {
-				if (/^layout\[elements\]\[[^\]]+\]/.test(input.name)) {
-					input.name = input.name.replace(/layout\[elements\]\[[^\]]+\]/, "layout[elements][" + index + "]");
-				}
+				if (/^layout\[elements\]\[[^\]]+\]/.test(input.name)) { input.name = input.name.replace(/layout\[elements\]\[[^\]]+\]/, "layout[elements][" + index + "]"); }
 			});
 		});
 	}
 
+	function productCards(card, forcedLimit) {
+		var columns = Math.max(1, Math.min(4, Math.round(number(card, "columns", 2))));
+		var limit = Math.max(columns, Math.min(forcedLimit || number(card, "limit", 4), 6));
+		var items = sampleProducts().slice(0, limit);
+		var style = value(card, "card_style", "outlined");
+		var gap = number(card, "gap", 12) * 0.58;
+		return '<div class="kidia-app-products" style="--columns:' + columns + ';gap:' + gap + 'px">' + items.map(function (item) {
+			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<span class="kidia-app-product__fallback">K</span>';
+			return '<article class="kidia-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 16) * .62 + 'px"><div class="kidia-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", true) ? icon("heart") : "") + (checked(card, "show_badge", true) ? '<b class="kidia-app-badge">SALE</b>' : "") + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(item.name || "Kidia product") + '</strong>' + (checked(card, "show_rating", true) ? '<small class="kidia-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div></article>';
+		}).join("") + '</div>';
+	}
+
+	function renderHeader(card) {
+		if (!card || !checked(card, "enabled", true)) { return ""; }
+		var showBar = value(card, "search_style", "icon") === "bar" && checked(card, "show_search", true);
+		var title = escapeHtml(value(card, "title", root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"));
+		var actions = "";
+		if (checked(card, "show_search", true) && !showBar) { actions += icon("search"); }
+		if (checked(card, "show_wishlist", false)) { actions += icon("heart"); }
+		if (checked(card, "show_cart", true)) { actions += icon("bag"); }
+		if (checked(card, "show_account", false)) { actions += icon("person"); }
+		return '<header class="kidia-app-header" style="height:' + number(card, "height", 64) * .68 + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';color:' + color(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading">' + (checked(card, "show_back", true) ? icon("back") : "") + '</span><div class="kidia-app-header__title">' + (showBar ? '<div class="kidia-app-search" style="height:' + number(card, "search_height", 40) * .68 + 'px;border-radius:' + number(card, "search_radius", 14) * .68 + 'px;background:' + color(card, "search_background", "#F1F3F4") + ';color:' + color(card, "search_text_color", "#5F6368") + '">' + icon("search") + '<span>' + escapeHtml(value(card, "search_placeholder", "Search products")) + '</span>' + (checked(card, "show_voice_search", false) ? icon("mic") : "") + '</div>' : '<strong>' + title + '</strong>') + '</div><div class="kidia-app-header__actions">' + actions + '</div></header>';
+	}
+
+	function pagination(card) {
+		var mode = value(card, "pagination_mode", "load_more");
+		if (mode === "none" || mode === "automatic") { return ""; }
+		return '<div class="kidia-app-pagination" style="margin-top:' + number(card, "pagination_spacing", 16) * .55 + 'px">' + (mode === "numbers" ? '<button>1</button><button>2</button><button>3</button>' : '<button style="height:' + number(card, "pagination_size", 44) * .68 + 'px;background:' + color(card, "pagination_color", "#1F6F61") + ';color:' + color(card, "pagination_text_color", "#FFFFFF") + ';border-radius:' + number(card, "pagination_radius", 14) * .68 + 'px">' + escapeHtml(value(card, "pagination_label", "Load more")) + '</button>') + '</div>';
+	}
+
 	function previewElement(card) {
 		var id = card.dataset.element || "element";
-		var labels = {
-			page_title:"Page title", search_bar:"Search", filter_bar:"Filter · Sort", product_grid:"Products",
-			pagination:"Load more", image_gallery:"Product images", product_summary:"Name · Price · Rating",
-			variations:"Sizes and colors", purchase_bar:"Quantity · Add to cart", description:"Description and details",
-			reviews:"Customer reviews", related_products:"Related products", wishlist_grid:"Saved products",
-			empty_state:"Empty wishlist", account_summary:"Customer profile", account_menu:"Orders · Addresses · Profile · Support",
-			logout_button:"Sign out"
-		};
-		var columns = Math.max(1, Math.min(4, Math.round(number(card, "columns", 2))));
-		var title = escapeHtml(value(card, "title", labels[id] || id.replace(/_/g, " ")));
-		var body;
-		if ({product_grid:true,related_products:true,wishlist_grid:true}[id]) {
-			body = productCards(columns, number(card, "limit", 4));
-		} else if (id === "image_gallery") {
-			body = products.some(function (item) { return item.image_url; })
-				? '<div class="kidia-page-preview-gallery">' + products.slice(0, 2).map(function (item) { return item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : ''; }).join("") + '</div>'
-				: '<div class="kidia-page-preview-gallery"><span class="kidia-page-preview-avatar">K</span><span class="kidia-page-preview-avatar">K</span></div>';
-		} else if (id === "account_summary") {
-			body = '<div class="kidia-page-preview-profile"><span class="kidia-page-preview-avatar">♙</span><div><strong>Customer name</strong><small>customer@example.com</small></div></div>';
-		} else if (id === "account_menu") {
-			body = '<div class="kidia-page-preview-menu"><span>Orders</span><span>Addresses</span><span>Profile</span><span>Support</span></div>';
-		} else if (id === "logout_button" || id === "purchase_bar") {
-			body = '<div class="kidia-page-preview-button">' + title + '</div>';
-		} else if (id === "filter_bar") {
-			var filterItems = [];
-			if (checked(card, "show_filter", true)) { filterItems.push('<span>⚙ Filter</span>'); }
-			if (checked(card, "filter_size", true)) { filterItems.push('<span>↔ Size</span>'); }
-			if (checked(card, "show_sort", true)) { filterItems.push('<span>⇅ Sort</span>'); }
-			body = '<div class="kidia-page-preview-menu" style="width:' + number(card, "block_width", 100) + '%;gap:' + number(card, "button_gap", 8) * .4 + 'px">' + filterItems.join("") + '</div>';
-		} else if (id === "empty_state") {
-			body = '<div class="kidia-page-preview-profile"><span class="kidia-page-preview-avatar">♡</span><div><strong>' + title + '</strong><small>' + escapeHtml(value(card, "description", "Your wishlist is empty")) + '</small></div></div>';
-		} else if (id === "product_summary") {
-			body = '<div><strong>' + escapeHtml(products[0] ? products[0].name : "Product name") + '</strong><p style="color:#2f806e;font-weight:800">' + escapeHtml(products[0] ? products[0].price : "450") + '</p></div>';
-		} else {
-			body = '<div class="kidia-page-preview-lines"><i></i><i></i><i></i></div>';
+		var first = sampleProducts()[0] || {};
+		if (id === "product_grid" || id === "wishlist_grid" || id === "related_products") {
+			return '<section class="kidia-app-section">' + (id === "related_products" ? '<h3>' + escapeHtml(value(card, "title", "قد يعجبك أيضًا")) + '</h3>' : "") + productCards(card, id === "related_products" ? number(card, "limit", 4) : 4) + (id === "product_grid" ? pagination(card) : "") + '</section>';
 		}
-		if (id === "product_grid" && value(card, "pagination_mode", "load_more") !== "none") {
-			body += '<div class="kidia-page-preview-button" style="margin-top:' + number(card, "pagination_spacing", 16) * .4 + 'px;background:' + color(card, "pagination_color", "#1F6F61") + ';color:' + color(card, "pagination_text_color", "#FFFFFF") + ';border-radius:' + number(card, "pagination_radius", 14) * .5 + 'px">' + escapeHtml(value(card, "pagination_mode", "load_more") === "numbers" ? "1  2  3" : value(card, "pagination_label", "Load more")) + '</div>';
+		if (id === "filter_bar") {
+			var buttons = [];
+			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
+			if (checked(card, "filter_size", true)) { buttons.push(icon("size") + '<b>المقاس</b>'); }
+			if (checked(card, "show_sort", true)) { buttons.push(icon("sort") + '<b>ترتيب</b>'); }
+			return '<div class="kidia-app-filter" style="width:' + number(card, "block_width", 100) + '%;height:' + number(card, "block_height", 68) * .68 + 'px;gap:' + number(card, "button_gap", 8) * .55 + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';--icon-size:' + number(card, "icon_size", 22) * .68 + 'px;--icon-color:' + color(card, "icon_color", "#1F2933") + '">' + buttons.map(function (button) { return '<button style="border-color:' + color(card, "border_color", "#DDE3E8") + ';border-radius:' + number(card, "button_radius", 12) * .68 + 'px">' + button + '</button>'; }).join("") + (checked(card, "show_result_count", true) ? '<small>24 منتج</small>' : "") + '</div>';
 		}
-		return '<section class="kidia-page-preview-element"><strong>' + title + '</strong>' + body + '</section>';
+		if (id === "image_gallery") {
+			var image = first.image_url ? '<img src="' + escapeHtml(first.image_url) + '" alt="">' : '<span class="kidia-app-gallery__fallback">KIDIA</span>';
+			return '<section class="kidia-app-gallery" style="aspect-ratio:' + number(card, "aspect_ratio", 1) + '">' + image + (checked(card, "show_indicators", true) ? '<span class="kidia-app-gallery__count">1 / 4</span>' : "") + (checked(card, "enable_zoom", true) ? icon("zoom") : "") + '</section>';
+		}
+		if (id === "product_summary") {
+			return '<section class="kidia-app-summary">' + (checked(card, "show_badge", true) ? '<span class="kidia-app-sale">خصم</span>' : "") + (checked(card, "show_name", true) ? '<h2>' + escapeHtml(first.name || "طقم أطفال كيديا") + '</h2>' : "") + (checked(card, "show_sku", true) ? '<small>SKU: KIDIA-001</small>' : "") + (checked(card, "show_rating", true) ? '<div class="kidia-app-stars">★★★★★ <u>11</u></div>' : "") + (checked(card, "show_price", true) ? '<div class="kidia-app-price"><b>' + money(first) + '</b>' + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div>' : "") + (checked(card, "show_stock", true) ? '<small class="kidia-app-stock">متوفر</small>' : "") + '</section>';
+		}
+		if (id === "variations") {
+			return '<section class="kidia-app-variations"><h3>اللون <span>وردي</span></h3><div><button class="is-selected">وردي</button><button>أصفر</button></div><h3>المقاس</h3><div><button>2Y</button><button class="is-selected">3Y</button><button>4Y</button></div></section>';
+		}
+		if (id === "purchase_bar") {
+			return '<section class="kidia-app-purchase-inline">' + (checked(card, "show_quantity", true) ? '<div class="kidia-app-quantity"><button>−</button><b>1</b><button>＋</button></div>' : "") + '<button style="background:' + color(card, "button_color", "#1F6F61") + ';color:' + color(card, "button_text_color", "#FFFFFF") + ';border-radius:' + number(card, "button_radius", 14) * .68 + 'px">أضف للسلة</button></section>';
+		}
+		if (id === "description") {
+			return '<section class="kidia-app-details"><h3>الوصف والتفاصيل</h3>' + (checked(card, "show_description", true) ? '<p>خامات مريحة وجودة مناسبة للأطفال.</p>' : "") + (checked(card, "show_attributes", true) ? '<div><span>الخامة</span><b>قطن</b></div><div><span>اللون</span><b>وردي</b></div>' : "") + (checked(card, "show_shipping", true) ? '<div><span>الشحن</span><b>2–5 أيام</b></div>' : "") + '</section>';
+		}
+		if (id === "reviews") { return '<section class="kidia-app-reviews"><h3>تقييمات العملاء</h3><b>4.8</b><span>★★★★★</span><small>بناءً على 11 تقييم</small></section>'; }
+		if (id === "empty_state") { return '<section class="kidia-app-empty">' + icon("heart") + '<h3>' + escapeHtml(value(card, "title", "المفضلة فارغة")) + '</h3><p>' + escapeHtml(value(card, "description", "احفظي المنتجات التي تحبينها هنا")) + '</p>' + (checked(card, "show_button", true) ? '<button>' + escapeHtml(value(card, "button_label", "تسوقي الآن")) + '</button>' : "") + '</section>'; }
+		if (id === "account_summary") { return '<section class="kidia-app-account-summary is-' + value(card, "card_style", "elevated") + '"><span class="kidia-app-avatar" style="width:' + number(card, "avatar_size", 66) * .68 + 'px;height:' + number(card, "avatar_size", 66) * .68 + 'px">B</span><div><strong>بسمة زيدان</strong>' + (checked(card, "show_email", true) ? '<small>customer@example.com</small>' : "") + '</div></section>'; }
+		if (id === "account_menu") {
+			var menu = [["orders","طلباتي"],["addresses","العناوين المحفوظة"],["profile","بيانات حسابي"],["support","خدمة العملاء"]].filter(function (item) { return checked(card, "show_" + item[0], true); });
+			return '<section class="kidia-app-account-menu is-' + value(card, "style", "list") + '" style="--menu-color:' + color(card, "icon_color", "#1F6F61") + '">' + menu.map(function (item) { return '<div>' + icon(item[0]) + '<b>' + item[1] + '</b>' + icon("chevron") + '</div>'; }).join("") + '</section>';
+		}
+		if (id === "logout_button") { return '<button class="kidia-app-logout is-' + value(card, "style", "outline") + '" style="--logout-color:' + color(card, "color", "#B42318") + '">' + icon("logout") + escapeHtml(value(card, "label", "تسجيل الخروج")) + '</button>'; }
+		return "";
+	}
+
+	function renderFooter(card) {
+		if (!card || !checked(card, "enabled", true)) { return ""; }
+		if (value(card, "style", "navigation") === "product_action") {
+			return '<footer class="kidia-app-footer kidia-app-footer--product" style="height:' + number(card, "height", 84) * .68 + 'px;background:' + color(card, "background_color", "#FFFFFF") + '">' + (checked(card, "show_share", true) ? '<span>' + icon("share") + '<b>' + escapeHtml(value(card, "share_label", "مشاركة")) + '</b></span>' : "") + (checked(card, "show_like", true) ? '<span>' + icon("heart") + '<b>' + escapeHtml(value(card, "like_label", "إعجاب")) + '</b></span>' : "") + (checked(card, "show_add_to_cart", true) ? '<button style="background:' + color(card, "button_color", "#1F2933") + ';color:' + color(card, "button_text_color", "#FFFFFF") + ';border-radius:' + number(card, "button_radius", 28) * .68 + 'px">' + escapeHtml(value(card, "add_to_cart_label", "أضف للحقيبة")) + '</button>' : "") + '</footer>';
+		}
+		var nav = [];
+		if (checked(card, "show_home", true)) { nav.push(["home","الرئيسية"]); }
+		if (checked(card, "show_categories", true)) { nav.push(["categories","الأقسام"]); }
+		if (checked(card, "show_wishlist", true)) { nav.push(["heart","المفضلة"]); }
+		if (checked(card, "show_account", true)) { nav.push(["person","حسابي"]); }
+		return '<footer class="kidia-app-footer" style="height:' + number(card, "height", 72) * .68 + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';color:' + color(card, "inactive_color", "#6B7280") + '">' + nav.map(function (item, index) { return '<span' + (index === 0 ? ' class="is-active" style="color:' + color(card, "active_color", "#1F6F61") + '"' : "") + '>' + icon(item[0]) + (checked(card, "show_labels", true) ? '<b>' + item[1] + '</b>' : "") + '</span>'; }).join("") + '</footer>';
 	}
 
 	function renderPreview() {
+		frame = 0;
 		var header = root.querySelector('[data-element="header"]');
 		var footer = root.querySelector('[data-element="footer"]');
-		var html = "";
-		if (header && checked(header, "enabled", true)) {
-			html += '<div class="kidia-page-preview-header" style="min-height:' + number(header, "height", 64) * .75 + 'px;background:' + color(header, "background_color", "#FFFFFF") + ';color:' + color(header, "title_color", "#1F2933") + '"><span>‹</span><strong>' + escapeHtml(value(header, "title", root.dataset.page || "Page")) + '</strong><span>⌕  ♡  ◫</span></div>';
-			if (value(header, "search_style", "icon") === "bar" && checked(header, "show_search", true)) {
-				html += '<div class="kidia-page-preview-search" style="height:' + number(header, "search_height", 40) * .65 + 'px;border-radius:' + number(header, "search_radius", 14) * .65 + 'px;background:' + color(header, "search_background", "#F1F3F4") + ';color:' + color(header, "search_text_color", "#5F6368") + '">⌕ ' + escapeHtml(value(header, "search_placeholder", "Search products")) + '</div>';
-			}
-		}
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) {
-			if (checked(card, "enabled", true)) { html += previewElement(card); }
-		});
-		if (footer && checked(footer, "enabled", true)) {
-			if (field(footer, "style") && field(footer, "style").value === "product_action") {
-				html += '<div class="kidia-page-preview-footer kidia-page-preview-product-footer" style="background:' + color(footer, "background_color", "#FFFFFF") + '">' + (checked(footer, "show_share", true) ? '<span>⇧<b>' + escapeHtml(value(footer, "share_label", "Share")) + '</b></span>' : '') + (checked(footer, "show_like", true) ? '<span>♡<b>' + escapeHtml(value(footer, "like_label", "Like")) + '</b></span>' : '') + (checked(footer, "show_add_to_cart", true) ? '<button style="background:' + color(footer, "button_color", "#1F2933") + ';color:' + color(footer, "button_text_color", "#FFFFFF") + ';border-radius:' + number(footer, "button_radius", 28) + 'px">' + escapeHtml(value(footer, "add_to_cart_label", "Add to bag")) + '</button>' : '') + '</div>';
-			} else {
-				html += '<div class="kidia-page-preview-footer" style="min-height:' + number(footer, "height", 72) * .72 + 'px;background:' + color(footer, "background_color", "#FFFFFF") + ';color:' + color(footer, "inactive_color", "#6B7280") + '"><span>⌂<b>Home</b></span><span>▦<b>Categories</b></span><span>♡<b>Wishlist</b></span><span>♙<b>Account</b></span></div>';
-			}
-		}
+		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '">';
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { html += previewElement(card); } });
+		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;
+		var headerNode = preview.querySelector(".kidia-app-header");
+		var footerNode = preview.querySelector(".kidia-app-footer");
+		if (headerNode) { headerNode.classList.add("kidia-page-preview-header"); }
+		if (footerNode) { footerNode.classList.add("kidia-page-preview-footer"); }
+		array(preview.querySelectorAll(".kidia-app-product")).forEach(function (node) { node.classList.add("kidia-page-preview-product"); });
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
+			var rendered = preview.querySelectorAll(".kidia-app-page > *")[index];
+			if (rendered) { rendered.classList.add("kidia-page-preview-element"); }
+		});
+	}
+	function schedulePreview() {
+		var requestFrame = window.requestAnimationFrame || function (callback) { callback(); return 0; };
+		var cancelFrame = window.cancelAnimationFrame || function () {};
+		if (frame) { cancelFrame(frame); }
+		frame = requestFrame(renderPreview);
 	}
 
 	root.addEventListener("click", function (event) {
 		var button = event.target.closest(".kidia-page-expand");
 		var media = event.target.closest(".kidia-page-media-choose, .kidia-page-media-preview");
-		if (button) {
-			var card = button.closest(".kidia-page-card");
-			var body = card.querySelector(".kidia-page-card__body");
-			card.classList.toggle("is-open");
-			body.hidden = !card.classList.contains("is-open");
-			return;
-		}
-		if (media && window.wp && wp.media) {
-			var mediaField = media.closest(".kidia-page-field--image");
-			var frame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false});
-			frame.on("select", function () {
-				var attachment = frame.state().get("selection").first().toJSON();
-				var input = mediaField.querySelector(".kidia-page-media-url");
-				var image = mediaField.querySelector(".kidia-page-media-preview");
-				input.value = attachment.url || "";
-				image.src = attachment.url || "";
-				image.hidden = !attachment.url;
-				renderPreview();
-			});
-			frame.open();
-		}
+		if (button) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }
+		if (media && window.wp && wp.media) { var mediaField = media.closest(".kidia-page-field--image"); var mediaFrame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false}); mediaFrame.on("select", function () { var attachment = mediaFrame.state().get("selection").first().toJSON(); var input = mediaField.querySelector(".kidia-page-media-url"); var image = mediaField.querySelector(".kidia-page-media-preview"); input.value = attachment.url || ""; image.src = attachment.url || ""; image.hidden = !attachment.url; schedulePreview(); }); mediaFrame.open(); }
 	});
-
-	root.addEventListener("change", function (event) {
-		if (event.target.type === "checkbox") {
-			var toggle = event.target.closest(".kidia-page-toggle");
-			if (toggle) { toggle.querySelector("b").textContent = "Show"; }
-		}
-		renderPreview();
-	});
-	root.addEventListener("input", renderPreview);
-
-	list.addEventListener("pointerdown", function (event) {
-		var handle = event.target.closest(".kidia-page-drag");
-		var card = handle ? handle.closest(".kidia-page-card") : null;
-		if (card) { card.draggable = true; }
-	});
-	list.addEventListener("dragstart", function (event) {
-		var card = event.target.closest(".kidia-page-card");
-		if (!card || !card.draggable) { event.preventDefault(); return; }
-		dragged = card; card.classList.add("is-dragging");
-	});
-	list.addEventListener("dragover", function (event) {
-		if (!dragged) { return; }
-		event.preventDefault();
-		var target = event.target.closest(".kidia-page-card");
-		if (!target || target === dragged) { return; }
-		var rect = target.getBoundingClientRect();
-		target.insertAdjacentElement(event.clientY > rect.top + rect.height / 2 ? "afterend" : "beforebegin", dragged);
-	});
-	list.addEventListener("dragend", function () {
-		if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; }
-		dragged = null; updateIndexes(); renderPreview();
-	});
-	root.querySelector("form").addEventListener("submit", function () {
-		updateIndexes();
-		var button = root.querySelector('button[type="submit"],input[type="submit"]');
-		if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); }
-	});
-	window.addEventListener("pageshow", function () {
-		var button = root.querySelector('button[type="submit"],input[type="submit"]');
-		if (button) { button.disabled = false; button.removeAttribute("aria-busy"); }
-	});
-
-	if ($ && $.fn && $.fn.sortable) {
-		$(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();renderPreview();}});
-	}
+	root.addEventListener("change", schedulePreview);
+	root.addEventListener("input", schedulePreview);
+	list.addEventListener("pointerdown", function (event) { var handle = event.target.closest(".kidia-page-drag"); var card = handle ? handle.closest(".kidia-page-card") : null; if (card) { card.draggable = true; } });
+	list.addEventListener("dragstart", function (event) { var card = event.target.closest(".kidia-page-card"); if (!card || !card.draggable) { event.preventDefault(); return; } dragged = card; card.classList.add("is-dragging"); });
+	list.addEventListener("dragover", function (event) { if (!dragged) { return; } event.preventDefault(); var target = event.target.closest(".kidia-page-card"); if (!target || target === dragged) { return; } var rect = target.getBoundingClientRect(); target.insertAdjacentElement(event.clientY > rect.top + rect.height / 2 ? "afterend" : "beforebegin", dragged); });
+	list.addEventListener("dragend", function () { if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; } dragged = null; updateIndexes(); schedulePreview(); });
+	root.querySelector("form").addEventListener("submit", function () { updateIndexes(); var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
+	window.addEventListener("pageshow", function () { var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
+	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();schedulePreview();}}); }
 	updateIndexes(); renderPreview();
 }(window.jQuery));

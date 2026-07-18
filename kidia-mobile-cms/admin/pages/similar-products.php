@@ -1,7 +1,9 @@
 <?php defined( 'ABSPATH' ) || exit; if ( ! is_array( $definition ) || ! is_array( $element ) ) { return; } ?>
 <div class="wrap kidia-page-builder"><header class="kidia-page-builder__heading"><h1><?php esc_html_e( 'Similar Products', 'kidia-mobile-cms' ); ?></h1><p><?php esc_html_e( 'Configure the Related Products section shown on product pages.', 'kidia-mobile-cms' ); ?></p></header>
 <?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Similar Products saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
-<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="kidia_mobile_save_similar_products"><?php wp_nonce_field( 'kidia_mobile_save_similar_products', 'kidia_mobile_similar_nonce' ); ?>
+<div class="kidia-page-workspace kidia-commerce-preview-workspace">
+<aside class="kidia-page-preview"><div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div id="kidia-commerce-preview" class="kidia-page-phone__screen kidia-app-preview" data-preview-kind="related"></div></div><p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p></aside>
+<form class="kidia-page-editor kidia-commerce-preview-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="kidia_mobile_save_similar_products"><?php wp_nonce_field( 'kidia_mobile_save_similar_products', 'kidia_mobile_similar_nonce' ); ?>
 <div class="kidia-page-toolbar"><strong><?php esc_html_e( 'Similar Products', 'kidia-mobile-cms' ); ?></strong><?php submit_button( __( 'Save Similar Products', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
 <section class="kidia-page-card is-open"><div class="kidia-page-card__header"><div><span class="dashicons dashicons-products"></span><strong><?php esc_html_e( 'Related Products', 'kidia-mobile-cms' ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="related[enabled]" value="0"><input type="checkbox" name="related[enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label></div><div class="kidia-page-card__body"><div class="kidia-page-fields">
 <?php foreach ( $definition['fields'] as $field ) : $key=$field['key']; $value=$element['settings'][$key] ?? $field['default']; $name='related[settings]['.$key.']'; ?><div class="kidia-page-field"><label><?php echo esc_html( $field['label'] ); ?></label>
@@ -10,4 +12,4 @@
 <?php elseif ( 'color' === $field['type'] ) : ?><input type="color" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($value); ?>">
 <?php elseif ( 'number' === $field['type'] ) : ?><input type="number" name="<?php echo esc_attr($name); ?>" min="<?php echo esc_attr((string)$field['min']); ?>" max="<?php echo esc_attr((string)$field['max']); ?>" step="<?php echo esc_attr((string)$field['step']); ?>" value="<?php echo esc_attr((string)$value); ?>">
 <?php else : ?><input type="text" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr((string)$value); ?>"><?php endif; ?></div><?php endforeach; ?>
-</div></div></section></form></div>
+</div></div></section></form></div></div>

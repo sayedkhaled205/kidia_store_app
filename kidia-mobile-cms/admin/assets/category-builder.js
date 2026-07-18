@@ -232,14 +232,16 @@
 	function renderMobilePreview() {
 		var rootList = builder.find(".kidia-category-editor form > .kidia-category-list").first();
 		var visible = 0;
+		var content = $('<div class="kidia-category-preview-content"></div>');
 
 		preview.empty();
+		preview.append(renderChrome("header"));
 		rootList.children(".kidia-category-row").each(function () {
 			var branch;
 			try {
 				branch = buildRootBranch($(this));
 				if (branch) {
-					preview.append(branch);
+					content.append(branch);
 					visible += 1;
 				}
 			} catch (error) {
@@ -250,9 +252,28 @@
 		});
 
 		if (!visible) {
-			preview.append('<div class="kidia-category-preview-empty">No visible categories.</div>');
+			content.append('<div class="kidia-category-preview-empty">No visible categories.</div>');
 		}
+		preview.append(content);
+		preview.append(renderChrome("footer"));
 	}
+
+	function chromeInput(card, suffix) {
+		var inputs = card.find('[name$="[' + suffix + ']"]');
+		return inputs.length ? inputs.last() : $();
+	}
+	function chromeValue(card, suffix, fallback) { var input = chromeInput(card, suffix); return input.length ? input.val() : fallback; }
+	function chromeChecked(card, suffix, fallback) { var input = chromeInput(card, suffix); return input.length ? input.prop("checked") : fallback; }
+	function renderChrome(part) {
+		var card = builder.find('[data-chrome-part="' + part + '"]').first();
+		if (!card.length || !chromeChecked(card, "enabled", true)) { return ""; }
+		if (part === "header") {
+			var bar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
+			return '<header class="kidia-app-header" style="height:' + Number(chromeValue(card, "height", 64)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading">' + (chromeChecked(card, "show_back", true) ? '<span class="kidia-app-icon kidia-app-icon--back"></span>' : '') + '</span><div class="kidia-app-header__title">' + (bar ? '<div class="kidia-app-search" style="height:' + Number(chromeValue(card, "search_height", 40)) * .68 + 'px;border-radius:' + Number(chromeValue(card, "search_radius", 14)) * .68 + 'px;background:' + chromeValue(card, "search_background", "#F1F3F4") + '"><span>⌕ ' + escapeHtml(chromeValue(card, "search_placeholder", "Search products")) + '</span></div>' : '<strong>' + escapeHtml(chromeValue(card, "title", "Categories")) + '</strong>') + '</div><div class="kidia-app-header__actions">' + (chromeChecked(card, "show_search", true) && !bar ? '<span class="kidia-app-icon kidia-app-icon--search"></span>' : '') + (chromeChecked(card, "show_cart", true) ? '<span class="kidia-app-icon kidia-app-icon--bag"></span>' : '') + '</div></header>';
+		}
+		return '<footer class="kidia-app-footer" style="height:' + Number(chromeValue(card, "height", 72)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "inactive_color", "#6B7280") + '"><span><span class="kidia-app-icon kidia-app-icon--home"></span><b>Home</b></span><span class="is-active" style="color:' + chromeValue(card, "active_color", "#1F6F61") + '"><span class="kidia-app-icon kidia-app-icon--categories"></span><b>Categories</b></span><span><span class="kidia-app-icon kidia-app-icon--heart"></span><b>Wishlist</b></span><span><span class="kidia-app-icon kidia-app-icon--person"></span><b>Account</b></span></footer>';
+	}
+	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
 
 	function updateRangeLabel(input) {
 		var value = input.value;
@@ -325,6 +346,10 @@
 	});
 
 	builder.on("change", '.kidia-category-visibility input[type="checkbox"]', function () {
+		renderMobilePreview();
+	});
+
+	builder.on("input change", ".kidia-fixed-chrome-card input, .kidia-fixed-chrome-card select", function () {
 		renderMobilePreview();
 	});
 
