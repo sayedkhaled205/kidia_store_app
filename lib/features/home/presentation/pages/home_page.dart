@@ -156,6 +156,10 @@ class HomePage extends ConsumerWidget {
         context.go('/account');
         return;
 
+	  case 'wishlist':
+		context.go('/wishlist');
+		return;
+
       case 'external':
         unawaited(_openExternalUrl(context, value));
         return;

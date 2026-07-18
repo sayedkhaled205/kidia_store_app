@@ -20,11 +20,81 @@
 	var createTitle = document.getElementById("kidia-create-element-title");
 	var blocksPayload = document.getElementById("kidia-home-builder-payload");
 	var previewContent = document.getElementById("kidia-mobile-preview-content");
+	var actionChoices = config.actionChoices || {};
 	var currentCreateType = "";
 	var draggedBlock = null;
 	var isDirty = false;
 	var previewBlocksById = {};
 	var previewBlocksByType = {};
+
+	function actionValueField(typeField) {
+		var expectedName = String(typeField && typeField.name || "").replace(/\[action_type\]$/, "[action_value]");
+		var fields;
+		var match = null;
+
+		if (!expectedName) {
+			return null;
+		}
+
+		fields = builder.querySelectorAll('[name$="[action_value]"]');
+		toArray(fields).some(function (field) {
+			if (field.name === expectedName) {
+				match = field;
+				return true;
+			}
+			return false;
+		});
+		return match;
+	}
+
+	function makeActionValueControl(typeField) {
+		var current = actionValueField(typeField);
+		var field = current ? current.closest(".kidia-builder-field") : null;
+		var actionType = String(typeField && typeField.value || "");
+		var choices = actionChoices[actionType] || [];
+		var replacement;
+		var selectedValue;
+
+		if (!current || !field) {
+			return;
+		}
+
+		selectedValue = String(current.value || current.dataset.savedValue || "");
+		field.hidden = actionType === "" || actionType === "brands";
+		current.disabled = field.hidden;
+		if (field.hidden) {
+			current.dataset.savedValue = selectedValue;
+			return;
+		}
+
+		if (actionType === "product" || actionType === "category" || actionType === "collection" || actionType === "brand") {
+			replacement = document.createElement("select");
+			replacement.appendChild(new Option(labels.chooseDestination || "Choose destination", ""));
+			choices.forEach(function (choice) {
+				replacement.appendChild(new Option(String(choice.label || choice.value || ""), String(choice.value || "")));
+			});
+			if (selectedValue && !choices.some(function (choice) { return String(choice.value || "") === selectedValue; })) {
+				replacement.appendChild(new Option((labels.currentDestination || "Current") + ": " + selectedValue, selectedValue));
+			}
+			replacement.value = selectedValue;
+		} else {
+			replacement = document.createElement("input");
+			replacement.type = actionType === "external" ? "url" : "search";
+			replacement.value = selectedValue;
+			replacement.placeholder = actionType === "external"
+				? (labels.externalUrl || "https://example.com")
+				: (labels.searchTerm || "Search term");
+		}
+
+		replacement.name = current.name;
+		replacement.className = current.className;
+		replacement.dataset.savedValue = selectedValue;
+		current.replaceWith(replacement);
+	}
+
+	function refreshActionValueControls(root) {
+		toArray((root || builder).querySelectorAll('[name$="[action_type]"]')).forEach(makeActionValueControl);
+	}
 
 	function toArray(collection) {
 		return Array.prototype.slice.call(collection || []);
@@ -338,6 +408,7 @@
 		var drawing = {
 			account: '<circle cx="12" cy="8" r="3"></circle><path d="M5.5 19c.8-3.2 3-4.8 6.5-4.8s5.7 1.6 6.5 4.8"></path>',
 			search: '<circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 4 4"></path>',
+			wishlist: '<path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.7-7 10-7 10z"></path>',
 			cart: '<path d="M6.5 8.5h11l1 11h-13z"></path><path d="M9 9V7a3 3 0 0 1 6 0v2"></path>'
 		}[type] || "";
 
@@ -364,7 +435,7 @@
 			image = safeImage(settings.logo_url);
 			title = escapeHtml(settings.title || name || "Kidia Store");
 			subtitle = escapeHtml(settings.subtitle || "");
-			return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;color:" + safeColor(settings.title_color, "#1F2933") + ";background:" + safeColor(settings.background_color, "#FFFFFF") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="color:' + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_search && settings.search_style !== "bar" ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span>" + (settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="background:' + safeColor(settings.search_background, "#F1F3F4") + ";color:" + safeColor(settings.search_text_color, "#5F6368") + '">' + previewIcon("search") + escapeHtml(settings.search_placeholder || "Search products") + "</span>" : "") + "</div>";
+			return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;padding-inline:" + numberInRange(settings.horizontal_padding, 12, 0, 32) * 0.65 + "px;border-radius:" + numberInRange(settings.border_radius, 0, 0, 40) * 0.65 + "px;color:" + safeColor(settings.title_color, "#1F2933") + ";background:" + safeColor(settings.background_color, "#FFFFFF") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="gap:' + numberInRange(settings.icon_gap, 4, 0, 24) * 0.65 + "px;color:" + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_wishlist ? previewIcon("wishlist") : "") + (settings.show_search && settings.search_style !== "bar" ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span>" + (settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="height:' + numberInRange(settings.search_height, 40, 32, 64) * 0.65 + "px;border:" + numberInRange(settings.search_border_width, 0, 0, 6) + "px solid " + safeColor(settings.search_border_color, "#DDE3E8") + ";border-radius:" + numberInRange(settings.search_radius, 14, 0, 32) * 0.65 + "px;background:" + safeColor(settings.search_background, "#F1F3F4") + ";color:" + safeColor(settings.search_text_color, "#5F6368") + '">' + previewIcon("search") + escapeHtml(settings.search_placeholder || "Search products") + (settings.show_voice_search ? " ♪" : "") + "</span>" : "") + "</div>";
 
 		case "hero_slider":
 			items = Array.isArray(settings.items) ? settings.items.filter(function (slide) { return slide && slide.enabled !== ""; }) : [];
@@ -1037,6 +1108,10 @@
 			}
 		}
 
+		if (/\[action_type\]$/.test(String(target.name || ""))) {
+			makeActionValueControl(target);
+		}
+
 		markDirty();
 		renderPreview();
 	});
@@ -1182,6 +1257,21 @@
 		block.draggable = false;
 		setCollapsed(block, true);
 	});
+	refreshActionValueControls(builder);
+	if (window.MutationObserver) {
+		new MutationObserver(function (mutations) {
+			mutations.forEach(function (mutation) {
+				toArray(mutation.addedNodes).forEach(function (node) {
+					if (node && node.nodeType === 1) {
+						if (/\[action_type\]$/.test(String(node.name || ""))) {
+							makeActionValueControl(node);
+						}
+						refreshActionValueControls(node);
+					}
+				});
+			});
+		}).observe(builder, { childList: true, subtree: true });
+	}
 	updateIndexes();
 	loadRuntimePreview();
 	renderPreview();

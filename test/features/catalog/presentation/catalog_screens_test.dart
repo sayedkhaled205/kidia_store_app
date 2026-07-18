@@ -16,7 +16,7 @@ import 'package:kidia_store_app/features/catalog/presentation/controllers/catalo
 import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:kidia_store_app/features/categories/presentation/categories_screen.dart';
 import 'package:kidia_store_app/features/search/presentation/search_screen.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 void main() {
   testWidgets('empty search waits for a customer query', (
@@ -135,14 +135,7 @@ void main() {
 
     expect(find.byType(TextField), findsNothing);
     expect(find.text('1 product'), findsNothing);
-    expect(find.byType(CommerceAppBar), findsOneWidget);
-    final AppBar appBar = tester.widget<AppBar>(
-      find.descendant(
-        of: find.byType(CommerceAppBar),
-        matching: find.byType(AppBar),
-      ),
-    );
-    expect(appBar.centerTitle, isTrue);
+    expect(find.byType(CmsPageAppBar), findsOneWidget);
     expect(find.byKey(const Key('commerce-app-bar-title')), findsOneWidget);
     expect(find.text('Shoes'), findsOneWidget);
     expect(find.byKey(const Key('catalog-filter-button')), findsOneWidget);

@@ -18,6 +18,14 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	private const CAPABILITY = 'manage_options';
 
+	/** @var array<string,string> */
+	private const PAGE_BUILDER_SLUGS = array(
+		'kidia-mobile-catalog-builder'  => 'catalog',
+		'kidia-mobile-product-builder'  => 'product',
+		'kidia-mobile-wishlist-builder' => 'wishlist',
+		'kidia-mobile-account-builder'  => 'account',
+	);
+
 	/**
 	 * Library editor page slugs keyed by element type.
 	 *
@@ -103,6 +111,11 @@ final class Kidia_Mobile_CMS_Admin {
 		);
 
 		add_action(
+			'admin_post_kidia_mobile_save_page_builder',
+			array( $this, 'save_page_builder' )
+		);
+
+		add_action(
 			'admin_menu',
 			array( $this, 'hide_element_library_menus' ),
 			999
@@ -162,6 +175,56 @@ final class Kidia_Mobile_CMS_Admin {
 			array( $this, 'category_builder_page' )
 		);
 
+		foreach ( self::PAGE_BUILDER_SLUGS as $slug => $page ) {
+			$labels = Kidia_Mobile_Page_Layout_Store::pages();
+			$label = $labels[ $page ];
+			add_submenu_page(
+				'kidia-mobile-cms',
+				$label . ' ' . __( 'Builder', 'kidia-mobile-cms' ),
+				$label,
+				self::CAPABILITY,
+				$slug,
+				array( $this, 'page_builder_page' )
+			);
+		}
+
+	}
+
+	/** Renders one of the shared application page builders. */
+	public function page_builder_page(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+		}
+		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$page = self::PAGE_BUILDER_SLUGS[ $slug ] ?? '';
+		if ( '' === $page ) {
+			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
+		}
+		$store = new Kidia_Mobile_Page_Layout_Store();
+		$layout = $store->get_layout( $page );
+		$page_labels = Kidia_Mobile_Page_Layout_Store::pages();
+		$page_label = $page_labels[ $page ];
+		$element_definitions = Kidia_Mobile_Page_Layout_Store::element_definitions( $page );
+		$header_fields = Kidia_Mobile_Page_Layout_Store::header_fields();
+		$footer_fields = Kidia_Mobile_Page_Layout_Store::footer_fields();
+		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/page-builder.php';
+	}
+
+	/** Saves a shared application page layout. */
+	public function save_page_builder(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' );
+		$page = isset( $_POST['builder_page'] ) ? sanitize_key( wp_unslash( $_POST['builder_page'] ) ) : '';
+		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
+			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
+		}
+		$submitted = isset( $_POST['layout'] ) ? wp_unslash( $_POST['layout'] ) : array();
+		( new Kidia_Mobile_Page_Layout_Store() )->save_layout( $page, is_array( $submitted ) ? $submitted : array() );
+		$slug = array_search( $page, self::PAGE_BUILDER_SLUGS, true );
+		wp_safe_redirect( add_query_arg( array( 'page' => $slug, 'updated' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/** Keeps the plugin menu limited to its three public work areas. */
@@ -444,6 +507,7 @@ final class Kidia_Mobile_CMS_Admin {
 					if (
 							'kidia-mobile-home-builder' !== $page
 							&& 'kidia-mobile-category-builder' !== $page
+							&& ! isset( self::PAGE_BUILDER_SLUGS[ $page ] )
 							&& 'kidia-mobile-cms_page_kidia-mobile-home-builder'
 								!== $hook_suffix
 					) {
@@ -455,6 +519,20 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( 'kidia-mobile-category-builder' === $page ) {
 						wp_enqueue_style( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.css' ) );
 						wp_enqueue_script( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.js' ), true );
+						return;
+					}
+
+					if ( isset( self::PAGE_BUILDER_SLUGS[ $page ] ) ) {
+						wp_enqueue_style( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.css' ) );
+						wp_enqueue_script( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.js' ), true );
+						wp_localize_script(
+							'kidia-mobile-page-builder',
+							'kidiaPageBuilder',
+							array(
+								'page' => self::PAGE_BUILDER_SLUGS[ $page ],
+								'labels' => array( 'hidden' => __( 'Hidden', 'kidia-mobile-cms' ), 'visible' => __( 'Visible', 'kidia-mobile-cms' ) ),
+							)
+						);
 						return;
 					}
 
@@ -503,8 +581,13 @@ final class Kidia_Mobile_CMS_Admin {
 								'kidia-mobile-cms'
 							),
 							'addFirst'       => __( 'Add First Element', 'kidia-mobile-cms' ),
+							'chooseDestination' => __( 'Choose destination', 'kidia-mobile-cms' ),
+							'currentDestination' => __( 'Current value', 'kidia-mobile-cms' ),
+							'externalUrl' => __( 'External URL', 'kidia-mobile-cms' ),
+							'searchTerm' => __( 'Search term', 'kidia-mobile-cms' ),
 						),
 						'editorPages'     => self::EDITOR_PAGES,
+						'actionChoices'    => $this->get_action_choices(),
 						'previewEndpoint' => esc_url_raw(
 							add_query_arg(
 								'locale',
@@ -515,4 +598,73 @@ final class Kidia_Mobile_CMS_Admin {
 					)
             		);
             	}
+
+	/**
+	 * Returns the real WooCommerce destinations used by Action Value controls.
+	 *
+	 * @return array<string,array<int,array<string,string>>>
+	 */
+	private function get_action_choices(): array {
+		$choices = array(
+			'collection' => array(
+				array( 'value' => 'latest', 'label' => __( 'Latest products', 'kidia-mobile-cms' ) ),
+				array( 'value' => 'featured', 'label' => __( 'Featured products', 'kidia-mobile-cms' ) ),
+				array( 'value' => 'on_sale', 'label' => __( 'Products on sale', 'kidia-mobile-cms' ) ),
+				array( 'value' => 'best_selling', 'label' => __( 'Best selling', 'kidia-mobile-cms' ) ),
+				array( 'value' => 'top_rated', 'label' => __( 'Top rated', 'kidia-mobile-cms' ) ),
+			),
+			'product'    => array(),
+			'category'   => array(),
+			'brand'      => array(),
+		);
+
+		if ( post_type_exists( 'product' ) ) {
+			$product_ids = get_posts(
+				array(
+					'post_type'      => 'product',
+					'post_status'    => 'publish',
+					'posts_per_page' => 500,
+					'orderby'        => 'title',
+					'order'          => 'ASC',
+					'fields'         => 'ids',
+				)
+			);
+			foreach ( $product_ids as $product_id ) {
+				$choices['product'][] = array(
+					'value' => (string) absint( $product_id ),
+					'label' => sprintf( '%s — #%d', get_the_title( $product_id ), absint( $product_id ) ),
+				);
+			}
+		}
+
+		if ( taxonomy_exists( 'product_cat' ) ) {
+			$terms = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false, 'orderby' => 'name' ) );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$choices['category'][] = array(
+						'value' => (string) $term->term_id,
+						'label' => sprintf( '%s — #%d', $term->name, $term->term_id ),
+					);
+				}
+			}
+		}
+
+		foreach ( array( 'product_brand', 'pwb-brand', 'yith_product_brand' ) as $taxonomy ) {
+			if ( ! taxonomy_exists( $taxonomy ) ) {
+				continue;
+			}
+			$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => false, 'orderby' => 'name' ) );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$choices['brand'][] = array(
+						'value' => (string) $term->term_id,
+						'label' => sprintf( '%s — #%d', $term->name, $term->term_id ),
+					);
+				}
+			}
+			break;
+		}
+
+		return $choices;
+	}
             }

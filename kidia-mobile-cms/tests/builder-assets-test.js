@@ -92,7 +92,7 @@ function homeMarkup() {
     homeBlock("app_header", 0, `${mediaField("logo_url", "https://example.com/logo.png", "kidia-app-header-logo-url", "kidia-select-app-header-logo", "kidia-media-preview kidia-app-header-logo-preview")}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
     homeBlock("hero_slider", 1, `${input("aspect_ratio", "1.8")}<div class="kidia-hero-block-items">${heroItem}</div><button type="button" class="kidia-add-hero-block-item">Add Slide</button><script type="text/html" class="tmpl-kidia-hero-block-item">${heroTemplate}</script>`),
     homeBlock("category_grid", 2, `${input("title", "Categories")}${input("columns", "4")}${input("limit", "4")}<input type="checkbox" name="blocks[0][settings][show_names]" value="1" checked>`),
-    homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}`),
+    homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}<div class="kidia-builder-field"><select name="blocks[0][settings][action_type]"><option value="product" selected>Product</option><option value="category">Category</option></select></div><div class="kidia-builder-field">${input("action_value", "12")}</div>`),
     homeBlock("product_carousel", 4, `${input("title", "Latest")}${input("limit", "3")}`),
     homeBlock("product_grid", 5, `${input("title", "Offers")}${input("columns", "2")}${input("limit", "4")}`),
     homeBlock("section_header", 6, `${input("title", "Featured")}${input("subtitle", "Chosen for you")}${input("view_all_label", "View all")}<input type="checkbox" name="blocks[0][settings][show_view_all]" value="1" checked>`),
@@ -153,6 +153,10 @@ function runHomeBuilderTest() {
   };
   window.kidiaHomeBuilder = {
     labels: { copySuffix: " Copy" },
+    actionChoices: {
+      product: [{ value: "11", label: "Pink Kids Set" }, { value: "12", label: "Blue Kids Set" }],
+      category: [{ value: "1", label: "Clothes" }, { value: "2", label: "Toys" }],
+    },
     previewBlocks: [
       {
         id: "category_grid_2",
@@ -211,6 +215,14 @@ function runHomeBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 17, "All 17 element editors must load.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 17, "Every editor must use the compact essentials panel.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 17, "Every editor must use the shared settings panel.");
+  const actionType = window.document.querySelector('[name="blocks[3][settings][action_type]"]');
+  let actionValue = window.document.querySelector('[name="blocks[3][settings][action_value]"]');
+  assert.equal(actionValue.tagName, "SELECT", "Product actions must replace Action Value with a product selector.");
+  assert.equal(actionValue.value, "12", "The contextual selector must preserve the saved destination.");
+  actionType.value = "category";
+  actionType.dispatchEvent(new window.Event("change", { bubbles: true }));
+  actionValue = window.document.querySelector('[name="blocks[3][settings][action_value]"]');
+  assert.match(actionValue.textContent, /Clothes/, "Category actions must load WooCommerce category choices.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, 1fr\)/, "The editor must keep using the available workspace beside the phone preview.");
   assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*77%;/, "Element cards must be 10% wider than their previous 70% width.");
@@ -433,9 +445,44 @@ function runCategoryBuilderTest() {
   console.log("Category Builder: preview, expansion, media, visibility, settings and sorting passed.");
 }
 
+function runPageBuilderTest() {
+  const markup = `<!doctype html><html><body>
+    <div class="kidia-page-builder" data-page="catalog">
+      <div id="kidia-page-live-preview"></div>
+      <form><section class="kidia-page-card kidia-page-card--locked" data-element="header">
+        <div class="kidia-page-card__header"><button type="button" class="kidia-page-expand">Open</button></div>
+        <div class="kidia-page-card__body" hidden><input name="layout[header][height]" value="64"></div>
+        <input type="checkbox" name="layout[header][enabled]" checked>
+      </section>
+      <div id="kidia-page-elements">
+        <section class="kidia-page-card" data-element="filter_bar"><input name="layout[elements][0][id]" value="filter_bar"><input type="checkbox" name="layout[elements][0][enabled]" checked><span class="kidia-page-drag"></span></section>
+        <section class="kidia-page-card" data-element="product_grid"><input name="layout[elements][1][id]" value="product_grid"><input type="checkbox" name="layout[elements][1][enabled]" checked><input name="layout[elements][1][settings][columns]" value="3"><span class="kidia-page-drag"></span></section>
+      </div>
+      <section class="kidia-page-card kidia-page-card--locked" data-element="footer"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][height]" value="72"></section>
+      </form>
+    </div></body></html>`;
+  const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+  const { window } = dom;
+  const $ = createJQuery(window);
+  window.$ = window.jQuery = $;
+  $.fn.sortable = function (options) { return this.each(function () { this.kidiaSortableOptions = options; }); };
+  window.eval(readAsset("page-builder.js"));
+  assert.ok(window.document.querySelector(".kidia-page-preview-header"), "The fixed page header must render in preview.");
+  assert.ok(window.document.querySelector(".kidia-page-preview-footer"), "The fixed page footer must render in preview.");
+  assert.equal(window.document.querySelectorAll(".kidia-page-preview-element").length, 2, "Page-specific elements must render in preview.");
+  assert.equal(window.document.querySelectorAll(".kidia-page-preview-grid i").length, 4, "Grid controls must update the mobile preview.");
+  const list = window.document.getElementById("kidia-page-elements");
+  list.insertBefore(list.lastElementChild, list.firstElementChild);
+  list.kidiaSortableOptions.update();
+  assert.equal(list.firstElementChild.querySelector('input[name$="[id]"]').name, "layout[elements][0][id]", "Reordering must keep submitted indexes valid.");
+  assert.equal(window.document.querySelectorAll(".kidia-page-card--locked .kidia-page-drag").length, 0, "Fixed header/footer cards must never expose drag handles.");
+  console.log("Page Builders: fixed chrome, page elements, preview and sorting passed.");
+}
+
 if (require.main === module) {
   runHomeBuilderTest();
   runCategoryBuilderTest();
+  runPageBuilderTest();
   console.log("Builder browser contract tests: ok");
 }
 

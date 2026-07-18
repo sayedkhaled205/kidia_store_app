@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
 import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -16,7 +15,8 @@ import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_pr
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_size_sheet.dart';
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_sort_sheet.dart';
 import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 class CatalogProductListScreen extends StatelessWidget {
   const CatalogProductListScreen({
@@ -31,24 +31,33 @@ class CatalogProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
-    return Scaffold(
-      appBar: CommerceAppBar(
-        title: request.title.trim().isEmpty ? copy.products : request.title,
-        actions: <Widget>[
-          IconButton(
-            tooltip: copy.search,
-            onPressed: () async => showCatalogSearch(
-              context,
-              initialQuery: request.search,
+    final String title = request.title.trim().isEmpty ? copy.products : request.title;
+    return CmsPageLayoutLoader(
+      page: 'catalog',
+      builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
+        appBar: CmsPageAppBar(
+          layout: layout,
+          defaultTitle: title,
+          actions: <CmsPageHeaderAction>[
+            CmsPageHeaderAction(
+              type: 'search',
+              icon: Icons.search_rounded,
+              tooltip: copy.search,
+              onPressed: () => showCatalogSearch(context, initialQuery: request.search),
             ),
-            icon: const Icon(Icons.search_rounded, size: 26.4),
-          ),
-          CartIconButton(onPressed: () => context.push('/cart')),
-        ],
-      ),
-      body: CatalogProductListView(
-        request: request,
-        showSearchField: showSearchField,
+            CmsPageHeaderAction(
+              type: 'cart',
+              icon: Icons.shopping_bag_outlined,
+              tooltip: 'Cart',
+              onPressed: () => context.push('/cart'),
+            ),
+          ],
+        ),
+        body: CatalogProductListView(
+          request: request,
+          showSearchField: showSearchField,
+          pageLayout: layout,
+        ),
       ),
     );
   }
@@ -59,10 +68,12 @@ class CatalogProductListView extends ConsumerStatefulWidget {
     required this.request,
     super.key,
     this.showSearchField = true,
+    this.pageLayout,
   });
 
   final CatalogProductListRequest request;
   final bool showSearchField;
+  final CmsPageLayout? pageLayout;
 
   @override
   ConsumerState<CatalogProductListView> createState() =>
@@ -127,6 +138,7 @@ class _CatalogProductListViewState
           scrollController: _scrollController,
           searchController: _searchController,
           showSearchField: widget.showSearchField,
+          pageLayout: widget.pageLayout ?? CmsPageLayout.fallback('catalog'),
         );
       },
     );
@@ -139,12 +151,14 @@ class _ProductListContent extends StatelessWidget {
     required this.scrollController,
     required this.searchController,
     required this.showSearchField,
+    required this.pageLayout,
   });
 
   final CatalogProductListController controller;
   final ScrollController scrollController;
   final TextEditingController searchController;
   final bool showSearchField;
+  final CmsPageLayout pageLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +172,7 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
-          if (showSearchField)
+          if (showSearchField && pageLayout.element('search_bar').enabled)
             SliverToBoxAdapter(
               child: _SearchField(
                 controller: searchController,
@@ -170,7 +184,7 @@ class _ProductListContent extends StatelessWidget {
                 },
               ),
             ),
-          if (!controller.isAwaitingSearch)
+          if (!controller.isAwaitingSearch && pageLayout.element('filter_bar').enabled)
             SliverPersistentHeader(
               pinned: true,
               delegate: _CatalogToolbarHeaderDelegate(
@@ -202,13 +216,18 @@ class _ProductListContent extends StatelessWidget {
                         controller.applyFilters(const CatalogProductFilters()),
             )
           else ...<Widget>[
-            _CatalogProductGrid(items: state.items),
-            SliverToBoxAdapter(
-              child: _PaginationFooter(
-                state: state,
-                onRetry: controller.loadMore,
+            if (pageLayout.element('product_grid').enabled)
+              _CatalogProductGrid(
+                items: state.items,
+                settings: pageLayout.element('product_grid'),
               ),
-            ),
+            if (pageLayout.element('pagination').enabled)
+              SliverToBoxAdapter(
+                child: _PaginationFooter(
+                  state: state,
+                  onRetry: controller.loadMore,
+                ),
+              ),
           ],
         ],
       ),
@@ -417,19 +436,22 @@ class _ToolbarButton extends StatelessWidget {
 }
 
 class _CatalogProductGrid extends StatelessWidget {
-  const _CatalogProductGrid({required this.items});
+  const _CatalogProductGrid({required this.items, required this.settings});
 
   final List<CatalogProduct> items;
+  final CmsPageComponent settings;
 
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.sizeOf(context).width;
-    final int columns = width >= 760
+    final int responsiveColumns = width >= 760
         ? 4
         : width >= 540
         ? 3
         : 2;
-    final double usableWidth = width - 32 - ((columns - 1) * 12);
+    final int columns = settings.number('columns', 2).round().clamp(1, responsiveColumns);
+    final double gap = settings.number('gap', 12).clamp(0, 32);
+    final double usableWidth = width - 32 - ((columns - 1) * gap);
     final double cardWidth = usableWidth / columns;
     final double baseExtent = (cardWidth * 1.01 + 103)
         .clamp(250, 336)
@@ -444,8 +466,8 @@ class _CatalogProductGrid extends StatelessWidget {
         itemCount: items.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: gap,
+          crossAxisSpacing: gap,
           mainAxisExtent: extent,
         ),
         itemBuilder: (BuildContext context, int index) {

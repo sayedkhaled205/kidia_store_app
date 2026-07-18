@@ -5,10 +5,10 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.d
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 
 typedef ProductWishlistToggleCallback =
@@ -90,54 +90,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
-    return Scaffold(
-      appBar: CommerceAppBar(actions: _buildActions(copy)),
-      body: _buildBody(copy),
-      bottomNavigationBar:
-          _controller.status == ProductDetailStatus.success &&
-              _controller.product != null
-          ? _PurchaseBar(
-              controller: _controller,
-              hasCartConnection: widget.onAddToCart != null,
-              copy: copy,
-              onPressed: _addToCart,
-            )
-          : null,
+    return CmsPageLayoutLoader(
+      page: 'product',
+      builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
+        appBar: CmsPageAppBar(
+          layout: layout,
+          defaultTitle: copy.description,
+          actions: _buildCmsActions(copy),
+        ),
+        body: _buildBody(copy, layout),
+        bottomNavigationBar:
+            layout.element('purchase_bar').enabled &&
+                _controller.status == ProductDetailStatus.success &&
+                _controller.product != null
+            ? _PurchaseBar(
+                controller: _controller,
+                hasCartConnection: widget.onAddToCart != null,
+                copy: copy,
+                onPressed: _addToCart,
+              )
+            : null,
+      ),
     );
   }
 
-  List<Widget> _buildActions(_ProductCopy copy) {
+  List<CmsPageHeaderAction> _buildCmsActions(_ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
-    return <Widget>[
+    return <CmsPageHeaderAction>[
       if (product != null && widget.onShareRequested != null)
-        IconButton(
+        CmsPageHeaderAction(
+          type: 'share',
+          icon: Icons.ios_share_outlined,
           tooltip: copy.share,
           onPressed: () => widget.onShareRequested!(product),
-          icon: const Icon(Icons.ios_share_outlined),
         ),
       if (product != null && widget.onWishlistToggle != null)
-        IconButton(
+        CmsPageHeaderAction(
           key: const Key('product-wishlist-button'),
-          tooltip: copy.save,
-          onPressed: _isWishlistMutating
-              ? null
-              : () => _toggleWishlist(product),
+          type: 'wishlist',
+          icon: _isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
           color: _isWishlisted ? Colors.red : null,
-          icon: Icon(
-            _isWishlisted
-                ? Icons.favorite_rounded
-                : Icons.favorite_border_rounded,
-          ),
+          tooltip: copy.save,
+          onPressed: _isWishlistMutating ? () {} : () => _toggleWishlist(product),
         ),
-      CartIconButton(
+      CmsPageHeaderAction(
         key: const Key('product-cart-button'),
-        endInset: 0,
+        type: 'cart',
+        icon: Icons.shopping_bag_outlined,
+        tooltip: 'Cart',
         onPressed: () => context.push('/cart'),
       ),
     ];
   }
 
-  Widget _buildBody(_ProductCopy copy) {
+  Widget _buildBody(_ProductCopy copy, CmsPageLayout layout) {
     switch (_controller.status) {
       case ProductDetailStatus.initial:
       case ProductDetailStatus.loading:
@@ -159,6 +165,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           controller: _controller,
           product: product,
           copy: copy,
+          pageLayout: layout,
           onReviewsRequested: widget.onReviewsRequested,
           onRelatedProductsRequested: widget.onRelatedProductsRequested,
         );
@@ -222,6 +229,7 @@ class _ProductContent extends StatelessWidget {
     required this.controller,
     required this.product,
     required this.copy,
+    required this.pageLayout,
     this.onReviewsRequested,
     this.onRelatedProductsRequested,
   });
@@ -229,6 +237,7 @@ class _ProductContent extends StatelessWidget {
   final ProductDetailController controller;
   final CatalogProduct product;
   final _ProductCopy copy;
+  final CmsPageLayout pageLayout;
   final ValueChanged<CatalogProduct>? onReviewsRequested;
   final ValueChanged<CatalogProduct>? onRelatedProductsRequested;
 
@@ -245,14 +254,17 @@ class _ProductContent extends StatelessWidget {
     return CustomScrollView(
       key: const Key('product-detail-scroll'),
       slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: _ProductGallery(images: images, productName: product.name),
-        ),
+        if (pageLayout.element('image_gallery').enabled)
+          SliverToBoxAdapter(
+            child: _ProductGallery(images: images, productName: product.name),
+          ),
         SliverPadding(
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
           sliver: SliverList.list(
             children: <Widget>[
-              if (product.isOnSale || !inStock) ...<Widget>[
+              if (pageLayout.element('product_summary').enabled &&
+                  pageLayout.element('product_summary').boolean('show_badge', true) &&
+                  (product.isOnSale || !inStock)) ...<Widget>[
                 _ProductBadges(
                   product: product,
                   variation: variation,
@@ -260,13 +272,17 @@ class _ProductContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
+              if (pageLayout.element('product_summary').enabled &&
+                  pageLayout.element('product_summary').boolean('show_name', true))
               Text(
                 product.name,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              if (product.sku.isNotEmpty) ...<Widget>[
+              if (pageLayout.element('product_summary').enabled &&
+                  pageLayout.element('product_summary').boolean('show_sku', true) &&
+                  product.sku.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 6),
                 Text(
                   '${copy.sku}: ${product.sku}',
@@ -276,8 +292,10 @@ class _ProductContent extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 14),
-              _MoneyPrice(money: money),
-              if (controller.optionGroups.isNotEmpty) ...<Widget>[
+              if (pageLayout.element('product_summary').enabled &&
+                  pageLayout.element('product_summary').boolean('show_price', true))
+                _MoneyPrice(money: money),
+              if (pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 24),
                 for (final ProductOptionGroup group in controller.optionGroups)
                   _ProductOptionPicker(
@@ -287,7 +305,9 @@ class _ProductContent extends StatelessWidget {
                   ),
               ],
               const SizedBox(height: 18),
-              _QuantitySelector(controller: controller, copy: copy),
+              if (pageLayout.element('purchase_bar').enabled &&
+                  pageLayout.element('purchase_bar').boolean('show_quantity', true))
+                _QuantitySelector(controller: controller, copy: copy),
               if (product.hasVariations &&
                   controller.selectionComplete &&
                   controller.selectedVariation == null) ...<Widget>[
@@ -306,8 +326,10 @@ class _ProductContent extends StatelessWidget {
                 _BrandSection(product: product, copy: copy),
                 const SizedBox(height: 12),
               ],
-              _DetailsSection(product: product, copy: copy),
+              if (pageLayout.element('description').enabled)
+                _DetailsSection(product: product, copy: copy),
               const SizedBox(height: 18),
+              if (pageLayout.element('related_products').enabled)
               OutlinedButton.icon(
                 key: const Key('related-products-button'),
                 onPressed: onRelatedProductsRequested == null

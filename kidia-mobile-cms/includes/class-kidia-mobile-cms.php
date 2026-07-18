@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-block-registry.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-layout-store.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-page-layout-store.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'api/class-customer-auth-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-customer-orders-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-customer-account-endpoint.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'api/class-category-page-endpoint.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'api/class-page-layout-endpoint.php';
 
 final class Kidia_Mobile_CMS {
 
@@ -204,6 +206,9 @@ final class Kidia_Mobile_CMS {
 			->register();
 
 		(new Kidia_Mobile_CMS_Category_Page_Endpoint())
+			->register();
+
+		(new Kidia_Mobile_CMS_Page_Layout_Endpoint())
 			->register();
 
 	}

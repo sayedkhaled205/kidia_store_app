@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
+import '../features/page_builder/domain/cms_page_layout.dart';
+import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -34,29 +36,70 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final String page = _pageForPath(GoRouterState.of(context).uri.path);
+    final CmsPageLayout pageLayout =
+        ref.watch(cmsPageLayoutProvider(page)).value ??
+        CmsPageLayout.fallback(page);
+    final CmsPageComponent footer = pageLayout.footer;
+    final List<MapEntry<int, _NavigationItem>> visibleItems = _items
+        .asMap()
+        .entries
+        .where((MapEntry<int, _NavigationItem> entry) {
+          const List<String> keys = <String>[
+            'show_home',
+            'show_categories',
+            'show_wishlist',
+            'show_account',
+          ];
+          return footer.boolean(keys[entry.key], true);
+        })
+        .toList(growable: false);
+    final int selectedIndex = visibleItems.indexWhere(
+      (MapEntry<int, _NavigationItem> entry) =>
+          entry.key == navigationShell.currentIndex,
+    );
+    final Color activeColor = _cmsColor(
+      footer.string('active_color', '#1F6F61'),
+      KidiaColors.primaryDark,
+    );
+    final Color inactiveColor = _cmsColor(
+      footer.string('inactive_color', '#6B7280'),
+      KidiaColors.textSecondary,
+    );
+    final Color backgroundColor = _cmsColor(
+      footer.string('background_color', '#FFFFFF'),
+      KidiaColors.surface,
+    );
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: SafeArea(
+      bottomNavigationBar: !footer.enabled || visibleItems.isEmpty
+          ? null
+          : SafeArea(
         top: false,
         child: Container(
-          decoration: const BoxDecoration(
-            color: KidiaColors.surface,
-            border: Border(top: BorderSide(color: KidiaColors.divider)),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            border: const Border(top: BorderSide(color: KidiaColors.divider)),
           ),
           child: NavigationBar(
-            height: 72,
+            height: footer.number('height', 72).clamp(48, 100),
             elevation: 0,
-            backgroundColor: KidiaColors.surface,
+            backgroundColor: backgroundColor,
             indicatorColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: _openBranch,
-            destinations: _items.map((item) {
+            labelBehavior: footer.boolean('show_labels', true)
+                ? NavigationDestinationLabelBehavior.alwaysShow
+                : NavigationDestinationLabelBehavior.alwaysHide,
+            selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+            onDestinationSelected: (int index) =>
+                _openBranch(visibleItems[index].key),
+            destinations: visibleItems.map((entry) {
+              final _NavigationItem item = entry.value;
               return NavigationDestination(
-                icon: _NavigationIcon(icon: item.icon),
+                icon: _NavigationIcon(icon: item.icon, color: inactiveColor),
                 selectedIcon: _NavigationIcon(
                   icon: item.selectedIcon,
-                  selected: true,
+                  color: activeColor,
                 ),
                 label: item.label,
               );
@@ -65,6 +108,23 @@ class MainShell extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _pageForPath(String path) {
+    if (path.startsWith('/product/')) return 'product';
+    if (path.startsWith('/wishlist')) return 'wishlist';
+    if (path.startsWith('/account')) return 'account';
+    if (path.startsWith('/categories/') ||
+        path.startsWith('/collection/') ||
+        path.startsWith('/brand/') ||
+        path.startsWith('/products')) {
+      return 'catalog';
+    }
+    return navigationShell.currentIndex == 2
+        ? 'wishlist'
+        : navigationShell.currentIndex == 3
+        ? 'account'
+        : 'catalog';
   }
 
   void _openBranch(int index) {
@@ -76,18 +136,24 @@ class MainShell extends ConsumerWidget {
 }
 
 class _NavigationIcon extends StatelessWidget {
-  const _NavigationIcon({required this.icon, this.selected = false});
+  const _NavigationIcon({required this.icon, required this.color});
 
   final IconData icon;
-  final bool selected;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Icon(
       icon,
-      color: selected ? KidiaColors.primaryDark : KidiaColors.textSecondary,
+      color: color,
     );
   }
+}
+
+Color _cmsColor(String value, Color fallback) {
+  final String normalized = value.replaceFirst('#', '');
+  if (!RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(normalized)) return fallback;
+  return Color(int.parse('FF$normalized', radix: 16));
 }
 
 class _NavigationItem {

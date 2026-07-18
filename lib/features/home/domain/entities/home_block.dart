@@ -53,6 +53,25 @@ class AppHeaderBlock extends HomeBlock {
     this.searchPlaceholder = 'Search products',
     this.searchBackground = '#F1F3F4',
     this.searchTextColor = '#5F6368',
+    this.sticky = true,
+    this.shadow = 'subtle',
+    this.borderRadius = 0,
+    this.horizontalPadding = 12,
+    this.iconSize = 24,
+    this.iconGap = 4,
+    this.iconBackground = '#FFFFFF',
+    this.iconRadius = 12,
+    this.showWishlist = false,
+    this.searchHeight = 40,
+    this.searchRadius = 14,
+    this.searchBorderWidth = 0,
+    this.searchBorderColor = '#DDE3E8',
+    this.searchIconColor = '#5F6368',
+    this.showVoiceSearch = false,
+    this.accountStyle = 'icon',
+    this.showAccountLabel = false,
+    this.accountLabel = 'Account',
+    this.accountIconSize = 24,
   }) : super(type: HomeBlockType.appHeader);
 
   final String? logoUrl;
@@ -71,6 +90,25 @@ class AppHeaderBlock extends HomeBlock {
   final String searchPlaceholder;
   final String searchBackground;
   final String searchTextColor;
+  final bool sticky;
+  final String shadow;
+  final double borderRadius;
+  final double horizontalPadding;
+  final double iconSize;
+  final double iconGap;
+  final String iconBackground;
+  final double iconRadius;
+  final bool showWishlist;
+  final double searchHeight;
+  final double searchRadius;
+  final double searchBorderWidth;
+  final String searchBorderColor;
+  final String searchIconColor;
+  final bool showVoiceSearch;
+  final String accountStyle;
+  final bool showAccountLabel;
+  final String accountLabel;
+  final double accountIconSize;
 }
 
 abstract class HomeBlock {

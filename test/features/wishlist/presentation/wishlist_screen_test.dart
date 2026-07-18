@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/wishlist/presentation/wishlist_screen.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 import '../support/wishlist_test_data.dart';
 
@@ -62,14 +63,7 @@ void main() {
     expect(find.text(r'$85.00'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.text('1 item'), findsNothing);
-    expect(find.byType(CommerceAppBar), findsOneWidget);
-    final AppBar appBar = tester.widget<AppBar>(
-      find.descendant(
-        of: find.byType(CommerceAppBar),
-        matching: find.byType(AppBar),
-      ),
-    );
-    expect(appBar.centerTitle, isTrue);
+    expect(find.byType(CmsPageAppBar), findsOneWidget);
     final double logicalWidth =
         tester.view.physicalSize.width / tester.view.devicePixelRatio;
     expect(
@@ -102,17 +96,19 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
-      MaterialApp(
-        builder: (BuildContext context, Widget? child) =>
-            Directionality(textDirection: TextDirection.rtl, child: child!),
-        home: WishlistScreen(
-          repository: FakeWishlistRepository(ids: <int>[1, 2, 3]),
-          catalogRepository: FakeWishlistCatalogRepository(
-            products: const <CatalogProduct>[
-              wishlistProductOne,
-              wishlistProductTwo,
-              wishlistProductThree,
-            ],
+      ProviderScope(
+        child: MaterialApp(
+          builder: (BuildContext context, Widget? child) =>
+              Directionality(textDirection: TextDirection.rtl, child: child!),
+          home: WishlistScreen(
+            repository: FakeWishlistRepository(ids: <int>[1, 2, 3]),
+            catalogRepository: FakeWishlistCatalogRepository(
+              products: const <CatalogProduct>[
+                wishlistProductOne,
+                wishlistProductTwo,
+                wishlistProductThree,
+              ],
+            ),
           ),
         ),
       ),
@@ -181,5 +177,7 @@ void main() {
 }
 
 Widget _testApp(Widget home) {
-  return MaterialApp(theme: ThemeData(useMaterial3: true), home: home);
+  return ProviderScope(
+    child: MaterialApp(theme: ThemeData(useMaterial3: true), home: home),
+  );
 }

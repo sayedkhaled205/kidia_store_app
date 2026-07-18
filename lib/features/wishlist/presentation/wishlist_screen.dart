@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({
@@ -75,39 +75,40 @@ class _WishlistScreenState extends State<WishlistScreen> {
   @override
   Widget build(BuildContext context) {
     final _WishlistCopy copy = _WishlistCopy.of(context);
-    return Scaffold(
-      appBar: CommerceAppBar(
-        title: copy.title,
-        actions: <Widget>[
-          CartIconButton(onPressed: () => context.push('/cart')),
-          if (_controller.status == WishlistStatus.ready)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 16),
-              child: Center(
-                child: Text(
-                  '${_controller.length}',
-                  key: const Key('wishlist-count'),
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+    return CmsPageLayoutLoader(
+      page: 'wishlist',
+      builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
+        appBar: CmsPageAppBar(
+          layout: layout,
+          defaultTitle: layout.element('page_title').string('title', copy.title),
+          actions: <CmsPageHeaderAction>[
+            CmsPageHeaderAction(
+              type: 'cart',
+              icon: Icons.shopping_bag_outlined,
+              tooltip: 'Cart',
+              onPressed: () => context.push('/cart'),
+            ),
+          ],
+        ),
+        body: Column(
+          children: <Widget>[
+            if (_controller.status == WishlistStatus.ready &&
+                layout.element('page_title').boolean('show_count', true))
+              Text('${_controller.length}', key: const Key('wishlist-count')),
+            if (_controller.mutationError != null)
+              _MutationErrorNotice(
+                message: _controller.mutationError!,
+                closeLabel: copy.dismiss,
+                onClose: _controller.clearMutationError,
               ),
-            ),
-        ],
-      ),
-      body: Column(
-        children: <Widget>[
-          if (_controller.mutationError != null)
-            _MutationErrorNotice(
-              message: _controller.mutationError!,
-              closeLabel: copy.dismiss,
-              onClose: _controller.clearMutationError,
-            ),
-          Expanded(child: _buildBody(copy)),
-        ],
+            Expanded(child: _buildBody(copy, layout)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBody(_WishlistCopy copy) {
+  Widget _buildBody(_WishlistCopy copy, CmsPageLayout layout) {
     switch (_controller.status) {
       case WishlistStatus.initial:
       case WishlistStatus.loading:
@@ -119,12 +120,18 @@ class _WishlistScreenState extends State<WishlistScreen> {
           onRetry: _controller.load,
         );
       case WishlistStatus.empty:
+        if (!layout.element('empty_state').enabled) {
+          return const SizedBox.shrink();
+        }
         return _WishlistEmpty(
           copy: copy,
           onRefresh: _controller.refresh,
           onContinueShopping: widget.onContinueShopping,
         );
       case WishlistStatus.ready:
+        if (!layout.element('wishlist_grid').enabled) {
+          return const SizedBox.shrink();
+        }
         return _WishlistGrid(
           products: _controller.products,
           copy: copy,

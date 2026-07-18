@@ -40,6 +40,8 @@ class AppHeaderBlockWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: block.layout == 'center'
                 ? CrossAxisAlignment.center
+                : block.layout == 'end'
+                ? CrossAxisAlignment.end
                 : CrossAxisAlignment.start,
             children: <Widget>[
               Text(
@@ -63,35 +65,105 @@ class AppHeaderBlockWidget extends StatelessWidget {
             ],
           );
 
-    final List<Widget> actions = <Widget>[
-      if (block.showAccount)
-        IconButton(
+    final Color iconBackground = _parseHexColor(
+      block.iconBackground,
+      fallback: Colors.transparent,
+    );
+    Widget actionButton({
+      required String tooltip,
+      required IconData icon,
+      required VoidCallback onTap,
+      double? size,
+      String? label,
+    }) {
+      return Tooltip(
+        message: tooltip,
+        child: Material(
+          color: iconBackground,
+          borderRadius: BorderRadius.circular(block.iconRadius * responsive),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(block.iconRadius * responsive),
+            child: Padding(
+              padding: EdgeInsets.all(7 * responsive),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(icon, size: (size ?? block.iconSize) * responsive, color: iconColor),
+                  if (label != null && label.isNotEmpty)
+                    Text(
+                      label,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: iconColor,
+                        fontSize: 9 * responsive,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final List<Widget> actions = <Widget>[];
+    void addAction(Widget action) {
+      if (actions.isNotEmpty) {
+        actions.add(SizedBox(width: block.iconGap * responsive));
+      }
+      actions.add(action);
+    }
+    if (block.showAccount) {
+      addAction(
+        actionButton(
           tooltip: 'حسابي',
-          onPressed: () => onAction(
+          icon: block.accountStyle == 'filled'
+              ? Icons.person_rounded
+              : block.accountStyle == 'avatar'
+              ? Icons.account_circle_rounded
+              : Icons.person_outline_rounded,
+          size: block.accountIconSize,
+          label: block.showAccountLabel ? block.accountLabel : null,
+          onTap: () => onAction(
             const HomeAction(type: 'account', value: 'account'),
           ),
-          color: iconColor,
-          icon: Icon(Icons.person_outline_rounded, size: 24 * responsive),
         ),
-      if (block.showSearch && block.searchStyle == 'icon')
-        IconButton(
+      );
+    }
+    if (block.showWishlist) {
+      addAction(
+        actionButton(
+          tooltip: 'المفضلة',
+          icon: Icons.favorite_border_rounded,
+          onTap: () => onAction(
+            const HomeAction(type: 'wishlist', value: 'wishlist'),
+          ),
+        ),
+      );
+    }
+    if (block.showSearch && block.searchStyle == 'icon') {
+      addAction(
+        actionButton(
           tooltip: 'البحث',
-          onPressed: () => onAction(
+          icon: Icons.search_rounded,
+          onTap: () => onAction(
             const HomeAction(type: 'search', value: ''),
           ),
-          color: iconColor,
-          icon: Icon(Icons.search_rounded, size: 24 * responsive),
         ),
-      if (block.showCart)
-        IconButton(
+      );
+    }
+    if (block.showCart) {
+      addAction(
+        actionButton(
           tooltip: 'السلة',
-          onPressed: () => onAction(
+          icon: Icons.shopping_bag_outlined,
+          onTap: () => onAction(
             const HomeAction(type: 'cart', value: 'cart'),
           ),
-          color: iconColor,
-          icon: Icon(Icons.shopping_bag_outlined, size: 24 * responsive),
         ),
-    ];
+      );
+    }
 
     final Widget topRow = block.layout == 'center'
         ? Stack(
@@ -108,6 +180,9 @@ class AppHeaderBlockWidget extends StatelessWidget {
             ],
           )
         : Row(
+            mainAxisAlignment: block.layout == 'end'
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             children: <Widget>[
               Expanded(child: identity),
               ...actions,
@@ -124,13 +199,30 @@ class AppHeaderBlockWidget extends StatelessWidget {
               : configuredHeight
         : configuredHeight;
 
-    return ColoredBox(
-      color: backgroundColor,
+    final List<BoxShadow> shadows = block.shadow == 'none'
+        ? const <BoxShadow>[]
+        : <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: block.shadow == 'strong' ? 0.18 : 0.08,
+              ),
+              blurRadius: block.shadow == 'strong' ? 14 : 7,
+              offset: const Offset(0, 3),
+            ),
+          ];
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(block.borderRadius * responsive),
+        boxShadow: shadows,
+      ),
       child: SizedBox(
         key: Key('app-header-${block.id}'),
         height: effectiveHeight,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12 * responsive),
+          padding: EdgeInsets.symmetric(
+            horizontal: block.horizontalPadding * responsive,
+          ),
           child: Column(
             children: <Widget>[
               Expanded(child: topRow),
@@ -138,30 +230,28 @@ class AppHeaderBlockWidget extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(bottom: 10 * responsive),
                   child: Material(
-                    color: _parseHexColor(
-                      block.searchBackground,
-                      fallback: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
+                    color: _parseHexColor(block.searchBackground, fallback: Theme.of(context).colorScheme.surfaceContainerHighest),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(block.searchRadius * responsive),
+                      side: BorderSide(
+                        color: _parseHexColor(block.searchBorderColor, fallback: Colors.transparent),
+                        width: block.searchBorderWidth * responsive,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(14 * responsive),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(14 * responsive),
+                      borderRadius: BorderRadius.circular(block.searchRadius * responsive),
                       onTap: () => onAction(
                         const HomeAction(type: 'search', value: ''),
                       ),
                       child: SizedBox(
-                        height: 40 * responsive,
+                        height: block.searchHeight * responsive,
                         child: Row(
                           children: <Widget>[
                             SizedBox(width: 12 * responsive),
                             Icon(
                               Icons.search_rounded,
                               size: 21 * responsive,
-                              color: _parseHexColor(
-                                block.searchTextColor,
-                                fallback: iconColor,
-                              ),
+                              color: _parseHexColor(block.searchIconColor, fallback: iconColor),
                             ),
                             SizedBox(width: 8 * responsive),
                             Expanded(
@@ -178,6 +268,14 @@ class AppHeaderBlockWidget extends StatelessWidget {
                                     ),
                               ),
                             ),
+                            if (block.showVoiceSearch)
+                              Icon(
+                                Icons.mic_none_rounded,
+                                size: 20 * responsive,
+                                color: _parseHexColor(block.searchIconColor, fallback: iconColor),
+                              ),
+                            if (block.showVoiceSearch)
+                              SizedBox(width: 10 * responsive),
                           ],
                         ),
                       ),
