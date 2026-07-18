@@ -43,7 +43,7 @@ $catalog_ids = array_column( $catalog_default['elements'], 'id' );
 kidia_page_assert( ! in_array( 'pagination', $catalog_ids, true ), 'Pagination must be a Product Grid setting, not a separate element.' );
 $catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];
 kidia_page_assert( 'load_more' === $catalog_grid['settings']['pagination_mode'], 'Product Grid must expose pagination mode.' );
-kidia_page_assert( 12.0 === $catalog_grid['settings']['products_per_page'], 'Product Grid must expose products per page.' );
+kidia_page_assert( 12 === $catalog_grid['settings']['products_per_page'], 'Product Grid must expose products per page.' );
 $catalog_filter = $catalog_default['elements'][ array_search( 'filter_bar', $catalog_ids, true ) ];
 foreach ( array( 'filter_price', 'filter_sale', 'filter_brand', 'filter_size', 'block_width', 'block_height', 'icon_size' ) as $filter_setting ) {
 	kidia_page_assert( array_key_exists( $filter_setting, $catalog_filter['settings'] ), "Filter Bar must expose $filter_setting." );

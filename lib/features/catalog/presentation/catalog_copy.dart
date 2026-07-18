@@ -55,6 +55,7 @@ class CatalogCopy {
       ? 'أقل سعر يجب ألا يتجاوز أعلى سعر'
       : 'Minimum price cannot exceed maximum price';
   String get loadingMore => isArabic ? 'جارٍ تحميل المزيد...' : 'Loading more…';
+  String get loadMore => isArabic ? 'تحميل المزيد' : 'Load more';
   String get loadMoreFailed =>
       isArabic ? 'تعذر تحميل المزيد' : 'Could not load more products';
   String get outOfStock => isArabic ? 'نفد المخزون' : 'Out of stock';
