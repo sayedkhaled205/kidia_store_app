@@ -33,7 +33,7 @@ final class Kidia_Mobile_CMS_Activator {
 
 		if (
 			false !== get_option(
-				'kidia_mobile_home_layout_v3',
+				'kidia_mobile_home_layout_v4',
 				false
 			)
 		) {

@@ -139,7 +139,7 @@ kidia_assert(
 	'Runtime reconciliation must read existing Library items.'
 );
 kidia_assert(
-	! array_key_exists( 'kidia_mobile_home_layout_v3', $GLOBALS['kidia_test_options'] ),
+	! array_key_exists( 'kidia_mobile_home_layout_v4', $GLOBALS['kidia_test_options'] ),
 	'Runtime reconciliation must not write WordPress options.'
 );
 
@@ -306,6 +306,13 @@ $all_types = array(
 	'promo_strip', 'coupon_banner', 'countdown', 'video_banner',
 	'text_block', 'divider', 'spacer',
 );
+$GLOBALS['kidia_test_options']['kidia_mobile_home_layout_v3'] = array();
+$GLOBALS['kidia_test_options']['kidia_mobile_home_layout_exclusions_v1'] = array_map(
+	static function ( string $type ): string {
+		return $type . ':' . $type . '_roundtrip';
+	},
+	$all_types
+);
 $submitted = array();
 
 foreach ( $all_types as $index => $type ) {
@@ -334,7 +341,7 @@ $reloaded = $store->get_layout();
 
 kidia_assert(
 	count( $all_types ) === count( $reloaded ),
-	'Every Home Builder element must remain present after Save Home Layout and reload.'
+	'Every Home Builder element must remain present after Save Home Layout and reload, despite stale legacy exclusions.'
 );
 
 foreach ( $all_types as $index => $type ) {
