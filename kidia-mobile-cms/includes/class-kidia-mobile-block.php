@@ -377,6 +377,39 @@ abstract class Kidia_Mobile_Block {
 	}
 
 	/**
+	 * Sanitizes an absolute public HTTP(S) URL.
+	 *
+	 * WordPress' esc_url_raw() removes unsafe protocols, but callers that feed
+	 * the result to the mobile app also need an absolute host. Keeping that
+	 * validation in the shared block base prevents one block from depending on
+	 * an undefined helper and keeps media URLs consistent across builders.
+	 *
+	 * @param mixed $value Raw URL.
+	 *
+	 * @return string
+	 */
+	protected function sanitize_http_url( $value ): string {
+		$url = esc_url_raw(
+			(string) $value,
+			array( 'http', 'https' )
+		);
+
+		$scheme = strtolower(
+			(string) wp_parse_url( $url, PHP_URL_SCHEME )
+		);
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+
+		if (
+			'' === $host
+			|| ! in_array( $scheme, array( 'http', 'https' ), true )
+		) {
+			return '';
+		}
+
+		return $url;
+	}
+
+	/**
 	 * Builds a Flutter navigation action.
 	 *
 	 * @param mixed $type  Action type.

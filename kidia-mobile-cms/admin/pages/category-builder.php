@@ -38,10 +38,11 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			$default_image = absint( get_term_meta( $id, 'thumbnail_id', true ) );
 			$preview_id    = $image_id ?: $default_image;
 			$image_url     = $preview_id ? wp_get_attachment_image_url( $preview_id, 'thumbnail' ) : '';
+			$default_image_url = $default_image ? wp_get_attachment_image_url( $default_image, 'thumbnail' ) : '';
 			$has_children  = ! empty( $by_parent[ $id ] );
 			$image_size    = min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) );
 			?>
-			<li class="kidia-category-row" data-term-id="<?php echo esc_attr( (string) $id ); ?>" data-term-name="<?php echo esc_attr( $term->name ); ?>" data-default-image="<?php echo esc_url( $image_url ); ?>">
+			<li class="kidia-category-row" data-term-id="<?php echo esc_attr( (string) $id ); ?>" data-term-name="<?php echo esc_attr( $term->name ); ?>" data-default-image="<?php echo esc_url( $default_image_url ); ?>">
 				<div class="kidia-category-card">
 					<span class="dashicons dashicons-move kidia-category-handle" aria-hidden="true"></span>
 					<?php if ( $has_children ) : ?>

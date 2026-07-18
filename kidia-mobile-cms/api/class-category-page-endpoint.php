@@ -108,7 +108,7 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 				'image_text_gap' => min( 40, max( 0, absint( $setting['image_text_gap'] ?? 10 ) ) ),
 				'font_size' => min( 30, max( 10, absint( $setting['font_size'] ?? 16 ) ) ),
 				'font_color' => sanitize_hex_color( $setting['font_color'] ?? '' ) ?: '#1F2933',
-				'font_weight' => in_array( absint( $setting['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $setting['font_weight'] ) : 800,
+				'font_weight' => in_array( absint( $setting['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $setting['font_weight'] ?? 800 ) : 800,
 				'text_align' => in_array( $setting['text_align'] ?? '', array( 'start', 'center', 'end' ), true ) ? $setting['text_align'] : 'start',
 				'text_max_lines' => min( 3, max( 1, absint( $setting['text_max_lines'] ?? 2 ) ) ),
 				'line_height' => min( 200, max( 100, absint( $setting['line_height'] ?? 125 ) ) ),

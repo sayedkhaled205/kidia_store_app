@@ -37,6 +37,7 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			'title'       => '',
 			'subtitle'    => '',
 			'item_width'  => 92,
+			'limit'       => 12,
 			'items'       => array(),
 		);
 	}
@@ -58,19 +59,21 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				continue;
 			}
 
+			$id       = absint( $item['id'] ?? 0 );
+			$name     = sanitize_text_field( $item['name'] ?? '' );
+			$logo_url = $this->sanitize_http_url( $item['logo_url'] ?? '' );
+
+			if ( 0 === $id || '' === $name || '' === $logo_url ) {
+				continue;
+			}
+
 			$brands[] = array(
 
-				'id' => absint(
-					$item['id'] ?? 0
-				),
+				'id' => $id,
 
-				'name' => sanitize_text_field(
-					$item['name'] ?? ''
-				),
+				'name' => $name,
 
-				'logo_url' => esc_url_raw(
-					$item['logo_url'] ?? ''
-				),
+				'logo_url' => $logo_url,
 
 				'action_type' => sanitize_key(
 					$item['action_type'] ?? ''
@@ -104,6 +107,14 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				)
 			),
 
+			'limit' => max(
+				1,
+				min(
+					50,
+					absint( $settings['limit'] ?? 12 )
+				)
+			),
+
 			'items' => $brands,
 
 		);
@@ -119,12 +130,34 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
     			)
     		);
 
-    		return array(
-    			'title'      => $settings['title'],
-    			'subtitle'   => $settings['subtitle'],
-    			'item_width' => $settings['item_width'],
-    			'items'      => $settings['items'],
-    		);
+			$items = $settings['items'];
+
+			if ( empty( $items ) ) {
+				$items = $this->query_brand_items( $settings['limit'] );
+			}
+
+			$api_items = array();
+
+			foreach ( $items as $item ) {
+				$action = $this->build_action(
+					$item['action_type'] ?? 'brand',
+					$item['action_value'] ?? (string) $item['id']
+				);
+
+				$api_items[] = array(
+					'id'       => (int) $item['id'],
+					'name'     => (string) $item['name'],
+					'logo_url' => (string) $item['logo_url'],
+					'action'   => $action ?? $this->build_action( 'brand', (string) $item['id'] ),
+				);
+			}
+
+			return array(
+				'title'      => $settings['title'],
+				'subtitle'   => $settings['subtitle'],
+				'item_width' => $settings['item_width'],
+				'items'      => $api_items,
+			);
     	}
 
     	public function render_settings(
@@ -140,7 +173,7 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
     ?>
     <div class="kidia-builder-grid">
 
-    	<div class="kidia-builder-field">
+		<div class="kidia-builder-field">
 
     		<label>Title</label>
 
@@ -150,7 +183,21 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
     			value="<?php echo esc_attr( $settings['title'] ); ?>"
     		>
 
-    	</div>
+		</div>
+
+		<div class="kidia-builder-field">
+
+			<label>Brands Limit</label>
+
+			<input
+				type="number"
+				min="1"
+				max="50"
+				name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]"
+				value="<?php echo esc_attr( (string) ( $settings['limit'] ?? 12 ) ); ?>"
+			>
+
+		</div>
 
     	<div class="kidia-builder-field">
 
@@ -181,5 +228,82 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
     </div>
 
     <?php
-    	}
-    }
+		}
+
+	/** Uses whichever supported WooCommerce brand taxonomy is active. */
+	private function query_brand_items( int $limit ): array {
+		$taxonomy = '';
+
+		foreach ( array( 'product_brand', 'pwb-brand', 'yith_product_brand' ) as $candidate ) {
+			if ( taxonomy_exists( $candidate ) ) {
+				$taxonomy = $candidate;
+				break;
+			}
+		}
+
+		if ( '' === $taxonomy ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'number'     => max( 1, min( 50, $limit ) ),
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
+
+		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+			return array();
+		}
+
+		$items = array();
+
+		foreach ( $terms as $term ) {
+			if ( ! $term instanceof WP_Term ) {
+				continue;
+			}
+
+			$logo_url = $this->get_brand_logo_url( (int) $term->term_id );
+
+			if ( '' === $logo_url ) {
+				continue;
+			}
+
+			$items[] = array(
+				'id'           => (int) $term->term_id,
+				'name'         => sanitize_text_field( (string) $term->name ),
+				'logo_url'     => $logo_url,
+				'action_type'  => 'brand',
+				'action_value' => (string) $term->term_id,
+			);
+		}
+
+		return $items;
+	}
+
+	/** Resolves common brand-logo metadata used by supported brand plugins. */
+	private function get_brand_logo_url( int $term_id ): string {
+		foreach ( array( 'thumbnail_id', 'pwb_brand_image', 'brand_image_id' ) as $key ) {
+			$attachment_id = absint( get_term_meta( $term_id, $key, true ) );
+
+			if ( 0 === $attachment_id ) {
+				continue;
+			}
+
+			$url = wp_get_attachment_image_url(
+				$attachment_id,
+				'woocommerce_thumbnail'
+			);
+			$url = $this->sanitize_http_url( $url );
+
+			if ( '' !== $url ) {
+				return $url;
+			}
+		}
+
+		return '';
+	}
+}

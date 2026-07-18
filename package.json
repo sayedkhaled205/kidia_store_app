@@ -1,0 +1,11 @@
+{
+  "name": "kidia-store-builder-tests",
+  "private": true,
+  "scripts": {
+    "test:builders": "node kidia-mobile-cms/tests/builder-assets-test.js"
+  },
+  "devDependencies": {
+    "jquery": "3.7.1",
+    "jsdom": "26.1.0"
+  }
+}

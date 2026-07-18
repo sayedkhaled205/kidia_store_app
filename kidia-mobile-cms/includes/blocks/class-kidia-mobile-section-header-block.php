@@ -86,15 +86,22 @@ final class Kidia_Mobile_Section_Header_Block extends Kidia_Mobile_Block {
     			)
     		);
 
-    		return array(
-    			'title'          => $settings['title'],
-    			'subtitle'       => $settings['subtitle'],
-    			'show_view_all'  => $settings['show_view_all'],
-    			'view_all_label' => $settings['view_all_label'],
-    			'action'         => $this->build_action(
-    				$settings['action_type'],
-    				$settings['action_value']
-    			),
+			if ( '' === $settings['title'] ) {
+				return null;
+			}
+
+			return array(
+				'title'          => $settings['title'],
+				'subtitle'       => $settings['subtitle'],
+				'action_label'   => $settings['show_view_all']
+					? $settings['view_all_label']
+					: '',
+				'action'         => $settings['show_view_all']
+					? $this->build_action(
+						$settings['action_type'],
+						$settings['action_value']
+					)
+					: null,
     		);
     	}
 
@@ -111,7 +118,7 @@ final class Kidia_Mobile_Section_Header_Block extends Kidia_Mobile_Block {
     ?>
     <div class="kidia-builder-grid">
 
-    	<div class="kidia-builder-field">
+		<div class="kidia-builder-field">
 
     		<label>Title</label>
 
@@ -165,9 +172,38 @@ final class Kidia_Mobile_Section_Header_Block extends Kidia_Mobile_Block {
     			value="<?php echo esc_attr( $settings['view_all_label'] ); ?>"
     		>
 
-    	</div>
+		</div>
 
-    </div>
+		<div class="kidia-builder-field">
+
+			<label>Action Type</label>
+
+			<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_type]">
+				<option value="" <?php selected( '', $settings['action_type'] ); ?>>No Action</option>
+				<option value="collection" <?php selected( 'collection', $settings['action_type'] ); ?>>Collection</option>
+				<option value="category" <?php selected( 'category', $settings['action_type'] ); ?>>Category</option>
+				<option value="product" <?php selected( 'product', $settings['action_type'] ); ?>>Product</option>
+				<option value="brand" <?php selected( 'brand', $settings['action_type'] ); ?>>Brand</option>
+				<option value="brands" <?php selected( 'brands', $settings['action_type'] ); ?>>All Brands</option>
+				<option value="search" <?php selected( 'search', $settings['action_type'] ); ?>>Search</option>
+				<option value="external" <?php selected( 'external', $settings['action_type'] ); ?>>External URL</option>
+			</select>
+
+		</div>
+
+		<div class="kidia-builder-field kidia-builder-field--full">
+
+			<label>Action Value</label>
+
+			<input
+				type="text"
+				name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_value]"
+				value="<?php echo esc_attr( $settings['action_value'] ); ?>"
+			>
+
+		</div>
+
+	</div>
 
     <?php
     	}

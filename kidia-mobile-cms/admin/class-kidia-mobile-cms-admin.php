@@ -227,7 +227,7 @@ final class Kidia_Mobile_CMS_Admin {
 					'image_text_gap' => min( 40, max( 0, absint( $row['image_text_gap'] ?? 10 ) ) ),
 					'font_size' => min( 30, max( 10, absint( $row['font_size'] ?? 16 ) ) ),
 					'font_color' => sanitize_hex_color( $row['font_color'] ?? '' ) ?: '#1F2933',
-					'font_weight' => in_array( absint( $row['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $row['font_weight'] ) : 800,
+					'font_weight' => in_array( absint( $row['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $row['font_weight'] ?? 800 ) : 800,
 					'text_align' => in_array( $row['text_align'] ?? '', array( 'start', 'center', 'end' ), true ) ? sanitize_key( $row['text_align'] ) : 'start',
 					'text_max_lines' => min( 3, max( 1, absint( $row['text_max_lines'] ?? 2 ) ) ),
 					'line_height' => min( 200, max( 100, absint( $row['line_height'] ?? 125 ) ) ),

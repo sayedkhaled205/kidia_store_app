@@ -20,6 +20,10 @@ jobs:
         run: find kidia-mobile-cms -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Check JavaScript syntax
         run: find kidia-mobile-cms -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Install Builder browser test dependencies
+        run: npm ci
+      - name: Run Builder browser contract tests
+        run: npm run test:builders
       - name: Run PHP contract tests
         run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
 
