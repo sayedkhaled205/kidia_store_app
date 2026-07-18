@@ -43,6 +43,13 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'parent_id'  => 0,
 			'hide_empty' => false,
 			'show_names' => true,
+			'layout'      => 'grid',
+			'image_shape' => 'rounded',
+			'image_size'  => 78,
+			'gap'         => 12,
+			'label_size'  => 13,
+			'label_color' => '#1F2933',
+			'category_ids'=> '',
 		);
 	}
 
@@ -54,6 +61,9 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 	 * @return array<string, mixed>
 	 */
 	public function sanitize_settings( array $settings ): array {
+		$layout = sanitize_key( (string) ( $settings['layout'] ?? 'grid' ) );
+		$shape  = sanitize_key( (string) ( $settings['image_shape'] ?? 'rounded' ) );
+		$category_ids = array_values( array_unique( array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) ( $settings['category_ids'] ?? '' ) ) ) ) ) );
 		return array(
 			'title'      => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
 			'subtitle'   => sanitize_textarea_field( (string) ( $settings['subtitle'] ?? '' ) ),
@@ -62,6 +72,13 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'parent_id'  => absint( $settings['parent_id'] ?? 0 ),
 			'hide_empty' => ! empty( $settings['hide_empty'] ),
 			'show_names' => ! empty( $settings['show_names'] ),
+			'layout'      => in_array( $layout, array( 'grid', 'carousel' ), true ) ? $layout : 'grid',
+			'image_shape' => in_array( $shape, array( 'circle', 'rounded', 'square' ), true ) ? $shape : 'rounded',
+			'image_size'  => max( 48, min( 140, absint( $settings['image_size'] ?? 78 ) ) ),
+			'gap'         => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
+			'label_size'  => max( 10, min( 22, absint( $settings['label_size'] ?? 13 ) ) ),
+			'label_color' => sanitize_hex_color( $settings['label_color'] ?? '' ) ?: '#1F2933',
+			'category_ids'=> implode( ',', $category_ids ),
 		);
 	}
 
@@ -89,6 +106,14 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				'orderby'    => 'name',
 				'order'      => 'ASC',
 			);
+
+		$manual_ids = array_values( array_filter( array_map( 'absint', explode( ',', $settings['category_ids'] ) ) ) );
+		if ( ! empty( $manual_ids ) ) {
+			$query_args['include'] = $manual_ids;
+			$query_args['orderby'] = 'include';
+			$query_args['number'] = count( $manual_ids );
+			unset( $query_args['parent'] );
+		}
 
 		$terms = get_terms( $query_args );
 
@@ -138,6 +163,12 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'items'      => $items,
 			'columns'    => $settings['columns'],
 			'show_names' => $settings['show_names'],
+			'layout'      => $settings['layout'],
+			'image_shape' => $settings['image_shape'],
+			'image_size'  => $settings['image_size'],
+			'gap'         => $settings['gap'],
+			'label_size'  => $settings['label_size'],
+			'label_color' => $settings['label_color'],
 		);
 	}
 
@@ -171,6 +202,13 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Categories Limit', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="1" max="50" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>">
 			</div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Grid', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal Row', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_size]" value="<?php echo esc_attr( (string) $settings['image_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-builder-field--full"><label><?php esc_html_e( 'Manual Category IDs (optional)', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][category_ids]" value="<?php echo esc_attr( (string) $settings['category_ids'] ); ?>" placeholder="12, 34, 56"></div>
 			<div class="kidia-builder-field">
 				<label><?php esc_html_e( 'Parent Category ID', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="0" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][parent_id]" value="<?php echo esc_attr( (string) $settings['parent_id'] ); ?>">

@@ -40,6 +40,8 @@ final class Kidia_Mobile_Layout_Store {
 		'text_block'      => 'kidia_mobile_text_blocks',
 		'divider'         => 'kidia_mobile_dividers',
 		'spacer'          => 'kidia_mobile_spacers',
+		'quick_links'     => 'kidia_mobile_quick_links',
+		'banner_grid'     => 'kidia_mobile_banner_grids',
 	);
 
 	/**

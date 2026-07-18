@@ -13,7 +13,9 @@ enum HomeBlockType {
   videoBanner('video_banner'),
   textBlock('text_block'),
   divider('divider'),
-  spacer('spacer');
+  spacer('spacer'),
+  quickLinks('quick_links'),
+  bannerGrid('banner_grid');
 
   const HomeBlockType(this.apiValue);
 
@@ -46,6 +48,11 @@ class AppHeaderBlock extends HomeBlock {
     required this.showAccount,
     required this.titleColor,
     required this.iconColor,
+    this.backgroundColor = '#FFFFFF',
+    this.searchStyle = 'icon',
+    this.searchPlaceholder = 'Search products',
+    this.searchBackground = '#F1F3F4',
+    this.searchTextColor = '#5F6368',
   }) : super(type: HomeBlockType.appHeader);
 
   final String? logoUrl;
@@ -59,6 +66,11 @@ class AppHeaderBlock extends HomeBlock {
   final bool showAccount;
   final String titleColor;
   final String iconColor;
+  final String backgroundColor;
+  final String searchStyle;
+  final String searchPlaceholder;
+  final String searchBackground;
+  final String searchTextColor;
 }
 
 abstract class HomeBlock {
@@ -110,6 +122,7 @@ class HeroSlide {
     required this.imageUrl,
     required this.title,
     required this.subtitle,
+    required this.buttonLabel,
     required this.action,
   });
 
@@ -117,6 +130,7 @@ class HeroSlide {
   final String imageUrl;
   final String? title;
   final String? subtitle;
+  final String? buttonLabel;
   final HomeAction? action;
 }
 
@@ -129,12 +143,28 @@ class HeroSliderBlock extends HomeBlock {
     required this.aspectRatio,
     required this.autoPlay,
     required this.intervalMilliseconds,
+    required this.borderRadius,
+    required this.horizontalPadding,
+    required this.imageFit,
+    required this.overlayPosition,
+    required this.overlayStrength,
+    required this.textColor,
+    required this.showIndicators,
+    required this.indicatorStyle,
   }) : super(type: HomeBlockType.heroSlider);
 
   final List<HeroSlide> items;
   final double aspectRatio;
   final bool autoPlay;
   final int intervalMilliseconds;
+  final double borderRadius;
+  final double horizontalPadding;
+  final String imageFit;
+  final String overlayPosition;
+  final double overlayStrength;
+  final String textColor;
+  final bool showIndicators;
+  final String indicatorStyle;
 }
 
 class CategoryItem {
@@ -161,6 +191,12 @@ class CategoryGridBlock extends HomeBlock {
     required this.items,
     required this.columns,
     required this.showNames,
+    required this.layout,
+    required this.imageShape,
+    required this.imageSize,
+    required this.gap,
+    required this.labelSize,
+    required this.labelColor,
   }) : super(type: HomeBlockType.categoryGrid);
 
   final String? title;
@@ -168,6 +204,108 @@ class CategoryGridBlock extends HomeBlock {
   final List<CategoryItem> items;
   final int columns;
   final bool showNames;
+  final String layout;
+  final String imageShape;
+  final double imageSize;
+  final double gap;
+  final double labelSize;
+  final String labelColor;
+}
+
+class QuickLinkItem {
+  const QuickLinkItem({
+    required this.id,
+    required this.imageUrl,
+    required this.label,
+    required this.subtitle,
+    required this.action,
+  });
+
+  final String id;
+  final String imageUrl;
+  final String label;
+  final String? subtitle;
+  final HomeAction? action;
+}
+
+class QuickLinksBlock extends HomeBlock {
+  const QuickLinksBlock({
+    required super.id,
+    required super.enabled,
+    super.presentation,
+    required this.title,
+    required this.subtitle,
+    required this.layout,
+    required this.columns,
+    required this.imageShape,
+    required this.itemSize,
+    required this.gap,
+    required this.showLabels,
+    required this.labelColor,
+    required this.labelSize,
+    required this.items,
+  }) : super(type: HomeBlockType.quickLinks);
+
+  final String? title;
+  final String? subtitle;
+  final String layout;
+  final int columns;
+  final String imageShape;
+  final double itemSize;
+  final double gap;
+  final bool showLabels;
+  final String labelColor;
+  final double labelSize;
+  final List<QuickLinkItem> items;
+}
+
+class BannerGridItem {
+  const BannerGridItem({
+    required this.id,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.action,
+  });
+
+  final String id;
+  final String imageUrl;
+  final String? title;
+  final String? subtitle;
+  final String? buttonLabel;
+  final HomeAction? action;
+}
+
+class BannerGridBlock extends HomeBlock {
+  const BannerGridBlock({
+    required super.id,
+    required super.enabled,
+    super.presentation,
+    required this.title,
+    required this.subtitle,
+    required this.layout,
+    required this.columns,
+    required this.gap,
+    required this.aspectRatio,
+    required this.borderRadius,
+    required this.imageFit,
+    required this.overlayStrength,
+    required this.textColor,
+    required this.items,
+  }) : super(type: HomeBlockType.bannerGrid);
+
+  final String? title;
+  final String? subtitle;
+  final String layout;
+  final int columns;
+  final double gap;
+  final double aspectRatio;
+  final double borderRadius;
+  final String imageFit;
+  final double overlayStrength;
+  final String textColor;
+  final List<BannerGridItem> items;
 }
 
 class ImageBannerBlock extends HomeBlock {
@@ -179,6 +317,12 @@ class ImageBannerBlock extends HomeBlock {
     required this.aspectRatio,
     required this.borderRadius,
     required this.semanticLabel,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.imageFit,
+    required this.overlayStrength,
+    required this.textColor,
     required this.action,
   }) : super(type: HomeBlockType.imageBanner);
 
@@ -186,6 +330,12 @@ class ImageBannerBlock extends HomeBlock {
   final double aspectRatio;
   final double borderRadius;
   final String? semanticLabel;
+  final String? title;
+  final String? subtitle;
+  final String? buttonLabel;
+  final String imageFit;
+  final double overlayStrength;
+  final String textColor;
   final HomeAction? action;
 }
 
@@ -200,6 +350,9 @@ class HomeProductItem {
     required this.currencySymbol,
     required this.inStock,
     required this.badge,
+    required this.rating,
+    required this.reviewCount,
+    required this.discountPercent,
     required this.action,
   });
 
@@ -212,6 +365,9 @@ class HomeProductItem {
   final String currencySymbol;
   final bool inStock;
   final String? badge;
+  final double rating;
+  final int reviewCount;
+  final int discountPercent;
   final HomeAction? action;
 }
 
@@ -221,15 +377,37 @@ class ProductCarouselBlock extends HomeBlock {
     required super.enabled,
     super.presentation,
     required this.title,
+    required this.subtitle,
     required this.items,
     required this.showViewAll,
+    required this.viewAllLabel,
     required this.viewAllAction,
+    required this.cardStyle,
+    required this.itemWidth,
+    required this.imageRatio,
+    required this.cardRadius,
+    required this.showName,
+    required this.showPrice,
+    required this.showRegularPrice,
+    required this.showBadge,
+    required this.showRating,
   }) : super(type: HomeBlockType.productCarousel);
 
   final String? title;
+  final String? subtitle;
   final List<HomeProductItem> items;
   final bool showViewAll;
+  final String? viewAllLabel;
   final HomeAction? viewAllAction;
+  final String cardStyle;
+  final double itemWidth;
+  final double imageRatio;
+  final double cardRadius;
+  final bool showName;
+  final bool showPrice;
+  final bool showRegularPrice;
+  final bool showBadge;
+  final bool showRating;
 }
 
 class ProductGridBlock extends HomeBlock {
@@ -244,6 +422,14 @@ class ProductGridBlock extends HomeBlock {
     required this.showViewAll,
     required this.viewAllLabel,
     required this.viewAllAction,
+    required this.cardStyle,
+    required this.imageRatio,
+    required this.cardRadius,
+    required this.showName,
+    required this.showPrice,
+    required this.showRegularPrice,
+    required this.showBadge,
+    required this.showRating,
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
@@ -253,6 +439,14 @@ class ProductGridBlock extends HomeBlock {
   final bool showViewAll;
   final String? viewAllLabel;
   final HomeAction? viewAllAction;
+  final String cardStyle;
+  final double imageRatio;
+  final double cardRadius;
+  final bool showName;
+  final bool showPrice;
+  final bool showRegularPrice;
+  final bool showBadge;
+  final bool showRating;
 }
 
 class SectionHeaderBlock extends HomeBlock {
@@ -292,13 +486,25 @@ class BrandCarouselBlock extends HomeBlock {
     required super.enabled,
     super.presentation,
     required this.title,
+    required this.subtitle,
     required this.items,
     required this.itemWidth,
+    required this.layout,
+    required this.columns,
+    required this.imageShape,
+    required this.showNames,
+    required this.gap,
   }) : super(type: HomeBlockType.brandCarousel);
 
   final String? title;
+  final String? subtitle;
   final List<BrandItem> items;
   final double itemWidth;
+  final String layout;
+  final int columns;
+  final String imageShape;
+  final bool showNames;
+  final double gap;
 }
 
 class PromoStripBlock extends HomeBlock {
@@ -327,12 +533,22 @@ class CouponBannerBlock extends HomeBlock {
     required this.description,
     required this.couponCode,
     required this.imageUrl,
+    this.backgroundColor = '#DCEEE8',
+    this.textColor = '#1F2933',
+    this.accentColor = '#2F806E',
+    this.borderRadius = 20,
+    this.action,
   }) : super(type: HomeBlockType.couponBanner);
 
   final String? title;
   final String? description;
   final String? couponCode;
   final String? imageUrl;
+  final String backgroundColor;
+  final String textColor;
+  final String accentColor;
+  final double borderRadius;
+  final HomeAction? action;
 }
 
 class CountdownBlock extends HomeBlock {
@@ -343,11 +559,19 @@ class CountdownBlock extends HomeBlock {
     required this.title,
     required this.endsAt,
     required this.expiredText,
+    this.backgroundColor = '#FFFFFF',
+    this.textColor = '#1F2933',
+    this.boxColor = '#E9EEEC',
+    this.action,
   }) : super(type: HomeBlockType.countdown);
 
   final String? title;
   final DateTime? endsAt;
   final String expiredText;
+  final String backgroundColor;
+  final String textColor;
+  final String boxColor;
+  final HomeAction? action;
 }
 
 class VideoBannerBlock extends HomeBlock {
@@ -399,6 +623,9 @@ class TextBlock extends HomeBlock {
     required this.alignment,
     required this.backgroundColor,
     required this.textColor,
+    this.titleSize = 22,
+    this.contentSize = 15,
+    this.fontWeight = 'normal',
   }) : super(type: HomeBlockType.textBlock);
 
   final String? title;
@@ -406,6 +633,9 @@ class TextBlock extends HomeBlock {
   final HomeTextAlignment alignment;
   final String? backgroundColor;
   final String textColor;
+  final double titleSize;
+  final double contentSize;
+  final String fontWeight;
 }
 
 class DividerBlock extends HomeBlock {

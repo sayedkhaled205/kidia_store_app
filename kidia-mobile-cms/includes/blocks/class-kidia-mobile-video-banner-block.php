@@ -117,7 +117,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 			),
 
 			'aspect_ratio' => max(
-				1,
+				0.45,
 				min(
 					4,
 					(float) (
@@ -282,7 +282,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 
 				<input
 					type="number"
-					min="1"
+					min="0.45"
 					max="4"
 					step="0.1"
 					name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][aspect_ratio]"

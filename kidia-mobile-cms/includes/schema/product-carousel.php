@@ -25,6 +25,8 @@ return array(
 
 		'title' => '',
 
+		'subtitle' => '',
+
 		'source' => 'latest',
 
 		'limit' => 10,
@@ -32,6 +34,28 @@ return array(
 		'show_view_all' => true,
 
 		'category_id' => 0,
+
+		'product_ids' => '',
+
+		'view_all_label' => '',
+
+		'card_style' => 'outlined',
+
+		'item_width' => 168,
+
+		'image_ratio' => 1,
+
+		'card_radius' => 20,
+
+		'show_name' => true,
+
+		'show_price' => true,
+
+		'show_regular_price' => true,
+
+		'show_badge' => true,
+
+		'show_rating' => false,
 
 	),
 

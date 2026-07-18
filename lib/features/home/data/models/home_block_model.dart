@@ -90,6 +90,16 @@ abstract final class HomeBlockModel {
         enabled: enabled,
         data: data,
       ),
+      HomeBlockType.quickLinks => _parseQuickLinks(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
+      HomeBlockType.bannerGrid => _parseBannerGrid(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
     };
   }
 
@@ -101,6 +111,10 @@ abstract final class HomeBlockModel {
     final String layout = _optionalString(data, 'layout') ?? 'center';
     if (layout != 'center' && layout != 'start') {
       throw FormatException('Unsupported app header layout: $layout');
+    }
+    final String searchStyle = _optionalString(data, 'search_style') ?? 'icon';
+    if (searchStyle != 'icon' && searchStyle != 'bar') {
+      throw FormatException('Unsupported app header search style: $searchStyle');
     }
     return AppHeaderBlock(
       id: id,
@@ -129,6 +143,14 @@ abstract final class HomeBlockModel {
       showAccount: _optionalBool(data, 'show_account', fallback: false),
       titleColor: _hexColor(data, 'title_color', fallback: '#1F2933'),
       iconColor: _hexColor(data, 'icon_color', fallback: '#1F2933'),
+      backgroundColor: _hexColor(data, 'background_color', fallback: '#FFFFFF'),
+      searchStyle: searchStyle,
+      searchPlaceholder:
+          _optionalString(data, 'search_placeholder') ?? 'Search products',
+      searchBackground:
+          _hexColor(data, 'search_background', fallback: '#F1F3F4'),
+      searchTextColor:
+          _hexColor(data, 'search_text_color', fallback: '#5F6368'),
     );
   }
 
@@ -137,7 +159,21 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
-    final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
+	final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
+	final String imageFit = _optionalString(data, 'image_fit') ?? 'cover';
+	final String overlayPosition =
+		_optionalString(data, 'overlay_position') ?? 'start';
+	final String indicatorStyle =
+		_optionalString(data, 'indicator_style') ?? 'pill';
+	if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
+	  throw FormatException('Unsupported hero image fit: $imageFit');
+	}
+	if (!const <String>{'start', 'center', 'end'}.contains(overlayPosition)) {
+	  throw FormatException('Unsupported hero overlay position: $overlayPosition');
+	}
+	if (!const <String>{'pill', 'dots'}.contains(indicatorStyle)) {
+	  throw FormatException('Unsupported hero indicator style: $indicatorStyle');
+	}
 
     if (items.isEmpty) {
       throw const FormatException(
@@ -153,6 +189,14 @@ abstract final class HomeBlockModel {
       aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 1.8),
       autoPlay: _optionalBool(data, 'auto_play', fallback: true),
       intervalMilliseconds: _positiveInt(data, 'interval_ms', fallback: 4500),
+      borderRadius: _boundedDouble(data, 'border_radius', fallback: 24, minimum: 0, maximum: 48),
+      horizontalPadding: _boundedDouble(data, 'horizontal_padding', fallback: 16, minimum: 0, maximum: 32),
+      imageFit: imageFit,
+      overlayPosition: overlayPosition,
+      overlayStrength: _boundedDouble(data, 'overlay_strength', fallback: 72, minimum: 0, maximum: 95),
+      textColor: _hexColor(data, 'text_color', fallback: '#FFFFFF'),
+      showIndicators: _optionalBool(data, 'show_indicators', fallback: true),
+      indicatorStyle: indicatorStyle,
     );
   }
 
@@ -162,6 +206,7 @@ abstract final class HomeBlockModel {
       imageUrl: _requiredUrl(json, 'image_url'),
       title: _optionalString(json, 'title'),
       subtitle: _optionalString(json, 'subtitle'),
+      buttonLabel: _optionalString(json, 'button_label'),
       action: _parseAction(json['action']),
     );
   }
@@ -172,6 +217,15 @@ abstract final class HomeBlockModel {
     required Map<String, dynamic> data,
   }) {
     final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
+	final String layout = _optionalString(data, 'layout') ?? 'grid';
+	final String imageShape =
+		_optionalString(data, 'image_shape') ?? 'rounded';
+	if (!const <String>{'grid', 'carousel'}.contains(layout)) {
+	  throw FormatException('Unsupported category layout: $layout');
+	}
+	if (!const <String>{'circle', 'rounded', 'square'}.contains(imageShape)) {
+	  throw FormatException('Unsupported category image shape: $imageShape');
+	}
 
     return CategoryGridBlock(
       id: id,
@@ -188,6 +242,12 @@ abstract final class HomeBlockModel {
         maximum: 6,
       ),
       showNames: _optionalBool(data, 'show_names', fallback: true),
+      layout: layout,
+      imageShape: imageShape,
+      imageSize: _boundedDouble(data, 'image_size', fallback: 78, minimum: 48, maximum: 140),
+      gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
+      labelSize: _boundedDouble(data, 'label_size', fallback: 13, minimum: 10, maximum: 22),
+      labelColor: _hexColor(data, 'label_color', fallback: '#1F2933'),
     );
   }
 
@@ -205,6 +265,10 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
+    final String imageFit = _optionalString(data, 'image_fit') ?? 'cover';
+    if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
+      throw FormatException('Unsupported image banner fit: $imageFit');
+    }
     return ImageBannerBlock(
       id: id,
       enabled: enabled,
@@ -213,7 +277,97 @@ abstract final class HomeBlockModel {
       aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 2.4),
       borderRadius: _nonNegativeDouble(data, 'border_radius', fallback: 16),
       semanticLabel: _optionalString(data, 'semantic_label'),
+      title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
+      buttonLabel: _optionalString(data, 'button_label'),
+      imageFit: imageFit,
+      overlayStrength: _boundedDouble(data, 'overlay_strength', fallback: 0, minimum: 0, maximum: 95),
+      textColor: _hexColor(data, 'text_color', fallback: '#FFFFFF'),
       action: _parseAction(data['action']),
+    );
+  }
+
+  static QuickLinksBlock _parseQuickLinks({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    final String layout = _optionalString(data, 'layout') ?? 'carousel';
+    final String imageShape =
+        _optionalString(data, 'image_shape') ?? 'circle';
+    if (!const <String>{'carousel', 'grid'}.contains(layout)) {
+      throw FormatException('Unsupported quick links layout: $layout');
+    }
+    if (!const <String>{'circle', 'rounded', 'square'}.contains(imageShape)) {
+      throw FormatException('Unsupported quick links shape: $imageShape');
+    }
+    return QuickLinksBlock(
+      id: id,
+      enabled: enabled,
+      presentation: _parsePresentation(data),
+      title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
+      layout: layout,
+      columns: _boundedInt(data, 'columns', fallback: 4, minimum: 2, maximum: 6),
+      imageShape: imageShape,
+      itemSize: _boundedDouble(data, 'item_size', fallback: 76, minimum: 48, maximum: 140),
+      gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
+      showLabels: _optionalBool(data, 'show_labels', fallback: true),
+      labelColor: _hexColor(data, 'label_color', fallback: '#1F2933'),
+      labelSize: _boundedDouble(data, 'label_size', fallback: 13, minimum: 10, maximum: 22),
+      items: _requiredMapList(data, 'items').map(_parseQuickLinkItem).toList(growable: false),
+    );
+  }
+
+  static QuickLinkItem _parseQuickLinkItem(Map<String, dynamic> json) {
+    return QuickLinkItem(
+      id: _requiredString(json, 'id'),
+      imageUrl: _requiredUrl(json, 'image_url'),
+      label: _requiredString(json, 'label'),
+      subtitle: _optionalString(json, 'subtitle'),
+      action: _parseAction(json['action']),
+    );
+  }
+
+  static BannerGridBlock _parseBannerGrid({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    final String layout = _optionalString(data, 'layout') ?? 'equal';
+    final String imageFit = _optionalString(data, 'image_fit') ?? 'cover';
+    if (!const <String>{'equal', 'featured', 'mosaic'}.contains(layout)) {
+      throw FormatException('Unsupported banner grid layout: $layout');
+    }
+    if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
+      throw FormatException('Unsupported banner grid image fit: $imageFit');
+    }
+    return BannerGridBlock(
+      id: id,
+      enabled: enabled,
+      presentation: _parsePresentation(data),
+      title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
+      layout: layout,
+      columns: _boundedInt(data, 'columns', fallback: 2, minimum: 1, maximum: 3),
+      gap: _boundedDouble(data, 'gap', fallback: 10, minimum: 0, maximum: 32),
+      aspectRatio: _boundedDouble(data, 'aspect_ratio', fallback: 1, minimum: 0.45, maximum: 5),
+      borderRadius: _boundedDouble(data, 'border_radius', fallback: 16, minimum: 0, maximum: 48),
+      imageFit: imageFit,
+      overlayStrength: _boundedDouble(data, 'overlay_strength', fallback: 35, minimum: 0, maximum: 90),
+      textColor: _hexColor(data, 'text_color', fallback: '#FFFFFF'),
+      items: _requiredMapList(data, 'items').map(_parseBannerGridItem).toList(growable: false),
+    );
+  }
+
+  static BannerGridItem _parseBannerGridItem(Map<String, dynamic> json) {
+    return BannerGridItem(
+      id: _requiredString(json, 'id'),
+      imageUrl: _requiredUrl(json, 'image_url'),
+      title: _optionalString(json, 'title'),
+      subtitle: _optionalString(json, 'subtitle'),
+      buttonLabel: _optionalString(json, 'button_label'),
+      action: _parseAction(json['action']),
     );
   }
 
@@ -222,14 +376,29 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
+    final String cardStyle = _optionalString(data, 'card_style') ?? 'outlined';
+    if (!const <String>{'outlined', 'elevated', 'minimal'}.contains(cardStyle)) {
+      throw FormatException('Unsupported product card style: $cardStyle');
+    }
     return ProductCarouselBlock(
       id: id,
       enabled: enabled,
       presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
       items: _parseProducts(data),
       showViewAll: _optionalBool(data, 'show_view_all', fallback: false),
+      viewAllLabel: _optionalString(data, 'view_all_label'),
       viewAllAction: _parseAction(data['view_all_action']),
+      cardStyle: cardStyle,
+      itemWidth: _boundedDouble(data, 'item_width', fallback: 168, minimum: 110, maximum: 260),
+      imageRatio: _boundedDouble(data, 'image_ratio', fallback: 1, minimum: 0.6, maximum: 1.8),
+      cardRadius: _boundedDouble(data, 'card_radius', fallback: 20, minimum: 0, maximum: 40),
+      showName: _optionalBool(data, 'show_name', fallback: true),
+      showPrice: _optionalBool(data, 'show_price', fallback: true),
+      showRegularPrice: _optionalBool(data, 'show_regular_price', fallback: true),
+      showBadge: _optionalBool(data, 'show_badge', fallback: true),
+      showRating: _optionalBool(data, 'show_rating', fallback: false),
     );
   }
 
@@ -238,6 +407,10 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
+    final String cardStyle = _optionalString(data, 'card_style') ?? 'outlined';
+    if (!const <String>{'outlined', 'elevated', 'minimal'}.contains(cardStyle)) {
+      throw FormatException('Unsupported product card style: $cardStyle');
+    }
     return ProductGridBlock(
       id: id,
       enabled: enabled,
@@ -248,13 +421,21 @@ abstract final class HomeBlockModel {
       columns: _boundedInt(
         data,
         'columns',
-        fallback: 2,
-        minimum: 1,
+		fallback: 2,
+		minimum: 1,
         maximum: 4,
       ),
       showViewAll: _optionalBool(data, 'show_view_all', fallback: false),
       viewAllLabel: _optionalString(data, 'view_all_label'),
       viewAllAction: _parseAction(data['view_all_action']),
+      cardStyle: cardStyle,
+      imageRatio: _boundedDouble(data, 'image_ratio', fallback: 1, minimum: 0.6, maximum: 1.8),
+      cardRadius: _boundedDouble(data, 'card_radius', fallback: 20, minimum: 0, maximum: 40),
+      showName: _optionalBool(data, 'show_name', fallback: true),
+      showPrice: _optionalBool(data, 'show_price', fallback: true),
+      showRegularPrice: _optionalBool(data, 'show_regular_price', fallback: true),
+      showBadge: _optionalBool(data, 'show_badge', fallback: true),
+      showRating: _optionalBool(data, 'show_rating', fallback: false),
     );
   }
 
@@ -275,6 +456,9 @@ abstract final class HomeBlockModel {
       currencySymbol: _requiredString(json, 'currency_symbol'),
       inStock: _optionalBool(json, 'in_stock', fallback: true),
       badge: _optionalString(json, 'badge'),
+      rating: _boundedDouble(json, 'rating', fallback: 0, minimum: 0, maximum: 5),
+      reviewCount: _boundedInt(json, 'review_count', fallback: 0, minimum: 0, maximum: 1000000000),
+      discountPercent: _boundedInt(json, 'discount_percent', fallback: 0, minimum: 0, maximum: 100),
       action: _parseAction(json['action']),
     );
   }
@@ -301,14 +485,29 @@ abstract final class HomeBlockModel {
     required Map<String, dynamic> data,
   }) {
     final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
+	final String layout = _optionalString(data, 'layout') ?? 'carousel';
+	final String imageShape =
+		_optionalString(data, 'image_shape') ?? 'rounded';
+	if (!const <String>{'carousel', 'grid'}.contains(layout)) {
+	  throw FormatException('Unsupported brand layout: $layout');
+	}
+	if (!const <String>{'circle', 'rounded', 'square'}.contains(imageShape)) {
+	  throw FormatException('Unsupported brand image shape: $imageShape');
+	}
 
     return BrandCarouselBlock(
       id: id,
       enabled: enabled,
       presentation: _parsePresentation(data),
       title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
       items: items.map(_parseBrandItem).toList(growable: false),
       itemWidth: _positiveDouble(data, 'item_width', fallback: 92),
+      layout: layout,
+      columns: _boundedInt(data, 'columns', fallback: 4, minimum: 2, maximum: 6),
+      imageShape: imageShape,
+      showNames: _optionalBool(data, 'show_names', fallback: true),
+      gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
     );
   }
 
@@ -350,6 +549,12 @@ abstract final class HomeBlockModel {
       description: _optionalString(data, 'description'),
       couponCode: _optionalString(data, 'coupon_code'),
       imageUrl: _optionalUrl(data, 'image_url'),
+      backgroundColor:
+          _hexColor(data, 'background_color', fallback: '#DCEEE8'),
+      textColor: _hexColor(data, 'text_color', fallback: '#1F2933'),
+      accentColor: _hexColor(data, 'accent_color', fallback: '#2F806E'),
+      borderRadius: _boundedDouble(data, 'border_radius', fallback: 20, minimum: 0, maximum: 48),
+      action: _parseAction(data['action']),
     );
   }
 
@@ -365,6 +570,11 @@ abstract final class HomeBlockModel {
       title: _optionalString(data, 'title'),
       endsAt: _optionalDateTime(data, 'ends_at'),
       expiredText: _optionalString(data, 'expired_text') ?? 'Offer ended',
+      backgroundColor:
+          _hexColor(data, 'background_color', fallback: '#FFFFFF'),
+      textColor: _hexColor(data, 'text_color', fallback: '#1F2933'),
+      boxColor: _hexColor(data, 'box_color', fallback: '#E9EEEC'),
+      action: _parseAction(data['action']),
     );
   }
 
@@ -382,8 +592,8 @@ abstract final class HomeBlockModel {
       aspectRatio: _boundedDouble(
         data,
         'aspect_ratio',
-        fallback: 1.8,
-        minimum: 1,
+		fallback: 1.8,
+		minimum: 0.45,
         maximum: 4,
       ),
       autoPlay: _optionalBool(data, 'auto_play', fallback: false),
@@ -405,6 +615,8 @@ abstract final class HomeBlockModel {
     final HomeTextAlignment? alignment = HomeTextAlignment.tryParse(
       alignmentValue,
     );
+	final String fontWeight =
+		_optionalString(data, 'font_weight') ?? 'normal';
 
     if (title == null && content == null) {
       throw const FormatException(
@@ -415,6 +627,9 @@ abstract final class HomeBlockModel {
     if (alignment == null) {
       throw FormatException('Unsupported text alignment: $alignmentValue');
     }
+	if (!const <String>{'normal', 'medium', 'bold'}.contains(fontWeight)) {
+	  throw FormatException('Unsupported text block font weight: $fontWeight');
+	}
 
     return TextBlock(
       id: id,
@@ -425,6 +640,9 @@ abstract final class HomeBlockModel {
       alignment: alignment,
       backgroundColor: _optionalHexColor(data, 'background'),
       textColor: _hexColor(data, 'text_color', fallback: '#111111'),
+      titleSize: _boundedDouble(data, 'title_size', fallback: 22, minimum: 12, maximum: 48),
+      contentSize: _boundedDouble(data, 'content_size', fallback: 15, minimum: 10, maximum: 32),
+      fontWeight: fontWeight,
     );
   }
 

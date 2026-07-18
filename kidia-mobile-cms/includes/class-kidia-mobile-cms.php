@@ -38,6 +38,8 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-video-b
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-text-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-divider-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-spacer-block.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-quick-links-block.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-banner-grid-block.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -160,6 +162,14 @@ final class Kidia_Mobile_CMS {
 
 		Kidia_Mobile_Block_Registry::register(
 			new Kidia_Mobile_Spacer_Block()
+		);
+
+		Kidia_Mobile_Block_Registry::register(
+			new Kidia_Mobile_Quick_Links_Block()
+		);
+
+		Kidia_Mobile_Block_Registry::register(
+			new Kidia_Mobile_Banner_Grid_Block()
 		);
 
 	}

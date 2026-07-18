@@ -35,6 +35,12 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 			'description' => '',
 			'coupon_code' => '',
 			'image_url' => '',
+			'background_color' => '#DCEEE8',
+			'text_color' => '#1F2933',
+			'accent_color' => '#2F806E',
+			'border_radius' => 20,
+			'action_type' => '',
+			'action_value' => '',
 		);
 	}
 
@@ -60,18 +66,28 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 				$settings['image_url'] ?? ''
 			),
 
+			'background_color' => sanitize_hex_color( $settings['background_color'] ?? '' ) ?: '#DCEEE8',
+			'text_color' => sanitize_hex_color( $settings['text_color'] ?? '' ) ?: '#1F2933',
+			'accent_color' => sanitize_hex_color( $settings['accent_color'] ?? '' ) ?: '#2F806E',
+			'border_radius' => max( 0, min( 48, absint( $settings['border_radius'] ?? 20 ) ) ),
+			'action_type' => in_array( sanitize_key( $settings['action_type'] ?? '' ), array( '', 'product', 'category', 'collection', 'brand', 'brands', 'search', 'external' ), true ) ? sanitize_key( $settings['action_type'] ?? '' ) : '',
+			'action_value' => sanitize_text_field( $settings['action_value'] ?? '' ),
+
 		);
 	}
 		public function build_api_data(
     		array $settings
     	): ?array {
 
-    		return $this->sanitize_settings(
-    			wp_parse_args(
+		$settings = $this->sanitize_settings(
+				wp_parse_args(
     				$settings,
     				$this->get_default_settings()
     			)
-    		);
+			);
+		$settings['action'] = $this->build_action( $settings['action_type'], $settings['action_value'] );
+		unset( $settings['action_type'], $settings['action_value'] );
+		return $settings;
     	}
 
     	public function render_settings(
@@ -149,6 +165,13 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 		>
 
 	</div>
+
+	<div class="kidia-builder-field"><label>Background Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][background_color]" value="<?php echo esc_attr( $settings['background_color'] ); ?>"></div>
+	<div class="kidia-builder-field"><label>Text Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></div>
+	<div class="kidia-builder-field"><label>Accent Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][accent_color]" value="<?php echo esc_attr( $settings['accent_color'] ); ?>"></div>
+	<div class="kidia-builder-field"><label>Border Radius</label><input type="number" min="0" max="48" name="blocks[<?php echo esc_attr( $index ); ?>][settings][border_radius]" value="<?php echo esc_attr( (string) $settings['border_radius'] ); ?>"></div>
+	<div class="kidia-builder-field"><label>Action Type</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_type]"><?php foreach ( array( '' => 'No Action', 'product' => 'Product', 'category' => 'Category', 'collection' => 'Collection', 'brand' => 'Brand', 'brands' => 'All Brands', 'search' => 'Search', 'external' => 'External URL' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['action_type'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+	<div class="kidia-builder-field"><label>Action Value</label><input type="text" name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_value]" value="<?php echo esc_attr( $settings['action_value'] ); ?>"></div>
 
     </div>
 

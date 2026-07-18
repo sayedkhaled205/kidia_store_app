@@ -65,6 +65,12 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			'border_radius'  => 20,
 			'action_type'    => '',
 			'action_value'   => '',
+			'title'          => '',
+			'subtitle'       => '',
+			'button_label'   => '',
+			'image_fit'      => 'cover',
+			'overlay_strength' => 0,
+			'text_color'     => '#FFFFFF',
 		);
 	}
 
@@ -83,6 +89,8 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			'product',
 			'category',
 			'collection',
+			'brand',
+			'brands',
 			'search',
 			'external',
 		);
@@ -100,7 +108,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			: 2.4;
 
 		$aspect_ratio = max(
-			1,
+			0.45,
 			min( 5, $aspect_ratio )
 		);
 
@@ -112,6 +120,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			0,
 			min( 48, $border_radius )
 		);
+		$image_fit = sanitize_key( (string) ( $settings['image_fit'] ?? 'cover' ) );
 
 		return array(
 			'image_url'      => isset( $settings['image_url'] )
@@ -123,9 +132,15 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			'aspect_ratio'   => $aspect_ratio,
 			'border_radius'  => $border_radius,
 			'action_type'    => $action_type,
-			'action_value'   => isset( $settings['action_value'] )
-				? sanitize_text_field( $settings['action_value'] )
-				: '',
+			'action_value'   => 'external' === $action_type
+				? $this->sanitize_http_url( $settings['action_value'] ?? '' )
+				: sanitize_text_field( (string) ( $settings['action_value'] ?? '' ) ),
+			'title'          => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
+			'subtitle'       => sanitize_textarea_field( (string) ( $settings['subtitle'] ?? '' ) ),
+			'button_label'   => sanitize_text_field( (string) ( $settings['button_label'] ?? '' ) ),
+			'image_fit'      => in_array( $image_fit, array( 'cover', 'contain' ), true ) ? $image_fit : 'cover',
+			'overlay_strength' => max( 0, min( 95, absint( $settings['overlay_strength'] ?? 0 ) ) ),
+			'text_color'     => sanitize_hex_color( $settings['text_color'] ?? '' ) ?: '#FFFFFF',
 		);
 	}
 
@@ -157,6 +172,12 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 				: null,
 			'aspect_ratio'   => $settings['aspect_ratio'],
 			'border_radius'  => $settings['border_radius'],
+			'title'          => '' !== $settings['title'] ? $settings['title'] : null,
+			'subtitle'       => '' !== $settings['subtitle'] ? $settings['subtitle'] : null,
+			'button_label'   => '' !== $settings['button_label'] ? $settings['button_label'] : null,
+			'image_fit'      => $settings['image_fit'],
+			'overlay_strength' => $settings['overlay_strength'],
+			'text_color'     => $settings['text_color'],
 			'action'         => $this->build_action(
 				$settings['action_type'],
 				$settings['action_value']
@@ -237,6 +258,12 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 					value="<?php echo esc_attr( (string) $settings['semantic_label'] ); ?>"
 				>
 			</div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Title', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( (string) $settings['subtitle'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Button Label', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][button_label]" value="<?php echo esc_attr( (string) $settings['button_label'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Fit', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_fit]"><option value="cover" <?php selected( 'cover', $settings['image_fit'] ); ?>><?php esc_html_e( 'Cover', 'kidia-mobile-cms' ); ?></option><option value="contain" <?php selected( 'contain', $settings['image_fit'] ); ?>><?php esc_html_e( 'Contain', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Strength %', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="95" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][overlay_strength]" value="<?php echo esc_attr( (string) $settings['overlay_strength'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
 
 			<div class="kidia-builder-field">
 				<label>
@@ -247,7 +274,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 					type="number"
 					name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][aspect_ratio]"
 					value="<?php echo esc_attr( (string) $settings['aspect_ratio'] ); ?>"
-					min="1"
+					min="0.45"
 					max="5"
 					step="0.1"
 				>
@@ -299,6 +326,20 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 						<?php selected( 'collection', $settings['action_type'] ); ?>
 					>
 						<?php echo esc_html__( 'Collection', 'kidia-mobile-cms' ); ?>
+					</option>
+
+					<option
+						value="brand"
+						<?php selected( 'brand', $settings['action_type'] ); ?>
+					>
+						<?php echo esc_html__( 'Brand', 'kidia-mobile-cms' ); ?>
+					</option>
+
+					<option
+						value="brands"
+						<?php selected( 'brands', $settings['action_type'] ); ?>
+					>
+						<?php echo esc_html__( 'All Brands', 'kidia-mobile-cms' ); ?>
 					</option>
 
 					<option

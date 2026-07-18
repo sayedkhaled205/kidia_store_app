@@ -20,6 +20,8 @@ class WC_Product {
 	public function get_image_id(): int { return 41; }
 	public function get_price(): string { return '499'; }
 	public function get_regular_price(): string { return '599'; }
+	public function get_average_rating(): string { return '4.7'; }
+	public function get_review_count(): int { return 28; }
 	public function is_in_stock(): bool { return true; }
 	public function is_on_sale(): bool { return true; }
 }
@@ -33,6 +35,7 @@ function kidia_home_assert( bool $condition, string $message ): void {
 function __( string $text, string $domain = '' ): string { unset( $domain ); return $text; }
 function esc_attr( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 function esc_html( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
+function esc_html__( string $text, string $domain = '' ): string { return esc_html( __( $text, $domain ) ); }
 function esc_textarea( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 function esc_url( $value ): string { return esc_url_raw( $value ); }
 function esc_html_e( string $text, string $domain = '' ): void { echo htmlspecialchars( __( $text, $domain ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
@@ -86,6 +89,8 @@ require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-product-carous
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-brand-carousel-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-section-header-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-promo-strip-block.php';
+require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-quick-links-block.php';
+require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-banner-grid-block.php';
 
 // Regression: render_settings() used to fatal before the Builder footer and JS
 // because App Header called a missing sanitize_http_url() base helper.
@@ -100,6 +105,8 @@ $header_api = $header->build_api_block(
 );
 kidia_home_assert( 'Kidia Test Store' === $header_api['data']['title'], 'App Header must provide Flutter with a required title.' );
 kidia_home_assert( '' === $header_api['data']['logo_url'], 'Unsafe App Header URLs must be rejected.' );
+kidia_home_assert( '#FFFFFF' === $header_api['data']['background_color'], 'App Header must expose its configurable background.' );
+kidia_home_assert( 'icon' === $header_api['data']['search_style'], 'App Header must expose its configurable search presentation.' );
 
 $coupon = new Kidia_Mobile_Coupon_Banner_Block();
 ob_start();
@@ -113,7 +120,18 @@ $carousel_api = $carousel->build_api_block(
 	array(
 		'id'       => 'products',
 		'enabled'  => true,
-		'settings' => array( 'title' => 'Latest', 'source' => 'latest', 'limit' => 4, 'show_view_all' => true ),
+		'settings' => array(
+			'title'          => 'Latest',
+			'subtitle'       => 'Fresh arrivals',
+			'source'         => 'latest',
+			'limit'          => 4,
+			'show_view_all'  => true,
+			'view_all_label' => 'See everything',
+			'card_style'     => 'elevated',
+			'show_name'      => true,
+			'show_price'     => true,
+			'show_rating'    => true,
+		),
 	)
 );
 kidia_home_assert( 1 === count( $carousel_api['data']['items'] ), 'Product Carousel must return Flutter product items, not query settings.' );
@@ -122,6 +140,11 @@ kidia_home_assert( 42 === $product['id'] && '499' === $product['price'], 'Produc
 kidia_home_assert( 'https://example.com/media-41.jpg' === $product['image_url'], 'Product Carousel must expose an absolute product image.' );
 kidia_home_assert( 'EGP' === $product['currency_code'] && 'EGP' === $product['currency_symbol'], 'Product Carousel must expose the Flutter currency contract.' );
 kidia_home_assert( 'product' === $product['action']['type'] && '42' === $product['action']['value'], 'Product cards must navigate to their product.' );
+kidia_home_assert( 4.7 === $product['rating'] && 28 === $product['review_count'], 'Product cards must expose ratings when that presentation is enabled.' );
+kidia_home_assert( 17 === $product['discount_percent'], 'Product cards must expose the calculated discount percentage.' );
+kidia_home_assert( 'Fresh arrivals' === $carousel_api['data']['subtitle'], 'Product Carousel subtitles must reach Flutter.' );
+kidia_home_assert( 'See everything' === $carousel_api['data']['view_all_label'], 'Product Carousel View All labels must reach Flutter.' );
+kidia_home_assert( 'elevated' === $carousel_api['data']['card_style'] && true === $carousel_api['data']['show_rating'], 'Product Carousel card presentation settings must reach Flutter.' );
 kidia_home_assert( 'collection' === $carousel_api['data']['view_all_action']['type'], 'Latest products must get an automatic View All collection action.' );
 
 $brands = new Kidia_Mobile_Brand_Carousel_Block();
@@ -147,6 +170,71 @@ $promo_api = $promo->build_api_data(
 );
 kidia_home_assert( 'Free shipping' === $promo_api['text'], 'Promo Strip must expose its required text.' );
 kidia_home_assert( 'search' === $promo_api['action']['type'], 'Promo Strip action settings must reach Flutter.' );
+
+$quick_links = new Kidia_Mobile_Quick_Links_Block();
+$quick_links_settings = array_merge(
+	$quick_links->get_default_settings(),
+	array(
+		'title'       => 'Shop by age',
+		'layout'      => 'grid',
+		'image_shape' => 'circle',
+		'columns'     => 5,
+		'items'       => array(
+			array(
+				'image_url'    => 'https://example.com/baby.jpg',
+				'label'        => 'Baby',
+				'subtitle'     => '0-2 years',
+				'action_type'  => 'category',
+				'action_value' => '12',
+			),
+			array(
+				'image_url' => 'javascript:alert(1)',
+				'label'     => 'Unsafe',
+			),
+		),
+	)
+);
+$quick_links_api = $quick_links->build_api_data( $quick_links_settings );
+kidia_home_assert( is_array( $quick_links_api ) && 1 === count( $quick_links_api['items'] ), 'Quick Links must omit incomplete or unsafe shortcuts.' );
+kidia_home_assert( 'grid' === $quick_links_api['layout'] && 5 === $quick_links_api['columns'], 'Quick Links layout settings must reach Flutter.' );
+kidia_home_assert( 'category' === $quick_links_api['items'][0]['action']['type'], 'Quick Links must expose per-item navigation actions.' );
+ob_start();
+$quick_links->render_settings( 6, $quick_links_settings );
+$quick_links_markup = (string) ob_get_clean();
+kidia_home_assert( str_contains( $quick_links_markup, 'kidia-add-repeatable-item' ), 'Quick Links must provide a repeatable item editor.' );
+kidia_home_assert( str_contains( $quick_links_markup, 'kidia-select-media' ), 'Quick Links images must use the WordPress media picker.' );
+
+$banner_grid = new Kidia_Mobile_Banner_Grid_Block();
+$banner_grid_settings = array_merge(
+	$banner_grid->get_default_settings(),
+	array(
+		'title'         => 'Collections',
+		'layout'        => 'featured',
+		'aspect_ratio'  => 0.75,
+		'image_fit'     => 'contain',
+		'border_radius' => 12,
+		'items'         => array(
+			array(
+				'image_url'    => 'https://example.com/summer.jpg',
+				'title'        => 'Summer edit',
+				'subtitle'     => 'New season',
+				'button_label' => 'Shop now',
+				'action_type'  => 'collection',
+				'action_value' => 'summer',
+			),
+		),
+	)
+);
+$banner_grid_api = $banner_grid->build_api_data( $banner_grid_settings );
+kidia_home_assert( is_array( $banner_grid_api ) && 'featured' === $banner_grid_api['layout'], 'Banner Grid must expose its featured layout.' );
+kidia_home_assert( 0.75 === $banner_grid_api['aspect_ratio'] && 'contain' === $banner_grid_api['image_fit'], 'Banner Grid image presentation settings must reach Flutter.' );
+kidia_home_assert( 'Shop now' === $banner_grid_api['items'][0]['button_label'], 'Banner Grid overlays must expose their button label.' );
+kidia_home_assert( 'summer' === $banner_grid_api['items'][0]['action']['value'], 'Banner Grid items must expose their own action.' );
+ob_start();
+$banner_grid->render_settings( 7, $banner_grid_settings );
+$banner_grid_markup = (string) ob_get_clean();
+kidia_home_assert( str_contains( $banner_grid_markup, 'kidia-add-repeatable-item' ), 'Banner Grid must provide a repeatable item editor.' );
+kidia_home_assert( str_contains( $banner_grid_markup, 'kidia-select-media' ), 'Banner Grid images must use the WordPress media picker.' );
 
 $builder_template = file_get_contents(
 	dirname( __DIR__ ) . '/admin/templates/block-template.php'

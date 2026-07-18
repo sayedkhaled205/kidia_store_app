@@ -67,6 +67,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'alignment'  => 'right',
 			'background' => '',
 			'text_color' => '#111111',
+			'title_size' => 22,
+			'content_size' => 15,
+			'font_weight' => 'normal',
 		);
 	}
 
@@ -112,6 +115,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 				?? '#111111'
 			)
 		);
+		$font_weight = sanitize_key( (string) ( $settings['font_weight'] ?? 'normal' ) );
 
 		return array(
 			'title' => sanitize_text_field(
@@ -127,6 +131,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'background' => $background ?: '',
 
 			'text_color' => $text_color ?: '#111111',
+			'title_size' => max( 12, min( 48, absint( $settings['title_size'] ?? 22 ) ) ),
+			'content_size' => max( 10, min( 32, absint( $settings['content_size'] ?? 15 ) ) ),
+			'font_weight' => in_array( $font_weight, array( 'normal', 'medium', 'bold' ), true ) ? $font_weight : 'normal',
 		);
 	}
 
@@ -161,6 +168,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 			'alignment'  => $settings['alignment'],
 			'background' => $settings['background'],
 			'text_color' => $settings['text_color'],
+			'title_size' => $settings['title_size'],
+			'content_size' => $settings['content_size'],
+			'font_weight' => $settings['font_weight'],
 		);
 	}
 
@@ -276,6 +286,9 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 				</select>
 
 			</div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="12" max="48" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title_size]" value="<?php echo esc_attr( (string) $settings['title_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Content Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][content_size]" value="<?php echo esc_attr( (string) $settings['content_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Font Weight', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][font_weight]"><option value="normal" <?php selected( 'normal', $settings['font_weight'] ); ?>><?php esc_html_e( 'Normal', 'kidia-mobile-cms' ); ?></option><option value="medium" <?php selected( 'medium', $settings['font_weight'] ); ?>><?php esc_html_e( 'Medium', 'kidia-mobile-cms' ); ?></option><option value="bold" <?php selected( 'bold', $settings['font_weight'] ); ?>><?php esc_html_e( 'Bold', 'kidia-mobile-cms' ); ?></option></select></div>
 
 			<div class="kidia-builder-field">
 

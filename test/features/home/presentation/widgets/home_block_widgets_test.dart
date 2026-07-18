@@ -124,7 +124,7 @@ void main() {
     expect(find.byType(HomeResponsiveScope), findsOneWidget);
   });
 
-  testWidgets('video banner exposes an accessible playable fallback action', (
+  testWidgets('video banner exposes playback and a separate CMS action', (
     WidgetTester tester,
   ) async {
     HomeAction? receivedAction;
@@ -142,7 +142,10 @@ void main() {
           autoPlay: false,
           muted: true,
           loop: false,
-          action: null,
+          action: HomeAction(
+            type: 'external',
+            value: 'https://example.com/lookbook',
+          ),
         ),
         onAction: (HomeAction action) {
           receivedAction = action;
@@ -150,13 +153,16 @@ void main() {
       ),
     );
 
-    expect(find.bySemanticsLabel('تشغيل الفيديو'), findsOneWidget);
+    expect(find.bySemanticsLabel('فيديو ترويجي'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.play_arrow_rounded));
+    await tester.tap(find.text('عرض التفاصيل'));
     await tester.pump();
 
     expect(receivedAction?.type, 'external');
-    expect(receivedAction?.value, 'https://example.com/lookbook.mp4');
+    expect(receivedAction?.value, 'https://example.com/lookbook');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
 
     semantics.dispose();
   });
