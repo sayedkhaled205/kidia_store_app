@@ -19,10 +19,12 @@
 .kidia-page-card__identity strong { font-size:13px; }
 .kidia-page-drag { display:grid; width:32px; height:32px; place-items:center; border-radius:7px; background:#edf2ff; color:var(--accent); cursor:grab; }
 .kidia-page-card.is-dragging { opacity:.48; }
-.kidia-page-master-toggle { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; }
+.kidia-page-master-toggle { display:flex; min-width:92px; align-items:center; justify-content:center; gap:7px; font-size:12px; font-weight:600; }
+.kidia-page-master-toggle input { position:static; margin:0; }
 .kidia-page-expand { width:34px; min-height:32px; padding:0!important; }
 .kidia-page-expand .dashicons { transition:transform .18s; }
 .kidia-page-card.is-open .kidia-page-expand .dashicons { transform:rotate(180deg); }
+.kidia-fixed-chrome-card.is-open .kidia-fixed-chrome-expand .dashicons { transform:rotate(180deg); }
 .kidia-page-card__body { padding:13px; border-top:1px solid #e8eaed; background:#fbfcfd; }
 .kidia-page-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; }
 .kidia-page-field { display:flex; min-width:0; flex-direction:column; gap:4px; }

@@ -172,7 +172,7 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
-          if (showSearchField && pageLayout.element('search_bar').enabled)
+          if (showSearchField)
             SliverToBoxAdapter(
               child: _SearchField(
                 controller: searchController,
@@ -261,17 +261,13 @@ class _SearchField extends StatelessWidget {
           prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
           suffixIcon: ListenableBuilder(
             listenable: controller,
-            builder: (BuildContext context, Widget? child) {
-              return controller.text.isEmpty
-                  ? const SizedBox.shrink()
-                  : IconButton(
-                      tooltip: MaterialLocalizations.of(
-                        context,
-                      ).deleteButtonTooltip,
-                      onPressed: onClear,
-                      icon: const Icon(Icons.close_rounded),
-                    );
-            },
+            builder: (BuildContext context, Widget? child) => controller.text.isEmpty
+                ? const SizedBox.shrink()
+                : IconButton(
+                    tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+                    onPressed: onClear,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
           ),
         ),
         onSubmitted: (String value) {

@@ -301,7 +301,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
     ?>
     <div class="kidia-builder-grid">
 
-    	<div class="kidia-builder-field">
+	<div class="kidia-builder-field">
 
     		<label>Title</label>
 
@@ -325,9 +325,9 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
     	</div>
 
-    	<div class="kidia-builder-field">
+	<div class="kidia-builder-field kidia-builder-field--product-source">
 
-    		<label>Source</label>
+			<label>Source</label>
 
     		<select
     			name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][source]"
@@ -367,7 +367,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 		</div>
 
-		<div class="kidia-builder-field">
+		<div class="kidia-builder-field kidia-builder-field--product-source">
 
 			<label>Category ID</label>
 
@@ -380,7 +380,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 		</div>
 
-		<div class="kidia-builder-field kidia-builder-field--full">
+		<div class="kidia-builder-field kidia-builder-field--product-source">
 
 			<label>Manual Product IDs</label>
 

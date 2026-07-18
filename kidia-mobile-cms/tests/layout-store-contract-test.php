@@ -50,6 +50,10 @@ foreach ( $types as $index => $type ) {
 }
 $decoded = Kidia_Mobile_Layout_Store::decode_submission( (string) json_encode( $submitted ) );
 kidia_assert( count( $types ) === count( $decoded ), 'JSON submission must contain every inline element.' );
+$encoded = base64_encode( (string) json_encode( $submitted ) );
+$decoded_base64 = Kidia_Mobile_Layout_Store::decode_submission( $encoded, 'base64' );
+kidia_assert( count( $types ) === count( $decoded_base64 ), 'Base64 submission must survive hosting security filters.' );
+kidia_assert( array() === Kidia_Mobile_Layout_Store::decode_submission( 'broken payload', 'base64' ), 'A damaged payload must be rejected instead of erasing the Home Layout.' );
 $store->save_layout( $decoded );
 $reloaded = $store->get_layout();
 kidia_assert( count( $types ) === count( $reloaded ), 'Every inline element must survive save/reload.' );

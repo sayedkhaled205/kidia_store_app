@@ -77,11 +77,6 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       _header.string('title_color', '#1F2933'),
       Theme.of(context).colorScheme.onSurface,
     );
-    final Color iconColor = _color(
-      _header.string('icon_color', '#1F2933'),
-      titleColor,
-    );
-    final double iconSize = _header.number('icon_size', 24).clamp(16, 40);
     final String searchStyle = _header.string('search_style', 'icon');
     final bool showSearchBar =
         searchStyle == 'bar' && _header.boolean('show_search', true);
@@ -99,15 +94,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           }
           return _header.boolean('show_${action.type}', true);
         })
-        .map(
-          (CmsPageHeaderAction action) => IconButton(
-            key: action.key,
-            tooltip: action.tooltip,
-            onPressed: action.onPressed,
-            color: action.color ?? iconColor,
-            icon: Icon(action.icon, size: iconSize),
-          ),
-        )
+        .map((CmsPageHeaderAction action) => _actionButton(context, action, titleColor))
         .toList(growable: false);
     return AppBar(
       centerTitle: true,
@@ -117,7 +104,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? background.withValues(alpha: 0)
           : background,
       foregroundColor: titleColor,
-      automaticallyImplyLeading: _header.boolean('show_back', true),
+      automaticallyImplyLeading: false,
+      leading: _header.boolean('show_back', true) && Navigator.of(context).canPop()
+          ? _actionButton(
+              context,
+              CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop()),
+              titleColor,
+            )
+          : null,
       title: showSearchBar
           ? InkWell(
               borderRadius: BorderRadius.circular(
@@ -173,6 +167,35 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               overflow: TextOverflow.ellipsis,
             ),
       actions: visibleActions,
+    );
+  }
+
+  Widget _actionButton(BuildContext context, CmsPageHeaderAction action, Color fallbackColor) {
+    final String prefix = action.type == 'search' ? 'search_icon' : action.type == 'account' ? 'account_icon' : action.type;
+    final String style = _header.string('${prefix}_style', action.type == 'account' ? _header.string('account_style', 'icon') : 'outline');
+    final Color color = action.color ?? _color(_header.string('${prefix}_color', '#1F2933'), fallbackColor);
+    final Color background = _color(_header.string('${prefix}_background', '#FFFFFF'), Colors.transparent);
+    final double size = _header.number('${prefix}_size', 24).clamp(16, 40);
+    final double radius = _header.number('${prefix}_radius', 12).clamp(0, 24);
+    IconData icon = action.icon;
+    if (style == 'filled') {
+      icon = switch (action.type) {
+        'cart' => Icons.shopping_bag_rounded,
+        'wishlist' => Icons.favorite_rounded,
+        'account' => Icons.person_rounded,
+        _ => action.icon,
+      };
+    }
+    return IconButton(
+      key: action.key,
+      tooltip: action.tooltip,
+      onPressed: action.onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: style == 'circle' || style == 'filled' ? background : Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+      ),
+      color: color,
+      icon: Icon(icon, size: size),
     );
   }
 }

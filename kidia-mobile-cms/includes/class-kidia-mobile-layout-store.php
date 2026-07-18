@@ -158,13 +158,22 @@ final class Kidia_Mobile_Layout_Store {
 	 * A flat payload is intentionally used because some hosting security layers
 	 * strip deeply nested blocks[...] form fields before WordPress receives them.
 	 *
-	 * @param mixed $payload Raw request payload.
+	 * @param mixed  $payload  Raw request payload.
+	 * @param string $encoding Payload encoding.
 	 *
 	 * @return array<int|string,mixed>
 	 */
-	public static function decode_submission( $payload ): array {
+	public static function decode_submission( $payload, string $encoding = '' ): array {
 		if ( ! is_string( $payload ) || '' === trim( $payload ) ) {
 			return array();
+		}
+
+		if ( 'base64' === $encoding ) {
+			$decoded_payload = base64_decode( $payload, true );
+			if ( false === $decoded_payload ) {
+				return array();
+			}
+			$payload = $decoded_payload;
 		}
 
 		$decoded = json_decode( $payload, true );
