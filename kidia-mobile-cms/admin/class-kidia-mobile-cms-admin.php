@@ -451,27 +451,27 @@ final class Kidia_Mobile_CMS_Admin {
 					wp_enqueue_media();
 
 					if ( 'kidia-mobile-category-builder' === $page ) {
-						wp_enqueue_style( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.css', array(), KIDIA_MOBILE_CMS_VERSION );
-						wp_enqueue_script( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION, true );
+						wp_enqueue_style( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.css' ) );
+						wp_enqueue_script( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.js' ), true );
 						return;
 					}
 
-            		wp_enqueue_style(
-            			'kidia-mobile-home-builder',
-            			KIDIA_MOBILE_CMS_URL .
-            			'admin/assets/home-builder.css',
-            			array(),
-            			KIDIA_MOBILE_CMS_VERSION
-            		);
+					wp_enqueue_style(
+						'kidia-mobile-home-builder',
+						KIDIA_MOBILE_CMS_URL .
+						'admin/assets/home-builder.css',
+						array(),
+						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.css' )
+					);
 
             		wp_enqueue_script(
             			'kidia-mobile-home-builder',
-            			KIDIA_MOBILE_CMS_URL .
-            			'admin/assets/home-builder.js',
-            			array(),
-            			KIDIA_MOBILE_CMS_VERSION,
-            			true
-            		);
+						KIDIA_MOBILE_CMS_URL .
+						'admin/assets/home-builder.js',
+						array(),
+						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.js' ),
+						true
+					);
 
             		wp_localize_script(
             			'kidia-mobile-home-builder',
