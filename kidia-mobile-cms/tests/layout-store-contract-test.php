@@ -70,5 +70,5 @@ kidia_assert( 'app_header' === $preset[0]['type'], 'The PatPat preset must begin
 kidia_assert( 'bar' === $preset[0]['settings']['search_style'], 'The PatPat header must use a full search bar.' );
 kidia_assert( 'image_banner' === $preset[1]['type'], 'The PatPat preset must place the main Kidia banner directly under search.' );
 $saved_banner = array_values( array_filter( $reloaded, static fn ( array $block ): bool => 'image_banner' === $block['type'] ) )[0];
-kidia_assert( $saved_banner['settings']['image_url'] === $preset[1]['settings']['image_url'], 'The PatPat preset must preserve the store\'s real Kidia banner image.' );
+kidia_assert( $saved_banner['id'] === $preset[1]['id'], 'The PatPat preset must reuse the store\'s real Kidia banner instead of creating an empty one.' );
 fwrite( STDOUT, "Inline Home Builder canonical-layout test passed for all 17 elements.\n" );
