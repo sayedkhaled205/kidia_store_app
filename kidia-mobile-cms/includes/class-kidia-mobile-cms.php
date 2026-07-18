@@ -41,36 +41,12 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-spacer-
 
 /*
 |--------------------------------------------------------------------------
-| Framework
-|--------------------------------------------------------------------------
-*/
-
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/framework/class-library.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/framework/class-editor.php';
-
-/*
-|--------------------------------------------------------------------------
 | Admin
 |--------------------------------------------------------------------------
 */
 
 require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-admin.php';
 
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-hero-slider.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-app-header.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-image-banner.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-product-carousel.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-brand-carousel.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-category-grid.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-product-grid.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-section-header.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-promo-strip.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-coupon-banner.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-countdown.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-video-banner.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-text-block.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-divider.php';
-require_once KIDIA_MOBILE_CMS_PATH . 'admin/class-kidia-mobile-cms-spacer.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -191,36 +167,6 @@ final class Kidia_Mobile_CMS {
 	private function register_admin_modules(): void {
 
 		(new Kidia_Mobile_CMS_Admin())->register();
-
-		(new Kidia_Mobile_CMS_App_Header())->register();
-
-		(new Kidia_Mobile_CMS_Hero_Slider())->register();
-
-		(new Kidia_Mobile_CMS_Image_Banner())->register();
-
-		(new Kidia_Mobile_CMS_Product_Carousel())->register();
-
-		(new Kidia_Mobile_CMS_Brand_Carousel())->register();
-
-		(new Kidia_Mobile_CMS_Category_Grid())->register();
-
-		(new Kidia_Mobile_CMS_Product_Grid())->register();
-
-		(new Kidia_Mobile_CMS_Section_Header())->register();
-
-		(new Kidia_Mobile_CMS_Promo_Strip())->register();
-
-		(new Kidia_Mobile_CMS_Coupon_Banner())->register();
-
-		(new Kidia_Mobile_CMS_Countdown())->register();
-
-		(new Kidia_Mobile_CMS_Video_Banner())->register();
-
-		(new Kidia_Mobile_CMS_Text_Block())->register();
-
-		(new Kidia_Mobile_CMS_Divider())->register();
-
-		(new Kidia_Mobile_CMS_Spacer())->register();
 
 	}
 

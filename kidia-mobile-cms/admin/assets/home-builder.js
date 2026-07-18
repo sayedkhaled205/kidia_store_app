@@ -10,7 +10,6 @@
 
 	const config = window.kidiaHomeBuilder || {};
 	const labels = config.labels || {};
-	const editorPages = config.editorPages || {};
 	const picker = document.getElementById('kidia-element-picker');
 	const createModal = document.getElementById('kidia-create-element-modal');
 	const searchInput = document.getElementById('kidia-element-picker-search');
@@ -67,6 +66,32 @@
 			};
 			const enabled = block.querySelector('input[name$="[enabled]"]');
 
+			const settings = {};
+			block.querySelectorAll('[name*="[settings]"]').forEach(function (input) {
+				if (!(input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement)) return;
+				if ((input.type === 'checkbox' || input.type === 'radio') && !input.checked) return;
+				const match = input.name.match(/\[settings\]((?:\[[^\]]*\])+)/);
+				if (!match) return;
+				const path = Array.from(match[1].matchAll(/\[([^\]]*)\]/g)).map(function (part) { return part[1]; });
+				let cursor = settings;
+				path.forEach(function (key, pathIndex) {
+					const last = pathIndex === path.length - 1;
+					const nextKey = path[pathIndex + 1];
+					if (last) {
+						if (key === '') {
+							if (Array.isArray(cursor)) cursor.push(input.value);
+						} else if (Object.prototype.hasOwnProperty.call(cursor, key)) {
+							cursor[key] = Array.isArray(cursor[key]) ? cursor[key].concat(input.value) : [cursor[key], input.value];
+						} else {
+							cursor[key] = input.value;
+						}
+						return;
+					}
+					if (!Object.prototype.hasOwnProperty.call(cursor, key)) cursor[key] = /^\d+$/.test(nextKey) || nextKey === '' ? [] : {};
+					cursor = cursor[key];
+				});
+			});
+
 			return {
 				id: value('.kidia-block-id'),
 				library_id: value('.kidia-block-library-id'),
@@ -76,7 +101,8 @@
 				name: value('.kidia-block-name-input'),
 				enabled: enabled?.checked ? '1' : '',
 				status: value('.kidia-block-status'),
-				order: index + 1
+				order: index + 1,
+				settings: settings
 			};
 		});
 	}
@@ -217,6 +243,7 @@
 		const resolvedLibraryId = libraryId || blockId;
 		const html = template.innerHTML
 			.replaceAll('__INDEX__', String(index))
+			.replaceAll('987654321', String(index))
 			.replaceAll('__ORDER__', String(index + 1))
 			.replaceAll('__BLOCK_ID__', blockId)
 			.replaceAll('__LIBRARY_ID__', resolvedLibraryId)
@@ -248,7 +275,7 @@
 
 			block.dataset.isNew = isNew ? 'true' : 'false';
 			block.draggable = false;
-			setCollapsed(block, true);
+			setCollapsed(block, false);
 			block.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
 
@@ -349,32 +376,6 @@
 		updateIndexes();
 		markDirty();
 		clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-	}
-
-	function editBlock(block, button) {
-		const type = button.dataset.type || '';
-		const libraryId = button.dataset.libraryId || '';
-		const editorPage = editorPages[type];
-
-		if (!editorPage || !libraryId) {
-			return;
-		}
-
-		if (block.dataset.isNew === 'true') {
-			if (editAfterSaveType && editAfterSaveId) {
-				editAfterSaveType.value = type;
-				editAfterSaveId.value = libraryId;
-			}
-			form.requestSubmit();
-			return;
-		}
-
-		window.location.assign(
-			'admin.php?page=' +
-				encodeURIComponent(editorPage) +
-				'&id=' +
-				encodeURIComponent(libraryId)
-		);
 	}
 
 	document.addEventListener('click', function (event) {
@@ -481,11 +482,74 @@
 			return;
 		}
 
-		const editButton = target.closest('.kidia-edit-library-item');
-
-		if (editButton) {
-			editBlock(block, editButton);
+		if (target.closest('.kidia-select-banner-image, .kidia-select-media')) {
+			if (!window.wp?.media) return;
+			const frame = window.wp.media({ title: 'Choose image', button: { text: 'Use image' }, multiple: false });
+			frame.on('select', function () {
+				const attachment = frame.state().get('selection').first()?.toJSON();
+				if (!attachment?.url) return;
+				const field = target.closest('.kidia-builder-field');
+				const input = field?.querySelector('.kidia-banner-image-url, .kidia-media-url');
+				const preview = field?.querySelector('.kidia-banner-image-preview, .kidia-media-preview');
+				if (input) input.value = attachment.url;
+				if (preview) { preview.src = attachment.url; preview.hidden = false; preview.style.display = ''; }
+				markDirty();
+			});
+			frame.open();
+			return;
 		}
+
+		if (target.closest('.kidia-hero-gallery__select')) {
+			if (!window.wp?.media) return;
+			const frame = window.wp.media({ title: 'Choose slider images', button: { text: 'Add slides' }, multiple: true });
+			frame.on('select', function () {
+				const gallery = block.querySelector('.kidia-hero-gallery__items');
+				if (!gallery) return;
+				const blockIndex = getBlocks().indexOf(block);
+				frame.state().get('selection').each(function (model) {
+					const attachment = model.toJSON();
+					if (!attachment?.url) return;
+					const itemIndex = gallery.querySelectorAll('.kidia-hero-gallery__item').length;
+					const item = document.createElement('div');
+					item.className = 'kidia-hero-gallery__item';
+					const fields = { id: 'slide_' + Date.now().toString(36) + '_' + itemIndex, enabled: '1', image_url: attachment.url, title: attachment.title || '', subtitle: '', action_type: '', action_value: '' };
+					const image = document.createElement('img'); image.src = attachment.url; image.alt = '';
+					item.appendChild(image);
+					Object.keys(fields).forEach(function (fieldName) {
+						const input = document.createElement('input'); input.type = 'hidden'; input.dataset.heroField = fieldName;
+						input.name = 'blocks[' + blockIndex + '][settings][items][' + itemIndex + '][' + fieldName + ']'; input.value = fields[fieldName]; item.appendChild(input);
+					});
+					const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'button-link-delete kidia-hero-gallery__remove'; remove.textContent = 'Remove'; item.appendChild(remove);
+					gallery.appendChild(item);
+				});
+				updateIndexes(); markDirty();
+			});
+			frame.open();
+			return;
+		}
+
+		if (target.closest('.kidia-hero-gallery__remove')) {
+			target.closest('.kidia-hero-gallery__item')?.remove();
+			updateIndexes(); markDirty();
+			return;
+		}
+
+	});
+
+	builder.addEventListener('change', function (event) {
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) return;
+		if (target.classList.contains('kidia-block-status-select')) {
+			const block = target.closest('.kidia-builder-block');
+			const hidden = block?.querySelector('.kidia-block-status');
+			const badge = block?.querySelector('.kidia-builder-status');
+			if (hidden) hidden.value = target.value;
+			if (badge) {
+				badge.textContent = target.value === 'published' ? (labels.published || 'Published') : (labels.draft || 'Draft');
+				badge.className = 'kidia-builder-status kidia-builder-status--' + target.value;
+			}
+		}
+		markDirty();
 	});
 
 	builder.addEventListener('input', function (event) {

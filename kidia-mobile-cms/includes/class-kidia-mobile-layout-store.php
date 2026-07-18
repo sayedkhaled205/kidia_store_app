@@ -13,7 +13,9 @@ if ( class_exists( 'Kidia_Mobile_Layout_Store', false ) ) {
 
 final class Kidia_Mobile_Layout_Store {
 
-	private const OPTION_NAME = 'kidia_mobile_home_layout_v4';
+	private const OPTION_NAME = 'kidia_mobile_home_layout_v5';
+
+	private const LEGACY_OPTION_NAME = 'kidia_mobile_home_layout_v4';
 
 	private const EXCLUSIONS_OPTION = 'kidia_mobile_home_layout_exclusions_v2';
 
@@ -52,13 +54,10 @@ final class Kidia_Mobile_Layout_Store {
 		);
 
 		if ( ! is_array( $saved_layout ) ) {
-			$layout = $this->append_missing_library_items(
-				array()
-			);
-
-			if ( empty( $layout ) ) {
-				$layout = $this->get_default_layout();
-			}
+			$legacy = get_option( self::LEGACY_OPTION_NAME, array() );
+			$layout = is_array( $legacy )
+				? $this->hydrate_layout( $this->normalize_layout( $legacy ) )
+				: array();
 
 			$layout = $this->reorder_layout( $layout );
 
@@ -71,13 +70,7 @@ final class Kidia_Mobile_Layout_Store {
 			$saved_layout
 		);
 
-		$layout = $this->hydrate_layout(
-			$normalized_layout
-		);
-
-		$layout = $this->append_missing_library_items(
-			$layout
-		);
+		$layout = $normalized_layout;
 
 		$layout = $this->reorder_layout(
 			$layout
@@ -112,24 +105,13 @@ final class Kidia_Mobile_Layout_Store {
 		);
 
 		if ( ! is_array( $saved_layout ) ) {
-			$layout = $this->append_missing_library_items(
-				array()
-			);
-
-			if ( empty( $layout ) ) {
-				$layout = $this->create_default_layout();
-			}
-
-			return $this->reorder_layout( $layout );
+			$legacy = get_option( self::LEGACY_OPTION_NAME, array() );
+			return is_array( $legacy )
+				? $this->reorder_layout( $this->hydrate_layout( $this->normalize_layout( $legacy ) ) )
+				: array();
 		}
 
-		$layout = $this->hydrate_layout(
-			$this->normalize_layout( $saved_layout )
-		);
-
-		$layout = $this->append_missing_library_items(
-			$layout
-		);
+		$layout = $this->normalize_layout( $saved_layout );
 
 		return $this->reorder_layout( $layout );
 	}
@@ -151,10 +133,6 @@ final class Kidia_Mobile_Layout_Store {
 		);
 
 		$new_layout = $this->reorder_layout(
-			$new_layout
-		);
-
-		$new_layout = $this->preserve_library_state(
 			$new_layout
 		);
 
@@ -588,6 +566,15 @@ final class Kidia_Mobile_Layout_Store {
 				$item['enabled'] =
 					! empty( $block['enabled'] );
 
+				$item['status'] = $this->normalize_status(
+					$block['status'] ?? null,
+					'published'
+				);
+
+				$item['settings'] = $this->sanitize_settings(
+					(array) $block['settings']
+				);
+
 				$item['updated_at'] = current_time(
 					'mysql',
 					true
@@ -610,7 +597,10 @@ final class Kidia_Mobile_Layout_Store {
 					(string) $block['name']
 				),
 				'enabled'    => ! empty( $block['enabled'] ),
-				'status'     => 'draft',
+				'status'     => $this->normalize_status(
+					$block['status'] ?? null,
+					'published'
+				),
 				'created_at' => current_time(
 					'mysql',
 					true
@@ -769,6 +759,9 @@ final class Kidia_Mobile_Layout_Store {
 					? 'published'
 					: 'draft',
 				'order'      => $index + 1,
+				'settings'   => isset( $block['settings'] ) && is_array( $block['settings'] )
+					? $this->sanitize_settings( $block['settings'] )
+					: array(),
 			);
 		}
 

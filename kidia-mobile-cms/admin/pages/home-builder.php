@@ -445,8 +445,9 @@ foreach ( $library_options as $type => $option_name ) {
 					? (string) $definition['icon']
 					: 'dashicons-screenoptions';
 
-				$type_items = $library_items[ $type ]
-					?? array();
+				// Home Builder is the only authoring surface. Legacy Library records
+				// remain in the database for migration, but are not offered here.
+				$type_items = array();
 				?>
 
 				<details
@@ -571,17 +572,6 @@ foreach ( $library_options as $type => $option_name ) {
 							<?php endforeach; ?>
 
 						</div>
-
-					<?php else : ?>
-
-						<p class="kidia-element-group__empty">
-							<?php
-								esc_html_e(
-									'No saved elements of this type yet.',
-									'kidia-mobile-cms'
-								);
-								?>
-						</p>
 
 					<?php endif; ?>
 					</div>
@@ -791,9 +781,9 @@ foreach ( $library_options as $type => $option_name ) {
 		'__ORDER__';
 
 	$default_block_data['status'] =
-		'draft';
+		'published';
 
-	$index = '__INDEX__';
+	$index = 987654321;
 
 	$block_data = $default_block_data;
 	?>
@@ -844,7 +834,7 @@ foreach ( $library_options as $type => $option_name ) {
 					: $block->get_default_settings(),
 		);
 
-		$index = '__INDEX__';
+		$index = 987654321;
 		?>
 
 		<script

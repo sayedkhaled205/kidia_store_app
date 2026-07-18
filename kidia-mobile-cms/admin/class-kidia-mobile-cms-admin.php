@@ -488,6 +488,7 @@ final class Kidia_Mobile_CMS_Admin {
 							),
 							'createPrefix'   => __( 'Create', 'kidia-mobile-cms' ),
 							'draft'          => __( 'Draft', 'kidia-mobile-cms' ),
+							'published'      => __( 'Published', 'kidia-mobile-cms' ),
 							'copySuffix'     => __( ' Copy', 'kidia-mobile-cms' ),
 							'noElements'     => __( 'No elements on the Home Page', 'kidia-mobile-cms' ),
 							'noElementsDescription' => __(
