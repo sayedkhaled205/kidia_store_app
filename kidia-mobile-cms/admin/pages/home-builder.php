@@ -162,6 +162,13 @@ foreach ( $library_options as $type => $option_name ) {
 
 		<input
 			type="hidden"
+			name="blocks_payload_encoding"
+			id="kidia-home-builder-payload-encoding"
+			value="base64"
+		>
+
+		<input
+			type="hidden"
 			name="edit_after_save_type"
 			id="kidia-edit-after-save-type"
 			value=""

@@ -43,11 +43,16 @@ class DioHomeRemoteDataSource implements HomeRemoteDataSource {
   Future<Response<dynamic>> _fetch(String endpoint, String locale) =>
       _dio.get<dynamic>(
         endpoint,
-        queryParameters: <String, dynamic>{'locale': locale},
+        queryParameters: <String, dynamic>{
+          'locale': locale,
+          '_mobile_cache_buster': DateTime.now().millisecondsSinceEpoch,
+        },
         options: Options(
           responseType: ResponseType.json,
           headers: const <String, dynamic>{
             'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
           },
         ),
       );

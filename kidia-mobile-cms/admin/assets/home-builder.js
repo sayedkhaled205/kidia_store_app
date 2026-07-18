@@ -224,6 +224,14 @@
 		});
 	}
 
+	function encodePayload(value) {
+		try {
+			return window.btoa(unescape(encodeURIComponent(value)));
+		} catch (error) {
+			return value;
+		}
+	}
+
 	function escapeHtml(value) {
 		return String(value === null || typeof value === "undefined" ? "" : value).replace(/[&<>"']/g, function (character) {
 			return {
@@ -1240,7 +1248,7 @@
 	form.addEventListener("submit", function () {
 		updateIndexes();
 		if (blocksPayload) {
-			blocksPayload.value = JSON.stringify(serializeBlocks());
+			blocksPayload.value = encodePayload(JSON.stringify(serializeBlocks()));
 		}
 		isDirty = false;
 	});

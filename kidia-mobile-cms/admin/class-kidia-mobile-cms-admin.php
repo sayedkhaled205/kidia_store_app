@@ -392,15 +392,21 @@ final class Kidia_Mobile_CMS_Admin {
 				$payload = isset( $_POST['blocks_payload'] )
 					? wp_unslash( $_POST['blocks_payload'] )
 					: '';
+				$encoding = isset( $_POST['blocks_payload_encoding'] )
+					? sanitize_key( wp_unslash( $_POST['blocks_payload_encoding'] ) )
+					: '';
 
 				$submitted_blocks = Kidia_Mobile_Layout_Store::decode_submission(
-					$payload
+					$payload,
+					$encoding
 				);
 
-				if ( '' === $payload ) {
-					$submitted_blocks = isset( $_POST['blocks'] )
-						? wp_unslash( $_POST['blocks'] )
-						: array();
+				$fallback_blocks = isset( $_POST['blocks'] )
+					? wp_unslash( $_POST['blocks'] )
+					: array();
+
+				if ( empty( $submitted_blocks ) && is_array( $fallback_blocks ) && ! empty( $fallback_blocks ) ) {
+					$submitted_blocks = $fallback_blocks;
 				}
 
         		if (

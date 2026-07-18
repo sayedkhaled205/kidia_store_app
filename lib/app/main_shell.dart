@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/theme/kidia_colors.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import '../features/home/presentation/providers/home_providers.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -92,7 +93,7 @@ class MainShell extends ConsumerWidget {
                 : NavigationDestinationLabelBehavior.alwaysHide,
             selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
             onDestinationSelected: (int index) =>
-                _openBranch(visibleItems[index].key),
+                _openBranch(ref, visibleItems[index].key),
             destinations: visibleItems.map((entry) {
               final _NavigationItem item = entry.value;
               return NavigationDestination(
@@ -127,7 +128,10 @@ class MainShell extends ConsumerWidget {
         : 'catalog';
   }
 
-  void _openBranch(int index) {
+  void _openBranch(WidgetRef ref, int index) {
+    if (index == 0) {
+      ref.invalidate(homeLayoutProvider);
+    }
     navigationShell.goBranch(
       index,
       initialLocation: index == 1 || index == navigationShell.currentIndex,

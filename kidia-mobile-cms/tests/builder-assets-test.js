@@ -310,7 +310,7 @@ function runHomeBuilderTest() {
   cartToggle.checked = false;
   cartToggle.dispatchEvent(new window.Event("change", { bubbles: true }));
   window.document.getElementById("kidia-home-builder-form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
-  const saved = JSON.parse(window.document.getElementById("kidia-home-builder-payload").value);
+  const saved = JSON.parse(Buffer.from(window.document.getElementById("kidia-home-builder-payload").value, "base64").toString("utf8"));
   assert.equal(saved.find((block) => block.type === "app_header").settings.show_cart, "", "Unchecked settings must be saved as false.");
 
   const dragHandle = firstBlock.querySelector(".kidia-builder-drag");
