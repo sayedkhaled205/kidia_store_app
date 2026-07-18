@@ -51,6 +51,19 @@ $library_options = array(
  * @var array<string,array<int,array<string,mixed>>>
  */
 $library_items = array();
+$layout_counts = array();
+
+foreach ( $blocks as $layout_block ) {
+	if ( ! is_array( $layout_block ) ) {
+		continue;
+	}
+
+	$layout_type = sanitize_key( (string) ( $layout_block['type'] ?? '' ) );
+
+	if ( '' !== $layout_type ) {
+		$layout_counts[ $layout_type ] = ( $layout_counts[ $layout_type ] ?? 0 ) + 1;
+	}
+}
 
 foreach ( $library_options as $type => $option_name ) {
 	$items = get_option(
@@ -448,7 +461,11 @@ foreach ( $library_options as $type => $option_name ) {
 							<strong><?php echo esc_html( $label ); ?></strong>
 						</span>
 						<span class="kidia-element-group__count">
-							<?php echo esc_html( (string) count( $type_items ) ); ?>
+							<?php
+							echo esc_html(
+								(string) ( $layout_counts[ $type ] ?? 0 )
+							);
+							?>
 						</span>
 					</summary>
 
