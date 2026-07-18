@@ -9,8 +9,7 @@ final Provider<CmsPageLayoutRemoteDataSource> cmsPageLayoutRemoteDataSourceProvi
       return CmsPageLayoutRemoteDataSource(ref.watch(homeDioProvider));
     });
 
-final FutureProviderFamily<CmsPageLayout, String> cmsPageLayoutProvider =
-    FutureProvider.autoDispose.family<CmsPageLayout, String>(
+final cmsPageLayoutProvider = FutureProvider.autoDispose.family<CmsPageLayout, String>(
       (Ref ref, String page) async {
         if (AppConfig.useMockHomeLayout) {
           return CmsPageLayout.fallback(page);
