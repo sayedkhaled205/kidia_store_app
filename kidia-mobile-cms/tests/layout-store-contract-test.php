@@ -18,7 +18,7 @@ function current_time( string $type, bool $gmt = false ): string { unset( $type,
 final class Kidia_Mobile_Block_Registry {
 	private const TYPES = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer', 'quick_links', 'banner_grid' );
 	public static function exists( string $type ): bool { return in_array( $type, self::TYPES, true ); }
-	public static function defaults( string $type ): array { unset( $type ); return array( 'title' => '', 'items' => array(), 'limit' => 8 ); }
+	public static function defaults( string $type ): array { unset( $type ); return array( 'title' => '', 'image_url' => '', 'items' => array(), 'limit' => 8 ); }
 	public static function generate_id( string $type ): string { return $type . '_generated'; }
 	public static function create( string $type, int $order ): array { return array( 'id' => $type . '_' . $order, 'type' => $type, 'enabled' => true, 'order' => $order, 'settings' => self::defaults( $type ) ); }
 	public static function get( string $type ): array { return array( 'label' => $type ); }
