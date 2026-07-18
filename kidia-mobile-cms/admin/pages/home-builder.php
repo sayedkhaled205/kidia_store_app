@@ -22,22 +22,13 @@ if (
 	$blocks = array();
 }
 
-// The application header has its own editor and is not a reorderable Home
-// content element. Existing header references remain compatible at runtime.
-unset( $definitions['app_header'] );
-$blocks = array_values(
-	array_filter(
-		$blocks,
-		static fn( $block ): bool => ! is_array( $block ) || 'app_header' !== ( $block['type'] ?? '' )
-	)
-);
-
 /**
  * Library option names by block type.
  *
  * @var array<string,string>
  */
 $library_options = array(
+	'app_header'       => 'kidia_mobile_app_headers',
 	'hero_slider'      => 'kidia_mobile_hero_sliders',
 	'image_banner'     => 'kidia_mobile_image_banners',
 	'product_carousel' => 'kidia_mobile_product_carousels',
@@ -100,15 +91,6 @@ foreach ( $library_options as $type => $option_name ) {
 		</div>
 
 	</div>
-
-	<nav class="nav-tab-wrapper" aria-label="<?php echo esc_attr__( 'Home Builder sections', 'kidia-mobile-cms' ); ?>">
-		<a class="nav-tab nav-tab-active" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-home-builder' ) ); ?>">
-			<?php esc_html_e( 'Home Content', 'kidia-mobile-cms' ); ?>
-		</a>
-		<a class="nav-tab" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-app-headers' ) ); ?>">
-			<?php esc_html_e( 'Home Header', 'kidia-mobile-cms' ); ?>
-		</a>
-	</nav>
 
 	<?php if (
 		isset( $_GET['updated'] )

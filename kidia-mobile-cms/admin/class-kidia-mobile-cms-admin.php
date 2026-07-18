@@ -24,6 +24,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 * @var array<string,string>
 	 */
 	private const EDITOR_PAGES = array(
+		'app_header'       => 'kidia-mobile-app-headers',
 		'hero_slider'     => 'kidia-mobile-hero-sliders',
 		'image_banner'    => 'kidia-mobile-image-banners',
 		'product_carousel' => 'kidia-mobile-product-carousels',
