@@ -205,7 +205,12 @@ final class Kidia_Mobile_Layout_Store {
 			$block = Kidia_Mobile_Block_Registry::create( $type, $index + 1 );
 			if ( null === $block ) { continue; }
 			$block['name'] = $names[ $index ]; $block['library_id'] = $block['id']; $block['status'] = 'published'; $block['enabled'] = true;
-			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) { $block['settings']['source'] = 5 === $index ? 'latest' : 7 === $index ? 'featured' : 'on_sale'; $block['settings']['columns'] = 2; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true; }
+			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) {
+				$block['settings']['source'] = 'on_sale';
+				if ( 5 === $index ) { $block['settings']['source'] = 'latest'; }
+				if ( 7 === $index ) { $block['settings']['source'] = 'featured'; }
+				$block['settings']['columns'] = 2; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true;
+			}
 			$layout[] = $block;
 		}
 		return $layout;

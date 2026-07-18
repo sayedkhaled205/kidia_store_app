@@ -216,7 +216,7 @@ class _CheckoutSuggestionsSection extends StatelessWidget {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: settings.products.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
           itemBuilder: (BuildContext context, int index) {
             final CheckoutSuggestionProduct product = settings.products[index];
             return SizedBox(
@@ -225,7 +225,7 @@ class _CheckoutSuggestionsSection extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
-                    Expanded(child: product.imageUrl.isEmpty ? const Icon(Icons.inventory_2_outlined) : Image.network(product.imageUrl, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined))),
+                    Expanded(child: product.imageUrl.isEmpty ? const Icon(Icons.inventory_2_outlined) : Image.network(product.imageUrl, fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.inventory_2_outlined))),
                     Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                     Text(product.price, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
                     SizedBox(height: 30, child: FilledButton(
