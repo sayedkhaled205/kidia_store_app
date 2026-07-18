@@ -3,8 +3,8 @@
 	--kidia-accent-dark: #135e96;
 	--kidia-border: #dcdcde;
 	--kidia-border-soft: #e8eaed;
-	/* A 70% card × 71.4286% control keeps controls at 50% of their original width. */
-	--kidia-field-width: 71.4286%;
+	/* A 77% card × 64.9351% control keeps controls at 50% of their original width. */
+	--kidia-field-width: 64.9351%;
 	--kidia-muted: #646970;
 	--kidia-surface: #fff;
 	--kidia-surface-soft: #f6f7f7;
@@ -75,9 +75,12 @@
 .kidia-preview-placeholder { display: grid; min-height: 88px; place-items: center; padding: 12px; background: linear-gradient(135deg,#edf7f4,#fff); color: #2f806e; }
 .kidia-preview-header__identity { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; text-align: left; }
 .kidia-preview-header__identity small { max-width: 145px; overflow: hidden; font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-.kidia-preview-header__icons { display: flex; align-items: center; gap: 8px; font-size: 17px; }
-.kidia-preview-section { margin: 8px 0; padding: 9px 8px; background: #fff; text-align: right; }
+.kidia-preview-header__icons { display: flex; align-items: center; gap: 8px; }
+.kidia-preview-header__icon { display: grid; width: 17px; height: 17px; place-items: center; }
+.kidia-preview-header__icon svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.kidia-preview-section { margin: 7px 0; padding: 7px 0; background: #fff; text-align: right; }
 .kidia-preview-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 2px 9px; text-align: right; }
+.kidia-preview-section > .kidia-preview-section-heading { padding-inline: 11px; }
 .kidia-preview-section-heading > div { display: flex; min-width: 0; flex-direction: column; }
 .kidia-preview-section-heading strong { overflow: hidden; color: #1f2933; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .kidia-preview-section-heading small { overflow: hidden; color: #6b7280; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
@@ -93,38 +96,55 @@
 .kidia-preview-dots i { width: 4px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.55); }
 .kidia-preview-dots i.is-active { width: 10px; background: #fff; }
 .kidia-preview-category-grid,
-.kidia-preview-product-grid { display: grid; grid-template-columns: repeat(var(--kidia-preview-columns,2),minmax(0,1fr)); gap: 6px; }
+.kidia-preview-product-grid { display: grid; grid-template-columns: repeat(var(--kidia-preview-columns,2),minmax(0,1fr)); gap: 7px; padding-inline: 8px; }
 .kidia-preview-category-card,
 .kidia-preview-product-card,
 .kidia-preview-brand-card { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 5px; color: #1f2933; font-size: 8px; text-align: center; }
 .kidia-preview-category-card strong,
 .kidia-preview-product-card strong,
 .kidia-preview-brand-card strong { max-width: 100%; overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.kidia-preview-category-card .kidia-preview-sample-image { width: 42px; height: 42px; border-radius: 50%; }
-.kidia-preview-sample-image { display: grid; width: 58px; height: 58px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: linear-gradient(145deg,#e7f3ef,#f9fcfb); color: #2f806e; font-size: 10px; font-weight: 800; }
+.kidia-preview-category-card__image { display: grid; width: 100%; aspect-ratio: 1; place-items: center; overflow: hidden; border-radius: 10px; background: #f5f7f7; }
+.kidia-preview-category-card__image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.kidia-preview-category-card .kidia-preview-sample-image { width: 100%; aspect-ratio: 1; border-radius: 10px; }
+.kidia-preview-sample-image,
+.kidia-preview-image-fallback { display: grid; width: 100%; height: 100%; min-height: 42px; flex: 0 0 auto; place-items: center; border-radius: inherit; background: linear-gradient(110deg,#edf1f0 8%,#f8faf9 18%,#edf1f0 33%); background-size: 200% 100%; color: #2f806e; font-size: 10px; font-weight: 800; }
 .kidia-preview-product-row,
-.kidia-preview-brand-row { display: flex; gap: 7px; overflow: hidden; }
-.kidia-preview-product-row .kidia-preview-product-card { width: 76px; flex: 0 0 76px; }
-.kidia-preview-product-grid .kidia-preview-product-card { padding: 5px; border: 1px solid #eef0f2; border-radius: 8px; }
-.kidia-preview-product-grid .kidia-preview-sample-image { width: 100%; height: 68px; }
-.kidia-preview-brand-card { width: 55px; flex: 0 0 55px; }
-.kidia-preview-brand-card .kidia-preview-sample-image { width: 48px; height: 48px; border-radius: 50%; }
+.kidia-preview-brand-row { display: flex; gap: 8px; overflow: hidden; padding-inline: 11px; }
+.kidia-preview-product-row { align-items: stretch; min-height: 204px; }
+.kidia-preview-product-card { position: relative; align-items: stretch; gap: 0; overflow: hidden; border: 1px solid #dfe5e3; border-radius: 13px; background: #fff; color: #1f2933; text-align: right; }
+.kidia-preview-product-row .kidia-preview-product-card { width: 119px; min-height: 204px; flex: 0 0 119px; }
+.kidia-preview-product-card__image { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; background: #f5f7f7; }
+.kidia-preview-product-card__image > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.kidia-preview-product-card__badge { position: absolute; top: 7px; right: 7px; max-width: calc(100% - 14px); padding: 3px 6px; overflow: hidden; border-radius: 99px; background: #e8f5ef; color: #236b59; font-size: 7px; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.kidia-preview-product-card__badge.is-out-of-stock { background: #fce8e8; color: #a62d2d; }
+.kidia-preview-product-card__body { display: flex; min-height: 76px; flex: 1; flex-direction: column; align-items: flex-start; gap: 7px; padding: 8px; }
+.kidia-preview-product-card__body > strong { display: -webkit-box; width: 100%; overflow: hidden; color: #1f2933; font-size: 10px; font-weight: 800; line-height: 1.35; text-align: right; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.kidia-preview-product-card__prices { display: flex; width: 100%; align-items: baseline; flex-wrap: wrap; gap: 3px 5px; margin-top: auto; }
+.kidia-preview-product-card__prices b { color: #2f806e; font-size: 10px; font-weight: 900; white-space: nowrap; }
+.kidia-preview-product-card__prices del { color: #6b7280; font-size: 7px; white-space: nowrap; }
+.kidia-preview-product-grid { gap: 8px; }
+.kidia-preview-product-grid .kidia-preview-product-card { min-height: 190px; }
+.kidia-preview-product-grid .kidia-preview-sample-image { width: 100%; min-height: 98px; }
+.kidia-preview-product-row .kidia-preview-sample-image { min-height: 126px; border-radius: 0; }
+.kidia-preview-brand-card { width: var(--kidia-preview-brand-width,63px); flex: 0 0 var(--kidia-preview-brand-width,63px); }
+.kidia-preview-brand-card__image { display: grid; width: 100%; height: 68px; place-items: center; overflow: hidden; padding: 7px; border: 1px solid #dfe5e3; border-radius: 12px; background: #fff; }
+.kidia-preview-brand-card__image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.kidia-preview-brand-card .kidia-preview-sample-image { width: 63px; height: 68px; border-radius: 12px; }
 .kidia-preview-banner { min-height: 86px; }
 .kidia-preview-banner > img { width: 100%; height: 100%; object-fit: cover; }
 .kidia-preview-promo { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; margin: 7px 0; padding: 7px 10px; font-size: 10px; }
-.kidia-preview-coupon { display: flex; align-items: center; gap: 10px; margin: 8px; padding: 11px; border: 1px dashed #2f806e; border-radius: 10px; background: #edf7f4; text-align: right; }
-.kidia-preview-coupon > img,
-.kidia-preview-coupon__icon { display: grid; width: 58px; height: 58px; flex: 0 0 58px; place-items: center; border-radius: 9px; object-fit: cover; background: #2f806e; color: #fff; font-size: 24px; font-weight: 800; }
-.kidia-preview-coupon > div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.kidia-preview-coupon { position: relative; display: grid; min-height: 118px; margin: 9px 11px; overflow: hidden; border-radius: 13px; background: #dceee8; text-align: right; }
+.kidia-preview-coupon > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.kidia-preview-coupon__overlay { position: relative; z-index: 1; display: flex; min-width: 0; flex-direction: column; justify-content: center; gap: 3px; padding: 13px; }
+.kidia-preview-coupon.has-image .kidia-preview-coupon__overlay { background: linear-gradient(270deg,rgba(0,0,0,.85),rgba(0,0,0,.28)); color: #fff; }
 .kidia-preview-coupon strong { font-size: 12px; }
 .kidia-preview-coupon small { font-size: 9px; }
-.kidia-preview-coupon code { width: max-content; margin-top: 4px; padding: 2px 5px; border-radius: 4px; background: #fff; color: #2f806e; font-size: 9px; font-weight: 800; }
-.kidia-preview-countdown { margin: 8px; padding: 12px; border-radius: 10px; background: #1f2933; color: #fff; text-align: center; }
+.kidia-preview-coupon code { width: max-content; margin-top: 7px; padding: 4px 7px; border-radius: 7px; background: rgba(255,255,255,.92); color: #2f806e; font-size: 9px; font-weight: 800; }
+.kidia-preview-countdown { margin: 8px; padding: 10px; color: #1f2933; text-align: center; }
 .kidia-preview-countdown > strong { display: block; margin-bottom: 8px; font-size: 12px; }
-.kidia-preview-countdown > div { display: flex; align-items: flex-start; justify-content: center; gap: 6px; }
-.kidia-preview-countdown span { display: flex; min-width: 35px; flex-direction: column; padding: 5px; border-radius: 6px; background: rgba(255,255,255,.12); font-size: 14px; font-weight: 800; }
+.kidia-preview-countdown > div { display: flex; align-items: stretch; justify-content: center; gap: 5px; }
+.kidia-preview-countdown span { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 7px 3px; border-radius: 9px; background: #e9eeec; font-size: 14px; font-weight: 800; }
 .kidia-preview-countdown span small { font-size: 7px; font-weight: 500; }
-.kidia-preview-countdown b { padding-top: 5px; }
 .kidia-preview-video { position: relative; min-height: 105px; }
 .kidia-preview-video__play { position: absolute; top: 50%; left: 50%; display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.9); color: #2f806e; font-size: 15px; transform: translate(-50%,-50%); }
 .kidia-preview-text { margin: 8px; padding: 11px; border-radius: 9px; font-size: 10px; }
@@ -212,7 +232,7 @@
 }
 
 .kidia-builder-block {
-	width: 70%;
+	width: 77%;
 	margin-inline-end: auto;
 	overflow: hidden;
 	border: 1px solid var(--kidia-border);
@@ -242,8 +262,8 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 10px;
-	min-height: 50px;
-	padding: 7px 9px;
+	min-height: 55px;
+	padding: 8px 10px;
 	background: #fff;
 }
 
@@ -371,7 +391,7 @@
 
 .kidia-builder-block__body {
 	display: block;
-	padding: 12px;
+	padding: 13px;
 	border-block-start: 1px solid var(--kidia-border-soft);
 	background: #fbfcfd;
 }
@@ -385,8 +405,8 @@
 	grid-template-columns: minmax(220px, 1.7fr) minmax(145px, .8fr) 108px;
 	align-items: end;
 	gap: 10px;
-	margin-block-end: 12px;
-	padding: 10px;
+	margin-block-end: 13px;
+	padding: 11px;
 	border: 1px solid var(--kidia-border-soft);
 	border-radius: 8px;
 	background: #fff;
@@ -423,8 +443,8 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	min-height: 36px;
-	padding: 7px 10px;
+	min-height: 40px;
+	padding: 8px 11px;
 	border-block-end: 1px solid var(--kidia-border-soft);
 	background: #f6f8fa;
 	color: #2c3338;
@@ -439,7 +459,7 @@
 }
 
 .kidia-builder-settings-content {
-	padding: 10px;
+	padding: 11px;
 }
 
 .kidia-builder-settings-content > .kidia-builder-grid + * {
