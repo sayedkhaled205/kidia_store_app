@@ -20,6 +20,16 @@ class ProductCard extends StatelessWidget {
     this.onFavoritePressed,
     this.imageAspectRatio = 1,
     this.compact = false,
+    this.cardRadius = 20,
+    this.showBorder = true,
+    this.elevation = 0,
+    this.showName = true,
+    this.showPrice = true,
+    this.showRegularPrice = true,
+    this.showBadge = true,
+    this.showRating = false,
+    this.rating = 0,
+    this.reviewCount = 0,
   });
 
   final String name;
@@ -39,6 +49,16 @@ class ProductCard extends StatelessWidget {
 
   final double imageAspectRatio;
   final bool compact;
+  final double cardRadius;
+  final bool showBorder;
+  final double elevation;
+  final bool showName;
+  final bool showPrice;
+  final bool showRegularPrice;
+  final bool showBadge;
+  final bool showRating;
+  final double rating;
+  final int reviewCount;
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +70,12 @@ class ProductCard extends StatelessWidget {
       label: semanticLabel ?? name,
       child: Material(
         color: colorScheme.surfaceContainerLowest,
+        elevation: elevation,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: colorScheme.outlineVariant,
-          ),
+          borderRadius: BorderRadius.circular(cardRadius),
+          side: showBorder
+              ? BorderSide(color: colorScheme.outlineVariant)
+              : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -62,17 +83,16 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _ProductImageSection(
-                  imageUrl: imageUrl,
-                  productName: name,
-                  inStock: inStock,
-                  badgeLabel: badgeLabel,
-                  badgeType: badgeType,
-                  isFavorite: isFavorite,
-                  onFavoritePressed: onFavoritePressed,
-                  imageAspectRatio: imageAspectRatio,
-                ),
+              _ProductImageSection(
+                imageUrl: imageUrl,
+                productName: name,
+                inStock: inStock,
+                badgeLabel: badgeLabel,
+                badgeType: badgeType,
+                isFavorite: isFavorite,
+                onFavoritePressed: onFavoritePressed,
+                imageAspectRatio: imageAspectRatio,
+                showBadge: showBadge,
               ),
               _ProductInformation(
                 name: name,
@@ -81,6 +101,12 @@ class ProductCard extends StatelessWidget {
                 currencySymbol: currencySymbol,
                 inStock: inStock,
                 compact: compact,
+                showName: showName,
+                showPrice: showPrice,
+                showRegularPrice: showRegularPrice,
+                showRating: showRating,
+                rating: rating,
+                reviewCount: reviewCount,
               ),
             ],
           ),
@@ -100,6 +126,7 @@ class _ProductImageSection extends StatelessWidget {
     required this.isFavorite,
     required this.onFavoritePressed,
     required this.imageAspectRatio,
+    required this.showBadge,
   });
 
   final String imageUrl;
@@ -110,6 +137,7 @@ class _ProductImageSection extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback? onFavoritePressed;
   final double imageAspectRatio;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -131,15 +159,16 @@ class _ProductImageSection extends StatelessWidget {
                 alpha: 0.68,
               ),
             ),
-          PositionedDirectional(
-            top: 10,
-            start: 10,
-            child: _ProductStatusBadge(
-              inStock: inStock,
-              badgeLabel: badgeLabel,
-              badgeType: badgeType,
+          if (showBadge)
+            PositionedDirectional(
+              top: 10,
+              start: 10,
+              child: _ProductStatusBadge(
+                inStock: inStock,
+                badgeLabel: badgeLabel,
+                badgeType: badgeType,
+              ),
             ),
-          ),
           if (onFavoritePressed != null)
             PositionedDirectional(
               top: 8,
@@ -255,6 +284,12 @@ class _ProductInformation extends StatelessWidget {
     required this.currencySymbol,
     required this.inStock,
     required this.compact,
+    required this.showName,
+    required this.showPrice,
+    required this.showRegularPrice,
+    required this.showRating,
+    required this.rating,
+    required this.reviewCount,
   });
 
   final String name;
@@ -263,11 +298,21 @@ class _ProductInformation extends StatelessWidget {
   final String currencySymbol;
   final bool inStock;
   final bool compact;
+  final bool showName;
+  final bool showPrice;
+  final bool showRegularPrice;
+  final bool showRating;
+  final double rating;
+  final int reviewCount;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
+
+    if (!showName && !showPrice && !showRating) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -279,25 +324,59 @@ class _ProductInformation extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: inStock
-                  ? colorScheme.onSurface
-                  : colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-              height: 1.35,
+          if (showName)
+            Text(
+              name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: inStock
+                    ? colorScheme.onSurface
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
             ),
-          ),
-          SizedBox(height: compact ? 6 : 8),
-          ProductPrice(
-            price: price,
-            regularPrice: regularPrice,
-            currencySymbol: currencySymbol,
-            compact: compact,
-          ),
+          if (showRating && rating > 0) ...<Widget>[
+            SizedBox(height: compact ? 4 : 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.star_rounded,
+                    size: 16,
+                    color: Color(0xFFFFB300),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    rating.toStringAsFixed(1),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (reviewCount > 0)
+                    Text(
+                      ' ($reviewCount)',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          if (showPrice) ...<Widget>[
+            SizedBox(height: compact ? 6 : 8),
+            ProductPrice(
+              price: price,
+              regularPrice: showRegularPrice ? regularPrice : null,
+              currencySymbol: currencySymbol,
+              compact: compact,
+            ),
+          ],
         ],
       ),
     );

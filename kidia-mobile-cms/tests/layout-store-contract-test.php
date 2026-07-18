@@ -15,7 +15,7 @@ function update_option( string $name, $value, bool $autoload = false ): bool { u
 function current_time( string $type, bool $gmt = false ): string { unset( $type, $gmt ); return '2026-07-18 00:00:00'; }
 
 final class Kidia_Mobile_Block_Registry {
-	private const TYPES = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer' );
+	private const TYPES = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer', 'quick_links', 'banner_grid' );
 	public static function exists( string $type ): bool { return in_array( $type, self::TYPES, true ); }
 	public static function defaults( string $type ): array { unset( $type ); return array( 'title' => '', 'items' => array(), 'limit' => 8 ); }
 	public static function generate_id( string $type ): string { return $type . '_generated'; }
@@ -40,7 +40,7 @@ kidia_assert( 1 === count( $migrated ), 'Legacy Library items not placed in Home
 kidia_assert( 'Legacy title' === $migrated[0]['settings']['title'], 'A referenced legacy element must migrate its settings.' );
 
 $submitted = array();
-$types = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer' );
+$types = array( 'app_header', 'hero_slider', 'image_banner', 'product_carousel', 'brand_carousel', 'category_grid', 'product_grid', 'section_header', 'promo_strip', 'coupon_banner', 'countdown', 'video_banner', 'text_block', 'divider', 'spacer', 'quick_links', 'banner_grid' );
 foreach ( $types as $index => $type ) {
 	$submitted[] = array(
 		'id' => $type . '_inline', 'library_id' => $type . '_inline', 'type' => $type,
@@ -60,4 +60,4 @@ foreach ( $reloaded as $index => $block ) {
 $runtime = $store->get_runtime_layout();
 kidia_assert( count( $types ) === count( $runtime ), 'The mobile runtime must read the same complete Home Builder layout.' );
 kidia_assert( isset( $GLOBALS['kidia_test_options']['kidia_mobile_home_layout_v5'][0]['settings'] ), 'The saved Home Layout must contain settings, not Library references only.' );
-fwrite( STDOUT, "Inline Home Builder canonical-layout test passed for all 15 elements.\n" );
+fwrite( STDOUT, "Inline Home Builder canonical-layout test passed for all 17 elements.\n" );

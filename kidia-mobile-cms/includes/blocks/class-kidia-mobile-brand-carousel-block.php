@@ -38,6 +38,11 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			'subtitle'    => '',
 			'item_width'  => 92,
 			'limit'       => 12,
+			'layout'      => 'carousel',
+			'columns'     => 4,
+			'image_shape' => 'rounded',
+			'show_names'  => true,
+			'gap'         => 12,
 			'items'       => array(),
 		);
 	}
@@ -52,6 +57,8 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 			: array();
 
 		$brands = array();
+		$layout = sanitize_key( (string) ( $settings['layout'] ?? 'carousel' ) );
+		$shape = sanitize_key( (string) ( $settings['image_shape'] ?? 'rounded' ) );
 
 		foreach ( $items as $item ) {
 
@@ -115,6 +122,12 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				)
 			),
 
+			'layout' => in_array( $layout, array( 'carousel', 'grid' ), true ) ? $layout : 'carousel',
+			'columns' => max( 2, min( 6, absint( $settings['columns'] ?? 4 ) ) ),
+			'image_shape' => in_array( $shape, array( 'circle', 'rounded', 'square' ), true ) ? $shape : 'rounded',
+			'show_names' => ! empty( $settings['show_names'] ),
+			'gap' => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
+
 			'items' => $brands,
 
 		);
@@ -156,6 +169,11 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 				'title'      => $settings['title'],
 				'subtitle'   => $settings['subtitle'],
 				'item_width' => $settings['item_width'],
+				'layout'     => $settings['layout'],
+				'columns'    => $settings['columns'],
+				'image_shape'=> $settings['image_shape'],
+				'show_names' => $settings['show_names'],
+				'gap'        => $settings['gap'],
 				'items'      => $api_items,
 			);
     	}
@@ -184,6 +202,12 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
     		>
 
 		</div>
+
+		<div class="kidia-builder-field"><label>Layout</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][layout]"><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>>Horizontal Row</option><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>>Grid</option></select></div>
+		<div class="kidia-builder-field"><label>Columns</label><input type="number" min="2" max="6" name="blocks[<?php echo esc_attr( $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
+		<div class="kidia-builder-field"><label>Logo Shape</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>>Circle</option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>>Rounded</option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>>Square</option></select></div>
+		<div class="kidia-builder-field"><label>Gap</label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+		<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( $index ); ?>][settings][show_names]" value="1" <?php checked( true, $settings['show_names'] ); ?>> Show Brand Names</label></div>
 
 		<div class="kidia-builder-field">
 

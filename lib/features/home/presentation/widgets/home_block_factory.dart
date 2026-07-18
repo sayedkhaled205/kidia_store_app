@@ -48,9 +48,11 @@ abstract final class HomeBlockFactory {
       ),
       CouponBannerBlock couponBannerBlock => CouponBannerBlockWidget(
         block: couponBannerBlock,
+        onAction: onAction,
       ),
       CountdownBlock countdownBlock => CountdownBlockWidget(
         block: countdownBlock,
+        onAction: onAction,
       ),
       VideoBannerBlock videoBannerBlock => VideoBannerBlockWidget(
         block: videoBannerBlock,
@@ -59,6 +61,14 @@ abstract final class HomeBlockFactory {
       TextBlock textBlock => TextBlockWidget(block: textBlock),
       DividerBlock dividerBlock => DividerBlockWidget(block: dividerBlock),
       SpacerBlock spacerBlock => SizedBox(height: spacerBlock.height),
+      QuickLinksBlock quickLinksBlock => QuickLinksBlockWidget(
+        block: quickLinksBlock,
+        onAction: onAction,
+      ),
+      BannerGridBlock bannerGridBlock => BannerGridBlockWidget(
+        block: bannerGridBlock,
+        onAction: onAction,
+      ),
       _ => const SizedBox.shrink(),
     };
   }

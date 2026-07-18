@@ -44,6 +44,15 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'view_all_label'  => '',
 			'action_type'     => '',
 			'action_value'    => '',
+			'card_style'      => 'outlined',
+			'item_width'      => 168,
+			'image_ratio'     => 1,
+			'card_radius'     => 20,
+			'show_name'       => true,
+			'show_price'      => true,
+			'show_regular_price' => true,
+			'show_badge'      => true,
+			'show_rating'     => false,
 		);
 	}
 
@@ -113,6 +122,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				)
 			)
 		);
+		$card_style = sanitize_key( (string) ( $settings['card_style'] ?? 'outlined' ) );
 
 		return array(
 			'title' => isset( $settings['title'] )
@@ -174,6 +184,16 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 						: sanitize_text_field( $settings['action_value'] )
 				)
 				: '',
+
+			'card_style' => in_array( $card_style, array( 'outlined', 'elevated', 'minimal' ), true ) ? $card_style : 'outlined',
+			'item_width' => max( 110, min( 260, absint( $settings['item_width'] ?? 168 ) ) ),
+			'image_ratio' => max( 0.6, min( 1.8, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
+			'card_radius' => max( 0, min( 40, absint( $settings['card_radius'] ?? 20 ) ) ),
+			'show_name' => ! empty( $settings['show_name'] ),
+			'show_price' => ! empty( $settings['show_price'] ),
+			'show_regular_price' => ! empty( $settings['show_regular_price'] ),
+			'show_badge' => ! empty( $settings['show_badge'] ),
+			'show_rating' => ! empty( $settings['show_rating'] ),
 		);
 	}
 
@@ -221,6 +241,11 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			}
 
 			$regular_price = trim( (string) $product->get_regular_price() );
+			$rating = is_callable( array( $product, 'get_average_rating' ) ) ? (float) $product->get_average_rating() : 0.0;
+			$review_count = is_callable( array( $product, 'get_review_count' ) ) ? absint( $product->get_review_count() ) : 0;
+			$discount = is_numeric( $regular_price ) && is_numeric( $price ) && (float) $regular_price > (float) $price && 0 < (float) $regular_price
+				? (int) round( ( ( (float) $regular_price - (float) $price ) / (float) $regular_price ) * 100 )
+				: 0;
 			$items[]       = array(
 				'id'              => (int) $product->get_id(),
 				'name'            => $name,
@@ -233,6 +258,9 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				'badge'           => $product->is_on_sale()
 					? __( 'Sale', 'kidia-mobile-cms' )
 					: null,
+				'rating'           => $rating,
+				'review_count'     => $review_count,
+				'discount_percent' => $discount,
 				'action'          => $this->build_action(
 					'product',
 					(string) $product->get_id()
@@ -242,9 +270,20 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 		return array(
 			'title'           => $settings['title'],
+			'subtitle'        => $settings['subtitle'],
 			'items'           => $items,
 			'show_view_all'   => $settings['show_view_all'],
+			'view_all_label'  => $settings['view_all_label'],
 			'view_all_action' => $this->get_view_all_action( $settings ),
+			'card_style'      => $settings['card_style'],
+			'item_width'      => $settings['item_width'],
+			'image_ratio'     => $settings['image_ratio'],
+			'card_radius'     => $settings['card_radius'],
+			'show_name'       => $settings['show_name'],
+			'show_price'      => $settings['show_price'],
+			'show_regular_price' => $settings['show_regular_price'],
+			'show_badge'      => $settings['show_badge'],
+			'show_rating'     => $settings['show_rating'],
 		);
 	}
 
@@ -353,6 +392,15 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			>
 
 		</div>
+
+		<div class="kidia-builder-field"><label>Card Style</label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>>Outlined</option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>>Elevated</option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>>Minimal</option></select></div>
+		<div class="kidia-builder-field"><label>Item Width</label><input type="number" min="110" max="260" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_width]" value="<?php echo esc_attr( (string) $settings['item_width'] ); ?>"></div>
+		<div class="kidia-builder-field"><label>Image Ratio</label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
+		<div class="kidia-builder-field"><label>Card Radius</label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
+		<div class="kidia-builder-field"><label>View All Label</label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][view_all_label]" value="<?php echo esc_attr( (string) $settings['view_all_label'] ); ?>"></div>
+		<?php foreach ( array( 'show_name' => 'Show Name', 'show_price' => 'Show Price', 'show_regular_price' => 'Show Regular Price', 'show_badge' => 'Show Badge', 'show_rating' => 'Show Rating' ) as $key => $label ) : ?>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
+		<?php endforeach; ?>
 
 		<div class="kidia-builder-field">
 

@@ -11,12 +11,16 @@ final class Kidia_Mobile_App_Header_Block extends Kidia_Mobile_Block {
 		return array(
 			'logo_url' => '', 'title' => '', 'subtitle' => '', 'layout' => 'center',
 			'height' => 64, 'logo_height' => 38, 'show_search' => true,
-			'show_cart' => true, 'show_account' => false,
-			'title_color' => '#1F2933', 'icon_color' => '#1F2933',
+				'show_cart' => true, 'show_account' => false,
+				'title_color' => '#1F2933', 'icon_color' => '#1F2933',
+				'background_color' => '#FFFFFF', 'search_style' => 'icon',
+				'search_placeholder' => __( 'Search products', 'kidia-mobile-cms' ),
+				'search_background' => '#F1F3F4', 'search_text_color' => '#5F6368',
 		);
 	}
 	public function sanitize_settings( array $settings ): array {
-		$layout = sanitize_key( $settings['layout'] ?? 'center' );
+			$layout = sanitize_key( $settings['layout'] ?? 'center' );
+			$search_style = sanitize_key( $settings['search_style'] ?? 'icon' );
 		return array(
 			'logo_url' => $this->sanitize_http_url( $settings['logo_url'] ?? '' ),
 			'title' => sanitize_text_field( $settings['title'] ?? '' ),
@@ -28,7 +32,12 @@ final class Kidia_Mobile_App_Header_Block extends Kidia_Mobile_Block {
 			'show_cart' => ! empty( $settings['show_cart'] ),
 			'show_account' => ! empty( $settings['show_account'] ),
 			'title_color' => sanitize_hex_color( $settings['title_color'] ?? '' ) ?: '#1F2933',
-			'icon_color' => sanitize_hex_color( $settings['icon_color'] ?? '' ) ?: '#1F2933',
+				'icon_color' => sanitize_hex_color( $settings['icon_color'] ?? '' ) ?: '#1F2933',
+				'background_color' => sanitize_hex_color( $settings['background_color'] ?? '' ) ?: '#FFFFFF',
+				'search_style' => in_array( $search_style, array( 'icon', 'bar' ), true ) ? $search_style : 'icon',
+				'search_placeholder' => sanitize_text_field( $settings['search_placeholder'] ?? '' ),
+				'search_background' => sanitize_hex_color( $settings['search_background'] ?? '' ) ?: '#F1F3F4',
+				'search_text_color' => sanitize_hex_color( $settings['search_text_color'] ?? '' ) ?: '#5F6368',
 		);
 	}
 	public function build_api_data( array $settings ): ?array {
@@ -54,7 +63,12 @@ final class Kidia_Mobile_App_Header_Block extends Kidia_Mobile_Block {
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Header height', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="120" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][height]" value="<?php echo esc_attr( (string) $settings['height'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Logo height', 'kidia-mobile-cms' ); ?></label><input type="number" min="20" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][logo_height]" value="<?php echo esc_attr( (string) $settings['logo_height'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title_color]" value="<?php echo esc_attr( $settings['title_color'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Icon color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][icon_color]" value="<?php echo esc_attr( $settings['icon_color'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Icon color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][icon_color]" value="<?php echo esc_attr( $settings['icon_color'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Background color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][background_color]" value="<?php echo esc_attr( $settings['background_color'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Search Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][search_style]"><option value="icon" <?php selected( 'icon', $settings['search_style'] ); ?>><?php esc_html_e( 'Icon', 'kidia-mobile-cms' ); ?></option><option value="bar" <?php selected( 'bar', $settings['search_style'] ); ?>><?php esc_html_e( 'Search Bar', 'kidia-mobile-cms' ); ?></option></select></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Search Placeholder', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][search_placeholder]" value="<?php echo esc_attr( $settings['search_placeholder'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Search Background', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][search_background]" value="<?php echo esc_attr( $settings['search_background'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Search Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][search_text_color]" value="<?php echo esc_attr( $settings['search_text_color'] ); ?>"></div>
 			<?php foreach ( array( 'show_search' => __( 'Show search', 'kidia-mobile-cms' ), 'show_cart' => __( 'Show cart', 'kidia-mobile-cms' ), 'show_account' => __( 'Show account', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
 				<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
 			<?php endforeach; ?>

@@ -41,6 +41,8 @@ final class Kidia_Mobile_Block_Registry {
 		'text_block'      => 'text-block',
 		'divider'         => 'divider',
 		'spacer'          => 'spacer',
+		'quick_links'     => 'quick-links',
+		'banner_grid'     => 'banner-grid',
 	);
 
 	/**

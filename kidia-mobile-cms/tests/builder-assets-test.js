@@ -75,6 +75,18 @@ function homeMarkup() {
     .replaceAll("[0][title]", "[__ITEM_INDEX__][title]")
     .replaceAll("[0][subtitle]", "[__ITEM_INDEX__][subtitle]")
     .replace("slide_1", "");
+  const repeatableItem = `
+    <div class="kidia-repeatable-item">
+      <div class="kidia-builder-field kidia-builder-field--media">
+        <input class="kidia-media-url" name="blocks[0][settings][items][0][image_url]" value="https://example.com/tile.jpg">
+        <button type="button" class="kidia-select-media">Select</button>
+        <img class="kidia-media-preview" src="https://example.com/tile.jpg" alt="">
+      </div>
+      <input name="blocks[0][settings][items][0][label]" value="Kids">
+      <input name="blocks[0][settings][items][0][title]" value="Summer">
+      <button type="button" class="kidia-remove-repeatable-item">Remove item</button>
+    </div>`;
+  const repeatableTemplate = repeatableItem.replaceAll("[items][0]", "[items][__ITEM_INDEX__]");
 
   const blocks = [
     homeBlock("app_header", 0, `${mediaField("logo_url", "https://example.com/logo.png", "kidia-app-header-logo-url", "kidia-select-app-header-logo", "kidia-media-preview kidia-app-header-logo-preview")}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
@@ -92,6 +104,8 @@ function homeMarkup() {
     homeBlock("text_block", 12, `${input("title", "Welcome")}<textarea name="blocks[0][settings][content]">Hello families</textarea>${input("alignment", "right")}${input("background", "#ffffff")}${input("text_color", "#111111")}`),
     homeBlock("divider", 13, `${input("color", "#e5e7eb")}${input("thickness", "1")}${input("margin", "12")}`),
     homeBlock("spacer", 14, input("height", "24")),
+    homeBlock("quick_links", 15, `${input("title", "Shop by age")}${input("layout", "carousel")}${input("columns", "4")}<div class="kidia-repeatable-items">${repeatableItem}</div><button type="button" class="kidia-add-repeatable-item">Add Link</button><script type="text/html" class="tmpl-kidia-repeatable-item">${repeatableTemplate}</script>`),
+    homeBlock("banner_grid", 16, `${input("title", "Collections")}${input("layout", "featured")}${input("columns", "2")}${input("aspect_ratio", "1")}<div class="kidia-repeatable-items">${repeatableItem}</div><button type="button" class="kidia-add-repeatable-item">Add Banner</button><script type="text/html" class="tmpl-kidia-repeatable-item">${repeatableTemplate}</script>`),
   ].join("");
 
   const createTemplate = homeBlock("spacer", 987654321, input("height", "32"), "__BLOCK_NAME__")
@@ -194,9 +208,9 @@ function runHomeBuilderTest() {
   window.eval(readAsset("home-builder.js"));
 
   assert.equal(window.kidiaHomeBuilderBooted, true, "Home Builder must boot.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 15, "All 15 element editors must load.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 15, "Every editor must use the compact essentials panel.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 15, "Every editor must use the shared settings panel.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 17, "All 17 element editors must load.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 17, "Every editor must use the compact essentials panel.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 17, "Every editor must use the shared settings panel.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, 1fr\)/, "The editor must keep using the available workspace beside the phone preview.");
   assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*77%;/, "Element cards must be 10% wider than their previous 70% width.");
@@ -214,6 +228,7 @@ function runHomeBuilderTest() {
     ".kidia-preview-section-heading--standalone", ".kidia-preview-brand-row", ".kidia-preview-promo",
     ".kidia-preview-coupon", ".kidia-preview-countdown", ".kidia-preview-video",
     ".kidia-preview-text", ".kidia-preview-divider", ".kidia-preview-spacer",
+    ".kidia-preview-quick-links", ".kidia-preview-banner-grid",
   ];
   previewSelectors.forEach((selector) => assert.ok(window.document.querySelector(selector), `${selector} must render in the phone preview.`));
   assert.equal(window.document.querySelectorAll(".kidia-preview-product-row .kidia-preview-product-card img").length, 3, "Product Carousel must render real API product images.");
@@ -227,13 +242,13 @@ function runHomeBuilderTest() {
   click(window, window.document.getElementById("kidia-expand-all"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 0, "Expand All must open every element.");
   click(window, window.document.getElementById("kidia-collapse-all"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 15, "Collapse All must close every element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 17, "Collapse All must close every element.");
 
   const firstBlock = window.document.querySelector(".kidia-builder-block");
   click(window, firstBlock.querySelector(".kidia-duplicate-block"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 16, "Duplicate must clone an element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Duplicate must clone an element.");
   click(window, firstBlock.nextElementSibling.querySelector(".kidia-delete-block"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 15, "Remove must delete the selected element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 17, "Remove must delete the selected element.");
 
   const hero = window.document.querySelector('[data-type="hero_slider"]');
   click(window, hero.querySelector(".kidia-add-hero-block-item"));
@@ -242,12 +257,21 @@ function runHomeBuilderTest() {
   click(window, hero.querySelectorAll(".kidia-remove-hero-block-item")[1]);
   assert.equal(hero.querySelectorAll(".kidia-hero-block-item").length, 1, "Remove Slide must remove only that slide.");
 
+  const quickLinks = window.document.querySelector('[data-type="quick_links"]');
+  click(window, quickLinks.querySelector(".kidia-add-repeatable-item"));
+  assert.equal(quickLinks.querySelectorAll(".kidia-repeatable-item").length, 2, "Add Quick Link must add a real item.");
+  assert.match(quickLinks.querySelectorAll(".kidia-repeatable-item")[1].querySelector("input").name, /\[items\]\[1\]/, "New repeatable fields must be reindexed.");
+  click(window, quickLinks.querySelectorAll(".kidia-remove-repeatable-item")[1]);
+  assert.equal(quickLinks.querySelectorAll(".kidia-repeatable-item").length, 1, "Remove Quick Link must remove only that item.");
+
   const mediaCases = [
     ["app_header", ".kidia-select-app-header-logo", ".kidia-media-preview", ".kidia-app-header-logo-url"],
     ["hero_slider", ".kidia-select-hero-block-image", ".kidia-hero-block-image-preview", ".kidia-hero-block-image-url"],
     ["image_banner", ".kidia-select-banner-image", ".kidia-banner-image-preview", ".kidia-banner-image-url"],
     ["coupon_banner", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
     ["video_banner", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
+    ["quick_links", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
+    ["banner_grid", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
   ];
   mediaCases.forEach(([type, buttonSelector, previewSelector, inputSelector]) => {
     const mediaBlock = window.document.querySelector(`[data-type="${type}"]`);
@@ -261,7 +285,7 @@ function runHomeBuilderTest() {
     assert.match(field.value, /selected-\d+\.jpg$/, `${type} preview must reopen WordPress media.`);
     assert.equal(preview.src, field.value, `${type} preview selection must update immediately.`);
   });
-  assert.equal(mediaOpenCount, 10, "Every manual image button and preview must open WordPress media.");
+  assert.equal(mediaOpenCount, 14, "Every manual image button and preview must open WordPress media.");
   assert.match(window.document.querySelector(".kidia-preview-coupon img").src, /selected-\d+\.jpg$/, "Media selection must update the mobile preview immediately.");
 
   const promoInput = window.document.querySelector(".promo-text");
@@ -296,9 +320,9 @@ function runHomeBuilderTest() {
   assert.equal(window.document.getElementById("kidia-create-element-modal").hidden, false, "Choosing a type must open the create dialog.");
   window.document.getElementById("kidia-create-element-name").value = "Extra Space";
   click(window, window.document.getElementById("kidia-create-element-submit"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 16, "Creating an element must append its template.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Creating an element must append its template.");
 
-  console.log("Home Builder: all 15 previews and toolbar/editor interactions passed.");
+  console.log("Home Builder: all 17 previews and toolbar/editor interactions passed.");
 }
 
 function categorySettings(id) {
