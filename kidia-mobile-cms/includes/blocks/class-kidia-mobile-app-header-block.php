@@ -37,7 +37,25 @@ final class Kidia_Mobile_App_Header_Block extends Kidia_Mobile_Block {
 		return $settings;
 	}
 	public function render_settings( int $index, array $settings ): void {
-		unset( $index, $settings );
-		echo '<p>' . esc_html__( 'Edit this header in Library Editor for complete content, action and responsive controls.', 'kidia-mobile-cms' ) . '</p>';
+		$settings = $this->sanitize_settings( wp_parse_args( $settings, $this->get_default_settings() ) );
+		?>
+		<div class="kidia-builder-grid">
+			<div class="kidia-builder-field kidia-builder-field--full">
+				<label><?php esc_html_e( 'Logo', 'kidia-mobile-cms' ); ?></label>
+				<input class="kidia-app-header-logo-url" type="url" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][logo_url]" value="<?php echo esc_attr( $settings['logo_url'] ); ?>">
+				<button type="button" class="button kidia-select-app-header-logo"><?php esc_html_e( 'Choose logo', 'kidia-mobile-cms' ); ?></button>
+			</div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( $settings['title'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="center" <?php selected( 'center', $settings['layout'] ); ?>><?php esc_html_e( 'Centered', 'kidia-mobile-cms' ); ?></option><option value="start" <?php selected( 'start', $settings['layout'] ); ?>><?php esc_html_e( 'Start aligned', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Header height', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="120" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][height]" value="<?php echo esc_attr( (string) $settings['height'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Logo height', 'kidia-mobile-cms' ); ?></label><input type="number" min="20" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][logo_height]" value="<?php echo esc_attr( (string) $settings['logo_height'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title_color]" value="<?php echo esc_attr( $settings['title_color'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Icon color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][icon_color]" value="<?php echo esc_attr( $settings['icon_color'] ); ?>"></div>
+			<?php foreach ( array( 'show_search' => __( 'Show search', 'kidia-mobile-cms' ), 'show_cart' => __( 'Show cart', 'kidia-mobile-cms' ), 'show_account' => __( 'Show account', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
+				<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
+			<?php endforeach; ?>
+		</div>
+		<?php
 	}
 }

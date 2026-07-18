@@ -127,6 +127,18 @@ foreach ( $library_options as $type => $option_name ) {
 
 	<?php endif; ?>
 
+	<div class="kidia-builder-workspace">
+		<aside class="kidia-mobile-preview" aria-label="<?php echo esc_attr__( 'Live mobile preview', 'kidia-mobile-cms' ); ?>">
+			<div class="kidia-mobile-preview__device">
+				<div class="kidia-mobile-preview__speaker"></div>
+				<div class="kidia-mobile-preview__screen">
+					<div class="kidia-mobile-preview__status"><span>9:41</span><span>● ◒ ▰</span></div>
+					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content"></div>
+				</div>
+			</div>
+			<p><?php esc_html_e( 'Live preview — changes appear instantly before saving.', 'kidia-mobile-cms' ); ?></p>
+		</aside>
+		<div class="kidia-builder-editor">
 	<form
 		method="post"
 		action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
@@ -334,6 +346,8 @@ foreach ( $library_options as $type => $option_name ) {
 		</div>
 
 	</form>
+		</div>
+	</div>
 
 </div>
 

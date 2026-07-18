@@ -184,10 +184,21 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 				continue;
 			}
 
-			$api_block =
-				Kidia_Mobile_Block_Registry::build_api_block(
+			try {
+				$api_block = Kidia_Mobile_Block_Registry::build_api_block(
 					$instance
 				);
+			} catch ( Throwable $error ) {
+				error_log(
+					sprintf(
+						'Woo Mobile CMS skipped invalid Home element %s (%s): %s',
+						(string) ( $instance['type'] ?? 'unknown' ),
+						(string) ( $instance['id'] ?? 'unknown' ),
+						$error->getMessage()
+					)
+				);
+				continue;
+			}
 
 			if ( null === $api_block ) {
 				$api_block =
