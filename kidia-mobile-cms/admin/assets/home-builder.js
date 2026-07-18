@@ -381,7 +381,7 @@
 
 		case "image_banner":
 			image = safeImage(settings.image_url);
-			ratio = numberInRange(settings.aspect_ratio, 2.4, 1, 4);
+			ratio = numberInRange(settings.aspect_ratio, 2.4, 0.45, 5);
 			return '<div class="kidia-preview-block kidia-preview-banner" style="aspect-ratio:' + ratio + ";border-radius:" + numberInRange(settings.border_radius, 20, 0, 60) + 'px">' + (image ? '<img src="' + image + '" alt="' + escapeHtml(settings.semantic_label || "") + '" style="object-fit:' + (settings.image_fit === "contain" ? "contain" : "cover") + '">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + ((settings.title || settings.subtitle || settings.button_label) ? '<div class="kidia-preview-banner__overlay" style="background:linear-gradient(0deg,rgba(0,0,0,' + numberInRange(settings.overlay_strength, 0, 0, 95) / 100 + '),transparent);color:' + safeColor(settings.text_color, "#FFFFFF") + '"><strong>' + escapeHtml(settings.title || "") + "</strong><small>" + escapeHtml(settings.subtitle || "") + "</small>" + (settings.button_label ? "<b>" + escapeHtml(settings.button_label) + "</b>" : "") + "</div>" : "") + "</div>";
 
 		case "product_carousel":
@@ -427,7 +427,7 @@
 
 		case "video_banner":
 			image = safeImage(settings.poster_url);
-			ratio = numberInRange(settings.aspect_ratio, 1.8, 1, 4);
+			ratio = numberInRange(settings.aspect_ratio, 1.8, 0.45, 4);
 			return '<div class="kidia-preview-block kidia-preview-video" style="aspect-ratio:' + ratio + '">' + (image ? '<img src="' + image + '" alt="">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + '<span class="kidia-preview-video__play">▶</span></div>';
 
 		case "text_block":

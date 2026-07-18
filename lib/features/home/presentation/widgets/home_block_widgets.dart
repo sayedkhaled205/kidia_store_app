@@ -666,25 +666,42 @@ class QuickLinksBlockWidget extends StatelessWidget {
     final double itemSize = block.itemSize * responsive;
     final double gap = block.gap * responsive;
     final Widget content = block.layout == 'grid'
-        ? GridView.builder(
+        ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: block.items.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: block.columns,
-              crossAxisSpacing: gap,
-              mainAxisSpacing: gap,
-              mainAxisExtent: itemSize + (block.showLabels ? 48 : 4),
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final double availableItemWidth =
+                    (constraints.maxWidth -
+                        ((block.columns - 1) * gap)) /
+                    block.columns;
+                final double gridItemSize = availableItemWidth < 1
+                    ? 1
+                    : availableItemWidth < itemSize
+                    ? availableItemWidth
+                    : itemSize;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: block.items.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: block.columns,
+                    crossAxisSpacing: gap,
+                    mainAxisSpacing: gap,
+                    mainAxisExtent:
+                        gridItemSize + (block.showLabels ? 48 : 4),
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    return _QuickLinkCard(
+                      item: block.items[index],
+                      block: block,
+                      itemSize: gridItemSize,
+                      onAction: onAction,
+                    );
+                  },
+                );
+              },
             ),
-            itemBuilder: (BuildContext context, int index) {
-              return _QuickLinkCard(
-                item: block.items[index],
-                block: block,
-                itemSize: itemSize,
-                onAction: onAction,
-              );
-            },
           )
         : SizedBox(
             height: itemSize + (block.showLabels ? 54 : 8),
@@ -1266,28 +1283,42 @@ class ProductGridBlockWidget extends StatelessWidget {
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.builder(
-              itemCount: block.items.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: columns == 1 ? 1.15 : 0.59,
-              ),
-              itemBuilder: (BuildContext context, int index) {
-                return _HomeProductCardAdapter(
-                  product: block.items[index],
-                  onAction: onAction,
-                  cardStyle: block.cardStyle,
-                  imageRatio: block.imageRatio,
-                  cardRadius: block.cardRadius,
-                  showName: block.showName,
-                  showPrice: block.showPrice,
-                  showRegularPrice: block.showRegularPrice,
-                  showBadge: block.showBadge,
-                  showRating: block.showRating,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                const double spacing = 12;
+                final double itemWidth =
+                    (constraints.maxWidth - ((columns - 1) * spacing)) /
+                    columns;
+                final bool showsInformation =
+                    block.showName || block.showPrice || block.showRating;
+                final double itemHeight =
+                    (itemWidth / block.imageRatio) +
+                    (showsInformation ? 126 : 0);
+
+                return GridView.builder(
+                  itemCount: block.items.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    mainAxisExtent: itemHeight,
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    return _HomeProductCardAdapter(
+                      product: block.items[index],
+                      onAction: onAction,
+                      cardStyle: block.cardStyle,
+                      imageRatio: block.imageRatio,
+                      cardRadius: block.cardRadius,
+                      showName: block.showName,
+                      showPrice: block.showPrice,
+                      showRegularPrice: block.showRegularPrice,
+                      showBadge: block.showBadge,
+                      showRating: block.showRating,
+                    );
+                  },
                 );
               },
             ),

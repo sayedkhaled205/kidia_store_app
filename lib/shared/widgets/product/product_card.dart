@@ -83,18 +83,16 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _ProductImageSection(
-                  imageUrl: imageUrl,
-                  productName: name,
-                  inStock: inStock,
-                  badgeLabel: badgeLabel,
-                  badgeType: badgeType,
-                  isFavorite: isFavorite,
-                  onFavoritePressed: onFavoritePressed,
-                  imageAspectRatio: imageAspectRatio,
-                  showBadge: showBadge,
-                ),
+              _ProductImageSection(
+                imageUrl: imageUrl,
+                productName: name,
+                inStock: inStock,
+                badgeLabel: badgeLabel,
+                badgeType: badgeType,
+                isFavorite: isFavorite,
+                onFavoritePressed: onFavoritePressed,
+                imageAspectRatio: imageAspectRatio,
+                showBadge: showBadge,
               ),
               _ProductInformation(
                 name: name,

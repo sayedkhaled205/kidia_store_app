@@ -281,4 +281,88 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('dense quick-link and product grids fit a narrow screen', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const List<QuickLinkItem> links = <QuickLinkItem>[
+      QuickLinkItem(id: '1', imageUrl: 'https://example.com/1.jpg', label: 'One', subtitle: null, action: null),
+      QuickLinkItem(id: '2', imageUrl: 'https://example.com/2.jpg', label: 'Two', subtitle: null, action: null),
+      QuickLinkItem(id: '3', imageUrl: 'https://example.com/3.jpg', label: 'Three', subtitle: null, action: null),
+      QuickLinkItem(id: '4', imageUrl: 'https://example.com/4.jpg', label: 'Four', subtitle: null, action: null),
+      QuickLinkItem(id: '5', imageUrl: 'https://example.com/5.jpg', label: 'Five', subtitle: null, action: null),
+      QuickLinkItem(id: '6', imageUrl: 'https://example.com/6.jpg', label: 'Six', subtitle: null, action: null),
+    ];
+    const HomeProductItem product = HomeProductItem(
+      id: 42,
+      name: 'Kids outfit',
+      imageUrl: 'https://example.com/product.jpg',
+      price: '499',
+      regularPrice: '599',
+      currencyCode: 'EGP',
+      currencySymbol: 'EGP',
+      inStock: true,
+      badge: 'Sale',
+      rating: 4.8,
+      reviewCount: 20,
+      discountPercent: 17,
+      action: null,
+    );
+
+    await pumpBlock(
+      tester,
+      Column(
+        children: <Widget>[
+          QuickLinksBlockWidget(
+            block: const QuickLinksBlock(
+              id: 'quick-1',
+              enabled: true,
+              title: 'Quick links',
+              subtitle: null,
+              layout: 'grid',
+              columns: 6,
+              imageShape: 'circle',
+              itemSize: 140,
+              gap: 32,
+              showLabels: true,
+              labelColor: '#111111',
+              labelSize: 13,
+              items: links,
+            ),
+            onAction: (_) {},
+          ),
+          ProductGridBlockWidget(
+            block: const ProductGridBlock(
+              id: 'products-1',
+              enabled: true,
+              title: null,
+              subtitle: null,
+              items: <HomeProductItem>[product, product, product, product],
+              columns: 4,
+              showViewAll: false,
+              viewAllLabel: null,
+              viewAllAction: null,
+              cardStyle: 'minimal',
+              imageRatio: 0.6,
+              cardRadius: 8,
+              showName: true,
+              showPrice: true,
+              showRegularPrice: true,
+              showBadge: true,
+              showRating: true,
+            ),
+            onAction: (_) {},
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
 }
