@@ -2058,12 +2058,12 @@ class _VideoBannerBlockWidgetState extends State<VideoBannerBlockWidget> {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    if (ready) VideoPlayer(controller!),
-                    if (!ready || controller?.value.isPlaying != true)
+                    if (ready) VideoPlayer(controller),
+                    if (!ready || !controller.value.isPlaying)
                       const DecoratedBox(
                         decoration: BoxDecoration(color: Color(0x26000000)),
                       ),
-                    if (!ready || controller?.value.isPlaying != true)
+                    if (!ready || !controller.value.isPlaying)
                       Center(
                         child: DecoratedBox(
                           decoration: const BoxDecoration(
