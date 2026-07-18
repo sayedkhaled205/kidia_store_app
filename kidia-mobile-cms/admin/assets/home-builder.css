@@ -1,13 +1,13 @@
 .kidia-builder-wrap {
-	--kidia-accent: #2271b1;
-	--kidia-accent-dark: #135e96;
-	--kidia-border: #dcdcde;
+	--kidia-accent: #2f806e;
+	--kidia-accent-dark: #236b59;
+	--kidia-border: #d8e5e1;
 	--kidia-border-soft: #e8eaed;
 	/* A 77% card × 64.9351% control keeps controls at 50% of their original width. */
 	--kidia-field-width: 64.9351%;
 	--kidia-muted: #646970;
 	--kidia-surface: #fff;
-	--kidia-surface-soft: #f6f7f7;
+	--kidia-surface-soft: #f2f8f6;
 	box-sizing: border-box;
 	max-width: 1380px;
 	margin-inline: auto;
@@ -241,7 +241,7 @@
 	padding: 10px 12px;
 	border: 1px solid var(--kidia-border);
 	border-radius: 9px;
-	background: rgba(255, 255, 255, 0.96);
+	background: linear-gradient(135deg,#e7f5f1,#fff);
 	box-shadow: 0 3px 12px rgba(29, 35, 39, 0.06);
 	backdrop-filter: blur(8px);
 }

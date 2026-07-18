@@ -5,14 +5,30 @@
 	var list = document.getElementById("kidia-page-elements");
 	var preview = document.getElementById("kidia-page-live-preview");
 	var dragged = null;
+	var config = window.kidiaPageBuilder || {};
+	var products = Array.isArray(config.products) ? config.products : [];
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
-	function field(scope, suffix) { return scope.querySelector('[name$="[' + suffix + ']"]'); }
+	function field(scope, suffix) { var items = scope.querySelectorAll('[name$="[' + suffix + ']"]'); return items.length ? items[items.length - 1] : null; }
 	function value(scope, suffix, fallback) { var item = field(scope, suffix); return item ? item.value : fallback; }
 	function checked(scope, suffix, fallback) { var item = field(scope, suffix); return item ? item.checked : fallback; }
 	function color(scope, suffix, fallback) { var result = value(scope, suffix, fallback); return /^#[0-9a-f]{6}$/i.test(result) ? result : fallback; }
 	function number(scope, suffix, fallback) { var result = Number(value(scope, suffix, fallback)); return isFinite(result) ? result : fallback; }
+	function productCards(columns, limit) {
+		var items = products.slice(0, Math.max(columns, Math.min(limit || 4, 6)));
+		if (!items.length) {
+			items = [
+				{name:"Kidia product",price:"450",image_url:""},
+				{name:"New collection",price:"390",image_url:""},
+				{name:"Kids outfit",price:"320",image_url:""}
+			];
+		}
+		return '<div class="kidia-page-preview-products" style="--columns:' + columns + '">' + items.map(function (item) {
+			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<div class="kidia-page-preview-avatar">K</div>';
+			return '<article class="kidia-page-preview-product">' + image + '<div><strong>' + escapeHtml(item.name) + '</strong><b>' + escapeHtml(item.price || "") + '</b></div></article>';
+		}).join("") + '</div>';
+	}
 
 	function updateIndexes() {
 		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
@@ -35,11 +51,30 @@
 			logout_button:"Sign out"
 		};
 		var columns = Math.max(1, Math.min(4, Math.round(number(card, "columns", 2))));
-		var gridTypes = {product_grid:true, related_products:true, wishlist_grid:true, image_gallery:true};
-		var body = gridTypes[id]
-			? '<div class="kidia-page-preview-grid" style="--columns:' + columns + '"><i></i><i></i><i></i><i></i></div>'
-			: '<div class="kidia-page-preview-lines"><i></i><i></i><i></i></div>';
-		return '<section class="kidia-page-preview-element"><strong>' + escapeHtml(labels[id] || id.replace(/_/g, " ")) + '</strong>' + body + '</section>';
+		var title = escapeHtml(value(card, "title", labels[id] || id.replace(/_/g, " ")));
+		var body;
+		if ({product_grid:true,related_products:true,wishlist_grid:true}[id]) {
+			body = productCards(columns, number(card, "limit", 4));
+		} else if (id === "image_gallery") {
+			body = products.some(function (item) { return item.image_url; })
+				? '<div class="kidia-page-preview-gallery">' + products.slice(0, 2).map(function (item) { return item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : ''; }).join("") + '</div>'
+				: '<div class="kidia-page-preview-gallery"><span class="kidia-page-preview-avatar">K</span><span class="kidia-page-preview-avatar">K</span></div>';
+		} else if (id === "account_summary") {
+			body = '<div class="kidia-page-preview-profile"><span class="kidia-page-preview-avatar">♙</span><div><strong>Customer name</strong><small>customer@example.com</small></div></div>';
+		} else if (id === "account_menu") {
+			body = '<div class="kidia-page-preview-menu"><span>Orders</span><span>Addresses</span><span>Profile</span><span>Support</span></div>';
+		} else if (id === "logout_button" || id === "purchase_bar") {
+			body = '<div class="kidia-page-preview-button">' + title + '</div>';
+		} else if (id === "filter_bar") {
+			body = '<div class="kidia-page-preview-menu"><span>Filter</span><span>Sort</span></div>';
+		} else if (id === "empty_state") {
+			body = '<div class="kidia-page-preview-profile"><span class="kidia-page-preview-avatar">♡</span><div><strong>' + title + '</strong><small>' + escapeHtml(value(card, "description", "Your wishlist is empty")) + '</small></div></div>';
+		} else if (id === "product_summary") {
+			body = '<div><strong>' + escapeHtml(products[0] ? products[0].name : "Product name") + '</strong><p style="color:#2f806e;font-weight:800">' + escapeHtml(products[0] ? products[0].price : "450") + '</p></div>';
+		} else {
+			body = '<div class="kidia-page-preview-lines"><i></i><i></i><i></i></div>';
+		}
+		return '<section class="kidia-page-preview-element"><strong>' + title + '</strong>' + body + '</section>';
 	}
 
 	function renderPreview() {
@@ -118,7 +153,15 @@
 		if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; }
 		dragged = null; updateIndexes(); renderPreview();
 	});
-	root.querySelector("form").addEventListener("submit", updateIndexes);
+	root.querySelector("form").addEventListener("submit", function () {
+		updateIndexes();
+		var button = root.querySelector('button[type="submit"],input[type="submit"]');
+		if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); }
+	});
+	window.addEventListener("pageshow", function () {
+		var button = root.querySelector('button[type="submit"],input[type="submit"]');
+		if (button) { button.disabled = false; button.removeAttribute("aria-busy"); }
+	});
 
 	if ($ && $.fn && $.fn.sortable) {
 		$(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();renderPreview();}});

@@ -223,7 +223,10 @@ final class Kidia_Mobile_CMS_Admin {
 		$submitted = isset( $_POST['layout'] ) ? wp_unslash( $_POST['layout'] ) : array();
 		( new Kidia_Mobile_Page_Layout_Store() )->save_layout( $page, is_array( $submitted ) ? $submitted : array() );
 		$slug = array_search( $page, self::PAGE_BUILDER_SLUGS, true );
-		wp_safe_redirect( add_query_arg( array( 'page' => $slug, 'updated' => '1' ), admin_url( 'admin.php' ) ) );
+		if ( function_exists( 'nocache_headers' ) ) {
+			nocache_headers();
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => $slug, 'updated' => '1', 'saved_at' => time() ), admin_url( 'admin.php' ) ) );
 		exit;
 	}
 
@@ -543,6 +546,20 @@ final class Kidia_Mobile_CMS_Admin {
 					}
 
 					if ( isset( self::PAGE_BUILDER_SLUGS[ $page ] ) ) {
+						$preview_products = array();
+						if ( function_exists( 'wc_get_products' ) ) {
+							foreach ( wc_get_products( array( 'status' => 'publish', 'limit' => 6, 'orderby' => 'date', 'order' => 'DESC' ) ) as $product ) {
+								if ( ! is_object( $product ) || ! method_exists( $product, 'get_name' ) ) {
+									continue;
+								}
+								$image_id = method_exists( $product, 'get_image_id' ) ? absint( $product->get_image_id() ) : 0;
+								$preview_products[] = array(
+									'name'      => sanitize_text_field( (string) $product->get_name() ),
+									'price'     => wp_strip_all_tags( method_exists( $product, 'get_price_html' ) ? (string) $product->get_price_html() : '' ),
+									'image_url' => $image_id ? (string) wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '',
+								);
+							}
+						}
 						wp_enqueue_style( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.css' ) );
 						wp_enqueue_script( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.js' ), true );
 						wp_localize_script(
@@ -550,6 +567,7 @@ final class Kidia_Mobile_CMS_Admin {
 							'kidiaPageBuilder',
 							array(
 								'page' => self::PAGE_BUILDER_SLUGS[ $page ],
+								'products' => $preview_products,
 								'labels' => array( 'hidden' => __( 'Hidden', 'kidia-mobile-cms' ), 'visible' => __( 'Visible', 'kidia-mobile-cms' ) ),
 							)
 						);
