@@ -17,6 +17,7 @@ function is_wp_error( $value ): bool { return false; }
 function wp_specialchars_decode( string $value, int $flags = ENT_QUOTES ): string { return html_entity_decode( $value, $flags ); }
 function get_term_meta( int $term_id, string $key, bool $single = false ): int { unset( $key, $single ); return $term_id + 100; }
 function wp_get_attachment_image_url( int $attachment_id, string $size ): string { unset( $size ); return 'https://example.com/category-' . $attachment_id . '.jpg'; }
+function wp_parse_url( string $url, int $component = -1 ) { return parse_url( $url, $component ); }
 function get_terms( array $args ): array {
 	// Prove that legacy hide-empty elements fall back to visible categories.
 	if ( ! empty( $args['hide_empty'] ) ) {
