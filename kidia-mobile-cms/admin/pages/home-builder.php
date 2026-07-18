@@ -128,6 +128,13 @@ foreach ( $library_options as $type => $option_name ) {
 
 		<input
 			type="hidden"
+			name="blocks_payload"
+			id="kidia-home-builder-payload"
+			value=""
+		>
+
+		<input
+			type="hidden"
 			name="edit_after_save_type"
 			id="kidia-edit-after-save-type"
 			value=""

@@ -173,6 +173,26 @@ final class Kidia_Mobile_Layout_Store {
 	}
 
 	/**
+	 * Decodes the flat JSON payload posted by Home Builder.
+	 *
+	 * A flat payload is intentionally used because some hosting security layers
+	 * strip deeply nested blocks[...] form fields before WordPress receives them.
+	 *
+	 * @param mixed $payload Raw request payload.
+	 *
+	 * @return array<int|string,mixed>
+	 */
+	public static function decode_submission( $payload ): array {
+		if ( ! is_string( $payload ) || '' === trim( $payload ) ) {
+			return array();
+		}
+
+		$decoded = json_decode( $payload, true );
+
+		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
 	 * Returns default Home Page blocks.
 	 *
 	 * @return array<int, array<string, mixed>>
