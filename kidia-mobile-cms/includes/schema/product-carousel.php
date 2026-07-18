@@ -172,6 +172,16 @@ return array(
 			'step' => 1,
 		),
 
+		array( 'key' => 'card_style', 'label' => __( 'Card style', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'outlined', 'options' => array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ),
+		array( 'key' => 'item_width', 'label' => __( 'Card width', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 168, 'min' => 120, 'max' => 260, 'step' => 4 ),
+		array( 'key' => 'image_ratio', 'label' => __( 'Image ratio', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 1, 'min' => 0.6, 'max' => 1.8, 'step' => 0.05 ),
+		array( 'key' => 'card_radius', 'label' => __( 'Card radius', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 20, 'min' => 0, 'max' => 40, 'step' => 1 ),
+		array( 'key' => 'show_name', 'label' => __( 'Show product name', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'show_price', 'label' => __( 'Show price', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'show_regular_price', 'label' => __( 'Show regular price', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'show_badge', 'label' => __( 'Show sale badge', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'show_rating', 'label' => __( 'Show rating', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
+
 	),
 
 );

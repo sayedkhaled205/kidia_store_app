@@ -38,6 +38,16 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 $store = new Kidia_Mobile_Page_Layout_Store();
 $product_default = $store->get_layout( 'product' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
+$catalog_default = $store->get_layout( 'catalog' );
+$catalog_ids = array_column( $catalog_default['elements'], 'id' );
+kidia_page_assert( ! in_array( 'pagination', $catalog_ids, true ), 'Pagination must be a Product Grid setting, not a separate element.' );
+$catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];
+kidia_page_assert( 'load_more' === $catalog_grid['settings']['pagination_mode'], 'Product Grid must expose pagination mode.' );
+kidia_page_assert( 12.0 === $catalog_grid['settings']['products_per_page'], 'Product Grid must expose products per page.' );
+$catalog_filter = $catalog_default['elements'][ array_search( 'filter_bar', $catalog_ids, true ) ];
+foreach ( array( 'filter_price', 'filter_sale', 'filter_brand', 'filter_size', 'block_width', 'block_height', 'icon_size' ) as $filter_setting ) {
+	kidia_page_assert( array_key_exists( $filter_setting, $catalog_filter['settings'] ), "Filter Bar must expose $filter_setting." );
+}
 $expected = array(
 	'catalog' => array( 'filter_bar', 'product_grid' ),
 	'product' => array( 'image_gallery', 'purchase_bar', 'reviews' ),

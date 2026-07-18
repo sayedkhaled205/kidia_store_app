@@ -28,12 +28,17 @@
 .kidia-category-toolbar { align-items: center; background: linear-gradient(135deg,#e7f5f1,#fff); border: 1px solid #d8e5e1; display: flex; justify-content: space-between; margin: 20px 0 14px; padding: 14px 18px; width: 77%; }
 .kidia-category-list { list-style: none; margin: 0; padding: 0; }
 .kidia-category-children > .kidia-category-list { border-right: 3px solid #dbeee9; margin: 8px 42px 8px 0; padding-right: 18px; }
-.kidia-category-card { align-items: center; background: #fff; border: 1px solid #d8e5e1; border-radius: 9px; display: grid; gap: 10px; grid-template-columns: 24px 24px 58px minmax(150px,1fr) auto auto; margin: 7px 0 7px auto; padding: 10px 12px; position: relative; width: 77%; }
+.kidia-category-card { align-items: center; background: #fff; border: 1px solid #d8e5e1; border-radius: 9px; display: grid; gap: 12px; grid-template-columns: 24px 58px minmax(150px,1fr) auto auto 44px; margin: 7px 0 7px auto; padding: 10px 12px; position: relative; width: 77%; }
 .kidia-category-handle { color: #646970; cursor: grab; }
-.kidia-category-expand { align-items: center; display: inline-flex; justify-content: center; }
+.kidia-category-expand { align-items: center; display: inline-flex; grid-column: 6; grid-row: 1; height: 40px; justify-content: center; width: 40px; }
 .kidia-category-expand .dashicons { transition: transform .18s ease; }
 .kidia-category-expand[aria-expanded="true"] .dashicons { transform: rotate(180deg); }
-.kidia-category-expand-placeholder { display: block; width: 24px; }
+.kidia-category-expand-placeholder { display: block; grid-column: 6; grid-row: 1; width: 40px; }
+.kidia-category-handle { grid-column: 1; grid-row: 1; }
+.kidia-category-image { grid-column: 2; grid-row: 1; }
+.kidia-category-name { grid-column: 3; grid-row: 1; }
+.kidia-category-settings-toggle { grid-column: 4; grid-row: 1; }
+.kidia-category-visibility { grid-column: 5; grid-row: 1; }
 .kidia-category-image { align-items: center; background: #f0f6f4; border-radius: 6px; display: flex; height: min(52px,var(--preview-size)); justify-content: center; overflow: hidden; width: min(52px,var(--preview-size)); }
 .kidia-category-image img { height: 100%; object-fit: cover; width: 100%; }
 .kidia-category-name { display: flex; flex-direction: column; gap: 4px; }

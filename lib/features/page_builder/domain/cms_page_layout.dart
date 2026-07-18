@@ -55,7 +55,6 @@ class CmsPageLayout {
       'catalog': <String>[
         'filter_bar',
         'product_grid',
-        'pagination',
       ],
       'product': <String>[
         'image_gallery',
