@@ -3,6 +3,7 @@
 declare( strict_types=1 );
 define( 'ABSPATH', __DIR__ );
 $GLOBALS['kidia_test_options'] = array();
+function __( string $text, string $domain = '' ): string { unset( $domain ); return $text; }
 function sanitize_key( $value ): string { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) ) ?: ''; }
 function sanitize_text_field( $value ): string { return trim( strip_tags( (string) $value ) ); }
 function sanitize_textarea_field( $value ): string { return sanitize_text_field( $value ); }
