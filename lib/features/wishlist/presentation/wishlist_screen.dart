@@ -92,6 +92,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
         ),
         body: Column(
           children: <Widget>[
+            if (_controller.status == WishlistStatus.ready &&
+                layout.header.boolean('show_count', true))
+              Text('${_controller.length}', key: const Key('wishlist-count')),
             if (_controller.mutationError != null)
               _MutationErrorNotice(
                 message: _controller.mutationError!,

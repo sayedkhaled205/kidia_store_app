@@ -40,6 +40,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'show_cart', __( 'Show cart', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_wishlist', __( 'Show wishlist', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'show_account', __( 'Show account', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'show_count', __( 'Show page item count', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'back_style', __( 'Back icon style', 'kidia-mobile-cms' ), 'select', 'outline', array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ), 'circle' => __( 'Circle', 'kidia-mobile-cms' ) ) ),
 			self::field( 'back_size', __( 'Back icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 16, 40 ),
 			self::field( 'back_color', __( 'Back icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),

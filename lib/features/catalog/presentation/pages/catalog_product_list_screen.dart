@@ -172,6 +172,18 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
+          if (showSearchField)
+            SliverToBoxAdapter(
+              child: _SearchField(
+                controller: searchController,
+                hint: copy.searchHint,
+                onSubmitted: controller.submitSearch,
+                onClear: () {
+                  searchController.clear();
+                  controller.submitSearch('');
+                },
+              ),
+            ),
           if (!controller.isAwaitingSearch && pageLayout.element('filter_bar').enabled)
             SliverPersistentHeader(
               pinned: true,
@@ -218,6 +230,50 @@ class _ProductListContent extends StatelessWidget {
               ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.hint,
+    required this.onSubmitted,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onSubmitted;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 4),
+      child: TextField(
+        controller: controller,
+        textInputAction: TextInputAction.search,
+        autocorrect: false,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
+          suffixIcon: ListenableBuilder(
+            listenable: controller,
+            builder: (BuildContext context, Widget? child) => controller.text.isEmpty
+                ? const SizedBox.shrink()
+                : IconButton(
+                    tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+                    onPressed: onClear,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+          ),
+        ),
+        onSubmitted: (String value) {
+          FocusScope.of(context).unfocus();
+          onSubmitted(value);
+        },
       ),
     );
   }
