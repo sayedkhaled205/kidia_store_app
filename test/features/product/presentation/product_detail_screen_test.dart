@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
-import 'package:kidia_store_app/shared/widgets/common/commerce_app_bar.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 import '../support/product_test_data.dart';
 
@@ -32,14 +32,7 @@ void main() {
     expect(find.text('Kidia'), findsOneWidget);
     expect(find.text('Product'), findsNothing);
     expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
-    expect(find.byType(CommerceAppBar), findsOneWidget);
-    final AppBar appBar = tester.widget<AppBar>(
-      find.descendant(
-        of: find.byType(CommerceAppBar),
-        matching: find.byType(AppBar),
-      ),
-    );
-    expect(appBar.centerTitle, isTrue);
+    expect(find.byType(CmsPageAppBar), findsOneWidget);
     expect(find.text('In stock'), findsNothing);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
@@ -185,14 +178,16 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        builder: (BuildContext context, Widget? child) =>
-            Directionality(textDirection: TextDirection.rtl, child: child!),
-        home: ProductDetailScreen(
-          productId: simpleProduct.id,
-          repository: ProductFakeCatalogRepository(),
-          isWishlisted: (int productId) async => false,
-          onWishlistToggle: (product) async => true,
+      ProviderScope(
+        child: MaterialApp(
+          builder: (BuildContext context, Widget? child) =>
+              Directionality(textDirection: TextDirection.rtl, child: child!),
+          home: ProductDetailScreen(
+            productId: simpleProduct.id,
+            repository: ProductFakeCatalogRepository(),
+            isWishlisted: (int productId) async => false,
+            onWishlistToggle: (product) async => true,
+          ),
         ),
       ),
     );
@@ -206,12 +201,14 @@ void main() {
     final Finder cart = find.byKey(const Key('product-cart-button'));
     final Finder heart = find.byKey(const Key('product-wishlist-button'));
     expect(tester.getCenter(cart).dx, lessThan(tester.getCenter(heart).dx));
-    expect(tester.widget<CartIconButton>(cart).endInset, 0);
+    expect(tester.widget<IconButton>(cart).onPressed, isNotNull);
   });
 }
 
 Widget _testApp(Widget home) {
-  return MaterialApp(theme: ThemeData(useMaterial3: true), home: home);
+  return ProviderScope(
+    child: MaterialApp(theme: ThemeData(useMaterial3: true), home: home),
+  );
 }
 
 void _useTallSurface(WidgetTester tester) {

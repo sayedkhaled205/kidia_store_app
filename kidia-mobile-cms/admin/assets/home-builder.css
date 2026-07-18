@@ -232,10 +232,12 @@
 	top: 32px;
 	z-index: 50;
 	display: flex;
+	width: 77%;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
 	margin-block: 14px;
+	margin-inline-end: auto;
 	padding: 10px 12px;
 	border: 1px solid var(--kidia-border);
 	border-radius: 9px;
@@ -1120,6 +1122,7 @@ body.kidia-modal-open {
 	}
 
 	.kidia-builder-toolbar {
+		width: 100%;
 		top: 46px;
 		align-items: stretch;
 		flex-direction: column;

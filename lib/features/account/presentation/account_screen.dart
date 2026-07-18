@@ -7,7 +7,9 @@ import 'package:kidia_store_app/core/theme/kidia_radius.dart';
 import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -47,12 +49,26 @@ class AccountScreen extends ConsumerWidget {
       authControllerProvider,
     );
     final AuthSession? session = authState.asData?.value;
+    final CmsPageLayout pageLayout =
+        ref.watch(cmsPageLayoutProvider('account')).value ??
+        CmsPageLayout.fallback('account');
+    final CmsPageComponent summarySettings = pageLayout.element(
+      'account_summary',
+    );
+    final CmsPageComponent menuSettings = pageLayout.element('account_menu');
+    final List<_AccountAction> visibleActions = _visibleActions(menuSettings);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isArabic ? 'حسابي' : 'Account'),
-        actions: <Widget>[
-          CartIconButton(onPressed: () => context.push('/cart')),
+      appBar: CmsPageAppBar(
+        layout: pageLayout,
+        defaultTitle: isArabic ? 'حسابي' : 'Account',
+        actions: <CmsPageHeaderAction>[
+          CmsPageHeaderAction(
+            type: 'cart',
+            icon: Icons.shopping_bag_outlined,
+            tooltip: 'Cart',
+            onPressed: () => context.push('/cart'),
+          ),
         ],
       ),
       body: SafeArea(
@@ -65,11 +81,17 @@ class AccountScreen extends ConsumerWidget {
             KidiaSpacing.xl,
           ),
           children: <Widget>[
-            _AccountHeader(
+            if (summarySettings.enabled)
+              _AccountHeader(
               session: session,
               loading: authState.isLoading,
               isArabic: isArabic,
               onSignIn: () => context.push('/auth'),
+              avatarSize: summarySettings.number('avatar_size', 66),
+              guestTitle: summarySettings.string(
+                'guest_title',
+                isArabic ? 'تسجيل الدخول / إنشاء حساب' : 'Sign in / Register',
+              ),
             ),
             if (authState.hasError) ...<Widget>[
               const SizedBox(height: KidiaSpacing.sm),
@@ -79,27 +101,28 @@ class AccountScreen extends ConsumerWidget {
                     : 'Could not restore the account session. You can sign in again.',
               ),
             ],
-            const SizedBox(height: KidiaSpacing.lg),
-            Card(
+            if (menuSettings.enabled) const SizedBox(height: KidiaSpacing.lg),
+            if (menuSettings.enabled)
+              Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: <Widget>[
-                  for (int index = 0; index < _actions.length; index++) ...<Widget>[
+                  for (int index = 0; index < visibleActions.length; index++) ...<Widget>[
                     _AccountActionTile(
-                      action: _actions[index],
+                      action: visibleActions[index],
                       isArabic: isArabic,
                       onTap: () => _openAction(
                         context,
                         session: session,
-                        action: _actions[index],
+                        action: visibleActions[index],
                       ),
                     ),
-                    if (index < _actions.length - 1) const Divider(),
+                    if (index < visibleActions.length - 1) const Divider(),
                   ],
                 ],
               ),
             ),
-            if (session != null) ...<Widget>[
+            if (session != null && pageLayout.element('logout_button').enabled) ...<Widget>[
               const SizedBox(height: KidiaSpacing.lg),
               OutlinedButton.icon(
                 key: const Key('account-sign-out'),
@@ -112,6 +135,12 @@ class AccountScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  List<_AccountAction> _visibleActions(CmsPageComponent settings) {
+    return _actions.where((_AccountAction action) {
+      return settings.boolean('show_${action.id}', true);
+    }).toList(growable: false);
   }
 
   Future<void> _openAction(
@@ -165,12 +194,16 @@ class _AccountHeader extends StatelessWidget {
     required this.loading,
     required this.isArabic,
     required this.onSignIn,
+    required this.avatarSize,
+    required this.guestTitle,
   });
 
   final AuthSession? session;
   final bool loading;
   final bool isArabic;
   final VoidCallback onSignIn;
+  final double avatarSize;
+  final String guestTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -181,8 +214,8 @@ class _AccountHeader extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Container(
-              width: 66,
-              height: 66,
+              width: avatarSize,
+              height: avatarSize,
               decoration: const BoxDecoration(
                 color: KidiaColors.primaryLight,
                 shape: BoxShape.circle,
@@ -191,7 +224,7 @@ class _AccountHeader extends StatelessWidget {
                 current == null
                     ? Icons.person_outline_rounded
                     : Icons.person_rounded,
-                size: 38,
+                size: avatarSize * 0.58,
                 color: KidiaColors.primaryDark,
               ),
             ),
@@ -216,9 +249,7 @@ class _AccountHeader extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   Text(
-                                    isArabic
-                                        ? 'تسجيل الدخول / إنشاء حساب'
-                                        : 'Sign in / Register',
+                                    guestTitle,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge

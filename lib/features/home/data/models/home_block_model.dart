@@ -109,12 +109,21 @@ abstract final class HomeBlockModel {
     required Map<String, dynamic> data,
   }) {
     final String layout = _optionalString(data, 'layout') ?? 'center';
-    if (layout != 'center' && layout != 'start') {
+    if (!const <String>{'center', 'start', 'end'}.contains(layout)) {
       throw FormatException('Unsupported app header layout: $layout');
     }
     final String searchStyle = _optionalString(data, 'search_style') ?? 'icon';
     if (searchStyle != 'icon' && searchStyle != 'bar') {
       throw FormatException('Unsupported app header search style: $searchStyle');
+    }
+    final String shadow = _optionalString(data, 'shadow') ?? 'subtle';
+    if (!const <String>{'none', 'subtle', 'strong'}.contains(shadow)) {
+      throw FormatException('Unsupported app header shadow: $shadow');
+    }
+    final String accountStyle =
+        _optionalString(data, 'account_style') ?? 'icon';
+    if (!const <String>{'icon', 'filled', 'avatar'}.contains(accountStyle)) {
+      throw FormatException('Unsupported account icon style: $accountStyle');
     }
     return AppHeaderBlock(
       id: id,
@@ -151,6 +160,25 @@ abstract final class HomeBlockModel {
           _hexColor(data, 'search_background', fallback: '#F1F3F4'),
       searchTextColor:
           _hexColor(data, 'search_text_color', fallback: '#5F6368'),
+      sticky: _optionalBool(data, 'sticky', fallback: true),
+      shadow: shadow,
+      borderRadius: _boundedDouble(data, 'border_radius', fallback: 0, minimum: 0, maximum: 40),
+      horizontalPadding: _boundedDouble(data, 'horizontal_padding', fallback: 12, minimum: 0, maximum: 32),
+      iconSize: _boundedDouble(data, 'icon_size', fallback: 24, minimum: 16, maximum: 40),
+      iconGap: _boundedDouble(data, 'icon_gap', fallback: 4, minimum: 0, maximum: 24),
+      iconBackground: _hexColor(data, 'icon_background', fallback: '#FFFFFF'),
+      iconRadius: _boundedDouble(data, 'icon_radius', fallback: 12, minimum: 0, maximum: 30),
+      showWishlist: _optionalBool(data, 'show_wishlist', fallback: false),
+      searchHeight: _boundedDouble(data, 'search_height', fallback: 40, minimum: 32, maximum: 64),
+      searchRadius: _boundedDouble(data, 'search_radius', fallback: 14, minimum: 0, maximum: 32),
+      searchBorderWidth: _boundedDouble(data, 'search_border_width', fallback: 0, minimum: 0, maximum: 6),
+      searchBorderColor: _hexColor(data, 'search_border_color', fallback: '#DDE3E8'),
+      searchIconColor: _hexColor(data, 'search_icon_color', fallback: '#5F6368'),
+      showVoiceSearch: _optionalBool(data, 'show_voice_search', fallback: false),
+      accountStyle: accountStyle,
+      showAccountLabel: _optionalBool(data, 'show_account_label', fallback: false),
+      accountLabel: _optionalString(data, 'account_label') ?? 'Account',
+      accountIconSize: _boundedDouble(data, 'account_icon_size', fallback: 24, minimum: 16, maximum: 40),
     );
   }
 
