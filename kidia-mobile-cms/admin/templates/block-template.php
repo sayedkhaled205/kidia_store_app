@@ -19,14 +19,13 @@ $name = isset( $block_data['name'] )
 	? (string) $block_data['name']
 	: $block->get_label();
 
-$settings = isset( $block_data['settings'] )
-	&& is_array( $block_data['settings'] )
-		? $block_data['settings']
-		: array();
-
 $library_id = isset( $block_data['library_id'] )
 	? (string) $block_data['library_id']
 	: (string) $block_data['id'];
+
+$status = 'published' === ( $block_data['status'] ?? 'draft' )
+	? 'published'
+	: 'draft';
 ?>
 
 <div
@@ -53,6 +52,18 @@ $library_id = isset( $block_data['library_id'] )
 					<?php echo esc_html( $block->get_label() ); ?>
 				</span>
 
+				<span
+					class="kidia-builder-status kidia-builder-status--<?php echo esc_attr( $status ); ?>"
+				>
+					<?php
+					echo esc_html(
+						'published' === $status
+							? __( 'Published', 'kidia-mobile-cms' )
+							: __( 'Draft', 'kidia-mobile-cms' )
+					);
+					?>
+				</span>
+
 			</div>
 
 		</div>
@@ -64,18 +75,6 @@ $library_id = isset( $block_data['library_id'] )
 				class="button kidia-toggle-block-settings"
 			>
 				<span class="dashicons dashicons-arrow-down-alt2"></span>
-			</button>
-
-			<button
-				type="button"
-				class="button kidia-edit-library-item"
-				data-library-id="<?php echo esc_attr( $library_id ); ?>"
-				data-type="<?php echo esc_attr( $type ); ?>"
-			>
-				<?php esc_html_e(
-					'Edit',
-					'kidia-mobile-cms'
-				); ?>
 			</button>
 
 			<button
@@ -93,7 +92,7 @@ $library_id = isset( $block_data['library_id'] )
 				class="button button-link-delete kidia-delete-block"
 			>
 				<?php esc_html_e(
-					'Delete',
+					'Remove',
 					'kidia-mobile-cms'
 				); ?>
 			</button>
@@ -120,6 +119,20 @@ $library_id = isset( $block_data['library_id'] )
 
 		<input
 			type="hidden"
+			class="kidia-block-source-library-id"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][source_library_id]"
+			value=""
+		>
+
+		<input
+			type="hidden"
+			class="kidia-block-create-intent"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][create_intent]"
+			value="0"
+		>
+
+		<input
+			type="hidden"
 			class="kidia-block-type"
 			name="blocks[<?php echo esc_attr( (string) $index ); ?>][type]"
 			value="<?php echo esc_attr( $type ); ?>"
@@ -130,6 +143,13 @@ $library_id = isset( $block_data['library_id'] )
 			class="kidia-block-order"
 			name="blocks[<?php echo esc_attr( (string) $index ); ?>][order]"
 			value="<?php echo esc_attr( (string) $block_data['order'] ); ?>"
+		>
+
+		<input
+			type="hidden"
+			class="kidia-block-status"
+			name="blocks[<?php echo esc_attr( (string) $index ); ?>][status]"
+			value="<?php echo esc_attr( $status ); ?>"
 		>
 
 		<div class="kidia-builder-field">
@@ -185,14 +205,24 @@ $library_id = isset( $block_data['library_id'] )
 
 		</div>
 
-		<?php
-		$block->render_settings(
-			is_numeric( $index )
-				? (int) $index
-				: 0,
-			$settings
-		);
-		?>
+		<div class="kidia-builder-field">
+			<label for="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
+				<?php esc_html_e( 'Visibility', 'kidia-mobile-cms' ); ?>
+			</label>
+			<select class="kidia-block-status-select" id="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
+				<option value="published" <?php selected( 'published', $status ); ?>><?php esc_html_e( 'Published', 'kidia-mobile-cms' ); ?></option>
+				<option value="draft" <?php selected( 'draft', $status ); ?>><?php esc_html_e( 'Draft', 'kidia-mobile-cms' ); ?></option>
+			</select>
+		</div>
+
+		<div class="kidia-builder-inline-settings">
+			<?php
+			$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] )
+				? $block_data['settings']
+				: $block->get_default_settings();
+			$block->render_settings( (int) $index, $settings );
+			?>
+		</div>
 
 	</div>
 
