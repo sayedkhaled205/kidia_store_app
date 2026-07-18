@@ -33,6 +33,8 @@ function kidia_home_assert( bool $condition, string $message ): void {
 function __( string $text, string $domain = '' ): string { unset( $domain ); return $text; }
 function esc_attr( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 function esc_html( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
+function esc_textarea( $value ): string { return htmlspecialchars( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
+function esc_url( $value ): string { return esc_url_raw( $value ); }
 function esc_html_e( string $text, string $domain = '' ): void { echo htmlspecialchars( __( $text, $domain ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 function checked( $checked, $current = true ): void { if ( $checked === $current ) echo ' checked="checked"'; }
 function selected( $selected, $current = true ): void { if ( $selected === $current ) echo ' selected="selected"'; }
@@ -79,6 +81,7 @@ function is_wp_error( $value ): bool { return false; }
 
 require dirname( __DIR__ ) . '/includes/class-kidia-mobile-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-app-header-block.php';
+require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-coupon-banner-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-product-carousel-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-brand-carousel-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-section-header-block.php';
@@ -91,11 +94,19 @@ ob_start();
 $header->render_settings( 0, $header->get_default_settings() );
 $header_markup = (string) ob_get_clean();
 kidia_home_assert( str_contains( $header_markup, 'kidia-app-header-logo-url' ), 'App Header settings must render without a fatal error.' );
+kidia_home_assert( str_contains( $header_markup, 'kidia-app-header-logo-preview' ), 'The App Header logo preview must open the shared media picker.' );
 $header_api = $header->build_api_block(
 	array( 'id' => 'header', 'enabled' => true, 'settings' => array( 'logo_url' => 'javascript:alert(1)' ) )
 );
 kidia_home_assert( 'Kidia Test Store' === $header_api['data']['title'], 'App Header must provide Flutter with a required title.' );
 kidia_home_assert( '' === $header_api['data']['logo_url'], 'Unsafe App Header URLs must be rejected.' );
+
+$coupon = new Kidia_Mobile_Coupon_Banner_Block();
+ob_start();
+$coupon->render_settings( 1, $coupon->get_default_settings() );
+$coupon_markup = (string) ob_get_clean();
+kidia_home_assert( str_contains( $coupon_markup, 'kidia-select-media' ), 'Coupon Banner images must use the WordPress media picker.' );
+kidia_home_assert( str_contains( $coupon_markup, 'kidia-media-preview' ), 'Coupon Banner images must render a clickable preview.' );
 
 $carousel = new Kidia_Mobile_Product_Carousel_Block();
 $carousel_api = $carousel->build_api_block(

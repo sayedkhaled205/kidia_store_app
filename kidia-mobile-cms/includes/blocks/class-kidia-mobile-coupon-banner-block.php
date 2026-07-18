@@ -122,17 +122,33 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 
     	</div>
 
-    	<div class="kidia-builder-field">
+	<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media">
 
-    		<label>Image URL</label>
+		<label>Image URL</label>
 
-    		<input
-    			type="url"
-    			name="blocks[<?php echo esc_attr( $index ); ?>][settings][image_url]"
-    			value="<?php echo esc_attr( $settings['image_url'] ); ?>"
-    		>
+		<div class="kidia-builder-media-field">
 
-    	</div>
+			<input
+				type="url"
+				class="kidia-media-url"
+				name="blocks[<?php echo esc_attr( $index ); ?>][settings][image_url]"
+				value="<?php echo esc_attr( $settings['image_url'] ); ?>"
+			>
+
+			<button type="button" class="button kidia-select-media">
+				<?php esc_html_e( 'Select Image', 'kidia-mobile-cms' ); ?>
+			</button>
+
+		</div>
+
+		<img
+			class="kidia-media-preview"
+			src="<?php echo esc_url( $settings['image_url'] ); ?>"
+			alt=""
+			<?php echo empty( $settings['image_url'] ) ? 'hidden' : ''; ?>
+		>
+
+	</div>
 
     </div>
 

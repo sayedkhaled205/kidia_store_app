@@ -46,6 +46,7 @@ final class Kidia_Mobile_App_Header_Block extends Kidia_Mobile_Block {
 					<input class="kidia-app-header-logo-url" type="url" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][logo_url]" value="<?php echo esc_attr( $settings['logo_url'] ); ?>">
 					<button type="button" class="button kidia-select-app-header-logo"><?php esc_html_e( 'Choose logo', 'kidia-mobile-cms' ); ?></button>
 				</div>
+				<img class="kidia-media-preview kidia-app-header-logo-preview" src="<?php echo esc_url( $settings['logo_url'] ); ?>" alt="" <?php echo empty( $settings['logo_url'] ) ? 'hidden' : ''; ?>>
 			</div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( $settings['title'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>"></div>

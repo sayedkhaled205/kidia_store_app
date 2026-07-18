@@ -16,6 +16,14 @@ function input(name, value, extra = "") {
   return `<input name="blocks[0][settings][${name}]" value="${value}" ${extra}>`;
 }
 
+function mediaField(name, value, inputClass, buttonClass, previewClass) {
+  return `<div class="kidia-builder-field kidia-builder-field--media">
+    <input type="url" class="${inputClass}" name="blocks[0][settings][${name}]" value="${value}">
+    <button type="button" class="${buttonClass}">Select image</button>
+    <img class="${previewClass}" src="${value}" alt="">
+  </div>`;
+}
+
 function homeBlock(type, index, settings, name = type) {
   return `
     <div class="kidia-builder-block is-collapsed" data-type="${type}" data-library-id="${type}_${index}">
@@ -69,18 +77,18 @@ function homeMarkup() {
     .replace("slide_1", "");
 
   const blocks = [
-    homeBlock("app_header", 0, `${input("logo_url", "https://example.com/logo.png", 'class="kidia-app-header-logo-url"')}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
+    homeBlock("app_header", 0, `${mediaField("logo_url", "https://example.com/logo.png", "kidia-app-header-logo-url", "kidia-select-app-header-logo", "kidia-media-preview kidia-app-header-logo-preview")}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
     homeBlock("hero_slider", 1, `${input("aspect_ratio", "1.8")}<div class="kidia-hero-block-items">${heroItem}</div><button type="button" class="kidia-add-hero-block-item">Add Slide</button><script type="text/html" class="tmpl-kidia-hero-block-item">${heroTemplate}</script>`),
     homeBlock("category_grid", 2, `${input("title", "Categories")}${input("columns", "4")}${input("limit", "4")}<input type="checkbox" name="blocks[0][settings][show_names]" value="1" checked>`),
-    homeBlock("image_banner", 3, `${input("image_url", "https://example.com/banner.jpg", 'class="kidia-banner-image-url"')}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}`),
+    homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}`),
     homeBlock("product_carousel", 4, `${input("title", "Latest")}${input("limit", "3")}`),
     homeBlock("product_grid", 5, `${input("title", "Offers")}${input("columns", "2")}${input("limit", "4")}`),
     homeBlock("section_header", 6, `${input("title", "Featured")}${input("subtitle", "Chosen for you")}${input("view_all_label", "View all")}<input type="checkbox" name="blocks[0][settings][show_view_all]" value="1" checked>`),
     homeBlock("brand_carousel", 7, `${input("title", "Brands")}${input("limit", "4")}`),
     homeBlock("promo_strip", 8, `${input("text", "Free delivery", 'class="promo-text"')}${input("background_color", "#4f9f8f")}${input("text_color", "#ffffff")}`),
-    homeBlock("coupon_banner", 9, `${input("title", "Save now")}${input("description", "Special offer")}${input("coupon_code", "KIDIA20")}${input("image_url", "https://example.com/coupon.jpg")}`),
+    homeBlock("coupon_banner", 9, `${input("title", "Save now")}${input("description", "Special offer")}${input("coupon_code", "KIDIA20")}${mediaField("image_url", "https://example.com/coupon.jpg", "kidia-media-url", "kidia-select-media", "kidia-media-preview")}`),
     homeBlock("countdown", 10, `${input("title", "Ends soon")}${input("ends_at", "2030-01-01T00:00")}`),
-    homeBlock("video_banner", 11, `${input("video_url", "https://example.com/video.mp4")}${input("poster_url", "https://example.com/poster.jpg")}${input("aspect_ratio", "1.8")}`),
+    homeBlock("video_banner", 11, `${input("video_url", "https://example.com/video.mp4")}${mediaField("poster_url", "https://example.com/poster.jpg", "kidia-media-url", "kidia-select-media", "kidia-media-preview")}${input("aspect_ratio", "1.8")}`),
     homeBlock("text_block", 12, `${input("title", "Welcome")}<textarea name="blocks[0][settings][content]">Hello families</textarea>${input("alignment", "right")}${input("background", "#ffffff")}${input("text_color", "#111111")}`),
     homeBlock("divider", 13, `${input("color", "#e5e7eb")}${input("thickness", "1")}${input("margin", "12")}`),
     homeBlock("spacer", 14, input("height", "24")),
@@ -113,8 +121,21 @@ function runHomeBuilderTest() {
   const dom = new JSDOM(homeMarkup(), { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
   const builderCss = readAsset("home-builder.css");
+  let mediaOpenCount = 0;
   window.HTMLElement.prototype.scrollIntoView = function () {};
   window.confirm = () => true;
+  window.wp = {
+    media() {
+      let selectCallback = function () {};
+      return {
+        on(event, callback) { if (event === "select") selectCallback = callback; },
+        open() { mediaOpenCount += 1; selectCallback(); },
+        state() {
+          return { get() { return { first() { return { toJSON() { return { url: `https://example.com/selected-${mediaOpenCount}.jpg` }; } }; } }; } };
+        },
+      };
+    },
+  };
   window.kidiaHomeBuilder = { labels: { copySuffix: " Copy" } };
   window.eval(readAsset("home-builder.js"));
 
@@ -122,9 +143,13 @@ function runHomeBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 15, "All 15 element editors must load.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 15, "Every editor must use the compact essentials panel.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 15, "Every editor must use the shared settings panel.");
-  assert.match(builderCss, /--kidia-editor-width:\s*820px;/, "The editor column must stay compact on wide screens.");
-  assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, var\(--kidia-editor-width\)\)/, "The workspace must cap the element cards beside the phone preview.");
-  assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must use the compact three-column grid.");
+  assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
+  assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, 1fr\)/, "The editor must keep using the available workspace beside the phone preview.");
+  assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*70%;/, "Element cards must be 30% narrower than the restored Builder workspace.");
+  assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must keep the original three-column layout.");
+  assert.match(builderCss, /--kidia-field-width:\s*71\.4286%;/, "The 70% card must preserve controls at 50% of their original width.");
+  assert.match(builderCss, /input\[type="text"\],[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Settings controls must use the calculated half-original width.");
+  assert.match(builderCss, /input\[type="color"\]\s*\{[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Color controls must use the calculated half-original width.");
   assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
 
   const previewSelectors = [
@@ -153,6 +178,28 @@ function runHomeBuilderTest() {
   assert.match(hero.querySelectorAll(".kidia-hero-block-item")[1].querySelector("input").name, /\[items\]\[1\]/, "New Hero fields must be reindexed.");
   click(window, hero.querySelectorAll(".kidia-remove-hero-block-item")[1]);
   assert.equal(hero.querySelectorAll(".kidia-hero-block-item").length, 1, "Remove Slide must remove only that slide.");
+
+  const mediaCases = [
+    ["app_header", ".kidia-select-app-header-logo", ".kidia-media-preview", ".kidia-app-header-logo-url"],
+    ["hero_slider", ".kidia-select-hero-block-image", ".kidia-hero-block-image-preview", ".kidia-hero-block-image-url"],
+    ["image_banner", ".kidia-select-banner-image", ".kidia-banner-image-preview", ".kidia-banner-image-url"],
+    ["coupon_banner", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
+    ["video_banner", ".kidia-select-media", ".kidia-media-preview", ".kidia-media-url"],
+  ];
+  mediaCases.forEach(([type, buttonSelector, previewSelector, inputSelector]) => {
+    const mediaBlock = window.document.querySelector(`[data-type="${type}"]`);
+    const button = mediaBlock.querySelector(buttonSelector);
+    const preview = mediaBlock.querySelector(previewSelector);
+    const field = mediaBlock.querySelector(inputSelector);
+    click(window, button);
+    assert.match(field.value, /selected-\d+\.jpg$/, `${type} button must select an image from WordPress media.`);
+    assert.equal(preview.src, field.value, `${type} button must update its settings preview.`);
+    click(window, preview);
+    assert.match(field.value, /selected-\d+\.jpg$/, `${type} preview must reopen WordPress media.`);
+    assert.equal(preview.src, field.value, `${type} preview selection must update immediately.`);
+  });
+  assert.equal(mediaOpenCount, 10, "Every manual image button and preview must open WordPress media.");
+  assert.match(window.document.querySelector(".kidia-preview-coupon img").src, /selected-\d+\.jpg$/, "Media selection must update the mobile preview immediately.");
 
   const promoInput = window.document.querySelector(".promo-text");
   promoInput.value = "Live preview updated";
