@@ -212,6 +212,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$layout['elements'][] = $this->default_element( $definition );
 		}
 		update_option( self::OPTION_PREFIX . $page, $layout, false );
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( self::OPTION_PREFIX . $page, 'options' );
+		}
 		return $layout;
 	}
 

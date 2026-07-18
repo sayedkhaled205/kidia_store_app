@@ -59,6 +59,10 @@ foreach ( $expected as $page => $required ) {
 	kidia_page_assert( false === $saved['footer']['enabled'], "$page footer must support Hide without removal." );
 	kidia_page_assert( 80.0 === $saved['footer']['settings']['height'], "$page footer controls must save." );
 	kidia_page_assert( end( $ids ) === $saved['elements'][0]['id'], "$page element order must save." );
+	$submitted['header']['settings']['title'] = strtoupper( $page ) . ' SECOND';
+	$submitted['elements'][0]['settings']['__second_save_probe'] = 'ignored';
+	$second_saved = $store->save_layout( $page, $submitted );
+	kidia_page_assert( strtoupper( $page ) . ' SECOND' === $second_saved['header']['settings']['title'], "$page must accept consecutive saves." );
 }
 
 foreach ( array( 'home', 'category' ) as $page ) {

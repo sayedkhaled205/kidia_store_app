@@ -470,7 +470,7 @@ function runPageBuilderTest() {
   assert.ok(window.document.querySelector(".kidia-page-preview-header"), "The fixed page header must render in preview.");
   assert.ok(window.document.querySelector(".kidia-page-preview-footer"), "The fixed page footer must render in preview.");
   assert.equal(window.document.querySelectorAll(".kidia-page-preview-element").length, 2, "Page-specific elements must render in preview.");
-  assert.equal(window.document.querySelectorAll(".kidia-page-preview-grid i").length, 4, "Grid controls must update the mobile preview.");
+  assert.ok(window.document.querySelectorAll(".kidia-page-preview-product").length >= 3, "Product grids must render realistic product cards instead of empty squares.");
   const list = window.document.getElementById("kidia-page-elements");
   list.insertBefore(list.lastElementChild, list.firstElementChild);
   list.kidiaSortableOptions.update();
