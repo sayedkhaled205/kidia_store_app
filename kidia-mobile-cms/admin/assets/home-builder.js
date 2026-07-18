@@ -23,6 +23,8 @@
 	var currentCreateType = "";
 	var draggedBlock = null;
 	var isDirty = false;
+	var previewBlocksById = {};
+	var previewBlocksByType = {};
 
 	function toArray(collection) {
 		return Array.prototype.slice.call(collection || []);
@@ -181,28 +183,148 @@
 		return Math.max(minimum, Math.min(maximum, number));
 	}
 
-	function blockHeading(settings, fallback) {
-		var title = escapeHtml(settings.title || fallback || "");
-		var subtitle = escapeHtml(settings.subtitle || "");
+	function valueFromSettings(settings, runtimeData, key, fallback) {
+		if (Object.prototype.hasOwnProperty.call(settings, key)) {
+			return settings[key];
+		}
+
+		if (runtimeData && Object.prototype.hasOwnProperty.call(runtimeData, key)) {
+			return runtimeData[key];
+		}
+
+		return fallback;
+	}
+
+	function blockHeading(settings, fallback, runtimeData) {
+		var title = escapeHtml(valueFromSettings(settings, runtimeData, "title", fallback) || "");
+		var subtitle = escapeHtml(valueFromSettings(settings, runtimeData, "subtitle", "") || "");
+		var showViewAll = valueFromSettings(settings, runtimeData, "show_view_all", "");
+		var viewAllLabel = escapeHtml(valueFromSettings(settings, runtimeData, "view_all_label", "عرض الكل") || "عرض الكل");
 
 		if (!title && !subtitle) {
 			return "";
 		}
 
-		return '<div class="kidia-preview-section-heading"><div><strong>' + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "") + "</div></div>";
+		return '<div class="kidia-preview-section-heading"><div><strong>' + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "") + "</div>" + (showViewAll ? "<span>" + viewAllLabel + " ‹</span>" : "") + "</div>";
 	}
 
 	function sampleCards(count, className, label) {
 		var cards = [];
 		var index;
 		for (index = 0; index < count; index += 1) {
-			cards.push('<div class="' + className + '"><span class="kidia-preview-sample-image">' + (index + 1) + "</span><strong>" + escapeHtml(label) + " " + (index + 1) + "</strong></div>");
+			cards.push('<div class="' + className + '"><span class="kidia-preview-sample-image"></span>' + (label ? "<strong>" + escapeHtml(label) + "</strong>" : "") + "</div>");
 		}
 		return cards.join("");
 	}
 
+	function registerPreviewBlocks(blocks) {
+		previewBlocksById = {};
+		previewBlocksByType = {};
+
+		if (!Array.isArray(blocks)) {
+			return;
+		}
+
+		blocks.forEach(function (block) {
+			var id;
+			var type;
+
+			if (!block || typeof block !== "object") {
+				return;
+			}
+
+			id = String(block.id || "");
+			type = String(block.type || "");
+
+			if (id) {
+				previewBlocksById[id] = block;
+			}
+
+			if (type) {
+				if (!previewBlocksByType[type]) {
+					previewBlocksByType[type] = [];
+				}
+				previewBlocksByType[type].push(block);
+			}
+		});
+	}
+
+	function runtimePreviewBlock(block) {
+		var references = [block.id, block.library_id, block.source_library_id];
+		var match = null;
+
+		references.some(function (reference) {
+			var candidate = previewBlocksById[String(reference || "")];
+			if (candidate && candidate.type === block.type) {
+				match = candidate;
+				return true;
+			}
+			return false;
+		});
+
+		if (match) {
+			return match;
+		}
+
+		return previewBlocksByType[block.type] && previewBlocksByType[block.type].length
+			? previewBlocksByType[block.type][0]
+			: null;
+	}
+
+	function runtimePreviewData(block) {
+		var runtimeBlock = runtimePreviewBlock(block);
+		return runtimeBlock && runtimeBlock.data && typeof runtimeBlock.data === "object"
+			? runtimeBlock.data
+			: {};
+	}
+
+	function limitedItems(items, limit, maximum) {
+		var resolvedLimit = Math.round(numberInRange(limit, maximum, 1, maximum));
+		return Array.isArray(items) ? items.slice(0, resolvedLimit) : [];
+	}
+
+	function renderCategoryCard(item, showName) {
+		var image = safeImage(item && item.image_url);
+		var name = escapeHtml(item && item.name ? item.name : "Category");
+
+		return '<article class="kidia-preview-category-card"><span class="kidia-preview-category-card__image">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (showName ? "<strong>" + name + "</strong>" : "") + "</article>";
+	}
+
+	function renderProductCard(item) {
+		var image = safeImage(item && item.image_url);
+		var name = escapeHtml(item && item.name ? item.name : "Product");
+		var price = escapeHtml(item && item.price !== null && typeof item.price !== "undefined" ? item.price : "");
+		var regularPrice = escapeHtml(item && item.regular_price ? item.regular_price : "");
+		var currency = escapeHtml(item && item.currency_symbol ? item.currency_symbol : "");
+		var inStock = !item || item.in_stock !== false;
+		var badge = escapeHtml(item && item.badge ? item.badge : "");
+		var status = !inStock ? "نفد المخزون" : badge;
+		var discounted = regularPrice && regularPrice !== price;
+
+		return '<article class="kidia-preview-product-card"><div class="kidia-preview-product-card__image">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + '</div><div class="kidia-preview-product-card__body"><strong>' + name + '</strong><div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div></div></article>";
+	}
+
+	function renderBrandCard(item, itemWidth) {
+		var image = safeImage(item && item.logo_url);
+		var name = escapeHtml(item && item.name ? item.name : "Brand");
+		var width = numberInRange(itemWidth, 92, 60, 180) * 0.68;
+
+		return '<article class="kidia-preview-brand-card" style="--kidia-preview-brand-width:' + width + 'px"><span class="kidia-preview-brand-card__image">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span><strong>" + name + "</strong></article>";
+	}
+
+	function previewIcon(type) {
+		var drawing = {
+			account: '<circle cx="12" cy="8" r="3"></circle><path d="M5.5 19c.8-3.2 3-4.8 6.5-4.8s5.7 1.6 6.5 4.8"></path>',
+			search: '<circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 4 4"></path>',
+			cart: '<path d="M6.5 8.5h11l1 11h-13z"></path><path d="M9 9V7a3 3 0 0 1 6 0v2"></path>'
+		}[type] || "";
+
+		return '<span class="kidia-preview-header__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false">' + drawing + "</svg></span>";
+	}
+
 	function renderBlock(block) {
 		var settings = block.settings || {};
+		var runtimeData = runtimePreviewData(block);
 		var name = escapeHtml(block.name || replaceEvery(block.type, "_", " "));
 		var image;
 		var items;
@@ -220,7 +342,7 @@
 			image = safeImage(settings.logo_url);
 			title = escapeHtml(settings.title || name || "Kidia Store");
 			subtitle = escapeHtml(settings.subtitle || "");
-			return '<div class="kidia-preview-header" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;color:" + safeColor(settings.title_color, "#1F2933") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="color:' + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? "♙" : "") + (settings.show_search ? "⌕" : "") + (settings.show_cart ? "♧" : "") + "</span></div>";
+			return '<div class="kidia-preview-header" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;color:" + safeColor(settings.title_color, "#1F2933") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="color:' + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_search ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span></div>";
 
 		case "hero_slider":
 			items = Array.isArray(settings.items) ? settings.items.filter(function (slide) { return slide && slide.enabled !== ""; }) : [];
@@ -232,7 +354,8 @@
 		case "category_grid":
 			columns = Math.round(numberInRange(settings.columns, 4, 2, 6));
 			count = Math.round(numberInRange(settings.limit, 8, 1, 12));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name) + '<div class="kidia-preview-category-grid" style="--kidia-preview-columns:' + columns + '">' + sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category") + "</div></section>";
+			items = limitedItems(runtimeData.items, count, 12);
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid" style="--kidia-preview-columns:' + columns + '">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== ""); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
 
 		case "image_banner":
 			image = safeImage(settings.image_url);
@@ -240,20 +363,23 @@
 			return '<div class="kidia-preview-block kidia-preview-banner" style="aspect-ratio:' + ratio + ";border-radius:" + numberInRange(settings.border_radius, 20, 0, 60) + 'px">' + (image ? '<img src="' + image + '" alt="' + escapeHtml(settings.semantic_label || "") + '">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + "</div>";
 
 		case "product_carousel":
-			count = Math.round(numberInRange(settings.limit, 10, 1, 4));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name) + '<div class="kidia-preview-product-row">' + sampleCards(count, "kidia-preview-product-card", "Product") + "</div></section>";
+			count = Math.round(numberInRange(settings.limit, 10, 1, 12));
+			items = limitedItems(runtimeData.items, count, 12);
+			return '<section class="kidia-preview-section kidia-preview-section--products">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-product-row">' + (items.length ? items.map(renderProductCard).join("") : sampleCards(Math.min(count, 3), "kidia-preview-product-card", "Product")) + "</div></section>";
 
 		case "product_grid":
 			columns = Math.round(numberInRange(settings.columns, 2, 1, 4));
 			count = Math.round(numberInRange(settings.limit, 8, 1, 6));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name) + '<div class="kidia-preview-product-grid" style="--kidia-preview-columns:' + columns + '">' + sampleCards(count, "kidia-preview-product-card", "Product") + "</div></section>";
+			items = limitedItems(runtimeData.items, count, 6);
+			return '<section class="kidia-preview-section kidia-preview-section--products">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-product-grid" style="--kidia-preview-columns:' + columns + '">' + (items.length ? items.map(renderProductCard).join("") : sampleCards(count, "kidia-preview-product-card", "Product")) + "</div></section>";
 
 		case "section_header":
 			return '<div class="kidia-preview-section-heading kidia-preview-section-heading--standalone"><div><strong>' + escapeHtml(settings.title || name) + "</strong>" + (settings.subtitle ? "<small>" + escapeHtml(settings.subtitle) + "</small>" : "") + "</div>" + (settings.show_view_all === "" ? "" : "<span>" + escapeHtml(settings.view_all_label || "View all") + " ‹</span>") + "</div>";
 
 		case "brand_carousel":
 			count = Math.round(numberInRange(settings.limit, 12, 1, 5));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name) + '<div class="kidia-preview-brand-row">' + sampleCards(count, "kidia-preview-brand-card", "Brand") + "</div></section>";
+			items = limitedItems(runtimeData.items, count, 5);
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-brand-row">' + (items.length ? items.map(function (brand) { return renderBrandCard(brand, runtimeData.item_width || settings.item_width); }).join("") : sampleCards(count, "kidia-preview-brand-card", "Brand")) + "</div></section>";
 
 		case "promo_strip":
 			background = safeColor(settings.background_color, "#4f9f8f");
@@ -262,10 +388,10 @@
 
 		case "coupon_banner":
 			image = safeImage(settings.image_url);
-			return '<div class="kidia-preview-coupon">' + (image ? '<img src="' + image + '" alt="">' : '<span class="kidia-preview-coupon__icon">%</span>') + '<div><strong>' + escapeHtml(settings.title || name) + "</strong><small>" + escapeHtml(settings.description || "") + "</small>" + (settings.coupon_code ? "<code>" + escapeHtml(settings.coupon_code) + "</code>" : "") + "</div></div>";
+			return '<div class="kidia-preview-coupon' + (image ? " has-image" : "") + '">' + (image ? '<img src="' + image + '" alt="">' : "") + '<div class="kidia-preview-coupon__overlay"><strong>' + escapeHtml(settings.title || name) + "</strong><small>" + escapeHtml(settings.description || "") + "</small>" + (settings.coupon_code ? "<code>▣ " + escapeHtml(settings.coupon_code) + "</code>" : "") + "</div></div>";
 
 		case "countdown":
-			return '<div class="kidia-preview-countdown"><strong>' + escapeHtml(settings.title || name) + '</strong><div><span>02<small>Days</small></span><b>:</b><span>14<small>Hours</small></span><b>:</b><span>37<small>Min</small></span></div></div>';
+			return '<div class="kidia-preview-countdown"><strong>' + escapeHtml(settings.title || name) + '</strong><div><span>02<small>يوم</small></span><span>14<small>ساعة</small></span><span>37<small>دقيقة</small></span><span>42<small>ثانية</small></span></div></div>';
 
 		case "video_banner":
 			image = safeImage(settings.poster_url);
@@ -305,6 +431,36 @@
 		}
 
 		previewContent.innerHTML = blocks.map(renderBlock).join("");
+	}
+
+	function loadRuntimePreview() {
+		if (Array.isArray(config.previewBlocks)) {
+			registerPreviewBlocks(config.previewBlocks);
+		}
+
+		if (!config.previewEndpoint || typeof window.fetch !== "function") {
+			return;
+		}
+
+		window.fetch(String(config.previewEndpoint), {
+			credentials: "same-origin",
+			cache: "no-store"
+		}).then(function (response) {
+			if (!response.ok) {
+				throw new Error("Home preview request failed with HTTP " + response.status + ".");
+			}
+			return response.json();
+		}).then(function (payload) {
+			if (!payload || !Array.isArray(payload.blocks)) {
+				throw new Error("Home preview response did not contain blocks.");
+			}
+			registerPreviewBlocks(payload.blocks);
+			renderPreview();
+		}).catch(function (error) {
+			if (window.console && window.console.warn) {
+				window.console.warn("Kidia Home preview kept its local fallback because runtime data could not be loaded.", error);
+			}
+		});
 	}
 
 	function setCollapsed(block, collapsed) {
@@ -956,5 +1112,6 @@
 		setCollapsed(block, true);
 	});
 	updateIndexes();
+	loadRuntimePreview();
 	renderPreview();
 }());

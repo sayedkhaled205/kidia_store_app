@@ -8,6 +8,7 @@
 	var $ = window.jQuery;
 	var builder = $(".kidia-category-builder").first();
 	var preview = $("#kidia-category-live-preview");
+	var expandedTerms = {};
 
 	if (!builder.length || !preview.length) {
 		return;
@@ -49,6 +50,36 @@
 		$(list).children(".kidia-category-row").each(function (index) {
 			$(this).children(".kidia-category-card").find(".kidia-category-order").val(index);
 		});
+	}
+
+	function categoryKey(row) {
+		return String(row.attr("data-term-id") || "");
+	}
+
+	function isRowExpanded(row) {
+		var key = categoryKey(row);
+		var button;
+
+		if (key && Object.prototype.hasOwnProperty.call(expandedTerms, key)) {
+			return expandedTerms[key];
+		}
+
+		button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
+		return button.attr("aria-expanded") === "true";
+	}
+
+	function setRowExpanded(row, expanded) {
+		var key = categoryKey(row);
+		var button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
+		var children = row.children(".kidia-category-children");
+		var nextState = Boolean(expanded);
+
+		if (key) {
+			expandedTerms[key] = nextState;
+		}
+
+		button.attr("aria-expanded", nextState ? "true" : "false");
+		children.prop("hidden", !nextState);
 	}
 
 	function applyArtworkStyles(box, image, card, maximumSize) {
@@ -169,7 +200,7 @@
 
 		branch.append(tile);
 
-		if (editorChildren.length && !editorChildren.prop("hidden")) {
+		if (editorChildren.length && isRowExpanded(row)) {
 			childrenContainer = $('<div class="kidia-category-preview-children"></div>');
 			childrenList = editorChildren.children(".kidia-category-list").first();
 			childrenList.children(".kidia-category-row").each(function () {
@@ -245,19 +276,24 @@
 	builder.on("click", ".kidia-category-expand", function () {
 		var button = $(this);
 		var row = button.closest(".kidia-category-row");
-		var children = row.children(".kidia-category-children");
-		var expanded = button.attr("aria-expanded") === "true";
 
-		button.attr("aria-expanded", String(!expanded));
-		children.prop("hidden", expanded);
+		setRowExpanded(row, !isRowExpanded(row));
 		renderMobilePreview();
 	});
 
 	builder.on("click", ".kidia-category-preview-expand", function () {
 		var branch = $(this).closest(".kidia-category-preview-branch");
 		var termId = branch.attr("data-term-id");
-		var row = builder.find('.kidia-category-row[data-term-id="' + termId + '"]').first();
-		row.children(".kidia-category-card").find(".kidia-category-expand").first().trigger("click");
+		var row = builder.find(".kidia-category-row").filter(function () {
+			return String($(this).attr("data-term-id") || "") === String(termId || "");
+		}).first();
+
+		if (!row.length) {
+			return;
+		}
+
+		setRowExpanded(row, !isRowExpanded(row));
+		renderMobilePreview();
 	});
 
 	builder.on("click", ".kidia-category-settings-toggle", function () {
@@ -320,6 +356,15 @@
 		button.prop("hidden", true);
 		updateEditorCard(card);
 		renderMobilePreview();
+	});
+
+	builder.find(".kidia-category-row").each(function () {
+		var row = $(this);
+		var button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
+
+		if (button.length) {
+			setRowExpanded(row, button.attr("aria-expanded") === "true");
+		}
 	});
 
 	builder.find(".kidia-category-card").each(function () {

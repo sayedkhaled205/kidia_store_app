@@ -121,6 +121,7 @@ function runHomeBuilderTest() {
   const dom = new JSDOM(homeMarkup(), { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
   const builderCss = readAsset("home-builder.css");
+  const adminPhp = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
   let mediaOpenCount = 0;
   window.HTMLElement.prototype.scrollIntoView = function () {};
   window.confirm = () => true;
@@ -136,7 +137,60 @@ function runHomeBuilderTest() {
       };
     },
   };
-  window.kidiaHomeBuilder = { labels: { copySuffix: " Copy" } };
+  window.kidiaHomeBuilder = {
+    labels: { copySuffix: " Copy" },
+    previewBlocks: [
+      {
+        id: "category_grid_2",
+        type: "category_grid",
+        data: {
+          title: "Categories",
+          items: [
+            { id: 1, name: "Clothes", image_url: "https://example.com/clothes.jpg" },
+            { id: 2, name: "Toys", image_url: "https://example.com/toys.jpg" },
+            { id: 3, name: "Shoes", image_url: "https://example.com/shoes.jpg" },
+            { id: 4, name: "Baby", image_url: "https://example.com/baby.jpg" },
+          ],
+        },
+      },
+      {
+        id: "product_carousel_4",
+        type: "product_carousel",
+        data: {
+          title: "Latest",
+          show_view_all: true,
+          items: [
+            { id: 11, name: "Pink Kids Set", image_url: "https://example.com/product-1.jpg", price: "450", regular_price: "520", currency_symbol: "ج.م", in_stock: true, badge: "Sale" },
+            { id: 12, name: "Blue Kids Set", image_url: "https://example.com/product-2.jpg", price: "390", regular_price: null, currency_symbol: "ج.م", in_stock: true, badge: null },
+            { id: 13, name: "Baby Dress", image_url: "https://example.com/product-3.jpg", price: "300", regular_price: null, currency_symbol: "ج.م", in_stock: false, badge: null },
+          ],
+        },
+      },
+      {
+        id: "product_grid_5",
+        type: "product_grid",
+        data: {
+          title: "Offers",
+          items: [
+            { id: 21, name: "Summer Outfit", image_url: "https://example.com/product-4.jpg", price: "275", regular_price: "350", currency_symbol: "ج.م", in_stock: true, badge: "Sale" },
+            { id: 22, name: "Cotton T-shirt", image_url: "https://example.com/product-5.jpg", price: "220", regular_price: null, currency_symbol: "ج.م", in_stock: true, badge: null },
+          ],
+        },
+      },
+      {
+        id: "brand_carousel_7",
+        type: "brand_carousel",
+        data: {
+          title: "Brands",
+          item_width: 92,
+          items: [
+            { id: 31, name: "Kidia", logo_url: "https://example.com/brand-1.jpg" },
+            { id: 32, name: "Mini", logo_url: "https://example.com/brand-2.jpg" },
+          ],
+        },
+      },
+    ],
+  };
   window.eval(readAsset("home-builder.js"));
 
   assert.equal(window.kidiaHomeBuilderBooted, true, "Home Builder must boot.");
@@ -145,12 +199,14 @@ function runHomeBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 15, "Every editor must use the shared settings panel.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, 1fr\)/, "The editor must keep using the available workspace beside the phone preview.");
-  assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*70%;/, "Element cards must be 30% narrower than the restored Builder workspace.");
+  assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*77%;/, "Element cards must be 10% wider than their previous 70% width.");
+  assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?min-height:\s*55px;/, "Collapsed element cards must be 10% taller than their previous 50px height.");
   assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must keep the original three-column layout.");
-  assert.match(builderCss, /--kidia-field-width:\s*71\.4286%;/, "The 70% card must preserve controls at 50% of their original width.");
+  assert.match(builderCss, /--kidia-field-width:\s*64\.9351%;/, "The wider 77% card must preserve controls at 50% of their original width.");
   assert.match(builderCss, /input\[type="text"\],[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Settings controls must use the calculated half-original width.");
   assert.match(builderCss, /input\[type="color"\]\s*\{[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Color controls must use the calculated half-original width.");
   assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
+  assert.match(adminPhp, /rest_url\(\s*'woo-mobile\/v1\/home-layout'\s*\)/, "Home Builder must load preview items from the same Home Layout API used by Flutter.");
 
   const previewSelectors = [
     ".kidia-preview-header", ".kidia-preview-hero", ".kidia-preview-category-grid",
@@ -160,6 +216,13 @@ function runHomeBuilderTest() {
     ".kidia-preview-text", ".kidia-preview-divider", ".kidia-preview-spacer",
   ];
   previewSelectors.forEach((selector) => assert.ok(window.document.querySelector(selector), `${selector} must render in the phone preview.`));
+  assert.equal(window.document.querySelectorAll(".kidia-preview-product-row .kidia-preview-product-card img").length, 3, "Product Carousel must render real API product images.");
+  assert.match(window.document.querySelector(".kidia-preview-product-row .kidia-preview-product-card").textContent, /Pink Kids Set/, "Product Carousel must render real API product names.");
+  assert.match(window.document.querySelector(".kidia-preview-product-row .kidia-preview-product-card").textContent, /450 ج\.م/, "Product Carousel must render the same price and currency data as Flutter.");
+  assert.equal(window.document.querySelectorAll(".kidia-preview-product-row .kidia-preview-sample-image").length, 0, "Product Carousel must not use empty placeholder squares when API items exist.");
+  assert.ok(window.document.querySelector(".kidia-preview-product-grid .kidia-preview-product-card img"), "Product Grid must render real API product cards.");
+  assert.ok(window.document.querySelector(".kidia-preview-category-card img"), "Category Grid must render real API category images.");
+  assert.ok(window.document.querySelector(".kidia-preview-brand-card img"), "Brand Carousel must render real API brand logos.");
 
   click(window, window.document.getElementById("kidia-expand-all"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 0, "Expand All must open every element.");
@@ -312,6 +375,14 @@ function runCategoryBuilderTest() {
   size.value = "96";
   size.dispatchEvent(new window.Event("input", { bubbles: true }));
   assert.equal(window.document.querySelector(".kidia-category-preview-root .kidia-category-preview-image").style.width, "78px", "Preview must clamp category art to the app row width.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expanded subcategories must stay open when live settings rerender the preview.");
+
+  click(window, window.document.querySelector(".kidia-category-preview-expand"));
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Preview Expand control must collapse the matching category.");
+  assert.equal(window.document.querySelector(".kidia-category-expand").getAttribute("aria-expanded"), "false", "Preview collapse must synchronize the editor state.");
+  click(window, window.document.querySelector(".kidia-category-preview-expand"));
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Preview Expand control must reopen the matching category.");
+  assert.equal(window.document.querySelector(".kidia-category-expand").getAttribute("aria-expanded"), "true", "Preview expansion must synchronize the editor state.");
 
   const settingsButton = window.document.querySelector(".kidia-category-settings-toggle");
   click(window, settingsButton);

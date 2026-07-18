@@ -464,14 +464,19 @@ final class Kidia_Mobile_CMS_Admin {
 						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.css' )
 					);
 
-            		wp_enqueue_script(
-            			'kidia-mobile-home-builder',
+					wp_enqueue_script(
+						'kidia-mobile-home-builder',
 						KIDIA_MOBILE_CMS_URL .
 						'admin/assets/home-builder.js',
 						array(),
 						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.js' ),
 						true
 					);
+
+					$preview_locale = sanitize_key( (string) get_locale() );
+					if ( '' === $preview_locale ) {
+						$preview_locale = 'en';
+					}
 
             		wp_localize_script(
             			'kidia-mobile-home-builder',
@@ -497,7 +502,14 @@ final class Kidia_Mobile_CMS_Admin {
 							),
 							'addFirst'       => __( 'Add First Element', 'kidia-mobile-cms' ),
 						),
-						'editorPages' => self::EDITOR_PAGES,
+						'editorPages'     => self::EDITOR_PAGES,
+						'previewEndpoint' => esc_url_raw(
+							add_query_arg(
+								'locale',
+								$preview_locale,
+								rest_url( 'woo-mobile/v1/home-layout' )
+							)
+						),
 					)
             		);
             	}
