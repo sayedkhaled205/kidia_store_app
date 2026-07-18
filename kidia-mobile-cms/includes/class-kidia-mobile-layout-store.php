@@ -13,9 +13,9 @@ if ( class_exists( 'Kidia_Mobile_Layout_Store', false ) ) {
 
 final class Kidia_Mobile_Layout_Store {
 
-	private const OPTION_NAME = 'kidia_mobile_home_layout_v3';
+	private const OPTION_NAME = 'kidia_mobile_home_layout_v4';
 
-	private const EXCLUSIONS_OPTION = 'kidia_mobile_home_layout_exclusions_v1';
+	private const EXCLUSIONS_OPTION = 'kidia_mobile_home_layout_exclusions_v2';
 
 	/**
 	 * Maps block types to their Library option names.
