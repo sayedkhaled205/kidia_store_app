@@ -122,6 +122,8 @@ function runHomeBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 15, "All 15 element editors must load.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 15, "Every editor must use the compact essentials panel.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 15, "Every editor must use the shared settings panel.");
+  assert.match(builderCss, /--kidia-editor-width:\s*820px;/, "The editor column must stay compact on wide screens.");
+  assert.match(builderCss, /grid-template-columns:\s*286px minmax\(0, var\(--kidia-editor-width\)\)/, "The workspace must cap the element cards beside the phone preview.");
   assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must use the compact three-column grid.");
   assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
 

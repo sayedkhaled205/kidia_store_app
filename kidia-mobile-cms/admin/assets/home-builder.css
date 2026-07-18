@@ -3,23 +3,29 @@
 	--kidia-accent-dark: #135e96;
 	--kidia-border: #dcdcde;
 	--kidia-border-soft: #e8eaed;
+	--kidia-editor-width: 820px;
 	--kidia-muted: #646970;
 	--kidia-surface: #fff;
 	--kidia-surface-soft: #f6f7f7;
 	box-sizing: border-box;
-	max-width: 1380px;
+	max-width: calc(286px + 18px + var(--kidia-editor-width));
 	margin-inline: auto;
 }
 
 .kidia-builder-workspace {
 	direction: ltr;
 	display: grid;
-	grid-template-columns: 286px minmax(0, 1fr);
+	grid-template-columns: 286px minmax(0, var(--kidia-editor-width));
 	align-items: start;
 	gap: 18px;
 }
 
-.kidia-builder-editor { direction: rtl; min-width: 0; }
+.kidia-builder-editor {
+	width: 100%;
+	max-width: var(--kidia-editor-width);
+	min-width: 0;
+	direction: rtl;
+}
 
 .kidia-mobile-preview {
 	position: sticky;
@@ -135,6 +141,7 @@
 
 @media (max-width: 1100px) {
 	.kidia-builder-workspace { grid-template-columns: 1fr; }
+	.kidia-builder-editor { margin-inline: auto; }
 	.kidia-mobile-preview { position: relative; top: 0; }
 	.kidia-mobile-preview__device { margin-inline: auto; }
 }
