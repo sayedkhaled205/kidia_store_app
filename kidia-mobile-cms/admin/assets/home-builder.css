@@ -3,29 +3,25 @@
 	--kidia-accent-dark: #135e96;
 	--kidia-border: #dcdcde;
 	--kidia-border-soft: #e8eaed;
-	--kidia-editor-width: 820px;
+	/* A 70% card × 71.4286% control keeps controls at 50% of their original width. */
+	--kidia-field-width: 71.4286%;
 	--kidia-muted: #646970;
 	--kidia-surface: #fff;
 	--kidia-surface-soft: #f6f7f7;
 	box-sizing: border-box;
-	max-width: calc(286px + 18px + var(--kidia-editor-width));
+	max-width: 1380px;
 	margin-inline: auto;
 }
 
 .kidia-builder-workspace {
 	direction: ltr;
 	display: grid;
-	grid-template-columns: 286px minmax(0, var(--kidia-editor-width));
+	grid-template-columns: 286px minmax(0, 1fr);
 	align-items: start;
 	gap: 18px;
 }
 
-.kidia-builder-editor {
-	width: 100%;
-	max-width: var(--kidia-editor-width);
-	min-width: 0;
-	direction: rtl;
-}
+.kidia-builder-editor { min-width: 0; direction: rtl; }
 
 .kidia-mobile-preview {
 	position: sticky;
@@ -141,7 +137,6 @@
 
 @media (max-width: 1100px) {
 	.kidia-builder-workspace { grid-template-columns: 1fr; }
-	.kidia-builder-editor { margin-inline: auto; }
 	.kidia-mobile-preview { position: relative; top: 0; }
 	.kidia-mobile-preview__device { margin-inline: auto; }
 }
@@ -217,6 +212,8 @@
 }
 
 .kidia-builder-block {
+	width: 70%;
+	margin-inline-end: auto;
 	overflow: hidden;
 	border: 1px solid var(--kidia-border);
 	border-radius: 9px;
@@ -503,7 +500,8 @@
 .kidia-builder-field input[type="datetime-local"],
 .kidia-builder-field textarea,
 .kidia-builder-field select {
-	width: 100%;
+	width: var(--kidia-field-width);
+	max-width: 100%;
 	min-height: 34px;
 	margin: 0;
 	border-color: #a7aaad;
@@ -571,6 +569,9 @@
 .kidia-builder-grid .kidia-builder-field > label:first-child:last-child,
 .kidia-hero-block-item .kidia-builder-field--toggle > label {
 	display: flex;
+	width: var(--kidia-field-width);
+	max-width: 100%;
+	align-self: flex-start;
 	min-height: 34px;
 	align-items: center;
 	gap: 6px;
@@ -585,7 +586,8 @@
 }
 
 .kidia-builder-field input[type="color"] {
-	width: 100%;
+	width: var(--kidia-field-width);
+	max-width: 100%;
 	min-height: 34px;
 	margin: 0;
 	padding: 2px 4px;
@@ -596,8 +598,13 @@
 
 .kidia-builder-media-field {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) max-content;
+	grid-template-columns: minmax(0, var(--kidia-field-width)) max-content;
+	justify-content: start;
 	gap: 6px;
+}
+
+.kidia-builder-media-field input[type="url"] {
+	width: 100%;
 }
 
 .kidia-builder-media-field .button,
@@ -618,6 +625,7 @@
 	border: 1px solid #e1e5e8;
 	border-radius: 7px;
 	background: #f6f7f7;
+	cursor: pointer;
 	object-fit: contain;
 }
 
@@ -664,7 +672,8 @@
 .kidia-hero-block-item input[type="text"],
 .kidia-hero-block-item input[type="url"],
 .kidia-hero-block-item select {
-	width: 100%;
+	width: var(--kidia-field-width);
+	max-width: 100%;
 	min-height: 34px;
 	margin: 0;
 	border-color: #a7aaad;
@@ -672,9 +681,14 @@
 	font-size: 12px;
 }
 
+.kidia-hero-block-item .kidia-builder-field--media input[type="url"] {
+	width: 100%;
+}
+
 .kidia-hero-block-item .kidia-builder-field--media {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) max-content;
+	grid-template-columns: minmax(0, var(--kidia-field-width)) max-content;
+	justify-content: start;
 	align-items: end;
 }
 
@@ -1040,6 +1054,11 @@ body.kidia-modal-open {
 		margin-inline: 0;
 	}
 
+	.kidia-builder-block {
+		width: 100%;
+		margin-inline-end: 0;
+	}
+
 	.kidia-builder-toolbar {
 		top: 46px;
 		align-items: stretch;
@@ -1065,8 +1084,34 @@ body.kidia-modal-open {
 		grid-template-columns: 1fr;
 	}
 
+	.kidia-builder-essentials,
+	.kidia-builder-grid {
+		justify-content: stretch;
+	}
+
 	.kidia-builder-field--full {
 		grid-column: auto;
+	}
+
+	.kidia-builder-field,
+	.kidia-builder-field--full,
+	.kidia-hero-block-item .kidia-builder-field--full {
+		width: 100%;
+		max-width: none;
+		justify-self: stretch;
+	}
+
+	.kidia-builder-field input[type="text"],
+	.kidia-builder-field input[type="url"],
+	.kidia-builder-field input[type="number"],
+	.kidia-builder-field input[type="datetime-local"],
+	.kidia-builder-field input[type="color"],
+	.kidia-builder-field textarea,
+	.kidia-builder-field select,
+	.kidia-hero-block-item input[type="text"],
+	.kidia-hero-block-item input[type="url"],
+	.kidia-hero-block-item select {
+		width: 100%;
 	}
 
 	.kidia-hero-block-item__header {

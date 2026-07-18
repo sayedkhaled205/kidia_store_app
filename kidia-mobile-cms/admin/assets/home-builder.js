@@ -738,7 +738,7 @@
 			return;
 		}
 
-		if (target.closest(".kidia-select-hero-block-image")) {
+		if (target.closest(".kidia-select-hero-block-image, .kidia-hero-block-image-preview")) {
 			item = target.closest(".kidia-hero-block-item");
 			openMediaPicker({ title: "Choose slide image", button: { text: "Use image" }, multiple: false }, function (frame) {
 				var selection = frame.state().get("selection").first();
@@ -762,7 +762,7 @@
 			return;
 		}
 
-		action = target.closest(".kidia-select-banner-image, .kidia-select-media, .kidia-select-app-header-logo");
+		action = target.closest(".kidia-select-banner-image, .kidia-select-media, .kidia-select-app-header-logo, .kidia-banner-image-preview, .kidia-media-preview");
 		if (action) {
 			openMediaPicker({ title: "Choose image", button: { text: "Use image" }, multiple: false }, function (frame) {
 				var selection = frame.state().get("selection").first();
