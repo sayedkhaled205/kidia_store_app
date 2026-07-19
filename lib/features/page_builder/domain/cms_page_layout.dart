@@ -108,7 +108,7 @@ class CmsPageLayout {
 	final Map<String, dynamic> footerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackFooterLayout(page)),
 		'style': page == 'product' ? 'product_action' : 'navigation',
-		'height': page == 'product' ? 84 : 76,
+		'height': page == 'product' ? 84 : 64,
 		'margin_top': 0,
 		'margin_bottom': 0,
 		'side_spacing_percent': 0,
