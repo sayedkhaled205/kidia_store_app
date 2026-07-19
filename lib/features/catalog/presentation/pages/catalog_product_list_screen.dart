@@ -332,6 +332,7 @@ class _CatalogToolbar extends ConsumerWidget {
               child: _ToolbarButton(
                 key: const Key('catalog-filter-button'),
                 icon: Icons.tune_rounded,
+				iconOffsetY: settings.number('filter_icon_offset_y', -2).clamp(-8, 8),
                 iconSize: iconSize,
                 iconColor: iconColor,
                 borderColor: borderColor,
@@ -412,7 +413,7 @@ class _CatalogToolbar extends ConsumerWidget {
               },
             ),
           ),
-          if (settings.boolean('show_result_count', true)) ...<Widget>[
+          if (settings.boolean('show_result_count', false)) ...<Widget>[
             SizedBox(width: gap),
             Text('${state.totalItems}', style: Theme.of(context).textTheme.labelSmall),
           ],
@@ -462,6 +463,7 @@ class _ToolbarButton extends StatelessWidget {
     required this.iconColor,
     required this.borderColor,
     required this.radius,
+	this.iconOffsetY = 0,
     super.key,
   });
 
@@ -472,6 +474,7 @@ class _ToolbarButton extends StatelessWidget {
   final Color iconColor;
   final Color borderColor;
   final double radius;
+	final double iconOffsetY;
 
   @override
   Widget build(BuildContext context) {
@@ -484,7 +487,7 @@ class _ToolbarButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6),
       ),
       onPressed: onPressed,
-      icon: Icon(icon, size: iconSize),
+	  icon: Transform.translate(offset: Offset(0, iconOffsetY), child: Icon(icon, size: iconSize, weight: 300)),
       label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
     );
   }

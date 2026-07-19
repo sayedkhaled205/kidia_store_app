@@ -70,10 +70,7 @@ foreach ( $element_definitions as $definition ) {
 			<?php wp_nonce_field( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' ); ?>
 			<div class="kidia-page-toolbar"><strong><?php echo esc_html( $page_label ); ?></strong><?php submit_button( __( 'Save Page Layout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
 
-			<section class="kidia-page-card kidia-page-card--locked" data-element="header">
-				<div class="kidia-page-card__header"><div><span class="dashicons dashicons-lock"></span><strong><?php esc_html_e( 'Fixed Header', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Cannot be moved or removed', 'kidia-mobile-cms' ); ?></small></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[header][enabled]" value="0"><input type="checkbox" name="layout[header][enabled]" value="1" <?php checked( ! empty( $layout['header']['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[header]', $header_fields, $layout['header']['settings'] ); ?></div></div>
-			</section>
+			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 			<div id="kidia-page-elements" class="kidia-page-elements">
 			<?php foreach ( $layout['elements'] as $index => $element ) :
@@ -88,10 +85,7 @@ foreach ( $element_definitions as $definition ) {
 			<?php endforeach; ?>
 			</div>
 
-			<section class="kidia-page-card kidia-page-card--locked" data-element="footer">
-				<div class="kidia-page-card__header"><div><span class="dashicons dashicons-lock"></span><strong><?php esc_html_e( 'Fixed Footer', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Cannot be moved or removed', 'kidia-mobile-cms' ); ?></small></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[footer][enabled]" value="0"><input type="checkbox" name="layout[footer][enabled]" value="1" <?php checked( ! empty( $layout['footer']['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-				<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[footer]', $footer_fields, $layout['footer']['settings'] ); ?></div></div>
-			</section>
+			<?php $chrome_layout = $layout; $chrome_part = 'footer'; $chrome_page = $page; $chrome_name_prefix = 'layout[footer]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 		</form>
 	</div>
 </div>

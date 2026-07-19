@@ -266,6 +266,7 @@
 	function chromeChecked(card, suffix, fallback) { var input = chromeInput(card, suffix); return input.length ? input.prop("checked") : fallback; }
 	function renderChrome(part) {
 		var card = builder.find('[data-chrome-part="' + part + '"]').first();
+		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card.get(0), "Categories") : window.KidiaChromePreview.renderFooter(card.get(0)); }
 		if (!card.length || !chromeChecked(card, "enabled", true)) { return ""; }
 		if (part === "header") {
 			var bar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
