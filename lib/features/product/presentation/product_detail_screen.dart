@@ -919,10 +919,6 @@ class _PurchaseBar extends StatelessWidget {
       reason = copy.cartNotConnected;
     } else if (!product.hasVariations && !product.isInStock) {
       reason = copy.outOfStock;
-    } else if (product.hasVariations &&
-        controller.selectionComplete &&
-        !controller.canAddToCart) {
-      reason = copy.unavailableCombination;
     } else if (!product.hasVariations && !product.isPurchasable) {
       reason = copy.notPurchasable;
     }
@@ -995,6 +991,13 @@ class _PurchaseBar extends StatelessWidget {
 	  'soft' => buttonColor.withValues(alpha: 0.14),
 	  _ => buttonColor,
 	};
+	final bool awaitingProductOptions =
+	    product.hasVariations && !controller.canAddToCart;
+	final Color purchaseButtonBackground = product.hasVariations
+	    ? awaitingProductOptions
+	        ? buttonColor.withValues(alpha: 0.48)
+	        : buttonColor
+	    : buttonBackground;
 	final bool purchaseFlowAvailable = product.hasVariations ||
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
 	final List<Widget> footerItems = <Widget>[];
@@ -1021,9 +1024,11 @@ class _PurchaseBar extends StatelessWidget {
 		    child: FilledButton.icon(
 		      key: const Key('add-to-cart-button'),
 		      style: FilledButton.styleFrom(
-		        backgroundColor: buttonBackground,
+		        backgroundColor: purchaseButtonBackground,
 		        foregroundColor: buttonText,
-		        disabledBackgroundColor: buttonBackground.withValues(alpha: 0.42),
+		        disabledBackgroundColor: purchaseButtonBackground.withValues(
+		          alpha: 0.42,
+		        ),
 		        disabledForegroundColor: buttonText.withValues(alpha: 0.62),
 		        textStyle: TextStyle(fontSize: footerLabelSize),
 		        side: BorderSide(
@@ -1078,7 +1083,7 @@ class _PurchaseBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (controller.addError != null) ...<Widget>[
+            if (controller.addError != null && !awaitingProductOptions) ...<Widget>[
               Text(
                 controller.addError!,
                 key: const Key('add-to-cart-error'),
