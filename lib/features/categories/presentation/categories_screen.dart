@@ -51,36 +51,212 @@ class CategoriesScreen extends ConsumerWidget {
               );
             }
 
-            return RefreshIndicator(
+            return _CategoryLayoutView(
+              tree: value,
               onRefresh: () => ref
                   .refresh(catalogCategoryTreeProvider.future)
                   .then<void>((CatalogCategoryTree _) {}),
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[
-                  SliverPadding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      16,
-                      14,
-                      16,
-                      24,
-                    ),
-                    sliver: SliverList.separated(
-                      itemCount: value.roots.length,
-                      separatorBuilder: (BuildContext context, int index) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (BuildContext context, int index) =>
-                          _CategoryBranch(node: value.roots[index]),
-                    ),
-                  ),
-                ],
-              ),
             );
           },
         ),
       ),
     );
   }
+}
+
+class _CategoryLayoutView extends StatefulWidget {
+  const _CategoryLayoutView({required this.tree, required this.onRefresh});
+
+  final CatalogCategoryTree tree;
+  final Future<void> Function() onRefresh;
+
+  @override
+  State<_CategoryLayoutView> createState() => _CategoryLayoutViewState();
+}
+
+class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
+  int _selectedRoot = 0;
+
+  CatalogCategory get _settings => widget.tree.roots.first.category;
+
+  @override
+  Widget build(BuildContext context) {
+    final String layout = _settings.categoryLayout;
+    if (layout == 'sidebar') return _sidebar(context);
+    if (layout == 'default') return _defaultList();
+    return _grid(layout);
+  }
+
+  Widget _defaultList() {
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: ListView.separated(
+        key: const Key('category-layout-default'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
+        itemCount: widget.tree.roots.length,
+        separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
+        itemBuilder: (BuildContext context, int index) =>
+            _CategoryBranch(node: widget.tree.roots[index]),
+      ),
+    );
+  }
+
+  Widget _grid(String layout) {
+    final List<CatalogCategoryNode> nodes = _flatten(widget.tree.roots);
+    final int columns = layout == 'circular_grid'
+        ? 3
+        : layout == 'compact_grid'
+        ? _settings.gridColumns.clamp(3, 4)
+        : _settings.gridColumns.clamp(2, 3);
+    final double extent = layout == 'compact_grid' ? 126 : 178;
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: GridView.builder(
+        key: Key('category-layout-$layout'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          mainAxisSpacing: _settings.cardGap,
+          crossAxisSpacing: _settings.cardGap,
+          mainAxisExtent: extent,
+        ),
+        itemCount: nodes.length,
+        itemBuilder: (BuildContext context, int index) => _CategoryGridTile(
+          category: nodes[index].category,
+          circular: layout == 'circular_grid',
+          compact: layout == 'compact_grid',
+        ),
+      ),
+    );
+  }
+
+  Widget _sidebar(BuildContext context) {
+    final List<CatalogCategoryNode> roots = widget.tree.roots;
+    final int selected = _selectedRoot.clamp(0, roots.length - 1);
+    final CatalogCategoryNode root = roots[selected];
+    final List<CatalogCategoryNode> detail = root.children.isEmpty
+        ? <CatalogCategoryNode>[root]
+        : _flatten(root.children);
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: Row(
+        key: const Key('category-layout-sidebar'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          SizedBox(
+            width: 112,
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: roots.length,
+              itemBuilder: (BuildContext context, int index) {
+                final bool active = index == selected;
+                return InkWell(
+                  onTap: () => setState(() => _selectedRoot = index),
+                  child: Container(
+                    key: Key('category-sidebar-root-${roots[index].category.id}'),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                    color: active
+                        ? Theme.of(context).colorScheme.secondaryContainer
+                        : Theme.of(context).colorScheme.surfaceContainerLowest,
+                    child: Text(
+                      roots[index].category.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(_settings.cardGap),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _settings.gridColumns.clamp(2, 3),
+                mainAxisSpacing: _settings.cardGap,
+                crossAxisSpacing: _settings.cardGap,
+                mainAxisExtent: 160,
+              ),
+              itemCount: detail.length,
+              itemBuilder: (BuildContext context, int index) =>
+                  _CategoryGridTile(category: detail[index].category),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<CatalogCategoryNode> _flatten(List<CatalogCategoryNode> nodes) {
+    return nodes.expand((CatalogCategoryNode node) sync* {
+      yield node;
+      yield* _flatten(node.children);
+    }).toList(growable: false);
+  }
+}
+
+class _CategoryGridTile extends StatelessWidget {
+  const _CategoryGridTile({
+    required this.category,
+    this.circular = false,
+    this.compact = false,
+  });
+
+  final CatalogCategory category;
+  final bool circular;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final double imageLimit = compact ? 62 : circular ? 92 : 112;
+    return Material(
+      key: Key('category-grid-tile-${category.id}'),
+      color: theme.colorScheme.surfaceContainerLowest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(category.cardRadius),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openCategoryProducts(context, category),
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 7 : 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _CategoryArtwork(
+                category: category,
+                maximumSize: imageLimit,
+                forceCircle: circular,
+              ),
+              SizedBox(height: category.imageTextGap),
+              Text(
+                category.name,
+                maxLines: category.textMaxLines,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: _categoryColor(category.fontColor, theme.colorScheme.onSurface),
+                  fontSize: category.fontSize,
+                  fontWeight: _categoryFontWeight(category.fontWeight),
+                  height: category.lineHeight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _openCategoryProducts(BuildContext context, CatalogCategory category) {
+  final String name = Uri.encodeQueryComponent(category.name);
+  context.push('/categories/${category.id}?name=$name');
 }
 
 class _CategoryBranch extends StatefulWidget {
@@ -106,7 +282,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final Widget tile = Material(
       color: colors.surfaceContainerLowest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(category.cardRadius),
         side: BorderSide(color: colors.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
@@ -144,7 +320,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                       ),
                     ),
                   ),
-                  if (hasChildren)
+                  if (hasChildren && category.showArrow)
                     IconButton(
                       tooltip: _expanded ? copy.collapse : copy.expand,
                       onPressed: () => setState(() {
@@ -156,7 +332,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                         child: const Icon(Icons.keyboard_arrow_down_rounded),
                       ),
                     )
-                  else
+                  else if (category.showArrow)
                     const Icon(Icons.chevron_right_rounded),
                 ],
               ),
@@ -300,10 +476,15 @@ class _SubcategoryTile extends StatelessWidget {
 }
 
 class _CategoryArtwork extends StatelessWidget {
-  const _CategoryArtwork({required this.category, required this.maximumSize});
+  const _CategoryArtwork({
+    required this.category,
+    required this.maximumSize,
+    this.forceCircle = false,
+  });
 
   final CatalogCategory category;
   final double maximumSize;
+  final bool forceCircle;
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +500,7 @@ class _CategoryArtwork extends StatelessWidget {
     final double size = (category.imageSize * responsive)
         .clamp(32 * responsive, maximumSize)
         .toDouble();
-    final double radius = switch (category.imageShape) {
+    final double radius = forceCircle ? size / 2 : switch (category.imageShape) {
       'circle' => size / 2,
       'rounded' => size * category.imageRadius,
       _ => 0,

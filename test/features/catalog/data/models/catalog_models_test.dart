@@ -144,6 +144,11 @@ void main() {
         'count': -4,
         'image': <String, dynamic>{'src': 'file:///private/image.png'},
         'presentation': <String, dynamic>{
+          'category_layout': 'sidebar',
+          'grid_columns': 4,
+          'card_radius': 22,
+          'card_gap': 13,
+          'show_arrow': false,
           'image_size': 104,
           'image_shape': 'circle',
           'image_radius': 32,
@@ -168,6 +173,11 @@ void main() {
     expect(category.count, 0);
     expect(category.image, isNull);
     expect(category.imageSize, 104);
+    expect(category.categoryLayout, 'sidebar');
+    expect(category.gridColumns, 4);
+    expect(category.cardRadius, 22);
+    expect(category.cardGap, 13);
+    expect(category.showArrow, isFalse);
     expect(category.imageShape, 'circle');
     expect(category.imageRadius, 0.32);
     expect(category.imageFit, 'cover');

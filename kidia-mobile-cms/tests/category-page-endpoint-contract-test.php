@@ -7,7 +7,7 @@ $GLOBALS['routes'] = array();
 $GLOBALS['settings'] = array(
 	'version' => 2,
 	'enabled' => true,
-	'general' => array( 'image_size' => 80, 'image_shape' => 'circle', 'font_size' => 18 ),
+	'general' => array( 'category_layout' => 'compact_grid', 'grid_columns' => 4, 'card_radius' => 20, 'card_gap' => 12, 'show_arrow' => false, 'image_size' => 80, 'image_shape' => 'circle', 'font_size' => 18 ),
 	'categories' => array(
 		1 => array( 'order' => 1, 'hidden' => false, 'image_id' => 0, 'name' => '' ),
 		2 => array( 'order' => 0, 'hidden' => false, 'image_id' => 99, 'name' => 'App First Root' ),
@@ -65,5 +65,10 @@ assert( 80 === $response->data[0]['presentation']['image_size'] );
 assert( 18 === $response->data[0]['presentation']['image_radius'] );
 assert( 10 === $response->data[0]['presentation']['image_text_gap'] );
 assert( 18 === $response->data[0]['presentation']['font_size'] );
+assert( 'compact_grid' === $response->data[0]['presentation']['category_layout'] );
+assert( 4 === $response->data[0]['presentation']['grid_columns'] );
+assert( 20 === $response->data[0]['presentation']['card_radius'] );
+assert( 12 === $response->data[0]['presentation']['card_gap'] );
+assert( false === $response->data[0]['presentation']['show_arrow'] );
 assert( '3' === $response->headers['X-WP-Total'] );
 echo "category-page-endpoint-contract-test: ok\n";

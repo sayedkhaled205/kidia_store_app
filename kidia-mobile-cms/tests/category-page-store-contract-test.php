@@ -35,6 +35,13 @@ $saved = $store->save_settings(
 kidia_category_assert( 2 === $saved['version'], 'The Category element must save the current schema version.' );
 kidia_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 kidia_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );
+$layouts = array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' );
+foreach ( $layouts as $layout ) {
+	$saved_layout = $store->save_settings( array( 'enabled' => '1', 'general' => array( 'category_layout' => $layout, 'grid_columns' => 4, 'card_radius' => 21, 'card_gap' => 13, 'show_arrow' => '0' ) ) );
+	kidia_category_assert( $layout === $saved_layout['general']['category_layout'], "$layout must save as a category layout." );
+	kidia_category_assert( 4 === $saved_layout['general']['grid_columns'] && 21 === $saved_layout['general']['card_radius'] && 13 === $saved_layout['general']['card_gap'], "$layout must retain shared card settings." );
+	kidia_category_assert( false === $saved_layout['general']['show_arrow'], "$layout must retain the shared arrow visibility setting." );
+}
 kidia_category_assert( 120 === $saved['general']['image_size'] && 30 === $saved['general']['font_size'], 'General Settings must save once for the whole element.' );
 
 fwrite( STDOUT, "Category-page store migration and one-element schema passed.\n" );

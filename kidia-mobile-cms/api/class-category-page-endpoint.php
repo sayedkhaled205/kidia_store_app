@@ -104,6 +104,11 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			'image'       => $image,
 			'permalink'   => is_wp_error( $link ) ? '' : $link,
 			'presentation' => array(
+				'category_layout'  => $general['category_layout'],
+				'grid_columns'     => $general['grid_columns'],
+				'card_radius'      => $general['card_radius'],
+				'card_gap'         => $general['card_gap'],
+				'show_arrow'       => $general['show_arrow'],
 				'image_size'       => $general['image_size'],
 				'image_shape'      => $general['image_shape'],
 				'image_radius'     => $general['image_radius'],

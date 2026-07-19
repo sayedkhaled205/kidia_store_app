@@ -10,6 +10,11 @@ class CatalogCategory {
     this.count = 0,
     this.image,
     this.permalink,
+    this.categoryLayout = 'default',
+    this.gridColumns = 2,
+    this.cardRadius = 17,
+    this.cardGap = 10,
+    this.showArrow = true,
     this.imageSize = 68,
     this.imageShape = 'rounded',
     this.imageRadius = 0.18,
@@ -37,6 +42,11 @@ class CatalogCategory {
   final int count;
   final CatalogImage? image;
   final Uri? permalink;
+  final String categoryLayout;
+  final int gridColumns;
+  final double cardRadius;
+  final double cardGap;
+  final bool showArrow;
   final double imageSize;
   final String imageShape;
   final double imageRadius;
