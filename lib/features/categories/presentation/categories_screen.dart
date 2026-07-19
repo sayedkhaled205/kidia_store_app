@@ -109,7 +109,17 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         : layout == 'compact_grid'
         ? _settings.gridColumns.clamp(3, 4)
         : _settings.gridColumns.clamp(2, 3);
-    final double extent = layout == 'compact_grid' ? 126 : 178;
+    final double imageLimit = layout == 'compact_grid'
+        ? 62
+        : layout == 'circular_grid'
+        ? 92
+        : 112;
+    final double extent = (imageLimit.clamp(32, _settings.imageSize) +
+            _settings.imageTextGap +
+            (_settings.fontSize * _settings.lineHeight * _settings.textMaxLines) +
+            24)
+        .clamp(layout == 'compact_grid' ? 150 : 196, 280)
+        .toDouble();
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: GridView.builder(
