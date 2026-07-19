@@ -74,13 +74,47 @@ class CmsPageLayout {
         'logout_button',
       ],
     };
+	final Map<String, dynamic> headerSettings = <String, dynamic>{
+		'layout_json': jsonEncode(_fallbackHeaderLayout(page)),
+		'height': page == 'home' ? 112 : 64,
+		'row_gap': page == 'home' ? 4 : 8,
+		'vertical_padding': 8,
+		'horizontal_padding': 16,
+		'background_color': '#FFFFFF',
+		'icon_color': '#1F2933',
+		'icon_size': 24,
+		'icon_gap': 6,
+		'search_style': page == 'home' ? 'bar' : 'icon',
+		'search_width_percent': 100,
+		'search_height': 40,
+		'search_radius': page == 'home' ? 18 : 14,
+		'show_cart_badge': false,
+	};
+	final Map<String, dynamic> footerSettings = <String, dynamic>{
+		'layout_json': jsonEncode(<String, dynamic>{
+			'items': page == 'product'
+				? <String>['share', 'like', 'add_to_cart']
+				: <String>['home', 'categories', 'wishlist', 'account'],
+		}),
+		'style': page == 'product' ? 'product_action' : 'navigation',
+		'height': page == 'product' ? 84 : 72,
+		'horizontal_padding': 16,
+		'icon_size': 24,
+		'label_size': 11,
+		'icon_label_gap': 3,
+		'show_labels': true,
+		'active_color': '#1F6F61',
+		'inactive_color': '#6B7280',
+		'background_color': '#FFFFFF',
+		'button_color': '#2F806E',
+	};
     return CmsPageLayout(
       page: page,
-      header: const CmsPageComponent(
+	  header: CmsPageComponent(
         id: 'header',
         type: 'app_header',
         enabled: true,
-        settings: <String, dynamic>{},
+		settings: headerSettings,
       ),
       elements: (ids[page] ?? const <String>[])
           .map(
@@ -92,14 +126,26 @@ class CmsPageLayout {
             ),
           )
           .toList(growable: false),
-      footer: const CmsPageComponent(
+	  footer: CmsPageComponent(
         id: 'footer',
         type: 'app_footer',
         enabled: true,
-        settings: <String, dynamic>{},
+		settings: footerSettings,
       ),
     );
   }
+
+	static Map<String, dynamic> _fallbackHeaderLayout(String page) {
+		final Map<String, Map<String, dynamic>> layouts = <String, Map<String, dynamic>>{
+			'home': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['logo'], 'center': <String>[], 'right': <String>['cart']}, <String, dynamic>{'left': <String>[], 'center': <String>['search_bar'], 'right': <String>[]}]},
+			'catalog': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['cart', 'search'], 'center': <String>['title'], 'right': <String>['back']}]},
+			'product': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['back'], 'center': <String>[], 'right': <String>['support', 'cart']}]},
+			'category': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['search', 'cart'], 'center': <String>['title'], 'right': <String>[]}]},
+			'wishlist': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['back'], 'center': <String>['title'], 'right': <String>['cart']}]},
+			'account': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['orders']}]},
+		};
+		return layouts[page] ?? layouts['catalog']!;
+	}
 }
 
 class CmsPageComponent {

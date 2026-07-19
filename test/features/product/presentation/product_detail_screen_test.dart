@@ -31,7 +31,7 @@ void main() {
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
     expect(find.text('Kidia'), findsOneWidget);
     expect(find.text('Product'), findsNothing);
-    expect(find.byKey(const Key('commerce-app-bar-title')), findsOneWidget);
+	expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
     expect(find.text('In stock'), findsNothing);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
@@ -198,10 +198,9 @@ void main() {
     );
     expect(Directionality.of(productContext), TextDirection.rtl);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
-    final Finder cart = find.byKey(const Key('product-cart-button'));
     final Finder heart = find.byKey(const Key('product-wishlist-button'));
-    expect(tester.getCenter(cart).dx, lessThan(tester.getCenter(heart).dx));
-    expect(tester.widget<IconButton>(cart).onPressed, isNotNull);
+	expect(heart, findsOneWidget);
+	expect(tester.widget<IconButton>(heart).onPressed, isNotNull);
   });
 }
 

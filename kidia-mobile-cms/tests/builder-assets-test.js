@@ -501,6 +501,9 @@ function runChromeComposerTest() {
   assert.match(preview, /kidia-app-header-row--full/, "A lone second-row search must span the full header row.");
   assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
   assert.match(preview, /--row-gap:2.72px/, "The real gap between header rows must be reflected in preview.");
+	const searchWidth = card.querySelector('[name$="[search_width_percent]"]');
+	searchWidth.value = "150";
+	assert.match(window.KidiaChromePreview.renderHeader(card, "Home"), /width:100%/, "Search width must clamp to the full available row instead of silently overflowing.");
   assert.equal(window.document.querySelectorAll(".kidia-chrome-row").length, 2, "Home header must support two draggable rows.");
   assert.equal(window.document.querySelector('[data-item-section="support"]').hidden, true, "Only settings for placed items must be visible.");
   assert.equal(window.document.querySelector('[data-item-section="cart"]').hidden, false, "Placed item settings must be visible.");
@@ -508,7 +511,7 @@ function runChromeComposerTest() {
 }
 
 function runFooterPreviewControlsTest() {
-  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"items":["home","categories","wishlist","account"]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][horizontal_padding]" value="24"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select></section></body></html>`;
+  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"items":["home","categories","wishlist","account"]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][horizontal_padding]" value="24"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input name="layout[footer][settings][border_color]" value="#ABCDEF"><input name="layout[footer][settings][border_width]" value="3"><input name="layout[footer][settings][top_radius]" value="12"><select name="layout[footer][settings][shadow]"><option value="strong" selected>Strong</option></select><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
@@ -516,6 +519,9 @@ function runFooterPreviewControlsTest() {
   assert.match(preview, /padding-left:16.32px/, "Footer side spacing must match the saved horizontal padding.");
   assert.match(preview, /kidia-app-icon--home-filled/, "Footer icon design must match the selected visual option.");
   assert.match(preview, />Home</, "Footer labels must be independently switchable.");
+	assert.match(preview, /border-top:3px solid #ABCDEF/, "Footer border controls must update preview instantly.");
+	assert.match(preview, /border-radius:8.16px/, "Footer corner radius must update preview instantly.");
+	assert.match(preview, /0 4px 12px/, "Footer shadow must update preview instantly.");
   console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
 }
 
