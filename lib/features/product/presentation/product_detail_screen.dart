@@ -804,18 +804,36 @@ class _PurchaseBar extends StatelessWidget {
     final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
     final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
     final bool productAction = footer.string('style', 'navigation') == 'product_action';
-	final dynamic rawItems = footer.json('layout_json')['items'];
-	final List<String> items = rawItems is List ? rawItems.map((item) => '$item').toList() : <String>['share', 'like', 'add_to_cart'];
-	final List<Widget> footerItems = <Widget>[];
-	for (final String item in items) {
-	  if (footerItems.isNotEmpty) footerItems.add(SizedBox(width: footer.number('item_gap', 10)));
-	  if (item == 'share' && productAction) {
-		footerItems.add(_FooterAction(icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? footer.string('share_label', copy.share) : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), iconLabelGap: footer.number('icon_label_gap', 3), onPressed: onShare));
-	  } else if (item == 'like' && productAction) {
-		footerItems.add(_FooterAction(iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? footer.string('like_label', 'Like') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), iconLabelGap: footer.number('icon_label_gap', 3), onPressed: onLike));
-	  } else if (item == 'add_to_cart') {
-		footerItems.add(Expanded(child: FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)))));
+	final Map<String, dynamic> footerLayout = footer.json('layout_json');
+	final dynamic rawRows = footerLayout['rows'];
+	final List<(String, double)> placements = <(String, double)>[];
+	if (rawRows is List) {
+	  for (final dynamic rawRow in rawRows.take(3)) {
+		if (rawRow is! Map || rawRow['columns'] is! List) continue;
+		final List<dynamic> columns = rawRow['columns'] as List<dynamic>;
+		for (final dynamic rawColumn in columns.take(6)) {
+		  if (rawColumn is! Map || rawColumn['items'] is! List) continue;
+		  final double width = (rawColumn['width'] as num?)?.toDouble() ?? 100 / columns.length;
+		  placements.addAll((rawColumn['items'] as List).map((item) => ('$item', width)));
+		}
 	  }
+	}
+	final dynamic legacyItems = footerLayout['items'];
+	if (placements.isEmpty) {
+	  final List<String> items = legacyItems is List ? legacyItems.map((item) => '$item').toList() : <String>['share', 'like', 'add_to_cart'];
+	  placements.addAll(items.map((item) => (item, 100 / items.length)));
+	}
+	final List<Widget> footerItems = <Widget>[];
+	for (final (String item, double width) in placements) {
+	  Widget? child;
+	  if (item == 'share' && productAction) {
+		child = _FooterAction(icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? footer.string('share_label', copy.share) : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), iconLabelGap: footer.number('icon_label_gap', 3), onPressed: onShare);
+	  } else if (item == 'like' && productAction) {
+		child = _FooterAction(iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? footer.string('like_label', 'Like') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), iconLabelGap: footer.number('icon_label_gap', 3), onPressed: onLike);
+	  } else if (item == 'add_to_cart') {
+		child = FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)));
+	  }
+	  if (child != null) footerItems.add(Expanded(flex: (width * 100).round().clamp(1, 10000).toInt(), child: child));
 	}
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
@@ -824,7 +842,7 @@ class _PurchaseBar extends StatelessWidget {
       child: SafeArea(
         top: false,
 		bottom: footer.boolean('safe_area', true),
-        minimum: EdgeInsets.fromLTRB(footer.number('horizontal_padding', 16), 10, footer.number('horizontal_padding', 16), 12),
+		minimum: EdgeInsets.fromLTRB(MediaQuery.sizeOf(context).width * footer.number('side_spacing_percent', 5).clamp(0, 25) / 100, 10, MediaQuery.sizeOf(context).width * footer.number('side_spacing_percent', 5).clamp(0, 25) / 100, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

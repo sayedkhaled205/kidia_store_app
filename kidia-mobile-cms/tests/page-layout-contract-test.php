@@ -39,10 +39,11 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 $store = new Kidia_Mobile_Page_Layout_Store();
 $product_default = $store->get_layout( 'product' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
-kidia_page_assert( array( 'share', 'like', 'add_to_cart' ) === json_decode( $product_default['footer']['settings']['layout_json'], true )['items'], 'Product footer must default to Share, Like and Add to bag.' );
+$product_footer_columns = json_decode( $product_default['footer']['settings']['layout_json'], true )['rows'][0]['columns'];
+kidia_page_assert( array( 'share', 'like', 'add_to_cart' ) === array_map( static fn( array $column ): string => $column['items'][0], $product_footer_columns ), 'Product footer must default to Share, Like and Add to bag.' );
 $home_default = $store->get_layout( 'home' );
 $home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
-kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['left'] && array( 'search_bar' ) === $home_rows[1]['center'], 'Home header must default to the two-row Kidia layout.' );
+kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['columns'][0]['items'] && 100 === $home_rows[1]['columns'][0]['width'] && array( 'search_bar' ) === $home_rows[1]['columns'][0]['items'], 'Home header must default to the two-row percentage-column layout.' );
 kidia_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
 kidia_page_assert( 4 === $home_default['header']['settings']['row_gap'], 'Home header rows must default to a compact real gap.' );
 $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
@@ -51,8 +52,8 @@ $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 	'footer' => array( 'enabled' => true, 'settings' => array( 'horizontal_padding' => 0 ) ),
 );
 $migrated_home = $store->get_layout( 'home' );
-kidia_page_assert( 112 === $migrated_home['header']['settings']['height'], 'Version 2 saved chrome must migrate to the exact Home default.' );
-kidia_page_assert( 16 === $migrated_home['footer']['settings']['horizontal_padding'], 'Legacy footer settings must migrate to the new Kidia default.' );
+kidia_page_assert( 64.0 === $migrated_home['header']['settings']['height'], 'Schema upgrades must preserve a saved header instead of replacing it.' );
+kidia_page_assert( 5.0 === $migrated_home['footer']['settings']['side_spacing_percent'], 'Legacy footers must receive the percentage side-spacing default.' );
 unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] );
 foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );
@@ -117,7 +118,7 @@ $probe_settings = static function ( array $fields, bool $second ): array {
 			case 'number': $values[ $key ] = $second ? (string) $field['min'] : (string) $field['max']; break;
 			case 'color': $values[ $key ] = $second ? '#246B5A' : '#C84F6A'; break;
 			case 'select': $options = array_keys( $field['options'] ); $values[ $key ] = (string) ( $second ? end( $options ) : reset( $options ) ); break;
-			case 'json': $values[ $key ] = wp_json_encode( $second ? array( 'rows' => array( array( 'left' => array( 'logo' ), 'center' => array(), 'right' => array( 'cart' ) ) ) ) : array( 'items' => array( 'home', 'wishlist' ) ) ); break;
+			case 'json': $values[ $key ] = wp_json_encode( array( 'rows' => array( array( 'columns' => array( array( 'width' => $second ? 40 : 50, 'align' => 'left', 'items' => array( $second ? 'logo' : 'home' ) ), array( 'width' => $second ? 60 : 50, 'align' => 'right', 'items' => array( $second ? 'cart' : 'wishlist' ) ) ) ) ) ) ); break;
 			case 'image': $values[ $key ] = $second ? 'https://example.com/logo-second.png' : 'https://example.com/logo-first.png'; break;
 			default: $values[ $key ] = $second ? 'Second saved value' : 'First saved value';
 		}

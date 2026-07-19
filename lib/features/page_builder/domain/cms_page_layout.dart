@@ -91,14 +91,10 @@ class CmsPageLayout {
 		'show_cart_badge': false,
 	};
 	final Map<String, dynamic> footerSettings = <String, dynamic>{
-		'layout_json': jsonEncode(<String, dynamic>{
-			'items': page == 'product'
-				? <String>['share', 'like', 'add_to_cart']
-				: <String>['home', 'categories', 'wishlist', 'account'],
-		}),
+		'layout_json': jsonEncode(_fallbackFooterLayout(page)),
 		'style': page == 'product' ? 'product_action' : 'navigation',
 		'height': page == 'product' ? 84 : 72,
-		'horizontal_padding': 16,
+		'side_spacing_percent': 5,
 		'icon_size': 24,
 		'label_size': 11,
 		'icon_label_gap': 3,
@@ -136,15 +132,23 @@ class CmsPageLayout {
   }
 
 	static Map<String, dynamic> _fallbackHeaderLayout(String page) {
+		Map<String, dynamic> column(double width, List<String> items, [String align = 'center']) => <String, dynamic>{'width': width, 'align': align, 'items': items};
+		Map<String, dynamic> row(List<Map<String, dynamic>> columns) => <String, dynamic>{'columns': columns};
 		final Map<String, Map<String, dynamic>> layouts = <String, Map<String, dynamic>>{
-			'home': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['logo'], 'center': <String>[], 'right': <String>['cart']}, <String, dynamic>{'left': <String>[], 'center': <String>['search_bar'], 'right': <String>[]}]},
-			'catalog': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['cart', 'search'], 'center': <String>['title'], 'right': <String>['back']}]},
-			'product': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['back'], 'center': <String>[], 'right': <String>['support', 'cart']}]},
-			'category': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['search', 'cart'], 'center': <String>['title'], 'right': <String>[]}]},
-			'wishlist': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>['back'], 'center': <String>['title'], 'right': <String>['cart']}]},
-			'account': <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['orders']}]},
+			'home': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['logo'], 'left'), column(33.34, <String>[]), column(33.33, <String>['cart'], 'right')]), row(<Map<String, dynamic>>[column(100, <String>['search_bar'])])]},
+			'catalog': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['cart', 'search'], 'left'), column(33.34, <String>['title']), column(33.33, <String>['back'], 'right')])]},
+			'product': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['back'], 'left'), column(33.34, <String>[]), column(33.33, <String>['support', 'cart'], 'right')])]},
+			'category': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['search', 'cart'], 'left'), column(33.34, <String>['title']), column(33.33, <String>[], 'right')])]},
+			'wishlist': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['back'], 'left'), column(33.34, <String>['title']), column(33.33, <String>['cart'], 'right')])]},
+			'account': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>[], 'left'), column(33.34, <String>['title']), column(33.33, <String>['orders'], 'right')])]},
 		};
 		return layouts[page] ?? layouts['catalog']!;
+	}
+
+	static Map<String, dynamic> _fallbackFooterLayout(String page) {
+		final List<String> items = page == 'product' ? <String>['share', 'like', 'add_to_cart'] : <String>['home', 'categories', 'wishlist', 'account'];
+		final double width = 100 / items.length;
+		return <String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'columns': items.indexed.map((entry) => <String, dynamic>{'width': entry.$1 == items.length - 1 ? 100 - width * (items.length - 1) : width, 'align': 'center', 'items': <String>[entry.$2]}).toList()}]};
 	}
 }
 

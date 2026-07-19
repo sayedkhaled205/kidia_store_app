@@ -98,34 +98,49 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _headerRow(BuildContext context, Map<String, dynamic> row, Color color) {
-    final dynamic left = row['left'];
-    final dynamic center = row['center'];
-    final dynamic right = row['right'];
-    final List<String> allItems = <dynamic>[
-      if (left is List) ...left,
-      if (center is List) ...center,
-      if (right is List) ...right,
-    ].map((item) => '$item').toList(growable: false);
-    if (allItems.length == 1 && allItems.first == 'search_bar') {
-      return FractionallySizedBox(
-        widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
-        child: _searchBar(context, _actionFor('search'), color),
-      );
-    }
+    final List<Map<String, dynamic>> columns = _columns(row);
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: Row(children: <Widget>[
-        Expanded(child: _slot(context, row['left'], Alignment.centerLeft, color)),
-        Expanded(flex: 2, child: _slot(context, row['center'], Alignment.center, color)),
-        Expanded(child: _slot(context, row['right'], Alignment.centerRight, color)),
-      ]),
+      child: Row(
+        children: columns.map((column) {
+          final double width = (column['width'] as num?)?.toDouble() ?? (100 / columns.length);
+          final String align = '${column['align'] ?? 'center'}';
+          return Expanded(
+            flex: (width * 100).round().clamp(1, 10000).toInt(),
+            child: _slot(
+              context,
+              column['items'],
+              align == 'left' ? Alignment.centerLeft : align == 'right' ? Alignment.centerRight : Alignment.center,
+              color,
+            ),
+          );
+        }).toList(growable: false),
+      ),
     );
+  }
+
+  List<Map<String, dynamic>> _columns(Map<String, dynamic> row) {
+    final dynamic rawColumns = row['columns'];
+    if (rawColumns is List) {
+      final List<Map<String, dynamic>> columns = rawColumns
+          .whereType<Map>()
+          .map((column) => Map<String, dynamic>.from(column))
+          .take(6)
+          .toList(growable: false);
+      if (columns.isNotEmpty) return columns;
+    }
+    // Backward compatibility for layouts saved before the percentage-column schema.
+    return <Map<String, dynamic>>[
+      <String, dynamic>{'width': 33.33, 'align': 'left', 'items': row['left'] ?? <String>[]},
+      <String, dynamic>{'width': 33.34, 'align': 'center', 'items': row['center'] ?? <String>[]},
+      <String, dynamic>{'width': 33.33, 'align': 'right', 'items': row['right'] ?? <String>[]},
+    ];
   }
 
   List<Map<String, dynamic>> _layoutRows() {
     final dynamic raw = _header.json('layout_json')['rows'];
     if (raw is List) {
-      final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(2).toList();
+      final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(3).toList();
       if (rows.isNotEmpty) return rows;
     }
     if (layout.page == 'product') {
@@ -140,6 +155,15 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _slot(BuildContext context, dynamic rawItems, Alignment alignment, Color color) {
     final List<String> items = rawItems is List ? rawItems.map((item) => '$item').toList() : <String>[];
+    if (items.length == 1 && items.first == 'search_bar') {
+      return Align(
+        alignment: alignment,
+        child: FractionallySizedBox(
+          widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
+          child: _searchBar(context, _actionFor('search'), color),
+        ),
+      );
+    }
     return Align(
       alignment: alignment,
       child: FittedBox(
@@ -166,7 +190,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final CmsPageHeaderAction? action = item == 'back'
         ? CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop())
         : _actionFor(item == 'search_bar' ? 'search' : item);
-    if (item == 'search_bar') return SizedBox(width: 180 * (_header.number('search_width_percent', 100).clamp(30, 100) / 100), child: _searchBar(context, action, color));
+    if (item == 'search_bar') return _searchBar(context, action, color);
     if (action == null) return const SizedBox.shrink();
     return _actionButton(context, action, color);
   }
