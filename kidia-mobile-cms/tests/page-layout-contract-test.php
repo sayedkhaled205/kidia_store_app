@@ -45,7 +45,9 @@ $home_default = $store->get_layout( 'home' );
 $home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
 kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['columns'][0]['items'] && 100 === $home_rows[1]['columns'][0]['width'] && array( 'search_bar' ) === $home_rows[1]['columns'][0]['items'], 'Home header must default to the two-row percentage-column layout.' );
 kidia_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
-kidia_page_assert( 4 === $home_default['header']['settings']['row_gap'], 'Home header rows must default to a compact real gap.' );
+kidia_page_assert( 8 === $home_default['header']['settings']['row_gap'], 'Home header rows must preserve the measured PatPat gap.' );
+kidia_page_assert( 120 === $home_default['header']['settings']['height'] && 42 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the PatPat proportions.' );
+kidia_page_assert( 44 === $home_default['header']['settings']['search_height'] && 22 === $home_default['header']['settings']['search_radius'], 'Home search must use the PatPat height and pill radius.' );
 $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 	'version' => 2,
 	'header' => array( 'enabled' => true, 'settings' => array( 'height' => 64, 'layout_json' => wp_json_encode( array( 'rows' => array() ) ) ) ),
