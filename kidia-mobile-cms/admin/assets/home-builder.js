@@ -560,6 +560,25 @@
 		}
 	}
 
+	function renderBlockFrame(block) {
+		var settings = block.settings || {};
+		var marginTop = numberInRange(settings.margin_top, 0, 0, 80);
+		var marginBottom = numberInRange(settings.margin_bottom, 0, 0, 80);
+		var marginHorizontal = numberInRange(settings.margin_horizontal, 0, 0, 40);
+		var paddingVertical = numberInRange(settings.padding_vertical, 0, 0, 40);
+		var paddingHorizontal = numberInRange(settings.padding_horizontal, 0, 0, 40);
+		var radius = numberInRange(settings.block_radius, 0, 0, 50);
+		var scale = numberInRange(settings.content_scale, 100, 80, 120) / 100;
+		var background = safeColor(settings.block_background, "#FFFFFF");
+
+		return '<div class="kidia-preview-focus-target kidia-preview-block-frame" data-preview-block="' +
+			escapeHtml(block.id) +
+			'" style="margin:' + marginTop + 'px ' + marginHorizontal + 'px ' + marginBottom +
+			'px;padding:' + paddingVertical + 'px ' + paddingHorizontal + 'px;border-radius:' + radius +
+			'px;background:' + background + ';--kidia-preview-content-scale:' + scale + '">' +
+			'<div class="kidia-preview-block-frame__content">' + renderBlock(block) + '</div></div>';
+	}
+
 	var previewFrame = 0;
 	var activePreviewBlock = "";
 	function renderPreviewNow() {
@@ -577,7 +596,7 @@
 
 		header = renderFixedChrome("header");
 		footer = renderFixedChrome("footer");
-		previewContent.innerHTML = header + '<div class="kidia-preview-home-body">' + (blocks.length ? blocks.map(function(block){return '<div class="kidia-preview-focus-target" data-preview-block="'+escapeHtml(block.id)+'">'+renderBlock(block)+'</div>';}).join("") : '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>') + '</div>' + footer;
+		previewContent.innerHTML = header + '<div class="kidia-preview-home-body">' + (blocks.length ? blocks.map(renderBlockFrame).join("") : '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>') + '</div>' + footer;
 		if(activePreviewBlock){var active=activePreviewBlock==="header"?previewContent.querySelector(".kidia-app-header"):activePreviewBlock==="footer"?previewContent.querySelector(".kidia-app-footer"):previewContent.querySelector('[data-preview-block="'+activePreviewBlock.replace(/"/g,"\\\"")+'"]');if(active){active.classList.add("is-editor-focused");}}
 	}
 	function renderPreview() {
