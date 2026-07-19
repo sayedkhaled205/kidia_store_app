@@ -340,16 +340,24 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$header_settings['layout_json'] = wp_json_encode( $this->default_header_layout( $page ) );
 		$footer_settings['layout_json'] = wp_json_encode( $this->default_footer_layout( $page ) );
 		if ( 'home' === $page ) {
-			$header_settings['height'] = 112;
-			$header_settings['row_gap'] = 4;
+			$header_settings['height'] = 120;
+			$header_settings['row_gap'] = 8;
+			$header_settings['vertical_padding'] = 8;
 			$header_settings['horizontal_padding'] = 16;
 			$header_settings['show_back'] = false;
 			$header_settings['show_search'] = true;
 			$header_settings['search_style'] = 'bar';
 			$header_settings['search_width_percent'] = 100;
-			$header_settings['search_radius'] = 18;
+			$header_settings['search_height'] = 44;
+			$header_settings['search_radius'] = 22;
+			$header_settings['search_background'] = '#F4F5F5';
+			$header_settings['search_text_color'] = '#5F6368';
+			$header_settings['search_placeholder'] = __( 'Search products', 'kidia-mobile-cms' );
 			$header_settings['background_color'] = '#FFFFFF';
 			$header_settings['icon_color'] = '#1F2933';
+			$header_settings['logo_width'] = 132;
+			$header_settings['logo_height'] = 42;
+			$header_settings['cart_size'] = 26;
 			$header_settings['show_cart_badge'] = false;
 			$header_settings['logo_url'] = $this->site_logo_url();
 		}

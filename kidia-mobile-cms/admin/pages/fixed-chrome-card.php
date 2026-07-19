@@ -89,6 +89,7 @@ $footer_icon_symbols = array(
 				$symbols = $footer_icon_symbols[ $item ] ?? array();
 				$label_field = null;
 				foreach ( $chrome_fields as $candidate ) { if ( $candidate['key'] === $item . '_label' ) { $label_field = $candidate; break; } }
+				if ( $label_field ) { $label_field['label'] = __( 'Icon text', 'kidia-mobile-cms' ); }
 				?>
 				<div class="kidia-chrome-footer-icon-row" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
 					<strong><?php echo esc_html( $label ); ?></strong>
@@ -114,7 +115,7 @@ $footer_icon_symbols = array(
 			}
 			if ( ( 'footer' === $chrome_part || ! $variant_field ) && ! $item_fields ) { continue; }
 			?>
-			<section class="kidia-chrome-item-setting" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
+			<section class="kidia-chrome-item-setting <?php echo 'logo' === $item ? 'kidia-chrome-item-setting--logo' : ''; ?>" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
 				<h3><?php echo esc_html( sprintf( __( '%s Settings', 'kidia-mobile-cms' ), $label ) ); ?></h3>
 				<?php if ( 'header' === $chrome_part && $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
 					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="dashicons <?php echo esc_attr( $symbols[ $option ] ?? 'dashicons-marker' ); ?>"></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>

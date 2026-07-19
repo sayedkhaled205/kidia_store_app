@@ -27,9 +27,9 @@ return array(
 
 		'subtitle' => '',
 
-		'columns' => 4,
+		'columns' => 3,
 
-		'limit' => 8,
+		'limit' => 3,
 
 		'parent_id' => 0,
 

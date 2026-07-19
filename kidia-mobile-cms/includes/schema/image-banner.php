@@ -21,8 +21,9 @@ return array(
 	'defaults' => array(
 		'image_url'      => '',
 		'semantic_label' => '',
-		'aspect_ratio'   => 2.4,
-		'border_radius'  => 20,
+		'aspect_ratio'   => 1,
+		'border_radius'  => 18,
+		'button_label'   => 'SHOP NOW',
 		'action_type'    => '',
 		'action_value'   => '',
 	),

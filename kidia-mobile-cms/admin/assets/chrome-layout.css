@@ -55,8 +55,12 @@
 .kidia-chrome-footer-icon-row[hidden] { display:none!important; }
 .kidia-chrome-footer-icon-row .kidia-chrome-icon-options { justify-content:flex-start; }
 .kidia-chrome-footer-icon-row .kidia-page-field { margin:0; }
-.kidia-chrome-footer-icon-row .kidia-page-field>label { display:none; }
+.kidia-chrome-footer-icon-row .kidia-page-field>label { display:block; margin-bottom:5px; color:#315f55; font-size:12px; font-weight:700; }
 .kidia-chrome-footer-icon-row .kidia-page-field input { width:100%; }
+.kidia-chrome-item-setting--logo .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_url"] { grid-column:1/-1; }
+.kidia-chrome-item-setting--logo .kidia-page-media { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; }
+.kidia-chrome-item-setting--logo .kidia-page-media .button { min-height:42px; padding-inline:20px; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
