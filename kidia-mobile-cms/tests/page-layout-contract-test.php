@@ -52,6 +52,9 @@ $compact_rows = json_decode( $home_default['header']['settings']['compact_layout
 kidia_page_assert( true === $home_default['header']['settings']['collapse_on_scroll'], 'Home header must allow the collapsed scroll header by default.' );
 kidia_page_assert( array( 'search_bar' ) === $compact_rows[0]['columns'][0]['items'] && array( 'cart' ) === $compact_rows[0]['columns'][1]['items'], 'Collapsed header must have an independently stored Search + Cart layout.' );
 kidia_page_assert( 'original' === $home_default['header']['settings']['scroll_up_header'], 'Scrolling up must restore the original two-row header by default.' );
+foreach ( array( 'compact_style', 'compact_background_color', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' ) as $compact_setting ) {
+	kidia_page_assert( array_key_exists( $compact_setting, $home_default['header']['settings'] ), "Collapsed header must expose $compact_setting." );
+}
 kidia_page_assert( false === $home_default['footer']['settings']['hide_on_scroll'], 'Footer auto-hide must remain optional by default.' );
 $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 	'version' => 2,

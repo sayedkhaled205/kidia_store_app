@@ -26,6 +26,7 @@ $library_id = isset( $block_data['library_id'] )
 $status = 'published' === ( $block_data['status'] ?? 'draft' )
 	? 'published'
 	: 'draft';
+$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] ) ? $block_data['settings'] : $block->get_default_settings();
 ?>
 
 <div
@@ -192,6 +193,10 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 				</select>
 			</div>
 
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Space Above', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_top]" value="<?php echo esc_attr( (string) ( $settings['margin_top'] ?? 0 ) ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Space Below', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_bottom]" value="<?php echo esc_attr( (string) ( $settings['margin_bottom'] ?? 0 ) ); ?>"></div>
+			<div class="kidia-builder-field kidia-builder-field--background"><label><?php esc_html_e( 'Element Background', 'kidia-mobile-cms' ); ?></label><div class="kidia-builder-background-control"><input type="color" class="kidia-block-background-picker" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $settings['block_background'] ?? '' ) ) ?: '#FFFFFF' ); ?>"><input type="text" class="kidia-block-background-value" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][block_background]" value="<?php echo esc_attr( (string) ( $settings['block_background'] ?? '' ) ); ?>" placeholder="transparent"></div></div>
+
 		</div>
 
 		<div class="kidia-builder-inline-settings">
@@ -202,9 +207,6 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 
 			<div class="kidia-builder-settings-content">
 				<?php
-				$settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] )
-					? $block_data['settings']
-					: $block->get_default_settings();
 				$block->render_settings( (int) $index, $settings );
 				?>
 			</div>

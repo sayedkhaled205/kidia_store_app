@@ -1235,6 +1235,14 @@
 				name.textContent = target.value.trim() || labels.untitled || "Untitled Element";
 			}
 		}
+		if (target.classList.contains("kidia-block-background-picker")) {
+			var backgroundValue = target.parentNode.querySelector(".kidia-block-background-value");
+			if (backgroundValue) { backgroundValue.value = target.value; }
+		}
+		if (target.classList.contains("kidia-block-background-value") && /^#[0-9a-f]{6}$/i.test(target.value.trim())) {
+			var backgroundPicker = target.parentNode.querySelector(".kidia-block-background-picker");
+			if (backgroundPicker) { backgroundPicker.value = target.value.trim(); }
+		}
 
 		markDirty();
 		renderPreview();

@@ -11,6 +11,7 @@ $chrome_page_name = isset( $chrome_page ) ? (string) $chrome_page : ( isset( $pa
 $chrome_items     = 'header' === $chrome_part
 	? array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' )
 	: array( 'home' => 'Home', 'categories' => 'Categories', 'search' => 'Search', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' );
+$collapsed_header_keys = array( 'collapse_on_scroll', 'scroll_up_header', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
 $item_field = static function ( string $part, string $key ): string {
 	if ( 'header' === $part ) {
 		if ( 'show_cart_badge' === $key ) { return 'cart'; }
@@ -76,10 +77,14 @@ $footer_icon_symbols = array(
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
 		</div>
 		<?php if ( 'header' === $chrome_part ) : ?>
+		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
+			<h3><?php esc_html_e( 'Collapsed header behavior and appearance', 'kidia-mobile-cms' ); ?></h3>
+			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
+		</section>
 		<div class="kidia-chrome-composer kidia-chrome-composer--collapsed" data-part="header" data-page="<?php echo esc_attr( $chrome_page_name ); ?>" data-variant="collapsed">
 			<h3><?php esc_html_e( 'Collapsed header shown on scroll', 'kidia-mobile-cms' ); ?></h3>
 			<p><?php esc_html_e( 'Arrange the single merged header row exactly as it should appear while scrolling.', 'kidia-mobile-cms' ); ?></p>
-			<label class="kidia-page-toggle"><input type="checkbox" class="kidia-preview-collapsed-header"><b><?php esc_html_e( 'Preview collapsed header', 'kidia-mobile-cms' ); ?></b></label>
+			<label class="kidia-page-toggle"><input type="checkbox" class="kidia-preview-collapsed-header"><b><?php esc_html_e( 'Preview collapsed header (preview only)', 'kidia-mobile-cms' ); ?></b></label>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][compact_layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['compact_layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php esc_attr_e( 'Collapsed header layout', 'kidia-mobile-cms' ); ?>"></div>
 			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
@@ -134,7 +139,7 @@ $footer_icon_symbols = array(
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>
 			</section>
 		<?php endforeach; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array( 'layout_json', 'compact_layout_json' ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>
