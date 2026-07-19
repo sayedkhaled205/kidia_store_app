@@ -109,6 +109,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(2).toList();
       if (rows.isNotEmpty) return rows;
     }
+    if (layout.page == 'product') {
+      return <Map<String, dynamic>>[<String, dynamic>{
+        'left': <String>['back'],
+        'center': <String>[],
+        'right': <String>['wishlist', 'cart'],
+      }];
+    }
     return <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['search', 'cart']}];
   }
 
@@ -116,12 +123,16 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final List<String> items = rawItems is List ? rawItems.map((item) => '$item').toList() : <String>[];
     return Align(
       alignment: alignment,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: items.map((item) => Padding(
-          padding: EdgeInsets.symmetric(horizontal: _header.number('icon_gap', 6).clamp(0, 24) / 2),
-          child: _item(context, item, color),
-        )).toList(growable: false),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignment,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: items.map((item) => Padding(
+            padding: EdgeInsets.symmetric(horizontal: _header.number('icon_gap', 6).clamp(0, 24) / 2),
+            child: _item(context, item, color),
+          )).toList(growable: false),
+        ),
       ),
     );
   }
