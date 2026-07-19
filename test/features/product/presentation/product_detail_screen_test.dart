@@ -234,6 +234,24 @@ void main() {
       tester.widget<SizedBox>(find.byKey(const Key('product-footer-size'))).height,
       64,
     );
+    final SizedBox shareBox = tester.widget<SizedBox>(
+      find.byKey(const Key('product-footer-icon-box-share')),
+    );
+    final SizedBox likeBox = tester.widget<SizedBox>(
+      find.byKey(const Key('product-footer-icon-box-like')),
+    );
+    expect(shareBox.width, 32);
+    expect(shareBox.height, 32);
+    expect(likeBox.width, shareBox.width);
+    expect(likeBox.height, shareBox.height);
+    expect(
+      tester
+          .getCenter(find.byKey(const Key('product-footer-icon-box-share')))
+          .dy,
+      tester
+          .getCenter(find.byKey(const Key('product-footer-icon-box-like')))
+          .dy,
+    );
   });
 }
 

@@ -8,35 +8,39 @@
 	var $ = window.jQuery;
 	var builder = $(".kidia-category-builder").first();
 	var preview = $("#kidia-category-live-preview");
+	var form = builder.find(".kidia-category-editor form").first();
+	var general = builder.find(".kidia-category-general").first();
+	var categoryElement = builder.find(".kidia-category-element").first();
+	var phoneScreen = builder.find(".kidia-category-phone__screen").get(0);
 	var expandedTerms = {};
+	var previewScrolled = false;
 
-	if (!builder.length || !preview.length) {
+	if (!builder.length || !preview.length || !form.length || !general.length) {
 		return;
 	}
 
 	window.kidiaCategoryBuilderBooted = true;
 
-	builder.on("click", ".kidia-fixed-chrome-expand", function () {
-		var button = $(this);
-		var card = button.closest(".kidia-fixed-chrome-card");
-		var body = card.find(".kidia-page-card__body").first();
-		var opening = body.prop("hidden");
-		body.prop("hidden", !opening);
-		button.attr("aria-expanded", opening ? "true" : "false");
-		card.toggleClass("is-open", opening);
-	});
-
-	function numberInRange(value, fallback, minimum, maximum) {
-		var number = Number(value);
-		if (!isFinite(number)) {
-			number = fallback;
-		}
-		return Math.max(minimum, Math.min(maximum, number));
+	function markDirty() {
+		form.get(0).dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true }));
 	}
 
-	function setting(card, suffix) {
-		var field = card.find('[name$="[' + suffix + ']"]').first();
-		return field.length ? field.val() : "";
+	function field(scope, suffix) {
+		var fields = scope.find('[name$="[' + suffix + ']"]');
+		return fields.length ? fields.last() : $();
+	}
+
+	function setting(suffix) {
+		var input = field(general, suffix);
+		return input.length ? input.val() : "";
+	}
+
+	function numberInRange(value, fallback, minimum, maximum) {
+		var parsed = Number(value);
+		if (!isFinite(parsed)) {
+			parsed = fallback;
+		}
+		return Math.max(minimum, Math.min(maximum, parsed));
 	}
 
 	function imagePosition(value) {
@@ -68,14 +72,10 @@
 
 	function isRowExpanded(row) {
 		var key = categoryKey(row);
-		var button;
-
 		if (key && Object.prototype.hasOwnProperty.call(expandedTerms, key)) {
 			return expandedTerms[key];
 		}
-
-		button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
-		return button.attr("aria-expanded") === "true";
+		return row.children(".kidia-category-card").find(".kidia-category-expand").first().attr("aria-expanded") === "true";
 	}
 
 	function setRowExpanded(row, expanded) {
@@ -83,70 +83,64 @@
 		var button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
 		var children = row.children(".kidia-category-children");
 		var nextState = Boolean(expanded);
-
 		if (key) {
 			expandedTerms[key] = nextState;
 		}
-
 		button.attr("aria-expanded", nextState ? "true" : "false");
 		children.prop("hidden", !nextState);
 	}
 
-	function applyArtworkStyles(box, image, card, maximumSize) {
-		var size = numberInRange(setting(card, "image_size"), 68, 32, maximumSize);
-		var shape = setting(card, "image_shape") || "rounded";
-		var radius = numberInRange(setting(card, "image_radius"), 18, 0, 50);
-		var effect = setting(card, "image_effect") || "none";
+	function elementEnabled() {
+		return categoryElement.find(".kidia-category-element-enabled").prop("checked");
+	}
+
+	function applyArtworkStyles(box, image, maximumSize) {
+		var size = numberInRange(setting("image_size"), 68, 32, maximumSize);
+		var shape = setting("image_shape") || "rounded";
+		var radius = numberInRange(setting("image_radius"), 18, 0, 50);
+		var effect = setting("image_effect") || "none";
 
 		box.css({
 			width: size + "px",
 			height: size + "px",
 			borderRadius: shape === "circle" ? "50%" : shape === "rounded" ? radius + "%" : "0",
-			border: numberInRange(setting(card, "border_width"), 0, 0, 8) + "px solid " + (setting(card, "border_color") || "#DDE5E2"),
-			backgroundColor: setting(card, "background_color") || "#FFFFFF",
+			border: numberInRange(setting("border_width"), 0, 0, 8) + "px solid " + (setting("border_color") || "#DDE5E2"),
+			backgroundColor: setting("background_color") || "#FFFFFF",
 			boxShadow: effect === "shadow" ? "0 4px 10px rgba(0,0,0,.2)" : "none"
 		});
 
 		image.css({
-			objectFit: setting(card, "image_fit") || "contain",
-			objectPosition: imagePosition(setting(card, "image_position")),
-			transform: "scale(" + numberInRange(setting(card, "image_scale"), 100, 80, 150) / 100 + ")",
+			objectFit: setting("image_fit") || "contain",
+			objectPosition: imagePosition(setting("image_position")),
+			transform: "scale(" + numberInRange(setting("image_scale"), 100, 80, 150) / 100 + ")",
 			filter: effect === "grayscale" ? "grayscale(1)" : "none"
 		});
 	}
 
-	function applyNameStyles(name, card, isChild) {
-		var requestedSize = numberInRange(setting(card, "font_size"), 16, 10, 30);
-		var displaySize = isChild ? Math.min(requestedSize, 14) : Math.min(requestedSize, 18);
-
+	function applyNameStyles(name, isChild) {
+		var requestedSize = numberInRange(setting("font_size"), 16, 10, 30);
 		name.css({
-			fontSize: displaySize + "px",
-			color: setting(card, "font_color") || "#1F2933",
-			fontWeight: setting(card, "font_weight") || "800",
-			textAlign: textAlignment(setting(card, "text_align")),
-			lineHeight: numberInRange(setting(card, "line_height"), 125, 100, 200) / 100,
+			fontSize: (isChild ? Math.min(requestedSize, 14) : Math.min(requestedSize, 18)) + "px",
+			color: setting("font_color") || "#1F2933",
+			fontWeight: setting("font_weight") || "800",
+			textAlign: textAlignment(setting("text_align")),
+			lineHeight: numberInRange(setting("line_height"), 125, 100, 200) / 100,
 			display: "-webkit-box",
 			WebkitBoxOrient: "vertical",
-			WebkitLineClamp: String(numberInRange(setting(card, "text_max_lines"), 2, 1, 3)),
+			WebkitLineClamp: String(numberInRange(setting("text_max_lines"), 2, 1, 3)),
 			overflow: "hidden"
 		});
 	}
 
-	function updateEditorCard(card) {
+	function updateEditorArtwork(card) {
 		var artwork = card.find(".kidia-category-image").first();
-		var image = artwork.find("img");
-		var name = card.find(".kidia-category-name strong").first();
-
-		applyArtworkStyles(artwork, image, card, 72);
-		card.find(".kidia-category-name").css("margin-right", numberInRange(setting(card, "image_text_gap"), 10, 0, 40) + "px");
-		applyNameStyles(name, card, false);
+		applyArtworkStyles(artwork, artwork.find("img"), 52);
 	}
 
 	function buildArtwork(card, maximumSize) {
 		var source = card.find(".kidia-category-image img").attr("src") || "";
 		var box = $('<div class="kidia-category-preview-image"></div>');
 		var image;
-
 		if (source) {
 			image = $('<img alt="">').attr("src", source);
 			box.append(image);
@@ -154,15 +148,15 @@
 			image = $("<span></span>");
 			box.append('<span class="dashicons dashicons-category kidia-category-preview-placeholder"></span>');
 		}
-
-		applyArtworkStyles(box, image, card, maximumSize);
+		applyArtworkStyles(box, image, maximumSize);
 		return box;
 	}
 
 	function buildCategoryName(row, card, isChild) {
 		var name = $('<div class="kidia-category-preview-name"></div>');
-		name.text(row.attr("data-term-name") || card.find(".kidia-category-name strong").text());
-		applyNameStyles(name, card, isChild);
+		var input = card.find(".kidia-category-name-input").first();
+		name.text(String(input.val() || row.attr("data-default-name") || ""));
+		applyNameStyles(name, isChild);
 		return name;
 	}
 
@@ -173,23 +167,20 @@
 	function buildChildCard(row) {
 		var card = row.children(".kidia-category-card");
 		var mobileCard = $('<div class="kidia-category-preview-child"></div>');
-
 		if (isHidden(card)) {
 			return null;
 		}
-
 		mobileCard.append(buildArtwork(card, 60));
-		mobileCard.append(buildCategoryName(row, card, true).css("margin-top", numberInRange(setting(card, "image_text_gap"), 10, 0, 40) + "px"));
+		mobileCard.append(buildCategoryName(row, card, true).css("margin-top", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
 		return mobileCard;
 	}
 
 	function buildRootBranch(row) {
 		var card = row.children(".kidia-category-card");
+		var editorChildren = row.children(".kidia-category-children");
 		var branch;
 		var tile;
 		var childrenContainer;
-		var editorChildren;
-		var childrenList;
 		var visibleChildren = 0;
 
 		if (isHidden(card)) {
@@ -199,96 +190,79 @@
 		branch = $('<section class="kidia-category-preview-branch"></section>').attr("data-term-id", row.attr("data-term-id") || "");
 		tile = $('<div class="kidia-category-preview-root"></div>');
 		tile.append(buildArtwork(card, 78));
-		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting(card, "image_text_gap"), 10, 0, 40) + "px"));
-
-		editorChildren = row.children(".kidia-category-children");
-		if (editorChildren.length) {
-			tile.append('<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span>⌄</span></button>');
-		} else {
-			tile.append('<span class="kidia-category-preview-chevron">‹</span>');
-		}
-
+		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
+		tile.append(editorChildren.length ? '<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span>⌄</span></button>' : '<span class="kidia-category-preview-chevron">‹</span>');
 		branch.append(tile);
 
 		if (editorChildren.length && isRowExpanded(row)) {
 			childrenContainer = $('<div class="kidia-category-preview-children"></div>');
-			childrenList = editorChildren.children(".kidia-category-list").first();
-			childrenList.children(".kidia-category-row").each(function () {
+			editorChildren.children(".kidia-category-list").first().children(".kidia-category-row").each(function () {
 				var child = buildChildCard($(this));
 				if (child) {
 					childrenContainer.append(child);
 					visibleChildren += 1;
 				}
 			});
-
 			if (visibleChildren) {
 				branch.addClass("is-expanded").append(childrenContainer);
 			}
 		}
-
 		return branch;
 	}
 
-	function renderMobilePreview() {
-		var rootList = builder.find(".kidia-category-editor form > .kidia-category-list").first();
-		var visible = 0;
-		var content = $('<div class="kidia-category-preview-content"></div>');
+	function renderChrome(part) {
+		var card = builder.find('[data-chrome-part="' + part + '"]').first();
+		if (window.KidiaChromePreview) {
+			return part === "header"
+				? window.KidiaChromePreview.renderHeader(card.get(0), "الأقسام", { collapsed: previewScrolled, page: "category" })
+				: window.KidiaChromePreview.renderFooter(card.get(0), { page: "category" });
+		}
+		return "";
+	}
 
-		preview.empty();
-		preview.append(renderChrome("header"));
-		rootList.children(".kidia-category-row").each(function () {
-			var branch;
-			try {
-				branch = buildRootBranch($(this));
+	function renderMobilePreview() {
+		var rootList = categoryElement.find(".kidia-category-items > .kidia-category-list").first();
+		var content = $('<div class="kidia-category-preview-content"></div>');
+		var visible = 0;
+		preview.empty().append(renderChrome("header"));
+
+		if (elementEnabled()) {
+			rootList.children(".kidia-category-row").each(function () {
+				var branch = buildRootBranch($(this));
 				if (branch) {
 					content.append(branch);
 					visible += 1;
 				}
-			} catch (error) {
-				if (window.console && window.console.error) {
-					window.console.error("Kidia category preview skipped a malformed category.", error);
-				}
-			}
-		});
+			});
+		}
 
 		if (!visible) {
-			content.append('<div class="kidia-category-preview-empty">No visible categories.</div>');
+			content.append('<div class="kidia-category-preview-empty">' + (elementEnabled() ? "No visible categories." : "Category element is hidden.") + "</div>");
 		}
-		preview.append(content);
-		preview.append(renderChrome("footer"));
+		preview.append(content).append(renderChrome("footer"));
+		categoryElement.toggleClass("is-enabled", elementEnabled());
 	}
-
-	function chromeInput(card, suffix) {
-		var inputs = card.find('[name$="[' + suffix + ']"]');
-		return inputs.length ? inputs.last() : $();
-	}
-	function chromeValue(card, suffix, fallback) { var input = chromeInput(card, suffix); return input.length ? input.val() : fallback; }
-	function chromeChecked(card, suffix, fallback) { var input = chromeInput(card, suffix); return input.length ? input.prop("checked") : fallback; }
-	function renderChrome(part) {
-		var card = builder.find('[data-chrome-part="' + part + '"]').first();
-		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card.get(0), "Categories") : window.KidiaChromePreview.renderFooter(card.get(0)); }
-		if (!card.length || !chromeChecked(card, "enabled", true)) { return ""; }
-		if (part === "header") {
-			var bar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
-			return '<header class="kidia-app-header" style="height:' + Number(chromeValue(card, "height", 64)) + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading">' + (chromeChecked(card, "show_back", true) ? '<span class="kidia-app-icon kidia-app-icon--back"></span>' : '') + '</span><div class="kidia-app-header__title">' + (bar ? '<div class="kidia-app-search" style="height:' + Number(chromeValue(card, "search_height", 40)) + 'px;border-radius:' + Number(chromeValue(card, "search_radius", 14)) + 'px;background:' + chromeValue(card, "search_background", "#F1F3F4") + '"><span>⌕ ' + escapeHtml(chromeValue(card, "search_placeholder", "Search products")) + '</span></div>' : '<strong>' + escapeHtml(chromeValue(card, "title", "Categories")) + '</strong>') + '</div><div class="kidia-app-header__actions">' + (chromeChecked(card, "show_search", true) && !bar ? '<span class="kidia-app-icon kidia-app-icon--search"></span>' : '') + (chromeChecked(card, "show_cart", true) ? '<span class="kidia-app-icon kidia-app-icon--bag"></span>' : '') + '</div></header>';
-		}
-		return '<footer class="kidia-app-footer" style="height:' + Number(chromeValue(card, "height", 72)) + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "inactive_color", "#6B7280") + '"><span><span class="kidia-app-icon kidia-app-icon--home"></span><b>Home</b></span><span class="is-active" style="color:' + chromeValue(card, "active_color", "#1F6F61") + '"><span class="kidia-app-icon kidia-app-icon--categories"></span><b>Categories</b></span><span><span class="kidia-app-icon kidia-app-icon--heart"></span><b>Wishlist</b></span><span><span class="kidia-app-icon kidia-app-icon--person"></span><b>Account</b></span></footer>';
-	}
-	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
 
 	function updateRangeLabel(input) {
-		var value = input.value;
 		var name = input.name || "";
-		var display = value + "px";
-
+		var display = input.value + "px";
 		if (name.indexOf("image_scale") !== -1 || name.indexOf("image_radius") !== -1) {
-			display = value + "%";
+			display = input.value + "%";
 		} else if (name.indexOf("line_height") !== -1) {
-			display = (Number(value) / 100).toFixed(2);
+			display = (Number(input.value) / 100).toFixed(2);
 		}
-
 		$(input).siblings(".kidia-range-value").text(display);
 	}
+
+	builder.on("click", ".kidia-fixed-chrome-expand, .kidia-category-element-expand", function () {
+		var button = $(this);
+		var card = button.closest(".kidia-page-card");
+		var body = card.children(".kidia-page-card__body").first();
+		var opening = body.prop("hidden");
+		body.prop("hidden", !opening);
+		button.attr("aria-expanded", opening ? "true" : "false");
+		card.toggleClass("is-open", opening);
+	});
 
 	if ($.fn && typeof $.fn.sortable === "function") {
 		builder.find(".kidia-category-list").each(function () {
@@ -299,6 +273,7 @@
 				containment: "parent",
 				update: function () {
 					updateOrders(this);
+					markDirty();
 					renderMobilePreview();
 				}
 			});
@@ -306,77 +281,51 @@
 	}
 
 	builder.on("click", ".kidia-category-expand", function () {
-		var button = $(this);
-		var row = button.closest(".kidia-category-row");
-
+		var row = $(this).closest(".kidia-category-row");
 		setRowExpanded(row, !isRowExpanded(row));
 		renderMobilePreview();
 	});
 
 	builder.on("click", ".kidia-category-preview-expand", function () {
-		var branch = $(this).closest(".kidia-category-preview-branch");
-		var termId = branch.attr("data-term-id");
-		var row = builder.find(".kidia-category-row").filter(function () {
-			return String($(this).attr("data-term-id") || "") === String(termId || "");
-		}).first();
-
-		if (!row.length) {
-			return;
+		var termId = $(this).closest(".kidia-category-preview-branch").attr("data-term-id");
+		var row = builder.find('.kidia-category-row[data-term-id="' + termId + '"]').first();
+		if (row.length) {
+			setRowExpanded(row, !isRowExpanded(row));
+			renderMobilePreview();
 		}
-
-		setRowExpanded(row, !isRowExpanded(row));
-		renderMobilePreview();
 	});
 
-	builder.on("click", ".kidia-category-settings-toggle", function () {
-		var button = $(this);
-		var panel = button.closest(".kidia-category-card").find(".kidia-category-settings").first();
-		var expanded = button.attr("aria-expanded") === "true";
-
-		button.attr("aria-expanded", String(!expanded));
-		panel.prop("hidden", expanded);
-	});
-
-	builder.on("input change", ".kidia-category-settings input, .kidia-category-settings select", function () {
-		var card = $(this).closest(".kidia-category-card");
+	builder.on("input change", ".kidia-category-general input, .kidia-category-general select", function () {
 		if (String(this.type).toLowerCase() === "range") {
 			updateRangeLabel(this);
 		}
-		updateEditorCard(card);
+		builder.find(".kidia-category-card").each(function () { updateEditorArtwork($(this)); });
 		renderMobilePreview();
 	});
 
-	builder.on("change", '.kidia-category-visibility input[type="checkbox"]', function () {
-		renderMobilePreview();
-	});
-
-	builder.on("input change", ".kidia-fixed-chrome-card input, .kidia-fixed-chrome-card select", function () {
-		renderMobilePreview();
-	});
+	builder.on("input change", ".kidia-category-name-input, .kidia-category-visibility input, .kidia-category-element-enabled", renderMobilePreview);
+	builder.on("input change", ".kidia-fixed-chrome-card input, .kidia-fixed-chrome-card select", renderMobilePreview);
 
 	builder.on("click", ".kidia-category-image-button", function () {
 		var card = $(this).closest(".kidia-category-card");
 		var frame;
-
 		if (!window.wp || !window.wp.media) {
 			return;
 		}
-
 		frame = window.wp.media({ title: "Choose category image", button: { text: "Use image" }, multiple: false });
 		frame.on("select", function () {
 			var selected = frame.state().get("selection").first();
 			var image = selected ? selected.toJSON() : null;
 			var source;
-
 			if (!image || !image.url) {
 				return;
 			}
-
 			source = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
 			card.find(".kidia-category-image-id").val(image.id || 0);
 			card.find(".kidia-category-image").empty().append($("<img>", { src: source, alt: "" }));
 			card.find(".kidia-category-image-clear").prop("hidden", false);
-			updateEditorCard(card);
+			updateEditorArtwork(card);
+			markDirty();
 			renderMobilePreview();
 		});
 		frame.open();
@@ -386,32 +335,31 @@
 		var button = $(this);
 		var card = button.closest(".kidia-category-card");
 		var fallback = card.closest(".kidia-category-row").attr("data-default-image") || "";
-
 		card.find(".kidia-category-image-id").val("0");
 		card.find(".kidia-category-image").empty().append(fallback ? $("<img>", { src: fallback, alt: "" }) : '<span class="dashicons dashicons-format-image"></span>');
 		button.prop("hidden", true);
-		updateEditorCard(card);
+		updateEditorArtwork(card);
+		markDirty();
 		renderMobilePreview();
 	});
+
+	if (phoneScreen) {
+		phoneScreen.addEventListener("scroll", function () {
+			var next = phoneScreen.scrollTop > 1;
+			if (next !== previewScrolled) {
+				previewScrolled = next;
+				renderMobilePreview();
+			}
+		}, { passive: true });
+	}
 
 	builder.find(".kidia-category-row").each(function () {
 		var row = $(this);
 		var button = row.children(".kidia-category-card").find(".kidia-category-expand").first();
-
 		if (button.length) {
 			setRowExpanded(row, button.attr("aria-expanded") === "true");
 		}
 	});
-
-	builder.find(".kidia-category-card").each(function () {
-		try {
-			updateEditorCard($(this));
-		} catch (error) {
-			if (window.console && window.console.error) {
-				window.console.error("Kidia category editor skipped a malformed category.", error);
-			}
-		}
-	});
-
+	builder.find(".kidia-category-card").each(function () { updateEditorArtwork($(this)); });
 	renderMobilePreview();
 }());

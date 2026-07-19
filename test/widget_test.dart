@@ -180,6 +180,26 @@ void main() {
 
       expect(footerSize.height, 64);
       expect(homeIcon.size, 24);
+      final SizedBox homeIconBox = tester.widget<SizedBox>(
+        find.byKey(const Key('cms-bottom-nav-icon-box-home')),
+      );
+      final SizedBox wishlistIconBox = tester.widget<SizedBox>(
+        find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
+      );
+      expect(homeIconBox.width, 32);
+      expect(homeIconBox.height, 32);
+      expect(wishlistIconBox.width, homeIconBox.width);
+      expect(wishlistIconBox.height, homeIconBox.height);
+      expect(
+        tester
+            .getCenter(find.byKey(const Key('cms-bottom-nav-icon-box-home')))
+            .dy,
+        tester
+            .getCenter(
+              find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
+            )
+            .dy,
+      );
       expect(find.text('الرئيسية'), findsOneWidget);
       expect(find.text('المفضلة'), findsOneWidget);
       expect(find.text('الأقسام'), findsNothing);

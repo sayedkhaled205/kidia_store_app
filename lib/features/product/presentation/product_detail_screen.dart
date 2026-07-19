@@ -822,7 +822,10 @@ class _PurchaseBar extends StatelessWidget {
     final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
     final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
     final double footerHeight = sizeReference.number('height', 64).clamp(48, 100);
-    final double footerIconSize = sizeReference.number('icon_size', 24);
+    final double footerIconSize = sizeReference
+        .number('icon_size', 24)
+        .clamp(14, 40);
+    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48);
     final double footerLabelSize = sizeReference.number('label_size', 11).clamp(8, 20);
     final double footerIconLabelGap = sizeReference.number('icon_label_gap', 3).clamp(0, 12);
 	final Map<String, dynamic> footerLayout = footer.json('layout_json');
@@ -848,9 +851,9 @@ class _PurchaseBar extends StatelessWidget {
 	for (final (String item, double width) in placements) {
 	  Widget? child;
 	  if (item == 'share') {
-		child = _FooterAction(icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('share_label', ''), 'مشاركة') : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
+		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('share_label', ''), 'مشاركة') : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
 	  } else if (item == 'like') {
-		child = _FooterAction(iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('like_label', ''), 'المفضلة') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
+		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('like_label', ''), 'المفضلة') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
 	  } else if (item == 'add_to_cart') {
 		child = FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, textStyle: TextStyle(fontSize: footerLabelSize), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? SizedBox.square(dimension: footerIconSize, child: const CircularProgressIndicator(strokeWidth: 2)) : Icon(Icons.shopping_bag_outlined, size: footerIconSize), label: Text(controller.isAdding ? 'جارٍ الإضافة…' : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة')));
 	  }
@@ -900,7 +903,81 @@ class _PurchaseBar extends StatelessWidget {
   }
 }
 
-class _FooterAction extends StatelessWidget { const _FooterAction({this.iconKey,required this.icon,required this.label,required this.color,required this.size,required this.style,required this.labelSize,required this.iconLabelGap,required this.onPressed}); final Key? iconKey; final IconData icon; final String label; final Color color; final double size; final String style; final double labelSize; final double iconLabelGap; final VoidCallback? onPressed; @override Widget build(BuildContext context){ final bool decorated=style=='filled'||style=='circle'; final double buttonExtent=(size+8).clamp(32,44); return Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[SizedBox.square(dimension:buttonExtent,child:IconButton(key:iconKey,onPressed:onPressed,color:decorated?Colors.white:color,padding:EdgeInsets.zero,constraints:const BoxConstraints(),style:IconButton.styleFrom(backgroundColor:decorated?color:Colors.transparent,shape:style=='circle'?const CircleBorder():RoundedRectangleBorder(borderRadius:BorderRadius.circular(8))),icon:Icon(icon,size:size))),if(label.isNotEmpty)...[SizedBox(height:iconLabelGap),Text(label,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:color,fontSize:labelSize))]])); } }
+class _FooterAction extends StatelessWidget {
+  const _FooterAction({
+    required this.id,
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.size,
+    required this.iconBoxSize,
+    required this.style,
+    required this.labelSize,
+    required this.iconLabelGap,
+    required this.onPressed,
+    this.iconKey,
+  });
+
+  final String id;
+  final Key? iconKey;
+  final IconData icon;
+  final String label;
+  final Color color;
+  final double size;
+  final double iconBoxSize;
+  final String style;
+  final double labelSize;
+  final double iconLabelGap;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool decorated = style == 'filled' || style == 'circle';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          SizedBox.square(
+            key: Key('product-footer-icon-box-$id'),
+            dimension: iconBoxSize,
+            child: IconButton(
+              key: iconKey,
+              onPressed: onPressed,
+              color: decorated ? Colors.white : color,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              style: IconButton.styleFrom(
+                backgroundColor: decorated ? color : Colors.transparent,
+                shape: style == 'circle'
+                    ? const CircleBorder()
+                    : RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+              ),
+              icon: Icon(icon, size: size),
+            ),
+          ),
+          if (label.isNotEmpty) ...<Widget>[
+            SizedBox(height: iconLabelGap),
+            SizedBox(
+              height: labelSize * 1.25,
+              child: Center(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: color, fontSize: labelSize, height: 1),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 IconData _footerActionIcon(String type, String variant, bool selected) => switch (type) { 'share' => variant == 'send' ? Icons.send_outlined : variant == 'share' ? Icons.share_outlined : Icons.ios_share_outlined, 'like' => variant == 'bookmark' ? (selected ? Icons.bookmark : Icons.bookmark_border) : selected ? Icons.favorite_rounded : Icons.favorite_border_rounded, _ => Icons.circle_outlined };
 Color _cmsColor(String value, Color fallback) { final hex=value.replaceFirst('#',''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex)?Color(int.parse('FF$hex',radix:16)):fallback; }
 

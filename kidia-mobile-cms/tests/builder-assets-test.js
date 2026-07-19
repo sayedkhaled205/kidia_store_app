@@ -374,45 +374,42 @@ function runHomeBuilderTest() {
   console.log("Home Builder: all 17 previews and toolbar/editor interactions passed.");
 }
 
-function categorySettings(id) {
-  const field = (name, value, type = "text") => `<input type="${type}" name="categories[${id}][${name}]" value="${value}">`;
-  return `<div class="kidia-category-settings" hidden>
-    <button type="button" class="kidia-category-image-button">Choose image</button>
-    <button type="button" class="kidia-category-image-clear" hidden>Clear</button>
-    ${field("image_size", 68, "range")}${field("image_radius", 18, "range")}${field("image_scale", 100, "range")}
-    ${field("border_width", 0, "number")}${field("border_color", "#DDE5E2", "color")}${field("background_color", "#FFFFFF", "color")}
-    ${field("image_text_gap", 10, "range")}${field("font_size", 16, "range")}${field("font_color", "#1F2933", "color")}${field("line_height", 125, "range")}
-    <select name="categories[${id}][image_shape]"><option value="rounded" selected>Rounded</option><option value="circle">Circle</option></select>
-    <select name="categories[${id}][image_fit]"><option value="contain" selected>Contain</option></select>
-    <select name="categories[${id}][image_effect]"><option value="none" selected>None</option></select>
-    <select name="categories[${id}][image_position]"><option value="center" selected>Center</option></select>
-    <select name="categories[${id}][font_weight]"><option value="800" selected>800</option></select>
-    <select name="categories[${id}][text_align]"><option value="start" selected>Start</option></select>
-    <select name="categories[${id}][text_max_lines]"><option value="2" selected>2</option></select>
-  </div>`;
+function categoryGeneralSettings() {
+	  const field = (name, value, type = "text") => `<input type="${type}" name="category_general[${name}]" value="${value}">`;
+	  return `<section class="kidia-category-general">
+	    ${field("image_size", 68, "range")}${field("image_radius", 18, "range")}${field("image_scale", 100, "range")}
+	    ${field("border_width", 0, "number")}${field("border_color", "#DDE5E2", "color")}${field("background_color", "#FFFFFF", "color")}
+	    ${field("image_text_gap", 10, "range")}${field("font_size", 16, "range")}${field("font_color", "#1F2933", "color")}${field("line_height", 125, "range")}
+	    <select name="category_general[image_shape]"><option value="rounded" selected>Rounded</option><option value="circle">Circle</option></select>
+	    <select name="category_general[image_fit]"><option value="contain" selected>Contain</option></select>
+	    <select name="category_general[image_effect]"><option value="none" selected>None</option></select>
+	    <select name="category_general[image_position]"><option value="center" selected>Center</option></select>
+	    <select name="category_general[font_weight]"><option value="800" selected>800</option></select>
+	    <select name="category_general[text_align]"><option value="start" selected>Start</option></select>
+	    <select name="category_general[text_max_lines]"><option value="2" selected>2</option></select>
+	  </section>`;
 }
 
 function categoryRow(id, name, hasChildren = false) {
   const child = hasChildren ? `<div class="kidia-category-children" hidden><ul class="kidia-category-list">${categoryRow(id + 10, `${name} Child`)}</ul></div>` : "";
-  return `<li class="kidia-category-row" data-term-id="${id}" data-term-name="${name}" data-default-image="https://example.com/default-${id}.jpg">
-    <div class="kidia-category-card">
-      <span class="kidia-category-handle"></span>
-      ${hasChildren ? '<button type="button" class="kidia-category-expand" aria-expanded="false">Expand</button>' : ""}
-      <div class="kidia-category-image"><img src="https://example.com/category-${id}.jpg" alt=""></div>
-      <div class="kidia-category-name"><strong>${name}</strong></div>
-      <input class="kidia-category-order" name="categories[${id}][order]" value="0">
-      <input class="kidia-category-image-id" name="categories[${id}][image_id]" value="0">
-      <button type="button" class="kidia-category-settings-toggle" aria-expanded="false">Settings</button>
-      <label class="kidia-category-visibility"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked></label>
-      ${categorySettings(id)}
-    </div>${child}
-  </li>`;
+	  return `<li class="kidia-category-row" data-term-id="${id}" data-default-name="${name}" data-default-image="https://example.com/default-${id}.jpg">
+	    <div class="kidia-category-card">
+	      <span class="kidia-category-handle"></span>
+	      ${hasChildren ? '<button type="button" class="kidia-category-expand" aria-expanded="false">Expand</button>' : ""}
+	      <div class="kidia-category-image"><img src="https://example.com/category-${id}.jpg" alt=""></div>
+	      <div class="kidia-category-name"><input class="kidia-category-name-input" name="categories[${id}][name]" value="${name}"></div>
+	      <input class="kidia-category-order" name="categories[${id}][order]" value="0">
+	      <input class="kidia-category-image-id" name="categories[${id}][image_id]" value="0">
+	      <div class="kidia-category-image-actions"><button type="button" class="kidia-category-image-button">Choose image</button><button type="button" class="kidia-category-image-clear" hidden>Clear</button></div>
+	      <label class="kidia-category-visibility"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked></label>
+	    </div>${child}
+	  </li>`;
 }
 
 function runCategoryBuilderTest() {
   const markup = `<!doctype html><html><body><div class="kidia-category-builder">
-    <div id="kidia-category-live-preview"></div>
-    <div class="kidia-category-editor"><form><ul class="kidia-category-list">${categoryRow(1, "Clothes", true)}${categoryRow(2, "Toys")}</ul></form></div>
+	    <div class="kidia-category-phone__screen"><div id="kidia-category-live-preview"></div></div>
+	    <div class="kidia-category-editor"><form><section class="kidia-category-element"><input class="kidia-category-element-enabled" type="checkbox" checked>${categoryGeneralSettings()}<div class="kidia-category-items"><ul class="kidia-category-list">${categoryRow(1, "Clothes", true)}${categoryRow(2, "Toys")}</ul></div></section></form></div>
   </div></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
@@ -444,7 +441,7 @@ function runCategoryBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expand must show subcategories instantly.");
   assert.ok(window.document.querySelector(".kidia-category-preview-branch.is-expanded"), "Expanded branch styling must be applied.");
 
-  const size = window.document.querySelector('[name="categories[1][image_size]"]');
+	  const size = window.document.querySelector('[name="category_general[image_size]"]');
   size.value = "96";
   size.dispatchEvent(new window.Event("input", { bubbles: true }));
   assert.equal(window.document.querySelector(".kidia-category-preview-root .kidia-category-preview-image").style.width, "78px", "Preview must clamp category art to the app row width.");
@@ -457,9 +454,10 @@ function runCategoryBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Preview Expand control must reopen the matching category.");
   assert.equal(window.document.querySelector(".kidia-category-expand").getAttribute("aria-expanded"), "true", "Preview expansion must synchronize the editor state.");
 
-  const settingsButton = window.document.querySelector(".kidia-category-settings-toggle");
-  click(window, settingsButton);
-  assert.equal(settingsButton.closest(".kidia-category-card").querySelector(".kidia-category-settings").hidden, false, "Image settings must open.");
+	  const appName = window.document.querySelector('[name="categories[1][name]"]');
+	  appName.value = "Kids Clothes";
+	  appName.dispatchEvent(new window.Event("input", { bubbles: true }));
+	  assert.match(window.document.querySelector(".kidia-category-preview-name").textContent, /Kids Clothes/, "App-only names must update the preview instantly.");
 
   click(window, window.document.querySelector(".kidia-category-image-button"));
   assert.match(window.document.querySelector(".kidia-category-image img").src, /custom-thumb\.jpg$/, "Choosing media must update the editor image.");
@@ -472,14 +470,14 @@ function runCategoryBuilderTest() {
   shown.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 1, "Turning Show off must remove the branch from preview.");
 
-  const rootList = window.document.querySelector(".kidia-category-editor form > .kidia-category-list");
+	  const rootList = window.document.querySelector(".kidia-category-items > .kidia-category-list");
   const rows = rootList.children;
   rootList.insertBefore(rows[1], rows[0]);
   rootList.kidiaSortableOptions.update.call(rootList);
   assert.equal(rootList.firstElementChild.querySelector(".kidia-category-order").value, "0", "Sorting must recalculate sibling order.");
   assert.equal(rootList.lastElementChild.querySelector(".kidia-category-order").value, "1", "Sorting must keep the next sibling order.");
 
-  console.log("Category Builder: preview, expansion, media, visibility, settings and sorting passed.");
+	  console.log("Category Builder: one element, general settings, app overrides and sorting passed.");
 }
 
 function runPageBuilderTest() {
@@ -593,19 +591,21 @@ function runCollapsedHeaderToggleTest() {
 
   assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "Off must preview the regular header.");
   toggle.checked = true;
-  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products");
-  assert.match(collapsedPreview, /is-collapsed/, "On must preview the collapsed header immediately.");
+	  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "On must still show the real regular header while the preview is at the top.");
+	  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
+	  assert.match(collapsedPreview, /is-collapsed/, "Scrolling the preview must show the collapsed header.");
+  assert.match(collapsedPreview, /height:56px/, "The sticky preset must expand enough to keep its search field inside the compact header.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
   assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
   toggle.checked = false;
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
-  console.log("Collapsed header: persistent On/Off toggle and preview passed.");
+	  console.log("Collapsed header: persistent On/Off toggle and scroll-accurate preview passed.");
 }
 
 function runFooterPreviewControlsTest() {
-  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":25,"items":["home"]},{"width":25,"items":["categories"]},{"width":25,"items":["wishlist"]},{"width":25,"items":["share"]}]}]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][side_spacing_percent]" value="5"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input name="layout[footer][settings][border_color]" value="#ABCDEF"><input name="layout[footer][settings][border_width]" value="3"><input name="layout[footer][settings][top_radius]" value="12"><select name="layout[footer][settings][shadow]"><option value="strong" selected>Strong</option></select><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select><select name="layout[footer][settings][share_icon_style]"><option value="filled" selected>Filled</option></select><input name="layout[footer][settings][share_icon_size]" value="30"></section></body></html>`;
+	  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-page="category"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":25,"items":["home"]},{"width":25,"items":["categories"]},{"width":25,"items":["wishlist"]},{"width":25,"items":["account","share"]}]}]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][side_spacing_percent]" value="5"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input name="layout[footer][settings][border_color]" value="#ABCDEF"><input name="layout[footer][settings][border_width]" value="3"><input name="layout[footer][settings][top_radius]" value="12"><select name="layout[footer][settings][shadow]"><option value="strong" selected>Strong</option></select><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select><select name="layout[footer][settings][wishlist_icon_style]"><option value="filled" selected>Filled</option></select><input name="layout[footer][settings][wishlist_icon_size]" value="30"></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
@@ -614,14 +614,47 @@ function runFooterPreviewControlsTest() {
   const preview = window.KidiaChromePreview.renderFooter(footerCard);
   assert.match(preview, /padding:0 5%/, "Footer outside spacing must use the saved percentage on both sides.");
   assert.match(preview, /kidia-app-icon--home-filled/, "Footer icon design must match the selected visual option.");
-  assert.match(preview, />Home</, "Footer labels must be independently switchable.");
+	  assert.match(preview, />الرئيسية</, "Footer labels must match the Arabic Flutter footer.");
 	assert.match(preview, /border-top:3px solid #ABCDEF/, "Footer border controls must update preview instantly.");
 	assert.match(preview, /border-radius:12px/, "Footer corner radius must update preview without browser-only scaling.");
 	assert.match(preview, /0 4px 12px/, "Footer shadow must update preview instantly.");
-	assert.match(preview, /kidia-app-footer-item--share is-filled/, "Footer icon style must be applied to the preview.");
-	assert.match(preview, /--item-icon-size:30px/, "Footer per-icon size must be applied to the preview.");
+	assert.match(preview, /kidia-app-footer-item--wishlist is-filled/, "Footer icon style must be applied to the preview.");
+	assert.doesNotMatch(preview, /kidia-app-footer-item--share/, "The preview must omit footer items that Flutter does not support on navigation pages.");
+	assert.doesNotMatch(preview, /--item-icon-size:30px/, "Per-icon sizes must no longer move one footer icon out of alignment.");
+	assert.match(preview, /--item-icon-size:26px/, "Every footer icon must use the same shared size.");
 	assert.match(preview, /margin:6px 0 8px/, "Footer space above and below must update the preview.");
-  console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
+	  console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
+}
+
+function runUnsavedChangesDialogTest() {
+	const markup = `<!doctype html><html><body><a id="leave" href="/wp-admin/admin.php?page=other">Leave</a><form class="kidia-page-editor"><input id="title" name="layout[title]" value="Before"><button type="submit">Save</button></form></body></html>`;
+	const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php?page=builder" });
+	const { window } = dom;
+	const form = window.document.querySelector("form");
+	let submitted = false;
+	form.reportValidity = () => true;
+	form.requestSubmit = () => {
+		submitted = true;
+		form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+	};
+	window.eval(readAsset("unsaved-changes.js"));
+	const title = window.document.getElementById("title");
+	title.value = "After";
+	title.dispatchEvent(new window.Event("input", { bubbles: true }));
+	click(window, window.document.getElementById("leave"));
+	const modal = window.document.querySelector(".kidia-unsaved-modal");
+	assert.equal(modal.hidden, false, "Internal navigation with edits must open the centered custom dialog.");
+	assert.match(modal.textContent, /Save Changes/);
+	assert.match(modal.textContent, /Discard Changes/);
+	assert.match(modal.textContent, /Cancel/);
+	click(window, modal.querySelector(".kidia-unsaved-modal__actions [data-kidia-unsaved-cancel]"));
+	assert.equal(modal.hidden, true, "Cancel must close the dialog and keep the builder open.");
+	window.document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "r", ctrlKey: true, bubbles: true, cancelable: true }));
+	assert.equal(modal.hidden, false, "Keyboard refresh must use the same custom decision dialog.");
+	click(window, modal.querySelector("[data-kidia-unsaved-save]"));
+	assert.equal(submitted, true, "Save Changes must submit the current builder form.");
+	assert.equal(form.querySelector('[name="kidia_redirect_to"]').value, window.location.href, "Save before refresh must return to the same builder URL.");
+	console.log("Unsaved changes: centered Save, Discard and Cancel decision dialog passed.");
 }
 
 function runCommercePreviewTest() {
@@ -653,8 +686,9 @@ if (require.main === module) {
   runPageBuilderTest();
   runChromeComposerTest();
   runCollapsedHeaderToggleTest();
-  runFooterPreviewControlsTest();
-  runCommercePreviewTest();
+	  runFooterPreviewControlsTest();
+	  runUnsavedChangesDialogTest();
+	  runCommercePreviewTest();
   console.log("Builder browser contract tests: ok");
 }
 

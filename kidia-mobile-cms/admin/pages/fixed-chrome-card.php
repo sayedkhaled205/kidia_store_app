@@ -8,10 +8,13 @@ $chrome_fields    = 'header' === $chrome_part ? $header_fields : $footer_fields;
 $chrome_title     = 'header' === $chrome_part ? __( 'Fixed Header', 'kidia-mobile-cms' ) : __( 'Fixed Footer', 'kidia-mobile-cms' );
 $chrome_prefix    = isset( $chrome_name_prefix ) ? (string) $chrome_name_prefix : 'layout[' . $chrome_part . ']';
 $chrome_page_name = isset( $chrome_page ) ? (string) $chrome_page : ( isset( $page ) ? (string) $page : '' );
-$chrome_items     = 'header' === $chrome_part
-	? array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' )
-	: array( 'home' => 'Home', 'categories' => 'Categories', 'search' => 'Search', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' );
-$collapsed_header_keys = array( 'collapse_on_scroll', 'collapse_transition', 'collapse_speed', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
+$chrome_items     = array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' );
+if ( 'footer' === $chrome_part ) {
+	$chrome_items = 'product' === $chrome_page_name
+		? array( 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' )
+		: array( 'home' => 'Home', 'categories' => 'Categories', 'wishlist' => 'Wishlist', 'account' => 'Account' );
+}
+$collapsed_header_keys = array( 'collapse_on_scroll', 'collapse_preset', 'collapse_transition', 'collapse_speed', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
 $item_field = static function ( string $part, string $key ): string {
 	if ( 'header' === $part ) {
 		if ( 'show_cart_badge' === $key ) { return 'cart'; }
@@ -36,7 +39,8 @@ $is_placement_toggle = static function ( string $part, string $key ) use ( $chro
 	return isset( $chrome_items[ substr( $key, 5 ) ] );
 };
 $is_redundant_ui_field = static function ( string $part, string $key ): bool {
-	return ( 'header' === $part && 'search_style' === $key );
+	return ( 'header' === $part && 'search_style' === $key )
+		|| ( 'footer' === $part && in_array( $key, array( 'share_icon_size', 'like_icon_size' ), true ) );
 };
 $render_chrome_field = static function ( array $field, $value, string $name ): void {
 	?><div class="kidia-page-field" data-setting="<?php echo esc_attr( $field['key'] ); ?>"><label><?php echo esc_html( $field['label'] ); ?></label><?php
@@ -63,7 +67,7 @@ $footer_icon_symbols = array(
 	'menu'       => array( 'menu' => 'dashicons-menu', 'dots' => 'dashicons-ellipsis', 'grid' => 'dashicons-grid-view' ),
 );
 ?>
-<section class="kidia-fixed-chrome-card kidia-page-card kidia-page-card--locked" data-element="<?php echo esc_attr( $chrome_part ); ?>" data-chrome-part="<?php echo esc_attr( $chrome_part ); ?>">
+<section class="kidia-fixed-chrome-card kidia-page-card kidia-page-card--locked" data-element="<?php echo esc_attr( $chrome_part ); ?>" data-chrome-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
 	<div class="kidia-page-card__header">
 		<div><span class="dashicons dashicons-lock"></span><strong><?php echo esc_html( $chrome_title ); ?></strong><small><?php esc_html_e( 'Fixed position · arrange the visible items below', 'kidia-mobile-cms' ); ?></small></div>
 		<label class="kidia-page-master-toggle"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="0"><input type="checkbox" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="1" <?php checked( ! empty( $chrome_component['enabled'] ) ); ?>><span class="kidia-toggle-state"></span></label>
@@ -90,6 +94,7 @@ $footer_icon_symbols = array(
 		</div>
 		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
 			<h3><?php esc_html_e( 'Collapsed header behavior and appearance', 'kidia-mobile-cms' ); ?></h3>
+			<p class="kidia-sticky-search-cart-note"><?php esc_html_e( 'Sticky Search + Cart smoothly removes the upper header rows while scrolling and keeps a compact search field with the cart fixed at the top.', 'kidia-mobile-cms' ); ?></p>
 			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( 'collapse_on_scroll' !== $field['key'] && in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
 		</section>
 		<?php endif; ?>
@@ -141,7 +146,7 @@ $footer_icon_symbols = array(
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>
 			</section>
 		<?php endforeach; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><?php if ( 'footer' === $chrome_part && 'category' !== $chrome_page_name ) : ?><p class="kidia-footer-size-reference-note"><?php esc_html_e( 'Footer height, icon size, icon position and label spacing come from the Category Page footer so all six pages stay identical.', 'kidia-mobile-cms' ); ?></p><?php endif; ?><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>
