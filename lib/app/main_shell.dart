@@ -83,6 +83,7 @@ class MainShell extends ConsumerWidget {
 			boxShadow: footer.string('shadow', 'subtle') == 'none' ? null : <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: footer.string('shadow', 'subtle') == 'strong' ? .18 : .08), blurRadius: footer.string('shadow', 'subtle') == 'strong' ? 16 : 6)],
           ),
           child: Padding(
+            key: const Key('cms-bottom-navigation'),
             padding: EdgeInsets.symmetric(
               horizontal: footer.number('horizontal_padding', 16).clamp(0, 32),
             ),
@@ -97,6 +98,7 @@ class MainShell extends ConsumerWidget {
                   final Color color = selected ? activeColor : inactiveColor;
                   return Expanded(
                     child: InkWell(
+                      key: Key('cms-bottom-nav-${item.id}'),
                       onTap: () => _openBranch(ref, entry.key),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

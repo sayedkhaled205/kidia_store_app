@@ -8,6 +8,7 @@ import 'package:kidia_store_app/app/app.dart';
 import 'package:kidia_store_app/app/app_router.dart';
 import 'package:kidia_store_app/app/app_startup_provider.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
+import 'package:kidia_store_app/core/theme/kidia_colors.dart';
 import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
 import 'package:kidia_store_app/features/brands/presentation/brands_screen.dart';
@@ -52,7 +53,7 @@ void main() {
     await _pumpStartedApp(tester, router: router);
 
     expect(find.byType(ProductDetailScreen), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsOneWidget);
 
     await _disposeApp(tester, router);
   });
@@ -69,10 +70,13 @@ void main() {
     );
     expect(screen.request.categoryId, 17);
 
-    final NavigationBar navigationBar = tester.widget<NavigationBar>(
-      find.byType(NavigationBar),
+    final Icon categoryIcon = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const Key('cms-bottom-nav-categories')),
+        matching: find.byType(Icon),
+      ),
     );
-    expect(navigationBar.selectedIndex, 1);
+    expect(categoryIcon.color, KidiaColors.primaryDark);
 
     await _disposeApp(tester, router);
   });
