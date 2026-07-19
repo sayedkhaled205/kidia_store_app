@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 ?>
 
-<div class="wrap">
+<div class="wrap kidia-legacy-editor">
 
 	<h1>
 

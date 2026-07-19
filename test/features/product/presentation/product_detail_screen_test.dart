@@ -133,11 +133,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Choose the product options first.'), findsNothing);
+    expect(
+      find.byKey(const Key('add-to-cart-disabled-reason')),
+      findsNothing,
+    );
     final FilledButton initialButton = tester.widget<FilledButton>(
       find.byKey(const Key('add-to-cart-button')),
     );
     expect(initialButton.onPressed, isNotNull);
+    expect(
+      initialButton.style?.backgroundColor?.resolve(<WidgetState>{}),
+      const Color(0xFF2F806E),
+    );
 
     await tester.tap(find.byKey(const Key('add-to-cart-button')));
     await tester.pumpAndSettle();
@@ -169,6 +176,38 @@ void main() {
     await tester.tap(find.byKey(const Key('product-options-sheet-add')));
     await tester.pumpAndSettle();
     expect(optionsSheet, findsNothing);
+    expect(captured?.variationId, 103);
+  });
+
+  testWidgets('adds directly when product options were already selected', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    ProductPurchaseSelection? captured;
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: variableProduct.id,
+          repository: ProductFakeCatalogRepository(
+            product: variableProduct,
+            variations: testVariations,
+          ),
+          onAddToCart: (ProductPurchaseSelection selection) async {
+            captured = selection;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('product-option-pa_color-blue')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('product-option-pa_size-m')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add-to-cart-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('product-options-sheet')), findsNothing);
     expect(captured?.variationId, 103);
   });
 

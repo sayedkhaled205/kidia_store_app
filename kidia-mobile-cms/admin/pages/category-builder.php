@@ -57,10 +57,10 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 						<button type="button" class="button button-secondary kidia-category-image-button"><?php esc_html_e( 'Change image', 'kidia-mobile-cms' ); ?></button>
 						<button type="button" class="button-link kidia-category-image-clear" <?php echo $image_id ? '' : 'hidden'; ?>><?php esc_html_e( 'Use WooCommerce image', 'kidia-mobile-cms' ); ?></button>
 					</div>
-					<label class="kidia-category-visibility">
+					<label class="kidia-category-visibility kidia-page-master-toggle">
 						<input type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="1">
 						<input type="checkbox" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="0" <?php checked( empty( $setting['hidden'] ) ); ?>>
-						<?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?>
+						<span class="kidia-toggle-state"></span>
 					</label>
 					<?php if ( $has_children ) : ?>
 						<button type="button" class="button kidia-category-expand" aria-expanded="false" aria-label="<?php esc_attr_e( 'Expand subcategories', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-arrow-down-alt2"></span></button>

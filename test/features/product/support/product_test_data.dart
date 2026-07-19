@@ -171,7 +171,10 @@ const CatalogProduct variableProduct = CatalogProduct(
   type: 'variable',
   summary: '<p>Pick your size and color.</p>',
   description: '<p>Available in several combinations.</p>',
-  isPurchasable: true,
+  // WooCommerce can mark the variable parent as non-purchasable until a
+  // concrete variation is selected. The product action must still open the
+  // options picker in that state.
+  isPurchasable: false,
   isInStock: true,
   stockStatus: CatalogStockStatus.inStock,
   averageRating: 4.2,

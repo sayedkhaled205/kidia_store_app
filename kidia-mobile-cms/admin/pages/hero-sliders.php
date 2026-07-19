@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 
-<div class="wrap">
+<div class="wrap kidia-legacy-library">
 
 	<h1 class="wp-heading-inline">
 

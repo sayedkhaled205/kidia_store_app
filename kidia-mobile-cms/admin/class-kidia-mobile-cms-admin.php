@@ -588,6 +588,19 @@ final class Kidia_Mobile_CMS_Admin {
 					$page = isset( $_GET['page'] )
 						? sanitize_key( wp_unslash( $_GET['page'] ) )
 						: '';
+					$is_kidia_page = 0 === strpos( $page, 'kidia-mobile-' )
+						|| 'kidia-mobile-cms_page_kidia-mobile-home-builder' === $hook_suffix;
+
+					if ( ! $is_kidia_page ) {
+						return;
+					}
+
+					wp_enqueue_style(
+						'kidia-mobile-admin-theme',
+						KIDIA_MOBILE_CMS_URL . 'admin/assets/admin-theme.css',
+						array(),
+						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/admin-theme.css' )
+					);
 
 					if (
 							'kidia-mobile-home-builder' !== $page

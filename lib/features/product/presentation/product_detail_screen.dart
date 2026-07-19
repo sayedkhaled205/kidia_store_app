@@ -199,6 +199,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       return;
     }
     if (product.hasVariations && !_controller.canAddToCart) {
+      _controller.clearAddError();
       final bool chooseComplete =
           await showModalBottomSheet<bool>(
             context: context,
@@ -916,13 +917,13 @@ class _PurchaseBar extends StatelessWidget {
     String? reason;
     if (!hasCartConnection) {
       reason = copy.cartNotConnected;
-    } else if (!product.isInStock) {
+    } else if (!product.hasVariations && !product.isInStock) {
       reason = copy.outOfStock;
     } else if (product.hasVariations &&
         controller.selectionComplete &&
         !controller.canAddToCart) {
       reason = copy.unavailableCombination;
-    } else if (!product.isPurchasable) {
+    } else if (!product.hasVariations && !product.isPurchasable) {
       reason = copy.notPurchasable;
     }
 
@@ -994,11 +995,10 @@ class _PurchaseBar extends StatelessWidget {
 	  'soft' => buttonColor.withValues(alpha: 0.14),
 	  _ => buttonColor,
 	};
-	final bool purchaseActionEnabled =
+	final bool purchaseFlowAvailable =
 	    hasCartConnection &&
-	    product.isPurchasable &&
-	    product.isInStock &&
-	    !controller.isAdding;
+	    (product.hasVariations ||
+	        (product.isPurchasable && product.isInStock));
 	final List<Widget> footerItems = <Widget>[];
 	for (final (String item, double width) in placements) {
 	  final double effectiveWidth = hasAddToCart
@@ -1036,7 +1036,11 @@ class _PurchaseBar extends StatelessWidget {
 		          borderRadius: BorderRadius.circular(buttonRadius),
 		        ),
 		      ),
-		      onPressed: purchaseActionEnabled ? onPressed : null,
+		      onPressed: purchaseFlowAvailable
+		          ? controller.isAdding
+		              ? () {}
+		              : onPressed
+		          : null,
 		      icon: controller.isAdding
 		          ? SizedBox.square(
 		              dimension: footerIconSize,
