@@ -15,7 +15,8 @@ class HomeBlockFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final HomeBlockPresentation style = block.presentation;
     final double screenScale = homeResponsiveScale(context);
-    final Color? background = _optionalColor(style.backgroundColor);
+    final Color background =
+        _optionalColor(style.backgroundColor) ?? Theme.of(context).colorScheme.surface;
 
     return Padding(
       key: Key('home-block-frame-${block.id}'),
@@ -30,7 +31,7 @@ class HomeBlockFrame extends StatelessWidget {
           style.borderRadius * screenScale,
         ),
         child: ColoredBox(
-          color: background ?? Colors.transparent,
+          color: background,
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: style.paddingHorizontal * screenScale,
