@@ -77,19 +77,17 @@ class _WishlistScreenState extends State<WishlistScreen> {
     final _WishlistCopy copy = _WishlistCopy.of(context);
     return CmsPageLayoutLoader(
       page: 'wishlist',
-      builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
-        appBar: CmsPageAppBar(
-          layout: layout,
-          defaultTitle: copy.title,
-          actions: <CmsPageHeaderAction>[
+      builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
+        layout: layout,
+        defaultTitle: copy.title,
+        actions: <CmsPageHeaderAction>[
             CmsPageHeaderAction(
               type: 'cart',
               icon: Icons.shopping_bag_outlined,
               tooltip: 'Cart',
               onPressed: () => context.push('/cart'),
             ),
-          ],
-        ),
+        ],
         body: Column(
           children: <Widget>[
             if (_controller.status == WishlistStatus.ready &&
