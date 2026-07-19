@@ -44,8 +44,7 @@ class CatalogProductListScreen extends StatelessWidget {
           searchOnly: request.searchOnly,
           pageSize: layout.element('product_grid').number('products_per_page', request.pageSize.toDouble()).round(),
         );
-        return Scaffold(
-        appBar: CmsPageAppBar(
+        return CmsPageScaffold(
           layout: layout,
           defaultTitle: title,
           actions: <CmsPageHeaderAction>[
@@ -62,13 +61,12 @@ class CatalogProductListScreen extends StatelessWidget {
               onPressed: () => context.push('/cart'),
             ),
           ],
-        ),
-        body: CatalogProductListView(
-          request: effectiveRequest,
-          showSearchField: showSearchField,
-          pageLayout: layout,
-        ),
-      );
+          body: CatalogProductListView(
+            request: effectiveRequest,
+            showSearchField: showSearchField,
+            pageLayout: layout,
+          ),
+        );
       },
     );
   }
