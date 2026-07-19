@@ -156,8 +156,10 @@
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
-	root.addEventListener("focusin", function (event) { focusPreview(event.target.closest(".kidia-page-card")); });
-	root.addEventListener("mouseover", function (event) { var card=event.target.closest(".kidia-page-card");if(card&&(!event.relatedTarget||!card.contains(event.relatedTarget))){focusPreview(card);} });
+	root.addEventListener("click", function (event) {
+		var card=event.target.closest(".kidia-page-card");
+		if(card && event.target.closest(".kidia-page-card__header")){focusPreview(card);}
+	});
 	list.addEventListener("pointerdown", function (event) { var handle = event.target.closest(".kidia-page-drag"); var card = handle ? handle.closest(".kidia-page-card") : null; if (card) { card.draggable = true; } });
 	list.addEventListener("dragstart", function (event) { var card = event.target.closest(".kidia-page-card"); if (!card || !card.draggable) { event.preventDefault(); return; } dragged = card; card.classList.add("is-dragging"); });
 	list.addEventListener("dragover", function (event) { if (!dragged) { return; } event.preventDefault(); var target = event.target.closest(".kidia-page-card"); if (!target || target === dragged) { return; } var rect = target.getBoundingClientRect(); target.insertAdjacentElement(event.clientY > rect.top + rect.height / 2 ? "afterend" : "beforebegin", dragged); });
