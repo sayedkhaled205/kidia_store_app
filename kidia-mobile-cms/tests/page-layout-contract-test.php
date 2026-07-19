@@ -107,6 +107,44 @@ foreach ( array( 'home', 'category' ) as $page ) {
 }
 kidia_page_assert( $store->get_layout( 'home' )['header']['settings']['title'] !== $store->get_layout( 'category' )['header']['settings']['title'], 'Every page must keep independent header settings.' );
 
+// Exercise every header/footer field through the complete save -> reload cycle.
+$probe_settings = static function ( array $fields, bool $second ): array {
+	$values = array();
+	foreach ( $fields as $field ) {
+		$key = $field['key'];
+		switch ( $field['type'] ) {
+			case 'checkbox': $values[ $key ] = $second ? '0' : '1'; break;
+			case 'number': $values[ $key ] = $second ? (string) $field['min'] : (string) $field['max']; break;
+			case 'color': $values[ $key ] = $second ? '#246B5A' : '#C84F6A'; break;
+			case 'select': $options = array_keys( $field['options'] ); $values[ $key ] = (string) ( $second ? end( $options ) : reset( $options ) ); break;
+			case 'json': $values[ $key ] = wp_json_encode( $second ? array( 'rows' => array( array( 'left' => array( 'logo' ), 'center' => array(), 'right' => array( 'cart' ) ) ) ) : array( 'items' => array( 'home', 'wishlist' ) ) ); break;
+			case 'image': $values[ $key ] = $second ? 'https://example.com/logo-second.png' : 'https://example.com/logo-first.png'; break;
+			default: $values[ $key ] = $second ? 'Second saved value' : 'First saved value';
+		}
+	}
+	return $values;
+};
+foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page => $_label ) {
+	$header_first = $probe_settings( Kidia_Mobile_Page_Layout_Store::header_fields(), false );
+	$footer_first = $probe_settings( Kidia_Mobile_Page_Layout_Store::footer_fields(), false );
+	$first = $store->save_layout( $page, array( 'header' => array( 'enabled' => '1', 'settings' => $header_first ), 'footer' => array( 'enabled' => '1', 'settings' => $footer_first ) ) );
+	$reloaded_first = $store->get_layout( $page );
+	foreach ( array( 'header', 'footer' ) as $part ) {
+		foreach ( $first[ $part ]['settings'] as $key => $expected_value ) {
+			kidia_page_assert( $expected_value === $reloaded_first[ $part ]['settings'][ $key ], "$page $part.$key must survive save and reload." );
+		}
+	}
+	$header_second = $probe_settings( Kidia_Mobile_Page_Layout_Store::header_fields(), true );
+	$footer_second = $probe_settings( Kidia_Mobile_Page_Layout_Store::footer_fields(), true );
+	$second = $store->save_layout( $page, array( 'header' => array( 'enabled' => '1', 'settings' => $header_second ), 'footer' => array( 'enabled' => '1', 'settings' => $footer_second ) ) );
+	$reloaded_second = $store->get_layout( $page );
+	foreach ( array( 'header', 'footer' ) as $part ) {
+		foreach ( $second[ $part ]['settings'] as $key => $expected_value ) {
+			kidia_page_assert( $expected_value === $reloaded_second[ $part ]['settings'][ $key ], "$page $part.$key must survive a second consecutive save and reload." );
+		}
+	}
+}
+
 $endpoint = new Kidia_Mobile_CMS_Page_Layout_Endpoint();
 $endpoint->register_routes();
 kidia_page_assert( isset( $GLOBALS['kidia_page_routes']['woo-mobile/v1/page-layout/(?P<page>[a-z-]+)'] ), 'The public page-layout route must register.' );

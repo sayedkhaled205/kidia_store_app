@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 3;
+	private const VERSION = 4;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -68,7 +68,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'search_icon_radius', __( 'Search icon radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 24 ),
 			self::field( 'search_placeholder', __( 'Search placeholder', 'kidia-mobile-cms' ), 'text', __( 'Search products', 'kidia-mobile-cms' ) ),
 			self::field( 'search_height', __( 'Search height', 'kidia-mobile-cms' ), 'number', 40, array(), 32, 64 ),
-			self::field( 'search_width_percent', __( 'Search width', 'kidia-mobile-cms' ), 'number', 100, array(), 30, 100 ),
+			self::field( 'search_width_percent', __( 'Search width (% of row)', 'kidia-mobile-cms' ), 'number', 100, array(), 30, 100 ),
 			self::field( 'search_radius', __( 'Search radius', 'kidia-mobile-cms' ), 'number', 14, array(), 0, 32 ),
 			self::field( 'search_background', __( 'Search background', 'kidia-mobile-cms' ), 'color', '#F1F3F4' ),
 			self::field( 'search_text_color', __( 'Search text color', 'kidia-mobile-cms' ), 'color', '#5F6368' ),
@@ -263,7 +263,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( ! is_array( $saved ) || empty( $saved ) ) {
 			return $default;
 		}
-		$needs_chrome_defaults = (int) ( $saved['version'] ?? 1 ) < 3;
+		$needs_chrome_defaults = (int) ( $saved['version'] ?? 1 ) < self::VERSION;
 		if ( ! $needs_chrome_defaults ) {
 			$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
 			$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );

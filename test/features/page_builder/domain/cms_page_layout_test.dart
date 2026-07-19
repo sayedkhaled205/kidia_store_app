@@ -49,5 +49,23 @@ void main() {
     );
     expect(CmsPageLayout.fallback('wishlist').header.enabled, isTrue);
     expect(CmsPageLayout.fallback('account').footer.enabled, isTrue);
+	final CmsPageLayout home = CmsPageLayout.fallback('home');
+	final dynamic homeRows = home.header.json('layout_json')['rows'];
+	expect(homeRows, isA<List<dynamic>>());
+	expect((homeRows as List<dynamic>).length, 2);
+	expect(home.header.number('search_width_percent', 0), 100);
+	expect(home.footer.json('layout_json')['items'], <String>[
+		'home',
+		'categories',
+		'wishlist',
+		'account',
+	]);
+	final CmsPageLayout product = CmsPageLayout.fallback('product');
+	expect(product.footer.string('style', ''), 'product_action');
+	expect(product.footer.json('layout_json')['items'], <String>[
+		'share',
+		'like',
+		'add_to_cart',
+	]);
   });
 }
