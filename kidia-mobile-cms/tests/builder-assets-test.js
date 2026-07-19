@@ -401,7 +401,7 @@ function categoryRow(id, name, hasChildren = false) {
 	      <input class="kidia-category-order" name="categories[${id}][order]" value="0">
 	      <input class="kidia-category-image-id" name="categories[${id}][image_id]" value="0">
 	      <div class="kidia-category-image-actions"><button type="button" class="kidia-category-image-button">Choose image</button><button type="button" class="kidia-category-image-clear" hidden>Clear</button></div>
-	      <label class="kidia-category-visibility"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked></label>
+	      <label class="kidia-category-visibility kidia-page-master-toggle"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked><span class="kidia-toggle-state"></span></label>
 	    </div>${child}
 	  </li>`;
 }
@@ -434,6 +434,8 @@ function runCategoryBuilderTest() {
 
   window.eval(readAsset("category-builder.js"));
   assert.equal(window.kidiaCategoryBuilderBooted, true, "Category Builder must boot.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-visibility.kidia-page-master-toggle").length, 3, "Every category and subcategory must use the shared On/Off toggle.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-visibility .kidia-toggle-state").length, 3, "Every visibility toggle must expose the shared On/Off state label.");
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 2, "Root categories must render as app-style rows.");
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Subcategories start collapsed.");
 
@@ -705,6 +707,14 @@ function runChromeCopyPasteAndLogoMediaTest() {
 }
 
 function runUnsavedChangesDialogTest() {
+	const adminTheme = readAsset("admin-theme.css");
+	const pageBuilderTheme = readAsset("page-builder.css");
+	assert.match(adminTheme, /--kidia-admin-button-radius:\s*999px/, "All CMS action buttons must use the shared pill radius.");
+	assert.match(adminTheme, /\.kidia-builder-editor/, "Buttons outside and inside Home elements must share the rounded theme.");
+	assert.match(adminTheme, /\.kidia-category-editor/, "Category controls must share the rounded theme.");
+	assert.match(adminTheme, /\.kidia-page-editor/, "Every page element editor must share the rounded theme.");
+	assert.match(pageBuilderTheme, /data-kidia-unsaved-save[^}]+background:#2f806e!important/, "The unsaved Save action must use Kidia green.");
+	assert.match(pageBuilderTheme, /kidia-unsaved-modal__icon[^}]+background:#e7f5f1[^}]+color:#2f806e/, "The unsaved dialog icon must use the Kidia palette.");
 	const markup = `<!doctype html><html><body><a id="leave" href="/wp-admin/admin.php?page=other">Leave</a><form class="kidia-page-editor"><input id="title" name="layout[title]" value="Before"><button type="submit">Save</button></form></body></html>`;
 	const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php?page=builder" });
 	const { window } = dom;

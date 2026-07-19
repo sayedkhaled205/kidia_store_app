@@ -83,6 +83,18 @@ kidia_collapsed_header_assert( false !== strpos( $footer_markup, 'name="layout[f
 kidia_collapsed_header_assert( false !== strpos( $footer_markup, 'name="layout[footer][settings][button_height]"' ), 'Add to bag settings must expose button height.' );
 kidia_collapsed_header_assert( false !== strpos( $footer_markup, 'name="layout[footer][settings][button_style]"' ) && false !== strpos( $footer_markup, 'name="layout[footer][settings][button_shape]"' ), 'Add to bag settings must expose button style and shape.' );
 
+$category_template = (string) file_get_contents( dirname( __DIR__ ) . '/admin/pages/category-builder.php' );
+kidia_collapsed_header_assert( false !== strpos( $category_template, 'kidia-category-visibility kidia-page-master-toggle' ), 'Category and subcategory visibility must use the shared On/Off toggle.' );
+kidia_collapsed_header_assert( false !== strpos( $category_template, '<span class="kidia-toggle-state"></span>' ), 'Every category visibility control must display On or Off instead of Show.' );
+
+$admin_theme = (string) file_get_contents( dirname( __DIR__ ) . '/admin/assets/admin-theme.css' );
+foreach ( array( '.kidia-builder-editor', '.kidia-category-editor', '.kidia-page-editor', '.kidia-library', '.kidia-editor', '.kidia-unsaved-modal' ) as $button_scope ) {
+	kidia_collapsed_header_assert( false !== strpos( $admin_theme, $button_scope ), "The rounded button theme must cover $button_scope." );
+}
+kidia_collapsed_header_assert( false !== strpos( $admin_theme, '--kidia-admin-button-radius: 999px' ), 'Every CMS action button must use the shared pill radius.' );
+$admin_controller = (string) file_get_contents( dirname( __DIR__ ) . '/admin/class-kidia-mobile-cms-admin.php' );
+kidia_collapsed_header_assert( false !== strpos( $admin_controller, 'admin/assets/admin-theme.css' ), 'The shared rounded button theme must load on every Kidia CMS page.' );
+
 $off = $store->save_layout( 'home', array(
 	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '0' ) ),
 	'footer' => array( 'enabled' => '1' ),

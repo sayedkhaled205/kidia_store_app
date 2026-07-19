@@ -1,0 +1,69 @@
+/* Shared Kidia controls across every CMS admin page. Phone-preview controls are intentionally excluded. */
+:is(
+	.kidia-dashboard,
+	.kidia-library,
+	.kidia-editor,
+	.kidia-legacy-library,
+	.kidia-legacy-editor,
+	.kidia-hero-library,
+	.kidia-image-banner-edit,
+	.kidia-builder-editor,
+	.kidia-category-editor,
+	.kidia-page-editor,
+	.kidia-unsaved-modal
+) {
+	--kidia-admin-primary: #2f806e;
+	--kidia-admin-primary-dark: #236b59;
+	--kidia-admin-primary-soft: #e7f5f1;
+	--kidia-admin-border: #8fbeb2;
+	--kidia-admin-button-radius: 999px;
+}
+
+:is(
+	.kidia-dashboard,
+	.kidia-library,
+	.kidia-editor,
+	.kidia-legacy-library,
+	.kidia-legacy-editor,
+	.kidia-hero-library,
+	.kidia-image-banner-edit,
+	.kidia-builder-editor,
+	.kidia-category-editor,
+	.kidia-page-editor,
+	.kidia-unsaved-modal
+) :is(button, .button, .page-title-action, input[type="button"], input[type="submit"], input[type="reset"]) {
+	border-radius: var(--kidia-admin-button-radius) !important;
+}
+
+:is(
+	.kidia-dashboard,
+	.kidia-library,
+	.kidia-editor,
+	.kidia-legacy-library,
+	.kidia-legacy-editor,
+	.kidia-hero-library,
+	.kidia-image-banner-edit,
+	.kidia-builder-editor,
+	.kidia-category-editor,
+	.kidia-page-editor
+) :is(.button-primary, .page-title-action) {
+	border-color: var(--kidia-admin-primary-dark) !important;
+	background: var(--kidia-admin-primary) !important;
+	color: #fff !important;
+	box-shadow: none !important;
+}
+
+:is(
+	.kidia-dashboard,
+	.kidia-library,
+	.kidia-editor,
+	.kidia-legacy-library,
+	.kidia-legacy-editor,
+	.kidia-hero-library,
+	.kidia-image-banner-edit,
+	.kidia-builder-editor,
+	.kidia-category-editor,
+	.kidia-page-editor
+) :is(.button-primary, .page-title-action):hover {
+	background: var(--kidia-admin-primary-dark) !important;
+}

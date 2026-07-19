@@ -46,6 +46,7 @@
 .kidia-category-name { display: flex; flex-direction: column; gap: 4px; }
 .kidia-category-name small { color: #646970; }
 .kidia-category-visibility { white-space: nowrap; }
+.kidia-category-visibility.kidia-page-master-toggle { min-width: 92px; justify-content: flex-start; margin: 0; }
 .kidia-category-settings-toggle { align-items: center; display: inline-flex !important; gap: 4px; }
 .kidia-category-settings { background: #f6f7f7; border-radius: 8px; display: grid; gap: 14px 18px; grid-column: 1 / -1; grid-template-columns: repeat(4,minmax(120px,1fr)); padding: 16px; }
 .kidia-category-settings[hidden], .kidia-category-children[hidden] { display: none; }
