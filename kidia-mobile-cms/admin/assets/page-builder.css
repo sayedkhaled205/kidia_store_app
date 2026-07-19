@@ -81,4 +81,63 @@
 .kidia-category-builder .kidia-category-toolbar,.kidia-category-builder .kidia-category-card,.kidia-category-builder .kidia-fixed-chrome-card { width:77%; }
 .kidia-category-builder .kidia-category-toolbar { min-height:70px; border-color:#d8e5e1; border-radius:10px; background:linear-gradient(135deg,#e7f5f1,#fff); box-shadow:0 3px 12px rgba(35,107,89,.08); }
 @media(max-width:960px){.kidia-page-workspace{grid-template-columns:1fr}.kidia-page-preview{position:static}.kidia-page-phone{margin:auto}.kidia-page-card,.kidia-page-toolbar{width:100%}}
+
+/* Flutter-parity live preview. Dimensions are scaled from the same CMS values used by the app. */
+#kidia-page-live-preview { display:flex; min-height:calc(100% - 27px); flex-direction:column; direction:rtl; background:#f7f8f8; color:#1f2933; font-family:Arial,Tahoma,sans-serif; overflow:hidden; }
+.kidia-app-page { flex:1; overflow:hidden; background:#f8f9f9; text-align:right; }
+.kidia-app-header { display:grid; position:relative; z-index:2; grid-template-columns:48px minmax(0,1fr) auto; align-items:center; padding:0 8px; box-shadow:0 1px 5px rgba(31,41,51,.08); direction:ltr; }
+.kidia-app-header__leading,.kidia-app-header__actions { display:flex; align-items:center; gap:3px; }
+.kidia-app-header__actions { justify-content:flex-end; }
+.kidia-app-header__title { min-width:0; padding:0 4px; text-align:center; }
+.kidia-app-header__title strong { display:block; overflow:hidden; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.kidia-app-search { display:flex; align-items:center; gap:6px; padding:0 9px; font-size:8px; direction:rtl; }
+.kidia-app-search span { flex:1; overflow:hidden; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
+.kidia-app-icon { display:inline-block; position:relative; width:17px; height:17px; flex:0 0 17px; color:currentColor; }
+.kidia-app-icon::before { display:grid; width:100%; height:100%; place-items:center; font-size:16px; font-weight:400; line-height:1; }
+.kidia-app-icon--back::before{content:'‹';font-size:25px}.kidia-app-icon--search::before{content:'⌕';font-size:20px}.kidia-app-icon--heart::before{content:'♡';font-size:20px}.kidia-app-icon--bag::before{content:'♧';font-size:20px}.kidia-app-icon--person::before{content:'♙'}.kidia-app-icon--mic::before{content:'♩'}.kidia-app-icon--filter::before{content:'⚙'}.kidia-app-icon--size::before{content:'↔'}.kidia-app-icon--sort::before{content:'⇅'}.kidia-app-icon--zoom::before{content:'⌕'}.kidia-app-icon--share::before{content:'⇧'}.kidia-app-icon--home::before{content:'⌂'}.kidia-app-icon--categories::before{content:'▦'}.kidia-app-icon--orders::before{content:'▤'}.kidia-app-icon--addresses::before{content:'⌖'}.kidia-app-icon--profile::before{content:'♙'}.kidia-app-icon--support::before{content:'♬'}.kidia-app-icon--chevron::before{content:'‹';font-size:20px}.kidia-app-icon--logout::before{content:'↪'}
+.kidia-app-section { padding:9px 10px; background:#fff; }
+.kidia-app-section + .kidia-app-section { margin-top:7px; }
+.kidia-app-section h3 { margin:0 0 9px; font-size:11px; }
+.kidia-app-products { display:grid; grid-template-columns:repeat(var(--columns,2),minmax(0,1fr)); }
+.kidia-app-product { position:relative; min-width:0; overflow:hidden; background:#fff; text-align:right; }
+.kidia-app-product.is-outlined { border:1px solid #e1e6e4; }
+.kidia-app-product.is-elevated { box-shadow:0 2px 7px rgba(31,41,51,.12); }
+.kidia-app-product__image { position:relative; overflow:hidden; background:#f2f4f4; }
+.kidia-app-product__image img { display:block; width:100%; height:100%; object-fit:cover; }
+.kidia-app-product__fallback,.kidia-app-gallery__fallback { display:grid; width:100%; height:100%; place-items:center; background:linear-gradient(135deg,#edf5f2,#fff); color:#2f806e; font-size:15px; font-weight:900; }
+.kidia-app-product__image > .kidia-app-icon { position:absolute; top:5px; left:5px; display:grid; width:23px; height:23px; place-items:center; border-radius:50%; background:#fff; }
+.kidia-app-badge { position:absolute; top:6px; right:5px; padding:2px 4px; border-radius:4px; background:#e94b5f; color:#fff; font-size:6px; }
+.kidia-app-product__copy { display:flex; min-height:48px; flex-wrap:wrap; gap:2px 4px; padding:6px; }
+.kidia-app-product__copy strong { width:100%; min-height:19px; overflow:hidden; font-size:7px; line-height:1.4; }
+.kidia-app-product__copy b { color:#2f806e; font-size:8px; }
+.kidia-app-product__copy del { color:#98a0a6; font-size:6px; }
+.kidia-app-rating { width:100%; color:#f2aa00; font-size:6px; }
+.kidia-app-filter { display:flex; align-items:center; box-sizing:border-box; margin:auto; padding:5px 9px; direction:rtl; }
+.kidia-app-filter button { display:flex; height:100%; flex:1; align-items:center; justify-content:center; gap:3px; border:1px solid; background:#fff; color:var(--icon-color); font-size:7px; }
+.kidia-app-filter button .kidia-app-icon { width:var(--icon-size); height:var(--icon-size); flex-basis:var(--icon-size); }
+.kidia-app-filter small { margin-inline-start:5px; font-size:6px; white-space:nowrap; }
+.kidia-app-pagination { display:flex; justify-content:center; gap:4px; }
+.kidia-app-pagination button { min-width:29px; padding:0 10px; border:1px solid #dce3e0; border-radius:7px; font-size:7px; font-weight:800; }
+.kidia-app-gallery { position:relative; width:100%; overflow:hidden; background:#f1f2f2; }
+.kidia-app-gallery > img { display:block; width:100%; height:100%; object-fit:contain; }
+.kidia-app-gallery > .kidia-app-icon { position:absolute; right:9px; bottom:9px; display:grid; width:26px; height:26px; place-items:center; border-radius:50%; background:rgba(255,255,255,.9); }
+.kidia-app-gallery__count { position:absolute; bottom:8px; left:50%; padding:3px 7px; border-radius:10px; background:rgba(20,24,27,.58); color:#fff; font-size:7px; transform:translateX(-50%); }
+.kidia-app-summary,.kidia-app-variations,.kidia-app-details,.kidia-app-reviews { padding:11px 13px; background:#fff; }
+.kidia-app-summary h2 { margin:5px 0; font-size:12px; line-height:1.35; }
+.kidia-app-summary small { display:block; color:#788087; font-size:7px; }
+.kidia-app-sale { display:inline-block; padding:2px 6px; border-radius:10px; background:#fee8ea; color:#c92f43; font-size:6px; }
+.kidia-app-stars { margin-top:5px; color:#f2aa00; font-size:8px; direction:ltr; text-align:right; }
+.kidia-app-price { display:flex; align-items:center; gap:6px; margin-top:7px; direction:rtl; }
+.kidia-app-price b { font-size:13px; }.kidia-app-price del{color:#8d959b;font-size:8px}.kidia-app-stock{margin-top:4px;color:#2f806e!important}
+.kidia-app-variations h3,.kidia-app-details h3,.kidia-app-reviews h3 { margin:0 0 7px; font-size:10px; }.kidia-app-variations h3 span{color:#737b81;font-size:8px;font-weight:400}
+.kidia-app-variations > div { display:flex; gap:6px; margin-bottom:10px; }.kidia-app-variations button{padding:5px 9px;border:1px solid #dce3e0;border-radius:8px;background:#fff;font-size:7px}.kidia-app-variations button.is-selected{border-color:#2f806e;background:#e9f5f1;color:#236b59}
+.kidia-app-purchase-inline { display:flex; gap:7px; padding:9px 12px; background:#fff; }.kidia-app-purchase-inline>button{min-height:32px;flex:1;border:0;font-size:8px;font-weight:800}.kidia-app-quantity{display:flex;align-items:center;border:1px solid #dfe4e2;border-radius:8px}.kidia-app-quantity button{border:0;background:none}.kidia-app-quantity b{font-size:8px}
+.kidia-app-details p{color:#60686e;font-size:8px;line-height:1.6}.kidia-app-details>div{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #edf0ef;font-size:7px}.kidia-app-reviews{display:grid;grid-template-columns:auto 1fr;gap:3px 7px}.kidia-app-reviews h3{grid-column:1/-1}.kidia-app-reviews>b{font-size:20px}.kidia-app-reviews>span{color:#f2aa00}.kidia-app-reviews>small{grid-column:2;color:#777;font-size:7px}
+.kidia-app-empty { display:flex; min-height:230px; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; }.kidia-app-empty>.kidia-app-icon{width:45px;height:45px}.kidia-app-empty>.kidia-app-icon::before{font-size:44px}.kidia-app-empty h3{margin:8px 0 3px;font-size:12px}.kidia-app-empty p{margin:0 0 12px;color:#737b81;font-size:8px}.kidia-app-empty button{padding:7px 14px;border:0;border-radius:10px;background:#2f806e;color:#fff;font-size:8px}
+.kidia-app-account-summary { display:flex; align-items:center; gap:10px; margin:11px; padding:12px; border-radius:12px; background:#fff; }.kidia-app-account-summary.is-outlined{border:1px solid #dfe5e2}.kidia-app-account-summary.is-elevated{box-shadow:0 2px 8px rgba(31,41,51,.1)}.kidia-app-avatar{display:grid;place-items:center;border-radius:50%;background:#e5f3ee;color:#2f806e;font-size:16px;font-weight:800}.kidia-app-account-summary div{display:flex;min-width:0;flex-direction:column}.kidia-app-account-summary strong{font-size:10px}.kidia-app-account-summary small{color:#737b81;font-size:7px}
+.kidia-app-account-menu { margin:10px; overflow:hidden; border-radius:11px; background:#fff; box-shadow:0 1px 5px rgba(31,41,51,.08); }.kidia-app-account-menu>div{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #edf0ef;color:var(--menu-color)}.kidia-app-account-menu>div:last-child{border-bottom:0}.kidia-app-account-menu b{flex:1;color:#29323a;font-size:8px}.kidia-app-account-menu.is-grid{display:grid;grid-template-columns:1fr 1fr}.kidia-app-account-menu.is-grid>div{flex-direction:column;text-align:center}.kidia-app-account-menu.is-grid .kidia-app-icon--chevron{display:none}
+.kidia-app-logout { display:flex; align-items:center; justify-content:center; gap:6px; width:calc(100% - 22px); margin:11px; padding:8px; border:1px solid var(--logout-color); border-radius:9px; background:#fff; color:var(--logout-color); font-size:8px;font-weight:800}.kidia-app-logout.is-filled{background:var(--logout-color);color:#fff}.kidia-app-logout.is-text{border-color:transparent;background:transparent}
+.kidia-app-footer { display:flex; position:relative; z-index:2; flex:0 0 auto; align-items:center; justify-content:space-around; border-top:1px solid #e2e6e4; box-shadow:0 -1px 5px rgba(31,41,51,.05); direction:ltr; }.kidia-app-footer span{display:flex;flex-direction:column;align-items:center;gap:2px}.kidia-app-footer b{font-size:6px}.kidia-app-footer--product{gap:8px;padding:6px 11px}.kidia-app-footer--product>button{height:100%;flex:1;border:0;font-size:9px;font-weight:800}
 @media(max-width:782px){.kidia-page-fields{grid-template-columns:1fr}.kidia-page-field input[type=text],.kidia-page-field input[type=url],.kidia-page-field input[type=number],.kidia-page-field input[type=color],.kidia-page-field select,.kidia-page-toggle{width:100%}.kidia-page-card__header{align-items:flex-start;flex-wrap:wrap}}
+.kidia-app-status{display:flex;min-height:24px;align-items:center;justify-content:space-between;padding:5px 12px;background:#fff;font-size:8px;font-weight:700;direction:ltr}
+.kidia-commerce-preview-workspace .kidia-page-editor{min-width:0}.kidia-commerce-preview-workspace .kidia-page-phone__screen{display:flex;flex-direction:column;background:#f7f8fa}.kidia-commerce-screen{flex:1;overflow:hidden;padding:10px;color:#202a35}.kidia-commerce-context{display:flex;flex-direction:column;gap:5px;padding:10px;margin-bottom:10px;background:#fff;border:1px solid #e5e9eb;border-radius:12px}.kidia-commerce-product-photo{height:118px;display:grid;place-items:center;background:#f3f3f3;border-radius:10px;color:#9aa3aa}.kidia-commerce-product-photo .dashicons{font-size:42px;width:42px;height:42px}.kidia-commerce-section{padding:10px 0}.kidia-commerce-section h3{margin:0 0 8px;font-size:14px}.kidia-commerce-section .kidia-app-product-grid{display:grid;grid-template-columns:repeat(var(--commerce-columns,2),minmax(0,1fr));gap:8px}.kidia-commerce-card{min-width:0;border-radius:var(--commerce-radius,14px)}.kidia-commerce-card .kidia-app-product__image{aspect-ratio:var(--commerce-ratio,1)}.kidia-commerce-card button,.kidia-commerce-checkout{border:0;border-radius:8px;background:var(--commerce-button,#2f806e);color:var(--commerce-button-text,#fff);font-weight:700}.kidia-commerce-card button{width:100%;min-height:24px;font-size:7px}.kidia-commerce-checkout{width:100%;min-height:38px;margin-top:10px}

@@ -488,10 +488,34 @@ function runPageBuilderTest() {
   console.log("Page Builders: fixed chrome, page elements, preview and sorting passed.");
 }
 
+function runCommercePreviewTest() {
+  const markup = `<!doctype html><html><body><div id="kidia-commerce-preview" data-preview-kind="checkout"></div><form class="kidia-commerce-preview-form">
+    <input type="hidden" name="suggestions[enabled]" value="0"><input type="checkbox" name="suggestions[enabled]" value="1" checked>
+    <input name="suggestions[title]" value="You may also need"><input name="suggestions[columns]" value="2"><input name="suggestions[limit]" value="2">
+    <input name="suggestions[card_radius]" value="14"><input name="suggestions[image_ratio]" value="1"><input name="suggestions[button_label]" value="Add">
+    <input type="checkbox" name="suggestions[show_price]" checked><input type="checkbox" name="suggestions[show_rating]">
+    <input name="suggestions[button_color]" value="#2F806E"><input name="suggestions[button_text_color]" value="#FFFFFF">
+  </form></body></html>`;
+  const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+  const { window } = dom;
+  window.requestAnimationFrame = (callback) => callback();
+  window.kidiaCommercePreview = { products: [{ name: "Pink Set", price: "450 EGP", image_url: "https://example.com/pink.jpg" }, { name: "Blue Set", price: "390 EGP", image_url: "https://example.com/blue.jpg" }] };
+  window.eval(readAsset("commerce-preview.js"));
+  window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
+  assert.equal(window.document.querySelectorAll(".kidia-commerce-card").length, 2, "Commerce previews must use real WooCommerce product cards.");
+  assert.match(window.document.getElementById("kidia-commerce-preview").textContent, /Pink Set/, "Commerce previews must show real product content.");
+  const title = window.document.querySelector('[name="suggestions[title]"]');
+  title.value = "Complete your order";
+  title.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.match(window.document.getElementById("kidia-commerce-preview").textContent, /Complete your order/, "Commerce previews must update during input without saving.");
+  console.log("Commerce previews: real products and instant settings updates passed.");
+}
+
 if (require.main === module) {
   runHomeBuilderTest();
   runCategoryBuilderTest();
   runPageBuilderTest();
+  runCommercePreviewTest();
   console.log("Builder browser contract tests: ok");
 }
 

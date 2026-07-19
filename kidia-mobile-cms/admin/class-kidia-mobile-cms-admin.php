@@ -625,7 +625,19 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( 'kidia-mobile-splash-screen' === $page ) {
 						wp_enqueue_script( 'kidia-mobile-splash-screen', KIDIA_MOBILE_CMS_URL . 'admin/assets/splash-screen.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/splash-screen.js' ), true ); return;
 					}
-					if ( in_array( $page, array( 'kidia-mobile-similar-products', 'kidia-mobile-checkout-suggestions' ), true ) ) { return; }
+					if ( in_array( $page, array( 'kidia-mobile-similar-products', 'kidia-mobile-checkout-suggestions' ), true ) ) {
+						$preview_products = array();
+						if ( function_exists( 'wc_get_products' ) ) {
+							foreach ( wc_get_products( array( 'status' => 'publish', 'limit' => 8, 'orderby' => 'date', 'order' => 'DESC' ) ) as $product ) {
+								if ( ! is_object( $product ) || ! method_exists( $product, 'get_name' ) ) { continue; }
+								$image_id = method_exists( $product, 'get_image_id' ) ? absint( $product->get_image_id() ) : 0;
+								$preview_products[] = array( 'name' => sanitize_text_field( (string) $product->get_name() ), 'price' => wp_strip_all_tags( method_exists( $product, 'get_price_html' ) ? (string) $product->get_price_html() : '' ), 'image_url' => $image_id ? (string) wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '' );
+							}
+						}
+						wp_enqueue_script( 'kidia-mobile-commerce-preview', KIDIA_MOBILE_CMS_URL . 'admin/assets/commerce-preview.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/commerce-preview.js' ), true );
+						wp_localize_script( 'kidia-mobile-commerce-preview', 'kidiaCommercePreview', array( 'products' => $preview_products ) );
+						return;
+					}
 
 					if ( 'kidia-mobile-category-builder' === $page ) {
 						wp_enqueue_style( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.css' ) );

@@ -562,6 +562,8 @@
 
 	function renderPreview() {
 		var blocks;
+		var header;
+		var footer;
 
 		if (!previewContent) {
 			return;
@@ -571,12 +573,34 @@
 			return Boolean(block.enabled);
 		});
 
-		if (!blocks.length) {
-			previewContent.innerHTML = '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>';
-			return;
-		}
+		header = renderFixedChrome("header");
+		footer = renderFixedChrome("footer");
+		previewContent.innerHTML = header + '<div class="kidia-preview-home-body">' + (blocks.length ? blocks.map(renderBlock).join("") : '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>') + '</div>' + footer;
+	}
 
-		previewContent.innerHTML = blocks.map(renderBlock).join("");
+	function chromeField(card, suffix) {
+		var fields = card ? card.querySelectorAll('[name$="[' + suffix + ']"]') : [];
+		return fields.length ? fields[fields.length - 1] : null;
+	}
+
+	function chromeValue(card, suffix, fallback) {
+		var input = chromeField(card, suffix);
+		return input ? input.value : fallback;
+	}
+
+	function chromeChecked(card, suffix, fallback) {
+		var input = chromeField(card, suffix);
+		return input ? input.checked : fallback;
+	}
+
+	function renderFixedChrome(part) {
+		var card = form.querySelector('[data-chrome-part="' + part + '"]');
+		if (!card || !chromeChecked(card, "enabled", true)) { return ""; }
+		if (part === "header") {
+			var searchBar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
+			return '<header class="kidia-app-header" style="height:' + Number(chromeValue(card, "height", 64)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading"></span><div class="kidia-app-header__title">' + (searchBar ? '<div class="kidia-app-search" style="height:' + Number(chromeValue(card, "search_height", 40)) * .68 + 'px;border-radius:' + Number(chromeValue(card, "search_radius", 14)) * .68 + 'px;background:' + chromeValue(card, "search_background", "#F1F3F4") + '"><span>⌕ ' + escapeHtml(chromeValue(card, "search_placeholder", "Search products")) + '</span></div>' : '<strong>' + escapeHtml(chromeValue(card, "title", "Kidia")) + '</strong>') + '</div><div class="kidia-app-header__actions">' + (chromeChecked(card, "show_search", true) && !searchBar ? '<span class="kidia-app-icon kidia-app-icon--search"></span>' : '') + (chromeChecked(card, "show_cart", true) ? '<span class="kidia-app-icon kidia-app-icon--bag"></span>' : '') + '</div></header>';
+		}
+		return '<footer class="kidia-app-footer" style="height:' + Number(chromeValue(card, "height", 72)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "inactive_color", "#6B7280") + '"><span class="is-active" style="color:' + chromeValue(card, "active_color", "#1F6F61") + '"><span class="kidia-app-icon kidia-app-icon--home"></span><b>Home</b></span><span><span class="kidia-app-icon kidia-app-icon--categories"></span><b>Categories</b></span><span><span class="kidia-app-icon kidia-app-icon--heart"></span><b>Wishlist</b></span><span><span class="kidia-app-icon kidia-app-icon--person"></span><b>Account</b></span></footer>';
 	}
 
 	function loadRuntimePreview() {
