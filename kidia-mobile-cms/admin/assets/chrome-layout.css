@@ -24,6 +24,12 @@
 .kidia-app-footer-item.is-active .kidia-app-footer-icon-shell { transform:none; }
 
 .kidia-chrome-item-setting[hidden] { display:none!important; }
+.kidia-page-card__header .kidia-chrome-transfer-actions { display:flex; flex:0 0 auto; align-items:center; gap:7px; margin-inline-start:auto; }
+.kidia-chrome-transfer-actions + .kidia-page-master-toggle { margin-inline-start:0; }
+.kidia-chrome-transfer-actions .button { display:inline-flex; min-height:34px; align-items:center; gap:4px; }
+.kidia-chrome-transfer-actions .dashicons { width:16px; height:16px; font-size:16px; }
+.kidia-chrome-transfer-status { max-width:160px; color:#236b59; font-size:11px; font-weight:700; }
+.kidia-chrome-transfer-status.is-error { color:#b42318; }
 .kidia-chrome-item-setting { margin-top:12px; padding:14px; border:1px solid #c9dfd9; border-radius:10px; background:#fff; }
 .kidia-chrome-item-setting h3 { margin:0 0 12px; padding:0 0 9px; border-bottom:1px solid #d7e7e2; }
 .kidia-chrome-item-setting .kidia-chrome-icon-choice { margin-bottom:12px; }
@@ -51,18 +57,14 @@
 .kidia-chrome-icon-option .dashicons { width:26px; height:26px; font-size:26px; }
 .kidia-chrome-icon-option:hover { background:#f1faf7; }
 .kidia-chrome-icon-option.is-selected { border:2px solid #2f806e; background:#dff3ed; box-shadow:0 0 0 2px #fff,0 0 0 4px #8cc6b7; }
-.kidia-chrome-footer-icons { display:block!important; }
-.kidia-chrome-footer-icon-list { display:flex; flex-direction:column; }
-.kidia-chrome-footer-icon-row { display:grid; grid-template-columns:minmax(90px,.4fr) minmax(180px,1.5fr) minmax(150px,.8fr); align-items:center; gap:12px; padding:7px 0; }
-.kidia-chrome-footer-icon-row[hidden] { display:none!important; }
-.kidia-chrome-footer-icon-row .kidia-chrome-icon-options { justify-content:flex-start; }
-.kidia-chrome-footer-icon-row .kidia-page-field { margin:0; }
-.kidia-chrome-footer-icon-row .kidia-page-field>label { display:block; margin-bottom:5px; color:#315f55; font-size:12px; font-weight:700; }
-.kidia-chrome-footer-icon-row .kidia-page-field input { width:100%; }
 .kidia-chrome-item-setting--logo .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; }
 .kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_url"] { grid-column:1/-1; }
-.kidia-chrome-item-setting--logo .kidia-page-media { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; }
-.kidia-chrome-item-setting--logo .kidia-page-media .button { min-height:42px; padding-inline:20px; }
+.kidia-chrome-item-setting--logo .kidia-page-media { display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:center; direction:rtl; }
+.kidia-chrome-item-setting--logo .kidia-page-media-actions { display:flex; grid-column:1; gap:7px; }
+.kidia-chrome-item-setting--logo .kidia-page-media input { grid-column:2; width:100%; }
+.kidia-chrome-item-setting--logo .kidia-page-media .button { min-height:42px; padding-inline:16px; }
+.kidia-chrome-item-setting--logo .kidia-page-media-preview { display:block; width:min(100%,360px); height:100px; margin-top:8px; }
+.kidia-chrome-item-setting--logo .kidia-page-media-preview[hidden] { display:none; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
@@ -127,5 +129,5 @@
 .kidia-mobile-preview__screen .kidia-app-footer { position:sticky; bottom:0; z-index:20; }
 @media (max-width: 900px) {
 	.kidia-chrome-icon-choice { grid-template-columns:1fr; }
-	.kidia-chrome-footer-icon-row { grid-template-columns:1fr; }
+	.kidia-page-card__header .kidia-chrome-transfer-actions { width:100%; order:3; margin:0; }
 }

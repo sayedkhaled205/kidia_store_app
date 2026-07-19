@@ -516,7 +516,7 @@ function runPageBuilderTest() {
 
 function runChromeComposerTest() {
   const layout = JSON.stringify({ rows: [{ columns: [{width:25,align:"left",items:["logo"]},{width:50,align:"center",items:[]},{width:25,align:"right",items:["cart"]}] }, { columns: [{width:100,align:"center",items:["search_bar"]}] }] });
-  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-element="header"><input type="checkbox" name="layout[header][enabled]" checked><div class="kidia-chrome-composer" data-part="header" data-page="home"><input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="logo">Logo</button><button class="kidia-chrome-item" data-item="cart">Cart</button><button class="kidia-chrome-item" data-item="search_bar">Search bar</button><button class="kidia-chrome-item" data-item="support">Support</button></div></div><button class="kidia-chrome-reset"></button></div><section data-item-section="logo"></section><section data-item-section="cart"><div class="kidia-chrome-icon-choice"><button class="kidia-chrome-icon-option" data-icon-value="bag">Bag</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="basket">Basket</button><select class="kidia-chrome-icon-select" name="layout[header][settings][cart_icon_variant]"><option value="bag">Bag</option><option value="basket" selected>Basket</option></select></div></section><section data-item-section="search_bar"></section><section class="kidia-chrome-footer-icon-row" data-item-section="support"><button class="kidia-chrome-icon-option" data-icon-value="chat">Chat</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="headset">Headset</button><select class="kidia-chrome-icon-select" name="layout[header][settings][support_icon_variant]"><option value="chat">Chat</option><option value="headset" selected>Headset</option></select></section><input name="layout[header][settings][subtitle]" value="Kids"><input name="layout[header][settings][height]" value="112"><input name="layout[header][settings][background_color]" value="#FFFFFF"><input name="layout[header][settings][icon_color]" value="#1F2933"><input name="layout[header][settings][icon_size]" value="24"><select name="layout[header][settings][cart_style]"><option value="circle" selected>Circle</option></select><input name="layout[header][settings][cart_color]" value="#123456"><input name="layout[header][settings][cart_background]" value="#FFFFFF"><input name="layout[header][settings][cart_radius]" value="12"><input name="layout[header][settings][icon_gap]" value="6"><input name="layout[header][settings][row_gap]" value="4"><input name="layout[header][settings][vertical_padding]" value="0"><input name="layout[header][settings][horizontal_padding]" value="16"><input name="layout[header][settings][search_width_percent]" value="100"><input name="layout[header][settings][search_height]" value="40"><input name="layout[header][settings][search_radius]" value="14"><input name="layout[header][settings][search_background]" value="#F1F3F4"><input name="layout[header][settings][search_placeholder]" value="Search products"></section></body></html>`;
+  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-element="header"><input type="checkbox" name="layout[header][enabled]" checked><div class="kidia-chrome-composer" data-part="header" data-page="home"><input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="logo">Logo</button><button class="kidia-chrome-item" data-item="cart">Cart</button><button class="kidia-chrome-item" data-item="search_bar">Search bar</button><button class="kidia-chrome-item" data-item="support">Support</button></div></div><button class="kidia-chrome-reset"></button></div><section data-item-section="logo"></section><section data-item-section="cart"><div class="kidia-chrome-icon-choice"><button class="kidia-chrome-icon-option" data-icon-value="bag">Bag</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="basket">Basket</button><select class="kidia-chrome-icon-select" name="layout[header][settings][cart_icon_variant]"><option value="bag">Bag</option><option value="basket" selected>Basket</option></select></div></section><section data-item-section="search_bar"></section><section data-item-section="support"><div class="kidia-chrome-icon-choice"><button class="kidia-chrome-icon-option" data-icon-value="chat">Chat</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="headset">Headset</button><select class="kidia-chrome-icon-select" name="layout[header][settings][support_icon_variant]"><option value="chat">Chat</option><option value="headset" selected>Headset</option></select></div></section><input name="layout[header][settings][subtitle]" value="Kids"><input name="layout[header][settings][height]" value="112"><input name="layout[header][settings][background_color]" value="#FFFFFF"><input name="layout[header][settings][icon_color]" value="#1F2933"><input name="layout[header][settings][icon_size]" value="24"><select name="layout[header][settings][cart_style]"><option value="circle" selected>Circle</option></select><input name="layout[header][settings][cart_color]" value="#123456"><input name="layout[header][settings][cart_background]" value="#FFFFFF"><input name="layout[header][settings][cart_radius]" value="12"><input name="layout[header][settings][icon_gap]" value="6"><input name="layout[header][settings][row_gap]" value="4"><input name="layout[header][settings][vertical_padding]" value="0"><input name="layout[header][settings][horizontal_padding]" value="16"><input name="layout[header][settings][search_width_percent]" value="100"><input name="layout[header][settings][search_height]" value="40"><input name="layout[header][settings][search_radius]" value="14"><input name="layout[header][settings][search_background]" value="#F1F3F4"><input name="layout[header][settings][search_placeholder]" value="Search products"></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
@@ -530,7 +530,7 @@ function runChromeComposerTest() {
 	window.document.querySelector('[data-icon-value="bag"]').dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 	assert.match(window.KidiaChromePreview.renderHeader(card, "Home"), /kidia-app-icon--cart-bag/, "Icon image buttons outside the composer must update the preview immediately.");
 	window.document.querySelector('[data-item-section="support"] [data-icon-value="chat"]').dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
-	assert.equal(window.document.querySelector('[name$="[support_icon_variant]"]').value, "chat", "Icon choices inside the combined footer-style section must remain clickable.");
+	assert.equal(window.document.querySelector('[name$="[support_icon_variant]"]').value, "chat", "Icon choices inside their own item settings section must remain clickable.");
   assert.match(preview, /grid-template-columns:minmax\(0,100fr\)/, "A one-column row must span the header without overflowing when row gaps are present.");
   assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
 	assert.match(preview, /--row-gap:4px/, "The real gap between header rows must be reflected without browser-only scaling.");
@@ -626,6 +626,84 @@ function runFooterPreviewControlsTest() {
 	  console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
 }
 
+function runProductFooterButtonPreviewTest() {
+	const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-page="product">
+		<input type="checkbox" name="layout[footer][enabled]" checked>
+		<input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":25,"items":["share"]},{"width":25,"items":["like"]},{"width":50,"items":["add_to_cart"]}]}]}'>
+		<input name="layout[footer][settings][button_width_percent]" value="60">
+		<input name="layout[footer][settings][button_height]" value="48">
+		<select name="layout[footer][settings][button_style]"><option value="outline" selected>Outline</option></select>
+		<select name="layout[footer][settings][button_shape]"><option value="pill" selected>Pill</option></select>
+		<input name="layout[footer][settings][button_color]" value="#112233">
+		<input name="layout[footer][settings][button_text_color]" value="#445566">
+		<input name="layout[footer][settings][button_border_color]" value="#778899">
+		<input name="layout[footer][settings][button_border_width]" value="2">
+		<input name="layout[footer][settings][add_to_cart_label]" value="Add to bag">
+		<input type="checkbox" name="layout[footer][settings][show_labels]" checked>
+	</section></body></html>`;
+	const dom = new JSDOM(markup, { runScripts: "outside-only" });
+	const { window } = dom;
+	window.eval(readAsset("chrome-layout.js"));
+	const preview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"), { page: "product" });
+	assert.match(preview, /grid-template-columns:minmax\(0,20fr\) minmax\(0,20fr\) minmax\(0,60fr\)/, "Button width must claim its configured share of the complete footer.");
+	assert.match(preview, /kidia-app-footer-add is-outline/, "The selected button style must render in the preview.");
+	assert.match(preview, /width:100%;height:48px/, "Button height must render immediately while its column controls the width.");
+	assert.match(preview, /background:transparent/, "Outline buttons must preview with a transparent fill.");
+	assert.match(preview, /border:2px solid #778899/, "Button border controls must render immediately.");
+	assert.match(preview, /border-radius:24px/, "Pill shape must derive its radius from the configured height.");
+	console.log("Product footer preview: width, height, style and shape controls passed.");
+}
+
+function runChromeCopyPasteAndLogoMediaTest() {
+	const sourceLayout = JSON.stringify({ rows: [{ columns: [{ width: 100, align: "center", items: ["title"] }] }] });
+	const destinationLayout = JSON.stringify({ rows: [{ columns: [{ width: 100, align: "center", items: ["cart"] }] }] });
+	function card(id, enabled, layout, title) {
+		return `<section id="${id}" class="kidia-fixed-chrome-card" data-chrome-part="header">
+			<input type="checkbox" name="${id}[enabled]" ${enabled ? "checked" : ""}>
+			<button type="button" data-chrome-copy>Copy</button><button type="button" data-chrome-paste>Paste</button><span class="kidia-chrome-transfer-status"></span>
+			<div class="kidia-chrome-composer" data-part="header" data-page="catalog">
+				<input class="kidia-chrome-layout-json" name="${id}[settings][layout_json]" value='${layout}'>
+				<div class="kidia-chrome-layout"></div>
+				<div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="title">Title</button><button class="kidia-chrome-item" data-item="cart">Cart</button></div></div>
+				<button type="button" class="kidia-chrome-reset">Reset</button>
+			</div>
+			<input name="${id}[settings][title]" value="${title}">
+			<input name="${id}[settings][logo_text]" value="${id} logo">
+			<div class="kidia-page-field kidia-page-field--image"><div class="kidia-page-media"><input class="kidia-page-media-url" name="${id}[settings][logo_url]" value="https://example.com/${id}.png"><button type="button" class="kidia-page-media-choose">Choose image</button><button type="button" class="kidia-page-media-clear">Use logo text</button></div><img class="kidia-page-media-preview" src="https://example.com/${id}.png"></div>
+		</section>`;
+	}
+	const dom = new JSDOM(`<!doctype html><html><body>${card("source", true, sourceLayout, "Copied title")}${card("destination", false, destinationLayout, "Old title")}</body></html>`, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+	const { window } = dom;
+	window.wp = {
+		media() {
+			let select = () => {};
+			return {
+				on(event, callback) { if (event === "select") select = callback; },
+				open() { select(); },
+				state() { return { get() { return { first() { return { toJSON() { return { url: "https://example.com/new-logo.png" }; } }; } }; } }; },
+			};
+		},
+	};
+	window.eval(readAsset("chrome-layout.js"));
+	window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
+	const source = window.document.getElementById("source");
+	const destination = window.document.getElementById("destination");
+	click(window, source.querySelector("[data-chrome-copy]"));
+	click(window, destination.querySelector("[data-chrome-paste]"));
+	assert.equal(destination.querySelector('[name$="[enabled]"]').checked, true, "Paste must copy the fixed card On/Off state.");
+	assert.equal(destination.querySelector('[name$="[title]"]').value, "Copied title", "Paste must copy settings between page cards.");
+	assert.deepEqual(JSON.parse(destination.querySelector(".kidia-chrome-layout-json").value), JSON.parse(sourceLayout), "Paste must copy the exact header/footer layout.");
+	assert.ok(destination.querySelector('.kidia-chrome-zone [data-item="title"]'), "The pasted layout must redraw the composer immediately.");
+	assert.equal(destination.querySelector(".kidia-chrome-transfer-status").textContent, "Settings pasted", "Paste must show clear feedback.");
+	click(window, destination.querySelector(".kidia-page-media-choose"));
+	assert.equal(destination.querySelector(".kidia-page-media-url").value, "https://example.com/new-logo.png", "Choose image must update the logo URL on every builder page.");
+	assert.equal(destination.querySelector(".kidia-page-media-preview").src, "https://example.com/new-logo.png", "Choose image must update the visible logo preview.");
+	click(window, destination.querySelector(".kidia-page-media-clear"));
+	assert.equal(destination.querySelector(".kidia-page-media-url").value, "", "Use logo text must clear the selected image.");
+	assert.equal(destination.querySelector(".kidia-page-media-preview").hidden, true, "Switching to logo text must hide the old image preview.");
+	console.log("Header/Footer transfer and shared logo media picker passed.");
+}
+
 function runUnsavedChangesDialogTest() {
 	const markup = `<!doctype html><html><body><a id="leave" href="/wp-admin/admin.php?page=other">Leave</a><form class="kidia-page-editor"><input id="title" name="layout[title]" value="Before"><button type="submit">Save</button></form></body></html>`;
 	const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php?page=builder" });
@@ -686,8 +764,10 @@ if (require.main === module) {
   runPageBuilderTest();
   runChromeComposerTest();
   runCollapsedHeaderToggleTest();
-	  runFooterPreviewControlsTest();
-	  runUnsavedChangesDialogTest();
+	runFooterPreviewControlsTest();
+	runProductFooterButtonPreviewTest();
+	runChromeCopyPasteAndLogoMediaTest();
+	runUnsavedChangesDialogTest();
 	  runCommercePreviewTest();
   console.log("Builder browser contract tests: ok");
 }

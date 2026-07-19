@@ -133,20 +133,42 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Choose the product options first.'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('product-option-pa_color-blue')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('product-option-pa_size-m')));
-    await tester.pumpAndSettle();
-
-    expect(find.text(r'$69.99'), findsOneWidget);
-    final FilledButton button = tester.widget<FilledButton>(
+    expect(find.text('Choose the product options first.'), findsNothing);
+    final FilledButton initialButton = tester.widget<FilledButton>(
       find.byKey(const Key('add-to-cart-button')),
     );
-    expect(button.onPressed, isNotNull);
+    expect(initialButton.onPressed, isNotNull);
 
     await tester.tap(find.byKey(const Key('add-to-cart-button')));
     await tester.pumpAndSettle();
+
+    final Finder optionsSheet = find.byKey(const Key('product-options-sheet'));
+    expect(optionsSheet, findsOneWidget);
+    expect(find.text('Choose product options'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: optionsSheet,
+        matching: find.byKey(const Key('product-option-pa_color-blue')),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: optionsSheet,
+        matching: find.byKey(const Key('product-option-pa_size-m')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(r'$69.99'), findsOneWidget);
+    final FilledButton sheetButton = tester.widget<FilledButton>(
+      find.byKey(const Key('product-options-sheet-add')),
+    );
+    expect(sheetButton.onPressed, isNotNull);
+
+    await tester.tap(find.byKey(const Key('product-options-sheet-add')));
+    await tester.pumpAndSettle();
+    expect(optionsSheet, findsNothing);
     expect(captured?.variationId, 103);
   });
 
@@ -234,6 +256,29 @@ void main() {
       tester.widget<SizedBox>(find.byKey(const Key('product-footer-size'))).height,
       64,
     );
+    final Size footerSize = tester.getSize(
+      find.byKey(const Key('product-footer-size')),
+    );
+    final Size addToCartSize = tester.getSize(
+      find.byKey(const Key('product-add-to-cart-size')),
+    );
+    expect(addToCartSize.height, 48);
+    expect(addToCartSize.width / footerSize.width, closeTo(0.60, 0.01));
+    final FilledButton addToCartButton = tester.widget<FilledButton>(
+      find.byKey(const Key('add-to-cart-button')),
+    );
+    expect(
+      addToCartButton.style?.backgroundColor?.resolve(<WidgetState>{}),
+      Colors.transparent,
+    );
+    final OutlinedBorder? addToCartShape = addToCartButton.style?.shape?.resolve(
+      <WidgetState>{},
+    );
+    expect(addToCartShape, isA<RoundedRectangleBorder>());
+    expect(
+      (addToCartShape! as RoundedRectangleBorder).borderRadius,
+      BorderRadius.circular(24),
+    );
     final SizedBox shareBox = tester.widget<SizedBox>(
       find.byKey(const Key('product-footer-icon-box-share')),
     );
@@ -291,6 +336,12 @@ CmsPageLayout _liveStyleProductLayout() {
         'share_label': 'Share',
         'like_label': 'Like',
         'add_to_cart_label': 'Add to bag',
+        'button_width_percent': 60,
+        'button_height': 48,
+        'button_style': 'outline',
+        'button_shape': 'pill',
+        'button_border_color': '#2F806E',
+        'button_border_width': 2,
       },
     ),
   );

@@ -151,6 +151,47 @@ void main() {
     expect(find.text('Products'), findsNothing);
     expect(find.text('Search products'), findsOneWidget);
   });
+
+  testWidgets('renders configured logo text and its independent color', (
+    WidgetTester tester,
+  ) async {
+    final CmsPageLayout fallback = CmsPageLayout.fallback('home');
+    await _pumpPage(
+      tester,
+      layout: CmsPageLayout(
+        page: 'home',
+        header: CmsPageComponent(
+          id: 'header',
+          type: 'app_header',
+          enabled: true,
+          settings: <String, dynamic>{
+            ...fallback.header.settings,
+            'logo_url': '',
+            'logo_text': 'My Store',
+            'logo_text_color': '#C84F6A',
+            'layout_json': <String, dynamic>{
+              'rows': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'columns': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'width': 100,
+                      'align': 'center',
+                      'items': <String>['logo'],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ),
+        elements: fallback.elements,
+        footer: fallback.footer,
+      ),
+    );
+
+    final Text logoText = tester.widget<Text>(find.text('My Store'));
+    expect(logoText.style?.color, const Color(0xFFC84F6A));
+  });
 }
 
 CmsPageAppBar _appBar(WidgetTester tester) => tester.widget<CmsPageAppBar>(

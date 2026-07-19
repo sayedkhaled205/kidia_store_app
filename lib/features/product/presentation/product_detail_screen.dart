@@ -124,7 +124,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 sizeReference: footerSize,
                 hasCartConnection: widget.onAddToCart != null,
                 copy: copy,
-                onPressed: _addToCart,
+                onPressed: _handlePurchasePressed,
                 onShare: widget.onShareRequested == null ? null : () => widget.onShareRequested!(_controller.product!),
                 onLike: widget.onWishlistToggle == null || _isWishlistMutating ? null : () => _toggleWishlist(_controller.product!),
                 isLiked: _isWishlisted,
@@ -191,6 +191,30 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           onRelatedProductsRequested: widget.onRelatedProductsRequested,
         );
     }
+  }
+
+  Future<void> _handlePurchasePressed() async {
+    final CatalogProduct? product = _controller.product;
+    if (product == null) {
+      return;
+    }
+    if (product.hasVariations && !_controller.canAddToCart) {
+      final bool chooseComplete =
+          await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (BuildContext context) => _ProductOptionsSheet(
+              controller: _controller,
+              copy: _ProductCopy.of(context),
+            ),
+          ) ??
+          false;
+      if (!mounted || !chooseComplete) {
+        return;
+      }
+    }
+    await _addToCart();
   }
 
   Future<void> _addToCart() async {
@@ -628,6 +652,91 @@ class _ProductOptionPicker extends StatelessWidget {
   }
 }
 
+class _ProductOptionsSheet extends StatelessWidget {
+  const _ProductOptionsSheet({
+    required this.controller,
+    required this.copy,
+  });
+
+  final ProductDetailController controller;
+  final _ProductCopy copy;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (BuildContext context, Widget? child) {
+        final bool invalidSelection =
+            controller.selectionComplete &&
+            controller.selectedVariation == null;
+        return Padding(
+          key: const Key('product-options-sheet'),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            20 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        copy.chooseOptionsTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      key: const Key('product-options-sheet-close'),
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).closeButtonTooltip,
+                      onPressed: () => Navigator.of(context).pop(false),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                for (final ProductOptionGroup group in controller.optionGroups)
+                  _ProductOptionPicker(
+                    group: group,
+                    controller: controller,
+                    copy: copy,
+                  ),
+                if (invalidSelection) ...<Widget>[
+                  Text(
+                    copy.unavailableCombination,
+                    key: const Key('product-options-sheet-error'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                FilledButton.icon(
+                  key: const Key('product-options-sheet-add'),
+                  onPressed: controller.canAddToCart
+                      ? () => Navigator.of(context).pop(true)
+                      : null,
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                  label: Text(copy.addToCart),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _QuantitySelector extends StatelessWidget {
   const _QuantitySelector({required this.controller, required this.copy});
 
@@ -809,9 +918,9 @@ class _PurchaseBar extends StatelessWidget {
       reason = copy.cartNotConnected;
     } else if (!product.isInStock) {
       reason = copy.outOfStock;
-    } else if (product.hasVariations && !controller.selectionComplete) {
-      reason = copy.chooseOptionsFirst;
-    } else if (product.hasVariations && !controller.canAddToCart) {
+    } else if (product.hasVariations &&
+        controller.selectionComplete &&
+        !controller.canAddToCart) {
       reason = copy.unavailableCombination;
     } else if (!product.isPurchasable) {
       reason = copy.notPurchasable;
@@ -821,6 +930,10 @@ class _PurchaseBar extends StatelessWidget {
     final Color background = _cmsColor(footer.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
     final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
+    final Color buttonBorderColor = _cmsColor(
+      footer.string('button_border_color', '#1F2933'),
+      buttonColor,
+    );
     final double footerHeight = sizeReference.number('height', 64).clamp(48, 100);
     final double footerIconSize = sizeReference
         .number('icon_size', 24)
@@ -847,17 +960,109 @@ class _PurchaseBar extends StatelessWidget {
 	  final List<String> items = legacyItems is List ? legacyItems.map((item) => '$item').toList() : <String>['share', 'like', 'add_to_cart'];
 	  placements.addAll(items.map((item) => (item, 100 / items.length)));
 	}
+	final bool hasAddToCart = placements.any(
+	  ((String, double) placement) => placement.$1 == 'add_to_cart',
+	);
+	final double configuredButtonWidth = footer
+	    .number('button_width_percent', 58)
+	    .clamp(35, 80);
+	final double otherWidthTotal = placements
+	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
+	    .fold<double>(0, (double total, (String, double) placement) => total + placement.$2);
+	final String buttonStyle = footer.string('button_style', 'filled');
+	final double configuredButtonHeight = footer
+	    .number('button_height', 52)
+	    .clamp(36, 80);
+	final double buttonHeight = configuredButtonHeight > footerHeight
+	    ? footerHeight
+	    : configuredButtonHeight;
+	final String buttonShape = footer.string('button_shape', 'custom');
+	final double buttonRadius = switch (buttonShape) {
+	  'rectangle' => 0,
+	  'rounded' => 12,
+	  'pill' => buttonHeight / 2,
+	  _ => footer.number('button_radius', 28).clamp(0, 40),
+	};
+	final double configuredBorderWidth = footer
+	    .number('button_border_width', 0)
+	    .clamp(0, 6);
+	final double buttonBorderWidth = buttonStyle == 'outline' && configuredBorderWidth < 1
+	    ? 1
+	    : configuredBorderWidth;
+	final Color buttonBackground = switch (buttonStyle) {
+	  'outline' => Colors.transparent,
+	  'soft' => buttonColor.withValues(alpha: 0.14),
+	  _ => buttonColor,
+	};
+	final bool purchaseActionEnabled =
+	    hasCartConnection &&
+	    product.isPurchasable &&
+	    product.isInStock &&
+	    !controller.isAdding;
 	final List<Widget> footerItems = <Widget>[];
 	for (final (String item, double width) in placements) {
+	  final double effectiveWidth = hasAddToCart
+	      ? item == 'add_to_cart'
+	          ? configuredButtonWidth
+	          : otherWidthTotal > 0
+	          ? (100 - configuredButtonWidth) * width / otherWidthTotal
+	          : 0
+	      : width;
 	  Widget? child;
 	  if (item == 'share') {
 		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('share_label', ''), 'مشاركة') : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
 	  } else if (item == 'like') {
 		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('like_label', ''), 'المفضلة') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
 	  } else if (item == 'add_to_cart') {
-		child = FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, textStyle: TextStyle(fontSize: footerLabelSize), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? SizedBox.square(dimension: footerIconSize, child: const CircularProgressIndicator(strokeWidth: 2)) : Icon(Icons.shopping_bag_outlined, size: footerIconSize), label: Text(controller.isAdding ? 'جارٍ الإضافة…' : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة')));
+		child = Align(
+		  alignment: Alignment.center,
+		  child: SizedBox(
+		    key: const Key('product-add-to-cart-size'),
+		    width: double.infinity,
+		    height: buttonHeight,
+		    child: FilledButton.icon(
+		      key: const Key('add-to-cart-button'),
+		      style: FilledButton.styleFrom(
+		        backgroundColor: buttonBackground,
+		        foregroundColor: buttonText,
+		        disabledBackgroundColor: buttonBackground.withValues(alpha: 0.42),
+		        disabledForegroundColor: buttonText.withValues(alpha: 0.62),
+		        textStyle: TextStyle(fontSize: footerLabelSize),
+		        side: BorderSide(
+		          color: buttonBorderColor,
+		          width: buttonBorderWidth,
+		        ),
+		        shape: RoundedRectangleBorder(
+		          borderRadius: BorderRadius.circular(buttonRadius),
+		        ),
+		      ),
+		      onPressed: purchaseActionEnabled ? onPressed : null,
+		      icon: controller.isAdding
+		          ? SizedBox.square(
+		              dimension: footerIconSize,
+		              child: const CircularProgressIndicator(strokeWidth: 2),
+		            )
+		          : Icon(Icons.shopping_bag_outlined, size: footerIconSize),
+		      label: Text(
+		        controller.isAdding
+		            ? 'جارٍ الإضافة…'
+		            : _arabicFooterLabel(
+		                footer.string('add_to_cart_label', ''),
+		                'أضف إلى السلة',
+		              ),
+		      ),
+		    ),
+		  ),
+		);
 	  }
-	  if (child != null) footerItems.add(Expanded(flex: (width * 100).round().clamp(1, 10000).toInt(), child: child));
+	  if (child != null && effectiveWidth > 0) {
+	    footerItems.add(
+	      Expanded(
+	        flex: (effectiveWidth * 100).round().clamp(1, 10000).toInt(),
+	        child: child,
+	      ),
+	    );
+	  }
 	}
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
@@ -1115,9 +1320,8 @@ class _ProductCopy {
   String get cartNotConnected => arabic
       ? 'ربط السلة غير متاح في هذه النسخة بعد.'
       : 'Cart connection is not available in this build yet.';
-  String get chooseOptionsFirst => arabic
-      ? 'اختر خيارات المنتج أولاً.'
-      : 'Choose the product options first.';
+  String get chooseOptionsTitle =>
+      arabic ? 'اختر خيارات المنتج' : 'Choose product options';
   String get unavailableCombination =>
       arabic ? 'هذه المجموعة غير متوفرة.' : 'This combination is unavailable.';
   String get notPurchasable => arabic

@@ -100,6 +100,8 @@ class CmsPageLayout {
 		'icon_color': '#1F2933',
 		'icon_size': 24,
 		'icon_gap': 6,
+		'logo_text': 'Kidia',
+		'logo_text_color': '#1F2933',
 		'search_style': page == 'home' ? 'bar' : 'icon',
 		'search_width_percent': 100,
 		'search_height': 40,
@@ -122,6 +124,14 @@ class CmsPageLayout {
 		'background_color': '#FFFFFF',
 		'hide_on_scroll': false,
 		'button_color': '#2F806E',
+		'button_text_color': '#FFFFFF',
+		'button_width_percent': 58,
+		'button_height': 52,
+		'button_style': 'filled',
+		'button_shape': 'custom',
+		'button_radius': 28,
+		'button_border_color': '#1F2933',
+		'button_border_width': 0,
 	};
     return CmsPageLayout(
       page: page,

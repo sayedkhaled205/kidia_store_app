@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 8;
+	private const VERSION = 9;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -42,7 +42,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'compact_shadow', __( 'Collapsed header shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'title', __( 'Page title', 'kidia-mobile-cms' ), 'text', '' ),
 			self::field( 'subtitle', __( 'Subtitle', 'kidia-mobile-cms' ), 'text', '' ),
-			self::field( 'logo_url', __( 'Logo', 'kidia-mobile-cms' ), 'image', '' ),
+			self::field( 'logo_url', __( 'Logo image', 'kidia-mobile-cms' ), 'image', '' ),
+			self::field( 'logo_text', __( 'Logo text (used when no image is selected)', 'kidia-mobile-cms' ), 'text', __( 'Kidia', 'kidia-mobile-cms' ) ),
+			self::field( 'logo_text_color', __( 'Logo text color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'logo_width', __( 'Logo width', 'kidia-mobile-cms' ), 'number', 118, array(), 32, 220 ),
 			self::field( 'logo_height', __( 'Logo height', 'kidia-mobile-cms' ), 'number', 38, array(), 20, 80 ),
 			self::field( 'style', __( 'Header style', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Standard', 'kidia-mobile-cms' ), 'compact' => __( 'Compact', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
@@ -190,7 +192,13 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'add_to_cart_label', __( 'Add to cart label', 'kidia-mobile-cms' ), 'text', __( 'Add to bag', 'kidia-mobile-cms' ) ),
 			self::field( 'button_color', __( 'Button color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'button_text_color', __( 'Button text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'kidia-mobile-cms' ), 'number', 58, array(), 35, 80 ),
+			self::field( 'button_height', __( 'Button height', 'kidia-mobile-cms' ), 'number', 52, array(), 36, 80 ),
+			self::field( 'button_style', __( 'Button style', 'kidia-mobile-cms' ), 'select', 'filled', array( 'filled' => __( 'Filled', 'kidia-mobile-cms' ), 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'soft' => __( 'Soft', 'kidia-mobile-cms' ) ) ),
+			self::field( 'button_shape', __( 'Button shape', 'kidia-mobile-cms' ), 'select', 'custom', array( 'custom' => __( 'Custom radius', 'kidia-mobile-cms' ), 'rectangle' => __( 'Rectangle', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded', 'kidia-mobile-cms' ), 'pill' => __( 'Pill', 'kidia-mobile-cms' ) ) ),
 			self::field( 'button_radius', __( 'Button radius', 'kidia-mobile-cms' ), 'number', 28, array(), 0, 40 ),
+			self::field( 'button_border_color', __( 'Button border color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+			self::field( 'button_border_width', __( 'Button border width', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 6 ),
 			self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'show_quantity', __( 'Show quantity', 'kidia-mobile-cms' ), 'checkbox', false ),
 		);

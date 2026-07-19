@@ -39,9 +39,16 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 $store = new Kidia_Mobile_Page_Layout_Store();
 $product_default = $store->get_layout( 'product' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
+kidia_page_assert( 58 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose a responsive button width control.' );
+kidia_page_assert( 52 === $product_default['footer']['settings']['button_height'], 'Product footer must expose a button height control.' );
+foreach ( array( 'button_style', 'button_shape', 'button_border_color', 'button_border_width' ) as $button_setting ) {
+	kidia_page_assert( array_key_exists( $button_setting, $product_default['footer']['settings'] ), "Product footer must expose $button_setting." );
+}
 $product_footer_columns = json_decode( $product_default['footer']['settings']['layout_json'], true )['rows'][0]['columns'];
 kidia_page_assert( array( 'share', 'like', 'add_to_cart' ) === array_map( static fn( array $column ): string => $column['items'][0], $product_footer_columns ), 'Product footer must default to Share, Like and Add to bag.' );
 $home_default = $store->get_layout( 'home' );
+kidia_page_assert( 'Kidia' === $home_default['header']['settings']['logo_text'], 'Header logo must expose a text fallback.' );
+kidia_page_assert( '#1F2933' === $home_default['header']['settings']['logo_text_color'], 'Header logo text must expose its own color.' );
 $home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
 kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['columns'][0]['items'] && 100 === $home_rows[1]['columns'][0]['width'] && array( 'search_bar' ) === $home_rows[1]['columns'][0]['items'], 'Home header must default to the two-row percentage-column layout.' );
 kidia_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
