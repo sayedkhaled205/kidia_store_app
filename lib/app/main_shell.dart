@@ -75,7 +75,9 @@ class MainShell extends ConsumerWidget {
           : SafeArea(
         top: false,
 		bottom: footer.boolean('safe_area', true),
-        child: Container(
+        child: Padding(
+          padding: EdgeInsets.only(top: footer.number('margin_top', 0).clamp(0, 80), bottom: footer.number('margin_bottom', 0).clamp(0, 80)),
+          child: Container(
           decoration: BoxDecoration(
             color: backgroundColor,
 			border: Border(top: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), KidiaColors.divider), width: footer.number('border_width', 1))),
@@ -123,16 +125,17 @@ class MainShell extends ConsumerWidget {
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(growable: false),
+						],
+					  ),
+					),
+				  );
+				}).toList(growable: false),
               ),
             ),
           ),
-        ),
-      ),
+		),
+	  ),
+	),
     );
   }
 

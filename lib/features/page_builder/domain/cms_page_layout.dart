@@ -77,6 +77,8 @@ class CmsPageLayout {
 	final Map<String, dynamic> headerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackHeaderLayout(page)),
 		'height': page == 'home' ? 112 : 64,
+		'margin_top': 0,
+		'margin_bottom': 0,
 		'row_gap': page == 'home' ? 4 : 8,
 		'vertical_padding': 8,
 		'horizontal_padding': 16,
@@ -93,8 +95,10 @@ class CmsPageLayout {
 	final Map<String, dynamic> footerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackFooterLayout(page)),
 		'style': page == 'product' ? 'product_action' : 'navigation',
-		'height': page == 'product' ? 84 : 72,
-		'side_spacing_percent': 5,
+		'height': page == 'product' ? 84 : 76,
+		'margin_top': 0,
+		'margin_bottom': 0,
+		'side_spacing_percent': 0,
 		'icon_size': 24,
 		'label_size': 11,
 		'icon_label_gap': 3,

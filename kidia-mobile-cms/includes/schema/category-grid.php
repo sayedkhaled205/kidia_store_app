@@ -29,7 +29,9 @@ return array(
 
 		'columns' => 3,
 
-		'limit' => 3,
+		'limit' => 5,
+
+		'layout' => 'patpat',
 
 		'parent_id' => 0,
 

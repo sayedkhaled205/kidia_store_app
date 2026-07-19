@@ -15,8 +15,11 @@ class HomeBlockFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final HomeBlockPresentation style = block.presentation;
     final double screenScale = homeResponsiveScale(context);
+    // An unset block background must remain transparent. Falling back to the
+    // theme surface introduced the grey bands that were not present in the
+    // Builder preview.
     final Color background =
-        _optionalColor(style.backgroundColor) ?? Theme.of(context).colorScheme.surface;
+        _optionalColor(style.backgroundColor) ?? Colors.transparent;
 
     return Padding(
       key: Key('home-block-frame-${block.id}'),

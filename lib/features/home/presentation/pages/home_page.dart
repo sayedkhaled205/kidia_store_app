@@ -14,11 +14,36 @@ import 'package:kidia_store_app/features/page_builder/presentation/providers/cms
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  late final ScrollController _scrollController;
+  bool _compactHeader = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    final bool compact = _scrollController.hasClients && _scrollController.offset > 36;
+    if (compact != _compactHeader) setState(() => _compactHeader = compact);
+  }
+
+  @override
+  void dispose() {
+    _scrollController..removeListener(_handleScroll)..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final String locale = Localizations.localeOf(context).toLanguageTag();
 
     final AsyncValue<HomeLayout> homeLayoutAsync = ref.watch(
@@ -32,6 +57,7 @@ class HomePage extends ConsumerWidget {
       appBar: CmsPageAppBar(
         layout: chrome,
         defaultTitle: 'Kidia',
+        compact: _compactHeader,
         actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
           CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
@@ -46,6 +72,7 @@ class HomePage extends ConsumerWidget {
             return ref.refresh(homeLayoutProvider(locale).future);
           },
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               homeLayoutAsync.when(

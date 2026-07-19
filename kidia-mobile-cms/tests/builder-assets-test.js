@@ -524,6 +524,7 @@ function runChromeComposerTest() {
   window.eval(readAsset("chrome-layout.js"));
   window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
+  card.insertAdjacentHTML("beforeend", '<input name="layout[header][settings][margin_top]" value="7"><input name="layout[header][settings][margin_bottom]" value="9">');
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
 	assert.match(preview, /is-circle[^>]+border:1px solid #123456/, "Header icon style must visibly affect the live preview.");
@@ -536,6 +537,7 @@ function runChromeComposerTest() {
   assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
 	assert.match(preview, /--row-gap:4px/, "The real gap between header rows must be reflected without browser-only scaling.");
 	assert.match(preview, /padding:0px 16px!important/, "Zero vertical padding must be reflected immediately instead of falling back to the default.");
+	assert.match(preview, /margin:7px 0 9px/, "Header space above and below must update the preview.");
 	const searchWidth = card.querySelector('[name$="[search_width_percent]"]');
 	searchWidth.value = "150";
 	assert.match(window.KidiaChromePreview.renderHeader(card, "Home"), /width:100%/, "Search width must clamp to the full available row instead of silently overflowing.");
@@ -571,7 +573,9 @@ function runFooterPreviewControlsTest() {
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
-  const preview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"));
+	const footerCard = window.document.querySelector("section");
+	footerCard.insertAdjacentHTML("beforeend", '<input name="layout[footer][settings][margin_top]" value="6"><input name="layout[footer][settings][margin_bottom]" value="8">');
+  const preview = window.KidiaChromePreview.renderFooter(footerCard);
   assert.match(preview, /padding:0 5%/, "Footer outside spacing must use the saved percentage on both sides.");
   assert.match(preview, /kidia-app-icon--home-filled/, "Footer icon design must match the selected visual option.");
   assert.match(preview, />Home</, "Footer labels must be independently switchable.");
@@ -580,6 +584,7 @@ function runFooterPreviewControlsTest() {
 	assert.match(preview, /0 4px 12px/, "Footer shadow must update preview instantly.");
 	assert.match(preview, /kidia-app-footer-item--share is-filled/, "Footer icon style must be applied to the preview.");
 	assert.match(preview, /--item-icon-size:30px/, "Footer per-icon size must be applied to the preview.");
+	assert.match(preview, /margin:6px 0 8px/, "Footer space above and below must update the preview.");
   console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
 }
 

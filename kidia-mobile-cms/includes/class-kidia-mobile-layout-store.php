@@ -198,8 +198,8 @@ final class Kidia_Mobile_Layout_Store {
 
 	/** PatPat-inspired Kidia content order used by fresh stores and the preset action. */
 	public function get_kidia_patpat_layout(): array {
-		$types = array( 'quick_links', 'image_banner', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
-		$names = array( 'Shop Fast', 'Kidia Main Offer', 'Shop by Category', 'Kidia Benefits', 'Flash Sale', 'New Arrivals', 'Seasonal Collections', 'Best Sellers', 'Our Brands', 'More for Kids' );
+		$types = array( 'image_banner', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
+		$names = array( 'Kidia Main Offer', 'Shop by Category', 'Kidia Benefits', 'Flash Sale', 'New Arrivals', 'Seasonal Collections', 'Best Sellers', 'Our Brands', 'More for Kids' );
 		$existing = $this->get_layout();
 		$pool = array();
 		foreach ( $existing as $saved_block ) {
@@ -224,7 +224,7 @@ final class Kidia_Mobile_Layout_Store {
 					$block['settings']['title'] = ''; $block['settings']['layout'] = 'grid'; $block['settings']['columns'] = 4; $block['settings']['image_shape'] = 'circle'; $block['settings']['item_size'] = 76; $block['settings']['gap'] = 14; $block['settings']['label_size'] = 13;
 					break;
 				case 'category_grid':
-					$block['settings']['title'] = ''; $block['settings']['columns'] = 3; $block['settings']['limit'] = 3; $block['settings']['show_names'] = true; $block['settings']['layout'] = 'grid'; $block['settings']['image_shape'] = 'circle'; $block['settings']['image_size'] = 86; $block['settings']['gap'] = 16; $block['settings']['label_size'] = 14;
+					$block['settings']['title'] = ''; $block['settings']['columns'] = 3; $block['settings']['limit'] = 5; $block['settings']['show_names'] = true; $block['settings']['layout'] = 'patpat'; $block['settings']['image_shape'] = 'circle'; $block['settings']['image_size'] = 86; $block['settings']['gap'] = 16; $block['settings']['label_size'] = 14; $block['settings']['block_background'] = '#FFFFFF';
 					break;
 				case 'promo_strip':
 					$block['settings']['text'] = __( 'New Kidia offers every day', 'kidia-mobile-cms' ); $block['settings']['background_color'] = '#EAF6F2'; $block['settings']['text_color'] = '#1F6F61';
@@ -241,9 +241,9 @@ final class Kidia_Mobile_Layout_Store {
 			}
 			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) {
 				$block['settings']['source'] = 'on_sale';
-				if ( 5 === $index ) { $block['settings']['source'] = 'latest'; }
-				if ( 7 === $index ) { $block['settings']['source'] = 'featured'; }
-				$block['settings']['title'] = 5 === $index ? __( 'New arrivals', 'kidia-mobile-cms' ) : ( 7 === $index ? __( 'Best sellers', 'kidia-mobile-cms' ) : __( 'More for kids', 'kidia-mobile-cms' ) );
+				if ( 4 === $index ) { $block['settings']['source'] = 'latest'; }
+				if ( 6 === $index ) { $block['settings']['source'] = 'featured'; }
+				$block['settings']['title'] = 4 === $index ? __( 'New arrivals', 'kidia-mobile-cms' ) : ( 6 === $index ? __( 'Best sellers', 'kidia-mobile-cms' ) : __( 'More for kids', 'kidia-mobile-cms' ) );
 				$block['settings']['columns'] = 2; $block['settings']['limit'] = 10; $block['settings']['card_style'] = 'minimal'; $block['settings']['image_ratio'] = 0.82; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true; $block['settings']['show_rating'] = true; $block['settings']['show_view_all'] = true;
 			}
 			$layout[] = $block;
@@ -257,7 +257,7 @@ final class Kidia_Mobile_Layout_Store {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function create_default_layout(): array {
-		$types = array( 'quick_links', 'image_banner', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
+		$types = array( 'image_banner', 'category_grid', 'promo_strip', 'countdown', 'product_carousel', 'banner_grid', 'product_carousel', 'brand_carousel', 'product_grid' );
 
 		$layout = array();
 
@@ -283,7 +283,7 @@ final class Kidia_Mobile_Layout_Store {
 			} elseif ( 'image_banner' === $type ) {
 				$block['settings'] = array_merge( $block['settings'], array( 'aspect_ratio' => 1, 'border_radius' => 18, 'button_label' => __( 'SHOP NOW', 'kidia-mobile-cms' ) ) );
 			} elseif ( 'category_grid' === $type ) {
-				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'columns' => 3, 'limit' => 3, 'layout' => 'grid', 'image_shape' => 'circle', 'image_size' => 86, 'gap' => 16, 'label_size' => 14 ) );
+				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'columns' => 3, 'limit' => 5, 'layout' => 'patpat', 'image_shape' => 'circle', 'image_size' => 86, 'gap' => 16, 'label_size' => 14, 'block_background' => '#FFFFFF' ) );
 			}
 
 			$layout[] = $block;

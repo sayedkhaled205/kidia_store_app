@@ -191,19 +191,9 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 				>
 
 				<span class="kidia-builder-switch__track"></span>
+				<span class="kidia-builder-switch__state"></span>
 
 			</label>
-
-			<span>
-
-				<?php
-				esc_html_e(
-					'Show',
-					'kidia-mobile-cms'
-				);
-				?>
-
-			</span>
 
 			</div>
 

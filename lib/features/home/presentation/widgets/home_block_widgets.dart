@@ -605,9 +605,11 @@ class CategoryGridBlockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int columns = block.columns.clamp(2, 6).toInt();
+    final bool compact = block.layout == 'compact';
+    final bool cards = block.layout == 'cards';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: compact ? 4 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -652,11 +654,11 @@ class CategoryGridBlockWidget extends StatelessWidget {
             )
           else
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final double itemWidth =
-                      (constraints.maxWidth - ((columns - 1) * block.gap)) /
+					  (constraints.maxWidth - ((columns - 1) * (compact ? block.gap / 2 : block.gap))) /
                       columns;
                   final double imageSize = block.imageSize < itemWidth - 8
                       ? block.imageSize
@@ -667,15 +669,16 @@ class CategoryGridBlockWidget extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
-                      crossAxisSpacing: block.gap,
-                      mainAxisSpacing: block.gap,
-                      mainAxisExtent: imageSize + (block.showNames ? 45 : 4),
+					  crossAxisSpacing: compact ? block.gap / 2 : block.gap,
+					  mainAxisSpacing: compact ? block.gap / 2 : block.gap,
+					  mainAxisExtent: imageSize + (block.showNames ? (compact ? 36 : 45) : 4),
                     ),
                     itemBuilder: (BuildContext context, int index) {
                       return _CategoryBlockCard(
                         item: block.items[index],
                         block: block,
-                        imageSize: imageSize,
+						imageSize: compact ? imageSize * .82 : imageSize,
+						forceRounded: cards,
                         onAction: onAction,
                       );
                     },
@@ -695,16 +698,18 @@ class _CategoryBlockCard extends StatelessWidget {
     required this.block,
     required this.imageSize,
     required this.onAction,
+    this.forceRounded = false,
   });
 
   final CategoryItem item;
   final CategoryGridBlock block;
   final double imageSize;
   final ValueChanged<HomeAction> onAction;
+  final bool forceRounded;
 
   @override
   Widget build(BuildContext context) {
-    final BorderRadius radius = switch (block.imageShape) {
+	final BorderRadius radius = forceRounded ? BorderRadius.circular(18) : switch (block.imageShape) {
       'circle' => BorderRadius.circular(imageSize / 2),
       'square' => BorderRadius.zero,
       _ => BorderRadius.circular(18),

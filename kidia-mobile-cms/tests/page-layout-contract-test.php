@@ -55,7 +55,7 @@ $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 );
 $migrated_home = $store->get_layout( 'home' );
 kidia_page_assert( 64.0 === $migrated_home['header']['settings']['height'], 'Schema upgrades must preserve a saved header instead of replacing it.' );
-kidia_page_assert( 5.0 === $migrated_home['footer']['settings']['side_spacing_percent'], 'Legacy footers must receive the percentage side-spacing default.' );
+kidia_page_assert( 0.0 === $migrated_home['footer']['settings']['side_spacing_percent'], 'Legacy footers must receive the full-width PatPat side-spacing default.' );
 unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] );
 foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );
