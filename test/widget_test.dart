@@ -52,7 +52,8 @@ void main() {
     await _pumpStartedApp(tester, router: router);
 
     expect(find.byType(ProductDetailScreen), findsOneWidget);
-    expect(find.byKey(const Key('cms-bottom-navigation')), findsOneWidget);
+	expect(find.byKey(const Key('cms-bottom-navigation')), findsNothing);
+	expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
 
     await _disposeApp(tester, router);
   });
