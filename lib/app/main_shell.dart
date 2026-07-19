@@ -58,6 +58,13 @@ class _MainShellState extends ConsumerState<MainShell> {
         CmsPageLayout.fallback('category');
     final CmsPageComponent footer = pageLayout.footer;
     final CmsPageComponent footerSize = categoryLayout.footer;
+    final double footerIconSize = footerSize
+        .number('icon_size', 24)
+        .clamp(14, 40);
+    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48);
+    final double footerLabelSize = footerSize
+        .number('label_size', 11)
+        .clamp(8, 20);
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
@@ -129,9 +136,11 @@ class _MainShellState extends ConsumerState<MainShell> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           _NavigationIcon(
+                            key: Key('cms-bottom-nav-icon-box-${item.id}'),
                             icon: _footerIcon(footer, item, selected),
                             color: color,
-                            size: footerSize.number('icon_size', 24),
+                            size: footerIconSize,
+                            boxSize: footerIconBoxSize,
                           ),
                           if (footer.boolean('show_labels', true)) ...<Widget>[
                             SizedBox(
@@ -139,16 +148,25 @@ class _MainShellState extends ConsumerState<MainShell> {
                                   .number('icon_label_gap', 3)
                                   .clamp(0, 12),
                             ),
-                            Text(
-                              _footerLabel(footer, item),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: color,
-                                fontSize: footerSize
-                                    .number('label_size', 11)
-                                    .clamp(8, 20),
-                                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            SizedBox(
+                              key: Key(
+                                'cms-bottom-nav-label-box-${item.id}',
+                              ),
+                              height: footerLabelSize * 1.25,
+                              child: Center(
+                                child: Text(
+                                  _footerLabel(footer, item),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: color,
+                                    fontSize: footerLabelSize,
+                                    height: 1,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -246,18 +264,24 @@ class _MainShellState extends ConsumerState<MainShell> {
 }
 
 class _NavigationIcon extends StatelessWidget {
-  const _NavigationIcon({required this.icon, required this.color, required this.size});
+  const _NavigationIcon({
+    required this.icon,
+    required this.color,
+    required this.size,
+    required this.boxSize,
+    super.key,
+  });
 
   final IconData icon;
   final Color color;
   final double size;
+  final double boxSize;
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      color: color,
-	  size: size,
+    return SizedBox.square(
+      dimension: boxSize,
+      child: Center(child: Icon(icon, color: color, size: size)),
     );
   }
 }

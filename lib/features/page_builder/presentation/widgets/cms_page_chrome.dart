@@ -423,6 +423,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
 	List<Map<String, dynamic>> _compactLayoutRows() {
+		if (_header.string('collapse_preset', 'custom') == 'sticky_search_cart') {
+			return <Map<String, dynamic>>[<String, dynamic>{
+				'columns': <Map<String, dynamic>>[
+					<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']},
+					<String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']},
+				],
+			}];
+		}
 		final dynamic raw = _header.json('compact_layout_json')['rows'];
 		if (raw is List) {
 			final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(1).toList();

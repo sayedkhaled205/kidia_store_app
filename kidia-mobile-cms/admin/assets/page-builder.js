@@ -4,11 +4,14 @@
 	if (!root) { return; }
 	var list = document.getElementById("kidia-page-elements");
 	var preview = document.getElementById("kidia-page-live-preview");
+	var form = root.querySelector("form");
+	var phoneScreen = root.querySelector(".kidia-page-phone__screen");
 	var dragged = null;
 	var frame = 0;
 	var activePreviewElement = "";
 	var config = window.kidiaPageBuilder || {};
 	var products = Array.isArray(config.products) ? config.products : [];
+	var previewScrolled = false;
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
@@ -20,6 +23,7 @@
 	function icon(name) { return '<span class="kidia-app-icon kidia-app-icon--' + name + '" aria-hidden="true"></span>'; }
 	function money(item) { return escapeHtml(item && item.price ? item.price : "450 ج.م"); }
 	function sampleProducts() { return products.length ? products : [{name:"طقم أطفال كيديا",price:"450 ج.م",image_url:""},{name:"كوليكشن جديد",price:"390 ج.م",image_url:""},{name:"ملابس أطفال",price:"320 ج.م",image_url:""},{name:"عرض خاص",price:"275 ج.م",image_url:""}]; }
+	function markDirty() { form.dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true })); }
 
 	function updateIndexes() {
 		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
@@ -42,7 +46,8 @@
 	}
 
 	function renderHeader(card) {
-		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderHeader(card, root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"); }
+		var titles = { catalog: "المنتجات", product: "", wishlist: "المفضلة", account: "حسابي" };
+		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderHeader(card, titles[root.dataset.page] || "المنتجات", { collapsed: previewScrolled, page: root.dataset.page }); }
 		if (!card || !checked(card, "enabled", true)) { return ""; }
 		var showBar = value(card, "search_style", "icon") === "bar" && checked(card, "show_search", true);
 		var title = escapeHtml(value(card, "title", root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"));
@@ -101,7 +106,7 @@
 	}
 
 	function renderFooter(card) {
-		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderFooter(card); }
+		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderFooter(card, { page: root.dataset.page }); }
 		if (!card || !checked(card, "enabled", true)) { return ""; }
 		if (value(card, "style", "navigation") === "product_action") {
 			return '<footer class="kidia-app-footer kidia-app-footer--product" style="height:' + number(card, "height", 84) + 'px;background:' + color(card, "background_color", "#FFFFFF") + '">' + (checked(card, "show_share", true) ? '<span>' + icon("share") + '<b>' + escapeHtml(value(card, "share_label", "مشاركة")) + '</b></span>' : "") + (checked(card, "show_like", true) ? '<span>' + icon("heart") + '<b>' + escapeHtml(value(card, "like_label", "إعجاب")) + '</b></span>' : "") + (checked(card, "show_add_to_cart", true) ? '<button style="background:' + color(card, "button_color", "#1F2933") + ';color:' + color(card, "button_text_color", "#FFFFFF") + ';border-radius:' + number(card, "button_radius", 28) + 'px">' + escapeHtml(value(card, "add_to_cart_label", "أضف للحقيبة")) + '</button>' : "") + '</footer>';
@@ -152,7 +157,7 @@
 		var button = event.target.closest(".kidia-page-expand");
 		var media = event.target.closest(".kidia-page-media-choose, .kidia-page-media-preview");
 		if (button) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }
-		if (media && window.wp && wp.media) { var mediaField = media.closest(".kidia-page-field--image"); var mediaFrame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false}); mediaFrame.on("select", function () { var attachment = mediaFrame.state().get("selection").first().toJSON(); var input = mediaField.querySelector(".kidia-page-media-url"); var image = mediaField.querySelector(".kidia-page-media-preview"); input.value = attachment.url || ""; image.src = attachment.url || ""; image.hidden = !attachment.url; schedulePreview(); }); mediaFrame.open(); }
+		if (media && window.wp && wp.media) { var mediaField = media.closest(".kidia-page-field--image"); var mediaFrame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false}); mediaFrame.on("select", function () { var attachment = mediaFrame.state().get("selection").first().toJSON(); var input = mediaField.querySelector(".kidia-page-media-url"); var image = mediaField.querySelector(".kidia-page-media-preview"); input.value = attachment.url || ""; image.src = attachment.url || ""; image.hidden = !attachment.url; markDirty(); schedulePreview(); }); mediaFrame.open(); }
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
@@ -163,9 +168,10 @@
 	list.addEventListener("pointerdown", function (event) { var handle = event.target.closest(".kidia-page-drag"); var card = handle ? handle.closest(".kidia-page-card") : null; if (card) { card.draggable = true; } });
 	list.addEventListener("dragstart", function (event) { var card = event.target.closest(".kidia-page-card"); if (!card || !card.draggable) { event.preventDefault(); return; } dragged = card; card.classList.add("is-dragging"); });
 	list.addEventListener("dragover", function (event) { if (!dragged) { return; } event.preventDefault(); var target = event.target.closest(".kidia-page-card"); if (!target || target === dragged) { return; } var rect = target.getBoundingClientRect(); target.insertAdjacentElement(event.clientY > rect.top + rect.height / 2 ? "afterend" : "beforebegin", dragged); });
-	list.addEventListener("dragend", function () { if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; } dragged = null; updateIndexes(); schedulePreview(); });
-	root.querySelector("form").addEventListener("submit", function () { updateIndexes(); var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
+	list.addEventListener("dragend", function () { if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; } dragged = null; updateIndexes(); markDirty(); schedulePreview(); });
+	form.addEventListener("submit", function () { updateIndexes(); var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
 	window.addEventListener("pageshow", function () { var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
-	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();schedulePreview();}}); }
+	if (phoneScreen) { phoneScreen.addEventListener("scroll", function () { var next=phoneScreen.scrollTop>1;if(next!==previewScrolled){previewScrolled=next;renderPreview();} }, {passive:true}); }
+	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();markDirty();schedulePreview();}}); }
 	updateIndexes(); renderPreview();
 }(window.jQuery));

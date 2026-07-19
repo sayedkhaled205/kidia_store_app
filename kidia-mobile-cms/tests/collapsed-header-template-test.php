@@ -59,6 +59,8 @@ kidia_collapsed_header_assert( false === strpos( $markup, 'Preview collapsed hea
 kidia_collapsed_header_assert( false === strpos( $markup, 'scroll_up_header' ), 'The obsolete scroll-up selector must not be rendered.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_transition]"' ), 'Collapsed transition options must render below the collapsed composer.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_speed]"' ), 'Collapsed transition speed must render below the collapsed composer.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_preset]"' ), 'Collapsed presets must render below the collapsed composer.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'Sticky Search + Cart' ), 'The compact sticky preset must use its generic product name.' );
 
 $off = $store->save_layout( 'home', array(
 	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '0' ) ),
@@ -67,12 +69,13 @@ $off = $store->save_layout( 'home', array(
 kidia_collapsed_header_assert( false === $off['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header Off must save.' );
 
 $on = $store->save_layout( 'home', array(
-	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_transition' => 'scale', 'collapse_speed' => 'slow' ) ),
+	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_preset' => 'sticky_search_cart', 'collapse_transition' => 'scale', 'collapse_speed' => 'slow' ) ),
 	'footer' => array( 'enabled' => '1' ),
 ) );
 kidia_collapsed_header_assert( true === $on['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header On must save.' );
 kidia_collapsed_header_assert( 'scale' === $on['header']['settings']['collapse_transition'], 'The collapsed transition must save.' );
 kidia_collapsed_header_assert( 'slow' === $on['header']['settings']['collapse_speed'], 'The collapsed transition speed must save.' );
+kidia_collapsed_header_assert( 'sticky_search_cart' === $on['header']['settings']['collapse_preset'], 'The Sticky Search + Cart preset must save.' );
 kidia_collapsed_header_assert( true === $store->get_layout( 'home' )['header']['settings']['collapse_on_scroll'], 'The saved On state must survive reload.' );
 
 fwrite( STDOUT, "Collapsed-header editor placement, toggle and save passed.\n" );

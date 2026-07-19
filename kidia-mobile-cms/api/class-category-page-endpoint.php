@@ -31,8 +31,17 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			return new WP_REST_Response( array(), 200 );
 		}
 
-		$settings  = get_option( 'kidia_mobile_category_page', array() );
-		$settings  = is_array( $settings ) ? $settings : array();
+		$page_settings = ( new Kidia_Mobile_Category_Page_Store() )->get_settings();
+		$settings      = $page_settings['categories'];
+		$general       = $page_settings['general'];
+		if ( empty( $page_settings['enabled'] ) ) {
+			$response = new WP_REST_Response( array(), 200 );
+			$response->header( 'X-WP-Total', '0' );
+			$response->header( 'X-WP-TotalPages', '0' );
+			$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+			$response->header( 'Pragma', 'no-cache' );
+			return $response;
+		}
 		$by_parent = array();
 		foreach ( $terms as $term ) {
 			$by_parent[ (int) $term->parent ][] = $term;
@@ -47,12 +56,12 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 		unset( $siblings );
 
 		$ordered = array();
-		$append  = function ( int $parent, bool $ancestor_hidden = false ) use ( &$append, &$ordered, $by_parent, $settings ): void {
+		$append  = function ( int $parent, bool $ancestor_hidden = false ) use ( &$append, &$ordered, $by_parent, $settings, $general ): void {
 			foreach ( $by_parent[ $parent ] ?? array() as $term ) {
 				$setting = is_array( $settings[ $term->term_id ] ?? null ) ? $settings[ $term->term_id ] : array();
 				$hidden  = $ancestor_hidden || ! empty( $setting['hidden'] );
 				if ( ! $hidden ) {
-					$ordered[] = $this->format_term( $term, $setting );
+					$ordered[] = $this->format_term( $term, $setting, $general );
 				}
 				$append( (int) $term->term_id, $hidden );
 			}
@@ -71,7 +80,7 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 		return $response;
 	}
 
-	private function format_term( WP_Term $term, array $setting ): array {
+	private function format_term( WP_Term $term, array $setting, array $general ): array {
 		$image_id = absint( $setting['image_id'] ?? 0 );
 		if ( 0 === $image_id ) {
 			$image_id = absint( get_term_meta( $term->term_id, 'thumbnail_id', true ) );
@@ -87,7 +96,7 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 		$link = get_term_link( $term );
 		return array(
 			'id'          => (int) $term->term_id,
-			'name'        => $term->name,
+			'name'        => '' !== trim( (string) ( $setting['name'] ?? '' ) ) ? sanitize_text_field( (string) $setting['name'] ) : $term->name,
 			'slug'        => $term->slug,
 			'parent'      => (int) $term->parent,
 			'description' => $term->description,
@@ -95,23 +104,23 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			'image'       => $image,
 			'permalink'   => is_wp_error( $link ) ? '' : $link,
 			'presentation' => array(
-				'image_size'   => min( 120, max( 32, absint( $setting['image_size'] ?? 68 ) ) ),
-				'image_shape'  => in_array( $setting['image_shape'] ?? '', array( 'square', 'rounded', 'circle' ), true ) ? $setting['image_shape'] : 'rounded',
-				'image_radius' => min( 50, max( 0, absint( $setting['image_radius'] ?? 18 ) ) ),
-				'image_fit'    => in_array( $setting['image_fit'] ?? '', array( 'contain', 'cover' ), true ) ? $setting['image_fit'] : 'contain',
-				'image_effect' => in_array( $setting['image_effect'] ?? '', array( 'none', 'shadow', 'grayscale' ), true ) ? $setting['image_effect'] : 'none',
-				'image_scale'  => min( 150, max( 80, absint( $setting['image_scale'] ?? 100 ) ) ),
-				'image_position' => in_array( $setting['image_position'] ?? '', array( 'center', 'top', 'bottom', 'left', 'right' ), true ) ? $setting['image_position'] : 'center',
-				'border_width' => min( 8, max( 0, absint( $setting['border_width'] ?? 0 ) ) ),
-				'border_color' => sanitize_hex_color( $setting['border_color'] ?? '' ) ?: '#DDE5E2',
-				'background_color' => sanitize_hex_color( $setting['background_color'] ?? '' ) ?: '#FFFFFF',
-				'image_text_gap' => min( 40, max( 0, absint( $setting['image_text_gap'] ?? 10 ) ) ),
-				'font_size' => min( 30, max( 10, absint( $setting['font_size'] ?? 16 ) ) ),
-				'font_color' => sanitize_hex_color( $setting['font_color'] ?? '' ) ?: '#1F2933',
-				'font_weight' => in_array( absint( $setting['font_weight'] ?? 800 ), array( 400, 500, 600, 700, 800, 900 ), true ) ? absint( $setting['font_weight'] ?? 800 ) : 800,
-				'text_align' => in_array( $setting['text_align'] ?? '', array( 'start', 'center', 'end' ), true ) ? $setting['text_align'] : 'start',
-				'text_max_lines' => min( 3, max( 1, absint( $setting['text_max_lines'] ?? 2 ) ) ),
-				'line_height' => min( 200, max( 100, absint( $setting['line_height'] ?? 125 ) ) ),
+				'image_size'       => $general['image_size'],
+				'image_shape'      => $general['image_shape'],
+				'image_radius'     => $general['image_radius'],
+				'image_fit'        => $general['image_fit'],
+				'image_effect'     => $general['image_effect'],
+				'image_scale'      => $general['image_scale'],
+				'image_position'   => $general['image_position'],
+				'border_width'     => $general['border_width'],
+				'border_color'     => $general['border_color'],
+				'background_color' => $general['background_color'],
+				'image_text_gap'   => $general['image_text_gap'],
+				'font_size'        => $general['font_size'],
+				'font_color'       => $general['font_color'],
+				'font_weight'      => $general['font_weight'],
+				'text_align'       => $general['text_align'],
+				'text_max_lines'   => $general['text_max_lines'],
+				'line_height'      => $general['line_height'],
 			),
 		);
 	}

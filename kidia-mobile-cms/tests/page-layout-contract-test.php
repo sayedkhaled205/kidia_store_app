@@ -45,16 +45,17 @@ $home_default = $store->get_layout( 'home' );
 $home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
 kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['columns'][0]['items'] && 100 === $home_rows[1]['columns'][0]['width'] && array( 'search_bar' ) === $home_rows[1]['columns'][0]['items'], 'Home header must default to the two-row percentage-column layout.' );
 kidia_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
-kidia_page_assert( 8 === $home_default['header']['settings']['row_gap'], 'Home header rows must preserve the measured PatPat gap.' );
-kidia_page_assert( 120 === $home_default['header']['settings']['height'] && 42 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the PatPat proportions.' );
-kidia_page_assert( 44 === $home_default['header']['settings']['search_height'] && 22 === $home_default['header']['settings']['search_radius'], 'Home search must use the PatPat height and pill radius.' );
+kidia_page_assert( 8 === $home_default['header']['settings']['row_gap'], 'Home header rows must preserve the measured compact-store gap.' );
+kidia_page_assert( 120 === $home_default['header']['settings']['height'] && 42 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the compact-store proportions.' );
+kidia_page_assert( 44 === $home_default['header']['settings']['search_height'] && 22 === $home_default['header']['settings']['search_radius'], 'Home search must use the compact-store height and pill radius.' );
 $compact_rows = json_decode( $home_default['header']['settings']['compact_layout_json'], true )['rows'];
 kidia_page_assert( true === $home_default['header']['settings']['collapse_on_scroll'], 'Home header must allow the collapsed scroll header by default.' );
 kidia_page_assert( array( 'search_bar' ) === $compact_rows[0]['columns'][0]['items'] && array( 'cart' ) === $compact_rows[0]['columns'][1]['items'], 'Collapsed header must have an independently stored Search + Cart layout.' );
 kidia_page_assert( 'fade_slide' === $home_default['header']['settings']['collapse_transition'], 'Collapsed header must default to the fade + slide transition.' );
 kidia_page_assert( 'medium' === $home_default['header']['settings']['collapse_speed'], 'Collapsed header must default to medium transition speed.' );
+kidia_page_assert( 'sticky_search_cart' === $home_default['header']['settings']['collapse_preset'], 'Home must default to the generic Sticky Search + Cart preset.' );
 kidia_page_assert( ! array_key_exists( 'scroll_up_header', $home_default['header']['settings'] ), 'The obsolete scroll-up header choice must not be exposed.' );
-foreach ( array( 'collapse_transition', 'collapse_speed', 'compact_style', 'compact_background_color', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' ) as $compact_setting ) {
+foreach ( array( 'collapse_preset', 'collapse_transition', 'collapse_speed', 'compact_style', 'compact_background_color', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' ) as $compact_setting ) {
 	kidia_page_assert( array_key_exists( $compact_setting, $home_default['header']['settings'] ), "Collapsed header must expose $compact_setting." );
 }
 kidia_page_assert( false === $home_default['footer']['settings']['hide_on_scroll'], 'Footer auto-hide must remain optional by default.' );
@@ -65,7 +66,7 @@ $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 );
 $migrated_home = $store->get_layout( 'home' );
 kidia_page_assert( 64.0 === $migrated_home['header']['settings']['height'], 'Schema upgrades must preserve a saved header instead of replacing it.' );
-kidia_page_assert( 0.0 === $migrated_home['footer']['settings']['side_spacing_percent'], 'Legacy footers must receive the full-width PatPat side-spacing default.' );
+kidia_page_assert( 0.0 === $migrated_home['footer']['settings']['side_spacing_percent'], 'Legacy footers must receive the full-width side-spacing default.' );
 unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] );
 foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );

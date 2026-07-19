@@ -20,12 +20,13 @@
 	var createTitle = document.getElementById("kidia-create-element-title");
 	var blocksPayload = document.getElementById("kidia-home-builder-payload");
 	var previewContent = document.getElementById("kidia-mobile-preview-content");
+	var phoneScreen = document.querySelector(".kidia-mobile-preview__screen");
 	var actionChoices = config.actionChoices || {};
 	var currentCreateType = "";
 	var draggedBlock = null;
-	var isDirty = false;
 	var previewBlocksById = {};
 	var previewBlocksByType = {};
+	var previewScrolled = false;
 
 	form.addEventListener("click", function (event) {
 		var button = event.target.closest(".kidia-fixed-chrome-expand");
@@ -141,7 +142,7 @@
 	}
 
 	function markDirty() {
-		isDirty = true;
+		form.dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true }));
 	}
 
 	function updateIndexes() {
@@ -630,7 +631,7 @@
 
 	function renderFixedChrome(part) {
 		var card = form.querySelector('[data-chrome-part="' + part + '"]');
-		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card, "Kidia") : window.KidiaChromePreview.renderFooter(card); }
+		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card, "Kidia", { collapsed: previewScrolled, page: "home" }) : window.KidiaChromePreview.renderFooter(card, { page: "home" }); }
 		if (!card || !chromeChecked(card, "enabled", true)) { return ""; }
 		if (part === "header") {
 			var searchBar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
@@ -1364,16 +1365,17 @@
 		if (blocksPayload) {
 			blocksPayload.value = encodePayload(JSON.stringify(serializeBlocks()));
 		}
-		isDirty = false;
 	});
 
-	window.addEventListener("beforeunload", function (event) {
-		if (!isDirty) {
-			return;
-		}
-		event.preventDefault();
-		event.returnValue = "";
-	});
+	if (phoneScreen) {
+		phoneScreen.addEventListener("scroll", function () {
+			var next = phoneScreen.scrollTop > 1;
+			if (next !== previewScrolled) {
+				previewScrolled = next;
+				renderPreview();
+			}
+		}, { passive: true });
+	}
 
 	getBlocks().forEach(function (block) {
 		block.draggable = false;

@@ -19,7 +19,9 @@
 }
 .kidia-app-footer-item .kidia-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
 .kidia-app-footer-item .kidia-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
-.kidia-app-footer-icon-shell { display:grid; width:calc(var(--item-icon-size,var(--icon-size)) + 10px); height:calc(var(--item-icon-size,var(--icon-size)) + 10px); place-items:center; font-style:normal; }
+.kidia-app-footer-icon-shell { display:grid; width:clamp(32px,calc(var(--item-icon-size,var(--icon-size)) + 8px),48px); height:clamp(32px,calc(var(--item-icon-size,var(--icon-size)) + 8px),48px); place-items:center; font-style:normal; }
+.kidia-app-footer-item b { min-height:1.25em; line-height:1; white-space:nowrap; }
+.kidia-app-footer-item.is-active .kidia-app-footer-icon-shell { transform:none; }
 
 .kidia-chrome-item-setting[hidden] { display:none!important; }
 .kidia-chrome-item-setting { margin-top:12px; padding:14px; border:1px solid #c9dfd9; border-radius:10px; background:#fff; }
@@ -64,6 +66,11 @@
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
+.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="height"],
+.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"],
+.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"],
+.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_label_gap"] { display:none; }
+.kidia-footer-size-reference-note { margin:0 0 12px; padding:9px 11px; border-radius:7px; background:#edf8f4; color:#315f55; }
 .kidia-chrome-row { display:block!important; min-height:0!important; }
 .kidia-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
 .kidia-chrome-row-toolbar label { display:inline-flex; align-items:center; gap:6px; }
@@ -82,6 +89,12 @@
 .kidia-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
 .kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
 .kidia-chrome-composer--collapsed { margin-top:12px; }
+.kidia-sticky-search-cart-note { display:none; margin:8px 0 14px; padding:10px 12px; border-inline-start:4px solid #2f806e; border-radius:7px; background:#edf8f4; color:#315f55; }
+.kidia-fixed-chrome-card.uses-sticky-search-cart .kidia-sticky-search-cart-note { display:block; }
+.kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-layout,
+.kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-palette,
+.kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-reset { opacity:.46; pointer-events:none; }
+.kidia-chrome-composer--collapsed.is-preset-locked::after { display:block; margin-top:8px; color:#236b59; font-weight:700; content:"Layout is controlled by Sticky Search + Cart."; }
 .kidia-chrome-composer__heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; direction:rtl; text-align:right; }
 .kidia-chrome-composer__heading h3 { margin:0; color:#236b59; }
 .kidia-chrome-composer__heading p { margin:4px 0 0; color:#646970; }
@@ -104,6 +117,14 @@
 .kidia-page-preview-footer.is-editor-focused,
 .kidia-app-header.is-editor-focused,
 .kidia-app-footer.is-editor-focused { position:relative; z-index:2; box-shadow:0 0 0 2px #2f806e,0 0 0 5px rgba(47,128,110,.16)!important; }
+
+/* The phone preview uses the same fixed chrome behavior as Flutter. */
+.kidia-page-phone__screen .kidia-app-header,
+.kidia-category-phone__screen .kidia-app-header,
+.kidia-mobile-preview__screen .kidia-app-header { position:sticky; top:0; z-index:20; }
+.kidia-page-phone__screen .kidia-app-footer,
+.kidia-category-phone__screen .kidia-app-footer,
+.kidia-mobile-preview__screen .kidia-app-footer { position:sticky; bottom:0; z-index:20; }
 @media (max-width: 900px) {
 	.kidia-chrome-icon-choice { grid-template-columns:1fr; }
 	.kidia-chrome-footer-icon-row { grid-template-columns:1fr; }
