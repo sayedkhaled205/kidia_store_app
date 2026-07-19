@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import '../core/theme/kidia_colors.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/home/presentation/providers/home_providers.dart';
+import '../features/catalog/presentation/providers/catalog_category_providers.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -43,9 +46,42 @@ class MainShell extends ConsumerStatefulWidget {
 	ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _MainShellState extends ConsumerState<MainShell>
+    with WidgetsBindingObserver {
 	bool _footerHidden = false;
+	Timer? _settingsRefreshTimer;
 	static const List<_NavigationItem> _items = MainShell._items;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _settingsRefreshTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _refreshRemoteSettings(),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshRemoteSettings();
+    }
+  }
+
+  void _refreshRemoteSettings() {
+    if (!mounted) return;
+    ref.invalidate(homeLayoutProvider);
+    ref.invalidate(cmsPageLayoutProvider);
+    ref.invalidate(catalogCategoryTreeProvider);
+  }
+
+  @override
+  void dispose() {
+    _settingsRefreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
