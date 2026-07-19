@@ -71,25 +71,27 @@ $footer_icon_symbols = array(
 	</div>
 	<div class="kidia-page-card__body" hidden>
 		<div class="kidia-chrome-composer" data-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
+			<?php if ( 'header' === $chrome_part ) : ?><div class="kidia-chrome-composer__heading"><h3><?php esc_html_e( 'Regular header', 'kidia-mobile-cms' ); ?></h3></div><?php endif; ?>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php echo esc_attr( $chrome_title ); ?>"></div>
 			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
 		</div>
 		<?php if ( 'header' === $chrome_part ) : ?>
-		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
-			<h3><?php esc_html_e( 'Collapsed header behavior and appearance', 'kidia-mobile-cms' ); ?></h3>
-			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
-		</section>
 		<div class="kidia-chrome-composer kidia-chrome-composer--collapsed" data-part="header" data-page="<?php echo esc_attr( $chrome_page_name ); ?>" data-variant="collapsed">
-			<h3><?php esc_html_e( 'Collapsed header shown on scroll', 'kidia-mobile-cms' ); ?></h3>
-			<p><?php esc_html_e( 'Arrange the single merged header row exactly as it should appear while scrolling.', 'kidia-mobile-cms' ); ?></p>
-			<label class="kidia-page-toggle"><input type="checkbox" class="kidia-preview-collapsed-header"><b><?php esc_html_e( 'Preview collapsed header (preview only)', 'kidia-mobile-cms' ); ?></b></label>
+			<div class="kidia-chrome-composer__heading">
+				<div><h3><?php esc_html_e( 'Collapsed header shown on scroll', 'kidia-mobile-cms' ); ?></h3><p><?php esc_html_e( 'Arrange the single merged header row exactly as it should appear while scrolling.', 'kidia-mobile-cms' ); ?></p></div>
+				<label class="kidia-page-master-toggle kidia-collapsed-header-toggle" aria-label="<?php esc_attr_e( 'Turn collapsed header on or off', 'kidia-mobile-cms' ); ?>"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="0"><input type="checkbox" class="kidia-collapsed-header-enabled" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="1" <?php checked( ! empty( $chrome_settings['collapse_on_scroll'] ) ); ?>><span class="kidia-toggle-state"></span></label>
+			</div>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][compact_layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['compact_layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php esc_attr_e( 'Collapsed header layout', 'kidia-mobile-cms' ); ?>"></div>
 			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore collapsed default', 'kidia-mobile-cms' ); ?></button>
 		</div>
+		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
+			<h3><?php esc_html_e( 'Collapsed header behavior and appearance', 'kidia-mobile-cms' ); ?></h3>
+			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( 'collapse_on_scroll' !== $field['key'] && in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
+		</section>
 		<?php endif; ?>
 		<div class="kidia-chrome-settings">
 		<?php if ( 'footer' === $chrome_part ) : ?>
