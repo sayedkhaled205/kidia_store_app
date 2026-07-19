@@ -56,7 +56,6 @@ void main() {
 	expect(home.header.number('search_width_percent', 0), 100);
 	expect(home.header.boolean('collapse_on_scroll', false), isTrue);
 	expect(home.header.string('collapse_transition', ''), 'smooth_compact');
-	expect(home.header.string('collapse_transition', ''), 'fade_slide');
 	expect(home.header.string('collapse_speed', ''), 'medium');
 	final dynamic homeFooterRows = home.footer.json('layout_json')['rows'];
 	expect(homeFooterRows, isA<List<dynamic>>());
