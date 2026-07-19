@@ -73,7 +73,11 @@ class DioStoreApiClient implements StoreApiClient {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: const <String, dynamic>{'Accept': 'application/json'},
+          headers: const <String, dynamic>{
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          },
         ),
       );
 
