@@ -88,18 +88,22 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     if (!_header.enabled) return const SizedBox.shrink();
-    final Color background = _color(_header.string(compact ? 'compact_background_color' : 'background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
+	final String compactStyle = _header.string('compact_style', 'standard');
+    final Color background = compact && compactStyle == 'transparent' ? Colors.transparent : _color(_header.string(compact ? 'compact_background_color' : 'background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color foreground = _color(_header.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
     final List<Map<String, dynamic>> rows = compact
         ? _compactLayoutRows()
         : _layoutRows();
     final double padding = _header.number(compact ? 'compact_horizontal_padding' : 'horizontal_padding', 16).clamp(0, 32);
+	final double sideMargin = compact ? _header.number('compact_side_margin', compactStyle == 'floating' || compactStyle == 'pill' ? 8 : 0).clamp(0, 32) : 0;
+	final double radius = compact ? _header.number('compact_radius', compactStyle == 'pill' ? 40 : compactStyle == 'floating' ? 16 : 0).clamp(0, 40) : _header.number('corner_radius', 0);
+	final String activeShadow = compact ? _header.string('compact_shadow', compactStyle == 'transparent' ? 'none' : 'subtle') : _header.string('shadow', 'subtle');
     return Padding(
-      padding: EdgeInsets.only(top: _header.number('margin_top', 0).clamp(0, 80), bottom: _header.number('margin_bottom', 0).clamp(0, 80)),
+      padding: EdgeInsets.fromLTRB(sideMargin, _header.number('margin_top', 0).clamp(0, 80), sideMargin, _header.number('margin_bottom', 0).clamp(0, 80)),
       child: Material(
-      color: _header.string('style', 'standard') == 'transparent' ? background.withValues(alpha: 0) : background,
-      elevation: _header.string('shadow', 'subtle') == 'none' ? 0 : _header.string('shadow', 'subtle') == 'strong' ? 6 : 2,
-	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_header.number('corner_radius', 0)), side: BorderSide(color: _color(_header.string('border_color', '#E2E6E4'), Colors.transparent), width: _header.number('border_width', 0))),
+      color: (!compact && _header.string('style', 'standard') == 'transparent') ? background.withValues(alpha: 0) : background,
+      elevation: activeShadow == 'none' ? 0 : activeShadow == 'strong' ? 6 : 2,
+	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: BorderSide(color: _color(_header.string(compact ? 'compact_border_color' : 'border_color', '#E2E6E4'), Colors.transparent), width: _header.number(compact ? 'compact_border_width' : 'border_width', 0))),
       child: SafeArea(
         bottom: false,
         child: SizedBox(

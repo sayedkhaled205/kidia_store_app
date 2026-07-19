@@ -583,6 +583,10 @@
 	resize: vertical;
 }
 
+.kidia-builder-background-control { display:flex; align-items:center; gap:6px; }
+.kidia-builder-background-control input[type="color"] { width:42px; min-width:42px; height:34px; padding:2px; cursor:pointer; }
+.kidia-builder-background-control .kidia-block-background-value { width:110px; }
+
 .kidia-builder-switch {
 	position: relative;
 	display: inline-flex;

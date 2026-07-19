@@ -114,6 +114,16 @@ final class Kidia_Mobile_Layout_Store {
 		}
 
 		$layout = $this->normalize_layout( $saved_layout );
+		foreach ( $layout as &$saved_block ) {
+			if ( 'category_grid' !== ( $saved_block['type'] ?? '' ) ) { continue; }
+			$current_background = strtoupper( (string) ( $saved_block['settings']['block_background'] ?? '' ) );
+			if ( '' === $current_background || in_array( $current_background, array( '#F4F5F5', '#F5F6F7', '#F6F7F8', '#F7F7F7' ), true ) ) {
+				$saved_block['settings']['block_background'] = '#FFFFFF';
+			}
+			$saved_block['settings']['margin_top'] = (int) ( $saved_block['settings']['margin_top'] ?? 0 );
+			$saved_block['settings']['margin_bottom'] = (int) ( $saved_block['settings']['margin_bottom'] ?? 0 );
+		}
+		unset( $saved_block );
 
 		return $this->reorder_layout( $layout );
 	}
