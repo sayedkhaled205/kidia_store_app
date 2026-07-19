@@ -594,6 +594,7 @@ function runCollapsedHeaderToggleTest() {
 	  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "On must still show the real regular header while the preview is at the top.");
 	  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
 	  assert.match(collapsedPreview, /is-collapsed/, "Scrolling the preview must show the collapsed header.");
+  assert.match(collapsedPreview, /height:56px/, "The sticky preset must expand enough to keep its search field inside the compact header.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
   assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");

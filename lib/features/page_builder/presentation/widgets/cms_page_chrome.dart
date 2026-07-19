@@ -187,8 +187,23 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(_header.enabled
-      ? (compact ? _header.number('compact_height', 60).clamp(44, 100) : _header.number('height', 64).clamp(48, 120)) + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
+      ? _visibleHeight + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
       : 0);
+
+  double get _visibleHeight {
+    final double configured = compact
+        ? _header.number('compact_height', 60).clamp(44, 100)
+        : _header.number('height', 64).clamp(48, 120);
+    if (!compact ||
+        _header.string('collapse_preset', 'custom') !=
+            'sticky_search_cart') {
+      return configured;
+    }
+    final double required =
+        _header.number('search_height', 40).clamp(32, 64) +
+        (_header.number('vertical_padding', 8).clamp(0, 24) * 2);
+    return configured < required ? required : configured;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,9 +299,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: SafeArea(
           bottom: false,
           child: SizedBox(
-            height: compact
-                ? _header.number('compact_height', 60).clamp(44, 100)
-                : _header.number('height', 64).clamp(48, 120),
+            height: _visibleHeight,
             child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: padding,
