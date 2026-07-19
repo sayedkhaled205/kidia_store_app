@@ -62,6 +62,10 @@
 .kidia-chrome-column>label input { width:72px; min-height:28px; padding:2px 5px; }
 .kidia-chrome-zone { box-sizing:border-box; width:100%; min-width:0; min-height:52px; overflow:hidden; }
 .kidia-chrome-zone .kidia-chrome-item { max-width:100%; }
+.kidia-chrome-remove { display:inline-grid; width:22px; height:22px; margin-inline-start:5px; place-items:center; border-radius:50%; background:#fff0ee; color:#b42318; font-size:20px; font-weight:800; line-height:1; cursor:pointer; }
+.kidia-chrome-palette { transition:background-color .15s ease,box-shadow .15s ease; }
+.kidia-chrome-palette:has(.kidia-chrome-item:active) { background:#edf8f4; box-shadow:0 0 0 2px #8fc8ba; }
+.kidia-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
 .kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
 .kidia-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
 .kidia-chrome-composer.has-invalid-layout .kidia-chrome-layout-error { display:block; }
