@@ -402,7 +402,7 @@
 		var name = escapeHtml(item && item.name ? item.name : "Category");
 		var radius = settings.image_shape === "circle" ? "50%" : (settings.image_shape === "square" ? "0" : "10px");
 
-		return '<article class="kidia-preview-category-card"><span class="kidia-preview-category-card__image" style="border-radius:' + radius + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (showName ? '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) * 0.62 + 'px">' + name + "</strong>" : "") + "</article>";
+		return '<article class="kidia-preview-category-card"><span class="kidia-preview-category-card__image" style="border-radius:' + radius + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (showName ? '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + name + "</strong>" : "") + "</article>";
 	}
 
 	function renderProductCard(item, settings) {
@@ -418,13 +418,13 @@
 		var rating = Number(item && item.rating ? item.rating : 0);
 		var style = settings && settings.card_style ? settings.card_style : "outlined";
 
-		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) * 0.65 + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
+		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
 	}
 
 	function renderBrandCard(item, itemWidth, settings) {
 		var image = safeImage(item && item.logo_url);
 		var name = escapeHtml(item && item.name ? item.name : "Brand");
-		var width = numberInRange(itemWidth, 92, 60, 180) * 0.68;
+		var width = numberInRange(itemWidth, 92, 60, 180);
 		var radius = settings.image_shape === "circle" ? "50%" : (settings.image_shape === "square" ? "0" : "12px");
 
 		return '<article class="kidia-preview-brand-card" style="--kidia-preview-brand-width:' + width + 'px"><span class="kidia-preview-brand-card__image" style="border-radius:' + radius + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (settings.show_names === "" ? "" : "<strong>" + name + "</strong>") + "</article>";
@@ -435,7 +435,7 @@
 		var label = escapeHtml(item && item.label ? item.label : "Link");
 		var subtitle = escapeHtml(item && item.subtitle ? item.subtitle : "");
 		var shape = settings.image_shape === "circle" ? "50%" : (settings.image_shape === "square" ? "0" : "12px");
-		return '<article class="kidia-preview-quick-link"><span style="border-radius:' + shape + '">' + (image ? '<img src="' + image + '" alt="' + label + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (settings.show_labels === "" ? "" : '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) * 0.62 + 'px">' + label + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + "</article>";
+		return '<article class="kidia-preview-quick-link"><span style="border-radius:' + shape + '">' + (image ? '<img src="' + image + '" alt="' + label + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (settings.show_labels === "" ? "" : '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + label + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + "</article>";
 	}
 
 	function renderBannerTile(item, settings) {
@@ -478,20 +478,20 @@
 			image = safeImage(settings.logo_url);
 			title = escapeHtml(settings.title || name || "Kidia Store");
 			subtitle = escapeHtml(settings.subtitle || "");
-			return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;padding-inline:" + numberInRange(settings.horizontal_padding, 12, 0, 32) * 0.65 + "px;border-radius:" + numberInRange(settings.border_radius, 0, 0, 40) * 0.65 + "px;color:" + safeColor(settings.title_color, "#1F2933") + ";background:" + safeColor(settings.background_color, "#FFFFFF") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="gap:' + numberInRange(settings.icon_gap, 4, 0, 24) * 0.65 + "px;color:" + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_wishlist ? previewIcon("wishlist") : "") + (settings.show_search && settings.search_style !== "bar" ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span>" + (settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="height:' + numberInRange(settings.search_height, 40, 32, 64) * 0.65 + "px;border:" + numberInRange(settings.search_border_width, 0, 0, 6) + "px solid " + safeColor(settings.search_border_color, "#DDE3E8") + ";border-radius:" + numberInRange(settings.search_radius, 14, 0, 32) * 0.65 + "px;background:" + safeColor(settings.search_background, "#F1F3F4") + ";color:" + safeColor(settings.search_text_color, "#5F6368") + '">' + previewIcon("search") + escapeHtml(settings.search_placeholder || "Search products") + (settings.show_voice_search ? " ♪" : "") + "</span>" : "") + "</div>";
+			return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;padding-inline:" + numberInRange(settings.horizontal_padding, 12, 0, 32) + "px;border-radius:" + numberInRange(settings.border_radius, 0, 0, 40) + "px;color:" + safeColor(settings.title_color, "#1F2933") + ";background:" + safeColor(settings.background_color, "#FFFFFF") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="gap:' + numberInRange(settings.icon_gap, 4, 0, 24) + "px;color:" + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_wishlist ? previewIcon("wishlist") : "") + (settings.show_search && settings.search_style !== "bar" ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span>" + (settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="height:' + numberInRange(settings.search_height, 40, 32, 64) + "px;border:" + numberInRange(settings.search_border_width, 0, 0, 6) + "px solid " + safeColor(settings.search_border_color, "#DDE3E8") + ";border-radius:" + numberInRange(settings.search_radius, 14, 0, 32) + "px;background:" + safeColor(settings.search_background, "#F1F3F4") + ";color:" + safeColor(settings.search_text_color, "#5F6368") + '">' + previewIcon("search") + escapeHtml(settings.search_placeholder || "Search products") + (settings.show_voice_search ? " ♪" : "") + "</span>" : "") + "</div>";
 
 		case "hero_slider":
 			items = Array.isArray(settings.items) ? settings.items.filter(function (slide) { return slide && slide.enabled !== ""; }) : [];
 			item = items[0] || {};
 			image = safeImage(item.image_url);
 			ratio = numberInRange(settings.aspect_ratio, 1.8, 0.45, 4);
-			return '<div class="kidia-preview-block kidia-preview-hero is-' + escapeHtml(settings.overlay_position || "start") + '" style="aspect-ratio:' + ratio + ";margin-inline:" + numberInRange(settings.horizontal_padding, 16, 0, 32) * 0.5 + "px;border-radius:" + numberInRange(settings.border_radius, 24, 0, 48) * 0.5 + 'px">' + (image ? '<img src="' + image + '" alt="" style="object-fit:' + (settings.image_fit === "contain" ? "contain" : "cover") + '">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + ((item.title || item.subtitle || item.button_label) ? '<div class="kidia-preview-hero__copy" style="background:rgba(17,24,39,' + numberInRange(settings.overlay_strength, 72, 0, 95) / 100 + ");color:" + safeColor(settings.text_color, "#FFFFFF") + '"><strong>' + escapeHtml(item.title || "") + "</strong><small>" + escapeHtml(item.subtitle || "") + "</small>" + (item.button_label ? "<b>" + escapeHtml(item.button_label) + "</b>" : "") + "</div>" : "") + (items.length > 1 && settings.show_indicators !== "" ? '<div class="kidia-preview-dots is-' + escapeHtml(settings.indicator_style || "pill") + '">' + items.map(function (_, index) { return "<i" + (index === 0 ? ' class="is-active"' : "") + "></i>"; }).join("") + "</div>" : "") + "</div>";
+			return '<div class="kidia-preview-block kidia-preview-hero is-' + escapeHtml(settings.overlay_position || "start") + '" style="aspect-ratio:' + ratio + ";margin-inline:" + numberInRange(settings.horizontal_padding, 16, 0, 32) + "px;border-radius:" + numberInRange(settings.border_radius, 24, 0, 48) + 'px">' + (image ? '<img src="' + image + '" alt="" style="object-fit:' + (settings.image_fit === "contain" ? "contain" : "cover") + '">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + ((item.title || item.subtitle || item.button_label) ? '<div class="kidia-preview-hero__copy" style="background:rgba(17,24,39,' + numberInRange(settings.overlay_strength, 72, 0, 95) / 100 + ");color:" + safeColor(settings.text_color, "#FFFFFF") + '"><strong>' + escapeHtml(item.title || "") + "</strong><small>" + escapeHtml(item.subtitle || "") + "</small>" + (item.button_label ? "<b>" + escapeHtml(item.button_label) + "</b>" : "") + "</div>" : "") + (items.length > 1 && settings.show_indicators !== "" ? '<div class="kidia-preview-dots is-' + escapeHtml(settings.indicator_style || "pill") + '">' + items.map(function (_, index) { return "<i" + (index === 0 ? ' class="is-active"' : "") + "></i>"; }).join("") + "</div>" : "") + "</div>";
 
 		case "category_grid":
 			columns = Math.round(numberInRange(settings.columns, 4, 2, 6));
 			count = Math.round(numberInRange(settings.limit, 8, 1, 12));
 			items = limitedItems(runtimeData.items, count, 12);
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid' + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) * 0.55 + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid' + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
 
 		case "image_banner":
 			image = safeImage(settings.image_url);
@@ -515,17 +515,17 @@
 		case "brand_carousel":
 			count = Math.round(numberInRange(settings.limit, 12, 1, 5));
 			items = limitedItems(runtimeData.items, count, 5);
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-brand-row' + (settings.layout === "grid" ? " is-grid" : "") + '" style="--kidia-preview-columns:' + numberInRange(settings.columns, 4, 2, 6) + ";gap:" + numberInRange(settings.gap, 12, 0, 32) * 0.55 + 'px">' + (items.length ? items.map(function (brand) { return renderBrandCard(brand, runtimeData.item_width || settings.item_width, settings); }).join("") : sampleCards(count, "kidia-preview-brand-card", "Brand")) + "</div></section>";
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-brand-row' + (settings.layout === "grid" ? " is-grid" : "") + '" style="--kidia-preview-columns:' + numberInRange(settings.columns, 4, 2, 6) + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (brand) { return renderBrandCard(brand, runtimeData.item_width || settings.item_width, settings); }).join("") : sampleCards(count, "kidia-preview-brand-card", "Brand")) + "</div></section>";
 
 		case "quick_links":
 			items = Array.isArray(settings.items) ? settings.items : [];
 			columns = Math.round(numberInRange(settings.columns, 4, 2, 6));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-quick-links ' + (settings.layout === "grid" ? "is-grid" : "is-row") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) * 0.55 + 'px">' + (items.length ? items.map(function (link) { return renderQuickLink(link, settings); }).join("") : sampleCards(columns, "kidia-preview-quick-link", "Link")) + "</div></section>";
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-quick-links ' + (settings.layout === "grid" ? "is-grid" : "is-row") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (link) { return renderQuickLink(link, settings); }).join("") : sampleCards(columns, "kidia-preview-quick-link", "Link")) + "</div></section>";
 
 		case "banner_grid":
 			items = Array.isArray(settings.items) ? settings.items : [];
 			columns = Math.round(numberInRange(settings.columns, 2, 1, 3));
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-banner-grid is-' + escapeHtml(settings.layout || "equal") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 10, 0, 32) * 0.55 + 'px">' + (items.length ? items.map(function (banner) { return renderBannerTile(banner, settings); }).join("") : sampleCards(columns + 1, "kidia-preview-banner-tile", "")) + "</div></section>";
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-banner-grid is-' + escapeHtml(settings.layout || "equal") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 10, 0, 32) + 'px">' + (items.length ? items.map(function (banner) { return renderBannerTile(banner, settings); }).join("") : sampleCards(columns + 1, "kidia-preview-banner-tile", "")) + "</div></section>";
 
 		case "promo_strip":
 			background = safeColor(settings.background_color, "#4f9f8f");
@@ -534,7 +534,7 @@
 
 		case "coupon_banner":
 			image = safeImage(settings.image_url);
-			return '<div class="kidia-preview-coupon' + (image ? " has-image" : "") + '" style="background:' + safeColor(settings.background_color, "#DCEEE8") + ";color:" + safeColor(settings.text_color, "#1F2933") + ";border-radius:" + numberInRange(settings.border_radius, 20, 0, 48) * 0.65 + 'px">' + (image ? '<img src="' + image + '" alt="">' : "") + '<div class="kidia-preview-coupon__overlay"><strong>' + escapeHtml(settings.title || name) + "</strong><small>" + escapeHtml(settings.description || "") + "</small>" + (settings.coupon_code ? '<code style="color:' + safeColor(settings.accent_color, "#2F806E") + '">▣ ' + escapeHtml(settings.coupon_code) + "</code>" : "") + "</div></div>";
+			return '<div class="kidia-preview-coupon' + (image ? " has-image" : "") + '" style="background:' + safeColor(settings.background_color, "#DCEEE8") + ";color:" + safeColor(settings.text_color, "#1F2933") + ";border-radius:" + numberInRange(settings.border_radius, 20, 0, 48) + 'px">' + (image ? '<img src="' + image + '" alt="">' : "") + '<div class="kidia-preview-coupon__overlay"><strong>' + escapeHtml(settings.title || name) + "</strong><small>" + escapeHtml(settings.description || "") + "</small>" + (settings.coupon_code ? '<code style="color:' + safeColor(settings.accent_color, "#2F806E") + '">▣ ' + escapeHtml(settings.coupon_code) + "</code>" : "") + "</div></div>";
 
 		case "countdown":
 			return '<div class="kidia-preview-countdown" style="background:' + safeColor(settings.background_color, "#FFFFFF") + ";color:" + safeColor(settings.text_color, "#1F2933") + '"><strong>' + escapeHtml(settings.title || name) + '</strong><div style="--kidia-countdown-box:' + safeColor(settings.box_color, "#E9EEEC") + '"><span>02<small>يوم</small></span><span>14<small>ساعة</small></span><span>37<small>دقيقة</small></span><span>42<small>ثانية</small></span></div></div>';
@@ -547,7 +547,7 @@
 		case "text_block":
 			background = safeColor(settings.background, "#ffffff");
 			textColor = safeColor(settings.text_color, "#111111");
-			return '<div class="kidia-preview-text" style="background:' + background + ";color:" + textColor + ";text-align:" + (settings.alignment === "left" || settings.alignment === "center" ? settings.alignment : "right") + ";font-weight:" + (settings.font_weight === "bold" ? "700" : settings.font_weight === "medium" ? "500" : "400") + '"><strong style="font-size:' + numberInRange(settings.title_size, 22, 12, 48) * 0.58 + 'px">' + escapeHtml(settings.title || name) + '</strong><p style="font-size:' + numberInRange(settings.content_size, 15, 10, 32) * 0.62 + 'px">' + escapeHtml(settings.content || "") + "</p></div>";
+			return '<div class="kidia-preview-text" style="background:' + background + ";color:" + textColor + ";text-align:" + (settings.alignment === "left" || settings.alignment === "center" ? settings.alignment : "right") + ";font-weight:" + (settings.font_weight === "bold" ? "700" : settings.font_weight === "medium" ? "500" : "400") + '"><strong style="font-size:' + numberInRange(settings.title_size, 22, 12, 48) + 'px">' + escapeHtml(settings.title || name) + '</strong><p style="font-size:' + numberInRange(settings.content_size, 15, 10, 32) + 'px">' + escapeHtml(settings.content || "") + "</p></div>";
 
 		case "divider":
 			return '<div class="kidia-preview-divider" style="margin-block:' + numberInRange(settings.margin, 16, 0, 64) + "px;border-top:" + numberInRange(settings.thickness, 1, 1, 12) + "px solid " + safeColor(settings.color, "#e5e7eb") + '"></div>';
@@ -560,7 +560,9 @@
 		}
 	}
 
-	function renderPreview() {
+	var previewFrame = 0;
+	var activePreviewBlock = "";
+	function renderPreviewNow() {
 		var blocks;
 		var header;
 		var footer;
@@ -575,7 +577,21 @@
 
 		header = renderFixedChrome("header");
 		footer = renderFixedChrome("footer");
-		previewContent.innerHTML = header + '<div class="kidia-preview-home-body">' + (blocks.length ? blocks.map(renderBlock).join("") : '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>') + '</div>' + footer;
+		previewContent.innerHTML = header + '<div class="kidia-preview-home-body">' + (blocks.length ? blocks.map(function(block){return '<div class="kidia-preview-focus-target" data-preview-block="'+escapeHtml(block.id)+'">'+renderBlock(block)+'</div>';}).join("") : '<div class="kidia-preview-empty">Add or enable an element to preview the Home Page.</div>') + '</div>' + footer;
+		if(activePreviewBlock){var active=activePreviewBlock==="header"?previewContent.querySelector(".kidia-app-header"):activePreviewBlock==="footer"?previewContent.querySelector(".kidia-app-footer"):previewContent.querySelector('[data-preview-block="'+activePreviewBlock.replace(/"/g,"\\\"")+'"]');if(active){active.classList.add("is-editor-focused");}}
+	}
+	function renderPreview() {
+		if (!window.requestAnimationFrame) { renderPreviewNow(); return; }
+		if (previewFrame) { return; }
+		previewFrame=window.requestAnimationFrame(function(){previewFrame=0;renderPreviewNow();});
+	}
+
+	function focusPreviewBlock(block) {
+		if (!previewContent || !block) { return; }
+		var id=(block.querySelector(".kidia-block-id")||{}).value||block.dataset.libraryId||"";
+		activePreviewBlock=block.dataset.chromePart||id;var target=block.dataset.chromePart?previewContent.querySelector(block.dataset.chromePart==="header"?".kidia-app-header":".kidia-app-footer"):previewContent.querySelector('[data-preview-block="'+id.replace(/"/g,"\\\"")+'"]');
+		toArray(previewContent.querySelectorAll(".is-editor-focused")).forEach(function(node){node.classList.remove("is-editor-focused");});
+		if(target){target.classList.add("is-editor-focused");target.scrollIntoView({behavior:"smooth",block:"center"});}
 	}
 
 	function chromeField(card, suffix) {
@@ -599,9 +615,9 @@
 		if (!card || !chromeChecked(card, "enabled", true)) { return ""; }
 		if (part === "header") {
 			var searchBar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
-			return '<header class="kidia-app-header" style="height:' + Number(chromeValue(card, "height", 64)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading"></span><div class="kidia-app-header__title">' + (searchBar ? '<div class="kidia-app-search" style="height:' + Number(chromeValue(card, "search_height", 40)) * .68 + 'px;border-radius:' + Number(chromeValue(card, "search_radius", 14)) * .68 + 'px;background:' + chromeValue(card, "search_background", "#F1F3F4") + '"><span>⌕ ' + escapeHtml(chromeValue(card, "search_placeholder", "Search products")) + '</span></div>' : '<strong>' + escapeHtml(chromeValue(card, "title", "Kidia")) + '</strong>') + '</div><div class="kidia-app-header__actions">' + (chromeChecked(card, "show_search", true) && !searchBar ? '<span class="kidia-app-icon kidia-app-icon--search"></span>' : '') + (chromeChecked(card, "show_cart", true) ? '<span class="kidia-app-icon kidia-app-icon--bag"></span>' : '') + '</div></header>';
+			return '<header class="kidia-app-header" style="height:' + Number(chromeValue(card, "height", 64)) + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "title_color", "#1F2933") + '"><span class="kidia-app-header__leading"></span><div class="kidia-app-header__title">' + (searchBar ? '<div class="kidia-app-search" style="height:' + Number(chromeValue(card, "search_height", 40)) + 'px;border-radius:' + Number(chromeValue(card, "search_radius", 14)) + 'px;background:' + chromeValue(card, "search_background", "#F1F3F4") + '"><span>⌕ ' + escapeHtml(chromeValue(card, "search_placeholder", "Search products")) + '</span></div>' : '<strong>' + escapeHtml(chromeValue(card, "title", "Kidia")) + '</strong>') + '</div><div class="kidia-app-header__actions">' + (chromeChecked(card, "show_search", true) && !searchBar ? '<span class="kidia-app-icon kidia-app-icon--search"></span>' : '') + (chromeChecked(card, "show_cart", true) ? '<span class="kidia-app-icon kidia-app-icon--bag"></span>' : '') + '</div></header>';
 		}
-		return '<footer class="kidia-app-footer" style="height:' + Number(chromeValue(card, "height", 72)) * .68 + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "inactive_color", "#6B7280") + '"><span class="is-active" style="color:' + chromeValue(card, "active_color", "#1F6F61") + '"><span class="kidia-app-icon kidia-app-icon--home"></span><b>Home</b></span><span><span class="kidia-app-icon kidia-app-icon--categories"></span><b>Categories</b></span><span><span class="kidia-app-icon kidia-app-icon--heart"></span><b>Wishlist</b></span><span><span class="kidia-app-icon kidia-app-icon--person"></span><b>Account</b></span></footer>';
+		return '<footer class="kidia-app-footer" style="height:' + Number(chromeValue(card, "height", 72)) + 'px;background:' + chromeValue(card, "background_color", "#FFFFFF") + ';color:' + chromeValue(card, "inactive_color", "#6B7280") + '"><span class="is-active" style="color:' + chromeValue(card, "active_color", "#1F6F61") + '"><span class="kidia-app-icon kidia-app-icon--home"></span><b>Home</b></span><span><span class="kidia-app-icon kidia-app-icon--categories"></span><b>Categories</b></span><span><span class="kidia-app-icon kidia-app-icon--heart"></span><b>Wishlist</b></span><span><span class="kidia-app-icon kidia-app-icon--person"></span><b>Account</b></span></footer>';
 	}
 
 	function loadRuntimePreview() {
@@ -1211,6 +1227,8 @@
 	form.addEventListener("change", function (event) {
 		if (event.target && event.target.closest && event.target.closest(".kidia-fixed-chrome-card")) { markDirty(); renderPreview(); }
 	});
+	form.addEventListener("focusin", function(event){focusPreviewBlock(event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card"));});
+	form.addEventListener("mouseover", function(event){var block=event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card");if(block&&(!event.relatedTarget||!block.contains(event.relatedTarget))){focusPreviewBlock(block);}});
 
 	builder.addEventListener("pointerdown", function (event) {
 		var target = event.target;

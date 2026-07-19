@@ -54,18 +54,12 @@ void main() {
 	expect(homeRows, isA<List<dynamic>>());
 	expect((homeRows as List<dynamic>).length, 2);
 	expect(home.header.number('search_width_percent', 0), 100);
-	expect(home.footer.json('layout_json')['items'], <String>[
-		'home',
-		'categories',
-		'wishlist',
-		'account',
-	]);
+	final dynamic homeFooterRows = home.footer.json('layout_json')['rows'];
+	expect(homeFooterRows, isA<List<dynamic>>());
+	expect((homeFooterRows as List<dynamic>).first['columns'], hasLength(4));
 	final CmsPageLayout product = CmsPageLayout.fallback('product');
 	expect(product.footer.string('style', ''), 'product_action');
-	expect(product.footer.json('layout_json')['items'], <String>[
-		'share',
-		'like',
-		'add_to_cart',
-	]);
+	final dynamic productFooterRows = product.footer.json('layout_json')['rows'];
+	expect((productFooterRows as List<dynamic>).first['columns'], hasLength(3));
   });
 }

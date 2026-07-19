@@ -46,8 +46,8 @@ class MainShell extends ConsumerWidget {
         ref.watch(cmsPageLayoutProvider(page)).value ??
         CmsPageLayout.fallback(page);
     final CmsPageComponent footer = pageLayout.footer;
-    final dynamic rawItems = footer.json('layout_json')['items'];
-    final List<String> order = rawItems is List ? rawItems.map((item) => '$item').toList() : _items.map((item) => item.id).toList();
+    final List<_FooterPlacement> placements = _footerPlacements(footer);
+    final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
 		final int index = _items.indexWhere((item) => item.id == id);
 		return index < 0 ? null : MapEntry<int, _NavigationItem>(index, _items[index]);
@@ -85,7 +85,7 @@ class MainShell extends ConsumerWidget {
           child: Padding(
             key: const Key('cms-bottom-navigation'),
             padding: EdgeInsets.symmetric(
-              horizontal: footer.number('horizontal_padding', 16).clamp(0, 32),
+              horizontal: MediaQuery.sizeOf(context).width * footer.number('side_spacing_percent', 5).clamp(0, 25) / 100,
             ),
             child: SizedBox(
               height: footer.number('height', 72).clamp(48, 100),
@@ -96,7 +96,9 @@ class MainShell extends ConsumerWidget {
                   final _NavigationItem item = entry.value;
                   final bool selected = visibleIndex == (selectedIndex < 0 ? 0 : selectedIndex);
                   final Color color = selected ? activeColor : inactiveColor;
+				  final _FooterPlacement placement = placements.firstWhere((entry) => entry.id == item.id);
                   return Expanded(
+					flex: (placement.width * 100).round().clamp(1, 10000).toInt(),
                     child: InkWell(
                       key: Key('cms-bottom-nav-${item.id}'),
                       onTap: () => _openBranch(ref, entry.key),
@@ -132,6 +134,30 @@ class MainShell extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  List<_FooterPlacement> _footerPlacements(CmsPageComponent footer) {
+    final Map<String, dynamic> json = footer.json('layout_json');
+    final dynamic rawRows = json['rows'];
+    if (rawRows is List) {
+      final List<_FooterPlacement> result = <_FooterPlacement>[];
+      for (final dynamic rawRow in rawRows.take(3)) {
+        if (rawRow is! Map || rawRow['columns'] is! List) continue;
+        final List<dynamic> columns = rawRow['columns'] as List<dynamic>;
+        for (final dynamic rawColumn in columns.take(6)) {
+          if (rawColumn is! Map) continue;
+          final double width = (rawColumn['width'] as num?)?.toDouble() ?? (100 / columns.length);
+          final dynamic rawItems = rawColumn['items'];
+          if (rawItems is List) {
+            result.addAll(rawItems.map((item) => _FooterPlacement('$item', width)));
+          }
+        }
+      }
+      if (result.isNotEmpty) return result;
+    }
+    final dynamic legacyItems = json['items'];
+    final List<String> ids = legacyItems is List ? legacyItems.map((item) => '$item').toList() : _items.map((item) => item.id).toList();
+    return ids.map((id) => _FooterPlacement(id, 100 / ids.length)).toList(growable: false);
   }
 
   IconData _footerIcon(CmsPageComponent footer, _NavigationItem item, bool selected) {
@@ -200,6 +226,13 @@ Color _cmsColor(String value, Color fallback) {
   final String normalized = value.replaceFirst('#', '');
   if (!RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(normalized)) return fallback;
   return Color(int.parse('FF$normalized', radix: 16));
+}
+
+class _FooterPlacement {
+  const _FooterPlacement(this.id, this.width);
+
+  final String id;
+  final double width;
 }
 
 class _NavigationItem {

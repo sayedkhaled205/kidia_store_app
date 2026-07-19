@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 4;
+	private const VERSION = 5;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -68,7 +68,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'search_icon_radius', __( 'Search icon radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 24 ),
 			self::field( 'search_placeholder', __( 'Search placeholder', 'kidia-mobile-cms' ), 'text', __( 'Search products', 'kidia-mobile-cms' ) ),
 			self::field( 'search_height', __( 'Search height', 'kidia-mobile-cms' ), 'number', 40, array(), 32, 64 ),
-			self::field( 'search_width_percent', __( 'Search width (% of row)', 'kidia-mobile-cms' ), 'number', 100, array(), 30, 100 ),
+			self::field( 'search_width_percent', __( 'Search width (% of its column)', 'kidia-mobile-cms' ), 'number', 100, array(), 30, 100 ),
 			self::field( 'search_radius', __( 'Search radius', 'kidia-mobile-cms' ), 'number', 14, array(), 0, 32 ),
 			self::field( 'search_background', __( 'Search background', 'kidia-mobile-cms' ), 'color', '#F1F3F4' ),
 			self::field( 'search_text_color', __( 'Search text color', 'kidia-mobile-cms' ), 'color', '#5F6368' ),
@@ -124,7 +124,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'shadow', __( 'Shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'top_radius', __( 'Top corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'horizontal_padding', __( 'Horizontal padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
-			self::field( 'item_gap', __( 'Item spacing', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
+			self::field( 'side_spacing_percent', __( 'Outside side spacing (%)', 'kidia-mobile-cms' ), 'number', 5, array(), 0, 25 ),
 			self::field( 'icon_size', __( 'Default icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 14, 40 ),
 			self::field( 'label_size', __( 'Label size', 'kidia-mobile-cms' ), 'number', 11, array(), 8, 20 ),
 			self::field( 'icon_label_gap', __( 'Icon and label spacing', 'kidia-mobile-cms' ), 'number', 3, array(), 0, 12 ),
@@ -263,11 +263,10 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( ! is_array( $saved ) || empty( $saved ) ) {
 			return $default;
 		}
-		$needs_chrome_defaults = (int) ( $saved['version'] ?? 1 ) < self::VERSION;
-		if ( ! $needs_chrome_defaults ) {
-			$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
-			$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
-		}
+		// Keep saved chrome settings across schema upgrades. The browser and Flutter
+		// readers migrate legacy left/center/right and flat footer layouts in place.
+		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+		$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
 		$saved_elements = array();
 		foreach ( is_array( $saved['elements'] ?? null ) ? $saved['elements'] : array() as $element ) {
 			if ( is_array( $element ) && ! empty( $element['id'] ) ) {
@@ -407,21 +406,34 @@ final class Kidia_Mobile_Page_Layout_Store {
 
 	/** @return array<string,mixed> */
 	private function default_header_layout( string $page ): array {
+		$row = static function ( array $columns ): array {
+			return array( 'columns' => $columns );
+		};
+		$column = static function ( float $width, array $items, string $align = 'center' ): array {
+			return compact( 'width', 'align', 'items' );
+		};
 		$layouts = array(
-			'home' => array( 'rows' => array( array( 'left' => array( 'logo' ), 'center' => array(), 'right' => array( 'cart' ) ), array( 'left' => array(), 'center' => array( 'search_bar' ), 'right' => array() ) ) ),
-			'catalog' => array( 'rows' => array( array( 'left' => array( 'cart', 'search' ), 'center' => array( 'title' ), 'right' => array( 'back' ) ) ) ),
-			'product' => array( 'rows' => array( array( 'left' => array( 'back' ), 'center' => array(), 'right' => array( 'support', 'cart' ) ) ) ),
-			'category' => array( 'rows' => array( array( 'left' => array( 'search', 'cart' ), 'center' => array( 'title' ), 'right' => array() ) ) ),
-			'wishlist' => array( 'rows' => array( array( 'left' => array( 'back' ), 'center' => array( 'title' ), 'right' => array( 'cart' ) ) ) ),
-			'account' => array( 'rows' => array( array( 'left' => array(), 'center' => array( 'title' ), 'right' => array( 'orders' ) ) ) ),
+			'home' => array( 'rows' => array( $row( array( $column( 33.33, array( 'logo' ), 'left' ), $column( 33.34, array() ), $column( 33.33, array( 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ) ),
+			'catalog' => array( 'rows' => array( $row( array( $column( 33.33, array( 'cart', 'search' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'back' ), 'right' ) ) ) ) ),
+			'product' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array() ), $column( 33.33, array( 'support', 'cart' ), 'right' ) ) ) ) ),
+			'category' => array( 'rows' => array( $row( array( $column( 33.33, array( 'search', 'cart' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array(), 'right' ) ) ) ) ),
+			'wishlist' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'cart' ), 'right' ) ) ) ) ),
+			'account' => array( 'rows' => array( $row( array( $column( 33.33, array(), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'orders' ), 'right' ) ) ) ) ),
 		);
 		return $layouts[ $page ] ?? $layouts['catalog'];
 	}
 
 	/** @return array<string,mixed> */
 	private function default_footer_layout( string $page ): array {
-		if ( 'product' === $page ) { return array( 'items' => array( 'share', 'like', 'add_to_cart' ) ); }
-		return array( 'items' => array( 'home', 'categories', 'wishlist', 'account' ) );
+		$items = 'product' === $page ? array( 'share', 'like', 'add_to_cart' ) : array( 'home', 'categories', 'wishlist', 'account' );
+		$count = count( $items );
+		$base = floor( 10000 / $count ) / 100;
+		$columns = array();
+		foreach ( $items as $index => $item ) {
+			$width = $index === $count - 1 ? round( 100 - ( $base * ( $count - 1 ) ), 2 ) : $base;
+			$columns[] = array( 'width' => $width, 'align' => 'center', 'items' => array( $item ) );
+		}
+		return array( 'rows' => array( array( 'columns' => $columns ) ) );
 	}
 
 	/** @param array<int,array<string,mixed>> $fields @return array<string,mixed> */
