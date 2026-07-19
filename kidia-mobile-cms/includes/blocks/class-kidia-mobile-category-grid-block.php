@@ -39,11 +39,11 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'title'      => '',
 			'subtitle'   => '',
 			'columns'    => 3,
-			'limit'      => 3,
+			'limit'      => 5,
 			'parent_id'  => 0,
 			'hide_empty' => false,
 			'show_names' => true,
-			'layout'      => 'grid',
+			'layout'      => 'patpat',
 			'image_shape' => 'circle',
 			'image_size'  => 86,
 			'gap'         => 16,
@@ -72,7 +72,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'parent_id'  => absint( $settings['parent_id'] ?? 0 ),
 			'hide_empty' => ! empty( $settings['hide_empty'] ),
 			'show_names' => ! empty( $settings['show_names'] ),
-			'layout'      => in_array( $layout, array( 'grid', 'carousel' ), true ) ? $layout : 'grid',
+			'layout'      => in_array( $layout, array( 'patpat', 'grid', 'compact', 'cards', 'carousel' ), true ) ? $layout : 'patpat',
 			'image_shape' => in_array( $shape, array( 'circle', 'rounded', 'square' ), true ) ? $shape : 'rounded',
 			'image_size'  => max( 48, min( 140, absint( $settings['image_size'] ?? 78 ) ) ),
 			'gap'         => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
@@ -202,7 +202,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Categories Limit', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="1" max="50" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>">
 			</div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Grid', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal Row', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="patpat" <?php selected( 'patpat', $settings['layout'] ); ?>><?php esc_html_e( 'PatPat circles', 'kidia-mobile-cms' ); ?></option><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Classic grid', 'kidia-mobile-cms' ); ?></option><option value="compact" <?php selected( 'compact', $settings['layout'] ); ?>><?php esc_html_e( 'Compact grid', 'kidia-mobile-cms' ); ?></option><option value="cards" <?php selected( 'cards', $settings['layout'] ); ?>><?php esc_html_e( 'Rounded cards', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_size]" value="<?php echo esc_attr( (string) $settings['image_size'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>

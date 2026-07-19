@@ -583,7 +583,7 @@
 .kidia-builder-switch {
 	position: relative;
 	display: inline-flex;
-	width: 38px;
+	width: 88px;
 	height: 20px;
 	flex: 0 0 auto;
 }
@@ -625,6 +625,10 @@
 .kidia-builder-switch input:checked + .kidia-builder-switch__track::after {
 	transform: translateX(18px);
 }
+
+.kidia-builder-switch__state { min-width:34px; margin-inline-start:7px; color:#646970; font-size:11px; font-weight:800; line-height:20px; }
+.kidia-builder-switch__state::before { content:"Off"; }
+.kidia-builder-switch input:checked ~ .kidia-builder-switch__state::before { content:"On"; color:var(--kidia-accent); }
 
 [dir="rtl"] .kidia-builder-switch input:checked + .kidia-builder-switch__track::after {
 	transform: translateX(-18px);

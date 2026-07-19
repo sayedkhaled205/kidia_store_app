@@ -51,34 +51,40 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.defaultTitle,
     super.key,
     this.actions = const <CmsPageHeaderAction>[],
+    this.compact = false,
   });
 
   final CmsPageLayout layout;
   final String defaultTitle;
   final List<CmsPageHeaderAction> actions;
+  final bool compact;
 
   CmsPageComponent get _header => layout.header;
 
   @override
-  Size get preferredSize => Size.fromHeight(
-    _header.enabled ? _header.number('height', 64).clamp(48, 120) : 0,
-  );
+  Size get preferredSize => Size.fromHeight(_header.enabled
+      ? (compact ? _header.number('search_height', 40).clamp(32, 64) + 16 : _header.number('height', 64).clamp(48, 120)) + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
+      : 0);
 
   @override
   Widget build(BuildContext context) {
     if (!_header.enabled) return const SizedBox.shrink();
     final Color background = _color(_header.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color foreground = _color(_header.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
-    final List<Map<String, dynamic>> rows = _layoutRows();
+    final List<Map<String, dynamic>> rows = compact && layout.page == 'home'
+        ? <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']}, <String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']}]}]
+        : _layoutRows();
     final double padding = _header.number('horizontal_padding', 16).clamp(0, 32);
-    return Material(
+    return Padding(
+      padding: EdgeInsets.only(top: _header.number('margin_top', 0).clamp(0, 80), bottom: _header.number('margin_bottom', 0).clamp(0, 80)),
+      child: Material(
       color: _header.string('style', 'standard') == 'transparent' ? background.withValues(alpha: 0) : background,
       elevation: _header.string('shadow', 'subtle') == 'none' ? 0 : _header.string('shadow', 'subtle') == 'strong' ? 6 : 2,
 	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_header.number('corner_radius', 0)), side: BorderSide(color: _color(_header.string('border_color', '#E2E6E4'), Colors.transparent), width: _header.number('border_width', 0))),
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: preferredSize.height,
+          height: compact ? _header.number('search_height', 40).clamp(32, 64) + 16 : _header.number('height', 64).clamp(48, 120),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: padding, vertical: _header.number('vertical_padding', 8).clamp(0, 24)),
             child: Column(
@@ -94,7 +100,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _headerRow(BuildContext context, Map<String, dynamic> row, Color color) {
