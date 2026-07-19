@@ -82,24 +82,43 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: padding, vertical: _header.number('vertical_padding', 8).clamp(0, 24)),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
-              children: rows.indexed.map((entry) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(top: entry.$1 == 0 ? 0 : _header.number('row_gap', 8).clamp(0, 24) / 2),
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Row(children: <Widget>[
-                      Expanded(child: _slot(context, entry.$2['left'], Alignment.centerLeft, foreground)),
-                      Expanded(flex: 2, child: _slot(context, entry.$2['center'], Alignment.center, foreground)),
-                      Expanded(child: _slot(context, entry.$2['right'], Alignment.centerRight, foreground)),
-                    ]),
-                  ),
-                ),
-              )).toList(growable: false),
+              children: rows.indexed.expand((entry) sync* {
+                if (entry.$1 > 0) {
+                  yield SizedBox(height: _header.number('row_gap', 8).clamp(0, 24));
+                }
+                yield _headerRow(context, entry.$2, foreground);
+              }).toList(growable: false),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _headerRow(BuildContext context, Map<String, dynamic> row, Color color) {
+    final dynamic left = row['left'];
+    final dynamic center = row['center'];
+    final dynamic right = row['right'];
+    final List<String> allItems = <dynamic>[
+      if (left is List) ...left,
+      if (center is List) ...center,
+      if (right is List) ...right,
+    ].map((item) => '$item').toList(growable: false);
+    if (allItems.length == 1 && allItems.first == 'search_bar') {
+      return FractionallySizedBox(
+        widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
+        child: _searchBar(context, _actionFor('search'), color),
+      );
+    }
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(children: <Widget>[
+        Expanded(child: _slot(context, row['left'], Alignment.centerLeft, color)),
+        Expanded(flex: 2, child: _slot(context, row['center'], Alignment.center, color)),
+        Expanded(child: _slot(context, row['right'], Alignment.centerRight, color)),
+      ]),
     );
   }
 
@@ -147,7 +166,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final CmsPageHeaderAction? action = item == 'back'
         ? CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop())
         : _actionFor(item == 'search_bar' ? 'search' : item);
-    if (item == 'search_bar') return SizedBox(width: 180, child: _searchBar(context, action, color));
+    if (item == 'search_bar') return SizedBox(width: 180 * (_header.number('search_width_percent', 100).clamp(30, 100) / 100), child: _searchBar(context, action, color));
     if (action == null) return const SizedBox.shrink();
     return _actionButton(context, action, color);
   }

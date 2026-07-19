@@ -1,0 +1,49 @@
+/* Shared header/footer composer and instant phone-preview refinements. */
+.kidia-app-header--composed {
+	padding: 5px var(--header-padding) !important;
+}
+.kidia-app-header-row--full {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+.kidia-app-header-row--full .kidia-app-search {
+	max-width: 100%;
+}
+.kidia-app-footer--composed {
+	justify-content: space-between;
+	gap: 0 !important;
+}
+.kidia-app-footer--composed .kidia-app-footer-item {
+	flex: 1;
+	gap: var(--label-gap);
+}
+
+.kidia-chrome-icons-panel .kidia-page-fields {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.kidia-chrome-icon-choice {
+	display: grid;
+	grid-template-columns: 42px minmax(0, 1fr);
+	align-items: end;
+	gap: 8px;
+}
+.kidia-chrome-icon-choice__preview {
+	display: grid;
+	width: 42px;
+	height: 42px;
+	place-items: center;
+	border: 1px solid #9fc8be;
+	border-radius: 9px;
+	background: #f4faf8;
+	color: #236b59;
+	font-size: 23px;
+}
+.kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
+	display: none;
+}
+@media (max-width: 900px) {
+	.kidia-chrome-icons-panel .kidia-page-fields {
+		grid-template-columns: 1fr 1fr;
+	}
+}

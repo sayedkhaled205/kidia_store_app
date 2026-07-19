@@ -43,6 +43,17 @@ kidia_page_assert( array( 'share', 'like', 'add_to_cart' ) === json_decode( $pro
 $home_default = $store->get_layout( 'home' );
 $home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
 kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['left'] && array( 'search_bar' ) === $home_rows[1]['center'], 'Home header must default to the two-row Kidia layout.' );
+kidia_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
+kidia_page_assert( 4 === $home_default['header']['settings']['row_gap'], 'Home header rows must default to a compact real gap.' );
+$GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
+	'version' => 2,
+	'header' => array( 'enabled' => true, 'settings' => array( 'height' => 64, 'layout_json' => wp_json_encode( array( 'rows' => array() ) ) ) ),
+	'footer' => array( 'enabled' => true, 'settings' => array( 'horizontal_padding' => 0 ) ),
+);
+$migrated_home = $store->get_layout( 'home' );
+kidia_page_assert( 112 === $migrated_home['header']['settings']['height'], 'Version 2 saved chrome must migrate to the exact Home default.' );
+kidia_page_assert( 16 === $migrated_home['footer']['settings']['horizontal_padding'], 'Legacy footer settings must migrate to the new Kidia default.' );
+unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] );
 foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );
 }
