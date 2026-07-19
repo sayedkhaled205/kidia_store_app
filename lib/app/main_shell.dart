@@ -7,7 +7,7 @@ import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/home/presentation/providers/home_providers.dart';
 
-class MainShell extends ConsumerWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
@@ -39,8 +39,16 @@ class MainShell extends ConsumerWidget {
     ),
   ];
 
+	@override
+	ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+	bool _footerHidden = false;
+	static const List<_NavigationItem> _items = MainShell._items;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final String page = _pageForPath(GoRouterState.of(context).uri.path);
     final CmsPageLayout pageLayout =
         ref.watch(cmsPageLayoutProvider(page)).value ??
@@ -54,7 +62,7 @@ class MainShell extends ConsumerWidget {
 	}).whereType<MapEntry<int, _NavigationItem>>().toList(growable: false);
     final int selectedIndex = visibleItems.indexWhere(
       (MapEntry<int, _NavigationItem> entry) =>
-          entry.key == navigationShell.currentIndex,
+          entry.key == widget.navigationShell.currentIndex,
     );
     final Color activeColor = _cmsColor(
       footer.string('active_color', '#1F6F61'),
@@ -69,8 +77,16 @@ class MainShell extends ConsumerWidget {
       KidiaColors.surface,
     );
     return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: !footer.enabled || visibleItems.isEmpty || footer.string('style', 'navigation') == 'product_action'
+      body: NotificationListener<ScrollUpdateNotification>(
+		onNotification: (ScrollUpdateNotification notification) {
+			if (!footer.boolean('hide_on_scroll', false) || notification.scrollDelta == null) return false;
+			final bool hidden = notification.scrollDelta! > 0;
+			if (hidden != _footerHidden) setState(() => _footerHidden = hidden);
+			return false;
+		},
+		child: widget.navigationShell,
+	  ),
+      bottomNavigationBar: !footer.enabled || (_footerHidden && footer.boolean('hide_on_scroll', false)) || visibleItems.isEmpty || footer.string('style', 'navigation') == 'product_action'
           ? null
           : SafeArea(
         top: false,
@@ -186,13 +202,13 @@ class MainShell extends ConsumerWidget {
         path.startsWith('/products')) {
       return 'catalog';
     }
-    return navigationShell.currentIndex == 0
+    return widget.navigationShell.currentIndex == 0
         ? 'home'
-        : navigationShell.currentIndex == 1
+        : widget.navigationShell.currentIndex == 1
         ? 'category'
-        : navigationShell.currentIndex == 2
+        : widget.navigationShell.currentIndex == 2
         ? 'wishlist'
-        : navigationShell.currentIndex == 3
+        : widget.navigationShell.currentIndex == 3
         ? 'account'
         : 'catalog';
   }
@@ -201,9 +217,9 @@ class MainShell extends ConsumerWidget {
     if (index == 0) {
       ref.invalidate(homeLayoutProvider);
     }
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == 1 || index == navigationShell.currentIndex,
+      initialLocation: index == 1 || index == widget.navigationShell.currentIndex,
     );
   }
 }

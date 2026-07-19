@@ -8,6 +8,25 @@ typedef CmsPageLayoutWidgetBuilder = Widget Function(
   CmsPageLayout layout,
 );
 
+class CmsElementFrame extends StatelessWidget {
+  const CmsElementFrame({required this.component, required this.child, super.key});
+
+  final CmsPageComponent component;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final String raw = component.string('background_color', '').trim();
+    final Color background = raw.isEmpty ? Colors.transparent : _color(raw, Colors.transparent);
+    return Container(
+      margin: EdgeInsets.only(top: component.number('margin_top', 0).clamp(0, 80), bottom: component.number('margin_bottom', 0).clamp(0, 80)),
+      padding: EdgeInsets.symmetric(vertical: component.number('padding_vertical', 0).clamp(0, 40), horizontal: component.number('padding_horizontal', 0).clamp(0, 40)),
+      color: background,
+      child: child,
+    );
+  }
+}
+
 class CmsPageLayoutLoader extends ConsumerWidget {
   const CmsPageLayoutLoader({
     required this.page,
@@ -63,18 +82,18 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(_header.enabled
-      ? (compact ? _header.number('search_height', 40).clamp(32, 64) + 16 : _header.number('height', 64).clamp(48, 120)) + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
+      ? (compact ? _header.number('compact_height', 60).clamp(44, 100) : _header.number('height', 64).clamp(48, 120)) + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
       : 0);
 
   @override
   Widget build(BuildContext context) {
     if (!_header.enabled) return const SizedBox.shrink();
-    final Color background = _color(_header.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
+    final Color background = _color(_header.string(compact ? 'compact_background_color' : 'background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color foreground = _color(_header.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
-    final List<Map<String, dynamic>> rows = compact && layout.page == 'home'
-        ? <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']}, <String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']}]}]
+    final List<Map<String, dynamic>> rows = compact
+        ? _compactLayoutRows()
         : _layoutRows();
-    final double padding = _header.number('horizontal_padding', 16).clamp(0, 32);
+    final double padding = _header.number(compact ? 'compact_horizontal_padding' : 'horizontal_padding', 16).clamp(0, 32);
     return Padding(
       padding: EdgeInsets.only(top: _header.number('margin_top', 0).clamp(0, 80), bottom: _header.number('margin_bottom', 0).clamp(0, 80)),
       child: Material(
@@ -84,7 +103,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: compact ? _header.number('search_height', 40).clamp(32, 64) + 16 : _header.number('height', 64).clamp(48, 120),
+          height: compact ? _header.number('compact_height', 60).clamp(44, 100) : _header.number('height', 64).clamp(48, 120),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: padding, vertical: _header.number('vertical_padding', 8).clamp(0, 24)),
             child: Column(
@@ -158,6 +177,18 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
     return <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['search', 'cart']}];
   }
+
+	List<Map<String, dynamic>> _compactLayoutRows() {
+		final dynamic raw = _header.json('compact_layout_json')['rows'];
+		if (raw is List) {
+			final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(1).toList();
+			if (rows.isNotEmpty) return rows;
+		}
+		return <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[
+			<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']},
+			<String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']},
+		]}];
+	}
 
   Widget _slot(BuildContext context, dynamic rawItems, Alignment alignment, Color color) {
     final List<String> items = rawItems is List ? rawItems.map((item) => '$item').where((item) => item != 'subtitle').toList() : <String>[];

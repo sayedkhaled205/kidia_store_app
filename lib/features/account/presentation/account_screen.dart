@@ -82,7 +82,7 @@ class AccountScreen extends ConsumerWidget {
           ),
           children: <Widget>[
             if (summarySettings.enabled)
-              _AccountHeader(
+              CmsElementFrame(component: summarySettings, child: _AccountHeader(
               session: session,
               loading: authState.isLoading,
               isArabic: isArabic,
@@ -92,7 +92,7 @@ class AccountScreen extends ConsumerWidget {
                 'guest_title',
                 isArabic ? 'تسجيل الدخول / إنشاء حساب' : 'Sign in / Register',
               ),
-            ),
+            )),
             if (authState.hasError) ...<Widget>[
               const SizedBox(height: KidiaSpacing.sm),
               _SessionNotice(
@@ -103,7 +103,7 @@ class AccountScreen extends ConsumerWidget {
             ],
             if (menuSettings.enabled) const SizedBox(height: KidiaSpacing.lg),
             if (menuSettings.enabled)
-              Card(
+              CmsElementFrame(component: menuSettings, child: Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: <Widget>[
@@ -121,15 +121,15 @@ class AccountScreen extends ConsumerWidget {
                   ],
                 ],
               ),
-            ),
+            )),
             if (session != null && pageLayout.element('logout_button').enabled) ...<Widget>[
               const SizedBox(height: KidiaSpacing.lg),
-              OutlinedButton.icon(
+              CmsElementFrame(component: pageLayout.element('logout_button'), child: OutlinedButton.icon(
                 key: const Key('account-sign-out'),
                 onPressed: () => _signOut(context, ref, isArabic),
                 icon: const Icon(Icons.logout_rounded),
                 label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
-              ),
+              )),
             ],
           ],
         ),

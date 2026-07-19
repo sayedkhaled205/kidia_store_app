@@ -123,23 +123,23 @@ class _WishlistScreenState extends State<WishlistScreen> {
         if (!layout.element('empty_state').enabled) {
           return const SizedBox.shrink();
         }
-        return _WishlistEmpty(
+        return CmsElementFrame(component: layout.element('empty_state'), child: _WishlistEmpty(
           copy: copy,
           onRefresh: _controller.refresh,
           onContinueShopping: widget.onContinueShopping,
-        );
+        ));
       case WishlistStatus.ready:
         if (!layout.element('wishlist_grid').enabled) {
           return const SizedBox.shrink();
         }
-        return _WishlistGrid(
+        return CmsElementFrame(component: layout.element('wishlist_grid'), child: _WishlistGrid(
           products: _controller.products,
           copy: copy,
           isMutating: _controller.isMutating,
           onRefresh: _controller.refresh,
           onProductTap: widget.onProductTap,
           onRemove: _removeProduct,
-        );
+        ));
     }
   }
 

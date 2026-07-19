@@ -569,7 +569,7 @@
 		var paddingHorizontal = numberInRange(settings.padding_horizontal, 0, 0, 40);
 		var radius = numberInRange(settings.block_radius, 0, 0, 50);
 		var scale = numberInRange(settings.content_scale, 100, 80, 120) / 100;
-		var background = safeColor(settings.block_background, "#FFFFFF");
+		var background = String(settings.block_background || "").trim() === "" ? "transparent" : safeColor(settings.block_background, "transparent");
 
 		return '<div class="kidia-preview-focus-target kidia-preview-block-frame" data-preview-block="' +
 			escapeHtml(block.id) +

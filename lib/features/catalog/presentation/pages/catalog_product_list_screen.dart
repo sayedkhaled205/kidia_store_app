@@ -230,9 +230,17 @@ class _ProductListContent extends StatelessWidget {
             )
           else ...<Widget>[
             if (pageLayout.element('product_grid').enabled)
-              _CatalogProductGrid(
-                items: state.items,
-                settings: pageLayout.element('product_grid'),
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  pageLayout.element('product_grid').number('padding_horizontal', 0).clamp(0, 40),
+                  pageLayout.element('product_grid').number('margin_top', 0).clamp(0, 80) + pageLayout.element('product_grid').number('padding_vertical', 0).clamp(0, 40),
+                  pageLayout.element('product_grid').number('padding_horizontal', 0).clamp(0, 40),
+                  pageLayout.element('product_grid').number('margin_bottom', 0).clamp(0, 80) + pageLayout.element('product_grid').number('padding_vertical', 0).clamp(0, 40),
+                ),
+                sliver: _CatalogProductGrid(
+                  items: state.items,
+                  settings: pageLayout.element('product_grid'),
+                ),
               ),
             if (pageLayout.element('product_grid').string('pagination_mode', 'load_more') != 'none')
               SliverToBoxAdapter(

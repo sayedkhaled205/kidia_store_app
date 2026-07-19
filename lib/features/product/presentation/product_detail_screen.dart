@@ -45,6 +45,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late ProductDetailController _controller;
   bool _isWishlisted = false;
   bool _isWishlistMutating = false;
+	bool _footerHidden = false;
 
   @override
   void initState() {
@@ -98,9 +99,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           defaultTitle: copy.description,
           actions: _buildCmsActions(context, copy),
         ),
-        body: _buildBody(copy, layout),
+        body: NotificationListener<ScrollUpdateNotification>(
+		  onNotification: (ScrollUpdateNotification notification) {
+			if (!layout.footer.boolean('hide_on_scroll', false) || notification.scrollDelta == null) return false;
+			final bool hidden = notification.scrollDelta! > 0;
+			if (hidden != _footerHidden) setState(() => _footerHidden = hidden);
+			return false;
+		  },
+		  child: _buildBody(copy, layout),
+		),
         bottomNavigationBar:
             layout.element('purchase_bar').enabled &&
+				!(_footerHidden && layout.footer.boolean('hide_on_scroll', false)) &&
                 _controller.status == ProductDetailStatus.success &&
                 _controller.product != null
             ? _PurchaseBar(
@@ -261,7 +271,7 @@ class _ProductContent extends StatelessWidget {
       slivers: <Widget>[
         if (pageLayout.element('image_gallery').enabled)
           SliverToBoxAdapter(
-            child: _ProductGallery(images: images, productName: product.name),
+            child: CmsElementFrame(component: pageLayout.element('image_gallery'), child: _ProductGallery(images: images, productName: product.name)),
           ),
         SliverPadding(
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
@@ -332,17 +342,17 @@ class _ProductContent extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               if (pageLayout.element('description').enabled)
-                _DetailsSection(product: product, copy: copy),
+                CmsElementFrame(component: pageLayout.element('description'), child: _DetailsSection(product: product, copy: copy)),
               const SizedBox(height: 18),
               if (pageLayout.element('related_products').enabled)
-              OutlinedButton.icon(
+              CmsElementFrame(component: pageLayout.element('related_products'), child: OutlinedButton.icon(
                 key: const Key('related-products-button'),
                 onPressed: onRelatedProductsRequested == null
                     ? null
                     : () => onRelatedProductsRequested!(product),
                 icon: const Icon(Icons.auto_awesome_outlined),
                 label: Text(copy.relatedProducts),
-              ),
+              )),
               const SizedBox(height: 32),
             ],
           ),

@@ -70,6 +70,12 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 
 		<div class="kidia-builder-block__actions">
 
+			<label class="kidia-builder-switch kidia-builder-switch--card" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
+				<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( true, ! empty( $block_data['enabled'] ) ); ?>>
+				<span class="kidia-builder-switch__track"></span>
+				<span class="kidia-builder-switch__state"></span>
+			</label>
+
 			<button
 				type="button"
 				class="button kidia-toggle-block-settings"
@@ -173,27 +179,6 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 				name="blocks[<?php echo esc_attr( (string) $index ); ?>][name]"
 				value="<?php echo esc_attr( $name ); ?>"
 			>
-
-			</div>
-
-			<div class="kidia-builder-field kidia-builder-field--enabled">
-
-			<label class="kidia-builder-switch">
-
-				<input
-					type="checkbox"
-					name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]"
-					value="1"
-					<?php checked(
-						true,
-						! empty( $block_data['enabled'] )
-					); ?>
-				>
-
-				<span class="kidia-builder-switch__track"></span>
-				<span class="kidia-builder-switch__state"></span>
-
-			</label>
 
 			</div>
 
