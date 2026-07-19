@@ -29,7 +29,7 @@ import 'package:kidia_store_app/features/product/presentation/product_detail_scr
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
-import 'features/product/presentation/support/product_test_data.dart';
+import 'features/product/support/product_test_data.dart';
 
 void main() {
   testWidgets('app shows its startup splash safely', (tester) async {
