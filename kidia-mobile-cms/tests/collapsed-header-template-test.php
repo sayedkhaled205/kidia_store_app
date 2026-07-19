@@ -56,6 +56,9 @@ kidia_collapsed_header_assert( false !== $settings_position && $settings_positio
 kidia_collapsed_header_assert( 2 === substr_count( $markup, $toggle_name ), 'The collapsed On/Off control must submit both its unchecked and checked values.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-toggle-state' ), 'The collapsed control must display the shared On/Off state.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'Preview collapsed header' ), 'The old preview-only control must not be rendered.' );
+kidia_collapsed_header_assert( false === strpos( $markup, 'scroll_up_header' ), 'The obsolete scroll-up selector must not be rendered.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_transition]"' ), 'Collapsed transition options must render below the collapsed composer.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_speed]"' ), 'Collapsed transition speed must render below the collapsed composer.' );
 
 $off = $store->save_layout( 'home', array(
 	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '0' ) ),
@@ -64,10 +67,12 @@ $off = $store->save_layout( 'home', array(
 kidia_collapsed_header_assert( false === $off['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header Off must save.' );
 
 $on = $store->save_layout( 'home', array(
-	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1' ) ),
+	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_transition' => 'scale', 'collapse_speed' => 'slow' ) ),
 	'footer' => array( 'enabled' => '1' ),
 ) );
 kidia_collapsed_header_assert( true === $on['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header On must save.' );
+kidia_collapsed_header_assert( 'scale' === $on['header']['settings']['collapse_transition'], 'The collapsed transition must save.' );
+kidia_collapsed_header_assert( 'slow' === $on['header']['settings']['collapse_speed'], 'The collapsed transition speed must save.' );
 kidia_collapsed_header_assert( true === $store->get_layout( 'home' )['header']['settings']['collapse_on_scroll'], 'The saved On state must survive reload.' );
 
 fwrite( STDOUT, "Collapsed-header editor placement, toggle and save passed.\n" );
