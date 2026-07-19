@@ -93,12 +93,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final _ProductCopy copy = _ProductCopy.of(context);
     return CmsPageLayoutLoader(
       page: 'product',
-      builder: (BuildContext context, CmsPageLayout layout) => Scaffold(
-        appBar: CmsPageAppBar(
-          layout: layout,
-          defaultTitle: copy.description,
-          actions: _buildCmsActions(context, copy),
-        ),
+      builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
+        layout: layout,
+        defaultTitle: copy.description,
+        actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
 		  onNotification: (ScrollUpdateNotification notification) {
 			if (!layout.footer.boolean('hide_on_scroll', false) || notification.scrollDelta == null) return false;

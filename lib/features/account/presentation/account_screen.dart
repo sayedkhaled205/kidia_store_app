@@ -58,19 +58,17 @@ class AccountScreen extends ConsumerWidget {
     final CmsPageComponent menuSettings = pageLayout.element('account_menu');
     final List<_AccountAction> visibleActions = _visibleActions(menuSettings);
 
-    return Scaffold(
-      appBar: CmsPageAppBar(
-        layout: pageLayout,
-        defaultTitle: isArabic ? 'حسابي' : 'Account',
-        actions: <CmsPageHeaderAction>[
+    return CmsPageScaffold(
+      layout: pageLayout,
+      defaultTitle: isArabic ? 'حسابي' : 'Account',
+      actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(
             type: 'cart',
             icon: Icons.shopping_bag_outlined,
             tooltip: 'Cart',
             onPressed: () => context.push('/cart'),
           ),
-        ],
-      ),
+      ],
       body: SafeArea(
         top: false,
         child: ListView(

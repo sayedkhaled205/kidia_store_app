@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 6;
+	private const VERSION = 7;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -27,8 +27,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 		return array(
 			self::field( 'layout_json', __( 'Header element layout', 'kidia-mobile-cms' ), 'json', '' ),
 			self::field( 'compact_layout_json', __( 'Collapsed header element layout', 'kidia-mobile-cms' ), 'json', '' ),
-			self::field( 'collapse_on_scroll', __( 'Merge header rows while scrolling down', 'kidia-mobile-cms' ), 'checkbox', false ),
-			self::field( 'scroll_up_header', __( 'Header shown while scrolling up', 'kidia-mobile-cms' ), 'select', 'original', array( 'original' => __( 'Original header rows', 'kidia-mobile-cms' ), 'collapsed' => __( 'Collapsed header', 'kidia-mobile-cms' ) ) ),
+			self::field( 'collapse_on_scroll', __( 'Show collapsed header while page is scrolled', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'collapse_transition', __( 'Collapsed header transition', 'kidia-mobile-cms' ), 'select', 'fade_slide', array( 'instant' => __( 'Instant (no animation)', 'kidia-mobile-cms' ), 'fade' => __( 'Fade in / out', 'kidia-mobile-cms' ), 'slide' => __( 'Slide up', 'kidia-mobile-cms' ), 'fade_slide' => __( 'Fade + slide', 'kidia-mobile-cms' ), 'scale' => __( 'Shrink / scale', 'kidia-mobile-cms' ) ) ),
+			self::field( 'collapse_speed', __( 'Transition speed', 'kidia-mobile-cms' ), 'select', 'medium', array( 'fast' => __( 'Fast', 'kidia-mobile-cms' ), 'medium' => __( 'Medium', 'kidia-mobile-cms' ), 'slow' => __( 'Slow', 'kidia-mobile-cms' ) ) ),
 			self::field( 'compact_height', __( 'Collapsed header height', 'kidia-mobile-cms' ), 'number', 60, array(), 44, 100 ),
 			self::field( 'compact_style', __( 'Collapsed header shape', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Full width', 'kidia-mobile-cms' ), 'floating' => __( 'Floating card', 'kidia-mobile-cms' ), 'pill' => __( 'Pill', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
 			self::field( 'compact_background_color', __( 'Collapsed header background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),

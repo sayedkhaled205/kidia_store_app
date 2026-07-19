@@ -22,34 +22,6 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  late final ScrollController _scrollController;
-  bool _compactHeader = false;
-	bool _wasScrollingDown = false;
-	double _lastOffset = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController()..addListener(_handleScroll);
-  }
-
-  void _handleScroll() {
-	if (!_scrollController.hasClients) return;
-	final double offset = _scrollController.offset;
-	final bool down = offset > _lastOffset;
-	_lastOffset = offset;
-	final bool compact = offset > 36;
-	if (compact != _compactHeader || down != _wasScrollingDown) {
-		setState(() { _compactHeader = compact; _wasScrollingDown = down; });
-	}
-  }
-
-  @override
-  void dispose() {
-    _scrollController..removeListener(_handleScroll)..dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final String locale = Localizations.localeOf(context).toLanguageTag();
@@ -60,22 +32,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     final CmsPageLayout chrome =
         ref.watch(cmsPageLayoutProvider('home')).value ??
         CmsPageLayout.fallback('home');
-	final bool collapseEnabled = chrome.header.boolean('collapse_on_scroll', true);
-	final bool keepCollapsedOnUp = chrome.header.string('scroll_up_header', 'original') == 'collapsed';
-	final bool useCollapsedHeader = collapseEnabled && _compactHeader && (_wasScrollingDown || keepCollapsedOnUp);
 
-    return Scaffold(
-      appBar: CmsPageAppBar(
-        layout: chrome,
-        defaultTitle: 'Kidia',
-        compact: useCollapsedHeader,
-        actions: <CmsPageHeaderAction>[
+    return CmsPageScaffold(
+      layout: chrome,
+      defaultTitle: 'Kidia',
+      actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
           CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
           CmsPageHeaderAction(type: 'wishlist', icon: Icons.favorite_border_rounded, tooltip: 'المفضلة', onPressed: () => context.go('/wishlist')),
           CmsPageHeaderAction(type: 'account', icon: Icons.person_outline_rounded, tooltip: 'حسابي', onPressed: () => context.go('/account')),
-        ],
-      ),
+      ],
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -83,7 +49,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             return ref.refresh(homeLayoutProvider(locale).future);
           },
           child: CustomScrollView(
-            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               homeLayoutAsync.when(

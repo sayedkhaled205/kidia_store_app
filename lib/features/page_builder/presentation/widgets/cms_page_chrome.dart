@@ -64,6 +64,81 @@ class CmsPageHeaderAction {
   final Color? color;
 }
 
+class CmsPageScaffold extends StatefulWidget {
+  const CmsPageScaffold({
+    required this.layout,
+    required this.defaultTitle,
+    required this.body,
+    super.key,
+    this.actions = const <CmsPageHeaderAction>[],
+    this.bottomNavigationBar,
+    this.backgroundColor,
+  });
+
+  final CmsPageLayout layout;
+  final String defaultTitle;
+  final Widget body;
+  final List<CmsPageHeaderAction> actions;
+  final Widget? bottomNavigationBar;
+  final Color? backgroundColor;
+
+  @override
+  State<CmsPageScaffold> createState() => _CmsPageScaffoldState();
+}
+
+class _CmsPageScaffoldState extends State<CmsPageScaffold> {
+  static const double _topTolerance = 0.5;
+
+  bool _collapsed = false;
+
+  bool _handleScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    final bool enabled = widget.layout.header.boolean(
+      'collapse_on_scroll',
+      false,
+    );
+    final bool next =
+        enabled &&
+        notification.metrics.pixels >
+            notification.metrics.minScrollExtent + _topTolerance;
+    if (next != _collapsed) {
+      setState(() => _collapsed = next);
+    }
+    return false;
+  }
+
+  @override
+  void didUpdateWidget(covariant CmsPageScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.layout.page != widget.layout.page ||
+        !widget.layout.header.boolean('collapse_on_scroll', false)) {
+      _collapsed = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool collapsed =
+        widget.layout.header.boolean('collapse_on_scroll', false) && _collapsed;
+    return Scaffold(
+      backgroundColor: widget.backgroundColor,
+      appBar: CmsPageAppBar(
+        layout: widget.layout,
+        defaultTitle: widget.defaultTitle,
+        actions: widget.actions,
+        compact: collapsed,
+      ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScroll,
+        child: widget.body,
+      ),
+      bottomNavigationBar: widget.bottomNavigationBar,
+    );
+  }
+}
+
 class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CmsPageAppBar({
     required this.layout,
@@ -88,42 +163,177 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     if (!_header.enabled) return const SizedBox.shrink();
-	final String compactStyle = _header.string('compact_style', 'standard');
-    final Color background = compact && compactStyle == 'transparent' ? Colors.transparent : _color(_header.string(compact ? 'compact_background_color' : 'background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
-    final Color foreground = _color(_header.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
+    final String compactStyle = _header.string('compact_style', 'standard');
+    final String transition = _header.string(
+      'collapse_transition',
+      'fade_slide',
+    );
+    final Duration transitionDuration = _transitionDuration(transition);
+    final Color background = compact && compactStyle == 'transparent'
+        ? Colors.transparent
+        : _color(
+            _header.string(
+              compact ? 'compact_background_color' : 'background_color',
+              '#FFFFFF',
+            ),
+            Theme.of(context).colorScheme.surface,
+          );
+    final Color foreground = _color(
+      _header.string('icon_color', '#1F2933'),
+      Theme.of(context).colorScheme.onSurface,
+    );
     final List<Map<String, dynamic>> rows = compact
         ? _compactLayoutRows()
         : _layoutRows();
-    final double padding = _header.number(compact ? 'compact_horizontal_padding' : 'horizontal_padding', 16).clamp(0, 32);
-	final double sideMargin = compact ? _header.number('compact_side_margin', compactStyle == 'floating' || compactStyle == 'pill' ? 8 : 0).clamp(0, 32) : 0;
-	final double radius = compact ? _header.number('compact_radius', compactStyle == 'pill' ? 40 : compactStyle == 'floating' ? 16 : 0).clamp(0, 40) : _header.number('corner_radius', 0);
-	final String activeShadow = compact ? _header.string('compact_shadow', compactStyle == 'transparent' ? 'none' : 'subtle') : _header.string('shadow', 'subtle');
+    final double padding = _header
+        .number(
+          compact ? 'compact_horizontal_padding' : 'horizontal_padding',
+          16,
+        )
+        .clamp(0, 32);
+    final double sideMargin = compact
+        ? _header
+              .number(
+                'compact_side_margin',
+                compactStyle == 'floating' || compactStyle == 'pill' ? 8 : 0,
+              )
+              .clamp(0, 32)
+        : 0;
+    final double radius = compact
+        ? _header
+              .number(
+                'compact_radius',
+                compactStyle == 'pill'
+                    ? 40
+                    : compactStyle == 'floating'
+                    ? 16
+                    : 0,
+              )
+              .clamp(0, 40)
+        : _header.number('corner_radius', 0);
+    final String activeShadow = compact
+        ? _header.string(
+            'compact_shadow',
+            compactStyle == 'transparent' ? 'none' : 'subtle',
+          )
+        : _header.string('shadow', 'subtle');
     return Padding(
-      padding: EdgeInsets.fromLTRB(sideMargin, _header.number('margin_top', 0).clamp(0, 80), sideMargin, _header.number('margin_bottom', 0).clamp(0, 80)),
+      padding: EdgeInsets.fromLTRB(
+        sideMargin,
+        _header.number('margin_top', 0).clamp(0, 80),
+        sideMargin,
+        _header.number('margin_bottom', 0).clamp(0, 80),
+      ),
       child: Material(
-      color: (!compact && _header.string('style', 'standard') == 'transparent') ? background.withValues(alpha: 0) : background,
-      elevation: activeShadow == 'none' ? 0 : activeShadow == 'strong' ? 6 : 2,
-	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: BorderSide(color: _color(_header.string(compact ? 'compact_border_color' : 'border_color', '#E2E6E4'), Colors.transparent), width: _header.number(compact ? 'compact_border_width' : 'border_width', 0))),
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: compact ? _header.number('compact_height', 60).clamp(44, 100) : _header.number('height', 64).clamp(48, 120),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: padding, vertical: _header.number('vertical_padding', 8).clamp(0, 24)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: rows.indexed.expand((entry) sync* {
-                if (entry.$1 > 0) {
-                  yield SizedBox(height: _header.number('row_gap', 8).clamp(0, 24));
-                }
-                yield _headerRow(context, entry.$2, foreground);
-              }).toList(growable: false),
+        color:
+            (!compact &&
+                _header.string('style', 'standard') == 'transparent')
+            ? background.withValues(alpha: 0)
+            : background,
+        elevation: activeShadow == 'none'
+            ? 0
+            : activeShadow == 'strong'
+            ? 6
+            : 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(
+            color: _color(
+              _header.string(
+                compact ? 'compact_border_color' : 'border_color',
+                '#E2E6E4',
+              ),
+              Colors.transparent,
+            ),
+            width: _header.number(
+              compact ? 'compact_border_width' : 'border_width',
+              0,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: compact
+                ? _header.number('compact_height', 60).clamp(44, 100)
+                : _header.number('height', 64).clamp(48, 120),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: padding,
+                vertical: _header.number('vertical_padding', 8).clamp(0, 24),
+              ),
+              child: ClipRect(
+                child: AnimatedSwitcher(
+                  key: const Key('cms-page-app-bar-transition'),
+                  duration: transitionDuration,
+                  reverseDuration: transitionDuration,
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) =>
+                          _transitionBuilder(transition, child, animation),
+                  child: Column(
+                    key: ValueKey<bool>(compact),
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: rows.indexed.expand((entry) sync* {
+                      if (entry.$1 > 0) {
+                        yield SizedBox(
+                          height: _header.number('row_gap', 8).clamp(0, 24),
+                        );
+                      }
+                      yield _headerRow(context, entry.$2, foreground);
+                    }).toList(growable: false),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
+  }
+
+  Duration _transitionDuration(String transition) {
+    if (transition == 'instant') return Duration.zero;
+    return switch (_header.string('collapse_speed', 'medium')) {
+      'fast' => const Duration(milliseconds: 160),
+      'slow' => const Duration(milliseconds: 420),
+      _ => const Duration(milliseconds: 260),
+    };
+  }
+
+  Widget _transitionBuilder(
+    String transition,
+    Widget child,
+    Animation<double> animation,
+  ) {
+    if (transition == 'instant') return child;
+    final Animation<double> curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final Animation<Offset> slide = Tween<Offset>(
+      begin: const Offset(0, -0.22),
+      end: Offset.zero,
+    ).animate(curved);
+    return switch (transition) {
+      'fade' => FadeTransition(opacity: curved, child: child),
+      'slide' => SlideTransition(position: slide, child: child),
+      'scale' => FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
+          alignment: Alignment.topCenter,
+          child: child,
+        ),
+      ),
+      _ => FadeTransition(
+        opacity: curved,
+        child: SlideTransition(position: slide, child: child),
+      ),
+    };
   }
 
   Widget _headerRow(BuildContext context, Map<String, dynamic> row, Color color) {

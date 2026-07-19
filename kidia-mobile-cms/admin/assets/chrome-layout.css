@@ -86,6 +86,14 @@
 .kidia-chrome-composer__heading h3 { margin:0; color:#236b59; }
 .kidia-chrome-composer__heading p { margin:4px 0 0; color:#646970; }
 .kidia-collapsed-header-toggle { flex:0 0 auto; margin-inline-start:auto; }
+.kidia-app-header.is-transition-fade { animation:kidia-header-fade var(--collapse-duration,260ms) ease both; }
+.kidia-app-header.is-transition-slide { animation:kidia-header-slide var(--collapse-duration,260ms) ease both; }
+.kidia-app-header.is-transition-fade_slide { animation:kidia-header-fade-slide var(--collapse-duration,260ms) ease both; }
+.kidia-app-header.is-transition-scale { transform-origin:top center; animation:kidia-header-scale var(--collapse-duration,260ms) ease both; }
+@keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }
+@keyframes kidia-header-fade-slide { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes kidia-header-scale { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
 .kidia-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
 .kidia-chrome-composer.has-invalid-layout .kidia-chrome-layout-error { display:block; }
 .kidia-chrome-composer.has-invalid-layout::after { display:block; margin-top:8px; color:#b42318; font-weight:700; content:"Each row must total exactly 100%."; }
