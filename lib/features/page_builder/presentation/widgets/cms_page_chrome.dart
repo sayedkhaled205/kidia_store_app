@@ -190,7 +190,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     'back' => variant == 'chevron' ? Icons.chevron_left_rounded : variant == 'rounded' ? Icons.keyboard_backspace_rounded : Icons.arrow_back_rounded,
     'search' => variant == 'classic' ? Icons.search : variant == 'minimal' ? Icons.manage_search_outlined : Icons.search_rounded,
     'cart' => variant == 'cart' ? (filled ? Icons.shopping_cart : Icons.shopping_cart_outlined) : variant == 'basket' ? (filled ? Icons.shopping_basket : Icons.shopping_basket_outlined) : (filled ? Icons.shopping_bag : Icons.shopping_bag_outlined),
-    'wishlist' => variant == 'bookmark' ? (filled ? Icons.bookmark : Icons.bookmark_border) : (filled ? Icons.favorite : Icons.favorite_border_rounded),
+    'wishlist' => variant == 'bookmark' ? (filled ? Icons.bookmark : Icons.bookmark_border) : (filled ? Icons.favorite_rounded : Icons.favorite_border_rounded),
     'account' => variant == 'circle' ? Icons.account_circle_outlined : variant == 'profile' ? Icons.manage_accounts_outlined : (filled ? Icons.person : Icons.person_outline_rounded),
     'orders' => variant == 'box' ? Icons.inventory_2_outlined : variant == 'list' ? Icons.format_list_bulleted_rounded : Icons.receipt_long_outlined,
     'support' => variant == 'chat' ? Icons.chat_bubble_outline_rounded : variant == 'support' ? Icons.support_agent_rounded : Icons.headset_mic_outlined,
