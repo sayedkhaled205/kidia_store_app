@@ -189,6 +189,7 @@ class HeroSliderBlock extends HomeBlock {
     required this.textColor,
     required this.showIndicators,
     required this.indicatorStyle,
+    required this.indicatorPosition,
   }) : super(type: HomeBlockType.heroSlider);
 
   final List<HeroSlide> items;
@@ -203,6 +204,7 @@ class HeroSliderBlock extends HomeBlock {
   final String textColor;
   final bool showIndicators;
   final String indicatorStyle;
+  final String indicatorPosition;
 }
 
 class CategoryItem {
