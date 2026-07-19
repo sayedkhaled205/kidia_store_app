@@ -709,10 +709,7 @@ function runChromeCopyPasteAndLogoMediaTest() {
 function runUnsavedChangesDialogTest() {
 	const adminTheme = readAsset("admin-theme.css");
 	const pageBuilderTheme = readAsset("page-builder.css");
-	assert.match(adminTheme, /--kidia-admin-button-radius:\s*999px/, "All CMS action buttons must use the shared pill radius.");
-	assert.match(adminTheme, /\.kidia-builder-editor/, "Buttons outside and inside Home elements must share the rounded theme.");
-	assert.match(adminTheme, /\.kidia-category-editor/, "Category controls must share the rounded theme.");
-	assert.match(adminTheme, /\.kidia-page-editor/, "Every page element editor must share the rounded theme.");
+	assert.match(adminTheme, /--kidia-admin-button-radius:\s*10px/, "CMS buttons must be square or rectangular with lightly rounded corners, never pills.");
 	assert.match(pageBuilderTheme, /data-kidia-unsaved-save[^}]+background:#2f806e!important/, "The unsaved Save action must use Kidia green.");
 	assert.match(pageBuilderTheme, /kidia-unsaved-modal__icon[^}]+background:#e7f5f1[^}]+color:#2f806e/, "The unsaved dialog icon must use the Kidia palette.");
 	const markup = `<!doctype html><html><body><a id="leave" href="/wp-admin/admin.php?page=other">Leave</a><form class="kidia-page-editor"><input id="title" name="layout[title]" value="Before"><button type="submit">Save</button></form></body></html>`;

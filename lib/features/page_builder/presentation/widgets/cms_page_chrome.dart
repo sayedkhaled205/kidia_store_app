@@ -195,8 +195,8 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         ? _header.number('compact_height', 60).clamp(44, 100)
         : _header.number('height', 64).clamp(48, 120);
     if (!compact ||
-        _header.string('collapse_preset', 'custom') !=
-            'sticky_search_cart') {
+        _header.string('collapse_transition', 'smooth_compact') !=
+            'smooth_compact') {
       return configured;
     }
     final double required =
@@ -211,7 +211,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final String compactStyle = _header.string('compact_style', 'standard');
     final String transition = _header.string(
       'collapse_transition',
-      'fade_slide',
+      'smooth_compact',
     );
     final Duration transitionDuration = _transitionDuration(transition);
     final Color background = compact && compactStyle == 'transparent'
@@ -436,7 +436,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
 	List<Map<String, dynamic>> _compactLayoutRows() {
-		if (_header.string('collapse_preset', 'custom') == 'sticky_search_cart') {
+		if (_header.string('collapse_transition', 'smooth_compact') == 'smooth_compact') {
 			return <Map<String, dynamic>>[<String, dynamic>{
 				'columns': <Map<String, dynamic>>[
 					<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']},

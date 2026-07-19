@@ -14,7 +14,7 @@ if ( 'footer' === $chrome_part ) {
 		? array( 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' )
 		: array( 'home' => 'Home', 'categories' => 'Categories', 'wishlist' => 'Wishlist', 'account' => 'Account' );
 }
-$collapsed_header_keys = array( 'collapse_on_scroll', 'collapse_preset', 'collapse_transition', 'collapse_speed', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
+$collapsed_header_keys = array( 'collapse_on_scroll', 'collapse_transition', 'collapse_speed', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
 $item_field = static function ( string $part, string $key ): string {
 	if ( 'header' === $part ) {
 		if ( 'show_cart_badge' === $key ) { return 'cart'; }
@@ -48,8 +48,8 @@ $render_chrome_field = static function ( array $field, $value, string $name ): v
 	elseif ( 'select' === $field['type'] ) { ?><select name="<?php echo esc_attr( $name ); ?>"><?php foreach ( $field['options'] as $option => $label ) { ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( (string) $value, (string) $option ); ?>><?php echo esc_html( $label ); ?></option><?php } ?></select><?php }
 	elseif ( 'color' === $field['type'] ) { ?><input type="color" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( sanitize_hex_color( (string) $value ) ?: (string) $field['default'] ); ?>"><?php }
 	elseif ( 'number' === $field['type'] ) { ?><input type="number" name="<?php echo esc_attr( $name ); ?>" min="<?php echo esc_attr( (string) $field['min'] ); ?>" max="<?php echo esc_attr( (string) $field['max'] ); ?>" step="<?php echo esc_attr( (string) $field['step'] ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><?php }
-	elseif ( 'image' === $field['type'] ) { ?><div class="kidia-page-media"><div class="kidia-page-media-actions"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-page-media-clear" <?php echo empty( $value ) ? 'hidden' : ''; ?>><?php esc_html_e( 'Use logo text', 'kidia-mobile-cms' ); ?></button></div><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"></div><img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>><?php }
-	else { ?><input type="text" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><?php }
+	elseif ( 'image' === $field['type'] ) { ?><div class="kidia-page-media"><div class="kidia-page-media-actions"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button></div><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"></div><img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>><?php }
+	else { ?><div class="kidia-page-text-control"><input type="text" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><?php if ( 'logo_text' === $field['key'] ) : ?><button type="button" class="button kidia-page-media-clear"><?php esc_html_e( 'Use logo text', 'kidia-mobile-cms' ); ?></button><?php endif; ?></div><?php }
 	?></div><?php
 };
 $footer_icon_symbols = array(
@@ -98,8 +98,6 @@ $footer_icon_symbols = array(
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore collapsed default', 'kidia-mobile-cms' ); ?></button>
 		</div>
 		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
-			<h3><?php esc_html_e( 'Collapsed header behavior and appearance', 'kidia-mobile-cms' ); ?></h3>
-			<p class="kidia-sticky-search-cart-note"><?php esc_html_e( 'Sticky Search + Cart smoothly removes the upper header rows while scrolling and keeps a compact search field with the cart fixed at the top.', 'kidia-mobile-cms' ); ?></p>
 			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( 'collapse_on_scroll' !== $field['key'] && in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
 		</section>
 		<?php endif; ?>
