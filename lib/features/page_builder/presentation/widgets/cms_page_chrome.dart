@@ -154,7 +154,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _slot(BuildContext context, dynamic rawItems, Alignment alignment, Color color) {
-    final List<String> items = rawItems is List ? rawItems.map((item) => '$item').toList() : <String>[];
+    final List<String> items = rawItems is List ? rawItems.map((item) => '$item').where((item) => item != 'subtitle').toList() : <String>[];
     if (items.length == 1 && items.first == 'search_bar') {
       return Align(
         alignment: alignment,
@@ -182,10 +182,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _item(BuildContext context, String item, Color color) {
     if (item == 'title') return Text(_header.string('title', defaultTitle), key: const Key('commerce-app-bar-title'), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _color(_header.string('title_color', '#1F2933'), color), fontWeight: FontWeight.w700));
-    if (item == 'subtitle') return Text(_header.string('subtitle', ''), maxLines: 1, overflow: TextOverflow.ellipsis);
+    if (item == 'subtitle') return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.
     if (item == 'logo') {
       final String url = _header.string('logo_url', '');
-      return url.isEmpty ? Text('Kidia', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 20)) : Image.network(url, width: _header.number('logo_width', 118), height: _header.number('logo_height', 38), fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink());
+      final String subtitle = _header.string('subtitle', '');
+      final Widget logo = url.isEmpty ? Text('Kidia', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 20)) : Image.network(url, width: _header.number('logo_width', 118), height: _header.number('logo_height', 38), fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink());
+      return Column(mainAxisSize: MainAxisSize.min, children: <Widget>[logo, if (subtitle.isNotEmpty) Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: color, fontSize: 11))]);
     }
     final CmsPageHeaderAction? action = item == 'back'
         ? CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop())

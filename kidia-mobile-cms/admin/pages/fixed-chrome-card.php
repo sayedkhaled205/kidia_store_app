@@ -9,14 +9,14 @@ $chrome_title     = 'header' === $chrome_part ? __( 'Fixed Header', 'kidia-mobil
 $chrome_prefix    = isset( $chrome_name_prefix ) ? (string) $chrome_name_prefix : 'layout[' . $chrome_part . ']';
 $chrome_page_name = isset( $chrome_page ) ? (string) $chrome_page : ( isset( $page ) ? (string) $page : '' );
 $chrome_items     = 'header' === $chrome_part
-	? array( 'logo' => 'Logo', 'title' => 'Title', 'subtitle' => 'Subtitle', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' )
+	? array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' )
 	: array( 'home' => 'Home', 'categories' => 'Categories', 'search' => 'Search', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' );
 $item_field = static function ( string $part, string $key ): string {
 	if ( 'header' === $part ) {
 		if ( 'show_cart_badge' === $key ) { return 'cart'; }
 		if ( 0 === strpos( $key, 'logo_' ) || 'logo_url' === $key ) { return 'logo'; }
 		if ( 'title' === $key || 'title_color' === $key ) { return 'title'; }
-		if ( 'subtitle' === $key ) { return 'subtitle'; }
+		if ( 'subtitle' === $key ) { return 'logo'; }
 		if ( 0 === strpos( $key, 'search_' ) || 'show_voice_search' === $key ) { return false !== strpos( $key, 'search_icon' ) ? 'search' : 'search_bar'; }
 		foreach ( array( 'back', 'cart', 'wishlist', 'account', 'orders', 'support', 'menu' ) as $item ) { if ( 0 === strpos( $key, $item . '_' ) ) { return $item; } }
 	} else {
@@ -24,6 +24,11 @@ $item_field = static function ( string $part, string $key ): string {
 		if ( 0 === strpos( $key, 'button_' ) || 0 === strpos( $key, 'add_to_cart_' ) || in_array( $key, array( 'show_price', 'show_quantity' ), true ) ) { return 'add_to_cart'; }
 	}
 	return 'general';
+};
+$is_placement_toggle = static function ( string $part, string $key ): bool {
+	$header_toggles = array( 'show_back', 'show_search', 'show_cart', 'show_wishlist', 'show_account', 'show_orders', 'show_support', 'show_menu' );
+	$footer_toggles = array( 'show_search', 'show_cart', 'show_share', 'show_like', 'show_add_to_cart' );
+	return in_array( $key, 'header' === $part ? $header_toggles : $footer_toggles, true );
 };
 $render_chrome_field = static function ( array $field, $value, string $name ): void {
 	?><div class="kidia-page-field" data-setting="<?php echo esc_attr( $field['key'] ); ?>"><label><?php echo esc_html( $field['label'] ); ?></label><?php
@@ -60,7 +65,7 @@ $footer_icon_symbols = array(
 		<div class="kidia-chrome-composer" data-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php echo esc_attr( $chrome_title ); ?>"></div>
-			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
+			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
 		</div>
 		<div class="kidia-chrome-settings">
@@ -68,8 +73,8 @@ $footer_icon_symbols = array(
 			$variant_key   = $item . '_icon_variant';
 			$variant_field = null;
 			foreach ( $chrome_fields as $candidate ) { if ( $candidate['key'] === $variant_key ) { $variant_field = $candidate; break; } }
-			$item_fields = array_values( array_filter( $chrome_fields, static function ( array $field ) use ( $item_field, $chrome_part, $item, $variant_key ): bool {
-				return $field['key'] !== $variant_key && $item_field( $chrome_part, $field['key'] ) === $item;
+			$item_fields = array_values( array_filter( $chrome_fields, static function ( array $field ) use ( $item_field, $is_placement_toggle, $chrome_part, $item, $variant_key ): bool {
+				return $field['key'] !== $variant_key && ! $is_placement_toggle( $chrome_part, $field['key'] ) && $item_field( $chrome_part, $field['key'] ) === $item;
 			} ) );
 			if ( ! $variant_field && ! $item_fields ) { continue; }
 			?>
@@ -81,7 +86,7 @@ $footer_icon_symbols = array(
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>
 			</section>
 		<?php endforeach; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( 'layout_json' !== $key && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( 'layout_json' !== $key && ! $is_placement_toggle( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>
