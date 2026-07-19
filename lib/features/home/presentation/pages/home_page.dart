@@ -22,6 +22,20 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final String locale = Localizations.localeOf(context).toLanguageTag();
@@ -36,6 +50,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return CmsPageScaffold(
       layout: chrome,
       defaultTitle: 'Kidia',
+      scrollController: _scrollController,
       actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
           CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
@@ -49,6 +64,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             return ref.refresh(homeLayoutProvider(locale).future);
           },
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               homeLayoutAsync.when(

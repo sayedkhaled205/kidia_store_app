@@ -46,6 +46,28 @@ void main() {
     expect(_appBar(tester).compact, isFalse);
   });
 
+  testWidgets('the real page controller drives the mobile collapsed header', (
+    WidgetTester tester,
+  ) async {
+    final ScrollController controller = ScrollController();
+    addTearDown(controller.dispose);
+    await _pumpPage(
+      tester,
+      layout: _layout(page: 'home'),
+      scrollController: controller,
+    );
+
+    controller.jumpTo(180);
+    await tester.pump();
+    expect(_appBar(tester).compact, isTrue);
+
+    controller.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(_appBar(tester).compact, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('maps the five transition choices to mobile animations', (
     WidgetTester tester,
   ) async {
@@ -119,14 +141,17 @@ CmsPageAppBar _appBar(WidgetTester tester) => tester.widget<CmsPageAppBar>(
 Future<void> _pumpPage(
   WidgetTester tester, {
   required CmsPageLayout layout,
+  ScrollController? scrollController,
 }) {
   return tester.pumpWidget(
     MaterialApp(
       home: CmsPageScaffold(
         layout: layout,
         defaultTitle: 'Products',
+        scrollController: scrollController,
         body: ListView.builder(
           key: const Key('cms-page-scroll'),
+          controller: scrollController,
           itemExtent: 72,
           itemCount: 40,
           itemBuilder: (BuildContext context, int index) => Text('Item $index'),

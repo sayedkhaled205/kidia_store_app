@@ -73,6 +73,7 @@ class CmsPageScaffold extends StatefulWidget {
     this.actions = const <CmsPageHeaderAction>[],
     this.bottomNavigationBar,
     this.backgroundColor,
+    this.scrollController,
   });
 
   final CmsPageLayout layout;
@@ -81,6 +82,7 @@ class CmsPageScaffold extends StatefulWidget {
   final List<CmsPageHeaderAction> actions;
   final Widget? bottomNavigationBar;
   final Color? backgroundColor;
+  final ScrollController? scrollController;
 
   @override
   State<CmsPageScaffold> createState() => _CmsPageScaffoldState();
@@ -91,20 +93,38 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
 
   bool _collapsed = false;
 
-  bool _handleScroll(ScrollNotification notification) {
-    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
-      return false;
-    }
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController?.addListener(_handleControllerScroll);
+  }
+
+  void _handleControllerScroll() {
+    final ScrollController? controller = widget.scrollController;
+    if (controller == null || !controller.hasClients) return;
+    _updateCollapsed(controller.position.extentBefore);
+  }
+
+  void _updateCollapsed(double extentBefore) {
     final bool enabled = widget.layout.header.boolean(
       'collapse_on_scroll',
       false,
     );
-    final bool next =
-        enabled &&
-        notification.metrics.pixels >
-            notification.metrics.minScrollExtent + _topTolerance;
+    final bool next = enabled && extentBefore > _topTolerance;
     if (next != _collapsed) {
       setState(() => _collapsed = next);
+    }
+  }
+
+  bool _handleScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    final ScrollController? controller = widget.scrollController;
+    if (controller != null && controller.hasClients) {
+      _updateCollapsed(controller.position.extentBefore);
+    } else {
+      _updateCollapsed(notification.metrics.extentBefore);
     }
     return false;
   }
@@ -112,10 +132,20 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
   @override
   void didUpdateWidget(covariant CmsPageScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController?.removeListener(_handleControllerScroll);
+      widget.scrollController?.addListener(_handleControllerScroll);
+    }
     if (oldWidget.layout.page != widget.layout.page ||
         !widget.layout.header.boolean('collapse_on_scroll', false)) {
       _collapsed = false;
     }
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController?.removeListener(_handleControllerScroll);
+    super.dispose();
   }
 
   @override

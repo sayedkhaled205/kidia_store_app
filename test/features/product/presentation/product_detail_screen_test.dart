@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
@@ -202,11 +204,77 @@ void main() {
 	expect(heart, findsOneWidget);
 	expect(tester.widget<IconButton>(heart).onPressed, isNotNull);
   });
+
+  testWidgets('shows product footer action text in Arabic', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: ProductFakeCatalogRepository(),
+          onAddToCart: (ProductPurchaseSelection selection) async {},
+          onShareRequested: (_) {},
+          onWishlistToggle: (_) async => true,
+        ),
+        locale: const Locale('ar'),
+        productLayout: _liveStyleProductLayout(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('مشاركة'), findsOneWidget);
+    expect(find.text('المفضلة'), findsOneWidget);
+    expect(find.text('أضف إلى السلة'), findsOneWidget);
+    expect(find.text('Share'), findsNothing);
+    expect(find.text('Like'), findsNothing);
+    expect(find.text('Add to bag'), findsNothing);
+    expect(
+      tester.widget<SizedBox>(find.byKey(const Key('product-footer-size'))).height,
+      64,
+    );
+  });
 }
 
-Widget _testApp(Widget home) {
+Widget _testApp(
+  Widget home, {
+  Locale? locale,
+  CmsPageLayout? productLayout,
+}) {
   return ProviderScope(
-    child: MaterialApp(theme: ThemeData(useMaterial3: true), home: home),
+    overrides: [
+      if (productLayout != null)
+        cmsPageLayoutProvider(
+          'product',
+        ).overrideWith((ref) async => productLayout),
+    ],
+    child: MaterialApp(
+      locale: locale,
+      theme: ThemeData(useMaterial3: true),
+      home: home,
+    ),
+  );
+}
+
+CmsPageLayout _liveStyleProductLayout() {
+  final CmsPageLayout fallback = CmsPageLayout.fallback('product');
+  return CmsPageLayout(
+    page: fallback.page,
+    header: fallback.header,
+    elements: fallback.elements,
+    footer: CmsPageComponent(
+      id: fallback.footer.id,
+      type: fallback.footer.type,
+      enabled: true,
+      settings: <String, dynamic>{
+        ...fallback.footer.settings,
+        'style': 'navigation',
+        'share_label': 'Share',
+        'like_label': 'Like',
+        'add_to_cart_label': 'Add to bag',
+      },
+    ),
   );
 }
 
