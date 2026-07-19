@@ -112,8 +112,8 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (layout.page == 'product') {
       return <Map<String, dynamic>>[<String, dynamic>{
         'left': <String>['back'],
-        'center': <String>[],
-        'right': <String>['wishlist', 'cart'],
+        'center': <String>['title'],
+        'right': <String>['cart', 'wishlist'],
       }];
     }
     return <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['search', 'cart']}];
@@ -171,7 +171,8 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final Color background = _color(_header.string('${prefix}_background', '#FFFFFF'), Colors.transparent);
     final double size = _header.number('${prefix}_size', _header.number('icon_size', 24)).clamp(14, 40);
     final double radius = _header.number('${prefix}_radius', 12).clamp(0, 24);
-    final IconData icon = _iconFor(action.type, _header.string('${action.type}_icon_variant', ''), style == 'filled');
+    final bool selectedWishlist = action.type == 'wishlist' && action.icon == Icons.favorite_rounded;
+    final IconData icon = _iconFor(action.type, _header.string('${action.type}_icon_variant', ''), style == 'filled' || selectedWishlist);
     return IconButton(
       key: action.key,
       tooltip: action.tooltip,
