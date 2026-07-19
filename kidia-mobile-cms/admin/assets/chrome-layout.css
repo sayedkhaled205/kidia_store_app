@@ -4,6 +4,7 @@
 .kidia-app-header-slot .kidia-app-search { box-sizing:border-box; max-width:100%; }
 .kidia-app-footer-row { display:grid; width:100%; height:100%; align-items:stretch; }
 .kidia-app-footer-column { display:flex; align-items:stretch; justify-content:center; }
+.kidia-app-header-item { box-sizing:border-box; min-width:calc(var(--item-icon-size,var(--icon-size)) + 10px); min-height:calc(var(--item-icon-size,var(--icon-size)) + 10px); padding:5px; }
 .kidia-app-header-item .kidia-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
 .kidia-app-header-item .kidia-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
 .kidia-app-footer--composed {
@@ -18,6 +19,7 @@
 }
 .kidia-app-footer-item .kidia-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
 .kidia-app-footer-item .kidia-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
+.kidia-app-footer-icon-shell { display:grid; width:calc(var(--item-icon-size,var(--icon-size)) + 10px); height:calc(var(--item-icon-size,var(--icon-size)) + 10px); place-items:center; font-style:normal; }
 
 .kidia-chrome-item-setting[hidden] { display:none!important; }
 .kidia-chrome-item-setting { margin-top:12px; padding:14px; border:1px solid #c9dfd9; border-radius:10px; background:#fff; }
@@ -47,6 +49,11 @@
 .kidia-chrome-icon-option .dashicons { width:26px; height:26px; font-size:26px; }
 .kidia-chrome-icon-option:hover { background:#f1faf7; }
 .kidia-chrome-icon-option.is-selected { border:2px solid #2f806e; background:#dff3ed; box-shadow:0 0 0 2px #fff,0 0 0 4px #8cc6b7; }
+.kidia-chrome-footer-icons { display:block!important; }
+.kidia-chrome-footer-icon-list { display:flex; flex-direction:column; }
+.kidia-chrome-footer-icon-row { display:grid; grid-template-columns:minmax(110px,.55fr) minmax(180px,2fr); align-items:center; gap:14px; padding:8px 0; }
+.kidia-chrome-footer-icon-row[hidden] { display:none!important; }
+.kidia-chrome-footer-icon-row .kidia-chrome-icon-options { justify-content:flex-start; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
@@ -79,4 +86,5 @@
 .kidia-app-footer.is-editor-focused { position:relative; z-index:2; box-shadow:0 0 0 2px #2f806e,0 0 0 5px rgba(47,128,110,.16)!important; }
 @media (max-width: 900px) {
 	.kidia-chrome-icon-choice { grid-template-columns:1fr; }
+	.kidia-chrome-footer-icon-row { grid-template-columns:1fr; }
 }

@@ -25,10 +25,14 @@ $item_field = static function ( string $part, string $key ): string {
 	}
 	return 'general';
 };
-$is_placement_toggle = static function ( string $part, string $key ): bool {
-	$header_toggles = array( 'show_back', 'show_search', 'show_cart', 'show_wishlist', 'show_account', 'show_orders', 'show_support', 'show_menu' );
-	$footer_toggles = array( 'show_search', 'show_cart', 'show_share', 'show_like', 'show_add_to_cart' );
-	return in_array( $key, 'header' === $part ? $header_toggles : $footer_toggles, true );
+$is_placement_toggle = static function ( string $part, string $key ) use ( $chrome_items ): bool {
+	if ( 'show_account_label' === $key ) {
+		return true;
+	}
+	if ( 0 !== strpos( $key, 'show_' ) ) {
+		return false;
+	}
+	return isset( $chrome_items[ substr( $key, 5 ) ] );
 };
 $render_chrome_field = static function ( array $field, $value, string $name ): void {
 	?><div class="kidia-page-field" data-setting="<?php echo esc_attr( $field['key'] ); ?>"><label><?php echo esc_html( $field['label'] ); ?></label><?php
@@ -69,6 +73,27 @@ $footer_icon_symbols = array(
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
 		</div>
 		<div class="kidia-chrome-settings">
+		<?php if ( 'footer' === $chrome_part ) : ?>
+		<section class="kidia-chrome-item-setting kidia-chrome-footer-icons">
+			<h3><?php esc_html_e( 'Footer Icons', 'kidia-mobile-cms' ); ?></h3>
+			<div class="kidia-chrome-footer-icon-list">
+			<?php foreach ( $chrome_items as $item => $label ) :
+				$variant_key = $item . '_icon_variant';
+				$variant_field = null;
+				foreach ( $chrome_fields as $candidate ) { if ( $candidate['key'] === $variant_key ) { $variant_field = $candidate; break; } }
+				if ( ! $variant_field ) { continue; }
+				$selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] );
+				$symbols = $footer_icon_symbols[ $item ] ?? array();
+				?>
+				<div class="kidia-chrome-footer-icon-row" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
+					<strong><?php echo esc_html( $label ); ?></strong>
+					<div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="dashicons <?php echo esc_attr( $symbols[ $option ] ?? 'dashicons-marker' ); ?>"></span></button><?php endforeach; ?></div>
+					<select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select>
+				</div>
+			<?php endforeach; ?>
+			</div>
+		</section>
+		<?php endif; ?>
 		<?php foreach ( $chrome_items as $item => $label ) :
 			$variant_key   = $item . '_icon_variant';
 			$variant_field = null;
@@ -76,11 +101,11 @@ $footer_icon_symbols = array(
 			$item_fields = array_values( array_filter( $chrome_fields, static function ( array $field ) use ( $item_field, $is_placement_toggle, $chrome_part, $item, $variant_key ): bool {
 				return $field['key'] !== $variant_key && ! $is_placement_toggle( $chrome_part, $field['key'] ) && $item_field( $chrome_part, $field['key'] ) === $item;
 			} ) );
-			if ( ! $variant_field && ! $item_fields ) { continue; }
+			if ( ( 'footer' === $chrome_part || ! $variant_field ) && ! $item_fields ) { continue; }
 			?>
 			<section class="kidia-chrome-item-setting" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
 				<h3><?php echo esc_html( sprintf( __( '%s Settings', 'kidia-mobile-cms' ), $label ) ); ?></h3>
-				<?php if ( $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
+				<?php if ( 'header' === $chrome_part && $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
 					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="dashicons <?php echo esc_attr( $symbols[ $option ] ?? 'dashicons-marker' ); ?>"></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
 				<?php endif; ?>
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>

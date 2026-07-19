@@ -482,16 +482,6 @@ final class Kidia_Mobile_CMS_Admin {
 					$encoding
 				);
 
-				if ( isset( $_POST['apply_kidia_patpat_preset'] ) ) {
-					$store = new Kidia_Mobile_Layout_Store();
-					$store->save_layout( $store->get_kidia_patpat_layout() );
-					$page_store = new Kidia_Mobile_Page_Layout_Store();
-					$chrome = $page_store->get_layout( 'home' );
-					$chrome['header']['enabled'] = false;
-					$page_store->save_layout( 'home', $chrome );
-					wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-home-builder', 'updated' => '1', 'preset' => '1', 'saved_at' => time() ), admin_url( 'admin.php' ) ) ); exit;
-				}
-
 				$fallback_blocks = isset( $_POST['blocks'] )
 					? wp_unslash( $_POST['blocks'] )
 					: array();
