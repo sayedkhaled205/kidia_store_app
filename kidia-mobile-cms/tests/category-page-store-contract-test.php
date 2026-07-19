@@ -32,7 +32,7 @@ $saved = $store->save_settings(
 		'categories' => array( 22 => array( 'order' => 0, 'hidden' => false, 'image_id' => 55, 'name' => 'App name' ) ),
 	)
 );
-kidia_category_assert( 2 === $saved['version'], 'The Category element must save the current schema version.' );
+kidia_category_assert( 3 === $saved['version'], 'The Category element must save the current schema version.' );
 kidia_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 kidia_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );
 $layouts = array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' );
