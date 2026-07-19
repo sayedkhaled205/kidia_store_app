@@ -53,7 +53,11 @@ class _MainShellState extends ConsumerState<MainShell> {
     final CmsPageLayout pageLayout =
         ref.watch(cmsPageLayoutProvider(page)).value ??
         CmsPageLayout.fallback(page);
+    final CmsPageLayout categoryLayout =
+        ref.watch(cmsPageLayoutProvider('category')).value ??
+        CmsPageLayout.fallback('category');
     final CmsPageComponent footer = pageLayout.footer;
+    final CmsPageComponent footerSize = categoryLayout.footer;
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
@@ -106,7 +110,8 @@ class _MainShellState extends ConsumerState<MainShell> {
               horizontal: MediaQuery.sizeOf(context).width * footer.number('side_spacing_percent', 5).clamp(0, 25) / 100,
             ),
             child: SizedBox(
-              height: footer.number('height', 72).clamp(48, 100),
+              key: const Key('cms-bottom-navigation-size'),
+              height: footerSize.number('height', 64).clamp(48, 100),
               child: Row(
                 children: visibleItems.indexed.map((indexed) {
                   final int visibleIndex = indexed.$1;
@@ -126,17 +131,23 @@ class _MainShellState extends ConsumerState<MainShell> {
                           _NavigationIcon(
                             icon: _footerIcon(footer, item, selected),
                             color: color,
-                            size: footer.number('icon_size', 24),
+                            size: footerSize.number('icon_size', 24),
                           ),
                           if (footer.boolean('show_labels', true)) ...<Widget>[
-                            SizedBox(height: footer.number('icon_label_gap', 3).clamp(0, 12)),
+                            SizedBox(
+                              height: footerSize
+                                  .number('icon_label_gap', 3)
+                                  .clamp(0, 12),
+                            ),
                             Text(
-                              footer.string('${item.id}_label', item.label),
+                              _footerLabel(footer, item),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: color,
-                                fontSize: footer.number('label_size', 11).clamp(8, 20),
+                                fontSize: footerSize
+                                    .number('label_size', 11)
+                                    .clamp(8, 20),
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                               ),
                             ),
@@ -188,6 +199,16 @@ class _MainShellState extends ConsumerState<MainShell> {
 	  'account' => variant == 'circle' ? Icons.account_circle_outlined : selected ? Icons.person_rounded : Icons.person_outline_rounded,
 	  _ => selected ? item.selectedIcon : item.icon,
 	};
+  }
+
+  String _footerLabel(CmsPageComponent footer, _NavigationItem item) {
+    final String configured = footer
+        .string('${item.id}_label', '')
+        .trim();
+    if (RegExp(r'[\u0600-\u06FF]').hasMatch(configured)) {
+      return configured;
+    }
+    return item.label;
   }
 
   String _pageForPath(String path) {
