@@ -498,7 +498,7 @@ function runChromeComposerTest() {
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
-  assert.match(preview, /grid-template-columns:100%/, "A one-column row must span the header through the shared percentage-column schema.");
+  assert.match(preview, /grid-template-columns:minmax\(0,100fr\)/, "A one-column row must span the header without overflowing when row gaps are present.");
   assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
 	assert.match(preview, /--row-gap:4px/, "The real gap between header rows must be reflected without browser-only scaling.");
 	const searchWidth = card.querySelector('[name$="[search_width_percent]"]');
@@ -514,6 +514,7 @@ function runChromeComposerTest() {
 	const firstWidth = window.document.querySelector('.kidia-column-width[data-row="0"][data-column="0"]');
 	firstWidth.value = "40";
 	firstWidth.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.match(window.document.querySelector(".kidia-chrome-row-grid").style.gridTemplateColumns, /minmax\(0, ?40fr\)/, "Column ratios must remain inside the row width instead of adding gaps beyond 100%.");
 	assert.match(window.document.querySelector(".kidia-row-total").textContent, /123\.3/, "Edited column percentages must update the row total instantly.");
 	assert.equal(window.document.querySelector(".kidia-chrome-composer").classList.contains("has-invalid-layout"), true, "A row whose columns do not total 100% must be visibly invalid.");
   assert.equal(window.document.querySelector('[data-item-section="support"]').hidden, true, "Only settings for placed items must be visible.");

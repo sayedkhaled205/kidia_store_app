@@ -19,18 +19,17 @@
 .kidia-app-footer-item .kidia-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
 .kidia-app-footer-item .kidia-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
 
-.kidia-chrome-icons-panel .kidia-page-fields {
-	display: flex;
-	flex-direction: column;
-	gap: 0;
-}
+.kidia-chrome-item-setting[hidden] { display:none!important; }
+.kidia-chrome-item-setting { margin-top:12px; padding:14px; border:1px solid #c9dfd9; border-radius:10px; background:#fff; }
+.kidia-chrome-item-setting h3 { margin:0 0 12px; padding:0 0 9px; border-bottom:1px solid #d7e7e2; }
+.kidia-chrome-item-setting .kidia-chrome-icon-choice { margin-bottom:12px; }
 .kidia-chrome-icon-choice {
 	display: grid;
 	grid-template-columns: minmax(110px, .55fr) minmax(180px, 2fr);
 	align-items: center;
 	gap: 14px;
-	padding: 13px 4px;
-	border-bottom: 1px solid #d7e7e2;
+	padding: 4px 0 12px;
+	border-bottom: 1px solid #e2ece9;
 }
 .kidia-chrome-icon-options { display:flex; gap:8px; }
 .kidia-chrome-icon-option {
@@ -57,11 +56,13 @@
 .kidia-chrome-row-total { margin-inline-start:auto; font-weight:700; color:#236b59; }
 .kidia-chrome-row.is-invalid { border-color:#b42318!important; }
 .kidia-chrome-row.is-invalid .kidia-chrome-row-total { color:#b42318; }
-.kidia-chrome-row-grid { display:grid; gap:7px; min-width:0; }
+.kidia-chrome-row-grid { display:grid; gap:7px; width:100%; min-width:0; overflow:hidden; }
 .kidia-chrome-column { display:flex; min-width:0; flex-direction:column; gap:5px; }
 .kidia-chrome-column>label { display:flex; align-items:center; justify-content:center; gap:5px; color:#50665f; font-size:10px; }
 .kidia-chrome-column>label input { width:72px; min-height:28px; padding:2px 5px; }
-.kidia-chrome-zone { min-height:52px; }
+.kidia-chrome-zone { box-sizing:border-box; width:100%; min-width:0; min-height:52px; overflow:hidden; }
+.kidia-chrome-zone .kidia-chrome-item { max-width:100%; }
+.kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
 .kidia-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
 .kidia-chrome-composer.has-invalid-layout .kidia-chrome-layout-error { display:block; }
 .kidia-chrome-composer.has-invalid-layout::after { display:block; margin-top:8px; color:#b42318; font-weight:700; content:"Each row must total exactly 100%."; }

@@ -61,7 +61,10 @@
 	}
 
 	function sectionAll(root) {
-		(root || document).querySelectorAll(".kidia-page-fields,.kidia-builder-settings-content,.kidia-category-settings").forEach(addHeadings);
+		(root || document).querySelectorAll(".kidia-page-fields,.kidia-builder-settings-content,.kidia-category-settings").forEach(function (container) {
+			/* Header/footer settings have their own item-based organization. */
+			if (!container.closest(".kidia-chrome-settings")) { addHeadings(container); }
+		});
 	}
 
 	document.addEventListener("DOMContentLoaded", function () {

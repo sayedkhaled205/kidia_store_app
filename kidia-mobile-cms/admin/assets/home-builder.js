@@ -1227,8 +1227,10 @@
 	form.addEventListener("change", function (event) {
 		if (event.target && event.target.closest && event.target.closest(".kidia-fixed-chrome-card")) { markDirty(); renderPreview(); }
 	});
-	form.addEventListener("focusin", function(event){focusPreviewBlock(event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card"));});
-	form.addEventListener("mouseover", function(event){var block=event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card");if(block&&(!event.relatedTarget||!block.contains(event.relatedTarget))){focusPreviewBlock(block);}});
+	form.addEventListener("click", function(event){
+		var block=event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card");
+		if(block && event.target.closest(".kidia-builder-block__header,.kidia-page-card__header")){focusPreviewBlock(block);}
+	});
 
 	builder.addEventListener("pointerdown", function (event) {
 		var target = event.target;
