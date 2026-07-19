@@ -14,6 +14,15 @@ class CatalogCategory {
     this.gridColumns = 2,
     this.cardRadius = 17,
     this.cardGap = 10,
+    this.marginTop = 0,
+    this.marginBottom = 0,
+    this.pageBackgroundColor = '#F7F8FA',
+    this.cardStyle = 'outlined',
+    this.cardBackgroundColor = '#FFFFFF',
+    this.cardShadowColor = '#000000',
+    this.cardShadowStrength = 0.10,
+    this.cardShadowBlur = 12,
+    this.cardShadowOffsetY = 4,
     this.showArrow = true,
     this.imageSize = 68,
     this.imageShape = 'rounded',
@@ -46,6 +55,15 @@ class CatalogCategory {
   final int gridColumns;
   final double cardRadius;
   final double cardGap;
+  final double marginTop;
+  final double marginBottom;
+  final String pageBackgroundColor;
+  final String cardStyle;
+  final String cardBackgroundColor;
+  final String cardShadowColor;
+  final double cardShadowStrength;
+  final double cardShadowBlur;
+  final double cardShadowOffsetY;
   final bool showArrow;
   final double imageSize;
   final String imageShape;
