@@ -112,6 +112,30 @@ void main() {
     expect(find.byType(SafeArea), findsWidgets);
   });
 
+  testWidgets('category page renders all five CMS layouts', (
+    WidgetTester tester,
+  ) async {
+    const Map<String, Key> layouts = <String, Key>{
+      'default': Key('category-layout-default'),
+      'visual_grid': Key('category-layout-visual_grid'),
+      'circular_grid': Key('category-layout-circular_grid'),
+      'compact_grid': Key('category-layout-compact_grid'),
+      'sidebar': Key('category-layout-sidebar'),
+    };
+    for (final MapEntry<String, Key> entry in layouts.entries) {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(categoryLayout: entry.key),
+          const CategoriesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(entry.value), findsOneWidget, reason: entry.key);
+      expect(find.text('Women'), findsWidgets, reason: entry.key);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   testWidgets('product list uses three controls without a duplicate search', (
     WidgetTester tester,
   ) async {
@@ -204,6 +228,9 @@ Widget _app(CatalogRepository repository, Widget home) {
 }
 
 class _ScreenCatalogRepository implements CatalogRepository {
+  _ScreenCatalogRepository({this.categoryLayout = 'default'});
+
+  final String categoryLayout;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -251,7 +278,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
     CatalogCategoryQuery query,
   ) async {
     return CatalogPage<CatalogCategory>(
-      items: const <CatalogCategory>[
+      items: <CatalogCategory>[
         CatalogCategory(
           id: 1,
           name: 'Women',
@@ -265,6 +292,10 @@ class _ScreenCatalogRepository implements CatalogRepository {
           fontWeight: 600,
           textAlign: 'center',
           lineHeight: 1.4,
+          categoryLayout: categoryLayout,
+          gridColumns: 4,
+          cardRadius: 20,
+          cardGap: 12,
         ),
         CatalogCategory(
           id: 2,

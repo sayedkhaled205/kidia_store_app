@@ -4,11 +4,16 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Category_Page_Store {
 	private const OPTION_NAME = 'kidia_mobile_category_page';
-	private const VERSION     = 2;
+	private const VERSION     = 3;
 
 	/** @return array<string,mixed> */
 	public static function general_defaults(): array {
 		return array(
+			'category_layout'  => 'default',
+			'grid_columns'     => 2,
+			'card_radius'      => 17,
+			'card_gap'         => 10,
+			'show_arrow'       => true,
 			'image_size'       => 68,
 			'image_shape'      => 'rounded',
 			'image_radius'     => 18,
@@ -118,6 +123,11 @@ final class Kidia_Mobile_Category_Page_Store {
 	public static function sanitize_general( array $settings ): array {
 		$defaults = self::general_defaults();
 		return array(
+			'category_layout'  => self::choice( $settings['category_layout'] ?? '', array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' ), $defaults['category_layout'] ),
+			'grid_columns'     => min( 4, max( 2, absint( $settings['grid_columns'] ?? $defaults['grid_columns'] ) ) ),
+			'card_radius'      => min( 32, max( 0, absint( $settings['card_radius'] ?? $defaults['card_radius'] ) ) ),
+			'card_gap'         => min( 24, max( 0, absint( $settings['card_gap'] ?? $defaults['card_gap'] ) ) ),
+			'show_arrow'       => ! isset( $settings['show_arrow'] ) || ! empty( $settings['show_arrow'] ),
 			'image_size'       => min( 120, max( 32, absint( $settings['image_size'] ?? $defaults['image_size'] ) ) ),
 			'image_shape'      => self::choice( $settings['image_shape'] ?? '', array( 'square', 'rounded', 'circle' ), $defaults['image_shape'] ),
 			'image_radius'     => min( 50, max( 0, absint( $settings['image_radius'] ?? $defaults['image_radius'] ) ) ),

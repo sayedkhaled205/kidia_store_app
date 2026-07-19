@@ -94,6 +94,11 @@
 		return categoryElement.find(".kidia-category-element-enabled").prop("checked");
 	}
 
+	function categoryLayout() {
+		var layout = String(setting("category_layout") || "default");
+		return ["default", "visual_grid", "circular_grid", "compact_grid", "sidebar"].indexOf(layout) >= 0 ? layout : "default";
+	}
+
 	function applyArtworkStyles(box, image, maximumSize) {
 		var size = numberInRange(setting("image_size"), 68, 32, maximumSize);
 		var shape = setting("image_shape") || "rounded";
@@ -191,7 +196,9 @@
 		tile = $('<div class="kidia-category-preview-root"></div>');
 		tile.append(buildArtwork(card, 78));
 		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
-		tile.append(editorChildren.length ? '<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span>⌄</span></button>' : '<span class="kidia-category-preview-chevron">‹</span>');
+		if (String(setting("show_arrow")) !== "0") {
+			tile.append(editorChildren.length ? '<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span>⌄</span></button>' : '<span class="kidia-category-preview-chevron">‹</span>');
+		}
 		branch.append(tile);
 
 		if (editorChildren.length && isRowExpanded(row)) {
@@ -222,12 +229,31 @@
 
 	function renderMobilePreview() {
 		var rootList = categoryElement.find(".kidia-category-items > .kidia-category-list").first();
-		var content = $('<div class="kidia-category-preview-content"></div>');
+		var layout = categoryLayout();
+		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
+		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px"});
 		var visible = 0;
 		preview.empty().append(renderChrome("header"));
 
 		if (elementEnabled()) {
-			rootList.children(".kidia-category-row").each(function () {
+			if (layout === "sidebar") {
+				var sidebar = $('<div class="kidia-category-preview-sidebar"></div>');
+				var detail = $('<div class="kidia-category-preview-sidebar-detail"></div>');
+				var firstVisible = null;
+				rootList.children(".kidia-category-row").each(function () {
+					var row = $(this), card = row.children(".kidia-category-card");
+					if (isHidden(card)) { return; }
+					if (!firstVisible) { firstVisible = row; }
+					sidebar.append(buildCategoryName(row, card, false).addClass("kidia-category-preview-sidebar-root"));
+					visible += 1;
+				});
+				if (firstVisible) {
+					var childRows = firstVisible.children(".kidia-category-children").find("> .kidia-category-list > .kidia-category-row");
+					if (childRows.length) { childRows.each(function () { var child = buildChildCard($(this)); if (child) { detail.append(child); } }); }
+					else { detail.append(buildArtwork(firstVisible.children(".kidia-category-card"), 82)).append(buildCategoryName(firstVisible, firstVisible.children(".kidia-category-card"), false)); }
+				}
+				content.append(sidebar, detail);
+			} else rootList.children(".kidia-category-row").each(function () {
 				var branch = buildRootBranch($(this));
 				if (branch) {
 					content.append(branch);
