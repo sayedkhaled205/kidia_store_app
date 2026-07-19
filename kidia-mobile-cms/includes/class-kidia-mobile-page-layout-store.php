@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 2;
+	private const VERSION = 3;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -68,6 +68,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'search_icon_radius', __( 'Search icon radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 24 ),
 			self::field( 'search_placeholder', __( 'Search placeholder', 'kidia-mobile-cms' ), 'text', __( 'Search products', 'kidia-mobile-cms' ) ),
 			self::field( 'search_height', __( 'Search height', 'kidia-mobile-cms' ), 'number', 40, array(), 32, 64 ),
+			self::field( 'search_width_percent', __( 'Search width', 'kidia-mobile-cms' ), 'number', 100, array(), 30, 100 ),
 			self::field( 'search_radius', __( 'Search radius', 'kidia-mobile-cms' ), 'number', 14, array(), 0, 32 ),
 			self::field( 'search_background', __( 'Search background', 'kidia-mobile-cms' ), 'color', '#F1F3F4' ),
 			self::field( 'search_text_color', __( 'Search text color', 'kidia-mobile-cms' ), 'color', '#5F6368' ),
@@ -123,7 +124,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'shadow', __( 'Shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'top_radius', __( 'Top corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'horizontal_padding', __( 'Horizontal padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
-			self::field( 'item_gap', __( 'Item spacing', 'kidia-mobile-cms' ), 'number', 10, array(), 0, 32 ),
+			self::field( 'item_gap', __( 'Item spacing', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'icon_size', __( 'Default icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 14, 40 ),
 			self::field( 'label_size', __( 'Label size', 'kidia-mobile-cms' ), 'number', 11, array(), 8, 20 ),
 			self::field( 'icon_label_gap', __( 'Icon and label spacing', 'kidia-mobile-cms' ), 'number', 3, array(), 0, 12 ),
@@ -262,8 +263,11 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( ! is_array( $saved ) || empty( $saved ) ) {
 			return $default;
 		}
-		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
-		$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
+		$needs_chrome_defaults = (int) ( $saved['version'] ?? 1 ) < 3;
+		if ( ! $needs_chrome_defaults ) {
+			$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+			$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
+		}
 		$saved_elements = array();
 		foreach ( is_array( $saved['elements'] ?? null ) ? $saved['elements'] : array() as $element ) {
 			if ( is_array( $element ) && ! empty( $element['id'] ) ) {
@@ -338,10 +342,17 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$footer_settings['layout_json'] = wp_json_encode( $this->default_footer_layout( $page ) );
 		if ( 'home' === $page ) {
 			$header_settings['height'] = 112;
+			$header_settings['row_gap'] = 4;
+			$header_settings['horizontal_padding'] = 16;
 			$header_settings['show_back'] = false;
 			$header_settings['show_search'] = true;
 			$header_settings['search_style'] = 'bar';
+			$header_settings['search_width_percent'] = 100;
+			$header_settings['search_radius'] = 18;
+			$header_settings['background_color'] = '#FFFFFF';
+			$header_settings['icon_color'] = '#1F2933';
 			$header_settings['show_cart_badge'] = false;
+			$header_settings['logo_url'] = $this->site_logo_url();
 		}
 		if ( 'product' === $page ) {
 			$header_settings['show_search'] = false;
@@ -349,6 +360,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$header_settings['show_cart_badge'] = false;
 			$footer_settings['style'] = 'product_action';
 			$footer_settings['height'] = 84;
+			$footer_settings['horizontal_padding'] = 16;
+			$footer_settings['button_color'] = '#2F806E';
 			$footer_settings['show_price'] = false;
 		}
 		return array(
@@ -359,6 +372,15 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'elements' => $elements,
 			'footer' => array( 'id' => 'footer', 'type' => 'app_footer', 'locked' => true, 'enabled' => true, 'settings' => $footer_settings ),
 		);
+	}
+
+	private function site_logo_url(): string {
+		if ( ! function_exists( 'get_theme_mod' ) || ! function_exists( 'wp_get_attachment_image_url' ) ) {
+			return '';
+		}
+		$logo_id = (int) get_theme_mod( 'custom_logo', 0 );
+		$url = $logo_id > 0 ? wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+		return is_string( $url ) ? esc_url_raw( $url ) : '';
 	}
 
 	/** @param array<string,mixed> $definition @return array<string,mixed> */

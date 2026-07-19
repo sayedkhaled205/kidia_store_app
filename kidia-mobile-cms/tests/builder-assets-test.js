@@ -490,7 +490,7 @@ function runPageBuilderTest() {
 
 function runChromeComposerTest() {
   const layout = JSON.stringify({ rows: [{ left: ["logo"], center: [], right: ["cart"] }, { left: [], center: ["search_bar"], right: [] }] });
-  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-element="header"><input type="checkbox" name="layout[header][enabled]" checked><div class="kidia-chrome-composer" data-part="header" data-page="home"><input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="logo">Logo</button><button class="kidia-chrome-item" data-item="cart">Cart</button><button class="kidia-chrome-item" data-item="search_bar">Search bar</button><button class="kidia-chrome-item" data-item="support">Support</button></div></div><button class="kidia-chrome-reset"></button></div><section data-item-section="logo"></section><section data-item-section="cart"></section><section data-item-section="search_bar"></section><section data-item-section="support"></section><select name="layout[header][settings][cart_icon_variant]"><option value="bag">Bag</option><option value="basket" selected>Basket</option></select><input name="layout[header][settings][height]" value="112"><input name="layout[header][settings][background_color]" value="#FFFFFF"><input name="layout[header][settings][icon_color]" value="#1F2933"><input name="layout[header][settings][icon_size]" value="24"><input name="layout[header][settings][icon_gap]" value="6"><input name="layout[header][settings][row_gap]" value="8"><input name="layout[header][settings][search_height]" value="40"><input name="layout[header][settings][search_radius]" value="14"><input name="layout[header][settings][search_background]" value="#F1F3F4"><input name="layout[header][settings][search_placeholder]" value="Search products"></section></body></html>`;
+  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-element="header"><input type="checkbox" name="layout[header][enabled]" checked><div class="kidia-chrome-composer" data-part="header" data-page="home"><input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="logo">Logo</button><button class="kidia-chrome-item" data-item="cart">Cart</button><button class="kidia-chrome-item" data-item="search_bar">Search bar</button><button class="kidia-chrome-item" data-item="support">Support</button></div></div><button class="kidia-chrome-reset"></button></div><section data-item-section="logo"></section><section data-item-section="cart"></section><section data-item-section="search_bar"></section><section data-item-section="support"></section><select name="layout[header][settings][cart_icon_variant]"><option value="bag">Bag</option><option value="basket" selected>Basket</option></select><input name="layout[header][settings][height]" value="112"><input name="layout[header][settings][background_color]" value="#FFFFFF"><input name="layout[header][settings][icon_color]" value="#1F2933"><input name="layout[header][settings][icon_size]" value="24"><input name="layout[header][settings][icon_gap]" value="6"><input name="layout[header][settings][row_gap]" value="4"><input name="layout[header][settings][horizontal_padding]" value="16"><input name="layout[header][settings][search_width_percent]" value="100"><input name="layout[header][settings][search_height]" value="40"><input name="layout[header][settings][search_radius]" value="14"><input name="layout[header][settings][search_background]" value="#F1F3F4"><input name="layout[header][settings][search_placeholder]" value="Search products"></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
@@ -498,10 +498,25 @@ function runChromeComposerTest() {
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
+  assert.match(preview, /kidia-app-header-row--full/, "A lone second-row search must span the full header row.");
+  assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
+  assert.match(preview, /--row-gap:2.72px/, "The real gap between header rows must be reflected in preview.");
   assert.equal(window.document.querySelectorAll(".kidia-chrome-row").length, 2, "Home header must support two draggable rows.");
   assert.equal(window.document.querySelector('[data-item-section="support"]').hidden, true, "Only settings for placed items must be visible.");
   assert.equal(window.document.querySelector('[data-item-section="cart"]').hidden, false, "Placed item settings must be visible.");
   console.log("Header/Footer composer: rows, conditional sections and icon designs passed.");
+}
+
+function runFooterPreviewControlsTest() {
+  const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"items":["home","categories","wishlist","account"]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][horizontal_padding]" value="24"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select></section></body></html>`;
+  const dom = new JSDOM(markup, { runScripts: "outside-only" });
+  const { window } = dom;
+  window.eval(readAsset("chrome-layout.js"));
+  const preview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"));
+  assert.match(preview, /padding-left:16.32px/, "Footer side spacing must match the saved horizontal padding.");
+  assert.match(preview, /kidia-app-icon--home-filled/, "Footer icon design must match the selected visual option.");
+  assert.match(preview, />Home</, "Footer labels must be independently switchable.");
+  console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
 }
 
 function runCommercePreviewTest() {
@@ -532,6 +547,7 @@ if (require.main === module) {
   runCategoryBuilderTest();
   runPageBuilderTest();
   runChromeComposerTest();
+  runFooterPreviewControlsTest();
   runCommercePreviewTest();
   console.log("Builder browser contract tests: ok");
 }

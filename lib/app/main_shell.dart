@@ -82,30 +82,50 @@ class MainShell extends ConsumerWidget {
 			borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))),
 			boxShadow: footer.string('shadow', 'subtle') == 'none' ? null : <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: footer.string('shadow', 'subtle') == 'strong' ? .18 : .08), blurRadius: footer.string('shadow', 'subtle') == 'strong' ? 16 : 6)],
           ),
-          child: NavigationBar(
-            height: footer.number('height', 72).clamp(48, 100),
-            elevation: 0,
-            backgroundColor: backgroundColor,
-            indicatorColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            labelBehavior: footer.boolean('show_labels', true)
-                ? NavigationDestinationLabelBehavior.alwaysShow
-                : NavigationDestinationLabelBehavior.alwaysHide,
-            selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-            onDestinationSelected: (int index) =>
-                _openBranch(ref, visibleItems[index].key),
-            destinations: visibleItems.map((entry) {
-              final _NavigationItem item = entry.value;
-              return NavigationDestination(
-                icon: _NavigationIcon(icon: _footerIcon(footer, item, false), color: inactiveColor, size: footer.number('icon_size', 24)),
-                selectedIcon: _NavigationIcon(
-                  icon: _footerIcon(footer, item, true),
-                  color: activeColor,
-			  size: footer.number('icon_size', 24),
-                ),
-                label: footer.string('${item.id}_label', item.label),
-              );
-            }).toList(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: footer.number('horizontal_padding', 16).clamp(0, 32),
+            ),
+            child: SizedBox(
+              height: footer.number('height', 72).clamp(48, 100),
+              child: Row(
+                children: visibleItems.indexed.map((indexed) {
+                  final int visibleIndex = indexed.$1;
+                  final MapEntry<int, _NavigationItem> entry = indexed.$2;
+                  final _NavigationItem item = entry.value;
+                  final bool selected = visibleIndex == (selectedIndex < 0 ? 0 : selectedIndex);
+                  final Color color = selected ? activeColor : inactiveColor;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () => _openBranch(ref, entry.key),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          _NavigationIcon(
+                            icon: _footerIcon(footer, item, selected),
+                            color: color,
+                            size: footer.number('icon_size', 24),
+                          ),
+                          if (footer.boolean('show_labels', true)) ...<Widget>[
+                            SizedBox(height: footer.number('icon_label_gap', 3).clamp(0, 12)),
+                            Text(
+                              footer.string('${item.id}_label', item.label),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: footer.number('label_size', 11).clamp(8, 20),
+                                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(growable: false),
+              ),
+            ),
           ),
         ),
       ),
