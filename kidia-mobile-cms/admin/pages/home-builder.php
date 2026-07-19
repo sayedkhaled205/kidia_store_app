@@ -192,8 +192,6 @@ foreach ( $library_options as $type => $option_name ) {
 		<div class="kidia-builder-toolbar">
 
 			<div class="kidia-builder-toolbar__actions">
-				<button type="submit" formnovalidate class="button" name="apply_kidia_patpat_preset" value="1" onclick="return confirm('<?php echo esc_js( __( 'Replace the current Home Page elements with the Kidia PatPat layout?', 'kidia-mobile-cms' ) ); ?>');"><span class="dashicons dashicons-layout"></span><?php esc_html_e( 'Apply Kidia PatPat Layout', 'kidia-mobile-cms' ); ?></button>
-
 				<button
 					type="button"
 					class="button button-primary"
