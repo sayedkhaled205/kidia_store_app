@@ -136,7 +136,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           _NavigationIcon(
-                            key: Key('cms-bottom-nav-icon-box-${item.id}'),
+                            boxKey: Key(
+                              'cms-bottom-nav-icon-box-${item.id}',
+                            ),
                             icon: _footerIcon(footer, item, selected),
                             color: color,
                             size: footerIconSize,
@@ -265,13 +267,14 @@ class _MainShellState extends ConsumerState<MainShell> {
 
 class _NavigationIcon extends StatelessWidget {
   const _NavigationIcon({
+    required this.boxKey,
     required this.icon,
     required this.color,
     required this.size,
     required this.boxSize,
-    super.key,
   });
 
+  final Key boxKey;
   final IconData icon;
   final Color color;
   final double size;
@@ -280,6 +283,7 @@ class _NavigationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
+      key: boxKey,
       dimension: boxSize,
       child: Center(child: Icon(icon, color: color, size: size)),
     );

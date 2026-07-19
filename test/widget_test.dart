@@ -181,16 +181,10 @@ void main() {
       expect(footerSize.height, 64);
       expect(homeIcon.size, 24);
       final SizedBox homeIconBox = tester.widget<SizedBox>(
-        find.descendant(
-          of: find.byKey(const Key('cms-bottom-nav-icon-box-home')),
-          matching: find.byType(SizedBox),
-        ),
+        find.byKey(const Key('cms-bottom-nav-icon-box-home')),
       );
       final SizedBox wishlistIconBox = tester.widget<SizedBox>(
-        find.descendant(
-          of: find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
-          matching: find.byType(SizedBox),
-        ),
+        find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
       );
       expect(homeIconBox.width, 32);
       expect(homeIconBox.height, 32);
