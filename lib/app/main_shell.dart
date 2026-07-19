@@ -125,17 +125,17 @@ class MainShell extends ConsumerWidget {
                               ),
                             ),
                           ],
-                        ],
-		),
-	  ),
-	),
-    );
-                }).toList(growable: false),
+						],
+					  ),
+					),
+				  );
+				}).toList(growable: false),
               ),
             ),
           ),
-        ),
-      ),
+		),
+	  ),
+	),
     );
   }
 
