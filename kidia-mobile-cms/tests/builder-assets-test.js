@@ -582,6 +582,8 @@ function runCollapsedHeaderToggleTest() {
     <input name="layout[header][settings][compact_height]" value="56">
     <input name="layout[header][settings][background_color]" value="#FFFFFF">
     <input name="layout[header][settings][compact_background_color]" value="#F4F5F5">
+    <select name="layout[header][settings][collapse_transition]"><option value="fade_slide" selected>Fade + slide</option></select>
+    <select name="layout[header][settings][collapse_speed]"><option value="slow" selected>Slow</option></select>
   </section></form></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
   const { window } = dom;
@@ -594,6 +596,8 @@ function runCollapsedHeaderToggleTest() {
   const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products");
   assert.match(collapsedPreview, /is-collapsed/, "On must preview the collapsed header immediately.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
+  assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
+  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
   toggle.checked = false;
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
