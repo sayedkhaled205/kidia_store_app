@@ -143,8 +143,10 @@ void main() {
     expect(initialButton.onPressed, isNotNull);
     expect(
       initialButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E),
+      const Color(0xFF2F806E).withValues(alpha: 0.48),
     );
+    expect(find.text('Choose the product options first.'), findsNothing);
+    expect(find.text('اختر خيارات المنتج أولًا.'), findsNothing);
 
     await tester.tap(find.byKey(const Key('add-to-cart-button')));
     await tester.pumpAndSettle();
@@ -168,6 +170,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(r'$69.99'), findsOneWidget);
+    final FilledButton selectedButton = tester.widget<FilledButton>(
+      find.byKey(const Key('add-to-cart-button')),
+    );
+    expect(
+      selectedButton.style?.backgroundColor?.resolve(<WidgetState>{}),
+      const Color(0xFF2F806E),
+    );
+    expect(find.byKey(const Key('add-to-cart-disabled-reason')), findsNothing);
+    expect(find.byKey(const Key('add-to-cart-error')), findsNothing);
     final FilledButton sheetButton = tester.widget<FilledButton>(
       find.byKey(const Key('product-options-sheet-add')),
     );
