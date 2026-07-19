@@ -491,7 +491,7 @@
 			columns = Math.round(numberInRange(settings.columns, 4, 2, 6));
 			count = Math.round(numberInRange(settings.limit, 8, 1, 12));
 			items = limitedItems(runtimeData.items, count, 12);
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid' + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid is-' + escapeHtml(settings.layout || "patpat") + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
 
 		case "image_banner":
 			image = safeImage(settings.image_url);
