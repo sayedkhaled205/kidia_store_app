@@ -108,6 +108,10 @@
 .kidia-preview-dots i { width: 4px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.55); }
 .kidia-preview-dots i.is-active { width: 10px; background: #fff; }
 .kidia-preview-dots.is-dots i.is-active { width: 4px; transform: scale(1.35); }
+.kidia-preview-hero.has-indicators-below { padding-bottom:14px; }
+.kidia-preview-hero.has-indicators-below .kidia-preview-dots { bottom:4px; }
+.kidia-preview-hero.has-indicators-below .kidia-preview-dots i { background:#b8cac5; }
+.kidia-preview-hero.has-indicators-below .kidia-preview-dots i.is-active { background:#2f806e; }
 .kidia-preview-category-grid,
 .kidia-preview-product-grid { display: grid; grid-template-columns: repeat(var(--kidia-preview-columns,2),minmax(0,1fr)); gap: 7px; padding-inline: 8px; }
 .kidia-preview-category-card,
