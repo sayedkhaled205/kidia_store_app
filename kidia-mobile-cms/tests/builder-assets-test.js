@@ -568,6 +568,38 @@ function runChromeComposerTest() {
   console.log("Header/Footer composer: rows, conditional sections and icon designs passed.");
 }
 
+function runCollapsedHeaderToggleTest() {
+  const regular = JSON.stringify({ rows: [{ columns: [{ width: 100, align: "center", items: ["title"] }] }] });
+  const collapsed = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["search_bar"] }, { width: 16, align: "right", items: ["cart"] }] }] });
+  const markup = `<!doctype html><html><body><form><section class="kidia-fixed-chrome-card">
+    <input type="checkbox" name="layout[header][enabled]" value="1" checked>
+    <input type="hidden" name="layout[header][settings][collapse_on_scroll]" value="0">
+    <input type="checkbox" class="kidia-collapsed-header-enabled" name="layout[header][settings][collapse_on_scroll]" value="1">
+    <input name="layout[header][settings][layout_json]" value='${regular}'>
+    <input name="layout[header][settings][compact_layout_json]" value='${collapsed}'>
+    <input name="layout[header][settings][title]" value="Products">
+    <input name="layout[header][settings][height]" value="64">
+    <input name="layout[header][settings][compact_height]" value="56">
+    <input name="layout[header][settings][background_color]" value="#FFFFFF">
+    <input name="layout[header][settings][compact_background_color]" value="#F4F5F5">
+  </section></form></body></html>`;
+  const dom = new JSDOM(markup, { runScripts: "outside-only" });
+  const { window } = dom;
+  window.eval(readAsset("chrome-layout.js"));
+  const card = window.document.querySelector(".kidia-fixed-chrome-card");
+  const toggle = card.querySelector(".kidia-collapsed-header-enabled");
+
+  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "Off must preview the regular header.");
+  toggle.checked = true;
+  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products");
+  assert.match(collapsedPreview, /is-collapsed/, "On must preview the collapsed header immediately.");
+  assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
+  assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
+  toggle.checked = false;
+  assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
+  console.log("Collapsed header: persistent On/Off toggle and preview passed.");
+}
+
 function runFooterPreviewControlsTest() {
   const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":25,"items":["home"]},{"width":25,"items":["categories"]},{"width":25,"items":["wishlist"]},{"width":25,"items":["share"]}]}]}'><input name="layout[footer][settings][height]" value="72"><input name="layout[footer][settings][side_spacing_percent]" value="5"><input name="layout[footer][settings][icon_size]" value="26"><input name="layout[footer][settings][label_size]" value="11"><input name="layout[footer][settings][icon_label_gap]" value="4"><input name="layout[footer][settings][active_color]" value="#1F6F61"><input name="layout[footer][settings][inactive_color]" value="#6B7280"><input name="layout[footer][settings][background_color]" value="#FFFFFF"><input name="layout[footer][settings][border_color]" value="#ABCDEF"><input name="layout[footer][settings][border_width]" value="3"><input name="layout[footer][settings][top_radius]" value="12"><select name="layout[footer][settings][shadow]"><option value="strong" selected>Strong</option></select><input type="checkbox" name="layout[footer][settings][show_labels]" checked><select name="layout[footer][settings][home_icon_variant]"><option value="filled" selected>Filled</option></select><select name="layout[footer][settings][share_icon_style]"><option value="filled" selected>Filled</option></select><input name="layout[footer][settings][share_icon_size]" value="30"></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
@@ -616,6 +648,7 @@ if (require.main === module) {
   runCategoryBuilderTest();
   runPageBuilderTest();
   runChromeComposerTest();
+  runCollapsedHeaderToggleTest();
   runFooterPreviewControlsTest();
   runCommercePreviewTest();
   console.log("Builder browser contract tests: ok");

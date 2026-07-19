@@ -81,6 +81,11 @@
 .kidia-chrome-palette:has(.kidia-chrome-item:active) { background:#edf8f4; box-shadow:0 0 0 2px #8fc8ba; }
 .kidia-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
 .kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
+.kidia-chrome-composer--collapsed { margin-top:12px; }
+.kidia-chrome-composer__heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; direction:rtl; text-align:right; }
+.kidia-chrome-composer__heading h3 { margin:0; color:#236b59; }
+.kidia-chrome-composer__heading p { margin:4px 0 0; color:#646970; }
+.kidia-collapsed-header-toggle { flex:0 0 auto; margin-inline-start:auto; }
 .kidia-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
 .kidia-chrome-composer.has-invalid-layout .kidia-chrome-layout-error { display:block; }
 .kidia-chrome-composer.has-invalid-layout::after { display:block; margin-top:8px; color:#b42318; font-weight:700; content:"Each row must total exactly 100%."; }
