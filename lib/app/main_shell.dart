@@ -14,21 +14,25 @@ class MainShell extends ConsumerWidget {
 
   static const List<_NavigationItem> _items = [
     _NavigationItem(
+	  id: 'home',
       label: 'الرئيسية',
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
     ),
     _NavigationItem(
+	  id: 'categories',
       label: 'الأقسام',
       icon: Icons.grid_view_outlined,
       selectedIcon: Icons.grid_view_rounded,
     ),
     _NavigationItem(
+	  id: 'wishlist',
       label: 'المفضلة',
       icon: Icons.favorite_border_rounded,
       selectedIcon: Icons.favorite_rounded,
     ),
     _NavigationItem(
+	  id: 'account',
       label: 'حسابي',
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
@@ -42,19 +46,12 @@ class MainShell extends ConsumerWidget {
         ref.watch(cmsPageLayoutProvider(page)).value ??
         CmsPageLayout.fallback(page);
     final CmsPageComponent footer = pageLayout.footer;
-    final List<MapEntry<int, _NavigationItem>> visibleItems = _items
-        .asMap()
-        .entries
-        .where((MapEntry<int, _NavigationItem> entry) {
-          const List<String> keys = <String>[
-            'show_home',
-            'show_categories',
-            'show_wishlist',
-            'show_account',
-          ];
-          return footer.boolean(keys[entry.key], true);
-        })
-        .toList(growable: false);
+    final dynamic rawItems = footer.json('layout_json')['items'];
+    final List<String> order = rawItems is List ? rawItems.map((item) => '$item').toList() : _items.map((item) => item.id).toList();
+    final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
+		final int index = _items.indexWhere((item) => item.id == id);
+		return index < 0 ? null : MapEntry<int, _NavigationItem>(index, _items[index]);
+	}).whereType<MapEntry<int, _NavigationItem>>().toList(growable: false);
     final int selectedIndex = visibleItems.indexWhere(
       (MapEntry<int, _NavigationItem> entry) =>
           entry.key == navigationShell.currentIndex,
@@ -73,14 +70,17 @@ class MainShell extends ConsumerWidget {
     );
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: !footer.enabled || visibleItems.isEmpty
+      bottomNavigationBar: !footer.enabled || visibleItems.isEmpty || footer.string('style', 'navigation') == 'product_action'
           ? null
           : SafeArea(
         top: false,
+		bottom: footer.boolean('safe_area', true),
         child: Container(
           decoration: BoxDecoration(
             color: backgroundColor,
-            border: const Border(top: BorderSide(color: KidiaColors.divider)),
+			border: Border(top: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), KidiaColors.divider), width: footer.number('border_width', 1))),
+			borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))),
+			boxShadow: footer.string('shadow', 'subtle') == 'none' ? null : <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: footer.string('shadow', 'subtle') == 'strong' ? .18 : .08), blurRadius: footer.string('shadow', 'subtle') == 'strong' ? 16 : 6)],
           ),
           child: NavigationBar(
             height: footer.number('height', 72).clamp(48, 100),
@@ -97,18 +97,30 @@ class MainShell extends ConsumerWidget {
             destinations: visibleItems.map((entry) {
               final _NavigationItem item = entry.value;
               return NavigationDestination(
-                icon: _NavigationIcon(icon: item.icon, color: inactiveColor),
+                icon: _NavigationIcon(icon: _footerIcon(footer, item, false), color: inactiveColor, size: footer.number('icon_size', 24)),
                 selectedIcon: _NavigationIcon(
-                  icon: item.selectedIcon,
+                  icon: _footerIcon(footer, item, true),
                   color: activeColor,
+			  size: footer.number('icon_size', 24),
                 ),
-                label: item.label,
+                label: footer.string('${item.id}_label', item.label),
               );
             }).toList(),
           ),
         ),
       ),
     );
+  }
+
+  IconData _footerIcon(CmsPageComponent footer, _NavigationItem item, bool selected) {
+	final String variant = footer.string('${item.id}_icon_variant', '');
+	return switch (item.id) {
+	  'home' => variant == 'filled' || selected ? Icons.home_rounded : variant == 'rounded' ? Icons.other_houses_outlined : Icons.home_outlined,
+	  'categories' => variant == 'list' ? Icons.view_list_outlined : variant == 'category' ? Icons.category_outlined : selected ? Icons.grid_view_rounded : Icons.grid_view_outlined,
+	  'wishlist' => variant == 'bookmark' ? (selected ? Icons.bookmark : Icons.bookmark_border) : selected ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+	  'account' => variant == 'circle' ? Icons.account_circle_outlined : selected ? Icons.person_rounded : Icons.person_outline_rounded,
+	  _ => selected ? item.selectedIcon : item.icon,
+	};
   }
 
   String _pageForPath(String path) {
@@ -146,16 +158,18 @@ class MainShell extends ConsumerWidget {
 }
 
 class _NavigationIcon extends StatelessWidget {
-  const _NavigationIcon({required this.icon, required this.color});
+  const _NavigationIcon({required this.icon, required this.color, required this.size});
 
   final IconData icon;
   final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Icon(
       icon,
       color: color,
+	  size: size,
     );
   }
 }
@@ -168,10 +182,13 @@ Color _cmsColor(String value, Color fallback) {
 
 class _NavigationItem {
   const _NavigationItem({
+	required this.id,
     required this.label,
     required this.icon,
     required this.selectedIcon,
   });
+
+  final String id;
 
   final String label;
   final IconData icon;

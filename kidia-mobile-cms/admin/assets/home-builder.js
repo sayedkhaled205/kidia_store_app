@@ -595,6 +595,7 @@
 
 	function renderFixedChrome(part) {
 		var card = form.querySelector('[data-chrome-part="' + part + '"]');
+		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card, "Kidia") : window.KidiaChromePreview.renderFooter(card); }
 		if (!card || !chromeChecked(card, "enabled", true)) { return ""; }
 		if (part === "header") {
 			var searchBar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
@@ -1202,6 +1203,13 @@
 
 		markDirty();
 		renderPreview();
+	});
+
+	form.addEventListener("input", function (event) {
+		if (event.target && event.target.closest && event.target.closest(".kidia-fixed-chrome-card")) { markDirty(); renderPreview(); }
+	});
+	form.addEventListener("change", function (event) {
+		if (event.target && event.target.closest && event.target.closest(".kidia-fixed-chrome-card")) { markDirty(); renderPreview(); }
 	});
 
 	builder.addEventListener("pointerdown", function (event) {

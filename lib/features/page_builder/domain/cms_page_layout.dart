@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class CmsPageLayout {
   const CmsPageLayout({
     required this.page,
@@ -135,6 +137,15 @@ class CmsPageComponent {
   double number(String key, double fallback) {
     final dynamic value = settings[key];
     return value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+  }
+
+  Map<String, dynamic> json(String key) {
+	final dynamic value = settings[key];
+	if (value is Map) return Map<String, dynamic>.from(value);
+	if (value is String && value.isNotEmpty) {
+		try { final dynamic decoded = jsonDecode(value); if (decoded is Map) return Map<String, dynamic>.from(decoded); } catch (_) {}
+	}
+	return <String, dynamic>{};
   }
 }
 

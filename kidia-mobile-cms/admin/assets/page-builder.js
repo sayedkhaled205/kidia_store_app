@@ -41,6 +41,7 @@
 	}
 
 	function renderHeader(card) {
+		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderHeader(card, root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"); }
 		if (!card || !checked(card, "enabled", true)) { return ""; }
 		var showBar = value(card, "search_style", "icon") === "bar" && checked(card, "show_search", true);
 		var title = escapeHtml(value(card, "title", root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"));
@@ -99,6 +100,7 @@
 	}
 
 	function renderFooter(card) {
+		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderFooter(card); }
 		if (!card || !checked(card, "enabled", true)) { return ""; }
 		if (value(card, "style", "navigation") === "product_action") {
 			return '<footer class="kidia-app-footer kidia-app-footer--product" style="height:' + number(card, "height", 84) * .68 + 'px;background:' + color(card, "background_color", "#FFFFFF") + '">' + (checked(card, "show_share", true) ? '<span>' + icon("share") + '<b>' + escapeHtml(value(card, "share_label", "مشاركة")) + '</b></span>' : "") + (checked(card, "show_like", true) ? '<span>' + icon("heart") + '<b>' + escapeHtml(value(card, "like_label", "إعجاب")) + '</b></span>' : "") + (checked(card, "show_add_to_cart", true) ? '<button style="background:' + color(card, "button_color", "#1F2933") + ';color:' + color(card, "button_text_color", "#FFFFFF") + ';border-radius:' + number(card, "button_radius", 28) * .68 + 'px">' + escapeHtml(value(card, "add_to_cart_label", "أضف للحقيبة")) + '</button>' : "") + '</footer>';

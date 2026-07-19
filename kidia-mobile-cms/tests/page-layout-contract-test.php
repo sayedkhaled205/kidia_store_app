@@ -25,6 +25,7 @@ function sanitize_key( $value ): string { return preg_replace( '/[^a-z0-9_\-]/',
 function sanitize_text_field( $value ): string { return trim( strip_tags( (string) $value ) ); }
 function sanitize_hex_color( $value ) { return preg_match( '/^#[0-9a-f]{6}$/i', (string) $value ) ? (string) $value : null; }
 function esc_url_raw( $value ): string { return filter_var( (string) $value, FILTER_VALIDATE_URL ) ? (string) $value : ''; }
+function wp_json_encode( $value ): string { return json_encode( $value, JSON_UNESCAPED_SLASHES ); }
 function get_option( string $name, $default = false ) { return $GLOBALS['kidia_page_options'][ $name ] ?? $default; }
 function update_option( string $name, $value, bool $autoload = false ): bool { unset( $autoload ); $GLOBALS['kidia_page_options'][ $name ] = $value; return true; }
 function add_action( string $hook, $callback ): void { unset( $hook, $callback ); }
@@ -38,6 +39,16 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 $store = new Kidia_Mobile_Page_Layout_Store();
 $product_default = $store->get_layout( 'product' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
+kidia_page_assert( array( 'share', 'like', 'add_to_cart' ) === json_decode( $product_default['footer']['settings']['layout_json'], true )['items'], 'Product footer must default to Share, Like and Add to bag.' );
+$home_default = $store->get_layout( 'home' );
+$home_rows = json_decode( $home_default['header']['settings']['layout_json'], true )['rows'];
+kidia_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['left'] && array( 'search_bar' ) === $home_rows[1]['center'], 'Home header must default to the two-row Kidia layout.' );
+foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
+	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );
+}
+foreach ( array( 'home_icon_variant', 'wishlist_icon_variant', 'account_icon_variant' ) as $icon_setting ) {
+	kidia_page_assert( array_key_exists( $icon_setting, $home_default['footer']['settings'] ), "Footer must expose $icon_setting." );
+}
 $catalog_default = $store->get_layout( 'catalog' );
 $catalog_ids = array_column( $catalog_default['elements'], 'id' );
 kidia_page_assert( ! in_array( 'pagination', $catalog_ids, true ), 'Pagination must be a Product Grid setting, not a separate element.' );

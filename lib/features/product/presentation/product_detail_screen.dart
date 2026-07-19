@@ -96,7 +96,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         appBar: CmsPageAppBar(
           layout: layout,
           defaultTitle: copy.description,
-          actions: _buildCmsActions(copy),
+          actions: _buildCmsActions(context, copy),
         ),
         body: _buildBody(copy, layout),
         bottomNavigationBar:
@@ -118,9 +118,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  List<CmsPageHeaderAction> _buildCmsActions(_ProductCopy copy) {
+  List<CmsPageHeaderAction> _buildCmsActions(BuildContext context, _ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <CmsPageHeaderAction>[
+	  CmsPageHeaderAction(type: 'support', icon: Icons.headset_mic_outlined, tooltip: 'خدمة العملاء', onPressed: () => context.push('/support')),
       if (product != null && widget.onShareRequested != null)
         CmsPageHeaderAction(
           type: 'share',
@@ -798,17 +799,31 @@ class _PurchaseBar extends StatelessWidget {
       reason = copy.notPurchasable;
     }
 
-    if (!footer.enabled || !footer.boolean('show_add_to_cart', true)) { return const SizedBox.shrink(); }
+    if (!footer.enabled) { return const SizedBox.shrink(); }
     final Color background = _cmsColor(footer.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
     final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
     final bool productAction = footer.string('style', 'navigation') == 'product_action';
+	final dynamic rawItems = footer.json('layout_json')['items'];
+	final List<String> items = rawItems is List ? rawItems.map((item) => '$item').toList() : <String>['share', 'like', 'add_to_cart'];
+	final List<Widget> footerItems = <Widget>[];
+	for (final String item in items) {
+	  if (footerItems.isNotEmpty) footerItems.add(SizedBox(width: footer.number('item_gap', 10)));
+	  if (item == 'share' && productAction) {
+		footerItems.add(_FooterAction(icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.string('share_label', copy.share), color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), onPressed: onShare));
+	  } else if (item == 'like' && productAction) {
+		footerItems.add(_FooterAction(icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.string('like_label', 'Like'), color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', footer.number('icon_size', 24)), labelSize: footer.number('label_size', 11), onPressed: onLike));
+	  } else if (item == 'add_to_cart') {
+		footerItems.add(Expanded(child: FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)))));
+	  }
+	}
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
       color: background,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))),
+	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))), side: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), Colors.transparent), width: footer.number('border_width', 1))),
       child: SafeArea(
         top: false,
+		bottom: footer.boolean('safe_area', true),
         minimum: EdgeInsets.fromLTRB(footer.number('horizontal_padding', 16), 10, footer.number('horizontal_padding', 16), 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -834,12 +849,7 @@ class _PurchaseBar extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
-            Row(children: <Widget>[
-              if (productAction && footer.boolean('show_share', true)) _FooterAction(icon: Icons.ios_share_outlined, label: footer.string('share_label', copy.share), color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footer.number('share_icon_size', 24), onPressed: onShare),
-              if (productAction && footer.boolean('show_like', true)) _FooterAction(icon: isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, label: footer.string('like_label', 'Like'), color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footer.number('like_icon_size', 24), onPressed: onLike),
-              SizedBox(width: footer.number('item_gap', 10)),
-              Expanded(child: FilledButton.icon(key: const Key('add-to-cart-button'), style: FilledButton.styleFrom(backgroundColor: buttonColor, foregroundColor: buttonText, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(footer.number('button_radius', 28)))), onPressed: hasCartConnection && controller.canAddToCart ? onPressed : null, icon: controller.isAdding ? const SizedBox.square(dimension:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.shopping_bag_outlined), label: Text(controller.isAdding ? copy.adding : footer.string('add_to_cart_label', copy.addToCart)))),
-            ]),
+			Row(children: footerItems),
           ],
         ),
       ),
@@ -847,7 +857,8 @@ class _PurchaseBar extends StatelessWidget {
   }
 }
 
-class _FooterAction extends StatelessWidget { const _FooterAction({required this.icon,required this.label,required this.color,required this.size,required this.onPressed}); final IconData icon; final String label; final Color color; final double size; final VoidCallback? onPressed; @override Widget build(BuildContext context)=>InkWell(onTap:onPressed,child:Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(icon,color:color,size:size),Text(label,style:TextStyle(color:color,fontSize:11))]))); }
+class _FooterAction extends StatelessWidget { const _FooterAction({required this.icon,required this.label,required this.color,required this.size,required this.labelSize,required this.onPressed}); final IconData icon; final String label; final Color color; final double size; final double labelSize; final VoidCallback? onPressed; @override Widget build(BuildContext context)=>InkWell(onTap:onPressed,child:Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(icon,color:color,size:size),Text(label,style:TextStyle(color:color,fontSize:labelSize))]))); }
+IconData _footerActionIcon(String type, String variant, bool selected) => switch (type) { 'share' => variant == 'send' ? Icons.send_outlined : variant == 'share' ? Icons.share_outlined : Icons.ios_share_outlined, 'like' => variant == 'bookmark' ? (selected ? Icons.bookmark : Icons.bookmark_border) : selected ? Icons.favorite_rounded : Icons.favorite_border_rounded, _ => Icons.circle_outlined };
 Color _cmsColor(String value, Color fallback) { final hex=value.replaceFirst('#',''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex)?Color(int.parse('FF$hex',radix:16)):fallback; }
 
 class _ProductLoading extends StatelessWidget {
