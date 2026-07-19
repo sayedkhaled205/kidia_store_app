@@ -11,6 +11,7 @@
 	var dirty = false;
 	var submitting = false;
 	var pending = null;
+	var draftKey = "kidia-unsaved-draft:" + window.location.pathname + window.location.search;
 	var modal = document.createElement("div");
 
 	modal.className = "kidia-unsaved-modal";
@@ -40,7 +41,41 @@
 		if (!submitting) {
 			dirty = true;
 			form.dataset.kidiaDirty = "true";
+			storeDraft();
 		}
+	}
+
+	function storeDraft() {
+		var fields = [];
+		Array.prototype.forEach.call(form.elements, function (field) {
+			if (!field.name || field.type === "file" || field.type === "submit") return;
+			fields.push({
+				name: field.name,
+				value: field.value,
+				checked: !!field.checked,
+				type: field.type || "text"
+			});
+		});
+		try { window.sessionStorage.setItem(draftKey, JSON.stringify(fields)); } catch (error) {}
+	}
+
+	function clearDraft() {
+		try { window.sessionStorage.removeItem(draftKey); } catch (error) {}
+	}
+
+	function restoreDraft(fields) {
+		(fields || []).forEach(function (saved) {
+			var matches = Array.prototype.filter.call(form.elements, function (field) {
+				return field.name === saved.name;
+			});
+			Array.prototype.forEach.call(matches, function (field) {
+				if (field.type === "checkbox" || field.type === "radio") {
+					field.checked = saved.checked && field.value === saved.value;
+				} else {
+					field.value = saved.value;
+				}
+			});
+		});
 	}
 
 	function closeModal() {
@@ -76,6 +111,7 @@
 		var target = pending;
 		var redirect = form.querySelector('input[name="kidia_redirect_to"]');
 		var submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+		if (target && target.fields) restoreDraft(target.fields);
 		if (typeof form.reportValidity === "function" && !form.reportValidity()) {
 			closeModal();
 			return;
@@ -103,10 +139,12 @@
 	form.addEventListener("submit", function () {
 		submitting = true;
 		dirty = false;
+		clearDraft();
 		form.dataset.kidiaDirty = "false";
 	});
 	form.addEventListener("reset", function () {
 		dirty = false;
+		clearDraft();
 		form.dataset.kidiaDirty = "false";
 	});
 
@@ -146,6 +184,11 @@
 			var target = pending;
 			dirty = false;
 			submitting = true;
+			clearDraft();
+			if (target && target.fields) {
+				closeModal();
+				return;
+			}
 			navigate(target);
 			return;
 		}
@@ -161,4 +204,16 @@
 		event.preventDefault();
 		event.returnValue = "";
 	});
+
+	window.setTimeout(function () {
+		var raw;
+		var fields;
+		try { raw = window.sessionStorage.getItem(draftKey); } catch (error) { raw = null; }
+		if (!raw) return;
+		try { fields = JSON.parse(raw); } catch (error) { clearDraft(); return; }
+		if (!Array.isArray(fields) || !fields.length) { clearDraft(); return; }
+		dirty = true;
+		form.dataset.kidiaDirty = "true";
+		openModal({ url: window.location.href, reload: false, fields: fields });
+	}, 0);
 }());
