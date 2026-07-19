@@ -24,6 +24,8 @@ import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_rep
 import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
+import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
   testWidgets('app shows its startup splash safely', (tester) async {
@@ -142,11 +144,59 @@ void main() {
 
     await _disposeApp(tester, router);
   });
+
+  testWidgets(
+    'all pages use Category footer sizing while keeping Arabic page labels',
+    (tester) async {
+      final GoRouter router = createAppRouter();
+      final CmsPageLayout homeLayout = _navigationLayout(
+        'home',
+        height: 92,
+        iconSize: 36,
+        items: const <String>['home', 'wishlist'],
+      );
+      final CmsPageLayout categoryLayout = _navigationLayout(
+        'category',
+        height: 64,
+        iconSize: 24,
+      );
+
+      await _pumpStartedApp(
+        tester,
+        router: router,
+        homeLayout: homeLayout,
+        categoryLayout: categoryLayout,
+      );
+
+      final SizedBox footerSize = tester.widget<SizedBox>(
+        find.byKey(const Key('cms-bottom-navigation-size')),
+      );
+      final Icon homeIcon = tester.widget<Icon>(
+        find.descendant(
+          of: find.byKey(const Key('cms-bottom-nav-home')),
+          matching: find.byType(Icon),
+        ),
+      );
+
+      expect(footerSize.height, 64);
+      expect(homeIcon.size, 24);
+      expect(find.text('الرئيسية'), findsOneWidget);
+      expect(find.text('المفضلة'), findsOneWidget);
+      expect(find.text('الأقسام'), findsNothing);
+      expect(find.text('حسابي'), findsNothing);
+      expect(find.text('Home'), findsNothing);
+      expect(find.text('Categories'), findsNothing);
+
+      await _disposeApp(tester, router);
+    },
+  );
 }
 
 Future<void> _pumpStartedApp(
   WidgetTester tester, {
   required GoRouter router,
+  CmsPageLayout? homeLayout,
+  CmsPageLayout? categoryLayout,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -158,6 +208,12 @@ Future<void> _pumpStartedApp(
         brandsRepositoryProvider.overrideWithValue(
           const _RouterBrandsRepository(),
         ),
+        if (homeLayout != null)
+          cmsPageLayoutProvider('home').overrideWith((ref) async => homeLayout),
+        if (categoryLayout != null)
+          cmsPageLayoutProvider(
+            'category',
+          ).overrideWith((ref) async => categoryLayout),
       ],
       child: KidiaApp(router: router),
     ),
@@ -165,6 +221,54 @@ Future<void> _pumpStartedApp(
   for (int index = 0; index < 8; index++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+CmsPageLayout _navigationLayout(
+  String page, {
+  required double height,
+  required double iconSize,
+  List<String> items = const <String>[
+    'home',
+    'categories',
+    'wishlist',
+    'account',
+  ],
+}) {
+  final CmsPageLayout fallback = CmsPageLayout.fallback(page);
+  return CmsPageLayout(
+    page: page,
+    header: fallback.header,
+    elements: fallback.elements,
+    footer: CmsPageComponent(
+      id: fallback.footer.id,
+      type: fallback.footer.type,
+      enabled: true,
+      settings: <String, dynamic>{
+        ...fallback.footer.settings,
+        'layout_json': <String, dynamic>{
+          'rows': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'columns': items
+                  .map(
+                    (String item) => <String, dynamic>{
+                      'width': 100 / items.length,
+                      'align': 'center',
+                      'items': <String>[item],
+                    },
+                  )
+                  .toList(growable: false),
+            },
+          ],
+        },
+        'height': height,
+        'icon_size': iconSize,
+        'home_label': 'Home',
+        'categories_label': 'Categories',
+        'wishlist_label': 'Wishlist',
+        'account_label': 'Account',
+      },
+    ),
+  );
 }
 
 Future<void> _disposeApp(WidgetTester tester, GoRouter router) async {
