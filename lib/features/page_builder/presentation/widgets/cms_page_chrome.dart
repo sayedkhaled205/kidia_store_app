@@ -488,8 +488,42 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (item == 'logo') {
       final String url = _header.string('logo_url', '');
       final String subtitle = _header.string('subtitle', '');
-      final Widget logo = url.isEmpty ? Text('Kidia', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 20)) : Image.network(url, width: _header.number('logo_width', 118), height: _header.number('logo_height', 38), fit: BoxFit.contain, errorBuilder: (_, _, _) => const SizedBox.shrink());
-      return Column(mainAxisSize: MainAxisSize.min, children: <Widget>[logo, if (subtitle.isNotEmpty) Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: color, fontSize: 11))]);
+      final Color logoTextColor = _color(
+        _header.string('logo_text_color', '#1F2933'),
+        color,
+      );
+      final Widget textLogo = Text(
+        _header.string('logo_text', 'Kidia'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: logoTextColor,
+          fontWeight: FontWeight.w900,
+          fontSize: 20,
+        ),
+      );
+      final Widget logo = url.isEmpty
+          ? textLogo
+          : Image.network(
+              url,
+              width: _header.number('logo_width', 118),
+              height: _header.number('logo_height', 38),
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => textLogo,
+            );
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          logo,
+          if (subtitle.isNotEmpty)
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: logoTextColor, fontSize: 11),
+            ),
+        ],
+      );
     }
     final CmsPageHeaderAction? action = item == 'back'
         ? CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop())
