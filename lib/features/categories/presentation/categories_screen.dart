@@ -24,15 +24,13 @@ class CategoriesScreen extends ConsumerWidget {
         ref.watch(cmsPageLayoutProvider('category')).value ??
         CmsPageLayout.fallback('category');
 
-    return Scaffold(
-      appBar: CmsPageAppBar(
-        layout: layout,
-        defaultTitle: copy.categories,
-        actions: <CmsPageHeaderAction>[
+    return CmsPageScaffold(
+      layout: layout,
+      defaultTitle: copy.categories,
+      actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(key: const Key('categories-search-action'), type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
           CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
-        ],
-      ),
+      ],
       body: SafeArea(
         bottom: false,
         child: tree.when(
