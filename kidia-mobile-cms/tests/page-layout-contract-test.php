@@ -48,6 +48,11 @@ kidia_page_assert( 100 === $home_default['header']['settings']['search_width_per
 kidia_page_assert( 8 === $home_default['header']['settings']['row_gap'], 'Home header rows must preserve the measured PatPat gap.' );
 kidia_page_assert( 120 === $home_default['header']['settings']['height'] && 42 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the PatPat proportions.' );
 kidia_page_assert( 44 === $home_default['header']['settings']['search_height'] && 22 === $home_default['header']['settings']['search_radius'], 'Home search must use the PatPat height and pill radius.' );
+$compact_rows = json_decode( $home_default['header']['settings']['compact_layout_json'], true )['rows'];
+kidia_page_assert( true === $home_default['header']['settings']['collapse_on_scroll'], 'Home header must allow the collapsed scroll header by default.' );
+kidia_page_assert( array( 'search_bar' ) === $compact_rows[0]['columns'][0]['items'] && array( 'cart' ) === $compact_rows[0]['columns'][1]['items'], 'Collapsed header must have an independently stored Search + Cart layout.' );
+kidia_page_assert( 'original' === $home_default['header']['settings']['scroll_up_header'], 'Scrolling up must restore the original two-row header by default.' );
+kidia_page_assert( false === $home_default['footer']['settings']['hide_on_scroll'], 'Footer auto-hide must remain optional by default.' );
 $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] = array(
 	'version' => 2,
 	'header' => array( 'enabled' => true, 'settings' => array( 'height' => 64, 'layout_json' => wp_json_encode( array( 'rows' => array() ) ) ) ),
@@ -65,6 +70,11 @@ foreach ( array( 'home_icon_variant', 'wishlist_icon_variant', 'account_icon_var
 }
 $catalog_default = $store->get_layout( 'catalog' );
 $catalog_ids = array_column( $catalog_default['elements'], 'id' );
+foreach ( $catalog_default['elements'] as $element ) {
+	foreach ( array( 'margin_top', 'margin_bottom', 'padding_vertical', 'padding_horizontal', 'background_color' ) as $presentation_setting ) {
+		kidia_page_assert( array_key_exists( $presentation_setting, $element['settings'] ), "Every page element must expose $presentation_setting." );
+	}
+}
 kidia_page_assert( ! in_array( 'pagination', $catalog_ids, true ), 'Pagination must be a Product Grid setting, not a separate element.' );
 $catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];
 kidia_page_assert( 'load_more' === $catalog_grid['settings']['pagination_mode'], 'Product Grid must expose pagination mode.' );

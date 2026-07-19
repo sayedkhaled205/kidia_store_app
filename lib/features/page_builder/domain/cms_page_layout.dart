@@ -76,6 +76,12 @@ class CmsPageLayout {
     };
 	final Map<String, dynamic> headerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackHeaderLayout(page)),
+		'compact_layout_json': jsonEncode(<String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']}, <String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']}]}]}),
+		'collapse_on_scroll': page == 'home',
+		'scroll_up_header': 'original',
+		'compact_height': 60,
+		'compact_background_color': '#FFFFFF',
+		'compact_horizontal_padding': 16,
 		'height': page == 'home' ? 112 : 64,
 		'margin_top': 0,
 		'margin_bottom': 0,
@@ -106,6 +112,7 @@ class CmsPageLayout {
 		'active_color': '#1F6F61',
 		'inactive_color': '#6B7280',
 		'background_color': '#FFFFFF',
+		'hide_on_scroll': false,
 		'button_color': '#2F806E',
 	};
     return CmsPageLayout(

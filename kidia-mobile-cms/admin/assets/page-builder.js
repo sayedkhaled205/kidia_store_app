@@ -119,7 +119,7 @@
 		var header = root.querySelector('[data-element="header"]');
 		var footer = root.querySelector('[data-element="footer"]');
 		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '">';
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { html += previewElement(card); } });
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent";html += '<div class="kidia-page-element-frame" style="margin:'+number(card,"margin_top",0)+'px 0 '+number(card,"margin_bottom",0)+'px;padding:'+number(card,"padding_vertical",0)+'px '+number(card,"padding_horizontal",0)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
 		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;
 		var headerNode = preview.querySelector(".kidia-app-header");

@@ -75,6 +75,17 @@ $footer_icon_symbols = array(
 			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
 			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
 		</div>
+		<?php if ( 'header' === $chrome_part ) : ?>
+		<div class="kidia-chrome-composer kidia-chrome-composer--collapsed" data-part="header" data-page="<?php echo esc_attr( $chrome_page_name ); ?>" data-variant="collapsed">
+			<h3><?php esc_html_e( 'Collapsed header shown on scroll', 'kidia-mobile-cms' ); ?></h3>
+			<p><?php esc_html_e( 'Arrange the single merged header row exactly as it should appear while scrolling.', 'kidia-mobile-cms' ); ?></p>
+			<label class="kidia-page-toggle"><input type="checkbox" class="kidia-preview-collapsed-header"><b><?php esc_html_e( 'Preview collapsed header', 'kidia-mobile-cms' ); ?></b></label>
+			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][compact_layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['compact_layout_json'] ?? '' ) ); ?>">
+			<div class="kidia-chrome-layout" aria-label="<?php esc_attr_e( 'Collapsed header layout', 'kidia-mobile-cms' ); ?>"></div>
+			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
+			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore collapsed default', 'kidia-mobile-cms' ); ?></button>
+		</div>
+		<?php endif; ?>
 		<div class="kidia-chrome-settings">
 		<?php if ( 'footer' === $chrome_part ) : ?>
 		<section class="kidia-chrome-item-setting kidia-chrome-footer-icons">
@@ -123,7 +134,7 @@ $footer_icon_symbols = array(
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>
 			</section>
 		<?php endforeach; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( 'layout_json' !== $key && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array( 'layout_json', 'compact_layout_json' ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>

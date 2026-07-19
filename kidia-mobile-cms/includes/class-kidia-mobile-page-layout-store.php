@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 5;
+	private const VERSION = 6;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -26,6 +26,12 @@ final class Kidia_Mobile_Page_Layout_Store {
 	public static function header_fields(): array {
 		return array(
 			self::field( 'layout_json', __( 'Header element layout', 'kidia-mobile-cms' ), 'json', '' ),
+			self::field( 'compact_layout_json', __( 'Collapsed header element layout', 'kidia-mobile-cms' ), 'json', '' ),
+			self::field( 'collapse_on_scroll', __( 'Merge header rows while scrolling down', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'scroll_up_header', __( 'Header shown while scrolling up', 'kidia-mobile-cms' ), 'select', 'original', array( 'original' => __( 'Original header rows', 'kidia-mobile-cms' ), 'collapsed' => __( 'Collapsed header', 'kidia-mobile-cms' ) ) ),
+			self::field( 'compact_height', __( 'Collapsed header height', 'kidia-mobile-cms' ), 'number', 60, array(), 44, 100 ),
+			self::field( 'compact_background_color', __( 'Collapsed header background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'compact_horizontal_padding', __( 'Collapsed header horizontal padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
 			self::field( 'title', __( 'Page title', 'kidia-mobile-cms' ), 'text', '' ),
 			self::field( 'subtitle', __( 'Subtitle', 'kidia-mobile-cms' ), 'text', '' ),
 			self::field( 'logo_url', __( 'Logo', 'kidia-mobile-cms' ), 'image', '' ),
@@ -120,6 +126,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 	public static function footer_fields(): array {
 		return array(
 			self::field( 'layout_json', __( 'Footer element layout', 'kidia-mobile-cms' ), 'json', '' ),
+			self::field( 'hide_on_scroll', __( 'Hide while scrolling down and show while scrolling up', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'style', __( 'Footer style', 'kidia-mobile-cms' ), 'select', 'navigation', array( 'navigation' => __( 'Bottom navigation', 'kidia-mobile-cms' ), 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'product_action' => __( 'Product action bar', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 76, array(), 48, 100 ),
 			self::field( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
@@ -253,7 +260,22 @@ final class Kidia_Mobile_Page_Layout_Store {
 			),
 		);
 
-		return $definitions[ $page ] ?? array();
+		$presentation = array(
+			self::field( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Space below', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
+			self::field( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
+			self::field( 'background_color', __( 'Element background (blank = transparent)', 'kidia-mobile-cms' ), 'text', '' ),
+		);
+		$result = $definitions[ $page ] ?? array();
+		foreach ( $result as &$definition ) {
+			$keys = array_column( $definition['fields'], 'key' );
+			foreach ( $presentation as $field ) {
+				if ( ! in_array( $field['key'], $keys, true ) ) { $definition['fields'][] = $field; }
+			}
+		}
+		unset( $definition );
+		return $result;
 	}
 
 	/** @return array<string,mixed> */
@@ -342,8 +364,10 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$header_settings = $this->defaults( self::header_fields() );
 		$footer_settings = $this->defaults( self::footer_fields() );
 		$header_settings['layout_json'] = wp_json_encode( $this->default_header_layout( $page ) );
+		$header_settings['compact_layout_json'] = wp_json_encode( $this->default_compact_header_layout() );
 		$footer_settings['layout_json'] = wp_json_encode( $this->default_footer_layout( $page ) );
 		if ( 'home' === $page ) {
+			$header_settings['collapse_on_scroll'] = true;
 			$header_settings['height'] = 120;
 			$header_settings['row_gap'] = 8;
 			$header_settings['vertical_padding'] = 8;
@@ -433,6 +457,14 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'account' => array( 'rows' => array( $row( array( $column( 33.33, array(), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'orders' ), 'right' ) ) ) ) ),
 		);
 		return $layouts[ $page ] ?? $layouts['catalog'];
+	}
+
+	/** @return array<string,mixed> */
+	private function default_compact_header_layout(): array {
+		return array( 'rows' => array( array( 'columns' => array(
+			array( 'width' => 84, 'align' => 'left', 'items' => array( 'search_bar' ) ),
+			array( 'width' => 16, 'align' => 'right', 'items' => array( 'cart' ) ),
+		) ) ) );
 	}
 
 	/** @return array<string,mixed> */
