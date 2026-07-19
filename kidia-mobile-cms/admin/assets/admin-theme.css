@@ -1,4 +1,4 @@
-/* Shared Kidia controls across every CMS admin page. Phone-preview controls are intentionally excluded. */
+/* Shared Kidia colors across every CMS admin page. */
 :is(
 	.kidia-dashboard,
 	.kidia-library,
@@ -16,7 +16,7 @@
 	--kidia-admin-primary-dark: #236b59;
 	--kidia-admin-primary-soft: #e7f5f1;
 	--kidia-admin-border: #8fbeb2;
-	--kidia-admin-button-radius: 999px;
+	--kidia-admin-button-radius: 10px;
 }
 
 :is(

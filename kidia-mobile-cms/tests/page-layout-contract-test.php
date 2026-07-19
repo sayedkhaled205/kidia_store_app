@@ -60,9 +60,9 @@ kidia_page_assert( true === $home_default['header']['settings']['collapse_on_scr
 kidia_page_assert( array( 'search_bar' ) === $compact_rows[0]['columns'][0]['items'] && array( 'cart' ) === $compact_rows[0]['columns'][1]['items'], 'Collapsed header must have an independently stored Search + Cart layout.' );
 kidia_page_assert( 'fade_slide' === $home_default['header']['settings']['collapse_transition'], 'Collapsed header must default to the fade + slide transition.' );
 kidia_page_assert( 'medium' === $home_default['header']['settings']['collapse_speed'], 'Collapsed header must default to medium transition speed.' );
-kidia_page_assert( 'sticky_search_cart' === $home_default['header']['settings']['collapse_preset'], 'Home must default to the generic Sticky Search + Cart preset.' );
+kidia_page_assert( 'smooth_compact' === $home_default['header']['settings']['collapse_transition'], 'Home must default to the smooth compact Search + Cart transition.' );
 kidia_page_assert( ! array_key_exists( 'scroll_up_header', $home_default['header']['settings'] ), 'The obsolete scroll-up header choice must not be exposed.' );
-foreach ( array( 'collapse_preset', 'collapse_transition', 'collapse_speed', 'compact_style', 'compact_background_color', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' ) as $compact_setting ) {
+foreach ( array( 'collapse_transition', 'collapse_speed', 'compact_style', 'compact_background_color', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' ) as $compact_setting ) {
 	kidia_page_assert( array_key_exists( $compact_setting, $home_default['header']['settings'] ), "Collapsed header must expose $compact_setting." );
 }
 kidia_page_assert( false === $home_default['footer']['settings']['hide_on_scroll'], 'Footer auto-hide must remain optional by default.' );

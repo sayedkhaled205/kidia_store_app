@@ -60,8 +60,9 @@ kidia_collapsed_header_assert( false === strpos( $markup, 'Preview collapsed hea
 kidia_collapsed_header_assert( false === strpos( $markup, 'scroll_up_header' ), 'The obsolete scroll-up selector must not be rendered.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_transition]"' ), 'Collapsed transition options must render below the collapsed composer.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_speed]"' ), 'Collapsed transition speed must render below the collapsed composer.' );
-kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_preset]"' ), 'Collapsed presets must render below the collapsed composer.' );
-kidia_collapsed_header_assert( false !== strpos( $markup, 'Sticky Search + Cart' ), 'The compact sticky preset must use its generic product name.' );
+kidia_collapsed_header_assert( false === strpos( $markup, 'collapse_preset' ), 'Collapsed presets must be removed.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'smooth_compact' ), 'The smooth compact Search + Cart behavior must be available as a transition.' );
+kidia_collapsed_header_assert( false === strpos( $markup, 'Collapsed header behavior and appearance' ), 'The redundant collapsed-header explanation block must be removed.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'data-chrome-copy' ) && false !== strpos( $markup, 'data-chrome-paste' ), 'Every fixed header card must expose Copy and Paste actions.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-page-field--image' ) && false !== strpos( $markup, 'kidia-page-media-preview' ), 'The logo image field must expose the shared working media-picker wrapper and preview.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-page-media-clear' ), 'The logo image field must allow switching back to the configured text logo.' );
@@ -88,10 +89,7 @@ kidia_collapsed_header_assert( false !== strpos( $category_template, 'kidia-cate
 kidia_collapsed_header_assert( false !== strpos( $category_template, '<span class="kidia-toggle-state"></span>' ), 'Every category visibility control must display On or Off instead of Show.' );
 
 $admin_theme = (string) file_get_contents( dirname( __DIR__ ) . '/admin/assets/admin-theme.css' );
-foreach ( array( '.kidia-builder-editor', '.kidia-category-editor', '.kidia-page-editor', '.kidia-library', '.kidia-editor', '.kidia-unsaved-modal' ) as $button_scope ) {
-	kidia_collapsed_header_assert( false !== strpos( $admin_theme, $button_scope ), "The rounded button theme must cover $button_scope." );
-}
-kidia_collapsed_header_assert( false !== strpos( $admin_theme, '--kidia-admin-button-radius: 999px' ), 'Every CMS action button must use the shared pill radius.' );
+kidia_collapsed_header_assert( false !== strpos( $admin_theme, '--kidia-admin-button-radius: 10px' ), 'CMS buttons must keep square or rectangular proportions with lightly rounded corners.' );
 $admin_controller = (string) file_get_contents( dirname( __DIR__ ) . '/admin/class-kidia-mobile-cms-admin.php' );
 kidia_collapsed_header_assert( false !== strpos( $admin_controller, 'admin/assets/admin-theme.css' ), 'The shared rounded button theme must load on every Kidia CMS page.' );
 
@@ -102,13 +100,14 @@ $off = $store->save_layout( 'home', array(
 kidia_collapsed_header_assert( false === $off['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header Off must save.' );
 
 $on = $store->save_layout( 'home', array(
-	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_preset' => 'sticky_search_cart', 'collapse_transition' => 'scale', 'collapse_speed' => 'slow' ) ),
+	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_transition' => 'smooth_compact', 'collapse_speed' => 'slow', 'logo_url' => '', 'logo_text' => 'KIDIACO', 'logo_text_color' => '#2F806E' ) ),
 	'footer' => array( 'enabled' => '1' ),
 ) );
 kidia_collapsed_header_assert( true === $on['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header On must save.' );
-kidia_collapsed_header_assert( 'scale' === $on['header']['settings']['collapse_transition'], 'The collapsed transition must save.' );
 kidia_collapsed_header_assert( 'slow' === $on['header']['settings']['collapse_speed'], 'The collapsed transition speed must save.' );
-kidia_collapsed_header_assert( 'sticky_search_cart' === $on['header']['settings']['collapse_preset'], 'The Sticky Search + Cart preset must save.' );
+kidia_collapsed_header_assert( 'smooth_compact' === $on['header']['settings']['collapse_transition'], 'The smooth compact transition must save.' );
 kidia_collapsed_header_assert( true === $store->get_layout( 'home' )['header']['settings']['collapse_on_scroll'], 'The saved On state must survive reload.' );
+kidia_collapsed_header_assert( 'KIDIACO' === $store->get_layout( 'home' )['header']['settings']['logo_text'], 'Custom logo text must survive save and reload.' );
+kidia_collapsed_header_assert( '' === $store->get_layout( 'home' )['header']['settings']['logo_url'], 'Using logo text must keep the image cleared after reload.' );
 
 fwrite( STDOUT, "Collapsed-header editor placement, toggle and save passed.\n" );

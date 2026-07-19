@@ -80,7 +80,7 @@ foreach ( $element_definitions as $definition ) {
 				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element['id'] ); ?>" draggable="false">
 					<input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element['id'] ); ?>">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
-					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields" data-kidia-sectioned="1"><?php $render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] ); ?></div></div>
+					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php $render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] ); ?></div></div>
 				</section>
 			<?php endforeach; ?>
 			</div>

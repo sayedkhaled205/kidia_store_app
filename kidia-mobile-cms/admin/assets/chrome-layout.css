@@ -91,12 +91,11 @@
 .kidia-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
 .kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
 .kidia-chrome-composer--collapsed { margin-top:12px; }
-.kidia-sticky-search-cart-note { display:none; margin:8px 0 14px; padding:10px 12px; border-inline-start:4px solid #2f806e; border-radius:7px; background:#edf8f4; color:#315f55; }
-.kidia-fixed-chrome-card.uses-sticky-search-cart .kidia-sticky-search-cart-note { display:block; }
+.kidia-page-text-control { display:flex; align-items:center; gap:10px; }
+.kidia-page-text-control input { flex:1 1 auto; min-width:0; }
 .kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-layout,
 .kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-palette,
 .kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-reset { opacity:.46; pointer-events:none; }
-.kidia-chrome-composer--collapsed.is-preset-locked::after { display:block; margin-top:8px; color:#236b59; font-weight:700; content:"Layout is controlled by Sticky Search + Cart."; }
 .kidia-chrome-composer__heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; direction:rtl; text-align:right; }
 .kidia-chrome-composer__heading h3 { margin:0; color:#236b59; }
 .kidia-chrome-composer__heading p { margin:4px 0 0; color:#646970; }
@@ -104,6 +103,7 @@
 .kidia-app-header.is-transition-fade { animation:kidia-header-fade var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-slide { animation:kidia-header-slide var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-fade_slide { animation:kidia-header-fade-slide var(--collapse-duration,260ms) ease both; }
+.kidia-app-header.is-transition-smooth_compact { animation:kidia-header-fade-slide var(--collapse-duration,260ms) cubic-bezier(.2,.8,.2,1) both; }
 .kidia-app-header.is-transition-scale { transform-origin:top center; animation:kidia-header-scale var(--collapse-duration,260ms) ease both; }
 @keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }

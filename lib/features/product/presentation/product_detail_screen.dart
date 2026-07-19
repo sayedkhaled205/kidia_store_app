@@ -995,10 +995,8 @@ class _PurchaseBar extends StatelessWidget {
 	  'soft' => buttonColor.withValues(alpha: 0.14),
 	  _ => buttonColor,
 	};
-	final bool purchaseFlowAvailable =
-	    hasCartConnection &&
-	    (product.hasVariations ||
-	        (product.isPurchasable && product.isInStock));
+	final bool purchaseFlowAvailable = product.hasVariations ||
+	    (hasCartConnection && product.isPurchasable && product.isInStock);
 	final List<Widget> footerItems = <Widget>[];
 	for (final (String item, double width) in placements) {
 	  final double effectiveWidth = hasAddToCart

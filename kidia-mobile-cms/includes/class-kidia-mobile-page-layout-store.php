@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 9;
+	private const VERSION = 10;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -28,8 +28,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'layout_json', __( 'Header element layout', 'kidia-mobile-cms' ), 'json', '' ),
 			self::field( 'compact_layout_json', __( 'Collapsed header element layout', 'kidia-mobile-cms' ), 'json', '' ),
 			self::field( 'collapse_on_scroll', __( 'Show collapsed header while page is scrolled', 'kidia-mobile-cms' ), 'checkbox', false ),
-			self::field( 'collapse_preset', __( 'Collapsed header preset', 'kidia-mobile-cms' ), 'select', 'custom', array( 'custom' => __( 'Custom collapsed layout', 'kidia-mobile-cms' ), 'sticky_search_cart' => __( 'Sticky Search + Cart', 'kidia-mobile-cms' ) ) ),
-			self::field( 'collapse_transition', __( 'Collapsed header transition', 'kidia-mobile-cms' ), 'select', 'fade_slide', array( 'instant' => __( 'Instant (no animation)', 'kidia-mobile-cms' ), 'fade' => __( 'Fade in / out', 'kidia-mobile-cms' ), 'slide' => __( 'Slide up', 'kidia-mobile-cms' ), 'fade_slide' => __( 'Fade + slide', 'kidia-mobile-cms' ), 'scale' => __( 'Shrink / scale', 'kidia-mobile-cms' ) ) ),
+			self::field( 'collapse_transition', __( 'Collapsed header transition', 'kidia-mobile-cms' ), 'select', 'smooth_compact', array( 'smooth_compact' => __( 'Smooth compact Search + Cart', 'kidia-mobile-cms' ), 'instant' => __( 'Instant (no animation)', 'kidia-mobile-cms' ), 'fade' => __( 'Fade in / out', 'kidia-mobile-cms' ), 'slide' => __( 'Slide up', 'kidia-mobile-cms' ), 'fade_slide' => __( 'Fade + slide', 'kidia-mobile-cms' ), 'scale' => __( 'Shrink / scale', 'kidia-mobile-cms' ) ) ),
 			self::field( 'collapse_speed', __( 'Transition speed', 'kidia-mobile-cms' ), 'select', 'medium', array( 'fast' => __( 'Fast', 'kidia-mobile-cms' ), 'medium' => __( 'Medium', 'kidia-mobile-cms' ), 'slow' => __( 'Slow', 'kidia-mobile-cms' ) ) ),
 			self::field( 'compact_height', __( 'Collapsed header height', 'kidia-mobile-cms' ), 'number', 60, array(), 44, 100 ),
 			self::field( 'compact_style', __( 'Collapsed header shape', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Full width', 'kidia-mobile-cms' ), 'floating' => __( 'Floating card', 'kidia-mobile-cms' ), 'pill' => __( 'Pill', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
@@ -308,6 +307,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
 		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+		if ( (int) ( $saved['version'] ?? 1 ) < 10 && 'sticky_search_cart' === (string) ( $saved['header']['settings']['collapse_preset'] ?? '' ) ) {
+			$default['header']['settings']['collapse_transition'] = 'smooth_compact';
+		}
 		$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
 		$saved_elements = array();
 		foreach ( is_array( $saved['elements'] ?? null ) ? $saved['elements'] : array() as $element ) {
@@ -384,7 +386,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$footer_settings['layout_json'] = wp_json_encode( $this->default_footer_layout( $page ) );
 		if ( 'home' === $page ) {
 			$header_settings['collapse_on_scroll'] = true;
-			$header_settings['collapse_preset'] = 'sticky_search_cart';
+			$header_settings['collapse_transition'] = 'smooth_compact';
 			$header_settings['height'] = 120;
 			$header_settings['row_gap'] = 8;
 			$header_settings['vertical_padding'] = 8;

@@ -133,12 +133,12 @@ void main() {
     }
   });
 
-  testWidgets('Sticky Search + Cart overrides the custom compact row', (
+  testWidgets('smooth compact transition uses Search + Cart', (
     WidgetTester tester,
   ) async {
     await _pumpPage(
       tester,
-      layout: _layout(page: 'home', preset: 'sticky_search_cart'),
+      layout: _layout(page: 'home', transition: 'smooth_compact'),
     );
 
     expect(find.text('Products'), findsOneWidget);
@@ -226,7 +226,6 @@ CmsPageLayout _layout({
   bool collapseOnScroll = true,
   String transition = 'fade_slide',
   String speed = 'medium',
-  String preset = 'custom',
 }) {
   const Map<String, dynamic> regularLayout = <String, dynamic>{
     'rows': <Map<String, dynamic>>[
@@ -265,7 +264,6 @@ CmsPageLayout _layout({
         'collapse_on_scroll': collapseOnScroll,
         'collapse_transition': transition,
         'collapse_speed': speed,
-        'collapse_preset': preset,
         'search_placeholder': 'Search products',
         'layout_json': regularLayout,
         'compact_layout_json': compactLayout,

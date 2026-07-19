@@ -23,9 +23,13 @@ import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
+import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart' as cart_selection;
+import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+
+import 'features/product/presentation/support/product_test_data.dart';
 
 void main() {
   testWidgets('app shows its startup splash safely', (tester) async {
@@ -57,6 +61,48 @@ void main() {
 	expect(find.byKey(const Key('cms-bottom-navigation')), findsNothing);
 	expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
 
+    await _disposeApp(tester, router);
+  });
+
+  testWidgets('real product route opens options and adds selected variation', (
+    tester,
+  ) async {
+    cart_selection.ProductPurchaseSelection? captured;
+    final GoRouter router = createAppRouter(initialLocation: '/product/42');
+
+    await _pumpStartedApp(
+      tester,
+      router: router,
+      catalogRepository: ProductFakeCatalogRepository(
+        product: variableProduct,
+        variations: testVariations,
+      ),
+      addSelection: (selection) async {
+        captured = selection;
+        return const cart_selection.CartActionResult.success();
+      },
+    );
+
+    final FilledButton initial = tester.widget<FilledButton>(
+      find.byKey(const Key('add-to-cart-button')),
+    );
+    expect(initial.onPressed, isNotNull);
+    expect(
+      initial.style?.backgroundColor?.resolve(<WidgetState>{}),
+      const Color(0xFF2F806E),
+    );
+    await tester.tap(find.byKey(const Key('add-to-cart-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('product-options-sheet')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('product-option-pa_color-blue')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('product-option-pa_size-m')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('product-options-sheet-add')));
+    await tester.pumpAndSettle();
+
+    expect(captured?.productId, 103);
+    expect(find.byKey(const Key('product-options-sheet')), findsNothing);
     await _disposeApp(tester, router);
   });
 
@@ -217,14 +263,16 @@ Future<void> _pumpStartedApp(
   required GoRouter router,
   CmsPageLayout? homeLayout,
   CmsPageLayout? categoryLayout,
+  CatalogRepository catalogRepository = const _RouterCatalogRepository(),
+  cart_selection.AddProductPurchaseSelection? addSelection,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         appStartupProvider.overrideWith((ref) async {}),
-        catalogRepositoryProvider.overrideWithValue(
-          const _RouterCatalogRepository(),
-        ),
+        catalogRepositoryProvider.overrideWithValue(catalogRepository),
+        if (addSelection != null)
+          addProductPurchaseSelectionProvider.overrideWithValue(addSelection),
         brandsRepositoryProvider.overrideWithValue(
           const _RouterBrandsRepository(),
         ),
