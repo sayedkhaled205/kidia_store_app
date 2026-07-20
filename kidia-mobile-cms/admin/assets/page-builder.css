@@ -131,6 +131,7 @@ body.kidia-unsaved-modal-open { overflow:hidden; }
 .kidia-app-product__image img { display:block; width:100%; height:100%; object-fit:cover; }
 .kidia-app-product__fallback,.kidia-app-gallery__fallback { display:grid; width:100%; height:100%; place-items:center; background:linear-gradient(135deg,#edf5f2,#fff); color:#2f806e; font-size:15px; font-weight:900; }
 .kidia-app-product__image > .kidia-app-icon { position:absolute; top:5px; left:5px; display:grid; width:23px; height:23px; place-items:center; border-radius:50%; background:#fff; }
+.kidia-app-product__image > .kidia-app-quick-add{position:absolute;right:5px;bottom:5px;display:grid;width:25px;height:25px;place-items:center;border-radius:50%;background:#fff;box-shadow:0 2px 7px rgba(31,41,51,.15)}.kidia-app-product__image > .kidia-app-quick-add .kidia-app-icon{position:static;width:auto;height:auto;background:transparent}
 .kidia-app-badge { position:absolute; top:6px; right:5px; padding:2px 4px; border-radius:4px; background:#e94b5f; color:#fff; font-size:6px; }
 .kidia-app-product__copy { display:flex; min-height:48px; flex-wrap:wrap; gap:2px 4px; padding:6px; }
 .kidia-app-product__copy strong { width:100%; min-height:19px; overflow:hidden; font-size:7px; line-height:1.4; }

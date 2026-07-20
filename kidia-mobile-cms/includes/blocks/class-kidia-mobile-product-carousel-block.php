@@ -53,6 +53,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => true,
 			'show_badge'      => true,
 			'show_rating'     => false,
+			'quick_add_enabled' => true,
 		);
 	}
 
@@ -194,6 +195,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => ! empty( $settings['show_regular_price'] ),
 			'show_badge' => ! empty( $settings['show_badge'] ),
 			'show_rating' => ! empty( $settings['show_rating'] ),
+			'quick_add_enabled' => ! empty( $settings['quick_add_enabled'] ),
 		);
 	}
 
@@ -284,6 +286,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => $settings['show_regular_price'],
 			'show_badge'      => $settings['show_badge'],
 			'show_rating'     => $settings['show_rating'],
+			'quick_add_enabled' => $settings['quick_add_enabled'],
 		);
 	}
 
@@ -398,7 +401,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-field"><label>Image Ratio</label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Card Radius</label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>View All Label</label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][view_all_label]" value="<?php echo esc_attr( (string) $settings['view_all_label'] ); ?>"></div>
-		<?php foreach ( array( 'show_name' => 'Show Name', 'show_price' => 'Show Price', 'show_regular_price' => 'Show Regular Price', 'show_badge' => 'Show Badge', 'show_rating' => 'Show Rating' ) as $key => $label ) : ?>
+		<?php foreach ( array( 'show_name' => 'Show Name', 'show_price' => 'Show Price', 'show_regular_price' => 'Show Regular Price', 'show_badge' => 'Show Badge', 'show_rating' => 'Show Rating', 'quick_add_enabled' => 'Quick add to cart' ) as $key => $label ) : ?>
 			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
 		<?php endforeach; ?>
 

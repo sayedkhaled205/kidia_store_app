@@ -431,6 +431,7 @@ class ProductCarouselBlock extends HomeBlock {
     required this.showRegularPrice,
     required this.showBadge,
     required this.showRating,
+    required this.quickAddEnabled,
   }) : super(type: HomeBlockType.productCarousel);
 
   final String? title;
@@ -448,6 +449,7 @@ class ProductCarouselBlock extends HomeBlock {
   final bool showRegularPrice;
   final bool showBadge;
   final bool showRating;
+  final bool quickAddEnabled;
 }
 
 class ProductGridBlock extends HomeBlock {
@@ -470,6 +472,7 @@ class ProductGridBlock extends HomeBlock {
     required this.showRegularPrice,
     required this.showBadge,
     required this.showRating,
+    required this.quickAddEnabled,
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
@@ -487,6 +490,7 @@ class ProductGridBlock extends HomeBlock {
   final bool showRegularPrice;
   final bool showBadge;
   final bool showRating;
+  final bool quickAddEnabled;
 }
 
 class SectionHeaderBlock extends HomeBlock {

@@ -37,16 +37,31 @@ require dirname( __DIR__ ) . '/includes/class-kidia-mobile-page-layout-store.php
 require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new Kidia_Mobile_Page_Layout_Store();
-foreach ( array( 'catalog', 'product', 'wishlist', 'account' ) as $page_with_elements ) {
+foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page_with_elements => $_page_label ) {
+	foreach ( array( Kidia_Mobile_Page_Layout_Store::header_fields(), Kidia_Mobile_Page_Layout_Store::footer_fields() ) as $chrome_fields ) {
+		$chrome_keys = array_column( $chrome_fields, 'key' );
+		kidia_page_assert( in_array( 'margin_top', $chrome_keys, true ), "$page_with_elements fixed chrome must expose Margin top." );
+		kidia_page_assert( in_array( 'margin_bottom', $chrome_keys, true ), "$page_with_elements fixed chrome must expose Margin bottom." );
+	}
 	foreach ( Kidia_Mobile_Page_Layout_Store::element_definitions( $page_with_elements ) as $definition ) {
 		$field_keys = array_column( $definition['fields'], 'key' );
 		kidia_page_assert( in_array( 'background_color', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose an element background setting." );
+		kidia_page_assert( in_array( 'margin_top', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose Margin top." );
+		kidia_page_assert( in_array( 'margin_bottom', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose Margin bottom." );
 	}
 }
+$catalog_default = $store->get_layout( 'catalog' );
+$catalog_ids = array_column( $catalog_default['elements'], 'id' );
+$catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];
+kidia_page_assert( true === $catalog_grid['settings']['quick_add_enabled'], 'Catalog Product Grid quick add must default to enabled.' );
+$wishlist_default = $store->get_layout( 'wishlist' );
+$wishlist_ids = array_column( $wishlist_default['elements'], 'id' );
+$wishlist_grid = $wishlist_default['elements'][ array_search( 'wishlist_grid', $wishlist_ids, true ) ];
+kidia_page_assert( true === $wishlist_grid['settings']['quick_add_enabled'], 'Wishlist Products quick add must default to enabled.' );
 $product_default = $store->get_layout( 'product' );
 $product_ids = array_column( $product_default['elements'], 'id' );
 $product_summary = $product_default['elements'][ array_search( 'product_summary', $product_ids, true ) ];
-kidia_page_assert( true === $product_summary['settings']['quick_add_enabled'], 'Quick add to cart must be enabled by default for every product card.' );
+kidia_page_assert( ! array_key_exists( 'quick_add_enabled', $product_summary['settings'] ), 'Product Information must not own the quick-add setting.' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
 kidia_page_assert( 58 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose a responsive button width control.' );
 kidia_page_assert( 52 === $product_default['footer']['settings']['button_height'], 'Product footer must expose a button height control.' );

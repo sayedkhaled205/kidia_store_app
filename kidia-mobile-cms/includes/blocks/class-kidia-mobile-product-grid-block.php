@@ -55,6 +55,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => true,
 			'show_badge'     => true,
 			'show_rating'    => false,
+			'quick_add_enabled' => true,
 		);
 	}
 
@@ -139,6 +140,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => ! empty( $settings['show_regular_price'] ),
 			'show_badge'     => ! empty( $settings['show_badge'] ),
 			'show_rating'    => ! empty( $settings['show_rating'] ),
+			'quick_add_enabled' => ! empty( $settings['quick_add_enabled'] ),
 		);
 	}
 
@@ -225,6 +227,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_regular_price' => $settings['show_regular_price'],
 			'show_badge'      => $settings['show_badge'],
 			'show_rating'     => $settings['show_rating'],
+			'quick_add_enabled' => $settings['quick_add_enabled'],
 		);
 	}
 
@@ -271,7 +274,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>><?php esc_html_e( 'Outlined', 'kidia-mobile-cms' ); ?></option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>><?php esc_html_e( 'Elevated', 'kidia-mobile-cms' ); ?></option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>><?php esc_html_e( 'Minimal', 'kidia-mobile-cms' ); ?></option><option value="no_shadow" <?php selected( 'no_shadow', $settings['card_style'] ); ?>><?php esc_html_e( 'No shadow', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Ratio', 'kidia-mobile-cms' ); ?></label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
-			<?php foreach ( array( 'show_name' => __( 'Show Name', 'kidia-mobile-cms' ), 'show_price' => __( 'Show Price', 'kidia-mobile-cms' ), 'show_regular_price' => __( 'Show Regular Price', 'kidia-mobile-cms' ), 'show_badge' => __( 'Show Badge', 'kidia-mobile-cms' ), 'show_rating' => __( 'Show Rating', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
+			<?php foreach ( array( 'show_name' => __( 'Show Name', 'kidia-mobile-cms' ), 'show_price' => __( 'Show Price', 'kidia-mobile-cms' ), 'show_regular_price' => __( 'Show Regular Price', 'kidia-mobile-cms' ), 'show_badge' => __( 'Show Badge', 'kidia-mobile-cms' ), 'show_rating' => __( 'Show Rating', 'kidia-mobile-cms' ), 'quick_add_enabled' => __( 'Quick add to cart', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
 				<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
 			<?php endforeach; ?>
 			<div class="kidia-builder-field kidia-builder-field--full">

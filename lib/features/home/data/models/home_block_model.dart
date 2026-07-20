@@ -433,6 +433,11 @@ abstract final class HomeBlockModel {
       showRegularPrice: _optionalBool(data, 'show_regular_price', fallback: true),
       showBadge: _optionalBool(data, 'show_badge', fallback: true),
       showRating: _optionalBool(data, 'show_rating', fallback: false),
+      quickAddEnabled: _optionalBool(
+        data,
+        'quick_add_enabled',
+        fallback: true,
+      ),
     );
   }
 
@@ -470,6 +475,11 @@ abstract final class HomeBlockModel {
       showRegularPrice: _optionalBool(data, 'show_regular_price', fallback: true),
       showBadge: _optionalBool(data, 'show_badge', fallback: true),
       showRating: _optionalBool(data, 'show_rating', fallback: false),
+      quickAddEnabled: _optionalBool(
+        data,
+        'quick_add_enabled',
+        fallback: true,
+      ),
     );
   }
 

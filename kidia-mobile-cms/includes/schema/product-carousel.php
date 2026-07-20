@@ -57,6 +57,8 @@ return array(
 
 		'show_rating' => false,
 
+		'quick_add_enabled' => true,
+
 	),
 
 	'tabs' => array(
@@ -181,6 +183,7 @@ return array(
 		array( 'key' => 'show_regular_price', 'label' => __( 'Show regular price', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
 		array( 'key' => 'show_badge', 'label' => __( 'Show sale badge', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
 		array( 'key' => 'show_rating', 'label' => __( 'Show rating', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
+		array( 'key' => 'quick_add_enabled', 'label' => __( 'Quick add to cart', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
 
 	),
 

@@ -131,6 +131,7 @@ $carousel_api = $carousel->build_api_block(
 			'show_name'      => true,
 			'show_price'     => true,
 			'show_rating'    => true,
+			'quick_add_enabled' => false,
 		),
 	)
 );
@@ -145,6 +146,7 @@ kidia_home_assert( 17 === $product['discount_percent'], 'Product cards must expo
 kidia_home_assert( 'Fresh arrivals' === $carousel_api['data']['subtitle'], 'Product Carousel subtitles must reach Flutter.' );
 kidia_home_assert( 'See everything' === $carousel_api['data']['view_all_label'], 'Product Carousel View All labels must reach Flutter.' );
 kidia_home_assert( 'elevated' === $carousel_api['data']['card_style'] && true === $carousel_api['data']['show_rating'], 'Product Carousel card presentation settings must reach Flutter.' );
+kidia_home_assert( false === $carousel_api['data']['quick_add_enabled'], 'Each product element must send its own Quick Add setting to Flutter.' );
 kidia_home_assert( 'collection' === $carousel_api['data']['view_all_action']['type'], 'Latest products must get an automatic View All collection action.' );
 
 $brands = new Kidia_Mobile_Brand_Carousel_Block();
@@ -242,5 +244,6 @@ $builder_template = file_get_contents(
 kidia_home_assert( false !== $builder_template, 'Home Builder block template must be readable.' );
 kidia_home_assert( str_contains( $builder_template, 'kidia-builder-essentials' ), 'Every block must render the compact essentials panel.' );
 kidia_home_assert( str_contains( $builder_template, 'kidia-builder-settings-content' ), 'Every block must render settings inside the shared compact panel.' );
+kidia_home_assert( str_contains( $builder_template, '[settings][margin_top]' ) && str_contains( $builder_template, '[settings][margin_bottom]' ), 'Every Home element must expose Margin top and Margin bottom.' );
 
 fwrite( STDOUT, "Home block API contracts and App Header Builder regression test passed.\n" );

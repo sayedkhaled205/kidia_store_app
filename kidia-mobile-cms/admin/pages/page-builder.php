@@ -13,7 +13,7 @@ $field_section = static function ( string $key ): string {
 	if ( false !== strpos( $key, 'filter' ) || false !== strpos( $key, 'sort' ) ) { return 'Filters & sorting'; }
 	if ( in_array( $key, array( 'source', 'category_id', 'manual_product_ids', 'limit', 'products_per_page' ), true ) ) { return 'Products & data'; }
 	if ( false !== strpos( $key, 'color' ) || false !== strpos( $key, 'background' ) || false !== strpos( $key, 'shadow' ) || false !== strpos( $key, 'border' ) ) { return 'Colors & appearance'; }
-	if ( false !== strpos( $key, 'size' ) || false !== strpos( $key, 'height' ) || false !== strpos( $key, 'width' ) || false !== strpos( $key, 'radius' ) || false !== strpos( $key, 'gap' ) || false !== strpos( $key, 'padding' ) || in_array( $key, array( 'columns', 'aspect_ratio', 'fit' ), true ) ) { return 'Layout & dimensions'; }
+	if ( false !== strpos( $key, 'size' ) || false !== strpos( $key, 'height' ) || false !== strpos( $key, 'width' ) || false !== strpos( $key, 'radius' ) || false !== strpos( $key, 'gap' ) || false !== strpos( $key, 'padding' ) || false !== strpos( $key, 'margin' ) || in_array( $key, array( 'columns', 'aspect_ratio', 'fit' ), true ) ) { return 'Layout & dimensions'; }
 	if ( false !== strpos( $key, 'label' ) || false !== strpos( $key, 'title' ) || false !== strpos( $key, 'text' ) || false !== strpos( $key, 'placeholder' ) ) { return 'Text'; }
 	return 'General';
 };
@@ -54,17 +54,6 @@ $definition_map = array();
 foreach ( $element_definitions as $definition ) {
 	$definition_map[ $definition['id'] ] = $definition;
 }
-$product_summary_index = null;
-$product_quick_add_enabled = true;
-if ( 'product' === $page ) {
-	foreach ( $layout['elements'] as $candidate_index => $candidate_element ) {
-		if ( 'product_summary' === ( $candidate_element['id'] ?? '' ) ) {
-			$product_summary_index = $candidate_index;
-			$product_quick_add_enabled = ! isset( $candidate_element['settings']['quick_add_enabled'] ) || ! empty( $candidate_element['settings']['quick_add_enabled'] );
-			break;
-		}
-	}
-}
 ?>
 <div class="wrap kidia-page-builder" data-page="<?php echo esc_attr( $page ); ?>">
 	<header class="kidia-page-builder__heading">
@@ -83,16 +72,6 @@ if ( 'product' === $page ) {
 
 			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
-			<?php if ( null !== $product_summary_index ) : ?>
-			<section class="kidia-page-card is-open kidia-product-general-settings" data-element="product_general_settings">
-				<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-generic"></span><strong><?php esc_html_e( 'Product General Settings', 'kidia-mobile-cms' ); ?></strong></div></div>
-				<div class="kidia-page-card__body"><div class="kidia-page-fields">
-					<div class="kidia-settings-section-title"><?php esc_html_e( 'Quick add to cart', 'kidia-mobile-cms' ); ?></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Enable on every product card in the app', 'kidia-mobile-cms' ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $product_summary_index ); ?>][settings][quick_add_enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $product_summary_index ); ?>][settings][quick_add_enabled]" value="1" <?php checked( $product_quick_add_enabled ); ?>><span></span><b><?php esc_html_e( 'On', 'kidia-mobile-cms' ); ?></b></label></div>
-				</div></div>
-			</section>
-			<?php endif; ?>
-
 			<div id="kidia-page-elements" class="kidia-page-elements">
 			<?php foreach ( $layout['elements'] as $index => $element ) :
 				$definition = $definition_map[ $element['id'] ] ?? null;
@@ -102,11 +81,7 @@ if ( 'product' === $page ) {
 					<input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element['id'] ); ?>">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
 					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php
-						$element_fields = $definition['fields'];
-						if ( 'product' === $page && 'product_summary' === $element['id'] ) {
-							$element_fields = array_values( array_filter( $element_fields, static fn ( array $field ): bool => 'quick_add_enabled' !== $field['key'] ) );
-						}
-						$render_fields( 'layout[elements][' . $index . ']', $element_fields, $element['settings'] );
+						$render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] );
 					?></div></div>
 				</section>
 			<?php endforeach; ?>

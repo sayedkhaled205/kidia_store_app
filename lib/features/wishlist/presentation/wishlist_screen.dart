@@ -358,7 +358,8 @@ class _WishlistProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (product.isInStock)
+                  if (product.isInStock &&
+                      settings.boolean('quick_add_enabled', true))
                     PositionedDirectional(
                       end: 8,
                       bottom: 8,

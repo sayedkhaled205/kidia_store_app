@@ -6,25 +6,22 @@ import 'package:kidia_store_app/features/cart/presentation/adapters/product_purc
 import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 
-class ProductQuickAddButton extends ConsumerWidget {
-  const ProductQuickAddButton({required this.productId, super.key});
+class ProductQuickAddButton extends StatelessWidget {
+  const ProductQuickAddButton({
+    required this.productId,
+    this.enabled = true,
+    super.key,
+  });
 
   final int productId;
+  final bool enabled;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final CmsPageLayout productLayout =
-        ref.watch(cmsPageLayoutProvider('product')).value ??
-        CmsPageLayout.fallback('product');
-    if (productId <= 0 ||
-        !productLayout
-            .element('product_summary')
-            .boolean('quick_add_enabled', true)) {
+  Widget build(BuildContext context) {
+    if (productId <= 0 || !enabled) {
       return const SizedBox.shrink();
     }
     return Material(

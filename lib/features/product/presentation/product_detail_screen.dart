@@ -1160,16 +1160,13 @@ class _PurchaseBar extends StatelessWidget {
 	final double configuredButtonWidth = footer
 	    .number('button_width_percent', 58)
 	    .clamp(20, 95);
-	final double otherWidthTotal = placements
-	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
-	    .fold<double>(0, (double total, (String, double) placement) => total + placement.$2);
 	final double composerButtonWidth = placements
 	    .where(((String, double) placement) => placement.$1 == 'add_to_cart')
 	    .fold<double>(0, (double widest, (String, double) placement) =>
 	        placement.$2 > widest ? placement.$2 : widest);
-	final double addToCartWidth = composerButtonWidth > configuredButtonWidth
-	    ? composerButtonWidth
-	    : configuredButtonWidth;
+	final double buttonWidthFactor = composerButtonWidth <= 0
+	    ? 1
+	    : (configuredButtonWidth / composerButtonWidth).clamp(0, 1).toDouble();
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
 	    .number('button_height', 52)
@@ -1210,13 +1207,7 @@ class _PurchaseBar extends StatelessWidget {
 	final List<(String, double, Widget)> footerItems =
 	    <(String, double, Widget)>[];
 	for (final (String item, double width) in placements) {
-	  final double effectiveWidth = hasAddToCart
-	      ? item == 'add_to_cart'
-	          ? addToCartWidth
-	          : otherWidthTotal > 0
-	          ? (100 - addToCartWidth) * width / otherWidthTotal
-	          : 0
-	      : width;
+	  final double effectiveWidth = width;
 	  Widget? child;
 	  if (item == 'share') {
 		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('share_label', ''), 'مشاركة') : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
@@ -1225,11 +1216,13 @@ class _PurchaseBar extends StatelessWidget {
 	  } else if (item == 'add_to_cart') {
 		child = Align(
 		  alignment: Alignment.center,
-		  child: SizedBox(
-		    key: const Key('product-add-to-cart-size'),
-		    width: double.infinity,
-		    height: buttonHeight,
-		    child: FilledButton.icon(
+		  child: FractionallySizedBox(
+		    widthFactor: buttonWidthFactor,
+		    child: SizedBox(
+		      key: const Key('product-add-to-cart-size'),
+		      width: double.infinity,
+		      height: buttonHeight,
+		      child: FilledButton.icon(
 		      key: const Key('add-to-cart-button'),
 		      style: FilledButton.styleFrom(
 		        backgroundColor: purchaseButtonBackground,
@@ -1265,6 +1258,7 @@ class _PurchaseBar extends StatelessWidget {
 		                footer.string('add_to_cart_label', ''),
 		                'أضف إلى السلة',
 		              ),
+		      ),
 		      ),
 		    ),
 		  ),
@@ -1581,13 +1575,13 @@ class _ProductShareSheet extends StatelessWidget {
               child: Divider(height: 1),
             ),
             Wrap(
-              spacing: 18,
-              runSpacing: 18,
+              spacing: 14,
+              runSpacing: 14,
               children: <Widget>[
                 _ShareAction(
                   key: const Key('share-facebook'),
                   label: 'Facebook',
-                  icon: Icons.facebook_rounded,
+                  icon: const Icon(Icons.facebook_rounded),
                   color: const Color(0xFF1877F2),
                   onTap: () => _open(
                     Uri.parse(
@@ -1598,7 +1592,7 @@ class _ProductShareSheet extends StatelessWidget {
                 _ShareAction(
                   key: const Key('share-whatsapp'),
                   label: 'WhatsApp',
-                  icon: Icons.chat_rounded,
+                  icon: const _WhatsAppMark(),
                   color: const Color(0xFF25D366),
                   onTap: () => _open(
                     Uri.parse(
@@ -1609,7 +1603,7 @@ class _ProductShareSheet extends StatelessWidget {
                 _ShareAction(
                   key: const Key('share-messenger'),
                   label: 'Messenger',
-                  icon: Icons.bolt_rounded,
+                  icon: const _MessengerMark(),
                   color: const Color(0xFF8A3FFC),
                   onTap: () async {
                     await Share.share(_message, subject: product.name);
@@ -1618,7 +1612,7 @@ class _ProductShareSheet extends StatelessWidget {
                 _ShareAction(
                   key: const Key('share-copy-link'),
                   label: 'نسخ الرابط',
-                  icon: Icons.link_rounded,
+                  icon: const Icon(Icons.link_rounded),
                   color: colors.onSurface,
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: _link));
@@ -1631,7 +1625,7 @@ class _ProductShareSheet extends StatelessWidget {
                 _ShareAction(
                   key: const Key('share-more'),
                   label: 'المزيد',
-                  icon: Icons.more_horiz_rounded,
+                  icon: const Icon(Icons.more_horiz_rounded),
                   color: colors.onSurface,
                   onTap: () async {
                     await Share.share(_message, subject: product.name);
@@ -1662,13 +1656,13 @@ class _ShareAction extends StatelessWidget {
   });
 
   final String label;
-  final IconData icon;
+  final Widget icon;
   final Color color;
   final Future<void> Function() onTap;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: 82,
+    width: 74,
     child: InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
@@ -1677,18 +1671,121 @@ class _ShareAction extends StatelessWidget {
         child: Column(
           children: <Widget>[
             CircleAvatar(
-              radius: 30,
+              key: const Key('share-action-circle'),
+              radius: 27,
               backgroundColor: color,
               foregroundColor: Colors.white,
-              child: Icon(icon, size: 32),
+              child: IconTheme(
+                data: const IconThemeData(color: Colors.white, size: 29),
+                child: SizedBox.square(dimension: 29, child: icon),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
             Text(label, textAlign: TextAlign.center, maxLines: 1),
           ],
         ),
       ),
     ),
   );
+}
+
+class _WhatsAppMark extends StatelessWidget {
+  const _WhatsAppMark();
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: const _WhatsAppMarkPainter(),
+    size: const Size.square(29),
+  );
+}
+
+class _WhatsAppMarkPainter extends CustomPainter {
+  const _WhatsAppMarkPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint stroke = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.25
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final Rect bubble = Rect.fromLTWH(3.5, 2.5, 22, 22);
+    canvas.drawOval(bubble, stroke);
+    canvas.drawPath(
+      Path()
+        ..moveTo(7.4, 21.2)
+        ..lineTo(5.2, 27)
+        ..lineTo(11.2, 24.5),
+      stroke,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(10.1, 8.1)
+        ..cubicTo(9.2, 10.8, 11.5, 15.8, 16.7, 18.6)
+        ..cubicTo(18.4, 19.5, 20.1, 18.2, 20.8, 16.8)
+        ..lineTo(17.3, 14.8)
+        ..lineTo(15.7, 16.1)
+        ..cubicTo(13.6, 14.9, 12.3, 13.5, 11.4, 11.4)
+        ..lineTo(12.7, 9.8)
+        ..close(),
+      Paint()..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MessengerMark extends StatelessWidget {
+  const _MessengerMark();
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: const _MessengerMarkPainter(),
+    size: const Size.square(29),
+  );
+}
+
+class _MessengerMarkPainter extends CustomPainter {
+  const _MessengerMarkPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint stroke = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.25
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(
+      Path()
+        ..moveTo(14.5, 3)
+        ..cubicTo(7.9, 3, 3, 7.6, 3, 13.7)
+        ..cubicTo(3, 17.3, 4.8, 20.4, 7.8, 22.3)
+        ..lineTo(7.8, 27)
+        ..lineTo(12.1, 24.5)
+        ..cubicTo(12.9, 24.6, 13.7, 24.7, 14.5, 24.7)
+        ..cubicTo(21.1, 24.7, 26, 20.1, 26, 13.7)
+        ..cubicTo(26, 7.6, 21.1, 3, 14.5, 3)
+        ..close(),
+      stroke,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(7.6, 17.2)
+        ..lineTo(12.5, 12)
+        ..lineTo(16.1, 14.7)
+        ..lineTo(21.4, 9.9)
+        ..lineTo(16.6, 16.5)
+        ..lineTo(12.8, 13.8)
+        ..close(),
+      Paint()..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 String _plainText(String source) {

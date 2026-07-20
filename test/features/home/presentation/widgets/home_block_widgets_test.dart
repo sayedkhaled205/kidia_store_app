@@ -358,6 +358,7 @@ void main() {
               showRegularPrice: true,
               showBadge: true,
               showRating: true,
+              quickAddEnabled: true,
             ),
             onAction: (_) {},
           ),
