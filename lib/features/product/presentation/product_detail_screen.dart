@@ -767,7 +767,7 @@ class _ProductOptionPicker extends StatelessWidget {
           const SizedBox(height: 10),
           if (settings?.string('style', 'chips') == 'dropdown')
             DropdownButtonFormField<String>(
-              value: selected,
+              initialValue: selected,
               decoration: InputDecoration(labelText: group.label),
               items: group.values
                   .where(
@@ -1543,7 +1543,7 @@ class _ProductShareSheet extends StatelessWidget {
               children: <Widget>[
                 if (product.primaryImage != null)
                   AppNetworkImage(
-                    imageUrl: product.primaryImage!.src.toString(),
+                    imageUrl: product.primaryImage!.source.toString(),
                     width: 76,
                     height: 92,
                     fit: BoxFit.contain,

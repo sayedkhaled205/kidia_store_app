@@ -493,7 +493,7 @@ CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
         'button_border_color': '#2F806E',
         'button_border_width': 2,
         'icon_label_gap': 9,
-        if (layoutJson != null) 'layout_json': layoutJson,
+        'layout_json': ?layoutJson,
       },
     ),
   );

@@ -537,7 +537,7 @@ class _CatalogProductGrid extends StatelessWidget {
       top: settings.number('margin_top', 0).clamp(0, 80),
       bottom: settings.number('margin_bottom', 0).clamp(0, 80),
     );
-    final EdgeInsets innerSpacing = EdgeInsetsDirectional.fromSTEB(
+    final EdgeInsetsGeometry innerSpacing = EdgeInsetsDirectional.fromSTEB(
       16 + settings.number('padding_horizontal', 0).clamp(0, 40),
       topSpacing + settings.number('padding_vertical', 0).clamp(0, 40),
       16 + settings.number('padding_horizontal', 0).clamp(0, 40),
