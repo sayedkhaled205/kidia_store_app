@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
@@ -8,8 +9,10 @@ import 'package:kidia_store_app/features/home/presentation/widgets/home_block_fr
 void main() {
   Future<void> pumpBlock(WidgetTester tester, Widget block) {
     return tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: SingleChildScrollView(child: block)),
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(body: SingleChildScrollView(child: block)),
+        ),
       ),
     );
   }
