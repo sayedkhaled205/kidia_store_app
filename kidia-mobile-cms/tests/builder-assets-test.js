@@ -906,6 +906,9 @@ function runUniformChromeSettingsContractTest() {
 	}
 	assert.doesNotMatch(template, /Footer height, icon size and label size come from/, "Every footer must own its complete settings instead of borrowing another page's values.");
 	assert.doesNotMatch(styles, /data-chrome-part="footer"[^}]+data-setting="height"/, "Footer height must remain visible on every page.");
+	assert.match(styles, /kidia-chrome-item-setting--logo[^}]+grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, "Logo settings must use a compact three-column grid.");
+	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 2/, "The logo image control must use two columns instead of wasting a full row.");
+	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:100%/, "Logo controls must align at full column width.");
 	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
