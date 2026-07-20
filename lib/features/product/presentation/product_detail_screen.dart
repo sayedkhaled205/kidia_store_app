@@ -1161,9 +1161,35 @@ class _PurchaseBar extends StatelessWidget {
 	    .where(((String, double) placement) => placement.$1 == 'add_to_cart')
 	    .fold<double>(0, (double widest, (String, double) placement) =>
 	        placement.$2 > widest ? placement.$2 : widest);
-	final double buttonWidthFactor = composerButtonWidth <= 0
+	final double addToCartColumnWidth = composerButtonWidth > configuredButtonWidth
+	    ? composerButtonWidth
+	    : configuredButtonWidth;
+	final double otherColumnsWidth = placements
+	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
+	    .fold<double>(0, (double total, (String, double) placement) =>
+	        total + placement.$2);
+	final double remainingColumnsWidth = (100 - addToCartColumnWidth).clamp(
+	  0,
+	  100,
+	);
+	final double otherColumnsScale = otherColumnsWidth <= 0
 	    ? 1
-	    : (configuredButtonWidth / composerButtonWidth).clamp(0, 1).toDouble();
+	    : remainingColumnsWidth / otherColumnsWidth;
+	final List<(String, double)> effectivePlacements = placements
+	    .map(
+	      ((String, double) placement) => (
+	        placement.$1,
+	        placement.$1 == 'add_to_cart'
+	            ? addToCartColumnWidth
+	            : placement.$2 * otherColumnsScale,
+	      ),
+	    )
+	    .toList(growable: false);
+	final double buttonWidthFactor = addToCartColumnWidth <= 0
+	    ? 1
+	    : (configuredButtonWidth / addToCartColumnWidth)
+	          .clamp(0, 1)
+	          .toDouble();
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
 	    .number('button_height', 52)
@@ -1203,7 +1229,7 @@ class _PurchaseBar extends StatelessWidget {
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
 	final List<(String, double, Widget)> footerItems =
 	    <(String, double, Widget)>[];
-	for (final (String item, double width) in placements) {
+	for (final (String item, double width) in effectivePlacements) {
 	  final double effectiveWidth = width;
 	  Widget? child;
 	  if (item == 'share') {
