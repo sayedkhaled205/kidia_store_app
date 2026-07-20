@@ -114,7 +114,6 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
 		</div>
 		<div class="kidia-repeatable-items kidia-banner-grid-items"><?php foreach ( $items as $item_index => $item ) : $this->render_item( $index, $item_index, $item ); endforeach; ?></div>
-		<p><button type="button" class="button kidia-add-repeatable-control kidia-add-repeatable-item"><?php esc_html_e( 'Add Banner +', 'kidia-mobile-cms' ); ?></button></p>
 		<script type="text/html" class="tmpl-kidia-repeatable-item"><?php $this->render_item( $index, '__ITEM_INDEX__', $this->empty_item() ); ?></script>
 		<?php
 	}
@@ -127,8 +126,8 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 		$item = wp_parse_args( $item, $this->empty_item() );
 		$actions = array( '' => __( 'No Action', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'collection' => __( 'Collection', 'kidia-mobile-cms' ), 'product' => __( 'Product', 'kidia-mobile-cms' ), 'brand' => __( 'Brand', 'kidia-mobile-cms' ), 'brands' => __( 'All Brands', 'kidia-mobile-cms' ), 'search' => __( 'Search', 'kidia-mobile-cms' ), 'external' => __( 'External URL', 'kidia-mobile-cms' ) );
 		?>
-		<div class="kidia-repeatable-item">
-			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Banner', 'kidia-mobile-cms' ); ?></strong><button type="button" class="button-link-delete kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button></div>
+		<div class="kidia-repeatable-item kidia-banner-editor-item">
+			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Banner', 'kidia-mobile-cms' ); ?></strong><div class="kidia-repeatable-item-actions"><button type="button" class="button kidia-repeatable-remove kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-repeatable-add kidia-add-repeatable-item"><?php esc_html_e( '+ Add Banner', 'kidia-mobile-cms' ); ?></button></div></div>
 			<input type="hidden" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][id]" value="<?php echo esc_attr( (string) $item['id'] ); ?>">
 			<div class="kidia-builder-grid">
 				<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media"><label><?php esc_html_e( 'Image', 'kidia-mobile-cms' ); ?></label><div class="kidia-builder-media-field"><input type="url" class="kidia-media-url" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>"><button type="button" class="button kidia-select-media"><?php esc_html_e( 'Select Image', 'kidia-mobile-cms' ); ?></button></div><img class="kidia-media-preview" src="<?php echo esc_url( (string) $item['image_url'] ); ?>" alt="" <?php echo empty( $item['image_url'] ) ? 'hidden' : ''; ?>></div>
