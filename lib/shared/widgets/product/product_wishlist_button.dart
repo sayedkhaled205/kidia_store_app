@@ -66,7 +66,7 @@ class _ProductWishlistButtonState extends State<ProductWishlistButton> {
   @override
   Widget build(BuildContext context) {
     if (!widget.appearance.enabled || widget.productId <= 0) return const SizedBox.shrink();
-    final double shell = widget.appearance.backgroundSize.clamp(28, 64).toDouble();
+    final double shell = widget.appearance.backgroundSize.clamp(20, 64).toDouble();
     return SizedBox.square(
       dimension: shell,
       child: Material(
@@ -82,7 +82,7 @@ class _ProductWishlistButtonState extends State<ProductWishlistButton> {
           onPressed: _busy ? null : _toggle,
           icon: Icon(
             _icon,
-            size: widget.appearance.iconSize.clamp(16, 36).toDouble(),
+            size: widget.appearance.iconSize.clamp(10, 36).toDouble(),
             color: _selected ? Theme.of(context).colorScheme.error : widget.appearance.iconColor,
           ),
         ),
