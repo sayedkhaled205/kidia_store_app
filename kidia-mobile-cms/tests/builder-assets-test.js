@@ -425,8 +425,11 @@ function runMergeControlsContractTest() {
   assert.match(homePreview, /marginBottom - marginTop/, "Home preview must pull elements together instead of adding positive margins.");
   assert.match(pagePreview, /mergeDown-mergeUp/, "Page preview must pull elements together instead of adding positive margins.");
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
-  assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
+	assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
 	assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
+	assert.match(settingsSections, /keys:\s*\["margin_top",\s*"margin_bottom"\]/, "Merge up and Merge down must share the first vertical column.");
+	assert.match(settingsSections, /keys:\s*\["space_up",\s*"space_down"\]/, "Space up and Space down must share the second vertical column.");
+	assert.match(settingsSections, /keys:\s*\["block_background",\s*"background_color",\s*"element_background_color"\]/, "The background control must use the final column across all Builder types.");
 	assert.match(settingsSections, /\(\(value - min\) \/ \(max - min\)\) \* 100/, "Range progress must derive from the real min, max and value instead of a fixed visual fill.");
 	assert.match(settingsSections, /element\.dataset\.element === "filter_bar"/, "Filter and Sort Bar must have an explicit compact section layout.");
 	assert.match(settingsSections, /filter_options:\s*"Available Filters"/, "Filter and Sort Bar must group its available filters together.");
@@ -453,13 +456,15 @@ function runMergeControlsContractTest() {
 	function sectionFieldCount(container) {
 		const heading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
 		assert.ok(heading, "Every tested element must render Section Layout Settings.");
-		let count = 0;
-		for (let node = heading.nextElementSibling; node && !node.classList.contains("kidia-settings-section-title"); node = node.nextElementSibling) { count += 1; }
-		return count;
+		const grid = heading.nextElementSibling;
+		assert.ok(grid && grid.classList.contains("kidia-section-layout-grid"), "Every Section Layout heading must be followed by the shared three-column grid.");
+		return grid.querySelectorAll(":scope > .kidia-section-layout-column > .kidia-page-field, :scope > .kidia-section-layout-column > .kidia-builder-field, :scope > .kidia-section-layout-column > label").length;
 	}
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("product-fields")), 5, "Product Grid must render exactly five fields in Section Layout Settings.");
 	assert.equal(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-settings-section-title--general").length, 1, "Product Grid must render one General Settings section.");
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("category-fields")), 5, "Category must render exactly five fields in Section Layout Settings.");
+	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["background_color"]], "Page elements must render Merge, Space, and Background in the requested columns.");
+	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#category-fields > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["element_background_color"]], "Category must use the same requested column order.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row").length, 0, "Quick Add must use the original settings grid without injected rows.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-title-subtitle-row").length, 0, "Title and Subtitle fields must use the original settings grid.");
 }
