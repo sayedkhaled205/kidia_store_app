@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
@@ -16,8 +17,8 @@ class CmsElementFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String raw = component.string('background_color', '').trim();
-    final Color background = raw.isEmpty ? Colors.transparent : _color(raw, Colors.transparent);
+    final String raw = component.string('background_color', '#FFFFFF').trim();
+    final Color background = _color(raw, Colors.white);
     return Container(
       margin: EdgeInsets.only(top: component.number('margin_top', 0).clamp(0, 80), bottom: component.number('margin_bottom', 0).clamp(0, 80)),
       padding: EdgeInsets.symmetric(vertical: component.number('padding_vertical', 0).clamp(0, 40), horizontal: component.number('padding_horizontal', 0).clamp(0, 40)),
@@ -155,19 +156,49 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
   Widget build(BuildContext context) {
     final bool collapsed =
         widget.layout.header.boolean('collapse_on_scroll', false) && _collapsed;
-    return Scaffold(
-      backgroundColor: widget.backgroundColor,
-      appBar: CmsPageAppBar(
-        layout: widget.layout,
-        defaultTitle: widget.defaultTitle,
-        actions: widget.actions,
-        compact: collapsed,
-      ),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: _handleScroll,
-        child: widget.body,
-      ),
-      bottomNavigationBar: widget.bottomNavigationBar,
+    final String transition = widget.layout.header.string(
+      'collapse_transition',
+      'smooth_compact',
+    );
+    final double compactHeight = widget.layout.header
+        .number('compact_height', 60)
+        .clamp(44, 100);
+    final double compactContentHeight =
+        widget.layout.header.number('search_height', 40).clamp(32, 64) +
+        (widget.layout.header.number('vertical_padding', 8).clamp(0, 24) * 2);
+    final bool needsCompactSearchRoom = transition == 'smooth_compact';
+    final double targetHeight = collapsed
+        ? (needsCompactSearchRoom && compactHeight < compactContentHeight
+              ? compactContentHeight
+              : compactHeight)
+        : widget.layout.header.number('height', 64).clamp(48, 120);
+    final Duration duration = transition == 'instant'
+        ? Duration.zero
+        : switch (widget.layout.header.string('collapse_speed', 'medium')) {
+            'fast' => const Duration(milliseconds: 160),
+            'slow' => const Duration(milliseconds: 420),
+            _ => const Duration(milliseconds: 260),
+          };
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: targetHeight),
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      builder: (BuildContext context, double animatedHeight, Widget? child) =>
+          Scaffold(
+            backgroundColor: widget.backgroundColor,
+            appBar: CmsPageAppBar(
+              layout: widget.layout,
+              defaultTitle: widget.defaultTitle,
+              actions: widget.actions,
+              compact: collapsed,
+              visibleHeight: animatedHeight,
+            ),
+            body: NotificationListener<ScrollNotification>(
+              onNotification: _handleScroll,
+              child: widget.body,
+            ),
+            bottomNavigationBar: widget.bottomNavigationBar,
+          ),
     );
   }
 }
@@ -179,12 +210,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.actions = const <CmsPageHeaderAction>[],
     this.compact = false,
+    this.visibleHeight,
   });
 
   final CmsPageLayout layout;
   final String defaultTitle;
   final List<CmsPageHeaderAction> actions;
   final bool compact;
+  final double? visibleHeight;
 
   CmsPageComponent get _header => layout.header;
 
@@ -194,12 +227,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       : 0);
 
   double get _visibleHeight {
-    final double configured = compact
-        ? _header.number('compact_height', 60).clamp(44, 100)
-        : _header.number('height', 64).clamp(48, 120);
-    if (!compact ||
-        _header.string('collapse_transition', 'smooth_compact') !=
-            'smooth_compact') {
+    if (visibleHeight != null) return visibleHeight!;
+    if (!compact) return _header.number('height', 64).clamp(48, 120);
+    final double configured = _header
+        .number('compact_height', 60)
+        .clamp(44, 100);
+    if (_header.string('collapse_transition', 'smooth_compact') !=
+        'smooth_compact') {
       return configured;
     }
     final double required =
@@ -371,8 +405,11 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     );
+    final bool compactChild = child.key == const ValueKey<bool>(true);
     final Animation<Offset> slide = Tween<Offset>(
-      begin: const Offset(0, -0.22),
+      begin: transition == 'smooth_compact'
+          ? Offset(0, compactChild ? 0.28 : -0.28)
+          : const Offset(0, -0.22),
       end: Offset.zero,
     ).animate(curved);
     return switch (transition) {
@@ -561,14 +598,20 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _actionButton(BuildContext context, CmsPageHeaderAction action, Color fallbackColor) {
     final String prefix = action.type == 'search' ? 'search_icon' : action.type == 'account' ? 'account_icon' : action.type;
+	final String backgroundKey = action.type == 'account'
+	    ? 'account_background'
+	    : '${prefix}_background';
+	final String radiusKey = action.type == 'account'
+	    ? 'account_radius'
+	    : '${prefix}_radius';
     final String style = _header.string('${prefix}_style', action.type == 'account' ? _header.string('account_style', 'icon') : 'outline');
     final Color color = action.color ?? _color(_header.string('${prefix}_color', _header.string('icon_color', '#1F2933')), fallbackColor);
-    final Color background = _color(_header.string('${prefix}_background', '#FFFFFF'), Colors.transparent);
-    final double size = _header.number('${prefix}_size', _header.number('icon_size', 24)).clamp(14, 40);
-    final double radius = _header.number('${prefix}_radius', 12).clamp(0, 24);
+    final Color background = _color(_header.string(backgroundKey, '#FFFFFF'), Colors.transparent);
+    final double size = _header.number('${prefix}_size', _header.number('icon_size', 24)).clamp(14, 40).toDouble();
+    final double radius = _header.number(radiusKey, 12).clamp(0, 24).toDouble();
     final bool selectedWishlist = action.type == 'wishlist' && action.icon == Icons.favorite_rounded;
     final IconData icon = _iconFor(action.type, _header.string('${action.type}_icon_variant', ''), style == 'filled' || selectedWishlist);
-    return IconButton(
+    final Widget button = IconButton(
       key: action.key,
       tooltip: action.tooltip,
       onPressed: action.onPressed,
@@ -578,6 +621,71 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       color: color,
       icon: Icon(icon, size: size),
+    );
+    if (action.type != 'cart' || !_header.boolean('show_cart_badge', false)) {
+      return button;
+    }
+    return Consumer(
+      child: button,
+      builder: (BuildContext context, WidgetRef ref, Widget? child) {
+        final int count = ref.watch(cartBadgeCountProvider).clamp(0, 99).toInt();
+        if (count == 0) return child!;
+        final double badgeSize = _header
+            .number('cart_badge_size', 18)
+            .clamp(12, 30)
+            .toDouble();
+        final String badgeShape = _header.string(
+          'cart_badge_shape',
+          'circle',
+        );
+        final double badgeRadius = badgeShape == 'circle'
+            ? badgeSize / 2
+            : badgeShape == 'pill'
+            ? badgeSize / 2
+            : badgeSize * 0.28;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            child!,
+            PositionedDirectional(
+              top: -2,
+              end: -2,
+              child: Container(
+                key: const Key('cms-cart-count-badge'),
+                constraints: BoxConstraints(
+                  minWidth: badgeSize,
+                  minHeight: badgeSize,
+                ),
+                height: badgeSize,
+                padding: EdgeInsets.symmetric(
+                  horizontal: badgeShape == 'pill' ? 4 : 0,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _color(
+                    _header.string('cart_badge_background', '#E94B5F'),
+                    Theme.of(context).colorScheme.error,
+                  ),
+                  borderRadius: BorderRadius.circular(badgeRadius),
+                ),
+                child: Text(
+                  '$count',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: _color(
+                      _header.string('cart_badge_text_color', '#FFFFFF'),
+                      Theme.of(context).colorScheme.onError,
+                    ),
+                    fontSize: (badgeSize * 0.52).clamp(7, 15).toDouble(),
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

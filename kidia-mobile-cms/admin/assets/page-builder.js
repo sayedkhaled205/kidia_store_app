@@ -68,9 +68,10 @@
 	function previewElement(card) {
 		var id = card.dataset.element || "element";
 		var first = sampleProducts()[0] || {};
-		if (id === "product_grid" || id === "wishlist_grid" || id === "related_products") {
-			return '<section class="kidia-app-section">' + (id === "related_products" ? '<h3>' + escapeHtml(value(card, "title", "قد يعجبك أيضًا")) + '</h3>' : "") + productCards(card, id === "related_products" ? number(card, "limit", 4) : 4) + (id === "product_grid" ? pagination(card) : "") + '</section>';
+		if (id === "product_grid" || id === "wishlist_grid") {
+			return '<section class="kidia-app-section">' + productCards(card, 4) + (id === "product_grid" ? pagination(card) : "") + '</section>';
 		}
+		if (id === "related_products") { return '<section class="kidia-app-section"><button class="kidia-app-related-button">✦ منتجات مشابهة</button></section>'; }
 		if (id === "filter_bar") {
 			var buttons = [];
 			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
@@ -89,7 +90,7 @@
 			return '<section class="kidia-app-variations"><h3>اللون <span>وردي</span></h3><div><button class="is-selected">وردي</button><button>أصفر</button></div><h3>المقاس</h3><div><button>2Y</button><button class="is-selected">3Y</button><button>4Y</button></div></section>';
 		}
 		if (id === "purchase_bar") {
-			return '<section class="kidia-app-purchase-inline">' + (checked(card, "show_quantity", true) ? '<div class="kidia-app-quantity"><button>−</button><b>1</b><button>＋</button></div>' : "") + '<button style="background:' + color(card, "button_color", "#1F6F61") + ';color:' + color(card, "button_text_color", "#FFFFFF") + ';border-radius:' + number(card, "button_radius", 14) + 'px">أضف للسلة</button></section>';
+			return checked(card, "show_quantity", true) ? '<section class="kidia-app-purchase-inline"><strong>الكمية</strong><div class="kidia-app-quantity"><button>−</button><b>1</b><button>＋</button></div></section>' : '';
 		}
 		if (id === "description") {
 			return '<section class="kidia-app-details"><h3>الوصف والتفاصيل</h3>' + (checked(card, "show_description", true) ? '<p>خامات مريحة وجودة مناسبة للأطفال.</p>' : "") + (checked(card, "show_attributes", true) ? '<div><span>الخامة</span><b>قطن</b></div><div><span>اللون</span><b>وردي</b></div>' : "") + (checked(card, "show_shipping", true) ? '<div><span>الشحن</span><b>2–5 أيام</b></div>' : "") + '</section>';

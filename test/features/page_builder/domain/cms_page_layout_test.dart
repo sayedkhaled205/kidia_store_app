@@ -61,6 +61,12 @@ void main() {
 	expect(homeFooterRows, isA<List<dynamic>>());
 	expect((homeFooterRows as List<dynamic>).first['columns'], hasLength(4));
 	final CmsPageLayout product = CmsPageLayout.fallback('product');
+	expect(
+	  product
+	      .element('product_summary')
+	      .boolean('quick_add_enabled', false),
+	  isTrue,
+	);
 	expect(product.footer.string('style', ''), 'product_action');
 	final dynamic productFooterRows = product.footer.json('layout_json')['rows'];
 	expect((productFooterRows as List<dynamic>).first['columns'], hasLength(3));

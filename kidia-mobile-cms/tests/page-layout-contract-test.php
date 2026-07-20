@@ -37,7 +37,16 @@ require dirname( __DIR__ ) . '/includes/class-kidia-mobile-page-layout-store.php
 require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new Kidia_Mobile_Page_Layout_Store();
+foreach ( array( 'catalog', 'product', 'wishlist', 'account' ) as $page_with_elements ) {
+	foreach ( Kidia_Mobile_Page_Layout_Store::element_definitions( $page_with_elements ) as $definition ) {
+		$field_keys = array_column( $definition['fields'], 'key' );
+		kidia_page_assert( in_array( 'background_color', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose an element background setting." );
+	}
+}
 $product_default = $store->get_layout( 'product' );
+$product_ids = array_column( $product_default['elements'], 'id' );
+$product_summary = $product_default['elements'][ array_search( 'product_summary', $product_ids, true ) ];
+kidia_page_assert( true === $product_summary['settings']['quick_add_enabled'], 'Quick add to cart must be enabled by default for every product card.' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
 kidia_page_assert( 58 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose a responsive button width control.' );
 kidia_page_assert( 52 === $product_default['footer']['settings']['button_height'], 'Product footer must expose a button height control.' );
@@ -76,6 +85,9 @@ kidia_page_assert( 0.0 === $migrated_home['footer']['settings']['side_spacing_pe
 unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_home'] );
 foreach ( array( 'cart_icon_variant', 'search_icon_variant', 'support_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['header']['settings'] ), "Header must expose $icon_setting." );
+}
+foreach ( array( 'show_cart_badge', 'cart_badge_shape', 'cart_badge_size', 'cart_badge_background', 'cart_badge_text_color' ) as $badge_setting ) {
+	kidia_page_assert( array_key_exists( $badge_setting, $home_default['header']['settings'] ), "Cart Settings must expose $badge_setting." );
 }
 foreach ( array( 'home_icon_variant', 'wishlist_icon_variant', 'account_icon_variant' ) as $icon_setting ) {
 	kidia_page_assert( array_key_exists( $icon_setting, $home_default['footer']['settings'] ), "Footer must expose $icon_setting." );

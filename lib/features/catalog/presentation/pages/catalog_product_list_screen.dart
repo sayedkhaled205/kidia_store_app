@@ -198,8 +198,18 @@ class _ProductListContent extends StatelessWidget {
             SliverPersistentHeader(
               pinned: pageLayout.element('filter_bar').boolean('sticky', true),
               delegate: _CatalogToolbarHeaderDelegate(
-                extent: pageLayout.element('filter_bar').number('block_height', 68).clamp(48, 100),
-                child: _CatalogToolbar(state: state, controller: controller, settings: pageLayout.element('filter_bar')),
+                extent: _elementExtent(
+                  pageLayout.element('filter_bar'),
+                  pageLayout.element('filter_bar').number('block_height', 68).clamp(48, 100),
+                ),
+                child: CmsElementFrame(
+                  component: pageLayout.element('filter_bar'),
+                  child: _CatalogToolbar(
+                    state: state,
+                    controller: controller,
+                    settings: pageLayout.element('filter_bar'),
+                  ),
+                ),
               ),
             ),
           if (controller.isAwaitingSearch)
@@ -228,17 +238,9 @@ class _ProductListContent extends StatelessWidget {
             )
           else ...<Widget>[
             if (pageLayout.element('product_grid').enabled)
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  pageLayout.element('product_grid').number('padding_horizontal', 0).clamp(0, 40),
-                  pageLayout.element('product_grid').number('margin_top', 0).clamp(0, 80) + pageLayout.element('product_grid').number('padding_vertical', 0).clamp(0, 40),
-                  pageLayout.element('product_grid').number('padding_horizontal', 0).clamp(0, 40),
-                  pageLayout.element('product_grid').number('margin_bottom', 0).clamp(0, 80) + pageLayout.element('product_grid').number('padding_vertical', 0).clamp(0, 40),
-                ),
-                sliver: _CatalogProductGrid(
-                  items: state.items,
-                  settings: pageLayout.element('product_grid'),
-                ),
+              _CatalogProductGrid(
+                items: state.items,
+                settings: pageLayout.element('product_grid'),
               ),
             if (pageLayout.element('product_grid').string('pagination_mode', 'load_more') != 'none')
               SliverToBoxAdapter(
@@ -253,6 +255,13 @@ class _ProductListContent extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static double _elementExtent(CmsPageComponent component, double content) {
+    return content +
+        component.number('margin_top', 0).clamp(0, 80) +
+        component.number('margin_bottom', 0).clamp(0, 80) +
+        (component.number('padding_vertical', 0).clamp(0, 40) * 2);
   }
 }
 
@@ -317,13 +326,13 @@ class _CatalogToolbar extends ConsumerWidget {
           loading: () => const <StoreBrand>[],
           error: (Object error, StackTrace stackTrace) => const <StoreBrand>[],
         );
-    final double gap = settings.number('button_gap', 8).clamp(0, 24);
-    final double iconSize = settings.number('icon_size', 22).clamp(14, 36);
-    final double widthFactor = settings.number('block_width', 100).clamp(40, 100) / 100;
+    final double gap = settings.number('button_gap', 8).clamp(0, 24).toDouble();
+    final double iconSize = settings.number('icon_size', 22).clamp(14, 36).toDouble();
+    final double widthFactor = settings.number('block_width', 100).clamp(40, 100).toDouble() / 100;
     final Color iconColor = _cmsColor(settings.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
     final Color borderColor = _cmsColor(settings.string('border_color', '#DDE3E8'), Theme.of(context).dividerColor);
     final Color backgroundColor = _cmsColor(settings.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
-    final double buttonRadius = settings.number('button_radius', 12).clamp(0, 28);
+    final double buttonRadius = settings.number('button_radius', 12).clamp(0, 28).toDouble();
     return ColoredBox(color: backgroundColor, child: FractionallySizedBox(
       widthFactor: widthFactor,
       child: Padding(
@@ -513,38 +522,66 @@ class _CatalogProductGrid extends StatelessWidget {
         : width >= 540
         ? 3
         : 2;
-    final int columns = settings.number('columns', 2).round().clamp(1, responsiveColumns);
-    final double gap = settings.number('gap', 12).clamp(0, 32);
+    final int columns = settings.number('columns', 2).round().clamp(1, responsiveColumns).toInt();
+    final double gap = settings.number('gap', 12).clamp(0, 32).toDouble();
     final double usableWidth = width - 32 - ((columns - 1) * gap);
     final double cardWidth = usableWidth / columns;
-    final double baseExtent = (cardWidth * 1.01 + 103)
+    final double imageRatio = settings.number('image_ratio', 1).clamp(0.6, 1.8).toDouble();
+    final double baseExtent = (cardWidth / imageRatio + 103)
         .clamp(250, 336)
         .toDouble();
     final double extent = baseExtent * 0.98;
     final double topSpacing = (width * 0.05).clamp(18, 24).toDouble();
 
+    final EdgeInsets outerSpacing = EdgeInsets.only(
+      top: settings.number('margin_top', 0).clamp(0, 80),
+      bottom: settings.number('margin_bottom', 0).clamp(0, 80),
+    );
+    final EdgeInsets innerSpacing = EdgeInsetsDirectional.fromSTEB(
+      16 + settings.number('padding_horizontal', 0).clamp(0, 40),
+      topSpacing + settings.number('padding_vertical', 0).clamp(0, 40),
+      16 + settings.number('padding_horizontal', 0).clamp(0, 40),
+      20 + settings.number('padding_vertical', 0).clamp(0, 40),
+    );
     return SliverPadding(
       key: const Key('catalog-product-grid-padding'),
-      padding: EdgeInsetsDirectional.fromSTEB(16, topSpacing, 16, 20),
-      sliver: SliverGrid.builder(
-        itemCount: items.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          mainAxisSpacing: gap,
-          crossAxisSpacing: gap,
-          mainAxisExtent: extent,
+      padding: outerSpacing,
+      sliver: DecoratedSliver(
+        decoration: BoxDecoration(
+          color: _cmsElementColor(
+            settings.string('background_color', '#FFFFFF'),
+          ),
         ),
-        itemBuilder: (BuildContext context, int index) {
-          final CatalogProduct product = items[index];
-          return CatalogProductCard(
-            key: ValueKey<int>(product.id),
-            product: product,
-            onTap: () => context.push('/product/${product.id}'),
-          );
-        },
+        sliver: SliverPadding(
+          padding: innerSpacing,
+          sliver: SliverGrid.builder(
+            itemCount: items.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: gap,
+              crossAxisSpacing: gap,
+              mainAxisExtent: extent,
+            ),
+            itemBuilder: (BuildContext context, int index) {
+              final CatalogProduct product = items[index];
+              return CatalogProductCard(
+                key: ValueKey<int>(product.id),
+                product: product,
+                settings: settings,
+                onTap: () => context.push('/product/${product.id}'),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
+}
+
+Color _cmsElementColor(String value) {
+  final String hex = value.trim().replaceFirst('#', '');
+  if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) return Colors.white;
+  return Color(int.parse('FF$hex', radix: 16));
 }
 
 class _CatalogLoadingGrid extends StatelessWidget {
@@ -621,8 +658,8 @@ class _PaginationFooter extends StatelessWidget {
     if (mode == 'automatic') return const SizedBox(height: 16);
     final Color background = _cmsColor(settings.string('pagination_color', '#1F6F61'), Theme.of(context).colorScheme.primary);
     final Color foreground = _cmsColor(settings.string('pagination_text_color', '#FFFFFF'), Colors.white);
-    final double height = settings.number('pagination_size', 44).clamp(32, 64);
-    final double radius = settings.number('pagination_radius', 14).clamp(0, 32);
+    final double height = settings.number('pagination_size', 44).clamp(32, 64).toDouble();
+    final double radius = settings.number('pagination_radius', 14).clamp(0, 32).toDouble();
     return Padding(
       padding: EdgeInsets.fromLTRB(16, settings.number('pagination_spacing', 16), 16, 28),
       child: mode == 'numbers'

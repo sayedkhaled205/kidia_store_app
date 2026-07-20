@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
@@ -46,6 +48,11 @@ final homeRepositoryProvider = Provider<HomeRepository>((Ref ref) {
 final homeLayoutProvider =
 FutureProvider.autoDispose.family<HomeLayout, String>(
       (Ref ref, String locale) async {
+    final Timer refreshTimer = Timer(
+      const Duration(seconds: 5),
+      ref.invalidateSelf,
+    );
+    ref.onDispose(refreshTimer.cancel);
     final HomeRepository repository = ref.watch(
       homeRepositoryProvider,
     );

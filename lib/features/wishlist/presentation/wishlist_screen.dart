@@ -9,6 +9,7 @@ import 'package:kidia_store_app/features/wishlist/application/wishlist_controlle
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -123,6 +124,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
         }
         return CmsElementFrame(component: layout.element('empty_state'), child: _WishlistEmpty(
           copy: copy,
+          settings: layout.element('empty_state'),
           onRefresh: _controller.refresh,
           onContinueShopping: widget.onContinueShopping,
         ));
@@ -133,6 +135,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
         return CmsElementFrame(component: layout.element('wishlist_grid'), child: _WishlistGrid(
           products: _controller.products,
           copy: copy,
+          settings: layout.element('wishlist_grid'),
           isMutating: _controller.isMutating,
           onRefresh: _controller.refresh,
           onProductTap: widget.onProductTap,
@@ -216,6 +219,7 @@ class _WishlistGrid extends StatelessWidget {
   const _WishlistGrid({
     required this.products,
     required this.copy,
+    required this.settings,
     required this.isMutating,
     required this.onRefresh,
     required this.onRemove,
@@ -224,6 +228,7 @@ class _WishlistGrid extends StatelessWidget {
 
   final List<CatalogProduct> products;
   final _WishlistCopy copy;
+  final CmsPageComponent settings;
   final bool isMutating;
   final Future<void> Function() onRefresh;
   final ValueChanged<CatalogProduct> onRemove;
@@ -233,14 +238,15 @@ class _WishlistGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final int columnCount = constraints.maxWidth >= 1100
-            ? 5
-            : constraints.maxWidth >= 820
-            ? 4
-            : constraints.maxWidth >= 560
-            ? 3
-            : 2;
-        final double spacing = constraints.maxWidth >= 560 ? 16 : 12;
+        final int columnCount = settings
+            .number('columns', 2)
+            .round()
+            .clamp(1, 4)
+            .toInt();
+        final double spacing = settings
+            .number('gap', 12)
+            .clamp(0, 32)
+            .toDouble();
         final double topSpacing = (constraints.maxWidth * 0.05)
             .clamp(18, 24)
             .toDouble();
@@ -259,7 +265,11 @@ class _WishlistGrid extends StatelessWidget {
               crossAxisCount: columnCount,
               mainAxisSpacing: spacing,
               crossAxisSpacing: spacing,
-              childAspectRatio: constraints.maxWidth >= 820 ? 0.7 : 0.62,
+              childAspectRatio: settings
+                  .number('image_ratio', 1)
+                  .clamp(0.6, 1.8)
+                  .toDouble() *
+                  0.62,
             ),
             itemCount: products.length,
             itemBuilder: (BuildContext context, int index) {
@@ -267,6 +277,7 @@ class _WishlistGrid extends StatelessWidget {
               return _WishlistProductCard(
                 product: product,
                 copy: copy,
+                settings: settings,
                 removeEnabled: !isMutating,
                 onTap: onProductTap == null
                     ? null
@@ -285,6 +296,7 @@ class _WishlistProductCard extends StatelessWidget {
   const _WishlistProductCard({
     required this.product,
     required this.copy,
+    required this.settings,
     required this.removeEnabled,
     required this.onRemove,
     this.onTap,
@@ -292,6 +304,7 @@ class _WishlistProductCard extends StatelessWidget {
 
   final CatalogProduct product;
   final _WishlistCopy copy;
+  final CmsPageComponent settings;
   final bool removeEnabled;
   final VoidCallback onRemove;
   final VoidCallback? onTap;
@@ -300,10 +313,18 @@ class _WishlistProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
+    final String cardStyle = settings.string('card_style', 'outlined');
     return Card(
       key: Key('wishlist-product-${product.id}'),
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
+      elevation: cardStyle == 'elevated' ? null : 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(settings.number('card_radius', 16)),
+        side: cardStyle == 'outlined'
+            ? BorderSide(color: colors.outlineVariant)
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: onTap,
         child: Column(
@@ -337,7 +358,13 @@ class _WishlistProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (product.isOnSale)
+                  if (product.isInStock)
+                    PositionedDirectional(
+                      end: 8,
+                      bottom: 8,
+                      child: ProductQuickAddButton(productId: product.id),
+                    ),
+                  if (settings.boolean('show_badge', true) && product.isOnSale)
                     PositionedDirectional(
                       top: 10,
                       start: 10,
@@ -378,8 +405,21 @@ class _WishlistProductCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 7),
-                  _WishlistPrice(money: product.prices),
+                  if (settings.boolean('show_price', true)) ...<Widget>[
+                    const SizedBox(height: 7),
+                    _WishlistPrice(
+                      money: product.prices,
+                      showRegularPrice: settings.boolean('show_regular_price', true),
+                    ),
+                  ],
+                  if (settings.boolean('show_rating', true) && product.averageRating > 0) ...<Widget>[
+                    const SizedBox(height: 5),
+                    Row(children: <Widget>[
+                      const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                      const SizedBox(width: 3),
+                      Text(product.averageRating.toStringAsFixed(1)),
+                    ]),
+                  ],
                   const SizedBox(height: 6),
                   Text(
                     product.isInStock ? copy.inStock : copy.outOfStock,
@@ -399,9 +439,10 @@ class _WishlistProductCard extends StatelessWidget {
 }
 
 class _WishlistPrice extends StatelessWidget {
-  const _WishlistPrice({required this.money});
+  const _WishlistPrice({required this.money, required this.showRegularPrice});
 
   final CatalogMoney money;
+  final bool showRegularPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -420,7 +461,7 @@ class _WishlistPrice extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        if (money.isDiscounted && regular.isNotEmpty)
+        if (showRegularPrice && money.isDiscounted && regular.isNotEmpty)
           Text(
             regular,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -456,11 +497,13 @@ class _WishlistLoading extends StatelessWidget {
 class _WishlistEmpty extends StatelessWidget {
   const _WishlistEmpty({
     required this.copy,
+    required this.settings,
     required this.onRefresh,
     this.onContinueShopping,
   });
 
   final _WishlistCopy copy;
+  final CmsPageComponent settings;
   final Future<void> Function() onRefresh;
   final VoidCallback? onContinueShopping;
 
@@ -481,22 +524,22 @@ class _WishlistEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            copy.emptyTitle,
+            settings.string('title', copy.emptyTitle),
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          Text(copy.emptyBody, textAlign: TextAlign.center),
-          if (onContinueShopping != null) ...<Widget>[
+          Text(settings.string('description', copy.emptyBody), textAlign: TextAlign.center),
+          if (onContinueShopping != null && settings.boolean('show_button', true)) ...<Widget>[
             const SizedBox(height: 22),
             Center(
               child: FilledButton.icon(
                 key: const Key('wishlist-continue-shopping'),
                 onPressed: onContinueShopping,
                 icon: const Icon(Icons.storefront_outlined),
-                label: Text(copy.continueShopping),
+                label: Text(settings.string('button_label', copy.continueShopping)),
               ),
             ),
           ],

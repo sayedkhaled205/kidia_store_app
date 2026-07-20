@@ -9,6 +9,7 @@ import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_suggestions.dart';
 import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
+import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({
@@ -225,14 +226,44 @@ class _CheckoutSuggestionsSection extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
-                    Expanded(child: product.imageUrl.isEmpty ? const Icon(Icons.inventory_2_outlined) : Image.network(product.imageUrl, fit: BoxFit.contain, errorBuilder: (_, _, _) => const Icon(Icons.inventory_2_outlined))),
+                    Expanded(
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: <Widget>[
+                          product.imageUrl.isEmpty
+                              ? const Icon(Icons.inventory_2_outlined)
+                              : Image.network(
+                                  product.imageUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) =>
+                                      const Icon(Icons.inventory_2_outlined),
+                                ),
+                          if (product.inStock)
+                            PositionedDirectional(
+                              end: 0,
+                              bottom: 0,
+                              child: ProductQuickAddButton(
+                                productId: product.id,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                     Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                     Text(product.price, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
                     SizedBox(height: 30, child: FilledButton(
                       style: FilledButton.styleFrom(backgroundColor: color, padding: EdgeInsets.zero),
                       onPressed: product.inStock && onAdd != null ? () async {
                         final result = await onAdd!(ProductPurchaseSelection(productId: product.id));
-                        if (context.mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.succeeded ? 'Added to cart' : result.message ?? 'Could not add product'))); }
+                        if (context.mounted && !result.succeeded) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                result.message ?? 'Could not add product',
+                              ),
+                            ),
+                          );
+                        }
                       } : null,
                       child: Text(settings.buttonLabel, style: const TextStyle(fontSize: 11)),
                     )),

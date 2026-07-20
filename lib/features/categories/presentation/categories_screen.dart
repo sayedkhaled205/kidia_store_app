@@ -92,9 +92,18 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   @override
   Widget build(BuildContext context) {
     final String layout = _settings.categoryLayout;
-    if (layout == 'sidebar') return _sidebar(context);
-    if (layout == 'default') return _defaultList();
-    return _grid(layout);
+    final Widget content = layout == 'sidebar'
+        ? _sidebar(context)
+        : layout == 'default'
+        ? _defaultList()
+        : _grid(layout);
+    return ColoredBox(
+      color: _categoryColor(
+        _settings.elementBackgroundColor,
+        Theme.of(context).colorScheme.surface,
+      ),
+      child: content,
+    );
   }
 
   Widget _defaultList() {
@@ -111,8 +120,12 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         ),
         itemCount: widget.tree.roots.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
-        itemBuilder: (BuildContext context, int index) =>
-            _CategoryBranch(node: widget.tree.roots[index]),
+        itemBuilder: (BuildContext context, int index) => Align(
+          child: FractionallySizedBox(
+            widthFactor: _settings.cardWidthPercent / 100,
+            child: _CategoryBranch(node: widget.tree.roots[index]),
+          ),
+        ),
       ),
     );
   }
@@ -122,19 +135,22 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     final int columns = layout == 'circular_grid'
         ? 3
         : layout == 'compact_grid'
-        ? _settings.gridColumns.clamp(3, 4)
-        : _settings.gridColumns.clamp(2, 3);
+        ? _settings.gridColumns.clamp(3, 4).toInt()
+        : _settings.gridColumns.clamp(2, 3).toInt();
     final double imageLimit = layout == 'compact_grid'
         ? 62
         : layout == 'circular_grid'
         ? 92
         : 112;
-    final double extent = (imageLimit.clamp(32, _settings.imageSize) +
+    final double automaticExtent = (imageLimit.clamp(32, _settings.imageSize) +
             _settings.imageTextGap +
             (_settings.fontSize * _settings.lineHeight * _settings.textMaxLines) +
             24)
         .clamp(layout == 'compact_grid' ? 150 : 196, 280)
         .toDouble();
+    final double extent = _settings.cardHeight > 0
+        ? _settings.cardHeight
+        : automaticExtent;
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: GridView.builder(
@@ -153,10 +169,16 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           mainAxisExtent: extent,
         ),
         itemCount: nodes.length,
-        itemBuilder: (BuildContext context, int index) => _CategoryGridTile(
-          category: nodes[index].category,
-          circular: layout == 'circular_grid',
-          compact: layout == 'compact_grid',
+        itemBuilder: (BuildContext context, int index) => Align(
+          child: FractionallySizedBox(
+            widthFactor: _settings.cardWidthPercent / 100,
+            heightFactor: 1,
+            child: _CategoryGridTile(
+              category: nodes[index].category,
+              circular: layout == 'circular_grid',
+              compact: layout == 'compact_grid',
+            ),
+          ),
         ),
       ),
     );
@@ -164,7 +186,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
 
   Widget _sidebar(BuildContext context) {
     final List<CatalogCategoryNode> roots = widget.tree.roots;
-    final int selected = _selectedRoot.clamp(0, roots.length - 1);
+    final int selected = _selectedRoot.clamp(0, roots.length - 1).toInt();
     final CatalogCategoryNode root = roots[selected];
     final List<CatalogCategoryNode> detail = root.children.isEmpty
         ? <CatalogCategoryNode>[root]
@@ -213,11 +235,20 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                 crossAxisCount: _settings.gridColumns.clamp(2, 3),
                 mainAxisSpacing: _settings.cardGap,
                 crossAxisSpacing: _settings.cardGap,
-                mainAxisExtent: 160,
+                mainAxisExtent: _settings.cardHeight > 0
+                    ? _settings.cardHeight
+                    : 160,
               ),
               itemCount: detail.length,
-              itemBuilder: (BuildContext context, int index) =>
-                  _CategoryGridTile(category: detail[index].category),
+              itemBuilder: (BuildContext context, int index) => Align(
+                child: FractionallySizedBox(
+                  widthFactor: _settings.cardWidthPercent / 100,
+                  heightFactor: 1,
+                  child: _CategoryGridTile(
+                    category: detail[index].category,
+                  ),
+                ),
+              ),
             ),
           ),
           ],
@@ -249,20 +280,11 @@ class _CategoryGridTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final double imageLimit = compact ? 62 : circular ? 92 : 112;
-    return Material(
+    return _CategoryCardSurface(
+      category: category,
+      child: Material(
       key: Key('category-grid-tile-${category.id}'),
-      color: _categoryColor(category.cardBackgroundColor, theme.colorScheme.surface),
-      elevation: category.cardStyle == 'elevated'
-          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
-          : 0,
-      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
-          .withValues(alpha: category.cardShadowStrength),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(category.cardRadius),
-        side: category.cardStyle == 'outlined'
-            ? BorderSide(color: theme.colorScheme.outlineVariant)
-            : BorderSide.none,
-      ),
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _openCategoryProducts(context, category),
@@ -293,6 +315,7 @@ class _CategoryGridTile extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -322,27 +345,20 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final ColorScheme colors = theme.colorScheme;
     final CatalogCopy copy = CatalogCopy.of(context);
     final double responsive = _categoryResponsiveScale(context);
-    final Widget tile = Material(
-      color: _categoryColor(category.cardBackgroundColor, colors.surface),
-      elevation: category.cardStyle == 'elevated'
-          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
-          : 0,
-      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
-          .withValues(alpha: category.cardShadowStrength),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(category.cardRadius),
-        side: category.cardStyle == 'outlined'
-            ? BorderSide(color: colors.outlineVariant)
-            : BorderSide.none,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
+    final Widget tile = _CategoryCardSurface(
+      category: category,
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
         children: <Widget>[
           InkWell(
             onTap: () => _openProducts(context, category),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
-              child: Row(
+            child: SizedBox(
+              height: category.cardHeight > 0 ? category.cardHeight : null,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
+                child: Row(
                 children: <Widget>[
                   _CategoryArtwork(
                     category: category,
@@ -385,6 +401,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                   else if (category.showArrow)
                     const Icon(Icons.chevron_right_rounded),
                 ],
+                ),
               ),
             ),
           ),
@@ -420,11 +437,14 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                                 responsive *
                                 child.lineHeight *
                                 child.textMaxLines;
-                            final double requested =
+                            final double automaticHeight =
                                 imageHeight +
                                 child.imageTextGap * responsive +
                                 textHeight +
                                 16;
+                            final double requested = child.cardHeight > 0
+                                ? child.cardHeight
+                                : automaticHeight;
                             return requested > height ? requested : height;
                           },
                         );
@@ -442,10 +462,16 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                           itemBuilder: (BuildContext context, int index) {
                             final CatalogCategory child =
                                 widget.node.children[index].category;
-                            return _SubcategoryTile(
-                              category: child,
-                              maximumImageSize: maximumImageSize,
-                              onTap: () => _openProducts(context, child),
+                            return Align(
+                              child: FractionallySizedBox(
+                                widthFactor: child.cardWidthPercent / 100,
+                                heightFactor: 1,
+                                child: _SubcategoryTile(
+                                  category: child,
+                                  maximumImageSize: maximumImageSize,
+                                  onTap: () => _openProducts(context, child),
+                                ),
+                              ),
                             );
                           },
                         );
@@ -454,6 +480,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
                   ),
           ),
         ],
+        ),
       ),
     );
 
@@ -482,21 +509,12 @@ class _SubcategoryTile extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final double responsive = _categoryResponsiveScale(context);
-    return Material(
-      color: _categoryColor(category.cardBackgroundColor, colors.surface),
-      elevation: category.cardStyle == 'elevated'
-          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
-          : 0,
-      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
-          .withValues(alpha: category.cardShadowStrength),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(category.cardRadius),
-        side: category.cardStyle == 'outlined'
-            ? BorderSide(color: colors.outlineVariant)
-            : BorderSide.none,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
+    return _CategoryCardSurface(
+      category: category,
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
         onTap: onTap,
         child: Column(
           children: <Widget>[
@@ -527,7 +545,41 @@ class _SubcategoryTile extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
+    );
+  }
+}
+
+class _CategoryCardSurface extends StatelessWidget {
+  const _CategoryCardSurface({required this.category, required this.child});
+
+  final CatalogCategory category;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final BorderRadius radius = BorderRadius.circular(category.cardRadius);
+    return Container(
+      decoration: BoxDecoration(
+        color: _categoryColor(category.cardBackgroundColor, colors.surface),
+        borderRadius: radius,
+        border: category.cardStyle == 'outlined'
+            ? Border.all(color: colors.outlineVariant)
+            : null,
+        boxShadow: category.cardStyle == 'elevated'
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: _categoryColor(category.cardShadowColor, Colors.black)
+                      .withValues(alpha: category.cardShadowStrength),
+                  blurRadius: category.cardShadowBlur,
+                  offset: Offset(0, category.cardShadowOffsetY),
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(borderRadius: radius, child: child),
     );
   }
 }

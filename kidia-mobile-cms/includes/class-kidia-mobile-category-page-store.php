@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Category_Page_Store {
 	private const OPTION_NAME = 'kidia_mobile_category_page';
-	private const VERSION     = 4;
+	private const VERSION     = 5;
 
 	/** @return array<string,mixed> */
 	public static function general_defaults(): array {
@@ -13,9 +13,12 @@ final class Kidia_Mobile_Category_Page_Store {
 			'grid_columns'     => 2,
 			'card_radius'      => 17,
 			'card_gap'         => 10,
+			'card_width_percent' => 100,
+			'card_height'      => 0,
 			'margin_top'       => 0,
 			'margin_bottom'    => 0,
 			'page_background_color' => '#F7F8FA',
+			'element_background_color' => '#FFFFFF',
 			'card_style'       => 'outlined',
 			'card_background_color' => '#FFFFFF',
 			'card_shadow_color' => '#000000',
@@ -136,10 +139,13 @@ final class Kidia_Mobile_Category_Page_Store {
 			'grid_columns'     => min( 4, max( 2, absint( $settings['grid_columns'] ?? $defaults['grid_columns'] ) ) ),
 			'card_radius'      => min( 32, max( 0, absint( $settings['card_radius'] ?? $defaults['card_radius'] ) ) ),
 			'card_gap'         => min( 24, max( 0, absint( $settings['card_gap'] ?? $defaults['card_gap'] ) ) ),
+			'card_width_percent' => min( 100, max( 40, absint( $settings['card_width_percent'] ?? $defaults['card_width_percent'] ) ) ),
+			'card_height'      => min( 320, max( 0, absint( $settings['card_height'] ?? $defaults['card_height'] ) ) ),
 			'margin_top'       => min( 80, max( 0, absint( $settings['margin_top'] ?? $defaults['margin_top'] ) ) ),
 			'margin_bottom'    => min( 80, max( 0, absint( $settings['margin_bottom'] ?? $defaults['margin_bottom'] ) ) ),
 			'page_background_color' => sanitize_hex_color( $settings['page_background_color'] ?? '' ) ?: $defaults['page_background_color'],
-			'card_style'       => self::choice( $settings['card_style'] ?? '', array( 'minimal', 'outlined', 'elevated' ), $defaults['card_style'] ),
+			'element_background_color' => sanitize_hex_color( $settings['element_background_color'] ?? '' ) ?: $defaults['element_background_color'],
+			'card_style'       => self::choice( $settings['card_style'] ?? '', array( 'minimal', 'no_shadow', 'outlined', 'elevated' ), $defaults['card_style'] ),
 			'card_background_color' => sanitize_hex_color( $settings['card_background_color'] ?? '' ) ?: $defaults['card_background_color'],
 			'card_shadow_color' => sanitize_hex_color( $settings['card_shadow_color'] ?? '' ) ?: $defaults['card_shadow_color'],
 			'card_shadow_strength' => min( 40, max( 0, absint( $settings['card_shadow_strength'] ?? $defaults['card_shadow_strength'] ) ) ),

@@ -106,6 +106,10 @@ class CmsPageLayout {
 		'search_height': 40,
 		'search_radius': page == 'home' ? 18 : 14,
 		'show_cart_badge': false,
+		'cart_badge_shape': 'circle',
+		'cart_badge_size': 18,
+		'cart_badge_background': '#E94B5F',
+		'cart_badge_text_color': '#FFFFFF',
 	};
 	final Map<String, dynamic> footerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackFooterLayout(page)),
@@ -146,7 +150,14 @@ class CmsPageLayout {
               id: id,
               type: id,
               enabled: true,
-              settings: const <String, dynamic>{},
+              settings: id == 'product_summary'
+                  ? const <String, dynamic>{
+                      'quick_add_enabled': true,
+                      'background_color': '#FFFFFF',
+                    }
+                  : const <String, dynamic>{
+                      'background_color': '#FFFFFF',
+                    },
             ),
           )
           .toList(growable: false),

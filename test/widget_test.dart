@@ -207,6 +207,7 @@ void main() {
         'home',
         height: 92,
         iconSize: 36,
+        iconLabelGap: 9,
         items: const <String>['home', 'wishlist'],
       );
       final CmsPageLayout categoryLayout = _navigationLayout(
@@ -244,6 +245,16 @@ void main() {
       expect(homeIconBox.height, 32);
       expect(wishlistIconBox.width, homeIconBox.width);
       expect(wishlistIconBox.height, homeIconBox.height);
+      expect(
+        tester
+            .widget<SizedBox>(
+              find.byKey(
+                const Key('cms-bottom-nav-icon-label-gap-home'),
+              ),
+            )
+            .height,
+        9,
+      );
       expect(
         tester
             .getCenter(find.byKey(const Key('cms-bottom-nav-icon-box-home')))
@@ -303,6 +314,7 @@ CmsPageLayout _navigationLayout(
   String page, {
   required double height,
   required double iconSize,
+  double iconLabelGap = 3,
   List<String> items = const <String>[
     'home',
     'categories',
@@ -338,6 +350,7 @@ CmsPageLayout _navigationLayout(
         },
         'height': height,
         'icon_size': iconSize,
+        'icon_label_gap': iconLabelGap,
         'home_label': 'Home',
         'categories_label': 'Categories',
         'wishlist_label': 'Wishlist',
