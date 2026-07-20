@@ -750,6 +750,58 @@
 	border-block-end: 1px solid var(--kidia-border-soft);
 }
 
+.kidia-repeatable-item-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.kidia-repeatable-item-actions .button {
+	min-height: 34px;
+	margin: 0;
+	padding-inline: 14px;
+	border-radius: 6px;
+	font-weight: 700;
+}
+
+.kidia-repeatable-item-actions .kidia-repeatable-remove {
+	border-color: #b32d2e;
+	background: #fff;
+	color: #b32d2e;
+}
+
+.kidia-repeatable-item-actions .kidia-repeatable-remove:hover,
+.kidia-repeatable-item-actions .kidia-repeatable-remove:focus {
+	border-color: #8a2424;
+	background: #fff5f5;
+	color: #8a2424;
+}
+
+.kidia-repeatable-item-actions .kidia-repeatable-add {
+	border-color: #236b59;
+	background: #236b59;
+	color: #fff;
+}
+
+.kidia-repeatable-item-actions .kidia-repeatable-add:hover,
+.kidia-repeatable-item-actions .kidia-repeatable-add:focus {
+	border-color: #174f42;
+	background: #174f42;
+	color: #fff;
+}
+
+.kidia-slider-editor-item {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kidia-slider-editor-item.kidia-hero-block-item .kidia-builder-field--media {
+	grid-column: span 2;
+}
+
+.kidia-banner-editor-item .kidia-builder-field--media {
+	grid-column: span 2;
+}
+
 .kidia-repeatable-item .kidia-hero-block-item__header { grid-column: 1 / -1; }
 .kidia-repeatable-item .kidia-builder-grid { grid-column: 1 / -1; }
 

@@ -409,8 +409,13 @@ function runMergeControlsContractTest() {
 	const addElementIndex = homePage.indexOf('id="kidia-add-element"');
 	const renderedBlockIndex = homePage.indexOf("admin/templates/block-template.php");
 	assert.ok(addElementIndex < renderedBlockIndex, "Add Element must remain in the original top toolbar.");
-	assert.match(heroBlockSource, /kidia-add-repeatable-control kidia-add-hero-block-item[\s\S]*Add Slide \+/, "Add Slide + must use the shared repeatable-add control.");
-	assert.match(bannerBlockSource, /kidia-add-repeatable-control kidia-add-repeatable-item[\s\S]*Add Banner \+/, "Add Banner + must use the same repeatable-add control.");
+	assert.match(heroBlockSource, /kidia-repeatable-item-actions[\s\S]*kidia-remove-hero-block-item[\s\S]*kidia-add-hero-block-item/, "Each Slide header must place Remove beside Add Slide.");
+	assert.match(bannerBlockSource, /kidia-repeatable-item-actions[\s\S]*kidia-remove-repeatable-item[\s\S]*kidia-add-repeatable-item/, "Each Banner header must place Remove beside Add Banner.");
+	assert.doesNotMatch(heroBlockSource, /<p>\s*<button[\s\S]*kidia-add-hero-block-item/, "Hero Slider must not keep a separate General Settings add control.");
+	assert.doesNotMatch(bannerBlockSource, /<p><button[\s\S]*kidia-add-repeatable-item/, "Banner Grid must not keep a separate General Settings add control.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-slider-editor-item\s*\{[\s\S]*grid-template-columns:\s*repeat\(3/, "Slide fields must use a compact three-column editor grid.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-banner-editor-item \.kidia-builder-field--media\s*\{[\s\S]*grid-column:\s*span 2/, "Banner media and fields must use the available row more efficiently.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-builder-field input\[type="text"\][\s\S]*width:\s*var\(--kidia-field-width\)/, "Slide and Banner compaction must preserve the standard field width.");
 	assert.doesNotMatch(chromeTemplate, /kidia-footer-toggle-row/, "Footer toggles must use the original General Settings grid.");
   assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
   assert.match(template, /Space up[\s\S]*\[settings\]\[space_up\][\s\S]*Space down[\s\S]*\[settings\]\[space_down\]/, "Every Home element must expose the two independent section spacing controls.");

@@ -352,15 +352,6 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
             <?php endforeach; ?>
 		</div>
 
-		<p>
-			<button
-				type="button"
-				class="button kidia-add-repeatable-control kidia-add-hero-block-item"
-			>
-				<?php echo esc_html__( 'Add Slide +', 'kidia-mobile-cms' ); ?>
-			</button>
-		</p>
-
 		<script type="text/html" class="tmpl-kidia-hero-block-item">
 			<?php
 			$this->render_item(
@@ -413,18 +404,16 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 		$image_url = (string) $item['image_url'];
 
 		?>
-		<div class="kidia-hero-block-item">
+		<div class="kidia-hero-block-item kidia-slider-editor-item">
 			<div class="kidia-hero-block-item__header">
 				<strong>
 					<?php echo esc_html__( 'Slide', 'kidia-mobile-cms' ); ?>
 				</strong>
 
-				<button
-					type="button"
-					class="button-link-delete kidia-remove-hero-block-item"
-				>
-					<?php echo esc_html__( 'Remove', 'kidia-mobile-cms' ); ?>
-				</button>
+				<div class="kidia-repeatable-item-actions">
+					<button type="button" class="button kidia-repeatable-remove kidia-remove-hero-block-item"><?php echo esc_html__( 'Remove', 'kidia-mobile-cms' ); ?></button>
+					<button type="button" class="button kidia-repeatable-add kidia-add-hero-block-item"><?php echo esc_html__( '+ Add Slide', 'kidia-mobile-cms' ); ?></button>
+				</div>
 			</div>
 
 			<input
