@@ -192,6 +192,11 @@ foreach ( $library_options as $type => $option_name ) {
 		<div class="kidia-builder-toolbar">
 
 			<div class="kidia-builder-toolbar__actions">
+				<button type="button" class="button button-primary" id="kidia-add-element">
+					<span class="dashicons dashicons-plus-alt2"></span>
+					<?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?>
+				</button>
+
 				<button
 					type="button"
 					class="button"
@@ -338,12 +343,6 @@ foreach ( $library_options as $type => $option_name ) {
 
 			<?php endforeach; ?>
 
-		</div>
-		<div class="kidia-builder-add-element-row">
-			<button type="button" class="button button-primary" id="kidia-add-element">
-				<span class="dashicons dashicons-plus-alt2"></span>
-				<?php esc_html_e( 'Add Element +', 'kidia-mobile-cms' ); ?>
-			</button>
 		</div>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'footer'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 

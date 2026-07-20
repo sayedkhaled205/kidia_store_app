@@ -800,20 +800,6 @@
 	margin: 0;
 }
 
-.kidia-builder-add-element-row {
-	display: flex;
-	justify-content: center;
-	padding: 14px 0 4px;
-}
-
-.kidia-add-repeatable-control {
-	min-height: 35px;
-	padding-inline: 18px;
-	border-color: var(--kidia-primary, #2f806e) !important;
-	color: var(--kidia-primary, #2f806e) !important;
-	font-weight: 700;
-}
-
 .kidia-hero-gallery {
 	padding: 12px;
 	border: 1px solid var(--kidia-border);
