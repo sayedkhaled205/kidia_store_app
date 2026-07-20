@@ -162,7 +162,7 @@ body.kidia-unsaved-modal-open { overflow:hidden; }
 .kidia-app-rating { width:100%; color:#f2aa00; font-size:6px; }
 .kidia-app-filter { display:flex; align-items:center; box-sizing:border-box; margin:auto; padding:5px 9px; direction:rtl; }
 .kidia-app-filter button { display:flex; height:100%; flex:1; align-items:center; justify-content:center; gap:3px; border:1px solid; background:#fff; color:var(--icon-color); font-size:7px; }
-.kidia-app-filter button .kidia-app-icon { width:var(--icon-size); height:var(--icon-size); flex-basis:var(--icon-size); }
+.kidia-app-filter button .kidia-app-icon { width:var(--icon-size); height:var(--icon-size); flex-basis:var(--icon-size); transform:translateY(var(--icon-offset-y, -2px)); }
 .kidia-app-filter small { margin-inline-start:5px; font-size:6px; white-space:nowrap; }
 .kidia-app-pagination { display:flex; justify-content:center; gap:4px; }
 .kidia-app-pagination button { min-width:29px; padding:0 10px; border:1px solid #dce3e0; border-radius:7px; font-size:7px; font-weight:800; }

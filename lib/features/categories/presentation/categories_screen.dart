@@ -93,31 +93,61 @@ class _CategoryLayoutView extends StatefulWidget {
 }
 
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
-  int _selectedRoot = 0;
+  int? _selectedRoot;
 
   CatalogCategory get _settings => widget.tree.roots.first.category;
 
   @override
   Widget build(BuildContext context) {
     final String layout = _settings.categoryLayout;
+    final CatalogCategoryNode? selectedRoot = _selectedRoot == null
+        ? null
+        : widget.tree.roots[
+            _selectedRoot!.clamp(0, widget.tree.roots.length - 1).toInt()
+          ];
+    final List<CatalogCategoryNode> visibleNodes = selectedRoot == null
+        ? widget.tree.roots
+        : selectedRoot.children;
     final Widget content = layout == 'sidebar'
-        ? _sidebar(context)
+        ? _sidebar(visibleNodes)
         : layout == 'default'
-        ? _defaultList()
-        : _grid(layout);
+        ? _defaultList(visibleNodes)
+        : _grid(layout, visibleNodes);
     return Transform.translate(
+      key: const Key('category-section-layout-merge'),
       offset: Offset(0, _settings.marginBottom - _settings.marginTop),
-      child: ColoredBox(
-        color: _categoryColor(
-          _settings.elementBackgroundColor,
-          Theme.of(context).colorScheme.surface,
+      child: Padding(
+        key: const Key('category-section-layout-spacing'),
+        padding: EdgeInsets.only(
+          top: _settings.spaceUp,
+          bottom: _settings.spaceDown,
         ),
-        child: content,
+        child: ColoredBox(
+          color: _categoryColor(
+            _settings.elementBackgroundColor,
+            Theme.of(context).colorScheme.surface,
+          ),
+          child: Column(
+            children: <Widget>[
+              if (selectedRoot != null)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    key: const Key('category-back-to-roots'),
+                    onPressed: () => setState(() => _selectedRoot = null),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: Text(selectedRoot.category.name),
+                  ),
+                ),
+              Expanded(child: content),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _defaultList() {
+  Widget _defaultList(List<CatalogCategoryNode> nodes) {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView.separated(
@@ -129,20 +159,22 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           16,
           24,
         ),
-        itemCount: widget.tree.roots.length,
+        itemCount: nodes.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
         itemBuilder: (BuildContext context, int index) => Align(
           child: FractionallySizedBox(
             widthFactor: _settings.cardWidthPercent / 100,
-            child: _CategoryBranch(node: widget.tree.roots[index]),
+            child: _CategoryBranch(
+              node: CatalogCategoryNode(category: nodes[index].category),
+              onTap: () => _openNode(nodes[index]),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _grid(String layout) {
-    final List<CatalogCategoryNode> nodes = _flatten(widget.tree.roots);
+  Widget _grid(String layout, List<CatalogCategoryNode> nodes) {
     final int columns = layout == 'circular_grid'
         ? 3
         : layout == 'compact_grid'
@@ -186,6 +218,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
             heightFactor: 1,
             child: _CategoryGridTile(
               category: nodes[index].category,
+              onTap: () => _openNode(nodes[index]),
               circular: layout == 'circular_grid',
               compact: layout == 'compact_grid',
             ),
@@ -195,89 +228,45 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     );
   }
 
-  Widget _sidebar(BuildContext context) {
-    final List<CatalogCategoryNode> roots = widget.tree.roots;
-    final int selected = _selectedRoot.clamp(0, roots.length - 1).toInt();
-    final CatalogCategoryNode root = roots[selected];
-    final List<CatalogCategoryNode> detail = root.children.isEmpty
-        ? <CatalogCategoryNode>[root]
-        : _flatten(root.children);
+  Widget _sidebar(List<CatalogCategoryNode> nodes) {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
-      child: Row(
+      child: ListView.builder(
           key: const Key('category-layout-sidebar'),
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-          SizedBox(
-            width: 112,
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: roots.length,
-              itemBuilder: (BuildContext context, int index) {
-                final bool active = index == selected;
-                return InkWell(
-                  onTap: () => setState(() => _selectedRoot = index),
-                  child: Container(
-                    key: Key('category-sidebar-root-${roots[index].category.id}'),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-                    color: active
-                        ? Theme.of(context).colorScheme.secondaryContainer
-                        : Theme.of(context).colorScheme.surfaceContainerLowest,
-                    child: Text(
-                      roots[index].category.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                );
-              },
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(_settings.cardGap),
+          itemCount: nodes.length,
+          itemBuilder: (BuildContext context, int index) => Padding(
+            padding: EdgeInsets.only(bottom: _settings.cardGap),
+            child: _CategoryBranch(
+              node: CatalogCategoryNode(category: nodes[index].category),
+              onTap: () => _openNode(nodes[index]),
             ),
           ),
-          Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.all(_settings.cardGap),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _settings.gridColumns.clamp(2, 3),
-                mainAxisSpacing: _settings.cardGap,
-                crossAxisSpacing: _settings.cardGap,
-                mainAxisExtent: _settings.cardHeight > 0
-                    ? _settings.cardHeight
-                    : 160,
-              ),
-              itemCount: detail.length,
-              itemBuilder: (BuildContext context, int index) => Align(
-                child: FractionallySizedBox(
-                  widthFactor: _settings.cardWidthPercent / 100,
-                  heightFactor: 1,
-                  child: _CategoryGridTile(
-                    category: detail[index].category,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          ],
       ),
     );
   }
 
-  List<CatalogCategoryNode> _flatten(List<CatalogCategoryNode> nodes) {
-    return nodes.expand((CatalogCategoryNode node) sync* {
-      yield node;
-      yield* _flatten(node.children);
-    }).toList(growable: false);
+  void _openNode(CatalogCategoryNode node) {
+    if (_selectedRoot == null && node.children.isNotEmpty) {
+      setState(() => _selectedRoot = widget.tree.roots.indexOf(node));
+      return;
+    }
+    _openCategoryProducts(context, node.category);
   }
+
 }
 
 class _CategoryGridTile extends StatelessWidget {
   const _CategoryGridTile({
     required this.category,
+    this.onTap,
     this.circular = false,
     this.compact = false,
   });
 
   final CatalogCategory category;
+  final VoidCallback? onTap;
   final bool circular;
   final bool compact;
 
@@ -292,7 +281,7 @@ class _CategoryGridTile extends StatelessWidget {
       color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => _openCategoryProducts(context, category),
+        onTap: onTap ?? () => _openCategoryProducts(context, category),
         child: Padding(
           padding: EdgeInsets.all(compact ? 7 : 10),
           child: Column(
@@ -331,9 +320,10 @@ void _openCategoryProducts(BuildContext context, CatalogCategory category) {
 }
 
 class _CategoryBranch extends StatefulWidget {
-  const _CategoryBranch({required this.node});
+  const _CategoryBranch({required this.node, this.onTap});
 
   final CatalogCategoryNode node;
+  final VoidCallback? onTap;
 
   @override
   State<_CategoryBranch> createState() => _CategoryBranchState();
@@ -358,7 +348,7 @@ class _CategoryBranchState extends State<_CategoryBranch> {
         child: Column(
         children: <Widget>[
           InkWell(
-            onTap: () => _openProducts(context, category),
+            onTap: widget.onTap ?? () => _openProducts(context, category),
             child: SizedBox(
               height: category.cardHeight > 0 ? category.cardHeight : null,
               child: Padding(

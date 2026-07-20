@@ -54,8 +54,8 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 					<input class="kidia-category-order" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][order]" value="<?php echo esc_attr( (string) $index ); ?>">
 					<input class="kidia-category-image-id" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][image_id]" value="<?php echo esc_attr( (string) $image_id ); ?>">
 					<div class="kidia-category-image-actions">
-						<button type="button" class="button button-secondary kidia-category-image-button"><?php esc_html_e( 'Change image', 'kidia-mobile-cms' ); ?></button>
-						<button type="button" class="button-link kidia-category-image-clear" <?php echo $image_id ? '' : 'hidden'; ?>><?php esc_html_e( 'Use WooCommerce image', 'kidia-mobile-cms' ); ?></button>
+						<button type="button" class="button button-secondary kidia-category-image-button<?php echo $image_id ? ' is-active' : ''; ?>" aria-pressed="<?php echo $image_id ? 'true' : 'false'; ?>"><?php esc_html_e( 'Change image', 'kidia-mobile-cms' ); ?></button>
+						<button type="button" class="button button-secondary kidia-category-image-clear<?php echo $image_id ? '' : ' is-active'; ?>" aria-pressed="<?php echo $image_id ? 'false' : 'true'; ?>"><?php esc_html_e( 'Use WooCommerce image', 'kidia-mobile-cms' ); ?></button>
 					</div>
 					<label class="kidia-category-visibility kidia-page-master-toggle">
 						<input type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][hidden]" value="1">
@@ -122,6 +122,8 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 								<label><?php esc_html_e( 'Card height (0 = automatic)', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $category_general['card_height'] ); ?>px</span><input type="range" min="0" max="320" step="4" name="category_general[card_height]" value="<?php echo esc_attr( (string) $category_general['card_height'] ); ?>"></label>
 								<label><?php esc_html_e( 'Merge up', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $category_general['margin_top'] ); ?>px</span><input type="range" min="0" max="80" name="category_general[margin_top]" value="<?php echo esc_attr( (string) $category_general['margin_top'] ); ?>"></label>
 								<label><?php esc_html_e( 'Merge down', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $category_general['margin_bottom'] ); ?>px</span><input type="range" min="0" max="80" name="category_general[margin_bottom]" value="<?php echo esc_attr( (string) $category_general['margin_bottom'] ); ?>"></label>
+								<label><?php esc_html_e( 'Space up', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $category_general['space_up'] ); ?>px</span><input type="range" min="0" max="80" name="category_general[space_up]" value="<?php echo esc_attr( (string) $category_general['space_up'] ); ?>"></label>
+								<label><?php esc_html_e( 'Space down', 'kidia-mobile-cms' ); ?><span class="kidia-range-value"><?php echo esc_html( (string) $category_general['space_down'] ); ?>px</span><input type="range" min="0" max="80" name="category_general[space_down]" value="<?php echo esc_attr( (string) $category_general['space_down'] ); ?>"></label>
 								<div class="kidia-settings-section-title"><?php esc_html_e( 'Colors & Appearance', 'kidia-mobile-cms' ); ?></div>
 								<label><?php esc_html_e( 'Page background', 'kidia-mobile-cms' ); ?><input type="color" name="category_general[page_background_color]" value="<?php echo esc_attr( $category_general['page_background_color'] ); ?>"></label>
 								<label><?php esc_html_e( 'Background color', 'kidia-mobile-cms' ); ?><input type="color" name="category_general[element_background_color]" value="<?php echo esc_attr( $category_general['element_background_color'] ); ?>"></label>

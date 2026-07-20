@@ -18,6 +18,8 @@ class CatalogCategory {
     this.cardHeight = 0,
     this.marginTop = 0,
     this.marginBottom = 0,
+    this.spaceUp = 0,
+    this.spaceDown = 0,
     this.pageBackgroundColor = '#F7F8FA',
     this.elementBackgroundColor = '#FFFFFF',
     this.cardStyle = 'outlined',
@@ -62,6 +64,8 @@ class CatalogCategory {
   final double cardHeight;
   final double marginTop;
   final double marginBottom;
+  final double spaceUp;
+  final double spaceDown;
   final String pageBackgroundColor;
   final String elementBackgroundColor;
   final String cardStyle;

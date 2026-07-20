@@ -271,7 +271,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 					self::field( 'filter_brand', __( 'Available filter: Brand', 'kidia-mobile-cms' ), 'checkbox', true ),
 					self::field( 'filter_size', __( 'Available filter: Size', 'kidia-mobile-cms' ), 'checkbox', true ),
 					self::field( 'block_width', __( 'Filter block width (%)', 'kidia-mobile-cms' ), 'number', 100, array(), 40, 100 ),
-					self::field( 'block_height', __( 'Filter block height', 'kidia-mobile-cms' ), 'number', 68, array(), 48, 100 ),
+					self::field( 'block_height', __( 'Filter block height', 'kidia-mobile-cms' ), 'number', 56, array(), 48, 100 ),
 					self::field( 'icon_size', __( 'Icon size', 'kidia-mobile-cms' ), 'number', 22, array(), 14, 36 ),
 					self::field( 'filter_icon_offset_y', __( 'Filter icon vertical position', 'kidia-mobile-cms' ), 'number', -2, array(), -8, 8 ),
 					self::field( 'button_radius', __( 'Button radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 28 ),
@@ -305,6 +305,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$presentation = array(
 			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'margin_bottom', __( 'Merge down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_up', __( 'Space up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_down', __( 'Space down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
@@ -473,7 +475,14 @@ final class Kidia_Mobile_Page_Layout_Store {
 	private function merge_element( array $definition, array $saved ): array {
 		$element = $this->default_element( $definition );
 		$element['enabled'] = ! empty( $saved['enabled'] );
-		$element['settings'] = $this->sanitize_settings( is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array(), $definition['fields'] );
+		$saved_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
+		// Preserve the old single vertical-padding value when upgrading to the two
+		// independent outside spacing controls. Explicit new values always win.
+		if ( array_key_exists( 'padding_vertical', $saved_settings ) ) {
+			if ( ! array_key_exists( 'space_up', $saved_settings ) ) { $saved_settings['space_up'] = $saved_settings['padding_vertical']; }
+			if ( ! array_key_exists( 'space_down', $saved_settings ) ) { $saved_settings['space_down'] = $saved_settings['padding_vertical']; }
+		}
+		$element['settings'] = $this->sanitize_settings( $saved_settings, $definition['fields'] );
 		return $element;
 	}
 

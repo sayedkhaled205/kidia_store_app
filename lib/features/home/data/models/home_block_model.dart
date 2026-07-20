@@ -855,6 +855,32 @@ abstract final class HomeBlockModel {
         minimum: 0,
         maximum: 80,
       ),
+      spaceUp: _boundedDouble(
+        presentation,
+        'space_up',
+        fallback: _boundedDouble(
+          presentation,
+          'padding_vertical',
+          fallback: 0,
+          minimum: 0,
+          maximum: 40,
+        ),
+        minimum: 0,
+        maximum: 80,
+      ),
+      spaceDown: _boundedDouble(
+        presentation,
+        'space_down',
+        fallback: _boundedDouble(
+          presentation,
+          'padding_vertical',
+          fallback: 0,
+          minimum: 0,
+          maximum: 40,
+        ),
+        minimum: 0,
+        maximum: 80,
+      ),
       marginHorizontal: _boundedDouble(
         presentation,
         'margin_horizontal',

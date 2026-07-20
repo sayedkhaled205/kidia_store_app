@@ -26,6 +26,7 @@
 .kidia-category-preview-child .kidia-category-preview-image { margin-inline: auto; }
 .kidia-category-preview-child .kidia-category-preview-name { width: 100%; }
 .kidia-category-preview-empty { padding: 80px 14px; color: #646970; font-size: 12px; text-align: center; }
+.kidia-category-preview-back { grid-column: 1 / -1; display: inline-flex; width: max-content; min-height: 32px; align-items: center; gap: 6px; padding: 4px 10px; border: 0; border-radius: 8px; background: #edf7f4; color: #2f806e; cursor: pointer; font-weight: 700; }
 .kidia-category-phone__content { display:flex; min-height:calc(100% - 27px); flex-direction:column; }
 .kidia-category-preview-content { flex:1; overflow:hidden; padding:7px 6px; }
 .kidia-category-preview-content.is-layout-visual_grid,
@@ -51,8 +52,10 @@
 .is-layout-circular_grid .kidia-category-preview-chevron,
 .is-layout-compact_grid .kidia-category-preview-chevron { display:none; }
 .is-layout-sidebar { display:grid; grid-template-columns:88px minmax(0,1fr); gap:var(--category-card-gap,10px); padding:7px 0; }
+.is-layout-sidebar.is-root-stage { grid-template-columns:1fr; }
+.is-layout-sidebar.is-showing-children { grid-template-columns:1fr; }
 .kidia-category-preview-sidebar { display:flex; flex-direction:column; background:#fff; }
-.kidia-category-preview-sidebar-root { padding:12px 5px; border-bottom:1px solid #edf0f2; text-align:center!important; }
+.kidia-category-preview-sidebar-root { width:100%; padding:12px 5px; border:0; border-bottom:1px solid #edf0f2; background:#fff; text-align:center!important; cursor:pointer; }
 .kidia-category-preview-sidebar-root:first-child { background:#e7f5f1; color:#236b59!important; }
 .kidia-category-preview-sidebar-detail { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:var(--category-card-gap,10px); padding-inline-end:6px; }
 .kidia-category-mobile-preview > p { margin: 10px 6px; color: #646970; font-size: 12px; }
@@ -84,7 +87,9 @@
 .kidia-category-settings input[type="number"] { max-width: 90px; min-height: 32px; width: 100%; }
 .kidia-category-settings input[type="color"] { height: 34px; padding: 2px; width: 54px; }
 .kidia-category-settings input[type="range"] { width: 100%; }
-.kidia-category-image-actions { align-items: center; display: flex; gap: 12px; grid-column: 1 / -1; }
+.kidia-category-image-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; grid-column: 1 / -1; }
+.kidia-category-image-actions .button { display: inline-flex; min-width: 150px; min-height: 35px; align-items: center; justify-content: center; margin: 0; }
+.kidia-category-image-actions .button.is-active { border-color:#236b59!important; background:#2f806e!important; color:#fff!important; }
 .kidia-settings-section-title { border-top: 1px solid #dcdcde; color: #1d2327; font-size: 14px; font-weight: 800; grid-column: 1 / -1; margin-top: 4px; padding-top: 12px; }
 .kidia-range-value { color: #2f806e; font-size: 12px; font-weight: 700; }
 .ui-sortable-helper .kidia-category-card { box-shadow: 0 8px 24px rgba(0,0,0,.15); }
@@ -124,7 +129,7 @@
 .kidia-category-element .kidia-category-name { grid-column:3; grid-row:1; margin:0!important; }
 .kidia-category-name > label { color:#315f55; font-size:11px; font-weight:700; }
 .kidia-category-name-input { width:100%; max-width:360px; min-height:36px; }
-.kidia-category-element .kidia-category-image-actions { grid-column:4; grid-row:1; display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
+.kidia-category-element .kidia-category-image-actions { grid-column:4; grid-row:1; display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:8px; }
 .kidia-category-element .kidia-category-visibility { grid-column:5; grid-row:1; }
 .kidia-category-element .kidia-category-expand,
 .kidia-category-element .kidia-category-expand-placeholder { grid-column:6; grid-row:1; }
@@ -142,6 +147,6 @@
 	.kidia-category-element .kidia-category-name { grid-column:3; }
 	.kidia-category-element .kidia-category-expand,
 	.kidia-category-element .kidia-category-expand-placeholder { grid-column:4; }
-	.kidia-category-element .kidia-category-image-actions { grid-column:2 / 4; grid-row:2; flex-direction:row; }
+	.kidia-category-element .kidia-category-image-actions { grid-column:2 / 4; grid-row:2; flex-direction:row; flex-wrap:wrap; }
 	.kidia-category-element .kidia-category-visibility { grid-column:4; grid-row:2; }
 }

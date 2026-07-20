@@ -150,6 +150,10 @@ void main() {
           'card_gap': 13,
           'card_width_percent': 76,
           'card_height': 144,
+          'margin_top': 7,
+          'margin_bottom': 8,
+          'space_up': 9,
+          'space_down': 10,
           'element_background_color': '#FDF4E7',
           'show_arrow': false,
           'image_size': 104,
@@ -182,6 +186,10 @@ void main() {
     expect(category.cardGap, 13);
     expect(category.cardWidthPercent, 76);
     expect(category.cardHeight, 144);
+    expect(category.marginTop, 7);
+    expect(category.marginBottom, 8);
+    expect(category.spaceUp, 9);
+    expect(category.spaceDown, 10);
     expect(category.elementBackgroundColor, '#FDF4E7');
     expect(category.showArrow, isFalse);
     expect(category.imageShape, 'circle');

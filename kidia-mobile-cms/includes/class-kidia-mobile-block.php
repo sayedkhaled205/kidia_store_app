@@ -200,6 +200,8 @@ abstract class Kidia_Mobile_Block {
 		$data['presentation'] = array(
 			'margin_top'        => $presentation['margin_top'],
 			'margin_bottom'     => $presentation['margin_bottom'],
+			'space_up'          => $presentation['space_up'],
+			'space_down'        => $presentation['space_down'],
 			'margin_horizontal' => $presentation['margin_horizontal'],
 			'padding_vertical'   => $presentation['padding_vertical'],
 			'padding_horizontal' => $presentation['padding_horizontal'],
@@ -231,6 +233,8 @@ abstract class Kidia_Mobile_Block {
 		return array(
 			'margin_top'        => 0,
 			'margin_bottom'     => 0,
+			'space_up'          => 0,
+			'space_down'        => 0,
 			'margin_horizontal' => 0,
 			'padding_vertical'   => 0,
 			'padding_horizontal' => 0,
@@ -251,6 +255,8 @@ abstract class Kidia_Mobile_Block {
 		return array(
 			'margin_top'        => min( 80, max( 0, absint( $settings['margin_top'] ?? 0 ) ) ),
 			'margin_bottom'     => min( 80, max( 0, absint( $settings['margin_bottom'] ?? 0 ) ) ),
+			'space_up'          => min( 80, max( 0, absint( $settings['space_up'] ?? $settings['padding_vertical'] ?? 0 ) ) ),
+			'space_down'        => min( 80, max( 0, absint( $settings['space_down'] ?? $settings['padding_vertical'] ?? 0 ) ) ),
 			'margin_horizontal' => min( 40, max( 0, absint( $settings['margin_horizontal'] ?? 0 ) ) ),
 			'padding_vertical'   => min( 40, max( 0, absint( $settings['padding_vertical'] ?? 0 ) ) ),
 			'padding_horizontal' => min( 40, max( 0, absint( $settings['padding_horizontal'] ?? 0 ) ) ),

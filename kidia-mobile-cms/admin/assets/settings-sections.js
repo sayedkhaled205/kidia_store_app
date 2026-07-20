@@ -16,11 +16,13 @@
 		icons: "Icons",
 		pagination: "Pagination",
 		section_layout: "Section Layout Settings",
+		filter_options: "Available Filters",
 		general: "General Settings"
 	};
-	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_above|space_below|block_background|background_color|element_background_color)\]$/;
+	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_up|space_down|block_background|element_background_color)\]$/;
 
 	function sectionFor(node) {
+		if (node.classList.contains("kidia-section-layout-field")) { return "section_layout"; }
 		var value = ((node.querySelector("label") || {}).textContent || "") + " " +
 			Array.prototype.map.call(node.querySelectorAll("input,select,textarea"), function (input) { return input.name || ""; }).join(" ");
 		value = value.toLowerCase();
@@ -51,6 +53,17 @@
 		var buckets = {};
 		children.forEach(function (node) {
 			var section = sectionFor(node);
+			var element = container.closest("[data-element]");
+			if (element && element.dataset.element === "product_grid" && section !== "section_layout") { section = "general"; }
+			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
+				var input = node.querySelector("input[name],select[name],textarea[name]");
+				var match = input && input.name.match(/\[settings\]\[([^\]]+)\]/);
+				var key = match ? match[1] : "";
+				if (/^(sticky|show_filter|show_sort|show_result_count)$/.test(key)) { section = "visibility"; }
+				else if (/^filter_(price|sale|brand|size)$/.test(key)) { section = "filter_options"; }
+				else if (/color$/.test(key)) { section = "colors"; }
+				else { section = "layout"; }
+			}
 			if (!buckets[section]) { buckets[section] = []; }
 			buckets[section].push(node);
 		});
@@ -70,14 +83,85 @@
 			container.classList.add("has-section-layout-settings");
 		}
 		container.dataset.kidiaSectioned = "1";
+		pairTitleAndSubtitle(container);
+		compactQuickAdd(container);
+	}
+
+	function pairTitleAndSubtitle(container) {
+		var fields = Array.prototype.slice.call(container.querySelectorAll(".kidia-page-field, .kidia-builder-field"));
+		fields.forEach(function (field) {
+			var input = field.querySelector('input[name$="[title]"]');
+			if (!input || field.closest(".kidia-title-subtitle-row")) { return; }
+			var subtitleName = input.name.replace(/\[title\]$/, "[subtitle]");
+			var siblings = Array.prototype.slice.call(field.parentElement.children).filter(function (candidate) { return candidate.matches(".kidia-page-field, .kidia-builder-field"); });
+			var subtitle = siblings.find(function (candidate) { return candidate.querySelector('[name="' + subtitleName.replace(/"/g, '\\"') + '"]'); });
+			if (!subtitle) { return; }
+			var row = document.createElement("div");
+			row.className = "kidia-title-subtitle-row";
+			field.parentNode.insertBefore(row, field);
+			row.appendChild(field);
+			row.appendChild(subtitle);
+		});
+	}
+
+	function compactQuickAdd(container) {
+		if (!container.closest('[data-element="product_grid"]') || container.querySelector(":scope > .kidia-quick-add-layout")) { return; }
+		var rows = [
+			["quick_add_enabled", "quick_add_icon_style", "quick_add_icon_variant"],
+			["quick_add_radius", "quick_add_icon_size", "quick_add_background_size"],
+			["quick_add_background_color", "quick_add_icon_color", "quick_add_show_background"]
+		];
+		var fields = {};
+		container.querySelectorAll(":scope > .kidia-page-field").forEach(function (field) {
+			var input = field.querySelector("[name]");
+			var match = input && input.name.match(/\[settings\]\[([^\]]+)\]/);
+			if (match) { fields[match[1]] = field; }
+		});
+		var position = fields.quick_add_position;
+		if (!position || !rows.some(function (row) { return row.some(function (key) { return fields[key]; }); })) { return; }
+		var layout = document.createElement("div");
+		layout.className = "kidia-quick-add-layout";
+		var controls = document.createElement("div");
+		controls.className = "kidia-quick-add-layout__controls";
+		rows.forEach(function (keys, index) {
+			var row = document.createElement("div");
+			row.className = "kidia-quick-add-row kidia-quick-add-row--" + (index + 1);
+			keys.forEach(function (key) { if (fields[key]) { row.appendChild(fields[key]); } });
+			controls.appendChild(row);
+		});
+		var preview = document.createElement("div");
+		preview.className = "kidia-quick-add-layout__preview";
+		preview.appendChild(position);
+		layout.appendChild(controls);
+		layout.appendChild(preview);
+		var general = container.querySelector(":scope > .kidia-settings-section-title--general");
+		if (general) { general.insertAdjacentElement("afterend", layout); } else { container.prepend(layout); }
 	}
 
 	function sectionAll(root) {
-		(root || document).querySelectorAll(".kidia-page-fields,.kidia-builder-settings-content,.kidia-category-settings").forEach(function (container) {
+		root = root || document;
+		var selector = ".kidia-page-fields,.kidia-builder-settings-content,.kidia-category-settings,.kidia-category-general-fields";
+		var containers = Array.prototype.slice.call(root.querySelectorAll(selector));
+		if (root.matches && root.matches(selector)) { containers.unshift(root); }
+		containers.forEach(function (container) {
 			/* Header/footer settings have their own item-based organization. */
 			if (!container.closest(".kidia-chrome-settings")) { addHeadings(container); }
 		});
-		enhanceProductPositions(root || document);
+		enhanceProductPositions(root);
+		updateRanges(root);
+	}
+
+	function updateRange(input) {
+		var min = Number(input.min || 0);
+		var max = Number(input.max || 100);
+		var value = Number(input.value || min);
+		var progress = max > min ? Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100)) : 0;
+		input.style.setProperty("--kidia-range-progress", progress + "%");
+	}
+
+	function updateRanges(root) {
+		if (root.matches && root.matches('input[type="range"]')) { updateRange(root); }
+		root.querySelectorAll('input[type="range"]').forEach(updateRange);
 	}
 
 	function enhanceProductPositions(root) {
@@ -112,6 +196,7 @@
 
 	document.addEventListener("DOMContentLoaded", function () {
 		sectionAll(document);
+		document.addEventListener("input", function (event) { if (event.target.matches && event.target.matches('input[type="range"]')) { updateRange(event.target); } });
 		if (window.MutationObserver) {
 			new MutationObserver(function (records) { records.forEach(function (record) { record.addedNodes.forEach(function (node) { if (node.nodeType === 1) { sectionAll(node); } }); }); }).observe(document.body, { childList: true, subtree: true });
 		}

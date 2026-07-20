@@ -81,10 +81,20 @@ void main() {
     );
     expect(find.byKey(const Key('categories-search-action')), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded));
+    final Container squareArtwork = tester.widget<Container>(
+      find.byKey(const Key('category-artwork-3')),
+    );
+    final BoxDecoration squareDecoration =
+        squareArtwork.decoration! as BoxDecoration;
+    final BorderRadius squareRadius =
+        squareDecoration.borderRadius! as BorderRadius;
+    expect(squareRadius.topLeft.x, 0);
+
+    await tester.tap(find.byKey(const Key('category-title-1')));
     await tester.pumpAndSettle();
 
     expect(find.text('Dresses'), findsOneWidget);
+    expect(find.text('Men'), findsNothing);
     final Finder roundedArtworkFinder = find.byKey(
       const Key('category-artwork-2'),
     );
@@ -99,14 +109,6 @@ void main() {
       roundedRadius.topLeft.x,
       closeTo(68 * responsiveScale * 0.18, 0.001),
     );
-    final Container squareArtwork = tester.widget<Container>(
-      find.byKey(const Key('category-artwork-3')),
-    );
-    final BoxDecoration squareDecoration =
-        squareArtwork.decoration! as BoxDecoration;
-    final BorderRadius squareRadius =
-        squareDecoration.borderRadius! as BorderRadius;
-    expect(squareRadius.topLeft.x, 0);
     expect(find.text('8 products'), findsNothing);
     expect(find.text('5 products'), findsNothing);
     expect(find.byType(SafeArea), findsWidgets);
@@ -132,6 +134,23 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(entry.value), findsOneWidget, reason: entry.key);
       expect(find.text('Women'), findsWidgets, reason: entry.key);
+      expect(find.text('Dresses'), findsNothing, reason: '${entry.key} roots');
+      final Padding sectionSpacing = tester.widget<Padding>(
+        find.byKey(const Key('category-section-layout-spacing')),
+      );
+      expect(sectionSpacing.padding, const EdgeInsets.only(top: 9, bottom: 10));
+      final Transform sectionMerge = tester.widget<Transform>(
+        find.byKey(const Key('category-section-layout-merge')),
+      );
+      expect(sectionMerge.transform.getTranslation().y, 1);
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Dresses'), findsOneWidget, reason: '${entry.key} children');
+      expect(find.text('Men'), findsNothing, reason: '${entry.key} children only');
+      expect(find.byKey(const Key('category-back-to-roots')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('category-back-to-roots')));
+      await tester.pumpAndSettle();
+      expect(find.text('Men'), findsOneWidget, reason: '${entry.key} back to roots');
       await tester.pumpWidget(const SizedBox.shrink());
     }
   });
@@ -296,6 +315,10 @@ class _ScreenCatalogRepository implements CatalogRepository {
           gridColumns: 4,
           cardRadius: 20,
           cardGap: 12,
+          marginTop: 7,
+          marginBottom: 8,
+          spaceUp: 9,
+          spaceDown: 10,
         ),
         CatalogCategory(
           id: 2,

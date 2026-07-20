@@ -575,6 +575,8 @@
 		var marginBottom = numberInRange(settings.margin_bottom, 0, 0, 80);
 		var marginHorizontal = numberInRange(settings.margin_horizontal, 0, 0, 40);
 		var paddingVertical = numberInRange(settings.padding_vertical, 0, 0, 40);
+		var spaceUp = numberInRange(settings.space_up, paddingVertical, 0, 80);
+		var spaceDown = numberInRange(settings.space_down, paddingVertical, 0, 80);
 		var paddingHorizontal = numberInRange(settings.padding_horizontal, 0, 0, 40);
 		var radius = numberInRange(settings.block_radius, 0, 0, 50);
 		var scale = numberInRange(settings.content_scale, 100, 80, 120) / 100;
@@ -583,7 +585,7 @@
 		return '<div class="kidia-preview-focus-target kidia-preview-block-frame" data-preview-block="' +
 			escapeHtml(block.id) +
 			'" style="margin:0 ' + marginHorizontal + 'px;transform:translateY(' + (marginBottom - marginTop) +
-			'px);padding:' + paddingVertical + 'px ' + paddingHorizontal + 'px;border-radius:' + radius +
+			'px);padding:' + spaceUp + 'px ' + paddingHorizontal + 'px ' + spaceDown + 'px;border-radius:' + radius +
 			'px;background:' + background + ';--kidia-preview-content-scale:' + scale + '">' +
 			'<div class="kidia-preview-block-frame__content">' + renderBlock(block) + '</div></div>';
 	}

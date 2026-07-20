@@ -114,7 +114,7 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
 		</div>
 		<div class="kidia-repeatable-items kidia-banner-grid-items"><?php foreach ( $items as $item_index => $item ) : $this->render_item( $index, $item_index, $item ); endforeach; ?></div>
-		<p><button type="button" class="button kidia-add-repeatable-item"><?php esc_html_e( 'Add Banner', 'kidia-mobile-cms' ); ?></button></p>
+		<p><button type="button" class="button kidia-add-repeatable-control kidia-add-repeatable-item"><?php esc_html_e( 'Add Banner +', 'kidia-mobile-cms' ); ?></button></p>
 		<script type="text/html" class="tmpl-kidia-repeatable-item"><?php $this->render_item( $index, '__ITEM_INDEX__', $this->empty_item() ); ?></script>
 		<?php
 	}

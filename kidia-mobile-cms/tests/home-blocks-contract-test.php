@@ -245,5 +245,6 @@ kidia_home_assert( false !== $builder_template, 'Home Builder block template mus
 kidia_home_assert( str_contains( $builder_template, 'kidia-builder-essentials' ), 'Every block must render the compact essentials panel.' );
 kidia_home_assert( str_contains( $builder_template, 'kidia-builder-settings-content' ), 'Every block must render settings inside the shared compact panel.' );
 kidia_home_assert( str_contains( $builder_template, '[settings][margin_top]' ) && str_contains( $builder_template, '[settings][margin_bottom]' ), 'Every Home element must expose Margin top and Margin bottom.' );
+kidia_home_assert( str_contains( $builder_template, '[settings][space_up]' ) && str_contains( $builder_template, '[settings][space_down]' ), 'Every Home element must expose Space up and Space down.' );
 
 fwrite( STDOUT, "Home block API contracts and App Header Builder regression test passed.\n" );

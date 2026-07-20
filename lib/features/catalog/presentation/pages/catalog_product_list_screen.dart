@@ -200,7 +200,7 @@ class _ProductListContent extends StatelessWidget {
               delegate: _CatalogToolbarHeaderDelegate(
                 extent: _elementExtent(
                   pageLayout.element('filter_bar'),
-                  pageLayout.element('filter_bar').number('block_height', 68).clamp(48, 100),
+                  pageLayout.element('filter_bar').number('block_height', 56).clamp(48, 100),
                 ),
                 child: CmsElementFrame(
                   component: pageLayout.element('filter_bar'),

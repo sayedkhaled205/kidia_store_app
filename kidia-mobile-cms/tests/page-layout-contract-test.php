@@ -46,16 +46,31 @@ foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page_with_elements => $_pa
 	foreach ( Kidia_Mobile_Page_Layout_Store::element_definitions( $page_with_elements ) as $definition ) {
 		$field_keys = array_column( $definition['fields'], 'key' );
 		$field_labels = array_column( $definition['fields'], 'label', 'key' );
-		kidia_page_assert( in_array( 'background_color', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose an element background setting." );
-		kidia_page_assert( 1 === count( array_keys( $field_keys, 'background_color', true ) ), "$page_with_elements.{$definition['type']} must expose the element background exactly once." );
-		kidia_page_assert( in_array( 'margin_top', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose Merge up." );
-		kidia_page_assert( in_array( 'margin_bottom', $field_keys, true ), "$page_with_elements.{$definition['type']} must expose Merge down." );
-		kidia_page_assert( 1 === count( array_keys( $field_keys, 'margin_top', true ) ), "$page_with_elements.{$definition['type']} must expose Merge up exactly once." );
-		kidia_page_assert( 1 === count( array_keys( $field_keys, 'margin_bottom', true ) ), "$page_with_elements.{$definition['type']} must expose Merge down exactly once." );
-		kidia_page_assert( 'Merge up' === $field_labels['margin_top'], "$page_with_elements.{$definition['type']} must label margin_top as Merge up." );
-		kidia_page_assert( 'Merge down' === $field_labels['margin_bottom'], "$page_with_elements.{$definition['type']} must label margin_bottom as Merge down." );
+		$element_name = $page_with_elements . '.' . $definition['id'];
+		kidia_page_assert( in_array( 'background_color', $field_keys, true ), "$element_name must expose an element background setting." );
+		kidia_page_assert( 1 === count( array_keys( $field_keys, 'background_color', true ) ), "$element_name must expose the element background exactly once." );
+		foreach ( array( 'margin_top', 'margin_bottom', 'space_up', 'space_down' ) as $layout_key ) {
+			kidia_page_assert( in_array( $layout_key, $field_keys, true ), "$element_name must expose $layout_key." );
+			kidia_page_assert( 1 === count( array_keys( $field_keys, $layout_key, true ) ), "$element_name must expose $layout_key exactly once." );
+		}
+		kidia_page_assert( 'Merge up' === $field_labels['margin_top'], "$element_name must label margin_top as Merge up." );
+		kidia_page_assert( 'Merge down' === $field_labels['margin_bottom'], "$element_name must label margin_bottom as Merge down." );
 	}
 }
+$catalog_default = $store->get_layout( 'catalog' );
+$catalog_ids = array_column( $catalog_default['elements'], 'id' );
+$legacy_catalog = $catalog_default;
+foreach ( $legacy_catalog['elements'] as &$legacy_element ) {
+	unset( $legacy_element['settings']['space_up'], $legacy_element['settings']['space_down'] );
+	$legacy_element['settings']['padding_vertical'] = 13;
+}
+unset( $legacy_element );
+$GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'] = $legacy_catalog;
+$migrated_catalog = $store->get_layout( 'catalog' );
+foreach ( $migrated_catalog['elements'] as $migrated_element ) {
+	kidia_page_assert( 13.0 === $migrated_element['settings']['space_up'] && 13.0 === $migrated_element['settings']['space_down'], 'Legacy vertical spacing must migrate without a visual reset.' );
+}
+unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'] );
 $catalog_default = $store->get_layout( 'catalog' );
 $catalog_ids = array_column( $catalog_default['elements'], 'id' );
 $catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];

@@ -112,6 +112,8 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 				'card_height'      => $general['card_height'],
 				'margin_top'       => $general['margin_top'],
 				'margin_bottom'    => $general['margin_bottom'],
+				'space_up'         => $general['space_up'],
+				'space_down'       => $general['space_down'],
 				'page_background_color' => $general['page_background_color'],
 				'element_background_color' => $general['element_background_color'],
 				'card_style'       => $general['card_style'],

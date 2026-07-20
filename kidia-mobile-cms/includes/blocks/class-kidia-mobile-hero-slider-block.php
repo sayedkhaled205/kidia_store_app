@@ -355,9 +355,9 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 		<p>
 			<button
 				type="button"
-				class="button kidia-add-hero-block-item"
+				class="button kidia-add-repeatable-control kidia-add-hero-block-item"
 			>
-				<?php echo esc_html__( 'Add Slide', 'kidia-mobile-cms' ); ?>
+				<?php echo esc_html__( 'Add Slide +', 'kidia-mobile-cms' ); ?>
 			</button>
 		</p>
 

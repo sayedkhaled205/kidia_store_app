@@ -132,6 +132,8 @@ class HomeBlockPresentation {
   const HomeBlockPresentation({
     this.marginTop = 0,
     this.marginBottom = 0,
+    this.spaceUp = 0,
+    this.spaceDown = 0,
     this.marginHorizontal = 0,
     this.paddingVertical = 0,
     this.paddingHorizontal = 0,
@@ -142,6 +144,8 @@ class HomeBlockPresentation {
 
   final double marginTop;
   final double marginBottom;
+  final double spaceUp;
+  final double spaceDown;
   final double marginHorizontal;
   final double paddingVertical;
   final double paddingHorizontal;
