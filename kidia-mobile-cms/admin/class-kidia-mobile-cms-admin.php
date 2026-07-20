@@ -769,6 +769,8 @@ final class Kidia_Mobile_CMS_Admin {
 								rest_url( 'woo-mobile/v1/home-layout' )
 							)
 						),
+						'livePreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/home-layout/preview' ) ),
+						'restNonce'           => wp_create_nonce( 'wp_rest' ),
 					)
             		);
             	}
