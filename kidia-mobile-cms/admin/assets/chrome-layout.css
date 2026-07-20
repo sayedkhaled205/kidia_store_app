@@ -118,6 +118,8 @@
 .kidia-app-header.is-transition-fade_slide { animation:kidia-header-fade-slide var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-smooth_compact.is-collapsed { animation:kidia-header-smooth-compact var(--collapse-duration,260ms) cubic-bezier(.2,.8,.2,1) both; }
 .kidia-app-header.is-transition-scale { transform-origin:top center; animation:kidia-header-scale var(--collapse-duration,260ms) ease both; }
+.kidia-app-header-transition-layer { display:flex; position:absolute; inset:0; flex-direction:column; justify-content:center; gap:var(--row-gap); padding:5px 9px; pointer-events:none; transition:none; }
+.kidia-app-header-transition-layer[style*="opacity:1"] { pointer-events:auto; }
 @keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }
 @keyframes kidia-header-fade-slide { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
