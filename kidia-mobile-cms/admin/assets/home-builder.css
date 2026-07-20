@@ -53,7 +53,10 @@
 	overflow-y: auto;
 	border-radius: 21px;
 	background: #f7f8fa;
+	scrollbar-width: none;
 }
+
+.kidia-mobile-preview__screen::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 .kidia-mobile-preview__status {
 	display: flex;
