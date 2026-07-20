@@ -401,9 +401,10 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				<div class="kidia-repeatable-item-actions">
 					<button type="button" class="button kidia-repeatable-remove kidia-remove-hero-block-item"><?php echo esc_html__( 'Remove', 'kidia-mobile-cms' ); ?></button>
 					<button type="button" class="button kidia-repeatable-add kidia-add-hero-block-item"><?php echo esc_html__( '+ Add Slide', 'kidia-mobile-cms' ); ?></button>
-					<label class="kidia-repeatable-item-toggle">
-						<?php echo esc_html__( 'Show', 'kidia-mobile-cms' ); ?>
+					<label class="kidia-page-master-toggle kidia-slider-item-toggle" aria-label="<?php esc_attr_e( 'Turn slide on or off', 'kidia-mobile-cms' ); ?>">
+						<input type="hidden" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="0">
 						<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="1" <?php checked( true, (bool) $item['enabled'] ); ?>>
+						<span class="kidia-toggle-state"></span>
 					</label>
 				</div>
 			</div>
