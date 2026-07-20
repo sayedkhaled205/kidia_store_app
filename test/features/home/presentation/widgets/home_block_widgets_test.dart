@@ -122,8 +122,15 @@ void main() {
     );
     expect(
       frame.padding.resolve(TextDirection.ltr),
-      const EdgeInsets.fromLTRB(10, 8, 10, 12),
+      const EdgeInsets.fromLTRB(10, 0, 10, 0),
     );
+    final Transform mergeTransform = tester.widget<Transform>(
+      find.descendant(
+        of: find.byKey(const Key('home-block-frame-space-1')),
+        matching: find.byType(Transform),
+      ).first,
+    );
+    expect(mergeTransform.transform.getTranslation().y, 4);
     expect(find.byType(HomeResponsiveScope), findsOneWidget);
   });
 
