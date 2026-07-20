@@ -41,31 +41,33 @@ class HomeBlockFrame extends StatelessWidget {
           child: ColoredBox(
             color: background,
             child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: style.paddingHorizontal * screenScale,
-              vertical: style.paddingVertical * screenScale,
-            ),
-            child: HomeResponsiveScope(
-              scale: screenScale * style.contentScale,
-              child: Builder(
-                builder: (BuildContext context) {
-                  final double contentScale = HomeResponsiveScope.of(context);
-                  final MediaQueryData media = MediaQuery.of(context);
-                  final double systemTextScale = media.textScaler.scale(1);
-                  return MediaQuery(
-                    data: media.copyWith(
-                      textScaler: TextScaler.linear(
-                        systemTextScale * contentScale,
-                      ),
-                    ),
-                    child: IconTheme.merge(
-                      data: IconThemeData(size: 24 * contentScale),
-                      child: child,
-                    ),
-                  );
-                },
+              padding: EdgeInsets.fromLTRB(
+                style.paddingHorizontal * screenScale,
+                style.spaceUp * screenScale,
+                style.paddingHorizontal * screenScale,
+                style.spaceDown * screenScale,
               ),
-            ),
+              child: HomeResponsiveScope(
+                scale: screenScale * style.contentScale,
+                child: Builder(
+                  builder: (BuildContext context) {
+                    final double contentScale = HomeResponsiveScope.of(context);
+                    final MediaQueryData media = MediaQuery.of(context);
+                    final double systemTextScale = media.textScaler.scale(1);
+                    return MediaQuery(
+                      data: media.copyWith(
+                        textScaler: TextScaler.linear(
+                          systemTextScale * contentScale,
+                        ),
+                      ),
+                      child: IconTheme.merge(
+                        data: IconThemeData(size: 24 * contentScale),
+                        child: child,
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ),

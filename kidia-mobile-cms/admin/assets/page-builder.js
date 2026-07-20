@@ -80,7 +80,7 @@
 			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
 			if (checked(card, "filter_size", true)) { buttons.push(icon("size") + '<b>المقاس</b>'); }
 			if (checked(card, "show_sort", true)) { buttons.push(icon("sort") + '<b>ترتيب</b>'); }
-			return '<div class="kidia-app-filter" style="width:' + number(card, "block_width", 100) + '%;height:' + number(card, "block_height", 68) + 'px;gap:' + number(card, "button_gap", 8) + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';--icon-size:' + number(card, "icon_size", 22) + 'px;--icon-color:' + color(card, "icon_color", "#1F2933") + '">' + buttons.map(function (button) { return '<button style="border-color:' + color(card, "border_color", "#DDE3E8") + ';border-radius:' + number(card, "button_radius", 12) + 'px">' + button + '</button>'; }).join("") + (checked(card, "show_result_count", true) ? '<small>24 منتج</small>' : "") + '</div>';
+			return '<div class="kidia-app-filter" style="width:' + number(card, "block_width", 100) + '%;height:' + number(card, "block_height", 56) + 'px;gap:' + number(card, "button_gap", 8) + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';--icon-size:' + number(card, "icon_size", 22) + 'px;--icon-color:' + color(card, "icon_color", "#1F2933") + ';--icon-offset-y:' + number(card, "filter_icon_offset_y", -2) + 'px">' + buttons.map(function (button) { return '<button style="border-color:' + color(card, "border_color", "#DDE3E8") + ';border-radius:' + number(card, "button_radius", 12) + 'px">' + button + '</button>'; }).join("") + (checked(card, "show_result_count", false) ? '<small>24 منتج</small>' : "") + '</div>';
 		}
 		if (id === "image_gallery") {
 			var image = first.image_url ? '<img src="' + escapeHtml(first.image_url) + '" alt="">' : '<span class="kidia-app-gallery__fallback">KIDIA</span>';
@@ -128,7 +128,7 @@
 		var header = root.querySelector('[data-element="header"]');
 		var footer = root.querySelector('[data-element="footer"]');
 		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '">';
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"padding_vertical",0)+'px '+number(card,"padding_horizontal",0)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0),legacySpace=number(card,"padding_vertical",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"space_up",legacySpace)+'px '+number(card,"padding_horizontal",0)+'px '+number(card,"space_down",legacySpace)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
 		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;
 		var headerNode = preview.querySelector(".kidia-app-header");

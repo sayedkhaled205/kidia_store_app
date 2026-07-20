@@ -495,6 +495,8 @@ final class Kidia_Mobile_Block_Registry {
 				array(
 					'margin_top'        => 0,
 					'margin_bottom'     => 0,
+					'space_up'          => 0,
+					'space_down'        => 0,
 					'margin_horizontal' => 0,
 					'padding_vertical'   => 0,
 					'padding_horizontal' => 0,

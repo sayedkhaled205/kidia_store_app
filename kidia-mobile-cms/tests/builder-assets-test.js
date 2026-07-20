@@ -387,31 +387,89 @@ function runHomeBuilderTest() {
 }
 
 function runMergeControlsContractTest() {
+	const homePage = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "home-builder.php"), "utf8");
   const template = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
   const registry = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-block-registry.php"), "utf8");
   const pageStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
   const pageBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
   const categoryBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
+  const chromeTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "fixed-chrome-card.php"), "utf8");
+  const heroBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-hero-slider-block.php"), "utf8");
+  const bannerBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-banner-grid-block.php"), "utf8");
   const homePreview = readAsset("home-builder.js");
   const pagePreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "page-builder.js"), "utf8");
   const categoryPreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "category-builder.js"), "utf8");
   const settingsSections = readAsset("settings-sections.js");
+	const schemaMap = registry.match(/private const SCHEMA_FILES = array\(([\s\S]*?)\n\t\);/);
+	assert.ok(schemaMap, "The Home registry schema map must remain discoverable by the coverage contract.");
+	const homeTypes = Array.from(schemaMap[1].matchAll(/^\s*'([a-z_]+)'\s*=>\s*'[a-z-]+',?$/gm), function (match) { return match[1]; });
 
+	assert.equal(homeTypes.length, 17, "The Section Layout contract must cover all 17 registered Home element types.");
+	assert.equal((homePage.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element + must render exactly once.");
+	const addElementIndex = homePage.indexOf('id="kidia-add-element"');
+	const renderedBlockIndex = homePage.lastIndexOf("admin/templates/block-template.php", addElementIndex);
+	const footerEditorIndex = homePage.indexOf("$chrome_part = 'footer'");
+	assert.ok(renderedBlockIndex < addElementIndex && addElementIndex < footerEditorIndex, "Add Element + must remain after the element list and before the footer editor.");
+	assert.match(heroBlockSource, /kidia-add-repeatable-control kidia-add-hero-block-item[\s\S]*Add Slide \+/, "Add Slide + must use the shared repeatable-add control.");
+	assert.match(bannerBlockSource, /kidia-add-repeatable-control kidia-add-repeatable-item[\s\S]*Add Banner \+/, "Add Banner + must use the same repeatable-add control.");
+	assert.match(chromeTemplate, /kidia-footer-toggle-row[\s\S]*array\( 'hide_on_scroll', 'safe_area', 'show_labels' \)/, "The three footer toggles must share the final ordered row.");
   assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
+  assert.match(template, /Space up[\s\S]*\[settings\]\[space_up\][\s\S]*Space down[\s\S]*\[settings\]\[space_down\]/, "Every Home element must expose the two independent section spacing controls.");
   assert.doesNotMatch(registry, /self::field\(\s*'margin_(?:top|bottom)'/, "Individual Home element schemas must not duplicate the shared merge controls.");
+	assert.match(registry, /'margin_top'\s*=>\s*0,[\s\S]*'margin_bottom'\s*=>\s*0,[\s\S]*'space_up'\s*=>\s*0,[\s\S]*'space_down'\s*=>\s*0/, "The central Home registry must preserve defaults for all four numeric Section Layout values.");
   assert.match(pageStore, /self::field\( 'margin_top', __\( 'Merge up'/, "Every page element must expose Merge up through shared presentation fields.");
   assert.match(pageStore, /self::field\( 'margin_bottom', __\( 'Merge down'/, "Every page element must expose Merge down through shared presentation fields.");
-  assert.match(pageBuilder, /return 'Layout & Spacing'/, "Page elements must group merge controls in Layout & Spacing.");
-  assert.match(categoryBuilder, /Layout & Spacing[\s\S]*Merge up[\s\S]*Merge down/, "Category merge controls must use the same Layout & Spacing section.");
+  assert.match(pageStore, /self::field\( 'space_up', __\( 'Space up'/, "Every page element must expose Space up through shared presentation fields.");
+  assert.match(pageStore, /self::field\( 'space_down', __\( 'Space down'/, "Every page element must expose Space down through shared presentation fields.");
+  assert.match(pageBuilder, /return 'Section Layout Settings'/, "Page elements must group the five shared controls in Section Layout Settings.");
+  assert.match(categoryBuilder, /Merge up[\s\S]*Merge down[\s\S]*Space up[\s\S]*Space down[\s\S]*element_background_color/, "Category must expose the same five Section Layout values.");
   assert.match(homePreview, /marginBottom - marginTop/, "Home preview must pull elements together instead of adding positive margins.");
   assert.match(pagePreview, /mergeDown-mergeUp/, "Page preview must pull elements together instead of adding positive margins.");
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
   assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
-  assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
+	assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
+	assert.match(settingsSections, /pairTitleAndSubtitle\(container\)/, "Every sectioned element must use the shared Title and Subtitle row enhancer.");
+	assert.match(settingsSections, /\(\(value - min\) \/ \(max - min\)\) \* 100/, "Range progress must derive from the real min, max and value instead of a fixed visual fill.");
+	assert.match(readAsset("admin-theme.css"), /input\[type="range"\]:hover::-(?:webkit-slider-thumb|moz-range-thumb)/, "Range sliders must keep the Kidia hover state.");
+	assert.match(readAsset("admin-theme.css"), /input\[type="range"\]:active::-(?:webkit-slider-thumb|moz-range-thumb)/, "Range sliders must keep the Kidia active state.");
+  assert.match(settingsSections, /quick_add_enabled[\s\S]*quick_add_icon_style[\s\S]*quick_add_icon_variant/, "Quick Add row one must contain its three related controls.");
+  assert.match(settingsSections, /quick_add_radius[\s\S]*quick_add_icon_size[\s\S]*quick_add_background_size/, "Quick Add row two must contain its three size controls.");
+	assert.match(settingsSections, /quick_add_background_color[\s\S]*quick_add_icon_color[\s\S]*quick_add_show_background/, "Quick Add row three must contain its three appearance controls.");
+	assert.match(settingsSections, /element\.dataset\.element === "filter_bar"/, "Filter and Sort Bar must have an explicit compact section layout.");
+	assert.match(settingsSections, /filter_options:\s*"Available Filters"/, "Filter and Sort Bar must group its available filters together.");
+	assert.match(readAsset("admin-theme.css"), /data-element="filter_bar"/, "Compact Filter and Sort Bar styles must target the real element id.");
+	assert.doesNotMatch(readAsset("admin-theme.css"), /data-element="filter_sort"/, "The obsolete Filter and Sort selector must not return.");
+	assert.match(pageStore, /'block_height'[^\n]+56/, "Filter and Sort Bar must use the compact 56px default height.");
+	assert.match(pagePreview, /checked\(card, "show_result_count", false\)/, "Filter result count must default to hidden in both Flutter and the live preview.");
+	assert.match(pagePreview, /filter_icon_offset_y", -2/, "Filter icon vertical position must reach the live preview.");
   assert.match(pageStore, /quick_add_icon_size[^\n]+array\(\), 10, 36/, "Quick Add icons must support compact sizes down to 10px.");
   assert.match(pageStore, /quick_add_background_size[^\n]+array\(\), 20, 64/, "Quick Add backgrounds must support compact sizes down to 20px.");
   assert.match(pageStore, /product_wishlist_icon_size[^\n]+array\(\), 10, 36/, "Wishlist icons must support compact sizes down to 10px.");
   assert.match(pageStore, /product_wishlist_background_size[^\n]+array\(\), 20, 64/, "Wishlist backgrounds must support compact sizes down to 20px.");
+
+	function layoutField(name, label, extraClass = "") {
+		return `<div class="kidia-page-field ${extraClass}"><label>${label}</label><input name="layout[elements][0][settings][${name}]" value="0"></div>`;
+	}
+	const quickKeys = ["quick_add_enabled", "quick_add_icon_style", "quick_add_icon_variant", "quick_add_radius", "quick_add_icon_size", "quick_add_background_size", "quick_add_background_color", "quick_add_icon_color", "quick_add_show_background"];
+	const quickMarkup = quickKeys.map(function (key) { return layoutField(key, key); }).join("") + layoutField("quick_add_position", "Quick add position");
+	const sharedMarkup = layoutField("margin_top", "Merge up", "kidia-section-layout-field") + layoutField("margin_bottom", "Merge down", "kidia-section-layout-field") + layoutField("space_up", "Space up", "kidia-section-layout-field") + layoutField("space_down", "Space down", "kidia-section-layout-field") + layoutField("background_color", "Background", "kidia-section-layout-field");
+	const categoryShared = ["margin_top", "margin_bottom", "space_up", "space_down", "element_background_color"].map(function (key) { return `<label>${key}<input name="category_general[${key}]" value="0"></label>`; }).join("");
+	const nestedTitlePair = `<div class="kidia-repeatable-item"><div class="kidia-builder-field"><input name="blocks[0][settings][items][0][title]"></div><div class="kidia-builder-field"><input name="blocks[0][settings][items][0][subtitle]"></div></div>`;
+	const sectionDom = new JSDOM(`<!doctype html><html><body><div class="kidia-page-builder"><section data-element="product_grid"><div id="product-fields" class="kidia-page-fields">${quickMarkup}${sharedMarkup}</div></section></div><div class="kidia-builder-wrap"><div class="kidia-builder-settings-content">${nestedTitlePair}</div></div><div class="kidia-category-builder"><div id="category-fields" class="kidia-category-general-fields">${categoryShared}</div></div></body></html>`, { runScripts: "outside-only" });
+	sectionDom.window.eval(settingsSections);
+	sectionDom.window.document.dispatchEvent(new sectionDom.window.Event("DOMContentLoaded"));
+	function sectionFieldCount(container) {
+		const heading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
+		assert.ok(heading, "Every tested element must render Section Layout Settings.");
+		let count = 0;
+		for (let node = heading.nextElementSibling; node && !node.classList.contains("kidia-settings-section-title"); node = node.nextElementSibling) { count += 1; }
+		return count;
+	}
+	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("product-fields")), 5, "Product Grid must render exactly five fields in Section Layout Settings.");
+	assert.equal(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-settings-section-title--general").length, 1, "Product Grid must render one General Settings section.");
+	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("category-fields")), 5, "Category must render exactly five fields in Section Layout Settings.");
+	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row"), function (row) { return row.children.length; }), [3, 3, 3], "Quick Add must render exactly three compact rows of three settings.");
+	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-repeatable-item > .kidia-title-subtitle-row").length, 1, "Nested Slide and Banner Title/Subtitle fields must share one row too.");
 }
 
 function categoryGeneralSettings() {
@@ -446,7 +504,7 @@ function categoryRow(id, name, hasChildren = false) {
 	      <div class="kidia-category-name"><input class="kidia-category-name-input" name="categories[${id}][name]" value="${name}"></div>
 	      <input class="kidia-category-order" name="categories[${id}][order]" value="0">
 	      <input class="kidia-category-image-id" name="categories[${id}][image_id]" value="0">
-	      <div class="kidia-category-image-actions"><button type="button" class="kidia-category-image-button">Choose image</button><button type="button" class="kidia-category-image-clear" hidden>Clear</button></div>
+	      <div class="kidia-category-image-actions"><button type="button" class="kidia-category-image-button" aria-pressed="false">Choose image</button><button type="button" class="kidia-category-image-clear is-active" aria-pressed="true">Clear</button></div>
 	      <label class="kidia-category-visibility kidia-page-master-toggle"><input type="hidden" name="categories[${id}][hidden]" value="1"><input type="checkbox" name="categories[${id}][hidden]" value="0" checked><span class="kidia-toggle-state"></span></label>
 	    </div>${child}
 	  </li>`;
@@ -484,12 +542,17 @@ function runCategoryBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-category-visibility .kidia-toggle-state").length, 3, "Every visibility toggle must expose the shared On/Off state label.");
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 2, "Root categories must render as app-style rows.");
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Subcategories start collapsed.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-image-actions button:not([hidden])").length, 6, "Both image-source buttons must remain visible for every category and subcategory.");
 
 	const layout = window.document.querySelector('[name="category_general[category_layout]"]');
 	["visual_grid", "circular_grid", "compact_grid", "sidebar", "default"].forEach((value) => {
 		layout.value = value;
 		layout.dispatchEvent(new window.Event("change", { bubbles: true }));
 		assert.ok(window.document.querySelector(`.kidia-category-preview-content.is-layout-${value}`), `${value} must change the live category preview.`);
+		assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, `${value} must initially show root categories only.`);
+		click(window, window.document.querySelector(value === "sidebar" ? ".kidia-category-preview-sidebar-root" : ".kidia-category-preview-expand"));
+		assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, `${value} must replace roots with only the selected subcategories.`);
+		click(window, window.document.querySelector(".kidia-category-preview-back"));
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
 
@@ -515,21 +578,22 @@ function runCategoryBuilderTest() {
 	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.transform, "translateY(-18px)", "Merge up must pull Category content toward the section above.");
 
   click(window, window.document.querySelector(".kidia-category-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expand must show subcategories instantly.");
-  assert.ok(window.document.querySelector(".kidia-category-preview-branch.is-expanded"), "Expanded branch styling must be applied.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Editor expansion must not mix subcategories into the mobile root list.");
 
 	  const size = window.document.querySelector('[name="category_general[image_size]"]');
   size.value = "96";
   size.dispatchEvent(new window.Event("input", { bubbles: true }));
   assert.equal(window.document.querySelector(".kidia-category-preview-root .kidia-category-preview-image").style.width, "78px", "Preview must clamp category art to the app row width.");
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expanded subcategories must stay open when live settings rerender the preview.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "The mobile root list must remain root-only when live settings rerender the preview.");
 
   click(window, window.document.querySelector(".kidia-category-preview-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Preview Expand control must collapse the matching category.");
-  assert.equal(window.document.querySelector(".kidia-category-expand").getAttribute("aria-expanded"), "false", "Preview collapse must synchronize the editor state.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Selecting a root category must replace roots with its subcategories.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 0, "Root categories must be hidden while subcategories are displayed.");
+  click(window, window.document.querySelector(".kidia-category-preview-back"));
+  assert.ok(window.document.querySelector(".kidia-category-preview-branch"), "Back must restore the root category list.");
   click(window, window.document.querySelector(".kidia-category-preview-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Preview Expand control must reopen the matching category.");
-  assert.equal(window.document.querySelector(".kidia-category-expand").getAttribute("aria-expanded"), "true", "Preview expansion must synchronize the editor state.");
+  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Preview selection must reopen the matching category detail.");
+  click(window, window.document.querySelector(".kidia-category-preview-back"));
 
 	  const appName = window.document.querySelector('[name="categories[1][name]"]');
 	  appName.value = "Kids Clothes";
@@ -539,8 +603,10 @@ function runCategoryBuilderTest() {
   click(window, window.document.querySelector(".kidia-category-image-button"));
   assert.match(window.document.querySelector(".kidia-category-image img").src, /custom-thumb\.jpg$/, "Choosing media must update the editor image.");
   assert.match(window.document.querySelector(".kidia-category-preview-image img").src, /custom-thumb\.jpg$/, "Choosing media must update the phone preview.");
+  assert.equal(window.document.querySelector(".kidia-category-image-button").getAttribute("aria-pressed"), "true", "The custom image source button must show its active state.");
   click(window, window.document.querySelector(".kidia-category-image-clear"));
   assert.match(window.document.querySelector(".kidia-category-image img").src, /default-1\.jpg$/, "Clear must restore the WooCommerce image.");
+  assert.equal(window.document.querySelector(".kidia-category-image-clear").getAttribute("aria-pressed"), "true", "The WooCommerce image source button must show its active state.");
 
   const shown = window.document.querySelector('[name="categories[2][hidden]"][type="checkbox"]');
   shown.checked = false;

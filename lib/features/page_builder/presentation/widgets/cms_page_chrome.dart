@@ -32,14 +32,28 @@ class CmsElementFrame extends StatelessWidget {
       child: Material(
         color: background,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: component
-                .number('padding_vertical', 0)
-                .clamp(0, 40)
-                .toDouble(),
-            horizontal: component
+          padding: EdgeInsets.fromLTRB(
+            component
                 .number('padding_horizontal', 0)
                 .clamp(0, 40)
+                .toDouble(),
+            component
+                .number(
+                  'space_up',
+                  component.number('padding_vertical', 0),
+                )
+                .clamp(0, 80)
+                .toDouble(),
+            component
+                .number('padding_horizontal', 0)
+                .clamp(0, 40)
+                .toDouble(),
+            component
+                .number(
+                  'space_down',
+                  component.number('padding_vertical', 0),
+                )
+                .clamp(0, 80)
                 .toDouble(),
           ),
           child: child,

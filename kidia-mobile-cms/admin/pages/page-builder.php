@@ -3,6 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 $field_section = static function ( string $key ): string {
+	if ( in_array( $key, array( 'margin_top', 'margin_bottom', 'space_up', 'space_down', 'background_color' ), true ) ) { return 'Section Layout Settings'; }
 	if ( 0 === strpos( $key, 'show_' ) || in_array( $key, array( 'sticky', 'enabled' ), true ) ) { return 'Visibility & display'; }
 	if ( false !== strpos( $key, 'image' ) || false !== strpos( $key, 'logo' ) || false !== strpos( $key, 'thumbnail' ) ) { return 'Images'; }
 	if ( false !== strpos( $key, 'search' ) ) { return 'Search'; }
@@ -28,7 +29,7 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 		$value = $settings[ $key ] ?? $field['default'];
 		$name = $name_prefix . '[settings][' . $key . ']';
 		?>
-		<div class="kidia-page-field<?php echo 'image' === $field['type'] ? ' kidia-page-field--image' : ''; ?>">
+		<div class="kidia-page-field<?php echo 'image' === $field['type'] ? ' kidia-page-field--image' : ''; ?><?php echo 'Section Layout Settings' === $section ? ' kidia-section-layout-field' : ''; ?>">
 			<label><?php echo esc_html( $field['label'] ); ?></label>
 			<?php if ( 'checkbox' === $field['type'] ) : ?>
 				<label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><span></span><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label>
