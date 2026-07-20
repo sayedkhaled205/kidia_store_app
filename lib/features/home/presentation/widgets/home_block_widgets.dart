@@ -389,62 +389,75 @@ class _HeroSliderBlockWidgetState extends State<HeroSliderBlockWidget> {
             aspectRatio: widget.block.aspectRatio,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(widget.block.borderRadius),
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: widget.block.items.length,
-                onPageChanged: (int page) {
-                  if (_currentPage == page) {
-                    return;
-                  }
-
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                itemBuilder: (BuildContext context, int index) {
-                  final HeroSlide slide = widget.block.items[index];
-
-                  return _HeroSlideCard(
-                    slide: slide,
-                    block: widget.block,
-                    onAction: widget.onAction,
-                  );
-                },
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.block.items.length,
+                    onPageChanged: (int page) {
+                      if (_currentPage == page) return;
+                      setState(() => _currentPage = page);
+                    },
+                    itemBuilder: (BuildContext context, int index) {
+                      final HeroSlide slide = widget.block.items[index];
+                      return _HeroSlideCard(
+                        slide: slide,
+                        block: widget.block,
+                        onAction: widget.onAction,
+                      );
+                    },
+                  ),
+                  if (widget.block.showIndicators &&
+                      widget.block.items.length > 1 &&
+                      widget.block.indicatorPosition == 'image_bottom')
+                    Positioned(
+                      right: 0,
+                      bottom: 12,
+                      left: 0,
+                      child: _indicators(colorScheme, insideImage: true),
+                    ),
+                ],
               ),
             ),
           ),
           if (widget.block.showIndicators &&
-              widget.block.items.length > 1) ...[
+              widget.block.items.length > 1 &&
+              widget.block.indicatorPosition == 'below') ...[
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List<Widget>.generate(widget.block.items.length, (
-                int index,
-              ) {
-                final bool selected = index == _currentPage;
-
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-                  width: selected && widget.block.indicatorStyle == 'pill'
-                      ? 22
-                      : 7,
-                  height: 7,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? colorScheme.primary
-                        : colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              }),
-            ),
+            _indicators(colorScheme),
           ],
         ],
       ),
     );
   }
+
+  Widget _indicators(ColorScheme colors, {bool insideImage = false}) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: List<Widget>.generate(widget.block.items.length, (int index) {
+      final bool selected = index == _currentPage;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        width: selected && widget.block.indicatorStyle == 'pill' ? 22 : 7,
+        height: 7,
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        decoration: BoxDecoration(
+          color: selected
+              ? (insideImage ? Colors.white : colors.primary)
+              : (insideImage
+                    ? Colors.white.withValues(alpha: 0.55)
+                    : colors.outlineVariant),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: insideImage
+              ? const <BoxShadow>[
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                ]
+              : null,
+        ),
+      );
+    }),
+  );
 }
 
 class _HeroSlideCard extends StatelessWidget {
