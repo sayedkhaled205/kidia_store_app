@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 12;
+	private const VERSION = 13;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -98,7 +98,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'cart_badge_size', __( 'Cart count size', 'kidia-mobile-cms' ), 'number', 18, array(), 12, 30 ),
 			self::field( 'cart_badge_background', __( 'Cart count background', 'kidia-mobile-cms' ), 'color', '#E94B5F' ),
 			self::field( 'cart_badge_text_color', __( 'Cart count text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
-			self::field( 'cart_size', __( 'Cart icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 16, 40 ),
+			self::field( 'cart_size', __( 'Cart icon size', 'kidia-mobile-cms' ), 'number', 28, array(), 16, 40 ),
 			self::field( 'cart_color', __( 'Cart icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'cart_background', __( 'Cart icon background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'cart_radius', __( 'Cart icon radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 24 ),
@@ -217,7 +217,17 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'quick_add_icon_color', __( 'Quick add icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'quick_add_show_background', __( 'White background behind icon', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'quick_add_background_color', __( 'Quick add background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'quick_add_background_size', __( 'Quick add background size', 'kidia-mobile-cms' ), 'number', 40, array(), 28, 64 ),
 			self::field( 'quick_add_radius', __( 'Quick add background radius', 'kidia-mobile-cms' ), 'number', 24, array(), 0, 40 ),
+			self::field( 'show_wishlist', __( 'Product wishlist icon', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'product_wishlist_icon_variant', __( 'Product wishlist icon shape', 'kidia-mobile-cms' ), 'select', 'heart', array( 'heart' => __( 'Heart', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded heart', 'kidia-mobile-cms' ), 'bookmark' => __( 'Bookmark', 'kidia-mobile-cms' ) ) ),
+			self::field( 'product_wishlist_icon_style', __( 'Product wishlist icon style', 'kidia-mobile-cms' ), 'select', 'outline', array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ) ) ),
+			self::field( 'product_wishlist_icon_size', __( 'Product wishlist icon size', 'kidia-mobile-cms' ), 'number', 20, array(), 16, 36 ),
+			self::field( 'product_wishlist_icon_color', __( 'Product wishlist icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+			self::field( 'product_wishlist_show_background', __( 'Product wishlist background', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'product_wishlist_background_color', __( 'Product wishlist background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'product_wishlist_background_size', __( 'Product wishlist background size', 'kidia-mobile-cms' ), 'number', 40, array(), 28, 64 ),
+			self::field( 'product_wishlist_radius', __( 'Product wishlist background radius', 'kidia-mobile-cms' ), 'number', 24, array(), 0, 40 ),
 			self::field( 'source', __( 'Source', 'kidia-mobile-cms' ), 'select', 'latest', array( 'latest' => __( 'Latest', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'featured' => __( 'Featured', 'kidia-mobile-cms' ), 'on_sale' => __( 'On sale', 'kidia-mobile-cms' ), 'manual' => __( 'Manual IDs', 'kidia-mobile-cms' ) ) ),
 			self::field( 'category_id', __( 'Category ID', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 999999999 ),
 			self::field( 'manual_product_ids', __( 'Manual Product IDs', 'kidia-mobile-cms' ), 'text', '' ),
@@ -240,7 +250,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'pagination_text_color', __( 'Pagination text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
-		$quick_add_keys = array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_radius' );
+		$quick_add_keys = array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_background_size', 'quick_add_radius', 'show_wishlist', 'product_wishlist_icon_variant', 'product_wishlist_icon_style', 'product_wishlist_icon_size', 'product_wishlist_icon_color', 'product_wishlist_show_background', 'product_wishlist_background_color', 'product_wishlist_background_size', 'product_wishlist_radius' );
 		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
 		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
 		$catalog_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $catalog_grid_keys, true ) ) );
@@ -420,7 +430,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$header_settings['icon_color'] = '#1F2933';
 			$header_settings['logo_width'] = 132;
 			$header_settings['logo_height'] = 42;
-			$header_settings['cart_size'] = 26;
+			$header_settings['cart_size'] = 28;
 			$header_settings['show_cart_badge'] = false;
 			$header_settings['logo_url'] = $this->site_logo_url();
 		}

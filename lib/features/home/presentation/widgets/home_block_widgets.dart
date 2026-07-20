@@ -7,6 +7,7 @@ import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_card.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 import 'package:video_player/video_player.dart';
 
 class AppHeaderBlockWidget extends StatelessWidget {
@@ -1349,6 +1350,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     showRating: block.showRating,
                     quickAddEnabled: block.quickAddEnabled,
                     quickAddAppearance: block.quickAddAppearance,
+					wishlistAppearance: block.wishlistAppearance,
                   ),
                 );
               },
@@ -1438,6 +1440,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       showRating: block.showRating,
                       quickAddEnabled: block.quickAddEnabled,
                       quickAddAppearance: block.quickAddAppearance,
+					  wishlistAppearance: block.wishlistAppearance,
                     );
                   },
                 );
@@ -2396,6 +2399,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.showRating = false,
     this.quickAddEnabled = true,
     this.quickAddAppearance,
+	this.wishlistAppearance = const ProductWishlistAppearance(),
   });
 
   final HomeProductItem product;
@@ -2411,6 +2415,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final bool showRating;
   final bool quickAddEnabled;
   final ProductQuickAddAppearance? quickAddAppearance;
+  final ProductWishlistAppearance wishlistAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -2439,6 +2444,8 @@ class _HomeProductCardAdapter extends StatelessWidget {
       reviewCount: product.reviewCount,
       quickAddProductId: quickAddEnabled ? product.id : null,
       quickAddAppearance: quickAddAppearance,
+	  wishlistProductId: product.id,
+	  wishlistAppearance: wishlistAppearance,
       onTap: action == null
           ? null
           : () {
