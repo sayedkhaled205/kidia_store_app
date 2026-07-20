@@ -79,10 +79,44 @@
 		var finalHeading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
 		if (finalHeading) {
 			container.appendChild(finalHeading);
-			(buckets.section_layout || []).forEach(function (node) { container.appendChild(node); });
+			container.appendChild(buildSectionLayoutGrid(buckets.section_layout || []));
 			container.classList.add("has-section-layout-settings");
 		}
 		container.dataset.kidiaSectioned = "1";
+	}
+
+	function sectionLayoutKey(field) {
+		var input = field.querySelector("input[name],select[name],textarea[name]");
+		var match = input && input.name.match(/\[([^\]]+)\]$/);
+		return match ? match[1] : "";
+	}
+
+	function buildSectionLayoutGrid(fields) {
+		var grid = document.createElement("div");
+		grid.className = "kidia-section-layout-grid";
+		var groups = [
+			{ name: "merge", keys: ["margin_top", "margin_bottom"] },
+			{ name: "space", keys: ["space_up", "space_down"] },
+			{ name: "background", keys: ["block_background", "background_color", "element_background_color"] }
+		];
+		var used = [];
+		groups.forEach(function (group) {
+			var column = document.createElement("div");
+			column.className = "kidia-section-layout-column kidia-section-layout-column--" + group.name;
+			group.keys.forEach(function (key) {
+				fields.forEach(function (field) {
+					if (used.indexOf(field) === -1 && sectionLayoutKey(field) === key) {
+						used.push(field);
+						column.appendChild(field);
+					}
+				});
+			});
+			grid.appendChild(column);
+		});
+		fields.forEach(function (field) {
+			if (used.indexOf(field) === -1) { grid.lastElementChild.appendChild(field); }
+		});
+		return grid;
 	}
 
 	function sectionAll(root) {

@@ -78,6 +78,34 @@
 	--kidia-settings-control-radius: 7px;
 }
 
+/* Shared final Section Layout arrangement: Merge, Space, then Background. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(150px, 1fr));
+	grid-column: 1 / -1;
+	order: 99;
+	gap: 12px 18px;
+	direction: inherit;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 11px;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column > :is(.kidia-page-field, .kidia-builder-field, label) {
+	width: 100%;
+	margin: 0;
+}
+
+@media (max-width: 782px) {
+	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-field, .kidia-builder-field, .kidia-category-settings label, .kidia-category-general-fields > label)
 	> :is(input[type="text"], input[type="url"], input[type="number"], input[type="datetime-local"], select),
