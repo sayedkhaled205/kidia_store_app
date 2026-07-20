@@ -115,7 +115,7 @@ $footer_icon_symbols = array(
 				return $field['key'] !== $variant_key && ! $is_placement_toggle( $chrome_part, $field['key'] ) && ! $is_redundant_ui_field( $chrome_part, $field['key'] ) && $item_field( $chrome_part, $field['key'] ) === $item;
 			} ) );
 			if ( 'header' === $chrome_part && 'logo' === $item ) {
-				$logo_order = array( 'logo_url' => 0, 'logo_text' => 1, 'logo_text_color' => 2, 'logo_width' => 3, 'logo_height' => 4, 'subtitle' => 5 );
+				$logo_order = array( 'logo_url' => 0, 'subtitle' => 1, 'logo_text' => 2, 'logo_width' => 3, 'logo_height' => 4, 'logo_text_color' => 5 );
 				usort( $item_fields, static function ( array $left, array $right ) use ( $logo_order ): int { return ( $logo_order[ $left['key'] ] ?? 99 ) <=> ( $logo_order[ $right['key'] ] ?? 99 ); } );
 			}
 			if ( ! $variant_field && ! $item_fields ) { continue; }
