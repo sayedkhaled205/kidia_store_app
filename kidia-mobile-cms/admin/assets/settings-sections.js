@@ -11,6 +11,7 @@
 		products: "Products & Data",
 		search: "Search Settings",
 		cart: "Cart Settings",
+		wishlist: "Wishlist Settings",
 		account: "Account Settings",
 		icons: "Icons",
 		pagination: "Pagination",
@@ -21,6 +22,8 @@
 		var value = ((node.querySelector("label") || {}).textContent || "") + " " +
 			Array.prototype.map.call(node.querySelectorAll("input,select,textarea"), function (input) { return input.name || ""; }).join(" ");
 		value = value.toLowerCase();
+		if (/quick_add|quick add/.test(value)) { return "cart"; }
+		if (/product_wishlist|product wishlist/.test(value)) { return "wishlist"; }
 		if (/pagination|products_per_page|load more|loader/.test(value)) { return "pagination"; }
 		if (/search/.test(value)) { return "search"; }
 		if (/cart|bag/.test(value)) { return "cart"; }

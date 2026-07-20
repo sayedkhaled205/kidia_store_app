@@ -10,6 +10,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('quick-add-product-42')), findsOneWidget);
+	final Finder shell = find.byKey(const Key('quick-add-shell-42'));
+	expect(tester.getSize(shell), const Size.square(40));
+	expect(find.byIcon(Icons.add_rounded), findsOneWidget);
   });
 
   testWidgets('owning product element can disable quick add', (

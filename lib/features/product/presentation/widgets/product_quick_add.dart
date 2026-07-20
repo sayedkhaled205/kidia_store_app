@@ -21,6 +21,7 @@ class ProductQuickAddButton extends StatelessWidget {
     this.showBackground = true,
     this.backgroundColor,
     this.backgroundRadius = 24,
+	this.backgroundSize = 40,
     this.appearance,
     super.key,
   });
@@ -34,6 +35,7 @@ class ProductQuickAddButton extends StatelessWidget {
   final bool showBackground;
   final Color? backgroundColor;
   final double backgroundRadius;
+  final double backgroundSize;
   final ProductQuickAddAppearance? appearance;
 
   IconData get _icon {
@@ -56,7 +58,13 @@ class ProductQuickAddButton extends StatelessWidget {
     if (productId <= 0 || !enabled) {
       return const SizedBox.shrink();
     }
-    return Material(
+	final double resolvedSize = (appearance?.backgroundSize ?? backgroundSize)
+		.clamp(28, 64)
+		.toDouble();
+    return SizedBox.square(
+	  key: Key('quick-add-shell-$productId'),
+	  dimension: resolvedSize,
+	  child: Material(
       color: (appearance?.showBackground ?? showBackground)
           ? appearance?.backgroundColor ?? backgroundColor ??
                 Theme.of(context).colorScheme.surface.withValues(alpha: 0.94)
@@ -88,10 +96,35 @@ class ProductQuickAddButton extends StatelessWidget {
             appearance?.iconColor ??
             iconColor ??
             Theme.of(context).colorScheme.onSurface,
-        icon: Icon(_icon),
+		padding: EdgeInsets.zero,
+		constraints: const BoxConstraints(),
+		icon: _buildIcon(),
       ),
+	  ),
     );
   }
+
+	Widget _buildIcon() {
+	  final double size = (appearance?.iconSize ?? iconSize).clamp(16, 36).toDouble();
+	  final String variant = appearance?.iconVariant ?? iconVariant;
+	  if (variant != 'bag') {
+		return Icon(_icon);
+	  }
+	  return SizedBox.square(
+		dimension: size,
+		child: Stack(
+		  clipBehavior: Clip.none,
+		  children: <Widget>[
+			Positioned.fill(child: Icon(_icon, size: size)),
+			PositionedDirectional(
+			  end: -1,
+			  bottom: -1,
+			  child: Icon(Icons.add_rounded, size: size * 0.46),
+			),
+		  ],
+		),
+	  );
+	}
 }
 
 class _ProductQuickAddSheet extends ConsumerStatefulWidget {

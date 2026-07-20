@@ -4,6 +4,8 @@ import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_price.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_button.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -34,6 +36,8 @@ class ProductCard extends StatelessWidget {
     this.reviewCount = 0,
     this.quickAddProductId,
     this.quickAddAppearance,
+	this.wishlistProductId,
+	this.wishlistAppearance = const ProductWishlistAppearance(),
   });
 
   final String name;
@@ -65,6 +69,8 @@ class ProductCard extends StatelessWidget {
   final int reviewCount;
   final int? quickAddProductId;
   final ProductQuickAddAppearance? quickAddAppearance;
+  final int? wishlistProductId;
+  final ProductWishlistAppearance wishlistAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +107,8 @@ class ProductCard extends StatelessWidget {
                 showBadge: showBadge,
                 quickAddProductId: quickAddProductId,
                 quickAddAppearance: quickAddAppearance,
+				wishlistProductId: wishlistProductId,
+				wishlistAppearance: wishlistAppearance,
               ),
               _ProductInformation(
                 name: name,
@@ -137,6 +145,8 @@ class _ProductImageSection extends StatelessWidget {
     required this.showBadge,
     required this.quickAddProductId,
     required this.quickAddAppearance,
+	required this.wishlistProductId,
+	required this.wishlistAppearance,
   });
 
   final String imageUrl;
@@ -150,6 +160,8 @@ class _ProductImageSection extends StatelessWidget {
   final bool showBadge;
   final int? quickAddProductId;
   final ProductQuickAddAppearance? quickAddAppearance;
+  final int? wishlistProductId;
+  final ProductWishlistAppearance wishlistAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -190,6 +202,15 @@ class _ProductImageSection extends StatelessWidget {
                 onPressed: onFavoritePressed!,
               ),
             ),
+		  if (onFavoritePressed == null && wishlistProductId != null && wishlistAppearance.enabled)
+			PositionedDirectional(
+			  top: 8,
+			  end: 8,
+			  child: ProductWishlistButton(
+				productId: wishlistProductId!,
+				appearance: wishlistAppearance,
+			  ),
+			),
           if (quickAddProductId != null && inStock)
             PositionedDirectional(
               end: 8,
