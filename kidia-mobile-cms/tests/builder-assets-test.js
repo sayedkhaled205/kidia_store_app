@@ -391,6 +391,7 @@ function runMergeControlsContractTest() {
   const homePreview = readAsset("home-builder.js");
   const pagePreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "page-builder.js"), "utf8");
   const categoryPreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "category-builder.js"), "utf8");
+  const settingsSections = readAsset("settings-sections.js");
 
   assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
   assert.doesNotMatch(registry, /self::field\(\s*'margin_(?:top|bottom)'/, "Individual Home element schemas must not duplicate the shared merge controls.");
@@ -401,6 +402,12 @@ function runMergeControlsContractTest() {
   assert.match(homePreview, /marginBottom - marginTop/, "Home preview must pull elements together instead of adding positive margins.");
   assert.match(pagePreview, /mergeDown-mergeUp/, "Page preview must pull elements together instead of adding positive margins.");
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
+  assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
+  assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
+  assert.match(pageStore, /quick_add_icon_size[^\n]+array\(\), 10, 36/, "Quick Add icons must support compact sizes down to 10px.");
+  assert.match(pageStore, /quick_add_background_size[^\n]+array\(\), 20, 64/, "Quick Add backgrounds must support compact sizes down to 20px.");
+  assert.match(pageStore, /product_wishlist_icon_size[^\n]+array\(\), 10, 36/, "Wishlist icons must support compact sizes down to 10px.");
+  assert.match(pageStore, /product_wishlist_background_size[^\n]+array\(\), 20, 64/, "Wishlist backgrounds must support compact sizes down to 20px.");
 }
 
 function categoryGeneralSettings() {
@@ -911,8 +918,9 @@ function runUniformChromeSettingsContractTest() {
 	assert.doesNotMatch(template, /Footer height, icon size and label size come from/, "Every footer must own its complete settings instead of borrowing another page's values.");
 	assert.doesNotMatch(styles, /data-chrome-part="footer"[^}]+data-setting="height"/, "Footer height must remain visible on every page.");
 	assert.match(styles, /kidia-chrome-item-setting--logo[^}]+grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, "Logo settings must use a compact three-column grid.");
-	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 2/, "The logo image control must use two columns instead of wasting a full row.");
-	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:100%/, "Logo controls must align at full column width.");
+	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 1/, "Logo image and subtitle must share the first compact row.");
+	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*1,\s*'logo_text'\s*=>\s*2/, "Subtitle must immediately follow the logo image in the first row.");
+	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,240px\)/, "Logo value controls must remain compact instead of filling empty space.");
 	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
