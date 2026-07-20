@@ -402,7 +402,7 @@ void main() {
     );
   });
 
-  testWidgets('uses the configured footer column width on mobile', (
+  testWidgets('centers the configured button width inside its footer column', (
     WidgetTester tester,
   ) async {
     _useTallSurface(tester);
@@ -419,11 +419,11 @@ void main() {
               <String, dynamic>{
                 'columns': <Map<String, dynamic>>[
                   <String, dynamic>{
-                    'width': 15,
+				    'width': 30,
                     'items': <String>['share', 'like'],
                   },
                   <String, dynamic>{
-                    'width': 85,
+				    'width': 70,
                     'items': <String>['add_to_cart'],
                   },
                 ],
@@ -445,8 +445,19 @@ void main() {
       find.byKey(const Key('product-add-to-cart-size')),
     );
 
-    expect(addToCartColumn.width / footerSize.width, closeTo(0.85, 0.01));
-    expect(addToCartButton.width, closeTo(addToCartColumn.width, 0.01));
+    expect(addToCartColumn.width / footerSize.width, closeTo(0.70, 0.01));
+    expect(addToCartButton.width / footerSize.width, closeTo(0.60, 0.01));
+    expect(
+      tester.getCenter(find.byKey(const Key('product-add-to-cart-size'))).dx,
+      closeTo(
+        tester
+            .getCenter(
+              find.byKey(const Key('product-footer-column-add_to_cart')),
+            )
+            .dx,
+        0.5,
+      ),
+    );
   });
 }
 

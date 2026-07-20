@@ -150,14 +150,9 @@ class CmsPageLayout {
               id: id,
               type: id,
               enabled: true,
-              settings: id == 'product_summary'
-                  ? const <String, dynamic>{
-                      'quick_add_enabled': true,
-                      'background_color': '#FFFFFF',
-                    }
-                  : const <String, dynamic>{
-                      'background_color': '#FFFFFF',
-                    },
+			  settings: const <String, dynamic>{
+			    'background_color': '#FFFFFF',
+			  },
             ),
           )
           .toList(growable: false),

@@ -64,8 +64,9 @@ void main() {
 	expect(
 	  product
 	      .element('product_summary')
-	      .boolean('quick_add_enabled', false),
-	  isTrue,
+	      .settings
+	      .containsKey('quick_add_enabled'),
+	  isFalse,
 	);
 	expect(product.footer.string('style', ''), 'product_action');
 	final dynamic productFooterRows = product.footer.json('layout_json')['rows'];

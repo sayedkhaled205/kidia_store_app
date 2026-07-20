@@ -41,7 +41,7 @@
 		var gap = number(card, "gap", 12);
 		return '<div class="kidia-app-products" style="--columns:' + columns + ';gap:' + gap + 'px">' + items.map(function (item) {
 			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<span class="kidia-app-product__fallback">K</span>';
-			return '<article class="kidia-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 16) + 'px"><div class="kidia-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", true) ? icon("heart") : "") + (checked(card, "show_badge", true) ? '<b class="kidia-app-badge">SALE</b>' : "") + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(item.name || "Kidia product") + '</strong>' + (checked(card, "show_rating", true) ? '<small class="kidia-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div></article>';
+			return '<article class="kidia-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 16) + 'px"><div class="kidia-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", true) ? icon("heart") : "") + (checked(card, "quick_add_enabled", true) ? '<span class="kidia-app-quick-add">' + icon("bag") + '</span>' : "") + (checked(card, "show_badge", true) ? '<b class="kidia-app-badge">SALE</b>' : "") + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(item.name || "Kidia product") + '</strong>' + (checked(card, "show_rating", true) ? '<small class="kidia-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div></article>';
 		}).join("") + '</div>';
 	}
 
@@ -162,6 +162,17 @@
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
+	// Clicking an empty builder area must release a previously focused control.
+	// Otherwise ArrowUp/ArrowDown keep changing that control and the page appears
+	// stuck instead of scrolling in the requested direction.
+	root.addEventListener("pointerdown", function (event) {
+		var target = event.target;
+		var active = window.document.activeElement;
+		var interactive = target && target.closest && target.closest("input, select, textarea, button, a, label, [contenteditable='true'], .kidia-page-drag, .kidia-builder-drag");
+		if (!interactive && active && root.contains(active) && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(active.tagName) && typeof active.blur === "function") {
+			active.blur();
+		}
+	});
 	root.addEventListener("click", function (event) {
 		var card=event.target.closest(".kidia-page-card");
 		if(card && event.target.closest(".kidia-page-card__header")){focusPreview(card);}

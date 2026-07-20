@@ -13,6 +13,7 @@ return array(
 		'card_style' => 'outlined', 'image_ratio' => 1, 'card_radius' => 20,
 		'show_name' => true, 'show_price' => true, 'show_regular_price' => true,
 		'show_badge' => true, 'show_rating' => false,
+		'quick_add_enabled' => true,
 	),
 	'fields'      => array(
 		array( 'key' => 'title', 'label' => __( 'Section title', 'kidia-mobile-cms' ), 'type' => 'text', 'default' => '' ),
@@ -31,5 +32,6 @@ return array(
 		array( 'key' => 'show_regular_price', 'label' => __( 'Show regular price', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => true ),
 		array( 'key' => 'show_badge', 'label' => __( 'Show sale badge', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => true ),
 		array( 'key' => 'show_rating', 'label' => __( 'Show rating', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => false ),
+		array( 'key' => 'quick_add_enabled', 'label' => __( 'Quick add to cart', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => true ),
 	),
 );

@@ -117,7 +117,9 @@ class CatalogProductCard extends StatelessWidget {
                               isError: !product.isInStock,
                             ),
                           ),
-                        if (product.isInStock)
+                        if (product.isInStock &&
+                            (settings?.boolean('quick_add_enabled', true) ??
+                                true))
                           PositionedDirectional(
                             end: 8,
                             bottom: 8,

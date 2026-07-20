@@ -1346,6 +1346,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     showRegularPrice: block.showRegularPrice,
                     showBadge: block.showBadge,
                     showRating: block.showRating,
+                    quickAddEnabled: block.quickAddEnabled,
                   ),
                 );
               },
@@ -1433,6 +1434,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       showRegularPrice: block.showRegularPrice,
                       showBadge: block.showBadge,
                       showRating: block.showRating,
+                      quickAddEnabled: block.quickAddEnabled,
                     );
                   },
                 );
@@ -2389,6 +2391,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.showRegularPrice = true,
     this.showBadge = true,
     this.showRating = false,
+    this.quickAddEnabled = true,
   });
 
   final HomeProductItem product;
@@ -2402,6 +2405,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final bool showRegularPrice;
   final bool showBadge;
   final bool showRating;
+  final bool quickAddEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2428,7 +2432,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
       showRating: showRating,
       rating: product.rating,
       reviewCount: product.reviewCount,
-      quickAddProductId: product.id,
+      quickAddProductId: quickAddEnabled ? product.id : null,
       onTap: action == null
           ? null
           : () {

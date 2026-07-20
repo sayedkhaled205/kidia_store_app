@@ -522,18 +522,25 @@ function runPageBuilderTest() {
   assert.match(storeSource, /self::field\( 'background_color', __\( 'Background color'.*'color', '#FFFFFF' \)/, "Every page element must receive one real background color picker.");
   assert.doesNotMatch(storeSource, /Element background \(blank = transparent\)/, "The obsolete duplicate text background field must be removed.");
   assert.match(storeSource, /'no_shadow' => __\( 'No shadow'/, "Card style settings must include an explicit no-shadow option.");
-  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' \)/, "Wishlist must expose only settings implemented by its mobile grid.");
+  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' \)/, "Wishlist must expose quick add and only settings implemented by its mobile grid.");
   assert.doesNotMatch(storeSource, /self::element\( 'account_menu'[\s\S]{0,500}Menu style/, "Account menu must not expose an unimplemented layout control.");
   const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
   assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
+  assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
+  const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
+  assert.match(catalogCardSource, /settings\?\.boolean\('quick_add_enabled', true\)/, "Catalog Product Grid must consume its own Quick Add setting.");
+  const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
+  assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
   const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
-  assert.match(pageTemplateSource, /Product General Settings/, "Quick add must appear in Product General Settings.");
-  assert.match(pageTemplateSource, /'quick_add_enabled' !== \$field\['key'\]/, "Quick add must not be duplicated inside Product Information.");
+  assert.doesNotMatch(pageTemplateSource, /Product General Settings/, "Quick add must not live in a separate global section.");
+  assert.doesNotMatch(pageTemplateSource, /product_quick_add_enabled/, "The obsolete global quick-add control must be removed.");
+  assert.match(storeSource, /\$catalog_grid_keys = array\( 'quick_add_enabled'/, "Catalog Product Grid must own its quick-add setting.");
+  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'quick_add_enabled'/, "Wishlist Products must own its quick-add setting.");
   const markup = `<!doctype html><html><body>
     <div class="kidia-page-builder" data-page="catalog">
       <div id="kidia-page-live-preview"></div>
-      <form><section class="kidia-page-card kidia-page-card--locked" data-element="header">
+      <form><div class="kidia-page-builder-blank"></div><section class="kidia-page-card kidia-page-card--locked" data-element="header">
         <div class="kidia-page-card__header"><button type="button" class="kidia-page-expand">Open</button></div>
         <div class="kidia-page-card__body" hidden><input name="layout[header][height]" value="64"></div>
         <input type="checkbox" name="layout[header][enabled]" checked>
@@ -560,6 +567,11 @@ function runPageBuilderTest() {
   list.kidiaSortableOptions.update();
   assert.equal(list.firstElementChild.querySelector('input[name$="[id]"]').name, "layout[elements][0][id]", "Reordering must keep submitted indexes valid.");
   assert.equal(window.document.querySelectorAll(".kidia-page-card--locked .kidia-page-drag").length, 0, "Fixed header/footer cards must never expose drag handles.");
+  const focusedNumber = window.document.querySelector('[name$="[settings][columns]"]');
+  focusedNumber.focus();
+  assert.equal(window.document.activeElement, focusedNumber, "The numeric field must accept focus.");
+  window.document.querySelector(".kidia-page-builder-blank").dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
+  assert.notEqual(window.document.activeElement, focusedNumber, "Clicking empty builder space must release the field so keyboard arrows can scroll.");
   console.log("Page Builders: fixed chrome, page elements, preview and sorting passed.");
 }
 
@@ -698,7 +710,7 @@ function runFooterPreviewControlsTest() {
 function runProductFooterButtonPreviewTest() {
 	const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-page="product">
 		<input type="checkbox" name="layout[footer][enabled]" checked>
-		<input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":20,"items":["share","like"]},{"width":80,"items":["add_to_cart"]}]}]}'>
+		<input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":30,"items":["share","like"]},{"width":70,"items":["add_to_cart"]}]}]}'>
 		<input name="layout[footer][settings][button_width_percent]" value="60">
 		<input name="layout[footer][settings][button_height]" value="48">
 		<select name="layout[footer][settings][button_style]"><option value="outline" selected>Outline</option></select>
@@ -714,9 +726,9 @@ function runProductFooterButtonPreviewTest() {
 	const { window } = dom;
 	window.eval(readAsset("chrome-layout.js"));
 	const preview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"), { page: "product" });
-	assert.match(preview, /grid-template-columns:minmax\(0,10fr\) minmax\(0,10fr\) minmax\(0,80fr\)/, "Composer column widths must control the button size and split a shared icon column evenly.");
+	assert.match(preview, /grid-template-columns:minmax\(0,15fr\) minmax\(0,15fr\) minmax\(0,70fr\)/, "Composer column widths must remain intact and split a shared icon column evenly.");
 	assert.match(preview, /kidia-app-footer-add is-outline/, "The selected button style must render in the preview.");
-	assert.match(preview, /width:100%;height:48px/, "Button height must render immediately while its column controls the width.");
+	assert.match(preview, /width:85\.71428571428571%;height:48px/, "A 60% button must be centered inside its wider 70% composer column.");
 	assert.match(preview, /background:transparent/, "Outline buttons must preview with a transparent fill.");
 	assert.match(preview, /border:2px solid #778899/, "Button border controls must render immediately.");
 	assert.match(preview, /border-radius:24px/, "Pill shape must derive its radius from the configured height.");

@@ -419,7 +419,7 @@
 		var rating = Number(item && item.rating ? item.rating : 0);
 		var style = settings && settings.card_style ? settings.card_style : "outlined";
 
-		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
+		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + (inStock && (!settings || settings.quick_add_enabled !== "") ? '<span class="kidia-preview-product-card__quick-add">♧</span>' : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
 	}
 
 	function renderBrandCard(item, itemWidth, settings) {
@@ -1352,6 +1352,15 @@
 			}
 		});
 	}
+
+	builder.addEventListener("pointerdown", function (event) {
+		var target = event.target;
+		var active = document.activeElement;
+		var interactive = target && target.closest && target.closest("input, select, textarea, button, a, label, [contenteditable='true'], .kidia-builder-drag");
+		if (!interactive && active && builder.contains(active) && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(active.tagName) && typeof active.blur === "function") {
+			active.blur();
+		}
+	});
 
 	document.addEventListener("keydown", function (event) {
 		if (event.key === "Escape") {

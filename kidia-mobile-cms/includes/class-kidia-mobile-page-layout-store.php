@@ -48,8 +48,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'logo_height', __( 'Logo height', 'kidia-mobile-cms' ), 'number', 38, array(), 20, 80 ),
 			self::field( 'style', __( 'Header style', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Standard', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 64, array(), 48, 120 ),
-			self::field( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Space below', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'row_gap', __( 'Space between rows', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
 			self::field( 'vertical_padding', __( 'Vertical padding', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
 			self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
@@ -141,8 +141,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'hide_on_scroll', __( 'Hide while scrolling down and show while scrolling up', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'style', __( 'Footer style', 'kidia-mobile-cms' ), 'select', 'navigation', array( 'navigation' => __( 'Bottom navigation', 'kidia-mobile-cms' ), 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'product_action' => __( 'Product action bar', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 76, array(), 48, 100 ),
-			self::field( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Space below', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'shadow', __( 'Shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'top_radius', __( 'Top corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
@@ -210,6 +210,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 	public static function element_definitions( string $page ): array {
 		$page = sanitize_key( $page );
 		$common_grid = array(
+			self::field( 'quick_add_enabled', __( 'Quick add to cart', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'source', __( 'Source', 'kidia-mobile-cms' ), 'select', 'latest', array( 'latest' => __( 'Latest', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'featured' => __( 'Featured', 'kidia-mobile-cms' ), 'on_sale' => __( 'On sale', 'kidia-mobile-cms' ), 'manual' => __( 'Manual IDs', 'kidia-mobile-cms' ) ) ),
 			self::field( 'category_id', __( 'Category ID', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 999999999 ),
 			self::field( 'manual_product_ids', __( 'Manual Product IDs', 'kidia-mobile-cms' ), 'text', '' ),
@@ -232,8 +233,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'pagination_text_color', __( 'Pagination text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
-		$catalog_grid_keys = array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' );
-		$wishlist_grid_keys = array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' );
+		$catalog_grid_keys = array( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' );
+		$wishlist_grid_keys = array( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' );
 		$catalog_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $catalog_grid_keys, true ) ) );
 		$wishlist_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $wishlist_grid_keys, true ) ) );
 
@@ -264,7 +265,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			),
 			'product' => array(
 				self::element( 'image_gallery', __( 'Product Gallery', 'kidia-mobile-cms' ), 'dashicons-format-gallery', array( self::field( 'aspect_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 1, array(), 0.6, 1.8, 0.1 ), self::field( 'fit', __( 'Image fit', 'kidia-mobile-cms' ), 'select', 'contain', array( 'contain' => __( 'Contain', 'kidia-mobile-cms' ), 'cover' => __( 'Cover', 'kidia-mobile-cms' ) ) ), self::field( 'show_thumbnails', __( 'Show thumbnails', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_indicators', __( 'Show indicators', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'enable_zoom', __( 'Enable zoom', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
-				self::element( 'product_summary', __( 'Product Information', 'kidia-mobile-cms' ), 'dashicons-info-outline', array( self::field( 'quick_add_enabled', __( 'Quick add to cart on every product card', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_name', __( 'Show name', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_sku', __( 'Show SKU', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_stock', __( 'Show stock', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_badge', __( 'Show badge', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'product_summary', __( 'Product Information', 'kidia-mobile-cms' ), 'dashicons-info-outline', array( self::field( 'show_name', __( 'Show name', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_sku', __( 'Show SKU', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_stock', __( 'Show stock', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_badge', __( 'Show badge', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
 				self::element( 'variations', __( 'Variations', 'kidia-mobile-cms' ), 'dashicons-screenoptions', array( self::field( 'style', __( 'Selector style', 'kidia-mobile-cms' ), 'select', 'chips', array( 'chips' => __( 'Chips', 'kidia-mobile-cms' ), 'dropdown' => __( 'Dropdown', 'kidia-mobile-cms' ) ) ) ) ),
 				self::element( 'purchase_bar', __( 'Quantity', 'kidia-mobile-cms' ), 'dashicons-cart', array( self::field( 'show_quantity', __( 'Show quantity', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
 				self::element( 'description', __( 'Description and Details', 'kidia-mobile-cms' ), 'dashicons-text-page', array( self::field( 'show_description', __( 'Show description', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_attributes', __( 'Show attributes', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
@@ -283,8 +284,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 		);
 
 		$presentation = array(
-			self::field( 'margin_top', __( 'Space above', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Space below', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
