@@ -135,7 +135,19 @@ $footer_icon_symbols = array(
 			</<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?>>
 		<?php endforeach; ?>
 		<?php if ( $footer_icon_group_open ) : ?></div></section><?php endif; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys, $section_layout_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php
+			$general_fields = array();
+			foreach ( $chrome_fields as $field ) {
+				$key = $field['key'];
+				if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys, $section_layout_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $general_fields[ $key ] = $field; }
+			}
+			if ( 'footer' === $chrome_part ) {
+				$footer_general_order = array( 'height', 'style', 'shadow', 'horizontal_padding', 'top_radius', 'side_spacing_percent', 'label_size', 'icon_size', 'icon_label_gap', 'border_width', 'border_color', 'inactive_color', 'active_color' );
+				foreach ( $footer_general_order as $key ) { if ( isset( $general_fields[ $key ] ) ) { $field = $general_fields[ $key ]; $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); unset( $general_fields[ $key ] ); } }
+				?><div class="kidia-footer-toggle-row"><?php foreach ( array( 'hide_on_scroll', 'safe_area', 'show_labels' ) as $key ) { if ( isset( $general_fields[ $key ] ) ) { $field = $general_fields[ $key ]; $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); unset( $general_fields[ $key ] ); } } ?></div><?php
+			}
+			foreach ( $general_fields as $key => $field ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); }
+		?></div></section>
 		<section class="kidia-chrome-setting kidia-chrome-setting--section-layout"><h3><?php esc_html_e( 'Section Layout Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-section-layout-grid">
 			<?php foreach ( $section_layout_groups as $group_index => $group_keys ) : ?><div class="kidia-section-layout-column kidia-section-layout-column--<?php echo esc_attr( array( 'merge', 'space', 'background' )[ $group_index ] ); ?>">
 				<?php foreach ( $group_keys as $layout_key ) { foreach ( $chrome_fields as $field ) { if ( $field['key'] === $layout_key ) { $render_chrome_field( $field, $chrome_settings[ $layout_key ] ?? $field['default'], $chrome_prefix . '[settings][' . $layout_key . ']' ); break; } } } ?>
