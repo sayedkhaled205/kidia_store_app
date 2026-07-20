@@ -26,7 +26,7 @@
 	var draggedBlock = null;
 	var previewBlocksById = {};
 	var previewBlocksByType = {};
-	var previewScrolled = false;
+	var previewCollapseProgress = 0;
 
 	form.addEventListener("click", function (event) {
 		var button = event.target.closest(".kidia-fixed-chrome-expand");
@@ -639,7 +639,7 @@
 
 	function renderFixedChrome(part) {
 		var card = form.querySelector('[data-chrome-part="' + part + '"]');
-		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card, "Kidia", { collapsed: previewScrolled, page: "home" }) : window.KidiaChromePreview.renderFooter(card, { page: "home" }); }
+		if (window.KidiaChromePreview) { return part === "header" ? window.KidiaChromePreview.renderHeader(card, "Kidia", { collapseProgress: previewCollapseProgress, page: "home" }) : window.KidiaChromePreview.renderFooter(card, { page: "home" }); }
 		if (!card || !chromeChecked(card, "enabled", true)) { return ""; }
 		if (part === "header") {
 			var searchBar = chromeValue(card, "search_style", "icon") === "bar" && chromeChecked(card, "show_search", true);
@@ -1386,10 +1386,9 @@
 
 	if (phoneScreen) {
 		phoneScreen.addEventListener("scroll", function () {
-			var next = phoneScreen.scrollTop > 1;
-			if (next !== previewScrolled) {
-				previewScrolled = next;
-				renderPreview();
+			previewCollapseProgress = Math.max(0, Math.min(1, phoneScreen.scrollTop / 64));
+			if (window.KidiaChromePreview) {
+				window.KidiaChromePreview.updateHeaderProgress(previewContent.querySelector(".kidia-app-header"), previewCollapseProgress);
 			}
 		}, { passive: true });
 	}
