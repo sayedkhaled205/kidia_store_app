@@ -15,13 +15,16 @@
 		account: "Account Settings",
 		icons: "Icons",
 		pagination: "Pagination",
+		section_layout: "Section Layout Settings",
 		general: "General Settings"
 	};
+	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_above|space_below|block_background|background_color|element_background_color)\]$/;
 
 	function sectionFor(node) {
 		var value = ((node.querySelector("label") || {}).textContent || "") + " " +
 			Array.prototype.map.call(node.querySelectorAll("input,select,textarea"), function (input) { return input.name || ""; }).join(" ");
 		value = value.toLowerCase();
+		if (Array.prototype.some.call(node.querySelectorAll("input,select,textarea"), function (input) { return sectionLayoutPattern.test(input.name || ""); })) { return "section_layout"; }
 		if (/quick_add|quick add/.test(value)) { return "cart"; }
 		if (/product_wishlist|product wishlist/.test(value)) { return "wishlist"; }
 		if (/pagination|products_per_page|load more|loader/.test(value)) { return "pagination"; }
@@ -60,6 +63,12 @@
 				buckets[section].forEach(function (node) { container.appendChild(node); });
 			}
 		});
+		var finalHeading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
+		if (finalHeading) {
+			container.appendChild(finalHeading);
+			(buckets.section_layout || []).forEach(function (node) { container.appendChild(node); });
+			container.classList.add("has-section-layout-settings");
+		}
 		container.dataset.kidiaSectioned = "1";
 	}
 
