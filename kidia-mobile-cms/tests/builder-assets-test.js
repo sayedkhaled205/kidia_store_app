@@ -647,7 +647,7 @@ function runChromeComposerTest() {
   assert.match(preview, /width:100%/, "Search width must be applied instantly as a percentage.");
 	assert.match(preview, /--row-gap:4px/, "The real gap between header rows must be reflected without browser-only scaling.");
 	assert.match(preview, /padding:0px 16px!important/, "Zero vertical padding must be reflected immediately instead of falling back to the default.");
-	assert.match(preview, /margin:7px 0 9px/, "Header space above and below must update the preview.");
+	assert.match(preview, /margin:7px 0px 9px/, "Header space above and below must update the preview.");
 	const searchWidth = card.querySelector('[name$="[search_width_percent]"]');
 	searchWidth.value = "150";
 	assert.match(window.KidiaChromePreview.renderHeader(card, "Home"), /width:100%/, "Search width must clamp to the full available row instead of silently overflowing.");
@@ -723,7 +723,11 @@ function runCollapsedHeaderToggleTest() {
   assert.match(collapsedPreview, /height:56px/, "Collapsed height must use the exact configured value.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
-  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
+	  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
+	  card.querySelector('[name$="[collapse_transition]"]').value = "smooth_compact";
+	  const halfwayPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0.5 });
+	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--regular/, "PatPat-style preview must keep the regular header layer while scrolling.");
+	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--compact/, "PatPat-style preview must blend in the compact header layer while scrolling.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
   toggle.checked = false;
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");

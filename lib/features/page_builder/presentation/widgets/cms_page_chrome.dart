@@ -124,8 +124,10 @@ class CmsPageScaffold extends StatefulWidget {
 class _CmsPageScaffoldState extends State<CmsPageScaffold> {
   static const double _collapseThreshold = 32;
   static const double _expandThreshold = 8;
+  static const double _patPatCollapseDistance = 64;
 
   bool _collapsed = false;
+  double _collapseProgress = 0;
 
   @override
   void initState() {
@@ -147,8 +149,20 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
     final bool next = enabled && (_collapsed
         ? extentBefore > _expandThreshold
         : extentBefore > _collapseThreshold);
-    if (next != _collapsed) {
-      setState(() => _collapsed = next);
+    final bool scrollLinked =
+        widget.layout.header.string('collapse_transition', 'smooth_compact') ==
+        'smooth_compact';
+    final double nextProgress = enabled
+        ? (extentBefore / _patPatCollapseDistance).clamp(0, 1).toDouble()
+        : 0;
+    if (next != _collapsed ||
+        (scrollLinked && (nextProgress - _collapseProgress).abs() > .001)) {
+      setState(() {
+        _collapsed = next;
+        _collapseProgress = scrollLinked
+            ? nextProgress
+            : (next ? 1 : 0);
+      });
     }
   }
 
@@ -175,6 +189,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
     if (oldWidget.layout.page != widget.layout.page ||
         !widget.layout.header.boolean('collapse_on_scroll', false)) {
       _collapsed = false;
+      _collapseProgress = 0;
     }
   }
 
@@ -199,11 +214,17 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
         widget.layout.header.number('search_height', 40).clamp(32, 64) +
         (widget.layout.header.number('vertical_padding', 8).clamp(0, 24) * 2);
     final bool needsCompactSearchRoom = transition == 'smooth_compact';
-    final double targetHeight = collapsed
-        ? (needsCompactSearchRoom && compactHeight < compactContentHeight
-              ? compactContentHeight
-              : compactHeight)
-        : widget.layout.header.number('height', 64).clamp(48, 120);
+    final double regularHeight = widget.layout.header
+        .number('height', 64)
+        .clamp(48, 120);
+    final double resolvedCompactHeight =
+        needsCompactSearchRoom && compactHeight < compactContentHeight
+        ? compactContentHeight
+        : compactHeight;
+    final double targetHeight = transition == 'smooth_compact'
+        ? regularHeight +
+              ((resolvedCompactHeight - regularHeight) * _collapseProgress)
+        : (collapsed ? resolvedCompactHeight : regularHeight);
     final Duration duration = transition == 'instant'
         ? Duration.zero
         : switch (widget.layout.header.string('collapse_speed', 'medium')) {
@@ -213,7 +234,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
           };
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: targetHeight),
-      duration: duration,
+      duration: transition == 'smooth_compact' ? Duration.zero : duration,
       curve: Curves.easeOutCubic,
       builder: (BuildContext context, double animatedHeight, Widget? child) =>
           Scaffold(
@@ -223,6 +244,9 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
               defaultTitle: widget.defaultTitle,
               actions: widget.actions,
               compact: collapsed,
+              collapseProgress: transition == 'smooth_compact'
+                  ? _collapseProgress
+                  : (collapsed ? 1 : 0),
               visibleHeight: animatedHeight,
             ),
             body: NotificationListener<ScrollNotification>(
@@ -242,6 +266,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.actions = const <CmsPageHeaderAction>[],
     this.compact = false,
+    this.collapseProgress,
     this.visibleHeight,
   });
 
@@ -249,6 +274,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String defaultTitle;
   final List<CmsPageHeaderAction> actions;
   final bool compact;
+  final double? collapseProgress;
   final double? visibleHeight;
 
   CmsPageComponent get _header => layout.header;
@@ -283,13 +309,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       'smooth_compact',
     );
     final Duration transitionDuration = _transitionDuration(transition);
-    final Color background = compact && compactStyle == 'transparent'
+    final Color regularBackground = _color(
+      _header.string('background_color', '#FFFFFF'),
+      Theme.of(context).colorScheme.surface,
+    );
+    final Color compactBackground = compactStyle == 'transparent'
         ? Colors.transparent
         : _color(
-            _header.string(
-              compact ? 'compact_background_color' : 'background_color',
-              '#FFFFFF',
-            ),
+            _header.string('compact_background_color', '#FFFFFF'),
             Theme.of(context).colorScheme.surface,
           );
     final Color foreground = _color(
@@ -299,38 +326,64 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final List<Map<String, dynamic>> rows = compact
         ? _compactLayoutRows()
         : _layoutRows();
-    final double padding = _header
+    final double progress = (collapseProgress ?? (compact ? 1 : 0))
+        .clamp(0, 1)
+        .toDouble();
+    final double regularPadding = _header
+        .number('horizontal_padding', 16)
+        .clamp(0, 32);
+    final double compactPadding = _header
+        .number('compact_horizontal_padding', 16)
+        .clamp(0, 32);
+    final double padding = _lerp(regularPadding, compactPadding, progress);
+    final double configuredSideMargin = _header
         .number(
-          compact ? 'compact_horizontal_padding' : 'horizontal_padding',
-          16,
+          'compact_side_margin',
+          compactStyle == 'floating' || compactStyle == 'pill' ? 8 : 0,
         )
         .clamp(0, 32);
-    final double sideMargin = compact
-        ? _header
-              .number(
-                'compact_side_margin',
-                compactStyle == 'floating' || compactStyle == 'pill' ? 8 : 0,
-              )
-              .clamp(0, 32)
-        : 0;
-    final double radius = compact
-        ? _header
-              .number(
-                'compact_radius',
-                compactStyle == 'pill'
-                    ? 40
-                    : compactStyle == 'floating'
-                    ? 16
-                    : 0,
-              )
-              .clamp(0, 40)
-        : _header.number('corner_radius', 0);
-    final String activeShadow = compact
-        ? _header.string(
-            'compact_shadow',
-            compactStyle == 'transparent' ? 'none' : 'subtle',
-          )
-        : _header.string('shadow', 'subtle');
+    final double sideMargin = _lerp(0, configuredSideMargin, progress);
+    final double regularRadius = _header.number('corner_radius', 0);
+    final double compactRadius = _header
+        .number(
+          'compact_radius',
+          compactStyle == 'pill'
+              ? 40
+              : compactStyle == 'floating'
+              ? 16
+              : 0,
+        )
+        .clamp(0, 40);
+    final double radius = _lerp(regularRadius, compactRadius, progress);
+    final String regularShadow = _header.string('shadow', 'subtle');
+    final String compactShadow = _header.string(
+      'compact_shadow',
+      compactStyle == 'transparent' ? 'none' : 'subtle',
+    );
+    final double elevation = _lerp(
+      _shadowElevation(regularShadow),
+      _shadowElevation(compactShadow),
+      progress,
+    );
+    final Color background = transition == 'smooth_compact'
+        ? Color.lerp(regularBackground, compactBackground, progress)!
+        : (compact ? compactBackground : regularBackground);
+    final Color regularBorder = _color(
+      _header.string('border_color', '#E2E6E4'),
+      Colors.transparent,
+    );
+    final Color compactBorder = _color(
+      _header.string('compact_border_color', '#E2E6E4'),
+      Colors.transparent,
+    );
+    final Color borderColor = transition == 'smooth_compact'
+        ? Color.lerp(regularBorder, compactBorder, progress)!
+        : (compact ? compactBorder : regularBorder);
+    final double borderWidth = _lerp(
+      _header.number('border_width', 0),
+      _header.number('compact_border_width', 0),
+      progress,
+    );
     return Padding(
       padding: EdgeInsets.fromLTRB(
         sideMargin,
@@ -344,25 +397,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 _header.string('style', 'standard') == 'transparent')
             ? background.withValues(alpha: 0)
             : background,
-        elevation: activeShadow == 'none'
-            ? 0
-            : activeShadow == 'strong'
-            ? 6
-            : 2,
+        elevation: elevation,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
           side: BorderSide(
-            color: _color(
-              _header.string(
-                compact ? 'compact_border_color' : 'border_color',
-                '#E2E6E4',
-              ),
-              Colors.transparent,
-            ),
-            width: _header.number(
-              compact ? 'compact_border_width' : 'border_width',
-              0,
-            ),
+            color: borderColor,
+            width: borderWidth,
           ),
         ),
         child: SafeArea(
@@ -375,7 +415,34 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 vertical: _header.number('vertical_padding', 8).clamp(0, 24),
               ),
               child: ClipRect(
-                child: AnimatedSwitcher(
+                child: transition == 'smooth_compact'
+                    ? Stack(
+                        key: const Key('cms-page-app-bar-scroll-transition'),
+                        alignment: Alignment.center,
+                        children: <Widget>[
+                          _scrollLinkedContent(
+                            context,
+                            rows: _layoutRows(),
+                            color: foreground,
+                            width: MediaQuery.sizeOf(context).width -
+                                (sideMargin * 2) -
+                                (padding * 2),
+                            opacity: 1 - progress,
+                            translateY: -24 * progress,
+                          ),
+                          _scrollLinkedContent(
+                            context,
+                            rows: _compactLayoutRows(),
+                            color: foreground,
+                            width: MediaQuery.sizeOf(context).width -
+                                (sideMargin * 2) -
+                                (padding * 2),
+                            opacity: progress,
+                            translateY: 14 * (1 - progress),
+                          ),
+                        ],
+                      )
+                    : AnimatedSwitcher(
                   key: const Key('cms-page-app-bar-transition'),
                   duration: transitionDuration,
                   reverseDuration: transitionDuration,
@@ -409,6 +476,56 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _lerp(num start, num end, double progress) =>
+      start.toDouble() + ((end.toDouble() - start.toDouble()) * progress);
+
+  double _shadowElevation(String shadow) => switch (shadow) {
+    'none' => 0,
+    'strong' => 6,
+    _ => 2,
+  };
+
+  Widget _scrollLinkedContent(
+    BuildContext context, {
+    required List<Map<String, dynamic>> rows,
+    required Color color,
+    required double width,
+    required double opacity,
+    required double translateY,
+  }) {
+    if (opacity <= .001) {
+      return const SizedBox.shrink();
+    }
+    return IgnorePointer(
+      ignoring: opacity < .5,
+      child: Opacity(
+        opacity: opacity.clamp(0, 1).toDouble(),
+        child: Transform.translate(
+          offset: Offset(0, translateY),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: width.clamp(1, double.infinity).toDouble(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: rows.indexed.expand((entry) sync* {
+                  if (entry.$1 > 0) {
+                    yield SizedBox(
+                      height: _header.number('row_gap', 8).clamp(0, 24),
+                    );
+                  }
+                  yield _headerRow(context, entry.$2, color);
+                }).toList(growable: false),
               ),
             ),
           ),

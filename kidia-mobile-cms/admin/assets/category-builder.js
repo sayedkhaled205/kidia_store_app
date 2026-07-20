@@ -13,7 +13,7 @@
 	var categoryElement = builder.find(".kidia-category-element").first();
 	var phoneScreen = builder.find(".kidia-category-phone__screen").get(0);
 	var expandedTerms = {};
-	var previewScrolled = false;
+	var previewCollapseProgress = 0;
 
 	if (!builder.length || !preview.length || !form.length || !general.length) {
 		return;
@@ -254,7 +254,7 @@
 		var card = builder.find('[data-chrome-part="' + part + '"]').first();
 		if (window.KidiaChromePreview) {
 			return part === "header"
-				? window.KidiaChromePreview.renderHeader(card.get(0), "الأقسام", { collapsed: previewScrolled, page: "category" })
+				? window.KidiaChromePreview.renderHeader(card.get(0), "الأقسام", { collapseProgress: previewCollapseProgress, page: "category" })
 				: window.KidiaChromePreview.renderFooter(card.get(0), { page: "category" });
 		}
 		return "";
@@ -405,10 +405,9 @@
 
 	if (phoneScreen) {
 		phoneScreen.addEventListener("scroll", function () {
-			var next = phoneScreen.scrollTop > 1;
-			if (next !== previewScrolled) {
-				previewScrolled = next;
-				renderMobilePreview();
+			previewCollapseProgress = Math.max(0, Math.min(1, phoneScreen.scrollTop / 64));
+			if (window.KidiaChromePreview) {
+				window.KidiaChromePreview.updateHeaderProgress(preview.get(0).querySelector(".kidia-app-header"), previewCollapseProgress);
 			}
 		}, { passive: true });
 	}
