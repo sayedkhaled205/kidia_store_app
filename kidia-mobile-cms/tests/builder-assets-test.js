@@ -229,6 +229,10 @@ function runHomeBuilderTest() {
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*300px minmax\(0, 1fr\)/, "The editor must reserve the five-percent wider phone preview without crowding the settings.");
 	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*283\.5px;[\s\S]*?margin-inline-start:\s*auto;/, "The Home phone must be five percent wider and shifted toward the element editor.");
+	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*translateX\(clamp\(35px,\s*calc\(11\.5cqw - 30px\),\s*130px\)\)/, "The Home phone must remain centered inside the real blank space beside the cards.");
+	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
+	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
+	assert.doesNotMatch(builderCss, /data-type="product_carousel"[^\{]*\.kidia-builder-block__actions\s*\{[^}]*direction:\s*ltr;/, "Product Carousel must not reverse the shared element action order.");
   assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*77%;/, "Element cards must be 10% wider than their previous 70% width.");
   assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?min-height:\s*70px;/, "Collapsed element cards must use the requested 70px height.");
   assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must keep the original three-column layout.");
@@ -462,6 +466,9 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(categoryBuilder, /kidia-category-phone__status/, "The Category preview must not render a fake operating-system status bar.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:283\.5px;[^}]*margin-inline-start:auto;/, "Every page phone must be five percent wider and closer to its settings.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:\s*275\.1px;[^}]*margin-inline-start:\s*auto;/, "The Category phone must be five percent wider and closer to its settings.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "Page phones must remain centered in the actual space beside their cards.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "The Category phone must remain centered in the actual space beside its cards.");
+	assert.match(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card > \.kidia-page-card__header\s*\{\s*direction:rtl;\s*\}[\s\S]*\.kidia-fixed-chrome-card > \.kidia-page-card__header \.kidia-chrome-transfer-actions\s*\{\s*direction:rtl;/, "Fixed Header and Footer cards must share the approved Copy, Paste, On/Off, and expand order.");
 	assert.match(settingsSections, /keys:\s*\["margin_top",\s*"margin_bottom"\]/, "Merge up and Merge down must share the first vertical column.");
 	assert.match(settingsSections, /keys:\s*\["space_up",\s*"space_down"\]/, "Space up and Space down must share the second vertical column.");
 	assert.match(settingsSections, /keys:\s*\["block_background",\s*"background_color",\s*"element_background_color"\]/, "The background control must use the final column across all Builder types.");
