@@ -128,11 +128,11 @@ class CatalogProductCard extends StatelessWidget {
 								enabled: true,
 								iconVariant: settings?.string('product_wishlist_icon_variant', 'heart') ?? 'heart',
 								iconStyle: settings?.string('product_wishlist_icon_style', 'outline') ?? 'outline',
-								iconSize: settings?.number('product_wishlist_icon_size', 20).clamp(16, 36).toDouble() ?? 20,
+								iconSize: settings?.number('product_wishlist_icon_size', 20).clamp(10, 36).toDouble() ?? 20,
 								iconColor: _quickAddColor(settings?.string('product_wishlist_icon_color', '#1F2933')),
 								showBackground: settings?.boolean('product_wishlist_show_background', true) ?? true,
 								backgroundColor: _quickAddColor(settings?.string('product_wishlist_background_color', '#FFFFFF')),
-								backgroundSize: settings?.number('product_wishlist_background_size', 40).clamp(28, 64).toDouble() ?? 40,
+								backgroundSize: settings?.number('product_wishlist_background_size', 40).clamp(20, 64).toDouble() ?? 40,
 								backgroundRadius: settings?.number('product_wishlist_radius', 24).clamp(0, 40).toDouble() ?? 24,
 								position: settings?.string('product_wishlist_position', 'top_end') ?? 'top_end',
 							  ),
@@ -151,7 +151,7 @@ class CatalogProductCard extends StatelessWidget {
                                   ? 22
                                   : settings!
                                         .number('quick_add_icon_size', 22)
-                                        .clamp(16, 36)
+                                        .clamp(10, 36)
                                         .toDouble(),
                               iconColor: _quickAddColor(settings?.string('quick_add_icon_color', '#1F2933')),
                               showBackground: settings?.boolean('quick_add_show_background', true) ?? true,
@@ -164,7 +164,7 @@ class CatalogProductCard extends StatelessWidget {
                                         .toDouble(),
 							  backgroundSize: settings == null
 								  ? 40
-								  : settings!.number('quick_add_background_size', 40).clamp(28, 64).toDouble(),
+								  : settings!.number('quick_add_background_size', 40).clamp(20, 64).toDouble(),
                             ),
                           ),
                       ],
