@@ -259,8 +259,6 @@ class _ProductListContent extends StatelessWidget {
 
   static double _elementExtent(CmsPageComponent component, double content) {
     return content +
-        component.number('margin_top', 0).clamp(0, 80) +
-        component.number('margin_bottom', 0).clamp(0, 80) +
         (component.number('padding_vertical', 0).clamp(0, 40) * 2);
   }
 }
@@ -533,15 +531,22 @@ class _CatalogProductGrid extends StatelessWidget {
     final double extent = baseExtent * 0.98;
     final double topSpacing = (width * 0.05).clamp(18, 24).toDouble();
 
-    final EdgeInsets outerSpacing = EdgeInsets.only(
-      top: settings.number('margin_top', 0).clamp(0, 80),
-      bottom: settings.number('margin_bottom', 0).clamp(0, 80),
-    );
+    final double mergeUp = settings
+        .number('margin_top', 0)
+        .clamp(0, 80)
+        .toDouble();
+    final double mergeDown = settings
+        .number('margin_bottom', 0)
+        .clamp(0, 80)
+        .toDouble();
+    const EdgeInsets outerSpacing = EdgeInsets.zero;
     final EdgeInsetsGeometry innerSpacing = EdgeInsetsDirectional.fromSTEB(
       16 + settings.number('padding_horizontal', 0).clamp(0, 40),
-      topSpacing + settings.number('padding_vertical', 0).clamp(0, 40),
+      (topSpacing - mergeUp).clamp(0, topSpacing).toDouble() +
+          settings.number('padding_vertical', 0).clamp(0, 40),
       16 + settings.number('padding_horizontal', 0).clamp(0, 40),
-      20 + settings.number('padding_vertical', 0).clamp(0, 40),
+      (20 - mergeDown).clamp(0, 20).toDouble() +
+          settings.number('padding_vertical', 0).clamp(0, 40),
     );
     return SliverPadding(
       key: const Key('catalog-product-grid-padding'),

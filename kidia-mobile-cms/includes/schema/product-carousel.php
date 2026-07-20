@@ -58,6 +58,13 @@ return array(
 		'show_rating' => false,
 
 		'quick_add_enabled' => true,
+		'quick_add_icon_variant' => 'bag',
+		'quick_add_icon_style' => 'outline',
+		'quick_add_icon_size' => 22,
+		'quick_add_icon_color' => '#1F2933',
+		'quick_add_show_background' => true,
+		'quick_add_background_color' => '#FFFFFF',
+		'quick_add_radius' => 24,
 
 	),
 
@@ -184,6 +191,13 @@ return array(
 		array( 'key' => 'show_badge', 'label' => __( 'Show sale badge', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
 		array( 'key' => 'show_rating', 'label' => __( 'Show rating', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
 		array( 'key' => 'quick_add_enabled', 'label' => __( 'Quick add to cart', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'quick_add_icon_variant', 'label' => __( 'Quick add icon shape', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'bag', 'options' => array( 'bag' => __( 'Shopping bag', 'kidia-mobile-cms' ), 'cart' => __( 'Shopping cart', 'kidia-mobile-cms' ), 'basket' => __( 'Shopping basket', 'kidia-mobile-cms' ) ) ),
+		array( 'key' => 'quick_add_icon_style', 'label' => __( 'Quick add icon style', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'outline', 'options' => array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded', 'kidia-mobile-cms' ) ) ),
+		array( 'key' => 'quick_add_icon_size', 'label' => __( 'Quick add icon size', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 22, 'min' => 16, 'max' => 36 ),
+		array( 'key' => 'quick_add_icon_color', 'label' => __( 'Quick add icon color', 'kidia-mobile-cms' ), 'type' => 'color', 'tab' => 'general', 'default' => '#1F2933' ),
+		array( 'key' => 'quick_add_show_background', 'label' => __( 'White background behind icon', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
+		array( 'key' => 'quick_add_background_color', 'label' => __( 'Quick add background color', 'kidia-mobile-cms' ), 'type' => 'color', 'tab' => 'general', 'default' => '#FFFFFF' ),
+		array( 'key' => 'quick_add_radius', 'label' => __( 'Quick add background radius', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 24, 'min' => 0, 'max' => 40 ),
 
 	),
 

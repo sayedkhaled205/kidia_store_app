@@ -10,7 +10,6 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variati
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
@@ -98,10 +97,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
-    final CmsPageComponent footerSize =
-        (ref.watch(cmsPageLayoutProvider('category')).value ??
-                CmsPageLayout.fallback('category'))
-            .footer;
     return CmsPageLayoutLoader(
       page: 'product',
       builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
@@ -125,7 +120,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ? _PurchaseBar(
                 controller: _controller,
                 footer: layout.footer,
-                sizeReference: footerSize,
                 hasCartConnection: widget.onAddToCart != null,
                 copy: copy,
                 onPressed: _handlePurchasePressed,
@@ -1085,7 +1079,6 @@ class _PurchaseBar extends StatelessWidget {
   const _PurchaseBar({
     required this.controller,
     required this.footer,
-    required this.sizeReference,
     required this.hasCartConnection,
     required this.copy,
     required this.onPressed,
@@ -1096,7 +1089,6 @@ class _PurchaseBar extends StatelessWidget {
 
   final ProductDetailController controller;
   final CmsPageComponent footer;
-  final CmsPageComponent sizeReference;
   final bool hasCartConnection;
   final _ProductCopy copy;
   final VoidCallback onPressed;
@@ -1124,14 +1116,16 @@ class _PurchaseBar extends StatelessWidget {
       footer.string('button_border_color', '#1F2933'),
       buttonColor,
     );
-    final double configuredFooterHeight = sizeReference
+    final double configuredFooterHeight = footer
         .number('height', 64)
-        .clamp(48, 100);
-    final double footerIconSize = sizeReference
+        .clamp(48, 100)
+        .toDouble();
+    final double footerIconSize = footer
         .number('icon_size', 24)
-        .clamp(14, 40);
+        .clamp(14, 40)
+        .toDouble();
     final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
-    final double footerLabelSize = sizeReference.number('label_size', 11).clamp(8, 20).toDouble();
+    final double footerLabelSize = footer.number('label_size', 11).clamp(8, 20).toDouble();
     final double footerIconLabelGap = footer.number('icon_label_gap', 3).clamp(0, 12).toDouble();
 	final Map<String, dynamic> footerLayout = footer.json('layout_json');
 	final dynamic rawRows = footerLayout['rows'];

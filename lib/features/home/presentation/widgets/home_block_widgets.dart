@@ -6,6 +6,7 @@ import 'package:kidia_store_app/features/home/presentation/widgets/home_block_fr
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_card.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
 import 'package:video_player/video_player.dart';
 
 class AppHeaderBlockWidget extends StatelessWidget {
@@ -1347,6 +1348,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     showBadge: block.showBadge,
                     showRating: block.showRating,
                     quickAddEnabled: block.quickAddEnabled,
+                    quickAddAppearance: block.quickAddAppearance,
                   ),
                 );
               },
@@ -1435,6 +1437,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       showBadge: block.showBadge,
                       showRating: block.showRating,
                       quickAddEnabled: block.quickAddEnabled,
+                      quickAddAppearance: block.quickAddAppearance,
                     );
                   },
                 );
@@ -2392,6 +2395,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.showBadge = true,
     this.showRating = false,
     this.quickAddEnabled = true,
+    this.quickAddAppearance,
   });
 
   final HomeProductItem product;
@@ -2406,6 +2410,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final ProductQuickAddAppearance? quickAddAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -2433,6 +2438,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
       rating: product.rating,
       reviewCount: product.reviewCount,
       quickAddProductId: quickAddEnabled ? product.id : null,
+      quickAddAppearance: quickAddAppearance,
       onTap: action == null
           ? null
           : () {

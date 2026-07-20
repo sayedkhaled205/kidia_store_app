@@ -19,12 +19,29 @@ class CmsElementFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final String raw = component.string('background_color', '#FFFFFF').trim();
     final Color background = _color(raw, Colors.white);
-    return Padding(
-      padding: EdgeInsets.only(top: component.number('margin_top', 0).clamp(0, 80), bottom: component.number('margin_bottom', 0).clamp(0, 80)),
+    final double mergeUp = component
+        .number('margin_top', 0)
+        .clamp(0, 80)
+        .toDouble();
+    final double mergeDown = component
+        .number('margin_bottom', 0)
+        .clamp(0, 80)
+        .toDouble();
+    return Transform.translate(
+      offset: Offset(0, mergeDown - mergeUp),
       child: Material(
         color: background,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: component.number('padding_vertical', 0).clamp(0, 40), horizontal: component.number('padding_horizontal', 0).clamp(0, 40)),
+          padding: EdgeInsets.symmetric(
+            vertical: component
+                .number('padding_vertical', 0)
+                .clamp(0, 40)
+                .toDouble(),
+            horizontal: component
+                .number('padding_horizontal', 0)
+                .clamp(0, 40)
+                .toDouble(),
+          ),
           child: child,
         ),
       ),
@@ -47,7 +64,18 @@ class CmsPageLayoutLoader extends ConsumerWidget {
     final AsyncValue<CmsPageLayout> state = ref.watch(
       cmsPageLayoutProvider(page),
     );
-    return builder(context, state.value ?? CmsPageLayout.fallback(page));
+    final CmsPageLayout? resolved = state.value;
+    if (resolved != null) {
+      return builder(context, resolved);
+    }
+    if (state.hasError) {
+      return builder(context, CmsPageLayout.fallback(page));
+    }
+    return const Scaffold(
+      body: SafeArea(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
   }
 }
 

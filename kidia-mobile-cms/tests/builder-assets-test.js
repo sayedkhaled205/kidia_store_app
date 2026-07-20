@@ -256,8 +256,6 @@ function runHomeBuilderTest() {
   const categoryBlock = window.document.querySelector('[data-type="category_grid"]');
   const categoryFrame = () => window.document.querySelector('[data-preview-block="category_grid_2"]');
   const presentationCases = [
-    ["margin_top", "13", "marginTop", "13px"],
-    ["margin_bottom", "17", "marginBottom", "17px"],
     ["margin_horizontal", "9", "marginLeft", "9px"],
     ["padding_vertical", "11", "paddingTop", "11px"],
     ["padding_horizontal", "7", "paddingLeft", "7px"],
@@ -269,6 +267,14 @@ function runHomeBuilderTest() {
     field.dispatchEvent(new window.Event("input", { bubbles: true }));
     assert.equal(categoryFrame().style[styleName], expected, `${fieldName} must update the Home preview instantly.`);
   });
+  const mergeUp = categoryBlock.querySelector('[name$="[settings][margin_top]"]');
+  const mergeDown = categoryBlock.querySelector('[name$="[settings][margin_bottom]"]');
+  mergeUp.value = "13";
+  mergeUp.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(categoryFrame().style.transform, "translateY(-13px)", "Merge up must pull the Home element toward the section above.");
+  mergeDown.value = "17";
+  mergeDown.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(categoryFrame().style.transform, "translateY(4px)", "Merge down must pull the Home element toward the section below.");
   const backgroundField = categoryBlock.querySelector('[name$="[settings][block_background]"]');
   backgroundField.value = "#eaf6f2";
   backgroundField.dispatchEvent(new window.Event("input", { bubbles: true }));
@@ -278,6 +284,8 @@ function runHomeBuilderTest() {
     field.value = "0";
     field.dispatchEvent(new window.Event("input", { bubbles: true }));
   });
+  mergeUp.value = "0";
+  mergeDown.value = "0";
   assert.equal(categoryFrame().style.marginTop, "0px", "Zero space above must join adjacent sections without a separator.");
   assert.equal(categoryFrame().style.marginBottom, "0px", "Zero space below must join adjacent sections without a separator.");
 
@@ -372,6 +380,27 @@ function runHomeBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Creating an element must append its template.");
 
   console.log("Home Builder: all 17 previews and toolbar/editor interactions passed.");
+}
+
+function runMergeControlsContractTest() {
+  const template = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
+  const registry = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-block-registry.php"), "utf8");
+  const pageStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
+  const pageBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+  const categoryBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
+  const homePreview = readAsset("home-builder.js");
+  const pagePreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "page-builder.js"), "utf8");
+  const categoryPreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "category-builder.js"), "utf8");
+
+  assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
+  assert.doesNotMatch(registry, /self::field\(\s*'margin_(?:top|bottom)'/, "Individual Home element schemas must not duplicate the shared merge controls.");
+  assert.match(pageStore, /self::field\( 'margin_top', __\( 'Merge up'/, "Every page element must expose Merge up through shared presentation fields.");
+  assert.match(pageStore, /self::field\( 'margin_bottom', __\( 'Merge down'/, "Every page element must expose Merge down through shared presentation fields.");
+  assert.match(pageBuilder, /return 'Layout & Spacing'/, "Page elements must group merge controls in Layout & Spacing.");
+  assert.match(categoryBuilder, /Layout & Spacing[\s\S]*Merge up[\s\S]*Merge down/, "Category merge controls must use the same Layout & Spacing section.");
+  assert.match(homePreview, /marginBottom - marginTop/, "Home preview must pull elements together instead of adding positive margins.");
+  assert.match(pagePreview, /mergeDown-mergeUp/, "Page preview must pull elements together instead of adding positive margins.");
+  assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
 }
 
 function categoryGeneralSettings() {
@@ -472,7 +501,7 @@ function runCategoryBuilderTest() {
 	const marginTop = window.document.querySelector('[name="category_general[margin_top]"]');
 	marginTop.value = "18";
 	marginTop.dispatchEvent(new window.Event("input", { bubbles: true }));
-	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.paddingTop, "32px", "Element top margin must be visible in the live preview.");
+	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.transform, "translateY(-18px)", "Merge up must pull Category content toward the section above.");
 
   click(window, window.document.querySelector(".kidia-category-expand"));
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expand must show subcategories instantly.");
@@ -522,21 +551,32 @@ function runPageBuilderTest() {
   assert.match(storeSource, /self::field\( 'background_color', __\( 'Background color'.*'color', '#FFFFFF' \)/, "Every page element must receive one real background color picker.");
   assert.doesNotMatch(storeSource, /Element background \(blank = transparent\)/, "The obsolete duplicate text background field must be removed.");
   assert.match(storeSource, /'no_shadow' => __\( 'No shadow'/, "Card style settings must include an explicit no-shadow option.");
-  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' \)/, "Wishlist must expose quick add and only settings implemented by its mobile grid.");
+  assert.match(storeSource, /\$quick_add_keys = array\( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_radius' \)/, "Every product grid must expose the complete Quick Add appearance settings.");
+  assert.match(storeSource, /\$wishlist_grid_keys = array_merge\( \$quick_add_keys/, "Wishlist must reuse the complete Quick Add settings.");
   assert.doesNotMatch(storeSource, /self::element\( 'account_menu'[\s\S]{0,500}Menu style/, "Account menu must not expose an unimplemented layout control.");
   const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
   assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
+  assert.match(wishlistSource, /quick_add_icon_variant/, "Wishlist must consume Quick Add appearance settings.");
   const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
   assert.match(catalogCardSource, /settings\?\.boolean\('quick_add_enabled', true\)/, "Catalog Product Grid must consume its own Quick Add setting.");
+  assert.match(catalogCardSource, /quick_add_background_color/, "Catalog Product Grid must consume Quick Add appearance settings.");
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
   const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	assert.match(pageTemplateSource, /Colors & appearance/, "Page element backgrounds must be grouped in Colors & Appearance.");
+	const homeTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
+	assert.equal((homeTemplateSource.match(/\[settings\]\[block_background\]/g) || []).length, 1, "Every Home element must render exactly one shared background control.");
+	assert.match(homeTemplateSource, /kidia-builder-settings-content[\s\S]*\[settings\]\[block_background\]/, "The Home element background must live with the sectioned element settings.");
+	const registrySource = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-block-registry.php"), "utf8");
+	assert.doesNotMatch(registrySource, /'key'\s*=>\s*'block_background'/, "Schema blocks must not duplicate the shared Home element background control.");
+	const categoryTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
+	assert.match(categoryTemplateSource, /Colors & Appearance[\s\S]*Background color[\s\S]*category_general\[element_background_color\]/, "Category element background must use the same label and Colors & Appearance section.");
   assert.doesNotMatch(pageTemplateSource, /Product General Settings/, "Quick add must not live in a separate global section.");
   assert.doesNotMatch(pageTemplateSource, /product_quick_add_enabled/, "The obsolete global quick-add control must be removed.");
-  assert.match(storeSource, /\$catalog_grid_keys = array\( 'quick_add_enabled'/, "Catalog Product Grid must own its quick-add setting.");
-  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'quick_add_enabled'/, "Wishlist Products must own its quick-add setting.");
+  assert.match(storeSource, /\$catalog_grid_keys = array_merge\( \$quick_add_keys/, "Catalog Product Grid must own its quick-add settings.");
+  assert.match(storeSource, /\$wishlist_grid_keys = array_merge\( \$quick_add_keys/, "Wishlist Products must own its quick-add settings.");
   const markup = `<!doctype html><html><body>
     <div class="kidia-page-builder" data-page="catalog">
       <div id="kidia-page-live-preview"></div>
@@ -696,7 +736,7 @@ function runFooterPreviewControlsTest() {
 	assert.match(preview, /border-radius:12px/, "Footer corner radius must update preview without browser-only scaling.");
 	assert.match(preview, /0 4px 12px/, "Footer shadow must update preview instantly.");
 	assert.match(preview, /kidia-app-footer-item--wishlist is-filled/, "Footer icon style must be applied to the preview.");
-	assert.doesNotMatch(preview, /kidia-app-footer-item--share/, "The preview must omit footer items that Flutter does not support on navigation pages.");
+	assert.match(preview, /kidia-app-footer-item--share/, "Every page preview must render every footer function placed by the merchant.");
 	assert.doesNotMatch(preview, /--item-icon-size:30px/, "Per-icon sizes must no longer move one footer icon out of alignment.");
 	assert.match(preview, /--item-icon-size:26px/, "Every footer icon must use the same shared size.");
 	assert.match(preview, /--label-gap:4px/, "The Category footer must preview its own icon and label spacing.");
@@ -847,8 +887,23 @@ function runCommercePreviewTest() {
   console.log("Commerce previews: real products and instant settings updates passed.");
 }
 
+function runUniformChromeSettingsContractTest() {
+	const template = fs.readFileSync(path.join(__dirname, "../admin/pages/fixed-chrome-card.php"), "utf8");
+	const styles = readAsset("chrome-layout.css");
+	const chrome = readAsset("chrome-layout.js");
+	assert.doesNotMatch(template, /\$chrome_items\s*=\s*'product'\s*===\s*\$chrome_page_name/, "Footer functions must not change between builder pages.");
+	for (const item of ["home", "categories", "search", "cart", "wishlist", "account", "orders", "share", "like", "add_to_cart"]) {
+		assert.match(template, new RegExp("'" + item + "'\\s*=>"), `Every footer must expose the ${item} function.`);
+	}
+	assert.doesNotMatch(template, /Footer height, icon size and label size come from/, "Every footer must own its complete settings instead of borrowing another page's values.");
+	assert.doesNotMatch(styles, /data-chrome-part="footer"[^}]+data-setting="height"/, "Footer height must remain visible on every page.");
+	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
+	console.log("Header/Footer settings and functions are uniform across all six page builders.");
+}
+
 if (require.main === module) {
   runHomeBuilderTest();
+  runMergeControlsContractTest();
   runCategoryBuilderTest();
   runPageBuilderTest();
   runChromeComposerTest();
@@ -857,7 +912,8 @@ if (require.main === module) {
 	runProductFooterButtonPreviewTest();
 	runChromeCopyPasteAndLogoMediaTest();
 	runUnsavedChangesDialogTest();
-	  runCommercePreviewTest();
+	runCommercePreviewTest();
+	runUniformChromeSettingsContractTest();
   console.log("Builder browser contract tests: ok");
 }
 

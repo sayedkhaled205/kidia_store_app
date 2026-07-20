@@ -56,6 +56,13 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_badge'     => true,
 			'show_rating'    => false,
 			'quick_add_enabled' => true,
+			'quick_add_icon_variant' => 'bag',
+			'quick_add_icon_style' => 'outline',
+			'quick_add_icon_size' => 22,
+			'quick_add_icon_color' => '#1F2933',
+			'quick_add_show_background' => true,
+			'quick_add_background_color' => '#FFFFFF',
+			'quick_add_radius' => 24,
 		);
 	}
 
@@ -141,6 +148,13 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_badge'     => ! empty( $settings['show_badge'] ),
 			'show_rating'    => ! empty( $settings['show_rating'] ),
 			'quick_add_enabled' => ! empty( $settings['quick_add_enabled'] ),
+			'quick_add_icon_variant' => in_array( sanitize_key( (string) ( $settings['quick_add_icon_variant'] ?? 'bag' ) ), array( 'bag', 'cart', 'basket' ), true ) ? sanitize_key( (string) $settings['quick_add_icon_variant'] ) : 'bag',
+			'quick_add_icon_style' => in_array( sanitize_key( (string) ( $settings['quick_add_icon_style'] ?? 'outline' ) ), array( 'outline', 'filled', 'rounded' ), true ) ? sanitize_key( (string) $settings['quick_add_icon_style'] ) : 'outline',
+			'quick_add_icon_size' => max( 16, min( 36, absint( $settings['quick_add_icon_size'] ?? 22 ) ) ),
+			'quick_add_icon_color' => sanitize_hex_color( (string) ( $settings['quick_add_icon_color'] ?? '#1F2933' ) ) ?: '#1F2933',
+			'quick_add_show_background' => ! empty( $settings['quick_add_show_background'] ),
+			'quick_add_background_color' => sanitize_hex_color( (string) ( $settings['quick_add_background_color'] ?? '#FFFFFF' ) ) ?: '#FFFFFF',
+			'quick_add_radius' => max( 0, min( 40, absint( $settings['quick_add_radius'] ?? 24 ) ) ),
 		);
 	}
 
@@ -228,6 +242,13 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'show_badge'      => $settings['show_badge'],
 			'show_rating'     => $settings['show_rating'],
 			'quick_add_enabled' => $settings['quick_add_enabled'],
+			'quick_add_icon_variant' => $settings['quick_add_icon_variant'],
+			'quick_add_icon_style' => $settings['quick_add_icon_style'],
+			'quick_add_icon_size' => $settings['quick_add_icon_size'],
+			'quick_add_icon_color' => $settings['quick_add_icon_color'],
+			'quick_add_show_background' => $settings['quick_add_show_background'],
+			'quick_add_background_color' => $settings['quick_add_background_color'],
+			'quick_add_radius' => $settings['quick_add_radius'],
 		);
 	}
 
@@ -277,6 +298,13 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			<?php foreach ( array( 'show_name' => __( 'Show Name', 'kidia-mobile-cms' ), 'show_price' => __( 'Show Price', 'kidia-mobile-cms' ), 'show_regular_price' => __( 'Show Regular Price', 'kidia-mobile-cms' ), 'show_badge' => __( 'Show Badge', 'kidia-mobile-cms' ), 'show_rating' => __( 'Show Rating', 'kidia-mobile-cms' ), 'quick_add_enabled' => __( 'Quick add to cart', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
 				<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
 			<?php endforeach; ?>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add icon shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_icon_variant]"><option value="bag" <?php selected( 'bag', $settings['quick_add_icon_variant'] ); ?>><?php esc_html_e( 'Shopping bag', 'kidia-mobile-cms' ); ?></option><option value="cart" <?php selected( 'cart', $settings['quick_add_icon_variant'] ); ?>><?php esc_html_e( 'Shopping cart', 'kidia-mobile-cms' ); ?></option><option value="basket" <?php selected( 'basket', $settings['quick_add_icon_variant'] ); ?>><?php esc_html_e( 'Shopping basket', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add icon style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_icon_style]"><option value="outline" <?php selected( 'outline', $settings['quick_add_icon_style'] ); ?>><?php esc_html_e( 'Outline', 'kidia-mobile-cms' ); ?></option><option value="filled" <?php selected( 'filled', $settings['quick_add_icon_style'] ); ?>><?php esc_html_e( 'Filled', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['quick_add_icon_style'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add icon size', 'kidia-mobile-cms' ); ?></label><input type="number" min="16" max="36" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_icon_size]" value="<?php echo esc_attr( (string) $settings['quick_add_icon_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add icon color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_icon_color]" value="<?php echo esc_attr( $settings['quick_add_icon_color'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_show_background]" value="1" <?php checked( true, $settings['quick_add_show_background'] ); ?>> <?php esc_html_e( 'White background behind icon', 'kidia-mobile-cms' ); ?></label></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add background color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_background_color]" value="<?php echo esc_attr( $settings['quick_add_background_color'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add background radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_radius]" value="<?php echo esc_attr( (string) $settings['quick_add_radius'] ); ?>"></div>
 			<div class="kidia-builder-field kidia-builder-field--full">
 				<label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>">

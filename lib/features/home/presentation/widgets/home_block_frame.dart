@@ -25,17 +25,22 @@ class HomeBlockFrame extends StatelessWidget {
       key: Key('home-block-frame-${block.id}'),
       padding: EdgeInsets.fromLTRB(
         style.marginHorizontal * screenScale,
-        style.marginTop * screenScale,
+        0,
         style.marginHorizontal * screenScale,
-        style.marginBottom * screenScale,
+        0,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(
-          style.borderRadius * screenScale,
+      child: Transform.translate(
+        offset: Offset(
+          0,
+          (style.marginBottom - style.marginTop) * screenScale,
         ),
-        child: ColoredBox(
-          color: background,
-          child: Padding(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(
+            style.borderRadius * screenScale,
+          ),
+          child: ColoredBox(
+            color: background,
+            child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: style.paddingHorizontal * screenScale,
               vertical: style.paddingVertical * screenScale,
@@ -60,6 +65,7 @@ class HomeBlockFrame extends StatelessWidget {
                   );
                 },
               ),
+            ),
             ),
           ),
         ),

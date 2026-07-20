@@ -363,7 +363,16 @@ class _WishlistProductCard extends StatelessWidget {
                     PositionedDirectional(
                       end: 8,
                       bottom: 8,
-                      child: ProductQuickAddButton(productId: product.id),
+                      child: ProductQuickAddButton(
+                        productId: product.id,
+                        iconVariant: settings.string('quick_add_icon_variant', 'bag'),
+                        iconStyle: settings.string('quick_add_icon_style', 'outline'),
+                        iconSize: settings.number('quick_add_icon_size', 22).clamp(16, 36).toDouble(),
+                        iconColor: _wishlistHexColor(settings.string('quick_add_icon_color', '#1F2933')),
+                        showBackground: settings.boolean('quick_add_show_background', true),
+                        backgroundColor: _wishlistHexColor(settings.string('quick_add_background_color', '#FFFFFF')),
+                        backgroundRadius: settings.number('quick_add_radius', 24).clamp(0, 40).toDouble(),
+                      ),
                     ),
                   if (settings.boolean('show_badge', true) && product.isOnSale)
                     PositionedDirectional(
@@ -437,6 +446,12 @@ class _WishlistProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Color? _wishlistHexColor(String value) {
+  final String hex = value.replaceFirst('#', '');
+  final int? parsed = int.tryParse(hex, radix: 16);
+  return parsed == null || hex.length != 6 ? null : Color(0xFF000000 | parsed);
 }
 
 class _WishlistPrice extends StatelessWidget {

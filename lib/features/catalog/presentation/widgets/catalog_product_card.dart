@@ -125,6 +125,23 @@ class CatalogProductCard extends StatelessWidget {
                             bottom: 8,
                             child: ProductQuickAddButton(
                               productId: product.id,
+                              iconVariant: settings?.string('quick_add_icon_variant', 'bag') ?? 'bag',
+                              iconStyle: settings?.string('quick_add_icon_style', 'outline') ?? 'outline',
+                              iconSize: settings == null
+                                  ? 22
+                                  : settings!
+                                        .number('quick_add_icon_size', 22)
+                                        .clamp(16, 36)
+                                        .toDouble(),
+                              iconColor: _quickAddColor(settings?.string('quick_add_icon_color', '#1F2933')),
+                              showBackground: settings?.boolean('quick_add_show_background', true) ?? true,
+                              backgroundColor: _quickAddColor(settings?.string('quick_add_background_color', '#FFFFFF')),
+                              backgroundRadius: settings == null
+                                  ? 24
+                                  : settings!
+                                        .number('quick_add_radius', 24)
+                                        .clamp(0, 40)
+                                        .toDouble(),
                             ),
                           ),
                       ],
@@ -214,6 +231,12 @@ class CatalogProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Color? _quickAddColor(String? value) {
+  final String hex = (value ?? '').replaceFirst('#', '');
+  final int? parsed = int.tryParse(hex, radix: 16);
+  return parsed == null || hex.length != 6 ? null : Color(0xFF000000 | parsed);
 }
 
 class _ProductBadge extends StatelessWidget {

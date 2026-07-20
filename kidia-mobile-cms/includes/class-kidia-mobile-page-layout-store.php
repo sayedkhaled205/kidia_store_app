@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 11;
+	private const VERSION = 12;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -211,6 +211,13 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$page = sanitize_key( $page );
 		$common_grid = array(
 			self::field( 'quick_add_enabled', __( 'Quick add to cart', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'quick_add_icon_variant', __( 'Quick add icon shape', 'kidia-mobile-cms' ), 'select', 'bag', array( 'bag' => __( 'Shopping bag', 'kidia-mobile-cms' ), 'cart' => __( 'Shopping cart', 'kidia-mobile-cms' ), 'basket' => __( 'Shopping basket', 'kidia-mobile-cms' ) ) ),
+			self::field( 'quick_add_icon_style', __( 'Quick add icon style', 'kidia-mobile-cms' ), 'select', 'outline', array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded', 'kidia-mobile-cms' ) ) ),
+			self::field( 'quick_add_icon_size', __( 'Quick add icon size', 'kidia-mobile-cms' ), 'number', 22, array(), 16, 36 ),
+			self::field( 'quick_add_icon_color', __( 'Quick add icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+			self::field( 'quick_add_show_background', __( 'White background behind icon', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'quick_add_background_color', __( 'Quick add background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'quick_add_radius', __( 'Quick add background radius', 'kidia-mobile-cms' ), 'number', 24, array(), 0, 40 ),
 			self::field( 'source', __( 'Source', 'kidia-mobile-cms' ), 'select', 'latest', array( 'latest' => __( 'Latest', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'featured' => __( 'Featured', 'kidia-mobile-cms' ), 'on_sale' => __( 'On sale', 'kidia-mobile-cms' ), 'manual' => __( 'Manual IDs', 'kidia-mobile-cms' ) ) ),
 			self::field( 'category_id', __( 'Category ID', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 999999999 ),
 			self::field( 'manual_product_ids', __( 'Manual Product IDs', 'kidia-mobile-cms' ), 'text', '' ),
@@ -233,8 +240,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'pagination_text_color', __( 'Pagination text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
-		$catalog_grid_keys = array( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' );
-		$wishlist_grid_keys = array( 'quick_add_enabled', 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' );
+		$quick_add_keys = array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_radius' );
+		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
+		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
 		$catalog_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $catalog_grid_keys, true ) ) );
 		$wishlist_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $wishlist_grid_keys, true ) ) );
 
@@ -284,8 +292,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 		);
 
 		$presentation = array(
-			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Merge down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
 			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),

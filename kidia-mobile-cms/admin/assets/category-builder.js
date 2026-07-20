@@ -265,7 +265,7 @@
 		var layout = categoryLayout();
 		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
 		var pageBackground = setting("page_background_color") || "#F7F8FA";
-		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "padding-top": (14 + numberInRange(setting("margin_top"), 0, 0, 80)) + "px", "padding-bottom": (24 + numberInRange(setting("margin_bottom"), 0, 0, 80)) + "px", "background-color": setting("element_background_color") || "#FFFFFF"});
+		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "transform": "translateY(" + (numberInRange(setting("margin_bottom"), 0, 0, 80) - numberInRange(setting("margin_top"), 0, 0, 80)) + "px)", "padding-top": "14px", "padding-bottom": "24px", "background-color": setting("element_background_color") || "#FFFFFF"});
 		var visible = 0;
 		preview.empty().css("background-color", pageBackground).append(renderChrome("header"));
 

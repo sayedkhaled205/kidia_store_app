@@ -43,9 +43,17 @@ class _HomePageState extends ConsumerState<HomePage> {
     final AsyncValue<HomeLayout> homeLayoutAsync = ref.watch(
       homeLayoutProvider(locale),
     );
+    final AsyncValue<CmsPageLayout> chromeState = ref.watch(
+      cmsPageLayoutProvider('home'),
+    );
+    final CmsPageLayout? loadedChrome = chromeState.value;
+    if (loadedChrome == null && !chromeState.hasError) {
+      return const Scaffold(
+        body: SafeArea(child: _HomeLoadingState()),
+      );
+    }
     final CmsPageLayout chrome =
-        ref.watch(cmsPageLayoutProvider('home')).value ??
-        CmsPageLayout.fallback('home');
+        loadedChrome ?? CmsPageLayout.fallback('home');
 
     return CmsPageScaffold(
       layout: chrome,

@@ -86,21 +86,23 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   Widget build(BuildContext context) {
     final String page = _pageForPath(GoRouterState.of(context).uri.path);
+    final AsyncValue<CmsPageLayout> pageLayoutState =
+        ref.watch(cmsPageLayoutProvider(page));
+    if (pageLayoutState.value == null && !pageLayoutState.hasError) {
+      return Scaffold(body: widget.navigationShell);
+    }
     final CmsPageLayout pageLayout =
-        ref.watch(cmsPageLayoutProvider(page)).value ??
-        CmsPageLayout.fallback(page);
-    final CmsPageLayout categoryLayout =
-        ref.watch(cmsPageLayoutProvider('category')).value ??
-        CmsPageLayout.fallback('category');
+        pageLayoutState.value ?? CmsPageLayout.fallback(page);
     final CmsPageComponent footer = pageLayout.footer;
-    final CmsPageComponent footerSize = categoryLayout.footer;
-    final double footerIconSize = footerSize
+    final double footerIconSize = footer
         .number('icon_size', 24)
-        .clamp(14, 40);
+        .clamp(14, 40)
+        .toDouble();
     final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
-    final double footerLabelSize = footerSize
+    final double footerLabelSize = footer
         .number('label_size', 11)
-        .clamp(8, 20);
+        .clamp(8, 20)
+        .toDouble();
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
@@ -154,7 +156,7 @@ class _MainShellState extends ConsumerState<MainShell>
             ),
             child: SizedBox(
               key: const Key('cms-bottom-navigation-size'),
-              height: footerSize.number('height', 64).clamp(48, 100),
+              height: footer.number('height', 64).clamp(48, 100).toDouble(),
               child: Row(
                 children: visibleItems.indexed.map((indexed) {
                   final int visibleIndex = indexed.$1;
