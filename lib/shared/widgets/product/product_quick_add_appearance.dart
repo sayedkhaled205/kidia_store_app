@@ -10,6 +10,7 @@ class ProductQuickAddAppearance {
     this.backgroundColor,
     this.backgroundRadius = 24,
 	this.backgroundSize = 40,
+    this.position = 'bottom_end',
   });
 
   final String iconVariant;
@@ -20,4 +21,5 @@ class ProductQuickAddAppearance {
   final Color? backgroundColor;
   final double backgroundRadius;
   final double backgroundSize;
+  final String position;
 }

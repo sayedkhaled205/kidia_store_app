@@ -11,6 +11,7 @@ class ProductWishlistAppearance {
     this.backgroundColor,
     this.backgroundSize = 40,
     this.backgroundRadius = 24,
+    this.position = 'top_end',
   });
 
   final bool enabled;
@@ -22,4 +23,5 @@ class ProductWishlistAppearance {
   final Color? backgroundColor;
   final double backgroundSize;
   final double backgroundRadius;
+  final String position;
 }

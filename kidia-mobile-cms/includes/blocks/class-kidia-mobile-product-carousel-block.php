@@ -62,6 +62,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'quick_add_background_color' => '#FFFFFF',
 			'quick_add_background_size' => 40,
 			'quick_add_radius' => 24,
+			'quick_add_position' => 'bottom_end',
 			'show_wishlist' => false,
 			'product_wishlist_icon_variant' => 'heart',
 			'product_wishlist_icon_style' => 'outline',
@@ -71,6 +72,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'product_wishlist_background_color' => '#FFFFFF',
 			'product_wishlist_background_size' => 40,
 			'product_wishlist_radius' => 24,
+			'product_wishlist_position' => 'top_end',
 		);
 	}
 
@@ -221,6 +223,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'quick_add_background_color' => sanitize_hex_color( (string) ( $settings['quick_add_background_color'] ?? '#FFFFFF' ) ) ?: '#FFFFFF',
 			'quick_add_background_size' => max( 28, min( 64, absint( $settings['quick_add_background_size'] ?? 40 ) ) ),
 			'quick_add_radius' => max( 0, min( 40, absint( $settings['quick_add_radius'] ?? 24 ) ) ),
+			'quick_add_position' => in_array( sanitize_key( (string) ( $settings['quick_add_position'] ?? 'bottom_end' ) ), array( 'top_start', 'top_end', 'bottom_start', 'bottom_end' ), true ) ? sanitize_key( (string) $settings['quick_add_position'] ) : 'bottom_end',
 			'show_wishlist' => ! empty( $settings['show_wishlist'] ),
 			'product_wishlist_icon_variant' => in_array( sanitize_key( (string) ( $settings['product_wishlist_icon_variant'] ?? 'heart' ) ), array( 'heart', 'rounded', 'bookmark' ), true ) ? sanitize_key( (string) $settings['product_wishlist_icon_variant'] ) : 'heart',
 			'product_wishlist_icon_style' => in_array( sanitize_key( (string) ( $settings['product_wishlist_icon_style'] ?? 'outline' ) ), array( 'outline', 'filled' ), true ) ? sanitize_key( (string) $settings['product_wishlist_icon_style'] ) : 'outline',
@@ -230,6 +233,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'product_wishlist_background_color' => sanitize_hex_color( (string) ( $settings['product_wishlist_background_color'] ?? '#FFFFFF' ) ) ?: '#FFFFFF',
 			'product_wishlist_background_size' => max( 28, min( 64, absint( $settings['product_wishlist_background_size'] ?? 40 ) ) ),
 			'product_wishlist_radius' => max( 0, min( 40, absint( $settings['product_wishlist_radius'] ?? 24 ) ) ),
+			'product_wishlist_position' => in_array( sanitize_key( (string) ( $settings['product_wishlist_position'] ?? 'top_end' ) ), array( 'top_start', 'top_end', 'bottom_start', 'bottom_end' ), true ) ? sanitize_key( (string) $settings['product_wishlist_position'] ) : 'top_end',
 		);
 	}
 
@@ -329,6 +333,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'quick_add_background_color' => $settings['quick_add_background_color'],
 			'quick_add_background_size' => $settings['quick_add_background_size'],
 			'quick_add_radius' => $settings['quick_add_radius'],
+			'quick_add_position' => $settings['quick_add_position'],
 			'show_wishlist' => $settings['show_wishlist'],
 			'product_wishlist_icon_variant' => $settings['product_wishlist_icon_variant'],
 			'product_wishlist_icon_style' => $settings['product_wishlist_icon_style'],
@@ -338,6 +343,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 			'product_wishlist_background_color' => $settings['product_wishlist_background_color'],
 			'product_wishlist_background_size' => $settings['product_wishlist_background_size'],
 			'product_wishlist_radius' => $settings['product_wishlist_radius'],
+			'product_wishlist_position' => $settings['product_wishlist_position'],
 		);
 	}
 
@@ -463,6 +469,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add background color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_background_color]" value="<?php echo esc_attr( $settings['quick_add_background_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add background size', 'kidia-mobile-cms' ); ?></label><input type="number" min="28" max="64" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_background_size]" value="<?php echo esc_attr( (string) $settings['quick_add_background_size'] ); ?>"></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add background radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_radius]" value="<?php echo esc_attr( (string) $settings['quick_add_radius'] ); ?>"></div>
+		<div class="kidia-builder-field"><label><?php esc_html_e( 'Quick add position', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][quick_add_position]"><?php foreach ( array( 'top_start' => 'Top start', 'top_end' => 'Top end', 'bottom_start' => 'Bottom start', 'bottom_end' => 'Bottom end' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['quick_add_position'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
 		<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_wishlist]" value="1" <?php checked( true, $settings['show_wishlist'] ); ?>> <?php esc_html_e( 'Product wishlist icon', 'kidia-mobile-cms' ); ?></label></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist icon shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_icon_variant]"><option value="heart" <?php selected( 'heart', $settings['product_wishlist_icon_variant'] ); ?>>Heart</option><option value="rounded" <?php selected( 'rounded', $settings['product_wishlist_icon_variant'] ); ?>>Rounded heart</option><option value="bookmark" <?php selected( 'bookmark', $settings['product_wishlist_icon_variant'] ); ?>>Bookmark</option></select></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist icon style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_icon_style]"><option value="outline" <?php selected( 'outline', $settings['product_wishlist_icon_style'] ); ?>>Outline</option><option value="filled" <?php selected( 'filled', $settings['product_wishlist_icon_style'] ); ?>>Filled</option></select></div>
@@ -472,6 +479,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist background color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_background_color]" value="<?php echo esc_attr( $settings['product_wishlist_background_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist background size', 'kidia-mobile-cms' ); ?></label><input type="number" min="28" max="64" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_background_size]" value="<?php echo esc_attr( (string) $settings['product_wishlist_background_size'] ); ?>"></div>
 		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist background radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_radius]" value="<?php echo esc_attr( (string) $settings['product_wishlist_radius'] ); ?>"></div>
+		<div class="kidia-builder-field"><label><?php esc_html_e( 'Product wishlist position', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][product_wishlist_position]"><?php foreach ( array( 'top_start' => 'Top start', 'top_end' => 'Top end', 'bottom_start' => 'Bottom start', 'bottom_end' => 'Bottom end' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['product_wishlist_position'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
 
 		<div class="kidia-builder-field">
 

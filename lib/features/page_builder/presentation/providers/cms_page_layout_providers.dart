@@ -14,7 +14,7 @@ final Provider<CmsPageLayoutRemoteDataSource> cmsPageLayoutRemoteDataSourceProvi
 final cmsPageLayoutProvider = FutureProvider.family<CmsPageLayout, String>(
       (Ref ref, String page) async {
         final Timer refreshTimer = Timer(
-          const Duration(seconds: 30),
+          const Duration(seconds: 5),
           ref.invalidateSelf,
         );
         ref.onDispose(refreshTimer.cancel);

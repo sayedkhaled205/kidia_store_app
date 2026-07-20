@@ -17,10 +17,12 @@ return array(
 		'quick_add_icon_variant' => 'bag', 'quick_add_icon_style' => 'outline', 'quick_add_icon_size' => 22,
 		'quick_add_icon_color' => '#1F2933', 'quick_add_show_background' => true,
 		'quick_add_background_color' => '#FFFFFF', 'quick_add_background_size' => 40, 'quick_add_radius' => 24,
+		'quick_add_position' => 'bottom_end',
 		'show_wishlist' => false, 'product_wishlist_icon_variant' => 'heart', 'product_wishlist_icon_style' => 'outline',
 		'product_wishlist_icon_size' => 20, 'product_wishlist_icon_color' => '#1F2933',
 		'product_wishlist_show_background' => true, 'product_wishlist_background_color' => '#FFFFFF',
 		'product_wishlist_background_size' => 40, 'product_wishlist_radius' => 24,
+		'product_wishlist_position' => 'top_end',
 	),
 	'fields'      => array(
 		array( 'key' => 'title', 'label' => __( 'Section title', 'kidia-mobile-cms' ), 'type' => 'text', 'default' => '' ),
@@ -48,6 +50,7 @@ return array(
 		array( 'key' => 'quick_add_background_color', 'label' => __( 'Quick add background color', 'kidia-mobile-cms' ), 'type' => 'color', 'default' => '#FFFFFF' ),
 		array( 'key' => 'quick_add_background_size', 'label' => __( 'Quick add background size', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 40, 'min' => 28, 'max' => 64 ),
 		array( 'key' => 'quick_add_radius', 'label' => __( 'Quick add background radius', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 24, 'min' => 0, 'max' => 40 ),
+		array( 'key' => 'quick_add_position', 'label' => __( 'Quick add position', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'bottom_end', 'options' => array( 'top_start' => 'Top start', 'top_end' => 'Top end', 'bottom_start' => 'Bottom start', 'bottom_end' => 'Bottom end' ) ),
 		array( 'key' => 'show_wishlist', 'label' => __( 'Product wishlist icon', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => false ),
 		array( 'key' => 'product_wishlist_icon_variant', 'label' => __( 'Product wishlist icon shape', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'heart', 'options' => array( 'heart' => __( 'Heart', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded heart', 'kidia-mobile-cms' ), 'bookmark' => __( 'Bookmark', 'kidia-mobile-cms' ) ) ),
 		array( 'key' => 'product_wishlist_icon_style', 'label' => __( 'Product wishlist icon style', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'outline', 'options' => array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ) ) ),
@@ -57,5 +60,6 @@ return array(
 		array( 'key' => 'product_wishlist_background_color', 'label' => __( 'Product wishlist background color', 'kidia-mobile-cms' ), 'type' => 'color', 'default' => '#FFFFFF' ),
 		array( 'key' => 'product_wishlist_background_size', 'label' => __( 'Product wishlist background size', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 40, 'min' => 28, 'max' => 64 ),
 		array( 'key' => 'product_wishlist_radius', 'label' => __( 'Product wishlist background radius', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 24, 'min' => 0, 'max' => 40 ),
+		array( 'key' => 'product_wishlist_position', 'label' => __( 'Product wishlist position', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'top_end', 'options' => array( 'top_start' => 'Top start', 'top_end' => 'Top end', 'bottom_start' => 'Bottom start', 'bottom_end' => 'Bottom end' ) ),
 	),
 );

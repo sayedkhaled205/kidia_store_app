@@ -564,9 +564,16 @@ function runPageBuilderTest() {
   assert.match(catalogCardSource, /quick_add_background_color/, "Catalog Product Grid must consume Quick Add appearance settings.");
   assert.match(catalogCardSource, /quick_add_background_size/, "Catalog Product Grid must consume the independent Quick Add background size.");
   assert.match(catalogCardSource, /product_wishlist_background_size/, "Catalog Product Grid must consume the product wishlist appearance settings.");
+  assert.match(catalogCardSource, /quick_add_position/, "Catalog Product Grid must apply the saved Quick Add corner.");
+  assert.match(catalogCardSource, /product_wishlist_position/, "Catalog Product Grid must apply the saved wishlist corner.");
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
-  const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	assert.match(pageTemplateSource, /kidia-product-position/, "Product icon positions must use the visual product-card selector.");
+	const settingsSectionsSource = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "settings-sections.js"), "utf8");
+	assert.match(settingsSectionsSource, /enhanceProductPositions/, "Home product elements must receive the same visual position selector.");
+	const layoutProviderSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "providers", "cms_page_layout_providers.dart"), "utf8");
+	assert.match(layoutProviderSource, /Duration\(seconds: 5\)/, "Visible pages must refresh CMS settings promptly without restarting the app.");
 	assert.match(pageTemplateSource, /Colors & appearance/, "Page element backgrounds must be grouped in Colors & Appearance.");
 	const homeTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.equal((homeTemplateSource.match(/\[settings\]\[block_background\]/g) || []).length, 1, "Every Home element must render exactly one shared background control.");

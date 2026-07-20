@@ -526,6 +526,10 @@ abstract final class HomeBlockModel {
 		minimum: 28,
 		maximum: 64,
 	  ),
+      position: _productActionPosition(
+        _optionalString(data, 'quick_add_position'),
+        fallback: 'bottom_end',
+      ),
     );
   }
 
@@ -540,8 +544,22 @@ abstract final class HomeBlockModel {
 		backgroundColor: _quickAddColor(_optionalString(data, 'product_wishlist_background_color')),
 		backgroundSize: _boundedDouble(data, 'product_wishlist_background_size', fallback: 40, minimum: 28, maximum: 64),
 		backgroundRadius: _boundedDouble(data, 'product_wishlist_radius', fallback: 24, minimum: 0, maximum: 40),
+		position: _productActionPosition(
+		  _optionalString(data, 'product_wishlist_position'),
+		  fallback: 'top_end',
+		),
 	  );
 	}
+
+  static String _productActionPosition(String? value, {required String fallback}) {
+    const Set<String> allowed = <String>{
+      'top_start',
+      'top_end',
+      'bottom_start',
+      'bottom_end',
+    };
+    return allowed.contains(value) ? value! : fallback;
+  }
 
   static Color? _quickAddColor(String? value) {
     final String hex = (value ?? '').replaceFirst('#', '');
