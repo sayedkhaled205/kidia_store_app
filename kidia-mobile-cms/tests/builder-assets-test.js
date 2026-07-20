@@ -751,6 +751,10 @@ function runChromeComposerTest() {
 	assert.match(readAsset("chrome-layout.css"), /kidia-page-media \.button\s*\{[^}]*height:34px;[^}]*min-height:34px/, "Choose image must match the standard logo field height.");
 	assert.match(readAsset("category-builder.css"), /kidia-category-general-fields input\[type="range"\]\s*\{[^}]*max-width:190px/, "Category sliders must match the adjacent standard field width.");
 	assert.match(readAsset("category-builder.css"), /input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*background:#2f806e/, "Category slider thumbs must use the Kidia color.");
+	assert.match(readAsset("chrome-layout.css"), /data-setting="horizontal_padding"\]\s*\{\s*grid-column:1;\s*grid-row:1;\s*\}[\s\S]*data-setting="height"\]\s*\{\s*grid-column:3;\s*grid-row:1;/, "Footer General Settings must follow the approved first-row order.");
+	assert.match(readAsset("chrome-layout.css"), /data-setting="show_labels"\]\s*\{\s*grid-column:1;\s*grid-row:6;\s*\}[\s\S]*data-setting="hide_on_scroll"\]\s*\{\s*grid-column:3;\s*grid-row:6;/, "Footer General Settings must keep all three toggles in the final row.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-image-button\s*\{\s*width:112px;\s*\}[\s\S]*kidia-category-image-clear\s*\{\s*width:142px;/, "Category and subcategory image buttons must use the compact approved widths.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-element \.kidia-category-visibility\s*\{[^}]*transform:translateX\(8px\)/, "Category and subcategory visibility toggles must shift right without overlapping the image buttons.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));
