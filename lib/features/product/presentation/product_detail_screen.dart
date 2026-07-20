@@ -1136,7 +1136,6 @@ class _PurchaseBar extends StatelessWidget {
 	final Map<String, dynamic> footerLayout = footer.json('layout_json');
 	final dynamic rawRows = footerLayout['rows'];
 	final List<(String, double)> placements = <(String, double)>[];
-	final bool hasStructuredRows = rawRows is List && rawRows.isNotEmpty;
 	if (rawRows is List) {
 	  for (final dynamic rawRow in rawRows.take(3)) {
 		if (rawRow is! Map || rawRow['columns'] is! List) continue;
@@ -1204,7 +1203,7 @@ class _PurchaseBar extends StatelessWidget {
 	final List<(String, double, Widget)> footerItems =
 	    <(String, double, Widget)>[];
 	for (final (String item, double width) in placements) {
-	  final double effectiveWidth = hasAddToCart && !hasStructuredRows
+	  final double effectiveWidth = hasAddToCart
 	      ? item == 'add_to_cart'
 	          ? configuredButtonWidth
 	          : otherWidthTotal > 0

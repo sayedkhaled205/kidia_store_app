@@ -19,11 +19,15 @@ class CmsElementFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final String raw = component.string('background_color', '#FFFFFF').trim();
     final Color background = _color(raw, Colors.white);
-    return Container(
-      margin: EdgeInsets.only(top: component.number('margin_top', 0).clamp(0, 80), bottom: component.number('margin_bottom', 0).clamp(0, 80)),
-      padding: EdgeInsets.symmetric(vertical: component.number('padding_vertical', 0).clamp(0, 40), horizontal: component.number('padding_horizontal', 0).clamp(0, 40)),
-      color: background,
-      child: child,
+    return Padding(
+      padding: EdgeInsets.only(top: component.number('margin_top', 0).clamp(0, 80), bottom: component.number('margin_bottom', 0).clamp(0, 80)),
+      child: Material(
+        color: background,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: component.number('padding_vertical', 0).clamp(0, 40), horizontal: component.number('padding_horizontal', 0).clamp(0, 40)),
+          child: child,
+        ),
+      ),
     );
   }
 }
