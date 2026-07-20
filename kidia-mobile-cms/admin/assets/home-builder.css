@@ -14,6 +14,7 @@
 }
 
 .kidia-builder-workspace {
+	container-type: inline-size;
 	direction: ltr;
 	display: grid;
 	grid-template-columns: 300px minmax(0, 1fr);
@@ -28,6 +29,7 @@
 	top: 48px;
 	direction: rtl;
 	text-align: center;
+	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
 }
 
 .kidia-mobile-preview__device {
@@ -208,7 +210,7 @@
 
 @media (max-width: 1100px) {
 	.kidia-builder-workspace { grid-template-columns: 1fr; }
-	.kidia-mobile-preview { position: relative; top: 0; }
+	.kidia-mobile-preview { position: relative; top: 0; transform: none; }
 	.kidia-mobile-preview__device { margin-inline: auto; }
 }
 
@@ -318,6 +320,7 @@
 	min-height: 70px;
 	padding: 8px 10px;
 	background: #fff;
+	direction: rtl;
 }
 
 .kidia-builder-block__left {
@@ -326,6 +329,7 @@
 	min-width: 0;
 	flex: 1;
 	gap: 8px;
+	direction: rtl;
 }
 
 .kidia-builder-drag {
@@ -406,6 +410,7 @@
 	justify-content: flex-end;
 	flex: 0 0 auto;
 	gap: 5px;
+	direction: rtl;
 }
 
 .kidia-builder-block__actions .button {
@@ -873,12 +878,8 @@
 	grid-row: 2 / 5;
 }
 
-.kidia-builder-block[data-type="product_carousel"] > .kidia-builder-block__header {
-	direction: rtl;
-}
-
 .kidia-builder-block[data-type="product_carousel"] .kidia-builder-block__actions {
-	direction: ltr;
+	direction: rtl;
 	margin-inline-start: auto;
 }
 

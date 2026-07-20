@@ -1,7 +1,7 @@
 .kidia-category-builder { direction: rtl; max-width: 1380px; margin-inline: auto; text-align: right; }
-.kidia-category-workspace { direction: ltr; display: grid; grid-template-columns: 300px minmax(0,1fr); align-items: start; gap: 10px; }
+.kidia-category-workspace { container-type:inline-size; direction: ltr; display: grid; grid-template-columns: 300px minmax(0,1fr); align-items: start; gap: 10px; }
 .kidia-category-editor { direction: rtl; min-width: 0; }
-.kidia-category-mobile-preview { position: sticky; top: 48px; direction: rtl; text-align: center; }
+.kidia-category-mobile-preview { position: sticky; top: 48px; direction: rtl; text-align: center; transform:translateX(clamp(35px,calc(11.5cqw - 30px),130px)); }
 .kidia-category-phone { width: 275.1px; margin-inline-start: auto; padding: 5px; border: 3px solid #1d2327; border-radius: 29px; background: #1d2327; box-shadow: 0 16px 38px rgba(29,35,39,.18); }
 .kidia-category-phone__speaker { width: 68px; height: 4px; margin: 0 auto 5px; border-radius: 99px; background: #646970; }
 .kidia-category-phone__screen { min-height: 548px; max-height: calc(100vh - 150px); overflow-y: auto; border-radius: 21px; background: #f7f8fa; }
@@ -93,7 +93,7 @@
 .kidia-range-value { color: #2f806e; font-size: 12px; font-weight: 700; }
 .ui-sortable-helper .kidia-category-card { box-shadow: 0 8px 24px rgba(0,0,0,.15); }
 @media (max-width: 900px) { .kidia-category-toolbar,.kidia-category-card { width: auto; } .kidia-category-card { grid-template-columns: 24px 24px 52px 1fr; } .kidia-category-card > button,.kidia-category-visibility { grid-column: 4; justify-self: start; } .kidia-category-settings { grid-template-columns: 1fr; } .kidia-category-image-actions { grid-column: 1; } }
-@media (max-width: 1100px) { .kidia-category-workspace { grid-template-columns: 1fr; } .kidia-category-mobile-preview { position: relative; top: 0; } .kidia-category-phone { margin-inline: auto; } }
+@media (max-width: 1100px) { .kidia-category-workspace { grid-template-columns: 1fr; } .kidia-category-mobile-preview { position: relative; top: 0; transform:none; } .kidia-category-phone { margin-inline: auto; } }
 
 /* The page content is one Category element. Appearance is configured once. */
 .kidia-category-element { width:77%; margin:10px 0 10px auto; }
