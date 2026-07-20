@@ -98,7 +98,8 @@
 	font-size: 14px !important;
 	font-weight: 800 !important;
 	line-height: 23px !important;
-	text-align: end !important;
+	direction: rtl !important;
+	text-align: right !important;
 	box-sizing: border-box;
 }
 
