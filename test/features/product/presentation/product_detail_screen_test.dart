@@ -347,7 +347,7 @@ void main() {
     expect(find.text('Add to bag'), findsNothing);
     expect(
       tester.widget<SizedBox>(find.byKey(const Key('product-footer-size'))).height,
-      64,
+      84,
     );
     final Size footerSize = tester.getSize(
       find.byKey(const Key('product-footer-size')),

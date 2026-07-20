@@ -3,6 +3,7 @@ import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_price.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -32,6 +33,7 @@ class ProductCard extends StatelessWidget {
     this.rating = 0,
     this.reviewCount = 0,
     this.quickAddProductId,
+    this.quickAddAppearance,
   });
 
   final String name;
@@ -62,6 +64,7 @@ class ProductCard extends StatelessWidget {
   final double rating;
   final int reviewCount;
   final int? quickAddProductId;
+  final ProductQuickAddAppearance? quickAddAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +100,7 @@ class ProductCard extends StatelessWidget {
                 imageAspectRatio: imageAspectRatio,
                 showBadge: showBadge,
                 quickAddProductId: quickAddProductId,
+                quickAddAppearance: quickAddAppearance,
               ),
               _ProductInformation(
                 name: name,
@@ -132,6 +136,7 @@ class _ProductImageSection extends StatelessWidget {
     required this.imageAspectRatio,
     required this.showBadge,
     required this.quickAddProductId,
+    required this.quickAddAppearance,
   });
 
   final String imageUrl;
@@ -144,6 +149,7 @@ class _ProductImageSection extends StatelessWidget {
   final double imageAspectRatio;
   final bool showBadge;
   final int? quickAddProductId;
+  final ProductQuickAddAppearance? quickAddAppearance;
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +194,10 @@ class _ProductImageSection extends StatelessWidget {
             PositionedDirectional(
               end: 8,
               bottom: 8,
-              child: ProductQuickAddButton(productId: quickAddProductId!),
+              child: ProductQuickAddButton(
+                productId: quickAddProductId!,
+                appearance: quickAddAppearance,
+              ),
             ),
         ],
       ),

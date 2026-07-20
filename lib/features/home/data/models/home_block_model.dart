@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
 
 abstract final class HomeBlockModel {
   const HomeBlockModel._();
@@ -438,6 +440,7 @@ abstract final class HomeBlockModel {
         'quick_add_enabled',
         fallback: true,
       ),
+      quickAddAppearance: _parseQuickAddAppearance(data),
     );
   }
 
@@ -480,7 +483,48 @@ abstract final class HomeBlockModel {
         'quick_add_enabled',
         fallback: true,
       ),
+      quickAddAppearance: _parseQuickAddAppearance(data),
     );
+  }
+
+  static ProductQuickAddAppearance _parseQuickAddAppearance(
+    Map<String, dynamic> data,
+  ) {
+    return ProductQuickAddAppearance(
+      iconVariant: _optionalString(data, 'quick_add_icon_variant') ?? 'bag',
+      iconStyle: _optionalString(data, 'quick_add_icon_style') ?? 'outline',
+      iconSize: _boundedDouble(
+        data,
+        'quick_add_icon_size',
+        fallback: 22,
+        minimum: 16,
+        maximum: 36,
+      ),
+      iconColor: _quickAddColor(_optionalString(data, 'quick_add_icon_color')),
+      showBackground: _optionalBool(
+        data,
+        'quick_add_show_background',
+        fallback: true,
+      ),
+      backgroundColor: _quickAddColor(
+        _optionalString(data, 'quick_add_background_color'),
+      ),
+      backgroundRadius: _boundedDouble(
+        data,
+        'quick_add_radius',
+        fallback: 24,
+        minimum: 0,
+        maximum: 40,
+      ),
+    );
+  }
+
+  static Color? _quickAddColor(String? value) {
+    final String hex = (value ?? '').replaceFirst('#', '');
+    final int? parsed = int.tryParse(hex, radix: 16);
+    return parsed == null || hex.length != 6
+        ? null
+        : Color(0xFF000000 | parsed);
   }
 
   static List<HomeProductItem> _parseProducts(Map<String, dynamic> data) {

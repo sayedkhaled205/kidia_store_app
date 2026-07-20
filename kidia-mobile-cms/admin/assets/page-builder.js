@@ -23,6 +23,7 @@
 	function icon(name) { return '<span class="kidia-app-icon kidia-app-icon--' + name + '" aria-hidden="true"></span>'; }
 	function money(item) { return escapeHtml(item && item.price ? item.price : "450 ج.م"); }
 	function sampleProducts() { return products.length ? products : [{name:"طقم أطفال كيديا",price:"450 ج.م",image_url:""},{name:"كوليكشن جديد",price:"390 ج.م",image_url:""},{name:"ملابس أطفال",price:"320 ج.م",image_url:""},{name:"عرض خاص",price:"275 ج.م",image_url:""}]; }
+	function quickAdd(card) { var variant=value(card,"quick_add_icon_variant","bag"),style=value(card,"quick_add_icon_style","outline"),name=variant==="cart"?"cart":variant==="basket"?"basket":"bag",size=Math.max(16,Math.min(36,number(card,"quick_add_icon_size",22))),background=checked(card,"quick_add_show_background",true)?color(card,"quick_add_background_color","#FFFFFF"):"transparent";return '<span class="kidia-app-quick-add is-'+escapeHtml(style)+'" style="width:'+(size+12)+'px;height:'+(size+12)+'px;border-radius:'+number(card,"quick_add_radius",24)+'px;background:'+background+';color:'+color(card,"quick_add_icon_color","#1F2933")+';--quick-add-icon-size:'+size+'px">'+icon(name)+'</span>'; }
 	function markDirty() { form.dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true })); }
 
 	function updateIndexes() {
@@ -41,7 +42,7 @@
 		var gap = number(card, "gap", 12);
 		return '<div class="kidia-app-products" style="--columns:' + columns + ';gap:' + gap + 'px">' + items.map(function (item) {
 			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<span class="kidia-app-product__fallback">K</span>';
-			return '<article class="kidia-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 16) + 'px"><div class="kidia-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", true) ? icon("heart") : "") + (checked(card, "quick_add_enabled", true) ? '<span class="kidia-app-quick-add">' + icon("bag") + '</span>' : "") + (checked(card, "show_badge", true) ? '<b class="kidia-app-badge">SALE</b>' : "") + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(item.name || "Kidia product") + '</strong>' + (checked(card, "show_rating", true) ? '<small class="kidia-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div></article>';
+			return '<article class="kidia-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 16) + 'px"><div class="kidia-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", true) ? icon("heart") : "") + (checked(card, "quick_add_enabled", true) ? quickAdd(card) : "") + (checked(card, "show_badge", true) ? '<b class="kidia-app-badge">SALE</b>' : "") + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(item.name || "Kidia product") + '</strong>' + (checked(card, "show_rating", true) ? '<small class="kidia-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div></article>';
 		}).join("") + '</div>';
 	}
 
@@ -125,7 +126,7 @@
 		var header = root.querySelector('[data-element="header"]');
 		var footer = root.querySelector('[data-element="footer"]');
 		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '">';
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent";html += '<div class="kidia-page-element-frame" style="margin:'+number(card,"margin_top",0)+'px 0 '+number(card,"margin_bottom",0)+'px;padding:'+number(card,"padding_vertical",0)+'px '+number(card,"padding_horizontal",0)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"padding_vertical",0)+'px '+number(card,"padding_horizontal",0)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
 		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;
 		var headerNode = preview.querySelector(".kidia-app-header");

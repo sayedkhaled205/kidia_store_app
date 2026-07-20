@@ -200,7 +200,7 @@ void main() {
   });
 
   testWidgets(
-    'all pages use Category footer sizing while keeping Arabic page labels',
+    'each page uses its own footer sizing while keeping Arabic page labels',
     (tester) async {
       final GoRouter router = createAppRouter();
       final CmsPageLayout homeLayout = _navigationLayout(
@@ -233,16 +233,16 @@ void main() {
         ),
       );
 
-      expect(footerSize.height, 64);
-      expect(homeIcon.size, 24);
+      expect(footerSize.height, 92);
+      expect(homeIcon.size, 36);
       final SizedBox homeIconBox = tester.widget<SizedBox>(
         find.byKey(const Key('cms-bottom-nav-icon-box-home')),
       );
       final SizedBox wishlistIconBox = tester.widget<SizedBox>(
         find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
       );
-      expect(homeIconBox.width, 32);
-      expect(homeIconBox.height, 32);
+      expect(homeIconBox.width, 44);
+      expect(homeIconBox.height, 44);
       expect(wishlistIconBox.width, homeIconBox.width);
       expect(wishlistIconBox.height, homeIconBox.height);
       expect(

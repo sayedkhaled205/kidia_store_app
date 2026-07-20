@@ -8,16 +8,48 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
 
 class ProductQuickAddButton extends StatelessWidget {
   const ProductQuickAddButton({
     required this.productId,
     this.enabled = true,
+    this.iconVariant = 'bag',
+    this.iconStyle = 'outline',
+    this.iconSize = 22,
+    this.iconColor,
+    this.showBackground = true,
+    this.backgroundColor,
+    this.backgroundRadius = 24,
+    this.appearance,
     super.key,
   });
 
   final int productId;
   final bool enabled;
+  final String iconVariant;
+  final String iconStyle;
+  final double iconSize;
+  final Color? iconColor;
+  final bool showBackground;
+  final Color? backgroundColor;
+  final double backgroundRadius;
+  final ProductQuickAddAppearance? appearance;
+
+  IconData get _icon {
+    final String resolvedStyle = appearance?.iconStyle ?? iconStyle;
+    final bool filled = resolvedStyle == 'filled';
+    switch (appearance?.iconVariant ?? iconVariant) {
+      case 'cart':
+        return filled ? Icons.shopping_cart : Icons.shopping_cart_outlined;
+      case 'basket':
+        return filled ? Icons.shopping_basket : Icons.shopping_basket_outlined;
+      default:
+        return filled || resolvedStyle == 'rounded'
+            ? Icons.shopping_bag_rounded
+            : Icons.shopping_bag_outlined;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +57,17 @@ class ProductQuickAddButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Material(
-      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.94),
-      shape: const CircleBorder(),
+      color: (appearance?.showBackground ?? showBackground)
+          ? appearance?.backgroundColor ?? backgroundColor ??
+                Theme.of(context).colorScheme.surface.withValues(alpha: 0.94)
+          : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          (appearance?.backgroundRadius ?? backgroundRadius)
+              .clamp(0, 40)
+              .toDouble(),
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: IconButton(
         key: Key('quick-add-product-$productId'),
@@ -40,7 +81,14 @@ class ProductQuickAddButton extends StatelessWidget {
             productId: productId,
           ),
         ),
-        icon: const Icon(Icons.shopping_bag_outlined),
+        iconSize: (appearance?.iconSize ?? iconSize)
+            .clamp(16, 36)
+            .toDouble(),
+        color:
+            appearance?.iconColor ??
+            iconColor ??
+            Theme.of(context).colorScheme.onSurface,
+        icon: Icon(_icon),
       ),
     );
   }

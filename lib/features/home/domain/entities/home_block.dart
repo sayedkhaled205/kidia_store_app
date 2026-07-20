@@ -1,3 +1,5 @@
+import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+
 enum HomeBlockType {
   appHeader('app_header'),
   heroSlider('hero_slider'),
@@ -432,6 +434,7 @@ class ProductCarouselBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.quickAddAppearance = const ProductQuickAddAppearance(),
   }) : super(type: HomeBlockType.productCarousel);
 
   final String? title;
@@ -450,6 +453,7 @@ class ProductCarouselBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final ProductQuickAddAppearance quickAddAppearance;
 }
 
 class ProductGridBlock extends HomeBlock {
@@ -473,6 +477,7 @@ class ProductGridBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.quickAddAppearance = const ProductQuickAddAppearance(),
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
@@ -491,6 +496,7 @@ class ProductGridBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final ProductQuickAddAppearance quickAddAppearance;
 }
 
 class SectionHeaderBlock extends HomeBlock {

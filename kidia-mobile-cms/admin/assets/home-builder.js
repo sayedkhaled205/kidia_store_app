@@ -418,8 +418,12 @@
 		var discounted = regularPrice && regularPrice !== price;
 		var rating = Number(item && item.rating ? item.rating : 0);
 		var style = settings && settings.card_style ? settings.card_style : "outlined";
+		var quickIcon = settings && settings.quick_add_icon_variant === "cart" ? "🛒" : settings && settings.quick_add_icon_variant === "basket" ? "🧺" : "🛍";
+		var quickSize = numberInRange(settings && settings.quick_add_icon_size, 22, 16, 36);
+		var quickBackground = settings && settings.quick_add_show_background === "" ? "transparent" : safeColor(settings && settings.quick_add_background_color, "#FFFFFF");
+		var quickStyle = 'style="width:' + (quickSize + 12) + 'px;height:' + (quickSize + 12) + 'px;font-size:' + quickSize + 'px;border-radius:' + numberInRange(settings && settings.quick_add_radius, 24, 0, 40) + 'px;background:' + quickBackground + ';color:' + safeColor(settings && settings.quick_add_icon_color, "#1F2933") + '"';
 
-		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + (inStock && (!settings || settings.quick_add_enabled !== "") ? '<span class="kidia-preview-product-card__quick-add">♧</span>' : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
+		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + (inStock && (!settings || settings.quick_add_enabled !== "") ? '<span class="kidia-preview-product-card__quick-add" ' + quickStyle + '>' + quickIcon + '</span>' : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
 	}
 
 	function renderBrandCard(item, itemWidth, settings) {
@@ -574,8 +578,8 @@
 
 		return '<div class="kidia-preview-focus-target kidia-preview-block-frame" data-preview-block="' +
 			escapeHtml(block.id) +
-			'" style="margin:' + marginTop + 'px ' + marginHorizontal + 'px ' + marginBottom +
-			'px;padding:' + paddingVertical + 'px ' + paddingHorizontal + 'px;border-radius:' + radius +
+			'" style="margin:0 ' + marginHorizontal + 'px;transform:translateY(' + (marginBottom - marginTop) +
+			'px);padding:' + paddingVertical + 'px ' + paddingHorizontal + 'px;border-radius:' + radius +
 			'px;background:' + background + ';--kidia-preview-content-scale:' + scale + '">' +
 			'<div class="kidia-preview-block-frame__content">' + renderBlock(block) + '</div></div>';
 	}

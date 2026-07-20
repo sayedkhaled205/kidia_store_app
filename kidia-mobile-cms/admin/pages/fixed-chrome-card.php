@@ -10,9 +10,7 @@ $chrome_prefix    = isset( $chrome_name_prefix ) ? (string) $chrome_name_prefix 
 $chrome_page_name = isset( $chrome_page ) ? (string) $chrome_page : ( isset( $page ) ? (string) $page : '' );
 $chrome_items     = array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' );
 if ( 'footer' === $chrome_part ) {
-	$chrome_items = 'product' === $chrome_page_name
-		? array( 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' )
-		: array( 'home' => 'Home', 'categories' => 'Categories', 'wishlist' => 'Wishlist', 'account' => 'Account' );
+	$chrome_items = array( 'home' => 'Home', 'categories' => 'Categories', 'search' => 'Search', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'share' => 'Share', 'like' => 'Like', 'add_to_cart' => 'Add to bag' );
 }
 $collapsed_header_keys = array( 'collapse_on_scroll', 'collapse_transition', 'collapse_speed', 'compact_height', 'compact_style', 'compact_background_color', 'compact_horizontal_padding', 'compact_side_margin', 'compact_radius', 'compact_border_width', 'compact_border_color', 'compact_shadow' );
 $item_field = static function ( string $part, string $key ): string {
@@ -131,7 +129,7 @@ $footer_icon_symbols = array(
 			</<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?>>
 		<?php endforeach; ?>
 		<?php if ( $footer_icon_group_open ) : ?></div></section><?php endif; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><?php if ( 'footer' === $chrome_part && 'category' !== $chrome_page_name ) : ?><p class="kidia-footer-size-reference-note"><?php esc_html_e( 'Footer height, icon size and label size come from the Category Page footer so all six pages stay identical. Icon and label spacing can be adjusted for this footer.', 'kidia-mobile-cms' ); ?></p><?php endif; ?><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>

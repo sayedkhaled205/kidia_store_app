@@ -70,10 +70,6 @@
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
-.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="height"],
-.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"],
-.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"] { display:none; }
-.kidia-footer-size-reference-note { margin:0 0 12px; padding:9px 11px; border-radius:7px; background:#edf8f4; color:#315f55; }
 .kidia-chrome-row { display:block!important; min-height:0!important; }
 .kidia-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
 .kidia-chrome-row-toolbar label { display:inline-flex; align-items:center; gap:6px; }

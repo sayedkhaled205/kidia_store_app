@@ -20,9 +20,17 @@ class CategoriesScreen extends ConsumerWidget {
     final AsyncValue<CatalogCategoryTree> tree = ref.watch(
       catalogCategoryTreeProvider,
     );
+    final AsyncValue<CmsPageLayout> layoutState = ref.watch(
+      cmsPageLayoutProvider('category'),
+    );
+    final CmsPageLayout? loadedLayout = layoutState.value;
+    if (loadedLayout == null && !layoutState.hasError) {
+      return const Scaffold(
+        body: SafeArea(child: _CategoryLoadingList()),
+      );
+    }
     final CmsPageLayout layout =
-        ref.watch(cmsPageLayoutProvider('category')).value ??
-        CmsPageLayout.fallback('category');
+        loadedLayout ?? CmsPageLayout.fallback('category');
     final CatalogCategory? categorySettings =
         tree.asData?.value.roots.isEmpty == false
         ? tree.asData!.value.roots.first.category
@@ -97,12 +105,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         : layout == 'default'
         ? _defaultList()
         : _grid(layout);
-    return ColoredBox(
-      color: _categoryColor(
-        _settings.elementBackgroundColor,
-        Theme.of(context).colorScheme.surface,
+    return Transform.translate(
+      offset: Offset(0, _settings.marginBottom - _settings.marginTop),
+      child: ColoredBox(
+        color: _categoryColor(
+          _settings.elementBackgroundColor,
+          Theme.of(context).colorScheme.surface,
+        ),
+        child: content,
       ),
-      child: content,
     );
   }
 
@@ -114,9 +125,9 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsetsDirectional.fromSTEB(
           16,
-          14 + _settings.marginTop,
+          14,
           16,
-          24 + _settings.marginBottom,
+          24,
         ),
         itemCount: widget.tree.roots.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
@@ -158,9 +169,9 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsetsDirectional.fromSTEB(
           16,
-          14 + _settings.marginTop,
+          14,
           16,
-          24 + _settings.marginBottom,
+          24,
         ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
@@ -193,12 +204,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         : _flatten(root.children);
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: _settings.marginTop,
-          bottom: _settings.marginBottom,
-        ),
-        child: Row(
+      child: Row(
           key: const Key('category-layout-sidebar'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -252,7 +258,6 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
             ),
           ),
           ],
-        ),
       ),
     );
   }

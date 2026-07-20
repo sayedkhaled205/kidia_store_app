@@ -540,18 +540,9 @@ final class Kidia_Mobile_Block_Registry {
 			};
 
 			return array(
-				$number( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 80 ),
-				$number( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 80 ),
 				$number( 'margin_horizontal', __( 'Outer side space', 'kidia-mobile-cms' ), 40 ),
 				$number( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 40 ),
 				$number( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 40 ),
-				array(
-					'key'     => 'block_background',
-					'label'   => __( 'Block background', 'kidia-mobile-cms' ),
-					'type'    => 'color',
-					'tab'     => 'responsive',
-					'default' => '',
-				),
 				$number( 'block_radius', __( 'Block corner radius', 'kidia-mobile-cms' ), 50 ),
 				array(
 					'key'     => 'content_scale',

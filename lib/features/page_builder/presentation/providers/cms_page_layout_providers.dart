@@ -11,10 +11,10 @@ final Provider<CmsPageLayoutRemoteDataSource> cmsPageLayoutRemoteDataSourceProvi
       return CmsPageLayoutRemoteDataSource(ref.watch(homeDioProvider));
     });
 
-final cmsPageLayoutProvider = FutureProvider.autoDispose.family<CmsPageLayout, String>(
+final cmsPageLayoutProvider = FutureProvider.family<CmsPageLayout, String>(
       (Ref ref, String page) async {
         final Timer refreshTimer = Timer(
-          const Duration(seconds: 5),
+          const Duration(seconds: 30),
           ref.invalidateSelf,
         );
         ref.onDispose(refreshTimer.cancel);
