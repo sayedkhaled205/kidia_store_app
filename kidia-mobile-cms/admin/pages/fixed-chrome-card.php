@@ -129,11 +129,7 @@ $footer_icon_symbols = array(
 			</<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?>>
 		<?php endforeach; ?>
 		<?php if ( $footer_icon_group_open ) : ?></div></section><?php endif; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( 'footer' === $chrome_part && in_array( $key, array( 'hide_on_scroll', 'safe_area', 'show_labels' ), true ) ) { continue; } if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div>
-		<?php if ( 'footer' === $chrome_part ) : ?>
-			<div class="kidia-footer-toggle-row"><?php foreach ( array( 'hide_on_scroll', 'safe_area', 'show_labels' ) as $toggle_key ) { foreach ( $chrome_fields as $field ) { if ( $field['key'] === $toggle_key ) { $render_chrome_field( $field, $chrome_settings[ $toggle_key ] ?? $field['default'], $chrome_prefix . '[settings][' . $toggle_key . ']' ); break; } } } ?></div>
-		<?php endif; ?>
-		</section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
 		</div>
 	</div>
 </section>
