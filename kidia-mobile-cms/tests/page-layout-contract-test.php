@@ -40,8 +40,12 @@ $store = new Kidia_Mobile_Page_Layout_Store();
 foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page_with_elements => $_page_label ) {
 	foreach ( array( Kidia_Mobile_Page_Layout_Store::header_fields(), Kidia_Mobile_Page_Layout_Store::footer_fields() ) as $chrome_fields ) {
 		$chrome_keys = array_column( $chrome_fields, 'key' );
-		kidia_page_assert( in_array( 'margin_top', $chrome_keys, true ), "$page_with_elements fixed chrome must expose Margin top." );
-		kidia_page_assert( in_array( 'margin_bottom', $chrome_keys, true ), "$page_with_elements fixed chrome must expose Margin bottom." );
+		$chrome_labels = array_column( $chrome_fields, 'label', 'key' );
+		foreach ( array( 'margin_top', 'margin_bottom', 'space_up', 'space_down', 'background_color' ) as $layout_key ) {
+			kidia_page_assert( in_array( $layout_key, $chrome_keys, true ), "$page_with_elements fixed chrome must expose $layout_key." );
+		}
+		kidia_page_assert( 'Merge up' === $chrome_labels['margin_top'], "$page_with_elements fixed chrome must label margin_top as Merge up." );
+		kidia_page_assert( 'Merge down' === $chrome_labels['margin_bottom'], "$page_with_elements fixed chrome must label margin_bottom as Merge down." );
 	}
 	foreach ( Kidia_Mobile_Page_Layout_Store::element_definitions( $page_with_elements ) as $definition ) {
 		$field_keys = array_column( $definition['fields'], 'key' );

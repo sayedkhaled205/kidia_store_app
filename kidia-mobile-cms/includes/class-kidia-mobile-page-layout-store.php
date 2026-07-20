@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 14;
+	private const VERSION = 15;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -48,11 +48,13 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'logo_height', __( 'Logo height', 'kidia-mobile-cms' ), 'number', 38, array(), 20, 80 ),
 			self::field( 'style', __( 'Header style', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Standard', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 64, array(), 48, 120 ),
-			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Merge down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_up', __( 'Space up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_down', __( 'Space down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
 			self::field( 'row_gap', __( 'Space between rows', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
 			self::field( 'vertical_padding', __( 'Vertical padding', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
-			self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'border_color', __( 'Border color', 'kidia-mobile-cms' ), 'color', '#E2E6E4' ),
 			self::field( 'border_width', __( 'Border width', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 6 ),
 			self::field( 'corner_radius', __( 'Corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
@@ -141,9 +143,11 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'hide_on_scroll', __( 'Hide while scrolling down and show while scrolling up', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'style', __( 'Footer style', 'kidia-mobile-cms' ), 'select', 'navigation', array( 'navigation' => __( 'Bottom navigation', 'kidia-mobile-cms' ), 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'product_action' => __( 'Product action bar', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 76, array(), 48, 100 ),
-			self::field( 'margin_top', __( 'Margin top', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'margin_bottom', __( 'Margin bottom', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
-			self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Merge down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_up', __( 'Space up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'space_down', __( 'Space down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'shadow', __( 'Shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'top_radius', __( 'Top corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'horizontal_padding', __( 'Horizontal padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
