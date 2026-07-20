@@ -28,6 +28,21 @@
 	var previewBlocksByType = {};
 	var previewCollapseProgress = 0;
 
+	document.addEventListener("click", function (event) {
+		if (event.target.closest("#kidia-add-element")) {
+			openPicker();
+			return;
+		}
+		if (event.target.closest("#kidia-collapse-all")) {
+			collapseAll(true);
+			return;
+		}
+		if (event.target.closest("#kidia-expand-all")) {
+			collapseAll(false);
+			return;
+		}
+	});
+
 	form.addEventListener("click", function (event) {
 		var button = event.target.closest(".kidia-fixed-chrome-expand");
 		var card;
@@ -1050,20 +1065,7 @@
 		}
 	});
 
-	var addElement = document.getElementById("kidia-add-element");
-	var collapseButton = document.getElementById("kidia-collapse-all");
-	var expandButton = document.getElementById("kidia-expand-all");
 	var createSubmit = document.getElementById("kidia-create-element-submit");
-
-	if (addElement) {
-		addElement.addEventListener("click", openPicker);
-	}
-	if (collapseButton) {
-		collapseButton.addEventListener("click", function () { collapseAll(true); });
-	}
-	if (expandButton) {
-		expandButton.addEventListener("click", function () { collapseAll(false); });
-	}
 	if (createSubmit) {
 		createSubmit.addEventListener("click", createElement);
 	}
