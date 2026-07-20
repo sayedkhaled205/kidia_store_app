@@ -90,6 +90,9 @@ kidia_collapsed_header_assert( false !== strpos( $category_template, '<span clas
 
 $admin_theme = (string) file_get_contents( dirname( __DIR__ ) . '/admin/assets/admin-theme.css' );
 kidia_collapsed_header_assert( false !== strpos( $admin_theme, '--kidia-admin-button-radius: 10px' ), 'CMS buttons must keep square or rectangular proportions with lightly rounded corners.' );
+kidia_collapsed_header_assert( false !== strpos( $admin_theme, 'grid-template-columns: repeat(3, minmax(0, var(--kidia-settings-control-width)))' ), 'Every desktop Builder settings panel must use the shared three-lane grid.' );
+kidia_collapsed_header_assert( false !== strpos( $admin_theme, 'justify-content: start' ), 'The shared settings grid must stay anchored to the interface writing direction.' );
+kidia_collapsed_header_assert( false !== strpos( $admin_theme, 'width: 100% !important' ), 'Every value control must fill its shared 150px lane consistently.' );
 $admin_controller = (string) file_get_contents( dirname( __DIR__ ) . '/admin/class-kidia-mobile-cms-admin.php' );
 kidia_collapsed_header_assert( false !== strpos( $admin_controller, 'admin/assets/admin-theme.css' ), 'The shared rounded button theme must load on every Kidia CMS page.' );
 

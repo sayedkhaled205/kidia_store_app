@@ -76,6 +76,7 @@
 	--kidia-settings-control-width: 150px;
 	--kidia-settings-control-height: 35px;
 	--kidia-settings-control-radius: 7px;
+	--kidia-settings-grid-gap: 12px;
 }
 
 /* One accessible Kidia treatment for every range control in every Builder. */
@@ -100,7 +101,21 @@
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) :is(.kidia-page-fields, .kidia-builder-settings-content, .kidia-category-general-fields) {
 	direction: inherit;
 	text-align: start;
-	justify-items: start;
+	grid-template-columns: repeat(3, minmax(0, var(--kidia-settings-control-width)));
+	justify-content: start;
+	justify-items: stretch;
+	gap: var(--kidia-settings-grid-gap);
+}
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(.kidia-page-field, .kidia-builder-field, .kidia-category-settings label, .kidia-category-general-fields > label) {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	align-items: stretch;
+}
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(.kidia-settings-section-title, .kidia-title-subtitle-row, .kidia-footer-toggle-row, .kidia-quick-add-layout) {
+	grid-column: 1 / -1;
 }
 [dir="rtl"] :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) :is(.kidia-settings-section-title, label, .kidia-page-field, .kidia-builder-field) { text-align: right; }
 [dir="ltr"] :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) :is(.kidia-settings-section-title, label, .kidia-page-field, .kidia-builder-field) { text-align: left; }
@@ -108,6 +123,9 @@
 @media (max-width: 782px) {
 	.kidia-title-subtitle-row,
 	.kidia-footer-toggle-row { grid-template-columns: 1fr; }
+	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) :is(.kidia-page-fields, .kidia-builder-settings-content, .kidia-category-general-fields) {
+		grid-template-columns: 1fr;
+	}
 }
 
 [data-element="product_grid"] .kidia-page-fields,
@@ -165,7 +183,8 @@
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-field, .kidia-builder-field, .kidia-category-settings label, .kidia-category-general-fields > label)
 	> input[type="color"] {
-	width: min(100%, var(--kidia-settings-control-width)) !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
 	max-width: var(--kidia-settings-control-width) !important;
 	min-height: var(--kidia-settings-control-height) !important;
 	height: var(--kidia-settings-control-height) !important;
@@ -177,14 +196,15 @@
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-field, .kidia-builder-field, .kidia-category-settings label, .kidia-category-general-fields > label)
 	> input[type="color"] {
-	min-width: min(100%, var(--kidia-settings-control-width)) !important;
+	min-width: 0 !important;
 	padding: 4px !important;
 	background: #fff !important;
 }
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-field, .kidia-builder-field) > textarea {
-	width: min(100%, var(--kidia-settings-control-width)) !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
 	max-width: var(--kidia-settings-control-width) !important;
 	border-radius: var(--kidia-settings-control-radius) !important;
 	font-size: 14px !important;
@@ -192,7 +212,8 @@
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-toggle, .kidia-builder-grid .kidia-builder-field > label:first-child:last-child, .kidia-hero-block-item .kidia-builder-field--toggle > label) {
-	width: min(100%, var(--kidia-settings-control-width)) !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
 	max-width: var(--kidia-settings-control-width) !important;
 	min-height: var(--kidia-settings-control-height) !important;
 	padding: 7px 10px !important;
@@ -200,7 +221,8 @@
 }
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-builder-background-control {
-	width: min(100%, var(--kidia-settings-control-width)) !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
 	max-width: var(--kidia-settings-control-width) !important;
 	min-height: var(--kidia-settings-control-height) !important;
 	gap: 6px !important;
