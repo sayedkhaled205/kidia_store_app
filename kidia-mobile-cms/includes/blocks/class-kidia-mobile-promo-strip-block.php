@@ -110,7 +110,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 
     <div class="kidia-builder-grid">
 
-    	<div class="kidia-builder-field kidia-builder-field--full">
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--text">
 
     		<label>Text</label>
 
@@ -122,7 +122,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 
     	</div>
 
-    	<div class="kidia-builder-field">
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--background">
 
     		<label>Background</label>
 
@@ -134,7 +134,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 
     	</div>
 
-    	<div class="kidia-builder-field">
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--text-color">
 
     		<label>Text Color</label>
 
@@ -146,7 +146,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 
     	</div>
 
-		<div class="kidia-builder-field">
+		<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--action-type">
 			<label><?php esc_html_e( 'Action Type', 'kidia-mobile-cms' ); ?></label>
 			<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_type]">
 				<option value="" <?php selected( '', $settings['action_type'] ); ?>><?php esc_html_e( 'No Action', 'kidia-mobile-cms' ); ?></option>
@@ -158,7 +158,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 			</select>
 		</div>
 
-		<div class="kidia-builder-field kidia-builder-field--full">
+		<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--action-value">
 			<label><?php esc_html_e( 'Action Value', 'kidia-mobile-cms' ); ?></label>
 			<input
 				type="text"

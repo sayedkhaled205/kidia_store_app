@@ -449,6 +449,9 @@ function runMergeControlsContractTest() {
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
 	assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
 	assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
+	assert.match(readAsset("admin-theme.css"), /\.kidia-settings-section-title--section_layout\s*\{[\s\S]*min-height:\s*45px;[\s\S]*background:\s*#edf7f4\s*!important;[\s\S]*font-size:\s*14px\s*!important;/, "Every builder must use the canonical Section Layout heading size and Kidia appearance.");
+	assert.match(readAsset("admin-theme.css"), /\.kidia-section-layout-grid\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(150px,\s*1fr\)\);[\s\S]*padding:\s*14px 12px 16px;/, "Every builder must use the same three-column Section Layout dimensions.");
+	assert.match(chromeTemplate, /kidia-settings-section-title kidia-settings-section-title--section_layout[\s\S]*kidia-section-layout-grid/, "Header and Footer must use the exact shared Section Layout heading and grid.");
 	assert.match(settingsSections, /keys:\s*\["margin_top",\s*"margin_bottom"\]/, "Merge up and Merge down must share the first vertical column.");
 	assert.match(settingsSections, /keys:\s*\["space_up",\s*"space_down"\]/, "Space up and Space down must share the second vertical column.");
 	assert.match(settingsSections, /keys:\s*\["block_background",\s*"background_color",\s*"element_background_color"\]/, "The background control must use the final column across all Builder types.");
@@ -489,6 +492,14 @@ function runMergeControlsContractTest() {
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#category-fields > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["element_background_color"]], "Category must use the same requested column order.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row").length, 0, "Quick Add must use the original settings grid without injected rows.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-title-subtitle-row").length, 0, "Title and Subtitle fields must use the original settings grid.");
+
+	const promoBlock = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-promo-strip-block.php"), "utf8");
+	const homeBuilderCss = readAsset("home-builder.css");
+	assert.match(settingsSections, /classList\.contains\("kidia-promo-action-setting"\)\)\s*\{\s*return "actions";/, "All Promo Strip controls must stay together under Actions & Navigation.");
+	assert.match(promoBlock, /kidia-promo-action-setting--text[\s\S]*kidia-promo-action-setting--background[\s\S]*kidia-promo-action-setting--text-color[\s\S]*kidia-promo-action-setting--action-type[\s\S]*kidia-promo-action-setting--action-value/, "Promo Strip must expose the complete approved Actions & Navigation field set.");
+	assert.match(homeBuilderCss, /kidia-promo-action-setting--background\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--text-color\s*\{\s*grid-column:\s*2;[\s\S]*kidia-promo-action-setting--text\s*\{\s*grid-column:\s*3;[\s\S]*kidia-promo-action-setting--action-type\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--action-value\s*\{\s*grid-column:\s*2;/, "Actions & Navigation must follow the approved two-row map with Action Type on the right.");
+	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{\s*color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-card:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
+	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-create-element-modal__body")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Element modal must not retain WordPress blue styling.");
 }
 
 function categoryGeneralSettings() {

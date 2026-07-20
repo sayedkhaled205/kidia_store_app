@@ -975,6 +975,9 @@
 
 .kidia-element-picker,
 .kidia-create-element-modal {
+	--kidia-picker-accent: #2f806e;
+	--kidia-picker-accent-dark: #236b59;
+	--kidia-picker-accent-soft: #e7f5f1;
 	position: fixed;
 	inset: 0;
 	z-index: 100000;
@@ -1045,6 +1048,15 @@
 	width: 34px;
 	height: 34px;
 	border-radius: 6px;
+	color: var(--kidia-picker-accent-dark) !important;
+}
+
+.kidia-element-picker__close:hover,
+.kidia-element-picker__close:focus,
+.kidia-create-element-modal__header .button-link:hover,
+.kidia-create-element-modal__header .button-link:focus {
+	background: var(--kidia-picker-accent-soft);
+	color: var(--kidia-picker-accent-dark) !important;
 }
 
 .kidia-element-picker__toolbar {
@@ -1059,6 +1071,12 @@
 	min-height: 40px;
 	margin: 0;
 	border-radius: 7px;
+}
+
+.kidia-element-picker__toolbar input[type="search"]:focus {
+	border-color: var(--kidia-picker-accent) !important;
+	box-shadow: 0 0 0 1px var(--kidia-picker-accent) !important;
+	outline: 2px solid transparent;
 }
 
 .kidia-element-picker__content {
@@ -1111,7 +1129,7 @@
 }
 
 .kidia-element-group__identity .dashicons {
-	color: #2271b1;
+	color: var(--kidia-picker-accent);
 }
 
 .kidia-element-group__count {
@@ -1165,16 +1183,17 @@
 
 .kidia-element-card:hover,
 .kidia-element-card:focus-visible {
-	border-color: #2271b1;
-	background: #f0f6fc;
-	box-shadow: 0 2px 8px rgba(34, 113, 177, 0.1);
+	border-color: var(--kidia-picker-accent);
+	background: var(--kidia-picker-accent-soft);
+	box-shadow: 0 2px 8px rgba(47, 128, 110, 0.14);
+	outline: none;
 }
 
 .kidia-element-card > .dashicons {
 	width: 24px;
 	height: 24px;
 	flex: 0 0 24px;
-	color: #2271b1;
+	color: var(--kidia-picker-accent);
 	font-size: 24px;
 }
 
@@ -1211,6 +1230,38 @@
 	padding: 12px 18px;
 	border-block-start: 1px solid #e8eaed;
 	background: #fbfcfd;
+}
+
+.kidia-element-picker__footer .button,
+.kidia-create-element-modal__footer .button {
+	border-color: var(--kidia-picker-accent) !important;
+	color: var(--kidia-picker-accent-dark) !important;
+}
+
+.kidia-element-picker__footer .button:hover,
+.kidia-element-picker__footer .button:focus,
+.kidia-create-element-modal__footer .button:hover,
+.kidia-create-element-modal__footer .button:focus {
+	border-color: var(--kidia-picker-accent-dark) !important;
+	background: var(--kidia-picker-accent-soft) !important;
+	color: var(--kidia-picker-accent-dark) !important;
+}
+
+/* Promo Strip Actions & Navigation follows the approved fixed two-row map. */
+.kidia-promo-action-setting--background { grid-column: 1; }
+.kidia-promo-action-setting--text-color { grid-column: 2; }
+.kidia-promo-action-setting--text { grid-column: 3; }
+.kidia-promo-action-setting--action-type { grid-column: 1; }
+.kidia-promo-action-setting--action-value { grid-column: 2; }
+
+@media (max-width: 782px) {
+	.kidia-promo-action-setting--background,
+	.kidia-promo-action-setting--text-color,
+	.kidia-promo-action-setting--text,
+	.kidia-promo-action-setting--action-type,
+	.kidia-promo-action-setting--action-value {
+		grid-column: 1;
+	}
 }
 
 .kidia-create-element-modal__panel {
