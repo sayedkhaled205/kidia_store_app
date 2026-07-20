@@ -80,6 +80,23 @@
 .kidia-chrome-footer-general .kidia-page-field[data-setting="item_gap"] {
 	display: none;
 }
+.kidia-chrome-footer-general .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="horizontal_padding"] { grid-column:1; grid-row:1; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="style"] { grid-column:2; grid-row:1; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="height"] { grid-column:3; grid-row:1; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"] { grid-column:1; grid-row:2; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="shadow"] { grid-column:2; grid-row:2; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="top_radius"] { grid-column:3; grid-row:2; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="border_width"] { grid-column:1; grid-row:3; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="side_spacing_percent"] { grid-column:2; grid-row:3; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"] { grid-column:3; grid-row:3; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="inactive_color"] { grid-column:1; grid-row:4; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="icon_label_gap"] { grid-column:2; grid-row:4; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="border_color"] { grid-column:3; grid-row:4; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="active_color"] { grid-column:3; grid-row:5; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="show_labels"] { grid-column:1; grid-row:6; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="safe_area"] { grid-column:2; grid-row:6; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="hide_on_scroll"] { grid-column:3; grid-row:6; }
 .kidia-chrome-row { display:block!important; min-height:0!important; }
 .kidia-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
 .kidia-chrome-row-toolbar .kidia-chrome-add-row { min-height:32px; margin:0 0 0 auto!important; border-color:#236b59!important; background:#236b59!important; color:#fff!important; font-weight:700; }
@@ -96,6 +113,10 @@
 .kidia-footer-icons-setting__items .kidia-chrome-item-setting { margin:0; padding:12px; border:1px solid #cfe1dc; border-radius:10px; background:#fff; }
 .kidia-footer-icons-setting__items .kidia-chrome-item-setting h4 { margin:0 0 10px; color:#236b59; font-size:15px; }
 @media(max-width:782px){.kidia-footer-icons-setting__items{grid-template-columns:1fr}}
+@media(max-width:782px){
+	.kidia-chrome-footer-general .kidia-page-fields{grid-template-columns:1fr}
+	.kidia-chrome-footer-general .kidia-page-field[data-setting]{grid-column:1;grid-row:auto}
+}
 .kidia-chrome-column>label { display:flex; align-items:center; justify-content:center; gap:5px; color:#50665f; font-size:10px; }
 .kidia-chrome-column>label input { width:72px; min-height:28px; padding:2px 5px; }
 .kidia-chrome-zone { box-sizing:border-box; width:100%; min-width:0; min-height:52px; overflow:hidden; }
