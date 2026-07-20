@@ -78,14 +78,41 @@
 	--kidia-settings-control-radius: 7px;
 }
 
-/* Shared final Section Layout arrangement: Merge, Space, then Background. */
+/*
+ * Canonical Section Layout panel used by Home, every page element, Category,
+ * and the fixed Header/Footer. Keep this definition here so individual
+ * builders cannot drift in heading, spacing, sizing, or column structure.
+ */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-settings-section-title--section_layout {
+	display: block !important;
+	width: 100% !important;
+	min-height: 45px;
+	grid-column: 1 / -1 !important;
+	margin: 14px 0 0 !important;
+	padding: 10px 12px !important;
+	border: 0 !important;
+	border-top: 2px solid #b9d9d1 !important;
+	border-bottom: 1px solid #dfeae7 !important;
+	background: #edf7f4 !important;
+	color: #236b59 !important;
+	font-size: 14px !important;
+	font-weight: 800 !important;
+	line-height: 23px !important;
+	text-align: end !important;
+	box-sizing: border-box;
+}
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(150px, 1fr));
 	grid-column: 1 / -1;
 	order: 99;
-	gap: 12px 18px;
+	width: 100%;
+	margin: 0;
+	padding: 14px 12px 16px;
+	gap: 11px 18px;
 	direction: inherit;
+	box-sizing: border-box;
 }
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column {
@@ -98,6 +125,14 @@
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column > :is(.kidia-page-field, .kidia-builder-field, label) {
 	width: 100%;
 	margin: 0;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column > :is(.kidia-page-field, .kidia-builder-field, label) > label {
+	min-height: 18px;
+	margin: 0 0 5px;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 18px;
 }
 
 @media (max-width: 782px) {
