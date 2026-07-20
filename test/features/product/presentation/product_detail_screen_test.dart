@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
@@ -12,6 +13,47 @@ import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_p
 import '../support/product_test_data.dart';
 
 void main() {
+  testWidgets('product share opens the real product link actions', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    final CatalogProduct shareProduct = CatalogProduct(
+      id: 88,
+      name: 'Share Dress',
+      slug: 'share-dress',
+      type: 'simple',
+      permalink: Uri.parse('https://shop.example.com/product/share-dress'),
+      prices: testMoney,
+      isPurchasable: true,
+      isInStock: true,
+    );
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: shareProduct.id,
+          repository: ProductFakeCatalogRepository(product: shareProduct),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('product-footer-icon-box-share')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('product-share-sheet')), findsOneWidget);
+    expect(find.text('Share Dress'), findsWidgets);
+    expect(find.byKey(const Key('share-facebook')), findsOneWidget);
+    expect(find.byKey(const Key('share-whatsapp')), findsOneWidget);
+    expect(find.byKey(const Key('share-messenger')), findsOneWidget);
+    expect(find.byKey(const Key('share-copy-link')), findsOneWidget);
+    expect(find.byKey(const Key('share-more')), findsOneWidget);
+  });
+
   testWidgets('renders product content and explains a disconnected cart', (
     WidgetTester tester,
   ) async {
