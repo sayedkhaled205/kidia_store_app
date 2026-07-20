@@ -191,7 +191,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'add_to_cart_label', __( 'Add to cart label', 'kidia-mobile-cms' ), 'text', __( 'Add to bag', 'kidia-mobile-cms' ) ),
 			self::field( 'button_color', __( 'Button color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'button_text_color', __( 'Button text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
-			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'kidia-mobile-cms' ), 'number', 58, array(), 35, 80 ),
+			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'kidia-mobile-cms' ), 'number', 58, array(), 20, 95 ),
 			self::field( 'button_height', __( 'Button height', 'kidia-mobile-cms' ), 'number', 52, array(), 36, 80 ),
 			self::field( 'button_style', __( 'Button style', 'kidia-mobile-cms' ), 'select', 'filled', array( 'filled' => __( 'Filled', 'kidia-mobile-cms' ), 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'soft' => __( 'Soft', 'kidia-mobile-cms' ) ) ),
 			self::field( 'button_shape', __( 'Button shape', 'kidia-mobile-cms' ), 'select', 'custom', array( 'custom' => __( 'Custom radius', 'kidia-mobile-cms' ), 'rectangle' => __( 'Rectangle', 'kidia-mobile-cms' ), 'rounded' => __( 'Rounded', 'kidia-mobile-cms' ), 'pill' => __( 'Pill', 'kidia-mobile-cms' ) ) ),
