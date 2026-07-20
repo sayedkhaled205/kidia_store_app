@@ -4,6 +4,12 @@
 	var labels = {
 		image: "Image Settings",
 		text: "Text & Content",
+		content_data: "Content & Data",
+		carousel_actions: "Actions & Navigation",
+		card_layout: "Card Layout",
+		carousel_visibility: "Visibility & Display",
+		quick_add: "Quick Add",
+		carousel_wishlist: "Wishlist",
 		layout: "Layout & Spacing",
 		colors: "Colors & Appearance",
 		actions: "Actions & Navigation",
@@ -57,6 +63,18 @@
 		children.forEach(function (node) {
 			var section = sectionFor(node);
 			var element = container.closest("[data-element]");
+			var homeBlock = container.closest("[data-type]");
+			if (homeBlock && homeBlock.dataset.type === "product_carousel" && section !== "section_layout") {
+				var carouselInput = node.querySelector("input[name],select[name],textarea[name]");
+				var carouselMatch = carouselInput && carouselInput.name.match(/\[settings\]\[([^\]]+)\]/);
+				var carouselKey = carouselMatch ? carouselMatch[1] : "";
+				if (/^(title|subtitle|source|limit|category_id|product_ids)$/.test(carouselKey)) { section = "content_data"; }
+				else if (/^(show_view_all|view_all_label|action_type|action_value)$/.test(carouselKey)) { section = "carousel_actions"; }
+				else if (/^(card_style|item_width|image_ratio|card_radius)$/.test(carouselKey)) { section = "card_layout"; }
+				else if (/^(show_name|show_price|show_regular_price|show_badge|show_rating)$/.test(carouselKey)) { section = "carousel_visibility"; }
+				else if (/^quick_add_/.test(carouselKey)) { section = "quick_add"; }
+				else if (/^(show_wishlist|product_wishlist_)/.test(carouselKey)) { section = "carousel_wishlist"; }
+			}
 			if (element && element.dataset.element === "product_grid" && section !== "section_layout") { section = "general"; }
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
 				var input = node.querySelector("input[name],select[name],textarea[name]");
