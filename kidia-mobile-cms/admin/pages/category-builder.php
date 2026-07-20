@@ -83,7 +83,6 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			<div class="kidia-category-phone">
 				<div class="kidia-category-phone__speaker"></div>
 				<div class="kidia-category-phone__screen">
-					<div class="kidia-category-phone__status"><span>9:41</span><span>● ◒ ▰</span></div>
 					<div id="kidia-category-live-preview" class="kidia-category-phone__content"></div>
 				</div>
 			</div>

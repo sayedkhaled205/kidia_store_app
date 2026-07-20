@@ -134,7 +134,6 @@ foreach ( $library_options as $type => $option_name ) {
 			<div class="kidia-mobile-preview__device">
 				<div class="kidia-mobile-preview__speaker"></div>
 				<div class="kidia-mobile-preview__screen">
-					<div class="kidia-mobile-preview__status"><span>9:41</span><span>● ◒ ▰</span></div>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content"></div>
 				</div>
 			</div>

@@ -70,7 +70,7 @@ foreach ( $element_definitions as $definition ) {
 	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
-			<div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div class="kidia-page-phone__screen"><div class="kidia-page-phone__status"><span>9:41</span><span>● ◒ ▰</span></div><div id="kidia-page-live-preview"></div></div></div>
+			<div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div class="kidia-page-phone__screen"><div id="kidia-page-live-preview"></div></div></div>
 			<p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p>
 		</aside>
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
