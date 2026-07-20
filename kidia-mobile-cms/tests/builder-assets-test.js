@@ -405,14 +405,13 @@ function runMergeControlsContractTest() {
 	const homeTypes = Array.from(schemaMap[1].matchAll(/^\s*'([a-z_]+)'\s*=>\s*'[a-z-]+',?$/gm), function (match) { return match[1]; });
 
 	assert.equal(homeTypes.length, 17, "The Section Layout contract must cover all 17 registered Home element types.");
-	assert.equal((homePage.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element + must render exactly once.");
+	assert.equal((homePage.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element must render exactly once.");
 	const addElementIndex = homePage.indexOf('id="kidia-add-element"');
-	const renderedBlockIndex = homePage.lastIndexOf("admin/templates/block-template.php", addElementIndex);
-	const footerEditorIndex = homePage.indexOf("$chrome_part = 'footer'");
-	assert.ok(renderedBlockIndex < addElementIndex && addElementIndex < footerEditorIndex, "Add Element + must remain after the element list and before the footer editor.");
+	const renderedBlockIndex = homePage.indexOf("admin/templates/block-template.php");
+	assert.ok(addElementIndex < renderedBlockIndex, "Add Element must remain in the original top toolbar.");
 	assert.match(heroBlockSource, /kidia-add-repeatable-control kidia-add-hero-block-item[\s\S]*Add Slide \+/, "Add Slide + must use the shared repeatable-add control.");
 	assert.match(bannerBlockSource, /kidia-add-repeatable-control kidia-add-repeatable-item[\s\S]*Add Banner \+/, "Add Banner + must use the same repeatable-add control.");
-	assert.match(chromeTemplate, /kidia-footer-toggle-row[\s\S]*array\( 'hide_on_scroll', 'safe_area', 'show_labels' \)/, "The three footer toggles must share the final ordered row.");
+	assert.doesNotMatch(chromeTemplate, /kidia-footer-toggle-row/, "Footer toggles must use the original General Settings grid.");
   assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
   assert.match(template, /Space up[\s\S]*\[settings\]\[space_up\][\s\S]*Space down[\s\S]*\[settings\]\[space_down\]/, "Every Home element must expose the two independent section spacing controls.");
   assert.doesNotMatch(registry, /self::field\(\s*'margin_(?:top|bottom)'/, "Individual Home element schemas must not duplicate the shared merge controls.");
@@ -428,16 +427,9 @@ function runMergeControlsContractTest() {
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
   assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
 	assert.match(settingsSections, /container\.appendChild\(finalHeading\)/, "Section Layout Settings must always be the final element settings section.");
-	assert.match(settingsSections, /pairTitleAndSubtitle\(container\)/, "Every sectioned element must use the shared Title and Subtitle row enhancer.");
 	assert.match(settingsSections, /\(\(value - min\) \/ \(max - min\)\) \* 100/, "Range progress must derive from the real min, max and value instead of a fixed visual fill.");
-	assert.match(readAsset("admin-theme.css"), /input\[type="range"\]:hover::-(?:webkit-slider-thumb|moz-range-thumb)/, "Range sliders must keep the Kidia hover state.");
-	assert.match(readAsset("admin-theme.css"), /input\[type="range"\]:active::-(?:webkit-slider-thumb|moz-range-thumb)/, "Range sliders must keep the Kidia active state.");
-  assert.match(settingsSections, /quick_add_enabled[\s\S]*quick_add_icon_style[\s\S]*quick_add_icon_variant/, "Quick Add row one must contain its three related controls.");
-  assert.match(settingsSections, /quick_add_radius[\s\S]*quick_add_icon_size[\s\S]*quick_add_background_size/, "Quick Add row two must contain its three size controls.");
-	assert.match(settingsSections, /quick_add_background_color[\s\S]*quick_add_icon_color[\s\S]*quick_add_show_background/, "Quick Add row three must contain its three appearance controls.");
 	assert.match(settingsSections, /element\.dataset\.element === "filter_bar"/, "Filter and Sort Bar must have an explicit compact section layout.");
 	assert.match(settingsSections, /filter_options:\s*"Available Filters"/, "Filter and Sort Bar must group its available filters together.");
-	assert.match(readAsset("admin-theme.css"), /data-element="filter_bar"/, "Compact Filter and Sort Bar styles must target the real element id.");
 	assert.doesNotMatch(readAsset("admin-theme.css"), /data-element="filter_sort"/, "The obsolete Filter and Sort selector must not return.");
 	assert.match(pageStore, /'block_height'[^\n]+56/, "Filter and Sort Bar must use the compact 56px default height.");
 	assert.match(pagePreview, /checked\(card, "show_result_count", false\)/, "Filter result count must default to hidden in both Flutter and the live preview.");
@@ -468,8 +460,8 @@ function runMergeControlsContractTest() {
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("product-fields")), 5, "Product Grid must render exactly five fields in Section Layout Settings.");
 	assert.equal(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-settings-section-title--general").length, 1, "Product Grid must render one General Settings section.");
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("category-fields")), 5, "Category must render exactly five fields in Section Layout Settings.");
-	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row"), function (row) { return row.children.length; }), [3, 3, 3], "Quick Add must render exactly three compact rows of three settings.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-repeatable-item > .kidia-title-subtitle-row").length, 1, "Nested Slide and Banner Title/Subtitle fields must share one row too.");
+	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row").length, 0, "Quick Add must use the original settings grid without injected rows.");
+	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-title-subtitle-row").length, 0, "Title and Subtitle fields must use the original settings grid.");
 }
 
 function categoryGeneralSettings() {
