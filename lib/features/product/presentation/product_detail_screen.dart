@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
@@ -12,6 +13,8 @@ import 'package:kidia_store_app/features/page_builder/presentation/providers/cms
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 typedef ProductWishlistToggleCallback =
     Future<bool> Function(CatalogProduct product);
@@ -125,7 +128,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 hasCartConnection: widget.onAddToCart != null,
                 copy: copy,
                 onPressed: _handlePurchasePressed,
-                onShare: widget.onShareRequested == null ? null : () => widget.onShareRequested!(_controller.product!),
+                onShare: () => _showShareSheet(_controller.product!),
                 onLike: widget.onWishlistToggle == null || _isWishlistMutating ? null : () => _toggleWishlist(_controller.product!),
                 isLiked: _isWishlisted,
               )
@@ -138,12 +141,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final CatalogProduct? product = _controller.product;
     return <CmsPageHeaderAction>[
 	  CmsPageHeaderAction(type: 'support', icon: Icons.headset_mic_outlined, tooltip: 'خدمة العملاء', onPressed: () => context.push('/support')),
-      if (product != null && widget.onShareRequested != null)
+      if (product != null)
         CmsPageHeaderAction(
           type: 'share',
           icon: Icons.ios_share_outlined,
           tooltip: copy.share,
-          onPressed: () => widget.onShareRequested!(product),
+          onPressed: () => _showShareSheet(product),
         ),
       if (product != null && widget.onWishlistToggle != null)
         CmsPageHeaderAction(
@@ -162,6 +165,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         onPressed: () => context.push('/cart'),
       ),
     ];
+  }
+
+  Future<void> _showShareSheet(CatalogProduct product) async {
+    widget.onShareRequested?.call(product);
+    final Uri? link = product.permalink;
+    if (link == null || !mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) => _ProductShareSheet(product: product),
+    );
   }
 
   Widget _buildBody(_ProductCopy copy, CmsPageLayout layout) {
@@ -1277,6 +1293,192 @@ class _ProductFailure extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProductShareSheet extends StatelessWidget {
+  const _ProductShareSheet({required this.product});
+
+  final CatalogProduct product;
+
+  String get _link => product.permalink.toString();
+  String get _message => '${product.name}\n$_link';
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Material(
+      key: const Key('product-share-sheet'),
+      color: colors.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                IconButton(
+                  key: const Key('product-share-close'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+                const Expanded(
+                  child: Text(
+                    'شارك المنتج مع أصدقائك',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: <Widget>[
+                if (product.primaryImage != null)
+                  AppNetworkImage(
+                    imageUrl: product.primaryImage!.src.toString(),
+                    width: 76,
+                    height: 92,
+                    fit: BoxFit.contain,
+                    borderRadius: BorderRadius.circular(10),
+                  )
+                else
+                  Container(
+                    width: 76,
+                    height: 92,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.image_outlined),
+                  ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    product.name,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Divider(height: 1),
+            ),
+            Wrap(
+              spacing: 18,
+              runSpacing: 18,
+              children: <Widget>[
+                _ShareAction(
+                  key: const Key('share-facebook'),
+                  label: 'Facebook',
+                  icon: Icons.facebook_rounded,
+                  color: const Color(0xFF1877F2),
+                  onTap: () => _open(
+                    Uri.parse(
+                      'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(_link)}',
+                    ),
+                  ),
+                ),
+                _ShareAction(
+                  key: const Key('share-whatsapp'),
+                  label: 'WhatsApp',
+                  icon: Icons.chat_rounded,
+                  color: const Color(0xFF25D366),
+                  onTap: () => _open(
+                    Uri.parse(
+                      'https://wa.me/?text=${Uri.encodeComponent(_message)}',
+                    ),
+                  ),
+                ),
+                _ShareAction(
+                  key: const Key('share-messenger'),
+                  label: 'Messenger',
+                  icon: Icons.bolt_rounded,
+                  color: const Color(0xFF8A3FFC),
+                  onTap: () async {
+                    await Share.share(_message, subject: product.name);
+                  },
+                ),
+                _ShareAction(
+                  key: const Key('share-copy-link'),
+                  label: 'نسخ الرابط',
+                  icon: Icons.link_rounded,
+                  color: colors.onSurface,
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: _link));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('تم نسخ رابط المنتج')),
+                    );
+                  },
+                ),
+                _ShareAction(
+                  key: const Key('share-more'),
+                  label: 'المزيد',
+                  icon: Icons.more_horiz_rounded,
+                  color: colors.onSurface,
+                  onTap: () async {
+                    await Share.share(_message, subject: product.name);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _open(Uri uri) async {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      await Share.share(_message, subject: product.name);
+    }
+  }
+}
+
+class _ShareAction extends StatelessWidget {
+  const _ShareAction({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 82,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          children: <Widget>[
+            CircleAvatar(
+              radius: 30,
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              child: Icon(icon, size: 32),
+            ),
+            const SizedBox(height: 8),
+            Text(label, textAlign: TextAlign.center, maxLines: 1),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 String _plainText(String source) {

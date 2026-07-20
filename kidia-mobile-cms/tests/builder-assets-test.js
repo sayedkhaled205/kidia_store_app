@@ -642,7 +642,7 @@ function runFooterPreviewControlsTest() {
 function runProductFooterButtonPreviewTest() {
 	const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-page="product">
 		<input type="checkbox" name="layout[footer][enabled]" checked>
-		<input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":25,"items":["share"]},{"width":25,"items":["like"]},{"width":50,"items":["add_to_cart"]}]}]}'>
+		<input name="layout[footer][settings][layout_json]" value='{"rows":[{"columns":[{"width":20,"items":["share","like"]},{"width":80,"items":["add_to_cart"]}]}]}'>
 		<input name="layout[footer][settings][button_width_percent]" value="60">
 		<input name="layout[footer][settings][button_height]" value="48">
 		<select name="layout[footer][settings][button_style]"><option value="outline" selected>Outline</option></select>
@@ -658,7 +658,7 @@ function runProductFooterButtonPreviewTest() {
 	const { window } = dom;
 	window.eval(readAsset("chrome-layout.js"));
 	const preview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"), { page: "product" });
-	assert.match(preview, /grid-template-columns:minmax\(0,20fr\) minmax\(0,20fr\) minmax\(0,60fr\)/, "Button width must claim its configured share of the complete footer.");
+	assert.match(preview, /grid-template-columns:minmax\(0,10fr\) minmax\(0,10fr\) minmax\(0,80fr\)/, "Composer column widths must control the button size and split a shared icon column evenly.");
 	assert.match(preview, /kidia-app-footer-add is-outline/, "The selected button style must render in the preview.");
 	assert.match(preview, /width:100%;height:48px/, "Button height must render immediately while its column controls the width.");
 	assert.match(preview, /background:transparent/, "Outline buttons must preview with a transparent fill.");

@@ -193,6 +193,8 @@ abstract final class HomeBlockModel {
 		_optionalString(data, 'overlay_position') ?? 'start';
 	final String indicatorStyle =
 		_optionalString(data, 'indicator_style') ?? 'pill';
+	final String indicatorPosition =
+		_optionalString(data, 'indicator_position') ?? 'below';
 	if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
 	  throw FormatException('Unsupported hero image fit: $imageFit');
 	}
@@ -201,6 +203,9 @@ abstract final class HomeBlockModel {
 	}
 	if (!const <String>{'pill', 'dots'}.contains(indicatorStyle)) {
 	  throw FormatException('Unsupported hero indicator style: $indicatorStyle');
+	}
+	if (!const <String>{'below', 'image_bottom'}.contains(indicatorPosition)) {
+	  throw FormatException('Unsupported hero indicator position: $indicatorPosition');
 	}
 
     if (items.isEmpty) {
@@ -225,6 +230,7 @@ abstract final class HomeBlockModel {
       textColor: _hexColor(data, 'text_color', fallback: '#FFFFFF'),
       showIndicators: _optionalBool(data, 'show_indicators', fallback: true),
       indicatorStyle: indicatorStyle,
+      indicatorPosition: indicatorPosition,
     );
   }
 

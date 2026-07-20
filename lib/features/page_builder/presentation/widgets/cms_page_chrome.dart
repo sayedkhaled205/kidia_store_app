@@ -89,7 +89,8 @@ class CmsPageScaffold extends StatefulWidget {
 }
 
 class _CmsPageScaffoldState extends State<CmsPageScaffold> {
-  static const double _topTolerance = 0.5;
+  static const double _collapseThreshold = 32;
+  static const double _expandThreshold = 8;
 
   bool _collapsed = false;
 
@@ -110,7 +111,9 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
       'collapse_on_scroll',
       false,
     );
-    final bool next = enabled && extentBefore > _topTolerance;
+    final bool next = enabled && (_collapsed
+        ? extentBefore > _expandThreshold
+        : extentBefore > _collapseThreshold);
     if (next != _collapsed) {
       setState(() => _collapsed = next);
     }
@@ -315,18 +318,29 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   transitionBuilder:
                       (Widget child, Animation<double> animation) =>
                           _transitionBuilder(transition, child, animation),
-                  child: Column(
+                  child: FittedBox(
                     key: ValueKey<bool>(compact),
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: rows.indexed.expand((entry) sync* {
-                      if (entry.$1 > 0) {
-                        yield SizedBox(
-                          height: _header.number('row_gap', 8).clamp(0, 24),
-                        );
-                      }
-                      yield _headerRow(context, entry.$2, foreground);
-                    }).toList(growable: false),
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: SizedBox(
+                      width: (MediaQuery.sizeOf(context).width -
+                              (sideMargin * 2) -
+                              (padding * 2))
+                          .clamp(1, double.infinity)
+                          .toDouble(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: rows.indexed.expand((entry) sync* {
+                          if (entry.$1 > 0) {
+                            yield SizedBox(
+                              height: _header.number('row_gap', 8).clamp(0, 24),
+                            );
+                          }
+                          yield _headerRow(context, entry.$2, foreground);
+                        }).toList(growable: false),
+                      ),
+                    ),
                   ),
                 ),
               ),

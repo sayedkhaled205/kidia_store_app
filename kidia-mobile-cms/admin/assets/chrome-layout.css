@@ -81,6 +81,12 @@
 .kidia-chrome-row.is-invalid .kidia-chrome-row-total { color:#b42318; }
 .kidia-chrome-row-grid { display:grid; gap:7px; width:100%; min-width:0; overflow:hidden; }
 .kidia-chrome-column { display:flex; min-width:0; flex-direction:column; gap:5px; }
+.kidia-page-phone__screen { scrollbar-width:none; }
+.kidia-page-phone__screen::-webkit-scrollbar { display:none; width:0; height:0; }
+.kidia-footer-icons-setting__items { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.kidia-footer-icons-setting__items .kidia-chrome-item-setting { margin:0; padding:12px; border:1px solid #cfe1dc; border-radius:10px; background:#fff; }
+.kidia-footer-icons-setting__items .kidia-chrome-item-setting h4 { margin:0 0 10px; color:#236b59; font-size:15px; }
+@media(max-width:782px){.kidia-footer-icons-setting__items{grid-template-columns:1fr}}
 .kidia-chrome-column>label { display:flex; align-items:center; justify-content:center; gap:5px; color:#50665f; font-size:10px; }
 .kidia-chrome-column>label input { width:72px; min-height:28px; padding:2px 5px; }
 .kidia-chrome-zone { box-sizing:border-box; width:100%; min-width:0; min-height:52px; overflow:hidden; }

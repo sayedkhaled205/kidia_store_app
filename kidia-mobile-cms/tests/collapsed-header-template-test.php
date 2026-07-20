@@ -75,7 +75,7 @@ $chrome_page   = 'product';
 ob_start();
 require dirname( __DIR__ ) . '/admin/pages/fixed-chrome-card.php';
 $footer_markup = (string) ob_get_clean();
-kidia_collapsed_header_assert( false === strpos( $footer_markup, '<h3>Footer Icons</h3>' ), 'Footer icon shapes must not be split into a separate Footer Icons section.' );
+kidia_collapsed_header_assert( 1 === substr_count( $footer_markup, '<h3>Footer Icons</h3>' ), 'Footer icon controls must be grouped in one Footer Icons section.' );
 $share_section_start = strpos( $footer_markup, 'data-item-section="share"' );
 $share_section_end   = false === $share_section_start ? false : strpos( $footer_markup, '</section>', $share_section_start );
 $share_section       = false === $share_section_start || false === $share_section_end ? '' : substr( $footer_markup, $share_section_start, $share_section_end - $share_section_start );

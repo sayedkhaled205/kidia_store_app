@@ -70,6 +70,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'text_color' => '#FFFFFF',
 			'show_indicators' => true,
 			'indicator_style' => 'pill',
+			'indicator_position' => 'below',
 			'items'        => array(),
 		);
 	}
@@ -111,6 +112,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 		$image_fit = sanitize_key( (string) ( $settings['image_fit'] ?? 'cover' ) );
 		$overlay_position = sanitize_key( (string) ( $settings['overlay_position'] ?? 'start' ) );
 		$indicator_style = sanitize_key( (string) ( $settings['indicator_style'] ?? 'pill' ) );
+		$indicator_position = sanitize_key( (string) ( $settings['indicator_position'] ?? 'below' ) );
 
 		foreach ( $items as $index => $item ) {
 			if ( ! is_array( $item ) ) {
@@ -183,6 +185,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'text_color' => sanitize_hex_color( $settings['text_color'] ?? '' ) ?: '#FFFFFF',
 			'show_indicators' => ! empty( $settings['show_indicators'] ),
 			'indicator_style' => in_array( $indicator_style, array( 'pill', 'dots' ), true ) ? $indicator_style : 'pill',
+			'indicator_position' => in_array( $indicator_position, array( 'below', 'image_bottom' ), true ) ? $indicator_position : 'below',
 			'items'        => $sanitized_items,
 		);
 	}
@@ -247,6 +250,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'text_color' => $settings['text_color'],
 			'show_indicators' => $settings['show_indicators'],
 			'indicator_style' => $settings['indicator_style'],
+			'indicator_position' => $settings['indicator_position'],
 			'items'        => $items,
 		);
 	}
@@ -329,6 +333,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Strength %', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="95" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][overlay_strength]" value="<?php echo esc_attr( (string) $settings['overlay_strength'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Indicator Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][indicator_style]"><option value="pill" <?php selected( 'pill', $settings['indicator_style'] ); ?>><?php esc_html_e( 'Pill', 'kidia-mobile-cms' ); ?></option><option value="dots" <?php selected( 'dots', $settings['indicator_style'] ); ?>><?php esc_html_e( 'Dots', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Indicator Position', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][indicator_position]"><option value="below" <?php selected( 'below', $settings['indicator_position'] ); ?>><?php esc_html_e( 'Below image', 'kidia-mobile-cms' ); ?></option><option value="image_bottom" <?php selected( 'image_bottom', $settings['indicator_position'] ); ?>><?php esc_html_e( 'Inside image at bottom', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_indicators]" value="1" <?php checked( true, ! empty( $settings['show_indicators'] ) ); ?>> <?php esc_html_e( 'Show Indicators', 'kidia-mobile-cms' ); ?></label></div>
 		</div>
 

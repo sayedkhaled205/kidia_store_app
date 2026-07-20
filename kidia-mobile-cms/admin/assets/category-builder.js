@@ -137,6 +137,18 @@
 		});
 	}
 
+	function applyCardStyles(card) {
+		var style = setting("card_style") || "outlined";
+		var strength = numberInRange(setting("card_shadow_strength"), 10, 0, 40) / 100;
+		card.css({
+			backgroundColor: setting("card_background_color") || "#FFFFFF",
+			borderColor: style === "outlined" ? (setting("border_color") || "#DDE5E2") : "transparent",
+			boxShadow: style === "elevated"
+				? "0 " + numberInRange(setting("card_shadow_offset_y"), 4, -20, 20) + "px " + numberInRange(setting("card_shadow_blur"), 12, 0, 40) + "px rgba(0,0,0," + strength + ")"
+				: "none"
+		});
+	}
+
 	function updateEditorArtwork(card) {
 		var artwork = card.find(".kidia-category-image").first();
 		applyArtworkStyles(artwork, artwork.find("img"), 52);
@@ -177,6 +189,7 @@
 		}
 		mobileCard.append(buildArtwork(card, 60));
 		mobileCard.append(buildCategoryName(row, card, true).css("margin-top", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
+		applyCardStyles(mobileCard);
 		return mobileCard;
 	}
 
@@ -193,6 +206,7 @@
 		}
 
 		branch = $('<section class="kidia-category-preview-branch"></section>').attr("data-term-id", row.attr("data-term-id") || "");
+		applyCardStyles(branch);
 		tile = $('<div class="kidia-category-preview-root"></div>');
 		tile.append(buildArtwork(card, 78));
 		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
@@ -231,7 +245,7 @@
 		var rootList = categoryElement.find(".kidia-category-items > .kidia-category-list").first();
 		var layout = categoryLayout();
 		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
-		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px"});
+		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "background-color": setting("page_background_color") || "#F7F8FA"});
 		var visible = 0;
 		preview.empty().append(renderChrome("header"));
 

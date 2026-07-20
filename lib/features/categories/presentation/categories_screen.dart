@@ -23,9 +23,19 @@ class CategoriesScreen extends ConsumerWidget {
     final CmsPageLayout layout =
         ref.watch(cmsPageLayoutProvider('category')).value ??
         CmsPageLayout.fallback('category');
+    final CatalogCategory? categorySettings =
+        tree.asData?.value.roots.isEmpty == false
+        ? tree.asData!.value.roots.first.category
+        : null;
 
     return CmsPageScaffold(
       layout: layout,
+      backgroundColor: categorySettings == null
+          ? null
+          : _categoryColor(
+              categorySettings.pageBackgroundColor,
+              Theme.of(context).colorScheme.surfaceContainerLowest,
+            ),
       defaultTitle: copy.categories,
       actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(key: const Key('categories-search-action'), type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
@@ -93,7 +103,12 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: ListView.separated(
         key: const Key('category-layout-default'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
+        padding: EdgeInsetsDirectional.fromSTEB(
+          16,
+          14 + _settings.marginTop,
+          16,
+          24 + _settings.marginBottom,
+        ),
         itemCount: widget.tree.roots.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
         itemBuilder: (BuildContext context, int index) =>
@@ -125,7 +140,12 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: GridView.builder(
         key: Key('category-layout-$layout'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
+        padding: EdgeInsetsDirectional.fromSTEB(
+          16,
+          14 + _settings.marginTop,
+          16,
+          24 + _settings.marginBottom,
+        ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           mainAxisSpacing: _settings.cardGap,
@@ -151,10 +171,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         : _flatten(root.children);
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
-      child: Row(
-        key: const Key('category-layout-sidebar'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: _settings.marginTop,
+          bottom: _settings.marginBottom,
+        ),
+        child: Row(
+          key: const Key('category-layout-sidebar'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
           SizedBox(
             width: 112,
             child: ListView.builder(
@@ -195,7 +220,8 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                   _CategoryGridTile(category: detail[index].category),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -225,10 +251,17 @@ class _CategoryGridTile extends StatelessWidget {
     final double imageLimit = compact ? 62 : circular ? 92 : 112;
     return Material(
       key: Key('category-grid-tile-${category.id}'),
-      color: theme.colorScheme.surfaceContainerLowest,
+      color: _categoryColor(category.cardBackgroundColor, theme.colorScheme.surface),
+      elevation: category.cardStyle == 'elevated'
+          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
+          : 0,
+      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
+          .withValues(alpha: category.cardShadowStrength),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(category.cardRadius),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        side: category.cardStyle == 'outlined'
+            ? BorderSide(color: theme.colorScheme.outlineVariant)
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -290,10 +323,17 @@ class _CategoryBranchState extends State<_CategoryBranch> {
     final CatalogCopy copy = CatalogCopy.of(context);
     final double responsive = _categoryResponsiveScale(context);
     final Widget tile = Material(
-      color: colors.surfaceContainerLowest,
+      color: _categoryColor(category.cardBackgroundColor, colors.surface),
+      elevation: category.cardStyle == 'elevated'
+          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
+          : 0,
+      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
+          .withValues(alpha: category.cardShadowStrength),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(category.cardRadius),
-        side: BorderSide(color: colors.outlineVariant),
+        side: category.cardStyle == 'outlined'
+            ? BorderSide(color: colors.outlineVariant)
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -443,10 +483,17 @@ class _SubcategoryTile extends StatelessWidget {
     final ColorScheme colors = theme.colorScheme;
     final double responsive = _categoryResponsiveScale(context);
     return Material(
-      color: colors.surface,
+      color: _categoryColor(category.cardBackgroundColor, colors.surface),
+      elevation: category.cardStyle == 'elevated'
+          ? (category.cardShadowBlur / 4).clamp(1, 10).toDouble()
+          : 0,
+      shadowColor: _categoryColor(category.cardShadowColor, Colors.black)
+          .withValues(alpha: category.cardShadowStrength),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(category.cardRadius),
+        side: category.cardStyle == 'outlined'
+            ? BorderSide(color: colors.outlineVariant)
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
