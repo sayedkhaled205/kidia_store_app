@@ -73,9 +73,9 @@
  * Icon-only controls intentionally keep their compact square dimensions.
  */
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) {
-	--kidia-settings-control-width: 246px;
-	--kidia-settings-control-height: 50px;
-	--kidia-settings-control-radius: 8px;
+	--kidia-settings-control-width: 150px;
+	--kidia-settings-control-height: 35px;
+	--kidia-settings-control-radius: 7px;
 }
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
