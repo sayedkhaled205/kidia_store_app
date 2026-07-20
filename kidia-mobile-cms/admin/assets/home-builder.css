@@ -593,6 +593,16 @@
 
 .kidia-builder-background-control { display:flex; align-items:center; gap:6px; }
 .kidia-builder-background-control input[type="color"] { width:42px; min-width:42px; height:34px; padding:2px; cursor:pointer; }
+.kidia-builder-settings-content>.kidia-builder-field input[type="text"],
+.kidia-builder-settings-content>.kidia-builder-field input[type="url"],
+.kidia-builder-settings-content>.kidia-builder-field input[type="number"],
+.kidia-builder-settings-content>.kidia-builder-field input[type="datetime-local"],
+.kidia-builder-settings-content>.kidia-builder-field select { width:min(100%,230px); justify-self:end; }
+.kidia-builder-settings-content>.kidia-builder-field input[type="color"] { width:64px; min-width:64px; height:36px; padding:2px; }
+.kidia-builder-settings-content.has-section-layout-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.kidia-builder-settings-content.has-section-layout-settings>.kidia-settings-section-title { grid-column:1/-1; }
+.kidia-builder-settings-content.has-section-layout-settings>.kidia-settings-section-title--section_layout { order:98; }
+.kidia-builder-settings-content.has-section-layout-settings>.kidia-settings-section-title--section_layout~.kidia-builder-field { order:99; }
 .kidia-builder-background-control .kidia-block-background-value { width:110px; }
 
 .kidia-builder-switch {
