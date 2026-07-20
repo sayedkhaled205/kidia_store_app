@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 
 abstract final class HomeBlockModel {
   const HomeBlockModel._();
@@ -441,6 +442,7 @@ abstract final class HomeBlockModel {
         fallback: true,
       ),
       quickAddAppearance: _parseQuickAddAppearance(data),
+	  wishlistAppearance: _parseWishlistAppearance(data),
     );
   }
 
@@ -484,6 +486,7 @@ abstract final class HomeBlockModel {
         fallback: true,
       ),
       quickAddAppearance: _parseQuickAddAppearance(data),
+	  wishlistAppearance: _parseWishlistAppearance(data),
     );
   }
 
@@ -516,8 +519,29 @@ abstract final class HomeBlockModel {
         minimum: 0,
         maximum: 40,
       ),
+	  backgroundSize: _boundedDouble(
+		data,
+		'quick_add_background_size',
+		fallback: 40,
+		minimum: 28,
+		maximum: 64,
+	  ),
     );
   }
+
+	static ProductWishlistAppearance _parseWishlistAppearance(Map<String, dynamic> data) {
+	  return ProductWishlistAppearance(
+		enabled: _optionalBool(data, 'show_wishlist', fallback: false),
+		iconVariant: _optionalString(data, 'product_wishlist_icon_variant') ?? 'heart',
+		iconStyle: _optionalString(data, 'product_wishlist_icon_style') ?? 'outline',
+		iconSize: _boundedDouble(data, 'product_wishlist_icon_size', fallback: 20, minimum: 16, maximum: 36),
+		iconColor: _quickAddColor(_optionalString(data, 'product_wishlist_icon_color')),
+		showBackground: _optionalBool(data, 'product_wishlist_show_background', fallback: true),
+		backgroundColor: _quickAddColor(_optionalString(data, 'product_wishlist_background_color')),
+		backgroundSize: _boundedDouble(data, 'product_wishlist_background_size', fallback: 40, minimum: 28, maximum: 64),
+		backgroundRadius: _boundedDouble(data, 'product_wishlist_radius', fallback: 24, minimum: 0, maximum: 40),
+	  );
+	}
 
   static Color? _quickAddColor(String? value) {
     final String hex = (value ?? '').replaceFirst('#', '');

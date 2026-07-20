@@ -4,6 +4,8 @@ import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart'
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_wishlist_button.dart';
 
 class CatalogProductCard extends StatelessWidget {
   const CatalogProductCard({
@@ -117,6 +119,25 @@ class CatalogProductCard extends StatelessWidget {
                               isError: !product.isInStock,
                             ),
                           ),
+						if (settings?.boolean('show_wishlist', false) ?? false)
+						  PositionedDirectional(
+							top: 8,
+							end: 8,
+							child: ProductWishlistButton(
+							  productId: product.id,
+							  appearance: ProductWishlistAppearance(
+								enabled: true,
+								iconVariant: settings?.string('product_wishlist_icon_variant', 'heart') ?? 'heart',
+								iconStyle: settings?.string('product_wishlist_icon_style', 'outline') ?? 'outline',
+								iconSize: settings?.number('product_wishlist_icon_size', 20).clamp(16, 36).toDouble() ?? 20,
+								iconColor: _quickAddColor(settings?.string('product_wishlist_icon_color', '#1F2933')),
+								showBackground: settings?.boolean('product_wishlist_show_background', true) ?? true,
+								backgroundColor: _quickAddColor(settings?.string('product_wishlist_background_color', '#FFFFFF')),
+								backgroundSize: settings?.number('product_wishlist_background_size', 40).clamp(28, 64).toDouble() ?? 40,
+								backgroundRadius: settings?.number('product_wishlist_radius', 24).clamp(0, 40).toDouble() ?? 24,
+							  ),
+							),
+						  ),
                         if (product.isInStock &&
                             (settings?.boolean('quick_add_enabled', true) ??
                                 true))
@@ -142,6 +163,9 @@ class CatalogProductCard extends StatelessWidget {
                                         .number('quick_add_radius', 24)
                                         .clamp(0, 40)
                                         .toDouble(),
+							  backgroundSize: settings == null
+								  ? 40
+								  : settings!.number('quick_add_background_size', 40).clamp(28, 64).toDouble(),
                             ),
                           ),
                       ],

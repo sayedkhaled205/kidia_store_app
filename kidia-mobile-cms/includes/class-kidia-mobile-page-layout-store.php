@@ -273,549 +273,299 @@ final class Kidia_Mobile_Page_Layout_Store {
 					self::field( 'block_height', __( 'Filter block height', 'kidia-mobile-cms' ), 'number', 68, array(), 48, 100 ),
 					self::field( 'icon_size', __( 'Icon size', 'kidia-mobile-cms' ), 'number', 22, array(), 14, 36 ),
 					self::field( 'filter_icon_offset_y', __( 'Filter icon vertical position', 'kidia-mobile-cms' ), 'number', -2, array(), -8, 8 ),
-					self::field( 'button_radius', __( 'Button radius', 'kidia-mobiln}Û-¢G§²ÚîÆ­yÑction? action;
-}
+					self::field( 'button_radius', __( 'Button radius', 'kidia-mobile-cms' ), 'number', 12, array(), 0, 28 ),
+					self::field( 'button_gap', __( 'Button spacing', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
+					self::field( 'background_color', __( 'Background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+					self::field( 'icon_color', __( 'Icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+					self::field( 'border_color', __( 'Border color', 'kidia-mobile-cms' ), 'color', '#DDE3E8' )
+				) ),
+				self::element( 'product_grid', __( 'Product Grid', 'kidia-mobile-cms' ), 'dashicons-grid-view', $catalog_grid ),
+			),
+			'product' => array(
+				self::element( 'image_gallery', __( 'Product Gallery', 'kidia-mobile-cms' ), 'dashicons-format-gallery', array( self::field( 'aspect_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 1, array(), 0.6, 1.8, 0.1 ), self::field( 'fit', __( 'Image fit', 'kidia-mobile-cms' ), 'select', 'contain', array( 'contain' => __( 'Contain', 'kidia-mobile-cms' ), 'cover' => __( 'Cover', 'kidia-mobile-cms' ) ) ), self::field( 'show_thumbnails', __( 'Show thumbnails', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_indicators', __( 'Show indicators', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'enable_zoom', __( 'Enable zoom', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'product_summary', __( 'Product Information', 'kidia-mobile-cms' ), 'dashicons-info-outline', array( self::field( 'show_name', __( 'Show name', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_sku', __( 'Show SKU', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_stock', __( 'Show stock', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_badge', __( 'Show badge', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'variations', __( 'Variations', 'kidia-mobile-cms' ), 'dashicons-screenoptions', array( self::field( 'style', __( 'Selector style', 'kidia-mobile-cms' ), 'select', 'chips', array( 'chips' => __( 'Chips', 'kidia-mobile-cms' ), 'dropdown' => __( 'Dropdown', 'kidia-mobile-cms' ) ) ) ) ),
+				self::element( 'purchase_bar', __( 'Quantity', 'kidia-mobile-cms' ), 'dashicons-cart', array( self::field( 'show_quantity', __( 'Show quantity', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'description', __( 'Description and Details', 'kidia-mobile-cms' ), 'dashicons-text-page', array( self::field( 'show_description', __( 'Show description', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_attributes', __( 'Show attributes', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'reviews', __( 'Reviews', 'kidia-mobile-cms' ), 'dashicons-star-filled', array() ),
+				self::element( 'related_products', __( 'Related Products', 'kidia-mobile-cms' ), 'dashicons-products', array() ),
+			),
+			'wishlist' => array(
+				self::element( 'wishlist_grid', __( 'Wishlist Products', 'kidia-mobile-cms' ), 'dashicons-heart', $wishlist_grid ),
+				self::element( 'empty_state', __( 'Empty Wishlist', 'kidia-mobile-cms' ), 'dashicons-heart', array( self::field( 'title', __( 'Title', 'kidia-mobile-cms' ), 'text', __( 'Your wishlist is empty', 'kidia-mobile-cms' ) ), self::field( 'description', __( 'Description', 'kidia-mobile-cms' ), 'text', __( 'Save products you love and find them here.', 'kidia-mobile-cms' ) ), self::field( 'button_label', __( 'Button label', 'kidia-mobile-cms' ), 'text', __( 'Continue shopping', 'kidia-mobile-cms' ) ), self::field( 'show_button', __( 'Show button', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+			),
+			'account' => array(
+				self::element( 'account_summary', __( 'Account Summary', 'kidia-mobile-cms' ), 'dashicons-admin-users', array( self::field( 'avatar_size', __( 'Avatar size', 'kidia-mobile-cms' ), 'number', 66, array(), 40, 110 ), self::field( 'show_email', __( 'Show email', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'guest_title', __( 'Guest title', 'kidia-mobile-cms' ), 'text', __( 'Sign in / Create account', 'kidia-mobile-cms' ) ), self::field( 'card_style', __( 'Card style', 'kidia-mobile-cms' ), 'select', 'elevated', array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'no_shadow' => __( 'No shadow', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ) ) ),
+				self::element( 'account_menu', __( 'Account Menu', 'kidia-mobile-cms' ), 'dashicons-menu-alt', array( self::field( 'show_orders', __( 'Show orders', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_addresses', __( 'Show addresses', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_profile', __( 'Show profile', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_support', __( 'Show support', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'logout_button', __( 'Logout Button', 'kidia-mobile-cms' ), 'dashicons-exit', array() ),
+			),
+		);
 
-class HeroSliderBlock extends HomeBlock {
-  const HeroSliderBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.items,
-    required this.aspectRatio,
-    required this.autoPlay,
-    required this.intervalMilliseconds,
-    required this.borderRadius,
-    required this.horizontalPadding,
-    required this.imageFit,
-    required this.overlayPosition,
-    required this.overlayStrength,
-    required this.textColor,
-    required this.showIndicators,
-    required this.indicatorStyle,
-    required this.indicatorPosition,
-  }) : super(type: HomeBlockType.heroSlider);
+		$presentation = array(
+			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'margin_bottom', __( 'Merge down', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
+			self::field( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
+			self::field( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 40 ),
+			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+		);
+		$result = $definitions[ $page ] ?? array();
+		foreach ( $result as &$definition ) {
+			$keys = array_column( $definition['fields'], 'key' );
+			foreach ( $presentation as $field ) {
+				if ( ! in_array( $field['key'], $keys, true ) ) { $definition['fields'][] = $field; }
+			}
+		}
+		unset( $definition );
+		return $result;
+	}
 
-  final List<HeroSlide> items;
-  final double aspectRatio;
-  final bool autoPlay;
-  final int intervalMilliseconds;
-  final double borderRadius;
-  final double horizontalPadding;
-  final String imageFit;
-  final String overlayPosition;
-  final double overlayStrength;
-  final String textColor;
-  final bool showIndicators;
-  final String indicatorStyle;
-  final String indicatorPosition;
-}
+	/** @return array<string,mixed> */
+	public function get_layout( string $page ): array {
+		$page = sanitize_key( $page );
+		if ( ! self::is_page( $page ) ) {
+			return array();
+		}
+		$default = $this->default_layout( $page );
+		$saved = get_option( self::OPTION_PREFIX . $page, array() );
+		if ( ! is_array( $saved ) || empty( $saved ) ) {
+			return $default;
+		}
+		// Keep saved chrome settings across schema upgrades. The browser and Flutter
+		// readers migrate legacy left/center/right and flat footer layouts in place.
+		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+		if ( (int) ( $saved['version'] ?? 1 ) < 10 && 'sticky_search_cart' === (string) ( $saved['header']['settings']['collapse_preset'] ?? '' ) ) {
+			$default['header']['settings']['collapse_transition'] = 'smooth_compact';
+		}
+		$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
+		$saved_elements = array();
+		foreach ( is_array( $saved['elements'] ?? null ) ? $saved['elements'] : array() as $element ) {
+			if ( is_array( $element ) && ! empty( $element['id'] ) ) {
+				$saved_elements[ sanitize_key( $element['id'] ) ] = $element;
+			}
+		}
+		$definitions = array();
+		foreach ( self::element_definitions( $page ) as $definition ) {
+			$definitions[ $definition['id'] ] = $definition;
+		}
+		$elements = array();
+		foreach ( $saved_elements as $id => $element ) {
+			if ( isset( $definitions[ $id ] ) ) {
+				$elements[] = $this->merge_element( $definitions[ $id ], $element );
+				unset( $definitions[ $id ] );
+			}
+		}
+		foreach ( $definitions as $definition ) {
+			$elements[] = $this->default_element( $definition );
+		}
+		if ( 'catalog' === $page && (int) ( $saved['version'] ?? 1 ) < 2 ) {
+			foreach ( $elements as &$migrated_element ) { if ( 'filter_bar' === $migrated_element['id'] ) { $migrated_element['settings']['show_result_count'] = false; $migrated_element['settings']['filter_icon_offset_y'] = -2; } }
+			unset( $migrated_element );
+		}
+		$default['elements'] = $elements;
+		$default['updated_at'] = sanitize_text_field( (string) ( $saved['updated_at'] ?? '' ) );
+		return $default;
+	}
 
-class CategoryItem {
-  const CategoryItem({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-    required this.action,
-  });
+	/** @param array<string,mixed> $submitted */
+	public function save_layout( string $page, array $submitted ): array {
+		$page = sanitize_key( $page );
+		$current = $this->get_layout( $page );
+		if ( empty( $current ) ) {
+			return array();
+		}
+		$layout = array(
+			'version' => self::VERSION,
+			'page' => $page,
+			'updated_at' => gmdate( 'c' ),
+			'header' => $this->merge_component( $current['header'], $submitted['header'] ?? array(), self::header_fields() ),
+			'elements' => array(),
+			'footer' => $this->merge_component( $current['footer'], $submitted['footer'] ?? array(), self::footer_fields() ),
+		);
+		$definitions = array();
+		foreach ( self::element_definitions( $page ) as $definition ) {
+			$definitions[ $definition['id'] ] = $definition;
+		}
+		foreach ( is_array( $submitted['elements'] ?? null ) ? $submitted['elements'] : array() as $element ) {
+			$id = is_array( $element ) ? sanitize_key( (string) ( $element['id'] ?? '' ) ) : '';
+			if ( isset( $definitions[ $id ] ) ) {
+				$layout['elements'][] = $this->merge_element( $definitions[ $id ], $element );
+				unset( $definitions[ $id ] );
+			}
+		}
+		foreach ( $definitions as $definition ) {
+			$layout['elements'][] = $this->default_element( $definition );
+		}
+		update_option( self::OPTION_PREFIX . $page, $layout, false );
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( self::OPTION_PREFIX . $page, 'options' );
+		}
+		return $layout;
+	}
 
-  final int id;
-  final String name;
-  final String imageUrl;
-  final HomeAction? action;
-}
+	/** @return array<string,mixed> */
+	private function default_layout( string $page ): array {
+		$elements = array_map( array( $this, 'default_element' ), self::element_definitions( $page ) );
+		$header_settings = $this->defaults( self::header_fields() );
+		$footer_settings = $this->defaults( self::footer_fields() );
+		$header_settings['layout_json'] = wp_json_encode( $this->default_header_layout( $page ) );
+		$header_settings['compact_layout_json'] = wp_json_encode( $this->default_compact_header_layout() );
+		$footer_settings['layout_json'] = wp_json_encode( $this->default_footer_layout( $page ) );
+		if ( 'home' === $page ) {
+			$header_settings['collapse_on_scroll'] = true;
+			$header_settings['collapse_transition'] = 'smooth_compact';
+			$header_settings['height'] = 120;
+			$header_settings['row_gap'] = 8;
+			$header_settings['vertical_padding'] = 8;
+			$header_settings['horizontal_padding'] = 16;
+			$header_settings['show_back'] = false;
+			$header_settings['show_search'] = true;
+			$header_settings['search_style'] = 'bar';
+			$header_settings['search_width_percent'] = 100;
+			$header_settings['search_height'] = 44;
+			$header_settings['search_radius'] = 22;
+			$header_settings['search_background'] = '#F4F5F5';
+			$header_settings['search_text_color'] = '#5F6368';
+			$header_settings['search_placeholder'] = __( 'Search products', 'kidia-mobile-cms' );
+			$header_settings['background_color'] = '#FFFFFF';
+			$header_settings['icon_color'] = '#1F2933';
+			$header_settings['logo_width'] = 132;
+			$header_settings['logo_height'] = 42;
+			$header_settings['cart_size'] = 28;
+			$header_settings['show_cart_badge'] = false;
+			$header_settings['logo_url'] = $this->site_logo_url();
+		}
+		if ( 'product' === $page ) {
+			$header_settings['show_search'] = false;
+			$header_settings['show_support'] = true;
+			$header_settings['show_cart_badge'] = false;
+			$footer_settings['style'] = 'product_action';
+			$footer_settings['height'] = 84;
+			$footer_settings['horizontal_padding'] = 16;
+			$footer_settings['button_color'] = '#2F806E';
+			$footer_settings['show_price'] = false;
+		}
+		return array(
+			'version' => self::VERSION,
+			'page' => $page,
+			'updated_at' => '',
+			'header' => array( 'id' => 'header', 'type' => 'app_header', 'locked' => true, 'enabled' => true, 'settings' => $header_settings ),
+			'elements' => $elements,
+			'footer' => array( 'id' => 'footer', 'type' => 'app_footer', 'locked' => true, 'enabled' => true, 'settings' => $footer_settings ),
+		);
+	}
 
-class CategoryGridBlock extends HomeBlock {
-  const CategoryGridBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.items,
-    required this.columns,
-    required this.showNames,
-    required this.layout,
-    required this.imageShape,
-    required this.imageSize,
-    required this.gap,
-    required this.labelSize,
-    required this.labelColor,
-  }) : super(type: HomeBlockType.categoryGrid);
+	private function site_logo_url(): string {
+		if ( ! function_exists( 'get_theme_mod' ) || ! function_exists( 'wp_get_attachment_image_url' ) ) {
+			return '';
+		}
+		$logo_id = (int) get_theme_mod( 'custom_logo', 0 );
+		$url = $logo_id > 0 ? wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+		return is_string( $url ) ? esc_url_raw( $url ) : '';
+	}
 
-  final String? title;
-  final String? subtitle;
-  final List<CategoryItem> items;
-  final int columns;
-  final bool showNames;
-  final String layout;
-  final String imageShape;
-  final double imageSize;
-  final double gap;
-  final double labelSize;
-  final String labelColor;
-}
+	/** @param array<string,mixed> $definition @return array<string,mixed> */
+	private function default_element( array $definition ): array {
+		return array( 'id' => $definition['id'], 'type' => $definition['id'], 'label' => $definition['label'], 'icon' => $definition['icon'], 'locked' => false, 'enabled' => true, 'settings' => $this->defaults( $definition['fields'] ) );
+	}
 
-class QuickLinkItem {
-  const QuickLinkItem({
-    required this.id,
-    required this.imageUrl,
-    required this.label,
-    required this.subtitle,
-    required this.action,
-  });
+	/** @param array<string,mixed> $definition @param array<string,mixed> $saved @return array<string,mixed> */
+	private function merge_element( array $definition, array $saved ): array {
+		$element = $this->default_element( $definition );
+		$element['enabled'] = ! empty( $saved['enabled'] );
+		$element['settings'] = $this->sanitize_settings( is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array(), $definition['fields'] );
+		return $element;
+	}
 
-  final String id;
-  final String imageUrl;
-  final String label;
-  final String? subtitle;
-  final HomeAction? action;
-}
+	/** @param array<string,mixed> $default @param mixed $saved @param array<int,array<string,mixed>> $fields @return array<string,mixed> */
+	private function merge_component( array $default, $saved, array $fields ): array {
+		$saved = is_array( $saved ) ? $saved : array();
+		$default['enabled'] = ! empty( $saved['enabled'] );
+		$submitted_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
+		$default['settings'] = $this->sanitize_settings( array_merge( $default['settings'], $submitted_settings ), $fields );
+		return $default;
+	}
 
-class QuickLinksBlock extends HomeBlock {
-  const QuickLinksBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.layout,
-    required this.columns,
-    required this.imageShape,
-    required this.itemSize,
-    required this.gap,
-    required this.showLabels,
-    required this.labelColor,
-    required this.labelSize,
-    required this.items,
-  }) : super(type: HomeBlockType.quickLinks);
+	/** @return array<string,mixed> */
+	private function default_header_layout( string $page ): array {
+		$row = static function ( array $columns ): array {
+			return array( 'columns' => $columns );
+		};
+		$column = static function ( float $width, array $items, string $align = 'center' ): array {
+			return compact( 'width', 'align', 'items' );
+		};
+		$layouts = array(
+			'home' => array( 'rows' => array( $row( array( $column( 33.33, array( 'logo' ), 'left' ), $column( 33.34, array() ), $column( 33.33, array( 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ) ),
+			'catalog' => array( 'rows' => array( $row( array( $column( 33.33, array( 'cart', 'search' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'back' ), 'right' ) ) ) ) ),
+			'product' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array() ), $column( 33.33, array( 'support', 'cart' ), 'right' ) ) ) ) ),
+			'category' => array( 'rows' => array( $row( array( $column( 33.33, array( 'search', 'cart' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array(), 'right' ) ) ) ) ),
+			'wishlist' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'cart' ), 'right' ) ) ) ) ),
+			'account' => array( 'rows' => array( $row( array( $column( 33.33, array(), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'orders' ), 'right' ) ) ) ) ),
+		);
+		return $layouts[ $page ] ?? $layouts['catalog'];
+	}
 
-  final String? title;
-  final String? subtitle;
-  final String layout;
-  final int columns;
-  final String imageShape;
-  final double itemSize;
-  final double gap;
-  final bool showLabels;
-  final String labelColor;
-  final double labelSize;
-  final List<QuickLinkItem> items;
-}
+	/** @return array<string,mixed> */
+	private function default_compact_header_layout(): array {
+		return array( 'rows' => array( array( 'columns' => array(
+			array( 'width' => 84, 'align' => 'left', 'items' => array( 'search_bar' ) ),
+			array( 'width' => 16, 'align' => 'right', 'items' => array( 'cart' ) ),
+		) ) ) );
+	}
 
-class BannerGridItem {
-  const BannerGridItem({
-    required this.id,
-    required this.imageUrl,
-    required this.title,
-    required this.subtitle,
-    required this.buttonLabel,
-    required this.action,
-  });
+	/** @return array<string,mixed> */
+	private function default_footer_layout( string $page ): array {
+		$items = 'product' === $page ? array( 'share', 'like', 'add_to_cart' ) : array( 'home', 'categories', 'wishlist', 'account' );
+		$count = count( $items );
+		$base = floor( 10000 / $count ) / 100;
+		$columns = array();
+		foreach ( $items as $index => $item ) {
+			$width = $index === $count - 1 ? round( 100 - ( $base * ( $count - 1 ) ), 2 ) : $base;
+			$columns[] = array( 'width' => $width, 'align' => 'center', 'items' => array( $item ) );
+		}
+		return array( 'rows' => array( array( 'columns' => $columns ) ) );
+	}
 
-  final String id;
-  final String imageUrl;
-  final String? title;
-  final String? subtitle;
-  final String? buttonLabel;
-  final HomeAction? action;
-}
+	/** @param array<int,array<string,mixed>> $fields @return array<string,mixed> */
+	private function defaults( array $fields ): array {
+		$values = array();
+		foreach ( $fields as $field ) {
+			$values[ $field['key'] ] = $field['default'];
+		}
+		return $values;
+	}
 
-class BannerGridBlock extends HomeBlock {
-  const BannerGridBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.layout,
-    required this.columns,
-    required this.gap,
-    required this.aspectRatio,
-    required this.borderRadius,
-    required this.imageFit,
-    required this.overlayStrength,
-    required this.textColor,
-    required this.items,
-  }) : super(type: HomeBlockType.bannerGrid);
+	/** @param array<string,mixed> $settings @param array<int,array<string,mixed>> $fields @return array<string,mixed> */
+	private function sanitize_settings( array $settings, array $fields ): array {
+		$clean = array();
+		foreach ( $fields as $field ) {
+			$key = $field['key'];
+			$value = $settings[ $key ] ?? $field['default'];
+			switch ( $field['type'] ) {
+				case 'checkbox': $clean[ $key ] = ! empty( $value ); break;
+				case 'number':
+					$number = is_numeric( $value ) ? (float) $value : (float) $field['default'];
+					$clean[ $key ] = min( (float) $field['max'], max( (float) $field['min'], $number ) );
+					break;
+			case 'color': $clean[ $key ] = sanitize_hex_color( (string) $value ) ?: $field['default']; break;
+				case 'json':
+					$decoded = json_decode( (string) $value, true );
+					$clean[ $key ] = is_array( $decoded ) ? wp_json_encode( $decoded ) : (string) $field['default'];
+					break;
+				case 'image': $clean[ $key ] = esc_url_raw( (string) $value ); break;
+				case 'select': $clean[ $key ] = isset( $field['options'][ sanitize_key( (string) $value ) ] ) ? sanitize_key( (string) $value ) : $field['default']; break;
+				default: $clean[ $key ] = sanitize_text_field( (string) $value );
+			}
+		}
+		return $clean;
+	}
 
-  final String? title;
-  final String? subtitle;
-  final String layout;
-  final int columns;
-  final double gap;
-  final double aspectRatio;
-  final double borderRadius;
-  final String imageFit;
-  final double overlayStrength;
-  final String textColor;
-  final List<BannerGridItem> items;
-}
+	/** @return array<string,mixed> */
+	private static function field( string $key, string $label, string $type, $default, array $options = array(), float $min = 0, float $max = 100, float $step = 1 ): array {
+		return compact( 'key', 'label', 'type', 'default', 'options', 'min', 'max', 'step' );
+	}
 
-class ImageBannerBlock extends HomeBlock {
-  const ImageBannerBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.imageUrl,
-    required this.aspectRatio,
-    required this.borderRadius,
-    required this.semanticLabel,
-    required this.title,
-    required this.subtitle,
-    required this.buttonLabel,
-    required this.imageFit,
-    required this.overlayStrength,
-    required this.textColor,
-    required this.action,
-  }) : super(type: HomeBlockType.imageBanner);
-
-  final String imageUrl;
-  final double aspectRatio;
-  final double borderRadius;
-  final String? semanticLabel;
-  final String? title;
-  final String? subtitle;
-  final String? buttonLabel;
-  final String imageFit;
-  final double overlayStrength;
-  final String textColor;
-  final HomeAction? action;
-}
-
-class HomeProductItem {
-  const HomeProductItem({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-    required this.price,
-    required this.regularPrice,
-    required this.currencyCode,
-    required this.currencySymbol,
-    required this.inStock,
-    required this.badge,
-    required this.rating,
-    required this.reviewCount,
-    required this.discountPercent,
-    required this.action,
-  });
-
-  final int id;
-  final String name;
-  final String imageUrl;
-  final String price;
-  final String? regularPrice;
-  final String currencyCode;
-  final String currencySymbol;
-  final bool inStock;
-  final String? badge;
-  final double rating;
-  final int reviewCount;
-  final int discountPercent;
-  final HomeAction? action;
-}
-
-class ProductCarouselBlock extends HomeBlock {
-  const ProductCarouselBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.items,
-    required this.showViewAll,
-    required this.viewAllLabel,
-    required this.viewAllAction,
-    required this.cardStyle,
-    required this.itemWidth,
-    required this.imageRatio,
-    required this.cardRadius,
-    required this.showName,
-    required this.showPrice,
-    required this.showRegularPrice,
-    required this.showBadge,
-    required this.showRating,
-    required this.quickAddEnabled,
-    this.quickAddAppearance = const ProductQuickAddAppearance(),
-	this.wishlistAppearance = const ProductWishlistAppearance(),
-  }) : super(type: HomeBlockType.productCarousel);
-
-  final String? title;
-  final String? subtitle;
-  final List<HomeProductItem> items;
-  final bool showViewAll;
-  final String? viewAllLabel;
-  final HomeAction? viewAllAction;
-  final String cardStyle;
-  final double itemWidth;
-  final double imageRatio;
-  final double cardRadius;
-  final bool showName;
-  final bool showPrice;
-  final bool showRegularPrice;
-  final bool showBadge;
-  final bool showRating;
-  final bool quickAddEnabled;
-  final ProductQuickAddAppearance quickAddAppearance;
-  final ProductWishlistAppearance wishlistAppearance;
-}
-
-class ProductGridBlock extends HomeBlock {
-  const ProductGridBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.items,
-    required this.columns,
-    required this.showViewAll,
-    required this.viewAllLabel,
-    required this.viewAllAction,
-    required this.cardStyle,
-    required this.imageRatio,
-    required this.cardRadius,
-    required this.showName,
-    required this.showPrice,
-    required this.showRegularPrice,
-    required this.showBadge,
-    required this.showRating,
-    required this.quickAddEnabled,
-    this.quickAddAppearance = const ProductQuickAddAppearance(),
-	this.wishlistAppearance = const ProductWishlistAppearance(),
-  }) : super(type: HomeBlockType.productGrid);
-
-  final String? title;
-  final String? subtitle;
-  final List<HomeProductItem> items;
-  final int columns;
-  final bool showViewAll;
-  final String? viewAllLabel;
-  final HomeAction? viewAllAction;
-  final String cardStyle;
-  final double imageRatio;
-  final double cardRadius;
-  final bool showName;
-  final bool showPrice;
-  final bool showRegularPrice;
-  final bool showBadge;
-  final bool showRating;
-  final bool quickAddEnabled;
-  final ProductQuickAddAppearance quickAddAppearance;
-  final ProductWishlistAppearance wishlistAppearance;
-}
-
-class SectionHeaderBlock extends HomeBlock {
-  const SectionHeaderBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.actionLabel,
-    required this.action,
-  }) : super(type: HomeBlockType.sectionHeader);
-
-  final String title;
-  final String? subtitle;
-  final String? actionLabel;
-  final HomeAction? action;
-}
-
-class BrandItem {
-  const BrandItem({
-    required this.id,
-    required this.name,
-    required this.logoUrl,
-    required this.action,
-  });
-
-  final int id;
-  final String name;
-  final String logoUrl;
-  final HomeAction? action;
-}
-
-class BrandCarouselBlock extends HomeBlock {
-  const BrandCarouselBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.subtitle,
-    required this.items,
-    required this.itemWidth,
-    required this.layout,
-    required this.columns,
-    required this.imageShape,
-    required this.showNames,
-    required this.gap,
-  }) : super(type: HomeBlockType.brandCarousel);
-
-  final String? title;
-  final String? subtitle;
-  final List<BrandItem> items;
-  final double itemWidth;
-  final String layout;
-  final int columns;
-  final String imageShape;
-  final bool showNames;
-  final double gap;
-}
-
-class PromoStripBlock extends HomeBlock {
-  const PromoStripBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.text,
-    required this.backgroundColor,
-    required this.textColor,
-    required this.action,
-  }) : super(type: HomeBlockType.promoStrip);
-
-  final String text;
-  final String backgroundColor;
-  final String textColor;
-  final HomeAction? action;
-}
-
-class CouponBannerBlock extends HomeBlock {
-  const CouponBannerBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.description,
-    required this.couponCode,
-    required this.imageUrl,
-    this.backgroundColor = '#DCEEE8',
-    this.textColor = '#1F2933',
-    this.accentColor = '#2F806E',
-    this.borderRadius = 20,
-    this.action,
-  }) : super(type: HomeBlockType.couponBanner);
-
-  final String? title;
-  final String? description;
-  final String? couponCode;
-  final String? imageUrl;
-  final String backgroundColor;
-  final String textColor;
-  final String accentColor;
-  final double borderRadius;
-  final HomeAction? action;
-}
-
-class CountdownBlock extends HomeBlock {
-  const CountdownBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.endsAt,
-    required this.expiredText,
-    this.backgroundColor = '#FFFFFF',
-    this.textColor = '#1F2933',
-    this.boxColor = '#E9EEEC',
-    this.action,
-  }) : super(type: HomeBlockType.countdown);
-
-  final String? title;
-  final DateTime? endsAt;
-  final String expiredText;
-  final String backgroundColor;
-  final String textColor;
-  final String boxColor;
-  final HomeAction? action;
-}
-
-class VideoBannerBlock extends HomeBlock {
-  const VideoBannerBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.videoUrl,
-    required this.posterUrl,
-    required this.aspectRatio,
-    required this.autoPlay,
-    required this.muted,
-    required this.loop,
-    required this.action,
-  }) : super(type: HomeBlockType.videoBanner);
-
-  final String videoUrl;
-  final String? posterUrl;
-  final double aspectRatio;
-  final bool autoPlay;
-  final bool muted;
-  final bool loop;
-  final HomeAction? action;
-}
-
-enum HomeTextAlignment {
-  left,
-  center,
-  right;
-
-  static HomeTextAlignment? tryParse(String value) {
-    for (final HomeTextAlignment alignment in values) {
-      if (alignment.name == value) {
-        return alignment;
-      }
-    }
-
-    return null;
-  }
-}
-
-class TextBlock extends HomeBlock {
-  const TextBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.title,
-    required this.content,
-    required this.alignment,
-    required this.backgroundColor,
-    required this.textColor,
-    this.titleSize = 22,
-    this.contentSize = 15,
-    this.fontWeight = 'normal',
-  }) : super(type: HomeBlockType.textBlock);
-
-  final String? title;
-  final String? content;
-  final HomeTextAlignment alignment;
-  final String? backgroundColor;
-  final String textColor;
-  final double titleSize;
-  final double contentSize;
-  final String fontWeight;
-}
-
-class DividerBlock extends HomeBlock {
-  const DividerBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.color,
-    required this.thickness,
-    required this.margin,
-  }) : super(type: HomeBlockType.divider);
-
-  final String color;
-  final double thickness;
-  final double margin;
-}
-
-class SpacerBlock extends HomeBlock {
-  const SpacerBlock({
-    required super.id,
-    required super.enabled,
-    super.presentation,
-    required this.height,
-  }) : super(type: HomeBlockType.spacer);
-
-  final double height;
+	/** @param array<int,array<string,mixed>> $fields @return array<string,mixed> */
+	private static function element( string $id, string $label, string $icon, array $fields ): array {
+		return compact( 'id', 'label', 'icon', 'fields' );
+	}
 }
