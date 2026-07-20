@@ -1182,8 +1182,11 @@
 				var selection = frame.state().get("selection").first();
 				var attachment = selection ? selection.toJSON() : null;
 				var field = action.closest(".kidia-builder-field");
+				var repeatableItem = action.closest(".kidia-banner-editor-item");
 				var input = field ? field.querySelector(".kidia-banner-image-url, .kidia-media-url, .kidia-app-header-logo-url") : null;
 				var preview = field ? field.querySelector(".kidia-banner-image-preview, .kidia-media-preview") : null;
+				input = input || (repeatableItem ? repeatableItem.querySelector(".kidia-media-url") : null);
+				preview = preview || (repeatableItem ? repeatableItem.querySelector(".kidia-media-preview") : null);
 				if (!attachment || !attachment.url) {
 					return;
 				}
