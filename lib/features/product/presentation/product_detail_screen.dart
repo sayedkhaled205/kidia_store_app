@@ -1163,6 +1163,13 @@ class _PurchaseBar extends StatelessWidget {
 	final double otherWidthTotal = placements
 	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
 	    .fold<double>(0, (double total, (String, double) placement) => total + placement.$2);
+	final double composerButtonWidth = placements
+	    .where(((String, double) placement) => placement.$1 == 'add_to_cart')
+	    .fold<double>(0, (double widest, (String, double) placement) =>
+	        placement.$2 > widest ? placement.$2 : widest);
+	final double addToCartWidth = composerButtonWidth > configuredButtonWidth
+	    ? composerButtonWidth
+	    : configuredButtonWidth;
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
 	    .number('button_height', 52)
@@ -1203,12 +1210,6 @@ class _PurchaseBar extends StatelessWidget {
 	final List<(String, double, Widget)> footerItems =
 	    <(String, double, Widget)>[];
 	for (final (String item, double width) in placements) {
-	  // Keep an explicitly wider composer column (for example 85%), while
-	  // allowing the dedicated button-width control to enlarge the default
-	  // equal-width footer layout.
-	  final double addToCartWidth = width > configuredButtonWidth
-	      ? width
-	      : configuredButtonWidth;
 	  final double effectiveWidth = hasAddToCart
 	      ? item == 'add_to_cart'
 	          ? addToCartWidth
