@@ -86,7 +86,7 @@
 .kidia-category-settings select { font-size: 13px; max-width: 180px; min-height: 32px; width: 100%; }
 .kidia-category-settings input[type="number"] { max-width: 90px; min-height: 32px; width: 100%; }
 .kidia-category-settings input[type="color"] { height: 34px; padding: 2px; width: 54px; }
-.kidia-category-settings input[type="range"] { width: 100%; }
+.kidia-category-settings input[type="range"] { width:100%; max-width:180px; }
 .kidia-category-image-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; grid-column: 1 / -1; }
 .kidia-category-image-actions .button { display: inline-flex; min-width: 150px; min-height: 35px; align-items: center; justify-content: center; margin: 0; }
 .kidia-category-image-actions .button.is-active { border-color:#236b59!important; background:#2f806e!important; color:#fff!important; }
@@ -110,7 +110,22 @@
 .kidia-category-general-fields > label { display:flex; min-width:0; flex-direction:column; align-items:flex-start; gap:5px; font-size:12px; font-weight:650; }
 .kidia-category-general-fields select,
 .kidia-category-general-fields input[type="number"] { width:100%; max-width:190px; min-height:34px; }
-.kidia-category-general-fields input[type="range"] { width:100%; }
+.kidia-category-general-fields input[type="range"] { width:100%; max-width:190px; }
+
+.kidia-category-builder input[type="range"] {
+	height:6px;
+	margin:8px 0;
+	border:0;
+	border-radius:99px;
+	background:linear-gradient(to left,#2f806e 0 var(--kidia-range-progress,50%),#d7e4e0 var(--kidia-range-progress,50%) 100%);
+	appearance:none;
+	cursor:pointer;
+}
+.kidia-category-builder input[type="range"]::-webkit-slider-runnable-track { height:6px; border:0; border-radius:99px; background:transparent; }
+.kidia-category-builder input[type="range"]::-webkit-slider-thumb { width:18px; height:18px; margin-top:-6px; border:0; border-radius:50%; background:#2f806e; appearance:none; box-shadow:0 0 0 2px #fff; }
+.kidia-category-builder input[type="range"]::-moz-range-track { height:6px; border:0; border-radius:99px; background:transparent; }
+.kidia-category-builder input[type="range"]::-moz-range-progress { height:6px; border-radius:99px; background:#2f806e; }
+.kidia-category-builder input[type="range"]::-moz-range-thumb { width:18px; height:18px; border:2px solid #fff; border-radius:50%; background:#2f806e; }
 .kidia-category-general-fields input[type="color"] { width:58px; height:36px; padding:2px; }
 .kidia-category-toggle-field { justify-content:flex-end; }
 .kidia-category-toggle-field > .kidia-page-master-toggle { width:auto; min-width:104px; margin:0; }

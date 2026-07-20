@@ -421,6 +421,8 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-banner-editor-item \.kidia-repeatable-field--media\s*\{[\s\S]*grid-column:\s*3;[\s\S]*grid-row:\s*1 \/ 4/, "The image picker and preview must stay in the third column.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-repeatable-item-actions \.kidia-repeatable-add\s*\{[\s\S]*color:\s*#fff\s*!important/, "Add Banner and Add Slide labels must remain white.");
 	assert.match(homePreview, /repeatableItem = action\.closest\("\.kidia-banner-editor-item"\)[\s\S]*repeatableItem\.querySelector\("\.kidia-media-url"\)/, "The Banner media picker must keep updating the URL after the image controls move to column three.");
+	assert.match(heroBlockSource, /kidia-slider-image-setting--aspect-ratio[\s\S]*kidia-slider-image-setting--interval[\s\S]*kidia-slider-image-setting--image-fit[\s\S]*kidia-slider-image-setting--border-radius[\s\S]*kidia-slider-image-setting--horizontal-padding[\s\S]*kidia-slider-image-setting--text-color[\s\S]*kidia-slider-image-setting--text-position[\s\S]*kidia-slider-image-setting--overlay-strength[\s\S]*kidia-slider-image-setting--indicator-position[\s\S]*kidia-slider-image-setting--indicator-style[\s\S]*kidia-slider-image-setting--auto-play[\s\S]*kidia-slider-image-setting--show-indicators/, "Hero Slider Image Settings must follow the approved four-row order.");
+	assert.match(settingsSections, /classList\.contains\("kidia-slider-image-setting"\)\)\s*\{\s*return "image";/, "All reordered Hero Slider controls must stay together inside Image Settings.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-builder-field input\[type="text"\][\s\S]*width:\s*var\(--kidia-field-width\)/, "Slide and Banner compaction must preserve the standard field width.");
 	assert.doesNotMatch(chromeTemplate, /kidia-footer-toggle-row/, "Footer toggles must use the original General Settings grid.");
   assert.match(template, /kidia-builder-settings-content[\s\S]*Merge up[\s\S]*\[settings\]\[margin_top\][\s\S]*Merge down[\s\S]*\[settings\]\[margin_bottom\]/, "Every Home element must expose Merge up/down inside its shared settings section.");
@@ -744,6 +746,11 @@ function runChromeComposerTest() {
 	addRow.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 	assert.equal(window.document.querySelectorAll(".kidia-chrome-row").length, 3, "Add row must add a third row when clicked.");
 	assert.equal(window.document.querySelectorAll(".kidia-chrome-layout > .kidia-chrome-add-row").length, 0, "Add row must never recreate the old space below the rows.");
+	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-row-toolbar \.kidia-chrome-add-row\s*\{[^}]*margin:\s*0 0 0 auto!important/, "Add row must stay inside the row toolbar and align to its far right edge.");
+	assert.match(readAsset("chrome-layout.css"), /kidia-page-text-control \.button\s*\{[^}]*height:34px;[^}]*min-height:34px/, "Use logo text must match the standard logo field height.");
+	assert.match(readAsset("chrome-layout.css"), /kidia-page-media \.button\s*\{[^}]*height:34px;[^}]*min-height:34px/, "Choose image must match the standard logo field height.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-general-fields input\[type="range"\]\s*\{[^}]*max-width:190px/, "Category sliders must match the adjacent standard field width.");
+	assert.match(readAsset("category-builder.css"), /input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*background:#2f806e/, "Category slider thumbs must use the Kidia color.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));
