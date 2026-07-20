@@ -135,6 +135,7 @@ function runHomeBuilderTest() {
   const dom = new JSDOM(homeMarkup(), { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
   const builderCss = readAsset("home-builder.css");
+  const adminThemeCss = readAsset("admin-theme.css");
   const adminPhp = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
   let mediaOpenCount = 0;
   window.HTMLElement.prototype.scrollIntoView = function () {};
@@ -233,6 +234,9 @@ function runHomeBuilderTest() {
   assert.match(builderCss, /--kidia-field-width:\s*64\.9351%;/, "The wider 77% card must preserve controls at 50% of their original width.");
   assert.match(builderCss, /input\[type="text"\],[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Settings controls must use the calculated half-original width.");
   assert.match(builderCss, /input\[type="color"\]\s*\{[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Color controls must use the calculated half-original width.");
+  assert.match(adminThemeCss, /--kidia-settings-control-width:\s*150px;/, "Every Builder must use the shared 150px value-control width.");
+  assert.match(adminThemeCss, /--kidia-settings-control-height:\s*35px;/, "Every Builder must use the shared 35px value-control height.");
+  assert.match(adminThemeCss, /@media\s*\(max-width:\s*782px\)[\s\S]*?--kidia-settings-control-width:\s*100%;/, "Value controls must remain responsive on narrow screens.");
   assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
   assert.match(adminPhp, /rest_url\(\s*'woo-mobile\/v1\/home-layout'\s*\)/, "Home Builder must load preview items from the same Home Layout API used by Flutter.");
 
