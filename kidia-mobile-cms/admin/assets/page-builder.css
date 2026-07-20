@@ -53,7 +53,14 @@
 .kidia-splash-preview strong { font-size:24px; }
 .kidia-page-field { display:flex; min-width:0; flex-direction:column; gap:4px; }
 .kidia-page-field > label:first-child { font-size:12px; font-weight:600; }
-.kidia-page-field input[type=text],.kidia-page-field input[type=url],.kidia-page-field input[type=number],.kidia-page-field input[type=color],.kidia-page-field select { width:66%; min-height:34px; margin:0; border-radius:5px; font-size:12px; }
+.kidia-page-field input[type=text],.kidia-page-field input[type=url],.kidia-page-field input[type=number],.kidia-page-field select { width:min(100%,220px); min-height:34px; margin:0; border-radius:5px; font-size:12px; }
+.kidia-page-field input[type=color] { width:64px; min-width:64px; height:36px; padding:2px; margin:0; border-radius:5px; }
+.kidia-page-field { align-items:end; }
+.kidia-page-field>input,.kidia-page-field>select,.kidia-page-field>.kidia-page-text-control,.kidia-page-field>.kidia-page-toggle { justify-self:end; }
+.has-section-layout-settings>.kidia-settings-section-title--section_layout { order:98; }
+.has-section-layout-settings>.kidia-settings-section-title--section_layout~.kidia-page-field,
+.has-section-layout-settings>.kidia-settings-section-title--section_layout~.kidia-builder-field { order:99; }
+.kidia-settings-section-title--section_layout { margin-top:14px; }
 .kidia-page-toggle { display:flex; width:66%; min-height:34px; align-items:center; gap:7px; padding:5px 7px; border:1px solid #e1e5e8; border-radius:6px; background:#f8f9fa; }
 .kidia-page-toggle b { font-size:11px; }
 .kidia-page-media { display:flex; align-items:center; gap:6px; }
