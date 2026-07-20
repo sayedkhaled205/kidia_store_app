@@ -57,7 +57,7 @@ class _MainShellState extends ConsumerState<MainShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _settingsRefreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
+      const Duration(seconds: 3),
       (_) => _refreshRemoteSettings(),
     );
   }
@@ -97,7 +97,7 @@ class _MainShellState extends ConsumerState<MainShell>
     final double footerIconSize = footerSize
         .number('icon_size', 24)
         .clamp(14, 40);
-    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48);
+    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
     final double footerLabelSize = footerSize
         .number('label_size', 11)
         .clamp(8, 20);
@@ -182,7 +182,10 @@ class _MainShellState extends ConsumerState<MainShell>
                           ),
                           if (footer.boolean('show_labels', true)) ...<Widget>[
                             SizedBox(
-                              height: footerSize
+                              key: Key(
+                                'cms-bottom-nav-icon-label-gap-${item.id}',
+                              ),
+                              height: footer
                                   .number('icon_label_gap', 3)
                                   .clamp(0, 12),
                             ),

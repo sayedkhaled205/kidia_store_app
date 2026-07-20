@@ -148,6 +148,9 @@ void main() {
           'grid_columns': 4,
           'card_radius': 22,
           'card_gap': 13,
+          'card_width_percent': 76,
+          'card_height': 144,
+          'element_background_color': '#FDF4E7',
           'show_arrow': false,
           'image_size': 104,
           'image_shape': 'circle',
@@ -177,6 +180,9 @@ void main() {
     expect(category.gridColumns, 4);
     expect(category.cardRadius, 22);
     expect(category.cardGap, 13);
+    expect(category.cardWidthPercent, 76);
+    expect(category.cardHeight, 144);
+    expect(category.elementBackgroundColor, '#FDF4E7');
     expect(category.showArrow, isFalse);
     expect(category.imageShape, 'circle');
     expect(category.imageRadius, 0.32);

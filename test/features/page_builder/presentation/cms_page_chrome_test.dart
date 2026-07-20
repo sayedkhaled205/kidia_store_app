@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
@@ -44,6 +46,25 @@ void main() {
     await tester.pump();
 
     expect(_appBar(tester).compact, isFalse);
+  });
+
+  testWidgets('uses exact regular and collapsed header heights', (
+    WidgetTester tester,
+  ) async {
+    await _pumpPage(
+      tester,
+      layout: _layout(height: 48, compactHeight: 44),
+    );
+
+    expect(_appBar(tester).preferredSize.height, 48);
+
+    await tester.drag(
+      find.byKey(const Key('cms-page-scroll')),
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_appBar(tester).preferredSize.height, 44);
   });
 
   testWidgets('the real page controller drives the mobile collapsed header', (
@@ -192,6 +213,73 @@ void main() {
     final Text logoText = tester.widget<Text>(find.text('My Store'));
     expect(logoText.style?.color, const Color(0xFFC84F6A));
   });
+
+  testWidgets('renders the live cart count with its configured badge shape', (
+    WidgetTester tester,
+  ) async {
+    final CmsPageLayout fallback = CmsPageLayout.fallback('catalog');
+    final CmsPageLayout layout = CmsPageLayout(
+      page: 'catalog',
+      header: CmsPageComponent(
+        id: 'header',
+        type: 'app_header',
+        enabled: true,
+        settings: <String, dynamic>{
+          ...fallback.header.settings,
+          'show_cart_badge': true,
+          'cart_badge_shape': 'pill',
+          'cart_badge_size': 22,
+          'cart_badge_background': '#C84F6A',
+          'cart_badge_text_color': '#FFF4E8',
+          'layout_json': <String, dynamic>{
+            'rows': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'columns': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'width': 100,
+                    'align': 'center',
+                    'items': <String>['cart'],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ),
+      elements: fallback.elements,
+      footer: fallback.footer,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cartBadgeCountProvider.overrideWithValue(7),
+        ],
+        child: MaterialApp(
+          home: CmsPageScaffold(
+            layout: layout,
+            defaultTitle: 'Products',
+            actions: <CmsPageHeaderAction>[
+              CmsPageHeaderAction(
+                type: 'cart',
+                icon: Icons.shopping_bag_outlined,
+                tooltip: 'Cart',
+                onPressed: () {},
+              ),
+            ],
+            body: const SizedBox(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('7'), findsOneWidget);
+    final Container badge = tester.widget<Container>(
+      find.byKey(const Key('cms-cart-count-badge')),
+    );
+    final BoxDecoration decoration = badge.decoration! as BoxDecoration;
+    expect(decoration.color, const Color(0xFFC84F6A));
+    expect(decoration.borderRadius, BorderRadius.circular(11));
+  });
 }
 
 CmsPageAppBar _appBar(WidgetTester tester) => tester.widget<CmsPageAppBar>(
@@ -226,6 +314,8 @@ CmsPageLayout _layout({
   bool collapseOnScroll = true,
   String transition = 'fade_slide',
   String speed = 'medium',
+  double height = 80,
+  double compactHeight = 52,
 }) {
   const Map<String, dynamic> regularLayout = <String, dynamic>{
     'rows': <Map<String, dynamic>>[
@@ -267,8 +357,8 @@ CmsPageLayout _layout({
         'search_placeholder': 'Search products',
         'layout_json': regularLayout,
         'compact_layout_json': compactLayout,
-        'height': 80,
-        'compact_height': 52,
+        'height': height,
+        'compact_height': compactHeight,
       },
     ),
     elements: const <CmsPageComponent>[],

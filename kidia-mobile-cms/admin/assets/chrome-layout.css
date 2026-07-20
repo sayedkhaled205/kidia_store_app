@@ -24,6 +24,8 @@
 .kidia-app-footer-item.is-active .kidia-app-footer-icon-shell { transform:none; }
 
 .kidia-chrome-item-setting[hidden] { display:none!important; }
+.kidia-chrome-composer--collapsed[hidden],
+.kidia-collapsed-header-settings[hidden] { display:none!important; }
 .kidia-page-card__header .kidia-chrome-transfer-actions { display:flex; flex:0 0 auto; align-items:center; gap:7px; margin-inline-start:auto; }
 .kidia-chrome-transfer-actions + .kidia-page-master-toggle { margin-inline-start:0; }
 .kidia-chrome-transfer-actions .button { display:inline-flex; min-height:34px; align-items:center; gap:4px; }
@@ -70,8 +72,7 @@
 }
 .kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="height"],
 .kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"],
-.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"],
-.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_label_gap"] { display:none; }
+.kidia-fixed-chrome-card[data-chrome-part="footer"]:not([data-page="category"]) .kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"] { display:none; }
 .kidia-footer-size-reference-note { margin:0 0 12px; padding:9px 11px; border-radius:7px; background:#edf8f4; color:#315f55; }
 .kidia-chrome-row { display:block!important; min-height:0!important; }
 .kidia-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
@@ -109,11 +110,12 @@
 .kidia-app-header.is-transition-fade { animation:kidia-header-fade var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-slide { animation:kidia-header-slide var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-fade_slide { animation:kidia-header-fade-slide var(--collapse-duration,260ms) ease both; }
-.kidia-app-header.is-transition-smooth_compact { animation:kidia-header-fade-slide var(--collapse-duration,260ms) cubic-bezier(.2,.8,.2,1) both; }
+.kidia-app-header.is-transition-smooth_compact.is-collapsed { animation:kidia-header-smooth-compact var(--collapse-duration,260ms) cubic-bezier(.2,.8,.2,1) both; }
 .kidia-app-header.is-transition-scale { transform-origin:top center; animation:kidia-header-scale var(--collapse-duration,260ms) ease both; }
 @keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }
 @keyframes kidia-header-fade-slide { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes kidia-header-smooth-compact { from { height:var(--regular-height); opacity:.88; transform:translateY(-4px); } to { height:var(--compact-height); opacity:1; transform:translateY(0); } }
 @keyframes kidia-header-scale { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
 .kidia-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
 .kidia-chrome-composer.has-invalid-layout .kidia-chrome-layout-error { display:block; }

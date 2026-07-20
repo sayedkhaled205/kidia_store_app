@@ -60,6 +60,15 @@
 		return value === "end" ? "left" : "right";
 	}
 
+	function colorWithAlpha(value, alpha, fallback) {
+		var hex = String(value || fallback || "#000000").replace("#", "");
+		var parsed = parseInt(hex, 16);
+		if (hex.length !== 6 || !isFinite(parsed)) {
+			parsed = 0;
+		}
+		return "rgba(" + ((parsed >> 16) & 255) + "," + ((parsed >> 8) & 255) + "," + (parsed & 255) + "," + alpha + ")";
+	}
+
 	function updateOrders(list) {
 		$(list).children(".kidia-category-row").each(function (index) {
 			$(this).children(".kidia-category-card").find(".kidia-category-order").val(index);
@@ -140,11 +149,15 @@
 	function applyCardStyles(card) {
 		var style = setting("card_style") || "outlined";
 		var strength = numberInRange(setting("card_shadow_strength"), 10, 0, 40) / 100;
+		var width = numberInRange(setting("card_width_percent"), 100, 40, 100);
 		card.css({
+			width: width + "%",
+			justifySelf: "center",
 			backgroundColor: setting("card_background_color") || "#FFFFFF",
-			borderColor: style === "outlined" ? (setting("border_color") || "#DDE5E2") : "transparent",
+			borderColor: style === "outlined" ? "#DDE5E2" : "transparent",
+			borderRadius: numberInRange(setting("card_radius"), 17, 0, 32) + "px",
 			boxShadow: style === "elevated"
-				? "0 " + numberInRange(setting("card_shadow_offset_y"), 4, -20, 20) + "px " + numberInRange(setting("card_shadow_blur"), 12, 0, 40) + "px rgba(0,0,0," + strength + ")"
+				? "0 " + numberInRange(setting("card_shadow_offset_y"), 4, -20, 20) + "px " + numberInRange(setting("card_shadow_blur"), 12, 0, 40) + "px " + colorWithAlpha(setting("card_shadow_color"), strength, "#000000")
 				: "none"
 		});
 	}
@@ -190,6 +203,9 @@
 		mobileCard.append(buildArtwork(card, 60));
 		mobileCard.append(buildCategoryName(row, card, true).css("margin-top", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
 		applyCardStyles(mobileCard);
+		if (numberInRange(setting("card_height"), 0, 0, 320) > 0) {
+			mobileCard.css("height", numberInRange(setting("card_height"), 0, 0, 320) + "px");
+		}
 		return mobileCard;
 	}
 
@@ -208,6 +224,9 @@
 		branch = $('<section class="kidia-category-preview-branch"></section>').attr("data-term-id", row.attr("data-term-id") || "");
 		applyCardStyles(branch);
 		tile = $('<div class="kidia-category-preview-root"></div>');
+		if (numberInRange(setting("card_height"), 0, 0, 320) > 0) {
+			tile.css({height: numberInRange(setting("card_height"), 0, 0, 320) + "px", minHeight: 0});
+		}
 		tile.append(buildArtwork(card, 78));
 		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
 		if (String(setting("show_arrow")) !== "0") {
@@ -245,9 +264,10 @@
 		var rootList = categoryElement.find(".kidia-category-items > .kidia-category-list").first();
 		var layout = categoryLayout();
 		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
-		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "background-color": setting("page_background_color") || "#F7F8FA"});
+		var pageBackground = setting("page_background_color") || "#F7F8FA";
+		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).css({"--category-columns": columns, "--category-card-gap": numberInRange(setting("card_gap"), 10, 0, 24) + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "padding-top": (14 + numberInRange(setting("margin_top"), 0, 0, 80)) + "px", "padding-bottom": (24 + numberInRange(setting("margin_bottom"), 0, 0, 80)) + "px", "background-color": setting("element_background_color") || "#FFFFFF"});
 		var visible = 0;
-		preview.empty().append(renderChrome("header"));
+		preview.empty().css("background-color", pageBackground).append(renderChrome("header"));
 
 		if (elementEnabled()) {
 			if (layout === "sidebar") {
@@ -286,7 +306,7 @@
 	function updateRangeLabel(input) {
 		var name = input.name || "";
 		var display = input.value + "px";
-		if (name.indexOf("image_scale") !== -1 || name.indexOf("image_radius") !== -1) {
+		if (name.indexOf("image_scale") !== -1 || name.indexOf("image_radius") !== -1 || name.indexOf("card_width_percent") !== -1) {
 			display = input.value + "%";
 		} else if (name.indexOf("line_height") !== -1) {
 			display = (Number(input.value) / 100).toFixed(2);

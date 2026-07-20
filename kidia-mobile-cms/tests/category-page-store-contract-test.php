@@ -28,11 +28,11 @@ kidia_category_assert( ! array_key_exists( 'image_size', $migrated['categories']
 $saved = $store->save_settings(
 	array(
 		'enabled' => '1',
-		'general' => array( 'image_size' => 120, 'image_shape' => 'square', 'font_size' => 30 ),
+		'general' => array( 'image_size' => 120, 'image_shape' => 'square', 'font_size' => 30, 'element_background_color' => '#FDF4E7', 'card_width_percent' => 76, 'card_height' => 144 ),
 		'categories' => array( 22 => array( 'order' => 0, 'hidden' => false, 'image_id' => 55, 'name' => 'App name' ) ),
 	)
 );
-kidia_category_assert( 4 === $saved['version'], 'The Category element must save the current schema version.' );
+kidia_category_assert( 5 === $saved['version'], 'The Category element must save the current schema version.' );
 kidia_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 kidia_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );
 $layouts = array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' );
@@ -43,5 +43,7 @@ foreach ( $layouts as $layout ) {
 	kidia_category_assert( false === $saved_layout['general']['show_arrow'], "$layout must retain the shared arrow visibility setting." );
 }
 kidia_category_assert( 120 === $saved['general']['image_size'] && 30 === $saved['general']['font_size'], 'General Settings must save once for the whole element.' );
+kidia_category_assert( '#FDF4E7' === $saved['general']['element_background_color'], 'The Category element background must save independently from page and card backgrounds.' );
+kidia_category_assert( 76 === $saved['general']['card_width_percent'] && 144 === $saved['general']['card_height'], 'Category card width and height must save independently.' );
 
 fwrite( STDOUT, "Category-page store migration and one-element schema passed.\n" );

@@ -236,8 +236,9 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 
 		$response->header(
 			'Cache-Control',
-			'no-cache, must-revalidate, max-age=0'
+			'no-store, no-cache, must-revalidate, max-age=0'
 		);
+		$response->header( 'Pragma', 'no-cache' );
 
 		return $response;
 	}

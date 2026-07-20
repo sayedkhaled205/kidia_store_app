@@ -14,9 +14,12 @@ class CatalogCategory {
     this.gridColumns = 2,
     this.cardRadius = 17,
     this.cardGap = 10,
+    this.cardWidthPercent = 100,
+    this.cardHeight = 0,
     this.marginTop = 0,
     this.marginBottom = 0,
     this.pageBackgroundColor = '#F7F8FA',
+    this.elementBackgroundColor = '#FFFFFF',
     this.cardStyle = 'outlined',
     this.cardBackgroundColor = '#FFFFFF',
     this.cardShadowColor = '#000000',
@@ -55,9 +58,12 @@ class CatalogCategory {
   final int gridColumns;
   final double cardRadius;
   final double cardGap;
+  final double cardWidthPercent;
+  final double cardHeight;
   final double marginTop;
   final double marginBottom;
   final String pageBackgroundColor;
+  final String elementBackgroundColor;
   final String cardStyle;
   final String cardBackgroundColor;
   final String cardShadowColor;

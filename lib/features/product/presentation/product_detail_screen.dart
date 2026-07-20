@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -235,13 +236,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Future<void> _addToCart() async {
-    final bool added = await _controller.addToCart(widget.onAddToCart);
-    if (!mounted || !added) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_ProductCopy.of(context).addedToCart)),
-    );
+    await _controller.addToCart(widget.onAddToCart);
   }
 
   Future<void> _loadWishlistState() async {
@@ -318,58 +313,109 @@ class _ProductContent extends StatelessWidget {
       slivers: <Widget>[
         if (pageLayout.element('image_gallery').enabled)
           SliverToBoxAdapter(
-            child: CmsElementFrame(component: pageLayout.element('image_gallery'), child: _ProductGallery(images: images, productName: product.name)),
+            child: CmsElementFrame(
+              component: pageLayout.element('image_gallery'),
+              child: _ProductGallery(
+                images: images,
+                productName: product.name,
+                settings: pageLayout.element('image_gallery'),
+              ),
+            ),
           ),
         SliverPadding(
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
           sliver: SliverList.list(
             children: <Widget>[
-              if (pageLayout.element('product_summary').enabled &&
-                  pageLayout.element('product_summary').boolean('show_badge', true) &&
-                  (product.isOnSale || !inStock)) ...<Widget>[
-                _ProductBadges(
-                  product: product,
-                  variation: variation,
-                  copy: copy,
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (pageLayout.element('product_summary').enabled &&
-                  pageLayout.element('product_summary').boolean('show_name', true))
-              Text(
-                product.name,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (pageLayout.element('product_summary').enabled &&
-                  pageLayout.element('product_summary').boolean('show_sku', true) &&
-                  product.sku.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 6),
-                Text(
-                  '${copy.sku}: ${product.sku}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              if (pageLayout.element('product_summary').enabled)
+                CmsElementFrame(
+                  component: pageLayout.element('product_summary'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      if (pageLayout.element('product_summary').boolean('show_badge', true) &&
+                          (product.isOnSale || !inStock)) ...<Widget>[
+                        _ProductBadges(product: product, variation: variation, copy: copy),
+                        const SizedBox(height: 12),
+                      ],
+                      if (pageLayout.element('product_summary').boolean('show_name', true))
+                        Text(
+                          product.name,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      if (pageLayout.element('product_summary').boolean('show_sku', true) &&
+                          product.sku.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 6),
+                        Text(
+                          '${copy.sku}: ${product.sku}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (pageLayout.element('product_summary').boolean('show_price', true)) ...<Widget>[
+                        const SizedBox(height: 14),
+                        _MoneyPrice(
+                          money: money,
+                          showRegularPrice: pageLayout
+                              .element('product_summary')
+                              .boolean('show_regular_price', true),
+                        ),
+                      ],
+                      if (pageLayout.element('product_summary').boolean('show_rating', true) &&
+                          product.averageRating > 0) ...<Widget>[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: <Widget>[
+                            const Icon(Icons.star_rounded, size: 19),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${product.averageRating.toStringAsFixed(1)} ${copy.reviewCount(product.reviewCount)}',
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (pageLayout.element('product_summary').boolean('show_stock', true)) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Text(
+                          inStock ? copy.inStock : copy.outOfStock,
+                          key: const Key('product-stock-status'),
+                          style: TextStyle(
+                            color: inStock
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 14),
-              if (pageLayout.element('product_summary').enabled &&
-                  pageLayout.element('product_summary').boolean('show_price', true))
-                _MoneyPrice(money: money),
               if (pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 24),
-                for (final ProductOptionGroup group in controller.optionGroups)
-                  _ProductOptionPicker(
-                    group: group,
-                    controller: controller,
-                    copy: copy,
+                CmsElementFrame(
+                  component: pageLayout.element('variations'),
+                  child: Column(
+                    children: <Widget>[
+                      for (final ProductOptionGroup group in controller.optionGroups)
+                        _ProductOptionPicker(
+                          group: group,
+                          controller: controller,
+                          copy: copy,
+                          settings: pageLayout.element('variations'),
+                        ),
+                    ],
                   ),
+                ),
               ],
               const SizedBox(height: 18),
               if (pageLayout.element('purchase_bar').enabled &&
                   pageLayout.element('purchase_bar').boolean('show_quantity', true))
-                _QuantitySelector(controller: controller, copy: copy),
+                CmsElementFrame(
+                  component: pageLayout.element('purchase_bar'),
+                  child: _QuantitySelector(controller: controller, copy: copy),
+                ),
               if (product.hasVariations &&
                   controller.selectionComplete &&
                   controller.selectedVariation == null) ...<Widget>[
@@ -389,8 +435,31 @@ class _ProductContent extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               if (pageLayout.element('description').enabled)
-                CmsElementFrame(component: pageLayout.element('description'), child: _DetailsSection(product: product, copy: copy)),
+                CmsElementFrame(
+                  component: pageLayout.element('description'),
+                  child: _DetailsSection(
+                    product: product,
+                    copy: copy,
+                    settings: pageLayout.element('description'),
+                  ),
+                ),
               const SizedBox(height: 18),
+              if (pageLayout.element('reviews').enabled)
+                CmsElementFrame(
+                  component: pageLayout.element('reviews'),
+                  child: OutlinedButton.icon(
+                    key: const Key('product-reviews-button'),
+                    onPressed: onReviewsRequested == null
+                        ? null
+                        : () => onReviewsRequested!(product),
+                    icon: const Icon(Icons.star_outline_rounded),
+                    label: Text(
+                      '${product.averageRating.toStringAsFixed(1)} (${product.reviewCount})',
+                    ),
+                  ),
+                ),
+              if (pageLayout.element('reviews').enabled)
+                const SizedBox(height: 18),
               if (pageLayout.element('related_products').enabled)
               CmsElementFrame(component: pageLayout.element('related_products'), child: OutlinedButton.icon(
                 key: const Key('related-products-button'),
@@ -424,10 +493,15 @@ class _ProductContent extends StatelessWidget {
 }
 
 class _ProductGallery extends StatefulWidget {
-  const _ProductGallery({required this.images, required this.productName});
+  const _ProductGallery({
+    required this.images,
+    required this.productName,
+    required this.settings,
+  });
 
   final List<CatalogImage> images;
   final String productName;
+  final CmsPageComponent settings;
 
   @override
   State<_ProductGallery> createState() => _ProductGalleryState();
@@ -476,7 +550,7 @@ class _ProductGalleryState extends State<_ProductGallery> {
     final ColorScheme colors = Theme.of(context).colorScheme;
     if (widget.images.isEmpty) {
       return AspectRatio(
-        aspectRatio: 0.86,
+        aspectRatio: widget.settings.number('aspect_ratio', 1).clamp(0.6, 1.8),
         child: AppNetworkImageError(
           backgroundColor: colors.surfaceContainerLow,
           iconSize: 54,
@@ -484,11 +558,15 @@ class _ProductGalleryState extends State<_ProductGallery> {
       );
     }
 
-    return Stack(
-      alignment: AlignmentDirectional.bottomCenter,
-      children: <Widget>[
-        AspectRatio(
-          aspectRatio: 0.86,
+    final double aspectRatio = widget.settings
+        .number('aspect_ratio', 1)
+        .clamp(0.6, 1.8);
+    final BoxFit fit = widget.settings.string('fit', 'contain') == 'cover'
+        ? BoxFit.cover
+        : BoxFit.contain;
+    final bool enableZoom = widget.settings.boolean('enable_zoom', true);
+    final Widget pager = AspectRatio(
+          aspectRatio: aspectRatio,
           child: PageView.builder(
             key: ValueKey<String>(widget.images.first.source.toString()),
             controller: _pageController,
@@ -498,26 +576,37 @@ class _ProductGalleryState extends State<_ProductGallery> {
             itemBuilder: (BuildContext context, int index) {
               final int imageIndex = index % widget.images.length;
               final CatalogImage image = widget.images[imageIndex];
-              return InteractiveViewer(
-                key: Key('product-image-$imageIndex'),
-                minScale: 1,
-                maxScale: 4,
-                clipBehavior: Clip.hardEdge,
-                child: AppNetworkImage(
+              final Widget imageWidget = AppNetworkImage(
+                  key: Key('product-image-$imageIndex'),
                   imageUrl: image.source.toString(),
                   width: double.infinity,
                   height: double.infinity,
-                  fit: BoxFit.contain,
+                  fit: fit,
                   backgroundColor: colors.surfaceContainerLow,
                   semanticLabel: image.alt.isEmpty
                       ? widget.productName
                       : image.alt,
-                ),
-              );
+                );
+              return enableZoom
+                  ? InteractiveViewer(
+                      minScale: 1,
+                      maxScale: 4,
+                      clipBehavior: Clip.hardEdge,
+                      child: imageWidget,
+                    )
+                  : imageWidget;
             },
           ),
-        ),
-        if (widget.images.length > 1)
+        );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Stack(
+          alignment: AlignmentDirectional.bottomCenter,
+          children: <Widget>[
+            pager,
+        if (widget.images.length > 1 &&
+            widget.settings.boolean('show_indicators', true))
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: DecoratedBox(
@@ -536,6 +625,37 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
+                ),
+              ),
+            ),
+          ),
+          ],
+        ),
+        if (widget.images.length > 1 &&
+            widget.settings.boolean('show_thumbnails', true))
+          SizedBox(
+            height: 62,
+            child: ListView.separated(
+              padding: const EdgeInsets.only(top: 8),
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.images.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (BuildContext context, int index) => InkWell(
+                onTap: () {
+                  final int current = _pageController.page?.round() ?? 0;
+                  final int cycleStart = current - (current % widget.images.length);
+                  _pageController.animateToPage(
+                    cycleStart + index,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                  );
+                },
+                child: AppNetworkImage(
+                  imageUrl: widget.images[index].source.toString(),
+                  width: 54,
+                  height: 54,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
@@ -576,9 +696,10 @@ class _ProductBadges extends StatelessWidget {
 }
 
 class _MoneyPrice extends StatelessWidget {
-  const _MoneyPrice({required this.money});
+  const _MoneyPrice({required this.money, this.showRegularPrice = true});
 
   final CatalogMoney money;
+  final bool showRegularPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -602,7 +723,7 @@ class _MoneyPrice extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        if (money.isDiscounted && regular.isNotEmpty)
+        if (showRegularPrice && money.isDiscounted && regular.isNotEmpty)
           Text(
             regular,
             key: const Key('product-regular-price'),
@@ -621,11 +742,13 @@ class _ProductOptionPicker extends StatelessWidget {
     required this.group,
     required this.controller,
     required this.copy,
+    this.settings,
   });
 
   final ProductOptionGroup group;
   final ProductDetailController controller;
   final _ProductCopy copy;
+  final CmsPageComponent? settings;
 
   @override
   Widget build(BuildContext context) {
@@ -642,6 +765,29 @@ class _ProductOptionPicker extends StatelessWidget {
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
+          if (settings?.string('style', 'chips') == 'dropdown')
+            DropdownButtonFormField<String>(
+              initialValue: selected,
+              decoration: InputDecoration(labelText: group.label),
+              items: group.values
+                  .where(
+                    (ProductOptionValue option) => controller.isOptionAvailable(
+                      group.key,
+                      option.value,
+                    ),
+                  )
+                  .map(
+                    (ProductOptionValue option) => DropdownMenuItem<String>(
+                      value: option.value,
+                      child: Text(option.label),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (String? value) {
+                if (value != null) controller.selectOption(group.key, value);
+              },
+            )
+          else
           Wrap(
             spacing: 9,
             runSpacing: 6,
@@ -831,15 +977,23 @@ class _QuantitySelector extends StatelessWidget {
 }
 
 class _DetailsSection extends StatelessWidget {
-  const _DetailsSection({required this.product, required this.copy});
+  const _DetailsSection({
+    required this.product,
+    required this.copy,
+    required this.settings,
+  });
 
   final CatalogProduct product;
   final _ProductCopy copy;
+  final CmsPageComponent settings;
 
   @override
   Widget build(BuildContext context) {
     final String description = _plainText(product.description);
-    if (description.isEmpty) {
+    final bool showDescription = settings.boolean('show_description', true);
+    final bool showAttributes = settings.boolean('show_attributes', true);
+    if ((!showDescription || description.isEmpty) &&
+        (!showAttributes || product.attributes.isEmpty)) {
       return const SizedBox.shrink();
     }
     return ExpansionTile(
@@ -852,10 +1006,33 @@ class _DetailsSection extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
       children: <Widget>[
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Text(description, style: const TextStyle(height: 1.6)),
-        ),
+        if (showDescription && description.isNotEmpty)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(description, style: const TextStyle(height: 1.6)),
+          ),
+        if (showAttributes && product.attributes.isNotEmpty) ...<Widget>[
+          if (showDescription && description.isNotEmpty)
+            const Divider(height: 24),
+          for (final CatalogProductAttribute attribute in product.attributes)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: <Widget>[
+                  Expanded(child: Text(attribute.name)),
+                  Flexible(
+                    child: Text(
+                      attribute.terms
+                          .map((CatalogAttributeTerm term) => term.name)
+                          .join('، '),
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ],
     );
   }
@@ -947,13 +1124,15 @@ class _PurchaseBar extends StatelessWidget {
       footer.string('button_border_color', '#1F2933'),
       buttonColor,
     );
-    final double footerHeight = sizeReference.number('height', 64).clamp(48, 100);
+    final double configuredFooterHeight = sizeReference
+        .number('height', 64)
+        .clamp(48, 100);
     final double footerIconSize = sizeReference
         .number('icon_size', 24)
         .clamp(14, 40);
-    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48);
-    final double footerLabelSize = sizeReference.number('label_size', 11).clamp(8, 20);
-    final double footerIconLabelGap = sizeReference.number('icon_label_gap', 3).clamp(0, 12);
+    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
+    final double footerLabelSize = sizeReference.number('label_size', 11).clamp(8, 20).toDouble();
+    final double footerIconLabelGap = footer.number('icon_label_gap', 3).clamp(0, 12).toDouble();
 	final Map<String, dynamic> footerLayout = footer.json('layout_json');
 	final dynamic rawRows = footerLayout['rows'];
 	final List<(String, double)> placements = <(String, double)>[];
@@ -963,8 +1142,10 @@ class _PurchaseBar extends StatelessWidget {
 		final List<dynamic> columns = rawRow['columns'] as List<dynamic>;
 		for (final dynamic rawColumn in columns.take(6)) {
 		  if (rawColumn is! Map || rawColumn['items'] is! List) continue;
+		  final List<dynamic> columnItems = rawColumn['items'] as List<dynamic>;
 		  final double width = (rawColumn['width'] as num?)?.toDouble() ?? 100 / columns.length;
-		  placements.addAll((rawColumn['items'] as List).map((item) => ('$item', width)));
+		  final double itemWidth = columnItems.isEmpty ? width : width / columnItems.length;
+		  placements.addAll(columnItems.map((item) => ('$item', itemWidth)));
 		}
 	  }
 	}
@@ -978,17 +1159,27 @@ class _PurchaseBar extends StatelessWidget {
 	);
 	final double configuredButtonWidth = footer
 	    .number('button_width_percent', 58)
-	    .clamp(35, 80);
+	    .clamp(20, 95);
 	final double otherWidthTotal = placements
 	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
 	    .fold<double>(0, (double total, (String, double) placement) => total + placement.$2);
+	final double composerButtonWidth = placements
+	    .where(((String, double) placement) => placement.$1 == 'add_to_cart')
+	    .fold<double>(0, (double widest, (String, double) placement) =>
+	        placement.$2 > widest ? placement.$2 : widest);
+	final double addToCartWidth = composerButtonWidth > configuredButtonWidth
+	    ? composerButtonWidth
+	    : configuredButtonWidth;
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
 	    .number('button_height', 52)
 	    .clamp(36, 80);
-	final double buttonHeight = configuredButtonHeight > footerHeight
-	    ? footerHeight
-	    : configuredButtonHeight;
+	// A configured product action must never be silently squeezed back to the
+	// category footer height. Grow the product footer when the button is taller.
+	final double footerHeight = configuredButtonHeight > configuredFooterHeight
+	    ? configuredButtonHeight
+	    : configuredFooterHeight;
+	final double buttonHeight = configuredButtonHeight;
 	final String buttonShape = footer.string('button_shape', 'custom');
 	final double buttonRadius = switch (buttonShape) {
 	  'rectangle' => 0,
@@ -1016,13 +1207,14 @@ class _PurchaseBar extends StatelessWidget {
 	    : buttonBackground;
 	final bool purchaseFlowAvailable = product.hasVariations ||
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
-	final List<Widget> footerItems = <Widget>[];
+	final List<(String, double, Widget)> footerItems =
+	    <(String, double, Widget)>[];
 	for (final (String item, double width) in placements) {
 	  final double effectiveWidth = hasAddToCart
 	      ? item == 'add_to_cart'
-	          ? configuredButtonWidth
+	          ? addToCartWidth
 	          : otherWidthTotal > 0
-	          ? (100 - configuredButtonWidth) * width / otherWidthTotal
+	          ? (100 - addToCartWidth) * width / otherWidthTotal
 	          : 0
 	      : width;
 	  Widget? child;
@@ -1079,14 +1271,14 @@ class _PurchaseBar extends StatelessWidget {
 		);
 	  }
 	  if (child != null && effectiveWidth > 0) {
-	    footerItems.add(
-	      Expanded(
-	        flex: (effectiveWidth * 100).round().clamp(1, 10000).toInt(),
-	        child: child,
-	      ),
-	    );
+	    footerItems.add((item, effectiveWidth, child));
 	  }
 	}
+	final double footerWidthTotal = footerItems.fold<double>(
+	  0,
+	  (double total, (String, double, Widget) placement) =>
+	      total + placement.$2,
+	);
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
       color: background,
@@ -1122,7 +1314,22 @@ class _PurchaseBar extends StatelessWidget {
 			SizedBox(
 			  key: const Key('product-footer-size'),
 			  height: footerHeight,
-			  child: Row(children: footerItems),
+			  child: LayoutBuilder(
+			    builder: (BuildContext context, BoxConstraints constraints) {
+			      final double availableWidth = constraints.maxWidth;
+			      return Row(
+			        children: footerItems.map(
+			          ((String, double, Widget) placement) => SizedBox(
+			            key: Key('product-footer-column-${placement.$1}'),
+			            width: footerWidthTotal <= 0
+			                ? 0
+			                : availableWidth * placement.$2 / footerWidthTotal,
+			            child: placement.$3,
+			          ),
+			        ).toList(growable: false),
+			      );
+			    },
+			  ),
 			),
           ],
         ),
@@ -1162,7 +1369,7 @@ class _FooterAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool decorated = style == 'filled' || style == 'circle';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -1187,7 +1394,10 @@ class _FooterAction extends StatelessWidget {
             ),
           ),
           if (label.isNotEmpty) ...<Widget>[
-            SizedBox(height: iconLabelGap),
+            SizedBox(
+              key: Key('product-footer-icon-label-gap-$id'),
+              height: iconLabelGap,
+            ),
             SizedBox(
               height: labelSize * 1.25,
               child: Center(
@@ -1339,7 +1549,7 @@ class _ProductShareSheet extends StatelessWidget {
               children: <Widget>[
                 if (product.primaryImage != null)
                   AppNetworkImage(
-                    imageUrl: product.primaryImage!.src.toString(),
+                    imageUrl: product.primaryImage!.source.toString(),
                     width: 76,
                     height: 92,
                     fit: BoxFit.contain,
@@ -1525,7 +1735,6 @@ class _ProductCopy {
   String get relatedProducts => arabic ? 'منتجات مشابهة' : 'Related products';
   String get addToCart => arabic ? 'أضف إلى السلة' : 'Add to cart';
   String get adding => arabic ? 'جارٍ الإضافة…' : 'Adding…';
-  String get addedToCart => arabic ? 'تمت الإضافة إلى السلة' : 'Added to cart';
   String get cartNotConnected => arabic
       ? 'ربط السلة غير متاح في هذه النسخة بعد.'
       : 'Cart connection is not available in this build yet.';

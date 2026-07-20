@@ -77,7 +77,7 @@ void main() {
     expect(find.text('Product'), findsNothing);
 	expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
-    expect(find.text('In stock'), findsNothing);
+    expect(find.text('In stock'), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),
@@ -151,7 +151,8 @@ void main() {
     expect(captured?.productId, simpleProduct.id);
     expect(captured?.variationId, isNull);
     expect(captured?.quantity, 2);
-    expect(find.text('Added to cart'), findsOneWidget);
+    expect(find.text('Added to cart'), findsNothing);
+    expect(find.text('تمت الإضافة إلى السلة'), findsNothing);
   });
 
   testWidgets('requires a valid variation then exposes its price to the UI', (
@@ -383,12 +384,69 @@ void main() {
     expect(likeBox.height, shareBox.height);
     expect(
       tester
+          .widget<SizedBox>(
+            find.byKey(
+              const Key('product-footer-icon-label-gap-share'),
+            ),
+          )
+          .height,
+      9,
+    );
+    expect(
+      tester
           .getCenter(find.byKey(const Key('product-footer-icon-box-share')))
           .dy,
       tester
           .getCenter(find.byKey(const Key('product-footer-icon-box-like')))
           .dy,
     );
+  });
+
+  testWidgets('uses the configured footer column width on mobile', (
+    WidgetTester tester,
+  ) async {
+    _useTallSurface(tester);
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: ProductFakeCatalogRepository(),
+          onAddToCart: (ProductPurchaseSelection selection) async {},
+        ),
+        productLayout: _liveStyleProductLayout(
+          layoutJson: <String, dynamic>{
+            'rows': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'columns': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'width': 15,
+                    'items': <String>['share', 'like'],
+                  },
+                  <String, dynamic>{
+                    'width': 85,
+                    'items': <String>['add_to_cart'],
+                  },
+                ],
+              },
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Size footerSize = tester.getSize(
+      find.byKey(const Key('product-footer-size')),
+    );
+    final Size addToCartColumn = tester.getSize(
+      find.byKey(const Key('product-footer-column-add_to_cart')),
+    );
+    final Size addToCartButton = tester.getSize(
+      find.byKey(const Key('product-add-to-cart-size')),
+    );
+
+    expect(addToCartColumn.width / footerSize.width, closeTo(0.85, 0.01));
+    expect(addToCartButton.width, closeTo(addToCartColumn.width, 0.01));
   });
 }
 
@@ -412,7 +470,7 @@ Widget _testApp(
   );
 }
 
-CmsPageLayout _liveStyleProductLayout() {
+CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
   final CmsPageLayout fallback = CmsPageLayout.fallback('product');
   return CmsPageLayout(
     page: fallback.page,
@@ -434,6 +492,8 @@ CmsPageLayout _liveStyleProductLayout() {
         'button_shape': 'pill',
         'button_border_color': '#2F806E',
         'button_border_width': 2,
+        'icon_label_gap': 9,
+        'layout_json': ?layoutJson,
       },
     ),
   );

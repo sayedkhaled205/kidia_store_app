@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
@@ -11,6 +13,11 @@ final Provider<CmsPageLayoutRemoteDataSource> cmsPageLayoutRemoteDataSourceProvi
 
 final cmsPageLayoutProvider = FutureProvider.autoDispose.family<CmsPageLayout, String>(
       (Ref ref, String page) async {
+        final Timer refreshTimer = Timer(
+          const Duration(seconds: 5),
+          ref.invalidateSelf,
+        );
+        ref.onDispose(refreshTimer.cancel);
         if (AppConfig.useMockHomeLayout) {
           return CmsPageLayout.fallback(page);
         }

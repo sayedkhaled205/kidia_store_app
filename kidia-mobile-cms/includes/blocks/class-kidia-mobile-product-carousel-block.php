@@ -185,7 +185,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 				)
 				: '',
 
-			'card_style' => in_array( $card_style, array( 'outlined', 'elevated', 'minimal' ), true ) ? $card_style : 'outlined',
+			'card_style' => in_array( $card_style, array( 'outlined', 'elevated', 'minimal', 'no_shadow' ), true ) ? $card_style : 'outlined',
 			'item_width' => max( 110, min( 260, absint( $settings['item_width'] ?? 168 ) ) ),
 			'image_ratio' => max( 0.6, min( 1.8, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
 			'card_radius' => max( 0, min( 40, absint( $settings['card_radius'] ?? 20 ) ) ),
@@ -393,7 +393,7 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 		</div>
 
-		<div class="kidia-builder-field"><label>Card Style</label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>>Outlined</option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>>Elevated</option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>>Minimal</option></select></div>
+		<div class="kidia-builder-field"><label>Card Style</label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>>Outlined</option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>>Elevated</option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>>Minimal</option><option value="no_shadow" <?php selected( 'no_shadow', $settings['card_style'] ); ?>>No shadow</option></select></div>
 		<div class="kidia-builder-field"><label>Item Width</label><input type="number" min="110" max="260" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_width]" value="<?php echo esc_attr( (string) $settings['item_width'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Image Ratio</label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Card Radius</label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>

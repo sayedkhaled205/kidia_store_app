@@ -2428,6 +2428,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
       showRating: showRating,
       rating: product.rating,
       reviewCount: product.reviewCount,
+      quickAddProductId: product.id,
       onTap: action == null
           ? null
           : () {

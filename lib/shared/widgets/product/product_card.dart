@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_price.dart';
+import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -30,6 +31,7 @@ class ProductCard extends StatelessWidget {
     this.showRating = false,
     this.rating = 0,
     this.reviewCount = 0,
+    this.quickAddProductId,
   });
 
   final String name;
@@ -59,6 +61,7 @@ class ProductCard extends StatelessWidget {
   final bool showRating;
   final double rating;
   final int reviewCount;
+  final int? quickAddProductId;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +96,7 @@ class ProductCard extends StatelessWidget {
                 onFavoritePressed: onFavoritePressed,
                 imageAspectRatio: imageAspectRatio,
                 showBadge: showBadge,
+                quickAddProductId: quickAddProductId,
               ),
               _ProductInformation(
                 name: name,
@@ -127,6 +131,7 @@ class _ProductImageSection extends StatelessWidget {
     required this.onFavoritePressed,
     required this.imageAspectRatio,
     required this.showBadge,
+    required this.quickAddProductId,
   });
 
   final String imageUrl;
@@ -138,6 +143,7 @@ class _ProductImageSection extends StatelessWidget {
   final VoidCallback? onFavoritePressed;
   final double imageAspectRatio;
   final bool showBadge;
+  final int? quickAddProductId;
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +183,12 @@ class _ProductImageSection extends StatelessWidget {
                 isFavorite: isFavorite,
                 onPressed: onFavoritePressed!,
               ),
+            ),
+          if (quickAddProductId != null && inStock)
+            PositionedDirectional(
+              end: 8,
+              bottom: 8,
+              child: ProductQuickAddButton(productId: quickAddProductId!),
             ),
         ],
       ),

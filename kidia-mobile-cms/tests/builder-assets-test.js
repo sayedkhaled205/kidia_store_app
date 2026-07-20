@@ -379,7 +379,10 @@ function categoryGeneralSettings() {
 	  return `<section class="kidia-category-general">
 	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
 	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
-	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("show_arrow", 1, "checkbox")}
+	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}${field("show_arrow", 1, "checkbox")}
+	    ${field("page_background_color", "#F7F8FA", "color")}${field("element_background_color", "#FFFFFF", "color")}${field("card_background_color", "#FFFFFF", "color")}
+	    ${field("card_shadow_color", "#000000", "color")}${field("card_shadow_strength", 10, "range")}${field("card_shadow_blur", 12, "range")}${field("card_shadow_offset_y", 4, "number")}
+	    <select name="category_general[card_style]"><option value="outlined" selected>Outlined</option><option value="elevated">Elevated</option></select>
 	    ${field("image_size", 68, "range")}${field("image_radius", 18, "range")}${field("image_scale", 100, "range")}
 	    ${field("border_width", 0, "number")}${field("border_color", "#DDE5E2", "color")}${field("background_color", "#FFFFFF", "color")}
 	    ${field("image_text_gap", 10, "range")}${field("font_size", 16, "range")}${field("font_color", "#1F2933", "color")}${field("line_height", 125, "range")}
@@ -450,6 +453,27 @@ function runCategoryBuilderTest() {
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
 
+	const elementBackground = window.document.querySelector('[name="category_general[element_background_color]"]');
+	elementBackground.value = "#fff4e8";
+	elementBackground.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.backgroundColor, "rgb(255, 244, 232)", "Category element background must update the live preview independently.");
+	const pageBackground = window.document.querySelector('[name="category_general[page_background_color]"]');
+	pageBackground.value = "#eef1f4";
+	pageBackground.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.getElementById("kidia-category-live-preview").style.backgroundColor, "rgb(238, 241, 244)", "Category page background must remain separate from the element background.");
+	const cardWidth = window.document.querySelector('[name="category_general[card_width_percent]"]');
+	cardWidth.value = "76";
+	cardWidth.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-branch").style.width, "76%", "Card width must update the live preview.");
+	const cardHeight = window.document.querySelector('[name="category_general[card_height]"]');
+	cardHeight.value = "96";
+	cardHeight.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-root").style.height, "96px", "Card height must update the live preview.");
+	const marginTop = window.document.querySelector('[name="category_general[margin_top]"]');
+	marginTop.value = "18";
+	marginTop.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.paddingTop, "32px", "Element top margin must be visible in the live preview.");
+
   click(window, window.document.querySelector(".kidia-category-expand"));
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Expand must show subcategories instantly.");
   assert.ok(window.document.querySelector(".kidia-category-preview-branch.is-expanded"), "Expanded branch styling must be applied.");
@@ -494,6 +518,18 @@ function runCategoryBuilderTest() {
 }
 
 function runPageBuilderTest() {
+  const storeSource = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
+  assert.match(storeSource, /self::field\( 'background_color', __\( 'Background color'.*'color', '#FFFFFF' \)/, "Every page element must receive one real background color picker.");
+  assert.doesNotMatch(storeSource, /Element background \(blank = transparent\)/, "The obsolete duplicate text background field must be removed.");
+  assert.match(storeSource, /'no_shadow' => __\( 'No shadow'/, "Card style settings must include an explicit no-shadow option.");
+  assert.match(storeSource, /\$wishlist_grid_keys = array\( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' \)/, "Wishlist must expose only settings implemented by its mobile grid.");
+  assert.doesNotMatch(storeSource, /self::element\( 'account_menu'[\s\S]{0,500}Menu style/, "Account menu must not expose an unimplemented layout control.");
+  const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
+  assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
+  assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
+  const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+  assert.match(pageTemplateSource, /Product General Settings/, "Quick add must appear in Product General Settings.");
+  assert.match(pageTemplateSource, /'quick_add_enabled' !== \$field\['key'\]/, "Quick add must not be duplicated inside Product Information.");
   const markup = `<!doctype html><html><body>
     <div class="kidia-page-builder" data-page="catalog">
       <div id="kidia-page-live-preview"></div>
@@ -532,12 +568,14 @@ function runChromeComposerTest() {
   const markup = `<!doctype html><html><body><section class="kidia-fixed-chrome-card" data-element="header"><input type="checkbox" name="layout[header][enabled]" checked><div class="kidia-chrome-composer" data-part="header" data-page="home"><input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items"><button class="kidia-chrome-item" data-item="logo">Logo</button><button class="kidia-chrome-item" data-item="cart">Cart</button><button class="kidia-chrome-item" data-item="search_bar">Search bar</button><button class="kidia-chrome-item" data-item="support">Support</button></div></div><button class="kidia-chrome-reset"></button></div><section data-item-section="logo"></section><section data-item-section="cart"><div class="kidia-chrome-icon-choice"><button class="kidia-chrome-icon-option" data-icon-value="bag">Bag</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="basket">Basket</button><select class="kidia-chrome-icon-select" name="layout[header][settings][cart_icon_variant]"><option value="bag">Bag</option><option value="basket" selected>Basket</option></select></div></section><section data-item-section="search_bar"></section><section data-item-section="support"><div class="kidia-chrome-icon-choice"><button class="kidia-chrome-icon-option" data-icon-value="chat">Chat</button><button class="kidia-chrome-icon-option is-selected" data-icon-value="headset">Headset</button><select class="kidia-chrome-icon-select" name="layout[header][settings][support_icon_variant]"><option value="chat">Chat</option><option value="headset" selected>Headset</option></select></div></section><input name="layout[header][settings][subtitle]" value="Kids"><input name="layout[header][settings][height]" value="112"><input name="layout[header][settings][background_color]" value="#FFFFFF"><input name="layout[header][settings][icon_color]" value="#1F2933"><input name="layout[header][settings][icon_size]" value="24"><select name="layout[header][settings][cart_style]"><option value="circle" selected>Circle</option></select><input name="layout[header][settings][cart_color]" value="#123456"><input name="layout[header][settings][cart_background]" value="#FFFFFF"><input name="layout[header][settings][cart_radius]" value="12"><input name="layout[header][settings][icon_gap]" value="6"><input name="layout[header][settings][row_gap]" value="4"><input name="layout[header][settings][vertical_padding]" value="0"><input name="layout[header][settings][horizontal_padding]" value="16"><input name="layout[header][settings][search_width_percent]" value="100"><input name="layout[header][settings][search_height]" value="40"><input name="layout[header][settings][search_radius]" value="14"><input name="layout[header][settings][search_background]" value="#F1F3F4"><input name="layout[header][settings][search_placeholder]" value="Search products"></section></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
   const { window } = dom;
+  window.document.querySelector(".kidia-fixed-chrome-card").insertAdjacentHTML("beforeend", '<input type="checkbox" name="layout[header][settings][show_cart_badge]" checked><select name="layout[header][settings][cart_badge_shape]"><option value="circle">Circle</option><option value="pill" selected>Pill</option></select><input name="layout[header][settings][cart_badge_size]" value="22"><input name="layout[header][settings][cart_badge_background]" value="#C84F6A"><input name="layout[header][settings][cart_badge_text_color]" value="#FFF4E8">');
   window.eval(readAsset("chrome-layout.js"));
   window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   card.insertAdjacentHTML("beforeend", '<input name="layout[header][settings][margin_top]" value="7"><input name="layout[header][settings][margin_bottom]" value="9">');
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
+	assert.match(preview, /kidia-app-icon-badge[^>]+min-width:22px[^>]+border-radius:11px[^>]+background:#C84F6A[^>]+color:#FFF4E8/, "Cart count shape, size and colors must render immediately in preview.");
 	assert.match(preview, /is-circle[^>]+border:1px solid #123456/, "Header icon style must visibly affect the live preview.");
 	assert.match(preview, /kidia-app-header-brand[\s\S]*Kids/, "The subtitle must render with the logo instead of occupying a separate row item.");
 	window.document.querySelector('[data-icon-value="bag"]').dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
@@ -582,7 +620,7 @@ function runChromeComposerTest() {
 function runCollapsedHeaderToggleTest() {
   const regular = JSON.stringify({ rows: [{ columns: [{ width: 100, align: "center", items: ["title"] }] }] });
   const collapsed = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["search_bar"] }, { width: 16, align: "right", items: ["cart"] }] }] });
-  const markup = `<!doctype html><html><body><form><section class="kidia-fixed-chrome-card">
+  const markup = `<!doctype html><html><body><form><section class="kidia-fixed-chrome-card" data-chrome-part="header">
     <input type="checkbox" name="layout[header][enabled]" value="1" checked>
     <input type="hidden" name="layout[header][settings][collapse_on_scroll]" value="0">
     <input type="checkbox" class="kidia-collapsed-header-enabled" name="layout[header][settings][collapse_on_scroll]" value="1">
@@ -590,24 +628,38 @@ function runCollapsedHeaderToggleTest() {
     <input name="layout[header][settings][compact_layout_json]" value='${collapsed}'>
     <input name="layout[header][settings][title]" value="Products">
     <input name="layout[header][settings][height]" value="64">
+    <input name="layout[header][settings][row_gap]" value="0">
+    <input name="layout[header][settings][vertical_padding]" value="0">
     <input name="layout[header][settings][compact_height]" value="56">
     <input name="layout[header][settings][background_color]" value="#FFFFFF">
     <input name="layout[header][settings][compact_background_color]" value="#F4F5F5">
     <select name="layout[header][settings][collapse_transition]"><option value="fade_slide" selected>Fade + slide</option></select>
     <select name="layout[header][settings][collapse_speed]"><option value="slow" selected>Slow</option></select>
+    <div class="kidia-chrome-composer--collapsed"></div>
+    <section class="kidia-collapsed-header-settings"></section>
   </section></form></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
   const { window } = dom;
   window.eval(readAsset("chrome-layout.js"));
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   const toggle = card.querySelector(".kidia-collapsed-header-enabled");
+	window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Collapsed layout must be hidden while collapsed header is Off.");
+	assert.equal(card.querySelector(".kidia-collapsed-header-settings").hidden, true, "Collapsed settings must be hidden while collapsed header is Off.");
 
-  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "Off must preview the regular header.");
+  const regularPreview = window.KidiaChromePreview.renderHeader(card, "Products");
+  assert.doesNotMatch(regularPreview, /is-collapsed/, "Off must preview the regular header.");
+	assert.match(regularPreview, /height:64px/, "Regular header height must use the exact configured value.");
+	assert.match(regularPreview, /padding:0px 16px/, "Vertical padding must update the preview exactly.");
+	assert.match(regularPreview, /--row-gap:0px/, "Setting row spacing to zero must remove the preview gap.");
   toggle.checked = true;
+	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Collapsed layout must appear when collapsed header is On.");
+	assert.equal(card.querySelector(".kidia-collapsed-header-settings").hidden, false, "Collapsed settings must appear when collapsed header is On.");
 	  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "On must still show the real regular header while the preview is at the top.");
 	  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
 	  assert.match(collapsedPreview, /is-collapsed/, "Scrolling the preview must show the collapsed header.");
-  assert.match(collapsedPreview, /height:56px/, "The sticky preset must expand enough to keep its search field inside the compact header.");
+  assert.match(collapsedPreview, /height:56px/, "Collapsed height must use the exact configured value.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
   assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
@@ -635,7 +687,11 @@ function runFooterPreviewControlsTest() {
 	assert.doesNotMatch(preview, /kidia-app-footer-item--share/, "The preview must omit footer items that Flutter does not support on navigation pages.");
 	assert.doesNotMatch(preview, /--item-icon-size:30px/, "Per-icon sizes must no longer move one footer icon out of alignment.");
 	assert.match(preview, /--item-icon-size:26px/, "Every footer icon must use the same shared size.");
+	assert.match(preview, /--label-gap:4px/, "The Category footer must preview its own icon and label spacing.");
 	assert.match(preview, /margin:6px 0 8px/, "Footer space above and below must update the preview.");
+	footerCard.dataset.page = "home";
+	const homePreview = window.KidiaChromePreview.renderFooter(footerCard, { page: "home" });
+	assert.match(homePreview, /--label-gap:4px/, "Every page footer must preview its own icon and label spacing instead of the Category value.");
 	  console.log("Footer preview: equal items, side spacing, labels and icon designs passed.");
 }
 
@@ -664,6 +720,9 @@ function runProductFooterButtonPreviewTest() {
 	assert.match(preview, /background:transparent/, "Outline buttons must preview with a transparent fill.");
 	assert.match(preview, /border:2px solid #778899/, "Button border controls must render immediately.");
 	assert.match(preview, /border-radius:24px/, "Pill shape must derive its radius from the configured height.");
+	window.document.querySelector('[name$="[button_height]"]').value = "80";
+	const tallPreview = window.KidiaChromePreview.renderFooter(window.document.querySelector("section"), { page: "product" });
+	assert.match(tallPreview, /style="height:80px;/, "A taller product button must grow the footer instead of being clipped by the shared footer height.");
 	console.log("Product footer preview: width, height, style and shape controls passed.");
 }
 

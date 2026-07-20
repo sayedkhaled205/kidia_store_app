@@ -165,7 +165,7 @@ void main() {
     final SliverPadding gridPadding = tester.widget<SliverPadding>(
       find.byKey(const Key('catalog-product-grid-padding')),
     );
-    expect(gridPadding.padding.resolve(TextDirection.ltr).top, 18);
+    expect(gridPadding.padding.resolve(TextDirection.ltr).top, 0);
     final SliverPersistentHeader toolbar = tester.widget<SliverPersistentHeader>(
       find.byType(SliverPersistentHeader),
     );

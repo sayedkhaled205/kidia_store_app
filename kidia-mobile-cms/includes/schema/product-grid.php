@@ -22,7 +22,7 @@ return array(
 		array( 'key' => 'limit', 'type' => 'number', 'default' => 8, 'min' => 1, 'max' => 50 ),
 		array( 'key' => 'category_id', 'label' => __( 'Category ID', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 0, 'min' => 0 ),
 		array( 'key' => 'product_ids', 'label' => __( 'Manual product IDs', 'kidia-mobile-cms' ), 'type' => 'text', 'default' => '' ),
-		array( 'key' => 'card_style', 'label' => __( 'Card style', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'outlined', 'options' => array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ),
+		array( 'key' => 'card_style', 'label' => __( 'Card style', 'kidia-mobile-cms' ), 'type' => 'select', 'default' => 'outlined', 'options' => array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'no_shadow' => __( 'No shadow', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ),
 		array( 'key' => 'image_ratio', 'label' => __( 'Image ratio', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 1, 'min' => 0.6, 'max' => 1.8, 'step' => 0.05 ),
 		array( 'key' => 'card_radius', 'label' => __( 'Card radius', 'kidia-mobile-cms' ), 'type' => 'number', 'default' => 20, 'min' => 0, 'max' => 40 ),
 		array( 'key' => 'show_view_all', 'label' => __( 'Show view all', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'default' => true ),

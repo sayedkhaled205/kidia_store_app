@@ -90,6 +90,8 @@ class AccountScreen extends ConsumerWidget {
                 'guest_title',
                 isArabic ? 'تسجيل الدخول / إنشاء حساب' : 'Sign in / Register',
               ),
+              showEmail: summarySettings.boolean('show_email', true),
+              cardStyle: summarySettings.string('card_style', 'elevated'),
             )),
             if (authState.hasError) ...<Widget>[
               const SizedBox(height: KidiaSpacing.sm),
@@ -194,6 +196,8 @@ class _AccountHeader extends StatelessWidget {
     required this.onSignIn,
     required this.avatarSize,
     required this.guestTitle,
+    required this.showEmail,
+    required this.cardStyle,
   });
 
   final AuthSession? session;
@@ -202,11 +206,22 @@ class _AccountHeader extends StatelessWidget {
   final VoidCallback onSignIn;
   final double avatarSize;
   final String guestTitle;
+  final bool showEmail;
+  final String cardStyle;
 
   @override
   Widget build(BuildContext context) {
     final AuthSession? current = session;
+    final bool outlined = cardStyle == 'outlined';
+    final bool elevated = cardStyle == 'elevated';
     return Card(
+      elevation: elevated ? null : 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(KidiaRadius.md),
+        side: outlined
+            ? BorderSide(color: Theme.of(context).colorScheme.outlineVariant)
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(KidiaSpacing.md),
         child: Row(
@@ -283,17 +298,19 @@ class _AccountHeader extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
-                        const SizedBox(height: 4),
-                        Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Text(
-                            current.user.email,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: KidiaColors.textSecondary),
+                        if (showEmail) ...<Widget>[
+                          const SizedBox(height: 4),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              current.user.email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: KidiaColors.textSecondary),
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
             ),

@@ -131,7 +131,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'view_all_label' => sanitize_text_field( (string) ( $settings['view_all_label'] ?? '' ) ),
 			'action_type'    => $action_type,
 			'action_value'   => $action_value,
-			'card_style'     => in_array( $card_style, array( 'outlined', 'elevated', 'minimal' ), true ) ? $card_style : 'outlined',
+			'card_style'     => in_array( $card_style, array( 'outlined', 'elevated', 'minimal', 'no_shadow' ), true ) ? $card_style : 'outlined',
 			'image_ratio'    => max( 0.6, min( 1.8, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
 			'card_radius'    => max( 0, min( 40, absint( $settings['card_radius'] ?? 20 ) ) ),
 			'show_name'      => ! empty( $settings['show_name'] ),
@@ -268,7 +268,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Section Title', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( $settings['title'] ); ?>">
 			</div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>><?php esc_html_e( 'Outlined', 'kidia-mobile-cms' ); ?></option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>><?php esc_html_e( 'Elevated', 'kidia-mobile-cms' ); ?></option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>><?php esc_html_e( 'Minimal', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>><?php esc_html_e( 'Outlined', 'kidia-mobile-cms' ); ?></option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>><?php esc_html_e( 'Elevated', 'kidia-mobile-cms' ); ?></option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>><?php esc_html_e( 'Minimal', 'kidia-mobile-cms' ); ?></option><option value="no_shadow" <?php selected( 'no_shadow', $settings['card_style'] ); ?>><?php esc_html_e( 'No shadow', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Ratio', 'kidia-mobile-cms' ); ?></label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
 			<?php foreach ( array( 'show_name' => __( 'Show Name', 'kidia-mobile-cms' ), 'show_price' => __( 'Show Price', 'kidia-mobile-cms' ), 'show_regular_price' => __( 'Show Regular Price', 'kidia-mobile-cms' ), 'show_badge' => __( 'Show Badge', 'kidia-mobile-cms' ), 'show_rating' => __( 'Show Rating', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
