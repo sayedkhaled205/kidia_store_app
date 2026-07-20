@@ -60,6 +60,29 @@ $catalog_default = $store->get_layout( 'catalog' );
 $catalog_ids = array_column( $catalog_default['elements'], 'id' );
 $catalog_grid = $catalog_default['elements'][ array_search( 'product_grid', $catalog_ids, true ) ];
 kidia_page_assert( true === $catalog_grid['settings']['quick_add_enabled'], 'Catalog Product Grid quick add must default to enabled.' );
+kidia_page_assert( false === $catalog_grid['settings']['show_wishlist'], 'Catalog Product Grid wishlist must default to hidden.' );
+kidia_page_assert( 'bottom_end' === $catalog_grid['settings']['quick_add_position'], 'Quick Add must default to the lower end corner.' );
+kidia_page_assert( 'top_end' === $catalog_grid['settings']['product_wishlist_position'], 'Wishlist must default to the upper end corner.' );
+$custom_catalog = $catalog_default;
+$custom_catalog['elements'][ array_search( 'product_grid', $catalog_ids, true ) ]['settings'] = array_merge(
+	$catalog_grid['settings'],
+	array(
+		'quick_add_icon_size' => 31,
+		'quick_add_background_size' => 55,
+		'quick_add_icon_color' => '#123456',
+		'quick_add_position' => 'top_start',
+		'product_wishlist_position' => 'bottom_start',
+	)
+);
+$store->save_layout( 'catalog', $custom_catalog );
+$saved_catalog = $store->get_layout( 'catalog' );
+$saved_grid = $saved_catalog['elements'][ array_search( 'product_grid', array_column( $saved_catalog['elements'], 'id' ), true ) ];
+kidia_page_assert( 31.0 === $saved_grid['settings']['quick_add_icon_size'], 'Saved Quick Add icon size must reach the public layout.' );
+kidia_page_assert( 55.0 === $saved_grid['settings']['quick_add_background_size'], 'Saved Quick Add background size must reach the public layout.' );
+kidia_page_assert( '#123456' === $saved_grid['settings']['quick_add_icon_color'], 'Saved Quick Add color must reach the public layout.' );
+kidia_page_assert( 'top_start' === $saved_grid['settings']['quick_add_position'], 'Saved Quick Add position must reach the public layout.' );
+kidia_page_assert( 'bottom_start' === $saved_grid['settings']['product_wishlist_position'], 'Saved wishlist position must reach the public layout.' );
+unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'] );
 $wishlist_default = $store->get_layout( 'wishlist' );
 $wishlist_ids = array_column( $wishlist_default['elements'], 'id' );
 $wishlist_grid = $wishlist_default['elements'][ array_search( 'wishlist_grid', $wishlist_ids, true ) ];

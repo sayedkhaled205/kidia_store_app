@@ -68,6 +68,37 @@
 			/* Header/footer settings have their own item-based organization. */
 			if (!container.closest(".kidia-chrome-settings")) { addHeadings(container); }
 		});
+		enhanceProductPositions(root || document);
+	}
+
+	function enhanceProductPositions(root) {
+		root.querySelectorAll('select[name$="[quick_add_position]"],select[name$="[product_wishlist_position]"]').forEach(function (select) {
+			if (select.dataset.kidiaPositionEnhanced === "1") { return; }
+			select.dataset.kidiaPositionEnhanced = "1";
+			select.hidden = true;
+			var picker = document.createElement("div");
+			picker.className = "kidia-product-position";
+			picker.innerHTML = '<div class="kidia-product-position__image" aria-hidden="true"></div>';
+			Array.prototype.forEach.call(select.options, function (option) {
+				var label = document.createElement("label");
+				label.className = "is-" + option.value;
+				label.title = option.textContent;
+				var input = document.createElement("input");
+				input.type = "radio";
+				input.name = select.name + "_visual";
+				input.checked = option.value === select.value;
+				input.addEventListener("change", function () {
+					if (!input.checked) { return; }
+					select.value = option.value;
+					select.dispatchEvent(new Event("change", { bubbles: true }));
+					select.dispatchEvent(new Event("input", { bubbles: true }));
+				});
+				label.appendChild(input);
+				label.appendChild(document.createElement("span"));
+				picker.appendChild(label);
+			});
+			select.insertAdjacentElement("afterend", picker);
+		});
 	}
 
 	document.addEventListener("DOMContentLoaded", function () {

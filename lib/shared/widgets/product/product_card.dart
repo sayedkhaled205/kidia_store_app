@@ -203,19 +203,17 @@ class _ProductImageSection extends StatelessWidget {
               ),
             ),
 		  if (onFavoritePressed == null && wishlistProductId != null && wishlistAppearance.enabled)
-			PositionedDirectional(
-			  top: 8,
-			  end: 8,
-			  child: ProductWishlistButton(
+			_positionedProductAction(
+			  wishlistAppearance.position,
+			  ProductWishlistButton(
 				productId: wishlistProductId!,
 				appearance: wishlistAppearance,
 			  ),
 			),
           if (quickAddProductId != null && inStock)
-            PositionedDirectional(
-              end: 8,
-              bottom: 8,
-              child: ProductQuickAddButton(
+			_positionedProductAction(
+			  quickAddAppearance?.position ?? 'bottom_end',
+			  ProductQuickAddButton(
                 productId: quickAddProductId!,
                 appearance: quickAddAppearance,
               ),
@@ -224,6 +222,18 @@ class _ProductImageSection extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _positionedProductAction(String position, Widget child) {
+  final bool top = position.startsWith('top_');
+  final bool start = position.endsWith('_start');
+  return PositionedDirectional(
+    top: top ? 8 : null,
+    bottom: top ? null : 8,
+    start: start ? 8 : null,
+    end: start ? null : 8,
+    child: child,
+  );
 }
 
 class _ProductStatusBadge extends StatelessWidget {

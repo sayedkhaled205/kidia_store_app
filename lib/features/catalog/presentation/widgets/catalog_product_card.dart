@@ -120,10 +120,9 @@ class CatalogProductCard extends StatelessWidget {
                             ),
                           ),
 						if (settings?.boolean('show_wishlist', false) ?? false)
-						  PositionedDirectional(
-							top: 8,
-							end: 8,
-							child: ProductWishlistButton(
+						  _positionedProductAction(
+							settings?.string('product_wishlist_position', 'top_end') ?? 'top_end',
+							ProductWishlistButton(
 							  productId: product.id,
 							  appearance: ProductWishlistAppearance(
 								enabled: true,
@@ -135,16 +134,16 @@ class CatalogProductCard extends StatelessWidget {
 								backgroundColor: _quickAddColor(settings?.string('product_wishlist_background_color', '#FFFFFF')),
 								backgroundSize: settings?.number('product_wishlist_background_size', 40).clamp(28, 64).toDouble() ?? 40,
 								backgroundRadius: settings?.number('product_wishlist_radius', 24).clamp(0, 40).toDouble() ?? 24,
+								position: settings?.string('product_wishlist_position', 'top_end') ?? 'top_end',
 							  ),
 							),
 						  ),
                         if (product.isInStock &&
                             (settings?.boolean('quick_add_enabled', true) ??
                                 true))
-                          PositionedDirectional(
-                            end: 8,
-                            bottom: 8,
-                            child: ProductQuickAddButton(
+                          _positionedProductAction(
+							settings?.string('quick_add_position', 'bottom_end') ?? 'bottom_end',
+							ProductQuickAddButton(
                               productId: product.id,
                               iconVariant: settings?.string('quick_add_icon_variant', 'bag') ?? 'bag',
                               iconStyle: settings?.string('quick_add_icon_style', 'outline') ?? 'outline',
@@ -255,6 +254,18 @@ class CatalogProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _positionedProductAction(String position, Widget child) {
+  final bool top = position.startsWith('top_');
+  final bool start = position.endsWith('_start');
+  return PositionedDirectional(
+    top: top ? 8 : null,
+    bottom: top ? null : 8,
+    start: start ? 8 : null,
+    end: start ? null : 8,
+    child: child,
+  );
 }
 
 Color? _quickAddColor(String? value) {

@@ -32,6 +32,13 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 			<label><?php echo esc_html( $field['label'] ); ?></label>
 			<?php if ( 'checkbox' === $field['type'] ) : ?>
 				<label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><span></span><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label>
+			<?php elseif ( 'product_position' === $field['type'] ) : ?>
+				<div class="kidia-product-position" role="radiogroup" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+					<div class="kidia-product-position__image" aria-hidden="true"></div>
+					<?php foreach ( $field['options'] as $option_value => $option_label ) : ?>
+						<label class="is-<?php echo esc_attr( $option_value ); ?>" title="<?php echo esc_attr( $option_label ); ?>"><input type="radio" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $option_value ); ?>" <?php checked( (string) $value, (string) $option_value ); ?>><span></span></label>
+					<?php endforeach; ?>
+				</div>
 			<?php elseif ( 'select' === $field['type'] ) : ?>
 				<select name="<?php echo esc_attr( $name ); ?>"><?php foreach ( $field['options'] as $option_value => $option_label ) : ?><option value="<?php echo esc_attr( $option_value ); ?>" <?php selected( (string) $value, (string) $option_value ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select>
 			<?php elseif ( 'color' === $field['type'] ) : ?>

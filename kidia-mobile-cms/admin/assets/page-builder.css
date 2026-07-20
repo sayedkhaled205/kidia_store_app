@@ -106,6 +106,20 @@ body.kidia-unsaved-modal-open { overflow:hidden; }
 .kidia-unsaved-modal__discard { border-color:#2f806e!important; background:#fff!important; color:#236b59!important; }
 .kidia-unsaved-modal__actions [data-kidia-unsaved-cancel] { border-color:#b9d9d1!important; background:#e7f5f1!important; color:#315f55!important; }
 
+/* Visual four-corner selector shared by every product-card action. */
+.kidia-product-position { position:relative; width:132px; aspect-ratio:4/5; margin-inline:auto; overflow:hidden; border:1px solid #b9d9d1; border-radius:14px; background:#f4f6f5; box-shadow:inset 0 -36px 0 #fff; }
+.kidia-product-position__image { position:absolute; inset:9px 9px 42px; border-radius:9px; background:linear-gradient(145deg,#e8f2ef,#d4e4df); }
+.kidia-product-position label { position:absolute; z-index:2; width:28px; height:28px; cursor:pointer; }
+.kidia-product-position label.is-top_start { inset-block-start:14px; inset-inline-start:14px; }
+.kidia-product-position label.is-top_end { inset-block-start:14px; inset-inline-end:14px; }
+.kidia-product-position label.is-bottom_start { inset-block-end:47px; inset-inline-start:14px; }
+.kidia-product-position label.is-bottom_end { inset-block-end:47px; inset-inline-end:14px; }
+.kidia-product-position input { position:absolute; opacity:0; pointer-events:none; }
+.kidia-product-position label span { display:grid; width:28px; height:28px; place-items:center; border:2px solid #fff; border-radius:50%; background:#dbe8e4; box-shadow:0 1px 4px rgba(31,41,51,.22); }
+.kidia-product-position label span::after { content:""; width:9px; height:9px; border-radius:50%; background:#83948f; }
+.kidia-product-position input:checked + span { outline:3px solid #2f806e; background:#fff; }
+.kidia-product-position input:checked + span::after { background:#2f806e; }
+
 /* Flutter-parity live preview. Dimensions are scaled from the same CMS values used by the app. */
 #kidia-page-live-preview { display:flex; min-height:calc(100% - 27px); flex-direction:column; direction:rtl; background:#f7f8f8; color:#1f2933; font-family:Arial,Tahoma,sans-serif; overflow:hidden; }
 .kidia-app-page { flex:1; overflow:hidden; background:#f8f9f9; text-align:right; }

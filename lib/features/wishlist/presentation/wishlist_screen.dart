@@ -360,10 +360,9 @@ class _WishlistProductCard extends StatelessWidget {
                   ),
                   if (product.isInStock &&
                       settings.boolean('quick_add_enabled', true))
-                    PositionedDirectional(
-                      end: 8,
-                      bottom: 8,
-                      child: ProductQuickAddButton(
+					_positionedWishlistAction(
+					  settings.string('quick_add_position', 'bottom_end'),
+					  ProductQuickAddButton(
                         productId: product.id,
                         iconVariant: settings.string('quick_add_icon_variant', 'bag'),
                         iconStyle: settings.string('quick_add_icon_style', 'outline'),
@@ -447,6 +446,18 @@ class _WishlistProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _positionedWishlistAction(String position, Widget child) {
+  final bool top = position.startsWith('top_');
+  final bool start = position.endsWith('_start');
+  return PositionedDirectional(
+    top: top ? 8 : null,
+    bottom: top ? null : 8,
+    start: start ? 8 : null,
+    end: start ? null : 8,
+    child: child,
+  );
 }
 
 Color? _wishlistHexColor(String value) {

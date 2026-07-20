@@ -564,9 +564,16 @@ function runPageBuilderTest() {
   assert.match(catalogCardSource, /quick_add_background_color/, "Catalog Product Grid must consume Quick Add appearance settings.");
   assert.match(catalogCardSource, /quick_add_background_size/, "Catalog Product Grid must consume the independent Quick Add background size.");
   assert.match(catalogCardSource, /product_wishlist_background_size/, "Catalog Product Grid must consume the product wishlist appearance settings.");
+  assert.match(catalogCardSource, /quick_add_position/, "Catalog Product Grid must apply the saved Quick Add corner.");
+  assert.match(catalogCardSource, /product_wishlist_position/, "Catalog Product Grid must apply the saved wishlist corner.");
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
-  const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	assert.match(pageTemplateSource, /kidia-product-position/, "Product icon positions must use the visual product-card selector.");
+	const settingsSectionsSource = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "settings-sections.js"), "utf8");
+	assert.match(settingsSectionsSource, /enhanceProductPositions/, "Home product elements must receive the same visual position selector.");
+	const layoutProviderSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "providers", "cms_page_layout_providers.dart"), "utf8");
+	assert.match(layoutProviderSource, /Duration\(seconds: 5\)/, "Visible pages must refresh CMS settings promptly without restarting the app.");
 	assert.match(pageTemplateSource, /Colors & appearance/, "Page element backgrounds must be grouped in Colors & Appearance.");
 	const homeTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.equal((homeTemplateSource.match(/\[settings\]\[block_background\]/g) || []).length, 1, "Every Home element must render exactly one shared background control.");
@@ -899,6 +906,9 @@ function runUniformChromeSettingsContractTest() {
 	}
 	assert.doesNotMatch(template, /Footer height, icon size and label size come from/, "Every footer must own its complete settings instead of borrowing another page's values.");
 	assert.doesNotMatch(styles, /data-chrome-part="footer"[^}]+data-setting="height"/, "Footer height must remain visible on every page.");
+	assert.match(styles, /kidia-chrome-item-setting--logo[^}]+grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, "Logo settings must use a compact three-column grid.");
+	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 2/, "The logo image control must use two columns instead of wasting a full row.");
+	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:100%/, "Logo controls must align at full column width.");
 	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
