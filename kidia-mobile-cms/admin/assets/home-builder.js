@@ -418,7 +418,7 @@
 		var name = escapeHtml(item && item.name ? item.name : "Category");
 		var radius = settings.image_shape === "circle" ? "50%" : (settings.image_shape === "square" ? "0" : "10px");
 
-		return '<article class="kidia-preview-category-card"><span class="kidia-preview-category-card__image" style="border-radius:' + radius + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (showName ? '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + name + "</strong>" : "") + "</article>";
+		return '<article class="kidia-preview-category-card"><span class="kidia-preview-category-card__image" style="width:' + numberInRange(settings.image_size, 78, 32, 160) + 'px;height:' + numberInRange(settings.image_size, 78, 32, 160) + 'px;border-radius:' + radius + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (showName ? '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + name + "</strong>" : "") + "</article>";
 	}
 
 	function renderProductCard(item, settings) {
@@ -441,8 +441,16 @@
 		var quickTop = quickPosition.indexOf("top_") === 0;
 		var quickStart = quickPosition.slice(-6) === "_start";
 		var quickStyle = 'style="width:' + quickShell + 'px;height:' + quickShell + 'px;font-size:' + quickSize + 'px;border-radius:' + numberInRange(settings && settings.quick_add_radius, 24, 0, 40) + 'px;background:' + quickBackground + ';color:' + safeColor(settings && settings.quick_add_icon_color, "#1F2933") + ';top:' + (quickTop ? '5px' : 'auto') + ';bottom:' + (quickTop ? 'auto' : '5px') + ';inset-inline-start:' + (quickStart ? '5px' : 'auto') + ';inset-inline-end:' + (quickStart ? 'auto' : '5px') + ';right:auto;left:auto"';
+		var wishlistIcon = settings && settings.product_wishlist_icon_variant === "bookmark" ? "🔖" : "♡";
+		var wishlistSize = numberInRange(settings && settings.product_wishlist_icon_size, 20, 10, 36);
+		var wishlistShell = numberInRange(settings && settings.product_wishlist_background_size, 40, 20, 64);
+		var wishlistPosition = settings && settings.product_wishlist_position ? settings.product_wishlist_position : "top_end";
+		var wishlistTop = wishlistPosition.indexOf("top_") === 0;
+		var wishlistStart = wishlistPosition.slice(-6) === "_start";
+		var wishlistBackground = settings && settings.product_wishlist_show_background === "" ? "transparent" : safeColor(settings && settings.product_wishlist_background_color, "#FFFFFF");
+		var wishlistStyle = 'style="width:' + wishlistShell + 'px;height:' + wishlistShell + 'px;font-size:' + wishlistSize + 'px;border-radius:' + numberInRange(settings && settings.product_wishlist_radius, 24, 0, 40) + 'px;background:' + wishlistBackground + ';color:' + safeColor(settings && settings.product_wishlist_icon_color, "#1F2933") + ';top:' + (wishlistTop ? '5px' : 'auto') + ';bottom:' + (wishlistTop ? 'auto' : '5px') + ';inset-inline-start:' + (wishlistStart ? '5px' : 'auto') + ';inset-inline-end:' + (wishlistStart ? 'auto' : '5px') + ';right:auto;left:auto"';
 
-		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + (inStock && (!settings || settings.quick_add_enabled !== "") ? '<span class="kidia-preview-product-card__quick-add" ' + quickStyle + '>' + quickIcon + '</span>' : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
+		return '<article class="kidia-preview-product-card is-' + escapeHtml(style) + '" style="border-radius:' + numberInRange(settings && settings.card_radius, 20, 0, 40) + 'px"><div class="kidia-preview-product-card__image" style="aspect-ratio:' + numberInRange(settings && settings.image_ratio, 1, 0.6, 1.8) + '">' + (image ? '<img src="' + image + '" alt="' + name + '">' : '<span class="kidia-preview-image-fallback"></span>') + (status && (!settings || settings.show_badge !== "") ? '<span class="kidia-preview-product-card__badge' + (!inStock ? " is-out-of-stock" : "") + '">' + status + "</span>" : "") + (settings && settings.show_wishlist !== "" ? '<span class="kidia-preview-product-card__wishlist is-' + escapeHtml(settings.product_wishlist_icon_style || "outline") + '" ' + wishlistStyle + '>' + wishlistIcon + '</span>' : "") + (inStock && (!settings || settings.quick_add_enabled !== "") ? '<span class="kidia-preview-product-card__quick-add is-' + escapeHtml(settings && settings.quick_add_icon_style || "outline") + '" ' + quickStyle + '>' + quickIcon + '</span>' : "") + '</div><div class="kidia-preview-product-card__body">' + (!settings || settings.show_name !== "" ? "<strong>" + name + "</strong>" : "") + (settings && settings.show_rating !== "" && rating > 0 ? '<span class="kidia-preview-product-card__rating">★ ' + rating.toFixed(1) + "</span>" : "") + (!settings || settings.show_price !== "" ? '<div class="kidia-preview-product-card__prices"><b>' + price + (currency ? " " + currency : "") + "</b>" + (discounted && (!settings || settings.show_regular_price !== "") ? "<del>" + regularPrice + (currency ? " " + currency : "") + "</del>" : "") + "</div>" : "") + "</div></article>";
 	}
 
 	function renderBrandCard(item, itemWidth, settings) {
@@ -459,7 +467,7 @@
 		var label = escapeHtml(item && item.label ? item.label : "Link");
 		var subtitle = escapeHtml(item && item.subtitle ? item.subtitle : "");
 		var shape = settings.image_shape === "circle" ? "50%" : (settings.image_shape === "square" ? "0" : "12px");
-		return '<article class="kidia-preview-quick-link"><span style="border-radius:' + shape + '">' + (image ? '<img src="' + image + '" alt="' + label + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (settings.show_labels === "" ? "" : '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + label + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + "</article>";
+		return '<article class="kidia-preview-quick-link"><span style="width:' + numberInRange(settings.item_size, 78, 32, 160) + 'px;height:' + numberInRange(settings.item_size, 78, 32, 160) + 'px;border-radius:' + shape + '">' + (image ? '<img src="' + image + '" alt="' + label + '">' : '<span class="kidia-preview-image-fallback"></span>') + "</span>" + (settings.show_labels === "" ? "" : '<strong style="color:' + safeColor(settings.label_color, "#1F2933") + ';font-size:' + numberInRange(settings.label_size, 13, 10, 22) + 'px">' + label + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + "</article>";
 	}
 
 	function renderBannerTile(item, settings) {
@@ -482,6 +490,27 @@
 		return '<span class="kidia-preview-header__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false">' + drawing + "</svg></span>";
 	}
 
+	function renderAppHeader(settings, name) {
+		var image = safeImage(settings.logo_url);
+		var title = escapeHtml(settings.title || name || "Kidia Store");
+		var subtitle = escapeHtml(settings.subtitle || "");
+		var iconStyle = 'style="width:' + numberInRange(settings.icon_size, 24, 16, 40) + 'px;height:' + numberInRange(settings.icon_size, 24, 16, 40) + 'px;border-radius:' + numberInRange(settings.icon_radius, 12, 0, 30) + 'px;background:' + safeColor(settings.icon_background, "#FFFFFF") + ';color:' + safeColor(settings.icon_color, "#1F2933") + '"';
+		var styledIcon = function (type, color) {
+			return previewIcon(type).replace('aria-hidden="true"', 'aria-hidden="true" ' + iconStyle.replace(safeColor(settings.icon_color, "#1F2933"), color || safeColor(settings.icon_color, "#1F2933")));
+		};
+		var icons = "";
+		if (settings.show_account) {
+			icons += '<span class="kidia-preview-header__account is-' + escapeHtml(settings.account_style || "icon") + '" style="--account-icon-size:' + numberInRange(settings.account_icon_size, 24, 16, 40) + 'px">' + styledIcon("account") + (settings.show_account_label !== "" ? '<small>' + escapeHtml(settings.account_label || "Account") + '</small>' : "") + '</span>';
+		}
+		if (settings.show_wishlist) { icons += styledIcon("wishlist"); }
+		if (settings.show_search && settings.search_style !== "bar") { icons += styledIcon("search", safeColor(settings.search_icon_color, "#5F6368")); }
+		if (settings.show_cart) { icons += styledIcon("cart"); }
+		var shadow = settings.shadow === "strong" ? "0 8px 18px rgba(31,41,51,.2)" : settings.shadow === "none" ? "none" : "0 3px 10px rgba(31,41,51,.12)";
+		var identity = image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : '<strong>' + title + '</strong>' + (subtitle ? '<small>' + subtitle + '</small>' : "");
+		var search = settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="height:' + numberInRange(settings.search_height, 40, 32, 64) + 'px;border:' + numberInRange(settings.search_border_width, 0, 0, 6) + 'px solid ' + safeColor(settings.search_border_color, "#DDE3E8") + ';border-radius:' + numberInRange(settings.search_radius, 14, 0, 32) + 'px;background:' + safeColor(settings.search_background, "#F1F3F4") + ';color:' + safeColor(settings.search_text_color, "#5F6368") + '">' + styledIcon("search", safeColor(settings.search_icon_color, "#5F6368")) + escapeHtml(settings.search_placeholder || "Search products") + (settings.show_voice_search ? " ♪" : "") + '</span>' : "";
+		return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + 'px;padding-inline:' + numberInRange(settings.horizontal_padding, 12, 0, 32) + 'px;border-radius:' + numberInRange(settings.border_radius, 0, 0, 40) + 'px;color:' + safeColor(settings.title_color, "#1F2933") + ';background:' + safeColor(settings.background_color, "#FFFFFF") + ';box-shadow:' + shadow + '"><span class="kidia-preview-header__identity">' + identity + '</span><span class="kidia-preview-header__icons" style="gap:' + numberInRange(settings.icon_gap, 4, 0, 24) + 'px">' + icons + '</span>' + search + '</div>';
+	}
+
 	function renderBlock(block) {
 		var settings = block.settings || {};
 		var runtimeData = runtimePreviewData(block);
@@ -499,14 +528,13 @@
 
 		switch (block.type) {
 		case "app_header":
-			image = safeImage(settings.logo_url);
-			title = escapeHtml(settings.title || name || "Kidia Store");
-			subtitle = escapeHtml(settings.subtitle || "");
-			return '<div class="kidia-preview-header' + (settings.search_style === "bar" ? " has-search-bar" : "") + '" style="min-height:' + numberInRange(settings.height, 64, 48, 120) + "px;padding-inline:" + numberInRange(settings.horizontal_padding, 12, 0, 32) + "px;border-radius:" + numberInRange(settings.border_radius, 0, 0, 40) + "px;color:" + safeColor(settings.title_color, "#1F2933") + ";background:" + safeColor(settings.background_color, "#FFFFFF") + '"><span class="kidia-preview-header__identity">' + (image ? '<img src="' + image + '" alt="" style="height:' + numberInRange(settings.logo_height, 38, 20, 80) + 'px">' : "<strong>" + title + "</strong>" + (subtitle ? "<small>" + subtitle + "</small>" : "")) + '</span><span class="kidia-preview-header__icons" style="gap:' + numberInRange(settings.icon_gap, 4, 0, 24) + "px;color:" + safeColor(settings.icon_color, "#1F2933") + '">' + (settings.show_account ? previewIcon("account") : "") + (settings.show_wishlist ? previewIcon("wishlist") : "") + (settings.show_search && settings.search_style !== "bar" ? previewIcon("search") : "") + (settings.show_cart ? previewIcon("cart") : "") + "</span>" + (settings.show_search && settings.search_style === "bar" ? '<span class="kidia-preview-header__search" style="height:' + numberInRange(settings.search_height, 40, 32, 64) + "px;border:" + numberInRange(settings.search_border_width, 0, 0, 6) + "px solid " + safeColor(settings.search_border_color, "#DDE3E8") + ";border-radius:" + numberInRange(settings.search_radius, 14, 0, 32) + "px;background:" + safeColor(settings.search_background, "#F1F3F4") + ";color:" + safeColor(settings.search_text_color, "#5F6368") + '">' + previewIcon("search") + escapeHtml(settings.search_placeholder || "Search products") + (settings.show_voice_search ? " ♪" : "") + "</span>" : "") + "</div>";
+			return renderAppHeader(settings, name);
 
 		case "hero_slider":
 			items = Array.isArray(settings.items) ? settings.items.filter(function (slide) { return slide && slide.enabled !== ""; }) : [];
-			item = items[0] || {};
+			item = items.length && settings.auto_play !== ""
+				? items[Math.floor(Date.now() / numberInRange(settings.interval_ms, 4500, 1000, 20000)) % items.length]
+				: (items[0] || {});
 			image = safeImage(item.image_url);
 			ratio = numberInRange(settings.aspect_ratio, 1.8, 0.45, 4);
 			return '<div class="kidia-preview-block kidia-preview-hero is-' + escapeHtml(settings.overlay_position || "start") + (settings.indicator_position === "below" ? " has-indicators-below" : "") + '" style="aspect-ratio:' + ratio + ";margin-inline:" + numberInRange(settings.horizontal_padding, 16, 0, 32) + "px;border-radius:" + numberInRange(settings.border_radius, 24, 0, 48) + 'px">' + (image ? '<img src="' + image + '" alt="" style="object-fit:' + (settings.image_fit === "contain" ? "contain" : "cover") + '">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + ((item.title || item.subtitle || item.button_label) ? '<div class="kidia-preview-hero__copy" style="background:rgba(17,24,39,' + numberInRange(settings.overlay_strength, 72, 0, 95) / 100 + ");color:" + safeColor(settings.text_color, "#FFFFFF") + '"><strong>' + escapeHtml(item.title || "") + "</strong><small>" + escapeHtml(item.subtitle || "") + "</small>" + (item.button_label ? "<b>" + escapeHtml(item.button_label) + "</b>" : "") + "</div>" : "") + (items.length > 1 && settings.show_indicators !== "" ? '<div class="kidia-preview-dots is-' + escapeHtml(settings.indicator_style || "pill") + '">' + items.map(function (_, index) { return "<i" + (index === 0 ? ' class="is-active"' : "") + "></i>"; }).join("") + "</div>" : "") + "</div>";
@@ -515,6 +543,11 @@
 			columns = Math.round(numberInRange(settings.columns, 4, 2, 6));
 			count = Math.round(numberInRange(settings.limit, 8, 1, 12));
 			items = limitedItems(runtimeData.items, count, 12);
+			if (settings.hide_empty !== "") {
+				items = items.filter(function (category) {
+					return !category || typeof category.count === "undefined" || Number(category.count) > 0;
+				});
+			}
 			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid is-' + escapeHtml(settings.layout || "patpat") + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
 
 		case "image_banner":
@@ -561,12 +594,22 @@
 			return '<div class="kidia-preview-coupon' + (image ? " has-image" : "") + '" style="background:' + safeColor(settings.background_color, "#DCEEE8") + ";color:" + safeColor(settings.text_color, "#1F2933") + ";border-radius:" + numberInRange(settings.border_radius, 20, 0, 48) + 'px">' + (image ? '<img src="' + image + '" alt="">' : "") + '<div class="kidia-preview-coupon__overlay"><strong>' + escapeHtml(settings.title || name) + "</strong><small>" + escapeHtml(settings.description || "") + "</small>" + (settings.coupon_code ? '<code style="color:' + safeColor(settings.accent_color, "#2F806E") + '">▣ ' + escapeHtml(settings.coupon_code) + "</code>" : "") + "</div></div>";
 
 		case "countdown":
-			return '<div class="kidia-preview-countdown" style="background:' + safeColor(settings.background_color, "#FFFFFF") + ";color:" + safeColor(settings.text_color, "#1F2933") + '"><strong>' + escapeHtml(settings.title || name) + '</strong><div style="--kidia-countdown-box:' + safeColor(settings.box_color, "#E9EEEC") + '"><span>02<small>يوم</small></span><span>14<small>ساعة</small></span><span>37<small>دقيقة</small></span><span>42<small>ثانية</small></span></div></div>';
+			var remainingSeconds = Math.max(0, Math.floor((Date.parse(settings.ends_at || "") - Date.now()) / 1000));
+			if (!isFinite(remainingSeconds)) { remainingSeconds = 0; }
+			if (remainingSeconds === 0 && settings.ends_at) {
+				return '<div class="kidia-preview-countdown is-expired"><strong>' + escapeHtml(settings.expired_text || "Offer ended") + '</strong></div>';
+			}
+			var countdownDays = Math.floor(remainingSeconds / 86400);
+			var countdownHours = Math.floor((remainingSeconds % 86400) / 3600);
+			var countdownMinutes = Math.floor((remainingSeconds % 3600) / 60);
+			var countdownSeconds = remainingSeconds % 60;
+			return '<div class="kidia-preview-countdown" style="background:' + safeColor(settings.background_color, "#FFFFFF") + ";color:" + safeColor(settings.text_color, "#1F2933") + '"><strong>' + escapeHtml(settings.title || name) + '</strong><div style="--kidia-countdown-box:' + safeColor(settings.box_color, "#E9EEEC") + '"><span>' + countdownDays + '<small>يوم</small></span><span>' + countdownHours + '<small>ساعة</small></span><span>' + countdownMinutes + '<small>دقيقة</small></span><span>' + countdownSeconds + '<small>ثانية</small></span></div></div>';
 
 		case "video_banner":
 			image = safeImage(settings.poster_url);
 			ratio = numberInRange(settings.aspect_ratio, 1.8, 0.45, 4);
-			return '<div class="kidia-preview-block kidia-preview-video" style="aspect-ratio:' + ratio + '">' + (image ? '<img src="' + image + '" alt="">' : '<div class="kidia-preview-placeholder">' + name + "</div>") + '<span class="kidia-preview-video__play">▶</span></div>';
+			var videoUrl = safeImage(settings.video_url);
+			return '<div class="kidia-preview-block kidia-preview-video" style="aspect-ratio:' + ratio + '">' + (videoUrl ? '<video src="' + videoUrl + '" poster="' + image + '" ' + (settings.auto_play !== "" ? "autoplay " : "") + (settings.muted !== "" ? "muted " : "") + (settings.loop !== "" ? "loop " : "") + 'playsinline></video>' : (image ? '<img src="' + image + '" alt="">' : '<div class="kidia-preview-placeholder">' + name + "</div>")) + (settings.auto_play !== "" ? "" : '<span class="kidia-preview-video__play">▶</span>') + '</div>';
 
 		case "text_block":
 			background = safeColor(settings.background, "#ffffff");
@@ -693,6 +736,31 @@
 				window.console.warn("Kidia Home preview kept its local fallback because runtime data could not be loaded.", error);
 			}
 		});
+	}
+
+	var livePreviewTimer = 0;
+	function requestLiveRuntimePreview() {
+		if (!config.livePreviewEndpoint || !config.restNonce || typeof window.fetch !== "function") { return; }
+		window.clearTimeout(livePreviewTimer);
+		livePreviewTimer = window.setTimeout(function () {
+			window.fetch(String(config.livePreviewEndpoint), {
+				method: "POST",
+				credentials: "same-origin",
+				cache: "no-store",
+				headers: { "Content-Type": "application/json", "X-WP-Nonce": String(config.restNonce) },
+				body: JSON.stringify({ blocks: serializeBlocks() })
+			}).then(function (response) {
+				if (!response.ok) { throw new Error("Live Home preview failed with HTTP " + response.status + "."); }
+				return response.json();
+			}).then(function (payload) {
+				if (payload && Array.isArray(payload.blocks)) {
+					registerPreviewBlocks(payload.blocks);
+					renderPreview();
+				}
+			}).catch(function (error) {
+				if (window.console && window.console.warn) { window.console.warn(error); }
+			});
+		}, 300);
 	}
 
 	function setCollapsed(block, collapsed) {
@@ -1233,6 +1301,7 @@
 
 		markDirty();
 		renderPreview();
+		requestLiveRuntimePreview();
 	});
 
 	builder.addEventListener("input", function (event) {
@@ -1262,6 +1331,7 @@
 
 		markDirty();
 		renderPreview();
+		requestLiveRuntimePreview();
 	});
 
 	form.addEventListener("input", function (event) {
