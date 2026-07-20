@@ -59,7 +59,7 @@ class ProductQuickAddButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
 	final double resolvedSize = (appearance?.backgroundSize ?? backgroundSize)
-		.clamp(28, 64)
+		.clamp(20, 64)
 		.toDouble();
     return SizedBox.square(
 	  key: Key('quick-add-shell-$productId'),
@@ -90,7 +90,7 @@ class ProductQuickAddButton extends StatelessWidget {
           ),
         ),
         iconSize: (appearance?.iconSize ?? iconSize)
-            .clamp(16, 36)
+            .clamp(10, 36)
             .toDouble(),
         color:
             appearance?.iconColor ??
@@ -105,7 +105,7 @@ class ProductQuickAddButton extends StatelessWidget {
   }
 
 	Widget _buildIcon() {
-	  final double size = (appearance?.iconSize ?? iconSize).clamp(16, 36).toDouble();
+	  final double size = (appearance?.iconSize ?? iconSize).clamp(10, 36).toDouble();
 	  final String variant = appearance?.iconVariant ?? iconVariant;
 	  if (variant != 'bag') {
 		return Icon(_icon);
