@@ -12,7 +12,7 @@
 		function number(key, fallback) { var parsed = parseFloat(value(key, fallback)); return isFinite(parsed) ? parsed : fallback; }
 		function card(product, checkout) {
 			var image = product.image_url ? '<img src="' + escapeHtml(product.image_url) + '" alt="">' : '<span class="dashicons dashicons-products"></span>';
-			return '<article class="kidia-app-product kidia-commerce-card"><div class="kidia-app-product__image">' + image + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(product.name || "Kidia product") + '</strong>' + (checked("show_rating", false) ? '<span class="kidia-app-rating">★★★★★</span>' : '') + (checked("show_price", true) ? '<b>' + escapeHtml(product.price || "EGP 0") + '</b>' : '') + (checkout ? '<button type="button" tabindex="-1">' + escapeHtml(value("button_label", "Add")) + '</button>' : '') + '</div></article>';
+			return '<article class="kidia-app-product kidia-commerce-card is-' + escapeHtml(value("card_style", "outlined")) + '"><div class="kidia-app-product__image">' + image + '</div><div class="kidia-app-product__copy"><strong>' + escapeHtml(product.name || "Kidia product") + '</strong>' + (checked("show_rating", false) ? '<span class="kidia-app-rating">★★★★★</span>' : '') + (checked("show_price", true) ? '<b>' + escapeHtml(product.price || "EGP 0") + '</b>' : '') + (checkout ? '<button type="button" tabindex="-1">' + escapeHtml(value("button_label", "Add")) + '</button>' : '') + '</div></article>';
 		}
 		function draw() {
 			var enabled = checked("enabled", true), checkout = preview.getAttribute("data-preview-kind") === "checkout";

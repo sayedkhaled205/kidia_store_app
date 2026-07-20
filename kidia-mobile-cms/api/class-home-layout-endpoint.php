@@ -121,6 +121,48 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 				),
 			)
 		);
+
+		register_rest_route(
+			'woo-mobile/v1',
+			'/home-layout/preview',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'preview_home_layout' ),
+				'permission_callback' => static function (): bool {
+					return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );
+				},
+			)
+		);
+	}
+
+	/** Builds the real runtime payload from unsaved Builder values without persisting them. */
+	public function preview_home_layout( WP_REST_Request $request ): WP_REST_Response {
+		$submitted = $request->get_param( 'blocks' );
+		$submitted = is_array( $submitted ) ? $submitted : array();
+		$blocks    = array();
+
+		foreach ( array_values( $submitted ) as $order => $instance ) {
+			if ( ! is_array( $instance ) || empty( $instance['enabled'] ) ) {
+				continue;
+			}
+			$normalized = Kidia_Mobile_Block_Registry::normalize( $instance, $order + 1 );
+			if ( null === $normalized ) {
+				continue;
+			}
+			$normalized['status'] = 'published';
+			try {
+				$api_block = Kidia_Mobile_Block_Registry::build_api_block( $normalized );
+			} catch ( Throwable $error ) {
+				$api_block = null;
+			}
+			if ( is_array( $api_block ) ) {
+				$blocks[] = $api_block;
+			}
+		}
+
+		$response = new WP_REST_Response( array( 'blocks' => array_values( $blocks ) ), 200 );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		return $response;
 	}
 
 	/**

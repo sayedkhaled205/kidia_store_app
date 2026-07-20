@@ -100,7 +100,8 @@
 .kidia-preview-section-heading--standalone { margin: 8px 0 2px; padding: 10px 12px; background: #fff; }
 .kidia-preview-hero { position: relative; min-height: 106px; }
 .kidia-preview-hero > img,
-.kidia-preview-video > img { width: 100%; height: 100%; object-fit: cover; }
+.kidia-preview-video > img,
+.kidia-preview-video > video { width: 100%; height: 100%; object-fit: cover; }
 .kidia-preview-hero__copy { position: absolute; right: 9px; bottom: 12px; left: 9px; display: flex; flex-direction: column; padding: 7px 8px; border-radius: 7px; background: rgba(17,24,39,.7); color: #fff; }
 .kidia-preview-hero__copy strong { font-size: 12px; }
 .kidia-preview-hero__copy small { font-size: 9px; }
@@ -145,6 +146,11 @@
 .kidia-preview-product-card__badge { position: absolute; top: 7px; right: 7px; max-width: calc(100% - 14px); padding: 3px 6px; overflow: hidden; border-radius: 99px; background: #e8f5ef; color: #236b59; font-size: 7px; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .kidia-preview-product-card__badge.is-out-of-stock { background: #fce8e8; color: #a62d2d; }
 .kidia-preview-product-card__quick-add{position:absolute;right:7px;bottom:7px;display:grid;width:24px;height:24px;place-items:center;border-radius:50%;background:#fff;color:#1f2933;box-shadow:0 2px 7px rgba(31,41,51,.16);font-size:15px;font-weight:800}
+.kidia-preview-product-card__wishlist{position:absolute;top:7px;left:7px;display:grid;place-items:center;z-index:2;box-shadow:0 2px 7px rgba(31,41,51,.16);font-weight:800}
+.kidia-preview-product-card__wishlist.is-filled{color:#e53935}
+.kidia-preview-header__account { display:inline-flex; align-items:center; gap:3px; }
+.kidia-preview-header__account .kidia-preview-header__icon { width:var(--account-icon-size); height:var(--account-icon-size); }
+.kidia-preview-header__account small { font-size:7px; }
 .kidia-preview-product-card__body { display: flex; min-height: 76px; flex: 1; flex-direction: column; align-items: flex-start; gap: 7px; padding: 8px; }
 .kidia-preview-product-card__body > strong { display: -webkit-box; width: 100%; overflow: hidden; color: #1f2933; font-size: 10px; font-weight: 800; line-height: 1.35; text-align: right; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .kidia-preview-product-card__prices { display: flex; width: 100%; align-items: baseline; flex-wrap: wrap; gap: 3px 5px; margin-top: auto; }

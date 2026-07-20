@@ -38,7 +38,7 @@
 
 	function productCards(card, forcedLimit) {
 		var columns = Math.max(1, Math.min(4, Math.round(number(card, "columns", 2))));
-		var limit = Math.max(columns, Math.min(forcedLimit || number(card, "limit", 4), 6));
+		var limit = Math.max(columns, Math.min(forcedLimit || number(card, "products_per_page", number(card, "limit", 4)), 6));
 		var items = sampleProducts().slice(0, limit);
 		var style = value(card, "card_style", "outlined");
 		var gap = number(card, "gap", 12);
@@ -78,13 +78,16 @@
 		if (id === "filter_bar") {
 			var buttons = [];
 			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
+			if (checked(card, "filter_price", true)) { buttons.push(icon("price") + '<b>السعر</b>'); }
+			if (checked(card, "filter_sale", true)) { buttons.push(icon("sale") + '<b>العروض</b>'); }
+			if (checked(card, "filter_brand", true)) { buttons.push(icon("brand") + '<b>العلامة</b>'); }
 			if (checked(card, "filter_size", true)) { buttons.push(icon("size") + '<b>المقاس</b>'); }
 			if (checked(card, "show_sort", true)) { buttons.push(icon("sort") + '<b>ترتيب</b>'); }
-			return '<div class="kidia-app-filter" style="width:' + number(card, "block_width", 100) + '%;height:' + number(card, "block_height", 56) + 'px;gap:' + number(card, "button_gap", 8) + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';--icon-size:' + number(card, "icon_size", 22) + 'px;--icon-color:' + color(card, "icon_color", "#1F2933") + ';--icon-offset-y:' + number(card, "filter_icon_offset_y", -2) + 'px">' + buttons.map(function (button) { return '<button style="border-color:' + color(card, "border_color", "#DDE3E8") + ';border-radius:' + number(card, "button_radius", 12) + 'px">' + button + '</button>'; }).join("") + (checked(card, "show_result_count", false) ? '<small>24 منتج</small>' : "") + '</div>';
+			return '<div class="kidia-app-filter' + (checked(card, "sticky", false) ? " is-sticky" : "") + '" style="width:' + number(card, "block_width", 100) + '%;height:' + number(card, "block_height", 56) + 'px;gap:' + number(card, "button_gap", 8) + 'px;background:' + color(card, "background_color", "#FFFFFF") + ';--icon-size:' + number(card, "icon_size", 22) + 'px;--icon-color:' + color(card, "icon_color", "#1F2933") + ';--icon-offset-y:' + number(card, "filter_icon_offset_y", -2) + 'px">' + buttons.map(function (button) { return '<button style="border-color:' + color(card, "border_color", "#DDE3E8") + ';border-radius:' + number(card, "button_radius", 12) + 'px">' + button + '</button>'; }).join("") + (checked(card, "show_result_count", false) ? '<small>24 منتج</small>' : "") + '</div>';
 		}
 		if (id === "image_gallery") {
 			var image = first.image_url ? '<img src="' + escapeHtml(first.image_url) + '" alt="">' : '<span class="kidia-app-gallery__fallback">KIDIA</span>';
-			return '<section class="kidia-app-gallery" style="aspect-ratio:' + number(card, "aspect_ratio", 1) + '">' + image + (checked(card, "show_indicators", true) ? '<span class="kidia-app-gallery__count">1 / 4</span>' : "") + (checked(card, "enable_zoom", true) ? icon("zoom") : "") + '</section>';
+			return '<section class="kidia-app-gallery" style="aspect-ratio:' + number(card, "aspect_ratio", 1) + ';--gallery-fit:' + escapeHtml(value(card, "fit", "cover")) + '">' + image + (checked(card, "show_indicators", true) ? '<span class="kidia-app-gallery__count">1 / 4</span>' : "") + (checked(card, "show_thumbnails", false) ? '<span class="kidia-app-gallery__thumbnails">● ● ●</span>' : "") + (checked(card, "enable_zoom", true) ? icon("zoom") : "") + '</section>';
 		}
 		if (id === "product_summary") {
 			return '<section class="kidia-app-summary">' + (checked(card, "show_badge", true) ? '<span class="kidia-app-sale">خصم</span>' : "") + (checked(card, "show_name", true) ? '<h2>' + escapeHtml(first.name || "طقم أطفال كيديا") + '</h2>' : "") + (checked(card, "show_sku", true) ? '<small>SKU: KIDIA-001</small>' : "") + (checked(card, "show_rating", true) ? '<div class="kidia-app-stars">★★★★★ <u>11</u></div>' : "") + (checked(card, "show_price", true) ? '<div class="kidia-app-price"><b>' + money(first) + '</b>' + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div>' : "") + (checked(card, "show_stock", true) ? '<small class="kidia-app-stock">متوفر</small>' : "") + '</section>';
@@ -100,7 +103,7 @@
 		}
 		if (id === "reviews") { return '<section class="kidia-app-reviews"><h3>تقييمات العملاء</h3><b>4.8</b><span>★★★★★</span><small>بناءً على 11 تقييم</small></section>'; }
 		if (id === "empty_state") { return '<section class="kidia-app-empty">' + icon("heart") + '<h3>' + escapeHtml(value(card, "title", "المفضلة فارغة")) + '</h3><p>' + escapeHtml(value(card, "description", "احفظي المنتجات التي تحبينها هنا")) + '</p>' + (checked(card, "show_button", true) ? '<button>' + escapeHtml(value(card, "button_label", "تسوقي الآن")) + '</button>' : "") + '</section>'; }
-		if (id === "account_summary") { return '<section class="kidia-app-account-summary is-' + value(card, "card_style", "elevated") + '"><span class="kidia-app-avatar" style="width:' + number(card, "avatar_size", 66) + 'px;height:' + number(card, "avatar_size", 66) + 'px">B</span><div><strong>بسمة زيدان</strong>' + (checked(card, "show_email", true) ? '<small>customer@example.com</small>' : "") + '</div></section>'; }
+		if (id === "account_summary") { return '<section class="kidia-app-account-summary is-' + value(card, "card_style", "elevated") + '"><span class="kidia-app-avatar" style="width:' + number(card, "avatar_size", 66) + 'px;height:' + number(card, "avatar_size", 66) + 'px">B</span><div><strong>' + escapeHtml(value(card, "guest_title", "بسمة زيدان")) + '</strong>' + (checked(card, "show_email", true) ? '<small>customer@example.com</small>' : "") + (checked(card, "show_addresses", true) ? '<small>العناوين</small>' : "") + (checked(card, "show_profile", true) ? '<small>الملف الشخصي</small>' : "") + '</div></section>'; }
 		if (id === "account_menu") {
 			var menu = [["orders","طلباتي"],["addresses","العناوين المحفوظة"],["profile","بيانات حسابي"],["support","خدمة العملاء"]].filter(function (item) { return checked(card, "show_" + item[0], true); });
 			return '<section class="kidia-app-account-menu is-' + value(card, "style", "list") + '" style="--menu-color:' + color(card, "icon_color", "#1F6F61") + '">' + menu.map(function (item) { return '<div>' + icon(item[0]) + '<b>' + item[1] + '</b>' + icon("chevron") + '</div>'; }).join("") + '</section>';
