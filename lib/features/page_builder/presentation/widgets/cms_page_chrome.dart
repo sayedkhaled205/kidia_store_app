@@ -501,6 +501,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required double opacity,
     required double translateY,
   }) {
+    if (opacity <= .001) {
+      return const SizedBox.shrink();
+    }
     return IgnorePointer(
       ignoring: opacity < .5,
       child: Opacity(
