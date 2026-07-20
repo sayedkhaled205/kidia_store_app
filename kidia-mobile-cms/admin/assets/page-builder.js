@@ -11,7 +11,7 @@
 	var activePreviewElement = "";
 	var config = window.kidiaPageBuilder || {};
 	var products = Array.isArray(config.products) ? config.products : [];
-	var previewScrolled = false;
+	var previewCollapseProgress = 0;
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
@@ -50,7 +50,7 @@
 
 	function renderHeader(card) {
 		var titles = { catalog: "المنتجات", product: "", wishlist: "المفضلة", account: "حسابي" };
-		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderHeader(card, titles[root.dataset.page] || "المنتجات", { collapsed: previewScrolled, page: root.dataset.page }); }
+		if (window.KidiaChromePreview) { return window.KidiaChromePreview.renderHeader(card, titles[root.dataset.page] || "المنتجات", { collapseProgress: previewCollapseProgress, page: root.dataset.page }); }
 		if (!card || !checked(card, "enabled", true)) { return ""; }
 		var showBar = value(card, "search_style", "icon") === "bar" && checked(card, "show_search", true);
 		var title = escapeHtml(value(card, "title", root.dataset.page === "account" ? "حسابي" : root.dataset.page === "product" ? "" : "المنتجات"));
@@ -186,7 +186,7 @@
 	list.addEventListener("dragend", function () { if (dragged) { dragged.classList.remove("is-dragging"); dragged.draggable = false; } dragged = null; updateIndexes(); markDirty(); schedulePreview(); });
 	form.addEventListener("submit", function () { updateIndexes(); var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
 	window.addEventListener("pageshow", function () { var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
-	if (phoneScreen) { phoneScreen.addEventListener("scroll", function () { var next=phoneScreen.scrollTop>1;if(next!==previewScrolled){previewScrolled=next;renderPreview();} }, {passive:true}); }
+	if (phoneScreen) { phoneScreen.addEventListener("scroll", function () { previewCollapseProgress=Math.max(0,Math.min(1,phoneScreen.scrollTop/64));if(window.KidiaChromePreview){window.KidiaChromePreview.updateHeaderProgress(preview.querySelector(".kidia-app-header"),previewCollapseProgress);} }, {passive:true}); }
 	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();markDirty();schedulePreview();}}); }
 	updateIndexes(); renderPreview();
 }(window.jQuery));
