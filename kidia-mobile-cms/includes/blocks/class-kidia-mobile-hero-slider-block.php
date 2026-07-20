@@ -413,6 +413,10 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				<div class="kidia-repeatable-item-actions">
 					<button type="button" class="button kidia-repeatable-remove kidia-remove-hero-block-item"><?php echo esc_html__( 'Remove', 'kidia-mobile-cms' ); ?></button>
 					<button type="button" class="button kidia-repeatable-add kidia-add-hero-block-item"><?php echo esc_html__( '+ Add Slide', 'kidia-mobile-cms' ); ?></button>
+					<label class="kidia-repeatable-item-toggle">
+						<?php echo esc_html__( 'Show', 'kidia-mobile-cms' ); ?>
+						<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="1" <?php checked( true, (bool) $item['enabled'] ); ?>>
+					</label>
 				</div>
 			</div>
 
@@ -422,20 +426,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				value="<?php echo esc_attr( (string) $item['id'] ); ?>"
 			>
 
-			<p class="kidia-builder-field kidia-builder-field--toggle">
-				<label>
-					<input
-						type="checkbox"
-						name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]"
-						value="1"
-						<?php checked( true, (bool) $item['enabled'] ); ?>
-					>
-
-					<?php echo esc_html__( 'Show', 'kidia-mobile-cms' ); ?>
-				</label>
-			</p>
-
-			<p class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media">
+			<p class="kidia-builder-field kidia-repeatable-field--image-url">
 				<label>
 					<?php echo esc_html__( 'Image URL', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -446,7 +437,9 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 					name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]"
 					value="<?php echo esc_attr( $image_url ); ?>"
 				>
+			</p>
 
+			<p class="kidia-builder-field kidia-builder-field--media kidia-repeatable-field--media">
 				<button
 					type="button"
 					class="button kidia-select-hero-block-image"
@@ -462,7 +455,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p class="kidia-builder-field">
+			<p class="kidia-builder-field kidia-repeatable-field--title">
 				<label>
 					<?php echo esc_html__( 'Title', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -474,7 +467,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p class="kidia-builder-field">
+			<p class="kidia-builder-field kidia-repeatable-field--subtitle">
 				<label>
 					<?php echo esc_html__( 'Subtitle', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -486,12 +479,12 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				>
 			</p>
 
-			<p class="kidia-builder-field">
+			<p class="kidia-builder-field kidia-repeatable-field--button-label">
 				<label><?php echo esc_html__( 'Button Label', 'kidia-mobile-cms' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_label]" value="<?php echo esc_attr( (string) $item['button_label'] ); ?>">
 			</p>
 
-			<p class="kidia-builder-field">
+			<p class="kidia-builder-field kidia-repeatable-field--action-type">
 				<label>
 					<?php echo esc_html__( 'Action Type', 'kidia-mobile-cms' ); ?>
 				</label>
@@ -533,7 +526,7 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				</select>
 			</p>
 
-			<p class="kidia-builder-field">
+			<p class="kidia-builder-field kidia-repeatable-field--action-value">
 				<label>
 					<?php echo esc_html__( 'Action Value', 'kidia-mobile-cms' ); ?>
 				</label>
