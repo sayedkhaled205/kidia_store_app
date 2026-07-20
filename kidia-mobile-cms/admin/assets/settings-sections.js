@@ -24,6 +24,7 @@
 	function sectionFor(node) {
 		if (node.classList.contains("kidia-section-layout-field")) { return "section_layout"; }
 		if (node.classList.contains("kidia-slider-image-setting")) { return "image"; }
+		if (node.classList.contains("kidia-category-grid-image-setting")) { return "image"; }
 		var value = ((node.querySelector("label") || {}).textContent || "") + " " +
 			Array.prototype.map.call(node.querySelectorAll("input,select,textarea"), function (input) { return input.name || ""; }).join(" ");
 		value = value.toLowerCase();

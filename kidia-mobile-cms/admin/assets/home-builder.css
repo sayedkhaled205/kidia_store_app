@@ -839,6 +839,10 @@
 .kidia-slider-editor-item > .kidia-repeatable-field--action-type { grid-row: 4; }
 .kidia-slider-editor-item.kidia-hero-block-item > .kidia-repeatable-field--media { grid-row: 2 / 5; }
 
+.kidia-category-grid-image-setting--hide-empty { grid-column-start: 1; }
+.kidia-category-grid-image-setting--show-names { grid-column-start: 2; }
+.kidia-category-grid-image-setting .kidia-page-master-toggle { min-width: 78px; margin: 0; }
+
 .kidia-repeatable-field--image-url { grid-column: 1; grid-row: 1; }
 .kidia-repeatable-field--subtitle { grid-column: 1; grid-row: 2; }
 .kidia-repeatable-field--action-value { grid-column: 1; grid-row: 3; }
@@ -1273,6 +1277,11 @@ body.kidia-modal-open {
 	.kidia-banner-editor-item .kidia-builder-field {
 		grid-column: 1;
 		grid-row: auto;
+	}
+
+	.kidia-category-grid-image-setting--hide-empty,
+	.kidia-category-grid-image-setting--show-names {
+		grid-column: 1;
 	}
 
 	.kidia-repeatable-item-actions {
