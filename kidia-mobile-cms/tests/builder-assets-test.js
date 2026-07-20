@@ -708,6 +708,7 @@ function runChromeComposerTest() {
   window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   card.insertAdjacentHTML("beforeend", '<input name="layout[header][settings][margin_top]" value="7"><input name="layout[header][settings][margin_bottom]" value="9">');
+	card.insertAdjacentHTML("beforeend", '<input name="layout[header][settings][space_up]" value="4"><input name="layout[header][settings][space_down]" value="6">');
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
 	assert.match(preview, /kidia-app-icon-badge[^>]+min-width:22px[^>]+border-radius:11px[^>]+background:#C84F6A[^>]+color:#FFF4E8/, "Cart count shape, size and colors must render immediately in preview.");
@@ -722,10 +723,16 @@ function runChromeComposerTest() {
 	assert.match(preview, /--row-gap:4px/, "The real gap between header rows must be reflected without browser-only scaling.");
 	assert.match(preview, /padding:0px 16px!important/, "Zero vertical padding must be reflected immediately instead of falling back to the default.");
 	assert.match(preview, /margin:7px 0px 9px/, "Header space above and below must update the preview.");
+	assert.match(preview, /padding-top:4px!important;padding-bottom:6px!important/, "Header Section Layout spacing must update the preview.");
 	const searchWidth = card.querySelector('[name$="[search_width_percent]"]');
 	searchWidth.value = "150";
 	assert.match(window.KidiaChromePreview.renderHeader(card, "Home"), /width:100%/, "Search width must clamp to the full available row instead of silently overflowing.");
   assert.equal(window.document.querySelectorAll(".kidia-chrome-row").length, 2, "Home header must support two draggable rows.");
+	const addRow = window.document.querySelector(".kidia-chrome-row:last-child .kidia-chrome-row-toolbar .kidia-chrome-add-row");
+	assert.ok(addRow, "Add row must render inside the final row toolbar instead of below the row.");
+	addRow.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+	assert.equal(window.document.querySelectorAll(".kidia-chrome-row").length, 3, "Add row must add a third row when clicked.");
+	assert.equal(window.document.querySelectorAll(".kidia-chrome-layout > .kidia-chrome-add-row").length, 0, "Add row must never recreate the old space below the rows.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));
@@ -815,6 +822,7 @@ function runFooterPreviewControlsTest() {
   window.eval(readAsset("chrome-layout.js"));
 	const footerCard = window.document.querySelector("section");
 	footerCard.insertAdjacentHTML("beforeend", '<input name="layout[footer][settings][margin_top]" value="6"><input name="layout[footer][settings][margin_bottom]" value="8">');
+	footerCard.insertAdjacentHTML("beforeend", '<input name="layout[footer][settings][space_up]" value="5"><input name="layout[footer][settings][space_down]" value="7">');
   const preview = window.KidiaChromePreview.renderFooter(footerCard);
   assert.match(preview, /padding:0 5%/, "Footer outside spacing must use the saved percentage on both sides.");
   assert.match(preview, /kidia-app-icon--home-filled/, "Footer icon design must match the selected visual option.");
@@ -828,6 +836,7 @@ function runFooterPreviewControlsTest() {
 	assert.match(preview, /--item-icon-size:26px/, "Every footer icon must use the same shared size.");
 	assert.match(preview, /--label-gap:4px/, "The Category footer must preview its own icon and label spacing.");
 	assert.match(preview, /margin:6px 0 8px/, "Footer space above and below must update the preview.");
+	assert.match(preview, /padding-top:5px!important;padding-bottom:7px!important/, "Footer Section Layout spacing must update the preview.");
 	footerCard.dataset.page = "home";
 	const homePreview = window.KidiaChromePreview.renderFooter(footerCard, { page: "home" });
 	assert.match(homePreview, /--label-gap:4px/, "Every page footer must preview its own icon and label spacing instead of the Category value.");
