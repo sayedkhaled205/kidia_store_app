@@ -81,6 +81,7 @@ void main() {
 	expect(product.element('product_tabs').boolean('sticky', false), isTrue);
 	expect(product.element('image_gallery').boolean('show_counter', false), isTrue);
 	expect(product.element('image_gallery').boolean('show_thumbnails', true), isFalse);
+	expect(product.element('image_gallery').string('background_color', ''), '#FFFFFF');
 	expect(product.footer.string('button_color', ''), '#1D1D1D');
 	expect(product.footer.string('add_to_cart_label', ''), 'Add to bag');
 	final dynamic productFooterRows = product.footer.json('layout_json')['rows'];
