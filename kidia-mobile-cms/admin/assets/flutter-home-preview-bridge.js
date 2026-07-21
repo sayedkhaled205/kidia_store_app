@@ -5,6 +5,8 @@
 	var form = document.getElementById("kidia-home-builder-form");
 	if (!root || !frame || !form) { return; }
 	var latestBlocks = [];
+	var frameOrigin = window.location.origin;
+	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
 
 	function parts(name) { return String(name || "").replace(/\]/g, "").split("[").filter(Boolean); }
 	function assign(target, path, value) {
@@ -18,7 +20,9 @@
 	}
 	function chrome() {
 		var data = {};
-		Array.prototype.forEach.call(form.querySelectorAll('[name^="layout[header]"],[name^="layout[footer]"]'), function (input) {
+		Array.prototype.forEach.call(form.querySelectorAll("[name]"), function (input) {
+			var name = String(input.name || "");
+			if (name.indexOf("layout[header]") !== 0 && name.indexOf("layout[footer]") !== 0) { return; }
 			if (input.type === "hidden" && input.nextElementSibling && input.nextElementSibling.name === input.name && input.nextElementSibling.type === "checkbox") { return; }
 			if ((input.type === "checkbox" || input.type === "radio") && !input.checked) { return; }
 			var value = input.type === "checkbox" ? input.checked : input.type === "number" ? Number(input.value) : input.value;
@@ -42,7 +46,7 @@
 				updated_at: new Date().toISOString(),
 				blocks: latestBlocks
 			}
-		}), window.location.origin);
+		}), frameOrigin);
 	}
 	document.addEventListener("kidia:home-preview-state", function (event) {
 		latestBlocks = event.detail && Array.isArray(event.detail.blocks) ? event.detail.blocks : [];
@@ -50,9 +54,14 @@
 	});
 	frame.addEventListener("load", send);
 	window.addEventListener("message", function (event) {
-		if (event.origin !== window.location.origin) { return; }
+		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
 		if (message && message.type === "kidia-flutter-preview-ready") { send(); }
+	});
+	// Do not rely on a load event that a cached iframe may already have fired.
+	send();
+	[250, 750, 1500, 3000, 6000].forEach(function (delay) {
+		window.setTimeout(send, delay);
 	});
 }());
