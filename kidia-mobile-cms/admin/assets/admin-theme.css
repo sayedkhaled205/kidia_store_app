@@ -224,6 +224,12 @@
 	}
 }
 
+/* Catalog reuses the Home Product Grid panels; each remains a full section. */
+.kidia-page-builder [data-element="product_grid"] .kidia-page-fields > .kidia-product-icon-panel {
+	width: 100% !important;
+	grid-column: 1 / -1 !important;
+}
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
 	:is(.kidia-page-field, .kidia-builder-field, .kidia-category-settings label, .kidia-category-general-fields > label)
 	> :is(input[type="text"], input[type="url"], input[type="number"], input[type="datetime-local"], select),

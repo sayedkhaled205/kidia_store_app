@@ -56,6 +56,7 @@ kidia_collapsed_header_assert( false !== $collapsed_position && $collapsed_posit
 kidia_collapsed_header_assert( false !== $settings_position && $settings_position > $collapsed_position, 'Collapsed appearance settings must follow the collapsed composer.' );
 kidia_collapsed_header_assert( 2 === substr_count( $markup, $toggle_name ), 'The collapsed On/Off control must submit both its unchecked and checked values.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-toggle-state' ), 'The collapsed control must display the shared On/Off state.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-collapsed-header-settings' ), 'Collapsed appearance settings must remain a separate hideable section below the persistent composer.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'Preview collapsed header' ), 'The old preview-only control must not be rendered.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'scroll_up_header' ), 'The obsolete scroll-up selector must not be rendered.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_transition]"' ), 'Collapsed transition options must render below the collapsed composer.' );
