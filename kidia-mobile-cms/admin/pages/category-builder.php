@@ -102,8 +102,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				<section class="kidia-page-card kidia-category-element is-open" data-element="category">
 					<div class="kidia-page-card__header">
 						<div class="kidia-page-card__identity"><span class="dashicons dashicons-category"></span><strong><?php esc_html_e( 'Category', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'All category and subcategory content', 'kidia-mobile-cms' ); ?></small></div>
-						<label class="kidia-page-master-toggle"><input type="hidden" name="category_element_enabled" value="0"><input class="kidia-category-element-enabled" type="checkbox" name="category_element_enabled" value="1" <?php checked( $category_enabled ); ?>><span class="kidia-toggle-state"></span></label>
-						<button type="button" class="button kidia-page-expand kidia-category-element-expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
+						<div class="kidia-card-actions"><span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span><span class="kidia-card-action-placeholder kidia-card-action--secondary" aria-hidden="true"></span><button type="button" class="button kidia-page-expand kidia-category-element-expand kidia-card-action kidia-card-action--expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button><label class="kidia-page-master-toggle kidia-card-action kidia-card-action--toggle"><input type="hidden" name="category_element_enabled" value="0"><input class="kidia-category-element-enabled" type="checkbox" name="category_element_enabled" value="1" <?php checked( $category_enabled ); ?>><span class="kidia-toggle-state"></span></label></div>
 					</div>
 					<div class="kidia-page-card__body">
 						<section class="kidia-category-general">

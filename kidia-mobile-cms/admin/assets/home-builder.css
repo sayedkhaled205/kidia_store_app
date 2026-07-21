@@ -883,6 +883,12 @@
 	margin-inline-start: auto;
 }
 
+/* Top-level closed cards use the shared physical action slots on every Home block. */
+.kidia-builder-block .kidia-builder-block__actions.kidia-card-actions {
+	display: grid !important;
+	direction: ltr !important;
+}
+
 .kidia-builder-block:is([data-type="product_carousel"], [data-type="product_grid"]) .kidia-builder-settings-content {
 	grid-template-columns: repeat(3, minmax(var(--kidia-field-width), 1fr));
 	direction: rtl;

@@ -69,9 +69,9 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 		</div>
 
-		<div class="kidia-builder-block__actions">
+		<div class="kidia-builder-block__actions kidia-card-actions">
 
-			<label class="kidia-builder-switch kidia-builder-switch--card" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
+			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
 				<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( true, ! empty( $block_data['enabled'] ) ); ?>>
 				<span class="kidia-builder-switch__track"></span>
 				<span class="kidia-builder-switch__state"></span>
@@ -79,14 +79,14 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 			<button
 				type="button"
-				class="button kidia-toggle-block-settings"
+				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
 			>
 				<span class="dashicons dashicons-arrow-down-alt2"></span>
 			</button>
 
 			<button
 				type="button"
-				class="button kidia-duplicate-block"
+				class="button kidia-duplicate-block kidia-card-action kidia-card-action--secondary"
 			>
 				<?php esc_html_e(
 					'Duplicate',
@@ -96,7 +96,7 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 			<button
 				type="button"
-				class="button button-link-delete kidia-delete-block"
+				class="button button-link-delete kidia-delete-block kidia-card-action kidia-card-action--primary"
 			>
 				<?php esc_html_e(
 					'Remove',
