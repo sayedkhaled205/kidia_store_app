@@ -8,6 +8,8 @@ import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.d
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
@@ -195,6 +197,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         }
         return _ProductContent(
           controller: _controller,
+          repository: widget.repository,
           product: product,
           copy: copy,
           pageLayout: layout,
@@ -278,6 +281,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 class _ProductContent extends StatelessWidget {
   const _ProductContent({
     required this.controller,
+    required this.repository,
     required this.product,
     required this.copy,
     required this.pageLayout,
@@ -286,6 +290,7 @@ class _ProductContent extends StatelessWidget {
   });
 
   final ProductDetailController controller;
+  final CatalogRepository repository;
   final CatalogProduct product;
   final _ProductCopy copy;
   final CmsPageLayout pageLayout;
@@ -294,6 +299,8 @@ class _ProductContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final GlobalKey reviewsKey = GlobalKey();
+    final GlobalKey recommendKey = GlobalKey();
     final CatalogVariation? variation = controller.selectedVariation;
     final List<CatalogImage> images = _displayImages(
       product.images,
@@ -316,6 +323,21 @@ class _ProductContent extends StatelessWidget {
               ),
             ),
           ),
+        if (pageLayout.element('product_tabs').enabled)
+          SliverPersistentHeader(
+            pinned: pageLayout.element('product_tabs').boolean('sticky', true),
+            delegate: _ProductTabsDelegate(
+              settings: pageLayout.element('product_tabs'),
+              onReviews: () {
+                final BuildContext? target = reviewsKey.currentContext;
+                if (target != null) Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 320));
+              },
+              onRecommend: () {
+                final BuildContext? target = recommendKey.currentContext;
+                if (target != null) Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 320));
+              },
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
           sliver: SliverList.list(
@@ -323,67 +345,14 @@ class _ProductContent extends StatelessWidget {
               if (pageLayout.element('product_summary').enabled)
                 CmsElementFrame(
                   component: pageLayout.element('product_summary'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      if (pageLayout.element('product_summary').boolean('show_badge', true) &&
-                          (product.isOnSale || !inStock)) ...<Widget>[
-                        _ProductBadges(product: product, variation: variation, copy: copy),
-                        const SizedBox(height: 12),
-                      ],
-                      if (pageLayout.element('product_summary').boolean('show_name', true))
-                        Text(
-                          product.name,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      if (pageLayout.element('product_summary').boolean('show_sku', true) &&
-                          product.sku.isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 6),
-                        Text(
-                          '${copy.sku}: ${product.sku}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      if (pageLayout.element('product_summary').boolean('show_price', true)) ...<Widget>[
-                        const SizedBox(height: 14),
-                        _MoneyPrice(
-                          money: money,
-                          showRegularPrice: pageLayout
-                              .element('product_summary')
-                              .boolean('show_regular_price', true),
-                        ),
-                      ],
-                      if (pageLayout.element('product_summary').boolean('show_rating', true) &&
-                          product.averageRating > 0) ...<Widget>[
-                        const SizedBox(height: 10),
-                        Row(
-                          children: <Widget>[
-                            const Icon(Icons.star_rounded, size: 19),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${product.averageRating.toStringAsFixed(1)} ${copy.reviewCount(product.reviewCount)}',
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (pageLayout.element('product_summary').boolean('show_stock', true)) ...<Widget>[
-                        const SizedBox(height: 8),
-                        Text(
-                          inStock ? copy.inStock : copy.outOfStock,
-                          key: const Key('product-stock-status'),
-                          style: TextStyle(
-                            color: inStock
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.error,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: _PatPatProductSummary(
+                    product: product,
+                    variation: variation,
+                    money: money,
+                    inStock: inStock,
+                    selectedAttributes: controller.selectedAttributes,
+                    settings: pageLayout.element('product_summary'),
+                    copy: copy,
                   ),
                 ),
               if (pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
@@ -440,29 +409,31 @@ class _ProductContent extends StatelessWidget {
               const SizedBox(height: 18),
               if (pageLayout.element('reviews').enabled)
                 CmsElementFrame(
+                  key: reviewsKey,
                   component: pageLayout.element('reviews'),
-                  child: OutlinedButton.icon(
-                    key: const Key('product-reviews-button'),
+                  child: _ProductReviewsSummary(
+                    product: product,
+                    settings: pageLayout.element('reviews'),
                     onPressed: onReviewsRequested == null
                         ? null
                         : () => onReviewsRequested!(product),
-                    icon: const Icon(Icons.star_outline_rounded),
-                    label: Text(
-                      '${product.averageRating.toStringAsFixed(1)} (${product.reviewCount})',
-                    ),
                   ),
                 ),
               if (pageLayout.element('reviews').enabled)
                 const SizedBox(height: 18),
               if (pageLayout.element('related_products').enabled)
-              CmsElementFrame(component: pageLayout.element('related_products'), child: OutlinedButton.icon(
-                key: const Key('related-products-button'),
-                onPressed: onRelatedProductsRequested == null
-                    ? null
-                    : () => onRelatedProductsRequested!(product),
-                icon: const Icon(Icons.auto_awesome_outlined),
-                label: Text(copy.relatedProducts),
-              )),
+                CmsElementFrame(
+                  key: recommendKey,
+                  component: pageLayout.element('related_products'),
+                  child: _RelatedProductsSection(
+                    repository: repository,
+                    product: product,
+                    settings: pageLayout.element('related_products'),
+                    onMore: onRelatedProductsRequested == null
+                        ? null
+                        : () => onRelatedProductsRequested!(product),
+                  ),
+                ),
               const SizedBox(height: 32),
             ],
           ),
@@ -484,6 +455,382 @@ class _ProductContent extends StatelessWidget {
     }
     return List<CatalogImage>.unmodifiable(images.values);
   }
+}
+
+class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
+  const _ProductTabsDelegate({
+    required this.settings,
+    this.onReviews,
+    this.onRecommend,
+  });
+
+  final CmsPageComponent settings;
+  final VoidCallback? onReviews;
+  final VoidCallback? onRecommend;
+
+  @override
+  double get minExtent => settings.number('height', 64).clamp(44, 88);
+
+  @override
+  double get maxExtent => minExtent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final Color active = _cmsColor(
+      settings.string('active_color', '#1D1D1D'),
+      const Color(0xFF1D1D1D),
+    );
+    final Color inactive = _cmsColor(
+      settings.string('inactive_color', '#6B6B6B'),
+      const Color(0xFF6B6B6B),
+    );
+    Widget tab(String label, {VoidCallback? onTap, bool selected = false}) =>
+        Expanded(
+          child: InkWell(
+            onTap: onTap,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: <Widget>[
+                Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: selected ? active : inactive,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                if (selected)
+                  Container(
+                    width: settings.number('indicator_width', 96).clamp(24, 160),
+                    height: 3,
+                    color: active,
+                  ),
+              ],
+            ),
+          ),
+        );
+    return Material(
+      color: Colors.white,
+      elevation: overlapsContent ? 2 : 0,
+      child: Row(
+        key: const Key('product-tabs'),
+        children: <Widget>[
+          tab(settings.string('overview_label', 'Overview'), selected: true),
+          tab(settings.string('reviews_label', 'Reviews'), onTap: onReviews),
+          tab(settings.string('recommend_label', 'Recommend'), onTap: onRecommend),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _ProductTabsDelegate oldDelegate) =>
+      oldDelegate.settings.settings != settings.settings ||
+      oldDelegate.onReviews != onReviews ||
+      oldDelegate.onRecommend != onRecommend;
+}
+
+class _PatPatProductSummary extends StatelessWidget {
+  const _PatPatProductSummary({
+    required this.product,
+    required this.variation,
+    required this.money,
+    required this.inStock,
+    required this.selectedAttributes,
+    required this.settings,
+    required this.copy,
+  });
+
+  final CatalogProduct product;
+  final CatalogVariation? variation;
+  final CatalogMoney money;
+  final bool inStock;
+  final Map<String, String> selectedAttributes;
+  final CmsPageComponent settings;
+  final _ProductCopy copy;
+
+  @override
+  Widget build(BuildContext context) {
+    final double priceSize = settings.number('price_size', 25).clamp(14, 36);
+    final double nameSize = settings.number('name_size', 18).clamp(12, 28);
+    final String price = money.displayAmount(money.priceMinor);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (settings.boolean('show_badge', false) &&
+            (product.isOnSale || !inStock)) ...<Widget>[
+          _ProductBadges(product: product, variation: variation, copy: copy),
+          const SizedBox(height: 12),
+        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            if (settings.boolean('show_price', true))
+              Expanded(
+                child: Text(
+                  price,
+                  key: const Key('product-current-price'),
+                  style: TextStyle(fontSize: priceSize, fontWeight: FontWeight.w900),
+                ),
+              ),
+            if (settings.boolean('show_rating', true) && product.averageRating > 0)
+              _CompactRating(
+                rating: product.averageRating,
+                count: settings.boolean('show_review_count', true)
+                    ? product.reviewCount
+                    : null,
+              ),
+          ],
+        ),
+        if (settings.boolean('show_regular_price', true) && money.isDiscounted)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              money.displayAmount(money.regularPriceMinor),
+              key: const Key('product-regular-price'),
+              style: const TextStyle(
+                color: Colors.grey,
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
+          ),
+        if (settings.boolean('show_name', true)) ...<Widget>[
+          const SizedBox(height: 20),
+          Text(
+            product.name,
+            style: TextStyle(fontSize: nameSize, height: 1.35, fontWeight: FontWeight.w500),
+          ),
+        ],
+        if (settings.boolean('show_selected_color', true) &&
+            selectedAttributes.entries.any((entry) => entry.key.toLowerCase().contains('color'))) ...<Widget>[
+          const SizedBox(height: 18),
+          Text(
+            'Color   ${selectedAttributes.entries.firstWhere((entry) => entry.key.toLowerCase().contains('color')).value}',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+        ],
+        if (settings.boolean('show_sku', false) && product.sku.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Text('${copy.sku}: ${product.sku}'),
+        ],
+        if (settings.boolean('show_stock', false)) ...<Widget>[
+          const SizedBox(height: 8),
+          Text(
+            inStock ? copy.inStock : copy.outOfStock,
+            key: const Key('product-stock-status'),
+            style: TextStyle(
+              color: inStock ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _CompactRating extends StatelessWidget {
+  const _CompactRating({required this.rating, this.count});
+  final double rating;
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          for (int index = 1; index <= 5; index++)
+            Icon(
+              rating >= index ? Icons.star_rounded : Icons.star_border_rounded,
+              size: 19,
+              color: const Color(0xFF1D1D1D),
+            ),
+          if (count != null) ...<Widget>[
+            const SizedBox(width: 6),
+            Text('$count', style: const TextStyle(decoration: TextDecoration.underline)),
+          ],
+        ],
+      );
+}
+
+class _ProductReviewsSummary extends StatelessWidget {
+  const _ProductReviewsSummary({
+    required this.product,
+    required this.settings,
+    this.onPressed,
+  });
+  final CatalogProduct product;
+  final CmsPageComponent settings;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final String title = settings.string('title', 'Reviews');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        ListTile(
+          key: const Key('product-reviews-button'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('$title (${product.reviewCount})', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: onPressed,
+        ),
+        if (settings.boolean('show_summary', true))
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 112,
+                  child: Column(
+                    children: <Widget>[
+                      Text(product.averageRating.toStringAsFixed(1), style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900)),
+                      _CompactRating(rating: product.averageRating),
+                    ],
+                  ),
+                ),
+                if (settings.boolean('show_fit_summary', true))
+                  Expanded(child: _FitSummary(settings: settings)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _FitSummary extends StatelessWidget {
+  const _FitSummary({required this.settings});
+  final CmsPageComponent settings;
+  @override
+  Widget build(BuildContext context) => Column(
+        children: <Widget>[
+          _fitRow('Small', settings.number('fit_small_percent', 1).clamp(0, 100) / 100),
+          _fitRow('True to size', settings.number('fit_true_percent', 99).clamp(0, 100) / 100),
+          _fitRow('Large', settings.number('fit_large_percent', 0).clamp(0, 100) / 100),
+        ],
+      );
+
+  Widget _fitRow(String label, double value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: <Widget>[
+            SizedBox(width: 88, child: Text(label, textAlign: TextAlign.end)),
+            const SizedBox(width: 8),
+            Expanded(child: LinearProgressIndicator(value: value, minHeight: 5, color: const Color(0xFF1D1D1D), backgroundColor: const Color(0xFFE8E8E8))),
+            const SizedBox(width: 8),
+            SizedBox(width: 32, child: Text('${(value * 100).round()}%')),
+          ],
+        ),
+      );
+}
+
+class _RelatedProductsSection extends StatefulWidget {
+  const _RelatedProductsSection({
+    required this.repository,
+    required this.product,
+    required this.settings,
+    this.onMore,
+  });
+  final CatalogRepository repository;
+  final CatalogProduct product;
+  final CmsPageComponent settings;
+  final VoidCallback? onMore;
+
+  @override
+  State<_RelatedProductsSection> createState() => _RelatedProductsSectionState();
+}
+
+class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
+  late Future<List<CatalogProduct>> _products;
+
+  @override
+  void initState() {
+    super.initState();
+    _products = _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RelatedProductsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.id != widget.product.id || oldWidget.repository != widget.repository) {
+      _products = _load();
+    }
+  }
+
+  Future<List<CatalogProduct>> _load() async {
+    final page = await widget.repository.getProducts(
+      CatalogProductQuery(
+        perPage: 4,
+        categoryIds: widget.product.categories.map((category) => category.id),
+        excludeIds: <int>[widget.product.id],
+        sort: CatalogSort.popularity,
+      ),
+    );
+    return page.items;
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<List<CatalogProduct>>(
+        future: _products,
+        builder: (BuildContext context, AsyncSnapshot<List<CatalogProduct>> snapshot) {
+          final List<CatalogProduct> products = snapshot.data ?? const <CatalogProduct>[];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              InkWell(
+                key: const Key('related-products-button'),
+                onTap: widget.onMore,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    widget.settings.string('title', 'You may also like'),
+                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const SizedBox(height: 180, child: Center(child: CircularProgressIndicator()))
+              else if (products.isNotEmpty)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: products.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: widget.settings.number('columns', 2).clamp(1, 3).round(),
+                    crossAxisSpacing: widget.settings.number('gap', 2).clamp(0, 24),
+                    mainAxisSpacing: widget.settings.number('gap', 2).clamp(0, 24),
+                    childAspectRatio: 0.62,
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    final CatalogProduct product = products[index];
+                    return CatalogProductCard(
+                      product: product,
+                      settings: CmsPageComponent(
+                        id: widget.settings.id,
+                        type: widget.settings.type,
+                        enabled: true,
+                        settings: <String, dynamic>{
+                          ...widget.settings.settings,
+                          'quick_add_enabled': widget.settings.boolean('show_quick_add', true),
+                          'card_style': 'minimal',
+                          'card_radius': 0,
+                          'show_name': false,
+                          'show_rating': false,
+                          'show_badge': true,
+                        },
+                      ),
+                      onTap: () => context.push('/product/${product.id}'),
+                    );
+                  },
+                ),
+            ],
+          );
+        },
+      );
 }
 
 class _ProductGallery extends StatefulWidget {
@@ -559,6 +906,10 @@ class _ProductGalleryState extends State<_ProductGallery> {
         ? BoxFit.cover
         : BoxFit.contain;
     final bool enableZoom = widget.settings.boolean('enable_zoom', true);
+    final Color galleryBackground = _cmsColor(
+      widget.settings.string('background_color', '#F4F2F3'),
+      const Color(0xFFF4F2F3),
+    );
     final Widget pager = AspectRatio(
           aspectRatio: aspectRatio,
           child: PageView.builder(
@@ -576,7 +927,7 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   width: double.infinity,
                   height: double.infinity,
                   fit: fit,
-                  backgroundColor: colors.surfaceContainerLow,
+                  backgroundColor: galleryBackground,
                   semanticLabel: image.alt.isEmpty
                       ? widget.productName
                       : image.alt,
@@ -598,14 +949,37 @@ class _ProductGalleryState extends State<_ProductGallery> {
         Stack(
           alignment: AlignmentDirectional.bottomCenter,
           children: <Widget>[
-            pager,
+            ColoredBox(color: galleryBackground, child: pager),
+            if (widget.images.length > 1 &&
+                widget.settings.boolean('show_indicators', false))
+              PositionedDirectional(
+                bottom: 12,
+                start: 16,
+                child: Row(
+                  children: List<Widget>.generate(
+                    widget.images.length,
+                    (int index) => Container(
+                      width: index == _page ? 18 : 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: index == _page ? Colors.black87 : Colors.black26,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
         if (widget.images.length > 1 &&
-            widget.settings.boolean('show_indicators', true))
+            widget.settings.boolean('show_counter', true))
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: colors.surface.withValues(alpha: 0.9),
+                color: _cmsColor(
+                  widget.settings.string('counter_background', '#8A8585'),
+                  const Color(0xFF8A8585),
+                ).withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Padding(
@@ -617,6 +991,10 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   '${_page + 1} / ${widget.images.length}',
                   key: const Key('product-gallery-counter'),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: _cmsColor(
+                      widget.settings.string('counter_text_color', '#FFFFFF'),
+                      Colors.white,
+                    ),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -689,48 +1067,6 @@ class _ProductBadges extends StatelessWidget {
   }
 }
 
-class _MoneyPrice extends StatelessWidget {
-  const _MoneyPrice({required this.money, this.showRegularPrice = true});
-
-  final CatalogMoney money;
-  final bool showRegularPrice;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final String price = money.displayAmount(money.priceMinor);
-    final String regular = money.displayAmount(money.regularPriceMinor);
-    if (price.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 10,
-      runSpacing: 6,
-      children: <Widget>[
-        Text(
-          price,
-          key: const Key('product-current-price'),
-          style: textTheme.headlineSmall?.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        if (showRegularPrice && money.isDiscounted && regular.isNotEmpty)
-          Text(
-            regular,
-            key: const Key('product-regular-price'),
-            style: textTheme.bodyLarge?.copyWith(
-              color: colors.onSurfaceVariant,
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _ProductOptionPicker extends StatelessWidget {
   const _ProductOptionPicker({
     required this.group,
@@ -752,11 +1088,54 @@ class _ProductOptionPicker extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            '${copy.choose} ${group.label}',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  selected == null ? group.label : '${group.label}   $selected',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              if (settings?.boolean('show_size_chart', true) == true &&
+                  group.label.toLowerCase().contains('size'))
+                TextButton(
+                  key: const Key('product-size-chart'),
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    useSafeArea: true,
+                    builder: (BuildContext context) => Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Text(
+                            settings?.string('size_chart_label', 'Size chart') ?? 'Size chart',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 18),
+                          for (final ProductOptionValue option in group.values)
+                            ListTile(
+                              title: Text(option.label),
+                              trailing: selected == option.value ? const Icon(Icons.check_rounded) : null,
+                              onTap: () {
+                                controller.selectOption(group.key, option.value);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(settings?.string('size_chart_label', 'Size chart') ?? 'Size chart'),
+                      const Icon(Icons.chevron_right_rounded),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
           if (settings?.string('style', 'chips') == 'dropdown')
@@ -791,14 +1170,21 @@ class _ProductOptionPicker extends StatelessWidget {
                     group.key,
                     option.value,
                   );
-                  return ChoiceChip(
-                    key: Key('product-option-${group.key}-${option.value}'),
-                    label: Text(option.label),
-                    selected: selected == option.value,
-                    onSelected: available
-                        ? (_) =>
-                              controller.selectOption(group.key, option.value)
-                        : null,
+                  return SizedBox(
+                    height: settings?.number('chip_height', 44).clamp(32, 60) ?? 44,
+                    child: ChoiceChip(
+                      key: Key('product-option-${group.key}-${option.value}'),
+                      label: Text(option.label),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          settings?.number('chip_radius', 22).clamp(0, 32) ?? 22,
+                        ),
+                      ),
+                      selected: selected == option.value,
+                      onSelected: available
+                          ? (_) => controller.selectOption(group.key, option.value)
+                          : null,
+                    ),
                   );
                 })
                 .toList(growable: false),
@@ -990,44 +1376,53 @@ class _DetailsSection extends StatelessWidget {
         (!showAttributes || product.attributes.isEmpty)) {
       return const SizedBox.shrink();
     }
+    final List<Widget> content = <Widget>[
+      if (showDescription && description.isNotEmpty)
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(description, style: const TextStyle(height: 1.6)),
+        ),
+      if (showAttributes && product.attributes.isNotEmpty) ...<Widget>[
+        if (showDescription && description.isNotEmpty) const Divider(height: 24),
+        for (final CatalogProductAttribute attribute in product.attributes)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: <Widget>[
+                Expanded(child: Text(attribute.name)),
+                Flexible(
+                  child: Text(
+                    attribute.terms.map((CatalogAttributeTerm term) => term.name).join('، '),
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ];
+    if (!settings.boolean('accordion', true)) {
+      return Column(
+        key: const Key('product-description-section'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(settings.string('details_label', copy.description), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          ...content,
+        ],
+      );
+    }
     return ExpansionTile(
       key: const Key('product-description-section'),
       tilePadding: EdgeInsets.zero,
       childrenPadding: const EdgeInsets.only(bottom: 12),
       initiallyExpanded: true,
       title: Text(
-        copy.description,
+        settings.string('details_label', copy.description),
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
-      children: <Widget>[
-        if (showDescription && description.isNotEmpty)
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(description, style: const TextStyle(height: 1.6)),
-          ),
-        if (showAttributes && product.attributes.isNotEmpty) ...<Widget>[
-          if (showDescription && description.isNotEmpty)
-            const Divider(height: 24),
-          for (final CatalogProductAttribute attribute in product.attributes)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: <Widget>[
-                  Expanded(child: Text(attribute.name)),
-                  Flexible(
-                    child: Text(
-                      attribute.terms
-                          .map((CatalogAttributeTerm term) => term.name)
-                          .join('، '),
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ],
+      children: content,
     );
   }
 }

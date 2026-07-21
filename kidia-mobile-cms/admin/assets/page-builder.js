@@ -74,7 +74,10 @@
 		if (id === "product_grid" || id === "wishlist_grid") {
 			return '<section class="kidia-app-section">' + productCards(card, 4) + (id === "product_grid" ? pagination(card) : "") + '</section>';
 		}
-		if (id === "related_products") { return '<section class="kidia-app-section"><button class="kidia-app-related-button">✦ منتجات مشابهة</button></section>'; }
+		if (id === "product_tabs") {
+			return '<nav class="kidia-app-section" style="display:flex;justify-content:space-around;height:' + number(card, "height", 64) + 'px;align-items:center;background:#fff;color:' + color(card, "inactive_color", "#6B6B6B") + '"><b style="color:' + color(card, "active_color", "#1D1D1D") + ';border-bottom:3px solid currentColor;padding:18px 8px">' + escapeHtml(value(card, "overview_label", "Overview")) + '</b><b>' + escapeHtml(value(card, "reviews_label", "Reviews")) + '</b><b>' + escapeHtml(value(card, "recommend_label", "Recommend")) + '</b></nav>';
+		}
+		if (id === "related_products") { return '<section class="kidia-app-section"><h2>' + escapeHtml(value(card, "title", "You may also like")) + '</h2>' + productCards(card, 4) + '</section>'; }
 		if (id === "filter_bar") {
 			var buttons = [];
 			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
@@ -87,10 +90,10 @@
 		}
 		if (id === "image_gallery") {
 			var image = first.image_url ? '<img src="' + escapeHtml(first.image_url) + '" alt="">' : '<span class="kidia-app-gallery__fallback">KIDIA</span>';
-			return '<section class="kidia-app-gallery" style="aspect-ratio:' + number(card, "aspect_ratio", 1) + ';--gallery-fit:' + escapeHtml(value(card, "fit", "cover")) + '">' + image + (checked(card, "show_indicators", true) ? '<span class="kidia-app-gallery__count">1 / 4</span>' : "") + (checked(card, "show_thumbnails", false) ? '<span class="kidia-app-gallery__thumbnails">● ● ●</span>' : "") + (checked(card, "enable_zoom", true) ? icon("zoom") : "") + '</section>';
+			return '<section class="kidia-app-gallery" style="aspect-ratio:' + number(card, "aspect_ratio", .75) + ';--gallery-fit:' + escapeHtml(value(card, "fit", "contain")) + ';background:' + color(card, "background_color", "#F4F2F3") + '">' + image + (checked(card, "show_counter", true) ? '<span class="kidia-app-gallery__count" style="background:' + color(card, "counter_background", "#8A8585") + ';color:' + color(card, "counter_text_color", "#FFFFFF") + '">1 / 4</span>' : "") + (checked(card, "show_thumbnails", false) ? '<span class="kidia-app-gallery__thumbnails">● ● ●</span>' : "") + (checked(card, "enable_zoom", false) ? icon("zoom") : "") + '</section>';
 		}
 		if (id === "product_summary") {
-			return '<section class="kidia-app-summary">' + (checked(card, "show_badge", true) ? '<span class="kidia-app-sale">خصم</span>' : "") + (checked(card, "show_name", true) ? '<h2>' + escapeHtml(first.name || "طقم أطفال كيديا") + '</h2>' : "") + (checked(card, "show_sku", true) ? '<small>SKU: KIDIA-001</small>' : "") + (checked(card, "show_rating", true) ? '<div class="kidia-app-stars">★★★★★ <u>11</u></div>' : "") + (checked(card, "show_price", true) ? '<div class="kidia-app-price"><b>' + money(first) + '</b>' + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div>' : "") + (checked(card, "show_stock", true) ? '<small class="kidia-app-stock">متوفر</small>' : "") + '</section>';
+			return '<section class="kidia-app-summary">' + (checked(card, "show_badge", false) ? '<span class="kidia-app-sale">خصم</span>' : "") + '<div style="display:flex;justify-content:space-between;align-items:center">' + (checked(card, "show_price", true) ? '<div class="kidia-app-price"><b>' + money(first) + '</b>' + (checked(card, "show_regular_price", true) ? '<del>520 ج.م</del>' : "") + '</div>' : "") + (checked(card, "show_rating", true) ? '<div class="kidia-app-stars">★★★★★ ' + (checked(card, "show_review_count", true) ? '<u>252</u>' : '') + '</div>' : "") + '</div>' + (checked(card, "show_name", true) ? '<h2>' + escapeHtml(first.name || "Toddler Girl Dress") + '</h2>' : "") + (checked(card, "show_sku", false) ? '<small>SKU: KIDIA-001</small>' : "") + (checked(card, "show_stock", false) ? '<small class="kidia-app-stock">متوفر</small>' : "") + '</section>';
 		}
 		if (id === "variations") {
 			return '<section class="kidia-app-variations"><h3>اللون <span>وردي</span></h3><div><button class="is-selected">وردي</button><button>أصفر</button></div><h3>المقاس</h3><div><button>2Y</button><button class="is-selected">3Y</button><button>4Y</button></div></section>';
@@ -101,7 +104,7 @@
 		if (id === "description") {
 			return '<section class="kidia-app-details"><h3>الوصف والتفاصيل</h3>' + (checked(card, "show_description", true) ? '<p>خامات مريحة وجودة مناسبة للأطفال.</p>' : "") + (checked(card, "show_attributes", true) ? '<div><span>الخامة</span><b>قطن</b></div><div><span>اللون</span><b>وردي</b></div>' : "") + (checked(card, "show_shipping", true) ? '<div><span>الشحن</span><b>2–5 أيام</b></div>' : "") + '</section>';
 		}
-		if (id === "reviews") { return '<section class="kidia-app-reviews"><h3>تقييمات العملاء</h3><b>4.8</b><span>★★★★★</span><small>بناءً على 11 تقييم</small></section>'; }
+		if (id === "reviews") { return '<section class="kidia-app-reviews"><h3>' + escapeHtml(value(card, "title", "Reviews")) + ' (252) ›</h3><b>4.5</b><span>★★★★☆</span><small>Small 1% · True to size 99% · Large 0%</small></section>'; }
 		if (id === "empty_state") { return '<section class="kidia-app-empty">' + icon("heart") + '<h3>' + escapeHtml(value(card, "title", "المفضلة فارغة")) + '</h3><p>' + escapeHtml(value(card, "description", "احفظي المنتجات التي تحبينها هنا")) + '</p>' + (checked(card, "show_button", true) ? '<button>' + escapeHtml(value(card, "button_label", "تسوقي الآن")) + '</button>' : "") + '</section>'; }
 		if (id === "account_summary") { return '<section class="kidia-app-account-summary is-' + value(card, "card_style", "elevated") + '"><span class="kidia-app-avatar" style="width:' + number(card, "avatar_size", 66) + 'px;height:' + number(card, "avatar_size", 66) + 'px">B</span><div><strong>' + escapeHtml(value(card, "guest_title", "بسمة زيدان")) + '</strong>' + (checked(card, "show_email", true) ? '<small>customer@example.com</small>' : "") + (checked(card, "show_addresses", true) ? '<small>العناوين</small>' : "") + (checked(card, "show_profile", true) ? '<small>الملف الشخصي</small>' : "") + '</div></section>'; }
 		if (id === "account_menu") {

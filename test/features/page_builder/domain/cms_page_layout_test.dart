@@ -45,7 +45,16 @@ void main() {
       CmsPageLayout.fallback('product').elements.map(
         (CmsPageComponent item) => item.id,
       ),
-      containsAll(<String>['image_gallery', 'purchase_bar', 'reviews']),
+      containsAll(<String>[
+		'product_tabs',
+		'image_gallery',
+		'product_summary',
+		'variations',
+		'purchase_bar',
+		'description',
+		'reviews',
+		'related_products',
+	  ]),
     );
     expect(CmsPageLayout.fallback('wishlist').header.enabled, isTrue);
     expect(CmsPageLayout.fallback('account').footer.enabled, isTrue);
@@ -69,6 +78,11 @@ void main() {
 	  isFalse,
 	);
 	expect(product.footer.string('style', ''), 'product_action');
+	expect(product.element('product_tabs').boolean('sticky', false), isTrue);
+	expect(product.element('image_gallery').boolean('show_counter', false), isTrue);
+	expect(product.element('image_gallery').boolean('show_thumbnails', true), isFalse);
+	expect(product.footer.string('button_color', ''), '#1D1D1D');
+	expect(product.footer.string('add_to_cart_label', ''), 'Add to bag');
 	final dynamic productFooterRows = product.footer.json('layout_json')['rows'];
 	expect((productFooterRows as List<dynamic>).first['columns'], hasLength(3));
   });

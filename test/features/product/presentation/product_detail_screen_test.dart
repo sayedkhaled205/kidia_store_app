@@ -77,7 +77,10 @@ void main() {
     expect(find.text('Product'), findsNothing);
 	expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
-    expect(find.text('In stock'), findsOneWidget);
+    expect(find.text('In stock'), findsNothing);
+	expect(find.byKey(const Key('product-tabs')), findsOneWidget);
+	expect(find.byKey(const Key('product-reviews-button')), findsOneWidget);
+	expect(find.byKey(const Key('related-products-button')), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),
@@ -139,6 +142,7 @@ void main() {
             captured = selection;
           },
         ),
+        productLayout: _productLayoutWithQuantity(),
       ),
     );
     await tester.pumpAndSettle();
@@ -186,7 +190,7 @@ void main() {
     expect(initialButton.onPressed, isNotNull);
     expect(
       initialButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E).withValues(alpha: 0.48),
+      const Color(0xFF1D1D1D).withValues(alpha: 0.48),
     );
     expect(find.text('Choose the product options first.'), findsNothing);
     expect(find.text('اختر خيارات المنتج أولًا.'), findsNothing);
@@ -218,7 +222,7 @@ void main() {
     );
     expect(
       selectedButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E),
+      const Color(0xFF1D1D1D),
     );
     expect(find.byKey(const Key('add-to-cart-disabled-reason')), findsNothing);
     expect(find.byKey(const Key('add-to-cart-error')), findsNothing);
@@ -507,6 +511,30 @@ CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
         'layout_json': ?layoutJson,
       },
     ),
+  );
+}
+
+CmsPageLayout _productLayoutWithQuantity() {
+  final CmsPageLayout fallback = CmsPageLayout.fallback('product');
+  return CmsPageLayout(
+    page: fallback.page,
+    header: fallback.header,
+    elements: fallback.elements
+        .map(
+          (CmsPageComponent element) => element.id == 'purchase_bar'
+              ? CmsPageComponent(
+                  id: element.id,
+                  type: element.type,
+                  enabled: true,
+                  settings: <String, dynamic>{
+                    ...element.settings,
+                    'show_quantity': true,
+                  },
+                )
+              : element,
+        )
+        .toList(growable: false),
+    footer: fallback.footer,
   );
 }
 
