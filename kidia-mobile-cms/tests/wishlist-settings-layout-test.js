@@ -13,7 +13,7 @@ const page = fs.readFileSync(path.join(pluginRoot, "admin/pages/page-builder.php
 const home = fs.readFileSync(path.join(pluginRoot, "admin/pages/home-builder.php"), "utf8");
 const category = fs.readFileSync(path.join(pluginRoot, "admin/pages/category-builder.php"), "utf8");
 
-const field = (key, type = "text") => `<div class="kidia-page-field"><label>${key}<input type="${type}" name="layout[elements][0][settings][${key}]" value="1"></label></div>`;
+const field = (key, type = "text", extraClass = "") => `<div class="kidia-page-field ${extraClass}"><label>${key}<input type="${type}" name="layout[elements][0][settings][${key}]" value="1"></label></div>`;
 const position = (key) => `<div class="kidia-page-field"><label>${key}<select name="layout[elements][0][settings][${key}]"><option value="top_start">Top</option><option value="bottom_end">Bottom</option></select></label></div>`;
 const dom = new JSDOM(`<!doctype html><body><div class="kidia-page-builder"><section data-element="wishlist_grid"><div class="kidia-page-card__body"><div class="kidia-page-fields">
   ${field("image_ratio")}${field("gap")}${field("card_radius")}${field("products_per_page")}
@@ -34,3 +34,14 @@ assert.match(toolbar, /kidia-collapse-all[\s\S]*kidia-expand-all/, "The shared t
 [home, page, category].forEach((template) => assert.match(template, /admin\/pages\/builder-toolbar\.php/, "Every builder must render the same toolbar template."));
 
 console.log("Shared builder toolbar and Wishlist Products settings layout: ok");
+
+const relatedDom = new JSDOM(`<!doctype html><body><div class="kidia-page-builder"><section data-element="related_products"><div class="kidia-page-card__body"><div class="kidia-page-fields">
+  ${field("title")}${field("columns")}${field("gap")}${field("image_ratio")}${field("show_price", "checkbox")}${field("show_quick_add", "checkbox")}
+  ${field("margin_top", "number", "kidia-section-layout-field")}${field("margin_bottom", "number", "kidia-section-layout-field")}${field("space_up", "number", "kidia-section-layout-field")}${field("space_down", "number", "kidia-section-layout-field")}${field("background_color", "color", "kidia-section-layout-field")}
+</div></div></section></div></body>`, { runScripts: "outside-only" });
+relatedDom.window.eval(script);
+relatedDom.window.document.dispatchEvent(new relatedDom.window.Event("DOMContentLoaded"));
+const relatedDocument = relatedDom.window.document;
+assert.equal(relatedDocument.querySelectorAll(".kidia-settings-section-title--related_products").length, 1, "Related Products must merge every content section into one.");
+assert.equal(relatedDocument.querySelectorAll(".kidia-section-layout-panel").length, 1, "Related Products must keep one isolated standard Section Layout Settings panel.");
+assert.equal(relatedDocument.querySelectorAll(".kidia-section-layout-panel .kidia-page-field").length, 5, "The standard Related Products layout panel must contain only the five canonical layout fields.");
