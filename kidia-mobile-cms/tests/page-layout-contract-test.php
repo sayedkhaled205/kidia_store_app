@@ -28,6 +28,7 @@ function esc_url_raw( $value ): string { return filter_var( (string) $value, FIL
 function wp_json_encode( $value ): string { return json_encode( $value, JSON_UNESCAPED_SLASHES ); }
 function get_option( string $name, $default = false ) { return $GLOBALS['kidia_page_options'][ $name ] ?? $default; }
 function update_option( string $name, $value, bool $autoload = false ): bool { unset( $autoload ); $GLOBALS['kidia_page_options'][ $name ] = $value; return true; }
+function delete_option( string $name ): bool { $exists = array_key_exists( $name, $GLOBALS['kidia_page_options'] ); unset( $GLOBALS['kidia_page_options'][ $name ] ); return $exists; }
 function add_action( string $hook, $callback ): void { unset( $hook, $callback ); }
 function register_rest_route( string $namespace, string $route, array $definition ): void { $GLOBALS['kidia_page_routes'][ $namespace . $route ] = $definition; }
 function rest_ensure_response( $value ): WP_REST_Response { return new WP_REST_Response( $value ); }
@@ -113,6 +114,14 @@ kidia_page_assert( ! array_key_exists( 'quick_add_enabled', $product_summary['se
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
 kidia_page_assert( 62 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose the PatPat action width.' );
 kidia_page_assert( 56 === $product_default['footer']['settings']['button_height'], 'Product footer must expose the PatPat action height.' );
+$custom_product = $product_default;
+$custom_product['footer']['settings']['button_height'] = 72;
+$store->save_layout( 'product', $custom_product );
+$GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'] = array( 'sentinel' => 'keep' );
+kidia_page_assert( true === $store->reset_layout( 'product' ), 'Product defaults reset must remove the saved Product Page option.' );
+kidia_page_assert( 56 === $store->get_layout( 'product' )['footer']['settings']['button_height'], 'Product defaults reset must restore the canonical Product Page values.' );
+kidia_page_assert( array( 'sentinel' => 'keep' ) === $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'], 'Product defaults reset must not alter another page option.' );
+unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_catalog'] );
 foreach ( array( 'button_style', 'button_shape', 'button_border_color', 'button_border_width' ) as $button_setting ) {
 	kidia_page_assert( array_key_exists( $button_setting, $product_default['footer']['settings'] ), "Product footer must expose $button_setting." );
 }

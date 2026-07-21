@@ -23,12 +23,28 @@ void main() {
 
     expect(find.byKey(const Key('quick-add-product-42')), findsNothing);
   });
+
+  testWidgets('quick add background accepts a compact size below twenty', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_app(backgroundSize: 12));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(find.byKey(const Key('quick-add-shell-42'))),
+      const Size.square(12),
+    );
+  });
 }
 
-Widget _app({bool enabled = true}) {
+Widget _app({bool enabled = true, double backgroundSize = 40}) {
   return MaterialApp(
     home: Scaffold(
-      body: ProductQuickAddButton(productId: 42, enabled: enabled),
+      body: ProductQuickAddButton(
+        productId: 42,
+        enabled: enabled,
+        backgroundSize: backgroundSize,
+      ),
     ),
   );
 }

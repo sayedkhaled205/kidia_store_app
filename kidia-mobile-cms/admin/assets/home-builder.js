@@ -422,7 +422,7 @@
 		var style = settings && settings.card_style ? settings.card_style : "outlined";
 		var quickIcon = settings && settings.quick_add_icon_variant === "cart" ? "🛒" : settings && settings.quick_add_icon_variant === "basket" ? "🧺" : "🛍";
 		var quickSize = numberInRange(settings && settings.quick_add_icon_size, 22, 10, 36);
-		var quickShell = numberInRange(settings && settings.quick_add_background_size, 40, 20, 64);
+		var quickShell = numberInRange(settings && settings.quick_add_background_size, 40, 10, 64);
 		var quickBackground = settings && settings.quick_add_show_background === "" ? "transparent" : safeColor(settings && settings.quick_add_background_color, "#FFFFFF");
 		var quickPosition = settings && settings.quick_add_position ? settings.quick_add_position : "bottom_end";
 		var quickTop = quickPosition.indexOf("top_") === 0;

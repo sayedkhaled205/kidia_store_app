@@ -221,7 +221,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'quick_add_icon_color', __( 'Quick add icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'quick_add_show_background', __( 'White background behind icon', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'quick_add_background_color', __( 'Quick add background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
-			self::field( 'quick_add_background_size', __( 'Quick add background size', 'kidia-mobile-cms' ), 'number', 40, array(), 20, 64 ),
+			self::field( 'quick_add_background_size', __( 'Quick add background size', 'kidia-mobile-cms' ), 'number', 40, array(), 10, 64 ),
 			self::field( 'quick_add_radius', __( 'Quick add background radius', 'kidia-mobile-cms' ), 'number', 24, array(), 0, 40 ),
 			self::field( 'quick_add_position', __( 'Quick add position', 'kidia-mobile-cms' ), 'product_position', 'bottom_end', array( 'top_start' => __( 'Top start', 'kidia-mobile-cms' ), 'top_end' => __( 'Top end', 'kidia-mobile-cms' ), 'bottom_start' => __( 'Bottom start', 'kidia-mobile-cms' ), 'bottom_end' => __( 'Bottom end', 'kidia-mobile-cms' ) ) ),
 			self::field( 'show_wishlist', __( 'Product wishlist icon', 'kidia-mobile-cms' ), 'checkbox', false ),
@@ -434,6 +434,19 @@ final class Kidia_Mobile_Page_Layout_Store {
 			wp_cache_delete( self::OPTION_PREFIX . $page, 'options' );
 		}
 		return $layout;
+	}
+
+	/** Removes only one page's saved layout so its canonical defaults are used again. */
+	public function reset_layout( string $page ): bool {
+		$page = sanitize_key( $page );
+		if ( ! self::is_page( $page ) ) {
+			return false;
+		}
+		$deleted = delete_option( self::OPTION_PREFIX . $page );
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( self::OPTION_PREFIX . $page, 'options' );
+		}
+		return $deleted;
 	}
 
 	/** @return array<string,mixed> */

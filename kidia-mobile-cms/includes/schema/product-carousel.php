@@ -209,7 +209,7 @@ return array(
 		array( 'key' => 'quick_add_icon_color', 'label' => __( 'Quick add icon color', 'kidia-mobile-cms' ), 'type' => 'color', 'tab' => 'general', 'default' => '#1F2933' ),
 		array( 'key' => 'quick_add_show_background', 'label' => __( 'White background behind icon', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => true ),
 		array( 'key' => 'quick_add_background_color', 'label' => __( 'Quick add background color', 'kidia-mobile-cms' ), 'type' => 'color', 'tab' => 'general', 'default' => '#FFFFFF' ),
-		array( 'key' => 'quick_add_background_size', 'label' => __( 'Quick add background size', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 40, 'min' => 20, 'max' => 64 ),
+		array( 'key' => 'quick_add_background_size', 'label' => __( 'Quick add background size', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 40, 'min' => 10, 'max' => 64 ),
 		array( 'key' => 'quick_add_radius', 'label' => __( 'Quick add background radius', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 24, 'min' => 0, 'max' => 40 ),
 		array( 'key' => 'quick_add_position', 'label' => __( 'Quick add position', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'bottom_end', 'options' => array( 'top_start' => 'Top start', 'top_end' => 'Top end', 'bottom_start' => 'Bottom start', 'bottom_end' => 'Bottom end' ) ),
 		array( 'key' => 'show_wishlist', 'label' => __( 'Product wishlist icon', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),

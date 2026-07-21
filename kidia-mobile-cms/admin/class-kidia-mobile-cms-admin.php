@@ -288,6 +288,15 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
 			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
 		}
+		if ( 'product' === $page && isset( $_POST['restore_product_defaults'] ) ) {
+			( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( 'product' );
+			$slug = array_search( $page, self::PAGE_BUILDER_SLUGS, true );
+			if ( function_exists( 'nocache_headers' ) ) {
+				nocache_headers();
+			}
+			wp_safe_redirect( add_query_arg( array( 'page' => $slug, 'restored' => '1', 'restored_at' => time() ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
 		$submitted = isset( $_POST['layout'] ) ? wp_unslash( $_POST['layout'] ) : array();
 		( new Kidia_Mobile_Page_Layout_Store() )->save_layout( $page, is_array( $submitted ) ? $submitted : array() );
 		$slug = array_search( $page, self::PAGE_BUILDER_SLUGS, true );
