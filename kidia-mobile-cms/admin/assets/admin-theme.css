@@ -78,6 +78,26 @@
 	--kidia-settings-control-radius: 7px;
 }
 
+/* Every settings section starts with its first field on the physical right. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(.kidia-page-fields, .kidia-builder-settings-content, .kidia-builder-settings-content > .kidia-builder-grid, .kidia-product-icon-panel__body, .kidia-category-general-fields, .kidia-category-settings) {
+	direction: rtl !important;
+	text-align: right !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(.kidia-page-fields, .kidia-builder-settings-content, .kidia-builder-settings-content > .kidia-builder-grid, .kidia-product-icon-panel__body, .kidia-category-general-fields, .kidia-category-settings)
+	:is(.kidia-page-field, .kidia-builder-field, label) {
+	direction: rtl;
+	text-align: right;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(.kidia-page-fields, .kidia-builder-settings-content, .kidia-builder-settings-content > .kidia-builder-grid, .kidia-product-icon-panel__body, .kidia-category-general-fields, .kidia-category-settings)
+	:is(.kidia-page-field, .kidia-builder-field) {
+	align-items: flex-start !important;
+}
+
 /*
  * Canonical Section Layout panel used by Home, every page element, Category,
  * and the fixed Header/Footer. Keep this definition here so individual
