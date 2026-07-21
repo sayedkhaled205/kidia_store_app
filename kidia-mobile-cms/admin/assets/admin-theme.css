@@ -83,12 +83,26 @@
  * and the fixed Header/Footer. Keep this definition here so individual
  * builders cannot drift in heading, spacing, sizing, or column structure.
  */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-panel {
+	display: block !important;
+	width: 100% !important;
+	min-width: 0;
+	grid-column: 1 / -1 !important;
+	order: 98;
+	margin: 14px 0 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: #fff;
+	direction: rtl !important;
+	box-sizing: border-box;
+}
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-settings-section-title--section_layout {
 	display: block !important;
 	width: 100% !important;
 	min-height: 45px;
 	grid-column: 1 / -1 !important;
-	margin: 14px 0 0 !important;
+	margin: 0 !important;
 	padding: 10px 12px !important;
 	border: 0 !important;
 	border-top: 2px solid #b9d9d1 !important;
@@ -112,7 +126,7 @@
 	margin: 0;
 	padding: 14px 12px 16px;
 	gap: 11px 18px;
-	direction: inherit;
+	direction: rtl !important;
 	box-sizing: border-box;
 }
 

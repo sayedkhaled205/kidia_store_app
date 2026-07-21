@@ -106,8 +106,11 @@
 		});
 		var finalHeading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
 		if (finalHeading) {
-			container.appendChild(finalHeading);
-			container.appendChild(buildSectionLayoutGrid(buckets.section_layout || []));
+			var sectionLayoutPanel = document.createElement("section");
+			sectionLayoutPanel.className = "kidia-section-layout-panel";
+			container.appendChild(sectionLayoutPanel);
+			sectionLayoutPanel.appendChild(finalHeading);
+			sectionLayoutPanel.appendChild(buildSectionLayoutGrid(buckets.section_layout || []));
 			container.classList.add("has-section-layout-settings");
 		}
 		if (productType) {
@@ -127,7 +130,7 @@
 		var heading = container.querySelector(":scope > .kidia-settings-section-title--" + section);
 		if (!heading) { return; }
 		var fields = [], cursor = heading.nextElementSibling;
-		while (cursor && !cursor.classList.contains("kidia-settings-section-title")) {
+		while (cursor && !cursor.classList.contains("kidia-settings-section-title") && !cursor.classList.contains("kidia-section-layout-panel") && !cursor.classList.contains("kidia-product-icon-panel")) {
 			fields.push(cursor);
 			cursor = cursor.nextElementSibling;
 		}
