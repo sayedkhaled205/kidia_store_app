@@ -70,10 +70,8 @@ void main() {
   testWidgets('the real page controller drives the mobile collapsed header', (
     WidgetTester tester,
   ) async {
-    final ScrollController slowController = ScrollController();
-    final ScrollController fastController = ScrollController();
-    addTearDown(slowController.dispose);
-    addTearDown(fastController.dispose);
+    final ScrollController controller = ScrollController();
+    addTearDown(controller.dispose);
     await _pumpPage(
       tester,
       layout: _layout(page: 'home'),
@@ -159,8 +157,10 @@ void main() {
   testWidgets('smooth compact speed changes the scroll-linked distance', (
     WidgetTester tester,
   ) async {
-    final ScrollController controller = ScrollController();
-    addTearDown(controller.dispose);
+    final ScrollController slowController = ScrollController();
+    final ScrollController fastController = ScrollController();
+    addTearDown(slowController.dispose);
+    addTearDown(fastController.dispose);
 
     await _pumpPage(
       tester,
