@@ -104,6 +104,7 @@
 				buckets[section].forEach(function (node) { container.appendChild(node); });
 			}
 		});
+		container.classList.add("kidia-sectioned-settings-grid");
 		var finalHeading = container.querySelector(":scope > .kidia-settings-section-title--section_layout");
 		if (finalHeading) {
 			var sectionLayoutPanel = document.createElement("section");
