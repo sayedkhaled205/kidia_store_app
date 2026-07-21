@@ -80,7 +80,7 @@ $footer_icon_symbols = array(
 			<button type="button" class="button kidia-chrome-paste" data-chrome-paste><span class="dashicons dashicons-clipboard" aria-hidden="true"></span><?php esc_html_e( 'Paste', 'kidia-mobile-cms' ); ?></button>
 			<span class="kidia-chrome-transfer-status" role="status" aria-live="polite"></span>
 		</div>
-		<label class="kidia-page-master-toggle"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="0"><input type="checkbox" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="1" <?php checked( ! empty( $chrome_component['enabled'] ) ); ?>><span class="kidia-toggle-state"></span></label>
+		<label class="kidia-builder-switch kidia-builder-switch--card kidia-fixed-chrome-toggle"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="0"><input type="checkbox" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="1" <?php checked( ! empty( $chrome_component['enabled'] ) ); ?>><span class="kidia-builder-switch__track"></span><span class="kidia-builder-switch__state"></span></label>
 		<button type="button" class="button kidia-fixed-chrome-expand kidia-page-expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 	</div>
 	<div class="kidia-page-card__body" hidden>
