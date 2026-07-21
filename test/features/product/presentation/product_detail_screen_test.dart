@@ -142,6 +142,7 @@ void main() {
             captured = selection;
           },
         ),
+        productLayout: _productLayoutWithQuantity(),
       ),
     );
     await tester.pumpAndSettle();
@@ -189,7 +190,7 @@ void main() {
     expect(initialButton.onPressed, isNotNull);
     expect(
       initialButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E).withValues(alpha: 0.48),
+      const Color(0xFF1D1D1D).withValues(alpha: 0.48),
     );
     expect(find.text('Choose the product options first.'), findsNothing);
     expect(find.text('اختر خيارات المنتج أولًا.'), findsNothing);
@@ -510,6 +511,30 @@ CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
         'layout_json': ?layoutJson,
       },
     ),
+  );
+}
+
+CmsPageLayout _productLayoutWithQuantity() {
+  final CmsPageLayout fallback = CmsPageLayout.fallback('product');
+  return CmsPageLayout(
+    page: fallback.page,
+    header: fallback.header,
+    elements: fallback.elements
+        .map(
+          (CmsPageComponent element) => element.id == 'purchase_bar'
+              ? CmsPageComponent(
+                  id: element.id,
+                  type: element.type,
+                  enabled: true,
+                  settings: <String, dynamic>{
+                    ...element.settings,
+                    'show_quantity': true,
+                  },
+                )
+              : element,
+        )
+        .toList(growable: false),
+    footer: fallback.footer,
   );
 }
 

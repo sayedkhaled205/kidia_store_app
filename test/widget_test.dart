@@ -89,7 +89,7 @@ void main() {
     expect(initial.onPressed, isNotNull);
     expect(
       initial.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E).withValues(alpha: 0.48),
+      const Color(0xFF1D1D1D).withValues(alpha: 0.48),
     );
     expect(find.text('اختر خيارات المنتج أولًا.'), findsNothing);
     await tester.tap(find.byKey(const Key('add-to-cart-button')));
