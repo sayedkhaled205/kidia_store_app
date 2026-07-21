@@ -223,11 +223,20 @@
 	min-height: var(--kidia-settings-control-height) !important;
 	align-items: center !important;
 	justify-content: flex-start !important;
+	flex-direction: column !important;
+	align-items: flex-start !important;
+	gap: 6px !important;
+	direction: rtl !important;
+}
+
+.kidia-unified-boolean__control {
+	display: inline-flex !important;
+	align-items: center !important;
 	gap: 8px !important;
 	direction: rtl !important;
 }
 
-:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"] {
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean__control > input[type="checkbox"] {
 	position: relative !important;
 	width: 42px !important;
 	min-width: 42px !important;
@@ -241,7 +250,7 @@
 	cursor: pointer !important;
 }
 
-:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]::before {
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean__control > input[type="checkbox"]::before {
 	content: "" !important;
 	position: absolute !important;
 	top: 3px !important;
@@ -254,16 +263,16 @@
 	transition: transform .18s ease !important;
 }
 
-:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]:checked {
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean__control > input[type="checkbox"]:checked {
 	background: #2f806e !important;
 }
 
-:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]:checked::before {
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean__control > input[type="checkbox"]:checked::before {
 	transform: translateX(20px) !important;
 }
 
 .kidia-unified-boolean__state::before { content: "Off"; color: #646970; font-weight: 700; }
-.kidia-unified-boolean > input[type="checkbox"]:checked ~ .kidia-unified-boolean__state::before { content: "On"; color: #2f806e; }
+.kidia-unified-boolean__control > input[type="checkbox"]:checked ~ .kidia-unified-boolean__state::before { content: "On"; color: #2f806e; }
 .kidia-page-toggle.kidia-unified-boolean > b,
 .kidia-page-toggle.kidia-unified-boolean > span:not(.kidia-unified-boolean__state) { display: none !important; }
 

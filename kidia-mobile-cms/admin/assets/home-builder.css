@@ -900,6 +900,10 @@
 	direction: rtl;
 }
 
+.kidia-builder-block:is([data-type="product_carousel"], [data-type="product_grid"]) .kidia-builder-settings-content > .kidia-builder-field--full {
+	grid-column: auto;
+}
+
 .kidia-repeatable-item .kidia-hero-block-item__header { grid-column: 1 / -1; }
 .kidia-repeatable-item .kidia-builder-grid { grid-column: 1 / -1; }
 
