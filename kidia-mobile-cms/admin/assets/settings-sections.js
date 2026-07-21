@@ -108,16 +108,26 @@
 		if (finalHeading) {
 			var sectionLayoutPanel = document.createElement("section");
 			sectionLayoutPanel.className = "kidia-section-layout-panel";
-			container.appendChild(sectionLayoutPanel);
+			var sectionLayoutHost = isolatedSectionLayoutHost(container);
+			sectionLayoutHost.appendChild(sectionLayoutPanel);
 			sectionLayoutPanel.appendChild(finalHeading);
 			sectionLayoutPanel.appendChild(buildSectionLayoutGrid(buckets.section_layout || []));
-			container.classList.add("has-section-layout-settings");
+			sectionLayoutHost.classList.add("has-section-layout-settings");
 		}
 		if (productType) {
 			buildProductIconPanel(container, "quick_add", "quick_add_enabled");
 			buildProductIconPanel(container, "carousel_wishlist", "show_wishlist");
 		}
 		container.dataset.kidiaSectioned = "1";
+	}
+
+	/*
+	 * Mount the shared layout controls beside the settings wrapper, never inside
+	 * it. This prevents a preceding settings section's grid, direction, spacing,
+	 * or product-specific rules from becoming the panel's layout context.
+	 */
+	function isolatedSectionLayoutHost(container) {
+		return container.closest(".kidia-builder-block__body,.kidia-page-card__body") || container;
 	}
 
 	function productSettingKey(field) {
