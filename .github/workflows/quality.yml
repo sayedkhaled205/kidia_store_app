@@ -39,6 +39,14 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+      - name: Build embedded CMS Flutter Web preview
+        run: bash tool/build_cms_flutter_preview.sh
+      - name: Upload CMS Flutter Web preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: cms-flutter-preview
+          path: kidia-mobile-cms/admin/flutter-preview
+          if-no-files-found: error
       - name: Build Android debug APK
         run: >-
           flutter build apk --debug

@@ -346,6 +346,50 @@ class CatalogProductListController extends ChangeNotifier {
     }
   }
 
+  Future<void> loadPage(int pageNumber) async {
+    if (isAwaitingSearch ||
+        pageNumber < 1 ||
+        pageNumber > _state.totalPages ||
+        pageNumber == _state.page ||
+        _state.isInitialLoading ||
+        _state.isRefreshing ||
+        _state.isLoadingMore) {
+      return;
+    }
+
+    final int operation = ++_operation;
+    _replace(
+      _state.copyWith(
+        isInitialLoading: true,
+        error: null,
+        loadMoreError: null,
+      ),
+    );
+    try {
+      final CatalogPage<CatalogProduct> page = await _repository.getProducts(
+        _query(page: pageNumber, includeFilters: true),
+      );
+      if (!_isCurrent(operation)) return;
+      _replace(
+        _state.copyWith(
+          items: List<CatalogProduct>.unmodifiable(page.items),
+          page: page.page,
+          totalItems: page.totalItems,
+          totalPages: page.totalPages,
+          isInitialLoading: false,
+          error: null,
+          availableSizes: _mergeSizeOptions(
+            _state.availableSizes,
+            _discoverSizeOptions(page.items),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!_isCurrent(operation)) return;
+      _replace(_state.copyWith(isInitialLoading: false, error: error));
+    }
+  }
+
   Future<void> changeSort(CatalogSort sort) async {
     if (_state.sort == sort) {
       return;

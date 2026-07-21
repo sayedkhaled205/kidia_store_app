@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:kidia_store_app/features/catalog/data/models/catalog_category_model.dart';
 import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
 import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
@@ -9,7 +10,13 @@ import 'package:kidia_store_app/features/search/presentation/catalog_search_laun
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+
+final cmsPreviewCategorySettingsProvider =
+    StreamProvider<Map<String, dynamic>?>(
+      (Ref ref) => CmsPreviewLayoutBridge.categorySettings,
+    );
 
 class CategoriesScreen extends ConsumerWidget {
   const CategoriesScreen({super.key});
@@ -25,14 +32,21 @@ class CategoriesScreen extends ConsumerWidget {
     );
     final CmsPageLayout? loadedLayout = layoutState.value;
     if (loadedLayout == null && !layoutState.hasError) {
-      return const Scaffold(
-        body: SafeArea(child: _CategoryLoadingList()),
-      );
+      return const Scaffold(body: SafeArea(child: _CategoryLoadingList()));
     }
     final CmsPageLayout layout =
         loadedLayout ?? CmsPageLayout.fallback('category');
-    final CatalogCategory? categorySettings =
-        tree.asData?.value.roots.isEmpty == false
+    final Map<String, dynamic>? previewSettings = ref
+        .watch(cmsPreviewCategorySettingsProvider)
+        .value;
+    final CatalogCategory? categorySettings = previewSettings != null
+        ? CatalogCategoryModel.fromJson(<String, dynamic>{
+            'id': 1,
+            'name': 'Preview',
+            'slug': 'preview',
+            'presentation': previewSettings,
+          })
+        : tree.asData?.value.roots.isEmpty == false
         ? tree.asData!.value.roots.first.category
         : null;
 
@@ -46,8 +60,19 @@ class CategoriesScreen extends ConsumerWidget {
             ),
       defaultTitle: copy.categories,
       actions: <CmsPageHeaderAction>[
-          CmsPageHeaderAction(key: const Key('categories-search-action'), type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
-          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
+        CmsPageHeaderAction(
+          key: const Key('categories-search-action'),
+          type: 'search',
+          icon: Icons.search_rounded,
+          tooltip: 'بحث',
+          onPressed: () => showCatalogSearch(context),
+        ),
+        CmsPageHeaderAction(
+          type: 'cart',
+          icon: Icons.shopping_bag_outlined,
+          tooltip: 'السلة',
+          onPressed: () => context.go('/cart'),
+        ),
       ],
       body: SafeArea(
         bottom: false,
@@ -71,6 +96,7 @@ class CategoriesScreen extends ConsumerWidget {
 
             return _CategoryLayoutView(
               tree: value,
+              settings: categorySettings,
               onRefresh: () => ref
                   .refresh(catalogCategoryTreeProvider.future)
                   .then<void>((CatalogCategoryTree _) {}),
@@ -83,10 +109,15 @@ class CategoriesScreen extends ConsumerWidget {
 }
 
 class _CategoryLayoutView extends StatefulWidget {
-  const _CategoryLayoutView({required this.tree, required this.onRefresh});
+  const _CategoryLayoutView({
+    required this.tree,
+    required this.onRefresh,
+    this.settings,
+  });
 
   final CatalogCategoryTree tree;
   final Future<void> Function() onRefresh;
+  final CatalogCategory? settings;
 
   @override
   State<_CategoryLayoutView> createState() => _CategoryLayoutViewState();
@@ -95,16 +126,17 @@ class _CategoryLayoutView extends StatefulWidget {
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   int? _selectedRoot;
 
-  CatalogCategory get _settings => widget.tree.roots.first.category;
+  CatalogCategory get _settings =>
+      widget.settings ?? widget.tree.roots.first.category;
 
   @override
   Widget build(BuildContext context) {
     final String layout = _settings.categoryLayout;
     final CatalogCategoryNode? selectedRoot = _selectedRoot == null
         ? null
-        : widget.tree.roots[
-            _selectedRoot!.clamp(0, widget.tree.roots.length - 1).toInt()
-          ];
+        : widget.tree.roots[_selectedRoot!
+              .clamp(0, widget.tree.roots.length - 1)
+              .toInt()];
     final List<CatalogCategoryNode> visibleNodes = selectedRoot == null
         ? widget.tree.roots
         : selectedRoot.children;
@@ -153,12 +185,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: ListView.separated(
         key: const Key('category-layout-default'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsetsDirectional.fromSTEB(
-          16,
-          14,
-          16,
-          24,
-        ),
+        padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
         itemCount: nodes.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
         itemBuilder: (BuildContext context, int index) => Align(
@@ -185,12 +212,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         : layout == 'circular_grid'
         ? 92
         : 112;
-    final double automaticExtent = (imageLimit.clamp(32, _settings.imageSize) +
-            _settings.imageTextGap +
-            (_settings.fontSize * _settings.lineHeight * _settings.textMaxLines) +
-            24)
-        .clamp(layout == 'compact_grid' ? 150 : 196, 280)
-        .toDouble();
+    final double automaticExtent =
+        (imageLimit.clamp(32, _settings.imageSize) +
+                _settings.imageTextGap +
+                (_settings.fontSize *
+                    _settings.lineHeight *
+                    _settings.textMaxLines) +
+                24)
+            .clamp(layout == 'compact_grid' ? 150 : 196, 280)
+            .toDouble();
     final double extent = _settings.cardHeight > 0
         ? _settings.cardHeight
         : automaticExtent;
@@ -199,12 +229,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: GridView.builder(
         key: Key('category-layout-$layout'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsetsDirectional.fromSTEB(
-          16,
-          14,
-          16,
-          24,
-        ),
+        padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           mainAxisSpacing: _settings.cardGap,
@@ -232,17 +257,17 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView.builder(
-          key: const Key('category-layout-sidebar'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(_settings.cardGap),
-          itemCount: nodes.length,
-          itemBuilder: (BuildContext context, int index) => Padding(
-            padding: EdgeInsets.only(bottom: _settings.cardGap),
-            child: _CategoryBranch(
-              node: CatalogCategoryNode(category: nodes[index].category),
-              onTap: () => _openNode(nodes[index]),
-            ),
+        key: const Key('category-layout-sidebar'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(_settings.cardGap),
+        itemCount: nodes.length,
+        itemBuilder: (BuildContext context, int index) => Padding(
+          padding: EdgeInsets.only(bottom: _settings.cardGap),
+          child: _CategoryBranch(
+            node: CatalogCategoryNode(category: nodes[index].category),
+            onTap: () => _openNode(nodes[index]),
           ),
+        ),
       ),
     );
   }
@@ -254,7 +279,6 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     }
     _openCategoryProducts(context, node.category);
   }
-
 }
 
 class _CategoryGridTile extends StatelessWidget {
@@ -273,42 +297,49 @@ class _CategoryGridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final double imageLimit = compact ? 62 : circular ? 92 : 112;
+    final double imageLimit = compact
+        ? 62
+        : circular
+        ? 92
+        : 112;
     return _CategoryCardSurface(
       category: category,
       child: Material(
-      key: Key('category-grid-tile-${category.id}'),
-      color: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap ?? () => _openCategoryProducts(context, category),
-        child: Padding(
-          padding: EdgeInsets.all(compact ? 7 : 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _CategoryArtwork(
-                category: category,
-                maximumSize: imageLimit,
-                forceCircle: circular,
-              ),
-              SizedBox(height: category.imageTextGap),
-              Text(
-                category.name,
-                maxLines: category.textMaxLines,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: _categoryColor(category.fontColor, theme.colorScheme.onSurface),
-                  fontSize: category.fontSize,
-                  fontWeight: _categoryFontWeight(category.fontWeight),
-                  height: category.lineHeight,
+        key: Key('category-grid-tile-${category.id}'),
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap ?? () => _openCategoryProducts(context, category),
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 7 : 10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                _CategoryArtwork(
+                  category: category,
+                  maximumSize: imageLimit,
+                  forceCircle: circular,
                 ),
-              ),
-            ],
+                SizedBox(height: category.imageTextGap),
+                Text(
+                  category.name,
+                  maxLines: category.textMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: _categoryColor(
+                      category.fontColor,
+                      theme.colorScheme.onSurface,
+                    ),
+                    fontSize: category.fontSize,
+                    fontWeight: _categoryFontWeight(category.fontWeight),
+                    height: category.lineHeight,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -346,135 +377,147 @@ class _CategoryBranchState extends State<_CategoryBranch> {
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: Column(
-        children: <Widget>[
-          InkWell(
-            onTap: widget.onTap ?? () => _openProducts(context, category),
-            child: SizedBox(
-              height: category.cardHeight > 0 ? category.cardHeight : null,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
-                child: Row(
-                children: <Widget>[
-                  _CategoryArtwork(
-                    category: category,
-                    maximumSize: 120 * responsive,
-                  ),
-                  SizedBox(
-                    key: Key('category-image-text-gap-${category.id}'),
-                    width: category.imageTextGap * responsive,
-                  ),
-                  Expanded(
-                    child: Text(
-                      category.name,
-                      key: Key('category-title-${category.id}'),
-                      maxLines: category.textMaxLines,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: _categoryTextAlign(category.textAlign),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: _categoryColor(
-                          category.fontColor,
-                          colors.onSurface,
+          children: <Widget>[
+            InkWell(
+              onTap: widget.onTap ?? () => _openProducts(context, category),
+              child: SizedBox(
+                height: category.cardHeight > 0 ? category.cardHeight : null,
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 8, 7),
+                  child: Row(
+                    children: <Widget>[
+                      _CategoryArtwork(
+                        category: category,
+                        maximumSize: 120 * responsive,
+                      ),
+                      SizedBox(
+                        key: Key('category-image-text-gap-${category.id}'),
+                        width: category.imageTextGap * responsive,
+                      ),
+                      Expanded(
+                        child: Text(
+                          category.name,
+                          key: Key('category-title-${category.id}'),
+                          maxLines: category.textMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: _categoryTextAlign(category.textAlign),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: _categoryColor(
+                              category.fontColor,
+                              colors.onSurface,
+                            ),
+                            fontSize: category.fontSize * responsive,
+                            fontWeight: _categoryFontWeight(
+                              category.fontWeight,
+                            ),
+                            height: category.lineHeight,
+                          ),
                         ),
-                        fontSize: category.fontSize * responsive,
-                        fontWeight: _categoryFontWeight(category.fontWeight),
-                        height: category.lineHeight,
                       ),
-                    ),
+                      if (hasChildren && category.showArrow)
+                        IconButton(
+                          tooltip: _expanded ? copy.collapse : copy.expand,
+                          onPressed: () => setState(() {
+                            _expanded = !_expanded;
+                          }),
+                          icon: AnimatedRotation(
+                            turns: _expanded ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 180),
+                            child: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                            ),
+                          ),
+                        )
+                      else if (category.showArrow)
+                        const Icon(Icons.chevron_right_rounded),
+                    ],
                   ),
-                  if (hasChildren && category.showArrow)
-                    IconButton(
-                      tooltip: _expanded ? copy.collapse : copy.expand,
-                      onPressed: () => setState(() {
-                        _expanded = !_expanded;
-                      }),
-                      icon: AnimatedRotation(
-                        turns: _expanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 180),
-                        child: const Icon(Icons.keyboard_arrow_down_rounded),
-                      ),
-                    )
-                  else if (category.showArrow)
-                    const Icon(Icons.chevron_right_rounded),
-                ],
                 ),
               ),
             ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 180),
-            alignment: Alignment.topCenter,
-            child: !_expanded
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      12,
-                      2,
-                      12,
-                      14,
+            AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              alignment: Alignment.topCenter,
+              child: !_expanded
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        12,
+                        2,
+                        12,
+                        14,
+                      ),
+                      child: LayoutBuilder(
+                        builder:
+                            (BuildContext context, BoxConstraints constraints) {
+                              const int columns = 3;
+                              const double spacing = 10;
+                              final double cardWidth =
+                                  (constraints.maxWidth -
+                                      spacing * (columns - 1)) /
+                                  columns;
+                              final double maximumImageSize = cardWidth - 10;
+                              final double
+                              cardHeight = widget.node.children.fold(0, (
+                                double height,
+                                CatalogCategoryNode node,
+                              ) {
+                                final CatalogCategory child = node.category;
+                                final double imageHeight =
+                                    (child.imageSize * responsive)
+                                        .clamp(
+                                          32 * responsive,
+                                          maximumImageSize,
+                                        )
+                                        .toDouble();
+                                final double textHeight =
+                                    child.fontSize *
+                                    responsive *
+                                    child.lineHeight *
+                                    child.textMaxLines;
+                                final double automaticHeight =
+                                    imageHeight +
+                                    child.imageTextGap * responsive +
+                                    textHeight +
+                                    16;
+                                final double requested = child.cardHeight > 0
+                                    ? child.cardHeight
+                                    : automaticHeight;
+                                return requested > height ? requested : height;
+                              });
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: widget.node.children.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      mainAxisSpacing: spacing,
+                                      crossAxisSpacing: spacing,
+                                      mainAxisExtent: cardHeight,
+                                    ),
+                                itemBuilder: (BuildContext context, int index) {
+                                  final CatalogCategory child =
+                                      widget.node.children[index].category;
+                                  return Align(
+                                    child: FractionallySizedBox(
+                                      widthFactor: child.cardWidthPercent / 100,
+                                      heightFactor: 1,
+                                      child: _SubcategoryTile(
+                                        category: child,
+                                        maximumImageSize: maximumImageSize,
+                                        onTap: () =>
+                                            _openProducts(context, child),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                      ),
                     ),
-                    child: LayoutBuilder(
-                      builder: (BuildContext context, BoxConstraints constraints) {
-                        const int columns = 3;
-                        const double spacing = 10;
-                        final double cardWidth =
-                            (constraints.maxWidth - spacing * (columns - 1)) /
-                            columns;
-                        final double maximumImageSize = cardWidth - 10;
-                        final double cardHeight = widget.node.children.fold(
-                          0,
-                          (double height, CatalogCategoryNode node) {
-                            final CatalogCategory child = node.category;
-                            final double imageHeight = (child.imageSize * responsive)
-                                .clamp(32 * responsive, maximumImageSize)
-                                .toDouble();
-                            final double textHeight =
-                                child.fontSize *
-                                responsive *
-                                child.lineHeight *
-                                child.textMaxLines;
-                            final double automaticHeight =
-                                imageHeight +
-                                child.imageTextGap * responsive +
-                                textHeight +
-                                16;
-                            final double requested = child.cardHeight > 0
-                                ? child.cardHeight
-                                : automaticHeight;
-                            return requested > height ? requested : height;
-                          },
-                        );
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: widget.node.children.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                mainAxisSpacing: spacing,
-                                crossAxisSpacing: spacing,
-                                mainAxisExtent: cardHeight,
-                              ),
-                          itemBuilder: (BuildContext context, int index) {
-                            final CatalogCategory child =
-                                widget.node.children[index].category;
-                            return Align(
-                              child: FractionallySizedBox(
-                                widthFactor: child.cardWidthPercent / 100,
-                                heightFactor: 1,
-                                child: _SubcategoryTile(
-                                  category: child,
-                                  maximumImageSize: maximumImageSize,
-                                  onTap: () => _openProducts(context, child),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-          ),
-        ],
+            ),
+          ],
         ),
       ),
     );
@@ -510,36 +553,36 @@ class _SubcategoryTile extends StatelessWidget {
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-        onTap: onTap,
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 5),
-              child: Center(
-                child: _CategoryArtwork(
-                  category: category,
-                  maximumSize: maximumImageSize,
+          onTap: onTap,
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Center(
+                  child: _CategoryArtwork(
+                    category: category,
+                    maximumSize: maximumImageSize,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: category.imageTextGap * responsive),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(5, 0, 5, 8),
-              child: Text(
-                category.name,
-                maxLines: category.textMaxLines,
-                overflow: TextOverflow.ellipsis,
-                textAlign: _categoryTextAlign(category.textAlign),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: _categoryColor(category.fontColor, colors.onSurface),
-                  fontSize: category.fontSize * responsive,
-                  fontWeight: _categoryFontWeight(category.fontWeight),
-                  height: category.lineHeight,
+              SizedBox(height: category.imageTextGap * responsive),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(5, 0, 5, 8),
+                child: Text(
+                  category.name,
+                  maxLines: category.textMaxLines,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: _categoryTextAlign(category.textAlign),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: _categoryColor(category.fontColor, colors.onSurface),
+                    fontSize: category.fontSize * responsive,
+                    fontWeight: _categoryFontWeight(category.fontWeight),
+                    height: category.lineHeight,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -558,7 +601,9 @@ class _CategoryCardSurface extends StatelessWidget {
     final BorderRadius radius = BorderRadius.circular(category.cardRadius);
     return Container(
       decoration: BoxDecoration(
-        color: _categoryColor(category.cardBackgroundColor, colors.surface),
+        color: category.cardStyle == 'minimal'
+            ? Colors.transparent
+            : _categoryColor(category.cardBackgroundColor, colors.surface),
         borderRadius: radius,
         border: category.cardStyle == 'outlined'
             ? Border.all(color: colors.outlineVariant)
@@ -566,8 +611,10 @@ class _CategoryCardSurface extends StatelessWidget {
         boxShadow: category.cardStyle == 'elevated'
             ? <BoxShadow>[
                 BoxShadow(
-                  color: _categoryColor(category.cardShadowColor, Colors.black)
-                      .withValues(alpha: category.cardShadowStrength),
+                  color: _categoryColor(
+                    category.cardShadowColor,
+                    Colors.black,
+                  ).withValues(alpha: category.cardShadowStrength),
                   blurRadius: category.cardShadowBlur,
                   offset: Offset(0, category.cardShadowOffsetY),
                 ),
@@ -604,11 +651,13 @@ class _CategoryArtwork extends StatelessWidget {
     final double size = (category.imageSize * responsive)
         .clamp(32 * responsive, maximumSize)
         .toDouble();
-    final double radius = forceCircle ? size / 2 : switch (category.imageShape) {
-      'circle' => size / 2,
-      'rounded' => size * category.imageRadius,
-      _ => 0,
-    };
+    final double radius = forceCircle
+        ? size / 2
+        : switch (category.imageShape) {
+            'circle' => size / 2,
+            'rounded' => size * category.imageRadius,
+            _ => 0,
+          };
     final Alignment alignment = switch (category.imagePosition) {
       'top' => Alignment.topCenter,
       'bottom' => Alignment.bottomCenter,
@@ -636,10 +685,26 @@ class _CategoryArtwork extends StatelessWidget {
     if (category.imageEffect == 'grayscale') {
       artwork = ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0, 0, 0, 1, 0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
         ]),
         child: artwork,
       );

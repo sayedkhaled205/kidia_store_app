@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/config/app_config.dart';
+
 import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/customer_profile_screen.dart';
 import '../features/account/presentation/customer_support_screen.dart';
@@ -292,6 +294,16 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                 path: '/wishlist',
                 builder: (context, state) => Consumer(
                   builder: (context, ref, child) {
+                    if (AppConfig.isCmsPreview) {
+                      return WishlistScreen(
+                        repository: ref.watch(wishlistRepositoryProvider),
+                        catalogRepository: ref.watch(catalogRepositoryProvider),
+                        onProductTap: (product) =>
+                            context.push('/product/${product.id}'),
+                        onContinueShopping: () => context.go('/'),
+                        onSignIn: () => context.push('/auth'),
+                      );
+                    }
                     final AsyncValue<AuthSession?> authState = ref.watch(
                       authControllerProvider,
                     );
@@ -324,10 +336,7 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
           ),
         ],
       ),
-      GoRoute(
-        path: '/auth',
-        builder: (context, state) => const AuthScreen(),
-      ),
+      GoRoute(path: '/auth', builder: (context, state) => const AuthScreen()),
       GoRoute(
         path: '/orders',
         builder: (context, state) => Consumer(
@@ -441,7 +450,9 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
               customerEmail: session.user.email,
               onBackToCart: () => context.go('/cart'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
-              suggestions: ref.watch(checkoutSuggestionsProvider).value ?? const CheckoutSuggestions(),
+              suggestions:
+                  ref.watch(checkoutSuggestionsProvider).value ??
+                  const CheckoutSuggestions(),
               onAddSuggestion: ref.read(addProductPurchaseSelectionProvider),
             );
           },
@@ -492,7 +503,9 @@ class _AppStartupGate extends ConsumerWidget {
     final AsyncValue<void> startupState = ref.watch(appStartupProvider);
 
     return startupState.when(
-      loading: () => SplashScreen(config: ref.watch(splashConfigProvider).value ?? const SplashConfig()),
+      loading: () => SplashScreen(
+        config: ref.watch(splashConfigProvider).value ?? const SplashConfig(),
+      ),
       error: (error, stackTrace) => _StartupErrorScreen(
         error: error,
         onRetry: () => ref.invalidate(appStartupProvider),

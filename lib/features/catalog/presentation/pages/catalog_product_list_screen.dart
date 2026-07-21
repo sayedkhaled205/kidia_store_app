@@ -248,6 +248,7 @@ class _ProductListContent extends StatelessWidget {
                   state: state,
                   onRetry: controller.loadMore,
                   onLoadMore: controller.loadMore,
+                  onLoadPage: controller.loadPage,
                   settings: pageLayout.element('product_grid'),
                 ),
               ),
@@ -620,11 +621,12 @@ class _CatalogLoadingGrid extends StatelessWidget {
 }
 
 class _PaginationFooter extends StatelessWidget {
-  const _PaginationFooter({required this.state, required this.onRetry, required this.onLoadMore, required this.settings});
+  const _PaginationFooter({required this.state, required this.onRetry, required this.onLoadMore, required this.onLoadPage, required this.settings});
 
   final CatalogProductListState state;
   final VoidCallback onRetry;
   final VoidCallback onLoadMore;
+  final ValueChanged<int> onLoadPage;
   final CmsPageComponent settings;
 
   @override
@@ -665,13 +667,23 @@ class _PaginationFooter extends StatelessWidget {
     final Color foreground = _cmsColor(settings.string('pagination_text_color', '#FFFFFF'), Colors.white);
     final double height = settings.number('pagination_size', 44).clamp(32, 64).toDouble();
     final double radius = settings.number('pagination_radius', 14).clamp(0, 32).toDouble();
+    final int visiblePageCount = state.totalPages.clamp(1, 7).toInt();
+    final int latestStart = (state.totalPages - visiblePageCount + 1)
+        .clamp(1, state.totalPages)
+        .toInt();
+    final int pageStart = (state.page - (visiblePageCount ~/ 2))
+        .clamp(1, latestStart)
+        .toInt();
+    final int pageEnd = (pageStart + visiblePageCount - 1)
+        .clamp(pageStart, state.totalPages)
+        .toInt();
     return Padding(
       padding: EdgeInsets.fromLTRB(16, settings.number('pagination_spacing', 16), 16, 28),
       child: mode == 'numbers'
           ? Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              for (int page = 1; page <= state.totalPages.clamp(1, 7); page++)
+              for (int page = pageStart; page <= pageEnd; page++)
                 Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: SizedBox.square(dimension: height, child: OutlinedButton(
-                  onPressed: page == state.page ? null : (page == state.page + 1 ? onLoadMore : null),
+                  onPressed: page == state.page ? null : () => onLoadPage(page),
                   style: OutlinedButton.styleFrom(backgroundColor: page == state.page ? background : null, foregroundColor: page == state.page ? foreground : background, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius))),
                   child: Text('$page'),
                 ))),

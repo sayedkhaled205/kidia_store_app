@@ -133,8 +133,13 @@ foreach ( $library_options as $type => $option_name ) {
 		<aside class="kidia-mobile-preview" aria-label="<?php echo esc_attr__( 'Live mobile preview', 'kidia-mobile-cms' ); ?>">
 			<div class="kidia-mobile-preview__device">
 				<div class="kidia-mobile-preview__speaker"></div>
-				<div class="kidia-mobile-preview__screen">
+			<div class="kidia-mobile-preview__screen">
+				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
+					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home' ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
+					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content kidia-legacy-preview-fallback" hidden></div>
+				<?php else : ?>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content"></div>
+				<?php endif; ?>
 				</div>
 			</div>
 			<p><?php esc_html_e( 'Live preview — changes appear instantly before saving.', 'kidia-mobile-cms' ); ?></p>

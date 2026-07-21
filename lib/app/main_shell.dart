@@ -141,7 +141,12 @@ class _MainShellState extends ConsumerState<MainShell>
         top: false,
 		bottom: footer.boolean('safe_area', true),
         child: Padding(
-          padding: EdgeInsets.only(top: footer.number('margin_top', 0).clamp(0, 80), bottom: footer.number('margin_bottom', 0).clamp(0, 80)),
+          padding: EdgeInsets.only(
+            top: footer.number('margin_top', 0).clamp(0, 80) +
+                footer.number('space_up', 0).clamp(0, 80),
+            bottom: footer.number('margin_bottom', 0).clamp(0, 80) +
+                footer.number('space_down', 0).clamp(0, 80),
+          ),
           child: Container(
           decoration: BoxDecoration(
             color: backgroundColor,
@@ -152,7 +157,11 @@ class _MainShellState extends ConsumerState<MainShell>
           child: Padding(
             key: const Key('cms-bottom-navigation'),
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width * footer.number('side_spacing_percent', 5).clamp(0, 25) / 100,
+              horizontal:
+                  MediaQuery.sizeOf(context).width *
+                      footer.number('side_spacing_percent', 5).clamp(0, 25) /
+                      100 +
+                  footer.number('horizontal_padding', 0).clamp(0, 32),
             ),
             child: SizedBox(
               key: const Key('cms-bottom-navigation-size'),
