@@ -140,7 +140,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 	public static function footer_fields(): array {
 		return array(
 			self::field( 'layout_json', __( 'Footer element layout', 'kidia-mobile-cms' ), 'json', '' ),
-			self::field( 'hide_on_scroll', __( 'Hide while scrolling down and show while scrolling up', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'hide_on_scroll', __( 'Hide while scrolling down', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'style', __( 'Footer style', 'kidia-mobile-cms' ), 'select', 'navigation', array( 'navigation' => __( 'Bottom navigation', 'kidia-mobile-cms' ), 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'product_action' => __( 'Product action bar', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 76, array(), 48, 100 ),
 			self::field( 'margin_top', __( 'Merge up', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 80 ),
