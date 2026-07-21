@@ -1088,6 +1088,9 @@ function runUniformChromeSettingsContractTest() {
 	const template = fs.readFileSync(path.join(__dirname, "../admin/pages/fixed-chrome-card.php"), "utf8");
 	const styles = readAsset("chrome-layout.css");
 	const chrome = readAsset("chrome-layout.js");
+	const home = readAsset("home-builder.js");
+	const page = readAsset("page-builder.js");
+	const category = readAsset("category-builder.js");
 	assert.doesNotMatch(template, /\$chrome_items\s*=\s*'product'\s*===\s*\$chrome_page_name/, "Footer functions must not change between builder pages.");
 	for (const item of ["home", "categories", "search", "cart", "wishlist", "account", "orders", "share", "like", "add_to_cart"]) {
 		assert.match(template, new RegExp("'" + item + "'\\s*=>"), `Every footer must expose the ${item} function.`);
@@ -1095,6 +1098,15 @@ function runUniformChromeSettingsContractTest() {
 	assert.doesNotMatch(template, /Footer height, icon size and label size come from/, "Every footer must own its complete settings instead of borrowing another page's values.");
 	assert.doesNotMatch(styles, /data-chrome-part="footer"[^}]+data-setting="height"/, "Footer height must remain visible on every page.");
 	assert.match(styles, /kidia-chrome-item-setting--logo[^}]+grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, "Logo settings must use a compact three-column grid.");
+	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\]\s*\{[^}]*direction:\s*rtl;[^}]*text-align:\s*right;/, "The shared Header card must always use the same right-to-left settings flow.");
+	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-fields\s*\{[^}]*grid-auto-flow:\s*row;/, "Header fields must keep a stable row-first order.");
+	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-field\s*\{[^}]*align-items:\s*flex-start;[^}]*direction:\s*rtl;/, "Every Header field must start from the right like the Home element grids.");
+	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="footer"\][^{]*\{[^}]*direction:\s*rtl/, "The already-correct Footer field order must remain untouched.");
+	assert.match(styles, /\.kidia-fixed-chrome-toggle\s*\{[^}]*width:\s*88px;/, "The fixed card On/Off control must be styled by the shared component rather than Home-only CSS.");
+	assert.match(chrome, /closest\("\.kidia-fixed-chrome-expand"\)[\s\S]*card\.classList\.toggle\("is-open",opening\)/, "The shared component must own Header/Footer expand behavior on every page.");
+	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
+	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
+	assert.match(page, /button && !button\.closest\("\.kidia-fixed-chrome-card"\)/, "Page builders must defer fixed-card expansion to the shared component.");
 	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 1/, "Logo image and subtitle must share the first compact row.");
 	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*1,\s*'logo_text'\s*=>\s*2/, "Subtitle must immediately follow the logo image in the first row.");
 	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,240px\)/, "Logo value controls must remain compact instead of filling empty space.");
