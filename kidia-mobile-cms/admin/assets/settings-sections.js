@@ -212,10 +212,14 @@
 			if (!label) { return; }
 			input.dataset.kidiaBooleanEnhanced = "1";
 			label.classList.add("kidia-unified-boolean");
+			var control = document.createElement("span");
+			control.className = "kidia-unified-boolean__control";
+			label.appendChild(control);
+			control.appendChild(input);
 			var state = document.createElement("span");
 			state.className = "kidia-unified-boolean__state";
 			state.setAttribute("aria-hidden", "true");
-			label.appendChild(state);
+			control.appendChild(state);
 		});
 	}
 
