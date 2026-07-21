@@ -318,7 +318,7 @@
 		$(input).siblings(".kidia-range-value").text(display);
 	}
 
-	builder.on("click", ".kidia-fixed-chrome-expand, .kidia-category-element-expand", function () {
+	builder.on("click", ".kidia-category-element-expand", function () {
 		var button = $(this);
 		var card = button.closest(".kidia-page-card");
 		var body = card.children(".kidia-page-card__body").first();
