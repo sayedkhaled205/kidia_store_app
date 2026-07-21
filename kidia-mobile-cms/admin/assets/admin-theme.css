@@ -169,6 +169,40 @@
 	line-height: 18px;
 }
 
+/* The five shared Section Layout controls must look identical in every Builder. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column input[type="number"],
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column input[type="color"] {
+	width: min(100%, var(--kidia-settings-control-width)) !important;
+	min-width: 0 !important;
+	height: var(--kidia-settings-control-height) !important;
+	min-height: var(--kidia-settings-control-height) !important;
+	margin: 0 !important;
+	border-radius: var(--kidia-settings-control-radius) !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column--background .kidia-builder-background-control {
+	position: relative;
+	display: block !important;
+	width: min(100%, var(--kidia-settings-control-width)) !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column--background .kidia-block-background-picker {
+	width: 100% !important;
+	min-width: 0 !important;
+	height: var(--kidia-settings-control-height) !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column--background .kidia-block-background-value {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
 @media (max-width: 782px) {
 	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-grid {
 		grid-template-columns: 1fr;
