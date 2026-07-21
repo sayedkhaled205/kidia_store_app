@@ -31,7 +31,7 @@
 .kidia-fixed-chrome-card > .kidia-page-card__header .kidia-fixed-chrome-identity { order:4; margin-left:auto; direction:rtl; }
 .kidia-fixed-chrome-card > .kidia-page-card__header .kidia-chrome-transfer-actions { order:1; margin:0; direction:ltr; }
 .kidia-fixed-chrome-card > .kidia-page-card__header .kidia-fixed-chrome-expand { order:2; }
-.kidia-fixed-chrome-card > .kidia-page-card__header > .kidia-page-master-toggle { order:3; margin:0; }
+.kidia-fixed-chrome-card > .kidia-page-card__header > .kidia-page-master-toggle { order:3; margin:0; direction:rtl; }
 .kidia-chrome-transfer-actions + .kidia-page-master-toggle { margin-inline-start:0; }
 .kidia-chrome-transfer-actions .button { display:inline-flex; min-height:28px; align-items:center; justify-content:center; gap:4px; margin:0; padding-inline:8px; font-size:12px; }
 .kidia-chrome-transfer-actions .dashicons { width:16px; height:16px; font-size:16px; }
