@@ -405,27 +405,44 @@
 }
 
 .kidia-builder-block__actions {
-	display: flex;
+	display: grid;
+	grid-template-columns: 74px 92px 38px 92px;
 	align-items: center;
-	justify-content: flex-end;
-	flex: 0 0 auto;
+	justify-content: start;
+	width: 311px;
+	min-width: 311px;
+	flex: 0 0 311px;
 	gap: 5px;
-	direction: rtl;
+	direction: ltr;
 }
 
 .kidia-builder-block__actions .button {
 	display: inline-flex;
+	width: 100%;
+	height: 38px;
 	align-items: center;
 	justify-content: center;
-	min-height: 28px;
+	min-height: 38px;
 	margin: 0;
 	padding-inline: 8px;
 	font-size: 12px;
 }
 
 .kidia-builder-block__actions .kidia-toggle-block-settings {
-	width: 30px;
+	grid-column: 3;
+	width: 38px;
 	padding: 0;
+}
+
+.kidia-builder-block__actions .kidia-delete-block { grid-column: 1; grid-row: 1; }
+.kidia-builder-block__actions .kidia-duplicate-block { grid-column: 2; grid-row: 1; }
+.kidia-builder-block__actions .kidia-builder-switch--card {
+	grid-column: 4;
+	grid-row: 1;
+	width: 92px;
+	min-width: 92px;
+	justify-content: flex-start;
+	direction: rtl;
 }
 
 .kidia-builder-block__actions .kidia-toggle-block-settings .dashicons {
@@ -876,11 +893,6 @@
 
 .kidia-slider-editor-item.kidia-hero-block-item .kidia-repeatable-field--media {
 	grid-row: 2 / 5;
-}
-
-.kidia-builder-block[data-type="product_carousel"] .kidia-builder-block__actions {
-	direction: rtl;
-	margin-inline-start: auto;
 }
 
 .kidia-builder-block:is([data-type="product_carousel"], [data-type="product_grid"]) .kidia-builder-settings-content {
@@ -1465,8 +1477,9 @@ body.kidia-modal-open {
 
 	.kidia-builder-block__actions {
 		width: 100%;
+		min-width: 0;
 		justify-content: flex-start;
-		flex-wrap: wrap;
+		grid-template-columns: 74px 92px 38px 92px;
 	}
 
 	.kidia-builder-block__body,
