@@ -166,7 +166,7 @@
 	root.addEventListener("click", function (event) {
 		var button = event.target.closest(".kidia-page-expand");
 		var media = event.target.closest(".kidia-page-media-choose, .kidia-page-media-preview");
-		if (button) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }
+		if (button && !button.closest(".kidia-fixed-chrome-card")) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }
 		if (media && !media.closest(".kidia-fixed-chrome-card") && window.wp && wp.media) { var mediaField = media.closest(".kidia-page-field--image"); var mediaFrame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false}); mediaFrame.on("select", function () { var attachment = mediaFrame.state().get("selection").first().toJSON(); var input = mediaField.querySelector(".kidia-page-media-url"); var image = mediaField.querySelector(".kidia-page-media-preview"); input.value = attachment.url || ""; image.src = attachment.url || ""; image.hidden = !attachment.url; markDirty(); schedulePreview(); }); mediaFrame.open(); }
 	});
 	root.addEventListener("change", schedulePreview);
