@@ -164,6 +164,19 @@
 	}
 
 	root.addEventListener("click", function (event) {
+		var collapseAll = event.target.closest("#kidia-collapse-all");
+		var expandAll = event.target.closest("#kidia-expand-all");
+		if (collapseAll || expandAll) {
+			var opening = Boolean(expandAll);
+			array(root.querySelectorAll(".kidia-page-card:not(.kidia-fixed-chrome-card)")).forEach(function (card) {
+				var body = card.querySelector(":scope > .kidia-page-card__body");
+				var toggle = card.querySelector(":scope > .kidia-page-card__header .kidia-page-expand, :scope > .kidia-page-card__header .kidia-fixed-chrome-expand");
+				if (body) { body.hidden = !opening; }
+				card.classList.toggle("is-open", opening);
+				if (toggle) { toggle.setAttribute("aria-expanded", opening ? "true" : "false"); }
+			});
+			return;
+		}
 		var button = event.target.closest(".kidia-page-expand");
 		var media = event.target.closest(".kidia-page-media-choose, .kidia-page-media-preview");
 		if (button && !button.closest(".kidia-fixed-chrome-card")) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }

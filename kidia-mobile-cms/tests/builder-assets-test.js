@@ -393,6 +393,7 @@ function runHomeBuilderTest() {
 
 function runMergeControlsContractTest() {
 	const homePage = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "home-builder.php"), "utf8");
+	const builderToolbar = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
   const template = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
   const registry = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-block-registry.php"), "utf8");
   const pageStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
@@ -411,8 +412,8 @@ function runMergeControlsContractTest() {
 	const homeTypes = Array.from(schemaMap[1].matchAll(/^\s*'([a-z_]+)'\s*=>\s*'[a-z-]+',?$/gm), function (match) { return match[1]; });
 
 	assert.equal(homeTypes.length, 17, "The Section Layout contract must cover all 17 registered Home element types.");
-	assert.equal((homePage.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element must render exactly once.");
-	const addElementIndex = homePage.indexOf('id="kidia-add-element"');
+	assert.equal((builderToolbar.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element must render exactly once in the shared toolbar.");
+	const addElementIndex = homePage.indexOf("admin/pages/builder-toolbar.php");
 	const renderedBlockIndex = homePage.indexOf("admin/templates/block-template.php");
 	assert.ok(addElementIndex < renderedBlockIndex, "Add Element must remain in the original top toolbar.");
 	assert.match(heroBlockSource, /kidia-repeatable-item-actions[\s\S]*kidia-remove-hero-block-item[\s\S]*kidia-add-hero-block-item/, "Each Slide header must place Remove beside Add Slide.");
@@ -507,7 +508,7 @@ function runMergeControlsContractTest() {
 	assert.match(settingsSections, /element\.dataset\.element === "empty_state"[\s\S]*\^\(title\|description\|button_label\|button_action\|show_button\)\$[\s\S]*section = "text"/, "Empty Wishlist must keep its two action controls and Show button toggle inside Text & Content without a separate Visibility section.");
 	assert.match(settingsSections, /filter_options:\s*"Available Filters"/, "Filter and Sort Bar must group its available filters together.");
 	assert.match(settingsSections, /\^\(product_carousel\|product_grid\)\$[\s\S]*content_data[\s\S]*carousel_actions[\s\S]*card_layout[\s\S]*carousel_visibility[\s\S]*quick_add[\s\S]*carousel_wishlist/, "Product Carousel and Product Grid must share the explicit six-section settings map.");
-	assert.match(settingsSections, /pageElement\.dataset\.element === "product_grid"[\s\S]*productType = "product_grid"/, "Catalog Product Grid must use the same specialized settings component as Home Product Grid.");
+	assert.match(settingsSections, /\^\(product_grid\|wishlist_grid\)\$[\s\S]*productType = pageElement\.dataset\.element/, "Catalog and Wishlist Product Grids must use the same specialized settings component as Home Product Grid.");
 	const appRouterSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "app", "app_router.dart"), "utf8");
 	const wishlistButtonSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "shared", "widgets", "product", "product_wishlist_button.dart"), "utf8");
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
@@ -862,7 +863,9 @@ function runPageBuilderTest() {
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
 	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
-	assert.match(pageTemplateSource, /'product' === \$page[\s\S]*restore_product_defaults[\s\S]*Restore Product Defaults/, "Only Product Page must expose the confirmed defaults restore action.");
+	const sharedToolbarSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
+	assert.match(pageTemplateSource, /\$kidia_toolbar_restore_product = 'product' === \$page/, "Only Product Page must request the defaults action from the shared toolbar.");
+	assert.match(sharedToolbarSource, /restore_product_defaults[\s\S]*Restore Product Defaults/, "The shared toolbar must render the confirmed Product defaults action when requested.");
 	assert.match(storeSource, /public function reset_layout\( string \$page \): bool[\s\S]*delete_option\( self::OPTION_PREFIX \. \$page \)/, "The defaults action must delete only the selected page option.");
 	assert.match(pageTemplateSource, /kidia-product-position/, "Product icon positions must use the visual product-card selector.");
 	const settingsSectionsSource = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "settings-sections.js"), "utf8");

@@ -8,6 +8,7 @@
 		carousel_actions: "Actions & Navigation",
 		card_layout: "Card Layout",
 		carousel_visibility: "Visibility & Display",
+		wishlist_products: "Wishlist Products",
 		quick_add: "Quick Add",
 		carousel_wishlist: "Wishlist",
 		layout: "Layout & Spacing",
@@ -59,7 +60,7 @@
 		var homeBlock = container.closest("[data-type]");
 		var pageElement = container.closest("[data-element]");
 		var productType = homeBlock && /^(product_carousel|product_grid)$/.test(homeBlock.dataset.type) ? homeBlock.dataset.type : "";
-		if (!productType && pageElement && pageElement.dataset.element === "product_grid") { productType = "product_grid"; }
+		if (!productType && pageElement && /^(product_grid|wishlist_grid)$/.test(pageElement.dataset.element)) { productType = pageElement.dataset.element; }
 		if (productType) {
 			Array.prototype.forEach.call(container.querySelectorAll(":scope > .kidia-builder-grid"), function (grid) {
 				Array.prototype.slice.call(grid.children).forEach(function (field) { container.insertBefore(field, grid); });
@@ -85,6 +86,9 @@
 				else if (/^(show_wishlist|product_wishlist_)/.test(productKey)) { section = "carousel_wishlist"; }
 				else if (/^pagination_|^products_per_page$/.test(productKey)) { section = "pagination"; }
 			}
+			if (element && element.dataset.element === "wishlist_grid" && /^(image|layout|colors|products|card_layout|content_data|carousel_visibility)$/.test(section)) {
+				section = "wishlist_products";
+			}
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
 				var input = node.querySelector("input[name],select[name],textarea[name]");
 				var match = input && input.name.match(/\[settings\]\[([^\]]+)\]/);
@@ -107,7 +111,11 @@
 			if (buckets[section] && buckets[section].length) {
 				var heading = document.createElement("div");
 				heading.className = "kidia-settings-section-title kidia-settings-section-title--" + section;
-				heading.textContent = labels[section];
+				heading.textContent = pageElement && pageElement.dataset.element === "wishlist_grid" && section === "quick_add"
+					? "Cart Settings"
+					: pageElement && pageElement.dataset.element === "wishlist_grid" && section === "carousel_wishlist"
+						? "Wishlist Settings"
+						: labels[section];
 				container.appendChild(heading);
 				buckets[section].forEach(function (node) { container.appendChild(node); });
 			}
