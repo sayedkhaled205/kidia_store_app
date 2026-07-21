@@ -765,6 +765,19 @@
 	margin-inline-start: auto;
 }
 
+.kidia-slider-editor-item > .kidia-hero-block-item__header,
+.kidia-banner-editor-item > .kidia-hero-block-item__header {
+	justify-content: flex-start;
+	direction: ltr;
+}
+
+.kidia-slider-editor-item > .kidia-hero-block-item__header .kidia-repeatable-item-actions,
+.kidia-banner-editor-item > .kidia-hero-block-item__header .kidia-repeatable-item-actions {
+	margin-inline-start: 0;
+	flex: 0 0 auto;
+	direction: ltr;
+}
+
 .kidia-repeatable-item-actions .button {
 	min-height: 34px;
 	margin: 0;
