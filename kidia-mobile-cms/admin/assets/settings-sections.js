@@ -94,6 +94,12 @@
 				else if (/color$/.test(key)) { section = "colors"; }
 				else { section = "layout"; }
 			}
+			if (element && element.dataset.element === "empty_state" && section !== "section_layout") {
+				var emptyInput = node.querySelector("input[name],select[name],textarea[name]");
+				var emptyMatch = emptyInput && emptyInput.name.match(/\[settings\]\[([^\]]+)\]/);
+				var emptyKey = emptyMatch ? emptyMatch[1] : "";
+				if (/^(title|description|button_label|button_action|show_button)$/.test(emptyKey)) { section = "text"; }
+			}
 			if (!buckets[section]) { buckets[section] = []; }
 			buckets[section].push(node);
 		});

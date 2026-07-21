@@ -19,12 +19,14 @@ class WishlistScreen extends StatefulWidget {
     super.key,
     this.onProductTap,
     this.onContinueShopping,
+    this.onSignIn,
   });
 
   final WishlistRepository repository;
   final CatalogRepository catalogRepository;
   final ValueChanged<CatalogProduct>? onProductTap;
   final VoidCallback? onContinueShopping;
+  final VoidCallback? onSignIn;
 
   @override
   State<WishlistScreen> createState() => _WishlistScreenState();
@@ -127,6 +129,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
           settings: layout.element('empty_state'),
           onRefresh: _controller.refresh,
           onContinueShopping: widget.onContinueShopping,
+          onSignIn: widget.onSignIn,
         ));
       case WishlistStatus.ready:
         if (!layout.element('wishlist_grid').enabled) {
@@ -528,15 +531,19 @@ class _WishlistEmpty extends StatelessWidget {
     required this.settings,
     required this.onRefresh,
     this.onContinueShopping,
+    this.onSignIn,
   });
 
   final _WishlistCopy copy;
   final CmsPageComponent settings;
   final Future<void> Function() onRefresh;
   final VoidCallback? onContinueShopping;
+  final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context) {
+    final bool signsIn = settings.string('button_action', 'shopping') == 'sign_in';
+    final VoidCallback? action = signsIn ? onSignIn : onContinueShopping;
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
@@ -560,13 +567,13 @@ class _WishlistEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(settings.string('description', copy.emptyBody), textAlign: TextAlign.center),
-          if (onContinueShopping != null && settings.boolean('show_button', true)) ...<Widget>[
+          if (action != null && settings.boolean('show_button', true)) ...<Widget>[
             const SizedBox(height: 22),
             Center(
               child: FilledButton.icon(
                 key: const Key('wishlist-continue-shopping'),
-                onPressed: onContinueShopping,
-                icon: const Icon(Icons.storefront_outlined),
+                onPressed: action,
+                icon: Icon(signsIn ? Icons.login_rounded : Icons.storefront_outlined),
                 label: Text(settings.string('button_label', copy.continueShopping)),
               ),
             ),

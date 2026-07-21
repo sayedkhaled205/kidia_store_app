@@ -291,13 +291,25 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
               GoRoute(
                 path: '/wishlist',
                 builder: (context, state) => Consumer(
-                  builder: (context, ref, child) => WishlistScreen(
-                    repository: ref.watch(wishlistRepositoryProvider),
-                    catalogRepository: ref.watch(catalogRepositoryProvider),
-                    onProductTap: (product) =>
-                        context.push('/product/${product.id}'),
-                    onContinueShopping: () => context.go('/'),
-                  ),
+                  builder: (context, ref, child) {
+                    final AsyncValue<AuthSession?> authState = ref.watch(
+                      authControllerProvider,
+                    );
+                    if (authState.isLoading) {
+                      return const _ProtectedAccountLoading();
+                    }
+                    if (authState.asData?.value == null) {
+                      return const AuthScreen(popOnSuccess: false);
+                    }
+                    return WishlistScreen(
+                      repository: ref.watch(wishlistRepositoryProvider),
+                      catalogRepository: ref.watch(catalogRepositoryProvider),
+                      onProductTap: (product) =>
+                          context.push('/product/${product.id}'),
+                      onContinueShopping: () => context.go('/'),
+                      onSignIn: () => context.push('/auth'),
+                    );
+                  },
                 ),
               ),
             ],

@@ -1944,7 +1944,9 @@ class _ProductShareSheet extends StatelessWidget {
                   child: Text(
                     'شارك المنتج مع أصدقائك',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                 ),
                 const SizedBox(width: 48),
@@ -2025,7 +2027,8 @@ class _ProductShareSheet extends StatelessWidget {
                   key: const Key('share-copy-link'),
                   label: 'نسخ الرابط',
                   icon: const Icon(Icons.link_rounded),
-                  color: colors.onSurface,
+                  color: Colors.white,
+                  foregroundColor: colors.onSurface,
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: _link));
                     if (!context.mounted) return;
@@ -2038,7 +2041,8 @@ class _ProductShareSheet extends StatelessWidget {
                   key: const Key('share-more'),
                   label: 'المزيد',
                   icon: const Icon(Icons.more_horiz_rounded),
-                  color: colors.onSurface,
+                  color: Colors.white,
+                  foregroundColor: colors.onSurface,
                   onTap: () async {
                     await Share.share(_message, subject: product.name);
                   },
@@ -2064,12 +2068,14 @@ class _ShareAction extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.foregroundColor = Colors.white,
     super.key,
   });
 
   final String label;
   final Widget icon;
   final Color color;
+  final Color foregroundColor;
   final Future<void> Function() onTap;
 
   @override
@@ -2086,9 +2092,9 @@ class _ShareAction extends StatelessWidget {
               key: const Key('share-action-circle'),
               radius: 27,
               backgroundColor: color,
-              foregroundColor: Colors.white,
+              foregroundColor: foregroundColor,
               child: IconTheme(
-                data: const IconThemeData(color: Colors.white, size: 29),
+                data: IconThemeData(color: foregroundColor, size: 29),
                 child: SizedBox.square(dimension: 29, child: icon),
               ),
             ),
