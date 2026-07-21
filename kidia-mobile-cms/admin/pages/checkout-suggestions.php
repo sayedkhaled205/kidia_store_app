@@ -25,16 +25,10 @@ defined( 'ABSPATH' ) || exit;
 				</div>
 				<div class="kidia-page-card__body">
 					<div class="kidia-page-fields kidia-checkout-suggestions-fields">
-						<div class="kidia-settings-section-title kidia-settings-section-title--checkout-suggestions"><?php esc_html_e( 'Checkout Suggestions', 'kidia-mobile-cms' ); ?></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></label><select name="suggestions[source]"><?php foreach ( array( 'latest' => 'Latest', 'featured' => 'Featured', 'on_sale' => 'On sale', 'category' => 'Category', 'manual' => 'Manual IDs' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['source'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-						<?php foreach ( array( 'category_id' => 'Category ID', 'manual_product_ids' => 'Manual Product IDs', 'limit' => 'Product limit', 'columns' => 'Columns' ) as $key => $label ) : ?>
-							<div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="<?php echo in_array( $key, array( 'category_id', 'limit', 'columns' ), true ) ? 'number' : 'text'; ?>" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>"></div>
-						<?php endforeach; ?>
+						<div class="kidia-settings-section-title kidia-settings-section-title--suggested-appearance"><?php esc_html_e( 'Content & Appearance', 'kidia-mobile-cms' ); ?></div>
 						<div class="kidia-page-field"><label><?php esc_html_e( 'Image ratio', 'kidia-mobile-cms' ); ?></label><input type="number" step="0.1" name="suggestions[image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
 						<div class="kidia-page-field"><label><?php esc_html_e( 'Section title', 'kidia-mobile-cms' ); ?></label><input type="text" name="suggestions[title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
 						<div class="kidia-page-field"><label><?php esc_html_e( 'Add button label', 'kidia-mobile-cms' ); ?></label><input type="text" name="suggestions[button_label]" value="<?php echo esc_attr( (string) $settings['button_label'] ); ?>"></div>
-
-						<div class="kidia-settings-section-title"><?php esc_html_e( 'Card & Appearance', 'kidia-mobile-cms' ); ?></div>
 						<div class="kidia-page-field"><label><?php esc_html_e( 'Card style', 'kidia-mobile-cms' ); ?></label><select name="suggestions[card_style]"><?php foreach ( array( 'minimal' => 'Minimal', 'no_shadow' => 'No shadow', 'outlined' => 'Outlined', 'elevated' => 'Elevated' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['card_style'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
 						<div class="kidia-page-field"><label><?php esc_html_e( 'Card radius', 'kidia-mobile-cms' ); ?></label><input type="number" name="suggestions[card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
 						<?php foreach ( array( 'show_price' => 'Show price', 'show_regular_price' => 'Show regular price', 'show_rating' => 'Show rating' ) as $key => $label ) : ?>
@@ -42,6 +36,12 @@ defined( 'ABSPATH' ) || exit;
 						<?php endforeach; ?>
 						<?php foreach ( array( 'button_color' => 'Button color', 'button_text_color' => 'Button text color' ) as $key => $label ) : ?>
 							<div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="color" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $settings[ $key ] ); ?>"></div>
+						<?php endforeach; ?>
+
+						<div class="kidia-settings-section-title kidia-settings-section-title--suggested-products-actions"><?php esc_html_e( 'Products & Actions', 'kidia-mobile-cms' ); ?></div>
+						<div class="kidia-page-field"><label><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></label><select name="suggestions[source]"><?php foreach ( array( 'latest' => 'Latest', 'featured' => 'Featured', 'on_sale' => 'On sale', 'category' => 'Category', 'manual' => 'Manual IDs' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['source'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+						<?php foreach ( array( 'category_id' => 'Category ID', 'manual_product_ids' => 'Manual Product IDs', 'limit' => 'Product limit', 'columns' => 'Columns' ) as $key => $label ) : ?>
+							<div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="<?php echo in_array( $key, array( 'category_id', 'limit', 'columns' ), true ) ? 'number' : 'text'; ?>" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>"></div>
 						<?php endforeach; ?>
 					</div>
 				</div>
