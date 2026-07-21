@@ -512,6 +512,10 @@ function runMergeControlsContractTest() {
 	const appRouterSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "app", "app_router.dart"), "utf8");
 	const wishlistButtonSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "shared", "widgets", "product", "product_wishlist_button.dart"), "utf8");
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
+	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
+	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*Colors\.white/, "Product Page must keep every uncovered gap white.");
+	assert.match(productScreenSource, /SliverToBoxAdapter\(\s*child:\s*_ProductGallery\(/, "Product Gallery must start directly below the header without a spacing frame.");
+	assert.match(productScreenSource, /_naturalAspectRatio[\s\S]*info\.image\.width[\s\S]*info\.image\.height[\s\S]*AnimatedSize/, "Product Gallery height must adapt to the loaded image dimensions.");
 	assert.match(appRouterSource, /path:\s*'\/wishlist'[\s\S]*authControllerProvider[\s\S]*AuthScreen\(popOnSuccess:\s*false\)[\s\S]*WishlistScreen/, "Opening the Wishlist route while signed out must show Sign in before wishlist content.");
 	assert.match(wishlistButtonSource, /ref\.read\(authControllerProvider\)[\s\S]*session == null[\s\S]*context\.push\('\/auth'\)/, "Every product Wishlist button must send signed-out shoppers to Sign in instead of changing local wishlist data.");
 	assert.match(wishlistScreenSource, /settings\.string\('button_action',\s*'shopping'\) == 'sign_in'[\s\S]*signsIn \? onSignIn : onContinueShopping/, "Empty Wishlist must execute exactly the selected Sign in or Continue shopping action while retaining shopping as the default.");

@@ -175,7 +175,7 @@ class CmsPageLayout {
 	static Map<String, dynamic> _fallbackProductSettings(String id) {
 		const Map<String, Map<String, dynamic>> settings = <String, Map<String, dynamic>>{
 			'product_tabs': <String, dynamic>{'sticky': true, 'overview_label': 'Overview', 'reviews_label': 'Reviews', 'recommend_label': 'Recommend', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
-			'image_gallery': <String, dynamic>{'aspect_ratio': .75, 'fit': 'contain', 'background_color': '#F4F2F3', 'show_thumbnails': false, 'show_indicators': false, 'show_counter': true, 'counter_background': '#8A8585', 'counter_text_color': '#FFFFFF', 'enable_zoom': false},
+			'image_gallery': <String, dynamic>{'aspect_ratio': .75, 'fit': 'contain', 'background_color': '#FFFFFF', 'show_thumbnails': false, 'show_indicators': false, 'show_counter': true, 'counter_background': '#8A8585', 'counter_text_color': '#FFFFFF', 'enable_zoom': false},
 			'product_summary': <String, dynamic>{'show_name': true, 'show_price': true, 'show_regular_price': true, 'show_rating': true, 'show_review_count': true, 'show_sku': false, 'show_stock': false, 'show_badge': false, 'show_selected_color': true, 'price_size': 25, 'name_size': 18},
 			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'chip_radius': 22, 'chip_height': 44},
 			'purchase_bar': <String, dynamic>{'show_quantity': false},

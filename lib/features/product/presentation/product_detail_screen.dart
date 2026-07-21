@@ -104,6 +104,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
         layout: layout,
         defaultTitle: copy.description,
+        backgroundColor: Colors.white,
         actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
 		  onNotification: (ScrollUpdateNotification notification) {
@@ -314,13 +315,10 @@ class _ProductContent extends StatelessWidget {
       slivers: <Widget>[
         if (pageLayout.element('image_gallery').enabled)
           SliverToBoxAdapter(
-            child: CmsElementFrame(
-              component: pageLayout.element('image_gallery'),
-              child: _ProductGallery(
-                images: images,
-                productName: product.name,
-                settings: pageLayout.element('image_gallery'),
-              ),
+            child: _ProductGallery(
+              images: images,
+              productName: product.name,
+              settings: pageLayout.element('image_gallery'),
             ),
           ),
         if (pageLayout.element('product_tabs').enabled)
@@ -851,11 +849,20 @@ class _ProductGallery extends StatefulWidget {
 class _ProductGalleryState extends State<_ProductGallery> {
   int _page = 0;
   late PageController _pageController;
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageStreamListener;
+  double? _naturalAspectRatio;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _initialPage());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolveNaturalAspectRatio();
   }
 
   int _initialPage() {
@@ -869,12 +876,19 @@ class _ProductGalleryState extends State<_ProductGallery> {
   @override
   void didUpdateWidget(_ProductGallery oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.images.isNotEmpty &&
-        widget.images.isNotEmpty &&
-        oldWidget.images.first.source != widget.images.first.source) {
+    final Uri? oldSource = oldWidget.images.isEmpty
+        ? null
+        : oldWidget.images.first.source;
+    final Uri? newSource = widget.images.isEmpty
+        ? null
+        : widget.images.first.source;
+    if (oldSource != newSource) {
       _page = 0;
       _pageController.dispose();
       _pageController = PageController(initialPage: _initialPage());
+      _detachImageStream();
+      _naturalAspectRatio = null;
+      _resolveNaturalAspectRatio();
     } else if (_page >= widget.images.length) {
       _page = 0;
     }
@@ -882,35 +896,79 @@ class _ProductGalleryState extends State<_ProductGallery> {
 
   @override
   void dispose() {
+    _detachImageStream();
     _pageController.dispose();
     super.dispose();
   }
 
+  void _detachImageStream() {
+    final ImageStream? stream = _imageStream;
+    final ImageStreamListener? listener = _imageStreamListener;
+    if (stream != null && listener != null) stream.removeListener(listener);
+    _imageStream = null;
+    _imageStreamListener = null;
+  }
+
+  void _resolveNaturalAspectRatio() {
+    if (_naturalAspectRatio != null || _imageStream != null) return;
+    _detachImageStream();
+    if (widget.images.isEmpty) return;
+    final ImageStream stream = NetworkImage(
+      widget.images.first.source.toString(),
+    ).resolve(createLocalImageConfiguration(context));
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (ImageInfo info, bool synchronousCall) {
+        final double width = info.image.width.toDouble();
+        final double height = info.image.height.toDouble();
+        if (!mounted || width <= 0 || height <= 0) return;
+        final double resolved = (width / height).clamp(0.45, 2.4).toDouble();
+        if (_naturalAspectRatio != resolved) {
+          setState(() => _naturalAspectRatio = resolved);
+        }
+        stream.removeListener(listener);
+        if (identical(_imageStream, stream)) {
+          _imageStream = null;
+          _imageStreamListener = null;
+        }
+      },
+      onError: (Object error, StackTrace? stackTrace) {
+        stream.removeListener(listener);
+        if (identical(_imageStream, stream)) {
+          _imageStream = null;
+          _imageStreamListener = null;
+        }
+      },
+    );
+    _imageStream = stream;
+    _imageStreamListener = listener;
+    stream.addListener(listener);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
     if (widget.images.isEmpty) {
       return AspectRatio(
         aspectRatio: widget.settings.number('aspect_ratio', 1).clamp(0.6, 1.8),
         child: AppNetworkImageError(
-          backgroundColor: colors.surfaceContainerLow,
+          backgroundColor: Colors.white,
           iconSize: 54,
         ),
       );
     }
 
-    final double aspectRatio = widget.settings
+    final double aspectRatio = _naturalAspectRatio ?? widget.settings
         .number('aspect_ratio', 1)
         .clamp(0.6, 1.8);
     final BoxFit fit = widget.settings.string('fit', 'contain') == 'cover'
         ? BoxFit.cover
         : BoxFit.contain;
     final bool enableZoom = widget.settings.boolean('enable_zoom', true);
-    final Color galleryBackground = _cmsColor(
-      widget.settings.string('background_color', '#F4F2F3'),
-      const Color(0xFFF4F2F3),
-    );
-    final Widget pager = AspectRatio(
+    const Color galleryBackground = Colors.white;
+    final Widget pager = AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      child: AspectRatio(
           aspectRatio: aspectRatio,
           child: PageView.builder(
             key: ValueKey<String>(widget.images.first.source.toString()),
@@ -942,7 +1000,8 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   : imageWidget;
             },
           ),
-        );
+        ),
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
