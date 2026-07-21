@@ -9,6 +9,7 @@
 		card_layout: "Card Layout",
 		carousel_visibility: "Visibility & Display",
 		wishlist_products: "Wishlist Products",
+		related_products: "Related Products",
 		quick_add: "Quick Add",
 		carousel_wishlist: "Wishlist",
 		layout: "Layout & Spacing",
@@ -88,6 +89,9 @@
 			}
 			if (element && element.dataset.element === "wishlist_grid" && /^(image|layout|colors|products|card_layout|content_data|carousel_visibility)$/.test(section)) {
 				section = "wishlist_products";
+			}
+			if (element && element.dataset.element === "related_products" && section !== "section_layout") {
+				section = "related_products";
 			}
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
 				var input = node.querySelector("input[name],select[name],textarea[name]");

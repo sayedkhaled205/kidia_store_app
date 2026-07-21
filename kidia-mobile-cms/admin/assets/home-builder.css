@@ -1294,9 +1294,9 @@
 }
 
 /* Promo Strip Actions & Navigation follows the approved fixed two-row map. */
-.kidia-promo-action-setting--background { grid-column: 1; }
-.kidia-promo-action-setting--text-color { grid-column: 2; }
-.kidia-promo-action-setting--text { grid-column: 3; }
+.kidia-promo-action-setting--text { grid-column: 1; }
+.kidia-promo-action-setting--background { grid-column: 2; }
+.kidia-promo-action-setting--text-color { grid-column: 3; }
 .kidia-promo-action-setting--action-type { grid-column: 1; }
 .kidia-promo-action-setting--action-value { grid-column: 2; }
 
