@@ -268,9 +268,17 @@
 .kidia-app-header.is-transition-fade { animation:kidia-header-fade var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-slide { animation:kidia-header-slide var(--collapse-duration,260ms) ease both; }
 .kidia-app-header.is-transition-fade_slide { animation:kidia-header-fade-slide var(--collapse-duration,260ms) ease both; }
-.kidia-app-header.is-transition-smooth_compact.is-collapsed { animation:kidia-header-smooth-compact var(--collapse-duration,260ms) cubic-bezier(.2,.8,.2,1) both; }
+.kidia-app-header.is-transition-smooth_compact { animation:none; }
 .kidia-app-header.is-transition-scale { transform-origin:top center; animation:kidia-header-scale var(--collapse-duration,260ms) ease both; }
 .kidia-app-header-transition-layer { display:flex; position:absolute; inset:0; flex-direction:column; justify-content:center; gap:var(--row-gap); padding:5px 9px; pointer-events:none; transition:none; }
+.kidia-app-header.is-transition-smooth_compact .kidia-app-header-transition-layer,
+.kidia-app-header.is-transition-smooth_compact .kidia-app-header-brand,
+.kidia-app-header.is-transition-smooth_compact .kidia-app-header-title,
+.kidia-app-header.is-transition-smooth_compact .kidia-app-header-item,
+.kidia-app-header.is-transition-smooth_compact .kidia-app-search {
+	transition:opacity var(--collapse-duration,260ms) linear,transform var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1);
+	will-change:opacity,transform;
+}
 .kidia-app-header-transition-layer[style*="opacity:1"] { pointer-events:auto; }
 @keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }

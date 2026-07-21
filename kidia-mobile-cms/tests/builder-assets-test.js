@@ -1023,6 +1023,19 @@ function runCollapsedHeaderToggleTest() {
 	  const halfwayPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0.5 });
 	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--regular/, "PatPat-style preview must keep the regular header layer while scrolling.");
 	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--compact/, "PatPat-style preview must blend in the compact header layer while scrolling.");
+	  assert.match(halfwayPreview, /height:64px/, "PatPat-style collapse must keep the header card at its regular height throughout the movement.");
+	  assert.match(halfwayPreview, /margin:0px 0px 0px/, "PatPat-style collapse must not move the header card sideways during the movement.");
+	  const previewHost = window.document.createElement("div");
+	  previewHost.innerHTML = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0 });
+	  const movingHeader = previewHost.querySelector(".kidia-app-header");
+	  const fixedCardMetrics = [movingHeader.style.height, movingHeader.style.marginLeft, movingHeader.style.marginRight, movingHeader.style.borderRadius];
+	  [0.25, 0.5, 0.75].forEach((progress) => {
+	    window.KidiaChromePreview.updateHeaderProgress(movingHeader, progress);
+	    assert.deepEqual([movingHeader.style.height, movingHeader.style.marginLeft, movingHeader.style.marginRight, movingHeader.style.borderRadius], fixedCardMetrics, `Header card metrics must remain fixed at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--compact").style.opacity, String(progress), `Compact search opacity must follow the real ${progress * 100}% scroll ratio.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--compact").style.transform, `translateY(${18 * (1 - progress)}px)`, `Search must move progressively at ${progress * 100}% scroll.`);
+	  });
+	  assert.match(readAsset("chrome-layout.css"), /is-transition-smooth_compact \.kidia-app-header-transition-layer,[\s\S]*transition:opacity var\(--collapse-duration,260ms\) linear,transform var\(--collapse-duration,260ms\)/, "Smooth compact search and logo movement must use the configured transition duration rather than jump instantly.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
   toggle.checked = false;
 	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
