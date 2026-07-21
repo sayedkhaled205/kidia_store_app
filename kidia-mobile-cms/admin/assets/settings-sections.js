@@ -56,6 +56,14 @@
 	function addHeadings(container) {
 		if (!container || container.dataset.kidiaSectioned === "1") { return; }
 		Array.prototype.forEach.call(container.querySelectorAll(":scope > .kidia-settings-section-title"), function (heading) { heading.remove(); });
+		var homeBlock = container.closest("[data-type]");
+		var productType = homeBlock && /^(product_carousel|product_grid)$/.test(homeBlock.dataset.type) ? homeBlock.dataset.type : "";
+		if (productType) {
+			Array.prototype.forEach.call(container.querySelectorAll(":scope > .kidia-builder-grid"), function (grid) {
+				Array.prototype.slice.call(grid.children).forEach(function (field) { container.insertBefore(field, grid); });
+				grid.remove();
+			});
+		}
 		var children = Array.prototype.filter.call(container.children, function (node) {
 			return !node.classList.contains("kidia-settings-section-title") && (node.querySelector("input,select,textarea,button") || node.matches("label"));
 		});
@@ -63,17 +71,16 @@
 		children.forEach(function (node) {
 			var section = sectionFor(node);
 			var element = container.closest("[data-element]");
-			var homeBlock = container.closest("[data-type]");
-			if (homeBlock && homeBlock.dataset.type === "product_carousel" && section !== "section_layout") {
-				var carouselInput = node.querySelector("input[name],select[name],textarea[name]");
-				var carouselMatch = carouselInput && carouselInput.name.match(/\[settings\]\[([^\]]+)\]/);
-				var carouselKey = carouselMatch ? carouselMatch[1] : "";
-				if (/^(title|subtitle|source|limit|category_id|product_ids)$/.test(carouselKey)) { section = "content_data"; }
-				else if (/^(show_view_all|view_all_label|action_type|action_value)$/.test(carouselKey)) { section = "carousel_actions"; }
-				else if (/^(card_style|item_width|image_ratio|card_radius)$/.test(carouselKey)) { section = "card_layout"; }
-				else if (/^(show_name|show_price|show_regular_price|show_badge|show_rating)$/.test(carouselKey)) { section = "carousel_visibility"; }
-				else if (/^quick_add_/.test(carouselKey)) { section = "quick_add"; }
-				else if (/^(show_wishlist|product_wishlist_)/.test(carouselKey)) { section = "carousel_wishlist"; }
+			if (productType && section !== "section_layout") {
+				var productInput = node.querySelector("input[name],select[name],textarea[name]");
+				var productMatch = productInput && productInput.name.match(/\[settings\]\[([^\]]+)\]/);
+				var productKey = productMatch ? productMatch[1] : "";
+				if (/^(title|subtitle|source|limit|category_id|product_ids)$/.test(productKey)) { section = "content_data"; }
+				else if (/^(show_view_all|view_all_label|action_type|action_value)$/.test(productKey)) { section = "carousel_actions"; }
+				else if (/^(card_style|item_width|columns|image_ratio|card_radius)$/.test(productKey)) { section = "card_layout"; }
+				else if (/^(show_name|show_price|show_regular_price|show_badge|show_rating)$/.test(productKey)) { section = "carousel_visibility"; }
+				else if (/^quick_add_/.test(productKey)) { section = "quick_add"; }
+				else if (/^(show_wishlist|product_wishlist_)/.test(productKey)) { section = "carousel_wishlist"; }
 			}
 			if (element && element.dataset.element === "product_grid" && section !== "section_layout") { section = "general"; }
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {

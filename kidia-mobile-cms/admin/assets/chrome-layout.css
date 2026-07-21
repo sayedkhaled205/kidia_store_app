@@ -27,8 +27,11 @@
 .kidia-chrome-composer--collapsed[hidden],
 .kidia-collapsed-header-settings[hidden] { display:none!important; }
 .kidia-page-card__header .kidia-chrome-transfer-actions { display:flex; flex:0 0 auto; align-items:center; gap:7px; margin-inline-start:auto; }
-.kidia-fixed-chrome-card > .kidia-page-card__header { direction:rtl; }
-.kidia-fixed-chrome-card > .kidia-page-card__header .kidia-chrome-transfer-actions { direction:rtl; }
+.kidia-fixed-chrome-card > .kidia-page-card__header { direction:ltr; }
+.kidia-fixed-chrome-card > .kidia-page-card__header .kidia-fixed-chrome-identity { order:4; margin-left:auto; direction:rtl; }
+.kidia-fixed-chrome-card > .kidia-page-card__header .kidia-chrome-transfer-actions { order:1; margin:0; direction:ltr; }
+.kidia-fixed-chrome-card > .kidia-page-card__header .kidia-fixed-chrome-expand { order:2; }
+.kidia-fixed-chrome-card > .kidia-page-card__header > .kidia-page-master-toggle { order:3; margin:0; }
 .kidia-chrome-transfer-actions + .kidia-page-master-toggle { margin-inline-start:0; }
 .kidia-chrome-transfer-actions .button { display:inline-flex; min-height:34px; align-items:center; gap:4px; }
 .kidia-chrome-transfer-actions .dashicons { width:16px; height:16px; font-size:16px; }
