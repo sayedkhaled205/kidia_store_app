@@ -161,6 +161,21 @@
 	margin: 0;
 }
 
+/* Category stores each shared setting in the label itself, unlike Home/Page fields. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column > label {
+	display: flex !important;
+	min-width: 0;
+	min-height: 18px;
+	flex-direction: column !important;
+	align-items: flex-start !important;
+	gap: 5px !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	line-height: 18px !important;
+	direction: rtl !important;
+	text-align: right !important;
+}
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-section-layout-column > :is(.kidia-page-field, .kidia-builder-field, label) > label {
 	min-height: 18px;
 	margin: 0 0 5px;
