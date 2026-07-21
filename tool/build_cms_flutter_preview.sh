@@ -8,6 +8,7 @@ cd "$ROOT"
 flutter pub get
 flutter build web \
   --release \
+  --pwa-strategy=none \
   --target lib/cms_preview_main.dart \
   --dart-define=CMS_PREVIEW=true \
   --dart-define=STORE_LOCALE=ar \

@@ -41,6 +41,28 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // The CMS preview is an embedded, versioned plugin asset. A Flutter service
+    // worker can keep an older bundle alive (or repeatedly reload this iframe),
+    // so always remove stale registrations before starting the preview.
+    (async function startKidiaPreview() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => {
+            return registration.scope.includes('/admin/flutter-preview/')
+              ? registration.unregister()
+              : Promise.resolve(false);
+          }));
+        } catch (error) {
+          console.warn('Could not clear the old preview worker.', error);
+        }
+      }
+
+      const bootstrap = document.createElement('script');
+      bootstrap.src = 'flutter_bootstrap.js';
+      document.body.appendChild(bootstrap);
+    })();
+  </script>
 </body>
 </html>
