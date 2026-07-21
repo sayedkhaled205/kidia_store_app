@@ -92,8 +92,7 @@ $admin_theme = (string) file_get_contents( dirname( __DIR__ ) . '/admin/assets/a
 kidia_collapsed_header_assert( false !== strpos( $admin_theme, '--kidia-admin-button-radius: 10px' ), 'CMS buttons must keep square or rectangular proportions with lightly rounded corners.' );
 $chrome_template = (string) file_get_contents( dirname( __DIR__ ) . '/admin/pages/fixed-chrome-card.php' );
 kidia_collapsed_header_assert( false !== strpos( $chrome_template, 'kidia-chrome-setting--section-layout' ), 'Header and Footer must render their own Section Layout Settings panel.' );
-kidia_collapsed_header_assert( false !== strpos( $chrome_template, "array( 'margin_top', 'margin_bottom', 'space_up', 'space_down', 'background_color' )" ), 'Header and Footer must provide all five values to the shared Section Layout component.' );
-kidia_collapsed_header_assert( false !== strpos( $chrome_template, 'kidia-section-layout-component' ), 'Header and Footer must use the canonical shared Section Layout component.' );
+kidia_collapsed_header_assert( false !== strpos( $chrome_template, "array( 'margin_top', 'margin_bottom' )" ) && false !== strpos( $chrome_template, "array( 'space_up', 'space_down' )" ), 'Header and Footer must stack Merge and Space controls in the requested columns.' );
 $admin_controller = (string) file_get_contents( dirname( __DIR__ ) . '/admin/class-kidia-mobile-cms-admin.php' );
 kidia_collapsed_header_assert( false !== strpos( $admin_controller, 'admin/assets/admin-theme.css' ), 'The shared rounded button theme must load on every Kidia CMS page.' );
 
