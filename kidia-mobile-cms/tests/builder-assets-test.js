@@ -453,7 +453,8 @@ function runMergeControlsContractTest() {
   assert.match(pagePreview, /mergeDown-mergeUp/, "Page preview must pull elements together instead of adding positive margins.");
   assert.match(categoryPreview, /margin_bottom[^\n]+margin_top/, "Category preview must pull elements together instead of adding positive margins.");
 	assert.match(settingsSections, /section_layout:\s*"Section Layout Settings"/, "Every element must use the same final Section Layout Settings heading.");
-	assert.match(settingsSections, /sectionLayoutPanel\.className = "kidia-section-layout-panel"[\s\S]*container\.appendChild\(sectionLayoutPanel\)[\s\S]*sectionLayoutPanel\.appendChild\(finalHeading\)[\s\S]*sectionLayoutPanel\.appendChild\(buildSectionLayoutGrid/, "Section Layout Settings must always be an independent final panel containing its own heading and grid.");
+	assert.match(settingsSections, /sectionLayoutPanel\.className = "kidia-section-layout-panel"[\s\S]*isolatedSectionLayoutHost\(container\)[\s\S]*sectionLayoutHost\.appendChild\(sectionLayoutPanel\)[\s\S]*sectionLayoutPanel\.appendChild\(finalHeading\)[\s\S]*sectionLayoutPanel\.appendChild\(buildSectionLayoutGrid/, "Section Layout Settings must always mount outside the settings wrapper as an independent final panel containing its own heading and grid.");
+	assert.match(settingsSections, /function isolatedSectionLayoutHost\(container\)[\s\S]*closest\("\.kidia-builder-block__body,\.kidia-page-card__body"\) \|\| container/, "Every real element card must use its card body, rather than a preceding settings section, as the Section Layout host.");
 	assert.match(readAsset("admin-theme.css"), /\.kidia-section-layout-panel\s*\{[\s\S]*display:\s*block\s*!important;[\s\S]*grid-column:\s*1 \/ -1\s*!important;[\s\S]*padding:\s*14px\s*!important;[\s\S]*border:\s*1px solid #c9dfd9\s*!important;[\s\S]*border-radius:\s*10px\s*!important;[\s\S]*direction:\s*rtl\s*!important;/, "Section Layout Settings must be an independent bordered card matching General Settings rather than inheriting the previous section.");
 	assert.match(pageStore, /'hide_on_scroll', __\( 'Hide while scrolling down'/, "The footer scrolling field must use the shorter approved title.");
 	assert.doesNotMatch(pageStore, /Hide while scrolling down and show while scrolling up/, "The obsolete long scrolling field title must not return.");
@@ -512,6 +513,38 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-product-icon-panel__body > \.kidia-builder-field\s*\{\s*grid-column:\s*auto;\s*grid-row:\s*auto;/, "Quick Add and Wishlist fields must auto-fill all three columns instead of reserving one and behaving like two columns.");
 	assert.match(readAsset("home-builder.css"), /Quick Add\/Cart and Wishlist share the approved two-column fields \+ right position preview[\s\S]*\.kidia-product-icon-field--quick_add_position,[\s\S]*\.kidia-product-icon-field--product_wishlist_position\s*\{\s*grid-column:\s*1;\s*grid-row:\s*1 \/ 5;[\s\S]*quick_add_icon_variant,[\s\S]*product_wishlist_icon_variant\s*\{\s*grid-column:\s*3;\s*grid-row:\s*1;[\s\S]*quick_add_icon_style,[\s\S]*product_wishlist_icon_style\s*\{\s*grid-column:\s*2;\s*grid-row:\s*1;/, "Quick Add/Cart and Wishlist must use the approved right-side position preview with two ordered settings columns.");
 	assert.match(readAsset("home-builder.css"), /quick_add_background_color,[\s\S]*product_wishlist_background_color\s*\{\s*grid-column:\s*3;\s*grid-row:\s*4;[\s\S]*quick_add_show_background,[\s\S]*product_wishlist_show_background\s*\{\s*grid-column:\s*2;\s*grid-row:\s*4;/, "Quick Add/Cart and Wishlist final rows must end with background color and background On/Off exactly like the approved mockup.");
+	const productIconCss = readAsset("home-builder.css");
+	const productIconCssStart = productIconCss.indexOf(".kidia-product-icon-panel__body {");
+	const productIconCssEnd = productIconCss.indexOf("@media (max-width: 782px)", productIconCssStart);
+	assert.ok(productIconCssStart >= 0 && productIconCssEnd > productIconCssStart, "The product icon panel CSS must expose its desktop layout rules.");
+	const productIconKeys = [
+		"position", "icon_variant", "icon_style", "icon_size", "icon_color",
+		"background_size", "radius", "background_color", "show_background"
+	];
+	const productIconMarkup = ["quick_add", "product_wishlist"].flatMap(function (prefix) {
+		return productIconKeys.map(function (key) {
+			const name = `${prefix}_${key}`;
+			return `<div id="${name}" class="kidia-builder-field kidia-product-icon-field--${name}"></div>`;
+		});
+	}).join("");
+	const productIconDom = new JSDOM(`<!doctype html><html><head><style>${productIconCss.slice(productIconCssStart, productIconCssEnd)}</style></head><body><section class="kidia-product-icon-panel"><div class="kidia-product-icon-panel__body">${productIconMarkup}</div></section></body></html>`);
+	const approvedProductIconLayout = {
+		position: ["1", "1 / 5"],
+		icon_variant: ["3", "1"],
+		icon_style: ["2", "1"],
+		icon_size: ["3", "2"],
+		icon_color: ["2", "2"],
+		background_size: ["3", "3"],
+		radius: ["2", "3"],
+		background_color: ["3", "4"],
+		show_background: ["2", "4"]
+	};
+	["quick_add", "product_wishlist"].forEach(function (prefix) {
+		Object.entries(approvedProductIconLayout).forEach(function ([key, expected]) {
+			const computed = productIconDom.window.getComputedStyle(productIconDom.window.document.getElementById(`${prefix}_${key}`));
+			assert.deepEqual([computed.gridColumn, computed.gridRow], expected, `${prefix}_${key} must keep its approved computed position after the full CSS cascade.`);
+		});
+	});
 	assert.match(settingsSections, /function enhanceBooleanToggles\(root\)[\s\S]*kidia-unified-boolean[\s\S]*kidia-unified-boolean__state/, "All Builder boolean fields must be enhanced with the shared On/Off control.");
 	assert.match(readAsset("admin-theme.css"), /Every boolean setting uses the same On\/Off control instead of a tick box[\s\S]*\.kidia-unified-boolean__control > input\[type="checkbox"\][\s\S]*border-radius:\s*999px[\s\S]*content:\s*"Off"[\s\S]*content:\s*"On"/, "Every Builder must render boolean values as the shared On/Off switch rather than tick boxes.");
 	assert.match(readAsset("admin-theme.css"), /\.kidia-page-toggle\.kidia-unified-boolean > span:not\(\.kidia-unified-boolean__state\):not\(\.kidia-unified-boolean__control\)/, "Footer boolean fields must keep the unified switch container visible so On/Off values cannot become empty boxes.");
@@ -571,6 +604,18 @@ function runMergeControlsContractTest() {
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#category-fields > .kidia-section-layout-panel > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["element_background_color"]], "Category must use the same requested column order.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row").length, 0, "Quick Add must use the original settings grid without injected rows.");
 	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-title-subtitle-row").length, 0, "Title and Subtitle fields must use the original settings grid.");
+
+	const isolatedLayoutMarkup = ["margin_top", "margin_bottom", "space_up", "space_down", "background_color"].map(function (key) {
+		return `<div class="kidia-page-field kidia-section-layout-field"><label>${key}</label><input name="layout[elements][0][settings][${key}]" value="0"></div>`;
+	}).join("");
+	const isolatedLayoutDom = new JSDOM(`<!doctype html><html><body><div class="kidia-page-builder"><section class="kidia-page-card" data-element="product_grid"><div id="isolated-card-body" class="kidia-page-card__body"><section id="previous-settings-section" class="previous-settings-section"><div id="isolated-fields" class="kidia-page-fields"><div class="kidia-page-field"><label>Grid columns</label><select name="layout[elements][0][settings][columns]"><option>2</option></select></div>${isolatedLayoutMarkup}</div></section></div></section></div></body></html>`, { runScripts: "outside-only" });
+	isolatedLayoutDom.window.eval(settingsSections);
+	isolatedLayoutDom.window.document.dispatchEvent(new isolatedLayoutDom.window.Event("DOMContentLoaded"));
+	const isolatedCardBody = isolatedLayoutDom.window.document.getElementById("isolated-card-body");
+	const isolatedPanel = isolatedCardBody.querySelector(":scope > .kidia-section-layout-panel");
+	assert.ok(isolatedPanel, "Section Layout Settings must be a direct child of the element card body.");
+	assert.equal(isolatedLayoutDom.window.document.querySelectorAll("#previous-settings-section .kidia-section-layout-panel").length, 0, "Section Layout Settings must never remain nested inside the preceding settings section.");
+	assert.equal(isolatedPanel.querySelectorAll(":scope > .kidia-section-layout-grid input[name]").length, 5, "Moving Section Layout outside the settings wrapper must preserve its five submitted values exactly once.");
 
 	const promoBlock = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-promo-strip-block.php"), "utf8");
 	const homeBuilderCss = readAsset("home-builder.css");
