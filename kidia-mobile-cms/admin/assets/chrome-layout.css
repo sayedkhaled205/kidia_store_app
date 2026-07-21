@@ -253,6 +253,9 @@
 .kidia-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
 .kidia-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
 .kidia-chrome-composer--collapsed { margin-top:12px; }
+.kidia-chrome-composer--collapsed.is-disabled { border-color:#d6d9dc; background:#f1f2f3; box-shadow:none; }
+.kidia-chrome-composer--collapsed.is-disabled .kidia-chrome-composer__heading :is(h3,p) { color:#7a7f84; }
+.kidia-chrome-composer--collapsed.is-disabled :is(.kidia-chrome-layout,.kidia-chrome-palette,.kidia-chrome-reset) { opacity:.46; pointer-events:none; }
 .kidia-page-text-control { display:flex; align-items:center; gap:10px; }
 .kidia-page-text-control input { flex:1 1 auto; min-width:0; }
 .kidia-chrome-composer--collapsed.is-preset-locked .kidia-chrome-layout,
