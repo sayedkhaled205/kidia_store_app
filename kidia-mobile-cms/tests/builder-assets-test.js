@@ -567,7 +567,7 @@ function runMergeControlsContractTest() {
 	assert.match(pagePreview, /checked\(card, "show_result_count", false\)/, "Filter result count must default to hidden in both Flutter and the live preview.");
 	assert.match(pagePreview, /filter_icon_offset_y", -2/, "Filter icon vertical position must reach the live preview.");
   assert.match(pageStore, /quick_add_icon_size[^\n]+array\(\), 10, 36/, "Quick Add icons must support compact sizes down to 10px.");
-  assert.match(pageStore, /quick_add_background_size[^\n]+array\(\), 20, 64/, "Quick Add backgrounds must support compact sizes down to 20px.");
+  assert.match(pageStore, /quick_add_background_size[^\n]+array\(\), 10, 64/, "Quick Add backgrounds must support compact sizes down to 10px.");
   assert.match(pageStore, /product_wishlist_icon_size[^\n]+array\(\), 10, 36/, "Wishlist icons must support compact sizes down to 10px.");
   assert.match(pageStore, /product_wishlist_background_size[^\n]+array\(\), 20, 64/, "Wishlist backgrounds must support compact sizes down to 20px.");
 
@@ -845,6 +845,8 @@ function runPageBuilderTest() {
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
 	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	assert.match(pageTemplateSource, /'product' === \$page[\s\S]*restore_product_defaults[\s\S]*Restore Product Defaults/, "Only Product Page must expose the confirmed defaults restore action.");
+	assert.match(storeSource, /public function reset_layout\( string \$page \): bool[\s\S]*delete_option\( self::OPTION_PREFIX \. \$page \)/, "The defaults action must delete only the selected page option.");
 	assert.match(pageTemplateSource, /kidia-product-position/, "Product icon positions must use the visual product-card selector.");
 	const settingsSectionsSource = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "settings-sections.js"), "utf8");
 	assert.match(settingsSectionsSource, /enhanceProductPositions/, "Home product elements must receive the same visual position selector.");
@@ -872,7 +874,7 @@ function runPageBuilderTest() {
       </section>
       <div id="kidia-page-elements">
         <section class="kidia-page-card" data-element="filter_bar"><input name="layout[elements][0][id]" value="filter_bar"><input type="checkbox" name="layout[elements][0][enabled]" checked><span class="kidia-page-drag"></span></section>
-        <section class="kidia-page-card" data-element="product_grid"><input name="layout[elements][1][id]" value="product_grid"><input type="checkbox" name="layout[elements][1][enabled]" checked><input name="layout[elements][1][settings][columns]" value="3"><span class="kidia-page-drag"></span></section>
+        <section class="kidia-page-card" data-element="product_grid"><input name="layout[elements][1][id]" value="product_grid"><input type="checkbox" name="layout[elements][1][enabled]" checked><input name="layout[elements][1][settings][columns]" value="3"><input type="checkbox" name="layout[elements][1][settings][quick_add_enabled]" checked><input name="layout[elements][1][settings][quick_add_background_size]" value="12"><span class="kidia-page-drag"></span></section>
       </div>
       <section class="kidia-page-card kidia-page-card--locked" data-element="footer"><input type="checkbox" name="layout[footer][enabled]" checked><input name="layout[footer][height]" value="72"></section>
       </form>
@@ -887,6 +889,8 @@ function runPageBuilderTest() {
   assert.ok(window.document.querySelector(".kidia-page-preview-footer"), "The fixed page footer must render in preview.");
   assert.equal(window.document.querySelectorAll(".kidia-page-preview-element").length, 2, "Page-specific elements must render in preview.");
   assert.ok(window.document.querySelectorAll(".kidia-page-preview-product").length >= 3, "Product grids must render realistic product cards instead of empty squares.");
+  const compactQuickAdd = window.document.querySelector(".kidia-app-quick-add");
+  assert.deepEqual([compactQuickAdd.style.width, compactQuickAdd.style.height], ["12px", "12px"], "Quick Add preview must apply a saved background size below 20px to the real circle dimensions.");
   const list = window.document.getElementById("kidia-page-elements");
   list.insertBefore(list.lastElementChild, list.firstElementChild);
   list.kidiaSortableOptions.update();

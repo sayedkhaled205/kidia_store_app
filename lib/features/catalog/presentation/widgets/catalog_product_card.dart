@@ -164,7 +164,7 @@ class CatalogProductCard extends StatelessWidget {
                                         .toDouble(),
 							  backgroundSize: settings == null
 								  ? 40
-								  : settings!.number('quick_add_background_size', 40).clamp(20, 64).toDouble(),
+								  : settings!.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
                             ),
                           ),
                       ],

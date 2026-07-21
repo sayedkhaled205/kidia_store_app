@@ -371,7 +371,7 @@ class _WishlistProductCard extends StatelessWidget {
                         showBackground: settings.boolean('quick_add_show_background', true),
                         backgroundColor: _wishlistHexColor(settings.string('quick_add_background_color', '#FFFFFF')),
                         backgroundRadius: settings.number('quick_add_radius', 24).clamp(0, 40).toDouble(),
-						backgroundSize: settings.number('quick_add_background_size', 40).clamp(20, 64).toDouble(),
+						backgroundSize: settings.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
                       ),
                     ),
                   if (settings.boolean('show_badge', true) && product.isOnSale)

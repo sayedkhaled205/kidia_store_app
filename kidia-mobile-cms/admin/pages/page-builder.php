@@ -67,7 +67,7 @@ foreach ( $element_definitions as $definition ) {
 	<header class="kidia-page-builder__heading">
 		<div><h1><?php echo esc_html( sprintf( __( '%s Builder', 'kidia-mobile-cms' ), $page_label ) ); ?></h1><p><?php esc_html_e( 'Header and footer stay fixed. Reorder the page-specific elements and control every visible section.', 'kidia-mobile-cms' ); ?></p></div>
 	</header>
-	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Product Page settings restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
 			<div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div class="kidia-page-phone__screen"><div id="kidia-page-live-preview"></div></div></div>
@@ -76,7 +76,7 @@ foreach ( $element_definitions as $definition ) {
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_page_builder"><input type="hidden" name="builder_page" value="<?php echo esc_attr( $page ); ?>">
 			<?php wp_nonce_field( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' ); ?>
-			<div class="kidia-page-toolbar"><strong><?php echo esc_html( $page_label ); ?></strong><?php submit_button( __( 'Save Page Layout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
+			<div class="kidia-page-toolbar"><strong><?php echo esc_html( $page_label ); ?></strong><span class="kidia-page-toolbar__actions"><?php if ( 'product' === $page ) : ?><button type="submit" class="button kidia-restore-product-defaults" name="restore_product_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore every Product Page setting to its default value? This does not affect any other page.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Product Defaults', 'kidia-mobile-cms' ); ?></button><?php endif; ?><?php submit_button( __( 'Save Page Layout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></span></div>
 
 			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 

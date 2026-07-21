@@ -59,7 +59,7 @@ class ProductQuickAddButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
 	final double resolvedSize = (appearance?.backgroundSize ?? backgroundSize)
-		.clamp(20, 64)
+		.clamp(10, 64)
 		.toDouble();
     return SizedBox.square(
 	  key: Key('quick-add-shell-$productId'),

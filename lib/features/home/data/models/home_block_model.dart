@@ -523,7 +523,7 @@ abstract final class HomeBlockModel {
 		data,
 		'quick_add_background_size',
 		fallback: 40,
-		minimum: 20,
+		minimum: 10,
 		maximum: 64,
 	  ),
       position: _productActionPosition(
