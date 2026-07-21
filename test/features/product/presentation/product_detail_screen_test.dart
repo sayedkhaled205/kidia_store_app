@@ -77,7 +77,10 @@ void main() {
     expect(find.text('Product'), findsNothing);
 	expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
-    expect(find.text('In stock'), findsOneWidget);
+    expect(find.text('In stock'), findsNothing);
+	expect(find.byKey(const Key('product-tabs')), findsOneWidget);
+	expect(find.byKey(const Key('product-reviews-button')), findsOneWidget);
+	expect(find.byKey(const Key('related-products-button')), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),

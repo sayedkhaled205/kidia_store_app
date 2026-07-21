@@ -59,6 +59,7 @@ class CmsPageLayout {
         'product_grid',
       ],
       'product': <String>[
+		'product_tabs',
         'image_gallery',
         'product_summary',
         'variations',
@@ -126,15 +127,18 @@ class CmsPageLayout {
 		'inactive_color': '#6B7280',
 		'background_color': '#FFFFFF',
 		'hide_on_scroll': false,
-		'button_color': '#2F806E',
+		'button_color': page == 'product' ? '#1D1D1D' : '#2F806E',
 		'button_text_color': '#FFFFFF',
-		'button_width_percent': 58,
-		'button_height': 52,
+		'button_width_percent': page == 'product' ? 62 : 58,
+		'button_height': page == 'product' ? 56 : 52,
 		'button_style': 'filled',
 		'button_shape': 'custom',
 		'button_radius': 28,
 		'button_border_color': '#1F2933',
 		'button_border_width': 0,
+		'add_to_cart_label': page == 'product' ? 'Add to bag' : 'Add to cart',
+		'share_label': 'Share',
+		'like_label': 'Like',
 	};
     return CmsPageLayout(
       page: page,
@@ -150,9 +154,9 @@ class CmsPageLayout {
               id: id,
               type: id,
               enabled: true,
-			  settings: const <String, dynamic>{
-			    'background_color': '#FFFFFF',
-			  },
+			  settings: page == 'product'
+			      ? _fallbackProductSettings(id)
+			      : const <String, dynamic>{'background_color': '#FFFFFF'},
             ),
           )
           .toList(growable: false),
@@ -164,6 +168,20 @@ class CmsPageLayout {
       ),
     );
   }
+
+	static Map<String, dynamic> _fallbackProductSettings(String id) {
+		const Map<String, Map<String, dynamic>> settings = <String, Map<String, dynamic>>{
+			'product_tabs': <String, dynamic>{'sticky': true, 'overview_label': 'Overview', 'reviews_label': 'Reviews', 'recommend_label': 'Recommend', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
+			'image_gallery': <String, dynamic>{'aspect_ratio': .75, 'fit': 'contain', 'background_color': '#F4F2F3', 'show_thumbnails': false, 'show_indicators': false, 'show_counter': true, 'counter_background': '#8A8585', 'counter_text_color': '#FFFFFF', 'enable_zoom': false},
+			'product_summary': <String, dynamic>{'show_name': true, 'show_price': true, 'show_regular_price': true, 'show_rating': true, 'show_review_count': true, 'show_sku': false, 'show_stock': false, 'show_badge': false, 'show_selected_color': true, 'price_size': 25, 'name_size': 18},
+			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'chip_radius': 22, 'chip_height': 44},
+			'purchase_bar': <String, dynamic>{'show_quantity': false},
+			'description': <String, dynamic>{'accordion': true, 'details_label': 'Product Details', 'show_description': true, 'show_attributes': true},
+			'reviews': <String, dynamic>{'title': 'Reviews', 'show_summary': true, 'show_fit_summary': true, 'fit_small_percent': 1, 'fit_true_percent': 99, 'fit_large_percent': 0},
+			'related_products': <String, dynamic>{'title': 'You may also like', 'columns': 2, 'gap': 2, 'image_ratio': .75, 'show_price': true, 'show_quick_add': true},
+		};
+		return settings[id] ?? const <String, dynamic>{'background_color': '#FFFFFF'};
+	}
 
 	static Map<String, dynamic> _fallbackHeaderLayout(String page) {
 		Map<String, dynamic> column(double width, List<String> items, [String align = 'center']) => <String, dynamic>{'width': width, 'align': align, 'items': items};

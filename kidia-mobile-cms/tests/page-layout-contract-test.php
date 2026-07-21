@@ -172,7 +172,7 @@ foreach ( array( 'filter_price', 'filter_sale', 'filter_brand', 'filter_size', '
 }
 $expected = array(
 	'catalog' => array( 'filter_bar', 'product_grid' ),
-	'product' => array( 'image_gallery', 'purchase_bar', 'reviews' ),
+	'product' => array( 'product_tabs', 'image_gallery', 'product_summary', 'variations', 'purchase_bar', 'description', 'reviews', 'related_products' ),
 	'wishlist' => array( 'wishlist_grid', 'empty_state' ),
 	'account' => array( 'account_summary', 'account_menu', 'logout_button' ),
 );
@@ -198,6 +198,13 @@ foreach ( $expected as $page => $required ) {
 	$second_saved = $store->save_layout( $page, $submitted );
 	kidia_page_assert( strtoupper( $page ) . ' SECOND' === $second_saved['header']['settings']['title'], "$page must accept consecutive saves." );
 }
+$product_layout = $store->get_layout( 'product' );
+$product_ids = array_column( $product_layout['elements'], 'id' );
+$product_gallery = $product_layout['elements'][ array_search( 'image_gallery', $product_ids, true ) ];
+kidia_page_assert( true === $product_gallery['settings']['show_counter'], 'Product gallery must show its image counter by default.' );
+kidia_page_assert( false === $product_gallery['settings']['show_thumbnails'], 'PatPat gallery must hide thumbnails by default.' );
+kidia_page_assert( '#1D1D1D' === $product_layout['footer']['settings']['button_color'], 'Product action must use the PatPat black button.' );
+kidia_page_assert( 'Add to bag' === $product_layout['footer']['settings']['add_to_cart_label'], 'Product action must use the requested label.' );
 
 foreach ( array( 'home', 'category' ) as $page ) {
 	$layout = $store->get_layout( $page );
