@@ -443,9 +443,14 @@ CmsPageLayout _layout({
       <String, dynamic>{
         'columns': <Map<String, dynamic>>[
           <String, dynamic>{
-            'width': 100,
-            'align': 'center',
-            'items': <String>['search_bar', 'cart'],
+            'width': 84,
+            'align': 'left',
+            'items': <String>['search_bar'],
+          },
+          <String, dynamic>{
+            'width': 16,
+            'align': 'right',
+            'items': <String>['cart'],
           },
         ],
       },
