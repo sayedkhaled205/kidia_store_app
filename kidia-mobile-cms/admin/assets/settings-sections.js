@@ -57,7 +57,9 @@
 		if (!container || container.dataset.kidiaSectioned === "1") { return; }
 		Array.prototype.forEach.call(container.querySelectorAll(":scope > .kidia-settings-section-title"), function (heading) { heading.remove(); });
 		var homeBlock = container.closest("[data-type]");
+		var pageElement = container.closest("[data-element]");
 		var productType = homeBlock && /^(product_carousel|product_grid)$/.test(homeBlock.dataset.type) ? homeBlock.dataset.type : "";
+		if (!productType && pageElement && pageElement.dataset.element === "product_grid") { productType = "product_grid"; }
 		if (productType) {
 			Array.prototype.forEach.call(container.querySelectorAll(":scope > .kidia-builder-grid"), function (grid) {
 				Array.prototype.slice.call(grid.children).forEach(function (field) { container.insertBefore(field, grid); });
@@ -70,19 +72,19 @@
 		var buckets = {};
 		children.forEach(function (node) {
 			var section = sectionFor(node);
-			var element = container.closest("[data-element]");
+			var element = pageElement;
 			if (productType && section !== "section_layout") {
 				var productInput = node.querySelector("input[name],select[name],textarea[name]");
 				var productMatch = productInput && productInput.name.match(/\[settings\]\[([^\]]+)\]/);
 				var productKey = productMatch ? productMatch[1] : "";
 				if (/^(title|subtitle|source|limit|category_id|product_ids)$/.test(productKey)) { section = "content_data"; }
 				else if (/^(show_view_all|view_all_label|action_type|action_value)$/.test(productKey)) { section = "carousel_actions"; }
-				else if (/^(card_style|item_width|columns|image_ratio|card_radius)$/.test(productKey)) { section = "card_layout"; }
+				else if (/^(card_style|item_width|columns|gap|image_ratio|card_radius)$/.test(productKey)) { section = "card_layout"; }
 				else if (/^(show_name|show_price|show_regular_price|show_badge|show_rating)$/.test(productKey)) { section = "carousel_visibility"; }
 				else if (/^quick_add_/.test(productKey)) { section = "quick_add"; }
 				else if (/^(show_wishlist|product_wishlist_)/.test(productKey)) { section = "carousel_wishlist"; }
+				else if (/^pagination_|^products_per_page$/.test(productKey)) { section = "pagination"; }
 			}
-			if (element && element.dataset.element === "product_grid" && section !== "section_layout") { section = "general"; }
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
 				var input = node.querySelector("input[name],select[name],textarea[name]");
 				var match = input && input.name.match(/\[settings\]\[([^\]]+)\]/);
