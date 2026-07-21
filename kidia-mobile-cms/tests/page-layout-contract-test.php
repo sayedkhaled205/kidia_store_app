@@ -111,8 +111,8 @@ $product_ids = array_column( $product_default['elements'], 'id' );
 $product_summary = $product_default['elements'][ array_search( 'product_summary', $product_ids, true ) ];
 kidia_page_assert( ! array_key_exists( 'quick_add_enabled', $product_summary['settings'] ), 'Product Information must not own the quick-add setting.' );
 kidia_page_assert( 'product_action' === $product_default['footer']['settings']['style'], 'Product Page must default to the product action footer.' );
-kidia_page_assert( 58 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose a responsive button width control.' );
-kidia_page_assert( 52 === $product_default['footer']['settings']['button_height'], 'Product footer must expose a button height control.' );
+kidia_page_assert( 62 === $product_default['footer']['settings']['button_width_percent'], 'Product footer must expose the PatPat action width.' );
+kidia_page_assert( 56 === $product_default['footer']['settings']['button_height'], 'Product footer must expose the PatPat action height.' );
 foreach ( array( 'button_style', 'button_shape', 'button_border_color', 'button_border_width' ) as $button_setting ) {
 	kidia_page_assert( array_key_exists( $button_setting, $product_default['footer']['settings'] ), "Product footer must expose $button_setting." );
 }

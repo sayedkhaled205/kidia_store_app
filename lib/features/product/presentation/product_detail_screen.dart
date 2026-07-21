@@ -1067,48 +1067,6 @@ class _ProductBadges extends StatelessWidget {
   }
 }
 
-class _MoneyPrice extends StatelessWidget {
-  const _MoneyPrice({required this.money, this.showRegularPrice = true});
-
-  final CatalogMoney money;
-  final bool showRegularPrice;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final String price = money.displayAmount(money.priceMinor);
-    final String regular = money.displayAmount(money.regularPriceMinor);
-    if (price.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 10,
-      runSpacing: 6,
-      children: <Widget>[
-        Text(
-          price,
-          key: const Key('product-current-price'),
-          style: textTheme.headlineSmall?.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        if (showRegularPrice && money.isDiscounted && regular.isNotEmpty)
-          Text(
-            regular,
-            key: const Key('product-regular-price'),
-            style: textTheme.bodyLarge?.copyWith(
-              color: colors.onSurfaceVariant,
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _ProductOptionPicker extends StatelessWidget {
   const _ProductOptionPicker({
     required this.group,
