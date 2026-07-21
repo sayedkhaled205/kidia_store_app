@@ -92,7 +92,13 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_page_builder"><input type="hidden" name="builder_page" value="<?php echo esc_attr( $page ); ?>">
 			<?php wp_nonce_field( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' ); ?>
-			<div class="kidia-page-toolbar"><strong><?php echo esc_html( $page_label ); ?></strong><span class="kidia-page-toolbar__actions"><?php if ( 'product' === $page ) : ?><button type="submit" class="button kidia-restore-product-defaults" name="restore_product_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore every Product Page setting to its default value? This does not affect any other page.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Product Defaults', 'kidia-mobile-cms' ); ?></button><?php endif; ?><?php submit_button( __( 'Save Page Layout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></span></div>
+			<?php
+			$kidia_toolbar_title = $page_label;
+			$kidia_toolbar_save_label = __( 'Save Page Layout', 'kidia-mobile-cms' );
+			$kidia_toolbar_show_add = false;
+			$kidia_toolbar_restore_product = 'product' === $page;
+			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
+			?>
 
 			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 

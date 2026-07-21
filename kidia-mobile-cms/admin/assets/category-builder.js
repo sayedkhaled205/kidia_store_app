@@ -328,6 +328,18 @@
 		card.toggleClass("is-open", opening);
 	});
 
+	builder.on("click", "#kidia-collapse-all, #kidia-expand-all", function () {
+		var opening = this.id === "kidia-expand-all";
+		builder.find(".kidia-category-element").each(function () {
+			var card = $(this);
+			var body = card.children(".kidia-page-card__body").first();
+			var toggle = card.find(".kidia-category-element-expand").first();
+			body.prop("hidden", !opening);
+			card.toggleClass("is-open", opening);
+			toggle.attr("aria-expanded", opening ? "true" : "false");
+		});
+	});
+
 	if ($.fn && typeof $.fn.sortable === "function") {
 		builder.find(".kidia-category-list").each(function () {
 			$(this).sortable({

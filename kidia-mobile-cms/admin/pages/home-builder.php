@@ -193,55 +193,13 @@ foreach ( $library_options as $type => $option_name ) {
 		);
 		?>
 
-		<div class="kidia-builder-toolbar">
-
-			<div class="kidia-builder-toolbar__actions">
-				<button type="button" class="button button-primary" id="kidia-add-element">
-					<span class="dashicons dashicons-plus-alt2"></span>
-					<?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?>
-				</button>
-
-				<button
-					type="button"
-					class="button"
-					id="kidia-collapse-all"
-				>
-					<?php
-						esc_html_e(
-							'Collapse All',
-							'kidia-mobile-cms'
-						);
-						?>
-				</button>
-
-				<button
-					type="button"
-					class="button"
-					id="kidia-expand-all"
-				>
-					<?php
-						esc_html_e(
-							'Expand All',
-							'kidia-mobile-cms'
-						);
-						?>
-				</button>
-
-			</div>
-
-			<?php
-			submit_button(
-				__(
-					'Save Home Layout',
-					'kidia-mobile-cms'
-				),
-				'primary',
-				'submit',
-				false
-			);
-			?>
-
-		</div>
+		<?php
+		$kidia_toolbar_title = __( 'Home Page', 'kidia-mobile-cms' );
+		$kidia_toolbar_save_label = __( 'Save Home Layout', 'kidia-mobile-cms' );
+		$kidia_toolbar_show_add = true;
+		$kidia_toolbar_restore_product = false;
+		include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
+		?>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'header'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 		<div

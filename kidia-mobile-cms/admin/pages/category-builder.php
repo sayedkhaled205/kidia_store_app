@@ -97,10 +97,13 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="kidia_mobile_save_category_builder">
 				<?php wp_nonce_field( 'kidia_mobile_save_category_builder', 'kidia_mobile_category_builder_nonce' ); ?>
-				<div class="kidia-category-toolbar">
-					<strong><?php echo esc_html( sprintf( __( '%d WooCommerce categories', 'kidia-mobile-cms' ), count( $terms ) ) ); ?></strong>
-					<?php submit_button( __( 'Save Category Page', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
-				</div>
+				<?php
+				$kidia_toolbar_title = sprintf( __( '%d WooCommerce categories', 'kidia-mobile-cms' ), count( $terms ) );
+				$kidia_toolbar_save_label = __( 'Save Category Page', 'kidia-mobile-cms' );
+				$kidia_toolbar_show_add = false;
+				$kidia_toolbar_restore_product = false;
+				include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
+				?>
 
 				<?php $chrome_layout = $category_layout; $chrome_part = 'header'; $chrome_page = 'category'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
