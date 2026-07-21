@@ -83,7 +83,12 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 			<div class="kidia-category-phone">
 				<div class="kidia-category-phone__speaker"></div>
 				<div class="kidia-category-phone__screen">
+				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
+					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'category' ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
+					<div id="kidia-category-live-preview" class="kidia-category-phone__content kidia-legacy-preview-fallback" hidden></div>
+				<?php else : ?>
 					<div id="kidia-category-live-preview" class="kidia-category-phone__content"></div>
+				<?php endif; ?>
 				</div>
 			</div>
 			<p><?php esc_html_e( 'Live preview — scroll it to preview the collapsed header.', 'kidia-mobile-cms' ); ?></p>

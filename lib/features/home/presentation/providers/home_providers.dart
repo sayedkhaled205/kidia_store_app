@@ -7,6 +7,12 @@ import 'package:kidia_store_app/features/home/data/datasources/home_remote_data_
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
 import 'package:kidia_store_app/features/home/domain/repositories/home_repository.dart';
+import 'package:kidia_store_app/features/home/data/models/home_layout_model.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+
+final cmsPreviewHomeLayoutJsonProvider = StreamProvider<Map<String, dynamic>?>(
+  (Ref ref) => CmsPreviewLayoutBridge.homeLayouts,
+);
 
 final homeDioProvider = Provider<Dio>((Ref ref) {
   final Dio dio = Dio(
@@ -16,9 +22,7 @@ final homeDioProvider = Provider<Dio>((Ref ref) {
       sendTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 25),
       responseType: ResponseType.json,
-      headers: const <String, dynamic>{
-        'Accept': 'application/json',
-      },
+      headers: const <String, dynamic>{'Accept': 'application/json'},
     ),
   );
 
@@ -27,8 +31,7 @@ final homeDioProvider = Provider<Dio>((Ref ref) {
   return dio;
 });
 
-final homeRemoteDataSourceProvider =
-Provider<HomeRemoteDataSource>((Ref ref) {
+final homeRemoteDataSourceProvider = Provider<HomeRemoteDataSource>((Ref ref) {
   if (AppConfig.useMockHomeLayout) {
     return const MockHomeRemoteDataSource();
   }
@@ -45,20 +48,20 @@ final homeRepositoryProvider = Provider<HomeRepository>((Ref ref) {
   );
 });
 
-final homeLayoutProvider =
-FutureProvider.autoDispose.family<HomeLayout, String>(
-      (Ref ref, String locale) async {
-    final Timer refreshTimer = Timer(
-      const Duration(seconds: 5),
-      ref.invalidateSelf,
-    );
-    ref.onDispose(refreshTimer.cancel);
-    final HomeRepository repository = ref.watch(
-      homeRepositoryProvider,
-    );
+final homeLayoutProvider = FutureProvider.autoDispose
+    .family<HomeLayout, String>((Ref ref, String locale) async {
+      final Map<String, dynamic>? previewJson = ref
+          .watch(cmsPreviewHomeLayoutJsonProvider)
+          .value;
+      if (previewJson != null) {
+        return HomeLayoutModel.fromJson(previewJson);
+      }
+      final Timer refreshTimer = Timer(
+        const Duration(seconds: 5),
+        ref.invalidateSelf,
+      );
+      ref.onDispose(refreshTimer.cancel);
+      final HomeRepository repository = ref.watch(homeRepositoryProvider);
 
-    return repository.getHomeLayout(
-      locale: locale,
-    );
-  },
-);
+      return repository.getHomeLayout(locale: locale);
+    });

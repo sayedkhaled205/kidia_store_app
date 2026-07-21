@@ -649,6 +649,7 @@
 		blocks = serializeBlocks().filter(function (block) {
 			return Boolean(block.enabled);
 		});
+		document.dispatchEvent(new CustomEvent("kidia:home-preview-state", { detail: { blocks: blocks } }));
 
 		header = renderFixedChrome("header");
 		footer = renderFixedChrome("footer");

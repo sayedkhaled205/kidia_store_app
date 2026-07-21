@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart';
 
+import 'runtime_store_origin.dart';
+
 abstract final class AppConfig {
   const AppConfig._();
 
   static const bool _useMockHomeLayout = bool.fromEnvironment(
     'USE_MOCK_HOME_LAYOUT',
+    defaultValue: false,
+  );
+
+  static const bool isCmsPreview = bool.fromEnvironment(
+    'CMS_PREVIEW',
     defaultValue: false,
   );
 
@@ -22,10 +29,14 @@ abstract final class AppConfig {
   ///
   /// Example:
   /// `flutter run --dart-define=STORE_URL=https://example.com`
-  static const String apiBaseUrl = String.fromEnvironment(
+  static const String _compiledApiBaseUrl = String.fromEnvironment(
     'STORE_URL',
     defaultValue: _legacyApiBaseUrl,
   );
+
+  static String get apiBaseUrl => _compiledApiBaseUrl.trim().isNotEmpty
+      ? _compiledApiBaseUrl
+      : RuntimeStoreOrigin.value;
 
   static bool get hasConfiguredStore => apiBaseUrl.trim().isNotEmpty;
 

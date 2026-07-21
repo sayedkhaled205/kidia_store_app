@@ -684,6 +684,9 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( 'kidia-mobile-category-builder' === $page ) {
 						wp_enqueue_style( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.css' ) );
 						wp_enqueue_script( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.js' ), true );
+						if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) {
+							wp_enqueue_script( 'kidia-mobile-flutter-category-preview-bridge', KIDIA_MOBILE_CMS_URL . 'admin/assets/flutter-category-preview-bridge.js', array( 'kidia-mobile-category-builder' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/flutter-category-preview-bridge.js' ), true );
+						}
 						return;
 					}
 
@@ -704,6 +707,9 @@ final class Kidia_Mobile_CMS_Admin {
 						}
 						wp_enqueue_style( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.css' ) );
 						wp_enqueue_script( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.js' ), true );
+						if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) {
+							wp_enqueue_script( 'kidia-mobile-flutter-preview-bridge', KIDIA_MOBILE_CMS_URL . 'admin/assets/flutter-preview-bridge.js', array( 'kidia-mobile-page-builder' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/flutter-preview-bridge.js' ), true );
+						}
 						wp_localize_script(
 							'kidia-mobile-page-builder',
 							'kidiaPageBuilder',
@@ -732,6 +738,9 @@ final class Kidia_Mobile_CMS_Admin {
 						KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/home-builder.js' ),
 						true
 					);
+					if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) {
+						wp_enqueue_script( 'kidia-mobile-flutter-home-preview-bridge', KIDIA_MOBILE_CMS_URL . 'admin/assets/flutter-home-preview-bridge.js', array( 'kidia-mobile-home-builder' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/flutter-home-preview-bridge.js' ), true );
+					}
 
 					$preview_locale = sanitize_key( (string) get_locale() );
 					if ( '' === $preview_locale ) {
