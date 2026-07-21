@@ -890,7 +890,7 @@
 }
 
 .kidia-builder-block:is([data-type="product_carousel"], [data-type="product_grid"]) .kidia-builder-settings-content {
-	grid-template-columns: repeat(3, minmax(var(--kidia-field-width), 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	direction: rtl;
 	column-gap: 16px;
 	row-gap: 10px;
@@ -1380,29 +1380,15 @@ body.kidia-modal-open {
 	direction: rtl;
 }
 
-.kidia-product-icon-panel__body > .kidia-builder-field { direction: rtl; }
-.kidia-product-icon-field--quick_add_icon_variant,
-.kidia-product-icon-field--product_wishlist_icon_variant { grid-column: 1; grid-row: 1; }
-.kidia-product-icon-field--quick_add_icon_size,
-.kidia-product-icon-field--product_wishlist_icon_size { grid-column: 2; grid-row: 1; }
-.kidia-product-icon-field--quick_add_position,
-.kidia-product-icon-field--product_wishlist_position { grid-column: 3; grid-row: 1 / 5; }
-.kidia-product-icon-field--quick_add_icon_color,
-.kidia-product-icon-field--product_wishlist_icon_color { grid-column: 1; grid-row: 2; }
-.kidia-product-icon-field--quick_add_background_color,
-.kidia-product-icon-field--product_wishlist_background_color { grid-column: 2; grid-row: 2; }
-.kidia-product-icon-field--quick_add_background_size,
-.kidia-product-icon-field--product_wishlist_background_size { grid-column: 1; grid-row: 3; }
-.kidia-product-icon-field--quick_add_radius,
-.kidia-product-icon-field--product_wishlist_radius { grid-column: 2; grid-row: 3; }
-.kidia-product-icon-field--quick_add_icon_style,
-.kidia-product-icon-field--product_wishlist_icon_style { grid-column: 1; grid-row: 4; }
-.kidia-product-icon-field--quick_add_show_background,
-.kidia-product-icon-field--product_wishlist_show_background { grid-column: 2; grid-row: 4; }
+.kidia-product-icon-panel__body > .kidia-builder-field {
+	grid-column: auto;
+	grid-row: auto;
+	direction: rtl;
+}
 
 .kidia-product-icon-panel .kidia-product-position {
-	width: min(100%, 210px);
-	min-height: 210px;
+	width: min(100%, 180px);
+	min-height: 180px;
 }
 
 @media (max-width: 782px) {
