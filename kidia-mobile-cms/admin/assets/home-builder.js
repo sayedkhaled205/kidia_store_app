@@ -43,19 +43,6 @@
 		}
 	});
 
-	form.addEventListener("click", function (event) {
-		var button = event.target.closest(".kidia-fixed-chrome-expand");
-		var card;
-		var body;
-		if (!button) { return; }
-		card = button.closest(".kidia-fixed-chrome-card");
-		body = card ? card.querySelector(".kidia-page-card__body") : null;
-		if (!body) { return; }
-		body.hidden = !body.hidden;
-		button.setAttribute("aria-expanded", body.hidden ? "false" : "true");
-		card.classList.toggle("is-open", !body.hidden);
-	});
-
 	function actionValueField(typeField) {
 		var expectedName = String(typeField && typeField.name || "").replace(/\[action_type\]$/, "[action_value]");
 		var fields;
