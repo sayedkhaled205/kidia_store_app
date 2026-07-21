@@ -48,6 +48,7 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 			if ( '' === $item_id ) { $item_id = 'banner_' . ( absint( $item_index ) + 1 ); }
 			$clean[] = array(
 				'id' => $item_id,
+				'enabled' => isset( $item['enabled'] ) ? (bool) $item['enabled'] : true,
 				'image_url' => $image_url,
 				'title' => sanitize_text_field( (string) ( $item['title'] ?? '' ) ),
 				'subtitle' => sanitize_text_field( (string) ( $item['subtitle'] ?? '' ) ),
@@ -78,6 +79,7 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 		if ( empty( $settings['items'] ) ) { return null; }
 		$items = array();
 		foreach ( $settings['items'] as $item ) {
+			if ( empty( $item['enabled'] ) ) { continue; }
 			$items[] = array(
 				'id' => $item['id'], 'image_url' => $item['image_url'],
 				'title' => '' !== $item['title'] ? $item['title'] : null,
@@ -119,7 +121,7 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 	}
 
 	/** @return array<string,mixed> */
-	private function empty_item(): array { return array( 'id' => '', 'image_url' => '', 'title' => '', 'subtitle' => '', 'button_label' => '', 'action_type' => '', 'action_value' => '' ); }
+	private function empty_item(): array { return array( 'id' => '', 'enabled' => true, 'image_url' => '', 'title' => '', 'subtitle' => '', 'button_label' => '', 'action_type' => '', 'action_value' => '' ); }
 
 	/** @param int $block_index Block index. @param int|string $item_index Item index. @param array<string,mixed> $item Item. */
 	private function render_item( int $block_index, $item_index, array $item ): void {
@@ -127,7 +129,7 @@ final class Kidia_Mobile_Banner_Grid_Block extends Kidia_Mobile_Block {
 		$actions = array( '' => __( 'No Action', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'collection' => __( 'Collection', 'kidia-mobile-cms' ), 'product' => __( 'Product', 'kidia-mobile-cms' ), 'brand' => __( 'Brand', 'kidia-mobile-cms' ), 'brands' => __( 'All Brands', 'kidia-mobile-cms' ), 'search' => __( 'Search', 'kidia-mobile-cms' ), 'external' => __( 'External URL', 'kidia-mobile-cms' ) );
 		?>
 		<div class="kidia-repeatable-item kidia-banner-editor-item">
-			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Banner', 'kidia-mobile-cms' ); ?></strong><div class="kidia-repeatable-item-actions"><button type="button" class="button kidia-repeatable-remove kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-repeatable-add kidia-add-repeatable-item"><?php esc_html_e( '+ Add Banner', 'kidia-mobile-cms' ); ?></button></div></div>
+			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Banner', 'kidia-mobile-cms' ); ?></strong><div class="kidia-repeatable-item-actions"><button type="button" class="button kidia-repeatable-remove kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-repeatable-add kidia-add-repeatable-item"><?php esc_html_e( '+ Add Banner', 'kidia-mobile-cms' ); ?></button><label class="kidia-page-master-toggle kidia-slider-item-toggle kidia-banner-item-toggle" aria-label="<?php echo esc_attr( __( 'Turn banner on or off', 'kidia-mobile-cms' ) ); ?>"><input type="hidden" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="0"><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][enabled]" value="1" <?php checked( true, (bool) $item['enabled'] ); ?>><span class="kidia-toggle-state"></span></label></div></div>
 			<input type="hidden" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][id]" value="<?php echo esc_attr( (string) $item['id'] ); ?>">
 			<div class="kidia-builder-grid">
 				<div class="kidia-builder-field kidia-repeatable-field--image-url"><label><?php esc_html_e( 'Image URL', 'kidia-mobile-cms' ); ?></label><input type="url" class="kidia-media-url" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>"></div>

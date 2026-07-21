@@ -580,7 +580,7 @@
 			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-quick-links ' + (settings.layout === "grid" ? "is-grid" : "is-row") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (link) { return renderQuickLink(link, settings); }).join("") : sampleCards(columns, "kidia-preview-quick-link", "Link")) + "</div></section>";
 
 		case "banner_grid":
-			items = Array.isArray(settings.items) ? settings.items : [];
+			items = Array.isArray(settings.items) ? settings.items.filter(function (banner) { return banner && banner.enabled !== "" && banner.enabled !== "0" && banner.enabled !== 0 && banner.enabled !== false; }) : [];
 			columns = Math.round(numberInRange(settings.columns, 2, 1, 3));
 			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-banner-grid is-' + escapeHtml(settings.layout || "equal") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 10, 0, 32) + 'px">' + (items.length ? items.map(function (banner) { return renderBannerTile(banner, settings); }).join("") : sampleCards(columns + 1, "kidia-preview-banner-tile", "")) + "</div></section>";
 
