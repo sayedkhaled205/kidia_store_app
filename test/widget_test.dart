@@ -104,7 +104,7 @@ void main() {
     );
     expect(
       selected.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E),
+      const Color(0xFF1D1D1D),
     );
     await tester.tap(find.byKey(const Key('product-options-sheet-add')));
     await tester.pumpAndSettle();

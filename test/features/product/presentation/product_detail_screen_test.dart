@@ -222,7 +222,7 @@ void main() {
     );
     expect(
       selectedButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-      const Color(0xFF2F806E),
+      const Color(0xFF1D1D1D),
     );
     expect(find.byKey(const Key('add-to-cart-disabled-reason')), findsNothing);
     expect(find.byKey(const Key('add-to-cart-error')), findsNothing);
