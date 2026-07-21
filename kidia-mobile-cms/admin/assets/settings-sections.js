@@ -197,7 +197,26 @@
 			if (!container.closest(".kidia-chrome-settings")) { addHeadings(container); }
 		});
 		enhanceProductPositions(root);
+		enhanceBooleanToggles(root);
 		updateRanges(root);
+	}
+
+	function enhanceBooleanToggles(root) {
+		var selector = '.kidia-page-fields input[type="checkbox"],.kidia-builder-settings-content input[type="checkbox"],.kidia-category-settings input[type="checkbox"],.kidia-category-general-fields input[type="checkbox"]';
+		var inputs = [];
+		if (root.matches && root.matches(selector)) { inputs.push(root); }
+		Array.prototype.push.apply(inputs, root.querySelectorAll(selector));
+		inputs.forEach(function (input) {
+			if (input.closest(".kidia-page-master-toggle,.kidia-builder-switch") || input.dataset.kidiaBooleanEnhanced === "1") { return; }
+			var label = input.closest("label");
+			if (!label) { return; }
+			input.dataset.kidiaBooleanEnhanced = "1";
+			label.classList.add("kidia-unified-boolean");
+			var state = document.createElement("span");
+			state.className = "kidia-unified-boolean__state";
+			state.setAttribute("aria-hidden", "true");
+			label.appendChild(state);
+		});
 	}
 
 	function updateRange(input) {
