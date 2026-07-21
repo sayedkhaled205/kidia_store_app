@@ -600,6 +600,9 @@ function runMergeControlsContractTest() {
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("product-fields")), 5, "Product Grid must render exactly five fields in Section Layout Settings.");
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#product-fields .kidia-settings-section-title"), function (heading) { return heading.childNodes[0].textContent; }), ["Card Layout", "Visibility & Display", "Quick Add", "Wishlist", "Layout & Spacing", "Pagination", "Section Layout Settings"], "Catalog Product Grid must reuse the Home Product Grid sections while keeping only its Catalog-specific Pagination and unmatched fields separate.");
 	assert.equal(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-product-icon-panel").length, 2, "Catalog Product Grid must reuse the complete Home Quick Add and Wishlist panels.");
+	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-product-icon-panel"), function (panel) { return panel.classList.contains("kidia-product-icon-panel--quick_add") ? "quick_add" : "wishlist"; }), ["quick_add", "wishlist"], "Catalog Product Grid must place full Quick Add then full Wishlist directly below Visibility & Display.");
+	const catalogPanelStyleDom = new JSDOM(`<!doctype html><html><head><style>${readAsset("page-builder.css")}\n${readAsset("admin-theme.css")}</style></head><body><div class="kidia-page-builder"><section data-element="product_grid"><div class="kidia-page-fields"><section id="catalog-quick-add-panel" class="kidia-product-icon-panel"></section></div></section></div></body></html>`);
+	assert.equal(catalogPanelStyleDom.window.getComputedStyle(catalogPanelStyleDom.window.document.getElementById("catalog-quick-add-panel")).gridColumn, "1 / -1", "The browser must compute each Catalog Quick Add/Wishlist panel across the complete three-column card width.");
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("category-fields")), 5, "Category must render exactly five fields in Section Layout Settings.");
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#carousel-fields .kidia-settings-section-title"), function (heading) { return heading.childNodes[0].textContent; }), ["Content & Data", "Actions & Navigation", "Card Layout", "Visibility & Display", "Quick Add", "Wishlist", "Section Layout Settings"], "Product Carousel must render the rebuilt sections in the approved order.");
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("carousel-fields")), 5, "Product Carousel must preserve all five shared Section Layout controls after regrouping.");
@@ -982,7 +985,7 @@ function runCollapsedHeaderToggleTest() {
     <input name="layout[header][settings][compact_background_color]" value="#F4F5F5">
     <select name="layout[header][settings][collapse_transition]"><option value="fade_slide" selected>Fade + slide</option></select>
     <select name="layout[header][settings][collapse_speed]"><option value="slow" selected>Slow</option></select>
-    <div class="kidia-chrome-composer--collapsed"></div>
+	<div class="kidia-chrome-composer--collapsed"><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"></div><button class="kidia-chrome-reset"></button></div>
     <section class="kidia-collapsed-header-settings"></section>
   </section></form></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
@@ -991,7 +994,9 @@ function runCollapsedHeaderToggleTest() {
   const card = window.document.querySelector(".kidia-fixed-chrome-card");
   const toggle = card.querySelector(".kidia-collapsed-header-enabled");
 	window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
-	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Collapsed layout must be hidden while collapsed header is Off.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "The Collapsed Header card and its Off toggle must remain visible while disabled.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").classList.contains("is-disabled"), true, "The persistent Collapsed Header card must gray out while Off.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed .kidia-chrome-layout").hidden, false, "The collapsed Row layout must remain visible inside the gray card while Off.");
 	assert.equal(card.querySelector(".kidia-collapsed-header-settings").hidden, true, "Collapsed settings must be hidden while collapsed header is Off.");
 
   const regularPreview = window.KidiaChromePreview.renderHeader(card, "Products");
@@ -1001,7 +1006,8 @@ function runCollapsedHeaderToggleTest() {
 	assert.match(regularPreview, /--row-gap:0px/, "Setting row spacing to zero must remove the preview gap.");
   toggle.checked = true;
 	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
-	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Collapsed layout must appear when collapsed header is On.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "The persistent Collapsed Header card must remain visible when On.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").classList.contains("is-disabled"), false, "The Collapsed Header card must leave its gray disabled state when On.");
 	assert.equal(card.querySelector(".kidia-collapsed-header-settings").hidden, false, "Collapsed settings must appear when collapsed header is On.");
 	  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "On must still show the real regular header while the preview is at the top.");
 	  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
@@ -1016,7 +1022,11 @@ function runCollapsedHeaderToggleTest() {
 	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--compact/, "PatPat-style preview must blend in the compact header layer while scrolling.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");
   toggle.checked = false;
+	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Turning Off again must never remove the persistent Collapsed Header card.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed .kidia-chrome-layout").hidden, false, "Turning Off again must keep Row and Available Items visible and hide only the lower appearance settings.");
+	assert.equal(new window.FormData(window.document.querySelector("form")).get('layout[header][settings][compact_layout_json]'), collapsed, "Turning Off must preserve the complete collapsed layout so it returns unchanged when enabled again.");
 	  console.log("Collapsed header: persistent On/Off toggle and scroll-accurate preview passed.");
 }
 
