@@ -216,6 +216,57 @@
 	border-radius: var(--kidia-settings-control-radius) !important;
 }
 
+/* Every boolean setting uses the same On/Off control instead of a tick box. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean {
+	display: inline-flex !important;
+	width: min(100%, var(--kidia-settings-control-width)) !important;
+	min-height: var(--kidia-settings-control-height) !important;
+	align-items: center !important;
+	justify-content: flex-start !important;
+	gap: 8px !important;
+	direction: rtl !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"] {
+	position: relative !important;
+	width: 42px !important;
+	min-width: 42px !important;
+	height: 22px !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	background: #a7aaad !important;
+	appearance: none !important;
+	box-shadow: none !important;
+	cursor: pointer !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]::before {
+	content: "" !important;
+	position: absolute !important;
+	top: 3px !important;
+	left: 3px !important;
+	width: 16px !important;
+	height: 16px !important;
+	margin: 0 !important;
+	border-radius: 50% !important;
+	background: #fff !important;
+	transition: transform .18s ease !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]:checked {
+	background: #2f806e !important;
+}
+
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-unified-boolean > input[type="checkbox"]:checked::before {
+	transform: translateX(20px) !important;
+}
+
+.kidia-unified-boolean__state::before { content: "Off"; color: #646970; font-weight: 700; }
+.kidia-unified-boolean > input[type="checkbox"]:checked ~ .kidia-unified-boolean__state::before { content: "On"; color: #2f806e; }
+.kidia-page-toggle.kidia-unified-boolean > b,
+.kidia-page-toggle.kidia-unified-boolean > span:not(.kidia-unified-boolean__state) { display: none !important; }
+
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-builder-background-control {
 	width: min(100%, var(--kidia-settings-control-width)) !important;
 	max-width: var(--kidia-settings-control-width) !important;
