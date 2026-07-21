@@ -835,16 +835,6 @@
 	order: -10;
 }
 
-/* Keep Banner item headers aligned exactly like the existing Slider header. */
-.kidia-banner-editor-item > .kidia-hero-block-item__header {
-	justify-content: flex-start;
-	direction: rtl;
-}
-
-.kidia-banner-editor-item > .kidia-hero-block-item__header .kidia-repeatable-item-actions {
-	margin-inline-start: 0;
-}
-
 .kidia-slider-item-toggle.kidia-page-master-toggle {
 	min-width: 78px;
 	margin: 0;
