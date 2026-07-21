@@ -2,7 +2,7 @@
   "name": "kidia-store-builder-tests",
   "private": true,
   "scripts": {
-    "test:builders": "node kidia-mobile-cms/tests/builder-assets-test.js"
+    "test:builders": "node kidia-mobile-cms/tests/builder-assets-test.js && node kidia-mobile-cms/tests/banner-chrome-header-test.js"
   },
   "devDependencies": {
     "jquery": "3.7.1",
