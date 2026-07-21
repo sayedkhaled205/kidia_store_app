@@ -154,6 +154,39 @@ void main() {
     }
   });
 
+  testWidgets('smooth compact speed changes the scroll-linked distance', (
+    WidgetTester tester,
+  ) async {
+    final ScrollController controller = ScrollController();
+    addTearDown(controller.dispose);
+
+    await _pumpPage(
+      tester,
+      layout: _layout(
+        page: 'home',
+        transition: 'smooth_compact',
+        speed: 'slow',
+      ),
+      scrollController: controller,
+    );
+    controller.jumpTo(44);
+    await tester.pump();
+    expect(_appBar(tester).collapseProgress, closeTo(44 / 96, .01));
+
+    await _pumpPage(
+      tester,
+      layout: _layout(
+        page: 'home',
+        transition: 'smooth_compact',
+        speed: 'fast',
+      ),
+      scrollController: controller,
+    );
+    controller.jumpTo(44);
+    await tester.pump();
+    expect(_appBar(tester).collapseProgress, 1);
+  });
+
   testWidgets('smooth compact transition uses Search + Cart', (
     WidgetTester tester,
   ) async {
@@ -171,6 +204,79 @@ void main() {
 
     expect(find.text('Products'), findsNothing);
     expect(find.text('Search products'), findsOneWidget);
+  });
+
+  testWidgets('smooth compact respects the configured collapsed layout', (
+    WidgetTester tester,
+  ) async {
+    final CmsPageLayout base = _layout(
+      page: 'home',
+      transition: 'smooth_compact',
+    );
+    await _pumpPage(
+      tester,
+      layout: CmsPageLayout(
+        page: base.page,
+        header: CmsPageComponent(
+          id: base.header.id,
+          type: base.header.type,
+          enabled: true,
+          settings: <String, dynamic>{
+            ...base.header.settings,
+            'compact_layout_json': <String, dynamic>{
+              'rows': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'columns': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'width': 100,
+                      'align': 'center',
+                      'items': <String>['title'],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ),
+        elements: base.elements,
+        footer: base.footer,
+      ),
+    );
+
+    await tester.drag(
+      find.byKey(const Key('cms-page-scroll')),
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Search products'), findsNothing);
+  });
+
+  testWidgets('header outer spacing contributes to its real extent', (
+    WidgetTester tester,
+  ) async {
+    final CmsPageLayout base = _layout(collapseOnScroll: false);
+    await _pumpPage(
+      tester,
+      layout: CmsPageLayout(
+        page: base.page,
+        header: CmsPageComponent(
+          id: base.header.id,
+          type: base.header.type,
+          enabled: true,
+          settings: <String, dynamic>{
+            ...base.header.settings,
+            'space_up': 7,
+            'space_down': 9,
+          },
+        ),
+        elements: base.elements,
+        footer: base.footer,
+      ),
+    );
+
+    expect(_appBar(tester).preferredSize.height, 80);
   });
 
   testWidgets('renders configured logo text and its independent color', (

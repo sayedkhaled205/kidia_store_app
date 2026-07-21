@@ -32,31 +32,26 @@ class CmsElementFrame extends StatelessWidget {
       child: Material(
         color: background,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            component
+          padding: EdgeInsets.symmetric(
+            horizontal: component
                 .number('padding_horizontal', 0)
                 .clamp(0, 40)
                 .toDouble(),
-            component
-                .number(
-                  'space_up',
-                  component.number('padding_vertical', 0),
-                )
-                .clamp(0, 80)
-                .toDouble(),
-            component
-                .number('padding_horizontal', 0)
+            vertical: component
+                .number('padding_vertical', 0)
                 .clamp(0, 40)
-                .toDouble(),
-            component
-                .number(
-                  'space_down',
-                  component.number('padding_vertical', 0),
-                )
-                .clamp(0, 80)
                 .toDouble(),
           ),
-          child: child,
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: component.number('space_up', 0).clamp(0, 80).toDouble(),
+              bottom: component
+                  .number('space_down', 0)
+                  .clamp(0, 80)
+                  .toDouble(),
+            ),
+            child: child,
+          ),
         ),
       ),
     );
@@ -138,7 +133,6 @@ class CmsPageScaffold extends StatefulWidget {
 class _CmsPageScaffoldState extends State<CmsPageScaffold> {
   static const double _collapseThreshold = 32;
   static const double _expandThreshold = 8;
-  static const double _patPatCollapseDistance = 64;
 
   bool _collapsed = false;
   double _collapseProgress = 0;
@@ -166,8 +160,15 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
     final bool scrollLinked =
         widget.layout.header.string('collapse_transition', 'smooth_compact') ==
         'smooth_compact';
+    final double collapseDistance = switch (
+      widget.layout.header.string('collapse_speed', 'medium')
+    ) {
+      'fast' => 44,
+      'slow' => 96,
+      _ => 64,
+    };
     final double nextProgress = enabled
-        ? (extentBefore / _patPatCollapseDistance).clamp(0, 1).toDouble()
+        ? (extentBefore / collapseDistance).clamp(0, 1).toDouble()
         : 0;
     if (next != _collapsed ||
         (scrollLinked && (nextProgress - _collapseProgress).abs() > .001)) {
@@ -295,7 +296,11 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(_header.enabled
-      ? _visibleHeight + _header.number('margin_top', 0).clamp(0, 80) + _header.number('margin_bottom', 0).clamp(0, 80)
+      ? _visibleHeight +
+          _header.number('margin_top', 0).clamp(0, 80) +
+          _header.number('margin_bottom', 0).clamp(0, 80) +
+          _header.number('space_up', 0).clamp(0, 80) +
+          _header.number('space_down', 0).clamp(0, 80)
       : 0);
 
   double get _visibleHeight {
@@ -401,9 +406,11 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         sideMargin,
-        _header.number('margin_top', 0).clamp(0, 80),
+        _header.number('margin_top', 0).clamp(0, 80) +
+            _header.number('space_up', 0).clamp(0, 80),
         sideMargin,
-        _header.number('margin_bottom', 0).clamp(0, 80),
+        _header.number('margin_bottom', 0).clamp(0, 80) +
+            _header.number('space_down', 0).clamp(0, 80),
       ),
       child: Material(
         color:
@@ -650,14 +657,6 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
 	List<Map<String, dynamic>> _compactLayoutRows() {
-		if (_header.string('collapse_transition', 'smooth_compact') == 'smooth_compact') {
-			return <Map<String, dynamic>>[<String, dynamic>{
-				'columns': <Map<String, dynamic>>[
-					<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']},
-					<String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']},
-				],
-			}];
-		}
 		final dynamic raw = _header.json('compact_layout_json')['rows'];
 		if (raw is List) {
 			final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(1).toList();

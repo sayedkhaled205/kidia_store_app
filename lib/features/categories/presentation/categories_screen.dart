@@ -601,7 +601,9 @@ class _CategoryCardSurface extends StatelessWidget {
     final BorderRadius radius = BorderRadius.circular(category.cardRadius);
     return Container(
       decoration: BoxDecoration(
-        color: _categoryColor(category.cardBackgroundColor, colors.surface),
+        color: category.cardStyle == 'minimal'
+            ? Colors.transparent
+            : _categoryColor(category.cardBackgroundColor, colors.surface),
         borderRadius: radius,
         border: category.cardStyle == 'outlined'
             ? Border.all(color: colors.outlineVariant)

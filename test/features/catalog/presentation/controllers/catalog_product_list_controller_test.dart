@@ -60,6 +60,30 @@ void main() {
       },
     );
 
+    test('loads any selected numbered page directly', () async {
+      final _FakeCatalogRepository repository = _FakeCatalogRepository(
+        products: (CatalogProductQuery query) async => _page(
+          query,
+          items: <CatalogProduct>[_product(query.page)],
+          totalItems: 5,
+          totalPages: 5,
+        ),
+      );
+      final CatalogProductListController controller =
+          CatalogProductListController(
+            repository,
+            request: const CatalogProductListRequest(),
+          );
+
+      await controller.loadInitial();
+      await controller.loadPage(4);
+
+      expect(repository.productQueries.last.page, 4);
+      expect(controller.state.page, 4);
+      expect(controller.state.items.single.id, 4);
+      controller.dispose();
+    });
+
     test('does not request the full catalog for an empty search', () async {
       final _FakeCatalogRepository repository = _FakeCatalogRepository();
       final CatalogProductListController controller =

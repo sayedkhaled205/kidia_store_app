@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 16;
+	private const VERSION = 17;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -150,7 +150,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'background_color', __( 'Background color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
 			self::field( 'shadow', __( 'Shadow', 'kidia-mobile-cms' ), 'select', 'subtle', array( 'none' => __( 'None', 'kidia-mobile-cms' ), 'subtle' => __( 'Subtle', 'kidia-mobile-cms' ), 'strong' => __( 'Strong', 'kidia-mobile-cms' ) ) ),
 			self::field( 'top_radius', __( 'Top corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
-			self::field( 'horizontal_padding', __( 'Horizontal padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
+			self::field( 'horizontal_padding', __( 'Horizontal padding', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'side_spacing_percent', __( 'Outside side spacing (%)', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 25 ),
 			self::field( 'icon_size', __( 'Default icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 14, 40 ),
 			self::field( 'label_size', __( 'Label size', 'kidia-mobile-cms' ), 'number', 11, array(), 8, 20 ),
@@ -365,6 +365,11 @@ final class Kidia_Mobile_Page_Layout_Store {
 		foreach ( $definitions as $definition ) {
 			$elements[] = $this->default_element( $definition );
 		}
+		if ( (int) ( $saved['version'] ?? 1 ) < 17 && 16 === (int) ( $default['footer']['settings']['horizontal_padding'] ?? 16 ) ) {
+			// This field existed with a value of 16 while Flutter ignored it. Keep
+			// the established mobile default unchanged when it becomes functional.
+			$default['footer']['settings']['horizontal_padding'] = 0;
+		}
 		if ( 'catalog' === $page && (int) ( $saved['version'] ?? 1 ) < 2 ) {
 			foreach ( $elements as &$migrated_element ) { if ( 'filter_bar' === $migrated_element['id'] ) { $migrated_element['settings']['show_result_count'] = false; $migrated_element['settings']['filter_icon_offset_y'] = -2; } }
 			unset( $migrated_element );
@@ -490,7 +495,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$header_settings['show_cart_badge'] = false;
 			$footer_settings['style'] = 'product_action';
 			$footer_settings['height'] = 84;
-			$footer_settings['horizontal_padding'] = 16;
+			$footer_settings['horizontal_padding'] = 0;
 			$footer_settings['button_color'] = '#1D1D1D';
 			$footer_settings['button_text_color'] = '#FFFFFF';
 			$footer_settings['button_width_percent'] = 62;
