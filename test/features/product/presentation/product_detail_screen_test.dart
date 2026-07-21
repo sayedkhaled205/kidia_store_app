@@ -52,6 +52,18 @@ void main() {
     expect(find.byKey(const Key('share-messenger')), findsOneWidget);
     expect(find.byKey(const Key('share-copy-link')), findsOneWidget);
     expect(find.byKey(const Key('share-more')), findsOneWidget);
+    for (final Key key in const <Key>[
+      Key('share-copy-link'),
+      Key('share-more'),
+    ]) {
+      final CircleAvatar action = tester.widget<CircleAvatar>(
+        find.descendant(
+          of: find.byKey(key),
+          matching: find.byKey(const Key('share-action-circle')),
+        ),
+      );
+      expect(action.backgroundColor, Colors.white);
+    }
   });
 
   testWidgets('renders product content and explains a disconnected cart', (

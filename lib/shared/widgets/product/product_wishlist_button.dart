@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:kidia_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 
-class ProductWishlistButton extends StatefulWidget {
+class ProductWishlistButton extends ConsumerStatefulWidget {
   const ProductWishlistButton({
     required this.productId,
     required this.appearance,
@@ -14,10 +17,10 @@ class ProductWishlistButton extends StatefulWidget {
   final ProductWishlistAppearance appearance;
 
   @override
-  State<ProductWishlistButton> createState() => _ProductWishlistButtonState();
+  ConsumerState<ProductWishlistButton> createState() => _ProductWishlistButtonState();
 }
 
-class _ProductWishlistButtonState extends State<ProductWishlistButton> {
+class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
   late final WishlistRepository _repository;
   bool _selected = false;
   bool _busy = true;
@@ -40,6 +43,11 @@ class _ProductWishlistButtonState extends State<ProductWishlistButton> {
 
   Future<void> _toggle() async {
     if (_busy) return;
+    final session = ref.read(authControllerProvider).asData?.value;
+    if (session == null) {
+      await context.push('/auth');
+      return;
+    }
     setState(() => _busy = true);
     try {
       final List<int> ids = (await _repository.loadProductIds()).toList();
