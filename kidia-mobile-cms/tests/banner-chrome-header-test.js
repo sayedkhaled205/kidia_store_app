@@ -8,7 +8,9 @@ const css = read("admin/assets/chrome-layout.css");
 const preview = read("admin/assets/home-builder.js");
 const banner = read("includes/blocks/class-kidia-mobile-banner-grid-block.php");
 
-assert.match(css, /\.kidia-fixed-chrome-card > \.kidia-page-card__header > \.kidia-page-master-toggle\s*\{[^}]*order:3;[^}]*direction:rtl;/, "Fixed Header and Footer must show the On label before their switch track.");
+const chromeTemplate = read("admin/pages/fixed-chrome-card.php");
+assert.match(chromeTemplate, /kidia-fixed-chrome-toggle[\s\S]*kidia-builder-switch__track[\s\S]*kidia-builder-switch__state/, "Fixed Header and Footer must use the exact normal-element switch structure.");
+assert.match(css, /\.kidia-fixed-chrome-card > \.kidia-page-card__header > \.kidia-fixed-chrome-toggle\s*\{[^}]*order:3;[^}]*direction:rtl;/, "Fixed Header and Footer must show On before the switch with the same RTL motion as normal elements.");
 assert.match(banner, /kidia-hero-block-item__header[\s\S]*Banner[\s\S]*kidia-repeatable-item-actions[\s\S]*kidia-remove-repeatable-item[\s\S]*kidia-add-repeatable-item[\s\S]*kidia-banner-item-toggle[\s\S]*kidia-toggle-state/, "Banner must use the same title, Remove, Add and On/Off header structure as Slider.");
 assert.match(banner, /'enabled'\s*=>\s*isset\(\s*\$item\['enabled'\]/, "Banner visibility must be sanitized and saved.");
 assert.match(banner, /foreach \( \$settings\['items'\] as \$item \)[\s\S]*empty\( \$item\['enabled'\] \)/, "Disabled banners must be excluded from the app API.");
