@@ -601,7 +601,7 @@
 .kidia-builder-settings-content>.kidia-builder-field input[type="url"],
 .kidia-builder-settings-content>.kidia-builder-field input[type="number"],
 .kidia-builder-settings-content>.kidia-builder-field input[type="datetime-local"],
-.kidia-builder-settings-content>.kidia-builder-field select { width:min(100%,230px); justify-self:end; }
+.kidia-builder-settings-content>.kidia-builder-field select { width:min(100%,230px); justify-self:start; }
 .kidia-builder-settings-content>.kidia-builder-field input[type="color"] { width:64px; min-width:64px; height:36px; padding:2px; }
 .kidia-builder-settings-content.has-section-layout-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .kidia-builder-settings-content.has-section-layout-settings>.kidia-settings-section-title { grid-column:1/-1; }
@@ -1377,7 +1377,7 @@ body.kidia-modal-open {
 	align-items: start;
 	gap: 14px 18px;
 	padding: 16px 14px 18px;
-	direction: ltr;
+	direction: rtl;
 }
 
 .kidia-product-icon-panel__body > .kidia-builder-field { direction: rtl; }
