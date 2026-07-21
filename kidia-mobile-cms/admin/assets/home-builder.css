@@ -603,9 +603,9 @@
 .kidia-builder-settings-content>.kidia-builder-field input[type="datetime-local"],
 .kidia-builder-settings-content>.kidia-builder-field select { width:min(100%,230px); justify-self:start; }
 .kidia-builder-settings-content>.kidia-builder-field input[type="color"] { width:64px; min-width:64px; height:36px; padding:2px; }
-.kidia-builder-settings-content.has-section-layout-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.kidia-builder-settings-content.has-section-layout-settings>.kidia-settings-section-title { grid-column:1/-1; }
-.kidia-builder-settings-content.has-section-layout-settings>.kidia-section-layout-panel { order:98; }
+.kidia-builder-settings-content.kidia-sectioned-settings-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.kidia-builder-settings-content.kidia-sectioned-settings-grid>.kidia-settings-section-title { grid-column:1/-1; }
+.kidia-builder-settings-content.kidia-sectioned-settings-grid>.kidia-product-icon-panel { grid-column:1/-1; }
 .kidia-builder-background-control .kidia-block-background-value { width:110px; }
 
 .kidia-builder-switch {
