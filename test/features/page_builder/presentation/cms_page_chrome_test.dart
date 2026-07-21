@@ -175,6 +175,9 @@ void main() {
     await tester.pump();
     expect(_appBar(tester).collapseProgress, closeTo(44 / 96, .01));
 
+    // Unmount the first scaffold so the second assertion measures a fresh
+    // header rather than the previous State object during a controller swap.
+    await tester.pumpWidget(const SizedBox.shrink());
     await _pumpPage(
       tester,
       layout: _layout(
