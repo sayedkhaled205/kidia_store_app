@@ -70,8 +70,10 @@ void main() {
   testWidgets('the real page controller drives the mobile collapsed header', (
     WidgetTester tester,
   ) async {
-    final ScrollController controller = ScrollController();
-    addTearDown(controller.dispose);
+    final ScrollController slowController = ScrollController();
+    final ScrollController fastController = ScrollController();
+    addTearDown(slowController.dispose);
+    addTearDown(fastController.dispose);
     await _pumpPage(
       tester,
       layout: _layout(page: 'home'),
@@ -167,9 +169,9 @@ void main() {
         transition: 'smooth_compact',
         speed: 'slow',
       ),
-      scrollController: controller,
+      scrollController: slowController,
     );
-    controller.jumpTo(44);
+    slowController.jumpTo(44);
     await tester.pump();
     expect(_appBar(tester).collapseProgress, closeTo(44 / 96, .01));
 
@@ -180,9 +182,9 @@ void main() {
         transition: 'smooth_compact',
         speed: 'fast',
       ),
-      scrollController: controller,
+      scrollController: fastController,
     );
-    controller.jumpTo(44);
+    fastController.jumpTo(44);
     await tester.pump();
     expect(_appBar(tester).collapseProgress, 1);
   });
@@ -276,7 +278,7 @@ void main() {
       ),
     );
 
-    expect(_appBar(tester).preferredSize.height, 80);
+    expect(_appBar(tester).preferredSize.height, 96);
   });
 
   testWidgets('renders configured logo text and its independent color', (
@@ -443,7 +445,7 @@ CmsPageLayout _layout({
           <String, dynamic>{
             'width': 100,
             'align': 'center',
-            'items': <String>['title'],
+            'items': <String>['search_bar', 'cart'],
           },
         ],
       },
