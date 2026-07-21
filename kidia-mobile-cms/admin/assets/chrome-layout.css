@@ -158,11 +158,11 @@
 	row-gap:14px;
 }
 .kidia-chrome-item-setting--header-cart[hidden] { display:none!important; }
-.kidia-chrome-item-setting--header-cart::before { content:""; grid-column:1; grid-row:2; align-self:stretch; border-bottom:2px solid #d7e7e2; }
+.kidia-chrome-item-setting--header-cart::before { content:""; grid-column:3; grid-row:2; align-self:stretch; border-bottom:2px solid #d7e7e2; }
 .kidia-chrome-item-setting--header-cart > h3 { grid-column:1/-1; grid-row:1; text-align:right; }
 .kidia-chrome-item-setting--header-cart > .kidia-chrome-icon-choice {
 	dis:flex;
-	grid-column:3;
+	grid-column:1;
 	grid-row:2;
 	flex-direction:column;
 	align-items:flex-end;
@@ -175,15 +175,15 @@
 .kidia-chrome-item-setting--header-cart > .kidia-page-fields { display:contents; }
 .kidia-chrome-item-setting--header-cart .kidia-page-field { align-self:end; }
 .kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="show_cart_badge"] { grid-column:2; grid-row:2; padding-bottom:18px; border-bottom:2px solid #d7e7e2; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_background"] { grid-column:1; grid-row:3; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_background"] { grid-column:3; grid-row:3; }
 .kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_shape"] { grid-column:2; grid-row:3; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_style"] { grid-column:3; grid-row:3; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_text_color"] { grid-column:1; grid-row:4; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_style"] { grid-column:1; grid-row:3; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_text_color"] { grid-column:3; grid-row:4; }
 .kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_badge_size"] { grid-column:2; grid-row:4; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_size"] { grid-column:3; grid-row:4; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_background"] { grid-column:1; grid-row:5; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_size"] { grid-column:1; grid-row:4; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_background"] { grid-column:3; grid-row:5; }
 .kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_color"] { grid-column:2; grid-row:5; }
-.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_radius"] { grid-column:3; grid-row:5; }
+.kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_radius"] { grid-column:1; grid-row:5; }
 .kidia-chrome-item-setting--logo .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; }
 .kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_url"] { grid-column:span 1; }
 .kidia-chrome-item-setting--logo .kidia-page-field input,
@@ -213,22 +213,22 @@
 	display: none;
 }
 .kidia-chrome-footer-general .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="horizontal_padding"] { grid-column:1; grid-row:1; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="horizontal_padding"] { grid-column:3; grid-row:1; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="style"] { grid-column:2; grid-row:1; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="height"] { grid-column:3; grid-row:1; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"] { grid-column:1; grid-row:2; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="height"] { grid-column:1; grid-row:1; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="label_size"] { grid-column:3; grid-row:2; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="shadow"] { grid-column:2; grid-row:2; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="top_radius"] { grid-column:3; grid-row:2; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="border_width"] { grid-column:1; grid-row:3; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="top_radius"] { grid-column:1; grid-row:2; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="border_width"] { grid-column:3; grid-row:3; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="side_spacing_percent"] { grid-column:2; grid-row:3; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"] { grid-column:3; grid-row:3; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="inactive_color"] { grid-column:1; grid-row:4; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="icon_size"] { grid-column:1; grid-row:3; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="inactive_color"] { grid-column:3; grid-row:4; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="icon_label_gap"] { grid-column:2; grid-row:4; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="border_color"] { grid-column:3; grid-row:4; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="active_color"] { grid-column:3; grid-row:5; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="show_labels"] { grid-column:1; grid-row:6; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="border_color"] { grid-column:1; grid-row:4; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="active_color"] { grid-column:1; grid-row:5; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="show_labels"] { grid-column:3; grid-row:6; }
 .kidia-chrome-footer-general .kidia-page-field[data-setting="safe_area"] { grid-column:2; grid-row:6; }
-.kidia-chrome-footer-general .kidia-page-field[data-setting="hide_on_scroll"] { grid-column:3; grid-row:6; }
+.kidia-chrome-footer-general .kidia-page-field[data-setting="hide_on_scroll"] { grid-column:1; grid-row:6; }
 .kidia-chrome-row { display:block!important; min-height:0!important; }
 .kidia-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
 .kidia-chrome-row-toolbar .kidia-chrome-add-row { min-height:32px; margin:0 0 0 auto!important; border-color:#236b59!important; background:#236b59!important; color:#fff!important; font-weight:700; }
