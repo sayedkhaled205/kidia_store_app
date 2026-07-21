@@ -110,7 +110,44 @@
 			container.appendChild(buildSectionLayoutGrid(buckets.section_layout || []));
 			container.classList.add("has-section-layout-settings");
 		}
+		if (productType) {
+			buildProductIconPanel(container, "quick_add", "quick_add_enabled");
+			buildProductIconPanel(container, "carousel_wishlist", "show_wishlist");
+		}
 		container.dataset.kidiaSectioned = "1";
+	}
+
+	function productSettingKey(field) {
+		var input = field.querySelector("input[name],select[name],textarea[name]");
+		var match = input && input.name.match(/\[settings\]\[([^\]]+)\]/);
+		return match ? match[1] : "";
+	}
+
+	function buildProductIconPanel(container, section, enabledKey) {
+		var heading = container.querySelector(":scope > .kidia-settings-section-title--" + section);
+		if (!heading) { return; }
+		var fields = [], cursor = heading.nextElementSibling;
+		while (cursor && !cursor.classList.contains("kidia-settings-section-title")) {
+			fields.push(cursor);
+			cursor = cursor.nextElementSibling;
+		}
+		var panel = document.createElement("section");
+		panel.className = "kidia-product-icon-panel kidia-product-icon-panel--" + section;
+		var body = document.createElement("div");
+		body.className = "kidia-product-icon-panel__body";
+		container.insertBefore(panel, heading);
+		panel.appendChild(heading);
+		panel.appendChild(body);
+		fields.forEach(function (field) {
+			var key = productSettingKey(field);
+			field.classList.add("kidia-product-icon-field", "kidia-product-icon-field--" + key);
+			if (key === enabledKey) {
+				heading.appendChild(field);
+				heading.classList.add("has-product-icon-toggle");
+			} else {
+				body.appendChild(field);
+			}
+		});
 	}
 
 	function sectionLayoutKey(field) {
