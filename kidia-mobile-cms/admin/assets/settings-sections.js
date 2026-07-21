@@ -25,7 +25,7 @@
 		filter_options: "Available Filters",
 		general: "General Settings"
 	};
-	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_up|space_down|background_color|block_background|element_background_color)\]$/;
+	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_up|space_down|block_background|element_background_color)\]$/;
 
 	function sectionFor(node) {
 		if (node.classList.contains("kidia-section-layout-field")) { return "section_layout"; }
@@ -172,7 +172,6 @@
 				fields.forEach(function (field) {
 					if (used.indexOf(field) === -1 && sectionLayoutKey(field) === key) {
 						used.push(field);
-						if (group.name === "background") { enhanceSectionBackground(field); }
 						column.appendChild(field);
 					}
 				});
@@ -185,35 +184,6 @@
 		return grid;
 	}
 
-	function enhanceSectionBackground(field) {
-		var color = field.querySelector('input[type="color"]');
-		if (!color || color.closest(".kidia-section-background-control")) { return; }
-		var control = document.createElement("div");
-		control.className = "kidia-section-background-control";
-		var value = document.createElement("input");
-		value.type = "text";
-		value.className = "kidia-section-background-value";
-		value.setAttribute("aria-label", "Background color value");
-		function normalize(hex) {
-			hex = String(hex || "").trim();
-			if (hex.charAt(0) !== "#") { hex = "#" + hex; }
-			return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toUpperCase() : "";
-		}
-		value.value = normalize(color.value) || "#FFFFFF";
-		color.parentNode.insertBefore(control, color);
-		control.appendChild(value);
-		control.appendChild(color);
-		color.addEventListener("input", function () { value.value = color.value.toUpperCase(); });
-		value.addEventListener("change", function () {
-			var normalized = normalize(value.value);
-			if (!normalized) { value.value = color.value.toUpperCase(); return; }
-			color.value = normalized;
-			value.value = normalized;
-			color.dispatchEvent(new Event("input", { bubbles: true }));
-			color.dispatchEvent(new Event("change", { bubbles: true }));
-		});
-	}
-
 	function sectionAll(root) {
 		root = root || document;
 		var selector = ".kidia-page-fields,.kidia-builder-settings-content,.kidia-category-settings,.kidia-category-general-fields";
@@ -221,7 +191,7 @@
 		if (root.matches && root.matches(selector)) { containers.unshift(root); }
 		containers.forEach(function (container) {
 			/* Header/footer settings have their own item-based organization. */
-			if (container.classList.contains("kidia-section-layout-component") || !container.closest(".kidia-chrome-settings")) { addHeadings(container); }
+			if (!container.closest(".kidia-chrome-settings")) { addHeadings(container); }
 		});
 		enhanceProductPositions(root);
 		updateRanges(root);
