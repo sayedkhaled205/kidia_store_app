@@ -649,6 +649,9 @@
 		blocks = serializeBlocks().filter(function (block) {
 			return Boolean(block.enabled);
 		});
+		// The Flutter bridge is loaded after this script. Preserve the latest
+		// snapshot so its first message cannot miss the initial render event.
+		window.kidiaHomePreviewBlocks = blocks;
 		document.dispatchEvent(new CustomEvent("kidia:home-preview-state", { detail: { blocks: blocks } }));
 
 		header = renderFixedChrome("header");
