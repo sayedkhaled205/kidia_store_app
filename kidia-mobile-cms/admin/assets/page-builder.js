@@ -133,7 +133,9 @@
 		frame = 0;
 		var header = root.querySelector('[data-element="header"]');
 		var footer = root.querySelector('[data-element="footer"]');
-		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '">';
+		var pageBackgroundInput = form.querySelector('[name="layout[settings][page_background_color]"]');
+		var pageBackground = root.dataset.page === "product" && pageBackgroundInput && /^#[0-9a-f]{6}$/i.test(pageBackgroundInput.value) ? pageBackgroundInput.value : root.dataset.page === "product" ? "#FFFFFF" : "";
+		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '"' + (pageBackground ? ' style="background:' + escapeHtml(pageBackground) + '"' : '') + '>';
 		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0),legacySpace=number(card,"padding_vertical",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"space_up",legacySpace)+'px '+number(card,"padding_horizontal",0)+'px '+number(card,"space_down",legacySpace)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
 		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;

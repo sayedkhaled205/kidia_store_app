@@ -6,12 +6,17 @@ class CmsPageLayout {
     required this.header,
     required this.elements,
     required this.footer,
+    this.settings = const <String, dynamic>{},
   });
 
   final String page;
   final CmsPageComponent header;
   final List<CmsPageComponent> elements;
   final CmsPageComponent footer;
+  final Map<String, dynamic> settings;
+
+  String string(String key, String fallback) =>
+      _string(settings[key], fallback: fallback);
 
   CmsPageComponent element(String id) {
     return elements.firstWhere(
@@ -29,6 +34,7 @@ class CmsPageLayout {
     final dynamic rawElements = json['elements'];
     return CmsPageLayout(
       page: _string(json['page'], fallback: 'catalog'),
+      settings: _map(json['settings']),
       header: CmsPageComponent.fromJson(
         _map(json['header']),
         fallbackId: 'header',
@@ -145,6 +151,9 @@ class CmsPageLayout {
 	};
     return CmsPageLayout(
       page: page,
+      settings: const <String, dynamic>{
+        'page_background_color': '#FFFFFF',
+      },
 	  header: CmsPageComponent(
         id: 'header',
         type: 'app_header',
