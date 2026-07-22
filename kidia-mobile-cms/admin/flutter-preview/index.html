@@ -42,9 +42,8 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script>
-    // The CMS preview is an embedded, versioned plugin asset. A Flutter service
-    // worker can keep an older bundle alive (or repeatedly reload this iframe),
-    // so always remove stale registrations before starting the preview.
+    // This build is embedded in the versioned WordPress plugin. Never let an
+    // older preview worker or cached Dart bundle survive a plugin update.
     (async function startKidiaPreview() {
       // The Dart bridge can announce readiness before the WordPress footer
       // bridge attaches its listener. Confirm readiness again from the web
