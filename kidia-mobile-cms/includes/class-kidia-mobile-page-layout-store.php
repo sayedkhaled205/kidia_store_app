@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 17;
+	private const VERSION = 18;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -338,6 +338,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( ! is_array( $saved ) || empty( $saved ) ) {
 			return $default;
 		}
+		$saved_page_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
+		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
 		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
@@ -416,6 +418,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'version' => self::VERSION,
 			'page' => $page,
 			'updated_at' => gmdate( 'c' ),
+			'settings' => array(
+				'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF',
+			),
 			'header' => $this->merge_component( $current['header'], $submitted['header'] ?? array(), self::header_fields() ),
 			'elements' => array(),
 			'footer' => $this->merge_component( $current['footer'], $submitted['footer'] ?? array(), self::footer_fields() ),
@@ -511,6 +516,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'version' => self::VERSION,
 			'page' => $page,
 			'updated_at' => '',
+			'settings' => array( 'page_background_color' => '#FFFFFF' ),
 			'header' => array( 'id' => 'header', 'type' => 'app_header', 'locked' => true, 'enabled' => true, 'settings' => $header_settings ),
 			'elements' => $elements,
 			'footer' => array( 'id' => 'footer', 'type' => 'app_footer', 'locked' => true, 'enabled' => true, 'settings' => $footer_settings ),

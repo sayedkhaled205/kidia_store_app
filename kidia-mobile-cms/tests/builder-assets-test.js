@@ -517,7 +517,13 @@ function runMergeControlsContractTest() {
 	const wishlistButtonSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "shared", "widgets", "product", "product_wishlist_button.dart"), "utf8");
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
 	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
-	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*Colors\.white/, "Product Page must keep every uncovered gap white.");
+	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*_cmsColor\([\s\S]*layout\.string\('page_background_color', '#FFFFFF'\)[\s\S]*Colors\.white/, "Product Page must use its CMS page background color with white as the safe default for every uncovered gap.");
+	assert.match(pageStore, /private const VERSION = 18;/, "Product page-level appearance settings must use the current layout schema.");
+	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
+	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
+	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
+	assert.match(pageBuilder, /Product Page Settings[\s\S]*Page background color[\s\S]*layout\[settings\]\[page_background_color\][\s\S]*#FFFFFF/, "Product Builder must expose a page-level background color control with a white default.");
+	assert.match(pagePreview, /layout\[settings\]\[page_background_color\][\s\S]*kidia-app-page[\s\S]*background:/, "The legacy Product preview must apply the page background independently from element backgrounds.");
 	assert.match(productScreenSource, /SliverToBoxAdapter\(\s*child:\s*_ProductGallery\(/, "Product Gallery must start directly below the header without a spacing frame.");
 	assert.match(productScreenSource, /_naturalAspectRatio[\s\S]*info\.image\.width[\s\S]*info\.image\.height[\s\S]*AnimatedSize/, "Product Gallery height must adapt to the loaded image dimensions.");
 	assert.match(appRouterSource, /path:\s*'\/wishlist'[\s\S]*authControllerProvider[\s\S]*AuthScreen\(popOnSuccess:\s*false\)[\s\S]*WishlistScreen/, "Opening the Wishlist route while signed out must show Sign in before wishlist content.");

@@ -104,7 +104,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
         layout: layout,
         defaultTitle: copy.description,
-        backgroundColor: Colors.white,
+        backgroundColor: _cmsColor(
+          layout.string('page_background_color', '#FFFFFF'),
+          Colors.white,
+        ),
         actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
 		  onNotification: (ScrollUpdateNotification notification) {
