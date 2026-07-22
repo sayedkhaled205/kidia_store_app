@@ -81,8 +81,8 @@ class CatalogCategoryModel extends CatalogCategory {
       ),
       navigationMode: _choice(
         presentation['navigation_mode'],
-        const <String>{'expand_inline', 'separate_page'},
-        'expand_inline',
+        const <String>{'drilldown', 'expand_inline', 'separate_page'},
+        'drilldown',
       ),
       gridColumns: _boundedDouble(
         presentation['grid_columns'],

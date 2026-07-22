@@ -112,7 +112,8 @@
 	function navigationMode() {
 		var selected = general.find('[name="category_general[navigation_mode]"]:checked').val();
 		if (!selected) { selected = setting("navigation_mode"); }
-		return String(selected) === "separate_page" ? "separate_page" : "expand_inline";
+		selected = String(selected || "drilldown");
+		return ["drilldown", "expand_inline", "separate_page"].indexOf(selected) >= 0 ? selected : "drilldown";
 	}
 
 	function applyArtworkStyles(box, image, maximumSize) {

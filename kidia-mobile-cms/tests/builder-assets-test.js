@@ -750,7 +750,7 @@ function runMergeControlsContractTest() {
 function categoryGeneralSettings() {
 	  const field = (name, value, type = "text") => `<input type="${type}" name="category_general[${name}]" value="${value}">`;
 	  return `<section class="kidia-category-general">
-	    <select name="category_general[navigation_mode]"><option value="expand_inline">Expand inline</option><option value="separate_page" selected>Separate page</option></select>
+	    <select name="category_general[navigation_mode]"><option value="drilldown" selected>Default drill-down</option><option value="expand_inline">Expand inline</option><option value="separate_page">Separate page</option></select>
 	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
 	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
 	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}${field("show_arrow", 1, "checkbox")}
