@@ -38,6 +38,11 @@ require dirname( __DIR__ ) . '/includes/class-kidia-mobile-page-layout-store.php
 require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new Kidia_Mobile_Page_Layout_Store();
+$wishlist_default = $store->get_layout( 'wishlist' );
+kidia_page_assert( 'sign_in_required' === $wishlist_default['settings']['wishlist_access_mode'], 'Wishlist access must preserve the existing sign-in-required behavior by default.' );
+$wishlist_default['settings']['wishlist_access_mode'] = 'guest';
+$store->save_layout( 'wishlist', $wishlist_default );
+kidia_page_assert( 'guest' === $store->get_layout( 'wishlist' )['settings']['wishlist_access_mode'], 'Wishlist guest mode must save and reach the public page layout.' );
 foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page_with_elements => $_page_label ) {
 	foreach ( array( Kidia_Mobile_Page_Layout_Store::header_fields(), Kidia_Mobile_Page_Layout_Store::footer_fields() ) as $chrome_fields ) {
 		$chrome_keys = array_column( $chrome_fields, 'key' );

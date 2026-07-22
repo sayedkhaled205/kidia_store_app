@@ -5,6 +5,7 @@ import 'package:kidia_store_app/features/auth/presentation/providers/auth_provid
 import 'package:kidia_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 class ProductWishlistButton extends ConsumerStatefulWidget {
   const ProductWishlistButton({
@@ -44,7 +45,11 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
   Future<void> _toggle() async {
     if (_busy) return;
     final session = ref.read(authControllerProvider).asData?.value;
-    if (session == null) {
+    final String accessMode = ref.read(cmsPageLayoutProvider('wishlist')).value?.string(
+      'wishlist_access_mode',
+      'sign_in_required',
+    ) ?? 'sign_in_required';
+    if (session == null && accessMode == 'sign_in_required') {
       await context.push('/auth');
       return;
     }

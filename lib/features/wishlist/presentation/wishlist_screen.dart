@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:kidia_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
@@ -20,6 +21,8 @@ class WishlistScreen extends StatefulWidget {
     this.onProductTap,
     this.onContinueShopping,
     this.onSignIn,
+    this.signedIn = false,
+    this.requiresSignIn = false,
   });
 
   final WishlistRepository repository;
@@ -27,6 +30,8 @@ class WishlistScreen extends StatefulWidget {
   final ValueChanged<CatalogProduct>? onProductTap;
   final VoidCallback? onContinueShopping;
   final VoidCallback? onSignIn;
+  final bool signedIn;
+  final bool requiresSignIn;
 
   @override
   State<WishlistScreen> createState() => _WishlistScreenState();
@@ -91,7 +96,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
               onPressed: () => context.push('/cart'),
             ),
         ],
-        body: Column(
+        body: widget.requiresSignIn && !widget.signedIn
+            ? _WishlistSignInGate(
+                repository: widget.catalogRepository,
+                onSignIn: widget.onSignIn,
+                onProductTap: widget.onProductTap,
+              )
+            : Column(
           children: <Widget>[
             if (_controller.status == WishlistStatus.ready &&
                 layout.header.boolean('show_count', true))
@@ -174,6 +185,67 @@ class _WishlistScreenState extends State<WishlistScreen> {
         messenger.hideCurrentSnackBar();
       }
     });
+  }
+}
+
+class _WishlistSignInGate extends StatelessWidget {
+  const _WishlistSignInGate({
+    required this.repository,
+    this.onSignIn,
+    this.onProductTap,
+  });
+
+  final CatalogRepository repository;
+  final VoidCallback? onSignIn;
+  final ValueChanged<CatalogProduct>? onProductTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool arabic = Localizations.localeOf(context).languageCode == 'ar';
+    return ListView(
+      key: const Key('wishlist-sign-in-required'),
+      padding: const EdgeInsets.fromLTRB(24, 72, 24, 32),
+      children: <Widget>[
+        Icon(Icons.shopping_bag_outlined, size: 112, color: Theme.of(context).colorScheme.outlineVariant),
+        const SizedBox(height: 36),
+        Text(arabic ? 'سجّل الدخول لعرض المفضلة' : 'Sign in to view your wishlist', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 24),
+        Center(child: OutlinedButton(
+          key: const Key('wishlist-sign-in-button'),
+          onPressed: onSignIn,
+          style: OutlinedButton.styleFrom(minimumSize: const Size(220, 58), side: BorderSide(color: Theme.of(context).colorScheme.onSurface), shape: const StadiumBorder()),
+          child: Text(arabic ? 'تسجيل الدخول' : 'Sign In'),
+        )),
+        const SizedBox(height: 110),
+        Text(arabic ? 'قد يعجبك أيضًا' : 'You may also like', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 18),
+        FutureBuilder(
+          future: repository.getProducts(CatalogProductQuery(perPage: 2, sort: CatalogSort.popularity)),
+          builder: (BuildContext context, snapshot) {
+            final List<CatalogProduct> products = snapshot.data?.items ?? const <CatalogProduct>[];
+            if (products.isEmpty) return const SizedBox(height: 180);
+            return Row(
+              children: products.map((CatalogProduct product) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 10),
+                  child: InkWell(
+                    onTap: onProductTap == null ? null : () => onProductTap!(product),
+                    child: AspectRatio(
+                      aspectRatio: 0.9,
+                      child: AppNetworkImage(
+                        imageUrl: product.primaryImage?.source.toString() ?? '',
+                        fit: BoxFit.contain,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+                      ),
+                    ),
+                  ),
+                ),
+              )).toList(growable: false),
+            );
+          },
+        ),
+      ],
+    );
   }
 }
 

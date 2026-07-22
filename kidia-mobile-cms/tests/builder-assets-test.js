@@ -535,8 +535,9 @@ function runMergeControlsContractTest() {
 	assert.match(pagePreview, /layout\[settings\]\[page_background_color\][\s\S]*kidia-app-page[\s\S]*background:/, "The legacy Product preview must apply the page background independently from element backgrounds.");
 	assert.match(productScreenSource, /SliverToBoxAdapter\(\s*child:\s*_ProductGallery\(/, "Product Gallery must start directly below the header without a spacing frame.");
 	assert.match(productScreenSource, /_naturalAspectRatio[\s\S]*info\.image\.width[\s\S]*info\.image\.height[\s\S]*AnimatedSize/, "Product Gallery height must adapt to the loaded image dimensions.");
-	assert.match(appRouterSource, /path:\s*'\/wishlist'[\s\S]*authControllerProvider[\s\S]*AuthScreen\(popOnSuccess:\s*false\)[\s\S]*WishlistScreen/, "Opening the Wishlist route while signed out must show Sign in before wishlist content.");
-	assert.match(wishlistButtonSource, /ref\.read\(authControllerProvider\)[\s\S]*session == null[\s\S]*context\.push\('\/auth'\)/, "Every product Wishlist button must send signed-out shoppers to Sign in instead of changing local wishlist data.");
+	assert.match(appRouterSource, /path:\s*'\/wishlist'[\s\S]*wishlist_access_mode[\s\S]*WishlistScreen[\s\S]*requiresSignIn:\s*requiresSignIn/, "Wishlist routing must honor the CMS guest or sign-in-required mode.");
+	assert.match(wishlistButtonSource, /wishlist_access_mode[\s\S]*session == null && accessMode == 'sign_in_required'[\s\S]*context\.push\('\/auth'\)/, "Product Wishlist buttons must require Sign in only when the selected CMS mode requires it.");
+	assert.match(wishlistScreenSource, /wishlist-sign-in-required[\s\S]*Sign in to view your wishlist[\s\S]*wishlist-sign-in-button[\s\S]*You may also like/, "The signed-out Wishlist mode must render the dedicated in-page sign-in state.");
 	assert.match(wishlistScreenSource, /settings\.string\('button_action',\s*'shopping'\) == 'sign_in'[\s\S]*signsIn \? onSignIn : onContinueShopping/, "Empty Wishlist must execute exactly the selected Sign in or Continue shopping action while retaining shopping as the default.");
 	assert.doesNotMatch(settingsSections, /element\.dataset\.element === "product_grid"[^\n]+section = "general"/, "Catalog Product Grid must not be forced back into its obsolete single General Settings bucket.");
 	assert.match(settingsSections, /\^pagination_\|\^products_per_page\$[\s\S]*section = "pagination"/, "Catalog pagination must remain a dedicated section while reusing the Home Product Grid component.");
@@ -749,6 +750,7 @@ function runMergeControlsContractTest() {
 function categoryGeneralSettings() {
 	  const field = (name, value, type = "text") => `<input type="${type}" name="category_general[${name}]" value="${value}">`;
 	  return `<section class="kidia-category-general">
+	    <select name="category_general[navigation_mode]"><option value="drilldown" selected>Default drill-down</option><option value="expand_inline">Expand inline</option><option value="separate_page">Separate page</option></select>
 	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
 	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
 	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}${field("show_arrow", 1, "checkbox")}
@@ -829,6 +831,11 @@ function runCategoryBuilderTest() {
 		click(window, window.document.querySelector(".kidia-category-preview-back"));
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
+	const navigationMode = window.document.querySelector('[name="category_general[navigation_mode]"]');
+	navigationMode.value = "expand_inline";
+	navigationMode.dispatchEvent(new window.Event("change", { bubbles: true }));
+	click(window, window.document.querySelector(".kidia-category-preview-expand"));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch.is-expanded .kidia-category-preview-child").length, 1, "Expand-in-page mode must reveal subcategories inside the same category card.");
 
 	const elementBackground = window.document.querySelector('[name="category_general[element_background_color]"]');
 	elementBackground.value = "#fff4e8";
@@ -861,13 +868,10 @@ function runCategoryBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "The mobile root list must remain root-only when live settings rerender the preview.");
 
   click(window, window.document.querySelector(".kidia-category-preview-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Selecting a root category must replace roots with its subcategories.");
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 0, "Root categories must be hidden while subcategories are displayed.");
-  click(window, window.document.querySelector(".kidia-category-preview-back"));
-  assert.ok(window.document.querySelector(".kidia-category-preview-branch"), "Back must restore the root category list.");
-  click(window, window.document.querySelector(".kidia-category-preview-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Preview selection must reopen the matching category detail.");
-  click(window, window.document.querySelector(".kidia-category-preview-back"));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Selecting a root category must expand its subcategories inline.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 2, "Root categories must remain visible in expand-in-page mode.");
+	click(window, window.document.querySelector(".kidia-category-preview-expand"));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Selecting the expanded root again must collapse its inline subcategories.");
 
 	  const appName = window.document.querySelector('[name="categories[1][name]"]');
 	  appName.value = "Kids Clothes";

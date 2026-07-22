@@ -109,6 +109,13 @@
 		return ["default", "visual_grid", "circular_grid", "compact_grid", "sidebar"].indexOf(layout) >= 0 ? layout : "default";
 	}
 
+	function navigationMode() {
+		var selected = general.find('[name="category_general[navigation_mode]"]:checked').val();
+		if (!selected) { selected = setting("navigation_mode"); }
+		selected = String(selected || "drilldown");
+		return ["drilldown", "expand_inline", "separate_page"].indexOf(selected) >= 0 ? selected : "drilldown";
+	}
+
 	function applyArtworkStyles(box, image, maximumSize) {
 		var size = numberInRange(setting("image_size"), 68, 32, maximumSize);
 		var shape = setting("image_shape") || "rounded";
@@ -235,7 +242,7 @@
 		}
 		branch.append(tile);
 
-		if (editorChildren.length && isRowExpanded(row)) {
+		if (navigationMode() === "expand_inline" && editorChildren.length && isRowExpanded(row)) {
 			childrenContainer = $('<div class="kidia-category-preview-children"></div>');
 			editorChildren.children(".kidia-category-list").first().children(".kidia-category-row").each(function () {
 				var child = buildChildCard($(this));
@@ -293,7 +300,7 @@
 			} else rootList.children(".kidia-category-row").each(function () {
 				var branch = buildRootBranch($(this));
 				if (branch) {
-					branch.removeClass("is-expanded").find(".kidia-category-preview-children").remove();
+					if (navigationMode() !== "expand_inline") { branch.removeClass("is-expanded").find(".kidia-category-preview-children").remove(); }
 					content.append(branch);
 					visible += 1;
 				}
@@ -365,7 +372,10 @@
 	builder.on("click", ".kidia-category-preview-expand", function () {
 		var termId = $(this).closest(".kidia-category-preview-branch").attr("data-term-id");
 		var row = builder.find('.kidia-category-row[data-term-id="' + termId + '"]').first();
-		if (row.length && row.children(".kidia-category-children").length) { activePreviewParentId = termId; renderMobilePreview(); }
+		if (!row.length) { return; }
+		if (navigationMode() === "expand_inline") { setRowExpanded(row, !isRowExpanded(row)); }
+		else if (row.children(".kidia-category-children").length) { activePreviewParentId = termId; }
+		renderMobilePreview();
 	});
 
 	builder.on("click", ".kidia-category-preview-back", function () { activePreviewParentId = ""; renderMobilePreview(); });
@@ -376,6 +386,10 @@
 			updateRangeLabel(this);
 		}
 		builder.find(".kidia-category-card").each(function () { updateEditorArtwork($(this)); });
+		if (String(this.name || "").indexOf("navigation_mode") !== -1) {
+			activePreviewParentId = "";
+			builder.find(".kidia-category-items").attr("data-navigation-mode", navigationMode());
+		}
 		renderMobilePreview();
 	});
 

@@ -113,6 +113,12 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 						<div class="kidia-card-actions"><span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span><span class="kidia-card-action-placeholder kidia-card-action--secondary" aria-hidden="true"></span><button type="button" class="button kidia-page-expand kidia-category-element-expand kidia-card-action kidia-card-action--expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button><label class="kidia-page-master-toggle kidia-card-action kidia-card-action--toggle"><input type="hidden" name="category_element_enabled" value="0"><input class="kidia-category-element-enabled" type="checkbox" name="category_element_enabled" value="1" <?php checked( $category_enabled ); ?>><span class="kidia-toggle-state"></span></label></div>
 					</div>
 					<div class="kidia-page-card__body" hidden>
+						<fieldset class="kidia-category-navigation-modes">
+							<legend><?php esc_html_e( 'Category opening layout', 'kidia-mobile-cms' ); ?></legend>
+							<label><input type="radio" name="category_general[navigation_mode]" value="drilldown" <?php checked( $category_general['navigation_mode'], 'drilldown' ); ?>><span><b><?php esc_html_e( 'Default drill-down', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Replace the current list with the selected category children.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-arrow-right-alt"></i></span></label>
+							<label><input type="radio" name="category_general[navigation_mode]" value="expand_inline" <?php checked( $category_general['navigation_mode'], 'expand_inline' ); ?>><span><b><?php esc_html_e( 'Expand in this page', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Open subcategories below their category and arrange them here.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-editor-expand"></i></span></label>
+							<label><input type="radio" name="category_general[navigation_mode]" value="separate_page" <?php checked( $category_general['navigation_mode'], 'separate_page' ); ?>><span><b><?php esc_html_e( 'Open a separate page', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Open the selected category products on a new page.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-external"></i></span></label>
+						</fieldset>
 						<section class="kidia-category-general">
 							<h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3>
 							<p><?php esc_html_e( 'These appearance settings apply to every category and subcategory.', 'kidia-mobile-cms' ); ?></p>
@@ -162,7 +168,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 							</div>
 						</section>
 
-						<section class="kidia-category-items">
+						<section class="kidia-category-items" data-navigation-mode="<?php echo esc_attr( $category_general['navigation_mode'] ); ?>">
 							<div class="kidia-category-items__heading"><h3><?php esc_html_e( 'Categories & Subcategories', 'kidia-mobile-cms' ); ?></h3><p><?php esc_html_e( 'Drag to reorder. Each row only changes its app name, app image and visibility.', 'kidia-mobile-cms' ); ?></p></div>
 							<?php if ( empty( $terms ) ) : ?><div class="notice notice-warning inline"><p><?php esc_html_e( 'No WooCommerce product categories were found.', 'kidia-mobile-cms' ); ?></p></div><?php else : ?><?php $render_level( 0 ); ?><?php endif; ?>
 						</section>

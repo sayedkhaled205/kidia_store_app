@@ -11,6 +11,7 @@ class CatalogCategory {
     this.image,
     this.permalink,
     this.categoryLayout = 'default',
+    this.navigationMode = 'drilldown',
     this.gridColumns = 2,
     this.cardRadius = 17,
     this.cardGap = 10,
@@ -57,6 +58,7 @@ class CatalogCategory {
   final CatalogImage? image;
   final Uri? permalink;
   final String categoryLayout;
+  final String navigationMode;
   final int gridColumns;
   final double cardRadius;
   final double cardGap;

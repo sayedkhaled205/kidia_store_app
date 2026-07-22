@@ -13,6 +13,7 @@ class CatalogCategoryModel extends CatalogCategory {
     super.image,
     super.permalink,
     super.categoryLayout,
+    super.navigationMode,
     super.gridColumns,
     super.cardRadius,
     super.cardGap,
@@ -77,6 +78,11 @@ class CatalogCategoryModel extends CatalogCategory {
           'sidebar',
         },
         'default',
+      ),
+      navigationMode: _choice(
+        presentation['navigation_mode'],
+        const <String>{'drilldown', 'expand_inline', 'separate_page'},
+        'drilldown',
       ),
       gridColumns: _boundedDouble(
         presentation['grid_columns'],
@@ -214,6 +220,7 @@ class CatalogCategoryModel extends CatalogCategory {
       image: image,
       permalink: permalink,
       categoryLayout: categoryLayout,
+      navigationMode: navigationMode,
       gridColumns: gridColumns,
       cardRadius: cardRadius,
       cardGap: cardGap,

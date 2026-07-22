@@ -340,6 +340,9 @@ final class Kidia_Mobile_Page_Layout_Store {
 		}
 		$saved_page_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
+		if ( 'wishlist' === $page ) {
+			$default['settings']['wishlist_access_mode'] = in_array( (string) ( $saved_page_settings['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $saved_page_settings['wishlist_access_mode'] : 'sign_in_required';
+		}
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
 		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
@@ -414,13 +417,15 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( empty( $current ) ) {
 			return array();
 		}
+		$page_settings = array( 'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' );
+		if ( 'wishlist' === $page ) {
+			$page_settings['wishlist_access_mode'] = in_array( (string) ( $submitted['settings']['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $submitted['settings']['wishlist_access_mode'] : 'sign_in_required';
+		}
 		$layout = array(
 			'version' => self::VERSION,
 			'page' => $page,
 			'updated_at' => gmdate( 'c' ),
-			'settings' => array(
-				'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF',
-			),
+			'settings' => $page_settings,
 			'header' => $this->merge_component( $current['header'], $submitted['header'] ?? array(), self::header_fields() ),
 			'elements' => array(),
 			'footer' => $this->merge_component( $current['footer'], $submitted['footer'] ?? array(), self::footer_fields() ),
@@ -521,7 +526,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$footer_settings['show_price'] = false;
 			$footer_settings['show_quantity'] = false;
 		}
-		return array(
+		$layout = array(
 			'version' => self::VERSION,
 			'page' => $page,
 			'updated_at' => '',
@@ -530,6 +535,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'elements' => $elements,
 			'footer' => array( 'id' => 'footer', 'type' => 'app_footer', 'locked' => true, 'enabled' => true, 'settings' => $footer_settings ),
 		);
+		if ( 'wishlist' === $page ) { $layout['settings']['wishlist_access_mode'] = 'sign_in_required'; }
+		return $layout;
 	}
 
 	private function site_logo_url(): string {

@@ -31,6 +31,8 @@ import '../features/checkout/presentation/checkout_suggestions_provider.dart';
 import '../features/checkout/domain/entities/checkout_suggestions.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/orders/presentation/customer_orders_screen.dart';
+import '../features/page_builder/domain/cms_page_layout.dart';
+import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/product/presentation/product_detail_screen.dart';
 import '../features/product/application/product_detail_controller.dart'
     as product_selection;
@@ -144,6 +146,19 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                               return ids.contains(productId);
                             },
                             onWishlistToggle: (product) async {
+                              final String accessMode = ref.read(
+                                cmsPageLayoutProvider('wishlist'),
+                              ).value?.string(
+                                'wishlist_access_mode',
+                                'sign_in_required',
+                              ) ?? 'sign_in_required';
+                              final AuthSession? session = ref.read(
+                                authControllerProvider,
+                              ).asData?.value;
+                              if (session == null && accessMode == 'sign_in_required') {
+                                await context.push('/auth');
+                                return false;
+                              }
                               final repository = ref.read(
                                 wishlistRepositoryProvider,
                               );
@@ -294,28 +309,24 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                 path: '/wishlist',
                 builder: (context, state) => Consumer(
                   builder: (context, ref, child) {
-                    if (AppConfig.isCmsPreview) {
-                      return WishlistScreen(
-                        repository: ref.watch(wishlistRepositoryProvider),
-                        catalogRepository: ref.watch(catalogRepositoryProvider),
-                        onProductTap: (product) =>
-                            context.push('/product/${product.id}'),
-                        onContinueShopping: () => context.go('/'),
-                        onSignIn: () => context.push('/auth'),
-                      );
-                    }
                     final AsyncValue<AuthSession?> authState = ref.watch(
                       authControllerProvider,
                     );
-                    if (authState.isLoading) {
+                    final CmsPageLayout wishlistLayout = ref.watch(
+                      cmsPageLayoutProvider('wishlist'),
+                    ).value ?? CmsPageLayout.fallback('wishlist');
+                    final bool requiresSignIn = wishlistLayout.string(
+                      'wishlist_access_mode',
+                      'sign_in_required',
+                    ) == 'sign_in_required';
+                    if (!AppConfig.isCmsPreview && authState.isLoading) {
                       return const _ProtectedAccountLoading();
-                    }
-                    if (authState.asData?.value == null) {
-                      return const AuthScreen(popOnSuccess: false);
                     }
                     return WishlistScreen(
                       repository: ref.watch(wishlistRepositoryProvider),
                       catalogRepository: ref.watch(catalogRepositoryProvider),
+                      signedIn: authState.asData?.value != null,
+                      requiresSignIn: requiresSignIn,
                       onProductTap: (product) =>
                           context.push('/product/${product.id}'),
                       onContinueShopping: () => context.go('/'),
