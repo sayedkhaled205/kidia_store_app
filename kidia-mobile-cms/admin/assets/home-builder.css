@@ -17,7 +17,7 @@
 	container-type: inline-size;
 	direction: ltr;
 	display: grid;
-	grid-template-columns: 300px minmax(0, 1fr);
+	grid-template-columns: 350px minmax(0, 1fr);
 	align-items: start;
 	gap: 10px;
 }
@@ -33,12 +33,12 @@
 }
 
 .kidia-mobile-preview__device {
-	width: 283.5px;
+	width: 330px;
 	margin-inline-start: auto;
 	padding: 5px;
-	border: 3px solid #1d2327;
+	border: 3px solid #2f806e;
 	border-radius: 29px;
-	background: #1d2327;
+	background: #2f806e;
 	box-shadow: 0 18px 45px rgba(29, 35, 39, .2);
 }
 
@@ -52,7 +52,7 @@
 
 .kidia-mobile-preview__screen {
 	position: relative;
-	height: clamp(560px, calc(100vh - 150px), 760px);
+	height: 697.78px;
 	overflow-y: auto;
 	border-radius: 21px;
 	background: #f7f8fa;
@@ -63,7 +63,7 @@
 
 .kidia-mobile-preview__content { display:flex; min-height:100%; flex-direction:column; padding-bottom:0; }
 .kidia-mobile-preview__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; inset:0; display:block; width:100%; height:100%; min-height:0; border:0; background:#fff; }
+.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; transform:scale(.872222); transform-origin:top left; }
 .kidia-mobile-preview__screen > .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-preview-home-body { flex:1; overflow:hidden; padding-bottom:0; }
 .kidia-preview-block-frame { overflow:hidden; background:#fff; }
