@@ -12,7 +12,7 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 			'woo-mobile/v1',
 			'/category-page/preview',
 			array(
-				'methods' => WP_REST_Server::CREATABLE,
+				'methods' => 'POST',
 				'callback' => array( $this, 'preview_categories' ),
 				'permission_callback' => static function (): bool {
 					return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );

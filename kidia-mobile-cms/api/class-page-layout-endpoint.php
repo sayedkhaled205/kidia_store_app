@@ -25,7 +25,7 @@ final class Kidia_Mobile_CMS_Page_Layout_Endpoint {
 			'woo-mobile/v1',
 			'/page-layout/(?P<page>[a-z-]+)/preview',
 			array(
-				'methods' => WP_REST_Server::CREATABLE,
+				'methods' => 'POST',
 				'callback' => array( $this, 'preview_layout' ),
 				'permission_callback' => static function (): bool {
 					return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );
