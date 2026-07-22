@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
+import '../core/config/app_config.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/home/presentation/providers/home_providers.dart';
@@ -262,6 +263,9 @@ class _MainShellState extends ConsumerState<MainShell>
 
   IconData _footerIcon(CmsPageComponent footer, _NavigationItem item, bool selected) {
 	final String variant = footer.string('${item.id}_icon_variant', '');
+	if (AppConfig.isCmsPreview && _usesApplicationFooterIcon(item.id, variant)) {
+	  return selected ? item.selectedIcon : item.icon;
+	}
 	return switch (item.id) {
 	  'home' => variant == 'filled' || selected ? Icons.home_rounded : variant == 'rounded' ? Icons.other_houses_outlined : Icons.home_outlined,
 	  'categories' => variant == 'list' ? Icons.view_list_outlined : variant == 'category' ? Icons.category_outlined : selected ? Icons.grid_view_rounded : Icons.grid_view_outlined,
@@ -269,6 +273,18 @@ class _MainShellState extends ConsumerState<MainShell>
 	  'account' => variant == 'circle' ? Icons.account_circle_outlined : selected ? Icons.person_rounded : Icons.person_outline_rounded,
 	  _ => selected ? item.selectedIcon : item.icon,
 	};
+  }
+
+  bool _usesApplicationFooterIcon(String item, String variant) {
+	final String normalized = variant.trim();
+	return normalized.isEmpty ||
+	    switch (item) {
+	      'home' => normalized == 'home',
+	      'categories' => normalized == 'grid',
+	      'wishlist' => normalized == 'heart' || normalized == 'rounded',
+	      'account' => normalized == 'person',
+	      _ => false,
+	    };
   }
 
   String _footerLabel(CmsPageComponent footer, _NavigationItem item) {

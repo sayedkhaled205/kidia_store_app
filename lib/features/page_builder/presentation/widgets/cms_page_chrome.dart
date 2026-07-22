@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
@@ -772,7 +773,15 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final double size = _header.number('${prefix}_size', _header.number('icon_size', 24)).clamp(14, 40).toDouble();
     final double radius = _header.number(radiusKey, 12).clamp(0, 24).toDouble();
     final bool selectedWishlist = action.type == 'wishlist' && action.icon == Icons.favorite_rounded;
-    final IconData icon = _iconFor(action.type, _header.string('${action.type}_icon_variant', ''), style == 'filled' || selectedWishlist);
+    final String variant = _header.string('${action.type}_icon_variant', '');
+    final IconData icon = AppConfig.isCmsPreview &&
+            _usesApplicationIcon(action.type, variant)
+        ? action.icon
+        : _iconFor(
+            action.type,
+            variant,
+            style == 'filled' || selectedWishlist,
+          );
     final Widget button = IconButton(
       key: action.key,
       tooltip: action.tooltip,
@@ -862,6 +871,22 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     'menu' => variant == 'dots' ? Icons.more_horiz_rounded : variant == 'grid' ? Icons.grid_view_rounded : Icons.menu_rounded,
     _ => _actionFor(type)?.icon ?? Icons.circle_outlined,
   };
+
+  bool _usesApplicationIcon(String type, String variant) {
+    final String normalized = variant.trim();
+    return normalized.isEmpty ||
+        switch (type) {
+          'back' => normalized == 'arrow',
+          'search' => normalized == 'rounded',
+          'cart' => normalized == 'bag',
+          'wishlist' => normalized == 'heart' || normalized == 'rounded',
+          'account' => normalized == 'person',
+          'orders' => normalized == 'receipt',
+          'support' => normalized == 'headset',
+          'menu' => normalized == 'menu',
+          _ => false,
+        };
+  }
 
   CmsPageHeaderAction? _actionFor(String type) {
     for (final CmsPageHeaderAction action in actions) { if (action.type == type) return action; }
