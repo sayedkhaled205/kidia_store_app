@@ -31,7 +31,9 @@ return array(
 
 		'limit' => 5,
 
-		'layout' => 'patpat',
+		'layout' => 'grid',
+
+		'items_alignment' => 'right',
 
 		'parent_id' => 0,
 
@@ -62,6 +64,15 @@ return array(
 	),
 
 	'fields' => array(
+
+		array(
+			'key' => 'layout', 'label' => __( 'Layout', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'display', 'default' => 'grid',
+			'options' => array( 'grid' => __( 'Classic grid', 'kidia-mobile-cms' ), 'compact' => __( 'Compact grid', 'kidia-mobile-cms' ), 'cards' => __( 'Rounded cards', 'kidia-mobile-cms' ), 'carousel' => __( 'Horizontal row', 'kidia-mobile-cms' ), 'editorial_mosaic' => __( 'Editorial Mosaic', 'kidia-mobile-cms' ), 'full_width_banners' => __( 'Full-width Banners', 'kidia-mobile-cms' ) ),
+		),
+		array(
+			'key' => 'items_alignment', 'label' => __( 'Items Alignment', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'display', 'default' => 'right',
+			'options' => array( 'right' => __( 'Right', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'left' => __( 'Left', 'kidia-mobile-cms' ) ),
+		),
 
 		array(
 			'key' => 'title',

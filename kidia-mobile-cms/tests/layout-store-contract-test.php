@@ -69,7 +69,7 @@ $preset = $store->get_kidia_patpat_layout();
 kidia_assert( 'image_banner' === $preset[0]['type'], 'The PatPat content must begin with the main banner and omit the shortcut circles.' );
 kidia_assert( 1.0 === (float) $preset[0]['settings']['aspect_ratio'], 'The main Kidia banner must use the tall PatPat proportion.' );
 kidia_assert( 'category_grid' === $preset[1]['type'] && 3 === $preset[1]['settings']['columns'], 'The circular Kidia categories must follow the main banner in three columns.' );
-kidia_assert( 5 === $preset[1]['settings']['limit'] && 'patpat' === $preset[1]['settings']['layout'], 'The PatPat grid must show the store\'s five categories.' );
+kidia_assert( 5 === $preset[1]['settings']['limit'] && 'grid' === $preset[1]['settings']['layout'], 'The category grid must show the store\'s five categories.' );
 $saved_banner = array_values( array_filter( $reloaded, static fn ( array $block ): bool => 'image_banner' === $block['type'] ) )[0];
 kidia_assert( $saved_banner['id'] === $preset[0]['id'], 'The PatPat preset must reuse the store\'s real Kidia banner instead of creating an empty one.' );
 $default_layout = $store->get_default_layout();

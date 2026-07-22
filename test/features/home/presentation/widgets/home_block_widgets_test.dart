@@ -54,6 +54,36 @@ void main() {
     expect(receivedAction?.value, 'summer');
   });
 
+  testWidgets('promo strip rotates saved messages using the selected duration', (WidgetTester tester) async {
+    await pumpBlock(tester, PromoStripBlockWidget(
+      block: const PromoStripBlock(
+        id: 'promo-rotating', enabled: true, text: 'Fallback', backgroundColor: '#4f9f8f', textColor: '#ffffff', action: null,
+        enableTransition: true, messages: <String>['First', 'Second'], changeEverySeconds: 1, transitionDurationMilliseconds: 200,
+      ),
+      onAction: (_) {},
+    ));
+    expect(find.text('First'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('Second'), findsOneWidget);
+  });
+
+  testWidgets('category grid centers an incomplete final row', (WidgetTester tester) async {
+    final List<CategoryItem> items = List<CategoryItem>.generate(5, (int index) => CategoryItem(
+      id: index, name: 'Category $index', imageUrl: 'https://example.com/$index.jpg', action: null,
+    ));
+    await pumpBlock(tester, CategoryGridBlockWidget(
+      block: CategoryGridBlock(
+        id: 'categories', enabled: true, title: null, subtitle: null, items: items, columns: 3, showNames: true,
+        layout: 'grid', itemsAlignment: 'center', imageShape: 'circle', imageSize: 78, gap: 12, labelSize: 13, labelColor: '#1F2933',
+      ),
+      onAction: (_) {},
+    ));
+    final Wrap wrap = tester.widget<Wrap>(find.byType(Wrap).first);
+    expect(wrap.alignment, WrapAlignment.center);
+    expect(wrap.children, hasLength(5));
+  });
+
   testWidgets('app header renders configured actions and dispatches them', (
     WidgetTester tester,
   ) async {
@@ -289,6 +319,61 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('countdown rolls hidden days into total hours', (
+    WidgetTester tester,
+  ) async {
+    await pumpBlock(
+      tester,
+      CountdownBlockWidget(
+        block: CountdownBlock(
+          id: 'countdown-hours',
+          enabled: true,
+          title: null,
+          endsAt: DateTime.now().toUtc().add(
+            const Duration(hours: 49, minutes: 10),
+          ),
+          expiredText: 'انتهى العرض',
+          showDays: false,
+          showHours: true,
+          showMinutes: false,
+          showSeconds: false,
+        ),
+      ),
+    );
+
+    expect(find.text('49'), findsOneWidget);
+    expect(find.text('يوم'), findsNothing);
+    expect(find.text('ساعة'), findsOneWidget);
+  });
+
+  testWidgets('countdown supports hiding every time unit', (
+    WidgetTester tester,
+  ) async {
+    await pumpBlock(
+      tester,
+      CountdownBlockWidget(
+        block: CountdownBlock(
+          id: 'countdown-hidden',
+          enabled: true,
+          title: 'عرض خاص',
+          endsAt: DateTime.now().toUtc().add(const Duration(hours: 2)),
+          expiredText: 'انتهى العرض',
+          showDays: false,
+          showHours: false,
+          showMinutes: false,
+          showSeconds: false,
+        ),
+      ),
+    );
+
+    expect(find.text('عرض خاص'), findsOneWidget);
+    expect(find.text('يوم'), findsNothing);
+    expect(find.text('ساعة'), findsNothing);
+    expect(find.text('دقيقة'), findsNothing);
+    expect(find.text('ثانية'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

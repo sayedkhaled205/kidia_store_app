@@ -29,6 +29,12 @@ return array(
 
 		'expired_text' => 'انتهى العرض',
 
+		'show_days' => true,
+		'show_hours' => true,
+		'show_minutes' => true,
+		'show_seconds' => true,
+		'layout_style' => 'cards',
+
 	),
 
 	'tabs' => array(
@@ -52,6 +58,11 @@ return array(
 	),
 
 	'fields' => array(
+		array( 'key' => 'layout_style', 'label' => __( 'Layout Style', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'cards', 'options' => array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) ),
+		array( 'key' => 'show_days', 'label' => __( 'Show Days', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
+		array( 'key' => 'show_hours', 'label' => __( 'Show Hours', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
+		array( 'key' => 'show_minutes', 'label' => __( 'Show Minutes', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
+		array( 'key' => 'show_seconds', 'label' => __( 'Show Seconds', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
 
 		array(
 			'key' => 'title',

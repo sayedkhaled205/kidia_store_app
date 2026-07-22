@@ -43,7 +43,8 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'parent_id'  => 0,
 			'hide_empty' => false,
 			'show_names' => true,
-			'layout'      => 'patpat',
+			'layout'      => 'grid',
+			'items_alignment' => 'right',
 			'image_shape' => 'circle',
 			'image_size'  => 86,
 			'gap'         => 16,
@@ -62,6 +63,12 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 	 */
 	public function sanitize_settings( array $settings ): array {
 		$layout = sanitize_key( (string) ( $settings['layout'] ?? 'grid' ) );
+		// PatPat was removed from the editor. Treat old saved values as the
+		// equivalent classic grid so existing elements continue to render.
+		if ( 'patpat' === $layout ) {
+			$layout = 'grid';
+		}
+		$items_alignment = sanitize_key( (string) ( $settings['items_alignment'] ?? 'right' ) );
 		$shape  = sanitize_key( (string) ( $settings['image_shape'] ?? 'rounded' ) );
 		$category_ids = array_values( array_unique( array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) ( $settings['category_ids'] ?? '' ) ) ) ) ) );
 		return array(
@@ -72,7 +79,8 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'parent_id'  => absint( $settings['parent_id'] ?? 0 ),
 			'hide_empty' => ! empty( $settings['hide_empty'] ),
 			'show_names' => ! empty( $settings['show_names'] ),
-			'layout'      => in_array( $layout, array( 'patpat', 'grid', 'compact', 'cards', 'carousel' ), true ) ? $layout : 'patpat',
+			'layout'      => in_array( $layout, array( 'grid', 'compact', 'cards', 'carousel', 'editorial_mosaic', 'full_width_banners' ), true ) ? $layout : 'grid',
+			'items_alignment' => in_array( $items_alignment, array( 'right', 'center', 'left' ), true ) ? $items_alignment : 'right',
 			'image_shape' => in_array( $shape, array( 'circle', 'rounded', 'square' ), true ) ? $shape : 'rounded',
 			'image_size'  => max( 48, min( 140, absint( $settings['image_size'] ?? 78 ) ) ),
 			'gap'         => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
@@ -164,6 +172,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'columns'    => $settings['columns'],
 			'show_names' => $settings['show_names'],
 			'layout'      => $settings['layout'],
+			'items_alignment' => $settings['items_alignment'],
 			'image_shape' => $settings['image_shape'],
 			'image_size'  => $settings['image_size'],
 			'gap'         => $settings['gap'],
@@ -195,7 +204,8 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>">
 			</div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--category-ids"><label><?php esc_html_e( 'Manual Category IDs (optional)', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][category_ids]" value="<?php echo esc_attr( (string) $settings['category_ids'] ); ?>" placeholder="12, 34, 56"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--layout"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="patpat" <?php selected( 'patpat', $settings['layout'] ); ?>><?php esc_html_e( 'PatPat circles', 'kidia-mobile-cms' ); ?></option><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Classic grid', 'kidia-mobile-cms' ); ?></option><option value="compact" <?php selected( 'compact', $settings['layout'] ); ?>><?php esc_html_e( 'Compact grid', 'kidia-mobile-cms' ); ?></option><option value="cards" <?php selected( 'cards', $settings['layout'] ); ?>><?php esc_html_e( 'Rounded cards', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--layout"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Classic grid', 'kidia-mobile-cms' ); ?></option><option value="compact" <?php selected( 'compact', $settings['layout'] ); ?>><?php esc_html_e( 'Compact grid', 'kidia-mobile-cms' ); ?></option><option value="cards" <?php selected( 'cards', $settings['layout'] ); ?>><?php esc_html_e( 'Rounded cards', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'kidia-mobile-cms' ); ?></option><option value="editorial_mosaic" <?php selected( 'editorial_mosaic', $settings['layout'] ); ?>><?php esc_html_e( 'Editorial Mosaic', 'kidia-mobile-cms' ); ?></option><option value="full_width_banners" <?php selected( 'full_width_banners', $settings['layout'] ); ?>><?php esc_html_e( 'Full-width Banners', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--items-alignment"><label><?php esc_html_e( 'Items Alignment', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items_alignment]"><option value="right" <?php selected( 'right', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Right', 'kidia-mobile-cms' ); ?></option><option value="center" <?php selected( 'center', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Center', 'kidia-mobile-cms' ); ?></option><option value="left" <?php selected( 'left', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Left', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--limit">
 				<label><?php esc_html_e( 'Categories Limit', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="1" max="50" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>">

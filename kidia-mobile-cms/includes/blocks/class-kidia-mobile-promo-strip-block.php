@@ -32,6 +32,13 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 	public function get_default_settings(): array {
 		return array(
 			'text' => '',
+			'width' => '',
+			'height' => '',
+			'enable_transition' => false,
+			'messages' => array(),
+			'transition_effect' => 'fade',
+			'change_every' => 4,
+			'transition_duration' => 500,
 			'background_color' => '#4f9f8f',
 			'text_color' => '#ffffff',
 			'action_type' => '',
@@ -43,11 +50,22 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 		array $settings
 	): array {
 
+		$messages = is_array( $settings['messages'] ?? null ) ? $settings['messages'] : array();
+		$messages = array_values( array_filter( array_map( 'sanitize_text_field', $messages ), static fn( $message ) => '' !== $message ) );
+		$effect = sanitize_key( (string) ( $settings['transition_effect'] ?? 'fade' ) );
+
 		return array(
 
 			'text' => sanitize_text_field(
 				$settings['text'] ?? ''
 			),
+			'width' => '' === (string) ( $settings['width'] ?? '' ) ? '' : max( 10, min( 100, absint( $settings['width'] ) ) ),
+			'height' => '' === (string) ( $settings['height'] ?? '' ) ? '' : max( 20, min( 240, absint( $settings['height'] ) ) ),
+			'enable_transition' => ! empty( $settings['enable_transition'] ),
+			'messages' => $messages,
+			'transition_effect' => in_array( $effect, array( 'fade', 'slide_up', 'slide_left', 'scale' ), true ) ? $effect : 'fade',
+			'change_every' => max( 1, min( 60, absint( $settings['change_every'] ?? 4 ) ) ),
+			'transition_duration' => max( 100, min( 5000, absint( $settings['transition_duration'] ?? 500 ) ) ),
 
 			'background_color' => sanitize_hex_color(
 				$settings['background_color'] ?? '#4f9f8f'
@@ -70,28 +88,35 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 		public function build_api_data(
     		array $settings
     	): ?array {
-			$text = sanitize_text_field(
-				$settings['text'] ?? ''
-			);
+			$settings = $this->sanitize_settings( wp_parse_args( $settings, $this->get_default_settings() ) );
+			$text = $settings['text'];
 
-			if ( '' === $text ) {
+			if ( '' === $text && empty( $settings['messages'] ) ) {
 				return null;
 			}
+			$api_text = '' !== $text ? $text : (string) $settings['messages'][0];
 
     		return array(
-				'text' => $text,
+				'text' => $api_text,
+				'width' => $settings['width'],
+				'height' => $settings['height'],
+				'enable_transition' => $settings['enable_transition'],
+				'messages' => $settings['messages'],
+				'transition_effect' => $settings['transition_effect'],
+				'change_every' => $settings['change_every'],
+				'transition_duration' => $settings['transition_duration'],
 
     			'background_color' => sanitize_hex_color(
-    				$settings['background_color'] ?? '#4f9f8f'
+				$settings['background_color']
     			),
 
     			'text_color' => sanitize_hex_color(
-    				$settings['text_color'] ?? '#ffffff'
+				$settings['text_color']
     			),
 
     			'action' => $this->build_action(
-    				$settings['action_type'] ?? '',
-    				$settings['action_value'] ?? ''
+				$settings['action_type'],
+				$settings['action_value']
     			),
     		);
     	}
@@ -101,10 +126,10 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     		array $settings
     	): void {
 
-    		$settings = wp_parse_args(
-    			$settings,
-    			$this->get_default_settings()
-    		);
+		$settings = $this->sanitize_settings( wp_parse_args(
+			$settings,
+			$this->get_default_settings()
+		) );
 
     ?>
 
@@ -120,7 +145,21 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     			value="<?php echo esc_attr( $settings['text'] ); ?>"
     		>
 
-    	</div>
+	</div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--width"><label><?php esc_html_e( 'Width (%)', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][width]" value="<?php echo esc_attr( (string) $settings['width'] ); ?>" placeholder="100"></div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--height"><label><?php esc_html_e( 'Height', 'kidia-mobile-cms' ); ?></label><input type="number" min="20" max="240" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][height]" value="<?php echo esc_attr( (string) $settings['height'] ); ?>" placeholder="Auto"></div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--enable-transition"><label><?php esc_html_e( 'Rotating Messages', 'kidia-mobile-cms' ); ?></label><label class="kidia-page-master-toggle"><input class="kidia-promo-transition-toggle" type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][enable_transition]" value="1" <?php checked( true, $settings['enable_transition'] ); ?>><span class="kidia-toggle-state"></span></label></div>
+	<div class="kidia-promo-transition-fields" <?php echo $settings['enable_transition'] ? '' : 'hidden'; ?>>
+		<div class="kidia-promo-messages" data-next-index="<?php echo esc_attr( (string) count( $settings['messages'] ) ); ?>">
+			<?php foreach ( $settings['messages'] as $message_index => $message ) : ?><div class="kidia-promo-message-row"><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][messages][<?php echo esc_attr( (string) $message_index ); ?>]" value="<?php echo esc_attr( $message ); ?>"><button type="button" class="button kidia-remove-promo-message"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button></div><?php endforeach; ?>
+		</div>
+		<button type="button" class="button kidia-add-promo-message"><?php esc_html_e( 'Add Message', 'kidia-mobile-cms' ); ?></button>
+		<div class="kidia-builder-grid">
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Effect', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_effect]"><?php foreach ( array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['transition_effect'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Change Every (seconds)', 'kidia-mobile-cms' ); ?></label><input type="number" min="1" max="60" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][change_every]" value="<?php echo esc_attr( (string) $settings['change_every'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Duration (ms)', 'kidia-mobile-cms' ); ?></label><input type="number" min="100" max="5000" step="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_duration]" value="<?php echo esc_attr( (string) $settings['transition_duration'] ); ?>"></div>
+		</div>
+	</div>
 
 	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--background">
 

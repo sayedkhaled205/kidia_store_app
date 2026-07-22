@@ -239,6 +239,7 @@ class CategoryGridBlock extends HomeBlock {
     required this.columns,
     required this.showNames,
     required this.layout,
+    required this.itemsAlignment,
     required this.imageShape,
     required this.imageSize,
     required this.gap,
@@ -252,6 +253,7 @@ class CategoryGridBlock extends HomeBlock {
   final int columns;
   final bool showNames;
   final String layout;
+  final String itemsAlignment;
   final String imageShape;
   final double imageSize;
   final double gap;
@@ -575,12 +577,26 @@ class PromoStripBlock extends HomeBlock {
     required this.backgroundColor,
     required this.textColor,
     required this.action,
+    this.width,
+    this.height,
+    this.enableTransition = false,
+    this.messages = const <String>[],
+    this.transitionEffect = 'fade',
+    this.changeEverySeconds = 4,
+    this.transitionDurationMilliseconds = 500,
   }) : super(type: HomeBlockType.promoStrip);
 
   final String text;
   final String backgroundColor;
   final String textColor;
   final HomeAction? action;
+  final double? width;
+  final double? height;
+  final bool enableTransition;
+  final List<String> messages;
+  final String transitionEffect;
+  final int changeEverySeconds;
+  final int transitionDurationMilliseconds;
 }
 
 class CouponBannerBlock extends HomeBlock {
@@ -622,6 +638,11 @@ class CountdownBlock extends HomeBlock {
     this.textColor = '#1F2933',
     this.boxColor = '#E9EEEC',
     this.action,
+    this.showDays = true,
+    this.showHours = true,
+    this.showMinutes = true,
+    this.showSeconds = true,
+    this.layoutStyle = 'cards',
   }) : super(type: HomeBlockType.countdown);
 
   final String? title;
@@ -631,6 +652,11 @@ class CountdownBlock extends HomeBlock {
   final String textColor;
   final String boxColor;
   final HomeAction? action;
+  final bool showDays;
+  final bool showHours;
+  final bool showMinutes;
+  final bool showSeconds;
+  final String layoutStyle;
 }
 
 class VideoBannerBlock extends HomeBlock {
