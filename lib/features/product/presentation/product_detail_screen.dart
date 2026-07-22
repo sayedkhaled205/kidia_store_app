@@ -104,7 +104,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
         layout: layout,
         defaultTitle: copy.description,
-        backgroundColor: Colors.white,
+        backgroundColor: _cmsColor(
+          layout.string('page_background_color', '#FFFFFF'),
+          Colors.white,
+        ),
         actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
 		  onNotification: (ScrollUpdateNotification notification) {
@@ -321,7 +324,8 @@ class _ProductContent extends StatelessWidget {
               settings: pageLayout.element('image_gallery'),
             ),
           ),
-        if (pageLayout.element('product_tabs').enabled)
+        if (pageLayout.element('product_tabs').enabled &&
+            pageLayout.element('product_tabs').boolean('show_tabs', true))
           SliverPersistentHeader(
             pinned: pageLayout.element('product_tabs').boolean('sticky', true),
             delegate: _ProductTabsDelegate(
@@ -553,6 +557,17 @@ class _PatPatProductSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final double priceSize = settings.number('price_size', 25).clamp(14, 36);
     final double nameSize = settings.number('name_size', 18).clamp(12, 28);
+    final double namePriceGap = settings
+        .number('name_price_gap', 20)
+        .clamp(0, 64);
+    final Color priceColor = _cmsColor(
+      settings.string('price_color', '#2F806E'),
+      const Color(0xFF2F806E),
+    );
+    final Color nameColor = _cmsColor(
+      settings.string('name_color', '#1D1D1D'),
+      const Color(0xFF1D1D1D),
+    );
     final String price = money.displayAmount(money.priceMinor);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -570,7 +585,11 @@ class _PatPatProductSummary extends StatelessWidget {
                 child: Text(
                   price,
                   key: const Key('product-current-price'),
-                  style: TextStyle(fontSize: priceSize, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: priceColor,
+                    fontSize: priceSize,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             if (settings.boolean('show_rating', true) && product.averageRating > 0)
@@ -595,10 +614,17 @@ class _PatPatProductSummary extends StatelessWidget {
             ),
           ),
         if (settings.boolean('show_name', true)) ...<Widget>[
-          const SizedBox(height: 20),
+          SizedBox(
+            height: settings.boolean('show_price', true) ? namePriceGap : 0,
+          ),
           Text(
             product.name,
-            style: TextStyle(fontSize: nameSize, height: 1.35, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: nameColor,
+              fontSize: nameSize,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
         if (settings.boolean('show_selected_color', true) &&
@@ -1142,8 +1168,18 @@ class _ProductOptionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? selected = controller.selectedAttributes[group.key];
+    final Color titleColor = _cmsColor(
+      settings?.string('title_color', '#1D1D1D') ?? '#1D1D1D',
+      const Color(0xFF1D1D1D),
+    );
+    final Color optionTextColor = _cmsColor(
+      settings?.string('option_text_color', '#1F2933') ?? '#1F2933',
+      const Color(0xFF1F2933),
+    );
+    final double groupGap =
+        settings?.number('group_gap', 18).clamp(0, 48) ?? 18;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: EdgeInsets.only(bottom: groupGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -1152,7 +1188,10 @@ class _ProductOptionPicker extends StatelessWidget {
               Expanded(
                 child: Text(
                   selected == null ? group.label : '${group.label}   $selected',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: titleColor,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               if (settings?.boolean('show_size_chart', true) == true &&
@@ -1211,7 +1250,10 @@ class _ProductOptionPicker extends StatelessWidget {
                   .map(
                     (ProductOptionValue option) => DropdownMenuItem<String>(
                       value: option.value,
-                      child: Text(option.label),
+                      child: Text(
+                        option.label,
+                        style: TextStyle(color: optionTextColor),
+                      ),
                     ),
                   )
                   .toList(growable: false),
@@ -1234,6 +1276,7 @@ class _ProductOptionPicker extends StatelessWidget {
                     child: ChoiceChip(
                       key: Key('product-option-${group.key}-${option.value}'),
                       label: Text(option.label),
+                      labelStyle: TextStyle(color: optionTextColor),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           settings?.number('chip_radius', 22).clamp(0, 32) ?? 22,

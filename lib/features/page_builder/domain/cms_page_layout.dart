@@ -6,12 +6,17 @@ class CmsPageLayout {
     required this.header,
     required this.elements,
     required this.footer,
+    this.settings = const <String, dynamic>{},
   });
 
   final String page;
   final CmsPageComponent header;
   final List<CmsPageComponent> elements;
   final CmsPageComponent footer;
+  final Map<String, dynamic> settings;
+
+  String string(String key, String fallback) =>
+      _string(settings[key], fallback: fallback);
 
   CmsPageComponent element(String id) {
     return elements.firstWhere(
@@ -29,6 +34,7 @@ class CmsPageLayout {
     final dynamic rawElements = json['elements'];
     return CmsPageLayout(
       page: _string(json['page'], fallback: 'catalog'),
+      settings: _map(json['settings']),
       header: CmsPageComponent.fromJson(
         _map(json['header']),
         fallbackId: 'header',
@@ -145,6 +151,9 @@ class CmsPageLayout {
 	};
     return CmsPageLayout(
       page: page,
+      settings: const <String, dynamic>{
+        'page_background_color': '#FFFFFF',
+      },
 	  header: CmsPageComponent(
         id: 'header',
         type: 'app_header',
@@ -174,10 +183,10 @@ class CmsPageLayout {
 
 	static Map<String, dynamic> _fallbackProductSettings(String id) {
 		const Map<String, Map<String, dynamic>> settings = <String, Map<String, dynamic>>{
-			'product_tabs': <String, dynamic>{'sticky': true, 'overview_label': 'Overview', 'reviews_label': 'Reviews', 'recommend_label': 'Recommend', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
+			'product_tabs': <String, dynamic>{'show_tabs': true, 'sticky': true, 'overview_label': 'Overview', 'reviews_label': 'Reviews', 'recommend_label': 'Recommend', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
 			'image_gallery': <String, dynamic>{'aspect_ratio': .75, 'fit': 'contain', 'background_color': '#FFFFFF', 'show_thumbnails': false, 'show_indicators': false, 'show_counter': true, 'counter_background': '#8A8585', 'counter_text_color': '#FFFFFF', 'enable_zoom': false},
-			'product_summary': <String, dynamic>{'show_name': true, 'show_price': true, 'show_regular_price': true, 'show_rating': true, 'show_review_count': true, 'show_sku': false, 'show_stock': false, 'show_badge': false, 'show_selected_color': true, 'price_size': 25, 'name_size': 18},
-			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'chip_radius': 22, 'chip_height': 44},
+			'product_summary': <String, dynamic>{'show_name': true, 'show_price': true, 'show_regular_price': true, 'show_rating': true, 'show_review_count': true, 'show_sku': false, 'show_stock': false, 'show_badge': false, 'show_selected_color': true, 'price_color': '#2F806E', 'name_color': '#1D1D1D', 'name_price_gap': 20, 'price_size': 25, 'name_size': 18},
+			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'title_color': '#1D1D1D', 'option_text_color': '#1F2933', 'group_gap': 18, 'chip_radius': 22, 'chip_height': 44},
 			'purchase_bar': <String, dynamic>{'show_quantity': false},
 			'description': <String, dynamic>{'accordion': true, 'details_label': 'Product Details', 'show_description': true, 'show_attributes': true},
 			'reviews': <String, dynamic>{'title': 'Reviews', 'show_summary': true, 'show_fit_summary': true, 'fit_small_percent': 1, 'fit_true_percent': 99, 'fit_large_percent': 0},
