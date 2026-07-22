@@ -1,0 +1,31 @@
+name: Rebuild embedded CMS preview
+
+on:
+  push:
+    branches:
+      - agent/rebuild-embedded-flutter-preview
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/build_cms_flutter_preview.sh
+      - name: Commit current Flutter preview bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kidia-mobile-cms/admin/flutter-preview
+          git diff --cached --quiet || git commit -m "Build current Flutter preview bundle"
+          git push origin HEAD:${{ github.ref_name }}
