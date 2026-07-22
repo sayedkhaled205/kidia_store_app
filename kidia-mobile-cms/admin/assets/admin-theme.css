@@ -474,3 +474,4 @@
 		--kidia-settings-control-width: 100%;
 	}
 }
+.kidia-wishlist-access-mode .kidia-category-navigation-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:18px}.kidia-wishlist-access-mode .kidia-category-navigation-modes label{position:relative}.kidia-wishlist-access-mode .kidia-category-navigation-modes input{position:absolute;opacity:0}.kidia-wishlist-access-mode .kidia-category-navigation-modes span{display:grid;grid-template-columns:1fr auto;gap:5px 12px;min-height:76px;padding:16px;border:2px solid #dbe7e4;border-radius:12px;background:#fff;cursor:pointer}.kidia-wishlist-access-mode .kidia-category-navigation-modes small{grid-column:1/-1;color:#60706c}.kidia-wishlist-access-mode .kidia-category-navigation-modes input:checked+span{border-color:#2f8877;background:#eef8f5}@media(max-width:782px){.kidia-wishlist-access-mode .kidia-category-navigation-modes{grid-template-columns:1fr}}

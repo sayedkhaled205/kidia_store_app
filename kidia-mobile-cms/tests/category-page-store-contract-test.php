@@ -32,6 +32,9 @@ $saved = $store->save_settings(
 		'categories' => array( 22 => array( 'order' => 0, 'hidden' => false, 'image_id' => 55, 'name' => 'App name' ) ),
 	)
 );
+kidia_category_assert( 'expand_inline' === $saved['general']['navigation_mode'], 'Category navigation must preserve the expand-in-page default.' );
+$separate = $store->save_settings( array( 'enabled' => '1', 'general' => array( 'navigation_mode' => 'separate_page' ) ) );
+kidia_category_assert( 'separate_page' === $separate['general']['navigation_mode'], 'Category navigation must save the separate-page mode.' );
 kidia_category_assert( 5 === $saved['version'], 'The Category element must save the current schema version.' );
 kidia_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 kidia_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );

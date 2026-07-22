@@ -125,6 +125,7 @@ class _CategoryLayoutView extends StatefulWidget {
 
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   int? _selectedRoot;
+  final Set<int> _expandedRootIds = <int>{};
 
   CatalogCategory get _settings =>
       widget.settings ?? widget.tree.roots.first.category;
@@ -140,11 +141,20 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     final List<CatalogCategoryNode> visibleNodes = selectedRoot == null
         ? widget.tree.roots
         : selectedRoot.children;
+    final List<CatalogCategoryNode> inlineNodes =
+        _settings.navigationMode == 'expand_inline' && layout != 'default'
+        ? visibleNodes.expand((CatalogCategoryNode node) sync* {
+            yield node;
+            if (_expandedRootIds.contains(node.category.id)) {
+              yield* node.children;
+            }
+          }).toList(growable: false)
+        : visibleNodes;
     final Widget content = layout == 'sidebar'
-        ? _sidebar(visibleNodes)
+        ? _sidebar(inlineNodes)
         : layout == 'default'
         ? _defaultList(visibleNodes)
-        : _grid(layout, visibleNodes);
+        : _grid(layout, inlineNodes);
     return Transform.translate(
       key: const Key('category-section-layout-merge'),
       offset: Offset(0, _settings.marginBottom - _settings.marginTop),
@@ -188,15 +198,20 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
         itemCount: nodes.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
-        itemBuilder: (BuildContext context, int index) => Align(
-          child: FractionallySizedBox(
+        itemBuilder: (BuildContext context, int index) {
+          final CatalogCategoryNode node = nodes[index];
+          final bool expanded = _expandedRootIds.contains(node.category.id);
+          return Align(child: FractionallySizedBox(
             widthFactor: _settings.cardWidthPercent / 100,
-            child: _CategoryBranch(
-              node: CatalogCategoryNode(category: nodes[index].category),
-              onTap: () => _openNode(nodes[index]),
-            ),
-          ),
-        ),
+            child: Column(children: <Widget>[
+              _CategoryBranch(node: CatalogCategoryNode(category: node.category), onTap: () => _openNode(node)),
+              if (expanded) ...node.children.map((CatalogCategoryNode child) => Padding(
+                padding: EdgeInsetsDirectional.only(top: _settings.cardGap, start: 18),
+                child: _CategoryBranch(node: CatalogCategoryNode(category: child.category), onTap: () => _openCategoryProducts(context, child.category)),
+              )),
+            ]),
+          ));
+        },
       ),
     );
   }
@@ -273,7 +288,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   }
 
   void _openNode(CatalogCategoryNode node) {
-    if (_selectedRoot == null && node.children.isNotEmpty) {
+    if (_settings.navigationMode == 'expand_inline' && node.children.isNotEmpty) {
+      setState(() {
+        if (!_expandedRootIds.add(node.category.id)) {
+          _expandedRootIds.remove(node.category.id);
+        }
+      });
+      return;
+    }
+    if (_settings.navigationMode != 'separate_page' && _selectedRoot == null && node.children.isNotEmpty) {
       setState(() => _selectedRoot = widget.tree.roots.indexOf(node));
       return;
     }
