@@ -7,6 +7,7 @@
 	if (!root || !frame || !form) { return; }
 
 	var page = root.dataset.page || "catalog";
+	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
 	var timer = 0;
 	var frameOrigin = window.location.origin;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
@@ -61,6 +62,23 @@
 		}), frameOrigin);
 	}
 
+	function waitForFlutter() {
+		frame.hidden = true;
+		frame.setAttribute("aria-busy", "true");
+		if (fallback) { fallback.hidden = false; }
+	}
+
+	function showFlutter() {
+		send();
+		window.requestAnimationFrame(function () {
+			window.requestAnimationFrame(function () {
+				frame.hidden = false;
+				frame.removeAttribute("aria-busy");
+				if (fallback) { fallback.hidden = true; }
+			});
+		});
+	}
+
 	function schedule() {
 		window.clearTimeout(timer);
 		timer = window.setTimeout(send, 60);
@@ -76,12 +94,13 @@
 		if (typeof message === "string") {
 			try { message = JSON.parse(message); } catch (_) { return; }
 		}
-		if (message && message.type === "kidia-flutter-preview-ready") { send(); }
+		if (message && message.type === "kidia-flutter-preview-ready") { showFlutter(); }
 	});
 
 	// A cached Flutter shell can finish loading before this footer script runs.
 	// Send immediately, then retry briefly so preview startup never depends on
 	// catching a future iframe load/ready event.
+	waitForFlutter();
 	send();
 	[250, 750, 1500, 3000, 6000].forEach(function (delay) {
 		window.setTimeout(send, delay);
