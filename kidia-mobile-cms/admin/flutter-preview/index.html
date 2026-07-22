@@ -59,8 +59,10 @@
         }
       }
 
+      const version = new URLSearchParams(window.location.search).get('v') || '';
+      window.__kidiaPreviewVersion = version;
       const bootstrap = document.createElement('script');
-      bootstrap.src = 'flutter_bootstrap.js';
+      bootstrap.src = 'flutter_bootstrap.js' + (version ? '?v=' + encodeURIComponent(version) : '');
       document.body.appendChild(bootstrap);
     })();
   </script>
