@@ -25,6 +25,11 @@ assert.match(
   /flutter-view, flt-glass-pane[\s\S]*requestAnimationFrame[\s\S]*kidia-flutter-preview-ready[\s\S]*MutationObserver/,
   "The web shell must repeat the ready handshake after Flutter has rendered.",
 );
+assert.match(
+  index,
+  /addEventListener\('message'[\s\S]*kidia-preview-layout[\s\S]*announceRendered\(\)/,
+  "The rendered shell must acknowledge every parent layout retry.",
+);
 assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,

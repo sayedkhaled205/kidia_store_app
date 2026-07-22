@@ -48,9 +48,11 @@
       // The Dart bridge can announce readiness before the WordPress footer
       // bridge attaches its listener. Confirm readiness again from the web
       // shell only after Flutter has mounted and painted its actual view.
+      let flutterRendered = false;
       const announceRendered = () => {
         const renderedView = document.querySelector('flutter-view, flt-glass-pane');
         if (!renderedView) return false;
+        flutterRendered = true;
         requestAnimationFrame(() => requestAnimationFrame(() => {
           window.parent.postMessage(JSON.stringify({
             type: 'kidia-flutter-preview-ready'
@@ -64,6 +66,15 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
       }
+      window.addEventListener('message', (event) => {
+        let message = event.data;
+        if (typeof message === 'string') {
+          try { message = JSON.parse(message); } catch (_) { return; }
+        }
+        if (flutterRendered && message && message.type === 'kidia-preview-layout') {
+          announceRendered();
+        }
+      });
 
       if ('serviceWorker' in navigator) {
         try {
