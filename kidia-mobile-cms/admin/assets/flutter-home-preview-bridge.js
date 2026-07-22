@@ -5,7 +5,9 @@
 	var form = document.getElementById("kidia-home-builder-form");
 	if (!root || !frame || !form) { return; }
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
-	var latestBlocks = [];
+	var latestBlocks = Array.isArray(window.kidiaHomePreviewBlocks)
+		? window.kidiaHomePreviewBlocks
+		: [];
 	var frameOrigin = window.location.origin;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
 
