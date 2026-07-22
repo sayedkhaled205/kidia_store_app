@@ -21,6 +21,32 @@ final class Kidia_Mobile_CMS_Page_Layout_Endpoint {
 				),
 			)
 		);
+		register_rest_route(
+			'woo-mobile/v1',
+			'/page-layout/(?P<page>[a-z-]+)/preview',
+			array(
+				'methods' => 'POST',
+				'callback' => array( $this, 'preview_layout' ),
+				'permission_callback' => static function (): bool {
+					return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );
+				},
+				'args' => array(
+					'page' => array( 'required' => true, 'sanitize_callback' => 'sanitize_key' ),
+				),
+			)
+		);
+	}
+
+	public function preview_layout( WP_REST_Request $request ) {
+		$page = sanitize_key( (string) $request->get_param( 'page' ) );
+		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
+			return new WP_Error( 'woo_mobile_unknown_page', __( 'Unknown application page.', 'kidia-mobile-cms' ), array( 'status' => 404 ) );
+		}
+		$submitted = $request->get_param( 'layout' );
+		$layout = ( new Kidia_Mobile_Page_Layout_Store() )->preview_layout( $page, is_array( $submitted ) ? $submitted : array() );
+		$response = rest_ensure_response( $layout );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		return $response;
 	}
 
 	public function get_layout( WP_REST_Request $request ) {

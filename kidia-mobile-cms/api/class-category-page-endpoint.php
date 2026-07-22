@@ -10,6 +10,17 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 	public function register_routes(): void {
 		register_rest_route(
 			'woo-mobile/v1',
+			'/category-page/preview',
+			array(
+				'methods' => 'POST',
+				'callback' => array( $this, 'preview_categories' ),
+				'permission_callback' => static function (): bool {
+					return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );
+				},
+			)
+		);
+		register_rest_route(
+			'woo-mobile/v1',
 			'/category-page',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -21,6 +32,14 @@ final class Kidia_Mobile_CMS_Category_Page_Endpoint {
 				),
 			)
 		);
+	}
+
+	/** Returns the canonical presentation generated from unsaved Category Builder values. */
+	public function preview_categories( WP_REST_Request $request ): WP_REST_Response {
+		$general = $request->get_param( 'general' );
+		$response = new WP_REST_Response( Kidia_Mobile_Category_Page_Store::sanitize_general( is_array( $general ) ? $general : array() ), 200 );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		return $response;
 	}
 
 	public function get_categories( WP_REST_Request $request ): WP_REST_Response {

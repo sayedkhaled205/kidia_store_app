@@ -686,6 +686,11 @@ final class Kidia_Mobile_CMS_Admin {
 						wp_enqueue_script( 'kidia-mobile-category-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/category-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/category-builder.js' ), true );
 						if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) {
 							wp_enqueue_script( 'kidia-mobile-flutter-category-preview-bridge', KIDIA_MOBILE_CMS_URL . 'admin/assets/flutter-category-preview-bridge.js', array( 'kidia-mobile-category-builder' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/flutter-category-preview-bridge.js' ), true );
+							wp_localize_script( 'kidia-mobile-flutter-category-preview-bridge', 'kidiaFlutterPreview', array(
+								'layoutPreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/page-layout/category/preview' ) ),
+								'categoryPreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/category-page/preview' ) ),
+								'restNonce' => wp_create_nonce( 'wp_rest' ),
+							) );
 						}
 						return;
 					}
@@ -709,6 +714,10 @@ final class Kidia_Mobile_CMS_Admin {
 						wp_enqueue_script( 'kidia-mobile-page-builder', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.js', array( 'jquery', 'jquery-ui-sortable' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.js' ), true );
 						if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) {
 							wp_enqueue_script( 'kidia-mobile-flutter-preview-bridge', KIDIA_MOBILE_CMS_URL . 'admin/assets/flutter-preview-bridge.js', array( 'kidia-mobile-page-builder' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/flutter-preview-bridge.js' ), true );
+							wp_localize_script( 'kidia-mobile-flutter-preview-bridge', 'kidiaFlutterPreview', array(
+								'layoutPreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/page-layout/' . self::PAGE_BUILDER_SLUGS[ $page ] . '/preview' ) ),
+								'restNonce' => wp_create_nonce( 'wp_rest' ),
+							) );
 						}
 						wp_localize_script(
 							'kidia-mobile-page-builder',
@@ -787,7 +796,8 @@ final class Kidia_Mobile_CMS_Admin {
 								rest_url( 'woo-mobile/v1/home-layout' )
 							)
 						),
-						'livePreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/home-layout/preview' ) ),
+					'livePreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/home-layout/preview' ) ),
+					'layoutPreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/page-layout/home/preview' ) ),
 						'restNonce'           => wp_create_nonce( 'wp_rest' ),
 					)
             		);

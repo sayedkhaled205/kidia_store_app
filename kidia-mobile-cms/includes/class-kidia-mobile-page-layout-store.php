@@ -408,7 +408,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 	}
 
 	/** @param array<string,mixed> $submitted */
-	public function save_layout( string $page, array $submitted ): array {
+	public function preview_layout( string $page, array $submitted ): array {
 		$page = sanitize_key( $page );
 		$current = $this->get_layout( $page );
 		if ( empty( $current ) ) {
@@ -439,9 +439,18 @@ final class Kidia_Mobile_Page_Layout_Store {
 		foreach ( $definitions as $definition ) {
 			$layout['elements'][] = $this->default_element( $definition );
 		}
-		update_option( self::OPTION_PREFIX . $page, $layout, false );
+		return $layout;
+	}
+
+	/** @param array<string,mixed> $submitted */
+	public function save_layout( string $page, array $submitted ): array {
+		$layout = $this->preview_layout( $page, $submitted );
+		if ( empty( $layout ) ) {
+			return array();
+		}
+		update_option( self::OPTION_PREFIX . sanitize_key( $page ), $layout, false );
 		if ( function_exists( 'wp_cache_delete' ) ) {
-			wp_cache_delete( self::OPTION_PREFIX . $page, 'options' );
+			wp_cache_delete( self::OPTION_PREFIX . sanitize_key( $page ), 'options' );
 		}
 		return $layout;
 	}
