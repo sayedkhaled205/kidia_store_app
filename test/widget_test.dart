@@ -199,6 +199,28 @@ void main() {
     await _disposeApp(tester, router);
   });
 
+  testWidgets('wishlist keeps its enabled navigation footer visible', (
+    tester,
+  ) async {
+    final GoRouter router = createAppRouter(initialLocation: '/wishlist');
+    final CmsPageLayout wishlistLayout = _navigationLayout(
+      'wishlist',
+      height: 64,
+      iconSize: 24,
+    );
+
+    await _pumpStartedApp(
+      tester,
+      router: router,
+      wishlistLayout: wishlistLayout,
+    );
+
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsOneWidget);
+    expect(find.byKey(const Key('cms-bottom-nav-wishlist')), findsOneWidget);
+
+    await _disposeApp(tester, router);
+  });
+
   testWidgets(
     'each page uses its own footer sizing while keeping Arabic page labels',
     (tester) async {
@@ -282,6 +304,7 @@ Future<void> _pumpStartedApp(
   required GoRouter router,
   CmsPageLayout? homeLayout,
   CmsPageLayout? categoryLayout,
+  CmsPageLayout? wishlistLayout,
   CatalogRepository catalogRepository = const _RouterCatalogRepository(),
   cart_selection.AddProductPurchaseSelection? addSelection,
 }) async {
@@ -301,6 +324,10 @@ Future<void> _pumpStartedApp(
           cmsPageLayoutProvider(
             'category',
           ).overrideWith((ref) async => categoryLayout),
+        if (wishlistLayout != null)
+          cmsPageLayoutProvider(
+            'wishlist',
+          ).overrideWith((ref) async => wishlistLayout),
       ],
       child: KidiaApp(router: router),
     ),
