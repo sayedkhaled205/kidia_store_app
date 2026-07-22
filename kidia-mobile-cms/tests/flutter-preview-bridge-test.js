@@ -8,7 +8,7 @@ const { JSDOM } = require("jsdom");
 
 const assets = path.resolve(__dirname, "..", "admin", "assets");
 
-function runBridge(asset, body) {
+function runBridge(asset, body, setup) {
   const dom = new JSDOM(`<!doctype html><body>${body}</body>`, {
     runScripts: "outside-only",
     url: "https://store.example/wp-admin/admin.php",
@@ -19,6 +19,7 @@ function runBridge(asset, body) {
   frame.contentWindow.postMessage = (message, origin) => messages.push({ message: JSON.parse(message), origin });
   window.setTimeout = () => 1;
   window.requestAnimationFrame = (callback) => { callback(); return 1; };
+  if (setup) setup(window);
   window.eval(fs.readFileSync(path.join(assets, asset), "utf8"));
   Object.defineProperties(messages, {
     window: { value: window },
@@ -66,15 +67,19 @@ test("Category Flutter preview sends current fields immediately", () => {
   assert.equal(messages[0].message.category.show_arrow, true);
 });
 
-test("Home Flutter preview sends an initial frame without waiting for iframe load", () => {
+test("Home Flutter preview sends the builder's existing blocks on its initial frame", () => {
   const messages = runBridge("flutter-home-preview-bridge.js", `
     <div class="kidia-builder-wrap"></div>
     <form id="kidia-home-builder-form"><input name="layout[header][enabled]" value="1"></form>
-    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`, (window) => {
+      window.kidiaHomePreviewBlocks = [{ id: "hero", type: "hero_slider", enabled: true, settings: {} }];
+    });
   assert.equal(messages.length, 1);
   assert.equal(messages[0].message.page, "home");
   assert.equal(messages[0].message.layout.header.enabled, "1");
-  assert.deepEqual(messages[0].message.home.blocks, []);
+  assert.deepEqual(messages[0].message.home.blocks, [
+    { id: "hero", type: "hero_slider", enabled: true, settings: {} },
+  ]);
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {
