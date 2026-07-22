@@ -29,6 +29,7 @@ void main() {
       findsNothing,
     );
     expect(find.byKey(const Key('wishlist-empty')), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-grid')), findsNothing);
     expect(find.text('Your wishlist is empty'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('wishlist-continue-shopping')));
@@ -59,6 +60,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('wishlist-grid')), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-empty')), findsNothing);
     expect(find.text('Everyday Jacket'), findsOneWidget);
     expect(find.text(r'$85.00'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);

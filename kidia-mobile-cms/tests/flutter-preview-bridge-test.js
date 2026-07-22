@@ -55,6 +55,22 @@ test("generic Flutter preview sends state immediately when cached iframe load wa
   assert.equal(messages.frame.nextElementSibling.hidden, true);
 });
 
+test("generic Flutter preview preserves the submitted Off value for WordPress checkbox pairs", () => {
+  const messages = runBridge("flutter-preview-bridge.js", `
+    <div class="kidia-page-builder" data-page="wishlist">
+      <form class="kidia-page-editor">
+        <input type="hidden" name="layout[footer][enabled]" value="0">
+        <input type="checkbox" name="layout[footer][enabled]" value="1">
+        <input type="hidden" name="layout[footer][settings][show_labels]" value="0">
+        <input type="checkbox" name="layout[footer][settings][show_labels]" value="1" checked>
+      </form>
+      <div id="kidia-page-elements"></div>
+    </div>
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+  assert.equal(messages[0].message.layout.footer.enabled, "0");
+  assert.equal(messages[0].message.layout.footer.settings.show_labels, true);
+});
+
 test("Category Flutter preview sends current fields immediately", () => {
   const messages = runBridge("flutter-category-preview-bridge.js", `
     <div class="kidia-category-builder"><form>

@@ -135,7 +135,7 @@ class _MainShellState extends ConsumerState<MainShell>
 		},
 		child: widget.navigationShell,
 	  ),
-      bottomNavigationBar: !footer.enabled || (_footerHidden && footer.boolean('hide_on_scroll', false)) || visibleItems.isEmpty || footer.string('style', 'navigation') == 'product_action'
+      bottomNavigationBar: !footer.enabled || (_footerHidden && footer.boolean('hide_on_scroll', false)) || visibleItems.isEmpty || (page == 'product' && footer.string('style', 'navigation') == 'product_action')
           ? null
           : SafeArea(
         top: false,

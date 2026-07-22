@@ -40,7 +40,7 @@
 		var result = {};
 		Array.prototype.forEach.call(form.querySelectorAll("[name]"), function (input) {
 			if (String(input.name || "").indexOf("layout[") !== 0) { return; }
-			if (input.type === "hidden" && input.nextElementSibling && input.nextElementSibling.name === input.name && input.nextElementSibling.type === "checkbox") { return; }
+			if (input.type === "hidden" && input.nextElementSibling && input.nextElementSibling.name === input.name && input.nextElementSibling.type === "checkbox" && input.nextElementSibling.checked) { return; }
 			if ((input.type === "radio" || input.type === "checkbox") && !input.checked) { return; }
 			assign(result, pathParts(input.name), scalar(input));
 		});
