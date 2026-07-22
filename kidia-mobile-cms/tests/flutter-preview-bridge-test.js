@@ -108,4 +108,10 @@ test("Flutter web shell repeats readiness only after its rendered view mounts", 
   await Promise.resolve();
   await Promise.resolve();
   assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
+  const firstReadyCount = messages.length;
+  window.dispatchEvent(new window.MessageEvent("message", {
+    data: JSON.stringify({ type: "kidia-preview-layout", page: "home", layout: {} }),
+  }));
+  assert.equal(messages.length, firstReadyCount + 1, "A parent retry receives a fresh rendered acknowledgement");
+  assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
 });
