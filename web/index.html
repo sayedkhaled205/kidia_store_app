@@ -41,6 +41,29 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // This build is embedded in the versioned WordPress plugin. Never let an
+    // older preview worker or cached Dart bundle survive a plugin update.
+    (async function startKidiaPreview() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => {
+            return registration.scope.includes('/admin/flutter-preview/')
+              ? registration.unregister()
+              : Promise.resolve(false);
+          }));
+        } catch (error) {
+          console.warn('Could not clear the old preview worker.', error);
+        }
+      }
+
+      const version = new URLSearchParams(window.location.search).get('v') || '';
+      window.__kidiaPreviewVersion = version;
+      const bootstrap = document.createElement('script');
+      bootstrap.src = 'flutter_bootstrap.js' + (version ? '?v=' + encodeURIComponent(version) : '');
+      document.body.appendChild(bootstrap);
+    })();
+  </script>
 </body>
 </html>

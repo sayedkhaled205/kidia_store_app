@@ -135,7 +135,7 @@ foreach ( $library_options as $type => $option_name ) {
 				<div class="kidia-mobile-preview__speaker"></div>
 			<div class="kidia-mobile-preview__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
-					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home' ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
+					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home', 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content kidia-legacy-preview-fallback" hidden></div>
 				<?php else : ?>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content"></div>

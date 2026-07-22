@@ -4,6 +4,7 @@
 	var frame = document.getElementById("kidia-flutter-preview");
 	var form = document.getElementById("kidia-home-builder-form");
 	if (!root || !frame || !form) { return; }
+	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
 	var latestBlocks = [];
 	var frameOrigin = window.location.origin;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
@@ -48,6 +49,21 @@
 			}
 		}), frameOrigin);
 	}
+	function waitForFlutter() {
+		frame.hidden = true;
+		frame.setAttribute("aria-busy", "true");
+		if (fallback) { fallback.hidden = false; }
+	}
+	function showFlutter() {
+		send();
+		window.requestAnimationFrame(function () {
+			window.requestAnimationFrame(function () {
+				frame.hidden = false;
+				frame.removeAttribute("aria-busy");
+				if (fallback) { fallback.hidden = true; }
+			});
+		});
+	}
 	document.addEventListener("kidia:home-preview-state", function (event) {
 		latestBlocks = event.detail && Array.isArray(event.detail.blocks) ? event.detail.blocks : [];
 		send();
@@ -57,9 +73,10 @@
 		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
-		if (message && message.type === "kidia-flutter-preview-ready") { send(); }
+		if (message && message.type === "kidia-flutter-preview-ready") { showFlutter(); }
 	});
 	// Do not rely on a load event that a cached iframe may already have fired.
+	waitForFlutter();
 	send();
 	[250, 750, 1500, 3000, 6000].forEach(function (delay) {
 		window.setTimeout(send, delay);

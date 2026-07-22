@@ -19,6 +19,9 @@ flutter build web \
 sed -i 's#<base href="/">#<base href="./">#' "$OUTPUT/index.html"
 sed -i 's#_flutter.loader.load({#_flutter.loader.load({config:{canvasKitBaseUrl:"canvaskit/"},#' \
   "$OUTPUT/flutter_bootstrap.js"
+sed -i '/_flutter.loader.load({config:/i\
+if (window.__kidiaPreviewVersion) { _flutter.buildConfig.builds.forEach(function (build) { if (build.mainJsPath) { build.mainJsPath += "?v=" + encodeURIComponent(window.__kidiaPreviewVersion); } }); }\
+' "$OUTPUT/flutter_bootstrap.js"
 
 # Dart2JS uses CanvasKit. Keep both runtime-compatible CanvasKit variants and
 # omit debug symbols plus WASM renderers that this build cannot select.
