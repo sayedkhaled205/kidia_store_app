@@ -46,6 +46,26 @@
     // worker can keep an older bundle alive (or repeatedly reload this iframe),
     // so always remove stale registrations before starting the preview.
     (async function startKidiaPreview() {
+      // The Dart bridge can announce readiness before the WordPress footer
+      // bridge attaches its listener. Confirm readiness again from the web
+      // shell only after Flutter has mounted and painted its actual view.
+      const announceRendered = () => {
+        const renderedView = document.querySelector('flutter-view, flt-glass-pane');
+        if (!renderedView) return false;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          window.parent.postMessage(JSON.stringify({
+            type: 'kidia-flutter-preview-ready'
+          }), '*');
+        }));
+        return true;
+      };
+      if (!announceRendered()) {
+        const observer = new MutationObserver(() => {
+          if (announceRendered()) observer.disconnect();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
       if ('serviceWorker' in navigator) {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();

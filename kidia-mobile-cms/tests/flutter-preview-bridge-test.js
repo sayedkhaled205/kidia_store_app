@@ -89,3 +89,23 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
   assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
   assert.match(bootstrap, /mainJsPath.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
 });
+
+test("Flutter web shell repeats readiness only after its rendered view mounts", async () => {
+  const index = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "index.html"), "utf8");
+  const script = index.match(/<script>([\s\S]*startKidiaPreview[\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script);
+  const dom = new JSDOM("<!doctype html><body></body>", {
+    runScripts: "outside-only",
+    url: "https://store.example/preview/index.html?page=home&v=1.30.63",
+  });
+  const { window } = dom;
+  const messages = [];
+  window.requestAnimationFrame = (callback) => { callback(); return 1; };
+  window.postMessage = (message) => messages.push(JSON.parse(message));
+  window.eval(script);
+  assert.equal(messages.length, 0, "Readiness cannot be announced before Flutter mounts");
+  window.document.body.appendChild(window.document.createElement("flutter-view"));
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
+});
