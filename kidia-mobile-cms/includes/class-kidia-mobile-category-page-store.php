@@ -56,6 +56,13 @@ final class Kidia_Mobile_Category_Page_Store {
 
 	/** @param array<string,mixed> $submitted @return array<string,mixed> */
 	public function save_settings( array $submitted ): array {
+		$clean = $this->preview_settings( $submitted );
+		update_option( self::OPTION_NAME, $clean, false );
+		return $clean;
+	}
+
+	/** Sanitizes an unsaved Category Builder snapshot without persisting it. @param array<string,mixed> $submitted @return array<string,mixed> */
+	public function preview_settings( array $submitted ): array {
 		$categories = array();
 		foreach ( is_array( $submitted['categories'] ?? null ) ? $submitted['categories'] : array() as $term_id => $row ) {
 			$id = absint( $term_id );
@@ -71,7 +78,6 @@ final class Kidia_Mobile_Category_Page_Store {
 			'general'    => self::sanitize_general( is_array( $submitted['general'] ?? null ) ? $submitted['general'] : array() ),
 			'categories' => $categories,
 		);
-		update_option( self::OPTION_NAME, $clean, false );
 		return $clean;
 	}
 

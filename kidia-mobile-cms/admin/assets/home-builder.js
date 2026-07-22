@@ -751,7 +751,7 @@
 			}).catch(function (error) {
 				if (window.console && window.console.warn) { window.console.warn(error); }
 			});
-		}, 300);
+		}, 0);
 	}
 
 	function setCollapsed(block, collapsed) {
