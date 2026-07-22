@@ -30,13 +30,34 @@ class KidiaApp extends ConsumerWidget {
         if (configuredLocale.languageCode != 'en') const Locale('en'),
       ],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: KidiaTheme.light,
+      // Flutter Web otherwise inherits the desktop browser platform. That
+      // changes Material metrics and interaction defaults even though the
+      // preview is rendered inside a phone-sized viewport. The CMS preview is
+      // an Android application preview, so make it use the same platform
+      // defaults as the installed app without changing native builds.
+      theme: AppConfig.isCmsPreview
+          ? KidiaTheme.light.copyWith(platform: TargetPlatform.android)
+          : KidiaTheme.light,
       builder: (context, child) {
-        return Directionality(
+        final Widget app = Directionality(
           textDirection: AppConfig.isRightToLeft
               ? TextDirection.rtl
               : TextDirection.ltr,
           child: child ?? const SizedBox.shrink(),
+        );
+        if (!AppConfig.isCmsPreview) return app;
+
+        // WordPress inherits the desktop accessibility/text environment. Do
+        // not let that environment resize only the embedded preview; the
+        // phone and the preview must calculate the same header/footer slots.
+        final MediaQueryData media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.noScaling,
+            boldText: false,
+            navigationMode: NavigationMode.traditional,
+          ),
+          child: app,
         );
       },
     );
