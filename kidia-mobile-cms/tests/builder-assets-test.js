@@ -685,6 +685,24 @@ function runMergeControlsContractTest() {
 	assert.match(checkoutSuggestions, /suggested-appearance[\s\S]*suggestions\[image_ratio\][\s\S]*suggestions\[title\][\s\S]*suggestions\[button_label\][\s\S]*button_color[\s\S]*suggested-products-actions/, "Image, text and appearance controls must remain together in the first Suggested Products section.");
 	assert.match(checkoutSuggestions, /suggested-products-actions[\s\S]*suggestions\[source\][\s\S]*category_id[\s\S]*manual_product_ids[\s\S]*limit[\s\S]*columns/, "Products and action data must remain together in the second Suggested Products section.");
 	assert.doesNotMatch(checkoutSuggestions, />Products & Data<|>Image Settings<|>Text & Content<|>Colors & Appearance<|>Actions & Navigation</, "Suggested Products must not render the five old section headings.");
+	assert.match(settingsSections, /suggested_products:\s*"Products, Actions & Image"/, "Suggested Products must expose one combined runtime heading for image, action, and product controls.");
+	assert.match(settingsSections, /kidia-checkout-suggestions-fields[\s\S]*\^\(image\|actions\|products\)\$[\s\S]*suggestionKey === "button_label"[\s\S]*section = "suggested_products"/, "Only Checkout Suggested Products may merge Image Settings, Actions & Navigation, and Products & Data at runtime.");
+	const suggestedDom = new JSDOM(`<!doctype html><html><body><div class="kidia-page-fields kidia-checkout-suggestions-fields">
+		<div class="kidia-page-field"><label>Image ratio</label><input name="suggestions[image_ratio]" value="1"></div>
+		<div class="kidia-page-field"><label>Section title</label><input name="suggestions[title]" value="Suggested"></div>
+		<div class="kidia-page-field"><label>Add button label</label><input name="suggestions[button_label]" value="Add"></div>
+		<div class="kidia-page-field"><label>Source</label><select name="suggestions[source]"><option>latest</option></select></div>
+	</div></body></html>`, { runScripts: "outside-only" });
+	suggestedDom.window.eval(settingsSections);
+	suggestedDom.window.document.dispatchEvent(new suggestedDom.window.Event("DOMContentLoaded"));
+	const suggestedHeading = suggestedDom.window.document.querySelector(".kidia-settings-section-title--suggested_products");
+	assert.ok(suggestedHeading, "Suggested Products must build the combined runtime section.");
+	assert.equal(suggestedHeading.textContent, "Products, Actions & Image", "The merged Suggested Products heading must describe all three combined groups.");
+	const suggestedFields = [];
+	for (let field = suggestedHeading.nextElementSibling; field && !field.classList.contains("kidia-settings-section-title"); field = field.nextElementSibling) {
+		suggestedFields.push(field.querySelector("[name]").name);
+	}
+	assert.deepEqual(suggestedFields, ["suggestions[image_ratio]", "suggestions[button_label]", "suggestions[source]"], "Image, action, and product fields must be together without pulling Text & Content into the merged section.");
 	const splashScreen = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "splash-screen.php"), "utf8");
 	assert.equal((splashScreen.match(/class="kidia-settings-section-title(?:\s[^\"]*)?"/g) || []).length, 2, "Splash Screen must contain exactly two settings sections.");
 	["image_url", "image_width", "image_height", "image_fit", "image_shape", "store_name", "show_store_name", "text_color", "background_color", "background_color_end", "duration_ms", "show_loader", "loader_color"].forEach(function (key) {
