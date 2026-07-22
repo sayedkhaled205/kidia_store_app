@@ -485,9 +485,14 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "The Category phone must remain centered in the actual space beside its cards.");
 	assert.match(chromeTemplate, /class="kidia-fixed-chrome-identity"/, "Fixed Header and Footer must expose a stable identity group for physical ordering.");
 	const pageBuilderCss = readAsset("page-builder.css");
+	const categoryBuilderCss = readAsset("category-builder.css");
 	const flutterPreviewBridge = readAsset("flutter-preview-bridge.js");
 	const homeBlockTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:96px 96px 58px 96px;[\s\S]*direction:ltr!important;/, "Every closed element card must use the same four physical action columns even when a page-specific stylesheet loads later.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*position:\s*relative;[^}]*height:\s*clamp\(560px,\s*calc\(100vh - 150px\),\s*760px\);/, "Home Flutter preview must receive a definite responsive height before it starts.");
+	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*position:relative;[^}]*height:clamp\(560px,calc\(100vh - 150px\),760px\);/, "Every page Flutter preview must receive a definite responsive height before it starts.");
+	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*position:relative;[^}]*height:clamp\(548px,calc\(100vh - 150px\),748px\);/, "Category Flutter preview must receive a definite responsive height before it starts.");
+	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*position:absolute;[^}]*inset:0;[^}]*height:100%;[^}]*min-height:0;/, "The Flutter iframe must fill that resolved phone viewport without intrinsic-height scaling.");
 	assert.match(pageBuilder, /file_exists\( KIDIA_MOBILE_CMS_PATH \. 'admin\/flutter-preview\/index\.html' \)[\s\S]*id="kidia-flutter-preview"[\s\S]*kidia-legacy-preview-fallback/, "Page builders must use the embedded Flutter Web preview with the legacy preview retained only as a local fallback.");
 	assert.match(flutterPreviewBridge, /postMessage[\s\S]*kidia-preview-layout[\s\S]*layoutFromForm\(\)/, "The CMS must stream the current unsaved layout JSON into Flutter instead of showing only the last saved state.");
 	assert.match(flutterPreviewBridge, /send\(\);[\s\S]*\[250, 750, 1500, 3000, 6000\]/, "A cached Flutter iframe must receive state immediately and through bounded startup retries even if its load event fired before the bridge loaded.");
