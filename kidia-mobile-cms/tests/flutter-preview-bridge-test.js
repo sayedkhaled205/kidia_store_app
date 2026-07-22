@@ -18,8 +18,21 @@ function runBridge(asset, body) {
   const messages = [];
   frame.contentWindow.postMessage = (message, origin) => messages.push({ message: JSON.parse(message), origin });
   window.setTimeout = () => 1;
+  window.requestAnimationFrame = (callback) => { callback(); return 1; };
   window.eval(fs.readFileSync(path.join(assets, asset), "utf8"));
+  Object.defineProperties(messages, {
+    window: { value: window },
+    frame: { value: frame },
+  });
   return messages;
+}
+
+function markFlutterReady(result) {
+  result.window.dispatchEvent(new result.window.MessageEvent("message", {
+    data: JSON.stringify({ type: "kidia-flutter-preview-ready" }),
+    origin: "https://store.example",
+    source: result.frame.contentWindow,
+  }));
 }
 
 test("generic Flutter preview sends state immediately when cached iframe load was missed", () => {
@@ -28,12 +41,17 @@ test("generic Flutter preview sends state immediately when cached iframe load wa
       <form class="kidia-page-editor"><input name="layout[header][enabled]" value="1"></form>
       <div id="kidia-page-elements"><div class="kidia-page-card" data-element="product_grid"></div></div>
     </div>
-    <iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe>`);
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].message.page, "catalog");
   assert.equal(messages[0].message.layout.header.enabled, "1");
   assert.equal(messages[0].message.layout.elements[0].id, "product_grid");
   assert.equal(messages[0].origin, "https://store.example");
+  assert.equal(messages.frame.hidden, true, "Flutter stays hidden until it reports that the UI is ready");
+  assert.equal(messages.frame.nextElementSibling.hidden, false, "The local preview is visible during Flutter startup");
+  markFlutterReady(messages);
+  assert.equal(messages.frame.hidden, false);
+  assert.equal(messages.frame.nextElementSibling.hidden, true);
 });
 
 test("Category Flutter preview sends current fields immediately", () => {
@@ -42,7 +60,7 @@ test("Category Flutter preview sends current fields immediately", () => {
       <input name="category_general[grid_columns]" type="number" value="3">
       <input name="category_general[show_arrow]" type="checkbox" checked>
     </form></div>
-    <iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe>`);
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].message.category.grid_columns, 3);
   assert.equal(messages[0].message.category.show_arrow, true);
@@ -52,9 +70,22 @@ test("Home Flutter preview sends an initial frame without waiting for iframe loa
   const messages = runBridge("flutter-home-preview-bridge.js", `
     <div class="kidia-builder-wrap"></div>
     <form id="kidia-home-builder-form"><input name="layout[header][enabled]" value="1"></form>
-    <iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe>`);
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].message.page, "home");
   assert.equal(messages[0].message.layout.header.enabled, "1");
   assert.deepEqual(messages[0].message.home.blocks, []);
+});
+
+test("every Flutter iframe and bundle URL is tied to the plugin version", () => {
+  for (const file of ["home-builder.php", "category-builder.php", "page-builder.php"]) {
+    const source = fs.readFileSync(path.resolve(__dirname, "..", "admin", "pages", file), "utf8");
+    assert.match(source, /'v'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/);
+  }
+  const index = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "index.html"), "utf8");
+  const sourceIndex = fs.readFileSync(path.resolve(__dirname, "..", "..", "web", "index.html"), "utf8");
+  const bootstrap = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "flutter_bootstrap.js"), "utf8");
+  assert.match(index, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
+  assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
+  assert.match(bootstrap, /mainJsPath.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
 });
