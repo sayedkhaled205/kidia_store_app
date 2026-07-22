@@ -30,6 +30,16 @@ assert.match(
   /addEventListener\('message'[\s\S]*kidia-preview-layout[\s\S]*announceRendered\(\)/,
   "The rendered shell must acknowledge every parent layout retry.",
 );
+assert.match(
+  index,
+  /name="viewport" content="width=device-width, initial-scale=1\.0"/,
+  "The embedded preview must use the iframe's real mobile viewport width.",
+);
+assert.match(
+  index,
+  /html, body \{[\s\S]*width: 100%;[\s\S]*height: 100%;[\s\S]*margin: 0;[\s\S]*overflow: hidden;/,
+  "The Flutter view must fill a stable, margin-free preview viewport.",
+);
 assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,
