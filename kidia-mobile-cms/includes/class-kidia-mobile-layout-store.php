@@ -234,7 +234,7 @@ final class Kidia_Mobile_Layout_Store {
 					$block['settings']['title'] = ''; $block['settings']['layout'] = 'grid'; $block['settings']['columns'] = 4; $block['settings']['image_shape'] = 'circle'; $block['settings']['item_size'] = 76; $block['settings']['gap'] = 14; $block['settings']['label_size'] = 13;
 					break;
 				case 'category_grid':
-					$block['settings']['title'] = ''; $block['settings']['columns'] = 3; $block['settings']['limit'] = 5; $block['settings']['show_names'] = true; $block['settings']['layout'] = 'patpat'; $block['settings']['image_shape'] = 'circle'; $block['settings']['image_size'] = 86; $block['settings']['gap'] = 16; $block['settings']['label_size'] = 14; $block['settings']['block_background'] = '#FFFFFF';
+					$block['settings']['title'] = ''; $block['settings']['columns'] = 3; $block['settings']['limit'] = 5; $block['settings']['show_names'] = true; $block['settings']['layout'] = 'grid'; $block['settings']['items_alignment'] = 'right'; $block['settings']['image_shape'] = 'circle'; $block['settings']['image_size'] = 86; $block['settings']['gap'] = 16; $block['settings']['label_size'] = 14; $block['settings']['block_background'] = '#FFFFFF';
 					break;
 				case 'promo_strip':
 					$block['settings']['text'] = __( 'New Kidia offers every day', 'kidia-mobile-cms' ); $block['settings']['background_color'] = '#EAF6F2'; $block['settings']['text_color'] = '#1F6F61';
@@ -293,7 +293,7 @@ final class Kidia_Mobile_Layout_Store {
 			} elseif ( 'image_banner' === $type ) {
 				$block['settings'] = array_merge( $block['settings'], array( 'aspect_ratio' => 1, 'border_radius' => 18, 'button_label' => __( 'SHOP NOW', 'kidia-mobile-cms' ) ) );
 			} elseif ( 'category_grid' === $type ) {
-				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'columns' => 3, 'limit' => 5, 'layout' => 'patpat', 'image_shape' => 'circle', 'image_size' => 86, 'gap' => 16, 'label_size' => 14, 'block_background' => '#FFFFFF' ) );
+				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'columns' => 3, 'limit' => 5, 'layout' => 'grid', 'items_alignment' => 'right', 'image_shape' => 'circle', 'image_size' => 86, 'gap' => 16, 'label_size' => 14, 'block_background' => '#FFFFFF' ) );
 			}
 
 			$layout[] = $block;

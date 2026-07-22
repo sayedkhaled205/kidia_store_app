@@ -729,6 +729,12 @@ function runMergeControlsContractTest() {
 	assert.match(homeScript, /product_wishlist_icon_variant[\s\S]*product_wishlist_icon_size[\s\S]*product_wishlist_background_size[\s\S]*product_wishlist_position[\s\S]*product_wishlist_show_background[\s\S]*product_wishlist_background_color[\s\S]*product_wishlist_radius[\s\S]*product_wishlist_icon_color/, "Every product Wishlist appearance control must update the Home preview.");
 	assert.match(homeScript, /quick_add_icon_style/, "Quick Add icon style must update the Home preview.");
 	assert.match(homeScript, /Date\.parse\(settings\.ends_at[\s\S]*settings\.expired_text[\s\S]*countdownDays[\s\S]*countdownSeconds/, "Countdown must use its real end date and expired label in the preview.");
+	assert.match(homeScript, /items_alignment/, "Category Grid alignment setting must be read by the preview.");
+	assert.match(homeScript, /is-align-/, "Category Grid alignment class must be rendered by the preview.");
+	assert.match(homeBuilderCss, /is-editorial_mosaic/, "Category Grid editorial mosaic must update the preview.");
+	assert.match(homeBuilderCss, /is-full_width_banners/, "Category Grid full-width banners must update the preview.");
+	assert.match(homeScript, /enable_transition[\s\S]*settings\.messages[\s\S]*change_every[\s\S]*transition_effect/, "Promo Strip rotating messages and transition controls must update the preview.");
+	assert.match(homeScript, /show_days[\s\S]*show_hours[\s\S]*show_minutes[\s\S]*show_seconds[\s\S]*layout_style/, "Countdown unit switches and layout style must update the preview.");
 	assert.match(homeScript, /settings\.video_url[\s\S]*settings\.auto_play[\s\S]*settings\.muted[\s\S]*settings\.loop[\s\S]*playsinline/, "Video URL and every playback switch must update the preview video.");
 	assert.match(homeScript, /settings\.auto_play[\s\S]*Date\.now\(\) \/ numberInRange\(settings\.interval_ms/, "Hero Slider autoplay and interval must control its selected preview slide.");
 	["shadow", "icon_size", "icon_background", "icon_radius", "search_icon_color", "account_style", "account_label", "account_icon_size"].forEach(function (key) {

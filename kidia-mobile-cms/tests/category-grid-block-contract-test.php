@@ -50,5 +50,11 @@ assert( 'Kids & Toys' === $api['data']['items'][0]['name'] );
 assert( 'https://example.com/category-116.jpg' === $api['data']['items'][0]['image_url'] );
 assert( 'category' === $api['data']['items'][0]['action']['type'] );
 assert( '16' === $api['data']['items'][0]['action']['value'] );
+assert( 'grid' === $api['data']['layout'] );
+assert( 'right' === $api['data']['items_alignment'] );
+
+$sanitized = $block->sanitize_settings( array( 'layout' => 'patpat', 'items_alignment' => 'center' ) );
+assert( 'grid' === $sanitized['layout'] );
+assert( 'center' === $sanitized['items_alignment'] );
 
 echo "category-grid-block-contract-test: ok\n";

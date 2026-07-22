@@ -667,36 +667,55 @@ class CategoryGridBlockWidget extends StatelessWidget {
                 },
               ),
             )
+          else if (block.layout == 'full_width_banners')
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                children: block.items.map((CategoryItem item) => Padding(
+                  padding: EdgeInsets.only(bottom: block.gap),
+                  child: _CategoryBannerCard(item: item, block: block, onAction: onAction),
+                )).toList(growable: false),
+              ),
+            )
+          else if (block.layout == 'editorial_mosaic')
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: _CategoryEditorialMosaic(block: block, onAction: onAction),
+            )
           else
             Padding(
               padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final double itemWidth =
-					  (constraints.maxWidth - ((columns - 1) * (compact ? block.gap / 2 : block.gap))) /
-                      columns;
+                      (constraints.maxWidth -
+                              ((columns - 1) *
+                                  (compact ? block.gap / 2 : block.gap))) /
+                          columns;
                   final double imageSize = block.imageSize < itemWidth - 8
                       ? block.imageSize
                       : itemWidth - 8;
-                  return GridView.builder(
-                    itemCount: block.items.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-					  crossAxisSpacing: compact ? block.gap / 2 : block.gap,
-					  mainAxisSpacing: compact ? block.gap / 2 : block.gap,
-					  mainAxisExtent: imageSize + (block.showNames ? (compact ? 36 : 45) : 4),
-                    ),
-                    itemBuilder: (BuildContext context, int index) {
-                      return _CategoryBlockCard(
-                        item: block.items[index],
-                        block: block,
-						imageSize: compact ? imageSize * .82 : imageSize,
-						forceRounded: cards,
-                        onAction: onAction,
-                      );
+                  final double spacing = compact ? block.gap / 2 : block.gap;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    alignment: switch (block.itemsAlignment) {
+                      'left' => WrapAlignment.start,
+                      'center' => WrapAlignment.center,
+                      _ => WrapAlignment.end,
                     },
+                    textDirection: TextDirection.ltr,
+                    children: block.items.map((CategoryItem item) => SizedBox(
+                      width: itemWidth,
+                      height: imageSize + (block.showNames ? (compact ? 36 : 45) : 4),
+                      child: _CategoryBlockCard(
+                        item: item,
+                        block: block,
+                        imageSize: compact ? imageSize * .82 : imageSize,
+                        forceRounded: cards,
+                        onAction: onAction,
+                      ),
+                    )).toList(growable: false),
                   );
                 },
               ),
@@ -705,6 +724,89 @@ class CategoryGridBlockWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CategoryEditorialMosaic extends StatelessWidget {
+  const _CategoryEditorialMosaic({required this.block, required this.onAction});
+  final CategoryGridBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    if (block.items.isEmpty) return const SizedBox.shrink();
+    final CategoryItem featured = block.items.first;
+    final List<CategoryItem> secondary = block.items.skip(1).take(2).toList(growable: false);
+    final List<CategoryItem> remaining = block.items.skip(3).toList(growable: false);
+    return Column(children: <Widget>[
+      SizedBox(
+        height: 220,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
+          Expanded(flex: 2, child: _CategoryMosaicTile(item: featured, block: block, onAction: onAction, featured: true)),
+          if (secondary.isNotEmpty) SizedBox(width: block.gap),
+          if (secondary.isNotEmpty) Expanded(child: Column(children: secondary.map((CategoryItem item) => Expanded(child: Padding(
+            padding: EdgeInsets.only(bottom: item == secondary.last ? 0 : block.gap),
+            child: _CategoryMosaicTile(item: item, block: block, onAction: onAction),
+          ))).toList(growable: false))),
+        ]),
+      ),
+      if (remaining.isNotEmpty) ...<Widget>[
+        SizedBox(height: block.gap),
+        Wrap(
+          spacing: block.gap,
+          runSpacing: block.gap,
+          alignment: WrapAlignment.end,
+          textDirection: TextDirection.ltr,
+          children: remaining.map((CategoryItem item) => SizedBox(width: 110, height: 130, child: _CategoryMosaicTile(item: item, block: block, onAction: onAction))).toList(growable: false),
+        ),
+      ],
+    ]);
+  }
+}
+
+class _CategoryMosaicTile extends StatelessWidget {
+  const _CategoryMosaicTile({required this.item, required this.block, required this.onAction, this.featured = false});
+  final CategoryItem item;
+  final CategoryGridBlock block;
+  final ValueChanged<HomeAction> onAction;
+  final bool featured;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    clipBehavior: Clip.antiAlias,
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      onTap: item.action == null ? null : () => onAction(item.action!),
+      child: Stack(fit: StackFit.expand, children: <Widget>[
+        AppNetworkImage(imageUrl: item.imageUrl, fit: BoxFit.cover, semanticLabel: item.name),
+        const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[Colors.transparent, Color(0x99000000)]))),
+        if (block.showNames) Align(alignment: Alignment.bottomRight, child: Padding(padding: const EdgeInsets.all(12), child: Text(item.name, maxLines: featured ? 2 : 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: featured ? block.labelSize + 2 : block.labelSize, fontWeight: FontWeight.w800)))),
+      ]),
+    ),
+  );
+}
+
+class _CategoryBannerCard extends StatelessWidget {
+  const _CategoryBannerCard({required this.item, required this.block, required this.onAction});
+  final CategoryItem item;
+  final CategoryGridBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    clipBehavior: Clip.antiAlias,
+    borderRadius: BorderRadius.circular(18),
+    child: InkWell(
+      onTap: item.action == null ? null : () => onAction(item.action!),
+      child: AspectRatio(
+        aspectRatio: 2.6,
+        child: Stack(fit: StackFit.expand, children: <Widget>[
+          AppNetworkImage(imageUrl: item.imageUrl, fit: BoxFit.cover, semanticLabel: item.name),
+          const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: <Color>[Colors.transparent, Color(0x99000000)]))),
+          if (block.showNames) Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.all(16), child: Text(item.name, style: TextStyle(color: Colors.white, fontSize: block.labelSize + 2, fontWeight: FontWeight.w900)))),
+        ]),
+      ),
+    ),
+  );
 }
 
 class _CategoryBlockCard extends StatelessWidget {
@@ -1655,7 +1757,7 @@ class _BrandTile extends StatelessWidget {
   }
 }
 
-class PromoStripBlockWidget extends StatelessWidget {
+class PromoStripBlockWidget extends StatefulWidget {
   const PromoStripBlockWidget({
     required this.block,
     required this.onAction,
@@ -1666,7 +1768,46 @@ class PromoStripBlockWidget extends StatelessWidget {
   final ValueChanged<HomeAction> onAction;
 
   @override
+  State<PromoStripBlockWidget> createState() => _PromoStripBlockWidgetState();
+}
+
+class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
+  Timer? _timer;
+  int _messageIndex = 0;
+
+  List<String> get _messages {
+    if (widget.block.enableTransition && widget.block.messages.isNotEmpty) {
+      return widget.block.messages;
+    }
+    return <String>[widget.block.text];
+  }
+
+  @override
+  void initState() { super.initState(); _configureTimer(); }
+
+  @override
+  void didUpdateWidget(covariant PromoStripBlockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.block.messages != widget.block.messages || oldWidget.block.enableTransition != widget.block.enableTransition || oldWidget.block.changeEverySeconds != widget.block.changeEverySeconds) {
+      _messageIndex = 0;
+      _configureTimer();
+    }
+  }
+
+  void _configureTimer() {
+    _timer?.cancel();
+    if (_messages.length < 2) return;
+    _timer = Timer.periodic(Duration(seconds: widget.block.changeEverySeconds), (_) {
+      if (mounted) setState(() => _messageIndex = (_messageIndex + 1) % _messages.length);
+    });
+  }
+
+  @override
+  void dispose() { _timer?.cancel(); super.dispose(); }
+
+  @override
   Widget build(BuildContext context) {
+    final PromoStripBlock block = widget.block;
     final HomeAction? action = block.action;
     final Color backgroundColor = _parseHexColor(
       block.backgroundColor,
@@ -1677,7 +1818,7 @@ class PromoStripBlockWidget extends StatelessWidget {
       fallback: Theme.of(context).colorScheme.onPrimary,
     );
 
-    return Semantics(
+    Widget content = Semantics(
       button: action != null,
       label: block.text,
       child: ExcludeSemantics(
@@ -1687,18 +1828,28 @@ class PromoStripBlockWidget extends StatelessWidget {
             onTap: action == null
                 ? null
                 : () {
-                    onAction(action);
+                    widget.onAction(action);
                   },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Center(
-                child: Text(
-                  block.text,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w800,
-                    height: 1.4,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: block.transitionDurationMilliseconds),
+                  transitionBuilder: (Widget child, Animation<double> animation) => switch (block.transitionEffect) {
+                    'slide_up' => SlideTransition(position: Tween<Offset>(begin: const Offset(0, .45), end: Offset.zero).animate(animation), child: FadeTransition(opacity: animation, child: child)),
+                    'slide_left' => SlideTransition(position: Tween<Offset>(begin: const Offset(.45, 0), end: Offset.zero).animate(animation), child: FadeTransition(opacity: animation, child: child)),
+                    'scale' => ScaleTransition(scale: animation, child: FadeTransition(opacity: animation, child: child)),
+                    _ => FadeTransition(opacity: animation, child: child),
+                  },
+                  child: Text(
+                    _messages[_messageIndex],
+                    key: ValueKey<int>(_messageIndex),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
@@ -1707,6 +1858,9 @@ class PromoStripBlockWidget extends StatelessWidget {
         ),
       ),
     );
+    if (block.height != null) content = SizedBox(height: block.height, child: content);
+    if (block.width != null) content = FractionallySizedBox(widthFactor: block.width! / 100, child: content);
+    return content;
   }
 }
 
@@ -1955,15 +2109,17 @@ class _CountdownBlockWidgetState extends State<CountdownBlockWidget> {
     }
 
     final int days = _remaining.inDays;
-    final int hours = _remaining.inHours.remainder(24);
+    final int hours = widget.block.showDays
+        ? _remaining.inHours.remainder(24)
+        : _remaining.inHours;
     final int minutes = _remaining.inMinutes.remainder(60);
     final int seconds = _remaining.inSeconds.remainder(60);
     final String semanticsLabel = [
       if (widget.block.title != null) widget.block.title!,
-      '$days يوم',
-      '$hours ساعة',
-      '$minutes دقيقة',
-      '$seconds ثانية',
+      if (widget.block.showDays) '$days يوم',
+      if (widget.block.showHours) '$hours ساعة',
+      if (widget.block.showMinutes) '$minutes دقيقة',
+      if (widget.block.showSeconds) '$seconds ثانية',
     ].join('، ');
 
     final Color textColor = _parseHexColor(
@@ -2005,15 +2161,7 @@ class _CountdownBlockWidgetState extends State<CountdownBlockWidget> {
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _CountdownUnit(value: days, label: 'يوم', boxColor: boxColor, textColor: textColor),
-                  const SizedBox(width: 8),
-                  _CountdownUnit(value: hours, label: 'ساعة', boxColor: boxColor, textColor: textColor),
-                  const SizedBox(width: 8),
-                  _CountdownUnit(value: minutes, label: 'دقيقة', boxColor: boxColor, textColor: textColor),
-                  const SizedBox(width: 8),
-                  _CountdownUnit(value: seconds, label: 'ثانية', boxColor: boxColor, textColor: textColor),
-                ],
+                children: _countdownUnits(days, hours, minutes, seconds, boxColor, textColor),
               ),
             ],
               ),
@@ -2023,6 +2171,21 @@ class _CountdownBlockWidgetState extends State<CountdownBlockWidget> {
       ),
     );
   }
+
+  List<Widget> _countdownUnits(int days, int hours, int minutes, int seconds, Color boxColor, Color textColor) {
+    final List<_CountdownUnit> units = <_CountdownUnit>[
+      if (widget.block.showDays) _CountdownUnit(value: days, label: 'يوم', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
+      if (widget.block.showHours) _CountdownUnit(value: hours, label: 'ساعة', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
+      if (widget.block.showMinutes) _CountdownUnit(value: minutes, label: 'دقيقة', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
+      if (widget.block.showSeconds) _CountdownUnit(value: seconds, label: 'ثانية', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
+    ];
+    final List<Widget> children = <Widget>[];
+    for (int i = 0; i < units.length; i++) {
+      if (i > 0) children.add(const SizedBox(width: 8));
+      children.add(units[i]);
+    }
+    return children;
+  }
 }
 
 class _CountdownUnit extends StatelessWidget {
@@ -2031,39 +2194,49 @@ class _CountdownUnit extends StatelessWidget {
     required this.label,
     required this.boxColor,
     required this.textColor,
+    required this.layoutStyle,
   });
 
   final int value;
   final String label;
   final Color boxColor;
   final Color textColor;
+  final String layoutStyle;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final String formattedValue = value.toString().padLeft(2, '0');
 
+    final bool minimal = layoutStyle == 'minimal_inline';
+    final bool split = layoutStyle == 'split_labels';
+    final bool circle = layoutStyle == 'circles';
+    final bool flip = layoutStyle == 'flip_clock';
+    final Widget valueText = Text(
+      formattedValue,
+      maxLines: 1,
+      style: theme.textTheme.titleLarge?.copyWith(
+        color: textColor,
+        fontWeight: FontWeight.w900,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+    );
     return Expanded(
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: boxColor,
-          borderRadius: BorderRadius.circular(14),
+          color: minimal || split ? Colors.transparent : boxColor,
+          shape: circle ? BoxShape.circle : BoxShape.rectangle,
+          borderRadius: circle ? null : BorderRadius.circular(flip ? 6 : 14),
+          border: minimal ? Border.all(color: textColor.withValues(alpha: .25)) : null,
+          gradient: flip ? LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[boxColor.withValues(alpha: .75), boxColor, boxColor.withValues(alpha: .8)]) : null,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: circle ? 14 : 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                formattedValue,
-                maxLines: 1,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w900,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-              const SizedBox(height: 2),
+              valueText,
+              SizedBox(height: split ? 7 : 2),
               Text(
                 label,
                 maxLines: 1,

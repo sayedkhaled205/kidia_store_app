@@ -129,6 +129,16 @@
 .kidia-preview-category-grid.is-compact .kidia-preview-category-card { transform:scale(.86); }
 .kidia-preview-category-grid.is-cards .kidia-preview-category-card__image { border-radius:14px!important; }
 .kidia-preview-category-grid.is-carousel .kidia-preview-category-card { width: 58px; flex: 0 0 58px; }
+.kidia-preview-category-grid:not(.is-carousel) { display:flex; flex-wrap:wrap; }
+.kidia-preview-category-grid:not(.is-carousel) .kidia-preview-category-card { width:calc((100% - (var(--kidia-preview-columns) - 1) * 8px) / var(--kidia-preview-columns)); }
+.kidia-preview-category-grid.is-align-right { justify-content:flex-end; }
+.kidia-preview-category-grid.is-align-center { justify-content:center; }
+.kidia-preview-category-grid.is-align-left { justify-content:flex-start; }
+.kidia-preview-category-grid.is-editorial_mosaic .kidia-preview-category-card:first-child { width:64%; }
+.kidia-preview-category-grid.is-editorial_mosaic .kidia-preview-category-card:not(:first-child) { width:calc(36% - 8px); }
+.kidia-preview-category-grid.is-full_width_banners { display:block; }
+.kidia-preview-category-grid.is-full_width_banners .kidia-preview-category-card { width:100%; display:flex; align-items:center; margin-bottom:8px; }
+.kidia-preview-category-grid.is-full_width_banners .kidia-preview-category-card__image { width:100%; aspect-ratio:2.6; border-radius:14px!important; }
 .kidia-preview-sample-image,
 .kidia-preview-image-fallback { display: grid; width: 100%; height: 100%; min-height: 42px; flex: 0 0 auto; place-items: center; border-radius: inherit; background: linear-gradient(110deg,#edf1f0 8%,#f8faf9 18%,#edf1f0 33%); background-size: 200% 100%; color: #2f806e; font-size: 10px; font-weight: 800; }
 .kidia-preview-product-row,
@@ -201,6 +211,10 @@
 .kidia-preview-countdown > div { display: flex; align-items: stretch; justify-content: center; gap: 5px; }
 .kidia-preview-countdown span { display: flex; min-width: 0; flex: 1; flex-direction: column; padding: 7px 3px; border-radius: 9px; background: var(--kidia-countdown-box,#e9eeec); font-size: 14px; font-weight: 800; }
 .kidia-preview-countdown span small { font-size: 7px; font-weight: 500; }
+.kidia-preview-countdown.is-circles span { border-radius:999px; aspect-ratio:1; justify-content:center; }
+.kidia-preview-countdown.is-flip_clock span { border-radius:4px; background:linear-gradient(#dfe5e2 49%,#cdd5d1 50%,#e9eeec 51%); }
+.kidia-preview-countdown.is-minimal_inline span { background:transparent; border:1px solid currentColor; }
+.kidia-preview-countdown.is-split_labels span { background:transparent; }
 .kidia-preview-video { position: relative; min-height: 105px; }
 .kidia-preview-video__play { position: absolute; top: 50%; left: 50%; display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.9); color: #2f806e; font-size: 15px; transform: translate(-50%,-50%); }
 .kidia-preview-text { margin: 8px; padding: 11px; border-radius: 9px; font-size: 10px; }
@@ -858,6 +872,17 @@
 .kidia-category-grid-image-setting--hide-empty { grid-column-start: 1; }
 .kidia-category-grid-image-setting--show-names { grid-column-start: 2; }
 .kidia-category-grid-image-setting .kidia-page-master-toggle { min-width: 78px; margin: 0; }
+.kidia-promo-transition-fields { grid-column:1 / -1; border:1px solid #c6ded8; border-radius:14px; padding:14px; }
+.kidia-promo-transition-fields[hidden] { display:none!important; }
+.kidia-promo-messages { display:grid; gap:10px; margin-bottom:10px; }
+.kidia-promo-message-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+.kidia-countdown-layout-preview { display:flex; gap:6px; margin-top:8px; direction:ltr; }
+.kidia-countdown-layout-preview i { display:flex; flex-direction:column; justify-content:center; min-width:42px; min-height:42px; padding:5px; border-radius:9px; background:#e9eeec; color:#1f2933; font-style:normal; text-align:center; font-weight:800; }
+.kidia-countdown-layout-preview i small { font-size:9px; font-weight:500; }
+.kidia-countdown-layout-preview.is-circles i { border-radius:50%; }
+.kidia-countdown-layout-preview.is-flip_clock i { border-radius:4px; background:linear-gradient(#dfe5e2 49%,#cdd5d1 50%,#e9eeec 51%); }
+.kidia-countdown-layout-preview.is-minimal_inline i { background:transparent; border:1px solid #a9cfc6; }
+.kidia-countdown-layout-preview.is-split_labels i { background:transparent; }
 
 .kidia-repeatable-field--image-url { grid-column: 1; grid-row: 1; }
 .kidia-repeatable-field--subtitle { grid-column: 1; grid-row: 2; }

@@ -156,6 +156,13 @@ void main() {
               'text': 'شحن مجاني',
               'background_color': '#123456',
               'text_color': '#fff',
+              'width': 80,
+              'height': 48,
+              'enable_transition': true,
+              'messages': <String>['شحن مجاني', 'خصم اليوم'],
+              'transition_effect': 'slide_up',
+              'change_every': 6,
+              'transition_duration': 700,
               'action': <String, dynamic>{
                 'type': 'collection',
                 'value': 'summer',
@@ -192,6 +199,11 @@ void main() {
               'background_color': '#fefefe',
               'text_color': '#101010',
               'box_color': '#eeeeee',
+              'show_days': false,
+              'show_hours': true,
+              'show_minutes': true,
+              'show_seconds': false,
+              'layout_style': 'circles',
               'action': <String, dynamic>{
                 'type': 'collection',
                 'value': 'flash-sale',
@@ -246,6 +258,10 @@ void main() {
       expect(promo.backgroundColor, '#123456');
       expect(promo.textColor, '#fff');
       expect(promo.action?.value, 'summer');
+      expect(promo.width, 80);
+      expect(promo.height, 48);
+      expect(promo.messages, <String>['شحن مجاني', 'خصم اليوم']);
+      expect(promo.transitionEffect, 'slide_up');
 
       final CouponBannerBlock coupon = layout.blocks[1] as CouponBannerBlock;
       expect(coupon.couponCode, 'KIDIA20');
@@ -257,6 +273,9 @@ void main() {
       expect(countdown.endsAt, DateTime.parse('2026-07-20T16:00:00Z'));
       expect(countdown.boxColor, '#eeeeee');
       expect(countdown.action?.value, 'flash-sale');
+      expect(countdown.showDays, isFalse);
+      expect(countdown.showSeconds, isFalse);
+      expect(countdown.layoutStyle, 'circles');
 
       final VideoBannerBlock video = layout.blocks[3] as VideoBannerBlock;
       expect(video.aspectRatio, 1.9);
@@ -395,6 +414,7 @@ void main() {
               'columns': 4,
               'show_names': true,
               'layout': 'carousel',
+              'items_alignment': 'center',
               'image_shape': 'circle',
               'image_size': 88,
               'gap': 9,
@@ -480,6 +500,7 @@ void main() {
       final brands = layout.blocks[2] as BrandCarouselBlock;
       expect(categories.items.single.action?.value, '10');
       expect(categories.layout, 'carousel');
+      expect(categories.itemsAlignment, 'center');
       expect(categories.imageShape, 'circle');
       expect(products.items.single.price, '1250.00');
       expect(products.items.single.rating, 4.8);

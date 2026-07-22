@@ -257,7 +257,7 @@ abstract final class HomeBlockModel {
 	final String layout = _optionalString(data, 'layout') ?? 'grid';
 	final String imageShape =
 		_optionalString(data, 'image_shape') ?? 'rounded';
-	if (!const <String>{'grid', 'carousel'}.contains(layout)) {
+	if (!const <String>{'grid', 'compact', 'cards', 'carousel', 'editorial_mosaic', 'full_width_banners'}.contains(layout)) {
 	  throw FormatException('Unsupported category layout: $layout');
 	}
 	if (!const <String>{'circle', 'rounded', 'square'}.contains(imageShape)) {
@@ -280,6 +280,7 @@ abstract final class HomeBlockModel {
       ),
       showNames: _optionalBool(data, 'show_names', fallback: true),
       layout: layout,
+      itemsAlignment: _enumString(data, 'items_alignment', const <String>{'right', 'center', 'left'}, fallback: 'right'),
       imageShape: imageShape,
       imageSize: _boundedDouble(data, 'image_size', fallback: 78, minimum: 48, maximum: 140),
       gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
@@ -663,6 +664,13 @@ abstract final class HomeBlockModel {
       backgroundColor: _hexColor(data, 'background_color', fallback: '#4f9f8f'),
       textColor: _hexColor(data, 'text_color', fallback: '#ffffff'),
       action: _parseAction(data['action']),
+      width: _optionalBoundedDouble(data, 'width', minimum: 10, maximum: 100),
+      height: _optionalBoundedDouble(data, 'height', minimum: 20, maximum: 240),
+      enableTransition: _optionalBool(data, 'enable_transition', fallback: false),
+      messages: _optionalStringList(data, 'messages'),
+      transitionEffect: _enumString(data, 'transition_effect', const <String>{'fade', 'slide_up', 'slide_left', 'scale'}, fallback: 'fade'),
+      changeEverySeconds: _boundedInt(data, 'change_every', fallback: 4, minimum: 1, maximum: 60),
+      transitionDurationMilliseconds: _boundedInt(data, 'transition_duration', fallback: 500, minimum: 100, maximum: 5000),
     );
   }
 
@@ -705,6 +713,11 @@ abstract final class HomeBlockModel {
       textColor: _hexColor(data, 'text_color', fallback: '#1F2933'),
       boxColor: _hexColor(data, 'box_color', fallback: '#E9EEEC'),
       action: _parseAction(data['action']),
+      showDays: _optionalBool(data, 'show_days', fallback: true),
+      showHours: _optionalBool(data, 'show_hours', fallback: true),
+      showMinutes: _optionalBool(data, 'show_minutes', fallback: true),
+      showSeconds: _optionalBool(data, 'show_seconds', fallback: true),
+      layoutStyle: _enumString(data, 'layout_style', const <String>{'cards', 'circles', 'flip_clock', 'minimal_inline', 'split_labels'}, fallback: 'cards'),
     );
   }
 
@@ -1153,6 +1166,47 @@ abstract final class HomeBlockModel {
     }
 
     return parsed;
+  }
+
+  static double? _optionalBoundedDouble(
+    Map<String, dynamic> json,
+    String key, {
+    required double minimum,
+    required double maximum,
+  }) {
+    final dynamic value = json[key];
+    if (value == null || (value is String && value.trim().isEmpty)) {
+      return null;
+    }
+    final double parsed = _requiredDouble(json, key);
+    if (parsed < minimum || parsed > maximum) {
+      throw FormatException('Number field $key must be between $minimum and $maximum.');
+    }
+    return parsed;
+  }
+
+  static String _enumString(
+    Map<String, dynamic> json,
+    String key,
+    Set<String> allowed, {
+    required String fallback,
+  }) {
+    final String value = _optionalString(json, key) ?? fallback;
+    if (!allowed.contains(value)) {
+      throw FormatException('Unsupported value for $key: $value');
+    }
+    return value;
+  }
+
+  static List<String> _optionalStringList(Map<String, dynamic> json, String key) {
+    final dynamic value = json[key];
+    if (value == null) return const <String>[];
+    if (value is! List) throw FormatException('Invalid string list field: $key');
+    return value
+        .whereType<String>()
+        .map((String item) => item.trim())
+        .where((String item) => item.isNotEmpty)
+        .toList(growable: false);
   }
 
   static double _requiredDouble(Map<String, dynamic> json, String key) {

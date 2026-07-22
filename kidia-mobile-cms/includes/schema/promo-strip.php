@@ -24,6 +24,13 @@ return array(
 	'defaults' => array(
 
 		'text' => '',
+		'width' => '',
+		'height' => '',
+		'enable_transition' => false,
+		'messages' => array(),
+		'transition_effect' => 'fade',
+		'change_every' => 4,
+		'transition_duration' => 500,
 
 		'background_color' => '#4f9f8f',
 
@@ -64,6 +71,12 @@ return array(
 	),
 
 	'fields' => array(
+		array( 'key' => 'width', 'label' => __( 'Width (%)', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 10, 'max' => 100 ),
+		array( 'key' => 'height', 'label' => __( 'Height', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 20, 'max' => 240 ),
+		array( 'key' => 'enable_transition', 'label' => __( 'Rotating Messages', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
+		array( 'key' => 'transition_effect', 'label' => __( 'Transition Effect', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'fade', 'options' => array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) ),
+		array( 'key' => 'change_every', 'label' => __( 'Change Every', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 4, 'min' => 1, 'max' => 60 ),
+		array( 'key' => 'transition_duration', 'label' => __( 'Transition Duration', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 500, 'min' => 100, 'max' => 5000 ),
 
 		array(
 			'key' => 'text',

@@ -37,6 +37,11 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 			'background_color' => '#FFFFFF',
 			'text_color' => '#1F2933',
 			'box_color' => '#E9EEEC',
+			'show_days' => true,
+			'show_hours' => true,
+			'show_minutes' => true,
+			'show_seconds' => true,
+			'layout_style' => 'cards',
 			'action_type' => '',
 			'action_value' => '',
 		);
@@ -46,6 +51,7 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 		array $settings
 	): array {
 
+		$layout_style = sanitize_key( (string) ( $settings['layout_style'] ?? 'cards' ) );
 		return array(
 
 			'title' => sanitize_text_field(
@@ -63,6 +69,11 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 			'background_color' => sanitize_hex_color( $settings['background_color'] ?? '' ) ?: '#FFFFFF',
 			'text_color' => sanitize_hex_color( $settings['text_color'] ?? '' ) ?: '#1F2933',
 			'box_color' => sanitize_hex_color( $settings['box_color'] ?? '' ) ?: '#E9EEEC',
+			'show_days' => ! empty( $settings['show_days'] ),
+			'show_hours' => ! empty( $settings['show_hours'] ),
+			'show_minutes' => ! empty( $settings['show_minutes'] ),
+			'show_seconds' => ! empty( $settings['show_seconds'] ),
+			'layout_style' => in_array( $layout_style, array( 'cards', 'circles', 'flip_clock', 'minimal_inline', 'split_labels' ), true ) ? $layout_style : 'cards',
 			'action_type' => in_array( sanitize_key( $settings['action_type'] ?? '' ), array( '', 'product', 'category', 'collection', 'brand', 'brands', 'search', 'external' ), true ) ? sanitize_key( $settings['action_type'] ?? '' ) : '',
 			'action_value' => sanitize_text_field( $settings['action_value'] ?? '' ),
 
@@ -88,10 +99,10 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
     		array $settings
     	): void {
 
-    		$settings = wp_parse_args(
-    			$settings,
-    			$this->get_default_settings()
-    		);
+		$settings = $this->sanitize_settings( wp_parse_args(
+			$settings,
+			$this->get_default_settings()
+		) );
 
     ?>
 
@@ -135,6 +146,8 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-field"><label>Background Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][background_color]" value="<?php echo esc_attr( $settings['background_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Text Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Timer Box Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][box_color]" value="<?php echo esc_attr( $settings['box_color'] ); ?>"></div>
+		<div class="kidia-builder-field kidia-countdown-setting kidia-countdown-setting--layout"><label><?php esc_html_e( 'Layout Style', 'kidia-mobile-cms' ); ?></label><select class="kidia-countdown-layout" name="blocks[<?php echo esc_attr( $index ); ?>][settings][layout_style]"><?php foreach ( array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['layout_style'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><span class="kidia-countdown-layout-preview is-<?php echo esc_attr( $settings['layout_style'] ); ?>" aria-hidden="true"><i>08<small>D</small></i><i>12<small>H</small></i><i>24<small>M</small></i><i>36<small>S</small></i></span></div>
+		<?php foreach ( array( 'days' => 'Show Days', 'hours' => 'Show Hours', 'minutes' => 'Show Minutes', 'seconds' => 'Show Seconds' ) as $unit => $label ) : ?><div class="kidia-builder-field kidia-countdown-setting kidia-countdown-setting--show-<?php echo esc_attr( $unit ); ?>"><label><?php echo esc_html( $label ); ?></label><label class="kidia-page-master-toggle"><input type="checkbox" name="blocks[<?php echo esc_attr( $index ); ?>][settings][show_<?php echo esc_attr( $unit ); ?>]" value="1" <?php checked( true, $settings[ 'show_' . $unit ] ); ?>><span class="kidia-toggle-state"></span></label></div><?php endforeach; ?>
 		<div class="kidia-builder-field"><label>Action Type</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_type]"><?php foreach ( array( '' => 'No Action', 'product' => 'Product', 'category' => 'Category', 'collection' => 'Collection', 'brand' => 'Brand', 'brands' => 'All Brands', 'search' => 'Search', 'external' => 'External URL' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['action_type'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
 		<div class="kidia-builder-field"><label>Action Value</label><input type="text" name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_value]" value="<?php echo esc_attr( $settings['action_value'] ); ?>"></div>
 
