@@ -17,9 +17,11 @@ flutter build web \
 # The bundle lives below a WordPress plugin directory whose site path varies.
 # A relative base keeps every engine, asset and font request inside the plugin.
 sed -i 's#<base href="/">#<base href="./">#' "$OUTPUT/index.html"
-sed -i 's#_flutter.loader.load({#_flutter.loader.load({config:{canvasKitBaseUrl:"canvaskit/"},#' \
+sed -i \
+  -e 's#_flutter.loader.load({#_flutter.loader.load({config:{canvasKitBaseUrl:"canvaskit/"},#' \
+  -e 's#_flutter.loader.load();#_flutter.loader.load({config:{canvasKitBaseUrl:"canvaskit/"}});#' \
   "$OUTPUT/flutter_bootstrap.js"
-sed -i '/_flutter.loader.load({config:/i\
+sed -i '/_flutter.loader.load(/i\
 if (window.__kidiaPreviewVersion) { _flutter.buildConfig.builds.forEach(function (build) { if (build.mainJsPath) { build.mainJsPath += "?v=" + encodeURIComponent(window.__kidiaPreviewVersion); } }); }\
 ' "$OUTPUT/flutter_bootstrap.js"
 
