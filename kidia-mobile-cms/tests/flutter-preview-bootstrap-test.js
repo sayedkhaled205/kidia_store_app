@@ -20,6 +20,11 @@ assert.match(
   /getRegistrations\(\)[\s\S]*admin\/flutter-preview\/[\s\S]*unregister\(\)/,
   "The embedded preview must clear its stale scoped service worker.",
 );
+assert.match(
+  index,
+  /flutter-view, flt-glass-pane[\s\S]*requestAnimationFrame[\s\S]*kidia-flutter-preview-ready[\s\S]*MutationObserver/,
+  "The web shell must repeat the ready handshake after Flutter has rendered.",
+);
 assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,
