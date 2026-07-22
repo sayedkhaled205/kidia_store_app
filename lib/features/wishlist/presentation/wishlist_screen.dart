@@ -22,7 +22,7 @@ class WishlistScreen extends StatefulWidget {
     this.onContinueShopping,
     this.onSignIn,
     this.signedIn = false,
-    this.requiresSignIn = true,
+    this.requiresSignIn = false,
   });
 
   final WishlistRepository repository;
