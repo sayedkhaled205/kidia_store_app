@@ -76,6 +76,10 @@
 		children.forEach(function (node) {
 			var section = sectionFor(node);
 			var element = pageElement;
+			/* Category keeps its opening, column, and visibility controls together with Layout & Spacing. */
+			if (container.classList.contains("kidia-category-general-fields") && /^(visibility|products|general)$/.test(section)) {
+				section = "layout";
+			}
 			if (container.classList.contains("kidia-checkout-suggestions-fields")) {
 				var suggestionInput = node.querySelector("input[name],select[name],textarea[name]");
 				var suggestionMatch = suggestionInput && suggestionInput.name.match(/^suggestions\[([^\]]+)\]/);

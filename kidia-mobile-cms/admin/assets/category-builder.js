@@ -272,6 +272,12 @@
 		var layout = categoryLayout();
 		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
 		var cardGap = numberInRange(setting("card_gap"), 10, 0, 24);
+		categoryElement.find(".kidia-category-items").first()
+			.attr("data-category-layout", layout)
+			.css({
+				"--category-editor-columns": layout === "circular_grid" ? 3 : columns,
+				"--category-editor-gap": cardGap + "px"
+			});
 		var pageBackground = setting("page_background_color") || "#F7F8FA";
 		var openingMode = navigationMode();
 		var content = $('<div class="kidia-category-preview-content"></div>').addClass("is-layout-" + layout).addClass("is-opening-" + openingMode).attr("data-opening-mode", openingMode).css({"--category-columns": columns, "--category-card-gap": cardGap + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "transform": "translateY(" + (numberInRange(setting("margin_bottom"), 0, 0, 80) - numberInRange(setting("margin_top"), 0, 0, 80)) + "px)", "padding-top": ((layout === "sidebar" ? cardGap : 14) + numberInRange(setting("space_up"), 0, 0, 80)) + "px", "padding-bottom": ((layout === "sidebar" ? cardGap : 24) + numberInRange(setting("space_down"), 0, 0, 80)) + "px", "background-color": setting("element_background_color") || "#FFFFFF"});
