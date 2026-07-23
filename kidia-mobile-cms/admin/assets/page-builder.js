@@ -12,6 +12,7 @@
 	var config = window.kidiaPageBuilder || {};
 	var products = Array.isArray(config.products) ? config.products : [];
 	var previewCollapseProgress = 0;
+	var wishlistPicker = document.getElementById("kidia-wishlist-element-picker");
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
@@ -96,19 +97,30 @@
 				focusPreview(card);
 			}
 		});
-		var addSelect = document.getElementById("kidia-wishlist-add-element-type");
-		if (addSelect) {
-			var firstVisible = null;
-			array(addSelect.options).forEach(function (option) {
-				var visible = option.dataset.wishlistState === state;
-				option.hidden = !visible;
-				option.disabled = !visible;
-				if (visible && !firstVisible) { firstVisible = option; }
+		if (wishlistPicker) {
+			array(wishlistPicker.querySelectorAll("[data-wishlist-add-type]")).forEach(function (choice) {
+				var visible = choice.dataset.wishlistState === state;
+				choice.hidden = !visible;
+				choice.disabled = !visible;
 			});
-			if (!addSelect.selectedOptions.length || addSelect.selectedOptions[0].disabled) {
-				addSelect.value = firstVisible ? firstVisible.value : "";
-			}
 		}
+	}
+
+	function openWishlistPicker() {
+		if (!wishlistPicker) { return; }
+		applyWishlistPreviewState();
+		wishlistPicker.hidden = false;
+		wishlistPicker.setAttribute("aria-hidden", "false");
+		document.body.classList.add("kidia-wishlist-picker-open");
+		var firstChoice = wishlistPicker.querySelector("[data-wishlist-add-type]:not([hidden])");
+		if (firstChoice) { firstChoice.focus(); }
+	}
+
+	function closeWishlistPicker() {
+		if (!wishlistPicker) { return; }
+		wishlistPicker.hidden = true;
+		wishlistPicker.setAttribute("aria-hidden", "true");
+		document.body.classList.remove("kidia-wishlist-picker-open");
 	}
 
 	function updateIndexes() {
@@ -144,11 +156,11 @@
 		schedulePreview();
 		focusPreview(clone);
 	}
-	function addWishlistElement() {
-		var select = document.getElementById("kidia-wishlist-add-element-type");
-		var source = select && list.querySelector('[data-element="' + select.value + '"]');
+	function addWishlistElement(type) {
+		var source = type && list.querySelector('[data-element="' + type + '"]');
 		if (!source || source.dataset.wishlistState !== wishlistPreviewState()) { return; }
 		duplicateWishlistElement(source);
+		closeWishlistPicker();
 	}
 
 	function productCards(card, forcedLimit) {
@@ -301,6 +313,19 @@
 	root.addEventListener("click", function (event) {
 		var collapseAll = event.target.closest("#kidia-collapse-all");
 		var expandAll = event.target.closest("#kidia-expand-all");
+		if (root.dataset.page === "wishlist" && event.target.closest("#kidia-add-element")) {
+			openWishlistPicker();
+			return;
+		}
+		if (event.target.closest("[data-kidia-close-wishlist-picker]")) {
+			closeWishlistPicker();
+			return;
+		}
+		var wishlistChoice = event.target.closest("[data-wishlist-add-type]");
+		if (wishlistChoice) {
+			addWishlistElement(wishlistChoice.dataset.wishlistAddType);
+			return;
+		}
 		if (collapseAll || expandAll) {
 			var opening = Boolean(expandAll);
 			array(root.querySelectorAll(".kidia-page-card:not(.kidia-fixed-chrome-card)")).forEach(function (card) {
@@ -315,10 +340,6 @@
 		var duplicate = event.target.closest(".kidia-page-duplicate");
 		if (duplicate) {
 			duplicateWishlistElement(duplicate.closest(".kidia-page-card"));
-			return;
-		}
-		if (event.target.closest("#kidia-wishlist-add-element")) {
-			addWishlistElement();
 			return;
 		}
 		var addTab = event.target.closest(".kidia-product-tab-add");
@@ -355,6 +376,12 @@
 		var media = event.target.closest(".kidia-page-media-choose, .kidia-page-media-preview");
 		if (button && !button.closest(".kidia-fixed-chrome-card")) { var card = button.closest(".kidia-page-card"); var body = card.querySelector(".kidia-page-card__body"); card.classList.toggle("is-open"); body.hidden = !card.classList.contains("is-open"); return; }
 		if (media && !media.closest(".kidia-fixed-chrome-card") && window.wp && wp.media) { var mediaField = media.closest(".kidia-page-field--image"); var mediaFrame = wp.media({title:"Choose image",button:{text:"Use image"},multiple:false}); mediaFrame.on("select", function () { var attachment = mediaFrame.state().get("selection").first().toJSON(); var input = mediaField.querySelector(".kidia-page-media-url"); var image = mediaField.querySelector(".kidia-page-media-preview"); input.value = attachment.url || ""; image.src = attachment.url || ""; image.hidden = !attachment.url; markDirty(); schedulePreview(); }); mediaFrame.open(); }
+	});
+
+	document.addEventListener("keydown", function (event) {
+		if (event.key === "Escape" && wishlistPicker && !wishlistPicker.hidden) {
+			closeWishlistPicker();
+		}
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);

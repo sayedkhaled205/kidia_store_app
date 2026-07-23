@@ -981,8 +981,10 @@ function runPageBuilderTest() {
 	assert.match(readAsset("page-builder.js"), /duplicateWishlistElement[\s\S]*dataset\.instanceId[\s\S]*insertAdjacentElement\("afterend"/, "Duplicating a Wishlist element must insert a unique copy directly below the selected element.");
 	assert.match(readAsset("page-builder.js"), /applyWishlistPreviewState[\s\S]*data-wishlist-state[\s\S]*wishlist_preview_state[\s\S]*kidia:page-layout-changed/, "Selecting a Wishlist state must show its settings and refresh the live Flutter preview.");
 	assert.doesNotMatch(readAsset("page-builder.js"), /applyWishlistPreviewState\(\{\s*open:\s*true\s*\}\)/, "Selecting a Wishlist state must not expand its settings card.");
-	assert.match(pageTemplateSource, /kidia-wishlist-element-toolbar[\s\S]*data-wishlist-state[\s\S]*kidia-wishlist-add-element/, "Wishlist Add Element must be available above the state elements and tag choices by their state.");
-	assert.match(readAsset("page-builder.js"), /option\.dataset\.wishlistState === state[\s\S]*source\.dataset\.wishlistState !== wishlistPreviewState\(\)/, "Wishlist Add Element must stay inside the currently selected state without switching states.");
+	assert.match(pageTemplateSource, /\$kidia_toolbar_show_add = 'wishlist' === \$page/, "Wishlist must place Add Element in the same shared top toolbar as Home Page.");
+	assert.doesNotMatch(pageTemplateSource, /kidia-wishlist-element-toolbar/, "Wishlist must not keep the old permanent Add Element row below its state choices.");
+	assert.match(pageTemplateSource, /kidia-wishlist-element-picker[\s\S]*data-wishlist-add-type[\s\S]*data-wishlist-state/, "The top Wishlist Add Element action must open a state-aware element picker.");
+	assert.match(readAsset("page-builder.js"), /openWishlistPicker[\s\S]*data-wishlist-add-type[\s\S]*source\.dataset\.wishlistState !== wishlistPreviewState\(\)/, "Wishlist Add Element must stay inside the currently selected state without switching states.");
 	assert.match(pageTemplateSource, /kidia-product-tabs-editor[\s\S]*kidia-product-tab-target[\s\S]*kidia-product-tab-add/, "Product Tabs must expose labels, destinations, visibility, remove, and Add tab controls.");
 	assert.match(readAsset("page-builder.js"), /syncProductTabs[\s\S]*slice\(0, 10\)[\s\S]*kidia-product-tab-add[\s\S]*length < 10/, "Product Tabs must save and preview up to ten merchant-defined tabs.");
 	assert.match(readAsset("admin-theme.css"), /\.kidia-wishlist-access-mode \.kidia-category-navigation-modes span\s*\{[\s\S]*min-height:\s*60px;[\s\S]*grid-template-areas:[\s\S]*"icon title"[\s\S]*"description description";[\s\S]*padding:\s*12px 16px;/, "All four Wishlist choices must keep their icon beside the title and use the same compact height.");
@@ -1052,6 +1054,60 @@ function runPageBuilderTest() {
   window.document.querySelector('.kidia-wishlist-access-option [value="guest"] + span').dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   assert.equal(window.document.querySelector('[name="layout[settings][wishlist_access_mode]"]:checked').value, "guest", "Clicking anywhere on a Wishlist access card must select and submit that mode.");
   console.log("Page Builders: fixed chrome, page elements, preview and sorting passed.");
+}
+
+function runWishlistElementPickerTest() {
+  const markup = `<!doctype html><html><body>
+    <div class="kidia-page-builder" data-page="wishlist">
+      <div id="kidia-page-live-preview"></div>
+      <form>
+        <button id="kidia-add-element" type="button">Add Element</button>
+        <input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" checked>
+        <input type="radio" name="layout[settings][wishlist_preview_state]" value="empty" checked>
+        <div id="kidia-page-elements">
+          <section class="kidia-page-card" data-element="empty_state" data-instance-id="empty_state" data-wishlist-state="empty">
+            <input class="kidia-page-element-id" name="layout[elements][0][id]" value="empty_state">
+            <input name="layout[elements][0][type]" value="empty_state">
+            <div class="kidia-page-card__header"></div><div class="kidia-page-card__body" hidden></div>
+          </section>
+          <section class="kidia-page-card" data-element="empty_recommendations" data-instance-id="empty_recommendations" data-wishlist-state="empty">
+            <input class="kidia-page-element-id" name="layout[elements][1][id]" value="empty_recommendations">
+            <input name="layout[elements][1][type]" value="empty_recommendations">
+            <div class="kidia-page-card__header"></div><div class="kidia-page-card__body" hidden></div>
+          </section>
+          <section class="kidia-page-card" data-element="wishlist_grid" data-instance-id="wishlist_grid" data-wishlist-state="products">
+            <input class="kidia-page-element-id" name="layout[elements][2][id]" value="wishlist_grid">
+            <input name="layout[elements][2][type]" value="wishlist_grid">
+            <div class="kidia-page-card__header"></div><div class="kidia-page-card__body" hidden></div>
+          </section>
+        </div>
+      </form>
+      <div id="kidia-wishlist-element-picker" hidden aria-hidden="true">
+        <button type="button" data-kidia-close-wishlist-picker>Close</button>
+        <button type="button" data-wishlist-add-type="empty_state" data-wishlist-state="empty">Empty Wishlist</button>
+        <button type="button" data-wishlist-add-type="empty_recommendations" data-wishlist-state="empty">Recommendations</button>
+        <button type="button" data-wishlist-add-type="wishlist_grid" data-wishlist-state="products">Wishlist Products</button>
+      </div>
+    </div>
+  </body></html>`;
+  const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+  const { window } = dom;
+  const $ = createJQuery(window);
+  window.$ = window.jQuery = $;
+  $.fn.sortable = function () { return this; };
+  window.requestAnimationFrame = (callback) => { callback(); return 1; };
+  window.HTMLElement.prototype.scrollIntoView = function () {};
+  window.eval(readAsset("page-builder.js"));
+
+  click(window, window.document.getElementById("kidia-add-element"));
+  const picker = window.document.getElementById("kidia-wishlist-element-picker");
+  assert.equal(picker.hidden, false, "The shared top Add Element button must open the Wishlist picker.");
+  assert.equal(picker.querySelector('[data-wishlist-state="products"]').hidden, true, "The picker must hide elements from other Wishlist states.");
+  click(window, picker.querySelector('[data-wishlist-add-type="empty_recommendations"]'));
+  assert.equal(picker.hidden, true, "Choosing an element must close the picker.");
+  assert.equal(window.document.querySelectorAll('[data-element="empty_recommendations"]').length, 2, "The chosen element must be inserted into the active Wishlist state.");
+  assert.equal(window.document.querySelectorAll('#kidia-page-elements [data-wishlist-state="products"]').length, 1, "Adding to Empty Wishlist must not change Product Wishlist.");
+  console.log("Wishlist top Add Element picker: state filtering and insertion passed.");
 }
 
 function runChromeComposerTest() {
@@ -1412,6 +1468,7 @@ if (require.main === module) {
   runMergeControlsContractTest();
   runCategoryBuilderTest();
   runPageBuilderTest();
+  runWishlistElementPickerTest();
   runChromeComposerTest();
   runCollapsedHeaderToggleTest();
 	runFooterPreviewControlsTest();

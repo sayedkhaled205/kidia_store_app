@@ -94,6 +94,31 @@
     // This build is embedded in the versioned WordPress plugin. Never let an
     // older preview worker or cached Dart bundle survive a plugin update.
     (async function startKidiaPreview() {
+      // Some managed WordPress stacks return .wasm with a generic MIME type.
+      // CanvasKit normally uses compileStreaming(), which rejects that valid
+      // response before Flutter can mount. Fall back to compiling its bytes.
+      if (
+        typeof WebAssembly !== 'undefined' &&
+        typeof WebAssembly.compileStreaming === 'function'
+      ) {
+        const compileStreaming = WebAssembly.compileStreaming.bind(WebAssembly);
+        WebAssembly.compileStreaming = async (source) => {
+          const response = await Promise.resolve(source);
+          if (!response || typeof response.clone !== 'function') {
+            return compileStreaming(source);
+          }
+          try {
+            return await compileStreaming(response.clone());
+          } catch (error) {
+            console.warn(
+              'Streaming WASM compilation failed; retrying from bytes.',
+              error,
+            );
+            return WebAssembly.compile(await response.arrayBuffer());
+          }
+        };
+      }
+
       // The Dart bridge can announce readiness before the WordPress footer
       // bridge attaches its listener. Confirm readiness again from the web
       // shell only after Flutter has mounted and painted its actual view.
@@ -175,6 +200,16 @@
             window.location.replace(previewUrl.toString());
           });
       };
+      window.addEventListener('kidia-flutter-preview-error', (event) => {
+        console.error('Flutter preview startup failed.', event.detail || event);
+        retryOrFail();
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        if (!flutterRendered) {
+          console.error('Flutter preview rejected during startup.', event.reason);
+          retryOrFail();
+        }
+      });
 
       const bootstrap = document.createElement('script');
       bootstrap.src =
@@ -191,7 +226,7 @@
       });
       // The exact Flutter bundle includes CanvasKit and can take longer on a
       // cold mobile connection. Retry only after a genuine long stall.
-      startupTimer = window.setTimeout(retryOrFail, 90000);
+      startupTimer = window.setTimeout(retryOrFail, 45000);
       document.body.appendChild(bootstrap);
     })();
   </script>

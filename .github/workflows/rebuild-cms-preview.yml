@@ -5,6 +5,7 @@ on:
     branches:
       - agent/rebuild-embedded-flutter-preview
       - agent/header-product-tabs-controls
+      - agent/fix-preview-wishlist-toolbar
     paths:
       - 'lib/**'
       - 'web/**'
