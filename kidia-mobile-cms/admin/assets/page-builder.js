@@ -186,6 +186,22 @@
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
+	root.addEventListener("click", function (event) {
+		var option = event.target.closest(".kidia-wishlist-access-option");
+		var radio = option && option.querySelector('[name="layout[settings][wishlist_access_mode]"]');
+		if (!radio || event.target === radio || radio.checked) { return; }
+		event.preventDefault();
+		radio.checked = true;
+		radio.dispatchEvent(new window.Event("input", { bubbles: true }));
+		radio.dispatchEvent(new window.Event("change", { bubbles: true }));
+	});
+	root.addEventListener("change", function (event) {
+		if (!event.target.matches('[name="layout[settings][wishlist_access_mode]"]')) { return; }
+		markDirty();
+		document.dispatchEvent(new window.CustomEvent("kidia:page-layout-changed", {
+			detail: { page: "wishlist", wishlistAccessMode: event.target.value },
+		}));
+	});
 	// Clicking an empty builder area must release a previously focused control.
 	// Otherwise ArrowUp/ArrowDown keep changing that control and the page appears
 	// stuck instead of scrolling in the requested direction.

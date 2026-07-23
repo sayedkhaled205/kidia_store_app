@@ -143,6 +143,7 @@
 	cursor: pointer;
 }
 .kidia-chrome-icon-option .dashicons { width:26px; height:26px; font-size:26px; }
+.kidia-chrome-icon-option .kidia-material-icon-choice { display:grid; width:26px; height:26px; place-items:center; font-family:"Kidia Material Icons"; font-size:26px; font-style:normal; font-weight:400; line-height:1; -webkit-font-smoothing:antialiased; }
 .kidia-chrome-icon-option:hover { background:#f1faf7; }
 .kidia-chrome-icon-option.is-selected { border:2px solid #2f806e; background:#dff3ed; box-shadow:0 0 0 2px #fff,0 0 0 4px #8cc6b7; }
 .kidia-chrome-item-setting--header-cart {
