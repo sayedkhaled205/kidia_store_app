@@ -1266,65 +1266,6 @@ class _WishlistLoading extends StatelessWidget {
   }
 }
 
-class _WishlistEmpty extends StatelessWidget {
-  const _WishlistEmpty({
-    required this.copy,
-    required this.settings,
-    required this.onRefresh,
-    this.onContinueShopping,
-    this.onSignIn,
-  });
-
-  final _WishlistCopy copy;
-  final CmsPageComponent settings;
-  final Future<void> Function() onRefresh;
-  final VoidCallback? onContinueShopping;
-  final VoidCallback? onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool signsIn = settings.string('button_action', 'shopping') == 'sign_in';
-    final VoidCallback? action = signsIn ? onSignIn : onContinueShopping;
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView(
-        key: const Key('wishlist-empty'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(32),
-        children: <Widget>[
-          SizedBox(height: MediaQuery.sizeOf(context).height * 0.12),
-          Icon(
-            Icons.favorite_border_rounded,
-            size: 72,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 18),
-          Text(
-            settings.string('title', copy.emptyTitle),
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(settings.string('description', copy.emptyBody), textAlign: TextAlign.center),
-          if (action != null && settings.boolean('show_button', true)) ...<Widget>[
-            const SizedBox(height: 22),
-            Center(
-              child: FilledButton.icon(
-                key: const Key('wishlist-continue-shopping'),
-                onPressed: action,
-                icon: Icon(signsIn ? Icons.login_rounded : Icons.storefront_outlined),
-                label: Text(settings.string('button_label', copy.continueShopping)),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _WishlistFailure extends StatelessWidget {
   const _WishlistFailure({
     required this.message,
