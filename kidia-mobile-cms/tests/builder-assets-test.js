@@ -411,8 +411,9 @@ function runMergeControlsContractTest() {
   const registry = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-block-registry.php"), "utf8");
   const pageStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
   const pageBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
-  const categoryBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
-  const chromeTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "fixed-chrome-card.php"), "utf8");
+	  const categoryBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
+	  const chromeTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "fixed-chrome-card.php"), "utf8");
+	  const cmsChromeSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "widgets", "cms_page_chrome.dart"), "utf8");
   const heroBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-hero-slider-block.php"), "utf8");
   const bannerBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-banner-grid-block.php"), "utf8");
   const categoryGridBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-category-grid-block.php"), "utf8");
@@ -529,12 +530,17 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-page-card__header \.kidia-chrome-transfer-actions\s*\{[^}]*order:/, "No page-specific Header/Footer rule may override the canonical closed-card action slots.");
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card \.kidia-card-actions\s*\{[^}]*margin-inline/, "Header and Footer must not shift the shared action strip away from the common physical left edge.");
 	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*min-height:28px;[^}]*padding-inline:8px;[^}]*font-size:12px;/, "Fixed Header and Footer transfer buttons must match the standard element action-button dimensions.");
+	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
+	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*title_offset_x[\s\S]*title_offset_y/, "The exact Header preview must apply every Title appearance and position control.");
+	for (const titleSetting of ["title_font_size", "title_font_weight", "title_alignment", "title_max_width_percent", "title_offset_x", "title_offset_y", "title_letter_spacing", "title_line_height", "title_transform"]) {
+		assert.match(cmsChromeSource, new RegExp(titleSetting), `Flutter mobile headers must consume ${titleSetting}.`);
+	}
 	assert.match(settingsSections, /keys:\s*\["margin_top",\s*"margin_bottom"\]/, "Merge up and Merge down must share the first vertical column.");
 	assert.match(settingsSections, /keys:\s*\["space_up",\s*"space_down"\]/, "Space up and Space down must share the second vertical column.");
 	assert.match(settingsSections, /keys:\s*\["block_background",\s*"background_color",\s*"element_background_color"\]/, "The background control must use the final column across all Builder types.");
 	assert.match(settingsSections, /\(\(value - min\) \/ \(max - min\)\) \* 100/, "Range progress must derive from the real min, max and value instead of a fixed visual fill.");
 	assert.match(settingsSections, /element\.dataset\.element === "filter_bar"/, "Filter and Sort Bar must have an explicit compact section layout.");
-	assert.match(settingsSections, /element\.dataset\.element === "empty_state"[\s\S]*\^\(title\|description\|button_label\|button_action\|show_button\)\$[\s\S]*section = "text"/, "Empty Wishlist must keep its two action controls and Show button toggle inside Text & Content without a separate Visibility section.");
+	assert.match(settingsSections, /\^\(empty_state\|sign_in_state\)\$[\s\S]*title_size[\s\S]*show_description[\s\S]*button_action[\s\S]*show_button[\s\S]*section = "text"/, "Sign-in and Empty Wishlist message controls must stay together inside Text & Content.");
 	assert.match(settingsSections, /filter_options:\s*"Available Filters"/, "Filter and Sort Bar must group its available filters together.");
 	assert.match(settingsSections, /\^\(product_carousel\|product_grid\)\$[\s\S]*content_data[\s\S]*carousel_actions[\s\S]*card_layout[\s\S]*carousel_visibility[\s\S]*quick_add[\s\S]*carousel_wishlist/, "Product Carousel and Product Grid must share the explicit six-section settings map.");
 	assert.match(settingsSections, /\^\(product_grid\|wishlist_grid\)\$[\s\S]*productType = pageElement\.dataset\.element/, "Catalog and Wishlist Product Grids must use the same specialized settings component as Home Product Grid.");
@@ -543,7 +549,7 @@ function runMergeControlsContractTest() {
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
 	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
 	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*_cmsColor\([\s\S]*layout\.string\('page_background_color', '#FFFFFF'\)[\s\S]*Colors\.white/, "Product Page must use its CMS page background color with white as the safe default for every uncovered gap.");
-	assert.match(pageStore, /private const VERSION = 18;/, "Product page-level appearance settings must use the current layout schema.");
+	assert.match(pageStore, /private const VERSION = 19;/, "Wishlist states and header text appearance must use the current layout schema.");
 	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
 	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
 	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
@@ -554,7 +560,7 @@ function runMergeControlsContractTest() {
 	assert.match(appRouterSource, /path:\s*'\/wishlist'[\s\S]*wishlist_access_mode[\s\S]*WishlistScreen[\s\S]*requiresSignIn:\s*requiresSignIn/, "Wishlist routing must honor the CMS guest or sign-in-required mode.");
 	assert.match(wishlistButtonSource, /wishlist_access_mode[\s\S]*session == null && accessMode == 'sign_in_required'[\s\S]*context\.push\('\/auth'\)/, "Product Wishlist buttons must require Sign in only when the selected CMS mode requires it.");
 	assert.match(wishlistScreenSource, /wishlist-sign-in-required[\s\S]*Sign in to view your wishlist[\s\S]*wishlist-sign-in-button[\s\S]*You may also like/, "The signed-out Wishlist mode must render the dedicated in-page sign-in state.");
-	assert.match(wishlistScreenSource, /settings\.string\('button_action',\s*'shopping'\) == 'sign_in'[\s\S]*signsIn \? onSignIn : onContinueShopping/, "Empty Wishlist must execute exactly the selected Sign in or Continue shopping action while retaining shopping as the default.");
+	assert.match(wishlistScreenSource, /final String action = settings\.string\([\s\S]*'button_action'[\s\S]*action == 'sign_in'[\s\S]*onSignIn[\s\S]*onContinueShopping/, "Wishlist message elements must execute exactly the selected Sign in or Continue shopping action.");
 	assert.doesNotMatch(settingsSections, /element\.dataset\.element === "product_grid"[^\n]+section = "general"/, "Catalog Product Grid must not be forced back into its obsolete single General Settings bucket.");
 	assert.match(settingsSections, /\^pagination_\|\^products_per_page\$[\s\S]*section = "pagination"/, "Catalog pagination must remain a dedicated section while reusing the Home Product Grid component.");
 	assert.match(settingsSections, /querySelectorAll\(":scope > \.kidia-builder-grid"\)[\s\S]*insertBefore\(field, grid\)[\s\S]*grid\.remove\(\)/, "Product settings must be flattened before sectioning so no field is hidden inside one generic bucket.");
@@ -945,7 +951,8 @@ function runPageBuilderTest() {
   const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
   assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
-  assert.match(wishlistSource, /wishlist_preview_state[\s\S]*_previewWishlistProducts[\s\S]*_buildEmptyState[\s\S]*_buildProductState/, "The Flutter preview must independently render Empty Wishlist Settings or Product Wishlist with stable sample products.");
+  assert.match(wishlistSource, /wishlist_preview_state[\s\S]*_buildSignInState[\s\S]*_buildEmptyState[\s\S]*_buildProductState/, "The Flutter preview must independently render all three Wishlist states.");
+  assert.match(wishlistSource, /AppConfig\.isCmsPreview[\s\S]*_previewWishlistProducts[\s\S]*Duration\(seconds: 8\)[\s\S]*Retry/, "Wishlist recommendations must use immediate preview data and a bounded retryable production request.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
   assert.match(wishlistSource, /quick_add_icon_variant/, "Wishlist must consume Quick Add appearance settings.");
   const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
@@ -959,7 +966,9 @@ function runPageBuilderTest() {
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
 	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
 	const sharedToolbarSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
-	assert.match(pageTemplateSource, /wishlist_preview_state[\s\S]*Empty Wishlist Settings[\s\S]*Product Wishlist[\s\S]*data-wishlist-state/, "Wishlist access choices must expose two independent state editor cards beneath them.");
+	assert.match(pageTemplateSource, /wishlist_preview_state[\s\S]*Sign-in Wishlist[\s\S]*Empty Wishlist Settings[\s\S]*Product Wishlist[\s\S]*data-wishlist-state/, "Wishlist access choices must expose three independent state editor cards beneath them.");
+	assert.match(pageTemplateSource, /data-instance-id[\s\S]*kidia-page-duplicate[\s\S]*kidia-page-remove/, "Every Wishlist state element must expose duplicate-under-current and removable repeated instances.");
+	assert.match(readAsset("page-builder.js"), /duplicateWishlistElement[\s\S]*dataset\.instanceId[\s\S]*insertAdjacentElement\("afterend"/, "Duplicating a Wishlist element must insert a unique copy directly below the selected element.");
 	assert.match(readAsset("page-builder.js"), /applyWishlistPreviewState[\s\S]*data-wishlist-state[\s\S]*wishlist_preview_state[\s\S]*kidia:page-layout-changed/, "Selecting a Wishlist state must show its settings and refresh the live Flutter preview.");
 	assert.match(readAsset("admin-theme.css"), /\.kidia-wishlist-access-mode \.kidia-category-navigation-modes span\s*\{[\s\S]*min-height:\s*60px;[\s\S]*grid-template-areas:[\s\S]*"icon title"[\s\S]*"description description";[\s\S]*padding:\s*12px 16px;/, "All four Wishlist choices must keep their icon beside the title and use the same compact height.");
 	assert.match(readAsset("admin-theme.css"), /Field values stay visually secondary[\s\S]*font-size:\s*13px\s*!important;[\s\S]*font-weight:\s*400\s*!important;/, "All CMS field values must use the smaller regular-weight typography.");

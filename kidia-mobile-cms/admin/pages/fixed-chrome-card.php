@@ -23,7 +23,7 @@ $item_field = static function ( string $part, string $key ): string {
 	if ( 'header' === $part ) {
 		if ( 'show_cart_badge' === $key ) { return 'cart'; }
 		if ( 0 === strpos( $key, 'logo_' ) || 'logo_url' === $key ) { return 'logo'; }
-		if ( 'title' === $key || 'title_color' === $key ) { return 'title'; }
+		if ( 'title' === $key || 0 === strpos( $key, 'title_' ) ) { return 'title'; }
 		if ( 'subtitle' === $key ) { return 'logo'; }
 		if ( 0 === strpos( $key, 'search_' ) || 'show_voice_search' === $key ) { return false !== strpos( $key, 'search_icon' ) ? 'search' : 'search_bar'; }
 		foreach ( array( 'back', 'cart', 'wishlist', 'account', 'orders', 'support', 'menu' ) as $item ) { if ( 0 === strpos( $key, $item . '_' ) ) { return $item; } }

@@ -103,7 +103,7 @@
 			if (element && element.dataset.element === "wishlist_grid" && /^(image|layout|colors|products|card_layout|content_data|carousel_visibility)$/.test(section)) {
 				section = "wishlist_products";
 			}
-			if (element && element.dataset.element === "related_products" && section !== "section_layout") {
+			if (element && (element.dataset.element === "related_products" || /_recommendations$/.test(element.dataset.element)) && section !== "section_layout") {
 				section = "related_products";
 			}
 			if (element && element.dataset.element === "filter_bar" && section !== "section_layout") {
@@ -115,11 +115,11 @@
 				else if (/color$/.test(key)) { section = "colors"; }
 				else { section = "layout"; }
 			}
-			if (element && element.dataset.element === "empty_state" && section !== "section_layout") {
+			if (element && /^(empty_state|sign_in_state)$/.test(element.dataset.element) && section !== "section_layout") {
 				var emptyInput = node.querySelector("input[name],select[name],textarea[name]");
 				var emptyMatch = emptyInput && emptyInput.name.match(/\[settings\]\[([^\]]+)\]/);
 				var emptyKey = emptyMatch ? emptyMatch[1] : "";
-				if (/^(title|description|button_label|button_action|show_button)$/.test(emptyKey)) { section = "text"; }
+				if (/^(title|title_size|title_weight|description|description_size|show_description|button_label|button_action|show_button)$/.test(emptyKey)) { section = "text"; }
 			}
 			if (!buckets[section]) { buckets[section] = []; }
 			buckets[section].push(node);

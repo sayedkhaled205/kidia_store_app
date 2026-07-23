@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 18;
+	private const VERSION = 19;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -59,6 +59,15 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'border_width', __( 'Border width', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 6 ),
 			self::field( 'corner_radius', __( 'Corner radius', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 32 ),
 			self::field( 'title_color', __( 'Title color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
+			self::field( 'title_font_size', __( 'Title font size', 'kidia-mobile-cms' ), 'number', 18, array(), 10, 42 ),
+			self::field( 'title_font_weight', __( 'Title font weight', 'kidia-mobile-cms' ), 'select', '700', array( '400' => __( 'Regular', 'kidia-mobile-cms' ), '500' => __( 'Medium', 'kidia-mobile-cms' ), '600' => __( 'Semi bold', 'kidia-mobile-cms' ), '700' => __( 'Bold', 'kidia-mobile-cms' ), '800' => __( 'Extra bold', 'kidia-mobile-cms' ) ) ),
+			self::field( 'title_alignment', __( 'Title text alignment', 'kidia-mobile-cms' ), 'select', 'center', array( 'start' => __( 'Start', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'end' => __( 'End', 'kidia-mobile-cms' ) ) ),
+			self::field( 'title_max_width_percent', __( 'Title maximum width (%)', 'kidia-mobile-cms' ), 'number', 100, array(), 20, 100 ),
+			self::field( 'title_letter_spacing', __( 'Title letter spacing', 'kidia-mobile-cms' ), 'number', 0, array(), -2, 8, 0.1 ),
+			self::field( 'title_line_height', __( 'Title line height', 'kidia-mobile-cms' ), 'number', 1.2, array(), 0.8, 2, 0.05 ),
+			self::field( 'title_offset_x', __( 'Title horizontal position', 'kidia-mobile-cms' ), 'number', 0, array(), -40, 40 ),
+			self::field( 'title_offset_y', __( 'Title vertical position', 'kidia-mobile-cms' ), 'number', 0, array(), -40, 40 ),
+			self::field( 'title_transform', __( 'Title letter case', 'kidia-mobile-cms' ), 'select', 'none', array( 'none' => __( 'As entered', 'kidia-mobile-cms' ), 'uppercase' => __( 'Uppercase', 'kidia-mobile-cms' ), 'lowercase' => __( 'Lowercase', 'kidia-mobile-cms' ) ) ),
 			self::field( 'icon_gap', __( 'Icon spacing', 'kidia-mobile-cms' ), 'number', 6, array(), 0, 24 ),
 			self::field( 'icon_size', __( 'Default icon size', 'kidia-mobile-cms' ), 'number', 24, array(), 14, 40 ),
 			self::field( 'icon_color', __( 'Default icon color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
@@ -242,6 +251,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'card_style', __( 'Card style', 'kidia-mobile-cms' ), 'select', 'outlined', array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'no_shadow' => __( 'No shadow', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ),
 			self::field( 'card_radius', __( 'Card radius', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 			self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 1, array(), 0.6, 1.8, 0.1 ),
+			self::field( 'show_name', __( 'Show product name', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ),
@@ -256,10 +266,57 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
 		$quick_add_keys = array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_background_size', 'quick_add_radius', 'quick_add_position', 'show_wishlist', 'product_wishlist_icon_variant', 'product_wishlist_icon_style', 'product_wishlist_icon_size', 'product_wishlist_icon_color', 'product_wishlist_show_background', 'product_wishlist_background_color', 'product_wishlist_background_size', 'product_wishlist_radius', 'product_wishlist_position' );
-		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
-		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
+		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
+		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
 		$catalog_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $catalog_grid_keys, true ) ) );
 		$wishlist_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $wishlist_grid_keys, true ) ) );
+		$wishlist_grid_defaults = array( 'gap' => 8, 'card_style' => 'minimal', 'card_radius' => 0, 'image_ratio' => 0.82, 'show_name' => false, 'show_regular_price' => false, 'show_rating' => false, 'show_badge' => false );
+		foreach ( $wishlist_grid as &$wishlist_grid_field ) {
+			if ( array_key_exists( $wishlist_grid_field['key'], $wishlist_grid_defaults ) ) {
+				$wishlist_grid_field['default'] = $wishlist_grid_defaults[ $wishlist_grid_field['key'] ];
+			}
+		}
+		unset( $wishlist_grid_field );
+		$wishlist_message_fields = static function ( string $title, string $description, string $button_label, string $button_action ): array {
+			return array(
+				self::field( 'illustration_url', __( 'Illustration', 'kidia-mobile-cms' ), 'image', '' ),
+				self::field( 'illustration_size', __( 'Illustration size', 'kidia-mobile-cms' ), 'number', 104, array(), 56, 180 ),
+				self::field( 'top_spacing', __( 'Space above illustration', 'kidia-mobile-cms' ), 'number', 56, array(), 0, 180 ),
+				self::field( 'title', __( 'Title', 'kidia-mobile-cms' ), 'text', $title ),
+				self::field( 'title_size', __( 'Title size', 'kidia-mobile-cms' ), 'number', 18, array(), 12, 36 ),
+				self::field( 'title_weight', __( 'Title weight', 'kidia-mobile-cms' ), 'select', '700', array( '400' => __( 'Regular', 'kidia-mobile-cms' ), '500' => __( 'Medium', 'kidia-mobile-cms' ), '600' => __( 'Semi bold', 'kidia-mobile-cms' ), '700' => __( 'Bold', 'kidia-mobile-cms' ), '800' => __( 'Extra bold', 'kidia-mobile-cms' ) ) ),
+				self::field( 'description', __( 'Description', 'kidia-mobile-cms' ), 'text', $description ),
+				self::field( 'show_description', __( 'Show description', 'kidia-mobile-cms' ), 'checkbox', '' !== $description ),
+				self::field( 'description_size', __( 'Description size', 'kidia-mobile-cms' ), 'number', 14, array(), 11, 26 ),
+				self::field( 'content_gap', __( 'Content spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 48 ),
+				self::field( 'button_label', __( 'Button label', 'kidia-mobile-cms' ), 'text', $button_label ),
+				self::field( 'button_action', __( 'Button action', 'kidia-mobile-cms' ), 'select', $button_action, array( 'shopping' => __( 'Continue shopping', 'kidia-mobile-cms' ), 'sign_in' => __( 'Sign in', 'kidia-mobile-cms' ) ) ),
+				self::field( 'show_button', __( 'Show button', 'kidia-mobile-cms' ), 'checkbox', true ),
+				self::field( 'button_width', __( 'Button width', 'kidia-mobile-cms' ), 'number', 220, array(), 120, 360 ),
+				self::field( 'button_height', __( 'Button height', 'kidia-mobile-cms' ), 'number', 52, array(), 36, 84 ),
+				self::field( 'button_radius', __( 'Button radius', 'kidia-mobile-cms' ), 'number', 26, array(), 0, 42 ),
+				self::field( 'button_style', __( 'Button style', 'kidia-mobile-cms' ), 'select', 'outline', array( 'outline' => __( 'Outline', 'kidia-mobile-cms' ), 'filled' => __( 'Filled', 'kidia-mobile-cms' ) ) ),
+				self::field( 'button_color', __( 'Button color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ),
+				self::field( 'button_text_color', __( 'Button text color', 'kidia-mobile-cms' ), 'color', '#1D1D1D' ),
+				self::field( 'button_border_color', __( 'Button border color', 'kidia-mobile-cms' ), 'color', '#1D1D1D' ),
+				self::field( 'button_border_width', __( 'Button border width', 'kidia-mobile-cms' ), 'number', 1.5, array(), 0, 6, 0.5 ),
+				self::field( 'bottom_spacing', __( 'Space below content', 'kidia-mobile-cms' ), 'number', 96, array(), 0, 220 ),
+			);
+		};
+		$wishlist_recommendation_fields = array(
+			self::field( 'title', __( 'Section title', 'kidia-mobile-cms' ), 'text', __( 'You may also like', 'kidia-mobile-cms' ) ),
+			self::field( 'title_size', __( 'Title size', 'kidia-mobile-cms' ), 'number', 20, array(), 14, 36 ),
+			self::field( 'title_weight', __( 'Title weight', 'kidia-mobile-cms' ), 'select', '700', array( '400' => __( 'Regular', 'kidia-mobile-cms' ), '500' => __( 'Medium', 'kidia-mobile-cms' ), '600' => __( 'Semi bold', 'kidia-mobile-cms' ), '700' => __( 'Bold', 'kidia-mobile-cms' ), '800' => __( 'Extra bold', 'kidia-mobile-cms' ) ) ),
+			self::field( 'columns', __( 'Columns', 'kidia-mobile-cms' ), 'number', 2, array(), 1, 3 ),
+			self::field( 'gap', __( 'Gap', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
+			self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.82, array(), 0.6, 1.8, 0.05 ),
+			self::field( 'limit', __( 'Products count', 'kidia-mobile-cms' ), 'number', 4, array(), 2, 12 ),
+			self::field( 'show_name', __( 'Show product name', 'kidia-mobile-cms' ), 'checkbox', false ),
+			self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'show_quick_add', __( 'Show quick add', 'kidia-mobile-cms' ), 'checkbox', true ),
+			self::field( 'section_padding', __( 'Side padding', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 32 ),
+			self::field( 'title_bottom_spacing', __( 'Space below title', 'kidia-mobile-cms' ), 'number', 18, array(), 0, 48 ),
+		);
 
 		$definitions = array(
 			'home' => array(),
@@ -297,8 +354,12 @@ final class Kidia_Mobile_Page_Layout_Store {
 				self::element( 'related_products', __( 'Related Products', 'kidia-mobile-cms' ), 'dashicons-products', array( self::field( 'title', __( 'Section title', 'kidia-mobile-cms' ), 'text', __( 'You may also like', 'kidia-mobile-cms' ) ), self::field( 'columns', __( 'Columns', 'kidia-mobile-cms' ), 'number', 2, array(), 1, 3 ), self::field( 'gap', __( 'Gap', 'kidia-mobile-cms' ), 'number', 2, array(), 0, 24 ), self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.75, array(), 0.6, 1.8, 0.05 ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_quick_add', __( 'Show quick add', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
 			),
 			'wishlist' => array(
-				self::element( 'wishlist_grid', __( 'Wishlist Products', 'kidia-mobile-cms' ), 'dashicons-heart', $wishlist_grid ),
-				self::element( 'empty_state', __( 'Empty Wishlist', 'kidia-mobile-cms' ), 'dashicons-heart', array( self::field( 'title', __( 'Title', 'kidia-mobile-cms' ), 'text', __( 'Your wishlist is empty', 'kidia-mobile-cms' ) ), self::field( 'description', __( 'Description', 'kidia-mobile-cms' ), 'text', __( 'Save products you love and find them here.', 'kidia-mobile-cms' ) ), self::field( 'button_label', __( 'Button label', 'kidia-mobile-cms' ), 'text', __( 'Continue shopping', 'kidia-mobile-cms' ) ), self::field( 'button_action', __( 'Button action', 'kidia-mobile-cms' ), 'select', 'shopping', array( 'shopping' => __( 'Continue shopping', 'kidia-mobile-cms' ), 'sign_in' => __( 'Sign in', 'kidia-mobile-cms' ) ) ), self::field( 'show_button', __( 'Show button', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'sign_in_state', __( 'Sign-in Wishlist', 'kidia-mobile-cms' ), 'dashicons-lock', $wishlist_message_fields( __( 'Sign in to view your wishlist', 'kidia-mobile-cms' ), '', __( 'Sign In', 'kidia-mobile-cms' ), 'sign_in' ) ),
+				self::element( 'sign_in_recommendations', __( 'Sign-in Recommendations', 'kidia-mobile-cms' ), 'dashicons-products', $wishlist_recommendation_fields ),
+				self::element( 'empty_state', __( 'Empty Wishlist', 'kidia-mobile-cms' ), 'dashicons-heart', $wishlist_message_fields( __( 'Your wishlist is empty', 'kidia-mobile-cms' ), __( 'Add items here by clicking the little heart!', 'kidia-mobile-cms' ), __( 'Go Shopping', 'kidia-mobile-cms' ), 'shopping' ) ),
+				self::element( 'empty_recommendations', __( 'Empty Wishlist Recommendations', 'kidia-mobile-cms' ), 'dashicons-products', $wishlist_recommendation_fields ),
+				self::element( 'wishlist_grid', __( 'Wishlist Products', 'kidia-mobile-cms' ), 'dashicons-grid-view', $wishlist_grid ),
+				self::element( 'products_recommendations', __( 'Wishlist Product Recommendations', 'kidia-mobile-cms' ), 'dashicons-products', $wishlist_recommendation_fields ),
 			),
 			'account' => array(
 				self::element( 'account_summary', __( 'Account Summary', 'kidia-mobile-cms' ), 'dashicons-admin-users', array( self::field( 'avatar_size', __( 'Avatar size', 'kidia-mobile-cms' ), 'number', 66, array(), 40, 110 ), self::field( 'show_email', __( 'Show email', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'guest_title', __( 'Guest title', 'kidia-mobile-cms' ), 'text', __( 'Sign in / Create account', 'kidia-mobile-cms' ) ), self::field( 'card_style', __( 'Card style', 'kidia-mobile-cms' ), 'select', 'elevated', array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'no_shadow' => __( 'No shadow', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ) ) ),
@@ -342,11 +403,22 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
 		if ( 'wishlist' === $page ) {
 			$default['settings']['wishlist_access_mode'] = in_array( (string) ( $saved_page_settings['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $saved_page_settings['wishlist_access_mode'] : 'sign_in_required';
-			$default['settings']['wishlist_preview_state'] = in_array( (string) ( $saved_page_settings['wishlist_preview_state'] ?? '' ), array( 'empty', 'products' ), true ) ? (string) $saved_page_settings['wishlist_preview_state'] : 'products';
+			$default['settings']['wishlist_preview_state'] = in_array( (string) ( $saved_page_settings['wishlist_preview_state'] ?? '' ), array( 'sign_in', 'empty', 'products' ), true ) ? (string) $saved_page_settings['wishlist_preview_state'] : 'products';
 		}
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
 		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+		if ( 'wishlist' === $page && (int) ( $saved['version'] ?? 1 ) < 19 ) {
+			$default['header']['settings']['layout_json'] = wp_json_encode( $this->default_header_layout( 'wishlist' ) );
+			$default['header']['settings']['height'] = 76;
+			$default['header']['settings']['show_back'] = false;
+			$default['header']['settings']['show_search'] = false;
+			$default['header']['settings']['show_cart'] = true;
+			$default['header']['settings']['show_cart_badge'] = true;
+			$default['header']['settings']['title_font_size'] = 18;
+			$default['header']['settings']['title_font_weight'] = '600';
+			$default['header']['settings']['title_alignment'] = 'center';
+		}
 		if ( (int) ( $saved['version'] ?? 1 ) < 10 && 'sticky_search_cart' === (string) ( $saved['header']['settings']['collapse_preset'] ?? '' ) ) {
 			$default['header']['settings']['collapse_transition'] = 'smooth_compact';
 		}
@@ -354,7 +426,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$saved_elements = array();
 		foreach ( is_array( $saved['elements'] ?? null ) ? $saved['elements'] : array() as $element ) {
 			if ( is_array( $element ) && ! empty( $element['id'] ) ) {
-				$saved_elements[ sanitize_key( $element['id'] ) ] = $element;
+				$saved_elements[] = $element;
 			}
 		}
 		$definitions = array();
@@ -362,14 +434,31 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$definitions[ $definition['id'] ] = $definition;
 		}
 		$elements = array();
-		foreach ( $saved_elements as $id => $element ) {
-			if ( isset( $definitions[ $id ] ) ) {
-				$elements[] = $this->merge_element( $definitions[ $id ], $element );
-				unset( $definitions[ $id ] );
+		$used_definitions = array();
+		foreach ( $saved_elements as $element ) {
+			$id = sanitize_key( (string) ( $element['id'] ?? '' ) );
+			$type = 'wishlist' === $page ? sanitize_key( (string) ( $element['type'] ?? $id ) ) : $id;
+			if ( isset( $definitions[ $type ] ) ) {
+				$merged = $this->merge_element( $definitions[ $type ], $element );
+				$merged['id'] = $id ?: $type;
+				$merged['type'] = $type;
+				$elements[] = $merged;
+				$used_definitions[ $type ] = true;
+				if ( 'wishlist' !== $page ) {
+					unset( $definitions[ $type ] );
+				}
 			}
 		}
-		foreach ( $definitions as $definition ) {
-			$elements[] = $this->default_element( $definition );
+		foreach ( $definitions as $type => $definition ) {
+			if ( ! isset( $used_definitions[ $type ] ) ) {
+				$elements[] = $this->default_element( $definition );
+			}
+		}
+		if ( 'wishlist' === $page && (int) ( $saved['version'] ?? 1 ) < 19 ) {
+			$order = array( 'sign_in_state', 'sign_in_recommendations', 'empty_state', 'empty_recommendations', 'wishlist_grid', 'products_recommendations' );
+			usort( $elements, static function ( array $left, array $right ) use ( $order ): int {
+				return array_search( $left['id'], $order, true ) <=> array_search( $right['id'], $order, true );
+			} );
 		}
 		if ( (int) ( $saved['version'] ?? 1 ) < 17 && 16 === (int) ( $default['footer']['settings']['horizontal_padding'] ?? 16 ) ) {
 			// This field existed with a value of 16 while Flutter ignored it. Keep
@@ -421,7 +510,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$page_settings = array( 'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' );
 		if ( 'wishlist' === $page ) {
 			$page_settings['wishlist_access_mode'] = in_array( (string) ( $submitted['settings']['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $submitted['settings']['wishlist_access_mode'] : 'sign_in_required';
-			$page_settings['wishlist_preview_state'] = in_array( (string) ( $submitted['settings']['wishlist_preview_state'] ?? '' ), array( 'empty', 'products' ), true ) ? (string) $submitted['settings']['wishlist_preview_state'] : 'products';
+			$page_settings['wishlist_preview_state'] = in_array( (string) ( $submitted['settings']['wishlist_preview_state'] ?? '' ), array( 'sign_in', 'empty', 'products' ), true ) ? (string) $submitted['settings']['wishlist_preview_state'] : 'products';
 		}
 		$layout = array(
 			'version' => self::VERSION,
@@ -438,13 +527,22 @@ final class Kidia_Mobile_Page_Layout_Store {
 		}
 		foreach ( is_array( $submitted['elements'] ?? null ) ? $submitted['elements'] : array() as $element ) {
 			$id = is_array( $element ) ? sanitize_key( (string) ( $element['id'] ?? '' ) ) : '';
-			if ( isset( $definitions[ $id ] ) ) {
-				$layout['elements'][] = $this->merge_element( $definitions[ $id ], $element );
-				unset( $definitions[ $id ] );
+			$type = 'wishlist' === $page && is_array( $element ) ? sanitize_key( (string) ( $element['type'] ?? $id ) ) : $id;
+			if ( isset( $definitions[ $type ] ) ) {
+				$merged = $this->merge_element( $definitions[ $type ], $element );
+				$merged['id'] = $id ?: $type;
+				$merged['type'] = $type;
+				$layout['elements'][] = $merged;
+				if ( 'wishlist' !== $page ) {
+					unset( $definitions[ $type ] );
+				}
 			}
 		}
-		foreach ( $definitions as $definition ) {
-			$layout['elements'][] = $this->default_element( $definition );
+		$submitted_types = array_column( $layout['elements'], 'type' );
+		foreach ( $definitions as $type => $definition ) {
+			if ( ! in_array( $type, $submitted_types, true ) ) {
+				$layout['elements'][] = $this->default_element( $definition );
+			}
 		}
 		return $layout;
 	}
@@ -528,6 +626,18 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$footer_settings['show_price'] = false;
 			$footer_settings['show_quantity'] = false;
 		}
+		if ( 'wishlist' === $page ) {
+			$header_settings['height'] = 76;
+			$header_settings['vertical_padding'] = 6;
+			$header_settings['show_back'] = false;
+			$header_settings['show_search'] = false;
+			$header_settings['show_cart'] = true;
+			$header_settings['show_cart_badge'] = true;
+			$header_settings['title_font_size'] = 18;
+			$header_settings['title_font_weight'] = '600';
+			$header_settings['title_alignment'] = 'center';
+			$footer_settings['height'] = 64;
+		}
 		$layout = array(
 			'version' => self::VERSION,
 			'page' => $page,
@@ -595,7 +705,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'catalog' => array( 'rows' => array( $row( array( $column( 33.33, array( 'cart', 'search' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'back' ), 'right' ) ) ) ) ),
 			'product' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array() ), $column( 33.33, array( 'support', 'cart' ), 'right' ) ) ) ) ),
 			'category' => array( 'rows' => array( $row( array( $column( 33.33, array( 'search', 'cart' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array(), 'right' ) ) ) ) ),
-			'wishlist' => array( 'rows' => array( $row( array( $column( 33.33, array( 'back' ), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'cart' ), 'right' ) ) ) ) ),
+			'wishlist' => array( 'rows' => array( $row( array( $column( 33.33, array(), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'cart' ), 'right' ) ) ) ) ),
 			'account' => array( 'rows' => array( $row( array( $column( 33.33, array(), 'left' ), $column( 33.34, array( 'title' ) ), $column( 33.33, array( 'orders' ), 'right' ) ) ) ) ),
 		);
 		return $layouts[ $page ] ?? $layouts['catalog'];

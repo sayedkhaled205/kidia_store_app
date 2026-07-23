@@ -555,4 +555,6 @@
 .kidia-wishlist-preview-heading small{color:#60706c;font-weight:400}
 .kidia-wishlist-access-mode .kidia-wishlist-preview-modes{padding-top:12px}
 .kidia-wishlist-access-mode .kidia-wishlist-preview-modes span{background:#f8fbfa}
+.kidia-wishlist-access-mode .kidia-wishlist-preview-modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1100px){.kidia-wishlist-access-mode .kidia-wishlist-preview-modes{grid-template-columns:1fr}}
 .kidia-page-elements>.kidia-page-card[hidden],.kidia-page-elements>.is-wishlist-state-hidden{display:none!important}
