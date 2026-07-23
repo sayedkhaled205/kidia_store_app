@@ -154,8 +154,8 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
   const index = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "index.html"), "utf8");
   const sourceIndex = fs.readFileSync(path.resolve(__dirname, "..", "..", "web", "index.html"), "utf8");
   const bootstrap = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "flutter_bootstrap.js"), "utf8");
-  assert.match(index, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
-  assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
+  assert.match(index, /flutter_bootstrap\.js.*encodeURIComponent\(cacheKey\)/s);
+  assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(cacheKey\)/s);
   assert.match(bootstrap, /mainJsPath.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
   for (const bridge of ["flutter-preview-bridge.js", "flutter-category-preview-bridge.js", "flutter-home-preview-bridge.js"]) {
     const source = fs.readFileSync(path.join(assets, bridge), "utf8");
