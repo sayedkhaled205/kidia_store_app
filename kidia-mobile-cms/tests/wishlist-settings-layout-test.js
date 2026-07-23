@@ -10,6 +10,11 @@ const script = fs.readFileSync(path.join(pluginRoot, "admin/assets/settings-sect
 const css = fs.readFileSync(path.join(pluginRoot, "admin/assets/admin-theme.css"), "utf8");
 const toolbar = fs.readFileSync(path.join(pluginRoot, "admin/pages/builder-toolbar.php"), "utf8");
 const page = fs.readFileSync(path.join(pluginRoot, "admin/pages/page-builder.php"), "utf8");
+
+assert.ok(
+  page.indexOf("kidia-wishlist-access-mode") < page.indexOf("$chrome_part = 'header'"),
+  "Wishlist access mode must render before Fixed Header.",
+);
 const home = fs.readFileSync(path.join(pluginRoot, "admin/pages/home-builder.php"), "utf8");
 const category = fs.readFileSync(path.join(pluginRoot, "admin/pages/category-builder.php"), "utf8");
 

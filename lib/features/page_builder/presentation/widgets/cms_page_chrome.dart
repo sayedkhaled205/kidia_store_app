@@ -5,6 +5,37 @@ import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
+List<Map<String, dynamic>> _configuredHeaderRows(
+  CmsPageComponent header, {
+  String key = 'layout_json',
+}) {
+  final dynamic raw = header.json(key)['rows'];
+  if (raw is! List) return const <Map<String, dynamic>>[];
+  return raw
+      .whereType<Map>()
+      .map((Map<dynamic, dynamic> row) => Map<String, dynamic>.from(row))
+      .toList(growable: false);
+}
+
+double _regularHeaderHeight(CmsPageComponent header) {
+  final int count = _configuredHeaderRows(header).length;
+  if (count <= 1) {
+    return header.number('height', 64).clamp(48, 120).toDouble();
+  }
+  final double first = header.number('row_1_height', 48).clamp(24, 100).toDouble();
+  final double remaining =
+      header.number('row_2_height', 48).clamp(24, 100).toDouble();
+  final double gap = (header.number('row_gap', 8).clamp(0, 24) -
+          header.number('row_merge', 0).clamp(0, 24))
+      .clamp(0, 24)
+      .toDouble();
+  final double padding =
+      header.number('vertical_padding', 8).clamp(0, 24).toDouble() * 2;
+  return (padding + first + (remaining * (count - 1)) + (gap * (count - 1)))
+      .clamp(48, 360)
+      .toDouble();
+}
+
 typedef CmsPageLayoutWidgetBuilder = Widget Function(
   BuildContext context,
   CmsPageLayout layout,
@@ -230,9 +261,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
         widget.layout.header.number('search_height', 40).clamp(32, 64) +
         (widget.layout.header.number('vertical_padding', 8).clamp(0, 24) * 2);
     final bool needsCompactSearchRoom = transition == 'smooth_compact';
-    final double regularHeight = widget.layout.header
-        .number('height', 64)
-        .clamp(48, 120);
+    final double regularHeight = _regularHeaderHeight(widget.layout.header);
     final double resolvedCompactHeight =
         needsCompactSearchRoom && compactHeight < compactContentHeight
         ? compactContentHeight
@@ -306,7 +335,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   double get _visibleHeight {
     if (visibleHeight != null) return visibleHeight!;
-    if (!compact) return _header.number('height', 64).clamp(48, 120);
+    if (!compact) return _regularHeaderHeight(_header);
     final double configured = _header
         .number('compact_height', 60)
         .clamp(44, 100);
@@ -471,10 +500,22 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                         children: rows.indexed.expand((entry) sync* {
                           if (entry.$1 > 0) {
                             yield SizedBox(
-                              height: _effectiveRowGap,
+                              height:
+                                  (_header
+                                              .number('row_gap', 8)
+                                              .clamp(0, 24) -
+                                          _header
+                                              .number('row_merge', 0)
+                                              .clamp(0, 24))
+                                      .clamp(0, 24)
+                                      .toDouble(),
                             );
                           }
-                          yield _headerRow(context, entry.$2, foreground);
+                          yield _positionedHeaderRow(
+                            entry.$1,
+                            rows.length,
+                            _headerRow(context, entry.$2, foreground),
+                          );
                         }).toList(growable: false),
                       ),
                     ),
@@ -491,11 +532,35 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   double _lerp(num start, num end, double progress) =>
       start.toDouble() + ((end.toDouble() - start.toDouble()) * progress);
 
-  double get _effectiveRowGap =>
-      (_header.number('row_gap', 8) -
-              _header.number('row_merge', 0).clamp(0, 8))
-          .clamp(0, 24)
-          .toDouble();
+  Widget _positionedHeaderRow(int index, int rowCount, Widget child) {
+    final bool single = rowCount <= 1;
+    final double height = single
+        ? (_visibleHeight -
+                  (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+              .clamp(0, double.infinity)
+              .toDouble()
+        : _header
+              .number(index == 0 ? 'row_1_height' : 'row_2_height', 48)
+              .clamp(24, 100)
+              .toDouble();
+    final String position = _header.string(
+      single
+          ? 'header_position'
+          : index == 0
+          ? 'row_1_position'
+          : 'row_2_position',
+      'center',
+    );
+    final Alignment alignment = switch (position) {
+      'up' => Alignment.topCenter,
+      'down' => Alignment.bottomCenter,
+      _ => Alignment.center,
+    };
+    return SizedBox(
+      height: height,
+      child: Align(alignment: alignment, child: child),
+    );
+  }
 
   double _shadowElevation(String shadow) => switch (shadow) {
     'none' => 0,
@@ -584,7 +649,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         .clamp(32, 64)
         .toDouble();
     final double regularContentHeight =
-        (_header.number('height', 64).clamp(48, 120) -
+        (_regularHeaderHeight(_header) -
                 (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
             .clamp(searchHeight, double.infinity)
             .toDouble();
@@ -728,8 +793,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     String item,
   ) {
     double top = 0;
-    final double gap = _effectiveRowGap;
-    for (final Map<String, dynamic> row in rows) {
+    final double gap = (_header.number('row_gap', 8).clamp(0, 24) -
+            _header.number('row_merge', 0).clamp(0, 24))
+        .clamp(0, 24)
+        .toDouble();
+    for (final MapEntry<int, Map<String, dynamic>> entry
+        in rows.asMap().entries) {
+      final Map<String, dynamic> row = entry.value;
       final Set<String> items = _columns(row)
           .expand((Map<String, dynamic> column) {
             final dynamic raw = column['items'];
@@ -738,8 +808,34 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 : const <String>[];
           })
           .toSet();
-      if (items.contains(item)) return top;
-      top += _rowContentHeight(items) + gap;
+      final double contentHeight = _rowContentHeight(items);
+      final bool single = rows.length <= 1;
+      final double rowHeight = single
+          ? (_regularHeaderHeight(_header) -
+                    (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+                .clamp(0, double.infinity)
+                .toDouble()
+          : _header
+                .number(entry.key == 0 ? 'row_1_height' : 'row_2_height', 48)
+                .clamp(24, 100)
+                .toDouble();
+      final String position = _header.string(
+        single
+            ? 'header_position'
+            : entry.key == 0
+            ? 'row_1_position'
+            : 'row_2_position',
+        'center',
+      );
+      final double inside = position == 'down'
+          ? (rowHeight - contentHeight).clamp(0, double.infinity).toDouble()
+          : position == 'center'
+          ? ((rowHeight - contentHeight) / 2)
+                .clamp(0, double.infinity)
+                .toDouble()
+          : 0;
+      if (items.contains(item)) return top + inside;
+      top += rowHeight + gap;
     }
     return top;
   }
@@ -800,10 +896,19 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 children: rows.indexed.expand((entry) sync* {
                   if (entry.$1 > 0) {
                     yield SizedBox(
-                      height: _effectiveRowGap,
+                          height: (_header.number('row_gap', 8).clamp(0, 24) -
+                                  _header
+                                      .number('row_merge', 0)
+                                      .clamp(0, 24))
+                              .clamp(0, 24)
+                              .toDouble(),
                     );
                   }
-                  yield _headerRow(context, entry.$2, color);
+                  yield _positionedHeaderRow(
+                    entry.$1,
+                    rows.length,
+                    _headerRow(context, entry.$2, color),
+                  );
                 }).toList(growable: false),
               ),
             ),
