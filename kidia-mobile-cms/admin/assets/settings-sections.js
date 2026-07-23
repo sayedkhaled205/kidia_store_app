@@ -189,6 +189,17 @@
 		body.className = "kidia-product-icon-panel__body";
 		container.insertBefore(panel, heading);
 		panel.appendChild(heading);
+		var scope = section === "quick_add" ? "quick_add" : "wishlist";
+		var apply = document.createElement("button");
+		apply.type = "button";
+		apply.className = "button kidia-product-apply-all";
+		apply.dataset.applyProductSettings = scope;
+		apply.textContent = (window.kidiaProductApplyAll && window.kidiaProductApplyAll.labels && window.kidiaProductApplyAll.labels.apply) || "Apply to all";
+		heading.appendChild(apply);
+		var status = document.createElement("span");
+		status.className = "kidia-product-apply-all-status";
+		status.setAttribute("role", "status");
+		heading.appendChild(status);
 		panel.appendChild(body);
 		fields.forEach(function (field) {
 			var key = productSettingKey(field);
@@ -200,6 +211,54 @@
 				body.appendChild(field);
 			}
 		});
+	}
+
+	function settingValue(input) {
+		if (input.type === "checkbox") { return input.checked; }
+		return input.value;
+	}
+
+	function setSettingValue(input, value) {
+		if (input.type === "checkbox") { input.checked = !!value; }
+		else { input.value = String(value); }
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		input.dispatchEvent(new Event("change", { bubbles: true }));
+	}
+
+	function applyProductSettings(button) {
+		var panel = button.closest(".kidia-product-icon-panel");
+		var scope = button.dataset.applyProductSettings;
+		var prefix = scope === "quick_add" ? /^quick_add_/ : /^(show_wishlist|product_wishlist_)/;
+		var settings = {};
+		Array.prototype.forEach.call(panel.querySelectorAll("input[name]:not([type=hidden]),select[name],textarea[name]"), function (input) {
+			var key = productSettingKey(input.closest(".kidia-builder-field,.kidia-page-field") || input.parentElement);
+			if (prefix.test(key)) { settings[key] = settingValue(input); }
+		});
+		Array.prototype.forEach.call(document.querySelectorAll("input[name]:not([type=hidden]),select[name],textarea[name]"), function (input) {
+			var match = input.name.match(/\[settings\]\[([^\]]+)\]/);
+			var key = match ? match[1] : "";
+			if (Object.prototype.hasOwnProperty.call(settings, key)) { setSettingValue(input, settings[key]); }
+		});
+		var config = window.kidiaProductApplyAll || {};
+		var status = panel.querySelector(".kidia-product-apply-all-status");
+		button.disabled = true;
+		button.textContent = config.labels && config.labels.working || "Applying…";
+		var data = new FormData();
+		data.append("action", "kidia_mobile_apply_product_icon_settings");
+		data.append("nonce", config.nonce || "");
+		data.append("scope", scope);
+		data.append("settings", JSON.stringify(settings));
+		window.fetch(config.ajaxUrl || window.ajaxurl, { method: "POST", credentials: "same-origin", body: data })
+			.then(function (response) { return response.json(); })
+			.then(function (result) {
+				if (!result || !result.success) { throw new Error(""); }
+				status.textContent = result.data && result.data.message || "Applied";
+			})
+			.catch(function () { status.textContent = config.labels && config.labels.error || "Could not apply these settings."; })
+			.finally(function () {
+				button.disabled = false;
+				button.textContent = config.labels && config.labels.apply || "Apply to all";
+			});
 	}
 
 	function sectionLayoutKey(field) {
@@ -317,6 +376,12 @@
 
 	document.addEventListener("DOMContentLoaded", function () {
 		sectionAll(document);
+		document.addEventListener("click", function (event) {
+			var button = event.target.closest && event.target.closest("[data-apply-product-settings]");
+			if (!button) { return; }
+			event.preventDefault();
+			applyProductSettings(button);
+		});
 		document.addEventListener("input", function (event) { if (event.target.matches && event.target.matches('input[type="range"]')) { updateRange(event.target); } });
 		if (window.MutationObserver) {
 			new MutationObserver(function (records) { records.forEach(function (record) { record.addedNodes.forEach(function (node) { if (node.nodeType === 1) { sectionAll(node); } }); }); }).observe(document.body, { childList: true, subtree: true });

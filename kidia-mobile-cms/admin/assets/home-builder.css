@@ -31,7 +31,7 @@
 
 .kidia-mobile-preview {
 	position: sticky;
-	top: 48px;
+	top: 32px;
 	direction: rtl;
 	text-align: center;
 	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
@@ -1399,6 +1399,25 @@ body.kidia-modal-open {
 	margin: 0 !important;
 	padding: 10px 12px !important;
 	border-top: 0;
+}
+
+.kidia-product-apply-all {
+	margin-inline-start: auto !important;
+	min-height: 32px !important;
+	padding: 2px 12px !important;
+	border-color: #2f8877 !important;
+	background: #2f8877 !important;
+	color: #fff !important;
+	font-weight: 700 !important;
+}
+
+.kidia-product-apply-all:disabled { opacity: .65; }
+
+.kidia-product-apply-all-status {
+	max-width: 260px;
+	color: #236b59;
+	font-size: 12px;
+	font-weight: 600;
 }
 
 .kidia-product-icon-panel > .kidia-settings-section-title .kidia-product-icon-field {

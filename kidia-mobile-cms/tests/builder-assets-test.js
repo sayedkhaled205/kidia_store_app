@@ -531,10 +531,11 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card \.kidia-card-actions\s*\{[^}]*margin-inline/, "Header and Footer must not shift the shared action strip away from the common physical left edge.");
 	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*min-height:28px;[^}]*padding-inline:8px;[^}]*font-size:12px;/, "Fixed Header and Footer transfer buttons must match the standard element action-button dimensions.");
 	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
-	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*title_offset_x[\s\S]*title_offset_y/, "The exact Header preview must apply every Title appearance and position control.");
-	for (const titleSetting of ["title_font_size", "title_font_weight", "title_alignment", "title_max_width_percent", "title_offset_x", "title_offset_y", "title_letter_spacing", "title_line_height", "title_transform"]) {
+	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
+	for (const titleSetting of ["title_font_size", "title_font_weight", "title_alignment", "title_max_width_percent", "title_letter_spacing", "title_line_height", "title_transform"]) {
 		assert.match(cmsChromeSource, new RegExp(titleSetting), `Flutter mobile headers must consume ${titleSetting}.`);
 	}
+	assert.match(cmsChromeSource, /\$\{prefix\}_offset_x[\s\S]*\$\{prefix\}_offset_y/, "Flutter mobile headers must apply the shared horizontal and vertical item positions to Title and every other Header item.");
 	assert.match(settingsSections, /keys:\s*\["margin_top",\s*"margin_bottom"\]/, "Merge up and Merge down must share the first vertical column.");
 	assert.match(settingsSections, /keys:\s*\["space_up",\s*"space_down"\]/, "Space up and Space down must share the second vertical column.");
 	assert.match(settingsSections, /keys:\s*\["block_background",\s*"background_color",\s*"element_background_color"\]/, "The background control must use the final column across all Builder types.");
@@ -1468,6 +1469,33 @@ function runUniformChromeSettingsContractTest() {
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
 
+function runHeaderPositionAndProductApplyAllContractTest() {
+	const store = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-page-layout-store.php"), "utf8");
+	const chrome = readAsset("chrome-layout.js");
+	const flutter = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "widgets", "cms_page_chrome.dart"), "utf8");
+	const sections = readAsset("settings-sections.js");
+	const admin = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
+	for (const item of ["logo", "title", "search_icon", "search_bar", "back", "cart", "wishlist", "account", "orders", "support", "menu"]) {
+		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_x'.*'Horizontal position'.*-80, 80"), `${item} must expose horizontal positioning.`);
+		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_y'.*'Vertical position'.*-80, 80"), `${item} must expose vertical positioning.`);
+	}
+	assert.match(chrome, /positionStyle\(card,item\)[\s\S]*transform:translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The exact HTML preview must apply both header offsets.");
+	assert.match(store, /self::field\( 'row_merge', __\( 'Merge rows'[\s\S]*, 0, array\(\), 0, 8 \)/, "Header settings must expose a zero-default Merge rows control without changing Header height.");
+	assert.match(chrome, /rowGap\(card\)[\s\S]*row_gap[\s\S]*row_merge/, "The exact Header preview must reduce only the distance between rows when Merge rows increases.");
+	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must honor Merge rows instead of pinning row two to the Header bottom.");
+	assert.match(flutter, /_positionedItem[\s\S]*Transform\.translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The Flutter app and preview must apply both header offsets.");
+	assert.match(flutter, /_effectiveRowGap[\s\S]*row_gap[\s\S]*row_merge/, "Flutter must apply Merge rows independently from total Header height.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*32px;/, "Home preview must sit slightly higher.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:32px;/, "Every page preview must sit at the same slightly higher position.");
+	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
+	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
+	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
+	assert.match(sections, /document\.querySelectorAll\("input\[name\]:not\(\[type=hidden\]\),select\[name\],textarea\[name\]"\)[\s\S]*setSettingValue/, "Apply to all must update every visible matching card control immediately.");
+	assert.match(admin, /wp_ajax_kidia_mobile_apply_product_icon_settings[\s\S]*Kidia_Mobile_Layout_Store[\s\S]*Kidia_Mobile_Page_Layout_Store/, "The server operation must persist product settings across Home and all page layouts.");
+	assert.match(admin, /'quick_add'[\s\S]*'wishlist'[\s\S]*\$keys = 'quick_add' === \$scope/, "Quick Add and Wishlist copy profiles must remain independent.");
+	console.log("Header positioning and global product icon copy contracts are complete.");
+}
+
 if (require.main === module) {
   runHomeBuilderTest();
   runMergeControlsContractTest();
@@ -1482,6 +1510,7 @@ if (require.main === module) {
 	runUnsavedChangesDialogTest();
 	runCommercePreviewTest();
 	runUniformChromeSettingsContractTest();
+	runHeaderPositionAndProductApplyAllContractTest();
   console.log("Builder browser contract tests: ok");
 }
 
