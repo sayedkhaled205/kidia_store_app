@@ -144,16 +144,6 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
       }
-      window.addEventListener('message', (event) => {
-        let message = event.data;
-        if (typeof message === 'string') {
-          try { message = JSON.parse(message); } catch (_) { return; }
-        }
-        if (flutterRendered && message && message.type === 'kidia-preview-layout') {
-          announceRendered();
-        }
-      });
-
       // Clear stale workers in parallel. Waiting for the browser's service
       // worker registry can delay the actual Flutter bootstrap indefinitely
       // on some WordPress hosts.

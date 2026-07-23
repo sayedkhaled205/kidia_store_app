@@ -82,6 +82,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               homeLayoutAsync.when(
+                skipLoadingOnReload: true,
+                skipLoadingOnRefresh: true,
                 data: (HomeLayout layout) {
                   _visibleBlocks = layout.enabledBlocks
                       .where((HomeBlock block) => block is! AppHeaderBlock)

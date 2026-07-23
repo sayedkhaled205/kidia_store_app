@@ -9,6 +9,7 @@
 	var controller = null;
 	var requestNumber = 0;
 	var refreshTimer = 0;
+	var sentInitialState = false;
 	var blocks = Array.isArray(window.kidiaHomePreviewBlocks) ? window.kidiaHomePreviewBlocks : [];
 	var lastSignature = "";
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
@@ -99,7 +100,19 @@
 		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
-		if (message && message.type === "kidia-flutter-preview-ready") { ready = true; showFlutter(); queueRefresh(true); }
+		if (message && message.type === "kidia-flutter-preview-ready") {
+			ready = true;
+			showFlutter();
+			if (!sentInitialState) {
+				sentInitialState = true;
+				queueRefresh(true);
+			}
+		}
+	});
+	frame.addEventListener("load", function () {
+		ready = false;
+		sentInitialState = false;
+		lastSignature = "";
 	});
 	form.addEventListener("input", function () { queueRefresh(false); });
 	form.addEventListener("change", function () { queueRefresh(false); });
