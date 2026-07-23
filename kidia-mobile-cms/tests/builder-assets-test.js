@@ -961,6 +961,7 @@ function runPageBuilderTest() {
 	const sharedToolbarSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
 	assert.match(pageTemplateSource, /wishlist_preview_state[\s\S]*Empty Wishlist Settings[\s\S]*Product Wishlist[\s\S]*data-wishlist-state/, "Wishlist access choices must expose two independent state editor cards beneath them.");
 	assert.match(readAsset("page-builder.js"), /applyWishlistPreviewState[\s\S]*data-wishlist-state[\s\S]*wishlist_preview_state[\s\S]*kidia:page-layout-changed/, "Selecting a Wishlist state must show its settings and refresh the live Flutter preview.");
+	assert.match(readAsset("admin-theme.css"), /\.kidia-wishlist-access-mode \.kidia-category-navigation-modes span\s*\{[\s\S]*min-height:\s*60px;[\s\S]*grid-template-areas:[\s\S]*"icon title"[\s\S]*"description description";[\s\S]*padding:\s*12px 16px;/, "All four Wishlist choices must keep their icon beside the title and use the same compact height.");
 	assert.match(readAsset("admin-theme.css"), /Field values stay visually secondary[\s\S]*font-size:\s*13px\s*!important;[\s\S]*font-weight:\s*400\s*!important;/, "All CMS field values must use the smaller regular-weight typography.");
 	assert.match(pageTemplateSource, /\$kidia_toolbar_restore_product = 'product' === \$page/, "Only Product Page must request the defaults action from the shared toolbar.");
 	assert.match(sharedToolbarSource, /restore_product_defaults[\s\S]*Restore Product Defaults/, "The shared toolbar must render the confirmed Product defaults action when requested.");

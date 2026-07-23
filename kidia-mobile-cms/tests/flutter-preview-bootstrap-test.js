@@ -32,6 +32,11 @@ assert.match(
 );
 assert.match(
   index,
+  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*25000\)/,
+  "A preview that never mounts must retry once with a fresh cache key instead of loading forever.",
+);
+assert.match(
+  index,
   /name="viewport" content="width=device-width, initial-scale=1\.0"/,
   "The embedded preview must use the iframe's real mobile viewport width.",
 );
