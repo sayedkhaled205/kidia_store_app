@@ -124,7 +124,12 @@
 			if (!buckets[section]) { buckets[section] = []; }
 			buckets[section].push(node);
 		});
-		Object.keys(labels).forEach(function (section) {
+		var sectionOrder = Object.keys(labels);
+		if (container.classList.contains("kidia-category-general-fields")) {
+			sectionOrder = sectionOrder.filter(function (section) { return section !== "layout"; });
+			sectionOrder.push("layout");
+		}
+		sectionOrder.forEach(function (section) {
 			if (buckets[section] && buckets[section].length) {
 				var heading = document.createElement("div");
 				heading.className = "kidia-settings-section-title kidia-settings-section-title--" + section;
