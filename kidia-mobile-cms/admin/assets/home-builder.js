@@ -728,6 +728,11 @@
 	}
 
 	function loadRuntimePreview() {
+		// The exact Flutter bridge requests the same canonical payload and owns
+		// the visible preview. Avoid running the expensive Home query twice.
+		if (document.getElementById("kidia-flutter-preview")) {
+			return;
+		}
 		if (Array.isArray(config.previewBlocks)) {
 			registerPreviewBlocks(config.previewBlocks);
 		}
@@ -759,6 +764,7 @@
 
 	var livePreviewTimer = 0;
 	function requestLiveRuntimePreview() {
+		if (document.getElementById("kidia-flutter-preview")) { return; }
 		if (!config.livePreviewEndpoint || !config.restNonce || typeof window.fetch !== "function") { return; }
 		window.clearTimeout(livePreviewTimer);
 		livePreviewTimer = window.setTimeout(function () {

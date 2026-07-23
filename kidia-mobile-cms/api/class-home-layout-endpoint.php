@@ -160,7 +160,16 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 			}
 		}
 
-		$response = new WP_REST_Response( array( 'blocks' => array_values( $blocks ) ), 200 );
+		$response = new WP_REST_Response(
+			array(
+				'version'    => 4,
+				'page'       => 'home',
+				'locale'     => sanitize_key( (string) get_locale() ) ?: 'en',
+				'updated_at' => current_time( 'c', true ),
+				'blocks'     => array_values( $blocks ),
+			),
+			200
+		);
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
 		return $response;
 	}

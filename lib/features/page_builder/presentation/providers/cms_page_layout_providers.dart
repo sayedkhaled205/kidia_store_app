@@ -29,6 +29,12 @@ final cmsPageLayoutProvider = FutureProvider.family<CmsPageLayout, String>((
   if (previewJson != null) {
     return CmsPageLayout.fromJson(previewJson);
   }
+  // Render the correctly sized local chrome immediately while WordPress
+  // normalizes the live form. The bridge emission rebuilds this provider with
+  // the exact unsaved settings as soon as they arrive.
+  if (AppConfig.isCmsPreview) {
+    return CmsPageLayout.fallback(page);
+  }
   final Timer refreshTimer = Timer(
     const Duration(seconds: 5),
     ref.invalidateSelf,
