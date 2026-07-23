@@ -178,7 +178,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           .then((_) {
             if (!mounted) return;
             final BuildContext? context = _blockKeys[target]?.currentContext;
-            if (context != null) {
+            if (context != null && context.mounted) {
               Scrollable.ensureVisible(
                 context,
                 duration: const Duration(milliseconds: 220),
