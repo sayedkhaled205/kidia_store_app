@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -12,6 +13,71 @@ import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dar
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+
+const List<CatalogProduct> _previewWishlistProducts = <CatalogProduct>[
+  CatalogProduct(
+    id: 900001,
+    name: 'Kidia everyday set',
+    slug: 'kidia-everyday-set',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '45000',
+      regularPriceMinor: '52000',
+      salePriceMinor: '45000',
+    ),
+  ),
+  CatalogProduct(
+    id: 900002,
+    name: 'Kidia summer outfit',
+    slug: 'kidia-summer-outfit',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '39000',
+    ),
+  ),
+  CatalogProduct(
+    id: 900003,
+    name: 'Kids essentials',
+    slug: 'kids-essentials',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '32000',
+    ),
+  ),
+  CatalogProduct(
+    id: 900004,
+    name: 'Special offer',
+    slug: 'special-offer',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '27500',
+    ),
+  ),
+];
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({
@@ -85,42 +151,70 @@ class _WishlistScreenState extends State<WishlistScreen> {
     final _WishlistCopy copy = _WishlistCopy.of(context);
     return CmsPageLayoutLoader(
       page: 'wishlist',
-      builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
-        layout: layout,
-        defaultTitle: copy.title,
-        actions: <CmsPageHeaderAction>[
+      builder: (BuildContext context, CmsPageLayout layout) {
+        final String previewState = AppConfig.isCmsPreview
+            ? layout.string('wishlist_preview_state', 'products')
+            : '';
+        return CmsPageScaffold(
+          layout: layout,
+          defaultTitle: copy.title,
+          actions: <CmsPageHeaderAction>[
             CmsPageHeaderAction(
               type: 'cart',
               icon: Icons.shopping_bag_outlined,
               tooltip: 'Cart',
               onPressed: () => context.push('/cart'),
             ),
-        ],
-        body: widget.requiresSignIn && !widget.signedIn
-            ? _WishlistSignInGate(
-                repository: widget.catalogRepository,
-                onSignIn: widget.onSignIn,
-                onProductTap: widget.onProductTap,
-              )
-            : Column(
-          children: <Widget>[
-            if (_controller.status == WishlistStatus.ready &&
-                layout.header.boolean('show_count', true))
-              Text('${_controller.length}', key: const Key('wishlist-count')),
-            if (_controller.mutationError != null)
-              _MutationErrorNotice(
-                message: _controller.mutationError!,
-                closeLabel: copy.dismiss,
-                onClose: _controller.clearMutationError,
-              ),
-            Expanded(child: _buildBody(copy, layout)),
           ],
-        ),
-      ),
+          body:
+              widget.requiresSignIn &&
+                  !widget.signedIn &&
+                  previewState.isEmpty
+              ? _WishlistSignInGate(
+                  repository: widget.catalogRepository,
+                  onSignIn: widget.onSignIn,
+                  onProductTap: widget.onProductTap,
+                )
+              : Column(
+                  children: <Widget>[
+                    if (_controller.status == WishlistStatus.ready &&
+                        layout.header.boolean('show_count', true))
+                      Text(
+                        '${previewState == 'products' && _controller.length == 0 ? _previewWishlistProducts.length : _controller.length}',
+                        key: const Key('wishlist-count'),
+                      ),
+                    if (_controller.mutationError != null)
+                      _MutationErrorNotice(
+                        message: _controller.mutationError!,
+                        closeLabel: copy.dismiss,
+                        onClose: _controller.clearMutationError,
+                      ),
+                    Expanded(child: _buildBody(copy, layout, previewState)),
+                  ],
+                ),
+        );
+      },
     );
   }
 
-  Widget _buildBody(_WishlistCopy copy, CmsPageLayout layout) {
+  Widget _buildBody(
+    _WishlistCopy copy,
+    CmsPageLayout layout, [
+    String previewState = '',
+  ]) {
+    if (previewState == 'empty') {
+      return _buildEmptyState(copy, layout);
+    }
+    if (previewState == 'products') {
+      return _buildProductState(
+        copy,
+        layout,
+        _controller.products.isEmpty
+            ? _previewWishlistProducts
+            : _controller.products,
+        previewOnly: _controller.products.isEmpty,
+      );
+    }
     switch (_controller.status) {
       case WishlistStatus.initial:
       case WishlistStatus.loading:
@@ -132,30 +226,51 @@ class _WishlistScreenState extends State<WishlistScreen> {
           onRetry: _controller.load,
         );
       case WishlistStatus.empty:
-        if (!layout.element('empty_state').enabled) {
-          return const SizedBox.shrink();
-        }
-        return CmsElementFrame(component: layout.element('empty_state'), child: _WishlistEmpty(
-          copy: copy,
-          settings: layout.element('empty_state'),
-          onRefresh: _controller.refresh,
-          onContinueShopping: widget.onContinueShopping,
-          onSignIn: widget.onSignIn,
-        ));
+        return _buildEmptyState(copy, layout);
       case WishlistStatus.ready:
-        if (!layout.element('wishlist_grid').enabled) {
-          return const SizedBox.shrink();
-        }
-        return CmsElementFrame(component: layout.element('wishlist_grid'), child: _WishlistGrid(
-          products: _controller.products,
-          copy: copy,
-          settings: layout.element('wishlist_grid'),
-          isMutating: _controller.isMutating,
-          onRefresh: _controller.refresh,
-          onProductTap: widget.onProductTap,
-          onRemove: _removeProduct,
-        ));
+        return _buildProductState(copy, layout, _controller.products);
     }
+  }
+
+  Widget _buildEmptyState(_WishlistCopy copy, CmsPageLayout layout) {
+    final CmsPageComponent settings = layout.element('empty_state');
+    if (!settings.enabled) {
+      return const SizedBox.shrink();
+    }
+    return CmsElementFrame(
+      component: settings,
+      child: _WishlistEmpty(
+        copy: copy,
+        settings: settings,
+        onRefresh: _controller.refresh,
+        onContinueShopping: widget.onContinueShopping,
+        onSignIn: widget.onSignIn,
+      ),
+    );
+  }
+
+  Widget _buildProductState(
+    _WishlistCopy copy,
+    CmsPageLayout layout,
+    List<CatalogProduct> products, {
+    bool previewOnly = false,
+  }) {
+    final CmsPageComponent settings = layout.element('wishlist_grid');
+    if (!settings.enabled) {
+      return const SizedBox.shrink();
+    }
+    return CmsElementFrame(
+      component: settings,
+      child: _WishlistGrid(
+        products: products,
+        copy: copy,
+        settings: settings,
+        isMutating: previewOnly || _controller.isMutating,
+        onRefresh: previewOnly ? () async {} : _controller.refresh,
+        onProductTap: previewOnly ? null : widget.onProductTap,
+        onRemove: previewOnly ? (_) {} : _removeProduct,
+      ),
+    );
   }
 
   Future<void> _removeProduct(CatalogProduct product) async {
@@ -437,16 +552,19 @@ class _WishlistProductCard extends StatelessWidget {
                       settings.boolean('quick_add_enabled', true))
 					_positionedWishlistAction(
 					  settings.string('quick_add_position', 'bottom_end'),
-					  ProductQuickAddButton(
-                        productId: product.id,
-                        iconVariant: settings.string('quick_add_icon_variant', 'bag'),
-                        iconStyle: settings.string('quick_add_icon_style', 'outline'),
-                        iconSize: settings.number('quick_add_icon_size', 22).clamp(10, 36).toDouble(),
-                        iconColor: _wishlistHexColor(settings.string('quick_add_icon_color', '#1F2933')),
-                        showBackground: settings.boolean('quick_add_show_background', true),
-                        backgroundColor: _wishlistHexColor(settings.string('quick_add_background_color', '#FFFFFF')),
-                        backgroundRadius: settings.number('quick_add_radius', 24).clamp(0, 40).toDouble(),
-						backgroundSize: settings.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
+					  AbsorbPointer(
+					    absorbing: !removeEnabled,
+					    child: ProductQuickAddButton(
+                          productId: product.id,
+                          iconVariant: settings.string('quick_add_icon_variant', 'bag'),
+                          iconStyle: settings.string('quick_add_icon_style', 'outline'),
+                          iconSize: settings.number('quick_add_icon_size', 22).clamp(10, 36).toDouble(),
+                          iconColor: _wishlistHexColor(settings.string('quick_add_icon_color', '#1F2933')),
+                          showBackground: settings.boolean('quick_add_show_background', true),
+                          backgroundColor: _wishlistHexColor(settings.string('quick_add_background_color', '#FFFFFF')),
+                          backgroundRadius: settings.number('quick_add_radius', 24).clamp(0, 40).toDouble(),
+						  backgroundSize: settings.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
+                        ),
                       ),
                     ),
                   if (settings.boolean('show_badge', true) && product.isOnSale)
