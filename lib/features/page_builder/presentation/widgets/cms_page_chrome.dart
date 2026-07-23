@@ -471,7 +471,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                         children: rows.indexed.expand((entry) sync* {
                           if (entry.$1 > 0) {
                             yield SizedBox(
-                              height: _header.number('row_gap', 8).clamp(0, 24),
+                              height: _effectiveRowGap,
                             );
                           }
                           yield _headerRow(context, entry.$2, foreground);
@@ -490,6 +490,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   double _lerp(num start, num end, double progress) =>
       start.toDouble() + ((end.toDouble() - start.toDouble()) * progress);
+
+  double get _effectiveRowGap =>
+      (_header.number('row_gap', 8) -
+              _header.number('row_merge', 0).clamp(0, 8))
+          .clamp(0, 24)
+          .toDouble();
 
   double _shadowElevation(String shadow) => switch (shadow) {
     'none' => 0,
@@ -586,9 +592,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final double availableWidth = width.clamp(1, double.infinity).toDouble();
-        final double startTop = (regularContentHeight - searchHeight)
-            .clamp(0, double.infinity)
-            .toDouble();
+        final double startTop = _itemTopInRows(
+          regularRows,
+          'search_bar',
+        ).clamp(0, regularContentHeight - searchHeight).toDouble();
         final double endTop = ((constraints.maxHeight - searchHeight) / 2)
             .clamp(0, double.infinity)
             .toDouble();
@@ -626,7 +633,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               height: searchHeight,
               child: KeyedSubtree(
                 key: const Key('cms-page-morphing-search'),
-                child: _searchBar(context, _actionFor('search'), color),
+                child: _positionedItem(
+                  'search_bar',
+                  _searchBar(context, _actionFor('search'), color),
+                ),
               ),
             ),
             if (persistentActions.isNotEmpty)
@@ -713,6 +723,54 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return fallback;
   }
 
+  double _itemTopInRows(
+    List<Map<String, dynamic>> rows,
+    String item,
+  ) {
+    double top = 0;
+    final double gap = _effectiveRowGap;
+    for (final Map<String, dynamic> row in rows) {
+      final Set<String> items = _columns(row)
+          .expand((Map<String, dynamic> column) {
+            final dynamic raw = column['items'];
+            return raw is List
+                ? raw.map((dynamic value) => '$value')
+                : const <String>[];
+          })
+          .toSet();
+      if (items.contains(item)) return top;
+      top += _rowContentHeight(items) + gap;
+    }
+    return top;
+  }
+
+  double _rowContentHeight(Set<String> items) {
+    if (items.isEmpty) return 0;
+    return items.map((String item) {
+      if (item == 'search_bar') {
+        return _header.number('search_height', 40).clamp(32, 64).toDouble();
+      }
+      if (item == 'logo') {
+        final double subtitle = _header.string('subtitle', '').isEmpty ? 0 : 11;
+        return _header.number('logo_height', 38).clamp(20, 80).toDouble() +
+            subtitle;
+      }
+      if (item == 'title') {
+        return (_header.number('title_font_size', 18).clamp(10, 42) *
+                _header.number('title_line_height', 1.2).clamp(.8, 2))
+            .toDouble();
+      }
+      final String prefix = item == 'search' ? 'search_icon' : item;
+      return _header
+          .number(
+            '${prefix}_size',
+            _header.number('icon_size', 24),
+          )
+          .clamp(14, 40)
+          .toDouble();
+    }).reduce((double current, double next) => current > next ? current : next);
+  }
+
   Widget _scrollLinkedContent(
     BuildContext context, {
     required List<Map<String, dynamic>> rows,
@@ -742,7 +800,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 children: rows.indexed.expand((entry) sync* {
                   if (entry.$1 > 0) {
                     yield SizedBox(
-                      height: _header.number('row_gap', 8).clamp(0, 24),
+                      height: _effectiveRowGap,
                     );
                   }
                   yield _headerRow(context, entry.$2, color);
@@ -875,7 +933,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         alignment: alignment,
         child: FractionallySizedBox(
           widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
-          child: _searchBar(context, _actionFor('search'), color),
+          child: _positionedItem(
+            'search_bar',
+            _searchBar(context, _actionFor('search'), color),
+          ),
         ),
       );
     }
@@ -896,6 +957,21 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _item(BuildContext context, String item, Color color) {
+    return _positionedItem(item, _rawItem(context, item, color));
+  }
+
+  Widget _positionedItem(String item, Widget child) {
+    final String prefix = item == 'search' ? 'search_icon' : item;
+    return Transform.translate(
+      offset: Offset(
+        _header.number('${prefix}_offset_x', 0).clamp(-80, 80).toDouble(),
+        _header.number('${prefix}_offset_y', 0).clamp(-80, 80).toDouble(),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _rawItem(BuildContext context, String item, Color color) {
     if (item == 'title') {
       String title = _header.string('title', defaultTitle);
       final String transform = _header.string('title_transform', 'none');
@@ -911,12 +987,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? TextAlign.end
           : TextAlign.center;
       final int weight = _header.number('title_font_weight', 700).round();
-      return Transform.translate(
-        offset: Offset(
-          _header.number('title_offset_x', 0).clamp(-40, 40).toDouble(),
-          _header.number('title_offset_y', 0).clamp(-40, 40).toDouble(),
-        ),
-        child: ConstrainedBox(
+      return ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth:
                 MediaQuery.sizeOf(context).width *
@@ -954,7 +1025,6 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   .toDouble(),
             ),
           ),
-        ),
       );
     }
     if (item == 'subtitle') return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.

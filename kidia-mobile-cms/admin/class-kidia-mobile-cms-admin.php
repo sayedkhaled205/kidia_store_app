@@ -118,6 +118,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_save_splash_screen', array( $this, 'save_splash_screen' ) );
 		add_action( 'admin_post_kidia_mobile_save_similar_products', array( $this, 'save_similar_products' ) );
 		add_action( 'admin_post_kidia_mobile_save_checkout_suggestions', array( $this, 'save_checkout_suggestions' ) );
+		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
 
 		add_action(
 			'admin_menu',
@@ -125,6 +126,79 @@ final class Kidia_Mobile_CMS_Admin {
 			999
 		);
 
+	}
+
+	/**
+	 * Copies one product-card icon profile to every saved product element.
+	 *
+	 * @return void
+	 */
+	public function apply_product_icon_settings(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_apply_product_icon_settings', 'nonce' );
+		$scope = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : '';
+		if ( ! in_array( $scope, array( 'quick_add', 'wishlist' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown settings group.', 'kidia-mobile-cms' ) ), 400 );
+		}
+		$raw = isset( $_POST['settings'] ) ? json_decode( wp_unslash( $_POST['settings'] ), true ) : array();
+		$raw = is_array( $raw ) ? $raw : array();
+		$keys = 'quick_add' === $scope
+			? array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_background_size', 'quick_add_radius', 'quick_add_position' )
+			: array( 'show_wishlist', 'product_wishlist_icon_variant', 'product_wishlist_icon_style', 'product_wishlist_icon_size', 'product_wishlist_icon_color', 'product_wishlist_show_background', 'product_wishlist_background_color', 'product_wishlist_background_size', 'product_wishlist_radius', 'product_wishlist_position' );
+		$booleans = array( 'quick_add_enabled', 'quick_add_show_background', 'show_wishlist', 'product_wishlist_show_background' );
+		$numbers  = array( 'quick_add_icon_size', 'quick_add_background_size', 'quick_add_radius', 'product_wishlist_icon_size', 'product_wishlist_background_size', 'product_wishlist_radius' );
+		$colors   = array( 'quick_add_icon_color', 'quick_add_background_color', 'product_wishlist_icon_color', 'product_wishlist_background_color' );
+		$profile  = array();
+		foreach ( $keys as $key ) {
+			if ( ! array_key_exists( $key, $raw ) ) { continue; }
+			if ( in_array( $key, $booleans, true ) ) {
+				$profile[ $key ] = ! empty( $raw[ $key ] );
+			} elseif ( in_array( $key, $numbers, true ) ) {
+				$profile[ $key ] = (float) $raw[ $key ];
+			} elseif ( in_array( $key, $colors, true ) ) {
+				$profile[ $key ] = sanitize_hex_color( (string) $raw[ $key ] ) ?: '#FFFFFF';
+			} else {
+				$profile[ $key ] = sanitize_key( (string) $raw[ $key ] );
+			}
+		}
+		if ( count( $profile ) !== count( $keys ) ) {
+			wp_send_json_error( array( 'message' => __( 'Some settings are missing.', 'kidia-mobile-cms' ) ), 400 );
+		}
+
+		$changed = 0;
+		$home_store = new Kidia_Mobile_Layout_Store();
+		$home = $home_store->get_layout();
+		foreach ( $home as &$block ) {
+			if ( ! is_array( $block['settings'] ?? null ) || ! in_array( (string) ( $block['type'] ?? '' ), array( 'product_carousel', 'product_grid' ), true ) ) { continue; }
+			$block['settings'] = array_merge( $block['settings'], $profile );
+			++$changed;
+		}
+		unset( $block );
+		if ( $changed > 0 ) { $home_store->save_layout( $home ); }
+
+		$page_store = new Kidia_Mobile_Page_Layout_Store();
+		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
+			$layout = $page_store->get_layout( $page );
+			if ( ! is_array( $layout['elements'] ?? null ) ) { continue; }
+			$page_changed = false;
+			foreach ( $layout['elements'] as &$element ) {
+				if ( ! is_array( $element['settings'] ?? null ) || ! array_key_exists( $keys[0], $element['settings'] ) ) { continue; }
+				$element['settings'] = array_merge( $element['settings'], $profile );
+				$page_changed = true;
+				++$changed;
+			}
+			unset( $element );
+			if ( $page_changed ) { $page_store->save_layout( $page, $layout ); }
+		}
+		update_option( 'kidia_mobile_global_' . $scope . '_profile', $profile, false );
+		wp_send_json_success(
+			array(
+				'message' => sprintf( __( 'Applied to %d saved product elements.', 'kidia-mobile-cms' ), $changed ),
+				'count'   => $changed,
+			)
+		);
 	}
 		/**
     	 * Registers admin pages.
@@ -628,6 +702,19 @@ final class Kidia_Mobile_CMS_Admin {
 					wp_enqueue_style( 'kidia-mobile-fixed-chrome', KIDIA_MOBILE_CMS_URL . 'admin/assets/page-builder.css', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/page-builder.css' ) );
 					wp_enqueue_style( 'kidia-mobile-chrome-layout', KIDIA_MOBILE_CMS_URL . 'admin/assets/chrome-layout.css', array( 'kidia-mobile-fixed-chrome' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/chrome-layout.css' ) );
 					wp_enqueue_script( 'kidia-mobile-settings-sections', KIDIA_MOBILE_CMS_URL . 'admin/assets/settings-sections.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/settings-sections.js' ), true );
+					wp_localize_script(
+						'kidia-mobile-settings-sections',
+						'kidiaProductApplyAll',
+						array(
+							'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+							'nonce'   => wp_create_nonce( 'kidia_mobile_apply_product_icon_settings' ),
+							'labels'  => array(
+								'apply'   => __( 'Apply to all', 'kidia-mobile-cms' ),
+								'working' => __( 'Applying…', 'kidia-mobile-cms' ),
+								'error'   => __( 'Could not apply these settings.', 'kidia-mobile-cms' ),
+							),
+						)
+					);
 					wp_enqueue_script( 'kidia-mobile-chrome-layout', KIDIA_MOBILE_CMS_URL . 'admin/assets/chrome-layout.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/chrome-layout.js' ), true );
 					$category_footer = ( new Kidia_Mobile_Page_Layout_Store() )->get_layout( 'category' )['footer']['settings'];
 					wp_localize_script(
