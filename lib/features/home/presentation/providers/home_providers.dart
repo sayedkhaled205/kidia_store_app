@@ -14,6 +14,10 @@ final cmsPreviewHomeLayoutJsonProvider = StreamProvider<Map<String, dynamic>?>(
   (Ref ref) => CmsPreviewLayoutBridge.homeLayouts,
 );
 
+final cmsPreviewHomeFocusTargetProvider = StreamProvider<String>(
+  (Ref ref) => CmsPreviewLayoutBridge.homeFocusTargets,
+);
+
 final homeDioProvider = Provider<Dio>((Ref ref) {
   final Dio dio = Dio(
     BaseOptions(

@@ -33,7 +33,7 @@
 .kidia-category-preview-content.is-opening-separate_page .kidia-category-preview-expand,
 .kidia-category-preview-content.is-opening-expand_inline .kidia-category-preview-expand { border:0; background:transparent; box-shadow:none; }
 .kidia-category-phone__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-category-phone__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; transform:scale(.872222); transform-origin:top left; }
+.kidia-category-phone__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; transform:scale(.872222); transform-origin:top left; }
 .kidia-category-phone__screen > .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-category-preview-content.is-layout-visual_grid,
 .kidia-category-preview-content.is-layout-circular_grid,

@@ -106,6 +106,20 @@
 	document.addEventListener("kidia:home-preview-state", function (event) {
 		if (event.detail && Array.isArray(event.detail.blocks)) { blocks = event.detail.blocks; queueRefresh(false); }
 	});
+	document.addEventListener("kidia:home-preview-focus", function (event) {
+		var target = event.detail && String(event.detail.target || "");
+		if (!target || !ready || !frame.contentWindow) { return; }
+		frame.contentWindow.postMessage(JSON.stringify({
+			type: "kidia-preview-focus",
+			page: "home",
+			target: target
+		}), frameOrigin);
+	});
+	frame.addEventListener("mouseenter", function () {
+		// Give the embedded Flutter surface the wheel/trackpad events while the
+		// pointer is over the phone, without requiring an initial click.
+		try { frame.contentWindow.focus(); } catch (_) {}
+	});
 	// Do not rely on a load event that a cached iframe may already have fired.
 	waitForFlutter();
 }());

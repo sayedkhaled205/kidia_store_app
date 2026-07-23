@@ -18,7 +18,7 @@
 .kidia-page-phone__screen::-webkit-scrollbar { display:none; width:0; height:0; }
 .kidia-page-preview p { color:#646970; font-size:12px; }
 .kidia-page-phone__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; transform:scale(.872222); transform-origin:top left; }
+.kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; transform:scale(.872222); transform-origin:top left; }
 .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-page-editor { min-width:0; direction:rtl; }
 .kidia-page-toolbar { position:sticky; top:32px; z-index:20; display:flex; width:77%; min-height:70px; align-items:center; justify-content:space-between; margin:14px 0 14px auto; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:linear-gradient(135deg,#e7f5f1,#fff); box-shadow:0 3px 12px rgba(35,107,89,.08); }
