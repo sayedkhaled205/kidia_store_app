@@ -342,6 +342,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
 		if ( 'wishlist' === $page ) {
 			$default['settings']['wishlist_access_mode'] = in_array( (string) ( $saved_page_settings['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $saved_page_settings['wishlist_access_mode'] : 'sign_in_required';
+			$default['settings']['wishlist_preview_state'] = in_array( (string) ( $saved_page_settings['wishlist_preview_state'] ?? '' ), array( 'empty', 'products' ), true ) ? (string) $saved_page_settings['wishlist_preview_state'] : 'products';
 		}
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
@@ -420,6 +421,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$page_settings = array( 'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' );
 		if ( 'wishlist' === $page ) {
 			$page_settings['wishlist_access_mode'] = in_array( (string) ( $submitted['settings']['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $submitted['settings']['wishlist_access_mode'] : 'sign_in_required';
+			$page_settings['wishlist_preview_state'] = in_array( (string) ( $submitted['settings']['wishlist_preview_state'] ?? '' ), array( 'empty', 'products' ), true ) ? (string) $submitted['settings']['wishlist_preview_state'] : 'products';
 		}
 		$layout = array(
 			'version' => self::VERSION,
@@ -535,7 +537,10 @@ final class Kidia_Mobile_Page_Layout_Store {
 			'elements' => $elements,
 			'footer' => array( 'id' => 'footer', 'type' => 'app_footer', 'locked' => true, 'enabled' => true, 'settings' => $footer_settings ),
 		);
-		if ( 'wishlist' === $page ) { $layout['settings']['wishlist_access_mode'] = 'sign_in_required'; }
+		if ( 'wishlist' === $page ) {
+			$layout['settings']['wishlist_access_mode'] = 'sign_in_required';
+			$layout['settings']['wishlist_preview_state'] = 'products';
+		}
 		return $layout;
 	}
 
