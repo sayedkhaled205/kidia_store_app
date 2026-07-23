@@ -166,7 +166,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 							</div>
 						</section>
 
-						<section class="kidia-category-items" data-navigation-mode="<?php echo esc_attr( $category_general['navigation_mode'] ); ?>">
+						<section class="kidia-category-items" data-navigation-mode="<?php echo esc_attr( $category_general['navigation_mode'] ); ?>" data-category-layout="<?php echo esc_attr( $category_general['category_layout'] ); ?>">
 							<div class="kidia-category-items__heading"><h3><?php esc_html_e( 'Categories & Subcategories', 'kidia-mobile-cms' ); ?></h3><p><?php esc_html_e( 'Drag to reorder. Each row only changes its app name, app image and visibility.', 'kidia-mobile-cms' ); ?></p></div>
 							<?php if ( empty( $terms ) ) : ?><div class="notice notice-warning inline"><p><?php esc_html_e( 'No WooCommerce product categories were found.', 'kidia-mobile-cms' ); ?></p></div><?php else : ?><?php $render_level( 0 ); ?><?php endif; ?>
 						</section>
