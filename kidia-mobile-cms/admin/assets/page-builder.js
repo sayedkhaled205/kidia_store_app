@@ -27,6 +27,27 @@
 	function quickAdd(card) { var variant=value(card,"quick_add_icon_variant","bag"),style=value(card,"quick_add_icon_style","outline"),name=variant==="cart"?"cart":variant==="basket"?"basket":"bag",size=Math.max(10,Math.min(36,number(card,"quick_add_icon_size",22))),shell=Math.max(10,Math.min(64,number(card,"quick_add_background_size",40))),background=checked(card,"quick_add_show_background",true)?color(card,"quick_add_background_color","#FFFFFF"):"transparent";return '<span class="kidia-app-quick-add is-'+escapeHtml(style)+'" style="'+actionPosition(value(card,"quick_add_position","bottom_end"))+'width:'+shell+'px;height:'+shell+'px;border-radius:'+number(card,"quick_add_radius",24)+'px;background:'+background+';color:'+color(card,"quick_add_icon_color","#1F2933")+';--quick-add-icon-size:'+size+'px">'+icon(name)+(variant==="bag"?'<b>+</b>':'')+'</span>'; }
 	function productWishlist(card) { var variant=value(card,"product_wishlist_icon_variant","heart"),size=Math.max(10,Math.min(36,number(card,"product_wishlist_icon_size",20))),shell=Math.max(20,Math.min(64,number(card,"product_wishlist_background_size",40))),background=checked(card,"product_wishlist_show_background",true)?color(card,"product_wishlist_background_color","#FFFFFF"):"transparent";return '<span class="kidia-app-product-wishlist is-'+escapeHtml(value(card,"product_wishlist_icon_style","outline"))+'" style="'+actionPosition(value(card,"product_wishlist_position","top_end"))+'width:'+shell+'px;height:'+shell+'px;border-radius:'+number(card,"product_wishlist_radius",24)+'px;background:'+background+';color:'+color(card,"product_wishlist_icon_color","#1F2933")+';--wishlist-icon-size:'+size+'px">'+icon(variant==="bookmark"?"bookmark":"heart")+'</span>'; }
 	function markDirty() { form.dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true })); }
+	function wishlistPreviewState() {
+		var selected = form.querySelector('[name="layout[settings][wishlist_preview_state]"]:checked');
+		return selected && selected.value === "empty" ? "empty" : "products";
+	}
+	function applyWishlistPreviewState(options) {
+		if (root.dataset.page !== "wishlist") { return; }
+		var state = wishlistPreviewState();
+		array(list.querySelectorAll("[data-wishlist-state]")).forEach(function (card) {
+			var active = card.dataset.wishlistState === state;
+			card.hidden = !active;
+			card.classList.toggle("is-wishlist-state-hidden", !active);
+			if (active && options && options.open) {
+				var body = card.querySelector(":scope > .kidia-page-card__body");
+				card.classList.add("is-open");
+				if (body) { body.hidden = false; }
+				var expand = card.querySelector(".kidia-page-expand");
+				if (expand) { expand.setAttribute("aria-expanded", "true"); }
+				focusPreview(card);
+			}
+		});
+	}
 
 	function updateIndexes() {
 		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
@@ -136,7 +157,7 @@
 		var pageBackgroundInput = form.querySelector('[name="layout[settings][page_background_color]"]');
 		var pageBackground = root.dataset.page === "product" && pageBackgroundInput && /^#[0-9a-f]{6}$/i.test(pageBackgroundInput.value) ? pageBackgroundInput.value : root.dataset.page === "product" ? "#FFFFFF" : "";
 		var html = renderHeader(header) + '<main class="kidia-app-page kidia-app-page--' + escapeHtml(root.dataset.page || "page") + '"' + (pageBackground ? ' style="background:' + escapeHtml(pageBackground) + '"' : '') + '>';
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0),legacySpace=number(card,"padding_vertical",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"space_up",legacySpace)+'px '+number(card,"padding_horizontal",0)+'px '+number(card,"space_down",legacySpace)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
+		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card) { if (!card.hidden && checked(card, "enabled", true)) { var background=value(card,"background_color","").trim()||"transparent",mergeUp=number(card,"margin_top",0),mergeDown=number(card,"margin_bottom",0),legacySpace=number(card,"padding_vertical",0);html += '<div class="kidia-page-element-frame" style="margin:0;transform:translateY('+(mergeDown-mergeUp)+'px);padding:'+number(card,"space_up",legacySpace)+'px '+number(card,"padding_horizontal",0)+'px '+number(card,"space_down",legacySpace)+'px;background:'+escapeHtml(background)+'">'+previewElement(card)+'</div>'; } });
 		html += '</main>' + renderFooter(footer);
 		preview.innerHTML = html;
 		var headerNode = preview.querySelector(".kidia-app-header");
@@ -144,7 +165,7 @@
 		if (headerNode) { headerNode.classList.add("kidia-page-preview-header"); }
 		if (footerNode) { footerNode.classList.add("kidia-page-preview-footer"); }
 		array(preview.querySelectorAll(".kidia-app-product")).forEach(function (node) { node.classList.add("kidia-page-preview-product"); });
-		array(list.querySelectorAll(".kidia-page-card")).forEach(function (card, index) {
+		array(list.querySelectorAll(".kidia-page-card:not([hidden])")).forEach(function (card, index) {
 			var rendered = preview.querySelectorAll(".kidia-app-page > *")[index];
 			if (rendered) { rendered.classList.add("kidia-page-preview-element"); rendered.dataset.previewElement = card.dataset.element || ""; }
 		});
@@ -187,8 +208,8 @@
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
 	root.addEventListener("click", function (event) {
-		var option = event.target.closest(".kidia-wishlist-access-option");
-		var radio = option && option.querySelector('[name="layout[settings][wishlist_access_mode]"]');
+		var option = event.target.closest(".kidia-wishlist-access-option, .kidia-wishlist-preview-option");
+		var radio = option && option.querySelector('input[type="radio"]');
 		if (!radio || event.target === radio || radio.checked) { return; }
 		event.preventDefault();
 		radio.checked = true;
@@ -196,6 +217,14 @@
 		radio.dispatchEvent(new window.Event("change", { bubbles: true }));
 	});
 	root.addEventListener("change", function (event) {
+		if (event.target.matches('[name="layout[settings][wishlist_preview_state]"]')) {
+			applyWishlistPreviewState({ open: true });
+			markDirty();
+			document.dispatchEvent(new window.CustomEvent("kidia:page-layout-changed", {
+				detail: { page: "wishlist", wishlistPreviewState: event.target.value },
+			}));
+			return;
+		}
 		if (!event.target.matches('[name="layout[settings][wishlist_access_mode]"]')) { return; }
 		markDirty();
 		document.dispatchEvent(new window.CustomEvent("kidia:page-layout-changed", {
@@ -225,5 +254,5 @@
 	window.addEventListener("pageshow", function () { var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
 	if (phoneScreen) { phoneScreen.addEventListener("scroll", function () { previewCollapseProgress=Math.max(0,Math.min(1,phoneScreen.scrollTop/64));if(window.KidiaChromePreview){window.KidiaChromePreview.updateHeaderProgress(preview.querySelector(".kidia-app-header"),previewCollapseProgress);} }, {passive:true}); }
 	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();markDirty();schedulePreview();}}); }
-	updateIndexes(); renderPreview();
+	updateIndexes(); applyWishlistPreviewState(); renderPreview();
 }(window.jQuery));
