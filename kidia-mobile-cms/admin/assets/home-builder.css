@@ -68,7 +68,7 @@
 
 .kidia-mobile-preview__content { display:flex; min-height:100%; flex-direction:column; padding-bottom:0; }
 .kidia-mobile-preview__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; transform:scale(.872222); transform-origin:top left; }
+.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; transform:scale(.872222); transform-origin:top left; }
 .kidia-mobile-preview__screen > .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-preview-home-body { flex:1; overflow:hidden; padding-bottom:0; }
 .kidia-preview-block-frame { overflow:hidden; background:#fff; }

@@ -9,4 +9,7 @@ class CmsPreviewLayoutBridge {
 
   static Stream<Map<String, dynamic>?> get categorySettings =>
       const Stream<Map<String, dynamic>?>.empty();
+
+  static Stream<String> get homeFocusTargets =>
+      const Stream<String>.empty();
 }

@@ -146,6 +146,24 @@ test("Home Flutter preview sends canonical layout and blocks on its initial fram
   ]);
 });
 
+test("Home Flutter preview focuses the selected Builder element", async () => {
+  const messages = runBridge("flutter-home-preview-bridge.js", `
+    <div class="kidia-builder-wrap"></div>
+    <form id="kidia-home-builder-form"></form>
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+  markFlutterReady(messages);
+  await settle();
+  messages.window.document.dispatchEvent(new messages.window.CustomEvent("kidia:home-preview-focus", {
+    detail: { target: "featured-products" },
+  }));
+  assert.deepEqual(messages.at(-1).message, {
+    type: "kidia-preview-focus",
+    page: "home",
+    target: "featured-products",
+  });
+  assert.equal(messages.at(-1).origin, "https://store.example");
+});
+
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {
   for (const file of ["home-builder.php", "category-builder.php", "page-builder.php"]) {
     const source = fs.readFileSync(path.resolve(__dirname, "..", "admin", "pages", file), "utf8");

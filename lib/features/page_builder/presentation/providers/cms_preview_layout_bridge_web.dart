@@ -13,6 +13,8 @@ class CmsPreviewLayoutBridge {
   static Map<String, dynamic>? _category;
   static final StreamController<String> _changes =
       StreamController<String>.broadcast();
+  static final StreamController<String> _focusTargets =
+      StreamController<String>.broadcast();
   static bool _listening = false;
 
   static Stream<Map<String, dynamic>?> layoutsFor(String page) async* {
@@ -39,6 +41,11 @@ class CmsPreviewLayoutBridge {
     }
   }
 
+  static Stream<String> get homeFocusTargets {
+    _listen();
+    return _focusTargets.stream;
+  }
+
   static void _listen() {
     if (_listening) return;
     _listening = true;
@@ -51,7 +58,15 @@ class CmsPreviewLayoutBridge {
           return;
         }
       }
-      if (message is! Map || message['type'] != 'kidia-preview-layout') return;
+      if (message is! Map) return;
+      if (message['type'] == 'kidia-preview-focus') {
+        if ('${message['page'] ?? ''}' == 'home') {
+          final String target = '${message['target'] ?? ''}'.trim();
+          if (target.isNotEmpty) _focusTargets.add(target);
+        }
+        return;
+      }
+      if (message['type'] != 'kidia-preview-layout') return;
       final String page = '${message['page'] ?? ''}';
       final dynamic rawLayout = message['layout'];
       if (page.isEmpty || rawLayout is! Map) return;

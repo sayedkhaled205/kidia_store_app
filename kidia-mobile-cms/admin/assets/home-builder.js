@@ -697,6 +697,9 @@
 		if (!previewContent || !block) { return; }
 		var id=(block.querySelector(".kidia-block-id")||{}).value||block.dataset.libraryId||"";
 		activePreviewBlock=block.dataset.chromePart||id;var target=block.dataset.chromePart?previewContent.querySelector(block.dataset.chromePart==="header"?".kidia-app-header":".kidia-app-footer"):previewContent.querySelector('[data-preview-block="'+id.replace(/"/g,"\\\"")+'"]');
+		document.dispatchEvent(new CustomEvent("kidia:home-preview-focus", {
+			detail: { target: activePreviewBlock }
+		}));
 		toArray(previewContent.querySelectorAll(".is-editor-focused")).forEach(function(node){node.classList.remove("is-editor-focused");});
 		if(target){target.classList.add("is-editor-focused");target.scrollIntoView({behavior:"smooth",block:"center"});}
 	}

@@ -23,6 +23,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   late final ScrollController _scrollController;
+  final Map<String, GlobalKey> _blockKeys = <String, GlobalKey>{};
+  List<HomeBlock> _visibleBlocks = const <HomeBlock>[];
 
   @override
   void initState() {
@@ -54,6 +56,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     final CmsPageLayout chrome =
         loadedChrome ?? CmsPageLayout.fallback('home');
+    ref.listen<AsyncValue<String>>(
+      cmsPreviewHomeFocusTargetProvider,
+      (_, AsyncValue<String> next) => next.whenData(_focusPreviewTarget),
+    );
 
     return CmsPageScaffold(
       layout: chrome,
@@ -77,12 +83,14 @@ class _HomePageState extends ConsumerState<HomePage> {
             slivers: [
               homeLayoutAsync.when(
                 data: (HomeLayout layout) {
+                  _visibleBlocks = layout.enabledBlocks
+                      .where((HomeBlock block) => block is! AppHeaderBlock)
+                      .toList(growable: false);
                   return SliverMainAxisGroup(
                     slivers: <Widget>[
                       HomeBlockRenderer(
-                        blocks: layout.enabledBlocks
-                            .where((HomeBlock block) => block is! AppHeaderBlock)
-                            .toList(growable: false),
+                        blocks: _visibleBlocks,
+                        keyForBlock: _keyForBlock,
                         onAction: (HomeAction action) {
                           _handleHomeAction(context: context, action: action);
                         },
@@ -122,6 +130,64 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ),
     );
+  }
+
+  Key _keyForBlock(String blockId) =>
+      _blockKeys.putIfAbsent(blockId, GlobalKey.new);
+
+  void _focusPreviewTarget(String target) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      if (target == 'header') {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+        );
+        return;
+      }
+      if (target == 'footer') {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+        );
+        return;
+      }
+      final BuildContext? blockContext = _blockKeys[target]?.currentContext;
+      if (blockContext != null) {
+        Scrollable.ensureVisible(
+          blockContext,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: .18,
+        );
+        return;
+      }
+      final int index = _visibleBlocks.indexWhere(
+        (HomeBlock block) => block.id == target,
+      );
+      if (index < 0 || _visibleBlocks.isEmpty) return;
+      final double fraction = index / _visibleBlocks.length;
+      _scrollController
+          .animateTo(
+            _scrollController.position.maxScrollExtent * fraction,
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+          )
+          .then((_) {
+            if (!mounted) return;
+            final BuildContext? context = _blockKeys[target]?.currentContext;
+            if (context != null) {
+              Scrollable.ensureVisible(
+                context,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: .18,
+              );
+            }
+          });
+    });
   }
 
   static String _resolveErrorMessage(Object error) {

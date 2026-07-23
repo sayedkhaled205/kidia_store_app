@@ -7,11 +7,13 @@ class HomeBlockRenderer extends StatelessWidget {
   const HomeBlockRenderer({
     required this.blocks,
     required this.onAction,
+    this.keyForBlock,
     super.key,
   });
 
   final List<HomeBlock> blocks;
   final ValueChanged<HomeAction> onAction;
+  final Key Function(String blockId)? keyForBlock;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class HomeBlockRenderer extends StatelessWidget {
         final HomeBlock block = enabledBlocks[index];
 
         return KeyedSubtree(
-          key: ValueKey<String>(block.id),
+          key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
           child: HomeBlockFrame(
             block: block,
             child: HomeBlockFactory.create(

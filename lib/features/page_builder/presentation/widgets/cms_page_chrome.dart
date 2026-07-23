@@ -605,6 +605,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: availableWidth,
                   opacity: 1 - progress,
                   translateY: -8 * progress,
+                  alignment: Alignment.topCenter,
                 ),
               ),
             if (fadingCompact.isNotEmpty)
@@ -719,6 +720,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required double width,
     required double opacity,
     required double translateY,
+    Alignment alignment = Alignment.center,
   }) {
     if (opacity <= .001) {
       return const SizedBox.shrink();
@@ -731,7 +733,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           offset: Offset(0, translateY),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
+            alignment: alignment,
             child: SizedBox(
               width: width.clamp(1, double.infinity).toDouble(),
               child: Column(
