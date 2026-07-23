@@ -8,6 +8,7 @@
 	var ready = false;
 	var controller = null;
 	var requestNumber = 0;
+	var refreshTimer = 0;
 	var blocks = Array.isArray(window.kidiaHomePreviewBlocks) ? window.kidiaHomePreviewBlocks : [];
 	var lastSignature = "";
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
@@ -82,16 +83,28 @@
 			if (window.console && window.console.warn) { window.console.warn(error); }
 		});
 	}
+	function queueRefresh(force) {
+		window.clearTimeout(refreshTimer);
+		if (force) {
+			refresh(true);
+			return;
+		}
+		// Typing and range controls can emit several events per frame. A short
+		// debounce keeps the UI live without piling up expensive product queries.
+		refreshTimer = window.setTimeout(function () {
+			refresh(false);
+		}, 140);
+	}
 	window.addEventListener("message", function (event) {
 		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
-		if (message && message.type === "kidia-flutter-preview-ready") { ready = true; showFlutter(); refresh(true); }
+		if (message && message.type === "kidia-flutter-preview-ready") { ready = true; showFlutter(); queueRefresh(true); }
 	});
-	form.addEventListener("input", function () { refresh(false); });
-	form.addEventListener("change", function () { refresh(false); });
+	form.addEventListener("input", function () { queueRefresh(false); });
+	form.addEventListener("change", function () { queueRefresh(false); });
 	document.addEventListener("kidia:home-preview-state", function (event) {
-		if (event.detail && Array.isArray(event.detail.blocks)) { blocks = event.detail.blocks; refresh(false); }
+		if (event.detail && Array.isArray(event.detail.blocks)) { blocks = event.detail.blocks; queueRefresh(false); }
 	});
 	// Do not rely on a load event that a cached iframe may already have fired.
 	waitForFlutter();

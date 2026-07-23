@@ -716,6 +716,7 @@ function runMergeControlsContractTest() {
 	const promoBlock = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-promo-strip-block.php"), "utf8");
 	const homeBuilderCss = readAsset("home-builder.css");
 	const homeScript = readAsset("home-builder.js");
+	const flutterHomePreviewBridge = readAsset("flutter-home-preview-bridge.js");
 	const pageScript = readAsset("page-builder.js");
 	const liveEndpoint = fs.readFileSync(path.join(pluginRoot, "api", "class-home-layout-endpoint.php"), "utf8");
 	const adminSource = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
@@ -771,8 +772,12 @@ function runMergeControlsContractTest() {
 		assert.ok(homeScript.slice(homeScript.indexOf("function renderAppHeader"), homeScript.indexOf("function renderBlock")).includes("settings." + key), "App Header " + key + " must update the Home preview.");
 	});
 	assert.match(liveEndpoint, /home-layout\/preview[\s\S]*preview_home_layout[\s\S]*Kidia_Mobile_Block_Registry::normalize[\s\S]*Kidia_Mobile_Block_Registry::build_api_block/, "Unsaved Home settings must use the same normalized API builder as Flutter.");
+	assert.match(liveEndpoint, /'version'\s*=>\s*4[\s\S]*'page'\s*=>\s*'home'[\s\S]*'locale'[\s\S]*'updated_at'[\s\S]*'blocks'/, "The live Home preview must return a complete Flutter Home layout instead of a blocks-only fragment.");
 	assert.match(adminSource, /livePreviewEndpoint[\s\S]*restNonce/, "The Home Builder must receive its protected live runtime endpoint.");
 	assert.match(homeScript, /livePreviewEndpoint[\s\S]*X-WP-Nonce[\s\S]*JSON\.stringify\(\{ blocks: serializeBlocks\(\) \}\)/, "Source and ID changes must refresh real preview data without saving.");
+	assert.match(homeScript, /function loadRuntimePreview\(\)[\s\S]*getElementById\("kidia-flutter-preview"\)[\s\S]*return;/, "The hidden HTML Home preview must not duplicate Flutter's expensive initial runtime query.");
+	assert.match(homeScript, /function requestLiveRuntimePreview\(\)[\s\S]*getElementById\("kidia-flutter-preview"\)[\s\S]*return;/, "The hidden HTML Home preview must not duplicate Flutter's live product queries.");
+	assert.match(flutterHomePreviewBridge, /setTimeout\(function \(\) \{[\s\S]*refresh\(false\);[\s\S]*\}, 140\)/, "Rapid Home field changes must be debounced before rebuilding product data.");
 	assert.match(pageScript, /products_per_page[\s\S]*filter_price[\s\S]*filter_sale[\s\S]*filter_brand[\s\S]*show_thumbnails[\s\S]*guest_title[\s\S]*show_addresses[\s\S]*show_profile/, "All previously disconnected page fields must update their live previews.");
 }
 

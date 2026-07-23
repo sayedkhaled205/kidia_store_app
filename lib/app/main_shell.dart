@@ -57,15 +57,17 @@ class _MainShellState extends ConsumerState<MainShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _settingsRefreshTimer = Timer.periodic(
-      const Duration(seconds: 3),
-      (_) => _refreshRemoteSettings(),
-    );
+    if (!AppConfig.isCmsPreview) {
+      _settingsRefreshTimer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => _refreshRemoteSettings(),
+      );
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (!AppConfig.isCmsPreview && state == AppLifecycleState.resumed) {
       _refreshRemoteSettings();
     }
   }

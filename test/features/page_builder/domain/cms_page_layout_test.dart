@@ -63,6 +63,10 @@ void main() {
 	expect(homeRows, isA<List<dynamic>>());
 	expect((homeRows as List<dynamic>).length, 2);
 	expect(home.header.number('search_width_percent', 0), 100);
+	expect(home.header.number('height', 0), 120);
+	expect(home.header.number('logo_height', 0), 42);
+	expect(home.header.number('search_height', 0), 44);
+	expect(home.header.number('search_radius', 0), 22);
 	expect(home.header.boolean('collapse_on_scroll', false), isTrue);
 	expect(home.header.string('collapse_transition', ''), 'smooth_compact');
 	expect(home.header.string('collapse_speed', ''), 'medium');
