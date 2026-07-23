@@ -443,6 +443,11 @@ abstract final class HomeBlockModel {
         'quick_add_enabled',
         fallback: true,
       ),
+      imageSwipeEnabled: _optionalBool(
+        data,
+        'enable_image_swipe',
+        fallback: false,
+      ),
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
     );
@@ -486,6 +491,11 @@ abstract final class HomeBlockModel {
         data,
         'quick_add_enabled',
         fallback: true,
+      ),
+      imageSwipeEnabled: _optionalBool(
+        data,
+        'enable_image_swipe',
+        fallback: false,
       ),
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
@@ -582,6 +592,12 @@ abstract final class HomeBlockModel {
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
       imageUrl: _requiredUrl(json, 'image_url'),
+      imageUrls: json['image_urls'] is List
+          ? (json['image_urls'] as List)
+                .map((dynamic value) => '$value'.trim())
+                .where((String value) => Uri.tryParse(value)?.hasScheme ?? false)
+                .toList(growable: false)
+          : const <String>[],
       price: _requiredNumericString(json, 'price'),
       regularPrice: _optionalNumericString(json, 'regular_price'),
       currencyCode: _requiredString(json, 'currency_code'),

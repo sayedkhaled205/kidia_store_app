@@ -27,9 +27,58 @@
 	function quickAdd(card) { var variant=value(card,"quick_add_icon_variant","bag"),style=value(card,"quick_add_icon_style","outline"),name=variant==="cart"?"cart":variant==="basket"?"basket":"bag",size=Math.max(10,Math.min(36,number(card,"quick_add_icon_size",22))),shell=Math.max(10,Math.min(64,number(card,"quick_add_background_size",40))),background=checked(card,"quick_add_show_background",true)?color(card,"quick_add_background_color","#FFFFFF"):"transparent";return '<span class="kidia-app-quick-add is-'+escapeHtml(style)+'" style="'+actionPosition(value(card,"quick_add_position","bottom_end"))+'width:'+shell+'px;height:'+shell+'px;border-radius:'+number(card,"quick_add_radius",24)+'px;background:'+background+';color:'+color(card,"quick_add_icon_color","#1F2933")+';--quick-add-icon-size:'+size+'px">'+icon(name)+(variant==="bag"?'<b>+</b>':'')+'</span>'; }
 	function productWishlist(card) { var variant=value(card,"product_wishlist_icon_variant","heart"),size=Math.max(10,Math.min(36,number(card,"product_wishlist_icon_size",20))),shell=Math.max(20,Math.min(64,number(card,"product_wishlist_background_size",40))),background=checked(card,"product_wishlist_show_background",true)?color(card,"product_wishlist_background_color","#FFFFFF"):"transparent";return '<span class="kidia-app-product-wishlist is-'+escapeHtml(value(card,"product_wishlist_icon_style","outline"))+'" style="'+actionPosition(value(card,"product_wishlist_position","top_end"))+'width:'+shell+'px;height:'+shell+'px;border-radius:'+number(card,"product_wishlist_radius",24)+'px;background:'+background+';color:'+color(card,"product_wishlist_icon_color","#1F2933")+';--wishlist-icon-size:'+size+'px">'+icon(variant==="bookmark"?"bookmark":"heart")+'</span>'; }
 	function markDirty() { form.dispatchEvent(new window.CustomEvent("kidia:dirty", { bubbles: true })); }
+	function productTabs(card) {
+		var raw = value(card, "tabs_json", "");
+		try {
+			var parsed = JSON.parse(raw);
+			if (Array.isArray(parsed)) {
+				return parsed.filter(function (tab) { return tab && tab.enabled !== false && tab.label; }).slice(0, 10);
+			}
+		} catch (error) {}
+		return [{label:"Overview",target:"overview",enabled:true},{label:"Reviews",target:"reviews",enabled:true},{label:"Recommend",target:"recommend",enabled:true}];
+	}
+	function syncProductTabs(editor) {
+		if (!editor) { return; }
+		var rows = array(editor.querySelectorAll(".kidia-product-tab-row")).map(function (row) {
+			return {
+				label: (row.querySelector(".kidia-product-tab-label").value || "").trim(),
+				target: row.querySelector(".kidia-product-tab-target").value || "overview",
+				enabled: row.querySelector(".kidia-product-tab-enabled input").checked
+			};
+		}).filter(function (tab) { return tab.label; }).slice(0, 10);
+		var input = editor.querySelector(".kidia-product-tabs-json");
+		input.value = JSON.stringify(rows);
+		input.dispatchEvent(new window.Event("input", { bubbles: true }));
+	}
+	function productTabRow(editor) {
+		var row = document.createElement("div");
+		row.className = "kidia-product-tab-row";
+		row.innerHTML = '<input type="text" class="kidia-product-tab-label" value="New tab" placeholder="Tab label"><select class="kidia-product-tab-target"><option value="overview">Overview / product information</option><option value="variations">Variations</option><option value="description">Description</option><option value="reviews">Reviews</option><option value="recommend">Related products</option></select><label class="kidia-product-tab-enabled"><input type="checkbox" checked>Show</label><button type="button" class="button kidia-product-tab-remove" aria-label="Remove tab"><span class="dashicons dashicons-trash"></span></button>';
+		editor.querySelector(".kidia-product-tabs-rows").appendChild(row);
+		syncProductTabs(editor);
+	}
 	function wishlistPreviewState() {
 		var selected = form.querySelector('[name="layout[settings][wishlist_preview_state]"]:checked');
 		return selected && ["sign_in", "empty", "products"].indexOf(selected.value) !== -1 ? selected.value : "products";
+	}
+	function wishlistAccessMode() {
+		var selected = form.querySelector('[name="layout[settings][wishlist_access_mode]"]:checked');
+		return selected && selected.value === "guest" ? "guest" : "sign_in_required";
+	}
+	function applyWishlistAccessMode() {
+		if (root.dataset.page !== "wishlist") { return; }
+		var guest = wishlistAccessMode() === "guest";
+		var signInOption = form.querySelector('[data-wishlist-preview-state="sign_in"]');
+		var signInRadio = signInOption && signInOption.querySelector('input[type="radio"]');
+		if (signInOption) {
+			signInOption.classList.toggle("is-disabled", guest);
+			signInOption.setAttribute("aria-disabled", guest ? "true" : "false");
+		}
+		if (signInRadio) { signInRadio.disabled = guest; }
+		if (guest && wishlistPreviewState() === "sign_in") {
+			var empty = form.querySelector('[name="layout[settings][wishlist_preview_state]"][value="empty"]');
+			if (empty) { empty.checked = true; }
+		}
 	}
 	function applyWishlistPreviewState(options) {
 		if (root.dataset.page !== "wishlist") { return; }
@@ -47,6 +96,19 @@
 				focusPreview(card);
 			}
 		});
+		var addSelect = document.getElementById("kidia-wishlist-add-element-type");
+		if (addSelect) {
+			var firstVisible = null;
+			array(addSelect.options).forEach(function (option) {
+				var visible = option.dataset.wishlistState === state;
+				option.hidden = !visible;
+				option.disabled = !visible;
+				if (visible && !firstVisible) { firstVisible = option; }
+			});
+			if (!addSelect.selectedOptions.length || addSelect.selectedOptions[0].disabled) {
+				addSelect.value = firstVisible ? firstVisible.value : "";
+			}
+		}
 	}
 
 	function updateIndexes() {
@@ -81,6 +143,12 @@
 		markDirty();
 		schedulePreview();
 		focusPreview(clone);
+	}
+	function addWishlistElement() {
+		var select = document.getElementById("kidia-wishlist-add-element-type");
+		var source = select && list.querySelector('[data-element="' + select.value + '"]');
+		if (!source || source.dataset.wishlistState !== wishlistPreviewState()) { return; }
+		duplicateWishlistElement(source);
 	}
 
 	function productCards(card, forcedLimit) {
@@ -138,7 +206,8 @@
 			return '<section class="kidia-app-section">' + productCards(card, 4) + (id === "product_grid" ? pagination(card) : "") + '</section>';
 		}
 		if (id === "product_tabs") {
-			return '<nav class="kidia-app-section" style="display:flex;justify-content:space-around;height:' + number(card, "height", 64) + 'px;align-items:center;background:#fff;color:' + color(card, "inactive_color", "#6B6B6B") + '"><b style="color:' + color(card, "active_color", "#1D1D1D") + ';border-bottom:3px solid currentColor;padding:18px 8px">' + escapeHtml(value(card, "overview_label", "Overview")) + '</b><b>' + escapeHtml(value(card, "reviews_label", "Reviews")) + '</b><b>' + escapeHtml(value(card, "recommend_label", "Recommend")) + '</b></nav>';
+			var tabs = productTabs(card);
+			return '<nav class="kidia-app-section kidia-app-product-tabs" style="display:flex;overflow-x:auto;height:' + number(card, "height", 64) + 'px;align-items:stretch;background:#fff;color:' + color(card, "inactive_color", "#6B6B6B") + '">' + tabs.map(function (tab, index) { return '<b style="flex:1 0 110px;display:grid;place-items:center;color:' + (index === 0 ? color(card, "active_color", "#1D1D1D") : "inherit") + ';border-bottom:' + (index === 0 ? "3px solid currentColor" : "0") + ';padding:8px">' + escapeHtml(tab.label) + '</b>'; }).join("") + '</nav>';
 		}
 		if (id === "related_products" || /_recommendations$/.test(id)) { return '<section class="kidia-app-section kidia-app-wishlist-recommendations" style="padding-inline:' + number(card, "section_padding", 16) + 'px"><h2 style="font-size:' + number(card, "title_size", 20) + 'px;font-weight:' + escapeHtml(value(card, "title_weight", "700")) + ';margin-bottom:' + number(card, "title_bottom_spacing", 18) + 'px">' + escapeHtml(value(card, "title", "You may also like")) + '</h2>' + productCards(card, number(card, "limit", 4)) + '</section>'; }
 		if (id === "filter_bar") {
@@ -248,6 +317,29 @@
 			duplicateWishlistElement(duplicate.closest(".kidia-page-card"));
 			return;
 		}
+		if (event.target.closest("#kidia-wishlist-add-element")) {
+			addWishlistElement();
+			return;
+		}
+		var addTab = event.target.closest(".kidia-product-tab-add");
+		if (addTab) {
+			var editor = addTab.closest(".kidia-product-tabs-editor");
+			if (editor.querySelectorAll(".kidia-product-tab-row").length < 10) {
+				productTabRow(editor);
+				markDirty();
+			}
+			return;
+		}
+		var removeTab = event.target.closest(".kidia-product-tab-remove");
+		if (removeTab) {
+			var tabEditor = removeTab.closest(".kidia-product-tabs-editor");
+			if (tabEditor.querySelectorAll(".kidia-product-tab-row").length > 1) {
+				removeTab.closest(".kidia-product-tab-row").remove();
+				syncProductTabs(tabEditor);
+				markDirty();
+			}
+			return;
+		}
 		var remove = event.target.closest(".kidia-page-remove");
 		if (remove) {
 			var removableCard = remove.closest(".kidia-page-card");
@@ -266,6 +358,14 @@
 	});
 	root.addEventListener("change", schedulePreview);
 	root.addEventListener("input", schedulePreview);
+	root.addEventListener("input", function (event) {
+		var editor = event.target.closest && event.target.closest(".kidia-product-tabs-editor");
+		if (editor && !event.target.classList.contains("kidia-product-tabs-json")) { syncProductTabs(editor); }
+	});
+	root.addEventListener("change", function (event) {
+		var editor = event.target.closest && event.target.closest(".kidia-product-tabs-editor");
+		if (editor && !event.target.classList.contains("kidia-product-tabs-json")) { syncProductTabs(editor); }
+	});
 	root.addEventListener("click", function (event) {
 		var option = event.target.closest(".kidia-wishlist-access-option, .kidia-wishlist-preview-option");
 		var radio = option && option.querySelector('input[type="radio"]');
@@ -277,7 +377,7 @@
 	});
 	root.addEventListener("change", function (event) {
 		if (event.target.matches('[name="layout[settings][wishlist_preview_state]"]')) {
-			applyWishlistPreviewState({ open: true });
+			applyWishlistPreviewState();
 			markDirty();
 			document.dispatchEvent(new window.CustomEvent("kidia:page-layout-changed", {
 				detail: { page: "wishlist", wishlistPreviewState: event.target.value },
@@ -285,6 +385,8 @@
 			return;
 		}
 		if (!event.target.matches('[name="layout[settings][wishlist_access_mode]"]')) { return; }
+		applyWishlistAccessMode();
+		applyWishlistPreviewState();
 		markDirty();
 		document.dispatchEvent(new window.CustomEvent("kidia:page-layout-changed", {
 			detail: { page: "wishlist", wishlistAccessMode: event.target.value },
@@ -313,5 +415,5 @@
 	window.addEventListener("pageshow", function () { var button = root.querySelector('button[type="submit"],input[type="submit"]'); if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
 	if (phoneScreen) { phoneScreen.addEventListener("scroll", function () { previewCollapseProgress=Math.max(0,Math.min(1,phoneScreen.scrollTop/64));if(window.KidiaChromePreview){window.KidiaChromePreview.updateHeaderProgress(preview.querySelector(".kidia-app-header"),previewCollapseProgress);} }, {passive:true}); }
 	if ($ && $.fn && $.fn.sortable) { $(list).sortable({handle:".kidia-page-drag",items:"> .kidia-page-card",update:function(){updateIndexes();markDirty();schedulePreview();}}); }
-	updateIndexes(); applyWishlistPreviewState(); renderPreview();
+	updateIndexes(); applyWishlistAccessMode(); applyWishlistPreviewState(); renderPreview();
 }(window.jQuery));

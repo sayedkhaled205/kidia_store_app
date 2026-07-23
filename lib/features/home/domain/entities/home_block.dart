@@ -405,11 +405,13 @@ class HomeProductItem {
     required this.reviewCount,
     required this.discountPercent,
     required this.action,
+    this.imageUrls = const <String>[],
   });
 
   final int id;
   final String name;
   final String imageUrl;
+  final List<String> imageUrls;
   final String price;
   final String? regularPrice;
   final String currencyCode;
@@ -443,6 +445,7 @@ class ProductCarouselBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
   }) : super(type: HomeBlockType.productCarousel);
@@ -463,6 +466,7 @@ class ProductCarouselBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final bool imageSwipeEnabled;
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
 }
@@ -488,6 +492,7 @@ class ProductGridBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
   }) : super(type: HomeBlockType.productGrid);
@@ -508,6 +513,7 @@ class ProductGridBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final bool imageSwipeEnabled;
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
 }

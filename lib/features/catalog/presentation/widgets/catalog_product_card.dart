@@ -4,6 +4,7 @@ import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart'
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_wishlist_button.dart';
 
@@ -47,6 +48,18 @@ class CatalogProductCard extends StatelessWidget {
         settings?.boolean('show_regular_price', true) ?? true;
     final bool showRating = settings?.boolean('show_rating', true) ?? true;
     final bool showBadge = settings?.boolean('show_badge', true) ?? true;
+    final bool imageSwipeEnabled =
+        settings?.boolean('enable_image_swipe', false) ?? false;
+    final List<String> imageUrls = product.images
+        .expand(
+          (image) => <String>[
+            image.source.toString(),
+            if (image.thumbnail != null) image.thumbnail.toString(),
+          ],
+        )
+        .where((String url) => url.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
 
     return Semantics(
       button: true,
@@ -77,7 +90,8 @@ class CatalogProductCard extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: <Widget>[
-                        if (imageUrl == null || imageUrl.isEmpty)
+                        if (imageUrls.isEmpty &&
+                            (imageUrl == null || imageUrl.isEmpty))
                           const Padding(
                             padding: EdgeInsets.all(5),
                             child: AppNetworkImageError(),
@@ -89,8 +103,11 @@ class CatalogProductCard extends StatelessWidget {
                               heightFactor: 0.95,
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: AppNetworkImage(
-                                  imageUrl: imageUrl,
+                                child: ProductImageSwiper(
+                                  imageUrls: imageUrls.isEmpty
+                                      ? <String>[imageUrl ?? '']
+                                      : imageUrls,
+                                  enabled: imageSwipeEnabled,
                                   fit: BoxFit.cover,
                                   alignment: Alignment.center,
                                   semanticLabel:

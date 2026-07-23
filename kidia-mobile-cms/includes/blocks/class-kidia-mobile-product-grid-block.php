@@ -49,6 +49,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'action_value'   => '',
 			'card_style'     => 'outlined',
 			'image_ratio'    => 1,
+			'enable_image_swipe' => false,
 			'card_radius'    => 20,
 			'show_name'      => true,
 			'show_price'     => true,
@@ -153,6 +154,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'action_value'   => $action_value,
 			'card_style'     => in_array( $card_style, array( 'outlined', 'elevated', 'minimal', 'no_shadow' ), true ) ? $card_style : 'outlined',
 			'image_ratio'    => max( 0.6, min( 1.8, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
+			'enable_image_swipe' => ! empty( $settings['enable_image_swipe'] ),
 			'card_radius'    => max( 0, min( 40, absint( $settings['card_radius'] ?? 20 ) ) ),
 			'show_name'      => ! empty( $settings['show_name'] ),
 			'show_price'     => ! empty( $settings['show_price'] ),
@@ -234,6 +236,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 				'id'              => (int) $product->get_id(),
 				'name'            => $name,
 				'image_url'       => $image_url,
+				'image_urls'      => $this->get_product_image_urls( $product ),
 				'price'           => $price,
 				'regular_price'   => '' === $regular_price ? null : $regular_price,
 				'currency_code'   => sanitize_text_field( (string) $currency_code ),
@@ -259,6 +262,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			'view_all_action' => $this->get_view_all_action( $settings ),
 			'card_style'      => $settings['card_style'],
 			'image_ratio'     => $settings['image_ratio'],
+			'enable_image_swipe' => $settings['enable_image_swipe'],
 			'card_radius'     => $settings['card_radius'],
 			'show_name'       => $settings['show_name'],
 			'show_price'      => $settings['show_price'],
@@ -330,6 +334,7 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 			</div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Style', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_style]"><option value="outlined" <?php selected( 'outlined', $settings['card_style'] ); ?>><?php esc_html_e( 'Outlined', 'kidia-mobile-cms' ); ?></option><option value="elevated" <?php selected( 'elevated', $settings['card_style'] ); ?>><?php esc_html_e( 'Elevated', 'kidia-mobile-cms' ); ?></option><option value="minimal" <?php selected( 'minimal', $settings['card_style'] ); ?>><?php esc_html_e( 'Minimal', 'kidia-mobile-cms' ); ?></option><option value="no_shadow" <?php selected( 'no_shadow', $settings['card_style'] ); ?>><?php esc_html_e( 'No shadow', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Ratio', 'kidia-mobile-cms' ); ?></label><input type="number" min="0.6" max="1.8" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][enable_image_swipe]" value="1" <?php checked( true, $settings['enable_image_swipe'] ); ?>> <?php esc_html_e( 'Swipe product images on the card', 'kidia-mobile-cms' ); ?></label></div>
 			<div class="kidia-builder-field"><label><?php esc_html_e( 'Card Radius', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="40" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
 			<?php foreach ( array( 'show_name' => __( 'Show Name', 'kidia-mobile-cms' ), 'show_price' => __( 'Show Price', 'kidia-mobile-cms' ), 'show_regular_price' => __( 'Show Regular Price', 'kidia-mobile-cms' ), 'show_badge' => __( 'Show Badge', 'kidia-mobile-cms' ), 'show_rating' => __( 'Show Rating', 'kidia-mobile-cms' ), 'quick_add_enabled' => __( 'Quick add to cart', 'kidia-mobile-cms' ) ) as $key => $label ) : ?>
 				<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( true, $settings[ $key ] ); ?>> <?php echo esc_html( $label ); ?></label></div>
@@ -498,6 +503,24 @@ final class Kidia_Mobile_Product_Grid_Block extends Kidia_Mobile_Block {
 				static fn ( $product ): bool => $product instanceof WC_Product
 			)
 		);
+	}
+
+	/**
+	 * Returns the main and gallery thumbnails used by card swiping.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_product_image_urls( WC_Product $product ): array {
+		$gallery_ids = method_exists( $product, 'get_gallery_image_ids' )
+			? (array) $product->get_gallery_image_ids()
+			: array();
+		$ids = array_merge( array( $product->get_image_id() ), $gallery_ids );
+		$urls = array();
+		foreach ( array_unique( array_filter( array_map( 'absint', $ids ) ) ) as $image_id ) {
+			$url = esc_url_raw( (string) wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) );
+			if ( '' !== $url ) { $urls[] = $url; }
+		}
+		return $urls;
 	}
 
 	/**

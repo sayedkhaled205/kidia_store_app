@@ -94,7 +94,7 @@
 				var productKey = productMatch ? productMatch[1] : "";
 				if (/^(title|subtitle|source|limit|category_id|product_ids)$/.test(productKey)) { section = "content_data"; }
 				else if (/^(show_view_all|view_all_label|action_type|action_value)$/.test(productKey)) { section = "carousel_actions"; }
-				else if (/^(card_style|item_width|columns|gap|image_ratio|card_radius)$/.test(productKey)) { section = "card_layout"; }
+				else if (/^(card_style|item_width|columns|gap|image_ratio|card_radius|enable_image_swipe)$/.test(productKey)) { section = "card_layout"; }
 				else if (/^(show_name|show_price|show_regular_price|show_badge|show_rating)$/.test(productKey)) { section = "carousel_visibility"; }
 				else if (/^quick_add_/.test(productKey)) { section = "quick_add"; }
 				else if (/^(show_wishlist|product_wishlist_)/.test(productKey)) { section = "carousel_wishlist"; }

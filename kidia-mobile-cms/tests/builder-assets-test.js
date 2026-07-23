@@ -549,7 +549,7 @@ function runMergeControlsContractTest() {
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
 	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
 	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*_cmsColor\([\s\S]*layout\.string\('page_background_color', '#FFFFFF'\)[\s\S]*Colors\.white/, "Product Page must use its CMS page background color with white as the safe default for every uncovered gap.");
-	assert.match(pageStore, /private const VERSION = 19;/, "Wishlist states and header text appearance must use the current layout schema.");
+	assert.match(pageStore, /private const VERSION = 20;/, "Repeatable Product Tabs and the current Wishlist/header controls must use the current layout schema.");
 	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
 	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
 	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
@@ -964,12 +964,27 @@ function runPageBuilderTest() {
   assert.match(catalogCardSource, /product_wishlist_position/, "Catalog Product Grid must apply the saved wishlist corner.");
   const homeBlockSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "home", "presentation", "widgets", "home_block_widgets.dart"), "utf8");
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
+  const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
+  const productImageSwiperSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "shared", "widgets", "product", "product_image_swiper.dart"), "utf8");
+  assert.match(storeSource, /self::field\( 'tabs_json'[\s\S]*'tabs'[\s\S]*overview[\s\S]*reviews[\s\S]*recommend/, "Product Tabs must save a repeatable list instead of three fixed labels.");
+  assert.match(productScreenSource, /_productTabConfigs[\s\S]*ListView\.builder[\s\S]*widget\.onSelected\(tab\.target\)/, "The mobile Product Tabs row must support a scrollable, variable number of tappable tabs.");
+  assert.match(productScreenSource, /Scrollable\.ensureVisible[\s\S]*variationsKey[\s\S]*descriptionKey[\s\S]*reviewsKey[\s\S]*recommendKey/, "Every Product Tab target must scroll to its real product section.");
+  assert.match(productScreenSource, /AppConfig\.isCmsPreview[\s\S]*_previewRelatedProducts[\s\S]*timeout\(const Duration\(seconds: 8\)\)[\s\S]*related-products-retry/, "Related products must render immediately in CMS preview and expose a bounded retry in the app.");
+  assert.match(productImageSwiperSource, /PageView\.builder[\s\S]*onPageChanged[\s\S]*showIndicator/, "The shared product image control must swipe gallery images directly on a product card.");
+  assert.match(catalogCardSource, /enable_image_swipe[\s\S]*ProductImageSwiper/, "Catalog and related product cards must consume the image-swipe On/Off setting.");
+  assert.match(wishlistSource, /enable_image_swipe[\s\S]*ProductImageSwiper/, "Wishlist products and recommendations must consume the image-swipe On/Off setting.");
+  assert.match(homeBlockSource, /imageSwipeEnabled[\s\S]*ProductCard/, "Home Product Grid and Product Carousel must pass image-swipe settings into the shared product card.");
 	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
 	const sharedToolbarSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
 	assert.match(pageTemplateSource, /wishlist_preview_state[\s\S]*Sign-in Wishlist[\s\S]*Empty Wishlist Settings[\s\S]*Product Wishlist[\s\S]*data-wishlist-state/, "Wishlist access choices must expose three independent state editor cards beneath them.");
 	assert.match(pageTemplateSource, /data-instance-id[\s\S]*kidia-page-duplicate[\s\S]*kidia-page-remove/, "Every Wishlist state element must expose duplicate-under-current and removable repeated instances.");
 	assert.match(readAsset("page-builder.js"), /duplicateWishlistElement[\s\S]*dataset\.instanceId[\s\S]*insertAdjacentElement\("afterend"/, "Duplicating a Wishlist element must insert a unique copy directly below the selected element.");
 	assert.match(readAsset("page-builder.js"), /applyWishlistPreviewState[\s\S]*data-wishlist-state[\s\S]*wishlist_preview_state[\s\S]*kidia:page-layout-changed/, "Selecting a Wishlist state must show its settings and refresh the live Flutter preview.");
+	assert.doesNotMatch(readAsset("page-builder.js"), /applyWishlistPreviewState\(\{\s*open:\s*true\s*\}\)/, "Selecting a Wishlist state must not expand its settings card.");
+	assert.match(pageTemplateSource, /kidia-wishlist-element-toolbar[\s\S]*data-wishlist-state[\s\S]*kidia-wishlist-add-element/, "Wishlist Add Element must be available above the state elements and tag choices by their state.");
+	assert.match(readAsset("page-builder.js"), /option\.dataset\.wishlistState === state[\s\S]*source\.dataset\.wishlistState !== wishlistPreviewState\(\)/, "Wishlist Add Element must stay inside the currently selected state without switching states.");
+	assert.match(pageTemplateSource, /kidia-product-tabs-editor[\s\S]*kidia-product-tab-target[\s\S]*kidia-product-tab-add/, "Product Tabs must expose labels, destinations, visibility, remove, and Add tab controls.");
+	assert.match(readAsset("page-builder.js"), /syncProductTabs[\s\S]*slice\(0, 10\)[\s\S]*kidia-product-tab-add[\s\S]*length < 10/, "Product Tabs must save and preview up to ten merchant-defined tabs.");
 	assert.match(readAsset("admin-theme.css"), /\.kidia-wishlist-access-mode \.kidia-category-navigation-modes span\s*\{[\s\S]*min-height:\s*60px;[\s\S]*grid-template-areas:[\s\S]*"icon title"[\s\S]*"description description";[\s\S]*padding:\s*12px 16px;/, "All four Wishlist choices must keep their icon beside the title and use the same compact height.");
 	assert.match(readAsset("admin-theme.css"), /Field values stay visually secondary[\s\S]*font-size:\s*13px\s*!important;[\s\S]*font-weight:\s*400\s*!important;/, "All CMS field values must use the smaller regular-weight typography.");
 	assert.match(pageTemplateSource, /\$kidia_toolbar_restore_product = 'product' === \$page/, "Only Product Page must request the defaults action from the shared toolbar.");
@@ -1117,7 +1132,7 @@ function runChromeComposerTest() {
 }
 
 function runCollapsedHeaderToggleTest() {
-  const regular = JSON.stringify({ rows: [{ columns: [{ width: 100, align: "center", items: ["title"] }] }] });
+  const regular = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["logo"] }, { width: 16, align: "right", items: ["cart"] }] }, { columns: [{ width: 100, align: "left", items: ["search_bar"] }] }] });
   const collapsed = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["search_bar"] }, { width: 16, align: "right", items: ["cart"] }] }] });
   const markup = `<!doctype html><html><body><form><section class="kidia-fixed-chrome-card" data-chrome-part="header">
     <input type="checkbox" name="layout[header][enabled]" value="1" checked>
@@ -1167,19 +1182,21 @@ function runCollapsedHeaderToggleTest() {
 	  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
 	  card.querySelector('[name$="[collapse_transition]"]').value = "smooth_compact";
 	  const halfwayPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0.5 });
-	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--regular/, "PatPat-style preview must keep the regular header layer while scrolling.");
-	  assert.match(halfwayPreview, /kidia-app-header-transition-layer--compact/, "PatPat-style preview must blend in the compact header layer while scrolling.");
-	  assert.match(halfwayPreview, /height:64px/, "PatPat-style collapse must keep the header card at its regular height throughout the movement.");
+	  assert.equal((halfwayPreview.match(/class="kidia-app-search"/g) || []).length, 1, "PatPat-style preview must move and resize the same Search instead of replacing it with a second Search.");
+	  assert.match(halfwayPreview, /kidia-app-header-morphing-search/, "The single Search must use the morphing layer.");
+	  assert.match(halfwayPreview, /kidia-app-header-fixed-actions[\s\S]*kidia-app-header-item--cart/, "The cart/orders action must remain in one fixed layer throughout the transition.");
+	  assert.match(halfwayPreview, /height:60px/, "PatPat-style collapse must shrink the header continuously with the Search.");
 	  assert.match(halfwayPreview, /margin:0px 0px 0px/, "PatPat-style collapse must not move the header card sideways during the movement.");
 	  const previewHost = window.document.createElement("div");
 	  previewHost.innerHTML = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0 });
 	  const movingHeader = previewHost.querySelector(".kidia-app-header");
-	  const fixedCardMetrics = [movingHeader.style.height, movingHeader.style.marginLeft, movingHeader.style.marginRight, movingHeader.style.borderRadius];
 	  [0.25, 0.5, 0.75].forEach((progress) => {
 	    window.KidiaChromePreview.updateHeaderProgress(movingHeader, progress);
-	    assert.deepEqual([movingHeader.style.height, movingHeader.style.marginLeft, movingHeader.style.marginRight, movingHeader.style.borderRadius], fixedCardMetrics, `Header card metrics must remain fixed at ${progress * 100}% scroll.`);
-	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--compact").style.opacity, String(progress), `Compact search opacity must follow the real ${progress * 100}% scroll ratio.`);
-	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--compact").style.transform, `translateY(${18 * (1 - progress)}px)`, `Search must move progressively at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.style.height, `${64 - (8 * progress)}px`, `Header height must shrink continuously at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--regular").style.opacity, String(1 - progress), `The logo must fade out with the real ${progress * 100}% scroll ratio.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.top, `${24 * (1 - progress)}px`, `The same Search must move progressively at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.width, `${100 - (16 * progress)}%`, `The same Search must shrink progressively at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelectorAll(".kidia-app-header-fixed-actions .kidia-app-header-item--cart").length, 1, "The fixed cart action must never be duplicated.");
 	  });
 	  assert.match(readAsset("chrome-layout.css"), /is-transition-smooth_compact \.kidia-app-header-transition-layer,[\s\S]*transition:opacity var\(--collapse-duration,260ms\) linear,transform var\(--collapse-duration,260ms\)/, "Smooth compact search and logo movement must use the configured transition duration rather than jump instantly.");
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0", "1"], "On must be included in the submitted form data.");

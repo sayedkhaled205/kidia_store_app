@@ -177,8 +177,10 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 				<?php endforeach; ?>
 			</select>
 		</div>
-		<div class="kidia-builder-field"><label>Action Type</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_type]"><?php foreach ( array( '' => 'No Action', 'product' => 'Product', 'category' => 'Category', 'collection' => 'Collection', 'brand' => 'Brand', 'brands' => 'All Brands', 'search' => 'Search', 'external' => 'External URL' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['action_type'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-		<div class="kidia-builder-field"><label>Action Value</label><input type="text" name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_value]" value="<?php echo esc_attr( $settings['action_value'] ); ?>"></div>
+		<div class="kidia-countdown-actions">
+			<div class="kidia-builder-field"><label>Action Type</label><select name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_type]"><?php foreach ( array( '' => 'No Action', 'product' => 'Product', 'category' => 'Category', 'collection' => 'Collection', 'brand' => 'Brand', 'brands' => 'All Brands', 'search' => 'Search', 'external' => 'External URL' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['action_type'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label>Action Value</label><input type="text" name="blocks[<?php echo esc_attr( $index ); ?>][settings][action_value]" value="<?php echo esc_attr( $settings['action_value'] ); ?>"></div>
+		</div>
 
     </div>
 

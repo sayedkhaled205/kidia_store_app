@@ -32,7 +32,7 @@ assert.match(
 );
 assert.match(
   index,
-  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*25000\)/,
+  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*90000\)/,
   "A preview that never mounts must retry once with a fresh cache key instead of loading forever.",
 );
 assert.match(

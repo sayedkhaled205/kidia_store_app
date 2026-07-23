@@ -205,14 +205,14 @@ class CmsPageLayout {
 
 	static Map<String, dynamic> _fallbackProductSettings(String id) {
 		const Map<String, Map<String, dynamic>> settings = <String, Map<String, dynamic>>{
-			'product_tabs': <String, dynamic>{'sticky': true, 'overview_label': 'Overview', 'reviews_label': 'Reviews', 'recommend_label': 'Recommend', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
+			'product_tabs': <String, dynamic>{'sticky': true, 'tabs_json': '[{"label":"Overview","target":"overview","enabled":true},{"label":"Reviews","target":"reviews","enabled":true},{"label":"Recommend","target":"recommend","enabled":true}]', 'active_color': '#1D1D1D', 'inactive_color': '#6B6B6B', 'indicator_width': 96, 'height': 64},
 			'image_gallery': <String, dynamic>{'aspect_ratio': .75, 'fit': 'contain', 'background_color': '#FFFFFF', 'show_thumbnails': false, 'show_indicators': false, 'show_counter': true, 'counter_background': '#8A8585', 'counter_text_color': '#FFFFFF', 'enable_zoom': false},
 			'product_summary': <String, dynamic>{'show_name': true, 'show_price': true, 'show_regular_price': true, 'show_rating': true, 'show_review_count': true, 'show_sku': false, 'show_stock': false, 'show_badge': false, 'show_selected_color': true, 'price_size': 25, 'name_size': 18},
-			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'chip_radius': 22, 'chip_height': 44},
+			'variations': <String, dynamic>{'style': 'chips', 'show_size_chart': true, 'size_chart_label': 'Size chart', 'chip_radius': 22, 'chip_height': 38},
 			'purchase_bar': <String, dynamic>{'show_quantity': false},
 			'description': <String, dynamic>{'accordion': true, 'details_label': 'Product Details', 'show_description': true, 'show_attributes': true},
 			'reviews': <String, dynamic>{'title': 'Reviews', 'show_summary': true, 'show_fit_summary': true, 'fit_small_percent': 1, 'fit_true_percent': 99, 'fit_large_percent': 0},
-			'related_products': <String, dynamic>{'title': 'You may also like', 'columns': 2, 'gap': 2, 'image_ratio': .75, 'show_price': true, 'show_quick_add': true},
+			'related_products': <String, dynamic>{'title': 'You may also like', 'columns': 2, 'gap': 2, 'image_ratio': .75, 'enable_image_swipe': false, 'show_price': true, 'show_quick_add': true},
 		};
 		return settings[id] ?? const <String, dynamic>{'background_color': '#FFFFFF'};
 	}
@@ -245,6 +245,7 @@ class CmsPageLayout {
 			'columns': 2,
 			'gap': 8,
 			'image_ratio': .82,
+			'enable_image_swipe': false,
 			'limit': 4,
 			'show_name': false,
 			'show_price': true,
@@ -281,6 +282,7 @@ class CmsPageLayout {
 				'card_style': 'minimal',
 				'card_radius': 0,
 				'image_ratio': .82,
+				'enable_image_swipe': false,
 				'show_price': true,
 				'show_regular_price': false,
 				'show_rating': false,

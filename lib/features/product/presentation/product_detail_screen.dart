@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
@@ -21,6 +25,41 @@ import 'package:url_launcher/url_launcher.dart';
 typedef ProductWishlistToggleCallback =
     Future<bool> Function(CatalogProduct product);
 typedef ProductWishlistStatusCallback = Future<bool> Function(int productId);
+
+const List<CatalogProduct> _previewRelatedProducts = <CatalogProduct>[
+  CatalogProduct(
+    id: 910001,
+    name: 'Kidia everyday set',
+    slug: 'kidia-everyday-set',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '45000',
+      regularPriceMinor: '52000',
+      salePriceMinor: '45000',
+    ),
+  ),
+  CatalogProduct(
+    id: 910002,
+    name: 'Kidia summer outfit',
+    slug: 'kidia-summer-outfit',
+    type: 'simple',
+    isPurchasable: true,
+    isInStock: true,
+    stockStatus: CatalogStockStatus.inStock,
+    prices: CatalogMoney(
+      currencyCode: 'EGP',
+      currencySymbol: 'ج.م',
+      currencyMinorUnit: 2,
+      priceMinor: '39000',
+    ),
+  ),
+];
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({
@@ -303,6 +342,9 @@ class _ProductContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final GlobalKey overviewKey = GlobalKey();
+    final GlobalKey variationsKey = GlobalKey();
+    final GlobalKey descriptionKey = GlobalKey();
     final GlobalKey reviewsKey = GlobalKey();
     final GlobalKey recommendKey = GlobalKey();
     final CatalogVariation? variation = controller.selectedVariation;
@@ -312,6 +354,27 @@ class _ProductContent extends StatelessWidget {
     );
     final CatalogMoney money = controller.displayedPrice ?? product.prices;
     final bool inStock = variation?.isInStock ?? product.isInStock;
+    final CmsPageComponent tabsSettings = pageLayout.element('product_tabs');
+    final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings);
+
+    void openTab(String target) {
+      final GlobalKey key = switch (target) {
+        'variations' => variationsKey,
+        'description' => descriptionKey,
+        'reviews' => reviewsKey,
+        'recommend' => recommendKey,
+        _ => overviewKey,
+      };
+      final BuildContext? destination = key.currentContext;
+      if (destination != null) {
+        Scrollable.ensureVisible(
+          destination,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: .08,
+        );
+      }
+    }
 
     return CustomScrollView(
       key: const Key('product-detail-scroll'),
@@ -324,19 +387,13 @@ class _ProductContent extends StatelessWidget {
               settings: pageLayout.element('image_gallery'),
             ),
           ),
-        if (pageLayout.element('product_tabs').enabled)
+        if (tabsSettings.enabled && tabs.isNotEmpty)
           SliverPersistentHeader(
-            pinned: pageLayout.element('product_tabs').boolean('sticky', true),
+            pinned: tabsSettings.boolean('sticky', true),
             delegate: _ProductTabsDelegate(
-              settings: pageLayout.element('product_tabs'),
-              onReviews: () {
-                final BuildContext? target = reviewsKey.currentContext;
-                if (target != null) Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 320));
-              },
-              onRecommend: () {
-                final BuildContext? target = recommendKey.currentContext;
-                if (target != null) Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 320));
-              },
+              settings: tabsSettings,
+              tabs: tabs,
+              onSelected: openTab,
             ),
           ),
         SliverPadding(
@@ -345,6 +402,7 @@ class _ProductContent extends StatelessWidget {
             children: <Widget>[
               if (pageLayout.element('product_summary').enabled)
                 CmsElementFrame(
+                  key: overviewKey,
                   component: pageLayout.element('product_summary'),
                   child: _PatPatProductSummary(
                     product: product,
@@ -359,6 +417,7 @@ class _ProductContent extends StatelessWidget {
               if (pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 24),
                 CmsElementFrame(
+                  key: variationsKey,
                   component: pageLayout.element('variations'),
                   child: Column(
                     children: <Widget>[
@@ -400,6 +459,7 @@ class _ProductContent extends StatelessWidget {
               ],
               if (pageLayout.element('description').enabled)
                 CmsElementFrame(
+                  key: descriptionKey,
                   component: pageLayout.element('description'),
                   child: _DetailsSection(
                     product: product,
@@ -461,13 +521,13 @@ class _ProductContent extends StatelessWidget {
 class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
   const _ProductTabsDelegate({
     required this.settings,
-    this.onReviews,
-    this.onRecommend,
+    required this.tabs,
+    required this.onSelected,
   });
 
   final CmsPageComponent settings;
-  final VoidCallback? onReviews;
-  final VoidCallback? onRecommend;
+  final List<_ProductTabConfig> tabs;
+  final ValueChanged<String> onSelected;
 
   @override
   double get minExtent => settings.number('height', 64).clamp(44, 88);
@@ -477,60 +537,180 @@ class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final Color active = _cmsColor(
-      settings.string('active_color', '#1D1D1D'),
-      const Color(0xFF1D1D1D),
-    );
-    final Color inactive = _cmsColor(
-      settings.string('inactive_color', '#6B6B6B'),
-      const Color(0xFF6B6B6B),
-    );
-    Widget tab(String label, {VoidCallback? onTap, bool selected = false}) =>
-        Expanded(
-          child: InkWell(
-            onTap: onTap,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: <Widget>[
-                Center(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: selected ? active : inactive,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                if (selected)
-                  Container(
-                    width: settings.number('indicator_width', 96).clamp(24, 160),
-                    height: 3,
-                    color: active,
-                  ),
-              ],
-            ),
-          ),
-        );
-    return Material(
-      color: Colors.white,
-      elevation: overlapsContent ? 2 : 0,
-      child: Row(
-        key: const Key('product-tabs'),
-        children: <Widget>[
-          tab(settings.string('overview_label', 'Overview'), selected: true),
-          tab(settings.string('reviews_label', 'Reviews'), onTap: onReviews),
-          tab(settings.string('recommend_label', 'Recommend'), onTap: onRecommend),
-        ],
-      ),
+    return _ProductTabsBar(
+      settings: settings,
+      tabs: tabs,
+      onSelected: onSelected,
+      elevated: overlapsContent,
     );
   }
 
   @override
   bool shouldRebuild(covariant _ProductTabsDelegate oldDelegate) =>
       oldDelegate.settings.settings != settings.settings ||
-      oldDelegate.onReviews != onReviews ||
-      oldDelegate.onRecommend != onRecommend;
+      oldDelegate.tabs != tabs ||
+      oldDelegate.onSelected != onSelected;
+}
+
+class _ProductTabConfig {
+  const _ProductTabConfig({
+    required this.label,
+    required this.target,
+  });
+
+  final String label;
+  final String target;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ProductTabConfig &&
+      other.label == label &&
+      other.target == target;
+
+  @override
+  int get hashCode => Object.hash(label, target);
+}
+
+List<_ProductTabConfig> _productTabConfigs(CmsPageComponent settings) {
+  final dynamic raw = settings.settings['tabs_json'];
+  dynamic decoded = raw;
+  if (raw is String && raw.trim().isNotEmpty) {
+    try {
+      decoded = jsonDecode(raw);
+    } catch (_) {
+      decoded = null;
+    }
+  }
+  final Set<String> targets = <String>{
+    'overview',
+    'variations',
+    'description',
+    'reviews',
+    'recommend',
+  };
+  if (decoded is List) {
+    final List<_ProductTabConfig> tabs = decoded
+        .whereType<Map>()
+        .where((Map tab) => tab['enabled'] != false)
+        .map((Map tab) {
+          final String label = '${tab['label'] ?? ''}'.trim();
+          final String target = '${tab['target'] ?? 'overview'}'.trim();
+          return label.isEmpty || !targets.contains(target)
+              ? null
+              : _ProductTabConfig(label: label, target: target);
+        })
+        .whereType<_ProductTabConfig>()
+        .take(10)
+        .toList(growable: false);
+    if (tabs.isNotEmpty) return tabs;
+  }
+  return <_ProductTabConfig>[
+    _ProductTabConfig(
+      label: settings.string('overview_label', 'Overview'),
+      target: 'overview',
+    ),
+    _ProductTabConfig(
+      label: settings.string('reviews_label', 'Reviews'),
+      target: 'reviews',
+    ),
+    _ProductTabConfig(
+      label: settings.string('recommend_label', 'Recommend'),
+      target: 'recommend',
+    ),
+  ];
+}
+
+class _ProductTabsBar extends StatefulWidget {
+  const _ProductTabsBar({
+    required this.settings,
+    required this.tabs,
+    required this.onSelected,
+    required this.elevated,
+  });
+
+  final CmsPageComponent settings;
+  final List<_ProductTabConfig> tabs;
+  final ValueChanged<String> onSelected;
+  final bool elevated;
+
+  @override
+  State<_ProductTabsBar> createState() => _ProductTabsBarState();
+}
+
+class _ProductTabsBarState extends State<_ProductTabsBar> {
+  late String _selectedTarget = widget.tabs.first.target;
+
+  @override
+  void didUpdateWidget(covariant _ProductTabsBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.tabs.any(
+      (_ProductTabConfig tab) => tab.target == _selectedTarget,
+    )) {
+      _selectedTarget = widget.tabs.first.target;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color active = _cmsColor(
+      widget.settings.string('active_color', '#1D1D1D'),
+      const Color(0xFF1D1D1D),
+    );
+    final Color inactive = _cmsColor(
+      widget.settings.string('inactive_color', '#6B6B6B'),
+      const Color(0xFF6B6B6B),
+    );
+    final double minimumWidth =
+        MediaQuery.sizeOf(context).width / widget.tabs.length.clamp(1, 3);
+    return Material(
+      color: Colors.white,
+      elevation: widget.elevated ? 2 : 0,
+      child: ListView.builder(
+        key: const Key('product-tabs'),
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.tabs.length,
+        itemBuilder: (BuildContext context, int index) {
+          final _ProductTabConfig tab = widget.tabs[index];
+          final bool selected = tab.target == _selectedTarget;
+          return SizedBox(
+            width: minimumWidth.clamp(108, 180).toDouble(),
+            child: InkWell(
+              key: Key('product-tab-${tab.target}-$index'),
+              onTap: () {
+                setState(() => _selectedTarget = tab.target);
+                widget.onSelected(tab.target);
+              },
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: <Widget>[
+                  Center(
+                    child: Text(
+                      tab.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: selected ? active : inactive,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  if (selected)
+                    Container(
+                      width: widget.settings
+                          .number('indicator_width', 96)
+                          .clamp(24, 160),
+                      height: 3,
+                      color: active,
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _PatPatProductSummary extends StatelessWidget {
@@ -762,15 +942,26 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
   }
 
   Future<List<CatalogProduct>> _load() async {
-    final page = await widget.repository.getProducts(
-      CatalogProductQuery(
-        perPage: 4,
-        categoryIds: widget.product.categories.map((category) => category.id),
-        excludeIds: <int>[widget.product.id],
-        sort: CatalogSort.popularity,
-      ),
-    );
+    if (AppConfig.isCmsPreview) return _previewRelatedProducts;
+    final page = await widget.repository
+        .getProducts(
+          CatalogProductQuery(
+            perPage: 4,
+            categoryIds: widget.product.categories.map(
+              (category) => category.id,
+            ),
+            excludeIds: <int>[widget.product.id],
+            sort: CatalogSort.popularity,
+          ),
+        )
+        .timeout(const Duration(seconds: 8));
     return page.items;
+  }
+
+  void _retry() {
+    setState(() {
+      _products = _load();
+    });
   }
 
   @override
@@ -794,6 +985,18 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
               ),
               if (snapshot.connectionState == ConnectionState.waiting)
                 const SizedBox(height: 180, child: Center(child: CircularProgressIndicator()))
+              else if (snapshot.hasError)
+                SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: TextButton.icon(
+                      key: const Key('related-products-retry'),
+                      onPressed: _retry,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                    ),
+                  ),
+                )
               else if (products.isNotEmpty)
                 GridView.builder(
                   shrinkWrap: true,
@@ -1145,8 +1348,10 @@ class _ProductOptionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? selected = controller.selectedAttributes[group.key];
+    final double chipHeight =
+        settings?.number('chip_height', 38).clamp(30, 56).toDouble() ?? 38;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -1199,7 +1404,7 @@ class _ProductOptionPicker extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 7),
           if (settings?.string('style', 'chips') == 'dropdown')
             DropdownButtonFormField<String>(
               initialValue: selected,
@@ -1224,8 +1429,8 @@ class _ProductOptionPicker extends StatelessWidget {
             )
           else
           Wrap(
-            spacing: 9,
-            runSpacing: 6,
+            spacing: 6,
+            runSpacing: 5,
             children: group.values
                 .map((ProductOptionValue option) {
                   final bool available = controller.isOptionAvailable(
@@ -1233,10 +1438,15 @@ class _ProductOptionPicker extends StatelessWidget {
                     option.value,
                   );
                   return SizedBox(
-                    height: settings?.number('chip_height', 44).clamp(32, 60) ?? 44,
+                    height: chipHeight,
                     child: ChoiceChip(
                       key: Key('product-option-${group.key}-${option.value}'),
                       label: Text(option.label),
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 5),
+                      visualDensity: const VisualDensity(
+                        horizontal: -2,
+                        vertical: -2,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           settings?.number('chip_radius', 22).clamp(0, 32) ?? 22,
@@ -1434,8 +1644,11 @@ class _DetailsSection extends StatelessWidget {
     final String description = _plainText(product.description);
     final bool showDescription = settings.boolean('show_description', true);
     final bool showAttributes = settings.boolean('show_attributes', true);
+    final List<CatalogProductAttribute> detailAttributes = product.attributes
+        .where((CatalogProductAttribute attribute) => !attribute.hasVariations)
+        .toList(growable: false);
     if ((!showDescription || description.isEmpty) &&
-        (!showAttributes || product.attributes.isEmpty)) {
+        (!showAttributes || detailAttributes.isEmpty)) {
       return const SizedBox.shrink();
     }
     final List<Widget> content = <Widget>[
@@ -1444,9 +1657,9 @@ class _DetailsSection extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           child: Text(description, style: const TextStyle(height: 1.6)),
         ),
-      if (showAttributes && product.attributes.isNotEmpty) ...<Widget>[
+      if (showAttributes && detailAttributes.isNotEmpty) ...<Widget>[
         if (showDescription && description.isNotEmpty) const Divider(height: 24),
-        for (final CatalogProductAttribute attribute in product.attributes)
+        for (final CatalogProductAttribute attribute in detailAttributes)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 5),
             child: Row(

@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 19;
+	private const VERSION = 20;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -251,6 +251,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'card_style', __( 'Card style', 'kidia-mobile-cms' ), 'select', 'outlined', array( 'minimal' => __( 'Minimal', 'kidia-mobile-cms' ), 'no_shadow' => __( 'No shadow', 'kidia-mobile-cms' ), 'outlined' => __( 'Outlined', 'kidia-mobile-cms' ), 'elevated' => __( 'Elevated', 'kidia-mobile-cms' ) ) ),
 			self::field( 'card_radius', __( 'Card radius', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 			self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 1, array(), 0.6, 1.8, 0.1 ),
+			self::field( 'enable_image_swipe', __( 'Swipe product images on the card', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'show_name', __( 'Show product name', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ),
 			self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ),
@@ -266,8 +267,8 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'pagination_spacing', __( 'Pagination spacing', 'kidia-mobile-cms' ), 'number', 16, array(), 0, 40 ),
 		);
 		$quick_add_keys = array( 'quick_add_enabled', 'quick_add_icon_variant', 'quick_add_icon_style', 'quick_add_icon_size', 'quick_add_icon_color', 'quick_add_show_background', 'quick_add_background_color', 'quick_add_background_size', 'quick_add_radius', 'quick_add_position', 'show_wishlist', 'product_wishlist_icon_variant', 'product_wishlist_icon_style', 'product_wishlist_icon_size', 'product_wishlist_icon_color', 'product_wishlist_show_background', 'product_wishlist_background_color', 'product_wishlist_background_size', 'product_wishlist_radius', 'product_wishlist_position' );
-		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
-		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
+		$catalog_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'enable_image_swipe', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge', 'pagination_mode', 'products_per_page', 'pagination_label', 'pagination_size', 'pagination_radius', 'pagination_color', 'pagination_text_color', 'pagination_spacing' ) );
+		$wishlist_grid_keys = array_merge( $quick_add_keys, array( 'columns', 'gap', 'card_style', 'card_radius', 'image_ratio', 'enable_image_swipe', 'show_name', 'show_price', 'show_regular_price', 'show_rating', 'show_badge' ) );
 		$catalog_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $catalog_grid_keys, true ) ) );
 		$wishlist_grid = array_values( array_filter( $common_grid, static fn ( array $field ): bool => in_array( $field['key'], $wishlist_grid_keys, true ) ) );
 		$wishlist_grid_defaults = array( 'gap' => 8, 'card_style' => 'minimal', 'card_radius' => 0, 'image_ratio' => 0.82, 'show_name' => false, 'show_regular_price' => false, 'show_rating' => false, 'show_badge' => false );
@@ -310,6 +311,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'columns', __( 'Columns', 'kidia-mobile-cms' ), 'number', 2, array(), 1, 3 ),
 			self::field( 'gap', __( 'Gap', 'kidia-mobile-cms' ), 'number', 8, array(), 0, 24 ),
 			self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.82, array(), 0.6, 1.8, 0.05 ),
+			self::field( 'enable_image_swipe', __( 'Swipe product images on the card', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'limit', __( 'Products count', 'kidia-mobile-cms' ), 'number', 4, array(), 2, 12 ),
 			self::field( 'show_name', __( 'Show product name', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ),
@@ -344,14 +346,14 @@ final class Kidia_Mobile_Page_Layout_Store {
 				self::element( 'product_grid', __( 'Product Grid', 'kidia-mobile-cms' ), 'dashicons-grid-view', $catalog_grid ),
 			),
 			'product' => array(
-				self::element( 'product_tabs', __( 'Product Tabs', 'kidia-mobile-cms' ), 'dashicons-index-card', array( self::field( 'sticky', __( 'Keep tabs visible while scrolling', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'overview_label', __( 'Overview label', 'kidia-mobile-cms' ), 'text', __( 'Overview', 'kidia-mobile-cms' ) ), self::field( 'reviews_label', __( 'Reviews label', 'kidia-mobile-cms' ), 'text', __( 'Reviews', 'kidia-mobile-cms' ) ), self::field( 'recommend_label', __( 'Recommend label', 'kidia-mobile-cms' ), 'text', __( 'Recommend', 'kidia-mobile-cms' ) ), self::field( 'active_color', __( 'Active tab color', 'kidia-mobile-cms' ), 'color', '#1D1D1D' ), self::field( 'inactive_color', __( 'Inactive tab color', 'kidia-mobile-cms' ), 'color', '#6B6B6B' ), self::field( 'indicator_width', __( 'Indicator width', 'kidia-mobile-cms' ), 'number', 96, array(), 24, 160 ), self::field( 'height', __( 'Tabs height', 'kidia-mobile-cms' ), 'number', 64, array(), 44, 88 ) ) ),
+				self::element( 'product_tabs', __( 'Product Tabs', 'kidia-mobile-cms' ), 'dashicons-index-card', array( self::field( 'sticky', __( 'Keep tabs visible while scrolling', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'tabs_json', __( 'Visible product tabs', 'kidia-mobile-cms' ), 'tabs', wp_json_encode( array( array( 'label' => __( 'Overview', 'kidia-mobile-cms' ), 'target' => 'overview', 'enabled' => true ), array( 'label' => __( 'Reviews', 'kidia-mobile-cms' ), 'target' => 'reviews', 'enabled' => true ), array( 'label' => __( 'Recommend', 'kidia-mobile-cms' ), 'target' => 'recommend', 'enabled' => true ) ) ) ), self::field( 'active_color', __( 'Active tab color', 'kidia-mobile-cms' ), 'color', '#1D1D1D' ), self::field( 'inactive_color', __( 'Inactive tab color', 'kidia-mobile-cms' ), 'color', '#6B6B6B' ), self::field( 'indicator_width', __( 'Indicator width', 'kidia-mobile-cms' ), 'number', 96, array(), 24, 160 ), self::field( 'height', __( 'Tabs height', 'kidia-mobile-cms' ), 'number', 64, array(), 44, 88 ) ) ),
 				self::element( 'image_gallery', __( 'Product Gallery', 'kidia-mobile-cms' ), 'dashicons-format-gallery', array( self::field( 'aspect_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.75, array(), 0.6, 1.8, 0.05 ), self::field( 'fit', __( 'Image fit', 'kidia-mobile-cms' ), 'select', 'contain', array( 'contain' => __( 'Contain', 'kidia-mobile-cms' ), 'cover' => __( 'Cover', 'kidia-mobile-cms' ) ) ), self::field( 'background_color', __( 'Gallery background', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ), self::field( 'show_thumbnails', __( 'Show thumbnails', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_indicators', __( 'Show indicators', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_counter', __( 'Show image counter', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'counter_background', __( 'Counter background', 'kidia-mobile-cms' ), 'color', '#8A8585' ), self::field( 'counter_text_color', __( 'Counter text color', 'kidia-mobile-cms' ), 'color', '#FFFFFF' ), self::field( 'enable_zoom', __( 'Enable zoom', 'kidia-mobile-cms' ), 'checkbox', false ) ) ),
 				self::element( 'product_summary', __( 'Product Information', 'kidia-mobile-cms' ), 'dashicons-info-outline', array( self::field( 'show_name', __( 'Show name', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_regular_price', __( 'Show regular price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_rating', __( 'Show rating', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_review_count', __( 'Show review count', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_sku', __( 'Show SKU', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_stock', __( 'Show stock', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_badge', __( 'Show badge', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_selected_color', __( 'Show selected color', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'price_size', __( 'Price size', 'kidia-mobile-cms' ), 'number', 25, array(), 14, 36 ), self::field( 'name_size', __( 'Product name size', 'kidia-mobile-cms' ), 'number', 18, array(), 12, 28 ) ) ),
-				self::element( 'variations', __( 'Variations', 'kidia-mobile-cms' ), 'dashicons-screenoptions', array( self::field( 'style', __( 'Selector style', 'kidia-mobile-cms' ), 'select', 'chips', array( 'chips' => __( 'Chips', 'kidia-mobile-cms' ), 'dropdown' => __( 'Dropdown', 'kidia-mobile-cms' ) ) ), self::field( 'show_size_chart', __( 'Show size chart link', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'size_chart_label', __( 'Size chart label', 'kidia-mobile-cms' ), 'text', __( 'Size chart', 'kidia-mobile-cms' ) ), self::field( 'chip_radius', __( 'Option radius', 'kidia-mobile-cms' ), 'number', 22, array(), 0, 32 ), self::field( 'chip_height', __( 'Option height', 'kidia-mobile-cms' ), 'number', 44, array(), 32, 60 ) ) ),
+				self::element( 'variations', __( 'Variations', 'kidia-mobile-cms' ), 'dashicons-screenoptions', array( self::field( 'style', __( 'Selector style', 'kidia-mobile-cms' ), 'select', 'chips', array( 'chips' => __( 'Chips', 'kidia-mobile-cms' ), 'dropdown' => __( 'Dropdown', 'kidia-mobile-cms' ) ) ), self::field( 'show_size_chart', __( 'Show size chart link', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'size_chart_label', __( 'Size chart label', 'kidia-mobile-cms' ), 'text', __( 'Size chart', 'kidia-mobile-cms' ) ), self::field( 'chip_radius', __( 'Option radius', 'kidia-mobile-cms' ), 'number', 22, array(), 0, 32 ), self::field( 'chip_height', __( 'Option height', 'kidia-mobile-cms' ), 'number', 38, array(), 30, 56 ) ) ),
 				self::element( 'purchase_bar', __( 'Quantity', 'kidia-mobile-cms' ), 'dashicons-cart', array( self::field( 'show_quantity', __( 'Show quantity', 'kidia-mobile-cms' ), 'checkbox', false ) ) ),
 				self::element( 'description', __( 'Description and Details', 'kidia-mobile-cms' ), 'dashicons-text-page', array( self::field( 'accordion', __( 'Use compact accordion rows', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'details_label', __( 'Details label', 'kidia-mobile-cms' ), 'text', __( 'Product Details', 'kidia-mobile-cms' ) ), self::field( 'show_description', __( 'Show description', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_attributes', __( 'Show attributes', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
 				self::element( 'reviews', __( 'Reviews', 'kidia-mobile-cms' ), 'dashicons-star-filled', array( self::field( 'title', __( 'Reviews title', 'kidia-mobile-cms' ), 'text', __( 'Reviews', 'kidia-mobile-cms' ) ), self::field( 'show_summary', __( 'Show rating summary', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_fit_summary', __( 'Show size and fit summary', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'fit_small_percent', __( 'Small (%)', 'kidia-mobile-cms' ), 'number', 1, array(), 0, 100 ), self::field( 'fit_true_percent', __( 'True to size (%)', 'kidia-mobile-cms' ), 'number', 99, array(), 0, 100 ), self::field( 'fit_large_percent', __( 'Large (%)', 'kidia-mobile-cms' ), 'number', 0, array(), 0, 100 ) ) ),
-				self::element( 'related_products', __( 'Related Products', 'kidia-mobile-cms' ), 'dashicons-products', array( self::field( 'title', __( 'Section title', 'kidia-mobile-cms' ), 'text', __( 'You may also like', 'kidia-mobile-cms' ) ), self::field( 'columns', __( 'Columns', 'kidia-mobile-cms' ), 'number', 2, array(), 1, 3 ), self::field( 'gap', __( 'Gap', 'kidia-mobile-cms' ), 'number', 2, array(), 0, 24 ), self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.75, array(), 0.6, 1.8, 0.05 ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_quick_add', __( 'Show quick add', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
+				self::element( 'related_products', __( 'Related Products', 'kidia-mobile-cms' ), 'dashicons-products', array( self::field( 'title', __( 'Section title', 'kidia-mobile-cms' ), 'text', __( 'You may also like', 'kidia-mobile-cms' ) ), self::field( 'columns', __( 'Columns', 'kidia-mobile-cms' ), 'number', 2, array(), 1, 3 ), self::field( 'gap', __( 'Gap', 'kidia-mobile-cms' ), 'number', 2, array(), 0, 24 ), self::field( 'image_ratio', __( 'Image ratio', 'kidia-mobile-cms' ), 'number', 0.75, array(), 0.6, 1.8, 0.05 ), self::field( 'enable_image_swipe', __( 'Swipe product images on the card', 'kidia-mobile-cms' ), 'checkbox', false ), self::field( 'show_price', __( 'Show price', 'kidia-mobile-cms' ), 'checkbox', true ), self::field( 'show_quick_add', __( 'Show quick add', 'kidia-mobile-cms' ), 'checkbox', true ) ) ),
 			),
 			'wishlist' => array(
 				self::element( 'sign_in_state', __( 'Sign-in Wishlist', 'kidia-mobile-cms' ), 'dashicons-lock', $wishlist_message_fields( __( 'Sign in to view your wishlist', 'kidia-mobile-cms' ), '', __( 'Sign In', 'kidia-mobile-cms' ), 'sign_in' ) ),
@@ -440,6 +442,16 @@ final class Kidia_Mobile_Page_Layout_Store {
 			$type = 'wishlist' === $page ? sanitize_key( (string) ( $element['type'] ?? $id ) ) : $id;
 			if ( isset( $definitions[ $type ] ) ) {
 				$merged = $this->merge_element( $definitions[ $type ], $element );
+				if ( 'product' === $page && 'product_tabs' === $type && (int) ( $saved['version'] ?? 1 ) < 20 ) {
+					$legacy_settings = is_array( $element['settings'] ?? null ) ? $element['settings'] : array();
+					if ( empty( $legacy_settings['tabs_json'] ) ) {
+						$merged['settings']['tabs_json'] = wp_json_encode( array(
+							array( 'label' => sanitize_text_field( (string) ( $legacy_settings['overview_label'] ?? __( 'Overview', 'kidia-mobile-cms' ) ) ), 'target' => 'overview', 'enabled' => true ),
+							array( 'label' => sanitize_text_field( (string) ( $legacy_settings['reviews_label'] ?? __( 'Reviews', 'kidia-mobile-cms' ) ) ), 'target' => 'reviews', 'enabled' => true ),
+							array( 'label' => sanitize_text_field( (string) ( $legacy_settings['recommend_label'] ?? __( 'Recommend', 'kidia-mobile-cms' ) ) ), 'target' => 'recommend', 'enabled' => true ),
+						) );
+					}
+				}
 				$merged['id'] = $id ?: $type;
 				$merged['type'] = $type;
 				$elements[] = $merged;
@@ -757,6 +769,19 @@ final class Kidia_Mobile_Page_Layout_Store {
 				case 'json':
 					$decoded = json_decode( (string) $value, true );
 					$clean[ $key ] = is_array( $decoded ) ? wp_json_encode( $decoded ) : (string) $field['default'];
+					break;
+				case 'tabs':
+					$decoded = json_decode( (string) $value, true );
+					$tabs = array();
+					foreach ( is_array( $decoded ) ? array_slice( $decoded, 0, 10 ) : array() as $tab ) {
+						if ( ! is_array( $tab ) ) { continue; }
+						$target = sanitize_key( (string) ( $tab['target'] ?? '' ) );
+						if ( ! in_array( $target, array( 'overview', 'variations', 'description', 'reviews', 'recommend' ), true ) ) { continue; }
+						$label = sanitize_text_field( (string) ( $tab['label'] ?? '' ) );
+						if ( '' === $label ) { continue; }
+						$tabs[] = array( 'label' => $label, 'target' => $target, 'enabled' => ! empty( $tab['enabled'] ) );
+					}
+					$clean[ $key ] = wp_json_encode( ! empty( $tabs ) ? $tabs : json_decode( (string) $field['default'], true ) );
 					break;
 				case 'image': $clean[ $key ] = esc_url_raw( (string) $value ); break;
 				case 'select': $clean[ $key ] = isset( $field['options'][ sanitize_key( (string) $value ) ] ) ? sanitize_key( (string) $value ) : $field['default']; break;

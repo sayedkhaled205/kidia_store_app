@@ -13,6 +13,7 @@ import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dar
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
 
 const List<CatalogProduct> _previewWishlistProducts = <CatalogProduct>[
   CatalogProduct(
@@ -762,6 +763,7 @@ class _WishlistRecommendationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
+    final List<String> imageUrls = _wishlistProductImageUrls(product);
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -777,8 +779,12 @@ class _WishlistRecommendationCard extends StatelessWidget {
                           context,
                         ).colorScheme.surfaceContainerLow,
                       )
-                    : AppNetworkImage(
-                        imageUrl: imageUrl,
+                    : ProductImageSwiper(
+                        imageUrls: imageUrls,
+                        enabled: settings.boolean(
+                          'enable_image_swipe',
+                          false,
+                        ),
                         fit: BoxFit.cover,
                         semanticLabel: product.name,
                       ),
@@ -1051,6 +1057,7 @@ class _WishlistProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
+    final List<String> imageUrls = _wishlistProductImageUrls(product);
     final String cardStyle = settings.string('card_style', 'outlined');
     return Card(
       key: instanceId == 'wishlist_grid'
@@ -1079,8 +1086,12 @@ class _WishlistProductCard extends StatelessWidget {
                       backgroundColor: colors.surfaceContainerLow,
                     )
                   else
-                    AppNetworkImage(
-                      imageUrl: imageUrl,
+                    ProductImageSwiper(
+                      imageUrls: imageUrls,
+                      enabled: settings.boolean(
+                        'enable_image_swipe',
+                        false,
+                      ),
                       fit: BoxFit.cover,
                       semanticLabel: product.name,
                     ),
@@ -1191,6 +1202,18 @@ class _WishlistProductCard extends StatelessWidget {
     );
   }
 }
+
+List<String> _wishlistProductImageUrls(CatalogProduct product) =>
+    product.images
+        .expand(
+          (image) => <String>[
+            image.source.toString(),
+            if (image.thumbnail != null) image.thumbnail.toString(),
+          ],
+        )
+        .where((String url) => url.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
 
 Widget _positionedWishlistAction(String position, Widget child) {
   final bool top = position.startsWith('top_');
