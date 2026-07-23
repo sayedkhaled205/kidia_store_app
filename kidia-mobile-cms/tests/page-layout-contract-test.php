@@ -123,6 +123,13 @@ $wishlist_custom['elements'][ $wishlist_empty_index ]['settings']['button_action
 $store->save_layout( 'wishlist', $wishlist_custom );
 $saved_wishlist = $store->get_layout( 'wishlist' );
 kidia_page_assert( 'sign_in' === $saved_wishlist['elements'][ $wishlist_empty_index ]['settings']['button_action'], 'Empty Wishlist must save Sign in as the second allowed button action.' );
+$wishlist_duplicate = $saved_wishlist['elements'][ $wishlist_empty_index ];
+$wishlist_duplicate['id'] = 'empty_state__second';
+$saved_wishlist['elements'][] = $wishlist_duplicate;
+$store->save_layout( 'wishlist', $saved_wishlist );
+$duplicated_wishlist = $store->get_layout( 'wishlist' );
+$empty_instances = array_values( array_filter( $duplicated_wishlist['elements'], static fn ( array $element ): bool => 'empty_state' === ( $element['type'] ?? '' ) ) );
+kidia_page_assert( 2 === count( $empty_instances ), 'Wishlist states must preserve duplicated elements with unique IDs and a shared renderer type.' );
 unset( $GLOBALS['kidia_page_options']['kidia_mobile_page_layout_wishlist'] );
 $product_default = $store->get_layout( 'product' );
 $product_ids = array_column( $product_default['elements'], 'id' );
@@ -199,7 +206,7 @@ foreach ( array( 'filter_price', 'filter_sale', 'filter_brand', 'filter_size', '
 $expected = array(
 	'catalog' => array( 'filter_bar', 'product_grid' ),
 	'product' => array( 'product_tabs', 'image_gallery', 'product_summary', 'variations', 'purchase_bar', 'description', 'reviews', 'related_products' ),
-	'wishlist' => array( 'wishlist_grid', 'empty_state' ),
+		'wishlist' => array( 'sign_in_state', 'sign_in_recommendations', 'empty_state', 'empty_recommendations', 'wishlist_grid', 'products_recommendations' ),
 	'account' => array( 'account_summary', 'account_menu', 'logout_button' ),
 );
 foreach ( $expected as $page => $required ) {

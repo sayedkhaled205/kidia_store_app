@@ -61,7 +61,7 @@ void main() {
 
     expect(find.byKey(const Key('wishlist-grid')), findsOneWidget);
     expect(find.byKey(const Key('wishlist-empty')), findsNothing);
-    expect(find.text('Everyday Jacket'), findsOneWidget);
+    expect(find.text('Everyday Jacket'), findsNothing);
     expect(find.text(r'$85.00'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
     expect(find.text('1 item'), findsNothing);

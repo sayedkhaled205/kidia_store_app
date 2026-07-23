@@ -697,7 +697,67 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _item(BuildContext context, String item, Color color) {
-    if (item == 'title') return Text(_header.string('title', defaultTitle), key: const Key('commerce-app-bar-title'), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _color(_header.string('title_color', '#1F2933'), color), fontWeight: FontWeight.w700));
+    if (item == 'title') {
+      String title = _header.string('title', defaultTitle);
+      final String transform = _header.string('title_transform', 'none');
+      if (transform == 'uppercase') {
+        title = title.toUpperCase();
+      } else if (transform == 'lowercase') {
+        title = title.toLowerCase();
+      }
+      final String alignment = _header.string('title_alignment', 'center');
+      final TextAlign textAlign = alignment == 'start'
+          ? TextAlign.start
+          : alignment == 'end'
+          ? TextAlign.end
+          : TextAlign.center;
+      final int weight = _header.number('title_font_weight', 700).round();
+      return Transform.translate(
+        offset: Offset(
+          _header.number('title_offset_x', 0).clamp(-40, 40).toDouble(),
+          _header.number('title_offset_y', 0).clamp(-40, 40).toDouble(),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.sizeOf(context).width *
+                _header
+                    .number('title_max_width_percent', 100)
+                    .clamp(20, 100) /
+                100,
+          ),
+          child: Text(
+            title,
+            key: const Key('commerce-app-bar-title'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: textAlign,
+            style: TextStyle(
+              color: _color(
+                _header.string('title_color', '#1F2933'),
+                color,
+              ),
+              fontSize: _header
+                  .number('title_font_size', 18)
+                  .clamp(10, 42)
+                  .toDouble(),
+              fontWeight: FontWeight.values.firstWhere(
+                (FontWeight value) => value.value == weight,
+                orElse: () => FontWeight.w700,
+              ),
+              letterSpacing: _header
+                  .number('title_letter_spacing', 0)
+                  .clamp(-2, 8)
+                  .toDouble(),
+              height: _header
+                  .number('title_line_height', 1.2)
+                  .clamp(.8, 2)
+                  .toDouble(),
+            ),
+          ),
+        ),
+      );
+    }
     if (item == 'subtitle') return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.
     if (item == 'logo') {
       final String url = _header.string('logo_url', '');

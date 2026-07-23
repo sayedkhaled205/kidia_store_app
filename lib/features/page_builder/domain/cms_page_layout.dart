@@ -74,7 +74,14 @@ class CmsPageLayout {
         'reviews',
         'related_products',
       ],
-      'wishlist': <String>['wishlist_grid', 'empty_state'],
+      'wishlist': <String>[
+        'sign_in_state',
+        'sign_in_recommendations',
+        'empty_state',
+        'empty_recommendations',
+        'wishlist_grid',
+        'products_recommendations',
+      ],
       'account': <String>[
         'account_summary',
         'account_menu',
@@ -96,7 +103,7 @@ class CmsPageLayout {
 		'compact_border_width': 0,
 		'compact_border_color': '#E2E6E4',
 		'compact_shadow': 'subtle',
-		'height': page == 'home' ? 112 : 64,
+		'height': page == 'home' ? 112 : page == 'wishlist' ? 76 : 64,
 		'margin_top': 0,
 		'margin_bottom': 0,
 		'row_gap': page == 'home' ? 4 : 8,
@@ -106,13 +113,22 @@ class CmsPageLayout {
 		'icon_color': '#1F2933',
 		'icon_size': 24,
 		'icon_gap': 6,
+		'title_font_size': 18,
+		'title_font_weight': page == 'wishlist' ? '600' : '700',
+		'title_alignment': 'center',
+		'title_max_width_percent': 100,
+		'title_letter_spacing': 0,
+		'title_line_height': 1.2,
+		'title_offset_x': 0,
+		'title_offset_y': 0,
+		'title_transform': 'none',
 		'logo_text': 'Kidia',
 		'logo_text_color': '#1F2933',
 		'search_style': page == 'home' ? 'bar' : 'icon',
 		'search_width_percent': 100,
 		'search_height': 40,
 		'search_radius': page == 'home' ? 18 : 14,
-		'show_cart_badge': false,
+		'show_cart_badge': page == 'wishlist',
 		'cart_badge_shape': 'circle',
 		'cart_badge_size': 18,
 		'cart_badge_background': '#E94B5F',
@@ -151,8 +167,12 @@ class CmsPageLayout {
 	};
     return CmsPageLayout(
       page: page,
-      settings: const <String, dynamic>{
+      settings: <String, dynamic>{
         'page_background_color': '#FFFFFF',
+        if (page == 'wishlist') ...<String, dynamic>{
+          'wishlist_access_mode': 'sign_in_required',
+          'wishlist_preview_state': 'products',
+        },
       },
 	  header: CmsPageComponent(
         id: 'header',
@@ -168,6 +188,8 @@ class CmsPageLayout {
               enabled: true,
 			  settings: page == 'product'
 			      ? _fallbackProductSettings(id)
+			      : page == 'wishlist'
+			      ? _fallbackWishlistSettings(id)
 			      : const <String, dynamic>{'background_color': '#FFFFFF'},
             ),
           )
@@ -195,6 +217,81 @@ class CmsPageLayout {
 		return settings[id] ?? const <String, dynamic>{'background_color': '#FFFFFF'};
 	}
 
+	static Map<String, dynamic> _fallbackWishlistSettings(String id) {
+		const Map<String, dynamic> messageBase = <String, dynamic>{
+			'illustration_url': '',
+			'illustration_size': 104,
+			'top_spacing': 56,
+			'title_size': 18,
+			'title_weight': '700',
+			'description_size': 14,
+			'content_gap': 16,
+			'show_button': true,
+			'button_width': 220,
+			'button_height': 52,
+			'button_radius': 26,
+			'button_style': 'outline',
+			'button_color': '#FFFFFF',
+			'button_text_color': '#1D1D1D',
+			'button_border_color': '#1D1D1D',
+			'button_border_width': 1.5,
+			'bottom_spacing': 96,
+			'background_color': '#FFFFFF',
+		};
+		const Map<String, dynamic> recommendations = <String, dynamic>{
+			'title': 'You may also like',
+			'title_size': 20,
+			'title_weight': '700',
+			'columns': 2,
+			'gap': 8,
+			'image_ratio': .82,
+			'limit': 4,
+			'show_name': false,
+			'show_price': true,
+			'show_quick_add': true,
+			'section_padding': 16,
+			'title_bottom_spacing': 18,
+			'background_color': '#FFFFFF',
+		};
+		if (id == 'sign_in_state') {
+			return <String, dynamic>{
+				...messageBase,
+				'title': 'Sign in to view your wishlist',
+				'description': '',
+				'show_description': false,
+				'button_label': 'Sign In',
+				'button_action': 'sign_in',
+			};
+		}
+		if (id == 'empty_state') {
+			return <String, dynamic>{
+				...messageBase,
+				'title': 'Your wishlist is empty',
+				'description': 'Add items here by clicking the little heart!',
+				'show_description': true,
+				'button_label': 'Go Shopping',
+				'button_action': 'shopping',
+			};
+		}
+		if (id.endsWith('_recommendations')) return recommendations;
+		if (id == 'wishlist_grid') {
+			return const <String, dynamic>{
+				'columns': 2,
+				'gap': 8,
+				'card_style': 'minimal',
+				'card_radius': 0,
+				'image_ratio': .82,
+				'show_price': true,
+				'show_regular_price': false,
+				'show_rating': false,
+				'show_badge': false,
+				'quick_add_enabled': true,
+				'background_color': '#FFFFFF',
+			};
+		}
+		return const <String, dynamic>{'background_color': '#FFFFFF'};
+	}
+
 	static Map<String, dynamic> _fallbackHeaderLayout(String page) {
 		Map<String, dynamic> column(double width, List<String> items, [String align = 'center']) => <String, dynamic>{'width': width, 'align': align, 'items': items};
 		Map<String, dynamic> row(List<Map<String, dynamic>> columns) => <String, dynamic>{'columns': columns};
@@ -203,7 +300,7 @@ class CmsPageLayout {
 			'catalog': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['cart', 'search'], 'left'), column(33.34, <String>['title']), column(33.33, <String>['back'], 'right')])]},
 			'product': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['back'], 'left'), column(33.34, <String>[]), column(33.33, <String>['support', 'cart'], 'right')])]},
 			'category': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['search', 'cart'], 'left'), column(33.34, <String>['title']), column(33.33, <String>[], 'right')])]},
-			'wishlist': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>['back'], 'left'), column(33.34, <String>['title']), column(33.33, <String>['cart'], 'right')])]},
+			'wishlist': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>[], 'left'), column(33.34, <String>['title']), column(33.33, <String>['cart'], 'right')])]},
 			'account': <String, dynamic>{'rows': <Map<String, dynamic>>[row(<Map<String, dynamic>>[column(33.33, <String>[], 'left'), column(33.34, <String>['title']), column(33.33, <String>['orders'], 'right')])]},
 		};
 		return layouts[page] ?? layouts['catalog']!;
