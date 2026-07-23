@@ -702,17 +702,20 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
-    final String visibleUnits = _enumString(
-      data,
-      'visible_units',
-      const <String>{
-        'days',
-        'days_hours',
-        'days_hours_minutes',
-        'days_hours_minutes_seconds',
-      },
-      fallback: '',
-    );
+    const Set<String> allowedVisibleUnits = <String>{
+      'days',
+      'days_hours',
+      'days_hours_minutes',
+      'days_hours_minutes_seconds',
+    };
+    final String? savedVisibleUnits = _optionalString(data, 'visible_units');
+    if (savedVisibleUnits != null &&
+        !allowedVisibleUnits.contains(savedVisibleUnits)) {
+      throw FormatException(
+        'Unsupported value for visible_units: $savedVisibleUnits',
+      );
+    }
+    final String visibleUnits = savedVisibleUnits ?? '';
     final bool usesVisibleUnits = visibleUnits.isNotEmpty;
     return CountdownBlock(
       id: id,
