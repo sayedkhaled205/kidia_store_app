@@ -836,6 +836,10 @@ function runCategoryBuilderTest() {
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 2, "Root categories must render as app-style rows.");
   assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Subcategories start collapsed.");
   assert.equal(window.document.querySelectorAll(".kidia-category-image-actions button:not([hidden])").length, 6, "Both image-source buttons must remain visible for every category and subcategory.");
+  assert.equal(window.document.querySelector(".kidia-category-preview-expand .kidia-category-preview-material-icon").textContent.codePointAt(0), 0xF82B, "Fallback category rows must use Flutter's keyboard_arrow_down_rounded glyph.");
+  assert.equal(window.document.querySelector(".kidia-category-preview-chevron").textContent.codePointAt(0), 0xF63B, "Fallback leaf rows must use Flutter's chevron_right_rounded glyph.");
+  assert.doesNotMatch(readAsset("category-builder.js"), /<span>⌄<\/span>|kidia-category-preview-chevron">‹/, "Fallback category rows must not substitute Unicode lookalikes for Flutter icons.");
+  assert.match(readAsset("category-builder.css"), /Kidia Category Material Icons[\s\S]*MaterialIcons-Regular\.otf[\s\S]*kidia-category-preview-expand[^}]*background:\s*transparent/, "Fallback arrows must use the bundled Flutter font without the old filled circle.");
 
 	const layout = window.document.querySelector('[name="category_general[category_layout]"]');
 	["visual_grid", "circular_grid", "compact_grid", "sidebar", "default"].forEach((value) => {

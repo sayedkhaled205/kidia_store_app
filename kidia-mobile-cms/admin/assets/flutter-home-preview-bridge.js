@@ -14,9 +14,11 @@
 	var frameOrigin = window.location.origin;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
 	function waitForFlutter() {
-		frame.hidden = true;
+		// Keep the real Flutter surface visible while its own loading state is
+		// shown. An HTML replica can drift from the mobile widgets.
+		frame.hidden = false;
 		frame.setAttribute("aria-busy", "true");
-		if (fallback) { fallback.hidden = false; }
+		if (fallback) { fallback.hidden = true; }
 	}
 	function showFlutter() {
 		window.requestAnimationFrame(function () {

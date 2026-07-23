@@ -249,7 +249,7 @@
 		tile.append(buildArtwork(card, 78));
 		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
 		if (String(setting("show_arrow")) !== "0") {
-			tile.append(editorChildren.length ? '<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span>⌄</span></button>' : '<span class="kidia-category-preview-chevron">‹</span>');
+			tile.append(editorChildren.length ? '<button type="button" class="kidia-category-preview-expand" aria-label="Toggle subcategories"><span class="kidia-category-preview-material-icon">&#xF82B;</span></button>' : '<span class="kidia-category-preview-chevron kidia-category-preview-material-icon">&#xF63B;</span>');
 		}
 		branch.append(tile);
 

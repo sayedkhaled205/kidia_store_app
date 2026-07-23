@@ -60,6 +60,9 @@ test("generic Flutter preview sends canonical state as soon as Flutter is ready"
     </div>
     <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
   assert.equal(messages.length, 0);
+  assert.equal(messages.frame.hidden, false, "The exact Flutter surface stays visible while loading.");
+  assert.equal(messages.frame.getAttribute("aria-busy"), "true");
+  assert.equal(messages.frame.nextElementSibling.hidden, true, "The approximate HTML replica must stay hidden.");
   markFlutterReady(messages);
   await settle();
   assert.equal(messages.length, 1);
@@ -115,6 +118,8 @@ test("Category Flutter preview sends canonical current fields immediately", asyn
       <input name="category_general[show_arrow]" type="checkbox" checked>
     </form></div>
     <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+  assert.equal(messages.frame.hidden, false);
+  assert.equal(messages.frame.nextElementSibling.hidden, true);
   markFlutterReady(messages);
   await settle();
   assert.equal(messages.length, 1);
@@ -129,6 +134,8 @@ test("Home Flutter preview sends canonical layout and blocks on its initial fram
     <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`, (window) => {
       window.kidiaHomePreviewBlocks = [{ id: "hero", type: "hero_slider", enabled: true, settings: {} }];
     });
+  assert.equal(messages.frame.hidden, false);
+  assert.equal(messages.frame.nextElementSibling.hidden, true);
   markFlutterReady(messages);
   await settle();
   assert.equal(messages.length, 1);
@@ -150,13 +157,18 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
   assert.match(index, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
   assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(version\)/s);
   assert.match(bootstrap, /mainJsPath.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
+  for (const bridge of ["flutter-preview-bridge.js", "flutter-category-preview-bridge.js", "flutter-home-preview-bridge.js"]) {
+    const source = fs.readFileSync(path.join(assets, bridge), "utf8");
+    assert.doesNotMatch(source, /frame\.hidden\s*=\s*true/, `${bridge} must not replace Flutter with an HTML replica while loading.`);
+    assert.doesNotMatch(source, /fallback\.hidden\s*=\s*false/, `${bridge} must keep the approximate HTML replica hidden.`);
+  }
 });
 
 test("Flutter web shell repeats readiness only after its rendered view mounts", async () => {
   const index = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "index.html"), "utf8");
   const script = index.match(/<script>([\s\S]*startKidiaPreview[\s\S]*?)<\/script>/)?.[1];
   assert.ok(script);
-  const dom = new JSDOM("<!doctype html><body></body>", {
+  const dom = new JSDOM('<!doctype html><body><div id="kidia-flutter-loading">Loading exact Flutter preview…</div></body>', {
     runScripts: "outside-only",
     url: "https://store.example/preview/index.html?page=home&v=1.30.63",
   });
@@ -166,9 +178,11 @@ test("Flutter web shell repeats readiness only after its rendered view mounts", 
   window.postMessage = (message) => messages.push(JSON.parse(message));
   window.eval(script);
   assert.equal(messages.length, 0, "Readiness cannot be announced before Flutter mounts");
+  assert.ok(window.document.getElementById("kidia-flutter-loading"), "The exact preview displays an honest loading state.");
   window.document.body.appendChild(window.document.createElement("flutter-view"));
   await Promise.resolve();
   await Promise.resolve();
+  assert.equal(window.document.getElementById("kidia-flutter-loading"), null, "The loading state disappears only after Flutter mounts.");
   assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
   const firstReadyCount = messages.length;
   window.dispatchEvent(new window.MessageEvent("message", {
