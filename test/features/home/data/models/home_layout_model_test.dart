@@ -311,6 +311,38 @@ void main() {
       expect(block.expiredText, 'Offer ended');
     });
 
+    test('uses the cumulative countdown unit selection when provided', () {
+      final layout = HomeLayoutModel.fromJson(
+        <String, dynamic>{
+          'version': 4,
+          'page': 'home',
+          'locale': 'en',
+          'updated_at': '2026-07-23T12:00:00Z',
+          'blocks': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'countdown-units',
+              'type': 'countdown',
+              'enabled': true,
+              'data': <String, dynamic>{
+                'visible_units': 'days_hours_minutes',
+                // Conflicting legacy flags prove the canonical dropdown wins.
+                'show_days': false,
+                'show_hours': false,
+                'show_minutes': false,
+                'show_seconds': true,
+              },
+            },
+          ],
+        },
+      );
+
+      final CountdownBlock countdown = layout.blocks.single as CountdownBlock;
+      expect(countdown.showDays, isTrue);
+      expect(countdown.showHours, isTrue);
+      expect(countdown.showMinutes, isTrue);
+      expect(countdown.showSeconds, isFalse);
+    });
+
     test('parses quick links and flexible banner grids', () {
       final layout = HomeLayoutModel.fromJson(<String, dynamic>{
         'version': 4,
