@@ -7,14 +7,12 @@ on:
       - agent/header-product-tabs-controls
       - agent/fix-preview-wishlist-toolbar
       - agent/fix-home-preview-content
-      - agent/header-row-layout-controls
     paths:
       - 'lib/**'
       - 'web/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
       - 'tool/build_cms_flutter_preview.sh'
-      - '.github/workflows/rebuild-cms-preview.yml'
 
 permissions:
   contents: write
