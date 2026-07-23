@@ -369,7 +369,24 @@
 	width: min(100%, var(--kidia-settings-control-width)) !important;
 	max-width: var(--kidia-settings-control-width) !important;
 	border-radius: var(--kidia-settings-control-radius) !important;
-	font-size: 14px !important;
+	font-size: 13px !important;
+	font-weight: 400 !important;
+}
+
+/* Field values stay visually secondary to labels across every CMS builder. */
+:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
+	:is(
+		input[type="text"],
+		input[type="url"],
+		input[type="number"],
+		input[type="datetime-local"],
+		input[type="email"],
+		input[type="search"],
+		select,
+		textarea
+	) {
+	font-size: 13px !important;
+	font-weight: 400 !important;
 }
 
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder)
@@ -475,3 +492,9 @@
 	}
 }
 .kidia-wishlist-access-mode .kidia-category-navigation-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:18px}.kidia-wishlist-access-mode .kidia-category-navigation-modes label{position:relative}.kidia-wishlist-access-mode .kidia-category-navigation-modes input{position:absolute;opacity:0}.kidia-wishlist-access-mode .kidia-category-navigation-modes span{display:grid;grid-template-columns:1fr auto;gap:5px 12px;min-height:76px;padding:16px;border:2px solid #dbe7e4;border-radius:12px;background:#fff;cursor:pointer}.kidia-wishlist-access-mode .kidia-category-navigation-modes small{grid-column:1/-1;color:#60706c}.kidia-wishlist-access-mode .kidia-category-navigation-modes input:checked+span{border-color:#2f8877;background:#eef8f5}@media(max-width:782px){.kidia-wishlist-access-mode .kidia-category-navigation-modes{grid-template-columns:1fr}}
+.kidia-wishlist-access-mode .kidia-wishlist-access-options{padding-bottom:10px}
+.kidia-wishlist-preview-heading{display:flex;flex-direction:column;gap:4px;margin:4px 18px 0;padding-top:16px;border-top:1px solid #dbe7e4;color:#315f55}
+.kidia-wishlist-preview-heading small{color:#60706c;font-weight:400}
+.kidia-wishlist-access-mode .kidia-wishlist-preview-modes{padding-top:12px}
+.kidia-wishlist-access-mode .kidia-wishlist-preview-modes span{background:#f8fbfa}
+.kidia-page-elements>.kidia-page-card[hidden],.kidia-page-elements>.is-wishlist-state-hidden{display:none!important}
