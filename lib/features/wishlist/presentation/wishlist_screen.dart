@@ -587,6 +587,7 @@ class _WishlistMessage extends StatelessWidget {
 
 class _WishlistRecommendations extends StatefulWidget {
   const _WishlistRecommendations({
+    super.key,
     required this.repository,
     required this.settings,
     this.onProductTap,
