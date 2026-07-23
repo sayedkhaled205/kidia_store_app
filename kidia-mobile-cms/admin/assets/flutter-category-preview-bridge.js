@@ -8,7 +8,7 @@
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
 	var frameOrigin = window.location.origin;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
-	function waitForFlutter(){frame.hidden=true;frame.setAttribute("aria-busy","true");if(fallback){fallback.hidden=false;}}
+	function waitForFlutter(){frame.hidden=false;frame.setAttribute("aria-busy","true");if(fallback){fallback.hidden=true;}}
 	function showFlutter(){window.requestAnimationFrame(function(){window.requestAnimationFrame(function(){frame.hidden=false;frame.removeAttribute("aria-busy");if(fallback){fallback.hidden=true;}});});}
 	function setPath(target,name,value){var keys=String(name).replace(/\]/g,"").split("[");var cursor=target;keys.forEach(function(key,index){var last=index===keys.length-1;var next=!last&&/^\d+$/.test(keys[index+1]);if(last){cursor[key]=value;return;}if(!cursor[key]||typeof cursor[key]!=="object"){cursor[key]=next?[]:{};}cursor=cursor[key];});}
 	function serialize(){var result={};Array.prototype.forEach.call(form.elements,function(field){if(!field.name||field.disabled){return;}if((field.type==="checkbox"||field.type==="radio")&&!field.checked){return;}if(field.name.indexOf("layout[")!==0&&field.name.indexOf("category_general[")!==0){return;}setPath(result,field.name,field.value);});return result;}

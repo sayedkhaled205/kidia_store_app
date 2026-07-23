@@ -44,9 +44,34 @@
       width: 100%;
       height: 100%;
     }
+    #kidia-flutter-loading {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-content: center;
+      gap: 12px;
+      background: #fff;
+      color: #2f806e;
+      font: 700 15px/1.4 Arial, sans-serif;
+      text-align: center;
+    }
+    #kidia-flutter-loading::before {
+      width: 30px;
+      height: 30px;
+      margin: 0 auto;
+      border: 3px solid #d9ebe6;
+      border-top-color: #2f806e;
+      border-radius: 50%;
+      content: "";
+      animation: kidia-preview-spin .8s linear infinite;
+    }
+    #kidia-flutter-loading.is-error::before { display: none; }
+    @keyframes kidia-preview-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div id="kidia-flutter-loading" role="status" aria-live="polite">Loading exact Flutter preview…</div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -67,6 +92,8 @@
         const renderedView = document.querySelector('flutter-view, flt-glass-pane');
         if (!renderedView) return false;
         flutterRendered = true;
+        const loading = document.getElementById('kidia-flutter-loading');
+        if (loading) loading.remove();
         requestAnimationFrame(() => requestAnimationFrame(() => {
           window.parent.postMessage(JSON.stringify({
             type: 'kidia-flutter-preview-ready'
@@ -107,6 +134,12 @@
       window.__kidiaPreviewVersion = version;
       const bootstrap = document.createElement('script');
       bootstrap.src = 'flutter_bootstrap.js' + (version ? '?v=' + encodeURIComponent(version) : '');
+      bootstrap.addEventListener('error', () => {
+        const loading = document.getElementById('kidia-flutter-loading');
+        if (!loading) return;
+        loading.classList.add('is-error');
+        loading.textContent = 'Flutter preview could not load. Refresh this page to retry.';
+      });
       document.body.appendChild(bootstrap);
     })();
   </script>
