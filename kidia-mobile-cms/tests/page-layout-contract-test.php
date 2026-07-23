@@ -40,9 +40,12 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 $store = new Kidia_Mobile_Page_Layout_Store();
 $wishlist_default = $store->get_layout( 'wishlist' );
 kidia_page_assert( 'sign_in_required' === $wishlist_default['settings']['wishlist_access_mode'], 'Wishlist access must preserve the existing sign-in-required behavior by default.' );
+kidia_page_assert( 'products' === $wishlist_default['settings']['wishlist_preview_state'], 'Wishlist Builder must default its independent preview to the product state.' );
 $wishlist_default['settings']['wishlist_access_mode'] = 'guest';
+$wishlist_default['settings']['wishlist_preview_state'] = 'empty';
 $store->save_layout( 'wishlist', $wishlist_default );
 kidia_page_assert( 'guest' === $store->get_layout( 'wishlist' )['settings']['wishlist_access_mode'], 'Wishlist guest mode must save and reach the public page layout.' );
+kidia_page_assert( 'empty' === $store->get_layout( 'wishlist' )['settings']['wishlist_preview_state'], 'Wishlist Empty and Product editor selection must survive save and preview requests.' );
 foreach ( Kidia_Mobile_Page_Layout_Store::pages() as $page_with_elements => $_page_label ) {
 	foreach ( array( Kidia_Mobile_Page_Layout_Store::header_fields(), Kidia_Mobile_Page_Layout_Store::footer_fields() ) as $chrome_fields ) {
 		$chrome_keys = array_column( $chrome_fields, 'key' );

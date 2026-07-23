@@ -115,10 +115,20 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<?php if ( 'wishlist' === $page ) : ?>
 				<section class="kidia-page-card is-open kidia-wishlist-access-mode">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-heart"></span><strong><?php esc_html_e( 'Wishlist access mode', 'kidia-mobile-cms' ); ?></strong></div></div>
-					<div class="kidia-page-card__body"><div class="kidia-category-navigation-modes">
-						<label class="kidia-wishlist-access-option" data-wishlist-access-mode="guest"><input type="radio" name="layout[settings][wishlist_access_mode]" value="guest" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'guest' ); ?>><span><b><?php esc_html_e( 'Guest wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Allow adding products without signing in.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-unlock"></i></span></label>
-						<label class="kidia-wishlist-access-option" data-wishlist-access-mode="sign_in_required"><input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'sign_in_required' ); ?>><span><b><?php esc_html_e( 'Sign in required', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Show the sign-in wishlist page for signed-out customers.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
-					</div></div>
+					<div class="kidia-page-card__body">
+						<div class="kidia-category-navigation-modes kidia-wishlist-access-options">
+							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="guest"><input type="radio" name="layout[settings][wishlist_access_mode]" value="guest" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'guest' ); ?>><span><b><?php esc_html_e( 'Guest wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Allow adding products without signing in.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-unlock"></i></span></label>
+							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="sign_in_required"><input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'sign_in_required' ); ?>><span><b><?php esc_html_e( 'Sign in required', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Show the sign-in wishlist page for signed-out customers.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
+						</div>
+						<div class="kidia-wishlist-preview-heading">
+							<strong><?php esc_html_e( 'Preview and edit a wishlist state', 'kidia-mobile-cms' ); ?></strong>
+							<small><?php esc_html_e( 'Each state keeps its own settings. Choose one to show its element directly below.', 'kidia-mobile-cms' ); ?></small>
+						</div>
+						<div class="kidia-category-navigation-modes kidia-wishlist-preview-modes">
+							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="empty"><input type="radio" name="layout[settings][wishlist_preview_state]" value="empty" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'empty' ); ?>><span><b><?php esc_html_e( 'Empty Wishlist Settings', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Edit and preview the screen shown before products are saved.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-heart"></i></span></label>
+							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="products"><input type="radio" name="layout[settings][wishlist_preview_state]" value="products" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'products' ); ?>><span><b><?php esc_html_e( 'Product Wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Edit and preview the wishlist when saved products exist.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-grid-view"></i></span></label>
+						</div>
+					</div>
 				</section>
 			<?php endif; ?>
 
@@ -127,7 +137,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 				$definition = $definition_map[ $element['id'] ] ?? null;
 				if ( ! is_array( $definition ) ) { continue; }
 				?>
-				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element['id'] ); ?>" draggable="false">
+				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element['id'] ); ?>"<?php if ( 'wishlist' === $page && in_array( $element['id'], array( 'empty_state', 'wishlist_grid' ), true ) ) : ?> data-wishlist-state="<?php echo esc_attr( 'empty_state' === $element['id'] ? 'empty' : 'products' ); ?>"<?php endif; ?> draggable="false">
 					<input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element['id'] ); ?>">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><div class="kidia-card-actions"><span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span><span class="kidia-card-action-placeholder kidia-card-action--secondary" aria-hidden="true"></span><button type="button" class="button kidia-page-expand kidia-card-action kidia-card-action--expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button><label class="kidia-page-master-toggle kidia-card-action kidia-card-action--toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label></div></div>
 					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php

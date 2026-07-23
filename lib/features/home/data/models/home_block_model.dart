@@ -702,6 +702,21 @@ abstract final class HomeBlockModel {
     required bool enabled,
     required Map<String, dynamic> data,
   }) {
+    const Set<String> allowedVisibleUnits = <String>{
+      'days',
+      'days_hours',
+      'days_hours_minutes',
+      'days_hours_minutes_seconds',
+    };
+    final String? savedVisibleUnits = _optionalString(data, 'visible_units');
+    if (savedVisibleUnits != null &&
+        !allowedVisibleUnits.contains(savedVisibleUnits)) {
+      throw FormatException(
+        'Unsupported value for visible_units: $savedVisibleUnits',
+      );
+    }
+    final String visibleUnits = savedVisibleUnits ?? '';
+    final bool usesVisibleUnits = visibleUnits.isNotEmpty;
     return CountdownBlock(
       id: id,
       enabled: enabled,
@@ -714,10 +729,19 @@ abstract final class HomeBlockModel {
       textColor: _hexColor(data, 'text_color', fallback: '#1F2933'),
       boxColor: _hexColor(data, 'box_color', fallback: '#E9EEEC'),
       action: _parseAction(data['action']),
-      showDays: _optionalBool(data, 'show_days', fallback: true),
-      showHours: _optionalBool(data, 'show_hours', fallback: true),
-      showMinutes: _optionalBool(data, 'show_minutes', fallback: true),
-      showSeconds: _optionalBool(data, 'show_seconds', fallback: true),
+      showDays: usesVisibleUnits
+          ? true
+          : _optionalBool(data, 'show_days', fallback: true),
+      showHours: usesVisibleUnits
+          ? visibleUnits != 'days'
+          : _optionalBool(data, 'show_hours', fallback: true),
+      showMinutes: usesVisibleUnits
+          ? visibleUnits == 'days_hours_minutes' ||
+                visibleUnits == 'days_hours_minutes_seconds'
+          : _optionalBool(data, 'show_minutes', fallback: true),
+      showSeconds: usesVisibleUnits
+          ? visibleUnits == 'days_hours_minutes_seconds'
+          : _optionalBool(data, 'show_seconds', fallback: true),
       layoutStyle: _enumString(data, 'layout_style', const <String>{'cards', 'circles', 'flip_clock', 'minimal_inline', 'split_labels'}, fallback: 'cards'),
     );
   }
