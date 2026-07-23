@@ -24,6 +24,7 @@
 	var actionChoices = config.actionChoices || {};
 	var currentCreateType = "";
 	var draggedBlock = null;
+	var activeInsertionBlock = null;
 	var previewBlocksById = {};
 	var previewBlocksByType = {};
 	var previewCollapseProgress = 0;
@@ -594,16 +595,29 @@
 				return '<div class="kidia-preview-countdown is-expired"><strong>' + escapeHtml(settings.expired_text || "Offer ended") + '</strong></div>';
 			}
 			var countdownDays = Math.floor(remainingSeconds / 86400);
-			var countdownHours = settings.show_days !== ""
+			var visibleUnits = ["days", "days_hours", "days_hours_minutes", "days_hours_minutes_seconds"].indexOf(settings.visible_units) >= 0
+				? settings.visible_units
+				: settings.show_seconds !== ""
+					? "days_hours_minutes_seconds"
+					: settings.show_minutes !== ""
+						? "days_hours_minutes"
+						: settings.show_hours !== ""
+							? "days_hours"
+							: "days";
+			var showCountdownDays = visibleUnits.indexOf("days") === 0;
+			var showCountdownHours = visibleUnits.indexOf("hours") >= 0;
+			var showCountdownMinutes = visibleUnits.indexOf("minutes") >= 0;
+			var showCountdownSeconds = visibleUnits.indexOf("seconds") >= 0;
+			var countdownHours = showCountdownDays
 				? Math.floor((remainingSeconds % 86400) / 3600)
 				: Math.floor(remainingSeconds / 3600);
 			var countdownMinutes = Math.floor((remainingSeconds % 3600) / 60);
 			var countdownSeconds = remainingSeconds % 60;
 			var countdownUnits = [];
-			if (settings.show_days !== "") { countdownUnits.push('<span>' + countdownDays + '<small>يوم</small></span>'); }
-			if (settings.show_hours !== "") { countdownUnits.push('<span>' + countdownHours + '<small>ساعة</small></span>'); }
-			if (settings.show_minutes !== "") { countdownUnits.push('<span>' + countdownMinutes + '<small>دقيقة</small></span>'); }
-			if (settings.show_seconds !== "") { countdownUnits.push('<span>' + countdownSeconds + '<small>ثانية</small></span>'); }
+			if (showCountdownDays) { countdownUnits.push('<span>' + countdownDays + '<small>يوم</small></span>'); }
+			if (showCountdownHours) { countdownUnits.push('<span>' + countdownHours + '<small>ساعة</small></span>'); }
+			if (showCountdownMinutes) { countdownUnits.push('<span>' + countdownMinutes + '<small>دقيقة</small></span>'); }
+			if (showCountdownSeconds) { countdownUnits.push('<span>' + countdownSeconds + '<small>ثانية</small></span>'); }
 			return '<div class="kidia-preview-countdown is-' + escapeHtml(settings.layout_style || "cards") + '" style="background:' + safeColor(settings.background_color, "#FFFFFF") + ";color:" + safeColor(settings.text_color, "#1F2933") + '"><strong>' + escapeHtml(settings.title || name) + '</strong><div style="--kidia-countdown-box:' + safeColor(settings.box_color, "#E9EEEC") + '">' + countdownUnits.join('') + '</div></div>';
 
 		case "video_banner":
@@ -923,11 +937,17 @@
 		html = replaceEvery(html, "__BLOCK_NAME__", "");
 
 		removeEmptyState();
-		builder.insertAdjacentHTML("beforeend", html);
-		blocks = getBlocks();
-		block = blocks.length ? blocks[blocks.length - 1] : null;
+		if (activeInsertionBlock && activeInsertionBlock.isConnected) {
+			activeInsertionBlock.insertAdjacentHTML("afterend", html);
+			block = activeInsertionBlock.nextElementSibling;
+		} else {
+			builder.insertAdjacentHTML("beforeend", html);
+			blocks = getBlocks();
+			block = blocks.length ? blocks[blocks.length - 1] : null;
+		}
 
 		if (block) {
+			activeInsertionBlock = block;
 			nameInput = block.querySelector(".kidia-block-name-input");
 			nameLabel = block.querySelector(".kidia-block-name");
 			createIntentInput = block.querySelector(".kidia-block-create-intent");
@@ -1036,6 +1056,7 @@
 		setDraftStatus(clone);
 		setCollapsed(clone, true);
 		block.insertAdjacentElement("afterend", clone);
+		activeInsertionBlock = clone;
 		updateIndexes();
 		markDirty();
 		renderPreview();
@@ -1339,6 +1360,21 @@
 			var layoutPreview = target.closest(".kidia-builder-field").querySelector(".kidia-countdown-layout-preview");
 			if (layoutPreview) { layoutPreview.className = "kidia-countdown-layout-preview is-" + target.value; }
 		}
+		if (target.classList.contains("kidia-countdown-visible-units")) {
+			var countdownBlock = target.closest(".kidia-builder-block");
+			var countdownUnitPreview = countdownBlock && countdownBlock.querySelector(".kidia-countdown-layout-preview");
+			var selectedUnits = {
+				days: ["days"],
+				days_hours: ["days", "hours"],
+				days_hours_minutes: ["days", "hours", "minutes"],
+				days_hours_minutes_seconds: ["days", "hours", "minutes", "seconds"]
+			}[target.value] || ["days", "hours", "minutes", "seconds"];
+			if (countdownUnitPreview) {
+				toArray(countdownUnitPreview.querySelectorAll("[data-countdown-unit]")).forEach(function (unit) {
+					unit.hidden = selectedUnits.indexOf(unit.dataset.countdownUnit) < 0;
+				});
+			}
+		}
 
 		markDirty();
 		renderPreview();
@@ -1383,7 +1419,14 @@
 	});
 	form.addEventListener("click", function(event){
 		var block=event.target.closest(".kidia-builder-block,.kidia-fixed-chrome-card");
-		if(block && event.target.closest(".kidia-builder-block__header,.kidia-page-card__header")){focusPreviewBlock(block);}
+		if(block && event.target.closest(".kidia-builder-block__header,.kidia-page-card__header")){
+			focusPreviewBlock(block);
+			if (block.classList.contains("kidia-builder-block")) {
+				toArray(builder.querySelectorAll(".is-insertion-target")).forEach(function (item) { item.classList.remove("is-insertion-target"); });
+				activeInsertionBlock = block;
+				block.classList.add("is-insertion-target");
+			}
+		}
 	});
 
 	builder.addEventListener("pointerdown", function (event) {
