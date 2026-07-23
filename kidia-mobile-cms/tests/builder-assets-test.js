@@ -1227,7 +1227,7 @@ function runCollapsedHeaderToggleTest() {
 
   const regularPreview = window.KidiaChromePreview.renderHeader(card, "Products");
   assert.doesNotMatch(regularPreview, /is-collapsed/, "Off must preview the regular header.");
-	assert.match(regularPreview, /height:64px/, "Regular header height must use the exact configured value.");
+	assert.match(regularPreview, /height:96px/, "A multi-row regular header must calculate its height from the two independent row heights.");
 	assert.match(regularPreview, /padding:0px 16px/, "Vertical padding must update the preview exactly.");
 	assert.match(regularPreview, /--row-gap:0px/, "Setting row spacing to zero must remove the preview gap.");
   toggle.checked = true;
@@ -1247,16 +1247,16 @@ function runCollapsedHeaderToggleTest() {
 	  assert.equal((halfwayPreview.match(/class="kidia-app-search"/g) || []).length, 1, "PatPat-style preview must move and resize the same Search instead of replacing it with a second Search.");
 	  assert.match(halfwayPreview, /kidia-app-header-morphing-search/, "The single Search must use the morphing layer.");
 	  assert.match(halfwayPreview, /kidia-app-header-fixed-actions[\s\S]*kidia-app-header-item--cart/, "The cart/orders action must remain in one fixed layer throughout the transition.");
-	  assert.match(halfwayPreview, /height:60px/, "PatPat-style collapse must shrink the header continuously with the Search.");
+	  assert.match(halfwayPreview, /height:76px/, "PatPat-style collapse must shrink the calculated multi-row header continuously with the Search.");
 	  assert.match(halfwayPreview, /margin:0px 0px 0px/, "PatPat-style collapse must not move the header card sideways during the movement.");
 	  const previewHost = window.document.createElement("div");
 	  previewHost.innerHTML = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0 });
 	  const movingHeader = previewHost.querySelector(".kidia-app-header");
 	  [0.25, 0.5, 0.75].forEach((progress) => {
 	    window.KidiaChromePreview.updateHeaderProgress(movingHeader, progress);
-	    assert.equal(movingHeader.style.height, `${64 - (8 * progress)}px`, `Header height must shrink continuously at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.style.height, `${96 - (40 * progress)}px`, `Header height must shrink continuously at ${progress * 100}% scroll.`);
 	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--regular").style.opacity, String(1 - progress), `The logo must fade out with the real ${progress * 100}% scroll ratio.`);
-	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.top, `${24 * (1 - progress)}px`, `The same Search must move progressively at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.top, `${52 * (1 - progress)}px`, `The same Search must move progressively at ${progress * 100}% scroll.`);
 	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.width, `${100 - (16 * progress)}%`, `The same Search must shrink progressively at ${progress * 100}% scroll.`);
 	    assert.equal(movingHeader.querySelectorAll(".kidia-app-header-fixed-actions .kidia-app-header-item--cart").length, 1, "The fixed cart action must never be duplicated.");
 	  });
@@ -1480,13 +1480,16 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_y'.*'Vertical position'.*-80, 80"), `${item} must expose vertical positioning.`);
 	}
 	assert.match(chrome, /positionStyle\(card,item\)[\s\S]*transform:translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The exact HTML preview must apply both header offsets.");
-	assert.match(store, /self::field\( 'row_merge', __\( 'Merge rows'[\s\S]*, 0, array\(\), 0, 8 \)/, "Header settings must expose a zero-default Merge rows control without changing Header height.");
-	assert.match(chrome, /rowGap\(card\)[\s\S]*row_gap[\s\S]*row_merge/, "The exact Header preview must reduce only the distance between rows when Merge rows increases.");
-	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must honor Merge rows instead of pinning row two to the Header bottom.");
+	assert.match(store, /self::field\( 'header_position', __\( 'Header position'[\s\S]*self::field\( 'row_1_height', __\( 'First row height'[\s\S]*self::field\( 'row_1_position', __\( 'First row position'[\s\S]*self::field\( 'row_2_height', __\( 'Second row height'[\s\S]*self::field\( 'row_2_position', __\( 'Second row position'[\s\S]*self::field\( 'row_merge', __\( 'Merge rows'/, "Header settings must expose the single-row position and independent multi-row height, position, and merge controls.");
+	assert.match(chrome, /function syncHeaderRowFields[\s\S]*single=\["height","header_position"\][\s\S]*multiple=\["row_1_height","row_1_position","row_2_height","row_2_position","row_merge"\]/, "Header controls must switch immediately between the single-row and multi-row settings.");
+	assert.match(chrome, /function visibleHeaderHeight[\s\S]*count<=1[\s\S]*effectiveRowGap[\s\S]*rowHeight/, "The exact preview must derive a multi-row Header height from its independent row settings.");
+	assert.match(chrome, /function headerRows[\s\S]*rowPosition[\s\S]*align-items:[\s\S]*rowHeight/, "The exact Header preview must position each row independently inside its own height.");
+	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must retain the selected row position.");
 	assert.match(flutter, /_positionedItem[\s\S]*Transform\.translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The Flutter app and preview must apply both header offsets.");
-	assert.match(flutter, /_effectiveRowGap[\s\S]*row_gap[\s\S]*row_merge/, "Flutter must apply Merge rows independently from total Header height.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*32px;/, "Home preview must sit slightly higher.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:32px;/, "Every page preview must sit at the same slightly higher position.");
+	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
+	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*32px;[\s\S]*translateY\(-16px\)/, "Home preview must start slightly higher before and during sticky scrolling.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:32px;[^}]*translateY\(-16px\)/, "Every page preview must start at the same slightly higher position.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");

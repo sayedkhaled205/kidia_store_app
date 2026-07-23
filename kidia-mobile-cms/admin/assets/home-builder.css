@@ -34,7 +34,7 @@
 	top: 32px;
 	direction: rtl;
 	text-align: center;
-	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
+	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px)) translateY(-16px);
 }
 
 .kidia-mobile-preview__device {

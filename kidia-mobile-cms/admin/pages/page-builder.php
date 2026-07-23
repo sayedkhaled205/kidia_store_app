@@ -136,7 +136,6 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 				</section>
 			<?php endif; ?>
 
-			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 			<?php if ( 'wishlist' === $page ) : ?>
 				<section class="kidia-page-card is-open kidia-wishlist-access-mode">
 					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-heart"></span><strong><?php esc_html_e( 'Wishlist access mode', 'kidia-mobile-cms' ); ?></strong></div></div>
@@ -157,6 +156,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 					</div>
 				</section>
 			<?php endif; ?>
+			<?php $chrome_layout = $layout; $chrome_part = 'header'; $chrome_page = $page; $chrome_name_prefix = 'layout[header]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 			<?php if ( 'wishlist' === $page ) : ?>
 				<?php
