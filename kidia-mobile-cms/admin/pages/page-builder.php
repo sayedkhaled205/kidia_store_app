@@ -120,7 +120,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<?php
 			$kidia_toolbar_title = $page_label;
 			$kidia_toolbar_save_label = __( 'Save Page Layout', 'kidia-mobile-cms' );
-			$kidia_toolbar_show_add = false;
+			$kidia_toolbar_show_add = 'wishlist' === $page;
 			$kidia_toolbar_restore_product = 'product' === $page;
 			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 			?>
@@ -169,21 +169,6 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 					'products_recommendations' => 'products',
 				);
 				?>
-				<div class="kidia-wishlist-element-toolbar">
-					<div>
-						<strong><?php esc_html_e( 'Add element to this wishlist state', 'kidia-mobile-cms' ); ?></strong>
-						<small><?php esc_html_e( 'The new element is inserted below the currently selected state.', 'kidia-mobile-cms' ); ?></small>
-					</div>
-					<select id="kidia-wishlist-add-element-type">
-						<?php foreach ( $element_definitions as $wishlist_definition ) : ?>
-							<?php $wishlist_definition_state = $wishlist_state_map[ $wishlist_definition['id'] ] ?? ''; ?>
-							<?php if ( $wishlist_definition_state ) : ?>
-								<option value="<?php echo esc_attr( $wishlist_definition['id'] ); ?>" data-wishlist-state="<?php echo esc_attr( $wishlist_definition_state ); ?>"><?php echo esc_html( $wishlist_definition['label'] ); ?></option>
-							<?php endif; ?>
-						<?php endforeach; ?>
-					</select>
-					<button type="button" class="button button-primary" id="kidia-wishlist-add-element"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?></button>
-				</div>
 			<?php endif; ?>
 
 			<div id="kidia-page-elements" class="kidia-page-elements">
@@ -207,4 +192,29 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<?php $chrome_layout = $layout; $chrome_part = 'footer'; $chrome_page = $page; $chrome_name_prefix = 'layout[footer]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 		</form>
 	</div>
+	<?php if ( 'wishlist' === $page ) : ?>
+		<div id="kidia-wishlist-element-picker" class="kidia-wishlist-element-picker" hidden aria-hidden="true">
+			<div class="kidia-wishlist-element-picker__overlay" data-kidia-close-wishlist-picker></div>
+			<div class="kidia-wishlist-element-picker__panel" role="dialog" aria-modal="true" aria-labelledby="kidia-wishlist-element-picker-title">
+				<header class="kidia-wishlist-element-picker__header">
+					<div>
+						<h2 id="kidia-wishlist-element-picker-title"><?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?></h2>
+						<p><?php esc_html_e( 'Choose an element to add below the currently selected wishlist state.', 'kidia-mobile-cms' ); ?></p>
+					</div>
+					<button type="button" class="button-link kidia-wishlist-element-picker__close" data-kidia-close-wishlist-picker aria-label="<?php esc_attr_e( 'Close', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
+				</header>
+				<div class="kidia-wishlist-element-picker__grid">
+					<?php foreach ( $element_definitions as $wishlist_definition ) : ?>
+						<?php $wishlist_definition_state = $wishlist_state_map[ $wishlist_definition['id'] ] ?? ''; ?>
+						<?php if ( $wishlist_definition_state ) : ?>
+							<button type="button" class="kidia-wishlist-element-choice" data-wishlist-add-type="<?php echo esc_attr( $wishlist_definition['id'] ); ?>" data-wishlist-state="<?php echo esc_attr( $wishlist_definition_state ); ?>">
+								<span class="dashicons <?php echo esc_attr( $wishlist_definition['icon'] ); ?>"></span>
+								<strong><?php echo esc_html( $wishlist_definition['label'] ); ?></strong>
+							</button>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</div>
+	<?php endif; ?>
 </div>

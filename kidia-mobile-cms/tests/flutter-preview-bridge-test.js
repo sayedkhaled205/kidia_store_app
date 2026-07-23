@@ -157,6 +157,8 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
   assert.match(index, /flutter_bootstrap\.js.*encodeURIComponent\(cacheKey\)/s);
   assert.match(sourceIndex, /flutter_bootstrap\.js.*encodeURIComponent\(cacheKey\)/s);
   assert.match(bootstrap, /mainJsPath.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
+  assert.match(bootstrap, /canvaskit\.js.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
+  assert.match(bootstrap, /canvaskit\.wasm.*encodeURIComponent\(window\.__kidiaPreviewVersion\)/s);
   for (const bridge of ["flutter-preview-bridge.js", "flutter-category-preview-bridge.js", "flutter-home-preview-bridge.js"]) {
     const source = fs.readFileSync(path.join(assets, bridge), "utf8");
     assert.doesNotMatch(source, /frame\.hidden\s*=\s*true/, `${bridge} must not replace Flutter with an HTML replica while loading.`);

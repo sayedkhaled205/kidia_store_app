@@ -14,6 +14,16 @@ const startup = fs.readFileSync(
   path.join(__dirname, "..", "..", "lib", "app", "app_startup_provider.dart"),
   "utf8",
 );
+const bootstrapPatcher = fs.readFileSync(
+  path.join(
+    __dirname,
+    "..",
+    "..",
+    "tool",
+    "patch_cms_flutter_bootstrap.mjs",
+  ),
+  "utf8",
+);
 
 assert.match(
   index,
@@ -32,8 +42,18 @@ assert.match(
 );
 assert.match(
   index,
-  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*90000\)/,
+  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*45000\)/,
   "A preview that never mounts must retry once with a fresh cache key instead of loading forever.",
+);
+assert.match(
+  index,
+  /WebAssembly\.compileStreaming[\s\S]*response\.clone\(\)[\s\S]*WebAssembly\.compile\(await response\.arrayBuffer\(\)\)/,
+  "CanvasKit must fall back to byte compilation when a WordPress host serves WASM with a generic MIME type.",
+);
+assert.match(
+  index,
+  /kidia-flutter-preview-error[\s\S]*unhandledrejection[\s\S]*retryOrFail\(\)/,
+  "Flutter engine failures must retry immediately instead of leaving the preview spinner running.",
 );
 assert.match(
   index,
@@ -49,6 +69,21 @@ assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,
   "The embedded preview must not register a reload-causing service worker.",
+);
+assert.match(
+  bootstrap,
+  /canvaskit\.js"[\s\S]*__kidiaPreviewVersion[\s\S]*canvaskit\.wasm"[\s\S]*__kidiaPreviewVersion/,
+  "CanvasKit JavaScript and WASM must use the plugin version cache key.",
+);
+assert.match(
+  bootstrap,
+  /onEntrypointLoaded[\s\S]*initializeEngine[\s\S]*runApp[\s\S]*kidia-flutter-preview-error/,
+  "The generated bootstrap must surface Flutter engine startup errors to the retry shell.",
+);
+assert.match(
+  bootstrapPatcher,
+  /canvaskit\.js[\s\S]*canvaskit\.wasm[\s\S]*onEntrypointLoaded[\s\S]*kidia-flutter-preview-error/,
+  "The repeatable preview build must preserve cache busting and startup error handling.",
 );
 assert.match(
   startup,
