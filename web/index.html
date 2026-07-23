@@ -88,10 +88,12 @@
       // bridge attaches its listener. Confirm readiness again from the web
       // shell only after Flutter has mounted and painted its actual view.
       let flutterRendered = false;
+      let startupTimer = 0;
       const announceRendered = () => {
         const renderedView = document.querySelector('flutter-view, flt-glass-pane');
         if (!renderedView) return false;
         flutterRendered = true;
+        if (startupTimer) window.clearTimeout(startupTimer);
         const loading = document.getElementById('kidia-flutter-loading');
         if (loading) loading.remove();
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -130,16 +132,45 @@
         }
       }
 
-      const version = new URLSearchParams(window.location.search).get('v') || '';
-      window.__kidiaPreviewVersion = version;
-      const bootstrap = document.createElement('script');
-      bootstrap.src = 'flutter_bootstrap.js' + (version ? '?v=' + encodeURIComponent(version) : '');
-      bootstrap.addEventListener('error', () => {
+      const previewUrl = new URL(window.location.href);
+      const version = previewUrl.searchParams.get('v') || '';
+      const retryToken = previewUrl.searchParams.get('preview_retry') || '';
+      const cacheKey = [version, retryToken].filter(Boolean).join('-');
+      window.__kidiaPreviewVersion = cacheKey;
+
+      const retryOrFail = () => {
+        if (flutterRendered) return;
+        const attempt = Number.parseInt(
+          previewUrl.searchParams.get('preview_attempt') || '0',
+          10,
+        );
+        if (attempt < 1) {
+          previewUrl.searchParams.set('preview_attempt', '1');
+          previewUrl.searchParams.set('preview_retry', String(Date.now()));
+          window.location.replace(previewUrl.toString());
+          return;
+        }
         const loading = document.getElementById('kidia-flutter-loading');
         if (!loading) return;
         loading.classList.add('is-error');
-        loading.textContent = 'Flutter preview could not load. Refresh this page to retry.';
+        loading.textContent =
+          'Flutter preview could not load. Refresh this page to retry.';
+      };
+
+      const bootstrap = document.createElement('script');
+      bootstrap.src =
+        'flutter_bootstrap.js' +
+        (cacheKey ? '?v=' + encodeURIComponent(cacheKey) : '');
+      bootstrap.addEventListener('error', retryOrFail);
+      window.addEventListener('error', (event) => {
+        if (
+          !flutterRendered &&
+          /(?:flutter_bootstrap|main\.dart)\.js/.test(event.filename || '')
+        ) {
+          retryOrFail();
+        }
       });
+      startupTimer = window.setTimeout(retryOrFail, 25000);
       document.body.appendChild(bootstrap);
     })();
   </script>
