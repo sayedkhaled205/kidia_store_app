@@ -465,17 +465,17 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 horizontal: padding,
                 vertical: _header.number('vertical_padding', 8).clamp(0, 24),
               ),
-              child: ClipRect(
-                child: transition == 'smooth_compact'
-                    ? _smoothCompactContent(
-                        context,
-                        color: foreground,
-                        width: MediaQuery.sizeOf(context).width -
-                            (sideMargin * 2) -
-                            (padding * 2),
-                        progress: progress,
-                      )
-                    : AnimatedSwitcher(
+              child: transition == 'smooth_compact'
+                  ? _smoothCompactContent(
+                      context,
+                      color: foreground,
+                      width:
+                          MediaQuery.sizeOf(context).width -
+                          (sideMargin * 2) -
+                          (padding * 2),
+                      progress: progress,
+                    )
+                  : AnimatedSwitcher(
                   key: const Key('cms-page-app-bar-transition'),
                   duration: transitionDuration,
                   reverseDuration: transitionDuration,
@@ -520,8 +520,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
                   ),
-                ),
-              ),
+                    ),
             ),
           ),
         ),
@@ -664,6 +663,20 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         final double endTop = ((constraints.maxHeight - searchHeight) / 2)
             .clamp(0, double.infinity)
             .toDouble();
+        final double regularActionTop = persistentActions.isEmpty
+            ? 0
+            : persistentActions
+                  .map(
+                    (String item) => _itemTopInRows(regularRows, item),
+                  )
+                  .reduce((double current, double next) =>
+                      current < next ? current : next)
+                  .clamp(2, double.infinity)
+                  .toDouble();
+        final double compactActionTop =
+            ((constraints.maxHeight - 48) / 2)
+                .clamp(2, double.infinity)
+                .toDouble();
         return Stack(
           key: const Key('cms-page-app-bar-scroll-transition'),
           clipBehavior: Clip.none,
@@ -706,9 +719,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             if (persistentActions.isNotEmpty)
               Positioned(
-                top: 0,
+                top: _lerp(regularActionTop, compactActionTop, progress),
                 right: 0,
-                height: searchHeight,
+                height: 48,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: persistentActions

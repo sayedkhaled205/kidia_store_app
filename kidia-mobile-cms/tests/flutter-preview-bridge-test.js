@@ -144,6 +144,9 @@ test("Home Flutter preview sends canonical layout and blocks on its initial fram
   assert.deepEqual(messages[0].message.home.blocks, [
     { id: "hero", type: "hero_slider", enabled: true, settings: {} },
   ]);
+  markFlutterReady(messages);
+  await settle();
+  assert.equal(messages.length, 1, "Repeated ready messages must not start a refresh loop.");
 });
 
 test("Home Flutter preview focuses the selected Builder element", async () => {
@@ -184,7 +187,7 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
   }
 });
 
-test("Flutter web shell repeats readiness only after its rendered view mounts", async () => {
+test("Flutter web shell announces readiness once after its rendered view mounts", async () => {
   const index = fs.readFileSync(path.resolve(__dirname, "..", "admin", "flutter-preview", "index.html"), "utf8");
   const script = index.match(/<script>([\s\S]*startKidiaPreview[\s\S]*?)<\/script>/)?.[1];
   assert.ok(script);
@@ -204,10 +207,8 @@ test("Flutter web shell repeats readiness only after its rendered view mounts", 
   await Promise.resolve();
   assert.equal(window.document.getElementById("kidia-flutter-loading"), null, "The loading state disappears only after Flutter mounts.");
   assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
-  const firstReadyCount = messages.length;
   window.dispatchEvent(new window.MessageEvent("message", {
     data: JSON.stringify({ type: "kidia-preview-layout", page: "home", layout: {} }),
   }));
-  assert.equal(messages.length, firstReadyCount + 1, "A parent retry receives a fresh rendered acknowledgement");
-  assert.equal(messages.at(-1)?.type, "kidia-flutter-preview-ready");
+  assert.equal(messages.length, 1, "Layout updates must not create a ready/layout feedback loop.");
 });

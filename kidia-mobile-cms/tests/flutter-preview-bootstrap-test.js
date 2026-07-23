@@ -33,12 +33,12 @@ assert.match(
 assert.match(
   index,
   /flutter-view, flt-glass-pane[\s\S]*requestAnimationFrame[\s\S]*kidia-flutter-preview-ready[\s\S]*MutationObserver/,
-  "The web shell must repeat the ready handshake after Flutter has rendered.",
+  "The web shell must announce readiness after Flutter has rendered.",
 );
-assert.match(
+assert.doesNotMatch(
   index,
   /addEventListener\('message'[\s\S]*kidia-preview-layout[\s\S]*announceRendered\(\)/,
-  "The rendered shell must acknowledge every parent layout retry.",
+  "Parent layout messages must not create a ready/layout feedback loop.",
 );
 assert.match(
   index,
