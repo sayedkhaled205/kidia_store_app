@@ -67,6 +67,16 @@
       animation: kidia-preview-spin .8s linear infinite;
     }
     #kidia-flutter-loading.is-error::before { display: none; }
+    #kidia-flutter-retry {
+      margin: 2px auto 0;
+      padding: 8px 14px;
+      border: 1px solid #2f806e;
+      border-radius: 10px;
+      background: #2f806e;
+      color: #fff;
+      font: inherit;
+      cursor: pointer;
+    }
     @keyframes kidia-preview-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -119,17 +129,19 @@
         }
       });
 
+      // Clear stale workers in parallel. Waiting for the browser's service
+      // worker registry can delay the actual Flutter bootstrap indefinitely
+      // on some WordPress hosts.
       if ('serviceWorker' in navigator) {
-        try {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map((registration) => {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => {
             return registration.scope.includes('/admin/flutter-preview/')
               ? registration.unregister()
               : Promise.resolve(false);
-          }));
-        } catch (error) {
-          console.warn('Could not clear the old preview worker.', error);
-        }
+          })))
+          .catch((error) => {
+            console.warn('Could not clear the old preview worker.', error);
+          });
       }
 
       const previewUrl = new URL(window.location.href);
@@ -153,8 +165,15 @@
         const loading = document.getElementById('kidia-flutter-loading');
         if (!loading) return;
         loading.classList.add('is-error');
-        loading.textContent =
-          'Flutter preview could not load. Refresh this page to retry.';
+        loading.innerHTML =
+          '<span>Flutter preview could not load.</span>' +
+          '<button type="button" id="kidia-flutter-retry">Retry preview</button>';
+        document.getElementById('kidia-flutter-retry')
+          ?.addEventListener('click', () => {
+            previewUrl.searchParams.set('preview_attempt', '0');
+            previewUrl.searchParams.set('preview_retry', String(Date.now()));
+            window.location.replace(previewUrl.toString());
+          });
       };
 
       const bootstrap = document.createElement('script');
@@ -170,7 +189,9 @@
           retryOrFail();
         }
       });
-      startupTimer = window.setTimeout(retryOrFail, 25000);
+      // The exact Flutter bundle includes CanvasKit and can take longer on a
+      // cold mobile connection. Retry only after a genuine long stall.
+      startupTimer = window.setTimeout(retryOrFail, 90000);
       document.body.appendChild(bootstrap);
     })();
   </script>

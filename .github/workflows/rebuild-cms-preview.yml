@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - agent/rebuild-embedded-flutter-preview
+      - agent/header-product-tabs-controls
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'tool/build_cms_flutter_preview.sh'
 
 permissions:
   contents: write

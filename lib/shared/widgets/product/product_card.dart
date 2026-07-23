@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
+import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_price.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
@@ -16,6 +16,8 @@ class ProductCard extends StatelessWidget {
     required this.inStock,
     super.key,
     this.regularPrice,
+    this.imageUrls = const <String>[],
+    this.imageSwipeEnabled = false,
     this.badgeLabel,
     this.badgeType = ProductBadgeType.custom,
     this.semanticLabel,
@@ -42,6 +44,8 @@ class ProductCard extends StatelessWidget {
 
   final String name;
   final String imageUrl;
+  final List<String> imageUrls;
+  final bool imageSwipeEnabled;
   final String price;
   final String? regularPrice;
   final String currencySymbol;
@@ -97,6 +101,8 @@ class ProductCard extends StatelessWidget {
             children: [
               _ProductImageSection(
                 imageUrl: imageUrl,
+                imageUrls: imageUrls,
+                imageSwipeEnabled: imageSwipeEnabled,
                 productName: name,
                 inStock: inStock,
                 badgeLabel: badgeLabel,
@@ -135,6 +141,8 @@ class ProductCard extends StatelessWidget {
 class _ProductImageSection extends StatelessWidget {
   const _ProductImageSection({
     required this.imageUrl,
+    required this.imageUrls,
+    required this.imageSwipeEnabled,
     required this.productName,
     required this.inStock,
     required this.badgeLabel,
@@ -150,6 +158,8 @@ class _ProductImageSection extends StatelessWidget {
   });
 
   final String imageUrl;
+  final List<String> imageUrls;
+  final bool imageSwipeEnabled;
   final String productName;
   final bool inStock;
   final String? badgeLabel;
@@ -172,8 +182,11 @@ class _ProductImageSection extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          AppNetworkImage(
-            imageUrl: imageUrl,
+          ProductImageSwiper(
+            imageUrls: imageUrls.isEmpty
+                ? <String>[imageUrl]
+                : <String>[imageUrl, ...imageUrls],
+            enabled: imageSwipeEnabled,
             fit: BoxFit.cover,
             semanticLabel: productName,
           ),

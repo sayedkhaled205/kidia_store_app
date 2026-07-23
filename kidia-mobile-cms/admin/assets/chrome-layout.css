@@ -281,6 +281,24 @@
 	will-change:opacity,transform;
 }
 .kidia-app-header-transition-layer[style*="opacity:1"] { pointer-events:auto; }
+.kidia-app-header-morphing-search {
+	position:absolute;
+	inset-inline-start:0;
+	z-index:2;
+	transition:top var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1),width var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1);
+	will-change:top,width;
+}
+.kidia-app-header-morphing-search .kidia-app-search { width:100%!important; }
+.kidia-app-header-fixed-actions {
+	position:absolute;
+	inset-block-start:0;
+	inset-inline-end:0;
+	z-index:3;
+	display:flex;
+	height:var(--search-height,44px);
+	align-items:center;
+	pointer-events:auto;
+}
 @keyframes kidia-header-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes kidia-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }
 @keyframes kidia-header-fade-slide { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }

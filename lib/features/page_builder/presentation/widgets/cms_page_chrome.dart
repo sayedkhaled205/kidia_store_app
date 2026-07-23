@@ -329,10 +329,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       'smooth_compact',
     );
     final Duration transitionDuration = _transitionDuration(transition);
-    final Color regularBackground = _color(
+    final Color configuredRegularBackground = _color(
       _header.string('background_color', '#FFFFFF'),
       Theme.of(context).colorScheme.surface,
     );
+    final Color regularBackground =
+        _header.string('style', 'standard') == 'transparent'
+        ? configuredRegularBackground.withValues(alpha: 0)
+        : configuredRegularBackground;
     final Color compactBackground = compactStyle == 'transparent'
         ? Colors.transparent
         : _color(
@@ -414,11 +418,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             _header.number('space_down', 0).clamp(0, 80),
       ),
       child: Material(
-        color:
-            (!compact &&
-                _header.string('style', 'standard') == 'transparent')
-            ? background.withValues(alpha: 0)
-            : background,
+        color: background,
         elevation: elevation,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
@@ -438,31 +438,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               child: ClipRect(
                 child: transition == 'smooth_compact'
-                    ? Stack(
-                        key: const Key('cms-page-app-bar-scroll-transition'),
-                        alignment: Alignment.center,
-                        children: <Widget>[
-                          _scrollLinkedContent(
-                            context,
-                            rows: _layoutRows(),
-                            color: foreground,
-                            width: MediaQuery.sizeOf(context).width -
-                                (sideMargin * 2) -
-                                (padding * 2),
-                            opacity: 1 - progress,
-                            translateY: -24 * progress,
-                          ),
-                          _scrollLinkedContent(
-                            context,
-                            rows: _compactLayoutRows(),
-                            color: foreground,
-                            width: MediaQuery.sizeOf(context).width -
-                                (sideMargin * 2) -
-                                (padding * 2),
-                            opacity: progress,
-                            translateY: 14 * (1 - progress),
-                          ),
-                        ],
+                    ? _smoothCompactContent(
+                        context,
+                        color: foreground,
+                        width: MediaQuery.sizeOf(context).width -
+                            (sideMargin * 2) -
+                            (padding * 2),
+                        progress: progress,
                       )
                     : AnimatedSwitcher(
                   key: const Key('cms-page-app-bar-transition'),
@@ -514,6 +496,221 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     'strong' => 6,
     _ => 2,
   };
+
+  Widget _smoothCompactContent(
+    BuildContext context, {
+    required Color color,
+    required double width,
+    required double progress,
+  }) {
+    final List<Map<String, dynamic>> regularRows = _layoutRows();
+    final List<Map<String, dynamic>> compactRows = _compactLayoutRows();
+    final Set<String> regularItems = _rowItems(regularRows);
+    final Set<String> compactItems = _rowItems(compactRows);
+    final bool morphSearch =
+        regularItems.contains('search_bar') &&
+        compactItems.contains('search_bar');
+    if (!morphSearch) {
+      return Stack(
+        key: const Key('cms-page-app-bar-scroll-transition'),
+        alignment: Alignment.center,
+        children: <Widget>[
+          _scrollLinkedContent(
+            context,
+            rows: regularRows,
+            color: color,
+            width: width,
+            opacity: 1 - progress,
+            translateY: -24 * progress,
+          ),
+          _scrollLinkedContent(
+            context,
+            rows: compactRows,
+            color: color,
+            width: width,
+            opacity: progress,
+            translateY: 14 * (1 - progress),
+          ),
+        ],
+      );
+    }
+
+    const Set<String> fixedActionItems = <String>{
+      'cart',
+      'orders',
+      'wishlist',
+      'account',
+    };
+    final Set<String> persistentActions = regularItems
+        .where(
+          fixedActionItems.contains,
+        )
+        .toSet();
+    final Set<String> removed = <String>{
+      'search_bar',
+      ...persistentActions,
+    };
+    final List<Map<String, dynamic>> fadingRegular = _rowsWithoutItems(
+      regularRows,
+      removed,
+    );
+    final List<Map<String, dynamic>> fadingCompact = _rowsWithoutItems(
+      compactRows,
+      removed,
+    );
+    final double compactSearchFraction = _itemWidthFraction(
+      compactRows,
+      'search_bar',
+      fallback: .84,
+    );
+    final double regularSearchFraction = _itemWidthFraction(
+      regularRows,
+      'search_bar',
+      fallback: 1,
+    );
+    final double searchFraction = _lerp(
+      regularSearchFraction,
+      compactSearchFraction,
+      progress,
+    );
+    final double searchHeight = _header
+        .number('search_height', 40)
+        .clamp(32, 64)
+        .toDouble();
+    final double regularContentHeight =
+        (_header.number('height', 64).clamp(48, 120) -
+                (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+            .clamp(searchHeight, double.infinity)
+            .toDouble();
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double availableWidth = width.clamp(1, double.infinity).toDouble();
+        final double startTop = (regularContentHeight - searchHeight)
+            .clamp(0, double.infinity)
+            .toDouble();
+        final double endTop = ((constraints.maxHeight - searchHeight) / 2)
+            .clamp(0, double.infinity)
+            .toDouble();
+        return Stack(
+          key: const Key('cms-page-app-bar-scroll-transition'),
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            if (fadingRegular.isNotEmpty)
+              Positioned.fill(
+                child: _scrollLinkedContent(
+                  context,
+                  rows: fadingRegular,
+                  color: color,
+                  width: availableWidth,
+                  opacity: 1 - progress,
+                  translateY: -8 * progress,
+                ),
+              ),
+            if (fadingCompact.isNotEmpty)
+              Positioned.fill(
+                child: _scrollLinkedContent(
+                  context,
+                  rows: fadingCompact,
+                  color: color,
+                  width: availableWidth,
+                  opacity: progress,
+                  translateY: 8 * (1 - progress),
+                ),
+              ),
+            Positioned(
+              top: _lerp(startTop, endTop, progress),
+              left: 0,
+              width: availableWidth * searchFraction,
+              height: searchHeight,
+              child: KeyedSubtree(
+                key: const Key('cms-page-morphing-search'),
+                child: _searchBar(context, _actionFor('search'), color),
+              ),
+            ),
+            if (persistentActions.isNotEmpty)
+              Positioned(
+                top: 0,
+                right: 0,
+                height: searchHeight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: persistentActions
+                      .map(
+                        (String item) => Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal:
+                                _header
+                                    .number('icon_gap', 6)
+                                    .clamp(0, 24) /
+                                2,
+                          ),
+                          child: _item(context, item, color),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Set<String> _rowItems(List<Map<String, dynamic>> rows) => rows
+      .expand(_columns)
+      .expand((Map<String, dynamic> column) {
+        final dynamic raw = column['items'];
+        return raw is List ? raw.map((dynamic item) => '$item') : <String>[];
+      })
+      .toSet();
+
+  List<Map<String, dynamic>> _rowsWithoutItems(
+    List<Map<String, dynamic>> rows,
+    Set<String> removed,
+  ) {
+    return rows
+        .map((Map<String, dynamic> row) {
+          final List<Map<String, dynamic>> columns = _columns(row)
+              .map((Map<String, dynamic> column) {
+                final dynamic raw = column['items'];
+                final List<String> items = raw is List
+                    ? raw
+                          .map((dynamic item) => '$item')
+                          .where((String item) => !removed.contains(item))
+                          .toList(growable: false)
+                    : <String>[];
+                return <String, dynamic>{...column, 'items': items};
+              })
+              .toList(growable: false);
+          return <String, dynamic>{...row, 'columns': columns};
+        })
+        .where(
+          (Map<String, dynamic> row) => _columns(row).any(
+            (Map<String, dynamic> column) =>
+                (column['items'] as List?)?.isNotEmpty ?? false,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  double _itemWidthFraction(
+    List<Map<String, dynamic>> rows,
+    String item, {
+    required double fallback,
+  }) {
+    for (final Map<String, dynamic> row in rows) {
+      for (final Map<String, dynamic> column in _columns(row)) {
+        final dynamic raw = column['items'];
+        if (raw is List && raw.map((dynamic value) => '$value').contains(item)) {
+          return (((column['width'] as num?)?.toDouble() ?? 100) / 100)
+              .clamp(.1, 1)
+              .toDouble();
+        }
+      }
+    }
+    return fallback;
+  }
 
   Widget _scrollLinkedContent(
     BuildContext context, {

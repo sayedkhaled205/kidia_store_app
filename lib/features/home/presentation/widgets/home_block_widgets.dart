@@ -1466,6 +1466,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     showBadge: block.showBadge,
                     showRating: block.showRating,
                     quickAddEnabled: block.quickAddEnabled,
+                    imageSwipeEnabled: block.imageSwipeEnabled,
                     quickAddAppearance: block.quickAddAppearance,
 					wishlistAppearance: block.wishlistAppearance,
                   ),
@@ -1556,6 +1557,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       showBadge: block.showBadge,
                       showRating: block.showRating,
                       quickAddEnabled: block.quickAddEnabled,
+                      imageSwipeEnabled: block.imageSwipeEnabled,
                       quickAddAppearance: block.quickAddAppearance,
 					  wishlistAppearance: block.wishlistAppearance,
                     );
@@ -2586,6 +2588,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.showBadge = true,
     this.showRating = false,
     this.quickAddEnabled = true,
+    this.imageSwipeEnabled = false,
     this.quickAddAppearance,
 	this.wishlistAppearance = const ProductWishlistAppearance(),
   });
@@ -2602,6 +2605,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final bool imageSwipeEnabled;
   final ProductQuickAddAppearance? quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
 
@@ -2612,6 +2616,8 @@ class _HomeProductCardAdapter extends StatelessWidget {
     return ProductCard(
       name: product.name,
       imageUrl: product.imageUrl,
+      imageUrls: product.imageUrls,
+      imageSwipeEnabled: imageSwipeEnabled,
       price: product.price,
       regularPrice: product.regularPrice,
       currencySymbol: product.currencySymbol,

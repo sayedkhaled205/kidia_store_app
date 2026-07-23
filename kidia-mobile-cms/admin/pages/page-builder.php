@@ -49,6 +49,31 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 			<?php elseif ( 'image' === $field['type'] ) : ?>
 				<div class="kidia-page-media"><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button></div>
 				<img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>>
+			<?php elseif ( 'tabs' === $field['type'] ) :
+				$tabs = json_decode( (string) $value, true );
+				$tabs = is_array( $tabs ) ? $tabs : array();
+				$tab_targets = array(
+					'overview' => __( 'Overview / product information', 'kidia-mobile-cms' ),
+					'variations' => __( 'Variations', 'kidia-mobile-cms' ),
+					'description' => __( 'Description', 'kidia-mobile-cms' ),
+					'reviews' => __( 'Reviews', 'kidia-mobile-cms' ),
+					'recommend' => __( 'Related products', 'kidia-mobile-cms' ),
+				);
+				?>
+				<div class="kidia-product-tabs-editor">
+					<input type="hidden" class="kidia-product-tabs-json" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
+					<div class="kidia-product-tabs-rows">
+						<?php foreach ( array_slice( $tabs, 0, 10 ) as $tab ) : ?>
+							<div class="kidia-product-tab-row">
+								<input type="text" class="kidia-product-tab-label" value="<?php echo esc_attr( (string) ( $tab['label'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'Tab label', 'kidia-mobile-cms' ); ?>">
+								<select class="kidia-product-tab-target"><?php foreach ( $tab_targets as $target => $target_label ) : ?><option value="<?php echo esc_attr( $target ); ?>" <?php selected( (string) ( $tab['target'] ?? 'overview' ), $target ); ?>><?php echo esc_html( $target_label ); ?></option><?php endforeach; ?></select>
+								<label class="kidia-product-tab-enabled"><input type="checkbox" <?php checked( ! empty( $tab['enabled'] ) ); ?>><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></label>
+								<button type="button" class="button kidia-product-tab-remove" aria-label="<?php esc_attr_e( 'Remove tab', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<button type="button" class="button kidia-product-tab-add"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add tab', 'kidia-mobile-cms' ); ?></button>
+				</div>
 			<?php else : ?>
 				<input type="text" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
 			<?php endif; ?>
@@ -133,13 +158,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 				</section>
 			<?php endif; ?>
 
-			<div id="kidia-page-elements" class="kidia-page-elements">
-			<?php foreach ( $layout['elements'] as $index => $element ) :
-				$element_type = sanitize_key( (string) ( $element['type'] ?? $element['id'] ?? '' ) );
-				$element_id = sanitize_key( (string) ( $element['id'] ?? $element_type ) );
-				$definition = $definition_map[ $element_type ] ?? null;
-				if ( ! is_array( $definition ) ) { continue; }
-				?>
+			<?php if ( 'wishlist' === $page ) : ?>
 				<?php
 				$wishlist_state_map = array(
 					'sign_in_state' => 'sign_in',
@@ -149,6 +168,30 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 					'wishlist_grid' => 'products',
 					'products_recommendations' => 'products',
 				);
+				?>
+				<div class="kidia-wishlist-element-toolbar">
+					<div>
+						<strong><?php esc_html_e( 'Add element to this wishlist state', 'kidia-mobile-cms' ); ?></strong>
+						<small><?php esc_html_e( 'The new element is inserted below the currently selected state.', 'kidia-mobile-cms' ); ?></small>
+					</div>
+					<select id="kidia-wishlist-add-element-type">
+						<?php foreach ( $element_definitions as $wishlist_definition ) : ?>
+							<?php $wishlist_definition_state = $wishlist_state_map[ $wishlist_definition['id'] ] ?? ''; ?>
+							<?php if ( $wishlist_definition_state ) : ?>
+								<option value="<?php echo esc_attr( $wishlist_definition['id'] ); ?>" data-wishlist-state="<?php echo esc_attr( $wishlist_definition_state ); ?>"><?php echo esc_html( $wishlist_definition['label'] ); ?></option>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</select>
+					<button type="button" class="button button-primary" id="kidia-wishlist-add-element"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?></button>
+				</div>
+			<?php endif; ?>
+
+			<div id="kidia-page-elements" class="kidia-page-elements">
+			<?php foreach ( $layout['elements'] as $index => $element ) :
+				$element_type = sanitize_key( (string) ( $element['type'] ?? $element['id'] ?? '' ) );
+				$element_id = sanitize_key( (string) ( $element['id'] ?? $element_type ) );
+				$definition = $definition_map[ $element_type ] ?? null;
+				if ( ! is_array( $definition ) ) { continue; }
 				?>
 				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element_type ); ?>" data-instance-id="<?php echo esc_attr( $element_id ); ?>"<?php if ( 'wishlist' === $page && isset( $wishlist_state_map[ $element_type ] ) ) : ?> data-wishlist-state="<?php echo esc_attr( $wishlist_state_map[ $element_type ] ); ?>"<?php endif; ?> draggable="false">
 					<input class="kidia-page-element-id" type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element_id ); ?>">
