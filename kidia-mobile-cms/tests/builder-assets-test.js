@@ -950,7 +950,7 @@ function runPageBuilderTest() {
   assert.doesNotMatch(storeSource, /self::element\( 'account_menu'[\s\S]{0,500}Menu style/, "Account menu must not expose an unimplemented layout control.");
   const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
-  assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
+  assert.match(wishlistSource, /settings\.string\(\s*'title',[\s\S]{0,120}copy\.emptyTitle/, "Wishlist empty-state copy must be consumed by the shared state renderer.");
   assert.match(wishlistSource, /wishlist_preview_state[\s\S]*_buildSignInState[\s\S]*_buildEmptyState[\s\S]*_buildProductState/, "The Flutter preview must independently render all three Wishlist states.");
   assert.match(wishlistSource, /AppConfig\.isCmsPreview[\s\S]*_previewWishlistProducts[\s\S]*Duration\(seconds: 8\)[\s\S]*Retry/, "Wishlist recommendations must use immediate preview data and a bounded retryable production request.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
