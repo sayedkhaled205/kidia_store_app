@@ -56,9 +56,9 @@ final homeLayoutProvider = FutureProvider.autoDispose
       if (previewJson != null) {
         return HomeLayoutModel.fromJson(previewJson);
       }
-      // The embedded CMS owns the preview payload. Falling through to the
-      // public store endpoint starts a second, much slower Home request while
-      // WordPress is already normalizing the unsaved Builder state.
+      // The embedded CMS owns the canonical WordPress preview payload.
+      // Falling through to the public store endpoint starts a second, much
+      // slower Home request while WordPress normalizes the unsaved Builder state.
       if (AppConfig.isCmsPreview) {
         return Completer<HomeLayout>().future;
       }
