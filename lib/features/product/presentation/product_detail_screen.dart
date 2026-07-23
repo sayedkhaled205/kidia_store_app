@@ -358,7 +358,7 @@ class _ProductContent extends StatelessWidget {
     final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings);
 
     void openTab(String target) {
-      final GlobalKey? key = switch (target) {
+      final GlobalKey key = switch (target) {
         'variations' => variationsKey,
         'description' => descriptionKey,
         'reviews' => reviewsKey,

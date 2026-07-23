@@ -608,7 +608,10 @@ final class Kidia_Mobile_Product_Carousel_Block extends Kidia_Mobile_Block {
 
 	/** Returns the main and gallery thumbnails used by card swiping. */
 	private function get_product_image_urls( WC_Product $product ): array {
-		$ids = array_merge( array( $product->get_image_id() ), $product->get_gallery_image_ids() );
+		$gallery_ids = method_exists( $product, 'get_gallery_image_ids' )
+			? (array) $product->get_gallery_image_ids()
+			: array();
+		$ids = array_merge( array( $product->get_image_id() ), $gallery_ids );
 		$urls = array();
 		foreach ( array_unique( array_filter( array_map( 'absint', $ids ) ) ) as $image_id ) {
 			$url = $this->sanitize_http_url( wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) );
