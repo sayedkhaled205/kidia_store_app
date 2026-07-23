@@ -58,18 +58,18 @@ $render_chrome_field = static function ( array $field, $value, string $name ): v
 	?></div><?php
 };
 $footer_icon_symbols = array(
-	'back'       => array( 'arrow' => 'dashicons-arrow-left-alt', 'chevron' => 'dashicons-arrow-left-alt2', 'rounded' => 'dashicons-undo' ),
-	'home'       => array( 'home' => 'dashicons-admin-home', 'rounded' => 'dashicons-building', 'filled' => 'dashicons-store' ),
-	'categories' => array( 'grid' => 'dashicons-grid-view', 'category' => 'dashicons-screenoptions', 'list' => 'dashicons-list-view' ),
-	'search'     => array( 'rounded' => 'dashicons-search', 'classic' => 'dashicons-search', 'minimal' => 'dashicons-visibility' ),
-	'cart'       => array( 'bag' => 'dashicons-products', 'cart' => 'dashicons-cart', 'basket' => 'dashicons-buddicons-groups' ),
-	'wishlist'   => array( 'heart' => 'dashicons-heart', 'rounded' => 'dashicons-heart', 'bookmark' => 'dashicons-bookmark' ),
-	'account'    => array( 'person' => 'dashicons-admin-users', 'circle' => 'dashicons-admin-users', 'profile' => 'dashicons-id' ),
-	'orders'     => array( 'receipt' => 'dashicons-media-text', 'box' => 'dashicons-archive', 'list' => 'dashicons-list-view' ),
-	'share'      => array( 'upload' => 'dashicons-upload', 'share' => 'dashicons-share', 'send' => 'dashicons-email-alt' ),
-	'like'       => array( 'heart' => 'dashicons-heart', 'rounded' => 'dashicons-heart', 'bookmark' => 'dashicons-bookmark' ),
-	'support'    => array( 'headset' => 'dashicons-phone', 'support' => 'dashicons-businessperson', 'chat' => 'dashicons-format-chat' ),
-	'menu'       => array( 'menu' => 'dashicons-menu', 'dots' => 'dashicons-ellipsis', 'grid' => 'dashicons-grid-view' ),
+	'back'       => array( 'arrow' => 'f572', 'chevron' => 'f63a', 'rounded' => 'f82f' ),
+	'home'       => array( 'home' => 'f107', 'rounded' => 'f244', 'filled' => 'f7f5' ),
+	'categories' => array( 'grid' => 'f0d7', 'category' => 'ef37', 'list' => 'f498' ),
+	'search'     => array( 'rounded' => 'f013d', 'classic' => 'e567', 'minimal' => 'f1ad' ),
+	'cart'       => array( 'bag' => 'f37d', 'cart' => 'f37f', 'basket' => 'f37e' ),
+	'wishlist'   => array( 'heart' => 'f737', 'rounded' => 'f738', 'bookmark' => 'e0f4' ),
+	'account'    => array( 'person' => 'f006c', 'circle' => 'ee35', 'profile' => 'f1ac' ),
+	'orders'     => array( 'receipt' => 'f2ef', 'box' => 'f134', 'list' => 'f792' ),
+	'share'      => array( 'upload' => 'f138', 'share' => 'f378', 'send' => 'f355' ),
+	'like'       => array( 'heart' => 'f737', 'rounded' => 'f738', 'bookmark' => 'e0f4' ),
+	'support'    => array( 'headset' => 'f0ee', 'support' => 'f01f5', 'chat' => 'f62f' ),
+	'menu'       => array( 'menu' => 'f8b6', 'dots' => 'f8d9', 'grid' => 'f7c4' ),
 );
 ?>
 <section class="kidia-fixed-chrome-card kidia-page-card kidia-page-card--locked" data-element="<?php echo esc_attr( $chrome_part ); ?>" data-chrome-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
@@ -131,7 +131,7 @@ $footer_icon_symbols = array(
 			<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?> class="kidia-chrome-item-setting kidia-chrome-item-setting--<?php echo esc_attr( $item ); ?> <?php echo 'header' === $chrome_part && 'cart' === $item ? 'kidia-chrome-item-setting--header-cart' : ''; ?>" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
 				<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>><?php echo esc_html( sprintf( __( '%s Settings', 'kidia-mobile-cms' ), $label ) ); ?></<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>>
 				<?php if ( $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
-					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="dashicons <?php echo esc_attr( $symbols[ $option ] ?? 'dashicons-marker' ); ?>"></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
+					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : $codepoint = preg_match( '/^[0-9a-f]+$/i', (string) ( $symbols[ $option ] ?? '' ) ) ? (string) $symbols[ $option ] : 'ef53'; ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="kidia-material-icon-choice" aria-hidden="true"><?php echo '&#x' . esc_html( $codepoint ) . ';'; ?></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
 				<?php endif; ?>
 				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } ?></div>
 			</<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?>>

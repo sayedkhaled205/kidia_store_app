@@ -88,6 +88,26 @@ test("generic Flutter preview preserves the submitted Off value for WordPress ch
   assert.equal(messages[0].message.layout.footer.settings.show_labels, "1");
 });
 
+test("generic Flutter preview sends the currently selected Wishlist access mode", async () => {
+  const messages = runBridge("flutter-preview-bridge.js", `
+    <div class="kidia-page-builder" data-page="wishlist">
+      <form class="kidia-page-editor">
+        <input type="radio" name="layout[settings][wishlist_access_mode]" value="guest">
+        <input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" checked>
+      </form>
+      <div id="kidia-page-elements"></div>
+    </div>
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+  markFlutterReady(messages);
+  await settle();
+  assert.equal(messages.at(-1).message.layout.settings.wishlist_access_mode, "sign_in_required");
+  const guest = messages.window.document.querySelector('[value="guest"]');
+  guest.checked = true;
+  guest.dispatchEvent(new messages.window.Event("change", { bubbles: true }));
+  await settle();
+  assert.equal(messages.at(-1).message.layout.settings.wishlist_access_mode, "guest");
+});
+
 test("Category Flutter preview sends canonical current fields immediately", async () => {
   const messages = runBridge("flutter-category-preview-bridge.js", `
     <div class="kidia-category-builder"><form>

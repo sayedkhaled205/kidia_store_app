@@ -484,6 +484,8 @@ function runMergeControlsContractTest() {
 	assert.ok(categoryBuilder.indexOf("Layout & Spacing") < categoryBuilder.indexOf("Categories & Subcategories"), "Category Layout & Spacing must remain above Categories & Subcategories.");
 	assert.match(categoryBuilder, /Layout & Spacing[\s\S]*grid_columns[\s\S]*show_arrow[\s\S]*card_radius[\s\S]*Colors & Appearance/, "Grid columns and Show arrow must both belong to Category Layout & Spacing before the next section starts.");
 	assert.match(chromeTemplate, /kidia-chrome-item-setting--header-cart/, "Only the Header Cart editor must receive the rebuilt Cart Settings layout.");
+	assert.match(chromeTemplate, /kidia-material-icon-choice[\s\S]*&#x/, "Header and Footer icon choices must use the bundled Material Icons font instead of unrelated WordPress Dashicons.");
+	assert.match(readAsset("page-builder.css"), /@font-face\{font-family:"Kidia Material Icons"[\s\S]*MaterialIcons-Regular\.otf/, "The HTML fallback preview must load the exact Material Icons font bundled with Flutter.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="cart_badge_background"\]\s*\{\s*grid-column:3;\s*grid-row:3;[\s\S]*data-setting="cart_badge_shape"\]\s*\{\s*grid-column:2;\s*grid-row:3;[\s\S]*data-setting="cart_style"\]\s*\{\s*grid-column:1;\s*grid-row:3;/, "Cart Settings must start with Cart icon style in the physical right column.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="show_cart_badge"\]\s*\{[^}]*grid-column:3;[^}]*grid-row:2;[^}]*align-items:center;[^}]*justify-self:stretch;/, "Show cart item count must move to the left slot above the second settings row without overlapping the icon choices.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="cart_background"\]\s*\{\s*grid-column:3;\s*grid-row:5;[\s\S]*data-setting="cart_color"\]\s*\{\s*grid-column:2;\s*grid-row:5;[\s\S]*data-setting="cart_radius"\]\s*\{\s*grid-column:1;\s*grid-row:5;/, "Cart Settings final row must also start from the physical right.");
@@ -969,7 +971,12 @@ function runPageBuilderTest() {
   const markup = `<!doctype html><html><body>
     <div class="kidia-page-builder" data-page="catalog">
       <div id="kidia-page-live-preview"></div>
-      <form><div class="kidia-page-builder-blank"></div><section class="kidia-page-card kidia-page-card--locked" data-element="header">
+      <form><div class="kidia-page-builder-blank"></div>
+      <div class="kidia-wishlist-access-mode">
+        <label class="kidia-wishlist-access-option"><input type="radio" name="layout[settings][wishlist_access_mode]" value="guest"><span>Guest wishlist</span></label>
+        <label class="kidia-wishlist-access-option"><input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" checked><span>Sign in required</span></label>
+      </div>
+      <section class="kidia-page-card kidia-page-card--locked" data-element="header">
         <div class="kidia-page-card__header"><button type="button" class="kidia-page-expand">Open</button></div>
         <div class="kidia-page-card__body" hidden><input name="layout[header][height]" value="64"></div>
         <input type="checkbox" name="layout[header][enabled]" checked>
@@ -1003,6 +1010,8 @@ function runPageBuilderTest() {
   assert.equal(window.document.activeElement, focusedNumber, "The numeric field must accept focus.");
   window.document.querySelector(".kidia-page-builder-blank").dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
   assert.notEqual(window.document.activeElement, focusedNumber, "Clicking empty builder space must release the field so keyboard arrows can scroll.");
+  window.document.querySelector('.kidia-wishlist-access-option [value="guest"] + span').dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.equal(window.document.querySelector('[name="layout[settings][wishlist_access_mode]"]:checked').value, "guest", "Clicking anywhere on a Wishlist access card must select and submit that mode.");
   console.log("Page Builders: fixed chrome, page elements, preview and sorting passed.");
 }
 
@@ -1019,6 +1028,7 @@ function runChromeComposerTest() {
 	card.insertAdjacentHTML("beforeend", '<input name="layout[header][settings][space_up]" value="4"><input name="layout[header][settings][space_down]" value="6">');
   const preview = window.KidiaChromePreview.renderHeader(card, "Home");
   assert.match(preview, /kidia-app-icon--cart-basket/, "The selected cart design must render immediately in preview.");
+	assert.match(preview, /kidia-app-icon--material[^>]*>&#xf37e;<\/span>/, "The selected cart design must use Flutter's shopping_basket_outlined glyph.");
 	assert.match(preview, /kidia-app-icon-badge[^>]+min-width:22px[^>]+border-radius:11px[^>]+background:#C84F6A[^>]+color:#FFF4E8/, "Cart count shape, size and colors must render immediately in preview.");
 	assert.match(preview, /is-circle[^>]+border:1px solid #123456/, "Header icon style must visibly affect the live preview.");
 	assert.match(preview, /kidia-app-header-brand[\s\S]*Kids/, "The subtitle must render with the logo instead of occupying a separate row item.");
