@@ -284,6 +284,7 @@ abstract final class HomeBlockModel {
       imageShape: imageShape,
       imageSize: _boundedDouble(data, 'image_size', fallback: 78, minimum: 48, maximum: 140),
       gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
+      rowGap: _boundedDouble(data, 'row_gap', fallback: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32), minimum: 0, maximum: 80),
       labelSize: _boundedDouble(data, 'label_size', fallback: 13, minimum: 10, maximum: 22),
       labelColor: _hexColor(data, 'label_color', fallback: '#1F2933'),
     );

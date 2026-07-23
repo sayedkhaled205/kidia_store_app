@@ -672,7 +672,7 @@ class CategoryGridBlockWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Column(
                 children: block.items.map((CategoryItem item) => Padding(
-                  padding: EdgeInsets.only(bottom: block.gap),
+                  padding: EdgeInsets.only(bottom: block.rowGap),
                   child: _CategoryBannerCard(item: item, block: block, onAction: onAction),
                 )).toList(growable: false),
               ),
@@ -687,18 +687,20 @@ class CategoryGridBlockWidget extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
+                  final double spacing = compact ? block.gap / 2 : block.gap;
+                  // Floor the computed width so floating-point rounding never
+                  // pushes the last item onto a new row (for example 3 columns
+                  // becoming 2 + 2 + 1 inside the narrow CMS phone preview).
                   final double itemWidth =
-                      (constraints.maxWidth -
-                              ((columns - 1) *
-                                  (compact ? block.gap / 2 : block.gap))) /
-                          columns;
+                      ((constraints.maxWidth - ((columns - 1) * spacing)) /
+                              columns)
+                          .floorToDouble();
                   final double imageSize = block.imageSize < itemWidth - 8
                       ? block.imageSize
                       : itemWidth - 8;
-                  final double spacing = compact ? block.gap / 2 : block.gap;
                   return Wrap(
                     spacing: spacing,
-                    runSpacing: spacing,
+                    runSpacing: compact ? block.rowGap / 2 : block.rowGap,
                     alignment: switch (block.itemsAlignment) {
                       'left' => WrapAlignment.start,
                       'center' => WrapAlignment.center,
@@ -707,7 +709,9 @@ class CategoryGridBlockWidget extends StatelessWidget {
                     textDirection: TextDirection.ltr,
                     children: block.items.map((CategoryItem item) => SizedBox(
                       width: itemWidth,
-                      height: imageSize + (block.showNames ? (compact ? 36 : 45) : 4),
+                      height: imageSize +
+                          (block.showNames ? (compact ? 36 : 45) : 4) +
+                          (cards ? 14 : 0),
                       child: _CategoryBlockCard(
                         item: item,
                         block: block,
@@ -750,10 +754,10 @@ class _CategoryEditorialMosaic extends StatelessWidget {
         ]),
       ),
       if (remaining.isNotEmpty) ...<Widget>[
-        SizedBox(height: block.gap),
+        SizedBox(height: block.rowGap),
         Wrap(
           spacing: block.gap,
-          runSpacing: block.gap,
+          runSpacing: block.rowGap,
           alignment: WrapAlignment.end,
           textDirection: TextDirection.ltr,
           children: remaining.map((CategoryItem item) => SizedBox(width: 110, height: 130, child: _CategoryMosaicTile(item: item, block: block, onAction: onAction))).toList(growable: false),
@@ -831,10 +835,7 @@ class _CategoryBlockCard extends StatelessWidget {
       'square' => BorderRadius.zero,
       _ => BorderRadius.circular(18),
     };
-    return InkWell(
-      borderRadius: radius,
-      onTap: item.action == null ? null : () => onAction(item.action!),
-      child: Column(
+    final Widget content = Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           ClipRRect(
@@ -865,6 +866,20 @@ class _CategoryBlockCard extends StatelessWidget {
             ),
           ],
         ],
+      );
+    return Material(
+      color: forceRounded ? Colors.white : Colors.transparent,
+      elevation: forceRounded ? 2 : 0,
+      shadowColor: const Color(0x241F2933),
+      borderRadius: forceRounded ? BorderRadius.circular(18) : radius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: forceRounded ? BorderRadius.circular(18) : radius,
+        onTap: item.action == null ? null : () => onAction(item.action!),
+        child: Padding(
+          padding: forceRounded ? const EdgeInsets.all(7) : EdgeInsets.zero,
+          child: content,
+        ),
       ),
     );
   }

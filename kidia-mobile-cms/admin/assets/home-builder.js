@@ -535,7 +535,9 @@
 					return !category || typeof category.count === "undefined" || Number(category.count) > 0;
 				});
 			}
-			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid is-' + escapeHtml(settings.layout || "grid") + ' is-align-' + escapeHtml(settings.items_alignment || "right") + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";gap:" + numberInRange(settings.gap, 12, 0, 32) + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
+			var categoryGap = numberInRange(settings.gap, 12, 0, 32);
+			var categoryRowGap = numberInRange(settings.row_gap, categoryGap, 0, 80);
+			return '<section class="kidia-preview-section">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-category-grid is-' + escapeHtml(settings.layout || "grid") + ' is-align-' + escapeHtml(settings.items_alignment || "right") + (settings.layout === "carousel" ? " is-carousel" : "") + '" style="--kidia-preview-columns:' + columns + ";--kidia-preview-gap:" + categoryGap + "px;column-gap:" + categoryGap + "px;row-gap:" + categoryRowGap + 'px">' + (items.length ? items.map(function (category) { return renderCategoryCard(category, settings.show_names !== "", settings); }).join("") : sampleCards(count, "kidia-preview-category-card", settings.show_names === "" ? "" : "Category")) + "</div></section>";
 
 		case "image_banner":
 			image = safeImage(settings.image_url);

@@ -2102,7 +2102,7 @@ class _ProductShareSheet extends StatelessWidget {
                   key: const Key('share-copy-link'),
                   label: 'نسخ الرابط',
                   icon: const Icon(Icons.link_rounded),
-                  color: Colors.white,
+                  color: const Color(0xFFF1F2F3),
                   foregroundColor: colors.onSurface,
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: _link));
@@ -2116,7 +2116,7 @@ class _ProductShareSheet extends StatelessWidget {
                   key: const Key('share-more'),
                   label: 'المزيد',
                   icon: const Icon(Icons.more_horiz_rounded),
-                  color: Colors.white,
+                  color: const Color(0xFFF1F2F3),
                   foregroundColor: colors.onSurface,
                   onTap: () async {
                     await Share.share(_message, subject: product.name);
