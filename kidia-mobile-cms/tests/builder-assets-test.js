@@ -91,7 +91,7 @@ function homeMarkup() {
   const blocks = [
     homeBlock("app_header", 0, `${mediaField("logo_url", "https://example.com/logo.png", "kidia-app-header-logo-url", "kidia-select-app-header-logo", "kidia-media-preview kidia-app-header-logo-preview")}${input("title", "Kidia")}${input("subtitle", "Kids store")}${input("height", "64")}${input("logo_height", "38")}${input("title_color", "#1F2933")}${input("icon_color", "#1F2933")}<input type="checkbox" name="blocks[0][settings][show_search]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_cart]" value="1" checked><input type="checkbox" name="blocks[0][settings][show_account]" value="1">`),
     homeBlock("hero_slider", 1, `${input("aspect_ratio", "1.8")}<div class="kidia-hero-block-items">${heroItem}</div><button type="button" class="kidia-add-hero-block-item">Add Slide</button><script type="text/html" class="tmpl-kidia-hero-block-item">${heroTemplate}</script>`),
-    homeBlock("category_grid", 2, `${input("title", "Categories")}${input("columns", "4")}${input("limit", "4")}${input("margin_top", "0")}${input("margin_bottom", "0")}${input("margin_horizontal", "0")}${input("padding_vertical", "0")}${input("padding_horizontal", "0")}${input("block_radius", "0")}${input("content_scale", "100")}<input type="color" name="blocks[0][settings][block_background]" value="#ffffff"><input type="checkbox" name="blocks[0][settings][show_names]" value="1" checked>`),
+    homeBlock("category_grid", 2, `${input("title", "Categories")}${input("columns", "4")}${input("limit", "4")}${input("gap", "12")}${input("row_gap", "12")}<select name="blocks[0][settings][layout]"><option value="grid" selected>Grid</option><option value="compact">Compact</option><option value="cards">Cards</option><option value="carousel">Carousel</option><option value="editorial_mosaic">Mosaic</option><option value="full_width_banners">Banners</option></select><select name="blocks[0][settings][items_alignment]"><option value="right">Right</option><option value="center" selected>Center</option><option value="left">Left</option></select>${input("margin_top", "0")}${input("margin_bottom", "0")}${input("margin_horizontal", "0")}${input("padding_vertical", "0")}${input("padding_horizontal", "0")}${input("block_radius", "0")}${input("content_scale", "100")}<input type="color" name="blocks[0][settings][block_background]" value="#ffffff"><input type="checkbox" name="blocks[0][settings][show_names]" value="1" checked>`),
     homeBlock("image_banner", 3, `${mediaField("image_url", "https://example.com/banner.jpg", "kidia-banner-image-url", "kidia-select-banner-image", "kidia-banner-image-preview")}${input("aspect_ratio", "2.4")}${input("border_radius", "18")}<div class="kidia-builder-field"><select name="blocks[0][settings][action_type]"><option value="product" selected>Product</option><option value="category">Category</option></select></div><div class="kidia-builder-field"><label>Action Value</label>${input("action_value", "12")}</div>`),
     homeBlock("product_carousel", 4, `${input("title", "Latest")}${input("limit", "3")}`),
     homeBlock("product_grid", 5, `${input("title", "Offers")}${input("columns", "2")}${input("limit", "4")}`),
@@ -264,6 +264,17 @@ function runHomeBuilderTest() {
 
   const categoryBlock = window.document.querySelector('[data-type="category_grid"]');
   const categoryFrame = () => window.document.querySelector('[data-preview-block="category_grid_2"]');
+  const categoryGrid = () => categoryFrame().querySelector('.kidia-preview-category-grid');
+  const rowGap = categoryBlock.querySelector('[name$="[settings][row_gap]"]');
+  rowGap.value = "27";
+  rowGap.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(categoryGrid().style.rowGap, "27px", "Category Row Gap must update only the spacing between rows.");
+  const categoryLayout = categoryBlock.querySelector('[name$="[settings][layout]"]');
+  ["grid", "compact", "cards", "carousel", "editorial_mosaic", "full_width_banners"].forEach((layout) => {
+    categoryLayout.value = layout;
+    categoryLayout.dispatchEvent(new window.Event("change", { bubbles: true }));
+    assert.ok(categoryGrid().classList.contains(`is-${layout}`), `${layout} must render its own Category Grid preview structure.`);
+  });
   const presentationCases = [
     ["margin_horizontal", "9", "marginLeft", "9px"],
     ["padding_vertical", "11", "paddingTop", "11px"],
@@ -750,7 +761,7 @@ function runMergeControlsContractTest() {
 function categoryGeneralSettings() {
 	  const field = (name, value, type = "text") => `<input type="${type}" name="category_general[${name}]" value="${value}">`;
 	  return `<section class="kidia-category-general">
-	    <select name="category_general[navigation_mode]"><option value="drilldown" selected>Default drill-down</option><option value="expand_inline">Expand inline</option><option value="separate_page">Separate page</option></select>
+	    <select name="category_general[navigation_mode]"><option value="expand_inline" selected>Expand inline</option><option value="separate_page">Separate page</option></select>
 	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
 	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
 	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}${field("show_arrow", 1, "checkbox")}
@@ -825,17 +836,20 @@ function runCategoryBuilderTest() {
 		layout.value = value;
 		layout.dispatchEvent(new window.Event("change", { bubbles: true }));
 		assert.ok(window.document.querySelector(`.kidia-category-preview-content.is-layout-${value}`), `${value} must change the live category preview.`);
-		assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, `${value} must initially show root categories only.`);
-		click(window, window.document.querySelector(value === "sidebar" ? ".kidia-category-preview-sidebar-root" : ".kidia-category-preview-expand"));
-		assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, `${value} must replace roots with only the selected subcategories.`);
-		click(window, window.document.querySelector(".kidia-category-preview-back"));
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
 	const navigationMode = window.document.querySelector('[name="category_general[navigation_mode]"]');
 	navigationMode.value = "expand_inline";
 	navigationMode.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.ok(window.document.querySelector(".kidia-category-preview-content.is-opening-expand_inline"), "Expand-in-page mode must change the preview immediately.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch.is-expanded .kidia-category-preview-child").length, 1, "Expand-in-page mode must immediately preview subcategories inside the same category card.");
+	navigationMode.value = "separate_page";
+	navigationMode.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.ok(window.document.querySelector(".kidia-category-preview-content.is-opening-separate_page"), "Separate-page mode must change the preview immediately.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Separate-page mode must keep child categories outside the current preview page.");
+	navigationMode.value = "expand_inline";
+	navigationMode.dispatchEvent(new window.Event("change", { bubbles: true }));
 	click(window, window.document.querySelector(".kidia-category-preview-expand"));
-	assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch.is-expanded .kidia-category-preview-child").length, 1, "Expand-in-page mode must reveal subcategories inside the same category card.");
 
 	const elementBackground = window.document.querySelector('[name="category_general[element_background_color]"]');
 	elementBackground.value = "#fff4e8";
@@ -859,19 +873,21 @@ function runCategoryBuilderTest() {
 	assert.equal(window.document.querySelector(".kidia-category-preview-content").style.transform, "translateY(-18px)", "Merge up must pull Category content toward the section above.");
 
   click(window, window.document.querySelector(".kidia-category-expand"));
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Editor expansion must not mix subcategories into the mobile root list.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Editor expansion must be reflected by the live inline-opening preview.");
 
 	  const size = window.document.querySelector('[name="category_general[image_size]"]');
   size.value = "96";
   size.dispatchEvent(new window.Event("input", { bubbles: true }));
   assert.equal(window.document.querySelector(".kidia-category-preview-root .kidia-category-preview-image").style.width, "78px", "Preview must clamp category art to the app row width.");
-  assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "The mobile root list must remain root-only when live settings rerender the preview.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Live settings must preserve the currently expanded inline category.");
 
   click(window, window.document.querySelector(".kidia-category-preview-expand"));
-	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Selecting a root category must expand its subcategories inline.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Selecting an expanded root category must collapse its inline subcategories.");
 	assert.equal(window.document.querySelectorAll(".kidia-category-preview-branch").length, 2, "Root categories must remain visible in expand-in-page mode.");
 	click(window, window.document.querySelector(".kidia-category-preview-expand"));
-	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "Selecting the expanded root again must collapse its inline subcategories.");
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 1, "Selecting the collapsed root again must expand its inline subcategories.");
+	click(window, window.document.querySelector(".kidia-category-preview-expand"));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-child").length, 0, "A second click must collapse the inline subcategories again.");
 
 	  const appName = window.document.querySelector('[name="categories[1][name]"]');
 	  appName.value = "Kids Clothes";
@@ -1023,12 +1039,11 @@ function runChromeComposerTest() {
 	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-row-toolbar \.kidia-chrome-add-row\s*\{[^}]*margin:\s*0 0 0 auto!important/, "Add row must stay inside the row toolbar and align to its far right edge.");
 	assert.match(readAsset("chrome-layout.css"), /kidia-page-text-control \.button\s*\{[^}]*height:34px;[^}]*min-height:34px/, "Use logo text must match the standard logo field height.");
 	assert.match(readAsset("chrome-layout.css"), /kidia-page-media \.button\s*\{[^}]*height:34px;[^}]*min-height:34px/, "Choose image must match the standard logo field height.");
-	assert.match(readAsset("category-builder.css"), /kidia-category-general-fields input\[type="range"\]\s*\{[^}]*max-width:190px/, "Category sliders must match the adjacent standard field width.");
-	assert.match(readAsset("category-builder.css"), /input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*background:#2f806e/, "Category slider thumbs must use the Kidia color.");
+	assert.doesNotMatch(fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8"), /type="range"/, "Every draggable Category slider must be replaced by a direct numeric value field.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="horizontal_padding"\]\s*\{\s*grid-column:3;\s*grid-row:1;\s*\}[\s\S]*data-setting="height"\]\s*\{\s*grid-column:1;\s*grid-row:1;/, "Footer General Settings must start with Height in the physical right column.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="show_labels"\]\s*\{\s*grid-column:3;\s*grid-row:6;\s*\}[\s\S]*data-setting="hide_on_scroll"\]\s*\{\s*grid-column:1;\s*grid-row:6;/, "Footer General Settings toggles must start from the physical right in the final row.");
-	assert.match(readAsset("category-builder.css"), /kidia-category-image-button\s*\{\s*width:112px;\s*\}[\s\S]*kidia-category-image-clear\s*\{\s*width:142px;/, "Category and subcategory image buttons must use the compact approved widths.");
-	assert.match(readAsset("category-builder.css"), /kidia-category-element \.kidia-category-visibility\s*\{[^}]*transform:translateX\(8px\)/, "Category and subcategory visibility toggles must shift right without overlapping the image buttons.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-image-actions\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,190px\)\)/, "Every Category card must place both image buttons in the same stable two-button row.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-image-actions \.button\s*\{[^}]*white-space:normal;[^}]*overflow-wrap:anywhere;/, "Long Category button labels must wrap inside their own button without overlap.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));

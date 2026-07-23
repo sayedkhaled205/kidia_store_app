@@ -52,9 +52,12 @@ assert( 'category' === $api['data']['items'][0]['action']['type'] );
 assert( '16' === $api['data']['items'][0]['action']['value'] );
 assert( 'grid' === $api['data']['layout'] );
 assert( 'right' === $api['data']['items_alignment'] );
+assert( 16 === $api['data']['row_gap'] );
 
-$sanitized = $block->sanitize_settings( array( 'layout' => 'patpat', 'items_alignment' => 'center' ) );
+$sanitized = $block->sanitize_settings( array( 'layout' => 'patpat', 'items_alignment' => 'center', 'gap' => 9, 'row_gap' => 37 ) );
 assert( 'grid' === $sanitized['layout'] );
 assert( 'center' === $sanitized['items_alignment'] );
+assert( 9 === $sanitized['gap'] );
+assert( 37 === $sanitized['row_gap'] );
 
 echo "category-grid-block-contract-test: ok\n";

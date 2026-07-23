@@ -243,6 +243,7 @@ class CategoryGridBlock extends HomeBlock {
     required this.imageShape,
     required this.imageSize,
     required this.gap,
+    required this.rowGap,
     required this.labelSize,
     required this.labelColor,
   }) : super(type: HomeBlockType.categoryGrid);
@@ -257,6 +258,7 @@ class CategoryGridBlock extends HomeBlock {
   final String imageShape;
   final double imageSize;
   final double gap;
+  final double rowGap;
   final double labelSize;
   final String labelColor;
 }

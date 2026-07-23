@@ -34,6 +34,7 @@ return array(
 		'layout' => 'grid',
 
 		'items_alignment' => 'right',
+		'row_gap' => 12,
 
 		'parent_id' => 0,
 
@@ -72,6 +73,9 @@ return array(
 		array(
 			'key' => 'items_alignment', 'label' => __( 'Items Alignment', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'display', 'default' => 'right',
 			'options' => array( 'right' => __( 'Right', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'left' => __( 'Left', 'kidia-mobile-cms' ) ),
+		),
+		array(
+			'key' => 'row_gap', 'label' => __( 'Row Gap', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'display', 'default' => 12, 'min' => 0, 'max' => 80,
 		),
 
 		array(

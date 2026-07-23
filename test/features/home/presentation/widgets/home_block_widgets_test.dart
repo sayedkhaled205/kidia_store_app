@@ -75,13 +75,25 @@ void main() {
     await pumpBlock(tester, CategoryGridBlockWidget(
       block: CategoryGridBlock(
         id: 'categories', enabled: true, title: null, subtitle: null, items: items, columns: 3, showNames: true,
-        layout: 'grid', itemsAlignment: 'center', imageShape: 'circle', imageSize: 78, gap: 12, labelSize: 13, labelColor: '#1F2933',
+        layout: 'grid', itemsAlignment: 'center', imageShape: 'circle', imageSize: 78, gap: 12, rowGap: 24, labelSize: 13, labelColor: '#1F2933',
       ),
       onAction: (_) {},
     ));
     final Wrap wrap = tester.widget<Wrap>(find.byType(Wrap).first);
     expect(wrap.alignment, WrapAlignment.center);
     expect(wrap.children, hasLength(5));
+    final List<Offset> positions = List<Offset>.generate(
+      5,
+      (int index) => tester.getTopLeft(find.text('Category $index')),
+    );
+    expect(positions[0].dy, positions[1].dy);
+    expect(positions[1].dy, positions[2].dy);
+    expect(positions[3].dy, positions[4].dy);
+    expect(positions[3].dy, greaterThan(positions[2].dy));
+    expect(
+      (positions[3].dx + positions[4].dx) / 2,
+      closeTo((positions[0].dx + positions[2].dx) / 2, 1),
+    );
   });
 
   testWidgets('app header renders configured actions and dispatches them', (

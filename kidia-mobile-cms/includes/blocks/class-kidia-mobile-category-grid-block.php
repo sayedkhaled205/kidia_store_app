@@ -48,6 +48,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'image_shape' => 'circle',
 			'image_size'  => 86,
 			'gap'         => 16,
+			'row_gap'     => 16,
 			'label_size'  => 14,
 			'label_color' => '#1F2933',
 			'category_ids'=> '',
@@ -84,6 +85,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'image_shape' => in_array( $shape, array( 'circle', 'rounded', 'square' ), true ) ? $shape : 'rounded',
 			'image_size'  => max( 48, min( 140, absint( $settings['image_size'] ?? 78 ) ) ),
 			'gap'         => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
+			'row_gap'     => max( 0, min( 80, absint( $settings['row_gap'] ?? ( $settings['gap'] ?? 12 ) ) ) ),
 			'label_size'  => max( 10, min( 22, absint( $settings['label_size'] ?? 13 ) ) ),
 			'label_color' => sanitize_hex_color( $settings['label_color'] ?? '' ) ?: '#1F2933',
 			'category_ids'=> implode( ',', $category_ids ),
@@ -176,6 +178,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'image_shape' => $settings['image_shape'],
 			'image_size'  => $settings['image_size'],
 			'gap'         => $settings['gap'],
+			'row_gap'     => $settings['row_gap'],
 			'label_size'  => $settings['label_size'],
 			'label_color' => $settings['label_color'],
 		);
@@ -214,7 +217,8 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				<label><?php esc_html_e( 'Columns', 'kidia-mobile-cms' ); ?></label>
 				<input type="number" min="2" max="6" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>">
 			</div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--gap"><label><?php esc_html_e( 'Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--gap"><label><?php esc_html_e( 'Column Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--row-gap"><label><?php esc_html_e( 'Row Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][row_gap]" value="<?php echo esc_attr( (string) $settings['row_gap'] ); ?>"></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-size"><label><?php esc_html_e( 'Image Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_size]" value="<?php echo esc_attr( (string) $settings['image_size'] ); ?>"></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-shape"><label><?php esc_html_e( 'Image Shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option></select></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--label-color"><label><?php esc_html_e( 'Label Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>

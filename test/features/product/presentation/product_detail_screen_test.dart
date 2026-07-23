@@ -62,7 +62,7 @@ void main() {
           matching: find.byKey(const Key('share-action-circle')),
         ),
       );
-      expect(action.backgroundColor, Colors.white);
+      expect(action.backgroundColor, const Color(0xFFF1F2F3));
     }
   });
 
