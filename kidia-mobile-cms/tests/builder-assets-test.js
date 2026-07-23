@@ -391,6 +391,7 @@ function runHomeBuilderTest() {
   firstBlock.dispatchEvent(new window.Event("dragend", { bubbles: true }));
   assert.equal(window.document.querySelector(".kidia-builder-block").dataset.type, "hero_slider", "Drag and drop must reorder elements.");
 
+  click(window, hero.querySelector(".kidia-builder-block__header"));
   click(window, window.document.getElementById("kidia-add-element"));
   assert.equal(window.document.getElementById("kidia-element-picker").hidden, false, "Add Element must open the picker.");
   click(window, window.document.querySelector(".kidia-create-element"));
@@ -398,6 +399,7 @@ function runHomeBuilderTest() {
   window.document.getElementById("kidia-create-element-name").value = "Extra Space";
   click(window, window.document.getElementById("kidia-create-element-submit"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Creating an element must append its template.");
+  assert.equal(hero.nextElementSibling.dataset.type, "spacer", "Creating an element must place it directly below the selected element.");
 
   console.log("Home Builder: all 17 previews and toolbar/editor interactions passed.");
 }
@@ -414,6 +416,7 @@ function runMergeControlsContractTest() {
   const heroBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-hero-slider-block.php"), "utf8");
   const bannerBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-banner-grid-block.php"), "utf8");
   const categoryGridBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-category-grid-block.php"), "utf8");
+  const countdownBlockSource = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-countdown-block.php"), "utf8");
   const homePreview = readAsset("home-builder.js");
   const pagePreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "page-builder.js"), "utf8");
   const categoryPreview = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "category-builder.js"), "utf8");
@@ -744,15 +747,18 @@ function runMergeControlsContractTest() {
 	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{\s*color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-card:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
 	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-create-element-modal__body")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Element modal must not retain WordPress blue styling.");
 	assert.match(homeScript, /settings\.image_size[\s\S]*settings\.item_size/, "Category Grid and Quick Links image sizes must update the live preview.");
+	assert.match(homeScript, /activeInsertionBlock[\s\S]*insertAdjacentHTML\("afterend", html\)[\s\S]*is-insertion-target/, "Add Element must insert directly below the element selected by the user.");
 	assert.match(homeScript, /product_wishlist_icon_variant[\s\S]*product_wishlist_icon_size[\s\S]*product_wishlist_background_size[\s\S]*product_wishlist_position[\s\S]*product_wishlist_show_background[\s\S]*product_wishlist_background_color[\s\S]*product_wishlist_radius[\s\S]*product_wishlist_icon_color/, "Every product Wishlist appearance control must update the Home preview.");
 	assert.match(homeScript, /quick_add_icon_style/, "Quick Add icon style must update the Home preview.");
 	assert.match(homeScript, /Date\.parse\(settings\.ends_at[\s\S]*settings\.expired_text[\s\S]*countdownDays[\s\S]*countdownSeconds/, "Countdown must use its real end date and expired label in the preview.");
+	assert.match(countdownBlockSource, /visible_units[\s\S]*days_hours[\s\S]*days_hours_minutes[\s\S]*days_hours_minutes_seconds[\s\S]*show_days[\s\S]*show_seconds/, "Countdown must save one cumulative unit choice and still publish the legacy unit flags for installed app versions.");
+	assert.doesNotMatch(countdownBlockSource, /foreach\s*\(\s*array\(\s*'days'\s*=>\s*'Show Days'/, "Countdown must no longer render four independent On/Off unit controls.");
 	assert.match(homeScript, /items_alignment/, "Category Grid alignment setting must be read by the preview.");
 	assert.match(homeScript, /is-align-/, "Category Grid alignment class must be rendered by the preview.");
 	assert.match(homeBuilderCss, /is-editorial_mosaic/, "Category Grid editorial mosaic must update the preview.");
 	assert.match(homeBuilderCss, /is-full_width_banners/, "Category Grid full-width banners must update the preview.");
 	assert.match(homeScript, /enable_transition[\s\S]*settings\.messages[\s\S]*change_every[\s\S]*transition_effect/, "Promo Strip rotating messages and transition controls must update the preview.");
-	assert.match(homeScript, /show_days[\s\S]*show_hours[\s\S]*show_minutes[\s\S]*show_seconds[\s\S]*layout_style/, "Countdown unit switches and layout style must update the preview.");
+	assert.match(homeScript, /visible_units[\s\S]*days_hours_minutes_seconds[\s\S]*showCountdownDays[\s\S]*showCountdownSeconds[\s\S]*layout_style/, "Countdown cumulative unit dropdown and layout style must update the preview while retaining legacy flag fallback.");
 	assert.match(homeScript, /settings\.video_url[\s\S]*settings\.auto_play[\s\S]*settings\.muted[\s\S]*settings\.loop[\s\S]*playsinline/, "Video URL and every playback switch must update the preview video.");
 	assert.match(homeScript, /settings\.auto_play[\s\S]*Date\.now\(\) \/ numberInRange\(settings\.interval_ms/, "Hero Slider autoplay and interval must control its selected preview slide.");
 	["shadow", "icon_size", "icon_background", "icon_radius", "search_icon_color", "account_style", "account_label", "account_icon_size"].forEach(function (key) {
@@ -939,6 +945,7 @@ function runPageBuilderTest() {
   const wishlistSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
   assert.match(wishlistSource, /settings\.string\('title', copy\.emptyTitle\)/, "Wishlist empty-state copy must be consumed by the mobile app.");
+  assert.match(wishlistSource, /wishlist_preview_state[\s\S]*_previewWishlistProducts[\s\S]*_buildEmptyState[\s\S]*_buildProductState/, "The Flutter preview must independently render Empty Wishlist Settings or Product Wishlist with stable sample products.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
   assert.match(wishlistSource, /quick_add_icon_variant/, "Wishlist must consume Quick Add appearance settings.");
   const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
@@ -952,6 +959,9 @@ function runPageBuilderTest() {
   assert.match(homeBlockSource, /quickAddProductId: quickAddEnabled \? product\.id : null/, "Home product elements must consume their own Quick Add setting.");
 	const pageTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
 	const sharedToolbarSource = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "builder-toolbar.php"), "utf8");
+	assert.match(pageTemplateSource, /wishlist_preview_state[\s\S]*Empty Wishlist Settings[\s\S]*Product Wishlist[\s\S]*data-wishlist-state/, "Wishlist access choices must expose two independent state editor cards beneath them.");
+	assert.match(readAsset("page-builder.js"), /applyWishlistPreviewState[\s\S]*data-wishlist-state[\s\S]*wishlist_preview_state[\s\S]*kidia:page-layout-changed/, "Selecting a Wishlist state must show its settings and refresh the live Flutter preview.");
+	assert.match(readAsset("admin-theme.css"), /Field values stay visually secondary[\s\S]*font-size:\s*13px\s*!important;[\s\S]*font-weight:\s*400\s*!important;/, "All CMS field values must use the smaller regular-weight typography.");
 	assert.match(pageTemplateSource, /\$kidia_toolbar_restore_product = 'product' === \$page/, "Only Product Page must request the defaults action from the shared toolbar.");
 	assert.match(sharedToolbarSource, /restore_product_defaults[\s\S]*Restore Product Defaults/, "The shared toolbar must render the confirmed Product defaults action when requested.");
 	assert.match(storeSource, /public function reset_layout\( string \$page \): bool[\s\S]*delete_option\( self::OPTION_PREFIX \. \$page \)/, "The defaults action must delete only the selected page option.");
