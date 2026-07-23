@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - agent/rebuild-embedded-flutter-preview
+      - agent/countdown-wishlist-controls
 
 permissions:
   contents: write
