@@ -29,10 +29,7 @@ return array(
 
 		'expired_text' => 'انتهى العرض',
 
-		'show_days' => true,
-		'show_hours' => true,
-		'show_minutes' => true,
-		'show_seconds' => true,
+		'visible_units' => 'days_hours_minutes_seconds',
 		'layout_style' => 'cards',
 
 	),
@@ -59,10 +56,7 @@ return array(
 
 	'fields' => array(
 		array( 'key' => 'layout_style', 'label' => __( 'Layout Style', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'cards', 'options' => array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) ),
-		array( 'key' => 'show_days', 'label' => __( 'Show Days', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
-		array( 'key' => 'show_hours', 'label' => __( 'Show Hours', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
-		array( 'key' => 'show_minutes', 'label' => __( 'Show Minutes', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
-		array( 'key' => 'show_seconds', 'label' => __( 'Show Seconds', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'timer', 'default' => true ),
+		array( 'key' => 'visible_units', 'label' => __( 'Visible time units', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'days_hours_minutes_seconds', 'options' => array( 'days' => __( 'Days only', 'kidia-mobile-cms' ), 'days_hours' => __( 'Days + Hours', 'kidia-mobile-cms' ), 'days_hours_minutes' => __( 'Days + Hours + Minutes', 'kidia-mobile-cms' ), 'days_hours_minutes_seconds' => __( 'Days + Hours + Minutes + Seconds', 'kidia-mobile-cms' ) ) ),
 
 		array(
 			'key' => 'title',
