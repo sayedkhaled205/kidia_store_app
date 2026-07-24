@@ -635,7 +635,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 	}
 
 	/** @return array<string,mixed> */
-	private function default_layout( string $page ): array {
+	public function default_layout( string $page ): array {
 		$elements = array_map( array( $this, 'default_element' ), self::element_definitions( $page ) );
 		$header_settings = $this->defaults( self::header_fields() );
 		$footer_settings = $this->defaults( self::footer_fields() );

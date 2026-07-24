@@ -18,6 +18,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-block-registry
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-layout-store.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-page-layout-store.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-category-page-store.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-setup-wizard.php';
 
 /*
 |--------------------------------------------------------------------------
