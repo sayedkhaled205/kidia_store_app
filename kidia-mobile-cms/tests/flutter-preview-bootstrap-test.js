@@ -14,6 +14,20 @@ const startup = fs.readFileSync(
   path.join(__dirname, "..", "..", "lib", "app", "app_startup_provider.dart"),
   "utf8",
 );
+const homePage = fs.readFileSync(
+  path.join(
+    __dirname,
+    "..",
+    "..",
+    "lib",
+    "features",
+    "home",
+    "presentation",
+    "pages",
+    "home_page.dart",
+  ),
+  "utf8",
+);
 const bootstrapPatcher = fs.readFileSync(
   path.join(
     __dirname,
@@ -89,6 +103,11 @@ assert.match(
   startup,
   /if \(AppConfig\.isCmsPreview\) \{\s*return;/,
   "CMS preview startup must not wait for a store API request.",
+);
+assert.match(
+  homePage,
+  /PointerScrollEvent[\s\S]*_scrollController\.jumpTo\(next\)[\s\S]*Listener\([\s\S]*onPointerSignal:\s*_handleCmsPreviewPointerSignal/,
+  "The Home CMS preview must translate desktop wheel and trackpad signals into its real Flutter scroll controller.",
 );
 
 console.log("Flutter preview bootstrap: ok");
