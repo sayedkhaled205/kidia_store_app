@@ -2,16 +2,12 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wrap kidia-page-builder">
-	<header class="kidia-page-builder__heading">
-		<h1><?php esc_html_e( 'Checkout Suggestions', 'kidia-mobile-cms' ); ?></h1>
-		<p><?php esc_html_e( 'Offer useful add-on products before the customer places the order.', 'kidia-mobile-cms' ); ?></p>
-	</header>
 	<?php if ( isset( $_GET['updated'] ) ) : ?>
 		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Checkout Suggestions saved successfully.', 'kidia-mobile-cms' ); ?></p></div>
 	<?php endif; ?>
 	<div class="kidia-page-workspace kidia-commerce-preview-workspace">
 		<aside class="kidia-page-preview">
-			<div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div id="kidia-commerce-preview" class="kidia-page-phone__screen kidia-app-preview" data-preview-kind="checkout"></div></div>
+			<div class="kidia-page-phone"><div id="kidia-commerce-preview" class="kidia-page-phone__screen kidia-app-preview" data-preview-kind="checkout"></div></div>
 			<p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p>
 		</aside>
 		<form class="kidia-page-editor kidia-commerce-preview-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
