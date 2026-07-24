@@ -517,7 +517,7 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*662\.89px;/, "Home preview height must be reduced by five percent.");
 	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:662\.89px;/, "Every page preview height must use the same five-percent reduction.");
 	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:662\.89px;/, "Category preview height must use the same five-percent reduction.");
-	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*zoom:\.8286125;/, "Flutter must keep the canonical mobile viewport and zoom the complete interactive screen, including its footer, by five percent.");
+	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*inset:0;[^}]*width:100%;[^}]*height:100%;[^}]*touch-action:auto;/, "Flutter must use the iframe's native interactive viewport so wheel and trackpad scrolling reach the application.");
 	assert.match(pageBuilder, /file_exists\( KIDIA_MOBILE_CMS_PATH \. 'admin\/flutter-preview\/index\.html' \)[\s\S]*id="kidia-flutter-preview"[\s\S]*kidia-legacy-preview-fallback/, "Page builders must use the embedded Flutter Web preview with the legacy preview retained only as a local fallback.");
 	assert.match(flutterPreviewBridge, /fetch\(String\(config\.layoutPreviewEndpoint\)[\s\S]*body: JSON\.stringify\(\{ layout: serializeLayout\(\) \}\)[\s\S]*sendLayout\(layout\)/, "Unsaved fields must pass through the canonical server normalizer before Flutter renders them.");
 	assert.match(flutterPreviewBridge, /controller\.abort\(\)[\s\S]*requestNumber[\s\S]*number === requestNumber/, "A newer field value must cancel and supersede an older preview request instead of appearing late.");
@@ -1503,11 +1503,11 @@ function runUniformChromeSettingsContractTest() {
 	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
 	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
 	assert.match(page, /button && !button\.closest\("\.kidia-fixed-chrome-card"\)/, "Page builders must defer fixed-card expansion to the shared component.");
-	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:1;[^}]+grid-row:1;[\s\S]*data-setting="subtitle"[^}]+grid-column:2;[^}]+grid-row:1;[\s\S]*data-setting="logo_text"[^}]+grid-column:3;[^}]+grid-row:1;/, "Logo image, subtitle and logo text must share one compact row.");
-	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*1,\s*'logo_text'\s*=>\s*2/, "Subtitle must immediately follow the logo image in the first row.");
+	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:1;[^}]+grid-row:1;[\s\S]*data-setting="logo_source"[^}]+grid-column:2;[^}]+grid-row:1;[\s\S]*data-setting="subtitle"[^}]+grid-column:3;[^}]+grid-row:1;/, "Logo source must be the second visible field in the compact logo grid.");
+	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*2,\s*'logo_text'\s*=>\s*3/, "The stored logo fields must leave the second slot for the Logo source action.");
 	assert.doesNotMatch(template, /'image' === \$field\['type'\][\s\S]{0,900}kidia-page-media-clear/, "The Logo image field must contain only its own image chooser.");
 	assert.match(template, /data-setting="logo_source"[\s\S]*Logo source[\s\S]*kidia-page-media-clear[\s\S]*Use logo text/, "Use logo text must have its own separately labelled Logo source field.");
-	assert.match(styles, /data-setting="logo_source"[^}]+grid-column:3;[^}]+grid-row:3;/, "The separate Logo source field must use the available third settings cell.");
+	assert.match(styles, /data-setting="logo_source"[^}]+grid-column:2;[^}]+grid-row:1;/, "The separate Logo source field must be the second field in Logo Settings.");
 	assert.match(styles, /data-setting="logo_url"[^}]+\.kidia-page-media-url\s*\{\s*display:none;/, "The internal Logo URL must not consume a visible settings column.");
 	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\);[\s\S]*?max-width:var\(--kidia-settings-control-width\)/, "Logo value controls must use the shared standard field width.");
 	assert.match(styles, /data-setting="search_placeholder"[^}]*\.kidia-page-text-control,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\)/, "Search placeholder must use the shared standard field width.");
