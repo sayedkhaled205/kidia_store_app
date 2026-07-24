@@ -228,7 +228,7 @@ function runHomeBuilderTest() {
   assert.match(actionValue.textContent, /Clothes/, "Category actions must load WooCommerce category choices.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*350px minmax\(0, 1fr\)/, "The editor must reserve the larger canonical phone preview without crowding the settings.");
-	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*330px;[\s\S]*?margin-inline-start:\s*auto;/, "The Home phone must display the scaled canonical mobile viewport and remain beside the element editor.");
+	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline-start:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport beside the element editor.");
 	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*translateX\(clamp\(35px,\s*calc\(11\.5cqw - 30px\),\s*130px\)\)/, "The Home phone must remain centered inside the real blank space beside the cards.");
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
@@ -497,11 +497,11 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(homePage, /Woo Mobile Home Builder|Arrange the application home page/, "The unified CMS shell must replace the redundant Home page heading and description.");
 	assert.doesNotMatch(pageBuilder, /kidia-page-phone__status/, "Page previews must not render a fake operating-system status bar.");
 	assert.doesNotMatch(categoryBuilder, /kidia-category-phone__status/, "The Category preview must not render a fake operating-system status bar.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*330px;/, "The Home phone must be large enough to display a scaled canonical mobile viewport clearly.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*313\.5px;/, "The Home phone must be reduced by five percent without clipping its content.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*border:\s*3px solid #2f806e;[^}]*background:\s*#2f806e;/, "The Home phone frame must use the Kidia brand color.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:330px;[^}]*margin-inline-start:auto;/, "Every page phone must use the same larger preview width.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline-start:auto;/, "Every page phone must use the same proportional five-percent reduction.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "Every page phone frame must use the Kidia brand color.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:330px;[^}]*margin-inline-start:auto;/, "The Category phone must use the same larger preview width.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline-start:auto;/, "The Category phone must use the same proportional five-percent reduction.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "The Category phone frame must use the Kidia brand color.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "Page phones must remain centered in the actual space beside their cards.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "The Category phone must remain centered in the actual space beside its cards.");
@@ -514,7 +514,7 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*662\.89px;/, "Home preview height must be reduced by five percent.");
 	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:662\.89px;/, "Every page preview height must use the same five-percent reduction.");
 	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:662\.89px;/, "Category preview height must use the same five-percent reduction.");
-	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*transform:scale\(\.872222\);[^}]*transform-origin:top left;/, "Flutter must calculate every responsive layout at the canonical mobile size before the CMS scales it visually.");
+	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*transform:scale\(\.8286125\);[^}]*transform-origin:top left;/, "Flutter must keep the canonical mobile viewport and scale the complete screen, including its footer, by five percent.");
 	assert.match(pageBuilder, /file_exists\( KIDIA_MOBILE_CMS_PATH \. 'admin\/flutter-preview\/index\.html' \)[\s\S]*id="kidia-flutter-preview"[\s\S]*kidia-legacy-preview-fallback/, "Page builders must use the embedded Flutter Web preview with the legacy preview retained only as a local fallback.");
 	assert.match(flutterPreviewBridge, /fetch\(String\(config\.layoutPreviewEndpoint\)[\s\S]*body: JSON\.stringify\(\{ layout: serializeLayout\(\) \}\)[\s\S]*sendLayout\(layout\)/, "Unsaved fields must pass through the canonical server normalizer before Flutter renders them.");
 	assert.match(flutterPreviewBridge, /controller\.abort\(\)[\s\S]*requestNumber[\s\S]*number === requestNumber/, "A newer field value must cancel and supersede an older preview request instead of appearing late.");
