@@ -51,6 +51,7 @@ assert.match(wizardScript, /history\.scrollRestoration = 'manual'/, "Wizard must
 assert.match(wizardScript, /show\(0, false\)/, "Initial wizard rendering must not scroll past the top hero.");
 assert.match(shellCss, /position:sticky/, "Unified navigation must remain available while editing.");
 assert.match(shellCss, /box-shadow:inset 0 0 0 2px #2f806e/, "Header focus must use an inset Kidia-colored ring.");
+assert.match(shellCss, /\.kidia-cms-setup-link\{[^}]*background:#236b59;[^}]*color:#fff\}/, "Quick Setup & Themes must use the dark Kidia button color.");
 assert.match(shellCss, /#wpbody-content\{[^}]*border:/, "The unified workspace must be enclosed by a full-page frame.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
