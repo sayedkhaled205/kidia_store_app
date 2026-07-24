@@ -93,6 +93,13 @@
 	form.addEventListener("input", refresh);
 	form.addEventListener("change", refresh);
 	document.addEventListener("kidia:page-layout-changed", refresh);
+	function focusPreview() {
+		try { frame.contentWindow.focus(); } catch (_) {}
+	}
+	frame.setAttribute("tabindex", "0");
+	frame.addEventListener("mouseenter", focusPreview);
+	frame.addEventListener("pointerenter", focusPreview);
+	frame.addEventListener("click", focusPreview);
 
 	// A cached Flutter shell can finish loading before this footer script runs.
 	waitForFlutter();
