@@ -1082,6 +1082,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _positionedItem(String item, Widget child) {
     final String prefix = item == 'search' ? 'search_icon' : item;
+    // Keep bag-shaped action icons optically centered with adjacent text/logo.
     final double opticalOffsetY =
         item == 'cart' || item == 'orders' ? -2 : 0;
     return Transform.translate(
