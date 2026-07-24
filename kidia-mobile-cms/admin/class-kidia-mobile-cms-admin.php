@@ -288,6 +288,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$wizard       = new Kidia_Mobile_Setup_Wizard();
 		$identity     = $wizard->identity();
 		$themes       = Kidia_Mobile_Setup_Wizard::themes();
+		$setup_pages  = Kidia_Mobile_Setup_Wizard::setup_pages();
 		$catalog_stats  = array( 'products' => 0, 'categories' => 0, 'images' => 0 );
 		$catalog_images = array();
 		if ( function_exists( 'wp_count_posts' ) ) {
