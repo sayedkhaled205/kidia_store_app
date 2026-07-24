@@ -71,6 +71,16 @@
 .kidia-fixed-chrome-card.is-open .kidia-fixed-chrome-expand .dashicons { transform:rotate(180deg); }
 .kidia-page-card__body { padding:13px; border-top:1px solid #dfeae7; background:#f8fbfa; }
 .kidia-page-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; }
+.kidia-product-tabs-editor{grid-column:1/-1;width:100%}
+.kidia-product-tabs-rows{display:grid;gap:10px}
+.kidia-product-tab-row{display:grid;grid-template-columns:minmax(150px,1fr) minmax(220px,1.35fr) auto 46px;align-items:center;gap:10px;padding:10px 12px;border:1px solid #dbe6e3;border-radius:14px;background:#fbfdfc}
+.kidia-product-tab-row :is(input[type=text],select){width:100%;min-width:0;margin:0}
+.kidia-product-tab-enabled{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding-inline:10px;border-radius:10px;background:#eef8f5;font-weight:700;white-space:nowrap}
+.kidia-product-tab-remove{display:grid!important;place-items:center;width:42px;min-width:42px;height:42px;padding:0!important;border-radius:10px!important}
+.kidia-product-tab-add{float:inline-end;margin-top:12px;min-height:42px;padding-inline:18px!important}
+.kidia-app-size-chart{padding:24px 18px}.kidia-app-size-chart h2{margin:0 0 8px}.kidia-app-size-chart p{margin:0 0 18px;color:#6b7280}.kidia-app-size-chart__rows{display:grid;gap:8px}.kidia-app-size-chart__rows>div{display:grid;place-items:center;border:2px solid transparent;border-radius:12px;font-weight:700}.kidia-app-size-chart.is-chips .kidia-app-size-chart__rows{grid-template-columns:repeat(3,1fr)}.kidia-app-size-chart.is-table .kidia-app-size-chart__rows{grid-template-columns:repeat(2,1fr)}
+.kidia-page-field.is-disabled{opacity:.45;filter:grayscale(1);pointer-events:none}
+@media(max-width:900px){.kidia-product-tab-row{grid-template-columns:1fr 1fr}.kidia-product-tab-enabled,.kidia-product-tab-remove{justify-self:stretch}}
 .kidia-settings-section-title { grid-column:1/-1; margin:10px 0 2px; padding:8px 10px; border-top:2px solid #b9d9d1; border-bottom:1px solid #dfeae7; background:#edf7f4; color:#236b59; font-size:13px; font-weight:800; }
 .kidia-settings-section-title:first-child { margin-top:0; }
 .kidia-builder-settings-content>.kidia-settings-section-title { display:block; width:100%; clear:both; }

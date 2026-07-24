@@ -674,10 +674,6 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                       current < next ? current : next)
                   .clamp(2, double.infinity)
                   .toDouble();
-        final double compactActionTop =
-            ((constraints.maxHeight - 48) / 2)
-                .clamp(2, double.infinity)
-                .toDouble();
         return Stack(
           key: const Key('cms-page-app-bar-scroll-transition'),
           clipBehavior: Clip.none,
@@ -720,7 +716,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             if (persistentActions.isNotEmpty)
               Positioned(
-                top: _lerp(regularActionTop, compactActionTop, progress),
+                // Header actions are deliberately anchored to their regular
+                // position. Only the search bar participates in the wide
+                // search transition.
+                top: regularActionTop,
                 right: 0,
                 height: 48,
                 child: Row(

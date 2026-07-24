@@ -16,6 +16,7 @@ import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_
 import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
@@ -25,6 +26,14 @@ import 'package:url_launcher/url_launcher.dart';
 typedef ProductWishlistToggleCallback =
     Future<bool> Function(CatalogProduct product);
 typedef ProductWishlistStatusCallback = Future<bool> Function(int productId);
+
+Color _productHexColor(String value, Color fallback) {
+  final String normalized = value.replaceFirst('#', '');
+  final int? parsed = int.tryParse(normalized, radix: 16);
+  return parsed == null || normalized.length != 6
+      ? fallback
+      : Color(0xFF000000 | parsed);
+}
 
 const List<CatalogProduct> _previewRelatedProducts = <CatalogProduct>[
   CatalogProduct(
@@ -1332,7 +1341,7 @@ class _ProductBadges extends StatelessWidget {
   }
 }
 
-class _ProductOptionPicker extends StatelessWidget {
+class _ProductOptionPicker extends ConsumerWidget {
   const _ProductOptionPicker({
     required this.group,
     required this.controller,
@@ -1346,7 +1355,11 @@ class _ProductOptionPicker extends StatelessWidget {
   final CmsPageComponent? settings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final CmsPageComponent sizeChart = ref
+        .watch(cmsPageLayoutProvider('size_chart'))
+        .valueOrNull
+        ?.element('size_chart_content') ?? CmsPageLayout.fallback('size_chart').element('size_chart_content');
     final String? selected = controller.selectedAttributes[group.key];
     final double chipHeight =
         settings?.number('chip_height', 38).clamp(30, 56).toDouble() ?? 38;
@@ -1377,18 +1390,31 @@ class _ProductOptionPicker extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
                           Text(
-                            settings?.string('size_chart_label', 'Size chart') ?? 'Size chart',
+                            sizeChart.string('title', settings?.string('size_chart_label', 'Size chart') ?? 'Size chart'),
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
                           ),
+                          if (sizeChart.boolean('show_description', true)) ...<Widget>[
+                            const SizedBox(height: 8),
+                            Text(sizeChart.string('description', 'Choose the size that fits you best.')),
+                          ],
                           const SizedBox(height: 18),
                           for (final ProductOptionValue option in group.values)
-                            ListTile(
+                            Container(
+                              constraints: BoxConstraints(minHeight: sizeChart.number('row_height', 52).clamp(36, 80).toDouble()),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: _productHexColor(sizeChart.string('row_color', '#F6F8F7'), const Color(0xFFF6F8F7)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: selected == option.value ? Border.all(color: _productHexColor(sizeChart.string('accent_color', '#2F806E'), const Color(0xFF2F806E)), width: 2) : null,
+                              ),
+                              child: ListTile(
                               title: Text(option.label),
                               trailing: selected == option.value ? const Icon(Icons.check_rounded) : null,
                               onTap: () {
                                 controller.selectOption(group.key, option.value);
                                 Navigator.of(context).pop();
                               },
+                              ),
                             ),
                         ],
                       ),

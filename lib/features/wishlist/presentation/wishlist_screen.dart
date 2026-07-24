@@ -705,6 +705,7 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
               final List<CatalogProduct> products =
                   snapshot.data ?? const <CatalogProduct>[];
               if (products.isEmpty) return const SizedBox.shrink();
+              final String layoutStyle = widget.settings.string('layout_style', 'grid');
               final int columns = widget.settings
                   .number('columns', 2)
                   .round()
@@ -714,12 +715,26 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
                   .number('gap', 8)
                   .clamp(0, 24)
                   .toDouble();
+              if (layoutStyle == 'carousel') {
+                return SizedBox(
+                  height: 250,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: products.length,
+                    separatorBuilder: (_, __) => SizedBox(width: gap),
+                    itemBuilder: (BuildContext context, int index) => SizedBox(
+                      width: 168,
+                      child: _WishlistRecommendationCard(product: products[index], settings: widget.settings, onTap: widget.onProductTap == null ? null : () => widget.onProductTap!(products[index])),
+                    ),
+                  ),
+                );
+              }
               return GridView.builder(
                 key: const Key('wishlist-recommendations-grid'),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
+                  crossAxisCount: layoutStyle == 'compact' ? (columns + 1).clamp(2, 3).toInt() : columns,
                   mainAxisSpacing: gap,
                   crossAxisSpacing: gap,
                   childAspectRatio:
@@ -764,8 +779,15 @@ class _WishlistRecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
     final List<String> imageUrls = _wishlistProductImageUrls(product);
-    return InkWell(
-      onTap: onTap,
+    final String actionType = settings.string('action_type', 'product');
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: _wishlistHexColor(settings.string('card_background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(settings.number('card_radius', 0).clamp(0, 32).toDouble())),
+      child: InkWell(
+      onTap: actionType == 'none' ? null : onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -825,6 +847,7 @@ class _WishlistRecommendationCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }
