@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 20;
+	private const VERSION = 21;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -434,6 +434,12 @@ final class Kidia_Mobile_Page_Layout_Store {
 		// Keep saved chrome settings across schema upgrades. The browser and Flutter
 		// readers migrate legacy left/center/right and flat footer layouts in place.
 		$default['header'] = $this->merge_component( $default['header'], $saved['header'] ?? array(), self::header_fields() );
+		if ( (int) ( $saved['version'] ?? 1 ) < 21 ) {
+			foreach ( array( 'cart_offset_y', 'orders_offset_y' ) as $action_offset_key ) {
+				$current_offset = (float) ( $default['header']['settings'][ $action_offset_key ] ?? 0 );
+				$default['header']['settings'][ $action_offset_key ] = max( -80, $current_offset - 2 );
+			}
+		}
 		if ( 'wishlist' === $page && (int) ( $saved['version'] ?? 1 ) < 19 ) {
 			$default['header']['settings']['layout_json'] = wp_json_encode( $this->default_header_layout( 'wishlist' ) );
 			$default['header']['settings']['height'] = 76;
