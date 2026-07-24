@@ -33,8 +33,10 @@ assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme 
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
 assert.match(shellTemplate, /kidia-cms-tabs/, "Shell must expose top navigation tabs.");
+assert.match(shellTemplate, /<\/nav>\s*<div class="kidia-cms-more">/, "More menu must sit outside the scrollable tab strip so its dropdown remains visible.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(shellCss, /position:sticky/, "Unified navigation must remain available while editing.");
+assert.match(shellCss, /#wpbody-content\{[^}]*border:/, "The unified workspace must be enclosed by a full-page frame.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-setup-progress"><span></span><span></span><span></span><span></span></div>
