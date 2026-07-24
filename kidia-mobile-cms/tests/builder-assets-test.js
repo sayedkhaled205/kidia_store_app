@@ -228,8 +228,8 @@ function runHomeBuilderTest() {
   assert.match(actionValue.textContent, /Clothes/, "Category actions must load WooCommerce category choices.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*350px minmax\(0, 1fr\)/, "The editor must reserve the larger canonical phone preview without crowding the settings.");
-	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline-start:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport beside the element editor.");
-	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*translateX\(clamp\(35px,\s*calc\(11\.5cqw - 30px\),\s*130px\)\)/, "The Home phone must remain centered inside the real blank space beside the cards.");
+	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport centered beside the element editor.");
+	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*none;/, "The Home phone must not be shifted away from the center of its preview column.");
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
 	assert.doesNotMatch(builderCss, /data-type="product_carousel"[^\{]*\.kidia-builder-block__actions\s*\{[^}]*direction:\s*ltr;/, "Product Carousel must not reverse the shared element action order.");
@@ -502,12 +502,12 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(categoryBuilder, /<h1>[\s\S]*Category Page Builder|Control the Category element once|kidia-category-phone__speaker/, "Category must omit its redundant heading and decorative phone speaker.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*313\.5px;/, "The Home phone must be reduced by five percent without clipping its content.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*border:\s*3px solid #2f806e;[^}]*background:\s*#2f806e;/, "The Home phone frame must use the Kidia brand color.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline-start:auto;/, "Every page phone must use the same proportional five-percent reduction.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline:auto;/, "Every page phone must use the same proportional five-percent reduction and remain centered.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "Every page phone frame must use the Kidia brand color.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline-start:auto;/, "The Category phone must use the same proportional five-percent reduction.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline:auto;/, "The Category phone must use the same proportional five-percent reduction and remain centered.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "The Category phone frame must use the Kidia brand color.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "Page phones must remain centered in the actual space beside their cards.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:translateX\(clamp\(35px,calc\(11\.5cqw - 30px\),130px\)\)/, "The Category phone must remain centered in the actual space beside its cards.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:none/, "Page phones must remain centered in their preview column.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:none/, "The Category phone must remain centered in its preview column.");
 	assert.match(chromeTemplate, /class="kidia-fixed-chrome-identity"/, "Fixed Header and Footer must expose a stable identity group for physical ordering.");
 	const pageBuilderCss = readAsset("page-builder.css");
 	const categoryBuilderCss = readAsset("category-builder.css");
