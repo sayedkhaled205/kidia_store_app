@@ -10,6 +10,8 @@ const sourceIndex = fs.readFileSync(
   path.join(__dirname, "..", "..", "web", "index.html"),
   "utf8",
 );
+// Quality checks run this contract again after the generated Flutter bundle
+// has been committed, so source and embedded preview stay in lockstep.
 const bootstrap = fs.readFileSync(
   path.join(previewRoot, "flutter_bootstrap.js"),
   "utf8",
