@@ -1082,10 +1082,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _positionedItem(String item, Widget child) {
     final String prefix = item == 'search' ? 'search_icon' : item;
+    final double opticalOffsetY =
+        item == 'cart' || item == 'orders' ? -2 : 0;
     return Transform.translate(
       offset: Offset(
         _header.number('${prefix}_offset_x', 0).clamp(-80, 80).toDouble(),
-        _header.number('${prefix}_offset_y', 0).clamp(-80, 80).toDouble(),
+        _header.number('${prefix}_offset_y', 0).clamp(-80, 80).toDouble() +
+            opticalOffsetY,
       ),
       child: child,
     );
