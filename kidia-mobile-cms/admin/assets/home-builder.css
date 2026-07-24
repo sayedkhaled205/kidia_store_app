@@ -31,10 +31,10 @@
 
 .kidia-mobile-preview {
 	position: sticky;
-	top: 32px;
+	top: max(24px, calc(50vh - 358px));
 	direction: rtl;
 	text-align: center;
-	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px)) translateY(-16px);
+	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
 }
 
 .kidia-mobile-preview__device {

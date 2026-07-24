@@ -42,7 +42,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'title', __( 'Page title', 'kidia-mobile-cms' ), 'text', '' ),
 			self::field( 'subtitle', __( 'Subtitle', 'kidia-mobile-cms' ), 'text', '' ),
 			self::field( 'logo_url', __( 'Logo image', 'kidia-mobile-cms' ), 'image', '' ),
-			self::field( 'logo_text', __( 'Logo text (used when no image is selected)', 'kidia-mobile-cms' ), 'text', __( 'Kidia', 'kidia-mobile-cms' ) ),
+			self::field( 'logo_text', __( 'Logo text', 'kidia-mobile-cms' ), 'text', __( 'Kidia', 'kidia-mobile-cms' ) ),
 			self::field( 'logo_text_color', __( 'Logo text color', 'kidia-mobile-cms' ), 'color', '#1F2933' ),
 			self::field( 'logo_width', __( 'Logo width', 'kidia-mobile-cms' ), 'number', 118, array(), 32, 220 ),
 			self::field( 'logo_height', __( 'Logo height', 'kidia-mobile-cms' ), 'number', 38, array(), 20, 80 ),

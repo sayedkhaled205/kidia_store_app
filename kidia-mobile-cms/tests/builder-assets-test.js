@@ -1462,8 +1462,10 @@ function runUniformChromeSettingsContractTest() {
 	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
 	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
 	assert.match(page, /button && !button\.closest\("\.kidia-fixed-chrome-card"\)/, "Page builders must defer fixed-card expansion to the shared component.");
-	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:span 1/, "Logo image and subtitle must share the first compact row.");
+	assert.match(styles, /data-setting="logo_url"[^}]+grid-column:1;[^}]+grid-row:1;[\s\S]*data-setting="subtitle"[^}]+grid-column:2;[^}]+grid-row:1;[\s\S]*data-setting="logo_text"[^}]+grid-column:3;[^}]+grid-row:1;/, "Logo image, subtitle and logo text must share one compact row.");
 	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*1,\s*'logo_text'\s*=>\s*2/, "Subtitle must immediately follow the logo image in the first row.");
+	assert.match(template, /'logo_url' === \$field\['key'\][\s\S]*kidia-page-media-clear[\s\S]*Use logo text/, "Choose image and Use logo text must stay together in the Logo image control.");
+	assert.match(styles, /data-setting="logo_url"[^}]+\.kidia-page-media-url\s*\{\s*display:none;/, "The internal Logo URL must not consume a visible settings column.");
 	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,240px\)/, "Logo value controls must remain compact instead of filling empty space.");
 	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
@@ -1490,8 +1492,9 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*32px;[\s\S]*translateY\(-16px\)/, "Home preview must start slightly higher before and during sticky scrolling.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:32px;[^}]*translateY\(-16px\)/, "Every page preview must start at the same slightly higher position.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*max\(24px,\s*calc\(50vh - 358px\)\)/, "Home preview must remain vertically centered during sticky scrolling.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:max\(24px,calc\(50vh - 358px\)\)/, "Every page preview must remain vertically centered during sticky scrolling.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*max\(24px,\s*calc\(50vh - 358px\)\)/, "Category preview must use the same centered sticky position.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
