@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - agent/rebuild-embedded-flutter-preview
+      - agent/align-header-action-icons
       - agent/header-product-tabs-controls
       - agent/fix-preview-wishlist-toolbar
       - agent/fix-home-preview-content
