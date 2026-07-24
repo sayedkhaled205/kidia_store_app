@@ -3,6 +3,7 @@ name: Rebuild embedded CMS preview
 on:
   push:
     branches:
+      - main
       - agent/rebuild-embedded-flutter-preview
       - agent/header-product-tabs-controls
       - agent/fix-preview-wishlist-toolbar
