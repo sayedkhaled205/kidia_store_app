@@ -5,6 +5,37 @@ import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
+List<Map<String, dynamic>> _configuredHeaderRows(
+  CmsPageComponent header, {
+  String key = 'layout_json',
+}) {
+  final dynamic raw = header.json(key)['rows'];
+  if (raw is! List) return const <Map<String, dynamic>>[];
+  return raw
+      .whereType<Map>()
+      .map((Map<dynamic, dynamic> row) => Map<String, dynamic>.from(row))
+      .toList(growable: false);
+}
+
+double _regularHeaderHeight(CmsPageComponent header) {
+  final int count = _configuredHeaderRows(header).length;
+  if (count <= 1) {
+    return header.number('height', 64).clamp(48, 120).toDouble();
+  }
+  final double first = header.number('row_1_height', 48).clamp(24, 100).toDouble();
+  final double remaining =
+      header.number('row_2_height', 48).clamp(24, 100).toDouble();
+  final double gap = (header.number('row_gap', 8).clamp(0, 24) -
+          header.number('row_merge', 0).clamp(0, 24))
+      .clamp(0, 24)
+      .toDouble();
+  final double padding =
+      header.number('vertical_padding', 8).clamp(0, 24).toDouble() * 2;
+  return (padding + first + (remaining * (count - 1)) + (gap * (count - 1)))
+      .clamp(48, 360)
+      .toDouble();
+}
+
 typedef CmsPageLayoutWidgetBuilder = Widget Function(
   BuildContext context,
   CmsPageLayout layout,
@@ -230,9 +261,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
         widget.layout.header.number('search_height', 40).clamp(32, 64) +
         (widget.layout.header.number('vertical_padding', 8).clamp(0, 24) * 2);
     final bool needsCompactSearchRoom = transition == 'smooth_compact';
-    final double regularHeight = widget.layout.header
-        .number('height', 64)
-        .clamp(48, 120);
+    final double regularHeight = _regularHeaderHeight(widget.layout.header);
     final double resolvedCompactHeight =
         needsCompactSearchRoom && compactHeight < compactContentHeight
         ? compactContentHeight
@@ -306,7 +335,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   double get _visibleHeight {
     if (visibleHeight != null) return visibleHeight!;
-    if (!compact) return _header.number('height', 64).clamp(48, 120);
+    if (!compact) return _regularHeaderHeight(_header);
     final double configured = _header
         .number('compact_height', 60)
         .clamp(44, 100);
@@ -329,10 +358,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       'smooth_compact',
     );
     final Duration transitionDuration = _transitionDuration(transition);
-    final Color regularBackground = _color(
+    final Color configuredRegularBackground = _color(
       _header.string('background_color', '#FFFFFF'),
       Theme.of(context).colorScheme.surface,
     );
+    final Color regularBackground =
+        _header.string('style', 'standard') == 'transparent'
+        ? configuredRegularBackground.withValues(alpha: 0)
+        : configuredRegularBackground;
     final Color compactBackground = compactStyle == 'transparent'
         ? Colors.transparent
         : _color(
@@ -414,11 +447,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             _header.number('space_down', 0).clamp(0, 80),
       ),
       child: Material(
-        color:
-            (!compact &&
-                _header.string('style', 'standard') == 'transparent')
-            ? background.withValues(alpha: 0)
-            : background,
+        color: background,
         elevation: elevation,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
@@ -436,35 +465,17 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 horizontal: padding,
                 vertical: _header.number('vertical_padding', 8).clamp(0, 24),
               ),
-              child: ClipRect(
-                child: transition == 'smooth_compact'
-                    ? Stack(
-                        key: const Key('cms-page-app-bar-scroll-transition'),
-                        alignment: Alignment.center,
-                        children: <Widget>[
-                          _scrollLinkedContent(
-                            context,
-                            rows: _layoutRows(),
-                            color: foreground,
-                            width: MediaQuery.sizeOf(context).width -
-                                (sideMargin * 2) -
-                                (padding * 2),
-                            opacity: 1 - progress,
-                            translateY: -24 * progress,
-                          ),
-                          _scrollLinkedContent(
-                            context,
-                            rows: _compactLayoutRows(),
-                            color: foreground,
-                            width: MediaQuery.sizeOf(context).width -
-                                (sideMargin * 2) -
-                                (padding * 2),
-                            opacity: progress,
-                            translateY: 14 * (1 - progress),
-                          ),
-                        ],
-                      )
-                    : AnimatedSwitcher(
+              child: transition == 'smooth_compact'
+                  ? _smoothCompactContent(
+                      context,
+                      color: foreground,
+                      width:
+                          MediaQuery.sizeOf(context).width -
+                          (sideMargin * 2) -
+                          (padding * 2),
+                      progress: progress,
+                    )
+                  : AnimatedSwitcher(
                   key: const Key('cms-page-app-bar-transition'),
                   duration: transitionDuration,
                   reverseDuration: transitionDuration,
@@ -489,16 +500,27 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                         children: rows.indexed.expand((entry) sync* {
                           if (entry.$1 > 0) {
                             yield SizedBox(
-                              height: _header.number('row_gap', 8).clamp(0, 24),
+                              height:
+                                  (_header
+                                              .number('row_gap', 8)
+                                              .clamp(0, 24) -
+                                          _header
+                                              .number('row_merge', 0)
+                                              .clamp(0, 24))
+                                      .clamp(0, 24)
+                                      .toDouble(),
                             );
                           }
-                          yield _headerRow(context, entry.$2, foreground);
+                          yield _positionedHeaderRow(
+                            entry.$1,
+                            rows.length,
+                            _headerRow(context, entry.$2, foreground),
+                          );
                         }).toList(growable: false),
                       ),
                     ),
                   ),
-                ),
-              ),
+                    ),
             ),
           ),
         ),
@@ -509,11 +531,356 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   double _lerp(num start, num end, double progress) =>
       start.toDouble() + ((end.toDouble() - start.toDouble()) * progress);
 
+  Widget _positionedHeaderRow(int index, int rowCount, Widget child) {
+    final bool single = rowCount <= 1;
+    final double height = single
+        ? (_visibleHeight -
+                  (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+              .clamp(0, double.infinity)
+              .toDouble()
+        : _header
+              .number(index == 0 ? 'row_1_height' : 'row_2_height', 48)
+              .clamp(24, 100)
+              .toDouble();
+    final String position = _header.string(
+      single
+          ? 'header_position'
+          : index == 0
+          ? 'row_1_position'
+          : 'row_2_position',
+      'center',
+    );
+    final Alignment alignment = switch (position) {
+      'up' => Alignment.topCenter,
+      'down' => Alignment.bottomCenter,
+      _ => Alignment.center,
+    };
+    return SizedBox(
+      height: height,
+      child: Align(alignment: alignment, child: child),
+    );
+  }
+
   double _shadowElevation(String shadow) => switch (shadow) {
     'none' => 0,
     'strong' => 6,
     _ => 2,
   };
+
+  Widget _smoothCompactContent(
+    BuildContext context, {
+    required Color color,
+    required double width,
+    required double progress,
+  }) {
+    final List<Map<String, dynamic>> regularRows = _layoutRows();
+    final List<Map<String, dynamic>> compactRows = _compactLayoutRows();
+    final Set<String> regularItems = _rowItems(regularRows);
+    final Set<String> compactItems = _rowItems(compactRows);
+    final bool morphSearch =
+        regularItems.contains('search_bar') &&
+        compactItems.contains('search_bar');
+    if (!morphSearch) {
+      return Stack(
+        key: const Key('cms-page-app-bar-scroll-transition'),
+        alignment: Alignment.center,
+        children: <Widget>[
+          _scrollLinkedContent(
+            context,
+            rows: regularRows,
+            color: color,
+            width: width,
+            opacity: 1 - progress,
+            translateY: -24 * progress,
+          ),
+          _scrollLinkedContent(
+            context,
+            rows: compactRows,
+            color: color,
+            width: width,
+            opacity: progress,
+            translateY: 14 * (1 - progress),
+          ),
+        ],
+      );
+    }
+
+    const Set<String> fixedActionItems = <String>{
+      'cart',
+      'orders',
+      'wishlist',
+      'account',
+    };
+    final Set<String> persistentActions = regularItems
+        .where(
+          fixedActionItems.contains,
+        )
+        .toSet();
+    final Set<String> removed = <String>{
+      'search_bar',
+      ...persistentActions,
+    };
+    final List<Map<String, dynamic>> fadingRegular = _rowsWithoutItems(
+      regularRows,
+      removed,
+      preserveEmptyRows: true,
+    );
+    final List<Map<String, dynamic>> fadingCompact = _rowsWithoutItems(
+      compactRows,
+      removed,
+    );
+    final double compactSearchFraction = _itemWidthFraction(
+      compactRows,
+      'search_bar',
+      fallback: .84,
+    );
+    final double regularSearchFraction = _itemWidthFraction(
+      regularRows,
+      'search_bar',
+      fallback: 1,
+    );
+    final double searchFraction = _lerp(
+      regularSearchFraction,
+      compactSearchFraction,
+      progress,
+    );
+    final double searchHeight = _header
+        .number('search_height', 40)
+        .clamp(32, 64)
+        .toDouble();
+    final double regularContentHeight =
+        (_regularHeaderHeight(_header) -
+                (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+            .clamp(searchHeight, double.infinity)
+            .toDouble();
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double availableWidth = width.clamp(1, double.infinity).toDouble();
+        final double startTop = _itemTopInRows(
+          regularRows,
+          'search_bar',
+        ).clamp(0, regularContentHeight - searchHeight).toDouble();
+        final double endTop = ((constraints.maxHeight - searchHeight) / 2)
+            .clamp(0, double.infinity)
+            .toDouble();
+        final double regularActionTop = persistentActions.isEmpty
+            ? 0
+            : persistentActions
+                  .map(
+                    (String item) => _itemTopInRows(regularRows, item),
+                  )
+                  .reduce((double current, double next) =>
+                      current < next ? current : next)
+                  .clamp(2, double.infinity)
+                  .toDouble();
+        final double compactActionTop =
+            ((constraints.maxHeight - 48) / 2)
+                .clamp(2, double.infinity)
+                .toDouble();
+        return Stack(
+          key: const Key('cms-page-app-bar-scroll-transition'),
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            if (fadingRegular.isNotEmpty)
+              Positioned.fill(
+                child: _scrollLinkedContent(
+                  context,
+                  rows: fadingRegular,
+                  color: color,
+                  width: availableWidth,
+                  opacity: 1 - progress,
+                  translateY: -8 * progress,
+                  alignment: Alignment.topCenter,
+                ),
+              ),
+            if (fadingCompact.isNotEmpty)
+              Positioned.fill(
+                child: _scrollLinkedContent(
+                  context,
+                  rows: fadingCompact,
+                  color: color,
+                  width: availableWidth,
+                  opacity: progress,
+                  translateY: 8 * (1 - progress),
+                ),
+              ),
+            Positioned(
+              top: _lerp(startTop, endTop, progress),
+              left: 0,
+              width: availableWidth * searchFraction,
+              height: searchHeight,
+              child: KeyedSubtree(
+                key: const Key('cms-page-morphing-search'),
+                child: _positionedItem(
+                  'search_bar',
+                  _searchBar(context, _actionFor('search'), color),
+                ),
+              ),
+            ),
+            if (persistentActions.isNotEmpty)
+              Positioned(
+                top: _lerp(regularActionTop, compactActionTop, progress),
+                right: 0,
+                height: 48,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: persistentActions
+                      .map(
+                        (String item) => Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal:
+                                _header
+                                    .number('icon_gap', 6)
+                                    .clamp(0, 24) /
+                                2,
+                          ),
+                          child: _item(context, item, color),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Set<String> _rowItems(List<Map<String, dynamic>> rows) => rows
+      .expand(_columns)
+      .expand((Map<String, dynamic> column) {
+        final dynamic raw = column['items'];
+        return raw is List ? raw.map((dynamic item) => '$item') : <String>[];
+      })
+      .toSet();
+
+  List<Map<String, dynamic>> _rowsWithoutItems(
+    List<Map<String, dynamic>> rows,
+    Set<String> removed,
+    {bool preserveEmptyRows = false}
+  ) {
+    return rows
+        .map((Map<String, dynamic> row) {
+          final List<Map<String, dynamic>> columns = _columns(row)
+              .map((Map<String, dynamic> column) {
+                final dynamic raw = column['items'];
+                final List<String> items = raw is List
+                    ? raw
+                          .map((dynamic item) => '$item')
+                          .where((String item) => !removed.contains(item))
+                          .toList(growable: false)
+                    : <String>[];
+                return <String, dynamic>{...column, 'items': items};
+              })
+              .toList(growable: false);
+          return <String, dynamic>{...row, 'columns': columns};
+        })
+        .where(
+          (Map<String, dynamic> row) => _columns(row).any(
+            (Map<String, dynamic> column) =>
+                (column['items'] as List?)?.isNotEmpty ?? false,
+          ) || preserveEmptyRows,
+        )
+        .toList(growable: false);
+  }
+
+  double _itemWidthFraction(
+    List<Map<String, dynamic>> rows,
+    String item, {
+    required double fallback,
+  }) {
+    for (final Map<String, dynamic> row in rows) {
+      for (final Map<String, dynamic> column in _columns(row)) {
+        final dynamic raw = column['items'];
+        if (raw is List && raw.map((dynamic value) => '$value').contains(item)) {
+          return (((column['width'] as num?)?.toDouble() ?? 100) / 100)
+              .clamp(.1, 1)
+              .toDouble();
+        }
+      }
+    }
+    return fallback;
+  }
+
+  double _itemTopInRows(
+    List<Map<String, dynamic>> rows,
+    String item,
+  ) {
+    double top = 0;
+    final double gap = (_header.number('row_gap', 8).clamp(0, 24) -
+            _header.number('row_merge', 0).clamp(0, 24))
+        .clamp(0, 24)
+        .toDouble();
+    for (final MapEntry<int, Map<String, dynamic>> entry
+        in rows.asMap().entries) {
+      final Map<String, dynamic> row = entry.value;
+      final Set<String> items = _columns(row)
+          .expand((Map<String, dynamic> column) {
+            final dynamic raw = column['items'];
+            return raw is List
+                ? raw.map((dynamic value) => '$value')
+                : const <String>[];
+          })
+          .toSet();
+      final double contentHeight = _rowContentHeight(items);
+      final bool single = rows.length <= 1;
+      final double rowHeight = single
+          ? (_regularHeaderHeight(_header) -
+                    (_header.number('vertical_padding', 8).clamp(0, 24) * 2))
+                .clamp(0, double.infinity)
+                .toDouble()
+          : _header
+                .number(entry.key == 0 ? 'row_1_height' : 'row_2_height', 48)
+                .clamp(24, 100)
+                .toDouble();
+      final String position = _header.string(
+        single
+            ? 'header_position'
+            : entry.key == 0
+            ? 'row_1_position'
+            : 'row_2_position',
+        'center',
+      );
+      final double inside = position == 'down'
+          ? (rowHeight - contentHeight).clamp(0, double.infinity).toDouble()
+          : position == 'center'
+          ? ((rowHeight - contentHeight) / 2)
+                .clamp(0, double.infinity)
+                .toDouble()
+          : 0;
+      if (items.contains(item)) return top + inside;
+      top += rowHeight + gap;
+    }
+    return top;
+  }
+
+  double _rowContentHeight(Set<String> items) {
+    if (items.isEmpty) return 0;
+    return items.map((String item) {
+      if (item == 'search_bar') {
+        return _header.number('search_height', 40).clamp(32, 64).toDouble();
+      }
+      if (item == 'logo') {
+        final double subtitle = _header.string('subtitle', '').isEmpty ? 0 : 11;
+        return _header.number('logo_height', 38).clamp(20, 80).toDouble() +
+            subtitle;
+      }
+      if (item == 'title') {
+        return (_header.number('title_font_size', 18).clamp(10, 42) *
+                _header.number('title_line_height', 1.2).clamp(.8, 2))
+            .toDouble();
+      }
+      final String prefix = item == 'search' ? 'search_icon' : item;
+      return _header
+          .number(
+            '${prefix}_size',
+            _header.number('icon_size', 24),
+          )
+          .clamp(14, 40)
+          .toDouble();
+    }).reduce((double current, double next) => current > next ? current : next);
+  }
 
   Widget _scrollLinkedContent(
     BuildContext context, {
@@ -522,6 +889,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required double width,
     required double opacity,
     required double translateY,
+    Alignment alignment = Alignment.center,
   }) {
     if (opacity <= .001) {
       return const SizedBox.shrink();
@@ -534,7 +902,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           offset: Offset(0, translateY),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
+            alignment: alignment,
             child: SizedBox(
               width: width.clamp(1, double.infinity).toDouble(),
               child: Column(
@@ -543,10 +911,19 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 children: rows.indexed.expand((entry) sync* {
                   if (entry.$1 > 0) {
                     yield SizedBox(
-                      height: _header.number('row_gap', 8).clamp(0, 24),
+                          height: (_header.number('row_gap', 8).clamp(0, 24) -
+                                  _header
+                                      .number('row_merge', 0)
+                                      .clamp(0, 24))
+                              .clamp(0, 24)
+                              .toDouble(),
                     );
                   }
-                  yield _headerRow(context, entry.$2, color);
+                  yield _positionedHeaderRow(
+                    entry.$1,
+                    rows.length,
+                    _headerRow(context, entry.$2, color),
+                  );
                 }).toList(growable: false),
               ),
             ),
@@ -676,7 +1053,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         alignment: alignment,
         child: FractionallySizedBox(
           widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
-          child: _searchBar(context, _actionFor('search'), color),
+          child: _positionedItem(
+            'search_bar',
+            _searchBar(context, _actionFor('search'), color),
+          ),
         ),
       );
     }
@@ -697,7 +1077,79 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _item(BuildContext context, String item, Color color) {
-    if (item == 'title') return Text(_header.string('title', defaultTitle), key: const Key('commerce-app-bar-title'), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _color(_header.string('title_color', '#1F2933'), color), fontWeight: FontWeight.w700));
+    return _positionedItem(item, _rawItem(context, item, color));
+  }
+
+  Widget _positionedItem(String item, Widget child) {
+    final String prefix = item == 'search' ? 'search_icon' : item;
+    final double opticalOffsetY =
+        item == 'cart' || item == 'orders' ? -2 : 0;
+    return Transform.translate(
+      offset: Offset(
+        _header.number('${prefix}_offset_x', 0).clamp(-80, 80).toDouble(),
+        _header.number('${prefix}_offset_y', 0).clamp(-80, 80).toDouble() +
+            opticalOffsetY,
+      ),
+      child: child,
+    );
+  }
+
+  Widget _rawItem(BuildContext context, String item, Color color) {
+    if (item == 'title') {
+      String title = _header.string('title', defaultTitle);
+      final String transform = _header.string('title_transform', 'none');
+      if (transform == 'uppercase') {
+        title = title.toUpperCase();
+      } else if (transform == 'lowercase') {
+        title = title.toLowerCase();
+      }
+      final String alignment = _header.string('title_alignment', 'center');
+      final TextAlign textAlign = alignment == 'start'
+          ? TextAlign.start
+          : alignment == 'end'
+          ? TextAlign.end
+          : TextAlign.center;
+      final int weight = _header.number('title_font_weight', 700).round();
+      return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth:
+                MediaQuery.sizeOf(context).width *
+                _header
+                    .number('title_max_width_percent', 100)
+                    .clamp(20, 100) /
+                100,
+          ),
+          child: Text(
+            title,
+            key: const Key('commerce-app-bar-title'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: textAlign,
+            style: TextStyle(
+              color: _color(
+                _header.string('title_color', '#1F2933'),
+                color,
+              ),
+              fontSize: _header
+                  .number('title_font_size', 18)
+                  .clamp(10, 42)
+                  .toDouble(),
+              fontWeight: FontWeight.values.firstWhere(
+                (FontWeight value) => value.value == weight,
+                orElse: () => FontWeight.w700,
+              ),
+              letterSpacing: _header
+                  .number('title_letter_spacing', 0)
+                  .clamp(-2, 8)
+                  .toDouble(),
+              height: _header
+                  .number('title_line_height', 1.2)
+                  .clamp(.8, 2)
+                  .toDouble(),
+            ),
+          ),
+      );
+    }
     if (item == 'subtitle') return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.
     if (item == 'logo') {
       final String url = _header.string('logo_url', '');
