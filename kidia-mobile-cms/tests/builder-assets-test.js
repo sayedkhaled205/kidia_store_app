@@ -229,7 +229,7 @@ function runHomeBuilderTest() {
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*350px minmax\(0, 1fr\)/, "The editor must reserve the larger canonical phone preview without crowding the settings.");
 	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport centered beside the element editor.");
-	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*none;/, "The Home phone must not be shifted away from the center of its preview column.");
+	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*translateX\(clamp\(48px,\s*6vw,\s*96px\)\);/, "The Home phone must be centered across the full visual preview area before the 77% editor cards.");
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
 	assert.doesNotMatch(builderCss, /data-type="product_carousel"[^\{]*\.kidia-builder-block__actions\s*\{[^}]*direction:\s*ltr;/, "Product Carousel must not reverse the shared element action order.");
