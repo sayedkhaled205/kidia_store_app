@@ -22,6 +22,7 @@ final class Kidia_Mobile_CMS_Admin {
 	private const PAGE_BUILDER_SLUGS = array(
 		'kidia-mobile-catalog-builder'  => 'catalog',
 		'kidia-mobile-product-builder'  => 'product',
+		'kidia-mobile-size-chart-builder' => 'size_chart',
 		'kidia-mobile-wishlist-builder' => 'wishlist',
 		'kidia-mobile-account-builder'  => 'account',
 	);

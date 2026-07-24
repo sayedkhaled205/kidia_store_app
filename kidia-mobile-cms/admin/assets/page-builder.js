@@ -13,6 +13,7 @@
 	var products = Array.isArray(config.products) ? config.products : [];
 	var previewCollapseProgress = 0;
 	var wishlistPicker = document.getElementById("kidia-wishlist-element-picker");
+	var recommendationClipboard = null;
 
 	function array(value) { return Array.prototype.slice.call(value || []); }
 	function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]; }); }
@@ -222,6 +223,10 @@
 			return '<nav class="kidia-app-section kidia-app-product-tabs" style="display:flex;overflow-x:auto;height:' + number(card, "height", 64) + 'px;align-items:stretch;background:#fff;color:' + color(card, "inactive_color", "#6B6B6B") + '">' + tabs.map(function (tab, index) { return '<b style="flex:1 0 110px;display:grid;place-items:center;color:' + (index === 0 ? color(card, "active_color", "#1D1D1D") : "inherit") + ';border-bottom:' + (index === 0 ? "3px solid currentColor" : "0") + ';padding:8px">' + escapeHtml(tab.label) + '</b>'; }).join("") + '</nav>';
 		}
 		if (id === "related_products" || /_recommendations$/.test(id)) { return '<section class="kidia-app-section kidia-app-wishlist-recommendations" style="padding-inline:' + number(card, "section_padding", 16) + 'px"><h2 style="font-size:' + number(card, "title_size", 20) + 'px;font-weight:' + escapeHtml(value(card, "title_weight", "700")) + ';margin-bottom:' + number(card, "title_bottom_spacing", 18) + 'px">' + escapeHtml(value(card, "title", "You may also like")) + '</h2>' + productCards(card, number(card, "limit", 4)) + '</section>'; }
+		if (id === "size_chart_content") {
+			var sizes=["XS","S","M","L","XL"],style=value(card,"layout_style","list"),rowColor=color(card,"row_color","#F6F8F7"),accent=color(card,"accent_color","#2F806E");
+			return '<section class="kidia-app-section kidia-app-size-chart is-'+escapeHtml(style)+'" style="color:'+color(card,"text_color","#1F2933")+'"><h2 style="font-size:'+number(card,"title_size",24)+'px">'+escapeHtml(value(card,"title","Size chart"))+'</h2>'+(checked(card,"show_description",true)?'<p>'+escapeHtml(value(card,"description","Choose the size that fits you best."))+'</p>':'')+'<div class="kidia-app-size-chart__rows">'+sizes.map(function(size,index){return '<div style="min-height:'+number(card,"row_height",52)+'px;background:'+rowColor+';border-color:'+(index===2?accent:"transparent")+'">'+size+'</div>';}).join("")+'</div></section>';
+		}
 		if (id === "filter_bar") {
 			var buttons = [];
 			if (checked(card, "show_filter", true)) { buttons.push(icon("filter") + '<b>فلتر</b>'); }
@@ -340,6 +345,33 @@
 		var duplicate = event.target.closest(".kidia-page-duplicate");
 		if (duplicate) {
 			duplicateWishlistElement(duplicate.closest(".kidia-page-card"));
+			return;
+		}
+		var copyRecommendation = event.target.closest(".kidia-recommendation-copy");
+		if (copyRecommendation) {
+			var copyCard = copyRecommendation.closest(".kidia-page-card");
+			recommendationClipboard = {};
+			array(copyCard.querySelectorAll(".kidia-page-card__body [name]")).forEach(function (control) {
+				var match = control.name.match(/\[settings\]\[([^\]]+)\]$/);
+				if (match) { recommendationClipboard[match[1]] = control.type === "checkbox" ? control.checked : control.value; }
+			});
+			copyRecommendation.classList.add("is-copied");
+			window.setTimeout(function () { copyRecommendation.classList.remove("is-copied"); }, 900);
+			return;
+		}
+		var pasteRecommendation = event.target.closest(".kidia-recommendation-paste");
+		if (pasteRecommendation && recommendationClipboard) {
+			var pasteCard = pasteRecommendation.closest(".kidia-page-card");
+			array(pasteCard.querySelectorAll(".kidia-page-card__body [name]")).forEach(function (control) {
+				var match = control.name.match(/\[settings\]\[([^\]]+)\]$/);
+				if (!match || !Object.prototype.hasOwnProperty.call(recommendationClipboard, match[1])) { return; }
+				if (control.type === "checkbox") { control.checked = Boolean(recommendationClipboard[match[1]]); }
+				else { control.value = recommendationClipboard[match[1]]; }
+				control.dispatchEvent(new window.Event("input", { bubbles: true }));
+				control.dispatchEvent(new window.Event("change", { bubbles: true }));
+			});
+			markDirty();
+			schedulePreview();
 			return;
 		}
 		var addTab = event.target.closest(".kidia-product-tab-add");

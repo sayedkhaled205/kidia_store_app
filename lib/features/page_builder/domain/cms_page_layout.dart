@@ -74,6 +74,7 @@ class CmsPageLayout {
         'reviews',
         'related_products',
       ],
+      'size_chart': <String>['size_chart_content'],
       'wishlist': <String>[
         'sign_in_state',
         'sign_in_recommendations',
@@ -218,6 +219,8 @@ class CmsPageLayout {
 			      ? _fallbackProductSettings(id)
 			      : page == 'wishlist'
 			      ? _fallbackWishlistSettings(id)
+			      : page == 'size_chart'
+			      ? <String, dynamic>{'title': 'Size chart', 'description': 'Choose the size that fits you best.', 'layout_style': 'list', 'show_description': true, 'row_height': 52, 'title_size': 24, 'row_color': '#F6F8F7', 'text_color': '#1F2933', 'accent_color': '#2F806E'}
 			      : const <String, dynamic>{'background_color': '#FFFFFF'},
             ),
           )

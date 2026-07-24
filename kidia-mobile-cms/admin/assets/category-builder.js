@@ -414,6 +414,13 @@
 				setRowExpanded(row, navigationMode() === "expand_inline" && index === 0);
 			});
 		}
+		if (String(this.name || "").indexOf("category_layout") !== -1) {
+			activePreviewParentId = "";
+			syncEditorLayout();
+			document.dispatchEvent(new window.CustomEvent("kidia:category-layout-changed", {
+				detail: { layout: categoryLayout() }
+			}));
+		}
 		renderMobilePreview();
 	});
 
