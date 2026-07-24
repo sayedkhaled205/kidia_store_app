@@ -623,6 +623,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final List<Map<String, dynamic>> fadingRegular = _rowsWithoutItems(
       regularRows,
       removed,
+      preserveEmptyRows: true,
     );
     final List<Map<String, dynamic>> fadingCompact = _rowsWithoutItems(
       compactRows,
@@ -757,6 +758,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   List<Map<String, dynamic>> _rowsWithoutItems(
     List<Map<String, dynamic>> rows,
     Set<String> removed,
+    {bool preserveEmptyRows = false}
   ) {
     return rows
         .map((Map<String, dynamic> row) {
@@ -778,7 +780,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           (Map<String, dynamic> row) => _columns(row).any(
             (Map<String, dynamic> column) =>
                 (column['items'] as List?)?.isNotEmpty ?? false,
-          ),
+          ) || preserveEmptyRows,
         )
         .toList(growable: false);
   }

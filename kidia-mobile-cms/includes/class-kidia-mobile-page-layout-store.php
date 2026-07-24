@@ -48,7 +48,6 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'logo_height', __( 'Logo height', 'kidia-mobile-cms' ), 'number', 38, array(), 20, 80 ),
 			self::field( 'style', __( 'Header style', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Standard', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
 			self::field( 'height', __( 'Height', 'kidia-mobile-cms' ), 'number', 64, array(), 48, 120 ),
-			self::field( 'header_position', __( 'Header position', 'kidia-mobile-cms' ), 'select', 'center', array( 'up' => __( 'Up', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'down' => __( 'Down', 'kidia-mobile-cms' ) ) ),
 			self::field( 'row_1_height', __( 'First row height', 'kidia-mobile-cms' ), 'number', 48, array(), 24, 100 ),
 			self::field( 'row_1_position', __( 'First row position', 'kidia-mobile-cms' ), 'select', 'center', array( 'up' => __( 'Up', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'down' => __( 'Down', 'kidia-mobile-cms' ) ) ),
 			self::field( 'row_2_height', __( 'Second row height', 'kidia-mobile-cms' ), 'number', 48, array(), 24, 100 ),
