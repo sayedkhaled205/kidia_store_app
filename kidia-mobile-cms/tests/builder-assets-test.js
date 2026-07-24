@@ -495,8 +495,11 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("chrome-layout.css"), /data-setting="cart_background"\]\s*\{\s*grid-column:3;\s*grid-row:5;[\s\S]*data-setting="cart_color"\]\s*\{\s*grid-column:2;\s*grid-row:5;[\s\S]*data-setting="cart_radius"\]\s*\{\s*grid-column:1;\s*grid-row:5;/, "Cart Settings final row must also start from the physical right.");
 	assert.doesNotMatch(homePage, /kidia-mobile-preview__status/, "The Home preview must not render a fake operating-system status bar.");
 	assert.doesNotMatch(homePage, /Woo Mobile Home Builder|Arrange the application home page/, "The unified CMS shell must replace the redundant Home page heading and description.");
+	assert.doesNotMatch(homePage, /kidia-mobile-preview__speaker/, "The Home phone frame must not render a decorative speaker.");
 	assert.doesNotMatch(pageBuilder, /kidia-page-phone__status/, "Page previews must not render a fake operating-system status bar.");
+	assert.doesNotMatch(pageBuilder, /kidia-page-builder__heading|kidia-page-phone__speaker/, "Shared page builders must start directly with their workspace and use an even phone frame.");
 	assert.doesNotMatch(categoryBuilder, /kidia-category-phone__status/, "The Category preview must not render a fake operating-system status bar.");
+	assert.doesNotMatch(categoryBuilder, /<h1>[\s\S]*Category Page Builder|Control the Category element once|kidia-category-phone__speaker/, "Category must omit its redundant heading and decorative phone speaker.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*313\.5px;/, "The Home phone must be reduced by five percent without clipping its content.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*border:\s*3px solid #2f806e;[^}]*background:\s*#2f806e;/, "The Home phone frame must use the Kidia brand color.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline-start:auto;/, "Every page phone must use the same proportional five-percent reduction.");
@@ -1534,9 +1537,9 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*max\(24px,\s*calc\(50vh - 341px\)\)/, "Home preview must remain vertically centered at its reduced height.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:max\(24px,calc\(50vh - 341px\)\)/, "Every page preview must remain vertically centered at its reduced height.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*max\(24px,\s*calc\(50vh - 341px\)\)/, "Category preview must use the same reduced-height centered position.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*118px;/, "Home preview must stay below the sticky CMS header while the WordPress page scrolls.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:118px;/, "Every page preview must stay below the sticky CMS header.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*118px;/, "Category preview must stay below the sticky CMS header.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
