@@ -181,14 +181,14 @@
 .kidia-chrome-item-setting--header-cart .kidia-page-field[data-setting="cart_radius"] { grid-column:1; grid-row:5; }
 .kidia-chrome-item-setting--logo .kidia-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:11px; }
 .kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_url"] { grid-column:1; grid-row:1; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="subtitle"] { grid-column:2; grid-row:1; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_text"] { grid-column:3; grid-row:1; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_width"] { grid-column:1; grid-row:2; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_height"] { grid-column:2; grid-row:2; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_text_color"] { grid-column:3; grid-row:2; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_offset_x"] { grid-column:1; grid-row:3; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_offset_y"] { grid-column:2; grid-row:3; }
-.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_source"] { grid-column:3; grid-row:3; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_source"] { grid-column:2; grid-row:1; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="subtitle"] { grid-column:3; grid-row:1; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_text"] { grid-column:1; grid-row:2; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_width"] { grid-column:2; grid-row:2; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_height"] { grid-column:3; grid-row:2; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_text_color"] { grid-column:1; grid-row:3; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_offset_x"] { grid-column:2; grid-row:3; }
+.kidia-chrome-item-setting--logo .kidia-page-field[data-setting="logo_offset_y"] { grid-column:3; grid-row:3; }
 .kidia-chrome-item-setting--logo .kidia-page-field input,
 .kidia-chrome-item-setting--logo .kidia-page-field select,
 .kidia-chrome-item-setting--logo .kidia-page-text-control {
