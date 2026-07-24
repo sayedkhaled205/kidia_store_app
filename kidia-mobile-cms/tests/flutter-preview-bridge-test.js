@@ -174,20 +174,14 @@ test("Home iframe wheel events are relayed to Flutter's scroll controller", asyn
     <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html?page=home"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
   markFlutterReady(messages);
   await settle();
-  messages.window.dispatchEvent(new messages.window.MessageEvent("message", {
-    data: JSON.stringify({
-      type: "kidia-flutter-preview-wheel",
-      page: "home",
-      sequence: 7,
-      deltaY: 120,
-    }),
-    origin: "https://store.example",
-    source: messages.frame.contentWindow,
+  messages.frame.contentWindow.dispatchEvent(new messages.window.WheelEvent("wheel", {
+    deltaY: 120,
+    cancelable: true,
   }));
   assert.deepEqual(messages.at(-1).message, {
     type: "kidia-preview-focus",
     page: "home",
-    target: "__wheel__:7:120",
+    target: "__wheel__:1:120",
   });
   assert.equal(messages.at(-1).origin, "https://store.example");
 });
