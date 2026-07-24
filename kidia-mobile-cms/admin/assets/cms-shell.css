@@ -10,3 +10,8 @@ body[class*="kidia-mobile"] #wpbody-content:after{float:none;clear:both;display:
 .kidia-cms-setup-link{flex:0 0 auto;margin-inline-start:0}
 .kidia-cms-shell~.wrap{padding-bottom:24px}
 @media(max-width:782px){body[class*="kidia-mobile"] #wpbody-content{width:calc(100% - 16px);min-height:calc(100vh - 62px);margin:8px}.kidia-cms-shell{top:46px}}
+
+/* Rounded workspace frame */
+body[class*="kidia-mobile"] #wpbody-content{border-radius:18px}
+.kidia-cms-shell{border-radius:17px 17px 0 0}
+@media(max-width:782px){body[class*="kidia-mobile"] #wpbody-content{border-radius:14px}.kidia-cms-shell{border-radius:13px 13px 0 0}}
