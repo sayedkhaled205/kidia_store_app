@@ -83,6 +83,18 @@ final class Kidia_Mobile_Setup_Wizard {
 		return compact( 'name', 'description', 'primary', 'soft', 'ink', 'card_style', 'blocks', 'sample_copy' );
 	}
 
+	/** @return array<string,array<string,string>> */
+	public static function setup_pages(): array {
+		return array(
+			'home'     => array( 'name' => __( 'Storefront', 'kidia-mobile-cms' ), 'description' => __( 'Home page sections, promotions and product discovery.', 'kidia-mobile-cms' ) ),
+			'category' => array( 'name' => __( 'Categories', 'kidia-mobile-cms' ), 'description' => __( 'Category navigation, cards and subcategory presentation.', 'kidia-mobile-cms' ) ),
+			'catalog'  => array( 'name' => __( 'Catalog', 'kidia-mobile-cms' ), 'description' => __( 'Product browsing, filters, sorting and product cards.', 'kidia-mobile-cms' ) ),
+			'product'  => array( 'name' => __( 'Product', 'kidia-mobile-cms' ), 'description' => __( 'Product information, gallery, actions, tabs and recommendations.', 'kidia-mobile-cms' ) ),
+			'wishlist' => array( 'name' => __( 'Wishlist', 'kidia-mobile-cms' ), 'description' => __( 'Sign-in, empty and saved-product wishlist states.', 'kidia-mobile-cms' ) ),
+			'account'  => array( 'name' => __( 'Account', 'kidia-mobile-cms' ), 'description' => __( 'Customer profile, orders and account navigation.', 'kidia-mobile-cms' ) ),
+		);
+	}
+
 	public function is_complete(): bool {
 		$state = get_option( self::STATE_OPTION, array() );
 		return is_array( $state ) && ! empty( $state['completed'] );
@@ -101,15 +113,21 @@ final class Kidia_Mobile_Setup_Wizard {
 				'direction'     => is_rtl() ? 'rtl' : 'ltr',
 				'primary_color' => '#2F806E',
 				'theme'         => 'aurora',
+				'page_themes'   => array_fill_keys( array_keys( self::setup_pages() ), 'aurora' ),
 			)
 		);
 	}
 
 	/** @param array<string,mixed> $submitted */
 	public function apply( array $submitted ): string {
-		$themes    = self::themes();
-		$theme_key = sanitize_key( (string) ( $submitted['theme'] ?? 'aurora' ) );
-		$theme_key = isset( $themes[ $theme_key ] ) ? $theme_key : 'aurora';
+		$themes      = self::themes();
+		$page_themes = array();
+		$submitted_page_themes = is_array( $submitted['page_themes'] ?? null ) ? $submitted['page_themes'] : array();
+		foreach ( array_keys( self::setup_pages() ) as $page ) {
+			$theme_key = sanitize_key( (string) ( $submitted_page_themes[ $page ] ?? $submitted['theme'] ?? 'aurora' ) );
+			$page_themes[ $page ] = isset( $themes[ $theme_key ] ) ? $theme_key : 'aurora';
+		}
+		$theme_key = $page_themes['home'];
 		$theme     = $themes[ $theme_key ];
 		$primary   = sanitize_hex_color( (string) ( $submitted['primary_color'] ?? '' ) ) ?: $theme['primary'];
 		$app_name  = sanitize_text_field( (string) ( $submitted['app_name'] ?? get_bloginfo( 'name' ) ) );
@@ -130,20 +148,22 @@ final class Kidia_Mobile_Setup_Wizard {
 				'direction'     => $direction,
 				'primary_color' => $primary,
 				'theme'         => $theme_key,
+				'page_themes'   => $page_themes,
 			),
 			false
 		);
 
 		$this->apply_home( $theme, $primary, $app_name, $logo_url );
-		$this->apply_pages( $theme, $primary, $app_name, $logo_url );
-		$this->apply_category( $theme );
-		$this->apply_extras( $theme, $primary, $app_name, $logo_url );
+		$this->apply_pages( $page_themes, $themes, $primary, $app_name, $logo_url );
+		$this->apply_category( $themes[ $page_themes['category'] ] );
+		$this->apply_extras( $theme, $themes[ $page_themes['product'] ], $primary, $app_name, $logo_url );
 
 		update_option(
 			self::STATE_OPTION,
 			array(
 				'completed'    => true,
 				'theme'        => $theme_key,
+				'page_themes'  => $page_themes,
 				'completed_at' => time(),
 			),
 			false
@@ -230,10 +250,16 @@ final class Kidia_Mobile_Setup_Wizard {
 		return $slides;
 	}
 
-	/** @param array<string,mixed> $theme */
-	private function apply_pages( array $theme, string $primary, string $app_name, string $logo_url ): void {
+	/**
+	 * @param array<string,string> $page_themes Selected theme key for each setup page.
+	 * @param array<string,array<string,mixed>> $themes Available theme definitions.
+	 */
+	private function apply_pages( array $page_themes, array $themes, string $primary, string $app_name, string $logo_url ): void {
 		$store = new Kidia_Mobile_Page_Layout_Store();
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
+			$setup_page = 'size_chart' === $page ? 'product' : $page;
+			$theme_key  = $page_themes[ $setup_page ] ?? $page_themes['home'] ?? 'aurora';
+			$theme      = $themes[ $theme_key ] ?? $themes['aurora'];
 			$layout = $store->default_layout( $page );
 			foreach ( array( 'header', 'footer' ) as $chrome ) {
 				if ( ! isset( $layout[ $chrome ]['settings'] ) || ! is_array( $layout[ $chrome ]['settings'] ) ) {
@@ -288,15 +314,18 @@ final class Kidia_Mobile_Setup_Wizard {
 		$store->save_settings( array( 'enabled' => true, 'general' => $general, 'categories' => $current['categories'] ) );
 	}
 
-	/** @param array<string,mixed> $theme */
-	private function apply_extras( array $theme, string $primary, string $app_name, string $logo_url ): void {
+	/**
+	 * @param array<string,mixed> $home_theme Home/splash styling.
+	 * @param array<string,mixed> $product_theme Product recommendation styling.
+	 */
+	private function apply_extras( array $home_theme, array $product_theme, string $primary, string $app_name, string $logo_url ): void {
 		update_option(
 			'kidia_mobile_splash_screen',
 			array(
 				'enabled'              => true,
 				'image_url'            => $logo_url,
 				'background_color'     => $primary,
-				'background_color_end' => $theme['ink'],
+				'background_color_end' => $home_theme['ink'],
 				'duration_ms'          => 1800,
 				'image_width'          => 140,
 				'image_height'         => 140,
@@ -320,7 +349,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'manual_product_ids'=> '',
 				'limit'             => 6,
 				'columns'           => 2,
-				'card_style'        => $theme['card_style'],
+				'card_style'        => $product_theme['card_style'],
 				'card_radius'       => 16,
 				'image_ratio'       => 1,
 				'show_price'        => true,
