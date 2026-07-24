@@ -118,10 +118,10 @@ assert.match(
   /__wheel__:[\s\S]*target\.split\(':'\)\.last[\s\S]*_scrollController\.jumpTo\(next\)/,
   "The Home CMS preview must translate iframe-relayed wheel input into its real Flutter scroll controller.",
 );
-assert.match(
+assert.doesNotMatch(
   sourceIndex,
-  /addEventListener\('wheel'[\s\S]*kidia-flutter-preview-wheel[\s\S]*preventDefault\(\)[\s\S]*passive:\s*false/,
-  "The Flutter shell must capture Home wheel input before CanvasKit consumes it.",
+  /kidia-flutter-preview-wheel/,
+  "The Flutter shell must leave Home wheel input to the parent bridge's direct same-origin relay.",
 );
 
 console.log("Flutter preview bootstrap: ok");
