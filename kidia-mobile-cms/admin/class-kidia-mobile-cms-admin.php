@@ -122,6 +122,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
+		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
 
 		add_action(
 			'admin_menu',
@@ -129,6 +130,21 @@ final class Kidia_Mobile_CMS_Admin {
 			999
 		);
 
+	}
+
+	/**
+	 * Keeps third-party and WordPress notices outside the unified CMS workspace.
+	 *
+	 * @return void
+	 */
+	public function suppress_external_admin_notices(): void {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( ! current_user_can( self::CAPABILITY ) || ! $this->is_public_cms_page( $page ) ) {
+			return;
+		}
+		remove_all_actions( 'admin_notices' );
+		remove_all_actions( 'all_admin_notices' );
+		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 	}
 
 	/**
