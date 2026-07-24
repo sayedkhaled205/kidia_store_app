@@ -106,7 +106,6 @@ foreach ( $library_options as $type => $option_name ) {
 	<div class="kidia-builder-workspace">
 		<aside class="kidia-mobile-preview" aria-label="<?php echo esc_attr__( 'Live mobile preview', 'kidia-mobile-cms' ); ?>">
 			<div class="kidia-mobile-preview__device">
-				<div class="kidia-mobile-preview__speaker"></div>
 			<div class="kidia-mobile-preview__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
 					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home', 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
