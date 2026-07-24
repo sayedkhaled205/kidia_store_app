@@ -31,7 +31,7 @@
 
 .kidia-mobile-preview {
 	position: sticky;
-	top: max(24px, calc(50vh - 358px));
+	top: max(24px, calc(50vh - 341px));
 	direction: rtl;
 	text-align: center;
 	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
@@ -57,7 +57,7 @@
 
 .kidia-mobile-preview__screen {
 	position: relative;
-	height: 697.78px;
+	height: 662.89px;
 	overflow-y: auto;
 	border-radius: 21px;
 	background: #f7f8fa;
