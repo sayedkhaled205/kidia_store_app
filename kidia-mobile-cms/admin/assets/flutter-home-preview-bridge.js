@@ -100,6 +100,16 @@
 		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
+		if (message && message.type === "kidia-flutter-preview-wheel" && ready && frame.contentWindow) {
+			var deltaY = Number(message.deltaY);
+			if (!isFinite(deltaY) || deltaY === 0) { return; }
+			frame.contentWindow.postMessage(JSON.stringify({
+				type: "kidia-preview-focus",
+				page: "home",
+				target: "__wheel__:" + String(message.sequence || Date.now()) + ":" + String(deltaY)
+			}), frameOrigin);
+			return;
+		}
 		if (message && message.type === "kidia-flutter-preview-ready") {
 			ready = true;
 			showFlutter();
