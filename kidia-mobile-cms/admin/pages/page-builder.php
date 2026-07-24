@@ -98,13 +98,10 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 }
 ?>
 <div class="wrap kidia-page-builder" data-page="<?php echo esc_attr( $page ); ?>">
-	<header class="kidia-page-builder__heading">
-		<div><h1><?php echo esc_html( sprintf( __( '%s Builder', 'kidia-mobile-cms' ), $page_label ) ); ?></h1><p><?php esc_html_e( 'Header and footer stay fixed. Reorder the page-specific elements and control every visible section.', 'kidia-mobile-cms' ); ?></p></div>
-	</header>
 	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Product Page settings restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
-			<div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div class="kidia-page-phone__screen">
+			<div class="kidia-page-phone"><div class="kidia-page-phone__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
 					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => $page, 'product' => $flutter_preview_product_id, 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
 					<div id="kidia-page-live-preview" class="kidia-legacy-preview-fallback" hidden></div>
