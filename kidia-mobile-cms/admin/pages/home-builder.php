@@ -81,32 +81,6 @@ foreach ( $library_options as $type => $option_name ) {
 
 <div class="wrap kidia-builder-wrap">
 
-	<div class="kidia-builder-page-header">
-
-		<div>
-
-			<h1>
-				<?php
-				esc_html_e(
-					'Woo Mobile Home Builder',
-					'kidia-mobile-cms'
-				);
-				?>
-			</h1>
-
-			<p class="description">
-				<?php
-				esc_html_e(
-					'Arrange the application home page using your saved elements.',
-					'kidia-mobile-cms'
-				);
-				?>
-			</p>
-
-		</div>
-
-	</div>
-
 	<?php if (
 		isset( $_GET['updated'] )
 		&& '1' === sanitize_key(
