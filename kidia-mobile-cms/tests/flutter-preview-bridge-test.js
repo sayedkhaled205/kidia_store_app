@@ -184,6 +184,8 @@ test("every Flutter iframe and bundle URL is tied to the plugin version", () => 
     const source = fs.readFileSync(path.join(assets, bridge), "utf8");
     assert.doesNotMatch(source, /frame\.hidden\s*=\s*true/, `${bridge} must not replace Flutter with an HTML replica while loading.`);
     assert.doesNotMatch(source, /fallback\.hidden\s*=\s*false/, `${bridge} must keep the approximate HTML replica hidden.`);
+    assert.match(source, /frame\.setAttribute\("tabindex",\s*"0"\)/, `${bridge} must make the exact mobile preview focusable.`);
+    assert.match(source, /frame\.addEventListener\("pointerenter",\s*focusPreview\)/, `${bridge} must hand mouse-wheel control to the mobile preview on hover.`);
   }
 });
 
