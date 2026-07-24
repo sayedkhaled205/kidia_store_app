@@ -8,7 +8,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   plugin:
@@ -32,8 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -43,19 +41,6 @@ jobs:
       - run: flutter test
       - name: Build embedded CMS Flutter Web preview
         run: bash tool/build_cms_flutter_preview.sh
-      - name: Commit rebuilt CMS Flutter Web preview
-        if: >-
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          if git diff --quiet -- kidia-mobile-cms/admin/flutter-preview; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add kidia-mobile-cms/admin/flutter-preview
-          git commit -m "Rebuild embedded Flutter preview"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
       - name: Upload CMS Flutter Web preview
         uses: actions/upload-artifact@v4
         with:
