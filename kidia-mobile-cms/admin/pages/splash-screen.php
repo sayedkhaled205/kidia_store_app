@@ -1,9 +1,8 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <div class="wrap kidia-page-builder kidia-splash-builder">
-	<header class="kidia-page-builder__heading"><h1><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></h1><p><?php esc_html_e( 'Control the screen shown when the application starts.', 'kidia-mobile-cms' ); ?></p></header>
 	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Splash Screen saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
-		<aside class="kidia-page-preview"><div class="kidia-page-phone"><div class="kidia-page-phone__speaker"></div><div id="kidia-splash-preview" class="kidia-page-phone__screen kidia-splash-preview"><img alt=""><strong></strong><span class="spinner is-active"></span></div></div><p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p></aside>
+		<aside class="kidia-page-preview"><div class="kidia-page-phone"><div id="kidia-splash-preview" class="kidia-page-phone__screen kidia-splash-preview"><img alt=""><strong></strong><span class="spinner is-active"></span></div></div><p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p></aside>
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_splash_screen"><?php wp_nonce_field( 'kidia_mobile_save_splash_screen', 'kidia_mobile_splash_nonce' ); ?>
 			<div class="kidia-page-toolbar"><strong><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></strong><?php submit_button( __( 'Save Splash Screen', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
