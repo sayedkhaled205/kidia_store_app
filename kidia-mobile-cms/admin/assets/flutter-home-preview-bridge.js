@@ -128,11 +128,15 @@
 			target: target
 		}), frameOrigin);
 	});
-	frame.addEventListener("mouseenter", function () {
+	function focusPreview() {
 		// Give the embedded Flutter surface the wheel/trackpad events while the
 		// pointer is over the phone, without requiring an initial click.
 		try { frame.contentWindow.focus(); } catch (_) {}
-	});
+	}
+	frame.setAttribute("tabindex", "0");
+	frame.addEventListener("mouseenter", focusPreview);
+	frame.addEventListener("pointerenter", focusPreview);
+	frame.addEventListener("click", focusPreview);
 	// Do not rely on a load event that a cached iframe may already have fired.
 	waitForFlutter();
 }());
