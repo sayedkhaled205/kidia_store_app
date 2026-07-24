@@ -6,6 +6,10 @@ const path = require("node:path");
 
 const previewRoot = path.join(__dirname, "..", "admin", "flutter-preview");
 const index = fs.readFileSync(path.join(previewRoot, "index.html"), "utf8");
+const sourceIndex = fs.readFileSync(
+  path.join(__dirname, "..", "..", "web", "index.html"),
+  "utf8",
+);
 const bootstrap = fs.readFileSync(
   path.join(previewRoot, "flutter_bootstrap.js"),
   "utf8",
@@ -107,7 +111,17 @@ assert.match(
 assert.match(
   homePage,
   /PointerScrollEvent[\s\S]*_scrollController\.jumpTo\(next\)[\s\S]*Listener\([\s\S]*onPointerSignal:\s*_handleCmsPreviewPointerSignal/,
-  "The Home CMS preview must translate desktop wheel and trackpad signals into its real Flutter scroll controller.",
+  "The Home CMS preview must translate direct wheel input into its real Flutter scroll controller.",
+);
+assert.match(
+  homePage,
+  /__wheel__:[\s\S]*target\.split\(':'\)\.last[\s\S]*_scrollController\.jumpTo\(next\)/,
+  "The Home CMS preview must translate iframe-relayed wheel input into its real Flutter scroll controller.",
+);
+assert.match(
+  sourceIndex,
+  /addEventListener\('wheel'[\s\S]*kidia-flutter-preview-wheel[\s\S]*preventDefault\(\)[\s\S]*passive:\s*false/,
+  "The Flutter shell must capture Home wheel input before CanvasKit consumes it.",
 );
 
 console.log("Flutter preview bootstrap: ok");
