@@ -170,9 +170,111 @@
 .kidia-category-element .kidia-category-children > .kidia-category-list { margin-inline-start:0; }
 .kidia-category-element:not(.is-enabled) .kidia-category-items { opacity:.55; }
 
-/* The editor always uses one compact, readable row per category. The selected
- * application layout is rendered only in the live mobile preview. */
+/* The editor follows the selected application layout as well as the phone
+ * preview, while keeping every card control readable and non-overlapping. */
 .kidia-category-items > .kidia-category-list { display:flex; flex-direction:column; gap:var(--category-editor-gap,10px); }
+.kidia-category-items[data-category-layout="visual_grid"] > .kidia-category-list,
+.kidia-category-items[data-category-layout="circular_grid"] > .kidia-category-list,
+.kidia-category-items[data-category-layout="compact_grid"] > .kidia-category-list,
+.kidia-category-items[data-category-layout="sidebar"] > .kidia-category-list {
+	display:grid;
+	grid-template-columns:repeat(var(--category-editor-columns,2),minmax(0,1fr));
+	gap:var(--category-editor-gap,10px);
+}
+.kidia-category-items[data-category-layout="sidebar"] > .kidia-category-list {
+	grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row {
+	min-width:0;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card {
+	grid-template-columns:28px 48px minmax(68px,1fr) 40px;
+	grid-template-rows:48px auto auto;
+	align-items:center;
+	padding:10px;
+	gap:8px;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-handle {
+	grid-column:1;
+	grid-row:1;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-image {
+	grid-column:2;
+	grid-row:1;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-visibility {
+	grid-column:3;
+	grid-row:1;
+	justify-self:center;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card :is(.kidia-category-expand,.kidia-category-expand-placeholder) {
+	grid-column:4;
+	grid-row:1;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-name {
+	grid-column:1 / -1;
+	grid-row:2;
+	width:100%;
+}
+.kidia-category-items:is(
+	[data-category-layout="visual_grid"],
+	[data-category-layout="circular_grid"],
+	[data-category-layout="compact_grid"],
+	[data-category-layout="sidebar"]
+) > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-image-actions {
+	grid-column:1 / -1;
+	grid-row:3;
+	grid-template-columns:repeat(2,minmax(0,1fr));
+	width:100%;
+}
+.kidia-category-items[data-category-layout="circular_grid"] > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-image {
+	border-radius:50%!important;
+}
+.kidia-category-items[data-category-layout="compact_grid"] > .kidia-category-list > .kidia-category-row > .kidia-category-card {
+	grid-template-columns:28px 40px minmax(60px,1fr) 36px;
+	grid-template-rows:40px auto auto;
+	padding:7px;
+	gap:6px;
+}
+.kidia-category-items[data-category-layout="compact_grid"] > .kidia-category-list > .kidia-category-row > .kidia-category-card .kidia-category-image {
+	width:38px!important;
+	height:38px!important;
+}
 
 @media (max-width: 1100px) {
 	.kidia-category-element { width:100%; }

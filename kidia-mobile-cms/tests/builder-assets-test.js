@@ -864,7 +864,7 @@ function runCategoryBuilderTest() {
 		layout.value = value;
 		layout.dispatchEvent(new window.Event("change", { bubbles: true }));
 		assert.ok(window.document.querySelector(`.kidia-category-preview-content.is-layout-${value}`), `${value} must change the live category preview.`);
-		assert.ok(window.document.querySelector(`.kidia-category-items[data-category-layout="${value}"]`), `${value} must remain available to the preview bridge without changing the compact editor-card layout.`);
+		assert.ok(window.document.querySelector(`.kidia-category-items[data-category-layout="${value}"]`), `${value} must change the Categories & Subcategories editor layout immediately.`);
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
 	const navigationMode = window.document.querySelector('[name="category_general[navigation_mode]"]');
@@ -1192,8 +1192,9 @@ function runChromeComposerTest() {
 	assert.match(readAsset("category-builder.css"), /kidia-category-image-button\.is-active[^}]*background:#2f806e!important;[^}]*color:#fff!important;/, "Change image must keep the same green color on every Category card regardless of image source.");
 	assert.match(readAsset("category-builder.css"), /kidia-category-image-clear\.is-active[^}]*background:#fff!important;[^}]*color:#236b59!important;/, "Use WooCommerce image must keep the same outline color on every Category card regardless of image source.");
 	assert.match(fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8"), /kidia-category-items[\s\S]{0,300}data-navigation-mode[\s\S]{0,300}data-category-layout=/, "The server-rendered Categories & Subcategories section must receive the saved layout before JavaScript boots.");
-	assert.match(readAsset("category-builder.css"), /The editor always uses one compact, readable row per category[\s\S]*kidia-category-items > \.kidia-category-list\s*\{\s*display:flex;\s*flex-direction:column/, "Category editor cards must remain full-width readable rows regardless of the selected mobile layout.");
-	assert.doesNotMatch(readAsset("category-builder.css"), /grid-template-columns:repeat\(var\(--category-editor-columns,2\),minmax\(0,1fr\)\)/, "Mobile layout choices must not squeeze editor cards into overlapping columns.");
+	assert.match(readAsset("category-builder.css"), /data-category-layout="visual_grid"[\s\S]*grid-template-columns:repeat\(var\(--category-editor-columns,2\),minmax\(0,1fr\)\)/, "Grid layout choices must immediately reshape the Categories & Subcategories editor.");
+	assert.match(readAsset("category-builder.css"), /data-category-layout="circular_grid"[\s\S]*kidia-category-image\s*\{\s*border-radius:50%!important;/, "Circular Grid must immediately use circular artwork in the Categories & Subcategories editor.");
+	assert.match(readAsset("category-builder.css"), /kidia-category-image-actions\s*\{[\s\S]*grid-column:1 \/ -1;[\s\S]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, "Grid editor cards must keep both image actions on a dedicated non-overlapping row.");
 	const automaticWidth = window.document.querySelector('.kidia-column-width[data-row="0"][data-column="1"]');
 	const untouchedWidth = window.document.querySelector('.kidia-column-width[data-row="0"][data-column="0"]');
 	automaticWidth.value = "";
@@ -1502,7 +1503,8 @@ function runUniformChromeSettingsContractTest() {
 	assert.match(template, /logo_url'\s*=>\s*0,\s*'subtitle'\s*=>\s*1,\s*'logo_text'\s*=>\s*2/, "Subtitle must immediately follow the logo image in the first row.");
 	assert.match(template, /'logo_url' === \$field\['key'\][\s\S]*kidia-page-media-clear[\s\S]*Use logo text/, "Choose image and Use logo text must stay together in the Logo image control.");
 	assert.match(styles, /data-setting="logo_url"[^}]+\.kidia-page-media-url\s*\{\s*display:none;/, "The internal Logo URL must not consume a visible settings column.");
-	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:100%;\s*max-width:none/, "Logo value controls must use the same full standard field width as the surrounding settings.");
+	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\);[\s\S]*?max-width:var\(--kidia-settings-control-width\)/, "Logo value controls must use the shared standard field width.");
+	assert.match(styles, /data-setting="search_placeholder"[^}]*\.kidia-page-text-control,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\)/, "Search placeholder must use the shared standard field width.");
 	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
