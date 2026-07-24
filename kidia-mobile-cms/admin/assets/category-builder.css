@@ -2,7 +2,7 @@
 .kidia-category-builder { direction: rtl; max-width: 1380px; margin-inline: auto; text-align: right; }
 .kidia-category-workspace { container-type:inline-size; direction:ltr; display:grid; grid-template-columns:350px minmax(0,1fr); align-items:start; gap:10px; }
 .kidia-category-editor { direction: rtl; min-width: 0; }
-.kidia-category-mobile-preview { position: sticky; top: 48px; direction: rtl; text-align: center; transform:translateX(clamp(35px,calc(11.5cqw - 30px),130px)); }
+.kidia-category-mobile-preview { position: sticky; top: max(24px, calc(50vh - 358px)); direction: rtl; text-align: center; transform:translateX(clamp(35px,calc(11.5cqw - 30px),130px)); }
 .kidia-category-phone { width:330px; margin-inline-start:auto; padding:5px; border:3px solid #2f806e; border-radius:29px; background:#2f806e; box-shadow:0 16px 38px rgba(29,35,39,.18); }
 .kidia-category-phone__speaker { width: 68px; height: 4px; margin: 0 auto 5px; border-radius: 99px; background: #646970; }
 .kidia-category-phone__screen { position:relative; height:697.78px; overflow-y:auto; border-radius:21px; background:#f7f8fa; }
