@@ -1518,6 +1518,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_y'.*'Vertical position'.*-80, 80"), `${item} must expose vertical positioning.`);
 	}
 	assert.match(chrome, /positionStyle\(card,item\)[\s\S]*transform:translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The exact HTML preview must apply both header offsets.");
+	assert.match(chrome, /item==="cart"\|\|item==="orders"\?-2:0/, "Cart and Orders icons must receive the same two-pixel optical lift in the HTML preview.");
 	assert.doesNotMatch(store, /self::field\( 'header_position', __\( 'Header position'/, "The redundant single-row Header position field must stay removed.");
 	assert.match(store, /self::field\( 'row_1_height', __\( 'First row height'[\s\S]*self::field\( 'row_1_position', __\( 'First row position'[\s\S]*self::field\( 'row_2_height', __\( 'Second row height'[\s\S]*self::field\( 'row_2_position', __\( 'Second row position'[\s\S]*self::field\( 'row_merge', __\( 'Merge rows'/, "Multi-row Header height, position, and merge controls must remain available.");
 	assert.match(chrome, /function syncHeaderRowFields[\s\S]*single=\["height"\][\s\S]*multiple=\["row_1_height","row_1_position","row_2_height","row_2_position","row_merge"\]/, "Header controls must switch immediately between the single-row and multi-row settings.");
@@ -1525,6 +1526,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(chrome, /function headerRows[\s\S]*rowPosition[\s\S]*align-items:[\s\S]*rowHeight/, "The exact Header preview must position each row independently inside its own height.");
 	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must retain the selected row position.");
 	assert.match(flutter, /_positionedItem[\s\S]*Transform\.translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The Flutter app and preview must apply both header offsets.");
+	assert.match(flutter, /item == 'cart' \|\| item == 'orders' \? -2 : 0/, "Cart and Orders icons must receive the same two-pixel optical lift in Flutter.");
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
