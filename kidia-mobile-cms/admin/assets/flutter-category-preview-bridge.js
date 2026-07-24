@@ -16,6 +16,11 @@
 	function refresh(){var values,number,signal;if(!ready||!config.layoutPreviewEndpoint||!config.categoryPreviewEndpoint||!config.restNonce||typeof window.fetch!=="function"){return;}values=serialize();if(controller){controller.abort();}controller=typeof window.AbortController==="function"?new window.AbortController():null;signal=controller?controller.signal:undefined;number=++requestNumber;Promise.all([post(config.layoutPreviewEndpoint,{layout:values.layout||{}},signal),post(config.categoryPreviewEndpoint,{general:values.category_general||{}},signal)]).then(function(payloads){if(number===requestNumber&&frame.contentWindow){frame.contentWindow.postMessage(JSON.stringify({type:"kidia-preview-layout",page:"category",layout:payloads[0],category:payloads[1]}),frameOrigin);}}).catch(function(error){if(error&&error.name==="AbortError"){return;}if(window.console&&window.console.warn){window.console.warn(error);}});}
 	window.addEventListener("message",function(event){if(event.source!==frame.contentWindow||event.origin!==frameOrigin){return;}var message=event.data;if(typeof message==="string"){try{message=JSON.parse(message);}catch(_){return;}}if(message&&message.type==="kidia-flutter-preview-ready"){ready=true;showFlutter();refresh();}});
 	form.addEventListener("input",refresh);form.addEventListener("change",refresh);document.addEventListener("kidia:category-layout-changed",refresh);
+	function focusPreview(){try{frame.contentWindow.focus();}catch(_){}}
+	frame.setAttribute("tabindex","0");
+	frame.addEventListener("mouseenter",focusPreview);
+	frame.addEventListener("pointerenter",focusPreview);
+	frame.addEventListener("click",focusPreview);
 	// Cached Flutter can become ready before this footer bridge is evaluated.
 	waitForFlutter();
 }());
