@@ -23,5 +23,5 @@ defined( 'ABSPATH' ) || exit;
 			<?php endforeach; ?>
 		</div>
 	</div>
-	<a class="kidia-cms-setup-link <?php echo 'setup' === $active_tab ? 'is-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>"><span class="dashicons dashicons-admin-customizer"></span><?php esc_html_e( 'Setup & Themes', 'kidia-mobile-cms' ); ?></a>
+	<a class="kidia-cms-setup-link <?php echo 'setup' === $active_tab ? 'is-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>"><span class="dashicons dashicons-admin-customizer"></span><?php esc_html_e( 'Quick Setup & Themes', 'kidia-mobile-cms' ); ?></a>
 </div>
