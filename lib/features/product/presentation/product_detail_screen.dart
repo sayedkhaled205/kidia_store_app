@@ -1358,7 +1358,8 @@ class _ProductOptionPicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final CmsPageComponent sizeChart = ref
         .watch(cmsPageLayoutProvider('size_chart'))
-        .valueOrNull
+        .asData
+        ?.value
         ?.element('size_chart_content') ?? CmsPageLayout.fallback('size_chart').element('size_chart_content');
     final String? selected = controller.selectedAttributes[group.key];
     final double chipHeight =

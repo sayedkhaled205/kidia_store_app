@@ -721,7 +721,7 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: products.length,
-                    separatorBuilder: (_, __) => SizedBox(width: gap),
+                    separatorBuilder: (_, _) => SizedBox(width: gap),
                     itemBuilder: (BuildContext context, int index) => SizedBox(
                       width: 168,
                       child: _WishlistRecommendationCard(product: products[index], settings: widget.settings, onTap: widget.onProductTap == null ? null : () => widget.onProductTap!(products[index])),
@@ -783,7 +783,11 @@ class _WishlistRecommendationCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: _wishlistHexColor(settings.string('card_background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface),
+      color:
+          _wishlistHexColor(
+            settings.string('card_background_color', '#FFFFFF'),
+          ) ??
+          Theme.of(context).colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(settings.number('card_radius', 0).clamp(0, 32).toDouble())),
       child: InkWell(
