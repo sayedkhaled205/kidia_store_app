@@ -9,7 +9,7 @@
 	const apply = form.querySelector('.kidia-setup-apply');
 	let current = 0;
 
-	function show(index) {
+	function show(index, shouldScroll) {
 		current = Math.max(0, Math.min(steps.length - 1, index));
 		steps.forEach((step, i) => step.classList.toggle('is-active', i === current));
 		dots.forEach((dot, i) => dot.classList.toggle('is-active', i <= current));
@@ -19,7 +19,11 @@
 		const name = form.querySelector('[name="setup[app_name]"]');
 		const review = form.querySelector('[data-review-name]');
 		if (name && review) review.textContent = name.value || name.placeholder;
-		window.scrollTo({ top: Math.max(0, form.getBoundingClientRect().top + window.scrollY - 90), behavior: 'smooth' });
+		if (shouldScroll !== false) {
+			const hero = document.querySelector('.kidia-setup-hero');
+			const target = hero || form;
+			window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + window.scrollY - 90), behavior: 'smooth' });
+		}
 	}
 	next.addEventListener('click', function () {
 		const required = steps[current].querySelectorAll('[required]');
@@ -43,5 +47,14 @@
 			frame.open();
 		});
 	}
-	show(0);
+	if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+	show(0, false);
+	const resetScroll = function () {
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+	};
+	if (window.requestAnimationFrame) {
+		window.requestAnimationFrame(resetScroll);
+	} else {
+		resetScroll();
+	}
 })();
