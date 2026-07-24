@@ -38,12 +38,17 @@ assert.match(admin, /add_submenu_page\(\s*null,\s*__\( 'Home Page'/, "Top-tab pa
 assert.doesNotMatch(admin, /remove_submenu_page\(\s*'kidia-mobile-cms',\s*'kidia-mobile-home-builder'/, "Public builders must not be unregistered while hiding sidebar links.");
 assert.match(admin, /Kidia_Mobile_Setup_Wizard\(\) \)->is_complete/, "First visit must resolve setup state.");
 assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme gallery.");
+assert.match(wizardTemplate, /Choose %s page design/, "Every design step heading must clearly identify that it configures a page.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
 assert.match(shellTemplate, /kidia-cms-tabs/, "Shell must expose top navigation tabs.");
 assert.match(shellTemplate, /<\/nav>\s*<div class="kidia-cms-more">/, "More menu must sit outside the scrollable tab strip so its dropdown remains visible.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
+const wizardScript = read("admin", "assets", "setup-wizard.js");
+assert.match(wizardScript, /document\.querySelector\('\.kidia-setup-hero'\)/, "Wizard navigation must keep the Setup & Themes hero visible.");
+assert.match(wizardScript, /history\.scrollRestoration = 'manual'/, "Wizard must ignore stale browser scroll restoration.");
+assert.match(wizardScript, /show\(0, false\)/, "Initial wizard rendering must not scroll past the top hero.");
 assert.match(shellCss, /position:sticky/, "Unified navigation must remain available while editing.");
 assert.match(shellCss, /box-shadow:inset 0 0 0 2px #2f806e/, "Header focus must use an inset Kidia-colored ring.");
 assert.match(shellCss, /#wpbody-content\{[^}]*border:/, "The unified workspace must be enclosed by a full-page frame.");
