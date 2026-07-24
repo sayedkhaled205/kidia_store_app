@@ -2,5 +2,7 @@ body[class*="kidia-mobile"] #wpcontent{padding-left:0}.rtl body[class*="kidia-mo
 /* Keep the dark setup action visually stable after mouse activation. */
 .kidia-cms-setup-link:focus,.kidia-cms-setup-link:focus-visible{outline:0!important;box-shadow:none!important}
 /* Keep plugin pages only as tall as their real content. */
-body[class*="kidia-mobile"] #wpbody-content{min-height:0;padding-bottom:0}
+body[class*="kidia-mobile"] #wpbody,
+body[class*="kidia-mobile"] #wpbody-content{height:auto!important;min-height:0!important}
+body[class*="kidia-mobile"] #wpbody-content{padding-bottom:0!important}
 body[class*="kidia-mobile"] #wpfooter{display:none}
