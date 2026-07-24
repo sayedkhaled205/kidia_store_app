@@ -34,12 +34,12 @@
 	top: 118px;
 	direction: rtl;
 	text-align: center;
-	transform: translateX(clamp(35px, calc(11.5cqw - 30px), 130px));
+	transform: none;
 }
 
 .kidia-mobile-preview__device {
 	width: 313.5px;
-	margin-inline-start: auto;
+	margin-inline: auto;
 	padding: 5px;
 	border: 3px solid #2f806e;
 	border-radius: 29px;
