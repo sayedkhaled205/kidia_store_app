@@ -33,7 +33,13 @@
 
 	function setting(suffix) {
 		var input = field(general, suffix);
-		return input.length ? input.val() : "";
+		if (!input.length) {
+			return "";
+		}
+		if (String(input.attr("type") || "").toLowerCase() === "checkbox") {
+			return input.prop("checked") ? String(input.val() || "1") : "0";
+		}
+		return input.val();
 	}
 
 	function numberInRange(value, fallback, minimum, maximum) {

@@ -486,7 +486,7 @@ function runMergeControlsContractTest() {
 	assert.match(chromeTemplate, /kidia-chrome-setting--section-layout kidia-section-layout-panel[\s\S]*kidia-settings-section-title kidia-settings-section-title--section_layout[\s\S]*kidia-section-layout-grid/, "Header and Footer must use the exact independent shared Section Layout panel, heading, and grid.");
 	assert.match(categoryBuilder, /class="kidia-page-card kidia-category-element"[^>]*>[\s\S]*kidia-category-element-expand[^>]*aria-expanded="false"[\s\S]*class="kidia-page-card__body" hidden/, "The Category element card must load collapsed by default.");
 	assert.ok(categoryBuilder.indexOf("Layout & Spacing") < categoryBuilder.indexOf("Categories & Subcategories"), "Category Layout & Spacing must remain above Categories & Subcategories.");
-	assert.match(categoryBuilder, /Layout & Spacing[\s\S]*grid_columns[\s\S]*show_arrow[\s\S]*card_radius[\s\S]*Colors & Appearance/, "Grid columns and Show arrow must both belong to Category Layout & Spacing before the next section starts.");
+	assert.match(categoryBuilder, /Layout & Spacing[\s\S]*grid_columns[\s\S]*card_height[\s\S]*card_radius[\s\S]*card_width_percent[\s\S]*show_arrow[\s\S]*Colors & Appearance/, "Card height and Show arrow must use their requested positions inside Category Layout & Spacing.");
 	assert.match(chromeTemplate, /kidia-chrome-item-setting--header-cart/, "Only the Header Cart editor must receive the rebuilt Cart Settings layout.");
 	assert.match(chromeTemplate, /kidia-material-icon-choice[\s\S]*&#x/, "Header and Footer icon choices must use the bundled Material Icons font instead of unrelated WordPress Dashicons.");
 	assert.match(readAsset("page-builder.css"), /@font-face\{font-family:"Kidia Material Icons"[\s\S]*MaterialIcons-Regular\.otf/, "The HTML fallback preview must load the exact Material Icons font bundled with Flutter.");
@@ -788,7 +788,7 @@ function categoryGeneralSettings() {
 	    <select name="category_general[navigation_mode]"><option value="expand_inline" selected>Expand inline</option><option value="separate_page">Separate page</option></select>
 	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
 	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
-	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}${field("show_arrow", 1, "checkbox")}
+	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}<input type="checkbox" name="category_general[show_arrow]" value="1" checked>
 	    ${field("page_background_color", "#F7F8FA", "color")}${field("element_background_color", "#FFFFFF", "color")}${field("card_background_color", "#FFFFFF", "color")}
 	    ${field("card_shadow_color", "#000000", "color")}${field("card_shadow_strength", 10, "range")}${field("card_shadow_blur", 12, "range")}${field("card_shadow_offset_y", 4, "number")}
 	    <select name="category_general[card_style]"><option value="outlined" selected>Outlined</option><option value="elevated">Elevated</option></select>
@@ -799,9 +799,9 @@ function categoryGeneralSettings() {
 	    <select name="category_general[image_fit]"><option value="contain" selected>Contain</option></select>
 	    <select name="category_general[image_effect]"><option value="none" selected>None</option></select>
 	    <select name="category_general[image_position]"><option value="center" selected>Center</option></select>
-	    <select name="category_general[font_weight]"><option value="800" selected>800</option></select>
-	    <select name="category_general[text_align]"><option value="start" selected>Start</option></select>
-	    <select name="category_general[text_max_lines]"><option value="2" selected>2</option></select>
+	    <select name="category_general[font_weight]"><option value="800" selected>800</option><option value="400">400</option></select>
+	    <select name="category_general[text_align]"><option value="start" selected>Start</option><option value="center">Center</option></select>
+	    <select name="category_general[text_max_lines]"><option value="2" selected>2</option><option value="3">3</option></select>
 	  </section>`;
 }
 
@@ -864,7 +864,7 @@ function runCategoryBuilderTest() {
 		layout.value = value;
 		layout.dispatchEvent(new window.Event("change", { bubbles: true }));
 		assert.ok(window.document.querySelector(`.kidia-category-preview-content.is-layout-${value}`), `${value} must change the live category preview.`);
-		assert.ok(window.document.querySelector(`.kidia-category-items[data-category-layout="${value}"]`), `${value} must also change the editable Categories & Subcategories list immediately.`);
+		assert.ok(window.document.querySelector(`.kidia-category-items[data-category-layout="${value}"]`), `${value} must remain available to the preview bridge without changing the compact editor-card layout.`);
 	});
 	assert.equal(window.document.querySelectorAll('[name="category_general[category_layout]"] option').length, 5, "Category must expose Default plus four alternative layouts.");
 	const navigationMode = window.document.querySelector('[name="category_general[navigation_mode]"]');
@@ -896,6 +896,33 @@ function runCategoryBuilderTest() {
 	cardHeight.value = "96";
 	cardHeight.dispatchEvent(new window.Event("input", { bubbles: true }));
 	assert.equal(window.document.querySelector(".kidia-category-preview-root").style.height, "96px", "Card height must update the live preview.");
+	const showArrow = window.document.querySelector('[name="category_general[show_arrow]"]');
+	showArrow.checked = false;
+	showArrow.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-expand, .kidia-category-preview-chevron").length, 0, "Turning Show arrow off must remove arrows from the live preview immediately.");
+	showArrow.checked = true;
+	showArrow.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(window.document.querySelectorAll(".kidia-category-preview-expand, .kidia-category-preview-chevron").length, 2, "Turning Show arrow on must restore arrows in the live preview immediately.");
+	const fontSize = window.document.querySelector('[name="category_general[font_size]"]');
+	fontSize.value = "18";
+	fontSize.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-name").style.fontSize, "18px", "Category product text size must update the live preview.");
+	const fontColor = window.document.querySelector('[name="category_general[font_color]"]');
+	fontColor.value = "#b83245";
+	fontColor.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-name").style.color, "rgb(184, 50, 69)", "Category product text color must update the live preview.");
+	const fontWeight = window.document.querySelector('[name="category_general[font_weight]"]');
+	fontWeight.value = "400";
+	fontWeight.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-name").style.fontWeight, "400", "Category product text weight must update the live preview.");
+	const textAlign = window.document.querySelector('[name="category_general[text_align]"]');
+	textAlign.value = "center";
+	textAlign.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-name").style.textAlign, "center", "Category product text alignment must update the live preview.");
+	const maxLines = window.document.querySelector('[name="category_general[text_max_lines]"]');
+	maxLines.value = "3";
+	maxLines.dispatchEvent(new window.Event("change", { bubbles: true }));
+	assert.equal(window.document.querySelector(".kidia-category-preview-name").style.webkitLineClamp, "3", "Category product text line count must update the live preview.");
 	const marginTop = window.document.querySelector('[name="category_general[margin_top]"]');
 	marginTop.value = "18";
 	marginTop.dispatchEvent(new window.Event("input", { bubbles: true }));
@@ -1165,8 +1192,8 @@ function runChromeComposerTest() {
 	assert.match(readAsset("category-builder.css"), /kidia-category-image-button\.is-active[^}]*background:#2f806e!important;[^}]*color:#fff!important;/, "Change image must keep the same green color on every Category card regardless of image source.");
 	assert.match(readAsset("category-builder.css"), /kidia-category-image-clear\.is-active[^}]*background:#fff!important;[^}]*color:#236b59!important;/, "Use WooCommerce image must keep the same outline color on every Category card regardless of image source.");
 	assert.match(fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8"), /kidia-category-items[\s\S]{0,300}data-navigation-mode[\s\S]{0,300}data-category-layout=/, "The server-rendered Categories & Subcategories section must receive the saved layout before JavaScript boots.");
-	assert.match(readAsset("category-builder.css"), /data-category-layout="visual_grid"[\s\S]*data-category-layout="circular_grid"[\s\S]*data-category-layout="compact_grid"[\s\S]*grid-template-columns:repeat\(var\(--category-editor-columns,2\),minmax\(0,1fr\)\)/, "The editable Category list must render its selected grid layout instead of remaining in Default layout.");
-	assert.match(readAsset("category-builder.css"), /data-category-layout="sidebar"[\s\S]*border-inline-start:7px solid #dceee9/, "The editable Category list must expose a distinct Sidebar layout.");
+	assert.match(readAsset("category-builder.css"), /The editor always uses one compact, readable row per category[\s\S]*kidia-category-items > \.kidia-category-list\s*\{\s*display:flex;\s*flex-direction:column/, "Category editor cards must remain full-width readable rows regardless of the selected mobile layout.");
+	assert.doesNotMatch(readAsset("category-builder.css"), /grid-template-columns:repeat\(var\(--category-editor-columns,2\),minmax\(0,1fr\)\)/, "Mobile layout choices must not squeeze editor cards into overlapping columns.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));
