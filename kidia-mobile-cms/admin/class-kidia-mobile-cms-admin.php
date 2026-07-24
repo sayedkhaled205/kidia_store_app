@@ -224,19 +224,7 @@ final class Kidia_Mobile_CMS_Admin {
     		);
 
 		add_submenu_page(
-    			'kidia-mobile-cms',
-    			__( 'Dashboard', 'kidia-mobile-cms' ),
-    			__( 'Dashboard', 'kidia-mobile-cms' ),
-    			self::CAPABILITY,
-    			'kidia-mobile-cms',
-    			array(
-    				$this,
-    				'dashboard_page',
-    			)
-		);
-
-    		add_submenu_page(
-    			'kidia-mobile-cms',
+			null,
 				__( 'Home Page', 'kidia-mobile-cms' ),
 				__( 'Home Page', 'kidia-mobile-cms' ),
     			self::CAPABILITY,
@@ -248,7 +236,7 @@ final class Kidia_Mobile_CMS_Admin {
     		);
 
 		add_submenu_page(
-			'kidia-mobile-cms',
+			null,
 			__( 'Category Page', 'kidia-mobile-cms' ),
 			__( 'Category Page', 'kidia-mobile-cms' ),
 			self::CAPABILITY,
@@ -260,7 +248,7 @@ final class Kidia_Mobile_CMS_Admin {
 			$labels = Kidia_Mobile_Page_Layout_Store::pages();
 			$label = $labels[ $page ];
 			add_submenu_page(
-				'kidia-mobile-cms',
+				null,
 				$label . ' ' . __( 'Builder', 'kidia-mobile-cms' ),
 				$label,
 				self::CAPABILITY,
@@ -269,10 +257,10 @@ final class Kidia_Mobile_CMS_Admin {
 			);
 		}
 
-		add_submenu_page( 'kidia-mobile-cms', __( 'Splash Screen', 'kidia-mobile-cms' ), __( 'Splash Screen', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-splash-screen', array( $this, 'splash_screen_page' ) );
-		add_submenu_page( 'kidia-mobile-cms', __( 'Similar Products', 'kidia-mobile-cms' ), __( 'Similar Products', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-similar-products', array( $this, 'similar_products_page' ) );
-		add_submenu_page( 'kidia-mobile-cms', __( 'Checkout Suggestions', 'kidia-mobile-cms' ), __( 'Checkout Suggestions', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-checkout-suggestions', array( $this, 'checkout_suggestions_page' ) );
-		add_submenu_page( 'kidia-mobile-cms', __( 'Setup & Themes', 'kidia-mobile-cms' ), __( 'Setup & Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-setup', array( $this, 'setup_wizard_page' ) );
+		add_submenu_page( null, __( 'Splash Screen', 'kidia-mobile-cms' ), __( 'Splash Screen', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-splash-screen', array( $this, 'splash_screen_page' ) );
+		add_submenu_page( null, __( 'Similar Products', 'kidia-mobile-cms' ), __( 'Similar Products', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-similar-products', array( $this, 'similar_products_page' ) );
+		add_submenu_page( null, __( 'Checkout Suggestions', 'kidia-mobile-cms' ), __( 'Checkout Suggestions', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-checkout-suggestions', array( $this, 'checkout_suggestions_page' ) );
+		add_submenu_page( null, __( 'Setup & Themes', 'kidia-mobile-cms' ), __( 'Setup & Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-setup', array( $this, 'setup_wizard_page' ) );
 
 	}
 
@@ -444,20 +432,6 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Keeps the plugin menu limited to its three public work areas. */
 	public function hide_element_library_menus(): void {
 		foreach ( self::EDITOR_PAGES as $page_slug ) {
-			remove_submenu_page( 'kidia-mobile-cms', $page_slug );
-		}
-		foreach ( array_merge(
-			array(
-				'kidia-mobile-cms',
-				'kidia-mobile-home-builder',
-				'kidia-mobile-category-builder',
-				'kidia-mobile-splash-screen',
-				'kidia-mobile-similar-products',
-				'kidia-mobile-checkout-suggestions',
-				'kidia-mobile-setup',
-			),
-			array_keys( self::PAGE_BUILDER_SLUGS )
-		) as $page_slug ) {
 			remove_submenu_page( 'kidia-mobile-cms', $page_slug );
 		}
 	}
