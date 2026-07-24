@@ -41,6 +41,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _handleCmsPreviewPointerSignal(PointerSignalEvent event) {
+    // CanvasKit runs inside a scaled WordPress iframe, so drive the Home
+    // controller explicitly instead of letting the parent page consume wheel.
     if (!AppConfig.isCmsPreview ||
         event is! PointerScrollEvent ||
         !_scrollController.hasClients) {
