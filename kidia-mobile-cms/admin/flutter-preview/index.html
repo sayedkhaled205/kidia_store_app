@@ -91,7 +91,9 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script>
-    // This build is embedded in the versioned WordPress plugin. Never let an
+    // This build is embedded in the versioned WordPress plugin. Wheel input is
+    // relayed by the same-origin parent bridge so CanvasKit cannot swallow it.
+    // Never let an
     // older preview worker or cached Dart bundle survive a plugin update.
     (async function startKidiaPreview() {
       // Some managed WordPress stacks return .wasm with a generic MIME type.
