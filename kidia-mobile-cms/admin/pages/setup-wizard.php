@@ -51,7 +51,7 @@ defined( 'ABSPATH' ) || exit;
 			<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>" data-theme-page="<?php echo esc_attr( $page_key ); ?>">
 				<div class="kidia-setup-step-heading">
 					<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
-					<div><h2><?php echo esc_html( sprintf( __( 'Choose %s design', 'kidia-mobile-cms' ), $page_details['name'] ) ); ?></h2><p><?php echo esc_html( $page_details['description'] ); ?></p></div>
+					<div><h2><?php echo esc_html( sprintf( __( 'Choose %s page design', 'kidia-mobile-cms' ), $page_details['name'] ) ); ?></h2><p><?php echo esc_html( $page_details['description'] ); ?></p></div>
 				</div>
 				<div class="kidia-theme-gallery">
 					<?php foreach ( $themes as $key => $theme ) : ?>
