@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
 import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
@@ -36,6 +38,21 @@ class _HomePageState extends ConsumerState<HomePage> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleCmsPreviewPointerSignal(PointerSignalEvent event) {
+    if (!AppConfig.isCmsPreview ||
+        event is! PointerScrollEvent ||
+        !_scrollController.hasClients) {
+      return;
+    }
+    final ScrollPosition position = _scrollController.position;
+    final double next = (position.pixels + event.scrollDelta.dy)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if (next != position.pixels) {
+      _scrollController.jumpTo(next);
+    }
   }
 
   @override
@@ -73,61 +90,64 @@ class _HomePageState extends ConsumerState<HomePage> {
       ],
       body: SafeArea(
         bottom: false,
-        child: RefreshIndicator(
-          onRefresh: () {
-            return ref.refresh(homeLayoutProvider(locale).future);
-          },
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              homeLayoutAsync.when(
-                skipLoadingOnReload: true,
-                skipLoadingOnRefresh: true,
-                data: (HomeLayout layout) {
-                  _visibleBlocks = layout.enabledBlocks
-                      .where((HomeBlock block) => block is! AppHeaderBlock)
-                      .toList(growable: false);
-                  return SliverMainAxisGroup(
-                    slivers: <Widget>[
-                      HomeBlockRenderer(
-                        blocks: _visibleBlocks,
-                        keyForBlock: _keyForBlock,
-                        onAction: (HomeAction action) {
-                          _handleHomeAction(context: context, action: action);
-                        },
-                      ),
-                    ],
-                  );
-                },
-                loading: () {
-                  return const SliverMainAxisGroup(
-                    slivers: <Widget>[
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _HomeLoadingState(),
-                      ),
-                    ],
-                  );
-                },
-                error: (Object error, StackTrace stackTrace) {
-                  return SliverMainAxisGroup(
-                    slivers: <Widget>[
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _HomeErrorState(
-                          message: _resolveErrorMessage(error),
-                          onRetry: () {
-                            ref.invalidate(homeLayoutProvider(locale));
+        child: Listener(
+          onPointerSignal: _handleCmsPreviewPointerSignal,
+          child: RefreshIndicator(
+            onRefresh: () {
+              return ref.refresh(homeLayoutProvider(locale).future);
+            },
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                homeLayoutAsync.when(
+                  skipLoadingOnReload: true,
+                  skipLoadingOnRefresh: true,
+                  data: (HomeLayout layout) {
+                    _visibleBlocks = layout.enabledBlocks
+                        .where((HomeBlock block) => block is! AppHeaderBlock)
+                        .toList(growable: false);
+                    return SliverMainAxisGroup(
+                      slivers: <Widget>[
+                        HomeBlockRenderer(
+                          blocks: _visibleBlocks,
+                          keyForBlock: _keyForBlock,
+                          onAction: (HomeAction action) {
+                            _handleHomeAction(context: context, action: action);
                           },
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
+                      ],
+                    );
+                  },
+                  loading: () {
+                    return const SliverMainAxisGroup(
+                      slivers: <Widget>[
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _HomeLoadingState(),
+                        ),
+                      ],
+                    );
+                  },
+                  error: (Object error, StackTrace stackTrace) {
+                    return SliverMainAxisGroup(
+                      slivers: <Widget>[
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _HomeErrorState(
+                            message: _resolveErrorMessage(error),
+                            onRetry: () {
+                              ref.invalidate(homeLayoutProvider(locale));
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            ),
           ),
         ),
       ),
