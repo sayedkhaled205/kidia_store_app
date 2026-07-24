@@ -75,13 +75,10 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 ?>
 
 <div class="wrap kidia-category-builder">
-	<h1><?php esc_html_e( 'Category Page Builder', 'kidia-mobile-cms' ); ?></h1>
-	<p class="description"><?php esc_html_e( 'Control the Category element once, then reorder, show, rename or replace the image of each category for the app only.', 'kidia-mobile-cms' ); ?></p>
 	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Category page saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-category-workspace">
 		<aside class="kidia-category-mobile-preview" aria-label="<?php echo esc_attr__( 'Live category preview', 'kidia-mobile-cms' ); ?>">
 			<div class="kidia-category-phone">
-				<div class="kidia-category-phone__speaker"></div>
 				<div class="kidia-category-phone__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
 					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'category', 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
