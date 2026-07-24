@@ -162,6 +162,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _focusPreviewTarget(String target) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
+      if (target.startsWith('__wheel__:')) {
+        final double? delta = double.tryParse(target.split(':').last);
+        if (delta == null || delta == 0) return;
+        final ScrollPosition position = _scrollController.position;
+        final double next = (position.pixels + delta)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+        if (next != position.pixels) _scrollController.jumpTo(next);
+        return;
+      }
       if (target == 'header') {
         _scrollController.animateTo(
           0,
