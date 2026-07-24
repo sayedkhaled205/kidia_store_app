@@ -6,3 +6,21 @@ body[class*="kidia-mobile"] #wpbody,
 body[class*="kidia-mobile"] #wpbody-content{height:auto!important;min-height:0!important}
 body[class*="kidia-mobile"] #wpbody-content{padding-bottom:0!important}
 body[class*="kidia-mobile"] #wpfooter{display:none}
+/* Keep WordPress' long admin menu from extending the plugin document. The
+ * menu remains independently scrollable while the plugin page ends at its
+ * own rounded workspace frame. */
+@media(min-width:783px){
+	body[class*="kidia-mobile"] #adminmenuback,
+	body[class*="kidia-mobile"] #adminmenuwrap{
+		position:fixed!important;
+		top:32px!important;
+		bottom:0!important;
+		height:auto!important;
+	}
+	body[class*="kidia-mobile"] #adminmenuwrap{
+		overflow-x:hidden!important;
+		overflow-y:auto!important;
+		overscroll-behavior:contain;
+		scrollbar-width:thin;
+	}
+}
