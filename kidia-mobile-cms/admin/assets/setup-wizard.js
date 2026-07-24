@@ -9,6 +9,17 @@
 	const apply = form.querySelector('.kidia-setup-apply');
 	let current = 0;
 
+	function updateActionTheme() {
+		const activeStep = steps[current];
+		const selected = activeStep && activeStep.querySelector('.kidia-theme-card input:checked');
+		const card = selected && selected.closest('.kidia-theme-card');
+		const brand = form.querySelector('[name="setup[primary_color]"]');
+		const primary = card
+			? window.getComputedStyle(card).getPropertyValue('--theme-primary').trim()
+			: (brand ? brand.value : '');
+		form.style.setProperty('--kidia-setup-theme-color', primary || '#2f806e');
+	}
+
 	function show(index, shouldScroll) {
 		current = Math.max(0, Math.min(steps.length - 1, index));
 		steps.forEach((step, i) => step.classList.toggle('is-active', i === current));
@@ -19,6 +30,7 @@
 		const name = form.querySelector('[name="setup[app_name]"]');
 		const review = form.querySelector('[data-review-name]');
 		if (name && review) review.textContent = name.value || name.placeholder;
+		updateActionTheme();
 		if (shouldScroll !== false) {
 			const hero = document.querySelector('.kidia-setup-hero');
 			const target = hero || form;
@@ -33,6 +45,11 @@
 		show(current + 1);
 	});
 	back.addEventListener('click', function () { show(current - 1); });
+	form.addEventListener('change', function (event) {
+		if (event.target.matches('.kidia-theme-card input, [name="setup[primary_color]"]')) {
+			updateActionTheme();
+		}
+	});
 
 	const chooseLogo = form.querySelector('.kidia-setup-choose-logo');
 	if (chooseLogo && window.wp && wp.media) {
