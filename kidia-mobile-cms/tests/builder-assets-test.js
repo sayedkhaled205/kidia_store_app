@@ -494,6 +494,7 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("chrome-layout.css"), /data-setting="show_cart_badge"\]\s*\{[^}]*grid-column:3;[^}]*grid-row:2;[^}]*align-items:center;[^}]*justify-self:stretch;/, "Show cart item count must move to the left slot above the second settings row without overlapping the icon choices.");
 	assert.match(readAsset("chrome-layout.css"), /data-setting="cart_background"\]\s*\{\s*grid-column:3;\s*grid-row:5;[\s\S]*data-setting="cart_color"\]\s*\{\s*grid-column:2;\s*grid-row:5;[\s\S]*data-setting="cart_radius"\]\s*\{\s*grid-column:1;\s*grid-row:5;/, "Cart Settings final row must also start from the physical right.");
 	assert.doesNotMatch(homePage, /kidia-mobile-preview__status/, "The Home preview must not render a fake operating-system status bar.");
+	assert.doesNotMatch(homePage, /Woo Mobile Home Builder|Arrange the application home page/, "The unified CMS shell must replace the redundant Home page heading and description.");
 	assert.doesNotMatch(pageBuilder, /kidia-page-phone__status/, "Page previews must not render a fake operating-system status bar.");
 	assert.doesNotMatch(categoryBuilder, /kidia-category-phone__status/, "The Category preview must not render a fake operating-system status bar.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*330px;/, "The Home phone must be large enough to display a scaled canonical mobile viewport clearly.");
@@ -510,9 +511,9 @@ function runMergeControlsContractTest() {
 	const flutterPreviewBridge = readAsset("flutter-preview-bridge.js");
 	const homeBlockTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:96px 96px 58px 96px;[\s\S]*direction:ltr!important;/, "Every closed element card must use the same four physical action columns even when a page-specific stylesheet loads later.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*697\.78px;/, "Home must preserve the 360 by 800 mobile aspect ratio after scaling.");
-	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:697\.78px;/, "Every page must preserve the same 360 by 800 mobile aspect ratio after scaling.");
-	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:697\.78px;/, "Category must preserve the same 360 by 800 mobile aspect ratio after scaling.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*662\.89px;/, "Home preview height must be reduced by five percent.");
+	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:662\.89px;/, "Every page preview height must use the same five-percent reduction.");
+	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:662\.89px;/, "Category preview height must use the same five-percent reduction.");
 	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*transform:scale\(\.872222\);[^}]*transform-origin:top left;/, "Flutter must calculate every responsive layout at the canonical mobile size before the CMS scales it visually.");
 	assert.match(pageBuilder, /file_exists\( KIDIA_MOBILE_CMS_PATH \. 'admin\/flutter-preview\/index\.html' \)[\s\S]*id="kidia-flutter-preview"[\s\S]*kidia-legacy-preview-fallback/, "Page builders must use the embedded Flutter Web preview with the legacy preview retained only as a local fallback.");
 	assert.match(flutterPreviewBridge, /fetch\(String\(config\.layoutPreviewEndpoint\)[\s\S]*body: JSON\.stringify\(\{ layout: serializeLayout\(\) \}\)[\s\S]*sendLayout\(layout\)/, "Unsaved fields must pass through the canonical server normalizer before Flutter renders them.");
@@ -1531,9 +1532,9 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*max\(24px,\s*calc\(50vh - 358px\)\)/, "Home preview must remain vertically centered during sticky scrolling.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:max\(24px,calc\(50vh - 358px\)\)/, "Every page preview must remain vertically centered during sticky scrolling.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*max\(24px,\s*calc\(50vh - 358px\)\)/, "Category preview must use the same centered sticky position.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*max\(24px,\s*calc\(50vh - 341px\)\)/, "Home preview must remain vertically centered at its reduced height.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:max\(24px,calc\(50vh - 341px\)\)/, "Every page preview must remain vertically centered at its reduced height.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*max\(24px,\s*calc\(50vh - 341px\)\)/, "Category preview must use the same reduced-height centered position.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
