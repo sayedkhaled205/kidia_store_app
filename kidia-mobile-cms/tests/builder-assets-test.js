@@ -550,7 +550,7 @@ function runMergeControlsContractTest() {
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
 	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
 	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*_cmsColor\([\s\S]*layout\.string\('page_background_color', '#FFFFFF'\)[\s\S]*Colors\.white/, "Product Page must use its CMS page background color with white as the safe default for every uncovered gap.");
-	assert.match(pageStore, /private const VERSION = 20;/, "Repeatable Product Tabs and the current Wishlist/header controls must use the current layout schema.");
+	assert.match(pageStore, /private const VERSION = 21;/, "Repeatable Product Tabs and the current Wishlist/header controls must use the current layout schema.");
 	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
 	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
 	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
@@ -1525,6 +1525,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(chrome, /function headerRows[\s\S]*rowPosition[\s\S]*align-items:[\s\S]*rowHeight/, "The exact Header preview must position each row independently inside its own height.");
 	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must retain the selected row position.");
 	assert.match(flutter, /_positionedItem[\s\S]*Transform\.translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The Flutter app and preview must apply both header offsets.");
+	assert.match(store, /VERSION = 21[\s\S]*saved\['version'\][\s\S]*cart_offset_y[\s\S]*orders_offset_y[\s\S]*current_offset - 2/, "Existing Cart and Orders icons must migrate upward by two pixels exactly once.");
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
