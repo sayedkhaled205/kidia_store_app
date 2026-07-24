@@ -1194,6 +1194,15 @@ function runChromeComposerTest() {
 	assert.match(fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8"), /kidia-category-items[\s\S]{0,300}data-navigation-mode[\s\S]{0,300}data-category-layout=/, "The server-rendered Categories & Subcategories section must receive the saved layout before JavaScript boots.");
 	assert.match(readAsset("category-builder.css"), /The editor always uses one compact, readable row per category[\s\S]*kidia-category-items > \.kidia-category-list\s*\{\s*display:flex;\s*flex-direction:column/, "Category editor cards must remain full-width readable rows regardless of the selected mobile layout.");
 	assert.doesNotMatch(readAsset("category-builder.css"), /grid-template-columns:repeat\(var\(--category-editor-columns,2\),minmax\(0,1fr\)\)/, "Mobile layout choices must not squeeze editor cards into overlapping columns.");
+	const automaticWidth = window.document.querySelector('.kidia-column-width[data-row="0"][data-column="1"]');
+	const untouchedWidth = window.document.querySelector('.kidia-column-width[data-row="0"][data-column="0"]');
+	automaticWidth.value = "";
+	automaticWidth.dispatchEvent(new window.Event("input", { bubbles: true }));
+	assert.equal(automaticWidth.value, "", "An emptied width must remain Automatic until the user clicks or focuses that field.");
+	assert.equal(untouchedWidth.value, "25", "Automatic width must not adjust any sibling column before the field is selected.");
+	automaticWidth.dispatchEvent(new window.Event("focusin", { bubbles: true }));
+	assert.equal(automaticWidth.value, "50", "Selecting an Automatic width must fill only that field with the exact remainder to 100%.");
+	assert.match(window.document.querySelector(".kidia-row-total").textContent, /100/, "The selected Automatic width must complete the row total to 100%.");
 	const columnCount = window.document.querySelector(".kidia-row-column-count");
 	columnCount.value = "6";
 	columnCount.dispatchEvent(new window.Event("change", { bubbles: true }));
