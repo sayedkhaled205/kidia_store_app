@@ -10,7 +10,11 @@ defined( 'ABSPATH' ) || exit;
 			<p><?php esc_html_e( 'Choose a complete storefront, connect it to your WooCommerce catalog, then review the application before applying it.', 'kidia-mobile-cms' ); ?></p>
 		</div>
 		<div class="kidia-setup-progress" aria-label="<?php esc_attr_e( 'Setup progress', 'kidia-mobile-cms' ); ?>">
-			<span class="is-active">1</span><i></i><span>2</span><i></i><span>3</span><i></i><span>4</span>
+			<?php $progress_steps = count( $setup_pages ) + 2; ?>
+			<?php for ( $progress_step = 1; $progress_step <= $progress_steps; $progress_step++ ) : ?>
+				<span class="<?php echo 1 === $progress_step ? 'is-active' : ''; ?>"><?php echo esc_html( (string) $progress_step ); ?></span>
+				<?php if ( $progress_step < $progress_steps ) : ?><i></i><?php endif; ?>
+			<?php endfor; ?>
 		</div>
 	</div>
 
@@ -38,56 +42,56 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</section>
 
-		<section class="kidia-setup-step" data-step="2">
-			<div class="kidia-setup-step-heading">
-				<span>02</span>
-				<div><h2><?php esc_html_e( 'Choose your storefront', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Every theme includes the full application: Home, categories, product, wishlist, account, splash and navigation.', 'kidia-mobile-cms' ); ?></p></div>
-			</div>
-			<div class="kidia-theme-gallery">
-				<?php foreach ( $themes as $key => $theme ) : ?>
-					<label class="kidia-theme-card" style="--theme-primary:<?php echo esc_attr( $theme['primary'] ); ?>;--theme-soft:<?php echo esc_attr( $theme['soft'] ); ?>;--theme-ink:<?php echo esc_attr( $theme['ink'] ); ?>">
-						<input type="radio" name="setup[theme]" value="<?php echo esc_attr( $key ); ?>" <?php checked( (string) $identity['theme'], $key ); ?>>
-						<div class="kidia-theme-preview">
-							<div class="kidia-theme-phone">
-								<div class="kidia-theme-phone-top"><b><?php echo esc_html( (string) $theme['name'] ); ?></b><i></i></div>
-								<div class="kidia-theme-search"></div>
-								<div class="kidia-theme-hero"><span><?php echo esc_html( (string) $theme['sample_copy'][0] ); ?></span></div>
-								<div class="kidia-theme-categories"><i></i><i></i><i></i></div>
-								<div class="kidia-theme-products">
-									<?php for ( $sample_index = 0; $sample_index < 2; $sample_index++ ) : ?>
-										<i<?php if ( ! empty( $catalog_images[ $sample_index ] ) ) : ?> style="background-image:url('<?php echo esc_url( $catalog_images[ $sample_index ] ); ?>')"<?php endif; ?>></i>
-									<?php endfor; ?>
+		<?php $setup_step = 2; ?>
+		<?php foreach ( $setup_pages as $page_key => $page_details ) : ?>
+			<?php
+			$saved_page_themes = is_array( $identity['page_themes'] ?? null ) ? $identity['page_themes'] : array();
+			$selected_theme    = sanitize_key( (string) ( $saved_page_themes[ $page_key ] ?? $identity['theme'] ?? 'aurora' ) );
+			?>
+			<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>" data-theme-page="<?php echo esc_attr( $page_key ); ?>">
+				<div class="kidia-setup-step-heading">
+					<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+					<div><h2><?php echo esc_html( sprintf( __( 'Choose %s design', 'kidia-mobile-cms' ), $page_details['name'] ) ); ?></h2><p><?php echo esc_html( $page_details['description'] ); ?></p></div>
+				</div>
+				<div class="kidia-theme-gallery">
+					<?php foreach ( $themes as $key => $theme ) : ?>
+						<label class="kidia-theme-card" style="--theme-primary:<?php echo esc_attr( $theme['primary'] ); ?>;--theme-soft:<?php echo esc_attr( $theme['soft'] ); ?>;--theme-ink:<?php echo esc_attr( $theme['ink'] ); ?>">
+							<input type="radio" name="setup[page_themes][<?php echo esc_attr( $page_key ); ?>]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $selected_theme, $key ); ?> required>
+							<div class="kidia-theme-preview">
+								<div class="kidia-theme-phone">
+									<div class="kidia-theme-phone-top"><b><?php echo esc_html( $page_details['name'] ); ?></b><i></i></div>
+									<div class="kidia-theme-search"></div>
+									<div class="kidia-theme-hero"><span><?php echo esc_html( (string) $theme['sample_copy'][0] ); ?></span></div>
+									<div class="kidia-theme-categories"><i></i><i></i><i></i></div>
+									<div class="kidia-theme-products">
+										<?php for ( $sample_index = 0; $sample_index < 2; $sample_index++ ) : ?>
+											<i<?php if ( ! empty( $catalog_images[ $sample_index ] ) ) : ?> style="background-image:url('<?php echo esc_url( $catalog_images[ $sample_index ] ); ?>')"<?php endif; ?>></i>
+										<?php endfor; ?>
+									</div>
+									<div class="kidia-theme-footer"><i></i><i></i><i></i><i></i></div>
 								</div>
-								<div class="kidia-theme-footer"><i></i><i></i><i></i><i></i></div>
 							</div>
-						</div>
-						<div class="kidia-theme-card-copy"><span class="kidia-theme-check dashicons dashicons-yes-alt"></span><h3><?php echo esc_html( (string) $theme['name'] ); ?></h3><p><?php echo esc_html( (string) $theme['description'] ); ?></p><small><?php echo esc_html( implode( ' · ', array_map( 'strval', $theme['sample_copy'] ) ) ); ?></small></div>
-					</label>
-				<?php endforeach; ?>
-			</div>
-		</section>
+							<div class="kidia-theme-card-copy"><span class="kidia-theme-check dashicons dashicons-yes-alt"></span><h3><?php echo esc_html( (string) $theme['name'] ); ?></h3><p><?php echo esc_html( (string) $theme['description'] ); ?></p><small><?php echo esc_html( $page_details['name'] . ' · ' . implode( ' · ', array_map( 'strval', $theme['sample_copy'] ) ) ); ?></small></div>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</section>
+			<?php ++$setup_step; ?>
+		<?php endforeach; ?>
 
-		<section class="kidia-setup-step" data-step="3">
+		<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>">
 			<div class="kidia-setup-step-heading">
-				<span>03</span>
-				<div><h2><?php esc_html_e( 'Catalog content', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'The design uses your real WooCommerce products, categories and images wherever available.', 'kidia-mobile-cms' ); ?></p></div>
+				<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+				<div><h2><?php esc_html_e( 'Review and apply', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'A snapshot of the current application is created before the new theme is applied.', 'kidia-mobile-cms' ); ?></p></div>
+			</div>
+			<div class="kidia-review-card">
+				<div class="kidia-review-icon"><span class="dashicons dashicons-smartphone"></span></div>
+				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><p><?php esc_html_e( 'Each application page will use the design selected in its own setup step.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><?php foreach ( $setup_pages as $page_details ) : ?><span><?php echo esc_html( $page_details['name'] ); ?></span><?php endforeach; ?></div></div>
 			</div>
 			<div class="kidia-catalog-summary">
 				<div><span class="dashicons dashicons-products"></span><strong><?php echo esc_html( number_format_i18n( $catalog_stats['products'] ) ); ?></strong><small><?php esc_html_e( 'Products ready', 'kidia-mobile-cms' ); ?></small></div>
 				<div><span class="dashicons dashicons-category"></span><strong><?php echo esc_html( number_format_i18n( $catalog_stats['categories'] ) ); ?></strong><small><?php esc_html_e( 'Categories ready', 'kidia-mobile-cms' ); ?></small></div>
 				<div><span class="dashicons dashicons-format-gallery"></span><strong><?php echo esc_html( number_format_i18n( $catalog_stats['images'] ) ); ?></strong><small><?php esc_html_e( 'Product images ready', 'kidia-mobile-cms' ); ?></small></div>
-			</div>
-			<div class="kidia-setup-notice"><span class="dashicons dashicons-lightbulb"></span><div><strong><?php esc_html_e( 'No empty templates', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Live previews use store data first and curated sample cards when the catalog does not yet contain enough content. Sample cards are preview-only and never create fake WooCommerce products.', 'kidia-mobile-cms' ); ?></p></div></div>
-		</section>
-
-		<section class="kidia-setup-step" data-step="4">
-			<div class="kidia-setup-step-heading">
-				<span>04</span>
-				<div><h2><?php esc_html_e( 'Review and apply', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'A snapshot of the current application is created before the new theme is applied.', 'kidia-mobile-cms' ); ?></p></div>
-			</div>
-			<div class="kidia-review-card">
-				<div class="kidia-review-icon"><span class="dashicons dashicons-smartphone"></span></div>
-				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><p><?php esc_html_e( 'Complete application preset with real catalog mapping, consistent navigation and editable builders.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><span><?php esc_html_e( 'Home', 'kidia-mobile-cms' ); ?></span><span><?php esc_html_e( 'Categories', 'kidia-mobile-cms' ); ?></span><span><?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?></span><span><?php esc_html_e( 'Wishlist', 'kidia-mobile-cms' ); ?></span><span><?php esc_html_e( 'Account', 'kidia-mobile-cms' ); ?></span><span><?php esc_html_e( 'Splash', 'kidia-mobile-cms' ); ?></span></div></div>
 			</div>
 		</section>
 
