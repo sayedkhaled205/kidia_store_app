@@ -104,6 +104,7 @@
 		}
 		button.attr("aria-expanded", nextState ? "true" : "false");
 		children.prop("hidden", !nextState);
+		row.toggleClass("is-expanded", nextState);
 	}
 
 	function elementEnabled() {
@@ -119,10 +120,14 @@
 		var layout = categoryLayout();
 		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
 		var cardGap = numberInRange(setting("card_gap"), 10, 0, 24);
+		var editorColumns = layout === "visual_grid" ? 2
+			: layout === "circular_grid" || layout === "compact_grid" ? columns
+			: layout === "sidebar" ? 1
+			: columns;
 		categoryElement.find(".kidia-category-items").first()
 			.attr("data-category-layout", layout)
 			.css({
-				"--category-editor-columns": layout === "circular_grid" ? 3 : columns,
+				"--category-editor-columns": editorColumns,
 				"--category-editor-gap": cardGap + "px"
 			});
 	}
@@ -275,6 +280,70 @@
 		return branch;
 	}
 
+	function appendVisibleChildren(row, container) {
+		var visibleChildren = 0;
+		row.children(".kidia-category-children").children(".kidia-category-list").first().children(".kidia-category-row").each(function () {
+			var child = buildChildCard($(this));
+			if (child) {
+				container.append(child);
+				visibleChildren += 1;
+			}
+		});
+		return visibleChildren;
+	}
+
+	function renderSidebarPreview(content, rootList, showInlineDetail) {
+		var rows = [];
+		rootList.children(".kidia-category-row").each(function () {
+			var row = $(this);
+			if (!isHidden(row.children(".kidia-category-card"))) {
+				rows.push(row);
+			}
+		});
+		if (!rows.length) {
+			return 0;
+		}
+
+		var selectedId = String(activePreviewParentId || "");
+		var selectedRow = rows[0];
+		rows.forEach(function (row) {
+			if (categoryKey(row) === selectedId) {
+				selectedRow = row;
+			}
+		});
+		if (showInlineDetail) {
+			activePreviewParentId = categoryKey(selectedRow);
+		}
+
+		var sidebar = $('<div class="kidia-category-preview-sidebar"></div>');
+		rows.forEach(function (row) {
+			var card = row.children(".kidia-category-card");
+			var button = $('<button type="button" class="kidia-category-preview-sidebar-root"></button>')
+				.attr("data-term-id", categoryKey(row))
+				.toggleClass("is-active", categoryKey(row) === categoryKey(selectedRow));
+			button.append(buildArtwork(card, 40));
+			button.append(buildCategoryName(row, card, false));
+			sidebar.append(button);
+		});
+
+		var detail = $('<div class="kidia-category-preview-sidebar-detail"></div>');
+		if (showInlineDetail) {
+			var selectedCard = selectedRow.children(".kidia-category-card");
+			var heading = $('<div class="kidia-category-preview-sidebar-heading"></div>')
+				.append(buildArtwork(selectedCard, 54))
+				.append(buildCategoryName(selectedRow, selectedCard, false));
+			detail.append(heading);
+			if (!appendVisibleChildren(selectedRow, detail)) {
+				detail.append('<div class="kidia-category-preview-sidebar-empty">No subcategories.</div>');
+			}
+		} else {
+			detail.append('<div class="kidia-category-preview-sidebar-empty">Choose a category.</div>');
+		}
+
+		content.addClass("is-root-stage").append(sidebar).append(detail);
+		return rows.length;
+	}
+
 	function renderChrome(part) {
 		var card = builder.find('[data-chrome-part="' + part + '"]').first();
 		if (window.KidiaChromePreview) {
@@ -298,7 +367,9 @@
 		preview.empty().css("background-color", pageBackground).append(renderChrome("header"));
 
 		if (elementEnabled()) {
-			if (activePreviewParentId) {
+			if (layout === "sidebar" && navigationMode() === "expand_inline") {
+				visible = renderSidebarPreview(content, rootList, true);
+			} else if (activePreviewParentId) {
 				var activeRow = rootList.children('.kidia-category-row[data-term-id="' + activePreviewParentId + '"]').first();
 				var children = activeRow.children(".kidia-category-children").find("> .kidia-category-list > .kidia-category-row");
 				content.addClass("is-showing-children").append('<button type="button" class="kidia-category-preview-back">‹ <span>Categories</span></button>');
@@ -306,16 +377,7 @@
 				children.each(function () { var child = buildChildCard($(this)); if (child) { childContainer.append(child); visible += 1; } });
 				if (childContainer.get(0) !== content.get(0)) { content.append(childContainer); }
 			} else if (layout === "sidebar") {
-				var sidebar = $('<div class="kidia-category-preview-sidebar"></div>');
-				content.addClass("is-root-stage");
-				rootList.children(".kidia-category-row").each(function () {
-					var row = $(this), card = row.children(".kidia-category-card");
-					if (isHidden(card)) { return; }
-					var rootButton = $('<button type="button" class="kidia-category-preview-sidebar-root"></button>').attr("data-term-id", row.attr("data-term-id")).append(buildCategoryName(row, card, false));
-					sidebar.append(rootButton);
-					visible += 1;
-				});
-				content.append(sidebar);
+				visible = renderSidebarPreview(content, rootList, false);
 			} else rootList.children(".kidia-category-row").each(function () {
 				var branch = buildRootBranch($(this));
 				if (branch) {
@@ -371,8 +433,28 @@
 			$(this).sortable({
 				items: "> .kidia-category-row",
 				handle: ".kidia-category-handle",
-				axis: "y",
-				containment: "parent",
+				axis: false,
+				tolerance: "pointer",
+				distance: 4,
+				scroll: true,
+				scrollSensitivity: 80,
+				scrollSpeed: 14,
+				forcePlaceholderSize: true,
+				placeholder: "kidia-category-sort-placeholder",
+				cancel: "input,select,textarea,button,label",
+				helper: function (_event, item) {
+					var helper = item.clone();
+					helper.children(".kidia-category-children").prop("hidden", true);
+					helper.width(item.outerWidth());
+					return helper;
+				},
+				start: function (_event, ui) {
+					builder.addClass("is-sorting-categories");
+					ui.placeholder.height(ui.item.outerHeight());
+				},
+				stop: function () {
+					builder.removeClass("is-sorting-categories");
+				},
 				update: function () {
 					updateOrders(this);
 					markDirty();
@@ -398,7 +480,10 @@
 	});
 
 	builder.on("click", ".kidia-category-preview-back", function () { activePreviewParentId = ""; renderMobilePreview(); });
-	builder.on("click", ".kidia-category-preview-sidebar-root", function () { activePreviewParentId = String($(this).attr("data-term-id") || ""); renderMobilePreview(); });
+	builder.on("click", ".kidia-category-preview-sidebar-root", function () {
+		activePreviewParentId = String($(this).attr("data-term-id") || "");
+		renderMobilePreview();
+	});
 
 	builder.on("input change", ".kidia-category-general input, .kidia-category-general select", function () {
 		if (String(this.type).toLowerCase() === "range") {

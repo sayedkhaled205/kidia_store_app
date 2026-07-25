@@ -155,6 +155,73 @@ void main() {
     }
   });
 
+  testWidgets('category layouts are distinct and expand children in place', (
+    WidgetTester tester,
+  ) async {
+    const Map<String, Key> layoutSurfaces = <String, Key>{
+      'visual_grid': Key('category-visual-card-1'),
+      'circular_grid': Key('category-circular-card-1'),
+      'compact_grid': Key('category-compact-card-1'),
+    };
+    for (final MapEntry<String, Key> entry in layoutSurfaces.entries) {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: entry.key,
+            navigationMode: 'expand_inline',
+          ),
+          const CategoriesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(entry.value), findsOneWidget, reason: entry.key);
+      expect(find.text('Dresses'), findsNothing, reason: entry.key);
+      await tester.tap(find.byKey(const Key('category-expand-1')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('category-inline-panel-1')),
+        findsOneWidget,
+        reason: entry.key,
+      );
+      expect(find.text('Dresses'), findsOneWidget, reason: entry.key);
+      expect(find.text('Men'), findsOneWidget, reason: entry.key);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(
+          categoryLayout: 'default',
+          navigationMode: 'expand_inline',
+        ),
+        const CategoriesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('category-expand-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Dresses'), findsOneWidget);
+    expect(find.text('Men'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(
+          categoryLayout: 'sidebar',
+          navigationMode: 'expand_inline',
+        ),
+        const CategoriesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('category-sidebar-rail')), findsOneWidget);
+    expect(find.byKey(const Key('category-sidebar-detail')), findsOneWidget);
+    expect(find.text('Dresses'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('category-sidebar-root-3')));
+    await tester.pumpAndSettle();
+    expect(find.text('Dresses'), findsNothing);
+    expect(find.text('Men'), findsWidgets);
+  });
+
   testWidgets('product list uses three controls without a duplicate search', (
     WidgetTester tester,
   ) async {
@@ -247,9 +314,13 @@ Widget _app(CatalogRepository repository, Widget home) {
 }
 
 class _ScreenCatalogRepository implements CatalogRepository {
-  _ScreenCatalogRepository({this.categoryLayout = 'default'});
+  _ScreenCatalogRepository({
+    this.categoryLayout = 'default',
+    this.navigationMode = 'drilldown',
+  });
 
   final String categoryLayout;
+  final String navigationMode;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -312,6 +383,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
           textAlign: 'center',
           lineHeight: 1.4,
           categoryLayout: categoryLayout,
+          navigationMode: navigationMode,
           gridColumns: 4,
           cardRadius: 20,
           cardGap: 12,
