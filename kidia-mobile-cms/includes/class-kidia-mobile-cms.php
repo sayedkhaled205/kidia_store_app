@@ -19,6 +19,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-layout-store.p
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-page-layout-store.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-category-page-store.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-setup-wizard.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-license-manager.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +82,8 @@ final class Kidia_Mobile_CMS {
 		}
 
 		$this->started = true;
+
+		(new Kidia_Mobile_License_Manager())->register();
 
 		$this->register_blocks();
 

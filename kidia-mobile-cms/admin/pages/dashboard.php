@@ -5,6 +5,8 @@
  * Available variables:
  *
  * @var array<string, mixed> $api API monitor status.
+ * @var array<string, mixed> $license License state.
+ * @var bool                 $setup_complete Setup state.
  *
  * @package Kidia_Mobile_CMS
  */
@@ -28,6 +30,14 @@ $api_time = isset( $api['time'] )
 $api_message = isset( $api['message'] )
 	? (string) $api['message']
 	: '';
+
+$license_active = ! empty( $license['active'] );
+$license_plan   = '' !== (string) ( $license['plan'] ?? '' )
+	? ucfirst( (string) $license['plan'] )
+	: __( 'No active plan', 'kidia-mobile-cms' );
+$license_expiry = ! empty( $license['expires_at'] )
+	? wp_date( get_option( 'date_format' ), (int) $license['expires_at'] )
+	: __( 'No expiry', 'kidia-mobile-cms' );
 ?>
 
 <div class="wrap kidia-dashboard">
@@ -58,7 +68,89 @@ $api_message = isset( $api['message'] )
 		</strong>
 	</p>
 
+	<?php if ( isset( $_GET['license_updated'] ) ) : ?>
+		<div class="notice notice-success inline"><p><?php esc_html_e( 'License updated successfully.', 'kidia-mobile-cms' ); ?></p></div>
+	<?php endif; ?>
+
+	<?php if ( isset( $_GET['license_error'] ) ) : ?>
+		<div class="notice notice-error inline"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['license_error'] ) ) ); ?></p></div>
+	<?php endif; ?>
+
 	<div class="kidia-dashboard__grid">
+
+		<section class="kidia-dashboard__card kidia-dashboard__card--license">
+			<h2><?php esc_html_e( 'License', 'kidia-mobile-cms' ); ?></h2>
+
+			<table class="widefat striped">
+				<tbody>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Status', 'kidia-mobile-cms' ); ?></th>
+						<td>
+							<span class="kidia-status <?php echo $license_active ? 'kidia-status--online' : 'kidia-status--offline'; ?>">
+								<?php echo $license_active ? esc_html__( 'Active', 'kidia-mobile-cms' ) : esc_html__( 'Inactive', 'kidia-mobile-cms' ); ?>
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Plan', 'kidia-mobile-cms' ); ?></th>
+						<td><?php echo esc_html( $license_plan ); ?></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Expires', 'kidia-mobile-cms' ); ?></th>
+						<td><?php echo esc_html( $license_expiry ); ?></td>
+					</tr>
+					<?php if ( ! empty( $license['last_verified_at'] ) ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Last verified', 'kidia-mobile-cms' ); ?></th>
+							<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $license['last_verified_at'] ) ); ?></td>
+						</tr>
+					<?php endif; ?>
+				</tbody>
+			</table>
+
+			<?php if ( $license_active ) : ?>
+				<?php if ( empty( $license['signature_configured'] ) ) : ?>
+					<div class="notice notice-warning inline">
+						<p><?php esc_html_e( 'License transport is active. Add the production signing public key before release to enable local Ed25519 proof verification.', 'kidia-mobile-cms' ); ?></p>
+					</div>
+				<?php endif; ?>
+				<div class="kidia-license-actions">
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="kidia_mobile_verify_license">
+						<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
+						<button class="button button-primary" type="submit"><?php esc_html_e( 'Verify now', 'kidia-mobile-cms' ); ?></button>
+					</form>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="kidia_mobile_deactivate_license">
+						<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
+						<button class="button" type="submit"><?php esc_html_e( 'Deactivate', 'kidia-mobile-cms' ); ?></button>
+					</form>
+				</div>
+			<?php else : ?>
+				<form class="kidia-license-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="kidia_mobile_activate_license">
+					<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
+					<label for="kidia-license-key"><?php esc_html_e( 'License key', 'kidia-mobile-cms' ); ?></label>
+					<input id="kidia-license-key" name="license_key" type="password" autocomplete="off" required>
+					<button class="button button-primary" type="submit"><?php esc_html_e( 'Activate license', 'kidia-mobile-cms' ); ?></button>
+				</form>
+			<?php endif; ?>
+		</section>
+
+		<section class="kidia-dashboard__card kidia-dashboard__card--quick-actions">
+			<h2><?php esc_html_e( 'Get started', 'kidia-mobile-cms' ); ?></h2>
+			<p><?php esc_html_e( 'Configure the app manually or choose one of the available themes.', 'kidia-mobile-cms' ); ?></p>
+			<a
+				class="button button-primary <?php echo $license_active ? '' : 'disabled'; ?>"
+				href="<?php echo $license_active ? esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ) : '#'; ?>"
+				<?php echo $license_active ? '' : 'aria-disabled="true"'; ?>
+			>
+				<?php echo $setup_complete ? esc_html__( 'Open Setup & Themes', 'kidia-mobile-cms' ) : esc_html__( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?>
+			</a>
+			<?php if ( ! $license_active ) : ?>
+				<p class="description"><?php esc_html_e( 'Activate a license to use Setup & Themes.', 'kidia-mobile-cms' ); ?></p>
+			<?php endif; ?>
+		</section>
 
 		<section class="kidia-dashboard__card">
 
@@ -368,6 +460,22 @@ $api_message = isset( $api['message'] )
 
 	.kidia-dashboard__card h2 {
 		margin-top: 0;
+	}
+
+	.kidia-license-form {
+		display: grid;
+		gap: 10px;
+		margin-top: 16px;
+	}
+
+	.kidia-license-form input {
+		width: 100%;
+	}
+
+	.kidia-license-actions {
+		display: flex;
+		gap: 10px;
+		margin-top: 16px;
 	}
 
 	.kidia-dashboard__card table th {
