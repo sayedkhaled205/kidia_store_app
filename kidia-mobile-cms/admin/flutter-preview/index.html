@@ -91,9 +91,22 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script>
-    // This build is embedded in the versioned WordPress plugin. Wheel input is
-    // relayed by the same-origin parent bridge so CanvasKit cannot swallow it.
-    // Never let an
+    // Capture the wheel before CanvasKit can consume it and send it directly
+    // to the Dart preview bridge. Keeping this inside the iframe avoids a
+    // fragile parent-window round trip.
+    if (new URLSearchParams(window.location.search).get('page') === 'home') {
+      window.addEventListener('wheel', (event) => {
+        if (!event.deltaY) return;
+        window.postMessage(JSON.stringify({
+          type: 'kidia-preview-scroll',
+          page: 'home',
+          deltaY: Math.max(-180, Math.min(180, Number(event.deltaY))),
+        }), window.location.origin);
+        event.preventDefault();
+      }, {capture: true, passive: false});
+    }
+
+    // This build is embedded in the versioned WordPress plugin. Never let an
     // older preview worker or cached Dart bundle survive a plugin update.
     (async function startKidiaPreview() {
       // Some managed WordPress stacks return .wasm with a generic MIME type.
