@@ -558,7 +558,8 @@ function runMergeControlsContractTest() {
 	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
 	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
 	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
-	assert.match(pageBuilder, /Product Page Settings[\s\S]*Page background color[\s\S]*layout\[settings\]\[page_background_color\][\s\S]*#FFFFFF/, "Product Builder must expose a page-level background color control with a white default.");
+	assert.match(pageBuilder, /kidia-page-settings-card[\s\S]*Page Settings[\s\S]*kidia-page-card__header-color[\s\S]*Page background color[\s\S]*layout\[settings\]\[page_background_color\][\s\S]*#FFFFFF/, "Every shared Page Builder must expose its background color directly in the compact Page Settings card header.");
+	assert.doesNotMatch(pageBuilder, /kidia-product-page-settings[\s\S]*Colors & Appearance[\s\S]*Page background color/, "Page background color must not consume a separate Product Page section.");
 	assert.match(pagePreview, /layout\[settings\]\[page_background_color\][\s\S]*kidia-app-page[\s\S]*background:/, "The legacy Product preview must apply the page background independently from element backgrounds.");
 	assert.match(productScreenSource, /SliverToBoxAdapter\(\s*child:\s*_ProductGallery\(/, "Product Gallery must start directly below the header without a spacing frame.");
 	assert.match(productScreenSource, /_naturalAspectRatio[\s\S]*info\.image\.width[\s\S]*info\.image\.height[\s\S]*AnimatedSize/, "Product Gallery height must adapt to the loaded image dimensions.");
@@ -1541,6 +1542,9 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Home preview must use the measured CMS header height while the WordPress page scrolls.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:var\(--kidia-preview-sticky-top,134px\)/, "Every page preview must share the measured CMS header offset.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Category preview must share the measured CMS header offset.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*transform:\s*translateX\(max\(0px,\s*calc\(11\.5cqw - 41\.4px\)\)\)/, "Home phone must be centered across the complete whitespace before its 77% cards.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:translateX\(max\(0px,calc\(11\.5cqw - 41\.4px\)\)\)/, "Every shared Page phone must use the same balanced centering.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:translateX\(max\(0px,calc\(11\.5cqw - 41\.4px\)\)\)/, "Category phone must use the same balanced centering.");
 	assert.match(adminTheme, /\.kidia-shared-builder-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "The page action header must stay fixed directly below the CMS navigation header.");
 	assert.doesNotMatch(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{\s*position:\s*relative;\s*top:\s*0/, "Responsive Home styles must not release the phone preview from its fixed screen position.");
 	assert.doesNotMatch(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{\s*position:\s*static/, "Responsive page styles must not release the phone preview from its fixed screen position.");

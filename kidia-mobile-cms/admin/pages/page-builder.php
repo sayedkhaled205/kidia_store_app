@@ -121,17 +121,12 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			$kidia_toolbar_restore_product = 'product' === $page;
 			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 			?>
-			<?php if ( 'product' === $page ) : ?>
-				<section class="kidia-page-card is-open kidia-product-page-settings">
-					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Product Page Settings', 'kidia-mobile-cms' ); ?></strong></div></div>
-					<div class="kidia-page-card__body">
-						<div class="kidia-page-fields">
-							<div class="kidia-settings-section-title"><?php esc_html_e( 'Colors & Appearance', 'kidia-mobile-cms' ); ?></div>
-							<div class="kidia-page-field"><label><?php esc_html_e( 'Page background color', 'kidia-mobile-cms' ); ?></label><input type="color" name="layout[settings][page_background_color]" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $layout['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' ); ?>"></div>
-						</div>
+				<section class="kidia-page-card kidia-page-settings-card">
+					<div class="kidia-page-card__header">
+						<div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Page Settings', 'kidia-mobile-cms' ); ?></strong></div>
+						<label class="kidia-page-card__header-color"><span><?php esc_html_e( 'Page background color', 'kidia-mobile-cms' ); ?></span><input type="color" name="layout[settings][page_background_color]" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $layout['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' ); ?>"></label>
 					</div>
 				</section>
-			<?php endif; ?>
 
 			<?php if ( 'wishlist' === $page ) : ?>
 				<section class="kidia-page-card is-open kidia-wishlist-access-mode">
