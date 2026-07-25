@@ -95,7 +95,7 @@
     // to the Dart preview bridge. Keeping this inside the iframe avoids a
     // fragile parent-window round trip.
     if (new URLSearchParams(window.location.search).get('page') === 'home') {
-      window.addEventListener('wheel', (event) => {
+      document.addEventListener('wheel', (event) => {
         if (!event.deltaY) return;
         window.postMessage(JSON.stringify({
           type: 'kidia-preview-scroll',
@@ -104,6 +104,21 @@
         }), window.location.origin);
         event.preventDefault();
       }, {capture: true, passive: false});
+      document.addEventListener('keydown', (event) => {
+        const deltas = {
+          ArrowDown: 72,
+          ArrowUp: -72,
+          PageDown: 420,
+          PageUp: -420,
+        };
+        if (!Object.prototype.hasOwnProperty.call(deltas, event.key)) return;
+        window.postMessage(JSON.stringify({
+          type: 'kidia-preview-scroll',
+          page: 'home',
+          deltaY: deltas[event.key],
+        }), window.location.origin);
+        event.preventDefault();
+      }, {capture: true});
     }
 
     // This build is embedded in the versioned WordPress plugin. Never let an
