@@ -8,9 +8,14 @@
 		const style = window.getComputedStyle(shell);
 		const stickyTop = parseFloat(style.top) || 0;
 		const shellHeight = Math.ceil(shell.getBoundingClientRect().height);
+		const previewTop = Math.ceil(stickyTop + shellHeight + 14);
 		document.documentElement.style.setProperty(
 			'--kidia-preview-sticky-top',
-			Math.ceil(stickyTop + shellHeight + 14) + 'px'
+			previewTop + 'px'
+		);
+		document.documentElement.style.setProperty(
+			'--kidia-builder-viewport-height',
+			Math.max(420, Math.floor(window.innerHeight - previewTop - 12)) + 'px'
 		);
 	}
 
