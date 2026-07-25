@@ -126,25 +126,6 @@ final class Kidia_Mobile_License_Manager {
 	}
 
 	/**
-	 * Deactivate this installation and remove its local secret.
-	 *
-	 * @return true|WP_Error
-	 */
-	public function deactivate() {
-		$state = $this->state();
-		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
-		if ( '' !== $token ) {
-			$response = $this->request( '/deactivate', array(), $token );
-			if ( is_wp_error( $response ) ) {
-				return $response;
-			}
-		}
-
-		delete_option( self::STATE_OPTION );
-		return true;
-	}
-
-	/**
 	 * Current normalized license status for the UI and feature gates.
 	 *
 	 * @return array<string,mixed>

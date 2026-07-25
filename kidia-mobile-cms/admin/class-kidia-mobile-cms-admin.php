@@ -98,6 +98,8 @@ final class Kidia_Mobile_CMS_Admin {
 			)
 		);
 
+		add_action( 'admin_init', array( $this, 'enforce_license_gate' ), 20 );
+
 		add_filter(
 			'admin_body_class',
 			array(
@@ -130,7 +132,6 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
-		add_action( 'admin_post_kidia_mobile_deactivate_license', array( $this, 'deactivate_license' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
@@ -141,6 +142,68 @@ final class Kidia_Mobile_CMS_Admin {
 			999
 		);
 
+	}
+
+	/**
+	 * Keeps every configuration screen locked until the site license is active.
+	 */
+	public function enforce_license_gate(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			return;
+		}
+
+		$license_active = ( new Kidia_Mobile_License_Manager() )->is_active();
+		$action         = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+		$allowed        = array(
+			'kidia_mobile_activate_license',
+			'kidia_mobile_verify_license',
+		);
+
+		if (
+			! $license_active
+			&& 0 === strpos( $action, 'kidia_mobile_' )
+			&& ! in_array( $action, $allowed, true )
+		) {
+			if ( wp_doing_ajax() ) {
+				wp_send_json_error(
+					array(
+						'message' => __( 'Activate your website license before changing Woo Mobile CMS settings.', 'kidia-mobile-cms' ),
+					),
+					403
+				);
+			}
+
+			wp_die(
+				esc_html__( 'Activate your website license before changing Woo Mobile CMS settings.', 'kidia-mobile-cms' ),
+				esc_html__( 'License required', 'kidia-mobile-cms' ),
+				array( 'response' => 403 )
+			);
+		}
+
+		if ( wp_doing_ajax() ) {
+			return;
+		}
+
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if (
+			'' === $page
+			|| 'kidia-mobile-cms' === $page
+			|| ! $this->is_public_cms_page( $page )
+			|| $license_active
+		) {
+			return;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'          => 'kidia-mobile-cms',
+					'license_error' => __( 'Activate your website license before using Woo Mobile CMS.', 'kidia-mobile-cms' ),
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -525,6 +588,10 @@ final class Kidia_Mobile_CMS_Admin {
 			'similar'    => $tab( __( 'Similar Products', 'kidia-mobile-cms' ), 'kidia-mobile-similar-products', 'dashicons-randomize' ),
 			'checkout'   => $tab( __( 'Checkout Suggestions', 'kidia-mobile-cms' ), 'kidia-mobile-checkout-suggestions', 'dashicons-cart' ),
 		);
+		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
+			$tabs      = array( 'overview' => $tabs['overview'] );
+			$more_tabs = array();
+		}
 		$active_map = array(
 			'kidia-mobile-cms'                  => 'overview',
 			'kidia-mobile-home-builder'         => 'home',
@@ -676,15 +743,6 @@ final class Kidia_Mobile_CMS_Admin {
 		$this->assert_license_action();
 		$result = ( new Kidia_Mobile_License_Manager() )->verify( true );
 		$this->redirect_license_result( $result, 'verified' );
-	}
-
-	/**
-	 * Deactivates the current installation.
-	 */
-	public function deactivate_license(): void {
-		$this->assert_license_action();
-		$result = ( new Kidia_Mobile_License_Manager() )->deactivate();
-		$this->redirect_license_result( $result, 'deactivated' );
 	}
 
 	private function assert_license_action(): void {

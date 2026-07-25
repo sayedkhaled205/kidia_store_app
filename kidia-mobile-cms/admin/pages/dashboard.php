@@ -38,6 +38,10 @@ $license_plan   = '' !== (string) ( $license['plan'] ?? '' )
 $license_expiry = ! empty( $license['expires_at'] )
 	? wp_date( get_option( 'date_format' ), (int) $license['expires_at'] )
 	: __( 'No expiry', 'kidia-mobile-cms' );
+$show_setup_choice = $license_active
+	&& ! $setup_complete
+	&& isset( $_GET['license_updated'] )
+	&& 'activated' === sanitize_key( wp_unslash( $_GET['license_updated'] ) );
 ?>
 
 <div class="wrap kidia-dashboard">
@@ -119,11 +123,6 @@ $license_expiry = ! empty( $license['expires_at'] )
 						<input type="hidden" name="action" value="kidia_mobile_verify_license">
 						<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
 						<button class="button button-primary" type="submit"><?php esc_html_e( 'Verify now', 'kidia-mobile-cms' ); ?></button>
-					</form>
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<input type="hidden" name="action" value="kidia_mobile_deactivate_license">
-						<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
-						<button class="button" type="submit"><?php esc_html_e( 'Deactivate', 'kidia-mobile-cms' ); ?></button>
 					</form>
 				</div>
 			<?php else : ?>
@@ -422,6 +421,30 @@ $license_expiry = ! empty( $license['expires_at'] )
 		</section>
 
 	</div>
+
+	<?php if ( $show_setup_choice ) : ?>
+		<div class="kidia-setup-choice" role="dialog" aria-modal="true" aria-labelledby="kidia-setup-choice-title">
+			<div class="kidia-setup-choice__panel">
+				<h2 id="kidia-setup-choice-title"><?php esc_html_e( 'Your license is active', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Would you like Woo Mobile CMS to guide you through setup, or configure everything manually?', 'kidia-mobile-cms' ); ?></p>
+				<div class="kidia-setup-choice__actions">
+					<a class="button button-primary button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>">
+						<?php esc_html_e( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?>
+					</a>
+					<a class="button button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms&setup_choice=manual' ) ); ?>">
+						<?php esc_html_e( 'Continue Manually', 'kidia-mobile-cms' ); ?>
+					</a>
+				</div>
+			</div>
+		</div>
+		<style>
+			.kidia-setup-choice{position:fixed;inset:0;z-index:100100;display:grid;place-items:center;padding:24px;background:rgba(15,23,42,.64)}
+			.kidia-setup-choice__panel{width:min(560px,100%);padding:32px;border-radius:18px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.3);text-align:center}
+			.kidia-setup-choice__panel h2{margin-top:0;font-size:28px}
+			.kidia-setup-choice__panel p{font-size:16px;color:#475569}
+			.kidia-setup-choice__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:24px}
+		</style>
+	<?php endif; ?>
 
 	<div class="notice notice-success inline">
 
