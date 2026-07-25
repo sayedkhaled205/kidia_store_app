@@ -87,7 +87,7 @@ assert.match(
 );
 assert.match(
   sourceIndex,
-  /addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*window\.location\.origin[\s\S]*preventDefault/,
+  /document\.addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*window\.location\.origin[\s\S]*preventDefault/,
   "Home wheel input must be captured inside the Flutter iframe and sent directly to Dart.",
 );
 assert.match(

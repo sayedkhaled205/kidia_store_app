@@ -174,8 +174,19 @@ test("Home wheel handling stays inside the Flutter iframe", () => {
   );
   assert.match(
     sourceIndex,
-    /addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*deltaY[\s\S]*preventDefault/,
+    /document\.addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*deltaY[\s\S]*preventDefault/,
   );
+});
+
+test("Home workspace keeps its shell and phone fixed while cards own wheel and keyboard scrolling", () => {
+  const bridge = fs.readFileSync(path.join(assets, "flutter-home-preview-bridge.js"), "utf8");
+  const styles = fs.readFileSync(path.join(assets, "home-builder.css"), "utf8");
+  assert.match(bridge, /classList\.add\("kidia-home-builder-viewport"\)/);
+  assert.match(bridge, /editor\.setAttribute\("tabindex",\s*"0"\)/);
+  assert.match(bridge, /event\.key === "ArrowDown"[\s\S]*editor\.scrollBy\([\s\S]*preventDefault/);
+  assert.match(styles, /body\.kidia-home-builder-viewport\s*\{[\s\S]*overflow:\s*hidden\s*!important/);
+  assert.match(styles, /\.kidia-builder-editor\s*\{[\s\S]*overflow-y:\s*auto[\s\S]*overscroll-behavior:\s*contain/);
+  assert.match(styles, /\.kidia-mobile-preview\s*\{[\s\S]*position:\s*relative[\s\S]*top:\s*0[\s\S]*overflow:\s*hidden/);
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {

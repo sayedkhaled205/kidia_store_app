@@ -29,6 +29,49 @@
 
 .kidia-builder-editor { min-width: 0; direction: rtl; }
 
+@media (min-width: 961px) {
+	body.kidia-home-builder-viewport {
+		overflow: hidden !important;
+	}
+
+	body.kidia-home-builder-viewport #wpbody,
+	body.kidia-home-builder-viewport #wpbody-content {
+		min-height: 0 !important;
+		overflow: hidden !important;
+	}
+
+	body.kidia-home-builder-viewport .kidia-builder-wrap {
+		height: var(--kidia-builder-viewport-height, calc(100vh - 150px));
+		overflow: hidden;
+	}
+
+	body.kidia-home-builder-viewport .kidia-builder-workspace {
+		height: 100%;
+		align-items: stretch;
+		overflow: hidden;
+	}
+
+	body.kidia-home-builder-viewport .kidia-mobile-preview {
+		position: relative;
+		top: 0;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	body.kidia-home-builder-viewport .kidia-builder-editor {
+		height: 100%;
+		overflow-x: hidden;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		scrollbar-gutter: stable;
+		outline: none;
+	}
+
+	body.kidia-home-builder-viewport .kidia-builder-toolbar {
+		top: 0;
+	}
+}
+
 .kidia-mobile-preview {
 	position: sticky;
 	top: var(--kidia-preview-sticky-top, 134px);

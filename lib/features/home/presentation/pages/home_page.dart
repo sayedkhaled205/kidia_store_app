@@ -34,10 +34,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    if (AppConfig.isCmsPreview) {
-      _previewScrollSubscription =
-          CmsPreviewLayoutBridge.homeScrollDeltas.listen(_scrollPreviewBy);
-    }
+    _previewScrollSubscription =
+        CmsPreviewLayoutBridge.homeScrollDeltas.listen(_scrollPreviewBy);
   }
 
   @override
