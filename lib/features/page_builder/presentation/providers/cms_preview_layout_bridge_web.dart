@@ -15,6 +15,8 @@ class CmsPreviewLayoutBridge {
       StreamController<String>.broadcast();
   static final StreamController<String> _focusTargets =
       StreamController<String>.broadcast();
+  static final StreamController<double> _homeScrollDeltas =
+      StreamController<double>.broadcast();
   static bool _listening = false;
 
   static Stream<Map<String, dynamic>?> layoutsFor(String page) async* {
@@ -46,6 +48,11 @@ class CmsPreviewLayoutBridge {
     return _focusTargets.stream;
   }
 
+  static Stream<double> get homeScrollDeltas {
+    _listen();
+    return _homeScrollDeltas.stream;
+  }
+
   static void _listen() {
     if (_listening) return;
     _listening = true;
@@ -59,6 +66,13 @@ class CmsPreviewLayoutBridge {
         }
       }
       if (message is! Map) return;
+      if (message['type'] == 'kidia-preview-scroll') {
+        if ('${message['page'] ?? ''}' == 'home') {
+          final double? delta = double.tryParse('${message['deltaY'] ?? ''}');
+          if (delta != null && delta != 0) _homeScrollDeltas.add(delta);
+        }
+        return;
+      }
       if (message['type'] == 'kidia-preview-focus') {
         if ('${message['page'] ?? ''}' == 'home') {
           final String target = '${message['target'] ?? ''}'.trim();
