@@ -194,14 +194,18 @@ test("Home iframe wheel is relayed before CanvasKit can consume it", () => {
   });
 });
 
-test("Home workspace keeps natural page sizing while the phone stays sticky and keyboard scrolls cards", () => {
+test("Builder workspace fixes navigation, toolbar, and phone while only cards scroll", () => {
   const bridge = fs.readFileSync(path.join(assets, "flutter-home-preview-bridge.js"), "utf8");
-  const styles = fs.readFileSync(path.join(assets, "home-builder.css"), "utf8");
-  assert.doesNotMatch(bridge, /kidia-home-builder-viewport/);
-  assert.doesNotMatch(styles, /--kidia-builder-viewport-height|scrollbar-gutter:\s*stable/);
-  assert.match(bridge, /event\.key === "ArrowDown"[\s\S]*window\.scrollBy\([\s\S]*preventDefault/);
+  const sharedStyles = fs.readFileSync(path.join(assets, "admin-theme.css"), "utf8");
+  const shellStyles = fs.readFileSync(path.join(assets, "cms-shell.css"), "utf8");
+  const homeTemplate = fs.readFileSync(path.resolve(__dirname, "..", "admin", "pages", "home-builder.php"), "utf8");
+  assert.match(homeTemplate, /data-kidia-builder-cards-scroll/);
+  assert.doesNotMatch(homeTemplate, /<p[^>]*>[\s\S]{0,160}Live preview —/);
+  assert.match(bridge, /data-kidia-builder-cards-scroll[\s\S]*\(cards \|\| window\)\.scrollBy[\s\S]*preventDefault/);
   assert.match(bridge, /kidia-preview-scroll[\s\S]*contentWindow\.addEventListener\("wheel",\s*relayPreviewWheel/);
-  assert.match(styles, /\.kidia-mobile-preview\s*\{[\s\S]*position:\s*sticky[\s\S]*top:\s*var\(--kidia-preview-sticky-top/);
+  assert.match(sharedStyles, /\.kidia-builder-cards-scroll\s*\{[\s\S]*overflow-y:\s*auto[\s\S]*scrollbar-gutter:\s*stable/);
+  assert.match(sharedStyles, /:is\(\.kidia-mobile-preview,\.kidia-page-preview,\.kidia-category-mobile-preview\)[\s\S]*position:\s*relative !important/);
+  assert.match(shellStyles, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*overflow:hidden!important/);
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {

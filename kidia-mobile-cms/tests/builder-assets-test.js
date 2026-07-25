@@ -1522,6 +1522,12 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	const flutter = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "widgets", "cms_page_chrome.dart"), "utf8");
 	const sections = readAsset("settings-sections.js");
 	const adminTheme = readAsset("admin-theme.css");
+	const shellCss = readAsset("cms-shell.css");
+	const shellScript = readAsset("cms-shell.js");
+	const homeTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "home-builder.php"), "utf8");
+	const pageTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "page-builder.php"), "utf8");
+	const categoryTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "category-builder.php"), "utf8");
+	const homePreviewBridge = readAsset("flutter-home-preview-bridge.js");
 	const admin = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
 	for (const item of ["logo", "title", "search_icon", "search_bar", "back", "cart", "wishlist", "account", "orders", "support", "menu"]) {
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_x'.*'Horizontal position'.*-80, 80"), `${item} must expose horizontal positioning.`);
@@ -1549,6 +1555,18 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.doesNotMatch(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{\s*position:\s*relative;\s*top:\s*0/, "Responsive Home styles must not release the phone preview from its fixed screen position.");
 	assert.doesNotMatch(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{\s*position:\s*static/, "Responsive page styles must not release the phone preview from its fixed screen position.");
 	assert.doesNotMatch(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{\s*position:\s*relative;\s*top:\s*0/, "Responsive Category styles must not release the phone preview from its fixed screen position.");
+	for (const template of [homeTemplate, pageTemplate, categoryTemplate]) {
+		assert.match(template, /class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll/, "Every Builder must isolate its settings cards in the shared scroll rail.");
+		assert.doesNotMatch(template, /<p[^>]*>[\s\S]{0,160}(?:Live preview —|Live mobile preview)/, "No explanatory caption may consume space below a phone preview.");
+	}
+	assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen[\s\S]*PAGE_BUILDER_SLUGS/, "Every Builder page must receive the fixed-workspace body class before it renders.");
+	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*display:flex;[\s\S]*overflow:hidden!important;/, "The WordPress document must not scroll behind a Builder.");
+	assert.match(shellCss, /body\.kidia-cms-builder-screen \.kidia-cms-shell\{[\s\S]*position:relative;[\s\S]*top:auto;/, "The CMS navigation must keep its initial position instead of moving to a sticky threshold.");
+	assert.match(adminTheme, /body\.kidia-cms-builder-screen \.kidia-builder-cards-scroll\s*\{[\s\S]*overflow-y:\s*auto;[\s\S]*overscroll-behavior:\s*contain;/, "Only the settings-card rail may scroll inside the fixed Builder workspace.");
+	assert.match(adminTheme, /body\.kidia-cms-builder-screen :is\(\.kidia-mobile-preview,\.kidia-page-preview,\.kidia-category-mobile-preview\)\s*\{[\s\S]*position:\s*relative !important;[\s\S]*overflow:\s*hidden;/, "All phone previews must keep the same viewport coordinates while cards scroll.");
+	assert.match(adminTheme, /body\.kidia-cms-builder-screen[\s\S]*\.kidia-shared-builder-toolbar\s*\{[\s\S]*position:\s*relative;[\s\S]*top:\s*auto;/, "The page toolbar must live outside the card rail and never be crossed by cards.");
+	assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*history\.scrollRestoration = 'manual'[\s\S]*window\.scrollTo/, "A Builder must discard restored document scroll before the fixed workspace appears.");
+	assert.match(homePreviewBridge, /data-kidia-builder-cards-scroll[\s\S]*\(cards \|\| window\)\.scrollBy/, "Keyboard navigation must scroll the card rail rather than the whole page.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");

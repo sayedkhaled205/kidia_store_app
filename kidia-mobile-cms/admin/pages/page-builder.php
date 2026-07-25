@@ -109,7 +109,6 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 					<div id="kidia-page-live-preview"></div>
 				<?php endif; ?>
 			</div></div>
-			<p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p>
 		</aside>
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_page_builder"><input type="hidden" name="builder_page" value="<?php echo esc_attr( $page ); ?>">
@@ -121,6 +120,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			$kidia_toolbar_restore_product = 'product' === $page;
 			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 			?>
+			<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 				<section class="kidia-page-card kidia-page-settings-card">
 					<div class="kidia-page-card__header">
 						<div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Page Settings', 'kidia-mobile-cms' ); ?></strong></div>
@@ -182,6 +182,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			</div>
 
 			<?php $chrome_layout = $layout; $chrome_part = 'footer'; $chrome_page = $page; $chrome_name_prefix = 'layout[footer]'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
+			</div>
 		</form>
 	</div>
 	<?php if ( 'wishlist' === $page ) : ?>

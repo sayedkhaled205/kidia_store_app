@@ -115,7 +115,6 @@ foreach ( $library_options as $type => $option_name ) {
 				<?php endif; ?>
 				</div>
 			</div>
-			<p><?php esc_html_e( 'Live preview — changes appear instantly before saving.', 'kidia-mobile-cms' ); ?></p>
 		</aside>
 		<div class="kidia-builder-editor">
 	<form
@@ -173,6 +172,7 @@ foreach ( $library_options as $type => $option_name ) {
 		$kidia_toolbar_restore_product = false;
 		include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 		?>
+		<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'header'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 		<div
@@ -280,6 +280,7 @@ foreach ( $library_options as $type => $option_name ) {
 
 		</div>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'footer'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
+		</div>
 
 	</form>
 		</div>

@@ -88,7 +88,6 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				<?php endif; ?>
 				</div>
 			</div>
-			<p><?php esc_html_e( 'Live preview — scroll it to preview the collapsed header.', 'kidia-mobile-cms' ); ?></p>
 		</aside>
 		<div class="kidia-category-editor">
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -102,6 +101,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 				?>
 
+				<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 				<?php $chrome_layout = $category_layout; $chrome_part = 'header'; $chrome_page = 'category'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
 				<section class="kidia-page-card kidia-category-element" data-element="category">
@@ -171,6 +171,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				</section>
 
 				<?php $chrome_layout = $category_layout; $chrome_part = 'footer'; $chrome_page = 'category'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
+				</div>
 			</form>
 		</div>
 	</div>
