@@ -60,6 +60,8 @@ assert.match(shellCss, /#wpbody-content\{[^}]*border:/, "The unified workspace m
 assert.match(shellCss, /#wpbody-content\{height:auto!important;min-height:0!important\}/, "CMS pages must end with their real content instead of a blank viewport-height tail.");
 assert.match(shellCss, /#wpbody-content\{padding-bottom:0!important\}/, "WordPress must not append footer padding below the CMS frame.");
 assert.match(shellCss, /#wpfooter\{display:none\}/, "The unused WordPress footer must not extend CMS pages.");
+assert.match(shellCss, /#adminmenuwrap\{[^}]*overflow-y:auto!important;[^}]*overscroll-behavior:contain;/, "The WordPress sidebar must scroll independently without extending the plugin page.");
+assert.match(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position:fixed!important;[^}]*bottom:0!important;/, "The WordPress sidebar must be constrained to the visible viewport.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-setup-progress">${Array.from({ length: 8 }, () => "<span></span>").join("")}</div>

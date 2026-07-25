@@ -91,6 +91,21 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script>
+    // Capture the wheel before CanvasKit can consume it and send it directly
+    // to the Dart preview bridge. Keeping this inside the iframe avoids a
+    // fragile parent-window round trip.
+    if (new URLSearchParams(window.location.search).get('page') === 'home') {
+      window.addEventListener('wheel', (event) => {
+        if (!event.deltaY) return;
+        window.postMessage(JSON.stringify({
+          type: 'kidia-preview-scroll',
+          page: 'home',
+          deltaY: Math.max(-180, Math.min(180, Number(event.deltaY))),
+        }), window.location.origin);
+        event.preventDefault();
+      }, {capture: true, passive: false});
+    }
+
     // This build is embedded in the versioned WordPress plugin. Never let an
     // older preview worker or cached Dart bundle survive a plugin update.
     (async function startKidiaPreview() {
@@ -144,20 +159,6 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
       }
-      let previewWheelSequence = 0;
-      window.addEventListener('wheel', (event) => {
-        if (!flutterRendered || previewUrl.searchParams.get('page') !== 'home') return;
-        const deltaY = Number(event.deltaY);
-        if (!Number.isFinite(deltaY) || deltaY === 0) return;
-        previewWheelSequence += 1;
-        window.parent.postMessage(JSON.stringify({
-          type: 'kidia-flutter-preview-wheel',
-          page: 'home',
-          sequence: previewWheelSequence,
-          deltaY: Math.max(-180, Math.min(180, deltaY))
-        }), '*');
-        event.preventDefault();
-      }, { capture: true, passive: false });
       // Clear stale workers in parallel. Waiting for the browser's service
       // worker registry can delay the actual Flutter bootstrap indefinitely
       // on some WordPress hosts.

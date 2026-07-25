@@ -31,9 +31,12 @@
 
 .kidia-mobile-preview {
 	position: sticky;
-	top: 118px;
+	top: var(--kidia-preview-sticky-top, 134px);
 	direction: rtl;
 	text-align: center;
+	/* The editor cards use only 77% of their column, leaving a visual gutter
+	 * between the phone column and the first card. Balance that gutter so the
+	 * phone is centered in the complete left-hand preview area. */
 	transform: none;
 }
 

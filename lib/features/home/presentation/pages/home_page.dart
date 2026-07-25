@@ -13,6 +13,7 @@ import 'package:kidia_store_app/features/home/presentation/widgets/home_block_re
 import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -25,6 +26,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   late final ScrollController _scrollController;
+  StreamSubscription<double>? _previewScrollSubscription;
   final Map<String, GlobalKey> _blockKeys = <String, GlobalKey>{};
   List<HomeBlock> _visibleBlocks = const <HomeBlock>[];
 
@@ -32,12 +34,26 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    if (AppConfig.isCmsPreview) {
+      _previewScrollSubscription =
+          CmsPreviewLayoutBridge.homeScrollDeltas.listen(_scrollPreviewBy);
+    }
   }
 
   @override
   void dispose() {
+    _previewScrollSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollPreviewBy(double delta) {
+    if (!mounted || !_scrollController.hasClients || delta == 0) return;
+    final ScrollPosition position = _scrollController.position;
+    final double next = (position.pixels + delta)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if (next != position.pixels) _scrollController.jumpTo(next);
   }
 
   void _handleCmsPreviewPointerSignal(PointerSignalEvent event) {

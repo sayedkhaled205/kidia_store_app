@@ -12,4 +12,7 @@ class CmsPreviewLayoutBridge {
 
   static Stream<String> get homeFocusTargets =>
       const Stream<String>.empty();
+
+  static Stream<double> get homeScrollDeltas =>
+      const Stream<double>.empty();
 }

@@ -10,6 +10,8 @@ const sourceIndex = fs.readFileSync(
   path.join(__dirname, "..", "..", "web", "index.html"),
   "utf8",
 );
+// Quality checks run this contract again after the generated Flutter bundle
+// has been committed, so source and embedded preview stay in lockstep.
 const bootstrap = fs.readFileSync(
   path.join(previewRoot, "flutter_bootstrap.js"),
   "utf8",
@@ -83,6 +85,16 @@ assert.match(
   /html, body \{[\s\S]*width: 100%;[\s\S]*height: 100%;[\s\S]*margin: 0;[\s\S]*overflow: hidden;/,
   "The Flutter view must fill a stable, margin-free preview viewport.",
 );
+assert.match(
+  sourceIndex,
+  /addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*window\.location\.origin[\s\S]*preventDefault/,
+  "Home wheel input must be captured inside the Flutter iframe and sent directly to Dart.",
+);
+assert.match(
+  homePage,
+  /homeScrollDeltas\.listen\(_scrollPreviewBy\)[\s\S]*_scrollController\.jumpTo\(next\)/,
+  "The Home preview must apply iframe wheel deltas directly to its own scroll controller.",
+);
 assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,
@@ -118,10 +130,10 @@ assert.match(
   /__wheel__:[\s\S]*target\.split\(':'\)\.last[\s\S]*_scrollController\.jumpTo\(next\)/,
   "The Home CMS preview must translate iframe-relayed wheel input into its real Flutter scroll controller.",
 );
-assert.match(
+assert.doesNotMatch(
   sourceIndex,
-  /addEventListener\('wheel'[\s\S]*kidia-flutter-preview-wheel[\s\S]*preventDefault\(\)[\s\S]*passive:\s*false/,
-  "The Flutter shell must capture Home wheel input before CanvasKit consumes it.",
+  /kidia-flutter-preview-wheel/,
+  "The Flutter shell must leave Home wheel input to the parent bridge's direct same-origin relay.",
 );
 
 console.log("Flutter preview bootstrap: ok");

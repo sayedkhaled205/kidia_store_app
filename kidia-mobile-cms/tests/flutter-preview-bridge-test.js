@@ -167,29 +167,15 @@ test("Home Flutter preview focuses the selected Builder element", async () => {
   assert.equal(messages.at(-1).origin, "https://store.example");
 });
 
-test("Home iframe wheel events are relayed to Flutter's scroll controller", async () => {
-  const messages = runBridge("flutter-home-preview-bridge.js", `
-    <div class="kidia-builder-wrap"></div>
-    <form id="kidia-home-builder-form"></form>
-    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html?page=home"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
-  markFlutterReady(messages);
-  await settle();
-  messages.window.dispatchEvent(new messages.window.MessageEvent("message", {
-    data: JSON.stringify({
-      type: "kidia-flutter-preview-wheel",
-      page: "home",
-      sequence: 7,
-      deltaY: 120,
-    }),
-    origin: "https://store.example",
-    source: messages.frame.contentWindow,
-  }));
-  assert.deepEqual(messages.at(-1).message, {
-    type: "kidia-preview-focus",
-    page: "home",
-    target: "__wheel__:7:120",
-  });
-  assert.equal(messages.at(-1).origin, "https://store.example");
+test("Home wheel handling stays inside the Flutter iframe", () => {
+  const sourceIndex = fs.readFileSync(
+    path.resolve(__dirname, "..", "..", "web", "index.html"),
+    "utf8",
+  );
+  assert.match(
+    sourceIndex,
+    /addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*deltaY[\s\S]*preventDefault/,
+  );
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {
