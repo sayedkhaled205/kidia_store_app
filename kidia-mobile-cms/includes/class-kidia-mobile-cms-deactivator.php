@@ -17,6 +17,9 @@ final class Kidia_Mobile_CMS_Deactivator {
 	 * @return void
 	 */
 	public static function deactivate(): void {
+		require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-license-manager.php';
+		Kidia_Mobile_License_Manager::deactivate_cron();
+
 		delete_transient( 'kidia_mobile_cms_api_status' );
 		delete_transient( 'kidia_mobile_cms_home_layout_cache' );
 

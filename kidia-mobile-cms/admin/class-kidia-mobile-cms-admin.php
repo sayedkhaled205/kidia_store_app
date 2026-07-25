@@ -128,6 +128,9 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_save_similar_products', array( $this, 'save_similar_products' ) );
 		add_action( 'admin_post_kidia_mobile_save_checkout_suggestions', array( $this, 'save_checkout_suggestions' ) );
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
+		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
+		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
+		add_action( 'admin_post_kidia_mobile_deactivate_license', array( $this, 'deactivate_license' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
@@ -354,6 +357,18 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
 		}
 		check_admin_referer( 'kidia_mobile_apply_setup_wizard', 'kidia_mobile_setup_nonce' );
+		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'          => 'kidia-mobile-cms',
+						'license_error' => 'required',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
 		$submitted = isset( $_POST['setup'] ) && is_array( $_POST['setup'] ) ? wp_unslash( $_POST['setup'] ) : array();
 		$theme     = ( new Kidia_Mobile_Setup_Wizard() )->apply( is_array( $submitted ) ? $submitted : array() );
 		wp_safe_redirect(
@@ -632,19 +647,66 @@ final class Kidia_Mobile_CMS_Admin {
     			);
     		}
 
-			if ( ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
-				$this->setup_wizard_page();
-				return;
-			}
-
     		$monitor = new Kidia_Mobile_CMS_API_Monitor();
 
     		$api = $monitor->get_status();
+			$license_manager = new Kidia_Mobile_License_Manager();
+			$license         = $license_manager->status();
+			$setup_complete  = ( new Kidia_Mobile_Setup_Wizard() )->is_complete();
 
     		require
     			KIDIA_MOBILE_CMS_PATH .
     			'admin/pages/dashboard.php';
     	}
+
+	/**
+	 * Activates the submitted license key.
+	 */
+	public function activate_license(): void {
+		$this->assert_license_action();
+		$key    = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
+		$result = ( new Kidia_Mobile_License_Manager() )->activate( $key );
+		$this->redirect_license_result( $result, 'activated' );
+	}
+
+	/**
+	 * Forces an immediate license verification.
+	 */
+	public function verify_license(): void {
+		$this->assert_license_action();
+		$result = ( new Kidia_Mobile_License_Manager() )->verify( true );
+		$this->redirect_license_result( $result, 'verified' );
+	}
+
+	/**
+	 * Deactivates the current installation.
+	 */
+	public function deactivate_license(): void {
+		$this->assert_license_action();
+		$result = ( new Kidia_Mobile_License_Manager() )->deactivate();
+		$this->redirect_license_result( $result, 'deactivated' );
+	}
+
+	private function assert_license_action(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' );
+	}
+
+	/**
+	 * @param true|WP_Error $result Action result.
+	 */
+	private function redirect_license_result( $result, string $success ): void {
+		$args = array( 'page' => 'kidia-mobile-cms' );
+		if ( is_wp_error( $result ) ) {
+			$args['license_error'] = $result->get_error_message();
+		} else {
+			$args['license_updated'] = $success;
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
     		/**
         	 * Home Builder.
         	 *
