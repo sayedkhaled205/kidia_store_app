@@ -81,7 +81,7 @@
 /* One real toolbar component for Home, Category and every page builder. */
 :is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-shared-builder-toolbar {
 	position: sticky;
-	top: 32px;
+	top: var(--kidia-preview-sticky-top, 134px);
 	z-index: 50;
 	display: flex;
 	width: 77%;

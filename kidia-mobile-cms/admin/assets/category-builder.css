@@ -99,7 +99,7 @@
 .kidia-range-value { color: #2f806e; font-size: 12px; font-weight: 700; }
 .ui-sortable-helper .kidia-category-card { box-shadow: 0 8px 24px rgba(0,0,0,.15); }
 @media (max-width: 900px) { .kidia-category-toolbar,.kidia-category-card { width: auto; } .kidia-category-card { grid-template-columns: 24px 24px 52px 1fr; } .kidia-category-card > button,.kidia-category-visibility { grid-column: 4; justify-self: start; } .kidia-category-settings { grid-template-columns: 1fr; } .kidia-category-image-actions { grid-column: 1; } }
-@media (max-width: 1100px) { .kidia-category-workspace { grid-template-columns: 1fr; } .kidia-category-mobile-preview { position: relative; top: 0; transform:none; } .kidia-category-phone { margin-inline: auto; } }
+@media (max-width: 1100px) { .kidia-category-workspace { grid-template-columns: 1fr; } .kidia-category-mobile-preview { position: sticky; top: var(--kidia-preview-sticky-top, 134px); transform:none; } .kidia-category-phone { margin-inline: auto; } }
 
 /* The page content is one Category element. Appearance is configured once. */
 .kidia-category-element { width:77%; margin:10px 0 10px auto; }
