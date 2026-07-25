@@ -8,6 +8,8 @@ on:
       - agent/header-product-tabs-controls
       - agent/fix-preview-wishlist-toolbar
       - agent/fix-home-preview-content
+      - agent/fix-home-preview-scroll-layout
+      - agent/fix-home-preview-scroll-final
     paths:
       - 'lib/**'
       - 'web/**'
