@@ -25,6 +25,7 @@
 .kidia-page-elements { display:flex; flex-direction:column; gap:10px; }
 .kidia-page-card { width:77%; margin-inline-end:auto; overflow:hidden; border:1px solid var(--border); border-radius:10px; background:#fff; box-shadow:0 2px 8px rgba(35,107,89,.06); }
 .kidia-page-card--locked { margin-block:10px; border-color:#b8c8f5; }
+.kidia-page-settings-card + .kidia-wishlist-access-mode { margin-top:10px; }
 .kidia-page-card__header { position:relative; display:flex; min-height:70px; align-items:center; justify-content:flex-start; gap:12px; padding:9px 12px; }
 .kidia-page-card__header { direction:rtl; }
 .kidia-page-card__header > div,.kidia-page-card__identity { display:flex; min-width:0; align-items:center; gap:8px; }

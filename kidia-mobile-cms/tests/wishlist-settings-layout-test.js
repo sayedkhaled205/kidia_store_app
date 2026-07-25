@@ -8,12 +8,18 @@ const { JSDOM } = require("jsdom");
 const pluginRoot = path.join(__dirname, "..");
 const script = fs.readFileSync(path.join(pluginRoot, "admin/assets/settings-sections.js"), "utf8");
 const css = fs.readFileSync(path.join(pluginRoot, "admin/assets/admin-theme.css"), "utf8");
+const pageCss = fs.readFileSync(path.join(pluginRoot, "admin/assets/page-builder.css"), "utf8");
 const toolbar = fs.readFileSync(path.join(pluginRoot, "admin/pages/builder-toolbar.php"), "utf8");
 const page = fs.readFileSync(path.join(pluginRoot, "admin/pages/page-builder.php"), "utf8");
 
 assert.ok(
   page.indexOf("kidia-wishlist-access-mode") < page.indexOf("$chrome_part = 'header'"),
   "Wishlist access mode must render before Fixed Header.",
+);
+assert.match(
+  pageCss,
+  /\.kidia-page-settings-card \+ \.kidia-wishlist-access-mode\s*\{\s*margin-top:10px;\s*\}/,
+  "Wishlist Page Settings and access mode cards must keep the same 10px gap as the other page cards.",
 );
 const home = fs.readFileSync(path.join(pluginRoot, "admin/pages/home-builder.php"), "utf8");
 const category = fs.readFileSync(path.join(pluginRoot, "admin/pages/category-builder.php"), "utf8");
