@@ -230,7 +230,7 @@
 
 @media (max-width: 1100px) {
 	.kidia-builder-workspace { grid-template-columns: 1fr; }
-	.kidia-mobile-preview { position: relative; top: 0; transform: none; }
+	.kidia-mobile-preview { position: sticky; top: var(--kidia-preview-sticky-top, 134px); transform: none; }
 	.kidia-mobile-preview__device { margin-inline: auto; }
 }
 
@@ -267,7 +267,7 @@
 
 .kidia-builder-toolbar {
 	position: sticky;
-	top: 32px;
+	top: var(--kidia-preview-sticky-top, 134px);
 	z-index: 50;
 	display: flex;
 	width: 77%;
@@ -1524,7 +1524,7 @@ body.kidia-modal-open {
 
 	.kidia-builder-toolbar {
 		width: 100%;
-		top: 46px;
+		top: var(--kidia-preview-sticky-top, 134px);
 		align-items: stretch;
 		flex-direction: column;
 	}

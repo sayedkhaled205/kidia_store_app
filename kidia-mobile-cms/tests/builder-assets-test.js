@@ -1520,6 +1520,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	const chrome = readAsset("chrome-layout.js");
 	const flutter = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "widgets", "cms_page_chrome.dart"), "utf8");
 	const sections = readAsset("settings-sections.js");
+	const adminTheme = readAsset("admin-theme.css");
 	const admin = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
 	for (const item of ["logo", "title", "search_icon", "search_bar", "back", "cart", "wishlist", "account", "orders", "support", "menu"]) {
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_x'.*'Horizontal position'.*-80, 80"), `${item} must expose horizontal positioning.`);
@@ -1540,6 +1541,10 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Home preview must use the measured CMS header height while the WordPress page scrolls.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:var\(--kidia-preview-sticky-top,134px\)/, "Every page preview must share the measured CMS header offset.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Category preview must share the measured CMS header offset.");
+	assert.match(adminTheme, /\.kidia-shared-builder-toolbar\s*\{[\s\S]*position:\s*sticky;[\s\S]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "The page action header must stay fixed directly below the CMS navigation header.");
+	assert.doesNotMatch(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{\s*position:\s*relative;\s*top:\s*0/, "Responsive Home styles must not release the phone preview from its fixed screen position.");
+	assert.doesNotMatch(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{\s*position:\s*static/, "Responsive page styles must not release the phone preview from its fixed screen position.");
+	assert.doesNotMatch(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{\s*position:\s*relative;\s*top:\s*0/, "Responsive Category styles must not release the phone preview from its fixed screen position.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
