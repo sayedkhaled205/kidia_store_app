@@ -178,15 +178,30 @@ test("Home wheel handling stays inside the Flutter iframe", () => {
   );
 });
 
-test("Home workspace keeps its shell and phone fixed while cards own wheel and keyboard scrolling", () => {
+test("Home iframe wheel is relayed before CanvasKit can consume it", () => {
+  const messages = runBridge("flutter-home-preview-bridge.js", `
+    <div class="kidia-builder-wrap"></div>
+    <form id="kidia-home-builder-form"></form>
+    <div><iframe id="kidia-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="kidia-legacy-preview-fallback" hidden></div></div>`);
+  messages.frame.contentWindow.dispatchEvent(new messages.window.WheelEvent("wheel", {
+    deltaY: 96,
+    cancelable: true,
+  }));
+  assert.deepEqual(messages.at(-1).message, {
+    type: "kidia-preview-scroll",
+    page: "home",
+    deltaY: 96,
+  });
+});
+
+test("Home workspace keeps natural page sizing while the phone stays sticky and keyboard scrolls cards", () => {
   const bridge = fs.readFileSync(path.join(assets, "flutter-home-preview-bridge.js"), "utf8");
   const styles = fs.readFileSync(path.join(assets, "home-builder.css"), "utf8");
-  assert.match(bridge, /classList\.add\("kidia-home-builder-viewport"\)/);
-  assert.match(bridge, /editor\.setAttribute\("tabindex",\s*"0"\)/);
-  assert.match(bridge, /event\.key === "ArrowDown"[\s\S]*editor\.scrollBy\([\s\S]*preventDefault/);
-  assert.match(styles, /body\.kidia-home-builder-viewport\s*\{[\s\S]*overflow:\s*hidden\s*!important/);
-  assert.match(styles, /\.kidia-builder-editor\s*\{[\s\S]*overflow-y:\s*auto[\s\S]*overscroll-behavior:\s*contain/);
-  assert.match(styles, /\.kidia-mobile-preview\s*\{[\s\S]*position:\s*relative[\s\S]*top:\s*0[\s\S]*overflow:\s*hidden/);
+  assert.doesNotMatch(bridge, /kidia-home-builder-viewport/);
+  assert.doesNotMatch(styles, /--kidia-builder-viewport-height|scrollbar-gutter:\s*stable/);
+  assert.match(bridge, /event\.key === "ArrowDown"[\s\S]*window\.scrollBy\([\s\S]*preventDefault/);
+  assert.match(bridge, /kidia-preview-scroll[\s\S]*contentWindow\.addEventListener\("wheel",\s*relayPreviewWheel/);
+  assert.match(styles, /\.kidia-mobile-preview\s*\{[\s\S]*position:\s*sticky[\s\S]*top:\s*var\(--kidia-preview-sticky-top/);
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {
