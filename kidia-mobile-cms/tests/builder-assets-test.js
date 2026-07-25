@@ -229,7 +229,7 @@ function runHomeBuilderTest() {
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*350px minmax\(0, 1fr\)/, "The editor must reserve the larger canonical phone preview without crowding the settings.");
 	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport centered beside the element editor.");
-	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*translateX\(clamp\(48px,\s*6vw,\s*96px\)\);/, "The Home phone must be centered across the full visual preview area before the 77% editor cards.");
+	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*none;/, "The Home phone must remain centered in its reserved preview column on every page.");
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
 	assert.doesNotMatch(builderCss, /data-type="product_carousel"[^\{]*\.kidia-builder-block__actions\s*\{[^}]*direction:\s*ltr;/, "Product Carousel must not reverse the shared element action order.");
@@ -1537,9 +1537,9 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*118px;/, "Home preview must stay below the sticky CMS header while the WordPress page scrolls.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:118px;/, "Every page preview must stay below the sticky CMS header.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*118px;/, "Category preview must stay below the sticky CMS header.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview\s*\{[\s\S]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Home preview must use the measured CMS header height while the WordPress page scrolls.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*top:var\(--kidia-preview-sticky-top,134px\)/, "Every page preview must share the measured CMS header offset.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*top:\s*var\(--kidia-preview-sticky-top,\s*134px\)/, "Category preview must share the measured CMS header offset.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");

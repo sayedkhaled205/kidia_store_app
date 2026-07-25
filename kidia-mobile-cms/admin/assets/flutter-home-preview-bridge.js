@@ -14,8 +14,6 @@
 	var lastSignature = "";
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
 	var frameOrigin = window.location.origin;
-	var wheelSequence = 0;
-	var attachedWheelWindow = null;
 	try { frameOrigin = new URL(frame.src, window.location.href).origin; } catch (_) {}
 	function waitForFlutter() {
 		// Keep the real Flutter surface visible while its own loading state is
@@ -98,41 +96,12 @@
 			refresh(false);
 		}, 140);
 	}
-	function relayWheel(deltaY) {
-		if (!frame.contentWindow) { return; }
-		deltaY = Number(deltaY);
-		if (!isFinite(deltaY) || deltaY === 0) { return; }
-		wheelSequence += 1;
-		frame.contentWindow.postMessage(JSON.stringify({
-			type: "kidia-preview-focus",
-			page: "home",
-			target: "__wheel__:" + String(wheelSequence) + ":" + String(Math.max(-180, Math.min(180, deltaY)))
-		}), frameOrigin);
-	}
-	function attachDirectWheelRelay() {
-		var frameWindow;
-		try { frameWindow = frame.contentWindow; } catch (_) { return; }
-		if (!frameWindow || attachedWheelWindow === frameWindow) { return; }
-		attachedWheelWindow = frameWindow;
-		// Listen on the embedded window itself. This avoids relying on wheel
-		// bubbling through CanvasKit or on a ready message arriving in a
-		// particular order.
-		frameWindow.addEventListener("wheel", function (event) {
-			relayWheel(event.deltaY);
-			event.preventDefault();
-		}, { capture: true, passive: false });
-	}
 	window.addEventListener("message", function (event) {
 		if (event.source !== frame.contentWindow || event.origin !== frameOrigin) { return; }
 		var message = event.data;
 		if (typeof message === "string") { try { message = JSON.parse(message); } catch (_) { return; } }
-		if (message && message.type === "kidia-flutter-preview-wheel") {
-			relayWheel(message.deltaY);
-			return;
-		}
 		if (message && message.type === "kidia-flutter-preview-ready") {
 			ready = true;
-			attachDirectWheelRelay();
 			showFlutter();
 			if (!sentInitialState) {
 				sentInitialState = true;
@@ -144,8 +113,6 @@
 		ready = false;
 		sentInitialState = false;
 		lastSignature = "";
-		attachedWheelWindow = null;
-		attachDirectWheelRelay();
 	});
 	form.addEventListener("input", function () { queueRefresh(false); });
 	form.addEventListener("change", function () { queueRefresh(false); });
@@ -170,7 +137,6 @@
 	frame.addEventListener("mouseenter", focusPreview);
 	frame.addEventListener("pointerenter", focusPreview);
 	frame.addEventListener("click", focusPreview);
-	attachDirectWheelRelay();
 	// Do not rely on a load event that a cached iframe may already have fired.
 	waitForFlutter();
 }());
