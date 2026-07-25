@@ -85,6 +85,16 @@ assert.match(
   /html, body \{[\s\S]*width: 100%;[\s\S]*height: 100%;[\s\S]*margin: 0;[\s\S]*overflow: hidden;/,
   "The Flutter view must fill a stable, margin-free preview viewport.",
 );
+assert.match(
+  sourceIndex,
+  /addEventListener\('wheel'[\s\S]*kidia-preview-scroll[\s\S]*window\.location\.origin[\s\S]*preventDefault/,
+  "Home wheel input must be captured inside the Flutter iframe and sent directly to Dart.",
+);
+assert.match(
+  homePage,
+  /homeScrollDeltas\.listen\(_scrollPreviewBy\)[\s\S]*_scrollController\.jumpTo\(next\)/,
+  "The Home preview must apply iframe wheel deltas directly to its own scroll controller.",
+);
 assert.doesNotMatch(
   bootstrap.slice(bootstrap.lastIndexOf("_flutter.loader.load")),
   /serviceWorkerSettings/,
