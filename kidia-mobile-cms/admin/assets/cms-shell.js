@@ -9,6 +9,8 @@
 		const stickyTop = parseFloat(style.top) || 0;
 		const shellHeight = Math.ceil(shell.getBoundingClientRect().height);
 		const previewTop = Math.ceil(stickyTop + shellHeight + 14);
+		// Keep the fixed phone and independently scrolling editor inside the
+		// visible WordPress workspace as the admin bar or shell wraps.
 		document.documentElement.style.setProperty(
 			'--kidia-preview-sticky-top',
 			previewTop + 'px'
