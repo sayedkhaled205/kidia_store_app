@@ -159,15 +159,16 @@
 		if (event.altKey || event.ctrlKey || event.metaKey) { return; }
 		var target = event.target;
 		if (target && (target.matches("input, textarea, select, button, [contenteditable='true']") || target.closest(".media-modal, .kidia-modal"))) { return; }
+		var cards = document.querySelector("[data-kidia-builder-cards-scroll]");
 		var amount = 0;
 		if (event.key === "ArrowDown") { amount = 72; }
 		else if (event.key === "ArrowUp") { amount = -72; }
 		else if (event.key === "PageDown") { amount = Math.max(180, Math.floor(window.innerHeight * 0.8)); }
 		else if (event.key === "PageUp") { amount = -Math.max(180, Math.floor(window.innerHeight * 0.8)); }
-		else if (event.key === "Home") { window.scrollTo({ top: 0, behavior: "smooth" }); event.preventDefault(); return; }
-		else if (event.key === "End") { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" }); event.preventDefault(); return; }
+		else if (event.key === "Home") { (cards || window).scrollTo({ top: 0, behavior: "smooth" }); event.preventDefault(); return; }
+		else if (event.key === "End") { (cards || window).scrollTo({ top: cards ? cards.scrollHeight : document.documentElement.scrollHeight, behavior: "smooth" }); event.preventDefault(); return; }
 		if (!amount) { return; }
-		window.scrollBy({ top: amount, behavior: "smooth" });
+		(cards || window).scrollBy({ top: amount, behavior: "smooth" });
 		event.preventDefault();
 	});
 	// Do not rely on a load event that a cached iframe may already have fired.

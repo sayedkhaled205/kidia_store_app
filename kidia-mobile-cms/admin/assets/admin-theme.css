@@ -119,6 +119,63 @@
 	color: #236b59;
 }
 
+.kidia-builder-cards-scroll {
+	min-width: 0;
+}
+
+/*
+ * The desktop workspace has three permanent surfaces: CMS navigation, page
+ * toolbar, and phone preview. This rail is the only settings scroll surface.
+ */
+@media (min-width: 1101px) {
+	body.kidia-cms-builder-screen :is(.kidia-builder-workspace,.kidia-page-workspace,.kidia-category-workspace) {
+		min-height: 0;
+		flex: 1 1 auto;
+		align-items: stretch;
+		overflow: hidden;
+		padding-top: 10px;
+	}
+
+	body.kidia-cms-builder-screen :is(.kidia-mobile-preview,.kidia-page-preview,.kidia-category-mobile-preview) {
+		position: relative !important;
+		top: auto !important;
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	body.kidia-cms-builder-screen :is(.kidia-builder-editor,.kidia-page-editor,.kidia-category-editor) {
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	body.kidia-cms-builder-screen :is(.kidia-builder-editor > form,.kidia-page-editor,.kidia-category-editor > form) {
+		display: flex;
+		height: 100%;
+		min-height: 0;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	body.kidia-cms-builder-screen :is(.kidia-page-builder,.kidia-builder-wrap,.kidia-category-builder) .kidia-shared-builder-toolbar {
+		position: relative;
+		top: auto;
+		z-index: 80;
+		flex: 0 0 auto;
+	}
+
+	body.kidia-cms-builder-screen .kidia-builder-cards-scroll {
+		min-height: 0;
+		flex: 1 1 auto;
+		overflow-x: hidden;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding-bottom: 16px;
+		scrollbar-gutter: stable;
+	}
+}
+
 @media (max-width: 960px) {
 	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-shared-builder-toolbar { width: 100%; }
 }

@@ -2,6 +2,14 @@
 	'use strict';
 	const more = document.querySelector('.kidia-cms-more');
 	const shell = document.querySelector('.kidia-cms-shell');
+	const fixedBuilder = document.body.classList.contains('kidia-cms-builder-screen');
+
+	if (fixedBuilder) {
+		if ('scrollRestoration' in history) {
+			history.scrollRestoration = 'manual';
+		}
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+	}
 
 	function syncPreviewOffset() {
 		if (!shell) return;

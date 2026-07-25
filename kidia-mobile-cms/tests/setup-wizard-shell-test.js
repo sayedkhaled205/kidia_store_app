@@ -14,6 +14,7 @@ const wizardTemplate = read("admin", "pages", "setup-wizard.php");
 const shellTemplate = read("admin", "pages", "cms-shell.php");
 const wizardCss = read("admin", "assets", "setup-wizard.css");
 const shellCss = read("admin", "assets", "cms-shell.css");
+const shellScript = read("admin", "assets", "cms-shell.js");
 
 for (const theme of ["aurora", "bloom", "canvas", "pulse", "avenue", "metro"]) {
   assert.match(service, new RegExp(`'${theme}'\\s*=>`), `Theme ${theme} must be registered.`);
@@ -62,6 +63,9 @@ assert.match(shellCss, /#wpbody-content\{padding-bottom:0!important\}/, "WordPre
 assert.match(shellCss, /#wpfooter\{display:none\}/, "The unused WordPress footer must not extend CMS pages.");
 assert.match(shellCss, /#adminmenuwrap\{[^}]*overflow-y:auto!important;[^}]*overscroll-behavior:contain;/, "The WordPress sidebar must scroll independently without extending the plugin page.");
 assert.match(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position:fixed!important;[^}]*bottom:0!important;/, "The WordPress sidebar must be constrained to the visible viewport.");
+assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
+assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*height:calc\(100% - 36px\)!important;[\s\S]*overflow:hidden!important;/, "Builder documents must remain fixed inside the visible CMS frame.");
+assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-setup-progress">${Array.from({ length: 8 }, () => "<span></span>").join("")}</div>

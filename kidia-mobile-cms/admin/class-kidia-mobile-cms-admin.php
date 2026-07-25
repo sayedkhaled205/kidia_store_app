@@ -98,6 +98,14 @@ final class Kidia_Mobile_CMS_Admin {
 			)
 		);
 
+		add_filter(
+			'admin_body_class',
+			array(
+				$this,
+				'admin_body_class',
+			)
+		);
+
 		add_action(
 			'admin_post_kidia_mobile_save_home_builder',
 			array(
@@ -130,6 +138,31 @@ final class Kidia_Mobile_CMS_Admin {
 			999
 		);
 
+	}
+
+	/**
+	 * Marks builder screens whose cards scroll inside the fixed CMS workspace.
+	 *
+	 * @param string $classes Existing admin body classes.
+	 * @return string
+	 */
+	public function admin_body_class( string $classes ): string {
+		$page = isset( $_GET['page'] )
+			? sanitize_key( wp_unslash( $_GET['page'] ) )
+			: '';
+		$builder_pages = array_merge(
+			array(
+				'kidia-mobile-home-builder',
+				'kidia-mobile-category-builder',
+			),
+			array_keys( self::PAGE_BUILDER_SLUGS )
+		);
+
+		if ( in_array( $page, $builder_pages, true ) ) {
+			$classes .= ' kidia-cms-builder-screen';
+		}
+
+		return $classes;
 	}
 
 	/**
