@@ -1561,6 +1561,10 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	}
 	assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen[\s\S]*PAGE_BUILDER_SLUGS/, "Every Builder page must receive the fixed-workspace body class before it renders.");
 	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*display:flex;[\s\S]*overflow:hidden!important;/, "The WordPress document must not scroll behind a Builder.");
+	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*height:calc\(100% - 24px\)!important;[\s\S]*margin-bottom:6px;/, "The Builder frame must extend downward without changing the phone position.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[\s\S]*box-shadow:\s*none;/, "The Home phone frame must not cast a shadow.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*box-shadow:none;/, "Shared page phone frames must not cast a shadow.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*box-shadow:none;/, "The Category phone frame must not cast a shadow.");
 	assert.match(shellCss, /body\.kidia-cms-builder-screen \.kidia-cms-shell\{[\s\S]*position:relative;[\s\S]*top:auto;/, "The CMS navigation must keep its initial position instead of moving to a sticky threshold.");
 	assert.match(adminTheme, /body\.kidia-cms-builder-screen \.kidia-builder-cards-scroll\s*\{[\s\S]*overflow-y:\s*auto;[\s\S]*overscroll-behavior:\s*contain;/, "Only the settings-card rail may scroll inside the fixed Builder workspace.");
 	assert.match(adminTheme, /body\.kidia-cms-builder-screen :is\(\.kidia-mobile-preview,\.kidia-page-preview,\.kidia-category-mobile-preview\)\s*\{[\s\S]*position:\s*relative !important;[\s\S]*overflow:\s*hidden;/, "All phone previews must keep the same viewport coordinates while cards scroll.");
