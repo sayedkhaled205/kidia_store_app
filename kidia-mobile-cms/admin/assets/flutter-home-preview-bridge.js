@@ -4,13 +4,6 @@
 	var frame = document.getElementById("kidia-flutter-preview");
 	var form = document.getElementById("kidia-home-builder-form");
 	if (!root || !frame || !form) { return; }
-	var editor = root.querySelector(".kidia-builder-editor");
-	document.body.classList.add("kidia-home-builder-viewport");
-	if (editor) {
-		editor.setAttribute("tabindex", "0");
-		editor.setAttribute("role", "region");
-		editor.setAttribute("aria-label", "Home page cards");
-	}
 	var config = window.kidiaHomeBuilder || {};
 	var ready = false;
 	var controller = null;
@@ -141,22 +134,40 @@
 		try { frame.contentWindow.focus(); } catch (_) {}
 	}
 	frame.setAttribute("tabindex", "0");
+	function relayPreviewWheel(event) {
+		if (!event.deltaY || !frame.contentWindow) { return; }
+		frame.contentWindow.postMessage(JSON.stringify({
+			type: "kidia-preview-scroll",
+			page: "home",
+			deltaY: Math.max(-180, Math.min(180, Number(event.deltaY)))
+		}), frameOrigin);
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	}
+	function bindPreviewWheel() {
+		try {
+			frame.contentWindow.removeEventListener("wheel", relayPreviewWheel, true);
+			frame.contentWindow.addEventListener("wheel", relayPreviewWheel, { capture: true, passive: false });
+		} catch (_) {}
+	}
 	frame.addEventListener("mouseenter", focusPreview);
 	frame.addEventListener("pointerenter", focusPreview);
 	frame.addEventListener("click", focusPreview);
+	frame.addEventListener("load", bindPreviewWheel);
+	bindPreviewWheel();
 	document.addEventListener("keydown", function (event) {
-		if (!editor || event.altKey || event.ctrlKey || event.metaKey) { return; }
+		if (event.altKey || event.ctrlKey || event.metaKey) { return; }
 		var target = event.target;
 		if (target && (target.matches("input, textarea, select, button, [contenteditable='true']") || target.closest(".media-modal, .kidia-modal"))) { return; }
 		var amount = 0;
 		if (event.key === "ArrowDown") { amount = 72; }
 		else if (event.key === "ArrowUp") { amount = -72; }
-		else if (event.key === "PageDown") { amount = Math.max(180, Math.floor(editor.clientHeight * 0.8)); }
-		else if (event.key === "PageUp") { amount = -Math.max(180, Math.floor(editor.clientHeight * 0.8)); }
-		else if (event.key === "Home") { editor.scrollTo({ top: 0, behavior: "smooth" }); event.preventDefault(); return; }
-		else if (event.key === "End") { editor.scrollTo({ top: editor.scrollHeight, behavior: "smooth" }); event.preventDefault(); return; }
+		else if (event.key === "PageDown") { amount = Math.max(180, Math.floor(window.innerHeight * 0.8)); }
+		else if (event.key === "PageUp") { amount = -Math.max(180, Math.floor(window.innerHeight * 0.8)); }
+		else if (event.key === "Home") { window.scrollTo({ top: 0, behavior: "smooth" }); event.preventDefault(); return; }
+		else if (event.key === "End") { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" }); event.preventDefault(); return; }
 		if (!amount) { return; }
-		editor.scrollBy({ top: amount, behavior: "smooth" });
+		window.scrollBy({ top: amount, behavior: "smooth" });
 		event.preventDefault();
 	});
 	// Do not rely on a load event that a cached iframe may already have fired.
