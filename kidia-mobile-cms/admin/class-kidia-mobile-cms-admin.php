@@ -458,7 +458,7 @@ final class Kidia_Mobile_CMS_Admin {
 					throw new InvalidArgumentException( 'saved_theme_not_found' );
 				}
 			} elseif ( 'delete' === $operation ) {
-				if ( ! $wizard->delete_saved_theme( sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) ) ) {
+				if ( ! $wizard->delete_saved_theme( sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) ) ) ) {
 					throw new InvalidArgumentException( 'saved_theme_not_found' );
 				}
 			} elseif ( 'blank' === $operation ) {
