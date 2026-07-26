@@ -13,7 +13,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.33\.0/, "The plugin header must be version 1.33.0.");
+assert.match(plugin, /Version:\s+1\.34\.0/, "The plugin header must be version 1.34.0.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -39,5 +39,24 @@ assert.match(dashboard, /Setup & Themes/, "Overview must link to Setup & Themes.
 assert.doesNotMatch(dashboard, /kidia_mobile_deactivate_license/, "The license UI must not expose deactivation.");
 assert.match(dashboard, /Start Setup Wizard/, "Successful activation must offer the setup wizard.");
 assert.match(dashboard, /Continue Manually/, "Successful activation must allow manual setup.");
+for (const journeyStep of [
+  "Purchase subscription",
+  "Connect your website",
+  "Install the plugin",
+  "Activate your license",
+  "Build your app",
+]) {
+  assert.match(dashboard, new RegExp(journeyStep), `The customer journey must include: ${journeyStep}.`);
+}
+assert.match(
+  dashboard,
+  /kidia_mobile_customer_portal_url/,
+  "The purchase and connection destination must remain configurable without changing builder settings."
+);
+assert.match(
+  dashboard,
+  /Purchase and connect on WooMobile, then complete activation and setup here in the plugin/,
+  "The journey must clearly separate the website checkout/connect flow from plugin activation."
+);
 
 console.log("License integration contract tests passed.");
