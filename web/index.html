@@ -201,8 +201,8 @@
           previewUrl.searchParams.get('preview_attempt') || '0',
           10,
         );
-        if (attempt < 1) {
-          previewUrl.searchParams.set('preview_attempt', '1');
+        if (attempt < 2) {
+          previewUrl.searchParams.set('preview_attempt', String(attempt + 1));
           previewUrl.searchParams.set('preview_retry', String(Date.now()));
           window.location.replace(previewUrl.toString());
           return;
@@ -244,9 +244,9 @@
           retryOrFail();
         }
       });
-      // The exact Flutter bundle includes CanvasKit and can take longer on a
-      // cold mobile connection. Retry only after a genuine long stall.
-      startupTimer = window.setTimeout(retryOrFail, 45000);
+      // Recover inside the iframe before the WordPress page looks frozen.
+      // Two fresh-cache retries cover intermittent mobile/WebAssembly stalls.
+      startupTimer = window.setTimeout(retryOrFail, 15000);
       document.body.appendChild(bootstrap);
     })();
   </script>
