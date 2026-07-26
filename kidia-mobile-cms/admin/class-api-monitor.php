@@ -13,7 +13,7 @@ if ( class_exists( 'Kidia_Mobile_CMS_API_Monitor', false ) ) {
 
 final class Kidia_Mobile_CMS_API_Monitor {
 
-	private const ROUTE = '/wp-json/kidia/v1/home-layout';
+	private const ROUTE = '/wp-json/woomobileapp/v1/home-layout';
 
 	/**
 	 * Tests the Home Layout API.

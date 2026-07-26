@@ -18,6 +18,65 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 	</div>
 
+	<?php if ( isset( $_GET['theme_notice'] ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Saved theme action completed successfully.', 'kidia-mobile-cms' ); ?></p></div>
+	<?php elseif ( isset( $_GET['theme_error'] ) ) : ?>
+		<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'The saved theme action could not be completed. Check the file and try again.', 'kidia-mobile-cms' ); ?></p></div>
+	<?php endif; ?>
+
+	<section class="kidia-saved-themes">
+		<div class="kidia-saved-themes__heading">
+			<div>
+				<span class="kidia-setup-eyebrow"><?php esc_html_e( 'Reusable designs', 'kidia-mobile-cms' ); ?></span>
+				<h2><?php esc_html_e( 'Saved themes', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Save every design setting and uploaded design image, or import a theme JSON file. Product and category images are never included.', 'kidia-mobile-cms' ); ?></p>
+			</div>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return window.confirm('<?php echo esc_js( __( 'Starting blank will replace your current design settings. Continue?', 'kidia-mobile-cms' ) ); ?>');">
+				<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+				<input type="hidden" name="theme_operation" value="blank">
+				<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+				<button type="submit" class="button"><?php esc_html_e( 'Start blank / manual', 'kidia-mobile-cms' ); ?></button>
+			</form>
+		</div>
+		<div class="kidia-saved-themes__tools">
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+				<input type="hidden" name="theme_operation" value="save">
+				<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+				<label><span><?php esc_html_e( 'Theme name', 'kidia-mobile-cms' ); ?></span><input type="text" name="theme_name" required maxlength="80" placeholder="<?php esc_attr_e( 'My storefront', 'kidia-mobile-cms' ); ?>"></label>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save current theme', 'kidia-mobile-cms' ); ?></button>
+			</form>
+			<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+				<input type="hidden" name="theme_operation" value="import">
+				<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+				<label><span><?php esc_html_e( 'Theme JSON file', 'kidia-mobile-cms' ); ?></span><input type="file" name="theme_file" accept="application/json,.json" required></label>
+				<button type="submit" class="button"><?php esc_html_e( 'Import theme', 'kidia-mobile-cms' ); ?></button>
+			</form>
+		</div>
+		<?php if ( $saved_themes ) : ?>
+			<div class="kidia-saved-themes__grid">
+				<?php foreach ( $saved_themes as $saved_theme_id => $saved_theme ) : ?>
+					<article>
+						<span class="dashicons dashicons-admin-appearance"></span>
+						<div><h3><?php echo esc_html( (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) ) ); ?></h3><p><?php echo ! empty( $saved_theme['created_at'] ) ? esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $saved_theme['created_at'] ) ) ) : ''; ?></p></div>
+						<div class="kidia-saved-themes__actions">
+							<?php foreach ( array( 'apply' => __( 'Apply', 'kidia-mobile-cms' ), 'export' => __( 'Export', 'kidia-mobile-cms' ), 'delete' => __( 'Delete', 'kidia-mobile-cms' ) ) as $theme_operation => $theme_label ) : ?>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" <?php if ( 'apply' === $theme_operation || 'delete' === $theme_operation ) : ?>onsubmit="return window.confirm('<?php echo esc_js( 'apply' === $theme_operation ? __( 'Applying this theme replaces your current changes and creates a new build. Continue?', 'kidia-mobile-cms' ) : __( 'Delete this saved theme?', 'kidia-mobile-cms' ) ); ?>');"<?php endif; ?>>
+									<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+									<input type="hidden" name="theme_operation" value="<?php echo esc_attr( $theme_operation ); ?>">
+									<input type="hidden" name="theme_id" value="<?php echo esc_attr( (string) $saved_theme_id ); ?>">
+									<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+									<button type="submit" class="button<?php echo 'apply' === $theme_operation ? ' button-primary' : ''; ?>"><?php echo esc_html( $theme_label ); ?></button>
+								</form>
+							<?php endforeach; ?>
+						</div>
+					</article>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+	</section>
+
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="kidia-setup-form">
 		<input type="hidden" name="action" value="kidia_mobile_apply_setup_wizard">
 		<?php wp_nonce_field( 'kidia_mobile_apply_setup_wizard', 'kidia_mobile_setup_nonce' ); ?>

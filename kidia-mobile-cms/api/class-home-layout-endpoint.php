@@ -61,7 +61,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 		}
 
 		register_rest_route(
-			'kidia/v1',
+			'woo-mobile/v1',
 			'/home-layout',
 			array(
 				'methods'             =>
@@ -99,7 +99,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 		);
 
 		register_rest_route(
-			'woo-mobile/v1',
+			'woomobileapp/v1',
 			'/home-layout',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -123,7 +123,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 		);
 
 		register_rest_route(
-			'woo-mobile/v1',
+			'woomobileapp/v1',
 			'/home-layout/preview',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,

@@ -29,8 +29,12 @@ for (const page of ["home", "category", "catalog", "product", "wishlist", "accou
   assert.match(service, new RegExp(`'${page}'\\s*=>`), `Quick Setup must expose an independent ${page} design step.`);
 }
 assert.match(service, /submitted\['page_themes'\]/, "Theme application must accept independent page selections.");
+assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
+assert.match(service, /strip_catalog_images/, "Saved themes must exclude product and category catalog images.");
+assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
 
 assert.match(admin, /admin_post_kidia_mobile_apply_setup_wizard/, "Wizard apply action must be registered.");
+assert.match(admin, /admin_post_kidia_mobile_manage_saved_theme/, "Saved theme actions must be registered.");
 assert.match(admin, /render_cms_shell/, "Unified shell must render on CMS screens.");
 assert.match(admin, /current_screen[^]*suppress_external_admin_notices/, "CMS pages must suppress notices emitted by WordPress and unrelated plugins.");
 assert.match(admin, /remove_all_actions\( 'admin_notices' \)/, "Third-party admin notices must be removed inside the CMS workspace.");
@@ -42,6 +46,8 @@ assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme 
 assert.match(wizardTemplate, /Choose %s page design/, "Every design step heading must clearly identify that it configures a page.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
+assert.match(wizardTemplate, /Save current theme/, "Setup & Themes must allow the current design to be saved.");
+assert.match(wizardTemplate, /Import theme/, "Setup & Themes must allow a saved theme file to be imported.");
 assert.match(shellTemplate, /kidia-cms-tabs/, "Shell must expose top navigation tabs.");
 assert.match(shellTemplate, /<\/nav>\s*<div class="kidia-cms-more">/, "More menu must sit outside the scrollable tab strip so its dropdown remains visible.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");

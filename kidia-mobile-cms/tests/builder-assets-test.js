@@ -243,7 +243,7 @@ function runHomeBuilderTest() {
   assert.match(adminThemeCss, /--kidia-settings-control-height:\s*35px;/, "Every Builder must use the shared 35px value-control height.");
   assert.match(adminThemeCss, /@media\s*\(max-width:\s*782px\)[\s\S]*?--kidia-settings-control-width:\s*100%;/, "Value controls must remain responsive on narrow screens.");
   assert.match(builderCss, /\.kidia-banner-image-preview,[\s\S]*?height:\s*150px;/, "Large media must be constrained to a compact preview.");
-  assert.match(adminPhp, /rest_url\(\s*'woo-mobile\/v1\/home-layout'\s*\)/, "Home Builder must load preview items from the same Home Layout API used by Flutter.");
+  assert.match(adminPhp, /rest_url\(\s*'woomobileapp\/v1\/home-layout'\s*\)/, "Home Builder must load preview items from the same Home Layout API used by Flutter.");
 
   const previewSelectors = [
     ".kidia-preview-header", ".kidia-preview-hero", ".kidia-preview-category-grid",
