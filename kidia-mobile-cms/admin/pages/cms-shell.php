@@ -25,3 +25,21 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 	<a class="kidia-cms-setup-link <?php echo 'setup' === $active_tab ? 'is-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>"><span class="dashicons dashicons-admin-customizer"></span><?php esc_html_e( 'Quick Setup & Themes', 'kidia-mobile-cms' ); ?></a>
 </div>
+<?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>
+	<div class="kidia-cms-billing-warning" role="alert">
+		<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+		<div>
+			<strong><?php esc_html_e( 'Your subscription payment is overdue.', 'kidia-mobile-cms' ); ?></strong>
+			<span>
+				<?php
+				printf(
+					/* translators: 1: remaining grace days, 2: grace end date. */
+					esc_html__( 'Woo Mobile CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'kidia-mobile-cms' ),
+					(int) ( $license_status['grace_days_remaining'] ?? 0 ),
+					esc_html( wp_date( get_option( 'date_format' ), (int) ( $license_status['grace_ends_at'] ?? time() ) ) )
+				);
+				?>
+			</span>
+		</div>
+	</div>
+<?php endif; ?>

@@ -651,6 +651,7 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
 			$active_tab = 'setup';
 		}
+		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
 

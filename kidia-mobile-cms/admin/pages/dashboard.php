@@ -219,15 +219,15 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 					<strong><?php echo $license_active ? esc_html__( 'Setup workspace ready', 'kidia-mobile-cms' ) : esc_html__( 'Setup unlocks after activation', 'kidia-mobile-cms' ); ?></strong>
 					<span><?php echo $license_active ? esc_html__( 'Open Setup & Themes to use the wizard or configure the app manually.', 'kidia-mobile-cms' ) : esc_html__( 'The default theme stays active while configuration tools are locked.', 'kidia-mobile-cms' ); ?></span>
 				</div>
+				<a
+					class="kidia-dashboard__primary-action <?php echo $license_active ? '' : 'is-disabled'; ?>"
+					href="<?php echo $license_active ? esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ) : '#'; ?>"
+					<?php echo $license_active ? '' : 'aria-disabled="true" tabindex="-1"'; ?>
+				>
+					<span><?php echo $setup_complete ? esc_html__( 'Open Setup & Themes', 'kidia-mobile-cms' ) : esc_html__( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?></span>
+					<span class="dashicons dashicons-arrow-left-alt" aria-hidden="true"></span>
+				</a>
 			</div>
-			<a
-				class="kidia-dashboard__primary-action <?php echo $license_active ? '' : 'is-disabled'; ?>"
-				href="<?php echo $license_active ? esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ) : '#'; ?>"
-				<?php echo $license_active ? '' : 'aria-disabled="true" tabindex="-1"'; ?>
-			>
-				<span><?php echo $setup_complete ? esc_html__( 'Open Setup & Themes', 'kidia-mobile-cms' ) : esc_html__( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?></span>
-				<span class="dashicons dashicons-arrow-left-alt" aria-hidden="true"></span>
-			</a>
 		</section>
 
 	</div>
@@ -470,7 +470,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-connect-prompt p,
-	.kidia-setup-overview span {
+	.kidia-setup-overview > div > span {
 		display: block;
 		margin: 0;
 		color: #60706c;
@@ -652,7 +652,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	.kidia-dashboard__card--license .kidia-dashboard__primary-action {
 		width: fit-content;
 		min-height: 34px;
-		margin-top: 10px;
+		margin-top: 0;
 		margin-inline-start: auto;
 		padding: 0 12px;
 		border-radius: 8px;
@@ -683,6 +683,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-dashboard__card--license .kidia-setup-overview {
+		flex-wrap: wrap;
 		gap: 9px;
 		margin: 12px 0 8px;
 		padding: 9px 10px;

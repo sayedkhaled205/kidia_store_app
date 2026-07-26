@@ -11,17 +11,18 @@ const bootstrap = read("includes", "class-kidia-mobile-cms.php");
 const manager = read("includes", "class-kidia-mobile-license-manager.php");
 const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
+const shell = read("admin", "pages", "cms-shell.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.36\.7/, "The plugin header must be version 1.36.7.");
+assert.match(plugin, /Version:\s+1\.36\.9/, "The plugin header must be version 1.36.9.");
 assert.match(
   plugin,
-  /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
+  /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*8IXNZ2WTf7edi80BI\/8VWqE5T1dK2nS7nHVIQRGb9BA=/,
   "The production Ed25519 public key must be bundled with the plugin."
 );
 assert.match(bootstrap, /class-kidia-mobile-license-manager\.php/, "The license manager must load during bootstrap.");
 assert.match(manager, /kidia_mobile_installation_id/, "Installation identity must persist independently of plugin updates.");
-assert.match(manager, /https:\/\/api\.woomobile\.app\/api\/v1\/licenses/, "The stable v1 licensing API must be used.");
+assert.match(manager, /https:\/\/woomobile-platform\.sayedkhaled205\.chatgpt\.site\/api\/v1\/licenses/, "The production WooMobile licensing API must be used.");
 for (const endpoint of ["/activate", "/verify"]) {
   assert.match(manager, new RegExp(`'${endpoint}'`), `The ${endpoint} endpoint must be integrated.`);
 }
@@ -30,6 +31,10 @@ assert.match(manager, /Authorization.*Bearer/s, "Verification must use the activ
 assert.match(manager, /sodium_crypto_sign_verify_detached/, "Signed license proofs must support local Ed25519 verification.");
 assert.match(manager, /valid_until/, "A server-defined offline grace window must be enforced.");
 assert.match(manager, /wp_schedule_event/, "License verification must be scheduled.");
+assert.match(manager, /'hourly'/, "Subscription recovery and suspension must be checked hourly.");
+assert.match(manager, /license_inactive/, "A definitive server suspension must invalidate the cached local state.");
+assert.match(shell, /payment is overdue/, "Past-due subscriptions must show a WordPress workspace warning.");
+assert.match(shell, /grace_days_remaining/, "The warning must include the remaining grace period.");
 assert.match(admin, /admin_post_kidia_mobile_activate_license/, "The activation handler must be registered.");
 assert.doesNotMatch(admin, /admin_post_kidia_mobile_deactivate_license/, "Customers must not be able to deactivate a site-bound license.");
 assert.match(admin, /enforce_license_gate/, "All configuration writes must be locked until license activation.");
@@ -52,6 +57,11 @@ assert.match(
   dashboard,
   /if \( \$license_active \)[\s\S]*else[\s\S]*class="kidia-license-form"/,
   "The activation form must only render while the license is inactive."
+);
+assert.match(
+  dashboard,
+  /class="kidia-setup-overview[\s\S]*class="kidia-dashboard__primary-action[\s\S]*<\/a>[\s\S]*<\/div>/,
+  "The Setup & Themes action must render inside the setup overview card."
 );
 assert.match(dashboard, /Setup & Themes/, "Overview must link to Setup & Themes.");
 assert.doesNotMatch(dashboard, /kidia_mobile_deactivate_license/, "The license UI must not expose deactivation.");
