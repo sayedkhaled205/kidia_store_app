@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 22;
+	private const VERSION = 23;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -30,6 +30,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 			self::field( 'compact_layout_json', __( 'Collapsed header element layout', 'kidia-mobile-cms' ), 'json', '' ),
 			self::field( 'collapse_on_scroll', __( 'Show collapsed header while page is scrolled', 'kidia-mobile-cms' ), 'checkbox', false ),
 			self::field( 'collapse_transition', __( 'Collapsed header transition', 'kidia-mobile-cms' ), 'select', 'smooth_compact', array( 'smooth_compact' => __( 'Wide Search Transition', 'kidia-mobile-cms' ), 'instant' => __( 'Instant (no animation)', 'kidia-mobile-cms' ), 'fade' => __( 'Fade in / out', 'kidia-mobile-cms' ), 'slide' => __( 'Slide up', 'kidia-mobile-cms' ), 'fade_slide' => __( 'Fade + slide', 'kidia-mobile-cms' ), 'scale' => __( 'Shrink / scale', 'kidia-mobile-cms' ) ) ),
+			self::field( 'compact_search_width_percent', __( 'Transition search width (%)', 'kidia-mobile-cms' ), 'number', 84, array(), 30, 100 ),
 			self::field( 'collapse_speed', __( 'Transition speed', 'kidia-mobile-cms' ), 'select', 'medium', array( 'fast' => __( 'Fast', 'kidia-mobile-cms' ), 'medium' => __( 'Medium', 'kidia-mobile-cms' ), 'slow' => __( 'Slow', 'kidia-mobile-cms' ) ) ),
 			self::field( 'compact_height', __( 'Collapsed header height', 'kidia-mobile-cms' ), 'number', 60, array(), 44, 100 ),
 			self::field( 'compact_style', __( 'Collapsed header shape', 'kidia-mobile-cms' ), 'select', 'standard', array( 'standard' => __( 'Full width', 'kidia-mobile-cms' ), 'floating' => __( 'Floating card', 'kidia-mobile-cms' ), 'pill' => __( 'Pill', 'kidia-mobile-cms' ), 'transparent' => __( 'Transparent', 'kidia-mobile-cms' ) ) ),
@@ -472,6 +473,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		}
 		if ( (int) ( $saved['version'] ?? 1 ) < 10 && 'sticky_search_cart' === (string) ( $saved['header']['settings']['collapse_preset'] ?? '' ) ) {
 			$default['header']['settings']['collapse_transition'] = 'smooth_compact';
+			$default['header']['settings']['compact_search_width_percent'] = 84;
 		}
 		$default['footer'] = $this->merge_component( $default['footer'], $saved['footer'] ?? array(), self::footer_fields() );
 		$saved_elements = array();

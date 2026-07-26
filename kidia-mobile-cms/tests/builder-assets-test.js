@@ -535,7 +535,7 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card \.kidia-card-actions\s*\{[^}]*margin-inline/, "Header and Footer must not shift the shared action strip away from the common physical left edge.");
 	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*min-height:28px;[^}]*padding-inline:8px;[^}]*font-size:12px;/, "Fixed Header and Footer transfer buttons must match the standard element action-button dimensions.");
 	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
-	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
+	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,\s*item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
 	for (const titleSetting of ["title_font_size", "title_font_weight", "title_alignment", "title_max_width_percent", "title_letter_spacing", "title_line_height", "title_transform"]) {
 		assert.match(cmsChromeSource, new RegExp(titleSetting), `Flutter mobile headers must consume ${titleSetting}.`);
 	}
@@ -554,7 +554,7 @@ function runMergeControlsContractTest() {
 	const wishlistScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "wishlist", "presentation", "wishlist_screen.dart"), "utf8");
 	const productScreenSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "product", "presentation", "product_detail_screen.dart"), "utf8");
 	assert.match(productScreenSource, /CmsPageScaffold\([\s\S]*backgroundColor:\s*_cmsColor\([\s\S]*layout\.string\('page_background_color', '#FFFFFF'\)[\s\S]*Colors\.white/, "Product Page must use its CMS page background color with white as the safe default for every uncovered gap.");
-	assert.match(pageStore, /private const VERSION = 22;/, "Repeatable Product Tabs and the current Wishlist/header controls must use the current layout schema.");
+	assert.match(pageStore, /private const VERSION = 23;/, "Repeatable Product Tabs and the current Wishlist/header controls must use the current layout schema.");
 	assert.match(pageStore, /'settings'\s*=>\s*array\( 'page_background_color' => '#FFFFFF' \)/, "Every page layout must default its page background to white.");
 	assert.match(pageStore, /saved_page_settings[\s\S]*page_background_color[\s\S]*sanitize_hex_color[\s\S]*#FFFFFF/, "Saved Product Page background colors must be sanitized and old layouts must stay white.");
 	assert.match(pageStore, /submitted\['settings'\]\['page_background_color'\][\s\S]*#FFFFFF/, "Saving Product Page must preserve the new page-level background control.");
@@ -1253,9 +1253,11 @@ function runCollapsedHeaderToggleTest() {
     <input name="layout[header][settings][compact_height]" value="56">
     <input name="layout[header][settings][background_color]" value="#FFFFFF">
     <input name="layout[header][settings][compact_background_color]" value="#F4F5F5">
-    <select name="layout[header][settings][collapse_transition]"><option value="fade_slide" selected>Fade + slide</option></select>
+    <select class="kidia-collapse-transition" name="layout[header][settings][collapse_transition]"><option value="fade_slide" selected>Fade + slide</option><option value="smooth_compact">Wide search</option></select>
+    <input name="layout[header][settings][compact_search_width_percent]" value="84">
     <select name="layout[header][settings][collapse_speed]"><option value="slow" selected>Slow</option></select>
 	<div class="kidia-chrome-composer--collapsed"><div class="kidia-chrome-layout"></div><div class="kidia-chrome-palette"></div><button class="kidia-chrome-reset"></button></div>
+    <div class="kidia-compact-search-transition"></div>
     <section class="kidia-collapsed-header-settings"></section>
   </section></form></body></html>`;
   const dom = new JSDOM(markup, { runScripts: "outside-only" });
@@ -1287,6 +1289,9 @@ function runCollapsedHeaderToggleTest() {
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
 	  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
 	  card.querySelector('[name$="[collapse_transition]"]').value = "smooth_compact";
+	  card.querySelector('[name$="[collapse_transition]"]').dispatchEvent(new window.Event("change", { bubbles: true }));
+	  assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Wide Search must hide the draggable collapsed-header composer.");
+	  assert.equal(card.querySelector(".kidia-compact-search-transition").hidden, false, "Wide Search must show one dedicated Search row.");
 	  const halfwayPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0.5 });
 	  assert.equal((halfwayPreview.match(/class="kidia-app-search"/g) || []).length, 1, "PatPat-style preview must move and resize the same Search instead of replacing it with a second Search.");
 	  assert.match(halfwayPreview, /kidia-app-header-morphing-search/, "The single Search must use the morphing layer.");
@@ -1301,7 +1306,7 @@ function runCollapsedHeaderToggleTest() {
 	    assert.equal(movingHeader.style.height, `${96 - (40 * progress)}px`, `Header height must shrink continuously at ${progress * 100}% scroll.`);
 	    assert.equal(movingHeader.querySelector(".kidia-app-header-transition-layer--regular").style.opacity, String(1 - progress), `The logo must fade out with the real ${progress * 100}% scroll ratio.`);
 	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.top, `${52 * (1 - progress)}px`, `The same Search must move progressively at ${progress * 100}% scroll.`);
-	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.width, `${100 - (16 * progress)}%`, `The same Search must shrink progressively at ${progress * 100}% scroll.`);
+	    assert.equal(movingHeader.querySelector(".kidia-app-header-morphing-search").style.width, `${100 - (16 * progress)}%`, `The same Search must shrink progressively to the configured 84% at ${progress * 100}% scroll.`);
 	    assert.equal(movingHeader.querySelectorAll(".kidia-app-header-fixed-actions .kidia-app-header-item--cart").length, 1, "The fixed cart action must never be duplicated.");
 	  });
 	  assert.match(readAsset("chrome-layout.css"), /is-transition-smooth_compact \.kidia-app-header-transition-layer,[\s\S]*transition:opacity var\(--collapse-duration,260ms\) linear,transform var\(--collapse-duration,260ms\)/, "Smooth compact search and logo movement must use the configured transition duration rather than jump instantly.");
@@ -1309,8 +1314,8 @@ function runCollapsedHeaderToggleTest() {
   toggle.checked = false;
 	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
-	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Turning Off again must never remove the persistent Collapsed Header card.");
-	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed .kidia-chrome-layout").hidden, false, "Turning Off again must keep Row and Available Items visible and hide only the lower appearance settings.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Wide Search keeps the legacy composer hidden while turning the feature Off.");
+	assert.equal(card.querySelector(".kidia-compact-search-transition").classList.contains("is-disabled"), true, "Turning Wide Search Off must gray out its single Search row.");
 	assert.equal(new window.FormData(window.document.querySelector("form")).get('layout[header][settings][compact_layout_json]'), collapsed, "Turning Off must preserve the complete collapsed layout so it returns unchanged when enabled again.");
 	  console.log("Collapsed header: persistent On/Off toggle and scroll-accurate preview passed.");
 }
@@ -1502,7 +1507,7 @@ function runUniformChromeSettingsContractTest() {
 	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-field\s*\{[^}]*align-items:\s*flex-start;[^}]*direction:\s*rtl;/, "Every Header field must start from the right like the Home element grids.");
 	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="footer"\][^{]*\{[^}]*direction:\s*rtl/, "The already-correct Footer field order must remain untouched.");
 	assert.match(styles, /\.kidia-fixed-chrome-toggle\s*\{[^}]*width:\s*88px;/, "The fixed card On/Off control must be styled by the shared component rather than Home-only CSS.");
-	assert.match(chrome, /closest\("\.kidia-fixed-chrome-expand"\)[\s\S]*card\.classList\.toggle\("is-open",opening\)/, "The shared component must own Header/Footer expand behavior on every page.");
+	assert.match(chrome, /closest\("\.kidia-fixed-chrome-expand"\)[\s\S]*card\.classList\.toggle\("is-open",\s*opening\)/, "The shared component must own Header/Footer expand behavior on every page.");
 	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
 	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
 	assert.match(page, /button && !button\.closest\("\.kidia-fixed-chrome-card"\)/, "Page builders must defer fixed-card expansion to the shared component.");
@@ -1514,7 +1519,7 @@ function runUniformChromeSettingsContractTest() {
 	assert.match(styles, /data-setting="logo_url"[^}]+\.kidia-page-media-url\s*\{\s*display:none;/, "The internal Logo URL must not consume a visible settings column.");
 	assert.match(styles, /kidia-chrome-item-setting--logo \.kidia-page-field input,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\);[\s\S]*?max-width:var\(--kidia-settings-control-width\)/, "Logo value controls must use the shared standard field width.");
 	assert.match(styles, /data-setting="search_placeholder"[^}]*\.kidia-page-text-control,[\s\S]*?width:min\(100%,var\(--kidia-settings-control-width\)\)/, "Search placeholder must use the shared standard field width.");
-	assert.match(chrome, /supported=\["home","categories","search","cart","wishlist","account","orders","share","like","add_to_cart"\]/, "The live preview must support the same footer functions on every page.");
+	assert.match(chrome, /supported\s*=\s*\[\s*"home",\s*"categories",\s*"search",\s*"cart",\s*"wishlist",\s*"account",\s*"orders",\s*"share",\s*"like",\s*"add_to_cart",?\s*\]/, "The live preview must support the same footer functions on every page.");
 	console.log("Header/Footer settings and functions are uniform across all six page builders.");
 }
 
@@ -1535,15 +1540,15 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_x'.*'Horizontal position'.*-80, 80"), `${item} must expose horizontal positioning.`);
 		assert.match(store, new RegExp("self::field\\( '" + item + "_offset_y'.*'Vertical position'.*-80, 80"), `${item} must expose vertical positioning.`);
 	}
-	assert.match(chrome, /positionStyle\(card,item\)[\s\S]*transform:translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The exact HTML preview must apply both header offsets.");
+	assert.match(chrome, /positionStyle\(card,\s*item\)[\s\S]*transform:translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The exact HTML preview must apply both header offsets.");
 	assert.doesNotMatch(store, /self::field\( 'header_position', __\( 'Header position'/, "The redundant single-row Header position field must stay removed.");
 	assert.match(store, /self::field\( 'row_1_height', __\( 'First row height'[\s\S]*self::field\( 'row_1_position', __\( 'First row position'[\s\S]*self::field\( 'row_2_height', __\( 'Second row height'[\s\S]*self::field\( 'row_2_position', __\( 'Second row position'[\s\S]*self::field\( 'row_merge', __\( 'Merge rows'/, "Multi-row Header height, position, and merge controls must remain available.");
-	assert.match(chrome, /function syncHeaderRowFields[\s\S]*single=\["height"\][\s\S]*multiple=\["row_1_height","row_1_position","row_2_height","row_2_position","row_merge"\]/, "Header controls must switch immediately between the single-row and multi-row settings.");
-	assert.match(chrome, /function visibleHeaderHeight[\s\S]*count<=1[\s\S]*effectiveRowGap[\s\S]*rowHeight/, "The exact preview must derive a multi-row Header height from its independent row settings.");
+	assert.match(chrome, /function syncHeaderRowFields[\s\S]*single\s*=\s*\[\s*"height",?\s*\][\s\S]*multiple\s*=\s*\[\s*"row_1_height",\s*"row_1_position",\s*"row_2_height",\s*"row_2_position",\s*"row_merge",?\s*\]/, "Header controls must switch immediately between the single-row and multi-row settings.");
+	assert.match(chrome, /function visibleHeaderHeight[\s\S]*count\s*<=\s*1[\s\S]*effectiveRowGap[\s\S]*rowHeight/, "The exact preview must derive a multi-row Header height from its independent row settings.");
 	assert.match(chrome, /function headerRows[\s\S]*rowPosition[\s\S]*align-items:[\s\S]*rowHeight/, "The exact Header preview must position each row independently inside its own height.");
-	assert.match(chrome, /searchTop=interpolate\([\s\S]*itemTop\(card,regularLayout,"search_bar"\)/, "The smooth Header transition must retain the selected row position.");
+	assert.match(chrome, /searchTop\s*=\s*interpolate\([\s\S]*itemTop\(\s*card,\s*regularLayout,\s*"search_bar",?\s*\)/, "The smooth Header transition must retain the selected row position.");
 	assert.match(flutter, /_positionedItem[\s\S]*Transform\.translate[\s\S]*_offset_x[\s\S]*_offset_y/, "The Flutter app and preview must apply both header offsets.");
-	assert.match(store, /VERSION = 22[\s\S]*saved\['version'\][\s\S]*cart_offset_y[\s\S]*orders_offset_y[\s\S]*current_offset - 2/, "Existing Cart and Orders icons must migrate upward by two pixels exactly once.");
+	assert.match(store, /VERSION = 23[\s\S]*saved\['version'\][\s\S]*cart_offset_y[\s\S]*orders_offset_y[\s\S]*current_offset - 2/, "Existing Cart and Orders icons must migrate upward by two pixels exactly once.");
 	assert.match(flutter, /_regularHeaderHeight[\s\S]*row_1_height[\s\S]*row_2_height[\s\S]*row_merge/, "Flutter must calculate the same automatic multi-row Header height.");
 	assert.match(flutter, /_positionedHeaderRow[\s\S]*header_position[\s\S]*row_1_position[\s\S]*row_2_position[\s\S]*Alignment\.topCenter[\s\S]*Alignment\.bottomCenter/, "Flutter must position every Header row independently.");
 	assert.match(flutter, /fadingRegular = _rowsWithoutItems\([\s\S]*preserveEmptyRows: true/, "The scroll transition must keep the logo in its original Header row.");

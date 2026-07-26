@@ -629,11 +629,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       compactRows,
       removed,
     );
-    final double compactSearchFraction = _itemWidthFraction(
-      compactRows,
-      'search_bar',
-      fallback: .84,
-    );
+    final double compactSearchFraction =
+        _header
+            .number('compact_search_width_percent', 84)
+            .clamp(30, 100)
+            .toDouble() /
+        100;
     final double regularSearchFraction = _itemWidthFraction(
       regularRows,
       'search_bar',
