@@ -13,7 +13,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.36\.6/, "The plugin header must be version 1.36.6.");
+assert.match(plugin, /Version:\s+1\.36\.7/, "The plugin header must be version 1.36.7.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -43,6 +43,16 @@ assert.match(admin, /plugin_installed[\s\S]*=> '1'/, "Plugin-originated connecti
 assert.match(admin, /https:\/\/woomobile\.app\/connect/, "The plugin connection journey must start on WooMobile.");
 assert.match(admin, /Kidia_Mobile_License_Manager\(\) \)->is_active/, "Premium setup application must be license-gated.");
 assert.match(dashboard, /Activate license/, "Overview must expose license activation.");
+assert.doesNotMatch(
+  dashboard,
+  /Connect your store to WooMobile|Purchase and connect website/,
+  "The license card must not repeat the external purchase and connection prompt."
+);
+assert.match(
+  dashboard,
+  /if \( \$license_active \)[\s\S]*else[\s\S]*class="kidia-license-form"/,
+  "The activation form must only render while the license is inactive."
+);
 assert.match(dashboard, /Setup & Themes/, "Overview must link to Setup & Themes.");
 assert.doesNotMatch(dashboard, /kidia_mobile_deactivate_license/, "The license UI must not expose deactivation.");
 assert.match(dashboard, /Start Setup Wizard/, "Successful activation must offer the setup wizard.");
