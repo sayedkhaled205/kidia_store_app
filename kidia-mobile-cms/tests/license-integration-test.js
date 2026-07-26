@@ -14,15 +14,15 @@ const dashboard = read("admin", "pages", "dashboard.php");
 const shell = read("admin", "pages", "cms-shell.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.37\.1/, "The plugin header must be version 1.37.1.");
+assert.match(plugin, /Version:\s+1\.37\.2/, "The plugin header must be version 1.37.2.");
 assert.match(
   plugin,
-  /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*8IXNZ2WTf7edi80BI\/8VWqE5T1dK2nS7nHVIQRGb9BA=/,
+  /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
   "The production Ed25519 public key must be bundled with the plugin."
 );
 assert.match(bootstrap, /class-kidia-mobile-license-manager\.php/, "The license manager must load during bootstrap.");
 assert.match(manager, /kidia_mobile_installation_id/, "Installation identity must persist independently of plugin updates.");
-assert.match(manager, /https:\/\/woomobile-platform\.sayedkhaled205\.chatgpt\.site\/api\/v1\/licenses/, "The production WooMobile licensing API must be used.");
+assert.match(manager, /https:\/\/api\.woomobile\.app\/api\/v1\/licenses/, "The live cPanel WooMobile licensing API must be used.");
 for (const endpoint of ["/activate", "/verify"]) {
   assert.match(manager, new RegExp(`'${endpoint}'`), `The ${endpoint} endpoint must be integrated.`);
 }
