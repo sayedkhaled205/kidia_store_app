@@ -269,19 +269,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		</style>
 	<?php endif; ?>
 
-	<div class="notice notice-success inline">
-
-		<p>
-			<?php
-			esc_html_e(
-				'Kidia Mobile CMS initialized successfully.',
-				'kidia-mobile-cms'
-			);
-			?>
-		</p>
-
-	</div>
-
 </div>
 
 <style>
@@ -292,6 +279,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	.kidia-dashboard__grid {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
+		justify-items: center;
 		gap: 24px;
 		margin: 24px 0;
 	}
@@ -583,45 +571,87 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-dashboard__card--license {
-		padding: 18px;
-		border-radius: 14px;
+		box-sizing: border-box;
+		width: min(100%, 780px);
+		padding: 16px;
+		border-radius: 16px;
 	}
 
 	.kidia-dashboard__card--license .kidia-dashboard__card-header {
-		gap: 11px;
-		margin-bottom: 14px;
+		gap: 10px;
+		margin-bottom: 12px;
 	}
 
 	.kidia-dashboard__card--license .kidia-dashboard__card-icon {
-		flex-basis: 40px;
-		width: 40px;
-		height: 40px;
-		border-radius: 11px;
-		font-size: 20px;
+		flex-basis: 36px;
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		font-size: 18px;
 	}
 
 	.kidia-dashboard__card--license h2 {
-		font-size: 20px;
+		font-size: 18px;
 	}
 
 	.kidia-dashboard__card--license .kidia-dashboard__card-header p {
-		font-size: 13px;
-		line-height: 1.4;
+		font-size: 12px;
+		line-height: 1.35;
+	}
+
+	.kidia-dashboard__card--license .kidia-license-summary {
+		display: block;
+		overflow: visible;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+	}
+
+	.kidia-dashboard__card--license .kidia-license-summary tbody {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 8px;
+	}
+
+	.kidia-dashboard__card--license .kidia-license-summary tr {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		gap: 4px;
+		padding: 9px 10px;
+		border: 1px solid #e0ebe7;
+		border-radius: 10px;
+		background: #f8fbfa;
 	}
 
 	.kidia-dashboard__card--license .kidia-license-summary th,
 	.kidia-dashboard__card--license .kidia-license-summary td {
-		padding: 9px 12px;
+		display: block;
+		width: auto;
+		padding: 0;
+		border: 0;
+		background: transparent;
 	}
 
 	.kidia-dashboard__card--license .kidia-license-summary th {
-		width: 140px;
+		color: #6b7b77;
+		font-size: 11px;
+		font-weight: 600;
+	}
+
+	.kidia-dashboard__card--license .kidia-license-summary td {
+		overflow: hidden;
+		color: #173f36;
+		font-size: 12px;
+		font-weight: 700;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.kidia-dashboard__card--license .kidia-connect-prompt {
 		gap: 10px;
 		margin-top: 12px;
-		padding: 10px 12px;
+		padding: 9px 10px;
 		border-radius: 10px;
 	}
 
@@ -633,21 +663,55 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-dashboard__card--license .kidia-dashboard__primary-action {
-		min-height: 40px;
+		width: fit-content;
+		min-height: 34px;
 		margin-top: 10px;
-		padding: 0 14px;
-		border-radius: 9px;
-		font-size: 13px;
+		margin-inline-start: auto;
+		padding: 0 12px;
+		border-radius: 8px;
+		font-size: 12px;
 	}
 
 	.kidia-dashboard__card--license .kidia-license-form {
+		grid-template-columns: minmax(0, 1fr) auto;
 		gap: 8px;
 		margin-top: 12px;
 	}
 
+	.kidia-dashboard__card--license .kidia-license-form label {
+		grid-column: 1 / -1;
+		margin: 0;
+		font-size: 12px;
+	}
+
 	.kidia-dashboard__card--license .kidia-license-form input,
 	.kidia-dashboard__card--license .kidia-license-form .button-primary {
-		min-height: 38px;
+		min-height: 34px;
+	}
+
+	.kidia-dashboard__card--license .kidia-license-form .button-primary {
+		padding: 0 14px;
+		border-radius: 8px;
+		font-size: 12px;
+	}
+
+	.kidia-dashboard__card--license .kidia-setup-overview {
+		gap: 9px;
+		margin: 12px 0 8px;
+		padding: 9px 10px;
+		border-radius: 10px;
+	}
+
+	.kidia-dashboard__card--license .kidia-setup-overview > .dashicons {
+		flex-basis: 31px;
+		width: 31px;
+		height: 31px;
+		border-radius: 8px;
+	}
+
+	.kidia-dashboard__card--license .kidia-status {
+		padding: 3px 8px;
+		font-size: 11px;
 	}
 
 	.kidia-license-actions {
@@ -697,6 +761,27 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		.kidia-customer-journey__header {
 			align-items: flex-start;
 			flex-direction: column;
+		}
+
+		.kidia-dashboard__card--license .kidia-license-summary tbody {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 520px) {
+		.kidia-dashboard__card--license {
+			padding: 13px;
+		}
+
+		.kidia-dashboard__card--license .kidia-license-summary tbody,
+		.kidia-dashboard__card--license .kidia-license-form {
+			grid-template-columns: 1fr;
+		}
+
+		.kidia-dashboard__card--license .kidia-dashboard__primary-action,
+		.kidia-dashboard__card--license .kidia-license-form .button-primary {
+			width: 100%;
+			justify-content: center;
 		}
 	}
 </style>
