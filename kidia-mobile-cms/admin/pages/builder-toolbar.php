@@ -3,7 +3,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$kidia_toolbar_title = isset( $kidia_toolbar_title ) ? (string) $kidia_toolbar_title : '';
 $kidia_toolbar_save_label = isset( $kidia_toolbar_save_label ) ? (string) $kidia_toolbar_save_label : __( 'Save Layout', 'kidia-mobile-cms' );
 $kidia_toolbar_show_add = ! empty( $kidia_toolbar_show_add );
 $kidia_toolbar_restore_product = ! empty( $kidia_toolbar_restore_product );
@@ -17,7 +16,6 @@ $kidia_toolbar_page_enabled = ! isset( $kidia_toolbar_page_enabled ) || ! empty(
 		<?php endif; ?>
 		<button type="button" class="button" id="kidia-collapse-all"><?php esc_html_e( 'Collapse All', 'kidia-mobile-cms' ); ?></button>
 		<button type="button" class="button" id="kidia-expand-all"><?php esc_html_e( 'Expand All', 'kidia-mobile-cms' ); ?></button>
-		<?php if ( '' !== $kidia_toolbar_title ) : ?><strong class="kidia-builder-toolbar__context"><?php echo esc_html( $kidia_toolbar_title ); ?></strong><?php endif; ?>
 	</div>
 	<div class="kidia-builder-toolbar__save">
 		<?php if ( $kidia_toolbar_page_toggle ) : ?>

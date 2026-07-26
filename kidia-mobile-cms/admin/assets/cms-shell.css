@@ -97,13 +97,65 @@ body[class*="kidia-mobile"] #wpbody-content{
 	background:#fff;
 	color:#33443f;
 	font-weight:700;
+	white-space:nowrap;
 }
-.kidia-page-availability>input{
+.kidia-page-availability>input[type="hidden"]{
 	position:absolute!important;
 	width:1px!important;
 	height:1px!important;
 	opacity:0!important;
 	pointer-events:none;
+}
+.kidia-page-availability>input[type="checkbox"]{
+	position:relative;
+	width:42px;
+	height:22px;
+	flex:0 0 42px;
+	margin:0;
+	padding:0!important;
+	overflow:hidden;
+	border:0;
+	border-radius:99px;
+	background:#a7aaad!important;
+	background-image:none!important;
+	appearance:none;
+	cursor:pointer;
+	box-shadow:none!important;
+}
+.kidia-page-availability>input[type="checkbox"]::before{
+	content:"";
+	position:absolute;
+	top:3px;
+	left:3px;
+	width:16px;
+	height:16px;
+	margin:0;
+	border-radius:50%;
+	background:#fff;
+	transition:transform .18s;
+}
+.kidia-page-availability>input[type="checkbox"]::after{
+	content:none!important;
+	display:none!important;
+}
+.kidia-page-availability>input[type="checkbox"]:checked{
+	background:#2f806e!important;
+}
+.kidia-page-availability>input[type="checkbox"]:checked::before{
+	transform:translateX(20px);
+}
+.kidia-page-availability>.kidia-toggle-state{
+	min-width:20px;
+	font-size:0;
+}
+.kidia-page-availability>.kidia-toggle-state::before{
+	content:"Off";
+	color:#646970;
+	font-size:12px;
+}
+.kidia-page-availability>input[type="checkbox"]:checked+.kidia-toggle-state::before{
+	content:"On";
+	color:#236b59;
 }
 
 @media(max-width:782px){

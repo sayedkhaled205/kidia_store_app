@@ -45,6 +45,8 @@ assert.match(toolbar, /kidia-collapse-all[\s\S]*kidia-expand-all/, "The shared t
 [home, page, category].forEach((template) => assert.match(template, /admin\/pages\/builder-toolbar\.php/, "Every builder must render the same toolbar template."));
 assert.match(toolbar, /name="layout\[enabled\]"/, "Every shared page builder toolbar must expose a page-level On/Off value.");
 assert.match(toolbar, /kidia-page-availability/, "The page-level On/Off control must have one shared visual contract.");
+assert.doesNotMatch(toolbar, /kidia-builder-toolbar__context/, "The shared toolbar must not repeat the current page title.");
+assert.match(css, /kidia-builder-toolbar__actions,.kidia-builder-toolbar__save\)[^{]*\{[^}]*flex-wrap:\s*nowrap;/, "Desktop builder toolbar controls must stay on one row.");
 
 console.log("Shared builder toolbar and Wishlist Products settings layout: ok");
 
