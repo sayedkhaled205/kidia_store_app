@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_License_Manager {
 
-	private const API_BASE_URL       = 'https://api.woomobile.app/api/v1/licenses';
+	private const API_BASE_URL       = 'https://woomobile-platform.sayedkhaled205.chatgpt.site/api/v1/licenses';
 	private const STATE_OPTION       = 'kidia_mobile_license_state';
 	private const INSTALLATION_OPTION = 'kidia_mobile_installation_id';
 	private const CRON_HOOK          = 'kidia_mobile_verify_license';
