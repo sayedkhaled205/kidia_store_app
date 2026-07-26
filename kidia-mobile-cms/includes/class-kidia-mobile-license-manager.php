@@ -13,7 +13,7 @@ final class Kidia_Mobile_License_Manager {
 	private const STATE_OPTION       = 'kidia_mobile_license_state';
 	private const INSTALLATION_OPTION = 'kidia_mobile_installation_id';
 	private const CRON_HOOK          = 'kidia_mobile_verify_license';
-	private const VERIFY_INTERVAL    = 43200;
+	private const VERIFY_INTERVAL    = 3600;
 	private const REQUEST_TIMEOUT    = 20;
 
 	/**
@@ -22,8 +22,14 @@ final class Kidia_Mobile_License_Manager {
 	public function register(): void {
 		add_action( self::CRON_HOOK, array( $this, 'scheduled_verify' ) );
 
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'twicedaily', self::CRON_HOOK );
+		$scheduled = wp_get_scheduled_event( self::CRON_HOOK );
+		if ( $scheduled && 'hourly' !== $scheduled->schedule ) {
+			wp_clear_scheduled_hook( self::CRON_HOOK );
+			$scheduled = false;
+		}
+
+		if ( ! $scheduled ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
 		}
 	}
 
@@ -105,6 +111,14 @@ final class Kidia_Mobile_License_Manager {
 
 		if ( is_wp_error( $response ) ) {
 			$state['last_error'] = $response->get_error_message();
+			if ( in_array( $response->get_error_code(), array( 'license_inactive', 'license_expired', 'invalid_token', 'activation_inactive' ), true ) ) {
+				$payload = is_array( $state['payload'] ?? null ) ? $state['payload'] : array();
+				$license = is_array( $payload['license'] ?? null ) ? $payload['license'] : array();
+				$license['status'] = 'inactive';
+				$payload['license'] = $license;
+				$state['payload'] = $payload;
+				$state['last_verified_at'] = time();
+			}
 			$this->save_state( $state );
 			return $response;
 		}
@@ -134,6 +148,7 @@ final class Kidia_Mobile_License_Manager {
 		$state      = $this->state();
 		$payload    = is_array( $state['payload'] ?? null ) ? $state['payload'] : array();
 		$license    = is_array( $payload['license'] ?? null ) ? $payload['license'] : array();
+		$entitlements = is_array( $license['entitlements'] ?? null ) ? $license['entitlements'] : array();
 		$valid_until = isset( $payload['valid_until'] ) ? strtotime( (string) $payload['valid_until'] ) : false;
 		$expires_at  = isset( $license['expires_at'] ) && null !== $license['expires_at']
 			? strtotime( (string) $license['expires_at'] )
@@ -143,6 +158,13 @@ final class Kidia_Mobile_License_Manager {
 			&& false !== $valid_until
 			&& $valid_until >= time()
 			&& ( false === $expires_at || $expires_at >= time() );
+		$payment_status = sanitize_key( (string) ( $entitlements['payment_status'] ?? 'paid' ) );
+		$grace_ends_at  = ! empty( $entitlements['grace_ends_at'] )
+			? strtotime( (string) $entitlements['grace_ends_at'] )
+			: false;
+		$grace_days_remaining = false === $grace_ends_at
+			? 0
+			: max( 0, (int) ceil( ( $grace_ends_at - time() ) / DAY_IN_SECONDS ) );
 
 		return array(
 			'active'           => $active,
@@ -152,7 +174,10 @@ final class Kidia_Mobile_License_Manager {
 			'valid_until'      => false === $valid_until ? null : $valid_until,
 			'last_verified_at' => absint( $state['last_verified_at'] ?? 0 ),
 			'last_error'       => sanitize_text_field( (string) ( $state['last_error'] ?? '' ) ),
-			'entitlements'     => is_array( $license['entitlements'] ?? null ) ? $license['entitlements'] : array(),
+			'entitlements'     => $entitlements,
+			'payment_status'   => $payment_status,
+			'grace_ends_at'    => false === $grace_ends_at ? null : $grace_ends_at,
+			'grace_days_remaining' => $grace_days_remaining,
 			'signature_configured' => defined( 'KIDIA_MOBILE_LICENSE_PUBLIC_KEY' ) && '' !== (string) KIDIA_MOBILE_LICENSE_PUBLIC_KEY,
 		);
 	}
@@ -225,7 +250,10 @@ final class Kidia_Mobile_License_Manager {
 			$message = is_array( $data ) && isset( $data['error']['message'] )
 				? sanitize_text_field( (string) $data['error']['message'] )
 				: __( 'The license request was rejected.', 'kidia-mobile-cms' );
-			return new WP_Error( 'license_request_failed', $message );
+			$code = is_array( $data ) && isset( $data['error']['code'] )
+				? sanitize_key( (string) $data['error']['code'] )
+				: 'license_request_failed';
+			return new WP_Error( $code ?: 'license_request_failed', $message );
 		}
 
 		return $data;

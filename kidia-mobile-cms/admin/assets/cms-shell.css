@@ -25,6 +25,32 @@ body[class*="kidia-mobile"] #wpfooter{display:none}
 	}
 }
 
+.kidia-cms-billing-warning{
+	display:flex;
+	align-items:flex-start;
+	gap:10px;
+	margin:14px 22px 0;
+	padding:12px 14px;
+	border:1px solid #f0c36d;
+	border-radius:10px;
+	background:#fff8e5;
+	color:#5f4308;
+}
+.kidia-cms-billing-warning>.dashicons{
+	flex:0 0 auto;
+	color:#b7791f;
+}
+.kidia-cms-billing-warning div{
+	display:grid;
+	gap:2px;
+}
+.kidia-cms-billing-warning strong{
+	font-size:14px;
+}
+.kidia-cms-billing-warning span{
+	line-height:1.45;
+}
+
 /*
  * Desktop builders are one fixed viewport. The CMS navigation, page toolbar,
  * and phone never participate in document scrolling; only the card rail does.
