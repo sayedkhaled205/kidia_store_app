@@ -199,6 +199,28 @@ void main() {
     await _disposeApp(tester, router);
   });
 
+  testWidgets('disabled pages disappear from app navigation', (tester) async {
+    final GoRouter router = createAppRouter();
+    final CmsPageLayout wishlistLayout = _navigationLayout(
+      'wishlist',
+      height: 64,
+      iconSize: 24,
+      enabled: false,
+    );
+
+    await _pumpStartedApp(
+      tester,
+      router: router,
+      wishlistLayout: wishlistLayout,
+    );
+
+    expect(find.byKey(const Key('cms-bottom-nav-wishlist')), findsNothing);
+    expect(find.text('المفضلة'), findsNothing);
+    expect(find.byKey(const Key('cms-bottom-nav-home')), findsOneWidget);
+
+    await _disposeApp(tester, router);
+  });
+
   testWidgets('wishlist keeps its enabled navigation footer visible', (
     tester,
   ) async {
@@ -341,6 +363,7 @@ CmsPageLayout _navigationLayout(
   String page, {
   required double height,
   required double iconSize,
+  bool enabled = true,
   double iconLabelGap = 3,
   List<String> items = const <String>[
     'home',
@@ -352,6 +375,7 @@ CmsPageLayout _navigationLayout(
   final CmsPageLayout fallback = CmsPageLayout.fallback(page);
   return CmsPageLayout(
     page: page,
+    enabled: enabled,
     header: fallback.header,
     elements: fallback.elements,
     footer: CmsPageComponent(

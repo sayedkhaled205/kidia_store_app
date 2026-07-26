@@ -170,6 +170,8 @@ foreach ( $library_options as $type => $option_name ) {
 		$kidia_toolbar_save_label = __( 'Save Home Layout', 'kidia-mobile-cms' );
 		$kidia_toolbar_show_add = true;
 		$kidia_toolbar_restore_product = false;
+		$kidia_toolbar_page_toggle = true;
+		$kidia_toolbar_page_enabled = ! empty( $home_chrome['enabled'] );
 		include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 		?>
 		<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>

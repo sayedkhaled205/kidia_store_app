@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Page_Layout_Store {
 	private const OPTION_PREFIX = 'kidia_mobile_page_layout_';
-	private const VERSION = 23;
+	private const VERSION = 24;
 
 	/** @return array<string,string> */
 	public static function pages(): array {
@@ -445,6 +445,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		if ( ! is_array( $saved ) || empty( $saved ) ) {
 			return $default;
 		}
+		$default['enabled'] = ! isset( $saved['enabled'] ) || ! empty( $saved['enabled'] );
 		$saved_page_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
 		if ( 'wishlist' === $page ) {
@@ -578,6 +579,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$layout = array(
 			'version' => self::VERSION,
 			'page' => $page,
+			'enabled' => ! isset( $submitted['enabled'] ) || ! empty( $submitted['enabled'] ),
 			'updated_at' => gmdate( 'c' ),
 			'settings' => $page_settings,
 			'header' => $this->merge_component( $current['header'], $submitted['header'] ?? array(), self::header_fields() ),
@@ -704,6 +706,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$layout = array(
 			'version' => self::VERSION,
 			'page' => $page,
+			'enabled' => true,
 			'updated_at' => '',
 			'settings' => array( 'page_background_color' => '#FFFFFF' ),
 			'header' => array( 'id' => 'header', 'type' => 'app_header', 'locked' => true, 'enabled' => true, 'settings' => $header_settings ),

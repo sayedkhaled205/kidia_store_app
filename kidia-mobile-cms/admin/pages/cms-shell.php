@@ -2,29 +2,41 @@
 /** Unified CMS navigation shell. */
 defined( 'ABSPATH' ) || exit;
 ?>
-<div class="kidia-cms-shell" data-kidia-cms-shell>
+<aside class="kidia-cms-sidebar" data-kidia-cms-sidebar>
 	<div class="kidia-cms-shell__brand">
 		<span class="dashicons dashicons-smartphone"></span>
 		<div><strong><?php esc_html_e( 'Woo Mobile CMS', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'kidia-mobile-cms' ); ?></small></div>
 	</div>
-	<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application screens', 'kidia-mobile-cms' ); ?>">
-		<?php foreach ( $tabs as $key => $tab ) : ?>
-			<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>">
-				<span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span>
-				<span><?php echo esc_html( $tab['label'] ); ?></span>
+	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woo Mobile CMS sections', 'kidia-mobile-cms' ); ?>">
+		<?php foreach ( $sidebar_items as $key => $item ) : ?>
+			<a href="<?php echo esc_url( $item['url'] ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
+				<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
+				<span><?php echo esc_html( $item['label'] ); ?></span>
 			</a>
 		<?php endforeach; ?>
 	</nav>
-	<div class="kidia-cms-more">
-		<button type="button" aria-expanded="false"><span class="dashicons dashicons-screenoptions"></span><span><?php esc_html_e( 'More', 'kidia-mobile-cms' ); ?></span><span class="dashicons dashicons-arrow-down-alt2"></span></button>
-		<div class="kidia-cms-more__menu">
-			<?php foreach ( $more_tabs as $key => $tab ) : ?>
-				<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>"><span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span><?php echo esc_html( $tab['label'] ); ?></a>
+</aside>
+<?php if ( $show_page_tabs ) : ?>
+	<div class="kidia-cms-shell" data-kidia-cms-shell>
+		<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application pages', 'kidia-mobile-cms' ); ?>">
+			<?php foreach ( $tabs as $key => $tab ) : ?>
+				<?php if ( 'overview' === $key ) { continue; } ?>
+				<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>">
+					<span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span>
+					<span><?php echo esc_html( $tab['label'] ); ?></span>
+				</a>
 			<?php endforeach; ?>
+		</nav>
+		<div class="kidia-cms-more">
+			<button type="button" aria-expanded="false"><span class="dashicons dashicons-screenoptions"></span><span><?php esc_html_e( 'More', 'kidia-mobile-cms' ); ?></span><span class="dashicons dashicons-arrow-down-alt2"></span></button>
+			<div class="kidia-cms-more__menu">
+				<?php foreach ( $more_tabs as $key => $tab ) : ?>
+					<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>"><span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span><?php echo esc_html( $tab['label'] ); ?></a>
+				<?php endforeach; ?>
+			</div>
 		</div>
 	</div>
-	<a class="kidia-cms-setup-link <?php echo 'setup' === $active_tab ? 'is-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>"><span class="dashicons dashicons-admin-customizer"></span><?php esc_html_e( 'Quick Setup & Themes', 'kidia-mobile-cms' ); ?></a>
-</div>
+<?php endif; ?>
 <?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>
 	<div class="kidia-cms-billing-warning" role="alert">
 		<span class="dashicons dashicons-warning" aria-hidden="true"></span>

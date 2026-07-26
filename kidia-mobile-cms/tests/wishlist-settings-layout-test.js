@@ -43,6 +43,8 @@ assert.match(css, /:is\(\[data-element="product_grid"\], \[data-element="wishlis
 
 assert.match(toolbar, /kidia-collapse-all[\s\S]*kidia-expand-all/, "The shared toolbar must provide Collapse All and Expand All.");
 [home, page, category].forEach((template) => assert.match(template, /admin\/pages\/builder-toolbar\.php/, "Every builder must render the same toolbar template."));
+assert.match(toolbar, /name="layout\[enabled\]"/, "Every shared page builder toolbar must expose a page-level On/Off value.");
+assert.match(toolbar, /kidia-page-availability/, "The page-level On/Off control must have one shared visual contract.");
 
 console.log("Shared builder toolbar and Wishlist Products settings layout: ok");
 

@@ -96,6 +96,15 @@ class _MainShellState extends ConsumerState<MainShell>
     }
     final CmsPageLayout pageLayout =
         pageLayoutState.value ?? CmsPageLayout.fallback(page);
+    final Map<String, bool> pageAvailability = <String, bool>{
+      'home': ref.watch(cmsPageLayoutProvider('home')).value?.enabled ?? true,
+      'categories':
+          ref.watch(cmsPageLayoutProvider('category')).value?.enabled ?? true,
+      'wishlist':
+          ref.watch(cmsPageLayoutProvider('wishlist')).value?.enabled ?? true,
+      'account':
+          ref.watch(cmsPageLayoutProvider('account')).value?.enabled ?? true,
+    };
     final CmsPageComponent footer = pageLayout.footer;
     final double footerIconSize = footer
         .number('icon_size', 24)
@@ -108,7 +117,9 @@ class _MainShellState extends ConsumerState<MainShell>
         .toDouble();
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
-    final List<MapEntry<int, _NavigationItem>> visibleItems = order.map((id) {
+    final List<MapEntry<int, _NavigationItem>> visibleItems = order.where(
+      (String id) => pageAvailability[id] ?? true,
+    ).map((id) {
 		final int index = _items.indexWhere((item) => item.id == id);
 		return index < 0 ? null : MapEntry<int, _NavigationItem>(index, _items[index]);
 	}).whereType<MapEntry<int, _NavigationItem>>().toList(growable: false);

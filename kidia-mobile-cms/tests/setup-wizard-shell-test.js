@@ -48,7 +48,9 @@ assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog c
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
 assert.match(wizardTemplate, /Save current theme/, "Setup & Themes must allow the current design to be saved.");
 assert.match(wizardTemplate, /Import theme/, "Setup & Themes must allow a saved theme file to be imported.");
-assert.match(shellTemplate, /kidia-cms-tabs/, "Shell must expose top navigation tabs.");
+assert.match(shellTemplate, /kidia-cms-sidebar/, "Shell must expose the primary left navigation.");
+assert.match(shellTemplate, /show_page_tabs/, "Page tabs must only appear inside Design Your Pages.");
+assert.match(shellTemplate, /kidia-cms-tabs/, "Design Your Pages must preserve the existing top page tabs.");
 assert.match(shellTemplate, /<\/nav>\s*<div class="kidia-cms-more">/, "More menu must sit outside the scrollable tab strip so its dropdown remains visible.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");

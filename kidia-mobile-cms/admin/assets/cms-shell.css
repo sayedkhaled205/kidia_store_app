@@ -25,6 +25,118 @@ body[class*="kidia-mobile"] #wpfooter{display:none}
 	}
 }
 
+/* Woo Mobile workspace navigation: primary areas live in the side rail while
+ * page builders keep their familiar page tabs above the editor. */
+body[class*="kidia-mobile"] #wpbody-content{
+	position:relative;
+	padding-inline-start:220px!important;
+}
+.kidia-cms-sidebar{
+	position:absolute;
+	inset-block:0;
+	inset-inline-start:0;
+	z-index:10025;
+	box-sizing:border-box;
+	width:220px;
+	padding:22px 14px;
+	border-inline-end:1px solid #dce7e3;
+	border-radius:17px 0 0 17px;
+	background:#fff;
+}
+.rtl .kidia-cms-sidebar{
+	border-radius:0 17px 17px 0;
+}
+.kidia-cms-sidebar .kidia-cms-shell__brand{
+	min-width:0;
+	margin:0 6px 24px;
+}
+.kidia-cms-sidebar__nav{
+	display:grid;
+	gap:7px;
+}
+.kidia-cms-sidebar__nav a{
+	display:flex;
+	align-items:center;
+	gap:11px;
+	min-height:44px;
+	padding:0 12px;
+	border-radius:9px;
+	color:#4d5d59;
+	text-decoration:none;
+	font-weight:650;
+}
+.kidia-cms-sidebar__nav a:hover,
+.kidia-cms-sidebar__nav a.is-active{
+	background:#e9f5f1;
+	color:#216e5e;
+}
+.kidia-cms-sidebar__nav .dashicons{
+	width:19px;
+	height:19px;
+	font-size:19px;
+}
+.kidia-cms-sidebar+.kidia-cms-shell{
+	border-radius:0 17px 0 0;
+}
+.rtl .kidia-cms-sidebar+.kidia-cms-shell{
+	border-radius:17px 0 0;
+}
+.kidia-cms-sidebar~.wrap{
+	margin-left:22px;
+	margin-right:22px;
+	padding-bottom:24px;
+}
+.kidia-page-availability{
+	display:flex;
+	align-items:center;
+	gap:9px;
+	min-height:36px;
+	padding:0 10px;
+	border:1px solid #cdded9;
+	border-radius:9px;
+	background:#fff;
+	color:#33443f;
+	font-weight:700;
+}
+.kidia-page-availability>input{
+	position:absolute!important;
+	width:1px!important;
+	height:1px!important;
+	opacity:0!important;
+	pointer-events:none;
+}
+
+@media(max-width:782px){
+	body[class*="kidia-mobile"] #wpbody-content{
+		padding-inline-start:0!important;
+	}
+	.kidia-cms-sidebar{
+		position:relative;
+		inset:auto;
+		display:flex;
+		width:auto;
+		padding:9px 10px;
+		border:0;
+		border-bottom:1px solid #dce7e3;
+		border-radius:13px 13px 0 0;
+		overflow-x:auto;
+	}
+	.kidia-cms-sidebar .kidia-cms-shell__brand{
+		display:none;
+	}
+	.kidia-cms-sidebar__nav{
+		display:flex;
+		gap:5px;
+	}
+	.kidia-cms-sidebar__nav a{
+		white-space:nowrap;
+	}
+	.kidia-cms-sidebar+.kidia-cms-shell{
+		top:46px;
+		border-radius:0;
+	}
+}
+
 .kidia-cms-billing-warning{
 	display:flex;
 	align-items:flex-start;
