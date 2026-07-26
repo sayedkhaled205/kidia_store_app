@@ -27,14 +27,6 @@ defined( 'ABSPATH' ) || exit;
 				</a>
 			<?php endforeach; ?>
 		</nav>
-		<div class="kidia-cms-more">
-			<button type="button" aria-expanded="false"><span class="dashicons dashicons-screenoptions"></span><span><?php esc_html_e( 'More', 'kidia-mobile-cms' ); ?></span><span class="dashicons dashicons-arrow-down-alt2"></span></button>
-			<div class="kidia-cms-more__menu">
-				<?php foreach ( $more_tabs as $key => $tab ) : ?>
-					<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>"><span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span><?php echo esc_html( $tab['label'] ); ?></a>
-				<?php endforeach; ?>
-			</div>
-		</div>
 	</div>
 <?php endif; ?>
 <?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>

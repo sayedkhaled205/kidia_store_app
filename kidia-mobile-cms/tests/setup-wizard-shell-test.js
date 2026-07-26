@@ -51,7 +51,12 @@ assert.match(wizardTemplate, /Import theme/, "Setup & Themes must allow a saved 
 assert.match(shellTemplate, /kidia-cms-sidebar/, "Shell must expose the primary left navigation.");
 assert.match(shellTemplate, /show_page_tabs/, "Page tabs must only appear inside Design Your Pages.");
 assert.match(shellTemplate, /kidia-cms-tabs/, "Design Your Pages must preserve the existing top page tabs.");
-assert.match(shellTemplate, /<\/nav>\s*<div class="kidia-cms-more">/, "More menu must sit outside the scrollable tab strip so its dropdown remains visible.");
+assert.doesNotMatch(shellTemplate, /kidia-cms-more/, "The obsolete More menu must not appear in the page header.");
+assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");
+assert.match(admin, /'setup'\s*=>\s*\$tab\(\s*__\(\s*'Setup Wizard'/, "Setup Wizard must follow Overview.");
+assert.match(admin, /'splash'\s*=>\s*\$tab\(\s*__\(\s*'Splash Page'/, "Splash Page must have its own sidebar destination.");
+assert.match(admin, /'pages'\s*=>\s*\$tab\(\s*__\(\s*'Design Your Pages'/, "Design Your Pages must follow Splash Page.");
+assert.match(admin, /'account'[\s\S]*'checkout'\s*=>\s*\$tab\(\s*__\(\s*'Checkout'/, "Checkout must appear immediately after Account in the page tabs.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");
@@ -101,9 +106,9 @@ for (let step = 3; step <= 8; step++) next.click();
 assert.equal(next.hidden, true, "Continue must disappear on the final setup step.");
 assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Apply Theme must appear only on the final setup step.");
 
-const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-more"><button aria-expanded="false"></button><div></div></div></body>`, { runScripts: "outside-only" });
+const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></div></body>`, { runScripts: "outside-only" });
+shellDom.window.scrollTo = () => {};
 shellDom.window.eval(read("admin", "assets", "cms-shell.js"));
-shellDom.window.document.querySelector(".kidia-cms-more button").click();
-assert.equal(shellDom.window.document.querySelector(".kidia-cms-more").classList.contains("is-open"), true, "More menu must open inside the CMS shell.");
+assert.equal(shellDom.window.document.querySelector(".kidia-cms-more"), null, "More menu must remain removed.");
 
 console.log("Setup wizard and unified CMS shell tests passed.");

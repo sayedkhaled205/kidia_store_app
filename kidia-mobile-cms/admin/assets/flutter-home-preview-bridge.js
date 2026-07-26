@@ -184,6 +184,10 @@
 		try {
 			frame.contentWindow.removeEventListener("wheel", relayPreviewWheel, true);
 			frame.contentWindow.addEventListener("wheel", relayPreviewWheel, { capture: true, passive: false });
+			if (frame.contentDocument) {
+				frame.contentDocument.removeEventListener("wheel", relayPreviewWheel, true);
+				frame.contentDocument.addEventListener("wheel", relayPreviewWheel, { capture: true, passive: false });
+			}
 		} catch (_) {}
 	}
 	frame.addEventListener("mouseenter", focusPreview);

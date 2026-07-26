@@ -196,13 +196,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						<p><?php esc_html_e( 'License transport is active. Add the production signing public key before release to enable local Ed25519 proof verification.', 'kidia-mobile-cms' ); ?></p>
 					</div>
 				<?php endif; ?>
-				<div class="kidia-license-actions">
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<input type="hidden" name="action" value="kidia_mobile_verify_license">
-						<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
-						<button class="button button-primary" type="submit"><?php esc_html_e( 'Verify now', 'kidia-mobile-cms' ); ?></button>
-					</form>
-				</div>
 			<?php else : ?>
 				<form class="kidia-license-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="kidia_mobile_activate_license">
