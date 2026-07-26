@@ -118,6 +118,8 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			$kidia_toolbar_save_label = __( 'Save Page Layout', 'kidia-mobile-cms' );
 			$kidia_toolbar_show_add = 'wishlist' === $page;
 			$kidia_toolbar_restore_product = 'product' === $page;
+			$kidia_toolbar_page_toggle = true;
+			$kidia_toolbar_page_enabled = ! empty( $layout['enabled'] );
 			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 			?>
 			<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>

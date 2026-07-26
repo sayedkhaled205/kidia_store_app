@@ -6,10 +6,12 @@ class CmsPageLayout {
     required this.header,
     required this.elements,
     required this.footer,
+    this.enabled = true,
     this.settings = const <String, dynamic>{},
   });
 
   final String page;
+  final bool enabled;
   final CmsPageComponent header;
   final List<CmsPageComponent> elements;
   final CmsPageComponent footer;
@@ -34,6 +36,7 @@ class CmsPageLayout {
     final dynamic rawElements = json['elements'];
     return CmsPageLayout(
       page: _string(json['page'], fallback: 'catalog'),
+      enabled: _boolean(json['enabled'], fallback: true),
       settings: _map(json['settings']),
       header: CmsPageComponent.fromJson(
         _map(json['header']),

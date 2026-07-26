@@ -98,6 +98,8 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				$kidia_toolbar_save_label = __( 'Save Category Page', 'kidia-mobile-cms' );
 				$kidia_toolbar_show_add = false;
 				$kidia_toolbar_restore_product = false;
+				$kidia_toolbar_page_toggle = true;
+				$kidia_toolbar_page_enabled = ! empty( $category_layout['enabled'] );
 				include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 				?>
 

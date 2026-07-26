@@ -7,6 +7,8 @@ $kidia_toolbar_title = isset( $kidia_toolbar_title ) ? (string) $kidia_toolbar_t
 $kidia_toolbar_save_label = isset( $kidia_toolbar_save_label ) ? (string) $kidia_toolbar_save_label : __( 'Save Layout', 'kidia-mobile-cms' );
 $kidia_toolbar_show_add = ! empty( $kidia_toolbar_show_add );
 $kidia_toolbar_restore_product = ! empty( $kidia_toolbar_restore_product );
+$kidia_toolbar_page_toggle = ! empty( $kidia_toolbar_page_toggle );
+$kidia_toolbar_page_enabled = ! isset( $kidia_toolbar_page_enabled ) || ! empty( $kidia_toolbar_page_enabled );
 ?>
 <div class="kidia-builder-toolbar kidia-shared-builder-toolbar">
 	<div class="kidia-builder-toolbar__actions">
@@ -18,6 +20,14 @@ $kidia_toolbar_restore_product = ! empty( $kidia_toolbar_restore_product );
 		<?php if ( '' !== $kidia_toolbar_title ) : ?><strong class="kidia-builder-toolbar__context"><?php echo esc_html( $kidia_toolbar_title ); ?></strong><?php endif; ?>
 	</div>
 	<div class="kidia-builder-toolbar__save">
+		<?php if ( $kidia_toolbar_page_toggle ) : ?>
+			<label class="kidia-page-availability">
+				<span><?php esc_html_e( 'Page', 'kidia-mobile-cms' ); ?></span>
+				<input type="hidden" name="layout[enabled]" value="0">
+				<input type="checkbox" name="layout[enabled]" value="1" <?php checked( $kidia_toolbar_page_enabled ); ?>>
+				<span class="kidia-toggle-state"></span>
+			</label>
+		<?php endif; ?>
 		<?php if ( $kidia_toolbar_restore_product ) : ?>
 			<button type="submit" class="button kidia-restore-product-defaults" name="restore_product_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore every Product Page setting to its default value? This does not affect any other page.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Product Defaults', 'kidia-mobile-cms' ); ?></button>
 		<?php endif; ?>

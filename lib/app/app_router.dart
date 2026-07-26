@@ -83,7 +83,10 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/',
-                builder: (context, state) => const HomePage(),
+                builder: (context, state) => const _PageAvailabilityGate(
+                  page: 'home',
+                  child: HomePage(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'product/:productId',
@@ -100,81 +103,91 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         );
                       }
 
-                      return Consumer(
-                        builder: (context, ref, child) {
-                          final addToCart = ref.read(
-                            addProductPurchaseSelectionProvider,
-                          );
-                          return ProductDetailScreen(
-                            productId: parsedProductId,
-                            repository: ref.watch(catalogRepositoryProvider),
-                            onAddToCart:
-                                (
-                                  product_selection.ProductPurchaseSelection
-                                  selection,
-                                ) async {
-                                  final result = await addToCart(
-                                    cart_selection.ProductPurchaseSelection(
-                                      productId:
-                                          selection.variationId ??
-                                          selection.productId,
-                                      quantity: selection.quantity,
-                                      variation: selection
-                                          .selectedAttributes
-                                          .entries
-                                          .map(
-                                            (entry) => CartItemVariation(
-                                              attribute: entry.key,
-                                              value: entry.value,
-                                            ),
-                                          )
-                                          .toList(growable: false),
-                                    ),
-                                  );
-                                  if (!result.succeeded) {
-                                    throw StateError(
-                                      result.message ??
-                                          'تعذر إضافة المنتج إلى السلة.',
+                      return _PageAvailabilityGate(
+                        page: 'product',
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            final addToCart = ref.read(
+                              addProductPurchaseSelectionProvider,
+                            );
+                            return ProductDetailScreen(
+                              productId: parsedProductId,
+                              repository: ref.watch(catalogRepositoryProvider),
+                              onAddToCart:
+                                  (
+                                    product_selection.ProductPurchaseSelection
+                                    selection,
+                                  ) async {
+                                    final result = await addToCart(
+                                      cart_selection.ProductPurchaseSelection(
+                                        productId:
+                                            selection.variationId ??
+                                            selection.productId,
+                                        quantity: selection.quantity,
+                                        variation: selection
+                                            .selectedAttributes
+                                            .entries
+                                            .map(
+                                              (entry) => CartItemVariation(
+                                                attribute: entry.key,
+                                                value: entry.value,
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                      ),
                                     );
-                                  }
-                                },
-                            isWishlisted: (int productId) async {
-                              final repository = ref.read(
-                                wishlistRepositoryProvider,
-                              );
-                              final ids = await repository.loadProductIds();
-                              return ids.contains(productId);
-                            },
-                            onWishlistToggle: (product) async {
-                              final String accessMode = ref.read(
-                                cmsPageLayoutProvider('wishlist'),
-                              ).value?.string(
-                                'wishlist_access_mode',
-                                'sign_in_required',
-                              ) ?? 'sign_in_required';
-                              final AuthSession? session = ref.read(
-                                authControllerProvider,
-                              ).asData?.value;
-                              if (session == null && accessMode == 'sign_in_required') {
-                                await context.push('/auth');
-                                return false;
-                              }
-                              final repository = ref.read(
-                                wishlistRepositoryProvider,
-                              );
-                              final List<int> ids = await repository
-                                  .loadProductIds();
-                              final bool isSaved = ids.contains(product.id);
-                              final List<int> nextIds = isSaved
-                                  ? ids
-                                        .where((int id) => id != product.id)
-                                        .toList(growable: false)
-                                  : <int>[...ids, product.id];
-                              await repository.saveProductIds(nextIds);
-                              return !isSaved;
-                            },
-                          );
-                        },
+                                    if (!result.succeeded) {
+                                      throw StateError(
+                                        result.message ??
+                                            'تعذر إضافة المنتج إلى السلة.',
+                                      );
+                                    }
+                                  },
+                              isWishlisted: (int productId) async {
+                                final repository = ref.read(
+                                  wishlistRepositoryProvider,
+                                );
+                                final ids = await repository.loadProductIds();
+                                return ids.contains(productId);
+                              },
+                              onWishlistToggle: (product) async {
+                                final String accessMode =
+                                    ref
+                                        .read(
+                                          cmsPageLayoutProvider('wishlist'),
+                                        )
+                                        .value
+                                        ?.string(
+                                          'wishlist_access_mode',
+                                          'sign_in_required',
+                                        ) ??
+                                    'sign_in_required';
+                                final AuthSession? session = ref
+                                    .read(authControllerProvider)
+                                    .asData
+                                    ?.value;
+                                if (session == null &&
+                                    accessMode == 'sign_in_required') {
+                                  await context.push('/auth');
+                                  return false;
+                                }
+                                final repository = ref.read(
+                                  wishlistRepositoryProvider,
+                                );
+                                final List<int> ids = await repository
+                                    .loadProductIds();
+                                final bool isSaved = ids.contains(product.id);
+                                final List<int> nextIds = isSaved
+                                    ? ids
+                                          .where((int id) => id != product.id)
+                                          .toList(growable: false)
+                                    : <int>[...ids, product.id];
+                                await repository.saveProductIds(nextIds);
+                                return !isSaved;
+                              },
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -192,10 +205,13 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         );
                       }
 
-                      return CatalogProductListScreen(
-                        request: CatalogProductListRequest(
-                          title: collectionId,
-                          collection: collectionId,
+                      return _PageAvailabilityGate(
+                        page: 'catalog',
+                        child: CatalogProductListScreen(
+                          request: CatalogProductListRequest(
+                            title: collectionId,
+                            collection: collectionId,
+                          ),
                         ),
                       );
                     },
@@ -215,9 +231,12 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         );
                       }
 
-                      return CatalogProductListScreen(
-                        request: CatalogProductListRequest(
-                          brandId: parsedBrandId,
+                      return _PageAvailabilityGate(
+                        page: 'catalog',
+                        child: CatalogProductListScreen(
+                          request: CatalogProductListRequest(
+                            brandId: parsedBrandId,
+                          ),
                         ),
                       );
                     },
@@ -241,10 +260,13 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                       final String? brand = state.uri.queryParameters['brand'];
 
                       if (collection != null && collection.isNotEmpty) {
-                        return CatalogProductListScreen(
-                          request: CatalogProductListRequest(
-                            title: collection,
-                            collection: collection,
+                        return _PageAvailabilityGate(
+                          page: 'catalog',
+                          child: CatalogProductListScreen(
+                            request: CatalogProductListRequest(
+                              title: collection,
+                              collection: collection,
+                            ),
                           ),
                         );
                       }
@@ -253,16 +275,22 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         final int? parsedBrandId = _positiveId(brand);
 
                         if (parsedBrandId != null) {
-                          return CatalogProductListScreen(
-                            request: CatalogProductListRequest(
-                              brandId: parsedBrandId,
+                          return _PageAvailabilityGate(
+                            page: 'catalog',
+                            child: CatalogProductListScreen(
+                              request: CatalogProductListRequest(
+                                brandId: parsedBrandId,
+                              ),
                             ),
                           );
                         }
                       }
 
-                      return const CatalogProductListScreen(
-                        request: CatalogProductListRequest(),
+                      return const _PageAvailabilityGate(
+                        page: 'catalog',
+                        child: CatalogProductListScreen(
+                          request: CatalogProductListRequest(),
+                        ),
                       );
                     },
                   ),
@@ -274,7 +302,10 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/categories',
-                builder: (context, state) => const CategoriesScreen(),
+                builder: (context, state) => const _PageAvailabilityGate(
+                  page: 'category',
+                  child: CategoriesScreen(),
+                ),
                 routes: [
                   GoRoute(
                     path: ':categoryId',
@@ -291,10 +322,13 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         );
                       }
 
-                      return CatalogProductListScreen(
-                        request: CatalogProductListRequest(
-                          categoryId: parsedCategoryId,
-                          title: state.uri.queryParameters['name'] ?? '',
+                      return _PageAvailabilityGate(
+                        page: 'catalog',
+                        child: CatalogProductListScreen(
+                          request: CatalogProductListRequest(
+                            categoryId: parsedCategoryId,
+                            title: state.uri.queryParameters['name'] ?? '',
+                          ),
                         ),
                       );
                     },
@@ -307,32 +341,39 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/wishlist',
-                builder: (context, state) => Consumer(
-                  builder: (context, ref, child) {
-                    final AsyncValue<AuthSession?> authState = ref.watch(
-                      authControllerProvider,
-                    );
-                    final CmsPageLayout wishlistLayout = ref.watch(
-                      cmsPageLayoutProvider('wishlist'),
-                    ).value ?? CmsPageLayout.fallback('wishlist');
-                    final bool requiresSignIn = wishlistLayout.string(
-                      'wishlist_access_mode',
-                      'sign_in_required',
-                    ) == 'sign_in_required';
-                    if (!AppConfig.isCmsPreview && authState.isLoading) {
-                      return const _ProtectedAccountLoading();
-                    }
-                    return WishlistScreen(
-                      repository: ref.watch(wishlistRepositoryProvider),
-                      catalogRepository: ref.watch(catalogRepositoryProvider),
-                      signedIn: authState.asData?.value != null,
-                      requiresSignIn: requiresSignIn,
-                      onProductTap: (product) =>
-                          context.push('/product/${product.id}'),
-                      onContinueShopping: () => context.go('/'),
-                      onSignIn: () => context.push('/auth'),
-                    );
-                  },
+                builder: (context, state) => _PageAvailabilityGate(
+                  page: 'wishlist',
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final AsyncValue<AuthSession?> authState = ref.watch(
+                        authControllerProvider,
+                      );
+                      final CmsPageLayout wishlistLayout =
+                          ref
+                              .watch(cmsPageLayoutProvider('wishlist'))
+                              .value ??
+                          CmsPageLayout.fallback('wishlist');
+                      final bool requiresSignIn =
+                          wishlistLayout.string(
+                            'wishlist_access_mode',
+                            'sign_in_required',
+                          ) ==
+                          'sign_in_required';
+                      if (!AppConfig.isCmsPreview && authState.isLoading) {
+                        return const _ProtectedAccountLoading();
+                      }
+                      return WishlistScreen(
+                        repository: ref.watch(wishlistRepositoryProvider),
+                        catalogRepository: ref.watch(catalogRepositoryProvider),
+                        signedIn: authState.asData?.value != null,
+                        requiresSignIn: requiresSignIn,
+                        onProductTap: (product) =>
+                            context.push('/product/${product.id}'),
+                        onContinueShopping: () => context.go('/'),
+                        onSignIn: () => context.push('/auth'),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -341,7 +382,10 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/account',
-                builder: (context, state) => const AccountScreen(),
+                builder: (context, state) => const _PageAvailabilityGate(
+                  page: 'account',
+                  child: AccountScreen(),
+                ),
               ),
             ],
           ),
@@ -496,6 +540,37 @@ class _ProtectedAccountLoading extends StatelessWidget {
         child: CircularProgressIndicator(key: Key('account-auth-loading')),
       ),
     );
+  }
+}
+
+class _PageAvailabilityGate extends ConsumerWidget {
+  const _PageAvailabilityGate({required this.page, required this.child});
+
+  final String page;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<CmsPageLayout> state = ref.watch(
+      cmsPageLayoutProvider(page),
+    );
+    if (state.value == null && !state.hasError) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(key: Key('page-availability-loading')),
+        ),
+      );
+    }
+    final CmsPageLayout layout =
+        state.value ?? CmsPageLayout.fallback(page);
+    if (!AppConfig.isCmsPreview && !layout.enabled) {
+      return const CommerceRouteDestination(
+        icon: Icons.visibility_off_outlined,
+        title: 'الصفحة غير متاحة',
+        description: 'تم إيقاف هذه الصفحة من إعدادات التطبيق.',
+      );
+    }
+    return child;
   }
 }
 

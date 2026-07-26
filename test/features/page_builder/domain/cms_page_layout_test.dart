@@ -6,6 +6,7 @@ void main() {
     final CmsPageLayout layout = CmsPageLayout.fromJson(
       <String, dynamic>{
         'page': 'catalog',
+        'enabled': false,
         'header': <String, dynamic>{
           'id': 'header',
           'type': 'app_header',
@@ -29,6 +30,7 @@ void main() {
     );
 
     expect(layout.page, 'catalog');
+    expect(layout.enabled, isFalse);
     expect(layout.header.number('height', 64), 70);
     expect(layout.header.boolean('show_cart', false), isTrue);
     expect(layout.elements.map((CmsPageComponent item) => item.id), <String>[
@@ -57,6 +59,7 @@ void main() {
 	  ]),
     );
     expect(CmsPageLayout.fallback('wishlist').header.enabled, isTrue);
+    expect(CmsPageLayout.fallback('wishlist').enabled, isTrue);
     expect(CmsPageLayout.fallback('account').footer.enabled, isTrue);
 	final CmsPageLayout home = CmsPageLayout.fallback('home');
 	final dynamic homeRows = home.header.json('layout_json')['rows'];

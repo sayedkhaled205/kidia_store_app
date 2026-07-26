@@ -651,6 +651,14 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
 			$active_tab = 'setup';
 		}
+		$builder_tabs = array( 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'size_chart', 'splash', 'similar', 'checkout' );
+		$show_page_tabs = in_array( $active_tab, $builder_tabs, true );
+		$sidebar_items = array(
+			'overview' => $tab( __( 'Dashboard', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
+			'pages'    => $tab( __( 'Design Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-appearance' ),
+			'setup'    => $tab( __( 'Quick Setup & Themes', 'kidia-mobile-cms' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
+		);
+		$active_sidebar = $show_page_tabs ? 'pages' : ( 'setup' === $active_tab ? 'setup' : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}

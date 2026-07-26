@@ -39,6 +39,15 @@ require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new Kidia_Mobile_Page_Layout_Store();
 $wishlist_default = $store->get_layout( 'wishlist' );
+kidia_page_assert( true === $wishlist_default['enabled'], 'Every legacy or default application page must remain enabled.' );
+$disabled_wishlist = $wishlist_default;
+$disabled_wishlist['enabled'] = '0';
+$store->save_layout( 'wishlist', $disabled_wishlist );
+kidia_page_assert( false === $store->get_layout( 'wishlist' )['enabled'], 'A page-level Off value must survive save and reload without deleting its layout.' );
+$disabled_wishlist['enabled'] = '1';
+$store->save_layout( 'wishlist', $disabled_wishlist );
+$wishlist_default = $store->get_layout( 'wishlist' );
+kidia_page_assert( true === $wishlist_default['enabled'], 'A disabled page must be restorable with its saved layout intact.' );
 kidia_page_assert( 'sign_in_required' === $wishlist_default['settings']['wishlist_access_mode'], 'Wishlist access must preserve the existing sign-in-required behavior by default.' );
 kidia_page_assert( 'products' === $wishlist_default['settings']['wishlist_preview_state'], 'Wishlist Builder must default its independent preview to the product state.' );
 $wishlist_default['settings']['wishlist_access_mode'] = 'guest';
