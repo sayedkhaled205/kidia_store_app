@@ -24,6 +24,8 @@
 	var actionChoices = config.actionChoices || {};
 	var currentCreateType = "";
 	var draggedBlock = null;
+	var dragPlaceholder = null;
+	var dragPreview = null;
 	var activeInsertionBlock = null;
 	var previewBlocksById = {};
 	var previewBlocksByType = {};
@@ -1470,9 +1472,22 @@
 
 		draggedBlock = block;
 		block.classList.add("is-dragging");
+		dragPlaceholder = document.createElement("div");
+		dragPlaceholder.className = "kidia-builder-drop-placeholder";
+		dragPlaceholder.style.height = Math.max(54, block.getBoundingClientRect().height) + "px";
+		block.insertAdjacentElement("afterend", dragPlaceholder);
+
+		dragPreview = block.cloneNode(true);
+		dragPreview.classList.remove("is-dragging");
+		dragPreview.classList.add("kidia-builder-drag-preview");
+		dragPreview.style.width = Math.max(280, block.getBoundingClientRect().width) + "px";
+		document.body.appendChild(dragPreview);
 		if (event.dataTransfer) {
 			event.dataTransfer.effectAllowed = "move";
 			event.dataTransfer.setData("text/plain", block.dataset.libraryId || "");
+			if (typeof event.dataTransfer.setDragImage === "function") {
+				event.dataTransfer.setDragImage(dragPreview, 28, 28);
+			}
 		}
 	});
 
@@ -1482,7 +1497,7 @@
 		var rect;
 		var after;
 
-		if (!draggedBlock) {
+		if (!draggedBlock || !dragPlaceholder) {
 			return;
 		}
 
@@ -1498,15 +1513,32 @@
 
 		rect = targetBlock.getBoundingClientRect();
 		after = event.clientY > rect.top + rect.height / 2;
-		targetBlock.insertAdjacentElement(after ? "afterend" : "beforebegin", draggedBlock);
+		if (
+			(after && targetBlock.nextElementSibling === dragPlaceholder) ||
+			(!after && targetBlock.previousElementSibling === dragPlaceholder)
+		) {
+			return;
+		}
+		targetBlock.insertAdjacentElement(after ? "afterend" : "beforebegin", dragPlaceholder);
 	});
 
 	builder.addEventListener("dragend", function () {
+		if (draggedBlock && dragPlaceholder) {
+			dragPlaceholder.insertAdjacentElement("beforebegin", draggedBlock);
+		}
 		if (draggedBlock) {
 			draggedBlock.classList.remove("is-dragging");
 			draggedBlock.draggable = false;
 		}
+		if (dragPlaceholder) {
+			dragPlaceholder.remove();
+		}
+		if (dragPreview) {
+			dragPreview.remove();
+		}
 		draggedBlock = null;
+		dragPlaceholder = null;
+		dragPreview = null;
 		updateIndexes();
 		markDirty();
 		renderPreview();

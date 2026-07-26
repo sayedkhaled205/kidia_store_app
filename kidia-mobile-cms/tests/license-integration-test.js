@@ -13,7 +13,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.36\.3/, "The plugin header must be version 1.36.4.");
+assert.match(plugin, /Version:\s+1\.36\.5/, "The plugin header must be version 1.36.5.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,

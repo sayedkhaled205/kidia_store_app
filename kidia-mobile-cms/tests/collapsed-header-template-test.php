@@ -63,6 +63,8 @@ kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_speed]"' ), 'Collapsed transition speed must render below the collapsed composer.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'collapse_preset' ), 'Collapsed presets must be removed.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'smooth_compact' ), 'The smooth compact Search + Cart behavior must be available as a transition.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-compact-search-transition' ), 'The wide Search transition must replace the draggable collapsed-header composer with one Search row.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][compact_search_width_percent]"' ), 'The transition Search row must expose its own percentage width.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'Collapsed header behavior and appearance' ), 'The redundant collapsed-header explanation block must be removed.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'data-chrome-copy' ) && false !== strpos( $markup, 'data-chrome-paste' ), 'Every fixed header card must expose Copy and Paste actions.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-page-field--image' ) && false !== strpos( $markup, 'kidia-page-media-preview' ), 'The logo image field must expose the shared working media-picker wrapper and preview.' );
@@ -104,12 +106,13 @@ $off = $store->save_layout( 'home', array(
 kidia_collapsed_header_assert( false === $off['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header Off must save.' );
 
 $on = $store->save_layout( 'home', array(
-	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_transition' => 'smooth_compact', 'collapse_speed' => 'slow', 'logo_url' => '', 'logo_text' => 'KIDIACO', 'logo_text_color' => '#2F806E' ) ),
+	'header' => array( 'enabled' => '1', 'settings' => array( 'collapse_on_scroll' => '1', 'collapse_transition' => 'smooth_compact', 'compact_search_width_percent' => '73', 'collapse_speed' => 'slow', 'logo_url' => '', 'logo_text' => 'KIDIACO', 'logo_text_color' => '#2F806E' ) ),
 	'footer' => array( 'enabled' => '1' ),
 ) );
 kidia_collapsed_header_assert( true === $on['header']['settings']['collapse_on_scroll'], 'Turning the collapsed header On must save.' );
 kidia_collapsed_header_assert( 'slow' === $on['header']['settings']['collapse_speed'], 'The collapsed transition speed must save.' );
 kidia_collapsed_header_assert( 'smooth_compact' === $on['header']['settings']['collapse_transition'], 'The smooth compact transition must save.' );
+kidia_collapsed_header_assert( 73.0 === $on['header']['settings']['compact_search_width_percent'], 'The transition Search width may save below 100 percent.' );
 kidia_collapsed_header_assert( true === $store->get_layout( 'home' )['header']['settings']['collapse_on_scroll'], 'The saved On state must survive reload.' );
 kidia_collapsed_header_assert( 'KIDIACO' === $store->get_layout( 'home' )['header']['settings']['logo_text'], 'Custom logo text must survive save and reload.' );
 kidia_collapsed_header_assert( '' === $store->get_layout( 'home' )['header']['settings']['logo_url'], 'Using logo text must keep the image cleared after reload.' );
