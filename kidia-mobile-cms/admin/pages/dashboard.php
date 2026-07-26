@@ -42,6 +42,46 @@ $show_setup_choice = $license_active
 	&& ! $setup_complete
 	&& isset( $_GET['license_updated'] )
 	&& 'activated' === sanitize_key( wp_unslash( $_GET['license_updated'] ) );
+$customer_portal_url = apply_filters(
+	'kidia_mobile_customer_portal_url',
+	'https://woomobile.app/'
+);
+$journey_steps = array(
+	array(
+		'title'       => __( 'Purchase subscription', 'kidia-mobile-cms' ),
+		'description' => __( 'Choose your plan and complete checkout securely on WooMobile.', 'kidia-mobile-cms' ),
+		'complete'    => $license_active,
+	),
+	array(
+		'title'       => __( 'Connect your website', 'kidia-mobile-cms' ),
+		'description' => __( 'Connect this WordPress website from your WooMobile account.', 'kidia-mobile-cms' ),
+		'complete'    => $license_active,
+	),
+	array(
+		'title'       => __( 'Install the plugin', 'kidia-mobile-cms' ),
+		'description' => __( 'Woo Mobile CMS is installed and ready on this website.', 'kidia-mobile-cms' ),
+		'complete'    => true,
+	),
+	array(
+		'title'       => __( 'Activate your license', 'kidia-mobile-cms' ),
+		'description' => __( 'Enter the website license below to unlock the plugin.', 'kidia-mobile-cms' ),
+		'complete'    => $license_active,
+	),
+	array(
+		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
+		'description' => __( 'Start the Setup Wizard or continue with manual configuration.', 'kidia-mobile-cms' ),
+		'complete'    => $setup_complete,
+	),
+);
+$current_journey_step = 0;
+foreach ( $journey_steps as $journey_index => $journey_step ) {
+	if ( empty( $journey_step['complete'] ) ) {
+		$current_journey_step = $journey_index;
+		break;
+	}
+
+	$current_journey_step = $journey_index + 1;
+}
 ?>
 
 <div class="wrap kidia-dashboard">
@@ -79,6 +119,47 @@ $show_setup_choice = $license_active
 	<?php if ( isset( $_GET['license_error'] ) ) : ?>
 		<div class="notice notice-error inline"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['license_error'] ) ) ); ?></p></div>
 	<?php endif; ?>
+
+	<section class="kidia-customer-journey" aria-labelledby="kidia-customer-journey-title">
+		<div class="kidia-customer-journey__header">
+			<div>
+				<span class="kidia-customer-journey__eyebrow"><?php esc_html_e( 'Your launch journey', 'kidia-mobile-cms' ); ?></span>
+				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From subscription to a ready mobile app', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Purchase and connect on WooMobile, then complete activation and setup here in the plugin.', 'kidia-mobile-cms' ); ?></p>
+			</div>
+			<?php if ( ! $license_active ) : ?>
+				<a class="button button-primary button-hero" href="<?php echo esc_url( $customer_portal_url ); ?>" target="_blank" rel="noopener noreferrer">
+					<?php esc_html_e( 'Purchase or connect website', 'kidia-mobile-cms' ); ?>
+				</a>
+			<?php endif; ?>
+		</div>
+
+		<ol class="kidia-customer-journey__steps">
+			<?php foreach ( $journey_steps as $journey_index => $journey_step ) : ?>
+				<?php
+				$step_complete = ! empty( $journey_step['complete'] );
+				$step_current  = ! $step_complete && $current_journey_step === $journey_index;
+				$step_class    = $step_complete
+					? 'is-complete'
+					: ( $step_current ? 'is-current' : 'is-upcoming' );
+				?>
+				<li class="<?php echo esc_attr( $step_class ); ?>">
+					<span class="kidia-customer-journey__number" aria-hidden="true">
+						<?php echo $step_complete ? '&#10003;' : esc_html( (string) ( $journey_index + 1 ) ); ?>
+					</span>
+					<div>
+						<h3><?php echo esc_html( (string) $journey_step['title'] ); ?></h3>
+						<p><?php echo esc_html( (string) $journey_step['description'] ); ?></p>
+						<?php if ( $step_current ) : ?>
+							<strong><?php esc_html_e( 'Current step', 'kidia-mobile-cms' ); ?></strong>
+						<?php elseif ( $step_complete ) : ?>
+							<strong><?php esc_html_e( 'Complete', 'kidia-mobile-cms' ); ?></strong>
+						<?php endif; ?>
+					</div>
+				</li>
+			<?php endforeach; ?>
+		</ol>
+	</section>
 
 	<div class="kidia-dashboard__grid">
 
@@ -473,6 +554,105 @@ $show_setup_choice = $license_active
 		margin: 24px 0;
 	}
 
+	.kidia-customer-journey {
+		margin-top: 24px;
+		padding: 26px;
+		border: 1px solid #cfe2dc;
+		border-radius: 18px;
+		background: linear-gradient(135deg, #ffffff 0%, #eef8f5 100%);
+		box-shadow: 0 8px 24px rgba(31, 71, 61, 0.06);
+	}
+
+	.kidia-customer-journey__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+	}
+
+	.kidia-customer-journey__header h2 {
+		margin: 4px 0 8px;
+		font-size: 25px;
+	}
+
+	.kidia-customer-journey__header p {
+		margin: 0;
+		color: #60706c;
+	}
+
+	.kidia-customer-journey__eyebrow {
+		color: #2f806e;
+		font-size: 12px;
+		font-weight: 800;
+		letter-spacing: .1em;
+		text-transform: uppercase;
+	}
+
+	.kidia-customer-journey__steps {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: 12px;
+		margin: 26px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.kidia-customer-journey__steps li {
+		position: relative;
+		display: grid;
+		grid-template-columns: 34px 1fr;
+		gap: 10px;
+		min-height: 120px;
+		padding: 16px;
+		border: 1px solid #dce8e5;
+		border-radius: 14px;
+		background: #ffffff;
+	}
+
+	.kidia-customer-journey__steps li.is-current {
+		border-color: #2f806e;
+		box-shadow: 0 0 0 2px rgba(47, 128, 110, .12);
+	}
+
+	.kidia-customer-journey__steps li.is-upcoming {
+		opacity: .66;
+	}
+
+	.kidia-customer-journey__number {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border: 2px solid #b9cec8;
+		border-radius: 50%;
+		color: #60706c;
+		font-weight: 800;
+	}
+
+	.is-complete .kidia-customer-journey__number,
+	.is-current .kidia-customer-journey__number {
+		border-color: #2f806e;
+		background: #2f806e;
+		color: #ffffff;
+	}
+
+	.kidia-customer-journey__steps h3 {
+		margin: 2px 0 7px;
+		font-size: 14px;
+	}
+
+	.kidia-customer-journey__steps p {
+		margin: 0 0 8px;
+		color: #60706c;
+		font-size: 12px;
+		line-height: 1.45;
+	}
+
+	.kidia-customer-journey__steps strong {
+		color: #2f806e;
+		font-size: 11px;
+	}
+
 	.kidia-dashboard__card {
 		padding: 22px;
 		border: 1px solid #dcdcde;
@@ -527,6 +707,21 @@ $show_setup_choice = $license_active
 	@media (max-width: 960px) {
 		.kidia-dashboard__grid {
 			grid-template-columns: 1fr;
+		}
+
+		.kidia-customer-journey__steps {
+			grid-template-columns: 1fr;
+		}
+
+		.kidia-customer-journey__steps li {
+			min-height: 0;
+		}
+	}
+
+	@media (max-width: 782px) {
+		.kidia-customer-journey__header {
+			align-items: flex-start;
+			flex-direction: column;
 		}
 	}
 </style>
