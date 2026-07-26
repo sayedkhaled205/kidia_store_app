@@ -62,8 +62,8 @@ assert.doesNotMatch(
 );
 assert.match(
   index,
-  /preview_attempt[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*45000\)/,
-  "A preview that never mounts must retry once with a fresh cache key instead of loading forever.",
+  /preview_attempt[\s\S]*attempt < 2[\s\S]*String\(attempt \+ 1\)[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*15000\)/,
+  "A preview that never mounts must retry twice with fresh cache keys instead of loading forever.",
 );
 assert.match(
   index,
