@@ -204,19 +204,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 					</form>
 				</div>
 			<?php else : ?>
-				<?php if ( ! $website_connected ) : ?>
-					<div class="kidia-connect-prompt">
-						<span class="kidia-connect-prompt__icon dashicons dashicons-admin-links" aria-hidden="true"></span>
-						<div>
-							<strong><?php esc_html_e( 'Connect your store to WooMobile', 'kidia-mobile-cms' ); ?></strong>
-							<p><?php esc_html_e( 'Choose your plan, complete checkout, and connect this website. Then return here to enter its serial.', 'kidia-mobile-cms' ); ?></p>
-						</div>
-					</div>
-					<a class="kidia-dashboard__primary-action" href="<?php echo esc_url( $connect_url ); ?>">
-						<span><?php esc_html_e( 'Purchase and connect website', 'kidia-mobile-cms' ); ?></span>
-						<span class="dashicons dashicons-arrow-left-alt" aria-hidden="true"></span>
-					</a>
-				<?php endif; ?>
 				<form class="kidia-license-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="kidia_mobile_activate_license">
 					<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
