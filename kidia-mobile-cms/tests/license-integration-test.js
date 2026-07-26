@@ -13,7 +13,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.34\.0/, "The plugin header must be version 1.34.0.");
+assert.match(plugin, /Version:\s+1\.36\.0/, "The plugin header must be version 1.36.0.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -32,7 +32,15 @@ assert.match(manager, /valid_until/, "A server-defined offline grace window must
 assert.match(manager, /wp_schedule_event/, "License verification must be scheduled.");
 assert.match(admin, /admin_post_kidia_mobile_activate_license/, "The activation handler must be registered.");
 assert.doesNotMatch(admin, /admin_post_kidia_mobile_deactivate_license/, "Customers must not be able to deactivate a site-bound license.");
-assert.match(admin, /enforce_license_gate/, "All configuration screens must be locked until license activation.");
+assert.match(admin, /enforce_license_gate/, "All configuration writes must be locked until license activation.");
+assert.doesNotMatch(
+  admin,
+  /license_error['"]?\s*=>\s*__\(\s*'Activate your website license before using Woo Mobile CMS/,
+  "Inactive customers must be able to browse CMS screens."
+);
+assert.match(admin, /kidia-cms-license-preview/, "Inactive CMS screens must expose preview mode.");
+assert.match(admin, /plugin_installed[\s\S]*=> '1'/, "Plugin-originated connections must tell the website that WordPress is already installed.");
+assert.match(admin, /https:\/\/woomobile\.app\/connect/, "The plugin connection journey must start on WooMobile.");
 assert.match(admin, /Kidia_Mobile_License_Manager\(\) \)->is_active/, "Premium setup application must be license-gated.");
 assert.match(dashboard, /Activate license/, "Overview must expose license activation.");
 assert.match(dashboard, /Setup & Themes/, "Overview must link to Setup & Themes.");
@@ -40,23 +48,18 @@ assert.doesNotMatch(dashboard, /kidia_mobile_deactivate_license/, "The license U
 assert.match(dashboard, /Start Setup Wizard/, "Successful activation must offer the setup wizard.");
 assert.match(dashboard, /Continue Manually/, "Successful activation must allow manual setup.");
 for (const journeyStep of [
-  "Purchase subscription",
-  "Connect your website",
-  "Install the plugin",
+  "Purchase and connect",
   "Activate your license",
+  "Set up your app",
   "Build your app",
 ]) {
   assert.match(dashboard, new RegExp(journeyStep), `The customer journey must include: ${journeyStep}.`);
 }
+assert.doesNotMatch(dashboard, /Install the plugin/, "Plugin installation must not appear as a pending in-plugin step.");
 assert.match(
   dashboard,
-  /kidia_mobile_customer_portal_url/,
-  "The purchase and connection destination must remain configurable without changing builder settings."
-);
-assert.match(
-  dashboard,
-  /Purchase and connect on WooMobile, then complete activation and setup here in the plugin/,
-  "The journey must clearly separate the website checkout/connect flow from plugin activation."
+  /Woo Mobile CMS is already installed\. Connect this website, activate its serial, then choose the wizard or manual setup\./,
+  "The plugin journey must start with the installed-plugin connection path."
 );
 
 console.log("License integration contract tests passed.");
