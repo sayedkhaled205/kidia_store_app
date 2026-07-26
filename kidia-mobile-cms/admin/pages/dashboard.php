@@ -7,6 +7,8 @@
  * @var array<string, mixed> $api API monitor status.
  * @var array<string, mixed> $license License state.
  * @var bool                 $setup_complete Setup state.
+ * @var bool                 $website_connected Website connection state.
+ * @var string               $connect_url WooMobile customer connection URL.
  *
  * @package Kidia_Mobile_CMS
  */
@@ -42,35 +44,26 @@ $show_setup_choice = $license_active
 	&& ! $setup_complete
 	&& isset( $_GET['license_updated'] )
 	&& 'activated' === sanitize_key( wp_unslash( $_GET['license_updated'] ) );
-$customer_portal_url = apply_filters(
-	'kidia_mobile_customer_portal_url',
-	'https://woomobile.app/'
-);
 $journey_steps = array(
 	array(
-		'title'       => __( 'Purchase subscription', 'kidia-mobile-cms' ),
-		'description' => __( 'Choose your plan and complete checkout securely on WooMobile.', 'kidia-mobile-cms' ),
-		'complete'    => $license_active,
-	),
-	array(
-		'title'       => __( 'Connect your website', 'kidia-mobile-cms' ),
-		'description' => __( 'Connect this WordPress website from your WooMobile account.', 'kidia-mobile-cms' ),
-		'complete'    => $license_active,
-	),
-	array(
-		'title'       => __( 'Install the plugin', 'kidia-mobile-cms' ),
-		'description' => __( 'Woo Mobile CMS is installed and ready on this website.', 'kidia-mobile-cms' ),
-		'complete'    => true,
+		'title'       => __( 'Purchase and connect', 'kidia-mobile-cms' ),
+		'description' => __( 'Open WooMobile to purchase a plan and connect this already-installed WordPress plugin.', 'kidia-mobile-cms' ),
+		'complete'    => $website_connected,
 	),
 	array(
 		'title'       => __( 'Activate your license', 'kidia-mobile-cms' ),
-		'description' => __( 'Enter the website license below to unlock the plugin.', 'kidia-mobile-cms' ),
+		'description' => __( 'Enter the license issued for this website below to unlock the plugin.', 'kidia-mobile-cms' ),
 		'complete'    => $license_active,
 	),
 	array(
-		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
-		'description' => __( 'Start the Setup Wizard or continue with manual configuration.', 'kidia-mobile-cms' ),
+		'title'       => __( 'Set up your app', 'kidia-mobile-cms' ),
+		'description' => __( 'Use the Setup Wizard or continue with manual configuration.', 'kidia-mobile-cms' ),
 		'complete'    => $setup_complete,
+	),
+	array(
+		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
+		'description' => __( 'Review your configuration and generate a new application build.', 'kidia-mobile-cms' ),
+		'complete'    => false,
 	),
 );
 $current_journey_step = 0;
@@ -124,12 +117,12 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		<div class="kidia-customer-journey__header">
 			<div>
 				<span class="kidia-customer-journey__eyebrow"><?php esc_html_e( 'Your launch journey', 'kidia-mobile-cms' ); ?></span>
-				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From subscription to a ready mobile app', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Purchase and connect on WooMobile, then complete activation and setup here in the plugin.', 'kidia-mobile-cms' ); ?></p>
+				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From website connection to ready mobile app', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Woo Mobile CMS is already installed. Connect this website, activate its serial, then choose the wizard or manual setup.', 'kidia-mobile-cms' ); ?></p>
 			</div>
 			<?php if ( ! $license_active ) : ?>
-				<a class="button button-primary button-hero" href="<?php echo esc_url( $customer_portal_url ); ?>" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Purchase or connect website', 'kidia-mobile-cms' ); ?>
+				<a class="button button-primary button-hero" href="<?php echo esc_url( $website_connected ? '#kidia-license-key' : $connect_url ); ?>">
+					<?php echo $website_connected ? esc_html__( 'Enter your serial', 'kidia-mobile-cms' ) : esc_html__( 'Connect website', 'kidia-mobile-cms' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>
@@ -207,6 +200,10 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 					</form>
 				</div>
 			<?php else : ?>
+				<?php if ( ! $website_connected ) : ?>
+					<p><?php esc_html_e( 'Start by purchasing a plan and connecting this website. You will return here to enter the serial issued for it.', 'kidia-mobile-cms' ); ?></p>
+					<p><a class="button button-secondary" href="<?php echo esc_url( $connect_url ); ?>"><?php esc_html_e( 'Purchase and connect website', 'kidia-mobile-cms' ); ?></a></p>
+				<?php endif; ?>
 				<form class="kidia-license-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="kidia_mobile_activate_license">
 					<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
