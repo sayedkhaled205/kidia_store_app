@@ -626,12 +626,9 @@ final class Kidia_Mobile_CMS_Admin {
 			'product'    => $tab( __( 'Product', 'kidia-mobile-cms' ), 'kidia-mobile-product-builder', 'dashicons-products' ),
 			'wishlist'   => $tab( __( 'Wishlist', 'kidia-mobile-cms' ), 'kidia-mobile-wishlist-builder', 'dashicons-heart' ),
 			'account'    => $tab( __( 'Account', 'kidia-mobile-cms' ), 'kidia-mobile-account-builder', 'dashicons-admin-users' ),
-		);
-		$more_tabs = array(
+			'checkout'   => $tab( __( 'Checkout', 'kidia-mobile-cms' ), 'kidia-mobile-checkout-suggestions', 'dashicons-cart' ),
 			'size_chart' => $tab( __( 'Size Chart', 'kidia-mobile-cms' ), 'kidia-mobile-size-chart-builder', 'dashicons-editor-table' ),
-			'splash'     => $tab( __( 'Splash Screen', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
 			'similar'    => $tab( __( 'Similar Products', 'kidia-mobile-cms' ), 'kidia-mobile-similar-products', 'dashicons-randomize' ),
-			'checkout'   => $tab( __( 'Checkout Suggestions', 'kidia-mobile-cms' ), 'kidia-mobile-checkout-suggestions', 'dashicons-cart' ),
 		);
 		$active_map = array(
 			'kidia-mobile-cms'                  => 'overview',
@@ -651,14 +648,17 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
 			$active_tab = 'setup';
 		}
-		$builder_tabs = array( 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'size_chart', 'splash', 'similar', 'checkout' );
+		$builder_tabs = array( 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'size_chart', 'similar' );
 		$show_page_tabs = in_array( $active_tab, $builder_tabs, true );
 		$sidebar_items = array(
-			'overview' => $tab( __( 'Dashboard', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
+			'overview' => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
+			'setup'    => $tab( __( 'Setup Wizard', 'kidia-mobile-cms' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
+			'splash'   => $tab( __( 'Splash Page', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
 			'pages'    => $tab( __( 'Design Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-appearance' ),
-			'setup'    => $tab( __( 'Quick Setup & Themes', 'kidia-mobile-cms' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
 		);
-		$active_sidebar = $show_page_tabs ? 'pages' : ( 'setup' === $active_tab ? 'setup' : 'overview' );
+		$active_sidebar = $show_page_tabs
+			? 'pages'
+			: ( in_array( $active_tab, array( 'setup', 'splash' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}

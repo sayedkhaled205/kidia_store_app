@@ -1,6 +1,5 @@
 (function () {
 	'use strict';
-	const more = document.querySelector('.kidia-cms-more');
 	const shell = document.querySelector('.kidia-cms-shell');
 	const fixedBuilder = document.body.classList.contains('kidia-cms-builder-screen');
 
@@ -28,17 +27,4 @@
 		new window.ResizeObserver(syncPreviewOffset).observe(shell);
 	}
 
-	if (more) {
-		const button = more.querySelector('button');
-		button.addEventListener('click', function () {
-			const open = more.classList.toggle('is-open');
-			button.setAttribute('aria-expanded', open ? 'true' : 'false');
-		});
-		document.addEventListener('click', function (event) {
-			if (!more.contains(event.target)) {
-				more.classList.remove('is-open');
-				button.setAttribute('aria-expanded', 'false');
-			}
-		});
-	}
 })();
