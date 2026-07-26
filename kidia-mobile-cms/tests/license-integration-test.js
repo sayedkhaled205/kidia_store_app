@@ -13,7 +13,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const dashboard = read("admin", "pages", "dashboard.php");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.36\.0/, "The plugin header must be version 1.36.0.");
+assert.match(plugin, /Version:\s+1\.36\.2/, "The plugin header must be version 1.36.2.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -56,6 +56,16 @@ for (const journeyStep of [
   assert.match(dashboard, new RegExp(journeyStep), `The customer journey must include: ${journeyStep}.`);
 }
 assert.doesNotMatch(dashboard, /Install the plugin/, "Plugin installation must not appear as a pending in-plugin step.");
+assert.match(
+  dashboard,
+  /\$license_step_complete\s*=\s*\$connection_step_complete\s*&&\s*\$license_active/,
+  "License completion must remain locked until the website connection is complete."
+);
+assert.match(
+  dashboard,
+  /\$setup_step_complete\s*=\s*\$license_step_complete\s*&&\s*\$setup_complete/,
+  "Setup completion must remain locked until website connection and license activation are complete."
+);
 assert.match(
   dashboard,
   /Woo Mobile CMS is already installed\. Connect this website, activate its serial, then choose the wizard or manual setup\./,

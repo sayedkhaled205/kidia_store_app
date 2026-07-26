@@ -130,6 +130,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_save_similar_products', array( $this, 'save_similar_products' ) );
 		add_action( 'admin_post_kidia_mobile_save_checkout_suggestions', array( $this, 'save_checkout_suggestions' ) );
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
+		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
@@ -376,6 +377,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$identity     = $wizard->identity();
 		$themes       = Kidia_Mobile_Setup_Wizard::themes();
 		$setup_pages  = Kidia_Mobile_Setup_Wizard::setup_pages();
+		$saved_themes = $wizard->saved_themes();
 		$catalog_stats  = array( 'products' => 0, 'categories' => 0, 'images' => 0 );
 		$catalog_images = array();
 		if ( function_exists( 'wp_count_posts' ) ) {
@@ -432,6 +434,61 @@ final class Kidia_Mobile_CMS_Admin {
 				admin_url( 'admin.php' )
 			)
 		);
+		exit;
+	}
+
+	/** Saves, restores, imports and exports reusable application themes. */
+	public function manage_saved_theme(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' );
+		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
+			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-cms', 'license_error' => 'required' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
+		$wizard    = new Kidia_Mobile_Setup_Wizard();
+		$operation = sanitize_key( (string) ( $_POST['theme_operation'] ?? '' ) );
+		try {
+			if ( 'save' === $operation ) {
+				$wizard->save_current_theme( sanitize_text_field( wp_unslash( (string) ( $_POST['theme_name'] ?? '' ) ) ) );
+			} elseif ( 'apply' === $operation ) {
+				if ( ! $wizard->apply_saved_theme( sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) ) ) ) {
+					throw new InvalidArgumentException( 'saved_theme_not_found' );
+				}
+			} elseif ( 'delete' === $operation ) {
+				if ( ! $wizard->delete_saved_theme( sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) ) ) {
+					throw new InvalidArgumentException( 'saved_theme_not_found' );
+				}
+			} elseif ( 'blank' === $operation ) {
+				$wizard->start_blank();
+			} elseif ( 'import' === $operation ) {
+				$file = isset( $_FILES['theme_file'] ) && is_array( $_FILES['theme_file'] ) ? $_FILES['theme_file'] : array();
+				if ( UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || empty( $file['tmp_name'] ) || (int) ( $file['size'] ?? 0 ) > 2097152 ) {
+					throw new InvalidArgumentException( 'invalid_theme_file' );
+				}
+				$contents = file_get_contents( (string) $file['tmp_name'] );
+				$wizard->import_saved_theme( is_string( $contents ) ? $contents : '' );
+			} elseif ( 'export' === $operation ) {
+				$theme_id = sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) );
+				$export   = $wizard->export_saved_theme( $theme_id );
+				if ( null === $export ) {
+					throw new InvalidArgumentException( 'saved_theme_not_found' );
+				}
+				nocache_headers();
+				header( 'Content-Type: application/json; charset=utf-8' );
+				header( 'Content-Disposition: attachment; filename="woomobile-theme-' . sanitize_file_name( $theme_id ) . '.json"' );
+				echo wp_json_encode( $export, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+				exit;
+			} else {
+				throw new InvalidArgumentException( 'unknown_theme_operation' );
+			}
+			$args = array( 'page' => 'kidia-mobile-setup', 'theme_notice' => $operation );
+		} catch ( Throwable $error ) {
+			$args = array( 'page' => 'kidia-mobile-setup', 'theme_error' => sanitize_key( $error->getMessage() ) ?: 'failed' );
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
 
@@ -1211,10 +1268,10 @@ final class Kidia_Mobile_CMS_Admin {
 							add_query_arg(
 								'locale',
 								$preview_locale,
-								rest_url( 'woo-mobile/v1/home-layout' )
+								rest_url( 'woomobileapp/v1/home-layout' )
 							)
 						),
-					'livePreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/home-layout/preview' ) ),
+					'livePreviewEndpoint' => esc_url_raw( rest_url( 'woomobileapp/v1/home-layout/preview' ) ),
 					'layoutPreviewEndpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/page-layout/home/preview' ) ),
 						'restNonce'           => wp_create_nonce( 'wp_rest' ),
 					)

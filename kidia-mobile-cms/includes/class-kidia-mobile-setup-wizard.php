@@ -11,6 +11,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	private const STATE_OPTION    = 'kidia_mobile_setup_wizard_state';
 	private const IDENTITY_OPTION = 'kidia_mobile_app_identity';
 	private const BACKUP_OPTION   = 'kidia_mobile_setup_wizard_backup';
+	private const SAVED_THEMES_OPTION = 'kidia_mobile_saved_themes';
 
 	/** @return array<string,array<string,mixed>> */
 	public static function themes(): array {
@@ -100,6 +101,88 @@ final class Kidia_Mobile_Setup_Wizard {
 		return is_array( $state ) && ! empty( $state['completed'] );
 	}
 
+	/** @return array<string,array<string,mixed>> */
+	public function saved_themes(): array {
+		$themes = get_option( self::SAVED_THEMES_OPTION, array() );
+		return is_array( $themes ) ? $themes : array();
+	}
+
+	public function save_current_theme( string $name ): string {
+		$name = sanitize_text_field( $name );
+		if ( '' === $name ) {
+			$name = __( 'Saved theme', 'kidia-mobile-cms' );
+		}
+		$id     = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : str_replace( '.', '-', uniqid( 'theme_', true ) );
+		$themes = $this->saved_themes();
+		$themes[ $id ] = array(
+			'id'         => $id,
+			'name'       => $name,
+			'created_at' => time(),
+			'snapshot'   => $this->sanitize_snapshot( $this->current_snapshot() ),
+		);
+		update_option( self::SAVED_THEMES_OPTION, $themes, false );
+		return $id;
+	}
+
+	public function apply_saved_theme( string $id ): bool {
+		$themes = $this->saved_themes();
+		if ( empty( $themes[ $id ]['snapshot'] ) || ! is_array( $themes[ $id ]['snapshot'] ) ) {
+			return false;
+		}
+		$this->restore_snapshot( $themes[ $id ]['snapshot'], 'saved_theme' );
+		return true;
+	}
+
+	public function delete_saved_theme( string $id ): bool {
+		$themes = $this->saved_themes();
+		if ( ! isset( $themes[ $id ] ) ) {
+			return false;
+		}
+		unset( $themes[ $id ] );
+		update_option( self::SAVED_THEMES_OPTION, $themes, false );
+		return true;
+	}
+
+	/** @return array<string,mixed>|null */
+	public function export_saved_theme( string $id ): ?array {
+		$themes = $this->saved_themes();
+		if ( ! isset( $themes[ $id ] ) ) {
+			return null;
+		}
+		return array(
+			'schema' => 'woomobileapp-saved-theme',
+			'version' => 1,
+			'theme' => $themes[ $id ],
+		);
+	}
+
+	public function import_saved_theme( string $json ): string {
+		$payload = json_decode( $json, true );
+		if ( ! is_array( $payload ) || 'woomobileapp-saved-theme' !== ( $payload['schema'] ?? '' ) || ! is_array( $payload['theme']['snapshot'] ?? null ) ) {
+			throw new InvalidArgumentException( __( 'The selected file is not a valid WooMobile saved theme.', 'kidia-mobile-cms' ) );
+		}
+		$id     = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : uniqid( 'theme_', true );
+		$themes = $this->saved_themes();
+		$themes[ $id ] = array(
+			'id'         => $id,
+			'name'       => sanitize_text_field( (string) ( $payload['theme']['name'] ?? __( 'Imported theme', 'kidia-mobile-cms' ) ) ),
+			'created_at' => time(),
+			'snapshot'   => $this->sanitize_snapshot( $payload['theme']['snapshot'] ),
+		);
+		update_option( self::SAVED_THEMES_OPTION, $themes, false );
+		return $id;
+	}
+
+	public function start_blank(): void {
+		$snapshot = $this->current_snapshot();
+		$snapshot['home'] = array();
+		$page_store = new Kidia_Mobile_Page_Layout_Store();
+		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
+			$snapshot['pages'][ $page ] = $page_store->default_layout( $page );
+		}
+		$this->restore_snapshot( $snapshot, 'manual' );
+	}
+
 	/** @return array<string,mixed> */
 	public function identity(): array {
 		$saved = get_option( self::IDENTITY_OPTION, array() );
@@ -165,6 +248,9 @@ final class Kidia_Mobile_Setup_Wizard {
 				'theme'        => $theme_key,
 				'page_themes'  => $page_themes,
 				'completed_at' => time(),
+				'source'       => 'built_in',
+				'build_required' => true,
+				'build_requested_at' => time(),
 			),
 			false
 		);
@@ -381,6 +467,13 @@ final class Kidia_Mobile_Setup_Wizard {
 	}
 
 	private function create_backup(): void {
+		$backup = $this->current_snapshot();
+		$backup['created_at'] = time();
+		update_option( self::BACKUP_OPTION, $backup, false );
+	}
+
+	/** @return array<string,mixed> */
+	private function current_snapshot(): array {
 		$backup = array(
 			'created_at' => time(),
 			'home'       => ( new Kidia_Mobile_Layout_Store() )->get_layout(),
@@ -394,6 +487,70 @@ final class Kidia_Mobile_Setup_Wizard {
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
 			$backup['pages'][ $page ] = $page_store->get_layout( $page );
 		}
-		update_option( self::BACKUP_OPTION, $backup, false );
+		return $backup;
+	}
+
+	/** @param array<string,mixed> $snapshot */
+	private function restore_snapshot( array $snapshot, string $source ): void {
+		$this->create_backup();
+		( new Kidia_Mobile_Layout_Store() )->save_layout( is_array( $snapshot['home'] ?? null ) ? $snapshot['home'] : array() );
+		$page_store = new Kidia_Mobile_Page_Layout_Store();
+		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
+			if ( is_array( $snapshot['pages'][ $page ] ?? null ) ) {
+				$page_store->save_layout( $page, $snapshot['pages'][ $page ] );
+			}
+		}
+		if ( is_array( $snapshot['category'] ?? null ) ) {
+			( new Kidia_Mobile_Category_Page_Store() )->save_settings( $snapshot['category'] );
+		}
+		foreach ( array( 'splash' => 'kidia_mobile_splash_screen', 'checkout' => 'kidia_mobile_checkout_suggestions', 'identity' => self::IDENTITY_OPTION ) as $key => $option ) {
+			if ( is_array( $snapshot[ $key ] ?? null ) ) {
+				update_option( $option, $snapshot[ $key ], false );
+			}
+		}
+		update_option( self::STATE_OPTION, array(
+			'completed' => true,
+			'completed_at' => time(),
+			'source' => $source,
+			'build_required' => true,
+			'build_requested_at' => time(),
+		), false );
+	}
+
+	/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+	private function sanitize_snapshot( array $snapshot ): array {
+		if ( isset( $snapshot['category']['categories'] ) && is_array( $snapshot['category']['categories'] ) ) {
+			foreach ( $snapshot['category']['categories'] as &$category ) {
+				if ( is_array( $category ) ) {
+					$category['image_id'] = 0;
+					$category['image_url'] = '';
+				}
+			}
+			unset( $category );
+		}
+		$snapshot['home'] = $this->strip_catalog_images( $snapshot['home'] ?? array() );
+		if ( isset( $snapshot['pages'] ) && is_array( $snapshot['pages'] ) ) {
+			foreach ( $snapshot['pages'] as $page => $layout ) {
+				$snapshot['pages'][ $page ] = $this->strip_catalog_images( $layout );
+			}
+		}
+		return $snapshot;
+	}
+
+	/** @param mixed $value @return mixed */
+	private function strip_catalog_images( $value, bool $catalog_context = false ) {
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+		$type = strtolower( (string) ( $value['type'] ?? $value['source'] ?? '' ) );
+		$catalog_context = $catalog_context || false !== strpos( $type, 'product' ) || false !== strpos( $type, 'category' );
+		foreach ( $value as $key => $item ) {
+			if ( $catalog_context && in_array( (string) $key, array( 'image_id', 'image_url', 'thumbnail', 'thumbnail_url', 'attachment_id' ), true ) ) {
+				$value[ $key ] = is_int( $item ) ? 0 : '';
+				continue;
+			}
+			$value[ $key ] = $this->strip_catalog_images( $item, $catalog_context || in_array( (string) $key, array( 'products', 'categories' ), true ) );
+		}
+		return $value;
 	}
 }

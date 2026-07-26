@@ -10,6 +10,9 @@
 	var requestNumber = 0;
 	var refreshTimer = 0;
 	var sentInitialState = false;
+	var pendingPayload = "";
+	var deliveryTimer = 0;
+	var deliveryAttempts = 0;
 	var blocks = Array.isArray(window.kidiaHomePreviewBlocks) ? window.kidiaHomePreviewBlocks : [];
 	var lastSignature = "";
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".kidia-legacy-preview-fallback");
@@ -61,11 +64,32 @@
 			return response.json();
 		});
 	}
+	function deliverPayload() {
+		window.clearTimeout(deliveryTimer);
+		if (!pendingPayload || !frame.contentWindow) { return; }
+		frame.contentWindow.postMessage(pendingPayload, frameOrigin);
+		deliveryAttempts += 1;
+		if (ready) {
+			pendingPayload = "";
+			deliveryAttempts = 0;
+			showFlutter();
+			return;
+		}
+		if (deliveryAttempts < 32) {
+			deliveryTimer = window.setTimeout(deliverPayload, 250);
+			return;
+		}
+		// Do not leave the phone on an infinite loader if the iframe ready
+		// message was missed by the parent during a cached refresh.
+		showFlutter();
+		deliveryAttempts = 0;
+		lastSignature = "";
+	}
 	function refresh(force) {
 		var signature;
 		var number;
 		var signal;
-		if (!ready || !config.layoutPreviewEndpoint || !config.livePreviewEndpoint || !config.restNonce || typeof window.fetch !== "function") { return; }
+		if (!config.layoutPreviewEndpoint || !config.livePreviewEndpoint || !config.restNonce || typeof window.fetch !== "function") { return; }
 		signature = JSON.stringify({ layout: serializeLayout(), blocks: blocks });
 		if (!force && signature === lastSignature) { return; }
 		lastSignature = signature;
@@ -78,7 +102,9 @@
 			postJson(config.livePreviewEndpoint, { blocks: blocks }, signal)
 		]).then(function (payloads) {
 			if (number !== requestNumber || !frame.contentWindow) { return; }
-			frame.contentWindow.postMessage(JSON.stringify({ type: "kidia-preview-layout", page: "home", layout: payloads[0], home: payloads[1] }), frameOrigin);
+			pendingPayload = JSON.stringify({ type: "kidia-preview-layout", page: "home", layout: payloads[0], home: payloads[1] });
+			deliveryAttempts = 0;
+			deliverPayload();
 		}).catch(function (error) {
 			if (error && error.name === "AbortError") { return; }
 			if (window.console && window.console.warn) { window.console.warn(error); }
@@ -103,6 +129,11 @@
 		if (message && message.type === "kidia-flutter-preview-ready") {
 			ready = true;
 			showFlutter();
+			if (pendingPayload) {
+				deliverPayload();
+				sentInitialState = true;
+				return;
+			}
 			if (!sentInitialState) {
 				sentInitialState = true;
 				queueRefresh(true);
@@ -113,6 +144,11 @@
 		ready = false;
 		sentInitialState = false;
 		lastSignature = "";
+		pendingPayload = "";
+		deliveryAttempts = 0;
+		window.clearTimeout(deliveryTimer);
+		waitForFlutter();
+		queueRefresh(true);
 	});
 	form.addEventListener("input", function () { queueRefresh(false); });
 	form.addEventListener("change", function () { queueRefresh(false); });
@@ -173,4 +209,5 @@
 	});
 	// Do not rely on a load event that a cached iframe may already have fired.
 	waitForFlutter();
+	queueRefresh(true);
 }());
