@@ -733,6 +733,18 @@ function runMergeControlsContractTest() {
 	assert.match(promoBlock, /kidia-promo-action-setting--text[\s\S]*kidia-promo-action-setting--background[\s\S]*kidia-promo-action-setting--text-color[\s\S]*kidia-promo-action-setting--action-type[\s\S]*kidia-promo-action-setting--action-value/, "Promo Strip must expose the complete approved Actions & Navigation field set.");
 	assert.match(homeBuilderCss, /kidia-promo-action-setting--text\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--background\s*\{\s*grid-column:\s*2;[\s\S]*kidia-promo-action-setting--text-color\s*\{\s*grid-column:\s*3;[\s\S]*kidia-promo-action-setting--action-type\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--action-value\s*\{\s*grid-column:\s*2;/, "Actions & Navigation must follow the approved two-row map starting with Text on the right.");
 	const checkoutSuggestions = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "checkout-suggestions.php"), "utf8");
+	const checkoutFieldStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-checkout-fields-store.php"), "utf8");
+	const checkoutEndpoint = fs.readFileSync(path.join(pluginRoot, "api", "class-checkout-config-endpoint.php"), "utf8");
+	const checkoutFieldBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "checkout-fields-builder.js"), "utf8");
+	assert.match(checkoutSuggestions, /Default Fields[\s\S]*data-checkout-fields-list[\s\S]*data-checkout-field-template/, "Checkout must expose live defaults, ordered field cards and an add-field template.");
+	assert.match(checkoutSuggestions, /data-checkout-add-field/, "Checkout fields must be addable.");
+	assert.match(checkoutSuggestions, /kidia-checkout-field-remove/, "Checkout fields must be removable.");
+	assert.match(checkoutSuggestions, /draggable="true"/, "Checkout fields must be draggable.");
+	assert.match(checkoutFieldStore, /get_checkout_fields\(\s*\$group\s*\)[\s\S]*OPTION[\s\S]*checkout_groups/, "Default Fields must snapshot WooCommerce's filtered runtime schema for the mobile checkout API.");
+	assert.match(checkoutEndpoint, /Kidia_Mobile_Checkout_Fields_Store[\s\S]*checkout_groups/, "The checkout API must serve the saved field-builder schema.");
+	assert.match(checkoutFieldBuilder, /function reindex/, "The checkout field editor must keep submitted indexes stable.");
+	assert.match(checkoutFieldBuilder, /dragstart[\s\S]*dragover/, "The checkout field editor must reorder cards.");
+	assert.match(checkoutFieldBuilder, /data-checkout-add-field/, "The checkout field editor must bind the add-field action.");
 	assert.equal((checkoutSuggestions.match(/kidia-settings-section-title--suggested-(?:appearance|products-actions)/g) || []).length, 2, "Suggested Products must render exactly the two requested merged sections.");
 	assert.match(checkoutSuggestions, /suggested-appearance[\s\S]*suggestions\[image_ratio\][\s\S]*suggestions\[title\][\s\S]*suggestions\[button_label\][\s\S]*button_color[\s\S]*suggested-products-actions/, "Image, text and appearance controls must remain together in the first Suggested Products section.");
 	assert.match(checkoutSuggestions, /suggested-products-actions[\s\S]*suggestions\[source\][\s\S]*category_id[\s\S]*manual_product_ids[\s\S]*limit[\s\S]*columns/, "Products and action data must remain together in the second Suggested Products section.");

@@ -19,11 +19,11 @@ $kidia_toolbar_page_enabled = ! isset( $kidia_toolbar_page_enabled ) || ! empty(
 	</div>
 	<div class="kidia-builder-toolbar__save">
 		<?php if ( $kidia_toolbar_page_toggle ) : ?>
-			<label class="kidia-page-availability">
-				<span><?php esc_html_e( 'Page', 'kidia-mobile-cms' ); ?></span>
+			<label class="kidia-page-availability" aria-label="<?php esc_attr_e( 'Page availability', 'kidia-mobile-cms' ); ?>">
 				<input type="hidden" name="layout[enabled]" value="0">
 				<input type="checkbox" name="layout[enabled]" value="1" <?php checked( $kidia_toolbar_page_enabled ); ?>>
-				<span class="kidia-toggle-state"></span>
+				<span class="kidia-page-availability__icon"><span class="dashicons dashicons-visibility"></span></span>
+				<span class="kidia-page-availability__copy"><strong><?php esc_html_e( 'Page status', 'kidia-mobile-cms' ); ?></strong><small class="kidia-toggle-state"></small></span>
 			</label>
 		<?php endif; ?>
 		<?php if ( $kidia_toolbar_restore_product ) : ?>

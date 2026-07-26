@@ -481,6 +481,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			'category'   => ( new Kidia_Mobile_Category_Page_Store() )->get_settings(),
 			'splash'     => get_option( 'kidia_mobile_splash_screen', array() ),
 			'checkout'   => get_option( 'kidia_mobile_checkout_suggestions', array() ),
+			'checkout_fields' => get_option( Kidia_Mobile_Checkout_Fields_Store::OPTION, array() ),
 			'identity'   => get_option( self::IDENTITY_OPTION, array() ),
 		);
 		$page_store = new Kidia_Mobile_Page_Layout_Store();
@@ -503,7 +504,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		if ( is_array( $snapshot['category'] ?? null ) ) {
 			( new Kidia_Mobile_Category_Page_Store() )->save_settings( $snapshot['category'] );
 		}
-		foreach ( array( 'splash' => 'kidia_mobile_splash_screen', 'checkout' => 'kidia_mobile_checkout_suggestions', 'identity' => self::IDENTITY_OPTION ) as $key => $option ) {
+		foreach ( array( 'splash' => 'kidia_mobile_splash_screen', 'checkout' => 'kidia_mobile_checkout_suggestions', 'checkout_fields' => Kidia_Mobile_Checkout_Fields_Store::OPTION, 'identity' => self::IDENTITY_OPTION ) as $key => $option ) {
 			if ( is_array( $snapshot[ $key ] ?? null ) ) {
 				update_option( $option, $snapshot[ $key ], false );
 			}
