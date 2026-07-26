@@ -74,7 +74,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 					'states'  => $states,
 				),
 				'fields'   => $this->normalize_fields(
-					$checkout->get_checkout_fields(),
+					( new Kidia_Mobile_Checkout_Fields_Store() )->checkout_groups(),
 					$default_country
 				),
 				'suggestions' => $this->get_suggestions(),
@@ -145,7 +145,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 		}
 
 		$definitions = array();
-		foreach ( $this->normalize_fields( $checkout->get_checkout_fields(), $this->get_default_country() ) as $definition ) {
+		foreach ( $this->normalize_fields( ( new Kidia_Mobile_Checkout_Fields_Store() )->checkout_groups(), $this->get_default_country() ) as $definition ) {
 			$definitions[ $definition['key'] ] = $definition;
 		}
 
