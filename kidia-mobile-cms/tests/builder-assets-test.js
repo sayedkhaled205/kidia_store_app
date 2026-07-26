@@ -509,11 +509,12 @@ function runMergeControlsContractTest() {
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:none/, "Page phones must remain centered in their preview column.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:none/, "The Category phone must remain centered in its preview column.");
 	assert.match(chromeTemplate, /class="kidia-fixed-chrome-identity"/, "Fixed Header and Footer must expose a stable identity group for physical ordering.");
+	assert.doesNotMatch(chromeTemplate, /Fixed position · arrange the visible items below/, "Header and Footer cards must omit the redundant helper copy.");
 	const pageBuilderCss = readAsset("page-builder.css");
 	const categoryBuilderCss = readAsset("category-builder.css");
 	const flutterPreviewBridge = readAsset("flutter-preview-bridge.js");
 	const homeBlockTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
-	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:96px 96px 58px 96px;[\s\S]*direction:ltr!important;/, "Every closed element card must use the same four physical action columns even when a page-specific stylesheet loads later.");
+	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:88px 88px 50px 86px;[\s\S]*gap:4px;[\s\S]*direction:ltr!important;/, "Every closed element card must keep its four actions compact and close together.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*662\.89px;/, "Home preview height must be reduced by five percent.");
 	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:662\.89px;/, "Every page preview height must use the same five-percent reduction.");
 	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:662\.89px;/, "Category preview height must use the same five-percent reduction.");

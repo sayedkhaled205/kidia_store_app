@@ -27,6 +27,13 @@ defined( 'ABSPATH' ) || exit;
 				</a>
 			<?php endforeach; ?>
 		</nav>
+		<form class="kidia-cms-save-theme" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="var themeName=window.prompt('<?php echo esc_js( __( 'Enter a name for this theme', 'kidia-mobile-cms' ) ); ?>','');if(themeName===null){return false;}themeName=themeName.trim();if(!themeName){window.alert('<?php echo esc_js( __( 'Please enter a theme name.', 'kidia-mobile-cms' ) ); ?>');return false;}var saveAction=document.querySelector('input[name=&quot;action&quot;][value^=&quot;kidia_mobile_save_&quot;]');var editorForm=saveAction?saveAction.form:null;if(editorForm&&editorForm!==this){var field=document.createElement('input');field.type='hidden';field.name='kidia_save_theme_name';field.value=themeName;editorForm.appendChild(field);if(typeof editorForm.requestSubmit==='function'){editorForm.requestSubmit();}else{editorForm.submit();}return false;}this.elements.theme_name.value=themeName;return true;">
+			<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+			<input type="hidden" name="theme_operation" value="save">
+			<input type="hidden" name="theme_name" value="">
+			<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+			<button type="submit" class="button button-primary"><span class="dashicons dashicons-saved" aria-hidden="true"></span><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button>
+		</form>
 	</div>
 <?php endif; ?>
 <?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>
