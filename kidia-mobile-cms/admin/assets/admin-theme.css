@@ -101,8 +101,16 @@
 .kidia-shared-builder-toolbar :is(.kidia-builder-toolbar__actions,.kidia-builder-toolbar__save) {
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	gap: 7px;
+}
+
+.kidia-shared-builder-toolbar .kidia-builder-toolbar__actions {
+	min-width: 0;
+}
+
+.kidia-shared-builder-toolbar .kidia-builder-toolbar__save {
+	flex: 0 0 auto;
 }
 
 .kidia-shared-builder-toolbar .button {
@@ -112,6 +120,8 @@
 	justify-content: center;
 	gap: 5px;
 	margin: 0;
+	padding-inline: 13px;
+	white-space: nowrap;
 }
 
 .kidia-shared-builder-toolbar .kidia-builder-toolbar__context {
@@ -178,6 +188,8 @@
 
 @media (max-width: 960px) {
 	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-shared-builder-toolbar { width: 100%; }
+	.kidia-shared-builder-toolbar { flex-wrap: wrap; }
+	.kidia-shared-builder-toolbar :is(.kidia-builder-toolbar__actions,.kidia-builder-toolbar__save) { flex-wrap: wrap; }
 }
 
 /* Every settings section starts with its first field on the physical right. */
