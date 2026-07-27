@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
+import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
@@ -54,7 +56,9 @@ class CartController extends AsyncNotifier<CartViewState> {
 
   @override
   Future<CartViewState> build() async {
-    return CartViewState(cart: await _repository.getCart());
+    final Cart cart = await _repository.getCart();
+    _captureCart(cart);
+    return CartViewState(cart: cart);
   }
 
   Future<void> retry() async {
@@ -77,6 +81,7 @@ class CartController extends AsyncNotifier<CartViewState> {
     );
     try {
       final Cart cart = await _repository.getCart();
+      _captureCart(cart);
       state = AsyncData<CartViewState>(
         CartViewState(cart: cart, isRefreshing: false),
       );
@@ -101,11 +106,21 @@ class CartController extends AsyncNotifier<CartViewState> {
     return _mutateItem(
       item.key,
       () => _repository.updateItem(key: item.key, quantity: quantity),
+      eventName: quantity < item.quantity ? 'remove_from_cart' : 'add_to_cart',
+      objectId: item.productId,
+      label: item.name,
     );
   }
 
   Future<CartActionResult> removeItem(String key) {
-    return _mutateItem(key, () => _repository.removeItem(key));
+    final CartItem? item = _itemForKey(key);
+    return _mutateItem(
+      key,
+      () => _repository.removeItem(key),
+      eventName: 'remove_from_cart',
+      objectId: item?.productId ?? 0,
+      label: item?.name ?? '',
+    );
   }
 
   Future<CartActionResult> applyCoupon(String code) {
@@ -124,6 +139,8 @@ class CartController extends AsyncNotifier<CartViewState> {
         variation: selection.variation,
       ),
       addingItem: true,
+      eventName: 'add_to_cart',
+      objectId: selection.productId,
     );
   }
 
@@ -137,9 +154,18 @@ class CartController extends AsyncNotifier<CartViewState> {
 
   Future<CartActionResult> _mutateItem(
     String key,
-    Future<Cart> Function() operation,
-  ) {
-    return _mutate(operation: operation, itemKey: key);
+    Future<Cart> Function() operation, {
+    String eventName = 'cart_updated',
+    int objectId = 0,
+    String label = '',
+  }) {
+    return _mutate(
+      operation: operation,
+      itemKey: key,
+      eventName: eventName,
+      objectId: objectId,
+      label: label,
+    );
   }
 
   Future<CartActionResult> _mutateCoupon(Future<Cart> Function() operation) {
@@ -151,6 +177,9 @@ class CartController extends AsyncNotifier<CartViewState> {
     String? itemKey,
     bool couponPending = false,
     bool addingItem = false,
+    String eventName = 'cart_updated',
+    int objectId = 0,
+    String label = '',
   }) async {
     final CartViewState? current = state.asData?.value;
     if (current == null) {
@@ -174,6 +203,16 @@ class CartController extends AsyncNotifier<CartViewState> {
     try {
       final Cart cart = await operation();
       state = AsyncData<CartViewState>(CartViewState(cart: cart));
+      final String token = _authToken;
+      ref
+          .read(mobileAnalyticsProvider)
+          .trackInBackground(
+            eventName,
+            objectId: objectId,
+            label: label,
+            authToken: token,
+          );
+      _captureCart(cart);
       return const CartActionResult.success();
     } catch (error) {
       final CartRepositoryException failure = _failure(error);
@@ -196,5 +235,23 @@ class CartController extends AsyncNotifier<CartViewState> {
       message: 'The cart request failed unexpectedly.',
       cause: error,
     );
+  }
+
+  CartItem? _itemForKey(String key) {
+    final CartViewState? current = state.asData?.value;
+    if (current == null) return null;
+    for (final CartItem item in current.cart.items) {
+      if (item.key == key) return item;
+    }
+    return null;
+  }
+
+  String get _authToken =>
+      ref.read(authControllerProvider).asData?.value?.token ?? '';
+
+  void _captureCart(Cart cart) {
+    ref
+        .read(mobileAnalyticsProvider)
+        .captureCartInBackground(cart, authToken: _authToken);
   }
 }

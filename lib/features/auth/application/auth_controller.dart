@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
@@ -24,6 +25,9 @@ class AuthController extends AsyncNotifier<AuthSession?> {
       password: password,
     );
     state = AsyncData<AuthSession?>(session);
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground('login', authToken: session.token);
     return session;
   }
 
@@ -31,11 +35,15 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     required String email,
     required String password,
   }) async {
+    ref.read(mobileAnalyticsProvider).trackInBackground('registration_started');
     final AuthSession session = await _repository.register(
       email: email.trim(),
       password: password,
     );
     state = AsyncData<AuthSession?>(session);
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground('sign_up', authToken: session.token);
     return session;
   }
 
@@ -56,6 +64,9 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     final SocialAuthCompletion completion = await _repository
         .completeSocialSignIn(code: code, state: callbackState);
     state = AsyncData<AuthSession?>(completion.session);
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground('login', authToken: completion.session.token);
     return completion;
   }
 

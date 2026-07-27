@@ -1,4 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
+import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
 import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
 import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
@@ -11,7 +16,7 @@ import 'package:kidia_store_app/features/checkout/domain/entities/checkout_sugge
 import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 
-class CheckoutScreen extends StatefulWidget {
+class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({
     required this.repository,
     super.key,
@@ -30,12 +35,13 @@ class CheckoutScreen extends StatefulWidget {
   final AddProductPurchaseSelection? onAddSuggestion;
 
   @override
-  State<CheckoutScreen> createState() => _CheckoutScreenState();
+  ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late CheckoutController _controller;
+  bool _checkoutTracked = false;
 
   @override
   void initState() {
@@ -64,6 +70,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _onControllerChanged() {
+    final Cart? cart = _controller.cart;
+    if (!_checkoutTracked &&
+        cart != null &&
+        !cart.isEmpty &&
+        (_controller.status == CheckoutStatus.ready ||
+            _controller.status == CheckoutStatus.submitting)) {
+      _checkoutTracked = true;
+      ref
+          .read(mobileAnalyticsProvider)
+          .trackInBackground(
+            'begin_checkout',
+            value: _cartValue(cart),
+            currency: cart.totals.currency.code,
+            authToken: _authToken,
+          );
+    }
     if (mounted) {
       setState(() {});
     }
@@ -125,7 +147,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!mounted || result == null) {
       return;
     }
+    final Cart? cart = _controller.cart;
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground(
+          'purchase',
+          value: cart == null ? 0 : _cartValue(cart),
+          currency: cart?.totals.currency.code ?? '',
+          orderId: result.orderId,
+          authToken: _authToken,
+        );
+    if (cart != null) {
+      for (final item in cart.items) {
+        final int lineMinor = int.tryParse(item.totals.totalMinor) ?? 0;
+        ref
+            .read(mobileAnalyticsProvider)
+            .trackInBackground(
+              'purchase_item',
+              objectId: item.productId,
+              label: item.name,
+              value:
+                  lineMinor /
+                  math.pow(10, item.totals.currency.minorUnit),
+              currency: item.totals.currency.code,
+              orderId: result.orderId,
+              authToken: _authToken,
+            );
+      }
+    }
     widget.onOrderSuccess?.call(result);
+  }
+
+  String get _authToken =>
+      ref.read(authControllerProvider).asData?.value?.token ?? '';
+
+  double _cartValue(Cart cart) {
+    final int minor = int.tryParse(cart.totals.priceMinor) ?? 0;
+    return minor / math.pow(10, cart.totals.currency.minorUnit);
   }
 }
 

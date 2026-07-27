@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/theme/kidia_colors.dart';
 import '../core/config/app_config.dart';
+import '../core/analytics/mobile_analytics.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/home/presentation/providers/home_providers.dart';
@@ -57,6 +58,7 @@ class _MainShellState extends ConsumerState<MainShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ref.read(mobileAnalyticsProvider).trackInBackground('app_open');
     if (!AppConfig.isCmsPreview) {
       _settingsRefreshTimer = Timer.periodic(
         const Duration(seconds: 3),
@@ -68,6 +70,7 @@ class _MainShellState extends ConsumerState<MainShell>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!AppConfig.isCmsPreview && state == AppLifecycleState.resumed) {
+      ref.read(mobileAnalyticsProvider).trackInBackground('app_resume');
       _refreshRemoteSettings();
     }
   }

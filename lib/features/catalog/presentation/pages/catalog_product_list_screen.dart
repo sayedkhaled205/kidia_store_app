@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
 import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
@@ -99,6 +100,7 @@ class _CatalogProductListViewState
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
     _searchController = TextEditingController(text: widget.request.search);
+    _trackRequest(widget.request);
   }
 
   @override
@@ -111,6 +113,27 @@ class _CatalogProductListViewState
           offset: widget.request.search.length,
         ),
       );
+    }
+    if (oldWidget.request.categoryId != widget.request.categoryId) {
+      _trackRequest(widget.request);
+    }
+  }
+
+  void _trackRequest(CatalogProductListRequest request) {
+    if ((request.categoryId ?? 0) > 0) {
+      ref
+          .read(mobileAnalyticsProvider)
+          .trackInBackground(
+            'view_category',
+            objectId: request.categoryId!,
+            label: request.title,
+          );
+    }
+    final String query = request.search.trim();
+    if (query.isNotEmpty) {
+      ref
+          .read(mobileAnalyticsProvider)
+          .trackInBackground('search', label: query);
     }
   }
 
@@ -149,6 +172,15 @@ class _CatalogProductListViewState
           searchController: _searchController,
           showSearchField: widget.showSearchField,
           pageLayout: widget.pageLayout ?? CmsPageLayout.fallback('catalog'),
+          onSearchSubmitted: (String query) {
+            final String term = query.trim();
+            if (term.isNotEmpty) {
+              ref
+                  .read(mobileAnalyticsProvider)
+                  .trackInBackground('search', label: term);
+            }
+            controller.submitSearch(query);
+          },
         );
       },
     );
@@ -162,6 +194,7 @@ class _ProductListContent extends StatelessWidget {
     required this.searchController,
     required this.showSearchField,
     required this.pageLayout,
+    required this.onSearchSubmitted,
   });
 
   final CatalogProductListController controller;
@@ -169,6 +202,7 @@ class _ProductListContent extends StatelessWidget {
   final TextEditingController searchController;
   final bool showSearchField;
   final CmsPageLayout pageLayout;
+  final ValueChanged<String> onSearchSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +221,7 @@ class _ProductListContent extends StatelessWidget {
               child: _SearchField(
                 controller: searchController,
                 hint: copy.searchHint,
-                onSubmitted: controller.submitSearch,
+                onSubmitted: onSearchSubmitted,
                 onClear: () {
                   searchController.clear();
                   controller.submitSearch('');
