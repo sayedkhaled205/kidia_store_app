@@ -35,16 +35,19 @@ $date_labels = array(
 );
 $event = static fn( string $name ): array => $ai_summary['events'][ $name ] ?? array( 'count' => 0, 'unique' => 0, 'value' => 0.0 );
 $rate  = static fn( float $part, float $whole ): float => $whole > 0 ? round( 100 * $part / $whole, 1 ) : 0.0;
-$views = absint( $event( 'view_item' )['unique'] );
-$carts = absint( $event( 'add_to_cart' )['unique'] );
-$checks = absint( $event( 'begin_checkout' )['unique'] );
-$buys = absint( $event( 'purchase' )['unique'] );
+$tracked_funnel = is_array( $ai_summary['funnel'] ?? null ) ? $ai_summary['funnel'] : array();
+$coverage = is_array( $ai_summary['coverage'] ?? null ) ? $ai_summary['coverage'] : array();
+$visitors = absint( $tracked_funnel['visitors'] ?? 0 );
+$views = absint( $tracked_funnel['viewed_product'] ?? 0 );
+$carts = absint( $tracked_funnel['added_to_cart'] ?? 0 );
+$checks = absint( $tracked_funnel['started_checkout'] ?? 0 );
+$buys = absint( $tracked_funnel['purchased'] ?? 0 );
 $funnel = array(
-	array( __( 'Visitors', 'kidia-mobile-cms' ), absint( $ai_summary['visitors'] ), 100 ),
-	array( __( 'Viewed product', 'kidia-mobile-cms' ), $views, $rate( $views, absint( $ai_summary['visitors'] ) ) ),
-	array( __( 'Added to cart', 'kidia-mobile-cms' ), $carts, $rate( $carts, absint( $ai_summary['visitors'] ) ) ),
-	array( __( 'Started checkout', 'kidia-mobile-cms' ), $checks, $rate( $checks, absint( $ai_summary['visitors'] ) ) ),
-	array( __( 'Purchased', 'kidia-mobile-cms' ), $buys, $rate( $buys, absint( $ai_summary['visitors'] ) ) ),
+	array( __( 'Visitors', 'kidia-mobile-cms' ), $visitors, $visitors > 0 ? 100 : 0 ),
+	array( __( 'Viewed product', 'kidia-mobile-cms' ), $views, $rate( $views, $visitors ) ),
+	array( __( 'Added to cart', 'kidia-mobile-cms' ), $carts, $rate( $carts, $visitors ) ),
+	array( __( 'Started checkout', 'kidia-mobile-cms' ), $checks, $rate( $checks, $visitors ) ),
+	array( __( 'Purchased', 'kidia-mobile-cms' ), $buys, $rate( $buys, $visitors ) ),
 );
 $playbook_groups = Kidia_Mobile_AI_Offer_Engine::playbook_groups();
 $playbook_count = array_sum( array_map( static fn( $group ) => count( $group['items'] ?? array() ), $playbook_groups ) );
@@ -78,14 +81,32 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 		<article><span class="dashicons dashicons-lightbulb"></span><div><small><?php esc_html_e( 'Recommendations found', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) count( $all_recommendations ) ); ?></strong></div></article>
 	</section>
 
-	<section class="kidia-ai-data-coverage">
-		<span class="dashicons dashicons-yes-alt"></span>
-		<div><strong><?php esc_html_e( 'Automatic store analysis is active', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'The engine combines historical WooCommerce orders, product relationships, catalog age, stock, sales velocity and live website/app behaviour. You do not configure analysis rules; you only review the strongest generated actions.', 'kidia-mobile-cms' ); ?></p></div>
+	<section class="kidia-ai-data-coverage<?php echo empty( $tracked_funnel['is_reliable'] ) ? ' is-limited' : ''; ?>">
+		<span class="dashicons <?php echo empty( $tracked_funnel['is_reliable'] ) ? 'dashicons-info-outline' : 'dashicons-yes-alt'; ?>"></span>
+		<div>
+			<strong><?php esc_html_e( 'Sales history and live journey tracking are analysed separately', 'kidia-mobile-cms' ); ?></strong>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: historical paid orders, 2: tracked days, 3: requested days. */
+						__( '%1$d paid WooCommerce orders were analysed for product, revenue and bundle decisions. Live funnel tracking covers %2$d of %3$d selected days; historical orders are never inserted into Add to cart or Checkout counts.', 'kidia-mobile-cms' ),
+						absint( $commerce['orders'] ?? 0 ),
+						absint( $coverage['tracked_days'] ?? 0 ),
+						absint( $coverage['requested_days'] ?? 0 )
+					)
+				);
+				?>
+			</p>
+			<?php if ( ! empty( $tracked_funnel['unmatched_purchases'] ) ) : ?>
+				<small><?php echo esc_html( sprintf( __( '%d purchase events were excluded from the funnel because their earlier journey steps were not tracked.', 'kidia-mobile-cms' ), absint( $tracked_funnel['unmatched_purchases'] ) ) ); ?></small>
+			<?php endif; ?>
+		</div>
 	</section>
 
 	<div class="kidia-ai-analysis-grid">
 		<section class="kidia-ai-funnel-panel">
-			<header><div><span class="dashicons dashicons-filter"></span><div><h2><?php esc_html_e( 'Sales funnel', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'See where measured customers stop before buying.', 'kidia-mobile-cms' ); ?></p></div></div></header>
+			<header><div><span class="dashicons dashicons-filter"></span><div><h2><?php esc_html_e( 'Tracked sales funnel', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Closed funnel: each customer must complete the previous tracked step first.', 'kidia-mobile-cms' ); ?></p></div></div></header>
 			<div><?php foreach ( $funnel as $step ) : ?><article><span><strong><?php echo esc_html( $step[0] ); ?></strong><small><?php echo esc_html( (string) $step[1] ); ?></small></span><i><b style="width:<?php echo esc_attr( (string) min( 100, $step[2] ) ); ?>%"></b></i><em><?php echo esc_html( $step[2] . '%' ); ?></em></article><?php endforeach; ?></div>
 		</section>
 		<section class="kidia-ai-demand-panel">
@@ -99,7 +120,26 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 	</div>
 
 	<section class="kidia-ai-recommendation-section">
-		<header><div><h2><?php esc_html_e( 'Decision-ready recommendations', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Each card explains the evidence, confidence and risk. Recommendations without enough real data are not shown.', 'kidia-mobile-cms' ); ?></p></div><details class="kidia-ai-playbooks"><summary><?php echo esc_html( sprintf( __( '%d supported playbooks', 'kidia-mobile-cms' ), $playbook_count ) ); ?></summary><div class="kidia-ai-playbook-groups"><?php foreach ( $playbook_groups as $group ) : ?><section><h3><?php echo esc_html( (string) $group['label'] ); ?></h3><div><?php foreach ( (array) $group['items'] as $playbook ) : ?><span><?php echo esc_html( $playbook ); ?></span><?php endforeach; ?></div></section><?php endforeach; ?></div></details></header>
+		<header>
+			<div>
+				<h2><?php esc_html_e( 'Decision-ready recommendations', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Every recommendation names the products, exact action, calculated value, evidence, success measure and safety guardrail.', 'kidia-mobile-cms' ); ?></p>
+			</div>
+			<details class="kidia-ai-playbooks">
+				<summary>
+					<span><?php echo esc_html( sprintf( __( '%d supported playbooks', 'kidia-mobile-cms' ), $playbook_count ) ); ?></span>
+					<span class="dashicons dashicons-arrow-down-alt2"></span>
+				</summary>
+				<div class="kidia-ai-playbook-groups">
+					<?php foreach ( $playbook_groups as $group ) : ?>
+						<section>
+							<h3><?php echo esc_html( (string) $group['label'] ); ?></h3>
+							<div><?php foreach ( (array) $group['items'] as $playbook ) : ?><span><?php echo esc_html( $playbook ); ?></span><?php endforeach; ?></div>
+						</section>
+					<?php endforeach; ?>
+				</div>
+			</details>
+		</header>
 		<?php if ( $ai_recommendations ) : ?>
 			<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
 				<?php foreach ( $ai_recommendations as $recommendation ) :
@@ -109,8 +149,26 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 					?>
 					<article class="kidia-ai-decision-card is-<?php echo esc_attr( $kind ); ?>">
 						<header><span class="dashicons <?php echo esc_attr( $kind_icons[ $kind ] ?? 'dashicons-lightbulb' ); ?>"></span><div><small><?php echo esc_html( $kind_labels[ $kind ] ?? ucfirst( $kind ) ); ?></small><h3><?php echo esc_html( (string) $recommendation['title'] ); ?></h3></div><b class="is-<?php echo esc_attr( (string) $recommendation['risk'] ); ?>"><?php echo esc_html( sprintf( __( '%d%% confidence', 'kidia-mobile-cms' ), absint( $recommendation['confidence'] ) ) ); ?></b></header>
+						<section class="kidia-ai-decision">
+							<small><?php esc_html_e( 'Recommended decision', 'kidia-mobile-cms' ); ?></small>
+							<strong><?php echo esc_html( (string) ( $recommendation['decision'] ?? $recommendation['title'] ) ); ?></strong>
+						</section>
+						<?php if ( ! empty( $recommendation['products'] ) ) : ?>
+							<div class="kidia-ai-decision-products">
+								<?php foreach ( (array) $recommendation['products'] as $product ) : ?>
+									<article>
+										<?php if ( ! empty( $product['image_url'] ) ) : ?><img src="<?php echo esc_url( (string) $product['image_url'] ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-products"></span><?php endif; ?>
+										<div><strong><?php echo esc_html( (string) ( $product['name'] ?? '' ) ); ?></strong><small><?php echo esc_html( wp_strip_all_tags( wc_price( (float) ( $product['price'] ?? 0 ) ) ) ); ?><?php if ( null !== ( $product['stock'] ?? null ) ) : ?> · <?php echo esc_html( sprintf( __( '%d in stock', 'kidia-mobile-cms' ), absint( $product['stock'] ) ) ); ?><?php endif; ?></small></div>
+									</article>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+						<div class="kidia-ai-decision-metrics">
+							<?php foreach ( (array) ( $recommendation['metrics'] ?? array() ) as $metric ) : ?><span><small><?php echo esc_html( (string) ( $metric['label'] ?? '' ) ); ?></small><b><?php echo esc_html( (string) ( $metric['value'] ?? '' ) ); ?></b></span><?php endforeach; ?>
+						</div>
 						<p><?php echo esc_html( (string) $recommendation['summary'] ); ?></p>
 						<div><strong><?php esc_html_e( 'Why this recommendation', 'kidia-mobile-cms' ); ?></strong><ul><?php foreach ( (array) $recommendation['evidence'] as $evidence ) : ?><li><?php echo esc_html( (string) $evidence ); ?></li><?php endforeach; ?></ul><p class="kidia-ai-expected"><b><?php esc_html_e( 'Decision target:', 'kidia-mobile-cms' ); ?></b> <?php echo esc_html( (string) ( $recommendation['expected_outcome'] ?? '' ) ); ?></p></div>
+						<p class="kidia-ai-success"><b><?php esc_html_e( 'Measure:', 'kidia-mobile-cms' ); ?></b> <?php echo esc_html( (string) ( $recommendation['success_metric'] ?? '' ) ); ?><br><b><?php esc_html_e( 'Guardrail:', 'kidia-mobile-cms' ); ?></b> <?php echo esc_html( (string) ( $recommendation['guardrail'] ?? '' ) ); ?></p>
 						<details class="kidia-ai-action-builder">
 							<summary class="button button-primary"><?php esc_html_e( 'Review & build', 'kidia-mobile-cms' ); ?></summary>
 							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -125,7 +183,7 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 									<label><span><?php esc_html_e( 'Build as', 'kidia-mobile-cms' ); ?></span><select name="ai_action_type"><?php foreach ( array( 'coupon' => 'Coupon or discount', 'bundle' => 'Bundle', 'placement' => 'Recommendation placement', 'merchandising' => 'Merchandising action', 'shipping_rule' => 'Free-shipping rule', 'store_action' => 'Store improvement', 'schedule' => 'Campaign timing' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $recommended_action ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 									<label><span><?php esc_html_e( 'Channel', 'kidia-mobile-cms' ); ?></span><select name="ai_action_channel"><option value="all" <?php selected( 'all', $ai_source ); ?>>Website + Mobile App</option><option value="website" <?php selected( 'website', $ai_source ); ?>>Website only</option><option value="mobile" <?php selected( 'mobile', $ai_source ); ?>>Mobile App only</option></select></label>
 									<label><span><?php esc_html_e( 'Placement', 'kidia-mobile-cms' ); ?></span><select name="ai_placement"><?php foreach ( array( 'home' => 'Home Page', 'product' => 'Product Page', 'category' => 'Category Page', 'search' => 'Search results', 'cart' => 'Cart', 'checkout' => 'Checkout', 'confirmation' => 'Order confirmation' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $recommendation['recommended_placement'] ?? 'home' ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
-									<label><span><?php esc_html_e( 'Discount type', 'kidia-mobile-cms' ); ?></span><select name="ai_discount_type"><option value="percent">Percentage</option><option value="fixed_cart">Fixed cart</option><option value="fixed_product">Fixed product</option></select></label>
+									<label><span><?php esc_html_e( 'Discount type', 'kidia-mobile-cms' ); ?></span><select name="ai_discount_type"><option value="percent" <?php selected( 'percent', $recommendation['discount_type'] ?? '' ); ?>>Percentage</option><option value="fixed_cart" <?php selected( 'fixed_cart', $recommendation['discount_type'] ?? '' ); ?>>Fixed cart</option><option value="fixed_product" <?php selected( 'fixed_product', $recommendation['discount_type'] ?? '' ); ?>>Fixed product</option></select></label>
 									<label><span><?php esc_html_e( 'Discount value', 'kidia-mobile-cms' ); ?></span><input type="number" min="0" step=".01" name="ai_discount_value" value="<?php echo esc_attr( (string) ( $recommendation['discount_value'] ?? 0 ) ); ?>"></label>
 									<label><span><?php esc_html_e( 'Duration (hours)', 'kidia-mobile-cms' ); ?></span><input type="number" min="1" max="720" name="ai_duration_hours" value="<?php echo esc_attr( (string) ( $recommendation['duration_hours'] ?? 48 ) ); ?>"></label>
 									<label><span><?php esc_html_e( 'Bundle concept', 'kidia-mobile-cms' ); ?></span><select name="ai_bundle_type"><?php foreach ( array( 'fixed' => 'Fixed bundle', 'multipack' => 'Multipack', 'mix_match' => 'Mix & Match', 'build_box' => 'Build your box', 'buy_x_get_y' => 'Buy X from A + Y from B', 'bogo' => 'BOGO', 'frequently_bought' => 'Frequently bought together', 'complete_look' => 'Complete the look', 'composite' => 'Composite builder', 'quantity' => 'Quantity bundle', 'category' => 'Category bundle', 'gift' => 'Gift bundle', 'chained' => 'Chained products', 'addons' => 'Optional add-ons', 'mystery' => 'Mystery box', 'subscription' => 'Subscription bundle' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'frequently_bought', $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>

@@ -620,12 +620,15 @@ final class Kidia_Mobile_Analytics {
 			'visitors'        => 0,
 			'new_users'       => 0,
 			'returning_users' => 0,
-			'top_products'    => array(),
-			'top_purchases'   => array(),
-			'top_categories'  => array(),
-			'top_searches'    => array(),
-			'activity_hours'  => array(),
-			'commerce'        => self::empty_commerce_snapshot(),
+			'top_products'          => array(),
+			'top_purchases'         => array(),
+			'tracked_top_purchases' => array(),
+			'top_categories'        => array(),
+			'top_searches'          => array(),
+			'activity_hours'        => array(),
+			'funnel'                => self::empty_funnel_snapshot(),
+			'coverage'              => self::empty_coverage_snapshot(),
+			'commerce'              => self::empty_commerce_snapshot(),
 		);
 	}
 
@@ -698,22 +701,14 @@ final class Kidia_Mobile_Analytics {
 			)
 		);
 
+		/*
+		 * Historical WooCommerce orders and live journey events are deliberately
+		 * kept separate. Replacing tracked purchase events with order-history
+		 * totals makes an impossible funnel (purchases without tracked carts).
+		 */
 		$commerce = self::commerce_snapshot( $from, $to, $source );
-		if ( $commerce['orders'] > $events['purchase']['count'] ) {
-			$events['purchase'] = array(
-				'count'  => $commerce['orders'],
-				'unique' => max( $commerce['customers'], $events['purchase']['unique'] ),
-				'value'  => max( $commerce['revenue'], $events['purchase']['value'] ),
-			);
-		}
-		if ( $commerce['units'] > $events['purchase_item']['count'] ) {
-			$events['purchase_item'] = array(
-				'count'  => $commerce['units'],
-				'unique' => max( $commerce['customers'], $events['purchase_item']['unique'] ),
-				'value'  => max( $commerce['revenue'], $events['purchase_item']['value'] ),
-			);
-		}
-		$top_purchases = self::top_objects( $from, $to, 'purchase_item', $source );
+		$tracked_top_purchases = self::top_objects( $from, $to, 'purchase_item', $source );
+		$top_purchases         = $tracked_top_purchases;
 		if ( ! empty( $commerce['products'] ) ) {
 			$top_purchases = $commerce['products'];
 		}
@@ -723,16 +718,167 @@ final class Kidia_Mobile_Analytics {
 		}
 
 		return array(
-			'events'          => $events,
-			'visitors'        => $visitors,
-			'new_users'       => min( $visitors, $new ),
-			'returning_users' => max( 0, $visitors - $new ),
-			'top_products'    => self::top_objects( $from, $to, 'view_item', $source ),
-			'top_purchases'   => $top_purchases,
-			'top_categories'  => self::top_objects( $from, $to, 'view_category', $source ),
-			'top_searches'    => self::top_labels( $from, $to, 'search', $source ),
-			'activity_hours'  => $activity_hours,
-			'commerce'        => $commerce,
+			'events'                => $events,
+			'visitors'              => $visitors,
+			'new_users'             => min( $visitors, $new ),
+			'returning_users'       => max( 0, $visitors - $new ),
+			'top_products'          => self::top_objects( $from, $to, 'view_item', $source ),
+			'top_purchases'         => $top_purchases,
+			'tracked_top_purchases' => $tracked_top_purchases,
+			'top_categories'        => self::top_objects( $from, $to, 'view_category', $source ),
+			'top_searches'          => self::top_labels( $from, $to, 'search', $source ),
+			'activity_hours'        => $activity_hours,
+			'funnel'                => self::funnel_snapshot( $from, $to, $source ),
+			'coverage'              => self::coverage_snapshot( $from, $to, $source, $commerce ),
+			'commerce'              => $commerce,
+		);
+	}
+
+	/**
+	 * Builds a closed, client-level funnel. A shopper is counted at a stage only
+	 * when the previous tracked stage happened first in the selected period.
+	 * Historical orders are never injected into this live journey.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function funnel_snapshot( int $from, int $to, string $source ): array {
+		global $wpdb;
+		$table      = self::events_table();
+		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$args       = array( gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
+		if ( 'all' !== $source ) {
+			$args[] = $source;
+		}
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT client_id, event_name, MIN(occurred_at) AS first_at
+				FROM {$table}
+				WHERE client_id <> ''
+					AND event_name IN ('site_visit','app_open','view_item','add_to_cart','begin_checkout','purchase')
+					AND occurred_at BETWEEN %s AND %s {$source_sql}
+				GROUP BY client_id, event_name
+				ORDER BY client_id ASC, first_at ASC",
+				...$args
+			),
+			ARRAY_A
+		);
+		$clients = array();
+		foreach ( $rows as $row ) {
+			$client_id = sanitize_text_field( (string) ( $row['client_id'] ?? '' ) );
+			$event     = sanitize_key( (string) ( $row['event_name'] ?? '' ) );
+			$timestamp = strtotime( (string) ( $row['first_at'] ?? '' ) . ' UTC' );
+			if ( '' === $client_id || false === $timestamp ) {
+				continue;
+			}
+			if ( in_array( $event, array( 'site_visit', 'app_open' ), true ) ) {
+				$clients[ $client_id ]['visitor'] = isset( $clients[ $client_id ]['visitor'] )
+					? min( $clients[ $client_id ]['visitor'], $timestamp )
+					: $timestamp;
+				continue;
+			}
+			$clients[ $client_id ][ $event ] = $timestamp;
+		}
+
+		$funnel = self::empty_funnel_snapshot();
+		foreach ( $clients as $stages ) {
+			$visitor = absint( $stages['visitor'] ?? 0 );
+			if ( 0 === $visitor ) {
+				continue;
+			}
+			++$funnel['visitors'];
+			$view = absint( $stages['view_item'] ?? 0 );
+			if ( 0 === $view || $view < $visitor ) {
+				continue;
+			}
+			++$funnel['viewed_product'];
+			$cart = absint( $stages['add_to_cart'] ?? 0 );
+			if ( 0 === $cart || $cart < $view ) {
+				continue;
+			}
+			++$funnel['added_to_cart'];
+			$checkout = absint( $stages['begin_checkout'] ?? 0 );
+			if ( 0 === $checkout || $checkout < $cart ) {
+				continue;
+			}
+			++$funnel['started_checkout'];
+			$purchase = absint( $stages['purchase'] ?? 0 );
+			if ( 0 === $purchase || $purchase < $checkout ) {
+				continue;
+			}
+			++$funnel['purchased'];
+		}
+
+		$raw_purchases = absint(
+			$wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT client_id)
+					FROM {$table}
+					WHERE client_id <> '' AND event_name = 'purchase'
+						AND occurred_at BETWEEN %s AND %s {$source_sql}",
+					...$args
+				)
+			)
+		);
+		$funnel['unmatched_purchases'] = max( 0, $raw_purchases - $funnel['purchased'] );
+		$funnel['is_reliable'] = $funnel['visitors'] >= 20
+			&& 0 === $funnel['unmatched_purchases'];
+		return $funnel;
+	}
+
+	/** @return array<string,int|bool> */
+	private static function empty_funnel_snapshot(): array {
+		return array(
+			'visitors'            => 0,
+			'viewed_product'      => 0,
+			'added_to_cart'       => 0,
+			'started_checkout'    => 0,
+			'purchased'           => 0,
+			'unmatched_purchases' => 0,
+			'is_reliable'         => false,
+		);
+	}
+
+	/**
+	 * Explains how much of the selected period is backed by live tracking.
+	 *
+	 * @param array<string,mixed> $commerce Historical commerce snapshot.
+	 * @return array<string,mixed>
+	 */
+	private static function coverage_snapshot( int $from, int $to, string $source, array $commerce ): array {
+		global $wpdb;
+		$table      = self::events_table();
+		$source_sql = 'all' === $source ? '' : ' WHERE source = %s';
+		$args       = 'all' === $source ? array() : array( $source );
+		$first      = $wpdb->get_var(
+			empty( $args )
+				? "SELECT MIN(occurred_at) FROM {$table}"
+				: $wpdb->prepare( "SELECT MIN(occurred_at) FROM {$table}{$source_sql}", ...$args )
+		);
+		$first_at = is_string( $first ) && '' !== $first ? strtotime( $first . ' UTC' ) : false;
+		$requested_days = max( 1, (int) ceil( max( 1, $to - $from ) / DAY_IN_SECONDS ) );
+		$tracked_from   = false === $first_at ? 0 : max( $from, $first_at );
+		$tracked_days   = 0 === $tracked_from
+			? 0
+			: max( 1, (int) ceil( max( 1, $to - $tracked_from ) / DAY_IN_SECONDS ) );
+		return array(
+			'tracking_started_at' => false === $first_at ? 0 : $first_at,
+			'requested_days'      => $requested_days,
+			'tracked_days'        => min( $requested_days, $tracked_days ),
+			'tracking_percent'    => min( 100, round( 100 * $tracked_days / $requested_days, 1 ) ),
+			'historical_orders'   => absint( $commerce['orders'] ?? 0 ),
+			'orders_truncated'    => ! empty( $commerce['truncated'] ),
+		);
+	}
+
+	/** @return array<string,int|float|bool> */
+	private static function empty_coverage_snapshot(): array {
+		return array(
+			'tracking_started_at' => 0,
+			'requested_days'      => 0,
+			'tracked_days'        => 0,
+			'tracking_percent'    => 0.0,
+			'historical_orders'   => 0,
+			'orders_truncated'    => false,
 		);
 	}
 
@@ -744,7 +890,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function commerce_snapshot( int $from, int $to, string $source = 'all' ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_commerce_snapshot_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = 'kidia_commerce_snapshot_v2_' . md5( $from . '|' . $to . '|' . $source );
 		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return array_merge( self::empty_commerce_snapshot(), $cached );
@@ -754,9 +900,11 @@ final class Kidia_Mobile_Analytics {
 		}
 
 		$args = array(
-			'limit'        => 750,
+			'limit'        => 250,
+			'page'         => 1,
+			'paginate'     => true,
 			'status'       => function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' ),
-			'date_created' => $from . '...' . $to,
+			'date_created' => gmdate( 'Y-m-d H:i:s', $from ) . '...' . gmdate( 'Y-m-d H:i:s', $to ),
 			'orderby'      => 'date',
 			'order'        => 'DESC',
 			'return'       => 'objects',
@@ -773,10 +921,34 @@ final class Kidia_Mobile_Analytics {
 			);
 		}
 
-		$orders = wc_get_orders( $args );
+		$orders = array();
+		$total_available = 0;
+		$maximum_orders  = max( 1000, absint( apply_filters( 'kidia_mobile_ai_maximum_historical_orders', 20000 ) ) );
+		do {
+			$result = wc_get_orders( $args );
+			$batch  = is_object( $result ) && isset( $result->orders )
+				? (array) $result->orders
+				: ( is_array( $result ) ? $result : array() );
+			if ( 1 === absint( $args['page'] ) ) {
+				$total_available = is_object( $result ) && isset( $result->total )
+					? absint( $result->total )
+					: count( $batch );
+			}
+			$remaining = max( 0, $maximum_orders - count( $orders ) );
+			$orders = array_merge( $orders, array_slice( $batch, 0, $remaining ) );
+			$maximum_pages = is_object( $result ) && isset( $result->max_num_pages )
+				? max( 1, absint( $result->max_num_pages ) )
+				: 1;
+			++$args['page'];
+		} while (
+			! empty( $batch )
+			&& count( $orders ) < $maximum_orders
+			&& absint( $args['page'] ) <= $maximum_pages
+		);
 		$snapshot = self::empty_commerce_snapshot();
 		$customers = array();
 		$products  = array();
+		$product_customers = array();
 		$pairs     = array();
 		$hours     = array();
 		foreach ( $orders as $order ) {
@@ -809,8 +981,8 @@ final class Kidia_Mobile_Analytics {
 				}
 				$products[ $product_id ]['event_count'] += $quantity;
 				$products[ $product_id ]['order_count'] += 1;
-				$products[ $product_id ]['unique_clients'] += 1;
 				$products[ $product_id ]['revenue'] += max( 0, (float) $item->get_total() );
+				$product_customers[ $product_id ][ $customer_key ] = true;
 				$order_product_ids[] = $product_id;
 			}
 			$order_product_ids = array_values( array_unique( $order_product_ids ) );
@@ -832,6 +1004,24 @@ final class Kidia_Mobile_Analytics {
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
 			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
 			: 0.0;
+		foreach ( $products as $product_id => &$product_row ) {
+			$product_row['unique_clients'] = count( $product_customers[ $product_id ] ?? array() );
+			$product_row['order_share'] = $snapshot['orders'] > 0
+				? round( 100 * absint( $product_row['order_count'] ) / $snapshot['orders'], 1 )
+				: 0.0;
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+			if ( $product instanceof WC_Product ) {
+				$product_row['price'] = max( 0, (float) $product->get_price() );
+				$product_row['regular_price'] = max( 0, (float) $product->get_regular_price() );
+				$product_row['stock'] = $product->managing_stock()
+					? max( 0, (int) $product->get_stock_quantity() )
+					: null;
+				$product_row['image_url'] = $product->get_image_id()
+					? (string) wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_thumbnail' )
+					: '';
+			}
+		}
+		unset( $product_row );
 		uasort(
 			$products,
 			static fn( $left, $right ) => $right['event_count'] <=> $left['event_count']
@@ -859,7 +1049,9 @@ final class Kidia_Mobile_Analytics {
 		$snapshot['catalog_products'] = function_exists( 'wp_count_posts' )
 			? absint( wp_count_posts( 'product' )->publish ?? 0 )
 			: 0;
-		$snapshot['orders_scanned'] = count( $orders );
+		$snapshot['orders_scanned']   = count( $orders );
+		$snapshot['orders_available'] = max( $total_available, count( $orders ) );
+		$snapshot['truncated']        = $snapshot['orders_available'] > $snapshot['orders_scanned'];
 		set_transient( $cache_key, $snapshot, 10 * MINUTE_IN_SECONDS );
 		return $snapshot;
 	}
@@ -877,6 +1069,8 @@ final class Kidia_Mobile_Analytics {
 			'products'            => array(),
 			'pairs'               => array(),
 			'activity_hours'      => array(),
+			'orders_available'    => 0,
+			'truncated'           => false,
 		);
 	}
 

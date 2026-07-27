@@ -22,9 +22,9 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function settings(): array {
 		return array(
-			'minimum_confidence'       => 35,
+			'minimum_confidence'       => 55,
 			'maximum_recommendations'  => 24,
-			'high_interest_min_views'  => 3,
+			'high_interest_min_views'  => 10,
 			'low_conversion_percent'   => 8,
 			'slow_stock_min_age_days'  => 30,
 			'slow_stock_min_units'     => 5,
@@ -39,7 +39,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function recommendations( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_ai_offers_v2_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = 'kidia_ai_offers_v3_' . md5( $from . '|' . $to . '|' . $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -48,15 +48,17 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		$summary = Kidia_Mobile_Analytics::summary( $from, $to, $source );
 		$settings = self::automatic_profile( $summary );
 		$events  = $summary['events'];
+		$funnel  = is_array( $summary['funnel'] ?? null ) ? $summary['funnel'] : array();
 		$commerce = is_array( $summary['commerce'] ?? null ) ? $summary['commerce'] : array();
 		$views   = absint( $events['view_item']['count'] ?? 0 );
-		$carts   = absint( $events['add_to_cart']['count'] ?? 0 );
-		$checks  = absint( $events['begin_checkout']['count'] ?? 0 );
-		$buys    = absint( $events['purchase']['count'] ?? 0 );
+		$carts   = absint( $funnel['added_to_cart'] ?? 0 );
+		$checks  = absint( $funnel['started_checkout'] ?? 0 );
+		$buys    = absint( $funnel['purchased'] ?? 0 );
+		$historical_orders = absint( $commerce['orders'] ?? 0 );
 		$offers  = array();
 
 		$purchases = array();
-		foreach ( $summary['top_purchases'] as $row ) {
+		foreach ( (array) ( $summary['tracked_top_purchases'] ?? array() ) as $row ) {
 			$purchases[ absint( $row['object_id'] ) ] = absint( $row['event_count'] );
 		}
 		foreach ( array_slice( $summary['top_products'], 0, 12 ) as $row ) {
@@ -69,6 +71,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				continue;
 			}
 			$name = sanitize_text_field( (string) $row['event_label'] );
+			$discount = self::discount_for_conversion_gap( $product_views, $product_buys, ! empty( $settings['protect_margin'] ) );
 			$offers[] = self::offer(
 				'high-interest-' . $product_id,
 				'high_interest',
@@ -82,7 +85,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 92, 55 + min( 30, $product_views ) ),
 				'medium',
 				'percent',
-				! empty( $settings['protect_margin'] ) ? 8 : 10,
+				$discount,
 				48,
 				'engaged',
 				$source,
@@ -90,14 +93,15 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		$slow_products = self::slow_stock_products( $settings );
+		$slow_products = self::slow_stock_products( $settings, $commerce );
 		foreach ( array_slice( $slow_products, 0, 6 ) as $product ) {
+			$discount = self::discount_for_slow_stock( $product, ! empty( $settings['protect_margin'] ) );
 			$offers[] = self::offer(
 				'slow-stock-' . $product['id'],
 				'slow_stock',
 				__( 'Rescue slow-moving stock', 'kidia-mobile-cms' ),
 				sprintf(
-					__( '%1$s has %2$d units in stock, has been listed for %3$d days and sold %4$d units.', 'kidia-mobile-cms' ),
+					__( '%1$s has %2$d units in stock, has been listed for %3$d days and sold %4$d units in the selected period.', 'kidia-mobile-cms' ),
 					$product['name'],
 					$product['stock'],
 					$product['age_days'],
@@ -111,7 +115,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				78,
 				'medium',
 				'percent',
-				! empty( $settings['protect_margin'] ) ? 12 : 15,
+				$discount,
 				72,
 				'engaged',
 				$source,
@@ -139,6 +143,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			if ( count( $bundle_ids ) < 2 || count( $bundle_names ) < 2 || $bundle_count < 2 ) {
 				continue;
 			}
+			$bundle_discount = self::discount_for_bundle( $bundle_count, $historical_orders, ! empty( $settings['protect_margin'] ) );
 			$offers[] = self::offer(
 				'bundle-' . implode( '-', $bundle_ids ),
 				'bundle',
@@ -152,7 +157,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 94, 58 + $bundle_count * 4 ),
 				'low',
 				'percent',
-				! empty( $settings['protect_margin'] ) ? 8 : 10,
+				$bundle_discount,
 				96,
 				'all',
 				$source,
@@ -160,7 +165,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		if ( $carts >= 3 && $buys < $carts ) {
+		if ( ! empty( $funnel['is_reliable'] ) && $carts >= 3 && $buys < $carts ) {
 			$drop = round( 100 * max( 0, $carts - $buys ) / max( 1, $carts ), 1 );
 			$offers[] = self::offer(
 				'cart-recovery',
@@ -183,7 +188,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		if ( $checks >= 2 && $buys < $checks ) {
+		if ( ! empty( $funnel['is_reliable'] ) && $checks >= 2 && $buys < $checks ) {
 			$offers[] = self::offer(
 				'checkout-threshold',
 				'free_shipping',
@@ -205,8 +210,8 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		if ( $buys >= 3 && (float) ( $events['purchase']['value'] ?? 0 ) > 0 ) {
-			$aov       = (float) $events['purchase']['value'] / $buys;
+		if ( $historical_orders >= 3 && (float) ( $commerce['revenue'] ?? 0 ) > 0 ) {
+			$aov       = (float) $commerce['revenue'] / $historical_orders;
 			$threshold = ceil( $aov * 1.2 / 10 ) * 10;
 			$offers[]  = self::offer(
 				'aov-lift',
@@ -214,11 +219,11 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				__( 'Lift average order value', 'kidia-mobile-cms' ),
 				sprintf( __( 'Tracked average order value is %1$s. Test a reward above %2$s rather than discounting every order.', 'kidia-mobile-cms' ), wp_strip_all_tags( wc_price( $aov ) ), wp_strip_all_tags( wc_price( $threshold ) ) ),
 				array(
-					sprintf( __( '%d tracked purchases', 'kidia-mobile-cms' ), $buys ),
+					sprintf( __( '%d paid WooCommerce orders', 'kidia-mobile-cms' ), $historical_orders ),
 					sprintf( __( 'Current AOV: %s', 'kidia-mobile-cms' ), wp_strip_all_tags( wc_price( $aov ) ) ),
 					__( 'The threshold is intentionally above current AOV to encourage one more item.', 'kidia-mobile-cms' ),
 				),
-				min( 90, 60 + $buys ),
+				min( 90, 60 + min( 25, $historical_orders ) ),
 				'low',
 				'fixed_cart',
 				round( max( 1, $aov * ( ! empty( $settings['protect_margin'] ) ? .04 : .05 ) ), 2 ),
@@ -229,34 +234,14 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		if ( $views >= 10 && empty( $offers ) ) {
-			$offers[] = self::offer(
-				'viewed-category',
-				'category',
-				__( 'Category cross-sell test', 'kidia-mobile-cms' ),
-				__( 'The store has measurable browsing interest but no single product signal is strong enough yet.', 'kidia-mobile-cms' ),
-				array(
-					sprintf( __( '%d tracked product views', 'kidia-mobile-cms' ), $views ),
-					__( 'Start with a small audience and compare conversion against a holdout.', 'kidia-mobile-cms' ),
-				),
-				52,
-				'medium',
-				'percent',
-				5,
-				48,
-				'engaged',
-				$source,
-				array()
-			);
-		}
-
 		$removed = absint( $events['remove_from_cart']['count'] ?? 0 );
-		if ( $removed >= 3 && $removed >= max( 2, (int) floor( $carts * .25 ) ) ) {
+		$tracked_cart_events = absint( $events['add_to_cart']['count'] ?? 0 );
+		if ( $removed >= 3 && $removed >= max( 2, (int) floor( $tracked_cart_events * .25 ) ) ) {
 			$offers[] = self::offer(
 				'cart-removal-friction',
 				'remove_friction',
 				__( 'Investigate products removed from carts', 'kidia-mobile-cms' ),
-				sprintf( __( '%1$d removal events were measured against %2$d add-to-cart events.', 'kidia-mobile-cms' ), $removed, $carts ),
+				sprintf( __( '%1$d removal events were measured against %2$d add-to-cart events.', 'kidia-mobile-cms' ), $removed, $tracked_cart_events ),
 				array(
 					sprintf( __( '%d remove-from-cart events', 'kidia-mobile-cms' ), $removed ),
 					__( 'Review unexpected shipping cost, variation clarity and stock messages before adding a discount.', 'kidia-mobile-cms' ),
@@ -453,10 +438,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		$visitors = absint( $summary['visitors'] ?? 0 );
 		$orders   = absint( $summary['commerce']['orders'] ?? 0 );
 		$catalog  = absint( $summary['commerce']['catalog_products'] ?? 0 );
-		$settings['high_interest_min_views'] = max( 3, min( 25, (int) ceil( max( 1, $visitors ) * .01 ) ) );
+		$settings['high_interest_min_views'] = max( 10, min( 50, (int) ceil( max( 1, $visitors ) * .015 ) ) );
 		$settings['slow_stock_min_age_days'] = $orders >= 100 ? 45 : 30;
 		$settings['slow_stock_min_units'] = $catalog >= 1000 ? 8 : 3;
-		$settings['minimum_confidence'] = $orders >= 50 || $visitors >= 500 ? 45 : 35;
+		$settings['minimum_confidence'] = $orders >= 50 || $visitors >= 500 ? 65 : 55;
 		return $settings;
 	}
 
@@ -525,9 +510,16 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	}
 
 	/** @return list<array<string,mixed>> */
-	private static function slow_stock_products( array $settings ): array {
+	private static function slow_stock_products( array $settings, array $commerce ): array {
 		if ( ! function_exists( 'wc_get_products' ) ) {
 			return array();
+		}
+		$period_sales = array();
+		foreach ( (array) ( $commerce['products'] ?? array() ) as $row ) {
+			$product_id = absint( $row['object_id'] ?? 0 );
+			if ( $product_id > 0 ) {
+				$period_sales[ $product_id ] = absint( $row['event_count'] ?? 0 );
+			}
 		}
 		$products = wc_get_products(
 			array(
@@ -544,13 +536,13 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				continue;
 			}
 			$stock = $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : 0;
-			$sales = max( 0, (int) $product->get_total_sales() );
+			$sales = absint( $period_sales[ $product->get_id() ] ?? 0 );
 			$date  = $product->get_date_created();
 			$age   = $date ? max( 1, (int) floor( ( time() - $date->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1;
 			if (
 				$stock < absint( $settings['slow_stock_min_units'] )
 				|| $age < absint( $settings['slow_stock_min_age_days'] )
-				|| $sales > max( 10, $stock * 2 )
+				|| $sales > max( 10, $stock )
 			) {
 				continue;
 			}
@@ -566,6 +558,34 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		}
 		usort( $rows, static fn( $left, $right ) => $right['score'] <=> $left['score'] );
 		return $rows;
+	}
+
+	private static function discount_for_conversion_gap( int $views, int $purchases, bool $protect_margin ): float {
+		$conversion = $views > 0 ? 100 * $purchases / $views : 0.0;
+		$discount   = $conversion <= 1 ? 12 : ( $conversion <= 3 ? 10 : 7 );
+		return (float) ( $protect_margin ? min( 10, $discount ) : $discount );
+	}
+
+	/** @param array<string,mixed> $product */
+	private static function discount_for_slow_stock( array $product, bool $protect_margin ): float {
+		$age   = absint( $product['age_days'] ?? 0 );
+		$stock = absint( $product['stock'] ?? 0 );
+		$sales = absint( $product['sales'] ?? 0 );
+		$discount = 8;
+		if ( $age >= 180 || $stock >= max( 20, $sales * 8 ) ) {
+			$discount = 15;
+		} elseif ( $age >= 90 || $stock >= max( 12, $sales * 5 ) ) {
+			$discount = 12;
+		} elseif ( $age >= 60 ) {
+			$discount = 10;
+		}
+		return (float) ( $protect_margin ? min( 12, $discount ) : $discount );
+	}
+
+	private static function discount_for_bundle( int $co_purchases, int $orders, bool $protect_margin ): float {
+		$support = $orders > 0 ? 100 * $co_purchases / $orders : 0.0;
+		$discount = $support >= 20 ? 6 : ( $support >= 10 ? 8 : 10 );
+		return (float) ( $protect_margin ? min( 8, $discount ) : $discount );
 	}
 
 	/** @return array<string,mixed> */
@@ -684,6 +704,41 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'free_shipping' => 'checkout',
 		);
 		$recommended_placement = $placement_map[ $scheme ] ?? 'analytics';
+		$products = self::product_snapshots( $product_ids );
+		$product_names = array_values(
+			array_filter(
+				array_map(
+					static fn( array $product ): string => sanitize_text_field( (string) ( $product['name'] ?? '' ) ),
+					$products
+				)
+			)
+		);
+		$target = empty( $product_names )
+			? __( 'the measured audience', 'kidia-mobile-cms' )
+			: implode( ' + ', array_slice( $product_names, 0, 3 ) );
+		$discount_label = $discount_value > 0
+			? ( 'percent' === $discount_type
+				? sprintf( __( '%s%%', 'kidia-mobile-cms' ), wc_format_decimal( $discount_value ) )
+				: wp_strip_all_tags( wc_price( $discount_value ) ) )
+			: __( 'No discount', 'kidia-mobile-cms' );
+		$decision = self::decision_sentence(
+			$scheme,
+			$target,
+			$discount_label,
+			$duration_hours,
+			$recommended_placement
+		);
+		$metrics = array(
+			array( 'label' => __( 'Recommended value', 'kidia-mobile-cms' ), 'value' => $discount_label ),
+			array( 'label' => __( 'Duration', 'kidia-mobile-cms' ), 'value' => sprintf( __( '%d hours', 'kidia-mobile-cms' ), $duration_hours ) ),
+			array( 'label' => __( 'Products', 'kidia-mobile-cms' ), 'value' => (string) count( $products ) ),
+			array( 'label' => __( 'Confidence', 'kidia-mobile-cms' ), 'value' => $confidence . '%' ),
+		);
+		$success_metric = self::success_metric( $scheme );
+		$guardrail = $discount_value > 0
+			? __( 'Verify gross margin before publishing; stop the test if incremental gross profit falls.', 'kidia-mobile-cms' )
+			: __( 'Compare the selected placement with the previous period or a holdout before keeping it.', 'kidia-mobile-cms' );
+		$analysis_grade = $confidence >= 80 ? 'strong' : ( $confidence >= 65 ? 'good' : 'exploratory' );
 		return compact(
 			'id',
 			'scheme',
@@ -702,7 +757,124 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'is_offer',
 			'expected_outcome',
 			'implementation',
-			'recommended_placement'
+			'recommended_placement',
+			'products',
+			'decision',
+			'metrics',
+			'success_metric',
+			'guardrail',
+			'analysis_grade'
 		);
+	}
+
+	private static function decision_sentence(
+		string $scheme,
+		string $target,
+		string $discount,
+		int $duration_hours,
+		string $placement
+	): string {
+		switch ( $scheme ) {
+			case 'bundle':
+				return sprintf(
+					__( 'Publish a product-scoped bundle for %1$s with %2$s off for %3$d hours.', 'kidia-mobile-cms' ),
+					$target,
+					$discount,
+					$duration_hours
+				);
+			case 'high_interest':
+			case 'slow_stock':
+				return sprintf(
+					__( 'Run a %1$s product-only offer on %2$s for %3$d hours.', 'kidia-mobile-cms' ),
+					$discount,
+					$target,
+					$duration_hours
+				);
+			case 'cart_recovery':
+				return sprintf(
+					__( 'Send a %1$s recovery offer only to tracked abandoned carts, expiring after %2$d hours.', 'kidia-mobile-cms' ),
+					$discount,
+					$duration_hours
+				);
+			case 'aov_lift':
+				return sprintf(
+					__( 'Create a %1$s cart reward above the calculated order-value threshold for %2$d hours.', 'kidia-mobile-cms' ),
+					$discount,
+					$duration_hours
+				);
+			case 'popular':
+			case 'best_seller':
+				return sprintf(
+					__( 'Place %1$s in the %2$s recommendations without discounting it.', 'kidia-mobile-cms' ),
+					$target,
+					$placement
+				);
+			case 'search_demand':
+			case 'category_merchandising':
+				return sprintf(
+					__( 'Create a measured merchandising placement in %s; no discount is recommended yet.', 'kidia-mobile-cms' ),
+					$placement
+				);
+			case 'peak_timing':
+				return __( 'Schedule the next controlled campaign in the measured peak window without changing its price.', 'kidia-mobile-cms' );
+			case 'remove_friction':
+			case 'signup_friction':
+				return __( 'Fix the measured funnel obstacle first; do not issue a discount until the next comparison period.', 'kidia-mobile-cms' );
+			case 'free_shipping':
+				return __( 'Test free shipping only above the calculated basket threshold and compare completed checkouts.', 'kidia-mobile-cms' );
+			default:
+				return sprintf(
+					__( 'Apply the measured action to %1$s for %2$d hours and review the success metric.', 'kidia-mobile-cms' ),
+					$target,
+					$duration_hours
+				);
+		}
+	}
+
+	private static function success_metric( string $scheme ): string {
+		$metrics = array(
+			'high_interest'          => __( 'Product conversion rate and incremental gross profit', 'kidia-mobile-cms' ),
+			'slow_stock'             => __( 'Sell-through rate and gross profit per unit', 'kidia-mobile-cms' ),
+			'bundle'                 => __( 'Bundle attachment rate, order value and incremental gross profit', 'kidia-mobile-cms' ),
+			'cart_recovery'          => __( 'Recovered carts, recovered revenue and coupon cost', 'kidia-mobile-cms' ),
+			'free_shipping'          => __( 'Checkout completion rate and shipping cost per converted order', 'kidia-mobile-cms' ),
+			'aov_lift'               => __( 'Average order value and gross profit per order', 'kidia-mobile-cms' ),
+			'popular'                => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
+			'best_seller'            => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
+			'search_demand'          => __( 'Search exits, product clicks and purchases after search', 'kidia-mobile-cms' ),
+			'category_merchandising' => __( 'Category click-through and revenue per visitor', 'kidia-mobile-cms' ),
+			'peak_timing'            => __( 'Campaign conversion compared with a quieter-hour holdout', 'kidia-mobile-cms' ),
+			'remove_friction'        => __( 'Remove-from-cart rate and checkout starts', 'kidia-mobile-cms' ),
+			'signup_friction'        => __( 'Registration completion and guest checkout completion', 'kidia-mobile-cms' ),
+		);
+		return $metrics[ $scheme ] ?? __( 'Incremental purchases, revenue and gross profit', 'kidia-mobile-cms' );
+	}
+
+	/**
+	 * @param list<int> $product_ids
+	 * @return list<array<string,mixed>>
+	 */
+	private static function product_snapshots( array $product_ids ): array {
+		if ( ! function_exists( 'wc_get_product' ) ) {
+			return array();
+		}
+		$products = array();
+		foreach ( array_slice( array_values( array_unique( array_filter( array_map( 'absint', $product_ids ) ) ) ), 0, 6 ) as $product_id ) {
+			$product = wc_get_product( $product_id );
+			if ( ! $product instanceof WC_Product ) {
+				continue;
+			}
+			$products[] = array(
+				'id'            => $product_id,
+				'name'          => $product->get_name(),
+				'price'         => max( 0, (float) $product->get_price() ),
+				'regular_price' => max( 0, (float) $product->get_regular_price() ),
+				'stock'         => $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null,
+				'image_url'     => $product->get_image_id()
+					? (string) wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_thumbnail' )
+					: '',
+			);
+		}
+		return $products;
 	}
 }

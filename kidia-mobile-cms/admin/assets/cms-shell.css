@@ -973,6 +973,9 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-data-coverage>.dashicons{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border-radius:50%;background:#2f806e;color:#fff}
 .kidia-ai-data-coverage strong{color:var(--kidia-ai-dark)}
 .kidia-ai-data-coverage p{margin:3px 0 0;color:#5e706a;line-height:1.5}
+.kidia-ai-data-coverage small{display:block;margin-top:5px;color:#7a5a21}
+.kidia-ai-data-coverage.is-limited{border-color:#e1c48e;background:#fff9ed}
+.kidia-ai-data-coverage.is-limited>.dashicons{background:#a66b00}
 .kidia-ai-analysis-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:16px}
 .kidia-ai-analysis-grid>section,.kidia-ai-recommendation-section,.kidia-ai-settings{border:1px solid var(--kidia-ai-border);border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,71,61,.045)}
 .kidia-ai-analysis-grid>section{padding:18px}
@@ -992,10 +995,12 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-demand-panel article small,.kidia-ai-demand-panel article span{color:#687873}
 .kidia-ai-demand-panel article strong{overflow:hidden;color:var(--kidia-ai-dark);font-size:14px;text-overflow:ellipsis;white-space:nowrap}
 .kidia-ai-recommendation-section{padding:19px}
-.kidia-ai-recommendation-section>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
-.kidia-ai-playbooks{position:relative;flex:0 0 auto}
-.kidia-ai-playbooks summary{padding:9px 12px;border:1px solid #9fc8be;border-radius:9px;background:#f1f9f7;color:#236b59;font-weight:750;cursor:pointer;list-style:none}
+.kidia-ai-recommendation-section>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
+.kidia-ai-playbooks{position:relative;flex:0 0 auto;max-width:100%}
+.kidia-ai-playbooks summary{display:flex;min-height:40px;align-items:center;justify-content:space-between;gap:9px;padding:9px 12px;border:1px solid #9fc8be;border-radius:9px;background:#f1f9f7;color:#236b59;font-weight:750;cursor:pointer;list-style:none;user-select:none}
 .kidia-ai-playbooks summary::-webkit-details-marker{display:none}
+.kidia-ai-playbooks summary .dashicons{width:18px;height:18px;transition:transform .18s ease}
+.kidia-ai-playbooks[open] summary .dashicons{transform:rotate(180deg)}
 .kidia-ai-playbooks>div{position:absolute;z-index:20;top:calc(100% + 7px);inset-inline-end:0;display:flex;width:min(560px,80vw);flex-wrap:wrap;gap:6px;padding:13px;border:1px solid var(--kidia-ai-border);border-radius:12px;background:#fff;box-shadow:0 16px 38px rgba(23,78,66,.16)}
 .kidia-ai-playbooks span{padding:6px 9px;border-radius:99px;background:#edf7f4;color:#315f55;font-size:11px;font-weight:700}
 .kidia-ai-recommendations--workspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -1011,6 +1016,22 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-decision-card>p{min-height:44px;margin:0;color:#526761;line-height:1.55}
 .kidia-ai-decision-card>div{padding:12px;border-radius:10px;background:#f0f7f5}
 .kidia-ai-decision-card>div>strong{color:#315f55;font-size:12px}
+.kidia-ai-decision{display:grid;gap:5px;padding:12px;border-inline-start:4px solid #2f806e;border-radius:10px;background:#edf7f4}
+.kidia-ai-decision small{color:#687873;font-size:10px;font-weight:750;text-transform:uppercase}
+.kidia-ai-decision strong{color:#174e42;font-size:14px;line-height:1.5}
+.kidia-ai-decision-products{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:transparent!important;padding:0!important}
+.kidia-ai-decision-products article{display:flex;min-width:0;align-items:center;gap:8px;padding:8px;border:1px solid #dce9e5;border-radius:10px;background:#fff}
+.kidia-ai-decision-products :is(img,article>.dashicons){width:42px;height:42px;flex:0 0 42px;border-radius:8px;object-fit:cover}
+.kidia-ai-decision-products article>.dashicons{display:grid;place-items:center;background:#e5f4ef;color:#2f806e}
+.kidia-ai-decision-products article>div{display:grid;min-width:0;gap:3px}
+.kidia-ai-decision-products article strong{overflow:hidden;color:#174e42;text-overflow:ellipsis;white-space:nowrap}
+.kidia-ai-decision-products article small{color:#687873}
+.kidia-ai-decision-metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0!important;background:transparent!important}
+.kidia-ai-decision-metrics>span{display:grid;min-width:0;gap:2px;padding:8px;border-radius:8px;background:#f0f7f5;text-align:center}
+.kidia-ai-decision-metrics small{color:#687873;font-size:9px}
+.kidia-ai-decision-metrics b{overflow:hidden;color:#174e42;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.kidia-ai-success{min-height:0!important;padding:10px;border-radius:9px;background:#fff;color:#526761!important;font-size:11px}
+.kidia-ai-success b{color:#236b59}
 .kidia-ai-decision-card ul{display:grid;gap:6px;margin:8px 0 0;padding-inline-start:18px;color:#526761}
 .kidia-ai-decision-card li{line-height:1.45}
 .kidia-ai-expected{margin:11px 0 0;padding-top:9px;border-top:1px solid #d7e6e2;color:#526761;line-height:1.45}
@@ -1054,7 +1075,7 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 }
 
 /* AI Studio review/build workflow and organized playbook library. */
-.kidia-ai-playbooks[open]{width:min(760px,100%)}
+.kidia-ai-playbooks[open]{width:100%;flex-basis:100%}
 .kidia-ai-playbooks>div.kidia-ai-playbook-groups{
 	position:static;
 	display:grid;
@@ -1068,8 +1089,8 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-playbook-groups section{min-width:0;padding:11px;border:1px solid #dfebe8;border-radius:11px;background:#fbfdfc}
 .kidia-ai-playbook-groups h3{margin:0 0 8px;color:#174e42;font-size:13px}
 .kidia-ai-playbook-groups section>div{display:flex;flex-wrap:wrap;gap:5px}
-.kidia-ai-action-builder{border:1px solid #c8dfd9;border-radius:12px;background:#fff}
-.kidia-ai-action-builder>summary{width:100%;border:0!important;border-radius:11px!important;cursor:pointer;list-style:none}
+.kidia-ai-action-builder{margin-top:auto;border:1px solid #c8dfd9;border-radius:12px;background:#fff}
+.kidia-ai-action-builder>summary{width:100%;min-height:42px;border:0!important;border-radius:11px!important;cursor:pointer;list-style:none}
 .kidia-ai-action-builder>summary::-webkit-details-marker{display:none}
 .kidia-ai-action-builder>form{padding:14px;border-top:1px solid #dce9e5}
 .kidia-ai-action-grid,.kidia-ai-bundle-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -1122,4 +1143,8 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 	.kidia-ai-bundle-studio>summary,.kidia-ai-action-builder form>footer{align-items:stretch;flex-direction:column}
 	.kidia-push-provider-grid,.kidia-push-automation,.kidia-push-stats.is-four{grid-template-columns:1fr}
 	.kidia-push-provider form>footer{align-items:stretch;flex-direction:column}
+}
+@media(max-width:650px){
+	.kidia-ai-decision-products{grid-template-columns:1fr}
+	.kidia-ai-decision-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
