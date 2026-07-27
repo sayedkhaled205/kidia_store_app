@@ -26,6 +26,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-product-channe
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-ai-offer-engine.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-recovery-campaigns.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-push-service.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-app-exporter.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-coupon-channel.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-bundle-recipes.php';
 
@@ -97,6 +98,7 @@ final class Kidia_Mobile_CMS {
 		(new Kidia_Mobile_Product_Channel_Visibility())->register();
 		(new Kidia_Mobile_Recovery_Campaigns())->register();
 		(new Kidia_Mobile_Push_Service())->register();
+		(new Kidia_Mobile_App_Exporter())->register();
 		(new Kidia_Mobile_Coupon_Channel())->register();
 		(new Kidia_Mobile_Bundle_Recipes())->register();
 

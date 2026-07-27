@@ -47,6 +47,7 @@ $show_setup_choice = $license_active
 $connection_step_complete = $website_connected;
 $license_step_complete    = $connection_step_complete && $license_active;
 $setup_step_complete      = $license_step_complete && $setup_complete;
+$build_step_complete      = $setup_step_complete && $app_export_current;
 $journey_steps = array(
 	array(
 		'title'       => __( 'Purchase and connect', 'kidia-mobile-cms' ),
@@ -65,8 +66,8 @@ $journey_steps = array(
 	),
 	array(
 		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
-		'description' => __( 'Review your configuration and generate a new application build.', 'kidia-mobile-cms' ),
-		'complete'    => false,
+		'description' => __( 'Export the application build package with its store and push connection ready for the WooMobile build pipeline.', 'kidia-mobile-cms' ),
+		'complete'    => $build_step_complete,
 	),
 );
 $current_journey_step = 0;
@@ -120,6 +121,22 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 					<div>
 						<h3><?php echo esc_html( (string) $journey_step['title'] ); ?></h3>
 						<p><?php echo esc_html( (string) $journey_step['description'] ); ?></p>
+						<?php if ( 3 === $journey_index ) : ?>
+							<form class="kidia-app-export-action" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<input type="hidden" name="action" value="kidia_mobile_export_app">
+								<?php wp_nonce_field( 'kidia_mobile_export_app', 'kidia_mobile_export_nonce' ); ?>
+								<button type="submit" class="button button-primary" <?php disabled( ! $setup_step_complete ); ?>>
+									<span class="dashicons dashicons-download" aria-hidden="true"></span>
+									<?php esc_html_e( 'Export App', 'kidia-mobile-cms' ); ?>
+								</button>
+							</form>
+							<?php if ( ! empty( $app_export_state['exported_at'] ) ) : ?>
+								<small class="kidia-app-export-meta"><?php echo esc_html( sprintf( __( 'Last export: %s', 'kidia-mobile-cms' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $app_export_state['exported_at'] ) ) ) ); ?></small>
+							<?php endif; ?>
+							<?php if ( empty( $push_export_config['enabled'] ) ) : ?>
+								<a class="kidia-app-export-push-link" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-push-notifications' ) ); ?>"><?php esc_html_e( 'Complete Push connection for automatic notification setup', 'kidia-mobile-cms' ); ?></a>
+							<?php endif; ?>
+						<?php endif; ?>
 						<?php if ( $step_current ) : ?>
 							<strong><?php esc_html_e( 'Current step', 'kidia-mobile-cms' ); ?></strong>
 						<?php elseif ( $step_complete ) : ?>
@@ -361,6 +378,39 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	.kidia-customer-journey__steps strong {
 		color: #2f806e;
 		font-size: 11px;
+	}
+
+	.kidia-app-export-action {
+		margin: 10px 0 6px;
+	}
+
+	.kidia-app-export-action .button {
+		display: inline-flex;
+		min-height: 38px;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		margin: 0;
+		border-radius: 10px;
+	}
+
+	.kidia-app-export-action .dashicons {
+		width: 17px;
+		height: 17px;
+		font-size: 17px;
+	}
+
+	.kidia-app-export-meta,
+	.kidia-app-export-push-link {
+		display: block;
+		margin-top: 5px;
+		font-size: 10px;
+		line-height: 1.35;
+	}
+
+	.kidia-app-export-push-link {
+		color: #236b59;
+		font-weight: 700;
 	}
 
 	.kidia-dashboard__card {
