@@ -573,3 +573,82 @@ body[class*="kidia-mobile"] #wpbody-content{
 @media(max-width:700px){
 	.kidia-data-summary.is-four,.kidia-audience-strip{grid-template-columns:1fr}
 }
+
+/* Store controls v4: dense actions, complete coupon filters and recovery tools. */
+body.kidia-cms-plugin-page .screen-reader-shortcut[href="#wpbody-content"]{display:none!important}
+.kidia-date-filter input:disabled{border-color:#d7dfdd!important;background:#eef1f0!important;color:#8b9692!important;cursor:not-allowed;opacity:.75}
+.kidia-product-search select,.kidia-coupon-filters :is(select,input){min-height:38px;border-color:#b9d4cd;border-radius:8px}
+.kidia-product-actions{min-width:max-content!important;flex-wrap:nowrap!important;white-space:nowrap}
+.kidia-product-actions form{display:inline-flex;margin:0}
+.kidia-product-actions :is(a,button){min-height:32px!important;padding:3px 7px!important;font-size:11px!important;line-height:1.2!important}
+.kidia-coupon-filters{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:11px 12px;border:1px solid #dce7e3;border-radius:11px;background:#f7fbfa}
+.kidia-coupon-filters input[type="search"]{width:min(300px,30vw)}
+.kidia-coupon-filters>span{margin-inline-start:auto;color:#687873;font-weight:700}
+.kidia-coupon-table{min-width:1180px}
+.kidia-coupon-table td>small{display:block;margin-top:5px;color:#70807b;line-height:1.45}
+.kidia-coupon-table code{display:inline-block;padding:5px 7px;border-radius:6px;background:#edf5f2;color:#174e42;font-weight:750}
+.kidia-coupon-badges{display:flex!important;flex-wrap:wrap;gap:4px}
+.kidia-coupon-badges b{padding:3px 6px;border-radius:99px;background:#e8f5f1;color:#236b59;font-size:10px}
+.kidia-coupon-actions{flex-wrap:nowrap;white-space:nowrap}
+.kidia-recovery-builder>details{margin-bottom:15px;border:1px solid #b9d9d1;border-radius:12px;background:#f5fbf9}
+.kidia-recovery-builder>details>summary{display:flex;align-items:center;gap:7px;padding:14px 16px;color:#174e42;font-size:15px;font-weight:800;cursor:pointer}
+.kidia-recovery-builder>details>summary .dashicons{color:#2f806e}
+.kidia-recovery-controls{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;padding:0 16px 16px}
+.kidia-recovery-controls label{display:grid;gap:5px}
+.kidia-recovery-controls label>span{color:#52645f;font-size:11px;font-weight:750}
+.kidia-recovery-controls :is(input,select,textarea){width:100%;border-color:#b9d4cd;border-radius:8px}
+.kidia-recovery-controls .is-wide{grid-column:span 3}
+.kidia-recovery-check{display:flex!important;grid-column:span 3;align-items:center;gap:8px}
+.kidia-recovery-check input{width:auto!important}
+.kidia-recovery-attribution{margin-top:20px;padding-top:18px;border-top:1px solid #dce7e3}
+.kidia-recovery-attribution h3{margin:0;color:#174e42}
+.kidia-recovery-attribution>p{margin:5px 0 13px;color:#687873}
+.kidia-recovery-rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:-6px 0 14px}
+.kidia-recovery-rates>span{display:grid;gap:3px;padding:10px 12px;border-radius:9px;background:#eef7f4}
+.kidia-recovery-rates small{color:#687873}
+.kidia-recovery-rates b{color:#174e42}
+
+/* Compact push chooser and explainable offer studio. */
+.kidia-push-types{grid-template-columns:repeat(4,minmax(180px,1fr))}
+.kidia-push-types label{grid-template-columns:28px minmax(0,1fr);min-height:64px;align-items:center;align-content:center;column-gap:9px;padding:10px 12px}
+.kidia-push-types label>.dashicons{grid-row:1/3;align-self:center}
+.kidia-push-types label>strong,.kidia-push-types label>small{grid-column:2}
+.kidia-push-types label>small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kidia-ai-offer-studio{margin:16px 0;padding:20px;border:1px solid #b9d9d1;border-radius:16px;background:linear-gradient(135deg,#eff9f6,#fff);box-shadow:0 8px 24px rgba(31,71,61,.05)}
+.kidia-ai-offer-studio>header{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.kidia-ai-offer-studio>header>div{display:flex;align-items:center;gap:12px}
+.kidia-ai-offer-studio>header>div>.dashicons{display:grid;width:44px;height:44px;place-items:center;border-radius:12px;background:#2f806e;color:#fff;font-size:24px}
+.kidia-ai-offer-studio h2,.kidia-ai-offer-studio h3{margin:0;color:#174e42}
+.kidia-ai-offer-studio header p{margin:4px 0 0;color:#687873}
+.kidia-ai-schemes{display:flex;flex-wrap:wrap;gap:6px;margin-top:15px;padding-top:13px;border-top:1px solid #d7e8e3}
+.kidia-ai-schemes>span{align-self:center;color:#52645f;font-weight:750}
+.kidia-ai-schemes>b{padding:4px 7px;border-radius:99px;background:#fff;color:#315f55;font-size:10px}
+.kidia-ai-recommendations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.kidia-ai-recommendations article{padding:14px;border:1px solid #d5e6e1;border-radius:12px;background:#fff}
+.kidia-ai-recommendations article>header{display:grid;grid-template-columns:34px 1fr auto;gap:9px}
+.kidia-ai-recommendations article>header>.dashicons{display:grid;width:34px;height:34px;place-items:center;border-radius:9px;background:#e2f2ed;color:#236b59}
+.kidia-ai-recommendations article>header>b{height:max-content;padding:4px 7px;border-radius:99px;background:#e8f5f1;color:#236b59;font-size:10px}
+.kidia-ai-recommendations article>header>b.is-medium{background:#fff0df;color:#8a4d00}
+.kidia-ai-recommendations ul{margin:12px 0;padding-inline-start:20px;color:#5f6f6a;line-height:1.6}
+.kidia-ai-recommendations footer{display:flex;align-items:center;justify-content:space-between;gap:9px;padding-top:10px;border-top:1px solid #e2ebe8}
+.kidia-ai-recommendations footer>span{color:#687873;font-size:11px;font-weight:700}
+.kidia-ai-empty{display:flex;align-items:center;gap:10px;margin-top:14px;padding:14px;border-radius:10px;background:#fff}
+.kidia-ai-empty>.dashicons{color:#2f806e}
+.kidia-ai-empty p{margin:3px 0 0;color:#687873}
+.kidia-ai-offer-review{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:13px;border:1px solid #b9d9d1;border-radius:11px;background:#f2f8f6}
+.kidia-ai-offer-review>p{grid-column:1/-1;margin:0;color:#687873;font-size:11px}
+
+@media(max-width:1200px){
+	.kidia-recovery-controls{grid-template-columns:repeat(3,minmax(120px,1fr))}
+	.kidia-ai-offer-studio>header{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:900px){
+	.kidia-coupon-filters{align-items:stretch;flex-direction:column}
+	.kidia-coupon-filters input[type="search"]{width:100%}
+	.kidia-coupon-filters>span{margin:0}
+	.kidia-ai-recommendations{grid-template-columns:1fr}
+	.kidia-ai-offer-review{grid-template-columns:1fr}
+	.kidia-recovery-controls{grid-template-columns:1fr}
+	.kidia-recovery-rates{grid-template-columns:repeat(2,1fr)}
+	.kidia-recovery-controls .is-wide,.kidia-recovery-check{grid-column:auto}
+}

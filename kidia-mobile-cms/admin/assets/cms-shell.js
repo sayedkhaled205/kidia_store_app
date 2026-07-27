@@ -101,6 +101,64 @@
 		const syncDelivery = function () { pushSchedule.hidden = pushDelivery.value !== 'scheduled'; };
 		pushDelivery.addEventListener('change', syncDelivery); syncDelivery();
 	}
+	const datePreset = document.querySelector('.kidia-date-filter select[name="date_preset"]');
+	if (datePreset) {
+		const customDates = document.querySelectorAll('.kidia-date-filter input[type="date"]');
+		const syncCustomDates = function () {
+			const enabled = datePreset.value === 'custom';
+			customDates.forEach(function (input) { input.disabled = !enabled; });
+		};
+		datePreset.addEventListener('change', syncCustomDates);
+		syncCustomDates();
+	}
+	const recoveryDelivery = document.querySelector('[data-recovery-delivery]');
+	const recoverySchedule = document.querySelector('[data-recovery-schedule]');
+	if (recoveryDelivery && recoverySchedule) {
+		const syncRecoveryDelivery = function () { recoverySchedule.hidden = recoveryDelivery.value !== 'scheduled'; };
+		recoveryDelivery.addEventListener('change', syncRecoveryDelivery);
+		syncRecoveryDelivery();
+	}
+	const selectAllCarts = document.querySelector('[data-select-all-carts]');
+	if (selectAllCarts) {
+		selectAllCarts.addEventListener('change', function () {
+			document.querySelectorAll('input[name="cart_ids[]"]:not(:disabled)').forEach(function (input) {
+				input.checked = selectAllCarts.checked;
+			});
+		});
+	}
+	document.querySelectorAll('[data-ai-offer]').forEach(function (button) {
+		button.addEventListener('click', function () {
+			const aiType = document.querySelector('[data-push-type][value="ai_offer"]');
+			if (aiType) {
+				aiType.checked = true;
+				aiType.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+			const values = {
+				'[data-ai-scheme]': button.dataset.scheme,
+				'[data-ai-confidence]': button.dataset.confidence,
+				'[data-ai-source]': button.dataset.source,
+				'[data-ai-products]': button.dataset.products,
+				'[data-ai-discount-value]': button.dataset.discountValue,
+				'[data-ai-duration]': button.dataset.duration
+			};
+			Object.keys(values).forEach(function (selector) {
+				const field = document.querySelector(selector);
+				if (field) field.value = values[selector] || '';
+			});
+			const typeField = document.querySelector('[data-ai-discount-type]');
+			if (typeField) typeField.value = button.dataset.discountType || 'percent';
+			if (pushTitle) {
+				pushTitle.value = button.dataset.title || '';
+				pushTitle.dispatchEvent(new Event('input', { bubbles: true }));
+			}
+			if (pushMessage) {
+				pushMessage.value = button.dataset.message || '';
+				pushMessage.dispatchEvent(new Event('input', { bubbles: true }));
+			}
+			const builder = document.querySelector('.kidia-push-builder');
+			if (builder) builder.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	});
 	document.addEventListener('click', function (event) {
 		const button = event.target.closest('[data-copy-link],[data-copy-text]');
 		if (!button) return;
