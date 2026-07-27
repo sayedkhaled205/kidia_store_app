@@ -121,6 +121,7 @@ for (const preset of [
   "last_30_days",
   "this_month",
   "previous_month",
+  "last_year",
   "custom",
 ]) {
   assert.match(admin, new RegExp(`'${preset}'`), `${preset} must be supported.`);
@@ -158,12 +159,21 @@ for (const couponDetail of ["Unlimited remaining", "allowed emails", "Excludes s
   assert.match(storeData, new RegExp(couponDetail), `Coupon rows must expose ${couponDetail}.`);
 }
 assert.match(storeData, /disabled\( 'custom' !== \$date_preset \)/);
+assert.match(storeData, /Last month[\s\S]*Last year[\s\S]*Custom/);
+assert.doesNotMatch(storeData, /Open full manager/);
+assert.doesNotMatch(storeData, /\$starts->format_i18n/, "Coupon dates must not call Woo-only methods on WordPress DateTime objects.");
+assert.match(storeData, /wp_date\([^;]*\$starts->getTimestamp\(\)/, "Coupon dates must render through a safe WordPress timestamp.");
 assert.match(shellCss, /kidia-date-filter input:disabled[\s\S]*cursor:not-allowed/);
 assert.match(shellCss, /kidia-product-actions\{[^}]*flex-wrap:nowrap/);
+assert.match(shellCss, /kidia-row-actions :is\(a,button\)[\s\S]*align-items:center!important[\s\S]*justify-content:center!important/);
+assert.match(shellCss, /input\[type="checkbox"\]:checked[\s\S]*background:#2f806e!important/);
 assert.match(shellCss, /screen-reader-shortcut\[href="#wpbody-content"\]\{display:none!important\}/);
 assert.match(aiOffers, /signal_catalog[\s\S]*sales_velocity[\s\S]*frequent_pair/);
-assert.match(push, /AI Offer Studio[\s\S]*Frequently bought together[\s\S]*Slow-stock rescue/);
+assert.match(push, /Frequently bought together[\s\S]*Slow-stock rescue/);
+assert.match(push, /AI Offer Studio/);
+assert.match(push, /data-ai-scheme-filter[\s\S]*data-ai-scheme-card/);
 assert.match(push, /Profit risk[\s\S]*Review this offer/);
+assert.match(push, /Push delivery is not connected yet[\s\S]*push-delivery integration/);
 for (const recoveryField of ["kidia_mobile_recovery_campaigns", "tracking_token", "converted_at"]) {
   assert.match(recovery, new RegExp(recoveryField), `Recovery storage must include ${recoveryField}.`);
 }
@@ -171,6 +181,9 @@ assert.match(recovery, /set_usage_limit\( 1 \)[\s\S]*set_email_restrictions[\s\S
 assert.match(recovery, /attribute_order[\s\S]*get_coupon_codes[\s\S]*customer_email/);
 for (const recoveryControl of ["cart_ids\\[\\]", "Create coupons & send", "Recovery attribution"]) {
   assert.match(storeData, new RegExp(recoveryControl), `Recovery UI must expose ${recoveryControl}.`);
+}
+for (const recoveryGroup of ["Personal coupon", "Notification message", "Delivery"]) {
+  assert.match(storeData, new RegExp(recoveryGroup), `Recovery controls must group ${recoveryGroup}.`);
 }
 assert.match(bootstrap, /class-kidia-mobile-ai-offer-engine\.php[\s\S]*class-kidia-mobile-recovery-campaigns\.php/);
 assert.match(storeApiClient, /X-Kidia-Channel'[\s\S]*mobile/);

@@ -126,6 +126,17 @@
 			});
 		});
 	}
+	const aiSchemeFilter = document.querySelector('[data-ai-scheme-filter]');
+	if (aiSchemeFilter) {
+		const syncAiSchemes = function () {
+			const selected = aiSchemeFilter.value;
+			document.querySelectorAll('[data-ai-scheme-card]').forEach(function (card) {
+				card.hidden = selected !== 'all' && card.dataset.aiSchemeCard !== selected;
+			});
+		};
+		aiSchemeFilter.addEventListener('change', syncAiSchemes);
+		syncAiSchemes();
+	}
 	document.querySelectorAll('[data-ai-offer]').forEach(function (button) {
 		button.addEventListener('click', function () {
 			const aiType = document.querySelector('[data-push-type][value="ai_offer"]');
