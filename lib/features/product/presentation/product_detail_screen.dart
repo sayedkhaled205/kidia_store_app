@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
@@ -102,6 +103,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isWishlisted = false;
   bool _isWishlistMutating = false;
 	bool _footerHidden = false;
+  int _trackedProductId = 0;
 
   @override
   void initState() {
@@ -132,6 +134,17 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   void _onControllerChanged() {
+    final CatalogProduct? product = _controller.product;
+    if (product != null && _trackedProductId != product.id) {
+      _trackedProductId = product.id;
+      ref
+          .read(mobileAnalyticsProvider)
+          .trackInBackground(
+            'view_item',
+            objectId: product.id,
+            label: product.name,
+          );
+    }
     if (mounted) {
       setState(() {});
     }

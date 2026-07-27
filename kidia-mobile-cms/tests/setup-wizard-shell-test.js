@@ -77,9 +77,12 @@ for (const tab of ["Products", "Categories", "Discounts", "Customers", "Orders",
 for (const editor of ["get_edit_post_link", "get_edit_term_link", "get_edit_user_link"]) {
   assert.match(storeDataTemplate, new RegExp(editor), "Store Data rows must open the real WooCommerce and WordPress editors.");
 }
-assert.match(storeDataTemplate, /kidia-data-table[\s\S]*kidia-order-list[\s\S]*kidia-customer-list[\s\S]*kidia-category-list/, "Every Store Data section must use a format suited to its data.");
+for (const layout of ["kidia-data-table", "kidia-order-list", "kidia-customer-list", "kidia-category-list"]) {
+  assert.match(storeDataTemplate, new RegExp(layout), `Store Data must render ${layout}.`);
+}
 assert.match(storeDataTemplate, /data-copy-link[\s\S]*data-copy-text/, "Products, categories and coupons must expose useful copy actions.");
-assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers and analytics must filter All, Website and Mobile App data.");
+assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers, reports and abandoned carts must filter All, Website and Mobile App data.");
+assert.match(storeDataTemplate, /Mobile App only/, "Analytics must be explicitly limited to the mobile app.");
 assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification types.");
 assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s\S]*push_delivery[\s\S]*Live preview[\s\S]*History/, "Push Notifications must provide compose, targeting, delivery, live preview and history.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");

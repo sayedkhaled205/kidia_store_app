@@ -6,6 +6,7 @@
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_splash_screen"><?php wp_nonce_field( 'kidia_mobile_save_splash_screen', 'kidia_mobile_splash_nonce' ); ?>
 			<div class="kidia-page-toolbar"><strong><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></strong><?php submit_button( __( 'Save Splash Screen', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
+			<div class="kidia-builder-cards-scroll">
 			<section class="kidia-page-card is-open"><div class="kidia-page-card__header"><div><span class="dashicons dashicons-format-image"></span><strong><?php esc_html_e( 'Startup Screen', 'kidia-mobile-cms' ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="splash[enabled]" value="0"><input type="checkbox" name="splash[enabled]" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
 				<div class="kidia-page-card__body"><div class="kidia-page-fields">
 					<div class="kidia-settings-section-title kidia-settings-section-title--splash-branding"><?php esc_html_e( 'Branding & Image', 'kidia-mobile-cms' ); ?></div>
@@ -23,6 +24,7 @@
 					<div class="kidia-page-field"><label><?php esc_html_e( 'Loader color', 'kidia-mobile-cms' ); ?></label><input type="color" name="splash[loader_color]" value="<?php echo esc_attr( $settings['loader_color'] ); ?>"></div>
 				</div></div>
 			</section>
+			</div>
 		</form>
 	</div>
 </div>

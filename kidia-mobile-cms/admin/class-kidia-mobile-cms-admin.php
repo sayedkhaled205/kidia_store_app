@@ -203,6 +203,7 @@ final class Kidia_Mobile_CMS_Admin {
 			array(
 				'kidia-mobile-home-builder',
 				'kidia-mobile-category-builder',
+				'kidia-mobile-splash-screen',
 			),
 			array_keys( self::PAGE_BUILDER_SLUGS )
 		);
@@ -423,40 +424,256 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
 		}
-		$store_tab = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
+		$store_tab    = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
 		$store_source = isset( $_GET['store_source'] ) ? sanitize_key( wp_unslash( $_GET['store_source'] ) ) : 'all';
 		$store_source = in_array( $store_source, array( 'all', 'website', 'mobile' ), true ) ? $store_source : 'all';
-		$allowed   = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'settings' );
-		$store_tab = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
-		$products  = function_exists( 'wc_get_products' ) ? wc_get_products( array( 'limit' => 12, 'orderby' => 'date', 'order' => 'DESC', 'status' => array( 'publish', 'draft', 'pending' ) ) ) : array();
-		$order_args = array( 'limit' => 30, 'orderby' => 'date', 'order' => 'DESC' );
+		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts', 'settings' );
+		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
+		if ( 'analytics' === $store_tab ) {
+			$store_source = 'mobile';
+		}
+
+		$date_default = 'customers' === $store_tab ? 'all_time' : 'last_30_days';
+		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
+		$date_range  = $this->store_data_date_range( $date_preset );
+		$date_from   = $date_range['from'];
+		$date_to     = $date_range['to'];
+		$date_preset = $date_range['preset'];
+		$previous_to = $date_from - 1;
+		$previous_from = $previous_to - ( $date_to - $date_from );
+
+		$products = 'products' === $store_tab && function_exists( 'wc_get_products' )
+			? wc_get_products( array( 'limit' => 24, 'orderby' => 'date', 'order' => 'DESC', 'status' => array( 'publish', 'draft', 'pending' ) ) )
+			: array();
+		$coupons = 'discounts' === $store_tab ? get_posts(
+			array(
+				'post_type'      => 'shop_coupon',
+				'post_status'    => array( 'publish', 'draft' ),
+				'posts_per_page' => 24,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		) : array();
+
+		$category_terms = 'categories' === $store_tab && taxonomy_exists( 'product_cat' )
+			? get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false, 'orderby' => 'name', 'order' => 'ASC' ) )
+			: array();
+		$parent_categories = array();
+		$subcategory_groups = array();
+		if ( ! is_wp_error( $category_terms ) ) {
+			foreach ( $category_terms as $category ) {
+				if ( 0 === (int) $category->parent ) {
+					$parent_categories[] = $category;
+					$subcategory_groups[ $category->term_id ] = array();
+				}
+			}
+			foreach ( $category_terms as $category ) {
+				if ( 0 !== (int) $category->parent ) {
+					$root = $this->store_data_root_category( $category, $category_terms );
+					$subcategory_groups[ $root ][] = $category;
+				}
+			}
+		}
+
+		$order_args = array(
+			'limit'        => in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? -1 : 60,
+			'orderby'      => 'date',
+			'order'        => 'DESC',
+			'date_created' => $date_from . '...' . $date_to,
+		);
+		$order_args = $this->store_data_order_source_args( $order_args, $store_source );
+		$orders     = in_array( $store_tab, array( 'orders', 'reports' ), true ) && function_exists( 'wc_get_orders' )
+			? wc_get_orders( $order_args )
+			: array();
+
+		$customer_page = max( 1, absint( $_GET['customer_page'] ?? 1 ) );
+		$customer_args = array(
+			'role__in'    => array( 'customer', 'subscriber' ),
+			'number'      => 50,
+			'paged'       => $customer_page,
+			'orderby'     => 'registered',
+			'order'       => 'DESC',
+			'count_total' => true,
+		);
+		if ( 'all_time' !== $date_preset ) {
+			$customer_args['date_query'] = array(
+				array(
+					'after'     => gmdate( 'Y-m-d H:i:s', $date_from ),
+					'before'    => gmdate( 'Y-m-d H:i:s', $date_to ),
+					'inclusive' => true,
+				),
+			);
+		}
 		if ( 'mobile' === $store_source ) {
-			$order_args['meta_key'] = '_kidia_order_source';
-			$order_args['meta_value'] = 'mobile';
+			$customer_args['meta_query'] = array(
+				'relation' => 'OR',
+				array( 'key' => '_kidia_mobile_customer', 'value' => '1' ),
+				array( 'key' => '_kidia_mobile_customer_sessions_v1', 'compare' => 'EXISTS' ),
+			);
 		} elseif ( 'website' === $store_source ) {
-			$order_args['meta_query'] = array(
+			$customer_args['meta_query'] = array(
+				'relation' => 'OR',
+				array( 'key' => '_kidia_website_customer', 'value' => '1' ),
+				array( 'key' => '_kidia_customer_origin', 'value' => 'website' ),
+				array( 'key' => '_kidia_customer_origin', 'compare' => 'NOT EXISTS' ),
+			);
+		}
+		$customer_query = 'customers' === $store_tab ? new WP_User_Query( $customer_args ) : null;
+		$customers      = $customer_query instanceof WP_User_Query ? $customer_query->get_results() : array();
+		$customer_total = $customer_query instanceof WP_User_Query ? absint( $customer_query->get_total() ) : 0;
+		$customer_pages = max( 1, (int) ceil( $customer_total / 50 ) );
+
+		$order_revenue = 0.0;
+		$order_units   = 0;
+		$paid_order_count = 0;
+		$order_statuses = array();
+		$product_performance = array();
+		$paid_statuses = function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' );
+		foreach ( $orders as $order ) {
+			if ( ! is_object( $order ) || ! method_exists( $order, 'get_total' ) ) {
+				continue;
+			}
+			$status = (string) $order->get_status();
+			$order_statuses[ $status ] = ( $order_statuses[ $status ] ?? 0 ) + 1;
+			if ( ! in_array( $status, $paid_statuses, true ) ) {
+				continue;
+			}
+			++$paid_order_count;
+			$order_revenue += (float) $order->get_total();
+			foreach ( $order->get_items() as $item ) {
+				$product_id = absint( $item->get_product_id() );
+				if ( ! isset( $product_performance[ $product_id ] ) ) {
+					$product_performance[ $product_id ] = array(
+						'name'    => $item->get_name(),
+						'units'   => 0,
+						'revenue' => 0.0,
+					);
+				}
+				$product_performance[ $product_id ]['units'] += absint( $item->get_quantity() );
+				$product_performance[ $product_id ]['revenue'] += (float) $item->get_total();
+				$order_units += absint( $item->get_quantity() );
+			}
+		}
+		uasort( $product_performance, static fn( $left, $right ) => $right['revenue'] <=> $left['revenue'] );
+		$product_performance = array_slice( $product_performance, 0, 10, true );
+
+		$analytics = Kidia_Mobile_Analytics::empty_summary();
+		$analytics_previous = Kidia_Mobile_Analytics::empty_summary();
+		if ( 'analytics' === $store_tab ) {
+			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to );
+			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to );
+		}
+		$abandoned_carts = 'abandoned-carts' === $store_tab
+			? Kidia_Mobile_Analytics::abandoned_carts( $date_from, $date_to, $store_source, 150 )
+			: array();
+
+		$category_count = taxonomy_exists( 'product_cat' )
+			? wp_count_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false ) )
+			: 0;
+		$customer_count_query = new WP_User_Query(
+			array(
+				'role__in'    => array( 'customer', 'subscriber' ),
+				'fields'      => 'ID',
+				'number'      => 1,
+				'count_total' => true,
+			)
+		);
+		$counts = array(
+			'products'         => is_object( wp_count_posts( 'product' ) ) ? absint( wp_count_posts( 'product' )->publish ?? 0 ) : 0,
+			'categories'       => is_wp_error( $category_count ) ? 0 : absint( $category_count ),
+			'discounts'        => is_object( wp_count_posts( 'shop_coupon' ) ) ? absint( wp_count_posts( 'shop_coupon' )->publish ?? 0 ) : count( $coupons ),
+			'customers'        => absint( $customer_count_query->get_total() ),
+			'orders'           => function_exists( 'wc_orders_count' ) ? absint( wc_orders_count( 'processing' ) + wc_orders_count( 'completed' ) + wc_orders_count( 'on-hold' ) ) : count( $orders ),
+			'abandoned-carts'  => Kidia_Mobile_Analytics::abandoned_count(),
+		);
+		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';
+	}
+
+	/**
+	 * Resolves the selected reporting period in the site's timezone.
+	 *
+	 * @return array{preset:string,from:int,to:int}
+	 */
+	private function store_data_date_range( string $preset ): array {
+		$allowed = array( 'all_time', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'previous_month', 'custom' );
+		$preset  = in_array( $preset, $allowed, true ) ? $preset : 'last_30_days';
+		$zone    = wp_timezone();
+		$today   = new DateTimeImmutable( 'today', $zone );
+		$from    = $today->modify( '-29 days' );
+		$to      = $today->modify( '+1 day -1 second' );
+
+		switch ( $preset ) {
+			case 'all_time':
+				$from = ( new DateTimeImmutable( '@1' ) )->setTimezone( $zone );
+				break;
+			case 'today':
+				$from = $today;
+				break;
+			case 'yesterday':
+				$from = $today->modify( '-1 day' );
+				$to   = $today->modify( '-1 second' );
+				break;
+			case 'last_7_days':
+				$from = $today->modify( '-6 days' );
+				break;
+			case 'this_month':
+				$from = $today->modify( 'first day of this month' );
+				break;
+			case 'previous_month':
+				$from = $today->modify( 'first day of previous month' );
+				$to   = $today->modify( 'first day of this month -1 second' );
+				break;
+			case 'custom':
+				$custom_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
+				$custom_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
+				$parsed_from = DateTimeImmutable::createFromFormat( '!Y-m-d', $custom_from, $zone );
+				$parsed_to   = DateTimeImmutable::createFromFormat( '!Y-m-d', $custom_to, $zone );
+				if ( false !== $parsed_from && false !== $parsed_to && $parsed_to >= $parsed_from ) {
+					$from = $parsed_from;
+					$to   = $parsed_to->modify( '+1 day -1 second' );
+				} else {
+					$preset = 'last_30_days';
+				}
+				break;
+		}
+
+		return array( 'preset' => $preset, 'from' => $from->getTimestamp(), 'to' => $to->getTimestamp() );
+	}
+
+	/**
+	 * Adds the mobile/website source to a WooCommerce order query.
+	 *
+	 * @param array<string,mixed> $args Query arguments.
+	 * @return array<string,mixed>
+	 */
+	private function store_data_order_source_args( array $args, string $source ): array {
+		if ( 'mobile' === $source ) {
+			$args['meta_query'] = array( array( 'key' => '_kidia_order_source', 'value' => 'mobile' ) );
+		} elseif ( 'website' === $source ) {
+			$args['meta_query'] = array(
 				'relation' => 'OR',
 				array( 'key' => '_kidia_order_source', 'compare' => 'NOT EXISTS' ),
 				array( 'key' => '_kidia_order_source', 'value' => 'website' ),
 			);
 		}
-		$orders    = function_exists( 'wc_get_orders' ) ? wc_get_orders( $order_args ) : array();
-		$customers = get_users( array( 'role__in' => array( 'customer', 'subscriber' ), 'number' => 12, 'orderby' => 'registered', 'order' => 'DESC' ) );
-		if ( 'all' !== $store_source ) {
-			$customer_ids = array_values( array_unique( array_filter( array_map( static fn( $order ) => absint( $order->get_customer_id() ), $orders ) ) ) );
-			$customers = $customer_ids ? get_users( array( 'include' => $customer_ids, 'number' => 30 ) ) : array();
+		return $args;
+	}
+
+	/**
+	 * Finds the top-level category for a nested term.
+	 *
+	 * @param WP_Term[] $terms All product category terms.
+	 */
+	private function store_data_root_category( WP_Term $category, array $terms ): int {
+		$parents = array();
+		foreach ( $terms as $term ) {
+			$parents[ $term->term_id ] = (int) $term->parent;
 		}
-		$categories = taxonomy_exists( 'product_cat' ) ? get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false, 'number' => 24 ) ) : array();
-		$coupons   = get_posts( array( 'post_type' => 'shop_coupon', 'post_status' => array( 'publish', 'draft' ), 'numberposts' => 12 ) );
-		$category_count = taxonomy_exists( 'product_cat' ) ? wp_count_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false ) ) : 0;
-		$counts    = array(
-			'products'   => is_object( wp_count_posts( 'product' ) ) ? absint( wp_count_posts( 'product' )->publish ?? 0 ) : 0,
-			'categories' => is_wp_error( $category_count ) ? 0 : absint( $category_count ),
-			'discounts'  => count( $coupons ),
-			'customers'  => absint( count_users()['total_users'] ?? 0 ),
-			'orders'     => function_exists( 'wc_orders_count' ) ? absint( wc_orders_count( 'processing' ) + wc_orders_count( 'completed' ) + wc_orders_count( 'on-hold' ) ) : count( $orders ),
-		);
-		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';
+		$root = (int) $category->parent;
+		while ( isset( $parents[ $root ] ) && 0 !== $parents[ $root ] ) {
+			$root = $parents[ $root ];
+		}
+		return $root;
 	}
 
 	/** Push composer, provider status and delivery history. */

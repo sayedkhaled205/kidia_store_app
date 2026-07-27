@@ -249,6 +249,9 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 				array( 'status' => 500 )
 			);
 		}
+		if ( class_exists( 'Kidia_Mobile_Analytics' ) ) {
+			Kidia_Mobile_Analytics::mark_mobile_registration( $user->ID );
+		}
 
 		return $this->issue_session_response( $user );
 	}
@@ -525,6 +528,9 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			'expires' => $expires,
 		);
 		update_user_meta( $user->ID, self::SESSION_META_KEY, $sessions );
+		if ( class_exists( 'Kidia_Mobile_Analytics' ) ) {
+			Kidia_Mobile_Analytics::mark_mobile_customer( $user->ID );
+		}
 
 		return $this->no_store_response(
 			array(
