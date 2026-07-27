@@ -37,6 +37,7 @@ final class Kidia_Mobile_Analytics {
 	public function register(): void {
 		add_action( 'init', array( $this, 'maybe_install' ), 3 );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_website_tracker' ), 20 );
 		add_action( 'user_register', array( $this, 'mark_website_registration' ) );
 		add_action( 'wp_login', array( $this, 'mark_website_login' ), 10, 2 );
 		add_action( 'wp', array( $this, 'capture_website_page_activity' ), 30 );
@@ -137,6 +138,143 @@ final class Kidia_Mobile_Analytics {
 				'permission_callback' => '__return_true',
 			)
 		);
+		register_rest_route(
+			'woo-mobile/v1',
+			'/analytics/website-event',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'record_website_event_request' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+	}
+
+	/**
+	 * Loads a cache-safe browser tracker. Server hooks alone cannot count visits
+	 * served entirely by a page cache or CDN.
+	 */
+	public function enqueue_website_tracker(): void {
+		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+			return;
+		}
+
+		$context = array(
+			'event'     => '',
+			'objectId'  => 0,
+			'label'     => '',
+			'currency'  => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
+			'isCheckout' => function_exists( 'is_checkout' ) && is_checkout()
+				&& ( ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'order-received' ) ),
+		);
+		if ( function_exists( 'is_product' ) && is_product() ) {
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( get_queried_object_id() ) : null;
+			$context['event']    = 'view_item';
+			$context['objectId'] = get_queried_object_id();
+			$context['label']    = $product instanceof WC_Product ? $product->get_name() : '';
+		} elseif ( function_exists( 'is_product_category' ) && is_product_category() ) {
+			$category = get_queried_object();
+			if ( $category instanceof WP_Term ) {
+				$context['event']    = 'view_category';
+				$context['objectId'] = $category->term_id;
+				$context['label']    = $category->name;
+			}
+		} elseif ( is_search() ) {
+			$context['event'] = 'search';
+			$context['label'] = sanitize_text_field( get_search_query() );
+		}
+
+		wp_enqueue_script(
+			'kidia-mobile-website-analytics',
+			KIDIA_MOBILE_CMS_URL . 'public/assets/website-analytics.js',
+			array(),
+			KIDIA_MOBILE_CMS_VERSION,
+			true
+		);
+		wp_add_inline_script(
+			'kidia-mobile-website-analytics',
+			'window.KidiaWebsiteAnalytics=' . wp_json_encode(
+				array(
+					'endpoint' => esc_url_raw( rest_url( 'woo-mobile/v1/analytics/website-event' ) ),
+					'context'  => $context,
+				)
+			) . ';',
+			'before'
+		);
+	}
+
+	/** Receives cache-safe first-party website events from the browser. */
+	public function record_website_event_request( WP_REST_Request $request ) {
+		$this->maybe_install();
+		$event = sanitize_key( (string) $request->get_param( 'event' ) );
+		$allowed = array(
+			'site_visit',
+			'registration_started',
+			'view_item',
+			'view_category',
+			'search',
+			'add_to_cart',
+			'remove_from_cart',
+			'begin_checkout',
+		);
+		if ( ! in_array( $event, $allowed, true ) ) {
+			return new WP_Error(
+				'kidia_website_analytics_event_invalid',
+				__( 'Unknown website analytics event.', 'kidia-mobile-cms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$client_id = $this->identifier( $request->get_param( 'client_id' ) );
+		if ( '' === $client_id ) {
+			return new WP_Error(
+				'kidia_website_analytics_client_missing',
+				__( 'A valid analytics client id is required.', 'kidia-mobile-cms' ),
+				array( 'status' => 400 )
+			);
+		}
+		if ( ! $this->allow_request( 'web-' . $client_id, 240 ) || ! $this->allow_request( 'web-ip-' . $this->request_ip(), 900 ) ) {
+			return new WP_Error(
+				'kidia_website_analytics_rate_limited',
+				__( 'Too many analytics events were received.', 'kidia-mobile-cms' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		$object_id = absint( $request->get_param( 'object_id' ) );
+		$label     = mb_substr( sanitize_text_field( (string) $request->get_param( 'label' ) ), 0, 191 );
+		$value     = max( 0, (float) $request->get_param( 'value' ) );
+		$properties = $request->get_param( 'properties' );
+		$properties = is_array( $properties ) ? $this->sanitize_properties( $properties ) : array();
+		$deduplicate_for = in_array( $event, array( 'site_visit', 'begin_checkout' ), true )
+			? 30 * MINUTE_IN_SECONDS
+			: ( in_array( $event, array( 'view_item', 'view_category', 'search' ), true )
+				? 5 * MINUTE_IN_SECONDS
+				: ( in_array( $event, array( 'add_to_cart', 'remove_from_cart' ), true ) ? 15 : 0 ) );
+
+		if ( $deduplicate_for > 0 ) {
+			$key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
+			if ( get_transient( $key ) ) {
+				return rest_ensure_response( array( 'recorded' => false, 'deduplicated' => true ) );
+			}
+			set_transient( $key, 1, $deduplicate_for );
+		}
+
+		$this->insert_event(
+			array(
+				'client_id'   => $client_id,
+				'session_id'  => $this->identifier( $request->get_param( 'session_id' ) ),
+				'user_id'     => get_current_user_id(),
+				'source'      => 'website',
+				'event_name'  => $event,
+				'object_id'   => $object_id,
+				'event_label' => $label,
+				'event_value' => $value,
+				'currency'    => strtoupper( sanitize_key( (string) $request->get_param( 'currency' ) ) ),
+				'properties'  => $properties,
+			)
+		);
+
+		return rest_ensure_response( array( 'recorded' => true ) );
 	}
 
 	public function record_event( WP_REST_Request $request ) {
@@ -301,7 +439,8 @@ final class Kidia_Mobile_Analytics {
 			$product_id,
 			$product instanceof WC_Product ? $product->get_name() : '',
 			0.0,
-			array( 'quantity' => max( 1, $quantity ) )
+			array( 'quantity' => max( 1, $quantity ) ),
+			15
 		);
 	}
 
@@ -317,7 +456,8 @@ final class Kidia_Mobile_Analytics {
 			$product_id,
 			$product instanceof WC_Product ? $product->get_name() : '',
 			0.0,
-			array( 'quantity' => max( 1, absint( $item['quantity'] ?? 1 ) ) )
+			array( 'quantity' => max( 1, absint( $item['quantity'] ?? 1 ) ) ),
+			15
 		);
 	}
 
@@ -485,6 +625,7 @@ final class Kidia_Mobile_Analytics {
 			'top_categories'  => array(),
 			'top_searches'    => array(),
 			'activity_hours'  => array(),
+			'commerce'        => self::empty_commerce_snapshot(),
 		);
 	}
 
@@ -557,16 +698,185 @@ final class Kidia_Mobile_Analytics {
 			)
 		);
 
+		$commerce = self::commerce_snapshot( $from, $to, $source );
+		if ( $commerce['orders'] > $events['purchase']['count'] ) {
+			$events['purchase'] = array(
+				'count'  => $commerce['orders'],
+				'unique' => max( $commerce['customers'], $events['purchase']['unique'] ),
+				'value'  => max( $commerce['revenue'], $events['purchase']['value'] ),
+			);
+		}
+		if ( $commerce['units'] > $events['purchase_item']['count'] ) {
+			$events['purchase_item'] = array(
+				'count'  => $commerce['units'],
+				'unique' => max( $commerce['customers'], $events['purchase_item']['unique'] ),
+				'value'  => max( $commerce['revenue'], $events['purchase_item']['value'] ),
+			);
+		}
+		$top_purchases = self::top_objects( $from, $to, 'purchase_item', $source );
+		if ( ! empty( $commerce['products'] ) ) {
+			$top_purchases = $commerce['products'];
+		}
+		$activity_hours = self::activity_hours( $from, $to, $source );
+		if ( empty( $activity_hours ) && ! empty( $commerce['activity_hours'] ) ) {
+			$activity_hours = $commerce['activity_hours'];
+		}
+
 		return array(
 			'events'          => $events,
 			'visitors'        => $visitors,
 			'new_users'       => min( $visitors, $new ),
 			'returning_users' => max( 0, $visitors - $new ),
 			'top_products'    => self::top_objects( $from, $to, 'view_item', $source ),
-			'top_purchases'   => self::top_objects( $from, $to, 'purchase_item', $source ),
+			'top_purchases'   => $top_purchases,
 			'top_categories'  => self::top_objects( $from, $to, 'view_category', $source ),
 			'top_searches'    => self::top_labels( $from, $to, 'search', $source ),
-			'activity_hours'  => self::activity_hours( $from, $to, $source ),
+			'activity_hours'  => $activity_hours,
+			'commerce'        => $commerce,
+		);
+	}
+
+	/**
+	 * Reads real historical WooCommerce orders so AI Studio has useful evidence
+	 * immediately, including stores that installed tracking after years of sales.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function commerce_snapshot( int $from, int $to, string $source = 'all' ): array {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$cache_key = 'kidia_commerce_snapshot_' . md5( $from . '|' . $to . '|' . $source );
+		$cached = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return array_merge( self::empty_commerce_snapshot(), $cached );
+		}
+		if ( ! function_exists( 'wc_get_orders' ) ) {
+			return self::empty_commerce_snapshot();
+		}
+
+		$args = array(
+			'limit'        => 750,
+			'status'       => function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' ),
+			'date_created' => $from . '...' . $to,
+			'orderby'      => 'date',
+			'order'        => 'DESC',
+			'return'       => 'objects',
+		);
+		if ( 'mobile' === $source ) {
+			$args['meta_query'] = array(
+				array( 'key' => '_kidia_order_source', 'value' => 'mobile' ),
+			);
+		} elseif ( 'website' === $source ) {
+			$args['meta_query'] = array(
+				'relation' => 'OR',
+				array( 'key' => '_kidia_order_source', 'compare' => 'NOT EXISTS' ),
+				array( 'key' => '_kidia_order_source', 'value' => 'website' ),
+			);
+		}
+
+		$orders = wc_get_orders( $args );
+		$snapshot = self::empty_commerce_snapshot();
+		$customers = array();
+		$products  = array();
+		$pairs     = array();
+		$hours     = array();
+		foreach ( $orders as $order ) {
+			if ( ! $order instanceof WC_Order ) {
+				continue;
+			}
+			++$snapshot['orders'];
+			$snapshot['revenue'] += max( 0, (float) $order->get_total() );
+			$customer_key = $order->get_customer_id() > 0
+				? 'user-' . $order->get_customer_id()
+				: 'email-' . hash( 'sha256', strtolower( (string) $order->get_billing_email() ) );
+			$customers[ $customer_key ] = true;
+			$order_product_ids = array();
+			foreach ( $order->get_items() as $item ) {
+				$product_id = absint( $item->get_product_id() );
+				$quantity   = max( 1, absint( $item->get_quantity() ) );
+				if ( $product_id <= 0 ) {
+					continue;
+				}
+				$snapshot['units'] += $quantity;
+				if ( ! isset( $products[ $product_id ] ) ) {
+					$products[ $product_id ] = array(
+						'object_id'      => $product_id,
+						'event_label'    => sanitize_text_field( $item->get_name() ),
+						'event_count'    => 0,
+						'unique_clients' => 0,
+						'order_count'    => 0,
+						'revenue'        => 0.0,
+					);
+				}
+				$products[ $product_id ]['event_count'] += $quantity;
+				$products[ $product_id ]['order_count'] += 1;
+				$products[ $product_id ]['unique_clients'] += 1;
+				$products[ $product_id ]['revenue'] += max( 0, (float) $item->get_total() );
+				$order_product_ids[] = $product_id;
+			}
+			$order_product_ids = array_values( array_unique( $order_product_ids ) );
+			sort( $order_product_ids );
+			for ( $left = 0; $left < count( $order_product_ids ); ++$left ) {
+				for ( $right = $left + 1; $right < count( $order_product_ids ); ++$right ) {
+					$key = $order_product_ids[ $left ] . ':' . $order_product_ids[ $right ];
+					$pairs[ $key ] = ( $pairs[ $key ] ?? 0 ) + 1;
+				}
+			}
+			$created = $order->get_date_created();
+			if ( $created ) {
+				$hour = absint( wp_date( 'G', $created->getTimestamp() ) );
+				$hours[ $hour ] = ( $hours[ $hour ] ?? 0 ) + 1;
+			}
+		}
+
+		$snapshot['customers'] = count( $customers );
+		$snapshot['average_order_value'] = $snapshot['orders'] > 0
+			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
+			: 0.0;
+		uasort(
+			$products,
+			static fn( $left, $right ) => $right['event_count'] <=> $left['event_count']
+		);
+		$snapshot['products'] = array_values( array_slice( $products, 0, 25, true ) );
+		arsort( $pairs );
+		foreach ( array_slice( $pairs, 0, 20, true ) as $key => $count ) {
+			$ids = array_map( 'absint', explode( ':', (string) $key ) );
+			$names = array_map(
+				static function ( int $product_id ) use ( $products ): string {
+					return sanitize_text_field( (string) ( $products[ $product_id ]['event_label'] ?? '#' . $product_id ) );
+				},
+				$ids
+			);
+			$snapshot['pairs'][] = array(
+				'product_ids' => $ids,
+				'names'       => $names,
+				'count'       => absint( $count ),
+			);
+		}
+		arsort( $hours );
+		foreach ( array_slice( $hours, 0, 6, true ) as $hour => $count ) {
+			$snapshot['activity_hours'][] = array( 'hour' => absint( $hour ), 'event_count' => absint( $count ) );
+		}
+		$snapshot['catalog_products'] = function_exists( 'wp_count_posts' )
+			? absint( wp_count_posts( 'product' )->publish ?? 0 )
+			: 0;
+		$snapshot['orders_scanned'] = count( $orders );
+		set_transient( $cache_key, $snapshot, 10 * MINUTE_IN_SECONDS );
+		return $snapshot;
+	}
+
+	/** @return array<string,mixed> */
+	private static function empty_commerce_snapshot(): array {
+		return array(
+			'orders'              => 0,
+			'orders_scanned'      => 0,
+			'revenue'             => 0.0,
+			'units'               => 0,
+			'customers'           => 0,
+			'average_order_value' => 0.0,
+			'catalog_products'    => 0,
+			'products'            => array(),
+			'pairs'               => array(),
+			'activity_hours'      => array(),
 		);
 	}
 
@@ -574,6 +884,7 @@ final class Kidia_Mobile_Analytics {
 	 * @return list<array<string,mixed>>
 	 */
 	public static function abandoned_carts( int $from, int $to, string $source = 'all', int $limit = 100 ): array {
+		self::sync_website_sessions();
 		global $wpdb;
 		$table     = self::carts_table();
 		$threshold = gmdate( 'Y-m-d H:i:s', time() - 30 * MINUTE_IN_SECONDS );
@@ -607,6 +918,7 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	public static function abandoned_count(): int {
+		self::sync_website_sessions();
 		global $wpdb;
 		$table     = self::carts_table();
 		$threshold = gmdate( 'Y-m-d H:i:s', time() - 30 * MINUTE_IN_SECONDS );
@@ -620,6 +932,98 @@ final class Kidia_Mobile_Analytics {
 				)
 			)
 		);
+	}
+
+	/**
+	 * Imports live WooCommerce session carts so abandoned-cart reporting works
+	 * even when the cart existed before this analytics table was introduced.
+	 */
+	public static function sync_website_sessions( int $limit = 300 ): int {
+		if ( get_transient( 'kidia_website_session_sync_lock' ) ) {
+			return 0;
+		}
+		set_transient( 'kidia_website_session_sync_lock', 1, 5 * MINUTE_IN_SECONDS );
+
+		global $wpdb;
+		$sessions_table = $wpdb->prefix . 'woocommerce_sessions';
+		$table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sessions_table ) );
+		if ( $sessions_table !== $table_exists ) {
+			return 0;
+		}
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT session_key, session_value, session_expiry
+				FROM {$sessions_table}
+				WHERE session_expiry >= %d
+				ORDER BY session_expiry ASC
+				LIMIT %d",
+				time() - 7 * DAY_IN_SECONDS,
+				max( 1, min( 1000, $limit ) )
+			),
+			ARRAY_A
+		);
+		$synced = 0;
+		$expiration = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
+		$service = new self();
+		foreach ( $rows as $row ) {
+			$session = maybe_unserialize( $row['session_value'] ?? '' );
+			if ( ! is_array( $session ) ) {
+				continue;
+			}
+			$cart = maybe_unserialize( $session['cart'] ?? array() );
+			if ( ! is_array( $cart ) || empty( $cart ) ) {
+				continue;
+			}
+			$customer = maybe_unserialize( $session['customer'] ?? array() );
+			$customer = is_array( $customer ) ? $customer : array();
+			$items = array();
+			$total = 0.0;
+			foreach ( $cart as $cart_item ) {
+				if ( ! is_array( $cart_item ) ) {
+					continue;
+				}
+				$product_id = absint( $cart_item['product_id'] ?? 0 );
+				$quantity   = max( 1, absint( $cart_item['quantity'] ?? 1 ) );
+				if ( $product_id <= 0 ) {
+					continue;
+				}
+				$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+				$items[] = array(
+					'product_id' => $product_id,
+					'name'       => $product instanceof WC_Product ? $product->get_name() : '',
+					'quantity'   => $quantity,
+				);
+				$total += max( 0, (float) ( $cart_item['line_total'] ?? 0 ) )
+					+ max( 0, (float) ( $cart_item['line_tax'] ?? 0 ) );
+			}
+			if ( empty( $items ) ) {
+				continue;
+			}
+			$session_key = sanitize_text_field( (string) ( $row['session_key'] ?? '' ) );
+			$user_id = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
+			$expiry = absint( $row['session_expiry'] ?? 0 );
+			$last_activity = max( time() - 30 * DAY_IN_SECONDS, $expiry - $expiration );
+			$service->upsert_cart(
+				array(
+					'cart_key'        => hash( 'sha256', 'website|' . $session_key ),
+					'source'          => 'website',
+					'client_id'       => '',
+					'session_id'      => $session_key,
+					'user_id'         => $user_id,
+					'customer_name'   => trim( sanitize_text_field( (string) ( $customer['first_name'] ?? '' ) ) . ' ' . sanitize_text_field( (string) ( $customer['last_name'] ?? '' ) ) ),
+					'customer_email'  => sanitize_email( (string) ( $customer['email'] ?? '' ) ),
+					'items'           => $items,
+					'item_count'      => array_sum( array_column( $items, 'quantity' ) ),
+					'cart_total'      => $total,
+					'currency'        => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
+					'started_at'      => gmdate( 'Y-m-d H:i:s', $last_activity ),
+					'last_activity_at' => gmdate( 'Y-m-d H:i:s', $last_activity ),
+				)
+			);
+			++$synced;
+		}
+		return $synced;
 	}
 
 	/**
@@ -768,7 +1172,7 @@ final class Kidia_Mobile_Analytics {
 			return;
 		}
 		if ( $deduplicate_for > 0 ) {
-			$key = 'kidia_web_event_' . substr( hash( 'sha256', $event . '|' . $client_id . '|' . $object_id . '|' . $label ), 0, 28 );
+			$key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
 			if ( get_transient( $key ) ) {
 				return;
 			}
@@ -780,9 +1184,7 @@ final class Kidia_Mobile_Analytics {
 		if ( function_exists( 'WC' ) && WC() && WC()->session ) {
 			$session_id = $this->identifier( (string) WC()->session->get_customer_id() );
 		}
-		global $wpdb;
-		$wpdb->insert(
-			self::events_table(),
+		$this->insert_event(
 			array(
 				'client_id'   => $client_id,
 				'session_id'  => $session_id,
@@ -793,11 +1195,35 @@ final class Kidia_Mobile_Analytics {
 				'event_label' => mb_substr( sanitize_text_field( $label ), 0, 191 ),
 				'event_value' => max( 0, $value ),
 				'currency'    => function_exists( 'get_woocommerce_currency' ) ? mb_substr( get_woocommerce_currency(), 0, 12 ) : '',
-				'properties'  => wp_json_encode( $this->sanitize_properties( $properties ) ),
+				'properties'  => $this->sanitize_properties( $properties ),
+			)
+		);
+	}
+
+	/** @param array<string,mixed> $event */
+	private function insert_event( array $event ): void {
+		global $wpdb;
+		$wpdb->insert(
+			self::events_table(),
+			array(
+				'client_id'   => $this->identifier( $event['client_id'] ?? '' ),
+				'session_id'  => $this->identifier( $event['session_id'] ?? '' ),
+				'user_id'     => absint( $event['user_id'] ?? 0 ),
+				'source'      => in_array( $event['source'] ?? '', array( 'website', 'mobile' ), true ) ? $event['source'] : 'website',
+				'event_name'  => sanitize_key( (string) ( $event['event_name'] ?? '' ) ),
+				'object_id'   => absint( $event['object_id'] ?? 0 ),
+				'event_label' => mb_substr( sanitize_text_field( (string) ( $event['event_label'] ?? '' ) ), 0, 191 ),
+				'event_value' => max( 0, (float) ( $event['event_value'] ?? 0 ) ),
+				'currency'    => mb_substr( strtoupper( sanitize_key( (string) ( $event['currency'] ?? '' ) ) ), 0, 12 ),
+				'properties'  => wp_json_encode( $this->sanitize_properties( (array) ( $event['properties'] ?? array() ) ) ),
 				'occurred_at' => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
 		);
+	}
+
+	private function website_event_cache_key( string $event, string $client_id, int $object_id, string $label ): string {
+		return 'kidia_web_event_' . substr( hash( 'sha256', $event . '|' . $client_id . '|' . $object_id . '|' . $label ), 0, 28 );
 	}
 
 	private function website_client_id(): string {
@@ -821,7 +1247,7 @@ final class Kidia_Mobile_Analytics {
 					'path'     => defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/',
 					'domain'   => defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '',
 					'secure'   => is_ssl(),
-					'httponly' => true,
+					'httponly' => false,
 					'samesite' => 'Lax',
 				)
 			);
@@ -837,6 +1263,8 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$table = self::carts_table();
 		$now   = current_time( 'mysql', true );
+		$started_at = self::safe_mysql_time( $cart['started_at'] ?? '', $now );
+		$last_activity_at = self::safe_mysql_time( $cart['last_activity_at'] ?? '', $now );
 		$items = is_array( $cart['items'] ?? null ) ? $cart['items'] : array();
 		$empty = empty( $items ) || empty( $cart['item_count'] );
 
@@ -871,10 +1299,15 @@ final class Kidia_Mobile_Analytics {
 			max( 0, (float) $cart['cart_total'] ),
 			mb_substr( strtoupper( sanitize_key( (string) $cart['currency'] ) ), 0, 12 ),
 			$empty ? 'empty' : 'active',
-			$now,
-			$now
+			$started_at,
+			$last_activity_at
 		);
 		$wpdb->query( $sql );
+	}
+
+	private static function safe_mysql_time( $value, string $fallback ): string {
+		$timestamp = is_numeric( $value ) ? absint( $value ) : strtotime( (string) $value . ' UTC' );
+		return $timestamp ? gmdate( 'Y-m-d H:i:s', $timestamp ) : $fallback;
 	}
 
 	private function mark_mobile_cart_converted( string $client_id, string $session_id, int $order_id ): void {
