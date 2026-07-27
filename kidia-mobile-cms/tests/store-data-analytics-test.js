@@ -222,15 +222,45 @@ assert.match(aiOffers, /minimum_confidence[\s\S]*maximum_recommendations[\s\S]*p
 assert.match(aiOffers, /automatic_profile[\s\S]*high_interest_min_views[\s\S]*minimum_confidence/);
 assert.match(
   analytics,
-  /commerce_snapshot[\s\S]*wc_get_orders[\s\S]*orders_scanned[\s\S]*pairs/,
+  /commerce_snapshot[\s\S]*paginate'[\s\S]*orders_available[\s\S]*pairs/,
   "AI Studio must analyze historical WooCommerce orders and product pairs.",
+);
+assert.match(
+  analytics,
+  /funnel_snapshot[\s\S]*view_item[\s\S]*add_to_cart[\s\S]*begin_checkout[\s\S]*purchase/,
+  "AI Studio must build a closed tracked funnel in the real journey order.",
+);
+assert.match(
+  analytics,
+  /Historical WooCommerce orders and live journey events are deliberately[\s\S]*kept separate[\s\S]*unmatched_purchases/,
+  "Historical order totals must never fabricate Add to cart or Checkout funnel stages.",
+);
+assert.doesNotMatch(
+  analytics,
+  /\$events\['purchase'\]\s*=\s*array\([^;]*\$commerce/s,
+  "Historical WooCommerce purchases must not overwrite tracked purchase events.",
+);
+assert.match(
+  analytics,
+  /tracked_top_purchases[\s\S]*top_purchases/,
+  "Tracked product conversions must remain distinct from historical best sellers.",
+);
+assert.match(
+  aiOffers,
+  /tracked_top_purchases[\s\S]*high-interest/,
+  "High-interest conversion decisions must compare tracked views with tracked purchases.",
+);
+assert.match(
+  analytics,
+  /kidia_mobile_ai_maximum_historical_orders[\s\S]*20000/,
+  "Large stores must not be silently reduced to the old small order sample.",
 );
 assert.match(
   analytics,
   /sync_website_sessions[\s\S]*woocommerce_sessions[\s\S]*session_value/,
   "Abandoned carts must import existing WooCommerce session carts.",
 );
-assert.match(aiInsights, /AI Offer Studio[\s\S]*Sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
+assert.match(aiInsights, /AI Offer Studio[\s\S]*Tracked sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
 assert.match(aiOffers, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Peak-time scheduling[\s\S]*Registration friction/);
 assert.match(aiInsights, /Why this recommendation[\s\S]*Decision target:[\s\S]*Profit risk/);
 assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*date_preset/);
@@ -251,8 +281,36 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /Automatic store analysis is active[\s\S]*historical WooCommerce orders[\s\S]*product relationships/,
-  "AI Studio must explain that its analysis is automatic and data-driven.",
+  /Sales history and live journey tracking are analysed separately[\s\S]*historical orders are never inserted into Add to cart or Checkout counts/,
+  "AI Studio must explain its sales-history and live-funnel coverage honestly.",
+);
+assert.match(
+  aiInsights,
+  /Recommended decision[\s\S]*Why this recommendation[\s\S]*Measure:[\s\S]*Guardrail:/,
+  "Recommendation cards must contain a concrete decision and its analytical controls.",
+);
+assert.match(
+  aiOffers,
+  /discount_for_conversion_gap[\s\S]*discount_for_slow_stock[\s\S]*discount_for_bundle/,
+  "Offer values must be calculated from each measured decision rather than copied from one manual default.",
+);
+for (const recommendationField of [
+  "decision",
+  "metrics",
+  "success_metric",
+  "guardrail",
+  "products",
+]) {
+  assert.match(
+    aiOffers,
+    new RegExp(`'${recommendationField}'`),
+    `AI recommendations must expose ${recommendationField}.`,
+  );
+}
+assert.match(
+  admin,
+  /ai_insights_page[\s\S]*:\s*'all_time'[\s\S]*:\s*'all'/,
+  "AI Studio must default to all store history and both channels.",
 );
 assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);
 assert.doesNotMatch(push, /kidia-ai-offer-studio|data-ai-scheme-filter|data-ai-scheme-card/);
