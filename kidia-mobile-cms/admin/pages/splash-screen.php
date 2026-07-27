@@ -2,10 +2,34 @@
 <div class="wrap kidia-page-builder kidia-splash-builder">
 	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Splash Screen saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
-		<aside class="kidia-page-preview"><div class="kidia-page-phone"><div id="kidia-splash-preview" class="kidia-page-phone__screen kidia-splash-preview"><img alt=""><strong></strong><span class="spinner is-active"></span></div></div><p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p></aside>
+		<aside class="kidia-page-preview">
+			<div class="kidia-page-phone">
+				<div id="kidia-splash-preview" class="kidia-page-phone__screen kidia-splash-preview">
+					<div class="kidia-splash-destination" aria-hidden="true">
+						<header><span></span><b></b><span></span></header>
+						<i></i>
+						<section><b></b><b></b></section>
+						<section><b></b><b></b><b></b><b></b></section>
+					</div>
+					<div class="kidia-splash-preview__overlay" data-splash-overlay>
+						<img alt="">
+						<strong></strong>
+						<span class="spinner is-active"></span>
+						<i class="kidia-splash-progress" aria-hidden="true"></i>
+					</div>
+				</div>
+			</div>
+			<p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p>
+		</aside>
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_splash_screen"><?php wp_nonce_field( 'kidia_mobile_save_splash_screen', 'kidia_mobile_splash_nonce' ); ?>
-			<div class="kidia-page-toolbar"><strong><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></strong><?php submit_button( __( 'Save Splash Screen', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?></div>
+			<div class="kidia-page-toolbar">
+				<strong><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></strong>
+				<div class="kidia-splash-toolbar-actions">
+					<button type="button" class="button kidia-splash-replay" data-splash-replay><span class="dashicons dashicons-controls-repeat"></span><?php esc_html_e( 'Replay preview', 'kidia-mobile-cms' ); ?></button>
+					<?php submit_button( __( 'Save Splash Screen', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
+				</div>
+			</div>
 			<div class="kidia-builder-cards-scroll">
 			<section class="kidia-page-card is-open"><div class="kidia-page-card__header"><div><span class="dashicons dashicons-format-image"></span><strong><?php esc_html_e( 'Startup Screen', 'kidia-mobile-cms' ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="splash[enabled]" value="0"><input type="checkbox" name="splash[enabled]" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
 				<div class="kidia-page-card__body"><div class="kidia-page-fields">

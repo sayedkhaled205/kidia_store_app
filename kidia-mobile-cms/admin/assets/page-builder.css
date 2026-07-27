@@ -93,9 +93,32 @@
 .kidia-settings-section-title { grid-column:1/-1; margin:10px 0 2px; padding:8px 10px; border-top:2px solid #b9d9d1; border-bottom:1px solid #dfeae7; background:#edf7f4; color:#236b59; font-size:13px; font-weight:800; }
 .kidia-settings-section-title:first-child { margin-top:0; }
 .kidia-builder-settings-content>.kidia-settings-section-title { display:block; width:100%; clear:both; }
-.kidia-splash-preview { display:flex; min-height:560px; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
-.kidia-splash-preview img { max-width:80%; }
-.kidia-splash-preview strong { font-size:24px; }
+.kidia-splash-preview { --kidia-splash-duration:1800ms; min-height:560px; overflow:hidden; background:#f7f8fa; }
+.kidia-splash-toolbar-actions { display:flex; align-items:center; gap:8px; }
+.kidia-splash-replay { display:inline-flex!important; align-items:center; justify-content:center; gap:5px; min-height:36px!important; border-radius:8px!important; }
+.kidia-splash-replay .dashicons { width:17px; height:17px; font-size:17px; }
+.kidia-splash-preview__overlay { position:absolute; z-index:4; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; opacity:1; visibility:visible; transition:opacity .32s ease,visibility .32s ease; }
+.kidia-splash-preview__overlay img { max-width:80%; }
+.kidia-splash-preview__overlay strong { font-size:24px; }
+.kidia-splash-preview__overlay .spinner { float:none; margin:0; }
+.kidia-splash-preview.is-finished .kidia-splash-preview__overlay,.kidia-splash-preview.is-splash-disabled .kidia-splash-preview__overlay { opacity:0; visibility:hidden; pointer-events:none; }
+.kidia-splash-preview.is-playing .kidia-splash-preview__overlay img,.kidia-splash-preview.is-playing .kidia-splash-preview__overlay strong { animation:kidia-splash-enter .5s both cubic-bezier(.2,.75,.25,1); }
+.kidia-splash-preview.is-playing .kidia-splash-preview__overlay strong { animation-delay:.08s; }
+.kidia-splash-progress { position:absolute; inset-inline:25px; bottom:26px; height:4px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.24); }
+.kidia-splash-progress::after { content:""; display:block; width:100%; height:100%; border-radius:inherit; background:currentColor; transform:scaleX(0); transform-origin:left; }
+.kidia-splash-preview.is-playing .kidia-splash-progress::after { animation:kidia-splash-progress var(--kidia-splash-duration) linear both; }
+.kidia-splash-destination { position:absolute; inset:0; padding:24px 14px; background:#f6f8f7; }
+.kidia-splash-destination header { display:grid; min-height:52px; grid-template-columns:30px 1fr 30px; align-items:center; gap:12px; margin:-24px -14px 16px; padding:8px 14px; background:#fff; box-shadow:0 2px 8px rgba(31,71,61,.08); }
+.kidia-splash-destination header span { width:25px; height:25px; border-radius:8px; background:#dbeae6; }
+.kidia-splash-destination header b { width:80px; height:10px; justify-self:center; border-radius:8px; background:#bfd8d1; }
+.kidia-splash-destination>i { display:block; height:38px; margin-bottom:16px; border-radius:12px; background:#e5ecea; }
+.kidia-splash-destination section { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:15px; }
+.kidia-splash-destination section:first-of-type b { height:98px; }
+.kidia-splash-destination section:last-of-type b { height:126px; }
+.kidia-splash-destination section b { border-radius:12px; background:linear-gradient(145deg,#e3efec,#fff); box-shadow:0 2px 7px rgba(31,71,61,.06); }
+@keyframes kidia-splash-enter { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:none; } }
+@keyframes kidia-splash-progress { to { transform:scaleX(1); } }
+@media(prefers-reduced-motion:reduce){.kidia-splash-preview__overlay,.kidia-splash-preview.is-playing .kidia-splash-preview__overlay :is(img,strong),.kidia-splash-preview.is-playing .kidia-splash-progress::after{animation:none!important;transition:none!important}}
 .kidia-page-field { display:flex; min-width:0; flex-direction:column; gap:4px; }
 .kidia-page-field > label:first-child { font-size:12px; font-weight:600; }
 .kidia-page-field input[type=text],.kidia-page-field input[type=url],.kidia-page-field input[type=number],.kidia-page-field select { width:min(100%,220px); min-height:34px; margin:0; border-radius:5px; font-size:12px; }

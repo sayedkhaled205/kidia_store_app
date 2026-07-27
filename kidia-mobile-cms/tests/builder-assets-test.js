@@ -772,6 +772,9 @@ function runMergeControlsContractTest() {
 	["image_url", "image_width", "image_height", "image_fit", "image_shape", "store_name", "show_store_name", "text_color", "background_color", "background_color_end", "duration_ms", "show_loader", "loader_color"].forEach(function (key) {
 		assert.equal((splashScreen.match(new RegExp("splash\\[" + key + "\\]|['\\\"]" + key + "['\\\"]", "g")) || []).length >= 1, true, "Splash Screen must preserve the " + key + " field.");
 	});
+	assert.match(splashScreen, /data-splash-overlay[\s\S]*data-splash-replay/, "Splash Screen must expose an animated preview and a replay action.");
+	const splashScript = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "splash-screen.js"), "utf8");
+	assert.match(splashScript, /duration_ms[\s\S]*--kidia-splash-duration[\s\S]*is-playing[\s\S]*is-finished/, "Splash preview timing must follow the saved duration.");
 	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{\s*color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-card:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
 	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-create-element-modal__body")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Element modal must not retain WordPress blue styling.");
 	assert.match(homeScript, /settings\.image_size[\s\S]*settings\.item_size/, "Category Grid and Quick Links image sizes must update the live preview.");

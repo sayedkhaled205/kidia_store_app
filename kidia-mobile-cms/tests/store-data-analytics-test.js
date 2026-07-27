@@ -28,8 +28,11 @@ const recovery = readPlugin(
 const admin = readPlugin("admin", "class-kidia-mobile-cms-admin.php");
 const storeData = readPlugin("admin", "pages", "store-data.php");
 const push = readPlugin("admin", "pages", "push-notifications.php");
+const aiInsights = readPlugin("admin", "pages", "ai-insights.php");
 const splash = readPlugin("admin", "pages", "splash-screen.php");
 const shellCss = readPlugin("admin", "assets", "cms-shell.css");
+const shellScript = readPlugin("admin", "assets", "cms-shell.js");
+const splashScript = readPlugin("admin", "assets", "splash-screen.js");
 const mobileAnalytics = readRepository(
   "lib",
   "core",
@@ -169,10 +172,15 @@ assert.match(shellCss, /kidia-row-actions :is\(a,button\)[\s\S]*align-items:cent
 assert.match(shellCss, /input\[type="checkbox"\]:checked[\s\S]*background:#2f806e!important/);
 assert.match(shellCss, /screen-reader-shortcut\[href="#wpbody-content"\]\{display:none!important\}/);
 assert.match(aiOffers, /signal_catalog[\s\S]*sales_velocity[\s\S]*frequent_pair/);
-assert.match(push, /Frequently bought together[\s\S]*Slow-stock rescue/);
-assert.match(push, /AI Offer Studio/);
-assert.match(push, /data-ai-scheme-filter[\s\S]*data-ai-scheme-card/);
-assert.match(push, /Profit risk[\s\S]*Review this offer/);
+assert.match(aiOffers, /remove_friction[\s\S]*signup_friction[\s\S]*search_demand[\s\S]*peak_timing/);
+assert.match(aiOffers, /minimum_confidence[\s\S]*maximum_recommendations[\s\S]*protect_margin/);
+assert.match(aiInsights, /AI Offer Studio[\s\S]*Sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
+assert.match(aiInsights, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Registration friction[\s\S]*Peak-time scheduling/);
+assert.match(aiInsights, /Why this recommendation[\s\S]*Decision target:[\s\S]*Profit risk/);
+assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*minimum_confidence[\s\S]*date_preset/);
+assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);
+assert.doesNotMatch(push, /kidia-ai-offer-studio|data-ai-scheme-filter|data-ai-scheme-card/);
+assert.match(push, /ai_offer_id|data-ai-scheme|Offer settings/);
 assert.match(push, /Push delivery is not connected yet[\s\S]*push-delivery integration/);
 for (const recoveryField of ["kidia_mobile_recovery_campaigns", "tracking_token", "converted_at"]) {
   assert.match(recovery, new RegExp(recoveryField), `Recovery storage must include ${recoveryField}.`);
@@ -185,9 +193,15 @@ for (const recoveryControl of ["cart_ids\\[\\]", "Create coupons & send", "Recov
 for (const recoveryGroup of ["Personal coupon", "Notification message", "Delivery"]) {
   assert.match(storeData, new RegExp(recoveryGroup), `Recovery controls must group ${recoveryGroup}.`);
 }
+assert.match(storeData, /Action display[\s\S]*Open link[\s\S]*Button[\s\S]*Button text[\s\S]*Destination URL/);
+assert.match(recovery, /action_style[\s\S]*cta_label/);
+assert.match(shellScript, /data-recovery-action-style[\s\S]*data-recovery-button-label/);
 assert.match(bootstrap, /class-kidia-mobile-ai-offer-engine\.php[\s\S]*class-kidia-mobile-recovery-campaigns\.php/);
 assert.match(storeApiClient, /X-Kidia-Channel'[\s\S]*mobile/);
 assert.match(splash, /kidia-page-toolbar[\s\S]*kidia-builder-cards-scroll/);
+assert.match(splash, /data-splash-overlay[\s\S]*data-splash-replay/);
+assert.match(splashScript, /function play\(\)[\s\S]*is-playing[\s\S]*is-finished/);
+assert.match(shellCss, /kidia-date-filter button\{[^}]*align-items:center!important[^}]*justify-content:center!important/);
 assert.match(
   admin,
   /kidia-mobile-splash-screen[\s\S]*kidia-cms-builder-screen/,

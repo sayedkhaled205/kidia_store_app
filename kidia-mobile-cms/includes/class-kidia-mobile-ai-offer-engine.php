@@ -13,13 +13,51 @@ defined( 'ABSPATH' ) || exit;
 final class Kidia_Mobile_AI_Offer_Engine {
 
 	/**
+	 * Store-owner controls used by the evidence engine.
+	 *
+	 * @return array<string,int|bool>
+	 */
+	public static function settings(): array {
+		$defaults = array(
+			'minimum_confidence'       => 50,
+			'maximum_recommendations'  => 16,
+			'high_interest_min_views'  => 3,
+			'low_conversion_percent'   => 8,
+			'slow_stock_min_age_days'  => 30,
+			'slow_stock_min_units'     => 5,
+			'protect_margin'           => true,
+		);
+		$saved = get_option( 'kidia_mobile_ai_insights_settings', array() );
+		return array_merge( $defaults, is_array( $saved ) ? $saved : array() );
+	}
+
+	/**
+	 * Sanitizes settings before persistence.
+	 *
+	 * @param array<string,mixed> $raw Submitted values.
+	 * @return array<string,int|bool>
+	 */
+	public static function sanitize_settings( array $raw ): array {
+		return array(
+			'minimum_confidence'       => min( 95, max( 30, absint( $raw['minimum_confidence'] ?? 50 ) ) ),
+			'maximum_recommendations'  => min( 24, max( 4, absint( $raw['maximum_recommendations'] ?? 16 ) ) ),
+			'high_interest_min_views'  => min( 1000, max( 3, absint( $raw['high_interest_min_views'] ?? 3 ) ) ),
+			'low_conversion_percent'   => min( 50, max( 1, absint( $raw['low_conversion_percent'] ?? 8 ) ) ),
+			'slow_stock_min_age_days'  => min( 730, max( 14, absint( $raw['slow_stock_min_age_days'] ?? 30 ) ) ),
+			'slow_stock_min_units'     => min( 1000, max( 1, absint( $raw['slow_stock_min_units'] ?? 5 ) ) ),
+			'protect_margin'           => ! empty( $raw['protect_margin'] ),
+		);
+	}
+
+	/**
 	 * Builds decision-ready offer suggestions from the selected channel.
 	 *
 	 * @return list<array<string,mixed>>
 	 */
 	public static function recommendations( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_ai_offers_' . md5( $from . '|' . $to . '|' . $source );
+		$settings  = self::settings();
+		$cache_key = 'kidia_ai_offers_' . md5( $from . '|' . $to . '|' . $source . '|' . wp_json_encode( $settings ) );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -41,7 +79,9 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			$product_id = absint( $row['object_id'] );
 			$product_views = absint( $row['event_count'] );
 			$product_buys  = absint( $purchases[ $product_id ] ?? 0 );
-			if ( $product_views < 3 || $product_buys >= max( 2, (int) floor( $product_views * .08 ) ) ) {
+			$minimum_views = absint( $settings['high_interest_min_views'] );
+			$low_rate      = (float) $settings['low_conversion_percent'] / 100;
+			if ( $product_views < $minimum_views || $product_buys >= max( 2, (int) floor( $product_views * $low_rate ) ) ) {
 				continue;
 			}
 			$name = sanitize_text_field( (string) $row['event_label'] );
@@ -58,7 +98,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 92, 55 + min( 30, $product_views ) ),
 				'medium',
 				'percent',
-				10,
+				! empty( $settings['protect_margin'] ) ? 8 : 10,
 				48,
 				'engaged',
 				$source,
@@ -67,7 +107,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			break;
 		}
 
-		$slow_products = self::slow_stock_products();
+		$slow_products = self::slow_stock_products( $settings );
 		if ( ! empty( $slow_products ) ) {
 			$product = $slow_products[0];
 			$offers[] = self::offer(
@@ -89,7 +129,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				78,
 				'medium',
 				'percent',
-				15,
+				! empty( $settings['protect_margin'] ) ? 12 : 15,
 				72,
 				'engaged',
 				$source,
@@ -112,7 +152,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 94, 58 + $bundle['count'] * 4 ),
 				'low',
 				'percent',
-				10,
+				! empty( $settings['protect_margin'] ) ? 8 : 10,
 				96,
 				'all',
 				$source,
@@ -135,7 +175,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 90, 55 + $carts ),
 				'low',
 				'percent',
-				8,
+				! empty( $settings['protect_margin'] ) ? 5 : 8,
 				24,
 				'abandoned',
 				$source,
@@ -181,7 +221,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				min( 90, 60 + $buys ),
 				'low',
 				'fixed_cart',
-				round( max( 1, $aov * .05 ), 2 ),
+				round( max( 1, $aov * ( ! empty( $settings['protect_margin'] ) ? .04 : .05 ) ), 2 ),
 				72,
 				'all',
 				$source,
@@ -210,9 +250,132 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		$offers = array_slice( $offers, 0, 8 );
+		$removed = absint( $events['remove_from_cart']['count'] ?? 0 );
+		if ( $removed >= 3 && $removed >= max( 2, (int) floor( $carts * .25 ) ) ) {
+			$offers[] = self::offer(
+				'cart-removal-friction',
+				'remove_friction',
+				__( 'Investigate products removed from carts', 'kidia-mobile-cms' ),
+				sprintf( __( '%1$d removal events were measured against %2$d add-to-cart events.', 'kidia-mobile-cms' ), $removed, $carts ),
+				array(
+					sprintf( __( '%d remove-from-cart events', 'kidia-mobile-cms' ), $removed ),
+					__( 'Review unexpected shipping cost, variation clarity and stock messages before adding a discount.', 'kidia-mobile-cms' ),
+					__( 'This is a funnel recommendation, not an automatically created offer.', 'kidia-mobile-cms' ),
+				),
+				min( 88, 55 + $removed ),
+				'low',
+				'percent',
+				0,
+				48,
+				'engaged',
+				$source,
+				array()
+			);
+		}
+
+		$registrations = absint( $events['sign_up']['count'] ?? 0 );
+		if ( absint( $summary['visitors'] ?? 0 ) >= 5 && $registrations < max( 1, (int) floor( absint( $summary['visitors'] ) * .1 ) ) ) {
+			$offers[] = self::offer(
+				'signup-friction',
+				'signup_friction',
+				__( 'Simplify the registration decision', 'kidia-mobile-cms' ),
+				sprintf( __( '%1$d visitors produced %2$d completed registrations in the selected period.', 'kidia-mobile-cms' ), absint( $summary['visitors'] ), $registrations ),
+				array(
+					sprintf( __( '%d measured visitors', 'kidia-mobile-cms' ), absint( $summary['visitors'] ) ),
+					sprintf( __( '%d completed registrations', 'kidia-mobile-cms' ), $registrations ),
+					__( 'Test fewer required fields and make guest checkout visible before offering a discount.', 'kidia-mobile-cms' ),
+				),
+				72,
+				'low',
+				'percent',
+				0,
+				72,
+				'guests',
+				$source,
+				array()
+			);
+		}
+
+		$top_search = $summary['top_searches'][0] ?? null;
+		if ( is_array( $top_search ) && absint( $top_search['event_count'] ?? 0 ) >= 2 ) {
+			$offers[] = self::offer(
+				'search-demand-' . sanitize_key( (string) ( $top_search['event_label'] ?? '' ) ),
+				'search_demand',
+				__( 'Turn search demand into merchandising', 'kidia-mobile-cms' ),
+				sprintf( __( 'Customers searched for “%1$s” %2$d times.', 'kidia-mobile-cms' ), sanitize_text_field( (string) $top_search['event_label'] ), absint( $top_search['event_count'] ) ),
+				array(
+					sprintf( __( '%d tracked searches', 'kidia-mobile-cms' ), absint( $top_search['event_count'] ) ),
+					__( 'Feature matching products in navigation, categories or the home page.', 'kidia-mobile-cms' ),
+					__( 'If no matching product exists, treat this as assortment demand rather than an offer.', 'kidia-mobile-cms' ),
+				),
+				min( 86, 58 + absint( $top_search['event_count'] ) * 2 ),
+				'low',
+				'percent',
+				0,
+				96,
+				'all',
+				$source,
+				array()
+			);
+		}
+
+		$top_category = $summary['top_categories'][0] ?? null;
+		if ( is_array( $top_category ) && absint( $top_category['event_count'] ?? 0 ) >= 3 ) {
+			$offers[] = self::offer(
+				'category-demand-' . absint( $top_category['object_id'] ?? 0 ),
+				'category_merchandising',
+				__( 'Promote the category customers already explore', 'kidia-mobile-cms' ),
+				sprintf( __( '%1$s attracted %2$d category views.', 'kidia-mobile-cms' ), sanitize_text_field( (string) $top_category['event_label'] ), absint( $top_category['event_count'] ) ),
+				array(
+					sprintf( __( '%d category views', 'kidia-mobile-cms' ), absint( $top_category['event_count'] ) ),
+					__( 'Move the category higher in navigation or create a focused collection.', 'kidia-mobile-cms' ),
+					__( 'Pair it with complementary products only when order data supports the relationship.', 'kidia-mobile-cms' ),
+				),
+				min( 88, 60 + absint( $top_category['event_count'] ) ),
+				'low',
+				'percent',
+				0,
+				96,
+				'engaged',
+				$source,
+				array()
+			);
+		}
+
+		$peak = $summary['activity_hours'][0] ?? null;
+		if ( is_array( $peak ) && absint( $peak['event_count'] ?? 0 ) >= 3 ) {
+			$hour = absint( $peak['hour'] ?? 0 );
+			$offers[] = self::offer(
+				'peak-time-' . $hour,
+				'peak_timing',
+				__( 'Schedule campaigns near peak activity', 'kidia-mobile-cms' ),
+				sprintf( __( 'The busiest measured hour starts at %1$s with %2$d tracked actions.', 'kidia-mobile-cms' ), wp_date( get_option( 'time_format' ), mktime( $hour, 0 ) ), absint( $peak['event_count'] ) ),
+				array(
+					sprintf( __( '%d actions in the busiest hour', 'kidia-mobile-cms' ), absint( $peak['event_count'] ) ),
+					__( 'Use this as a scheduling signal and compare it with a quieter-hour holdout.', 'kidia-mobile-cms' ),
+					__( 'Timing alone does not justify a discount.', 'kidia-mobile-cms' ),
+				),
+				min( 84, 55 + absint( $peak['event_count'] ) ),
+				'low',
+				'percent',
+				0,
+				24,
+				'all',
+				$source,
+				array()
+			);
+		}
+
+		$offers = array_values(
+			array_filter(
+				$offers,
+				static fn( $offer ) => absint( $offer['confidence'] ?? 0 ) >= absint( $settings['minimum_confidence'] )
+			)
+		);
 		$offers = apply_filters( 'kidia_mobile_ai_offer_recommendations', $offers, $summary, $source, $from, $to );
-		$offers = is_array( $offers ) ? array_values( array_slice( $offers, 0, 12 ) ) : array();
+		$offers = is_array( $offers )
+			? array_values( array_slice( $offers, 0, absint( $settings['maximum_recommendations'] ) ) )
+			: array();
 		set_transient( $cache_key, $offers, 10 * MINUTE_IN_SECONDS );
 		return $offers;
 	}
@@ -247,7 +410,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	}
 
 	/** @return list<array<string,mixed>> */
-	private static function slow_stock_products(): array {
+	private static function slow_stock_products( array $settings ): array {
 		if ( ! function_exists( 'wc_get_products' ) ) {
 			return array();
 		}
@@ -269,7 +432,11 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			$sales = max( 0, (int) $product->get_total_sales() );
 			$date  = $product->get_date_created();
 			$age   = $date ? max( 1, (int) floor( ( time() - $date->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1;
-			if ( $stock < 5 || $age < 30 || $sales > max( 10, $stock * 2 ) ) {
+			if (
+				$stock < absint( $settings['slow_stock_min_units'] )
+				|| $age < absint( $settings['slow_stock_min_age_days'] )
+				|| $sales > max( 10, $stock * 2 )
+			) {
 				continue;
 			}
 			$rows[] = array(
@@ -353,6 +520,30 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		string $source,
 		array $product_ids
 	): array {
+		$kind_map = array(
+			'high_interest'          => 'campaign',
+			'slow_stock'             => 'inventory',
+			'bundle'                 => 'merchandising',
+			'cart_recovery'          => 'campaign',
+			'free_shipping'          => 'funnel',
+			'aov_lift'               => 'campaign',
+			'category'               => 'merchandising',
+			'remove_friction'        => 'funnel',
+			'signup_friction'        => 'funnel',
+			'search_demand'          => 'merchandising',
+			'category_merchandising' => 'merchandising',
+			'peak_timing'            => 'timing',
+		);
+		$kind     = $kind_map[ $scheme ] ?? 'campaign';
+		$is_offer = $discount_value > 0;
+		$expected_outcomes = array(
+			'campaign'      => __( 'Measure incremental purchases and revenue against the current baseline.', 'kidia-mobile-cms' ),
+			'merchandising' => __( 'Improve product discovery, product-pair attachment and qualified product views.', 'kidia-mobile-cms' ),
+			'inventory'     => __( 'Improve sell-through while limiting unnecessary margin loss.', 'kidia-mobile-cms' ),
+			'funnel'        => __( 'Reduce the measured drop-off at the identified sales-funnel step.', 'kidia-mobile-cms' ),
+			'timing'        => __( 'Improve campaign engagement by testing the strongest observed activity window.', 'kidia-mobile-cms' ),
+		);
+		$expected_outcome = $expected_outcomes[ $kind ] ?? $expected_outcomes['campaign'];
 		return compact(
 			'id',
 			'scheme',
@@ -366,7 +557,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'duration_hours',
 			'audience',
 			'source',
-			'product_ids'
+			'product_ids',
+			'kind',
+			'is_offer',
+			'expected_outcome'
 		);
 	}
 }
