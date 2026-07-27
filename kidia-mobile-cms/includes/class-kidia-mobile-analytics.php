@@ -636,11 +636,17 @@ final class Kidia_Mobile_Analytics {
 	 * @return array<string,mixed>
 	 */
 	public static function summary( int $from, int $to, string $source = 'all' ): array {
+		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$cache_key = 'kidia_analytics_summary_v1_' . md5( $from . '|' . $to . '|' . $source );
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return array_merge( self::empty_summary(), $cached );
+		}
+
 		global $wpdb;
 		$table = self::events_table();
 		$start = gmdate( 'Y-m-d H:i:s', $from );
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
-		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
 		$event_args = array( $start, $end );
 		if ( 'all' !== $source ) {
@@ -717,7 +723,7 @@ final class Kidia_Mobile_Analytics {
 			$activity_hours = $commerce['activity_hours'];
 		}
 
-		return array(
+		$summary = array(
 			'events'                => $events,
 			'visitors'              => $visitors,
 			'new_users'             => min( $visitors, $new ),
@@ -732,6 +738,8 @@ final class Kidia_Mobile_Analytics {
 			'coverage'              => self::coverage_snapshot( $from, $to, $source, $commerce ),
 			'commerce'              => $commerce,
 		);
+		set_transient( $cache_key, $summary, 10 * MINUTE_IN_SECONDS );
+		return $summary;
 	}
 
 	/**

@@ -853,6 +853,8 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
 		}
+		$ai_generated = isset( $_GET['ai_generate'] )
+			&& '1' === sanitize_text_field( wp_unslash( $_GET['ai_generate'] ) );
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : 'all_time';
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];
@@ -863,8 +865,12 @@ final class Kidia_Mobile_CMS_Admin {
 		$ai_kind     = isset( $_GET['ai_kind'] ) ? sanitize_key( wp_unslash( $_GET['ai_kind'] ) ) : 'all';
 		$kind_keys   = array( 'all', 'campaign', 'merchandising', 'inventory', 'funnel', 'timing' );
 		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
-		$ai_summary = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $ai_source );
-		$all_recommendations = Kidia_Mobile_AI_Offer_Engine::recommendations( $date_from, $date_to, $ai_source );
+		$ai_summary         = Kidia_Mobile_Analytics::empty_summary();
+		$all_recommendations = array();
+		if ( $ai_generated ) {
+			$ai_summary         = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $ai_source );
+			$all_recommendations = Kidia_Mobile_AI_Offer_Engine::recommendations( $date_from, $date_to, $ai_source );
+		}
 		$ai_recommendations  = array_values(
 			array_filter(
 				$all_recommendations,
@@ -970,7 +976,16 @@ final class Kidia_Mobile_CMS_Admin {
 			);
 			update_option( 'kidia_mobile_ai_action_drafts', array_slice( $actions, -200, null, true ), false );
 		}
-		$args = array( 'page' => 'kidia-mobile-ai-insights', 'ai_action_saved' => '1', 'ai_action_id' => $created_id );
+		$args = array(
+			'page'            => 'kidia-mobile-ai-insights',
+			'ai_generate'     => '1',
+			'ai_action_saved' => '1',
+			'ai_action_id'    => $created_id,
+			'ai_source'       => $source,
+			'date_preset'     => 'custom',
+			'date_from'       => wp_date( 'Y-m-d', $from ),
+			'date_to'         => wp_date( 'Y-m-d', $to ),
+		);
 		if ( ! empty( $_POST['ai_promote_push'] ) ) {
 			$args = array(
 				'page'        => 'kidia-mobile-push-notifications',

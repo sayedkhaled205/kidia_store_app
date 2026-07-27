@@ -63,16 +63,22 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 		<?php if ( isset( $_GET['ai_action_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The reviewed AI action was saved. Nothing else was activated automatically.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['bundle_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Bundle recipe saved and is ready for Home Page or app placement.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 
-	<form class="kidia-date-filter kidia-ai-filter-bar" method="get">
+	<form class="kidia-date-filter kidia-ai-filter-bar" method="get" data-ai-generate-form>
 		<input type="hidden" name="page" value="kidia-mobile-ai-insights">
+		<input type="hidden" name="ai_generate" value="1">
 		<label><span><?php esc_html_e( 'Channel', 'kidia-mobile-cms' ); ?></span><select name="ai_source"><?php foreach ( $source_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $ai_source, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 		<label><span><?php esc_html_e( 'Recommendation type', 'kidia-mobile-cms' ); ?></span><select name="ai_kind"><?php foreach ( $kind_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $ai_kind, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 			<label><span><?php esc_html_e( 'Period', 'kidia-mobile-cms' ); ?></span><select name="date_preset"><?php foreach ( $date_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $date_preset, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 		<label><span><?php esc_html_e( 'From', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_from" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_from ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
 		<label><span><?php esc_html_e( 'To', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_to" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_to ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
-		<button class="button button-primary" type="submit"><?php esc_html_e( 'Apply', 'kidia-mobile-cms' ); ?></button>
+		<button class="button button-primary kidia-ai-generate-button" type="submit" data-ai-generate-button>
+			<span class="dashicons dashicons-update"></span>
+			<span data-ai-generate-label><?php echo esc_html( $ai_generated ? __( 'Generate again', 'kidia-mobile-cms' ) : __( 'Generate Analysis', 'kidia-mobile-cms' ) ); ?></span>
+			<span class="spinner" data-ai-generate-spinner></span>
+		</button>
 	</form>
 
+	<?php if ( $ai_generated ) : ?>
 	<section class="kidia-ai-overview">
 		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'WooCommerce orders analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['orders'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-products"></span><div><small><?php esc_html_e( 'Units analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['units'] ?? 0 ) ); ?></strong></div></article>
@@ -207,6 +213,15 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 			<div class="kidia-ai-empty"><span class="dashicons dashicons-database"></span><div><strong><?php esc_html_e( 'No recommendation matches these filters yet', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Widen the period or wait for more real store activity. The studio does not invent evidence.', 'kidia-mobile-cms' ); ?></p></div></div>
 		<?php endif; ?>
 	</section>
+	<?php else : ?>
+		<section class="kidia-ai-ready-state">
+			<span class="dashicons dashicons-chart-area"></span>
+			<div>
+				<h2><?php esc_html_e( 'Ready when you are', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Choose the channel and period, then generate the analysis. AI Studio does not scan orders or calculate recommendations while this page is opening.', 'kidia-mobile-cms' ); ?></p>
+			</div>
+		</section>
+	<?php endif; ?>
 
 	<details class="kidia-ai-bundle-studio">
 		<summary><div><span class="dashicons dashicons-products"></span><div><h2><?php esc_html_e( 'Optional manual bundle builder', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'AI recommendations are generated above. Open this only when you want to create a bundle without an analytical recommendation.', 'kidia-mobile-cms' ); ?></p></div></div><b><?php echo esc_html( sprintf( _n( '%d saved bundle', '%d saved bundles', count( $bundle_recipes ), 'kidia-mobile-cms' ), count( $bundle_recipes ) ) ); ?></b></summary>

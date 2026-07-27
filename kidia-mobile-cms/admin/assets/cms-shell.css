@@ -963,6 +963,15 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-filter-bar label:nth-of-type(2){flex-basis:210px}
 .kidia-ai-filter-bar :is(select,input){width:100%;min-width:0}
 .kidia-ai-filter-bar .button{min-width:98px}
+.kidia-ai-generate-button{min-width:178px!important;gap:7px;white-space:nowrap}
+.kidia-ai-generate-button>.dashicons{width:18px;height:18px;font-size:18px}
+.kidia-ai-generate-button .spinner{display:none;float:none;margin:0}
+.kidia-ai-generate-button.is-generating>.dashicons{display:none}
+.kidia-ai-generate-button.is-generating .spinner{display:inline-block;visibility:visible}
+.kidia-ai-ready-state{display:flex;min-height:230px;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;padding:28px;border:1px dashed #9fc8be;border-radius:16px;background:linear-gradient(135deg,#eff8f5,#fff);text-align:start}
+.kidia-ai-ready-state>.dashicons{display:grid;width:56px;height:56px;flex:0 0 56px;place-items:center;border-radius:15px;background:#dff1eb;color:#236b59;font-size:29px}
+.kidia-ai-ready-state h2{margin:0 0 6px;color:var(--kidia-ai-dark);font-size:20px}
+.kidia-ai-ready-state p{max-width:670px;margin:0;color:#5e706a;line-height:1.6}
 .kidia-ai-overview{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin-bottom:12px}
 .kidia-ai-overview article{display:flex;min-height:102px;align-items:center;gap:12px;padding:15px;border:1px solid var(--kidia-ai-border);border-radius:14px;background:#fff}
 .kidia-ai-overview article>.dashicons{display:grid;width:42px;height:42px;flex:0 0 42px;place-items:center;border-radius:11px;background:#e5f4ef;color:#236b59;font-size:21px}
