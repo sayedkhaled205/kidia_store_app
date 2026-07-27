@@ -377,12 +377,12 @@ body[class*="kidia-mobile"] #wpbody-content{
 	background:var(--kidia-data-accent-dark)!important;
 	color:#fff!important;
 }
-.kidia-data-tabs{
-	display:grid;
-	grid-template-columns:repeat(9,minmax(138px,1fr));
-	overflow-x:auto;
-	scrollbar-width:thin;
-}
+	.kidia-data-tabs{
+		display:grid;
+		grid-template-columns:repeat(7,minmax(138px,1fr));
+		overflow-x:auto;
+		scrollbar-width:thin;
+	}
 .kidia-data-tabs a{
 	box-sizing:border-box;
 	min-width:138px;
@@ -451,12 +451,45 @@ body[class*="kidia-mobile"] #wpbody-content{
 .kidia-analytics-kpis .is-flat{color:#687571}
 .kidia-customer-list article,.kidia-order-list article{box-sizing:border-box;min-height:104px}
 .kidia-data-pagination{display:flex;justify-content:center;gap:5px;margin-top:18px}
-.kidia-data-pagination .page-numbers{display:grid;min-width:36px;height:36px;place-items:center;border:1px solid #b9d9d1;border-radius:8px;background:#fff;color:#236b59;text-decoration:none}
-.kidia-data-pagination .current{background:#2f806e;color:#fff}
-.kidia-category-section+ .kidia-category-section{margin-top:24px;padding-top:22px;border-top:1px solid #dce7e3}
-.kidia-category-section>h3{margin:0 0 5px;color:#174e42;font-size:18px}
-.kidia-category-section>p{margin:0 0 14px;color:#697873}
-.kidia-category-section.is-subcategories>section{margin-top:13px;padding:13px;border:1px solid #dce7e3;border-radius:12px;background:#f8fbfa}
+	.kidia-data-pagination .page-numbers{display:grid;min-width:36px;height:36px;place-items:center;border:1px solid #b9d9d1;border-radius:8px;background:#fff;color:#236b59;text-decoration:none}
+	.kidia-data-pagination .current{background:#2f806e;color:#fff}
+	.kidia-product-search{
+		display:flex;
+		align-items:center;
+		gap:8px;
+		margin-bottom:14px;
+		padding:11px 12px;
+		border:1px solid #dce7e3;
+		border-radius:11px;
+		background:#f7fbfa;
+	}
+	.kidia-product-search label{font-weight:750;color:#315f55}
+	.kidia-product-search input[type="search"]{width:min(430px,45vw);min-height:38px;border-color:#b9d4cd;border-radius:8px}
+	.kidia-product-search>span{margin-inline-start:auto;color:#687873;font-weight:700}
+	.kidia-product-actions{min-width:285px}
+	.kidia-product-actions form{display:inline-flex;margin:0}
+	.kidia-product-channel-state{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+	.kidia-product-channel-state:empty{display:none}
+	.kidia-product-channel-state b{display:inline-flex;align-items:center;gap:3px;padding:3px 6px;border-radius:99px;background:#fff0df;color:#8a4d00;font-size:10px}
+	.kidia-product-channel-state .dashicons{width:12px;height:12px;font-size:12px}
+	.kidia-category-section+ .kidia-category-section{margin-top:24px;padding-top:22px;border-top:1px solid #dce7e3}
+	.kidia-category-section>h3{margin:0 0 5px;color:#174e42;font-size:18px}
+	.kidia-category-section>p{margin:0 0 14px;color:#697873}
+	.kidia-category-section .kidia-category-list{grid-template-columns:repeat(3,minmax(250px,1fr))}
+	.kidia-category-section .kidia-category-list article{
+		grid-template-columns:58px minmax(0,1fr);
+		min-height:94px;
+		padding:10px 12px;
+		gap:11px;
+	}
+	.kidia-category-thumb{display:grid!important;width:58px;height:58px;place-items:center;overflow:hidden;border-radius:10px;background:#edf5f2}
+	.kidia-category-thumb img{width:100%;height:100%;object-fit:cover}
+	.kidia-category-thumb .dashicons{width:24px;height:24px;color:#2f806e;font-size:24px}
+	.kidia-category-section article>div:last-child{min-width:0}
+	.kidia-category-section article strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+	.kidia-category-section article .kidia-row-actions{flex-wrap:nowrap;margin-top:6px}
+	.kidia-category-section article .kidia-row-actions :is(a,button){min-height:32px;padding:3px 9px}
+	.kidia-category-section.is-subcategories>section{margin-top:13px;padding:13px;border:1px solid #dce7e3;border-radius:12px;background:#f8fbfa}
 .kidia-category-section h4{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;color:#315f55}
 .kidia-category-section h4 b{display:grid;min-width:30px;height:24px;place-items:center;border-radius:99px;background:#dff1eb;font-size:11px}
 .kidia-report-grid,.kidia-analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -526,10 +559,15 @@ body[class*="kidia-mobile"] #wpbody-content{
 }
 @media(max-width:1250px){
 	.kidia-data-summary.is-four,.kidia-audience-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+	.kidia-category-section .kidia-category-list{grid-template-columns:repeat(2,minmax(250px,1fr))}
 }
 @media(max-width:900px){
 	.kidia-date-filter{align-items:stretch;flex-direction:column}
 	.kidia-date-filter p{margin:0}
+	.kidia-product-search{align-items:stretch;flex-direction:column}
+	.kidia-product-search input[type="search"]{width:100%}
+	.kidia-product-search>span{margin-inline-start:0}
+	.kidia-category-section .kidia-category-list{grid-template-columns:1fr}
 	.kidia-report-grid,.kidia-analytics-grid,.kidia-opportunities>div{grid-template-columns:1fr}
 }
 @media(max-width:700px){
