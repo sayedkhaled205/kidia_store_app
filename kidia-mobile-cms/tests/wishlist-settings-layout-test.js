@@ -45,6 +45,11 @@ assert.match(toolbar, /kidia-collapse-all[\s\S]*kidia-expand-all/, "The shared t
 [home, page, category].forEach((template) => assert.match(template, /admin\/pages\/builder-toolbar\.php/, "Every builder must render the same toolbar template."));
 assert.match(toolbar, /name="layout\[enabled\]"/, "Every shared page builder toolbar must expose a page-level On/Off value.");
 assert.match(toolbar, /kidia-page-availability/, "The page-level On/Off control must have one shared visual contract.");
+assert.match(home, /\$kidia_toolbar_page_toggle\s*=\s*false;/, "Home must not expose Page status because it is always required.");
+assert.match(page, /\$kidia_toolbar_page_toggle\s*=\s*true;/, "Every optional shared page must expose Page status in its toolbar.");
+assert.match(category, /\$kidia_toolbar_page_toggle\s*=\s*true;/, "Category must expose Page status in its toolbar.");
+assert.match(css, /\.kidia-shared-builder-toolbar \.kidia-page-availability\s*\{[^}]*width:236px;[^}]*grid-template-columns:42px minmax\(118px,1fr\) 38px;/, "Page status must reserve separate switch, label, and icon columns without overlap.");
+assert.match(css, /\.kidia-shared-builder-toolbar \.kidia-page-availability__copy\s*\{[^}]*display:\s*flex !important;[^}]*flex-direction:\s*row;[^}]*white-space:\s*nowrap;/, "Page status and Active or Disabled must stay on one line on every optional page.");
 assert.doesNotMatch(toolbar, /kidia-builder-toolbar__context/, "The shared toolbar must not repeat the current page title.");
 assert.match(css, /kidia-builder-toolbar__actions,.kidia-builder-toolbar__save\)[^{]*\{[^}]*flex-wrap:\s*nowrap;/, "Desktop builder toolbar controls must stay on one row.");
 

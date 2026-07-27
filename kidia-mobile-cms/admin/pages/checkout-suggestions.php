@@ -31,10 +31,11 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 				<span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span>
 				<button type="button" class="button kidia-checkout-field-remove kidia-card-action kidia-card-action--secondary"><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
 				<button type="button" class="button kidia-page-expand kidia-card-action kidia-card-action--expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
-				<label class="kidia-page-master-toggle kidia-card-action kidia-card-action--toggle">
+				<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle">
 					<input type="hidden" name="checkout[fields][<?php echo esc_attr( $index ); ?>][enabled]" value="0">
 					<input type="checkbox" name="checkout[fields][<?php echo esc_attr( $index ); ?>][enabled]" value="1" <?php checked( ! isset( $field['enabled'] ) || ! empty( $field['enabled'] ) ); ?>>
-					<span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span>
+					<span class="kidia-builder-switch__track"></span>
+					<span class="kidia-builder-switch__state"></span>
 				</label>
 			</div>
 		</div>

@@ -123,7 +123,40 @@
 	padding-inline: 11px;
 	white-space: nowrap;
 }
-.kidia-shared-builder-toolbar .kidia-page-availability{min-width:158px;grid-template-columns:32px 1fr 38px;gap:7px;padding-inline:8px}
+.kidia-shared-builder-toolbar .kidia-page-availability{
+	width:236px;
+	min-width:236px;
+	grid-template-columns:42px minmax(118px,1fr) 38px;
+	gap:7px;
+	padding-inline:8px;
+}
+
+.kidia-shared-builder-toolbar .kidia-page-availability > input[type="checkbox"] {
+	grid-column: 1;
+	grid-row: 1;
+	justify-self: center;
+}
+
+.kidia-shared-builder-toolbar .kidia-page-availability__copy {
+	display: flex !important;
+	grid-column: 2;
+	grid-row: 1;
+	min-width: 0;
+	align-items: center;
+	flex-direction: row;
+	gap: 5px;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.kidia-shared-builder-toolbar .kidia-page-availability__icon {
+	grid-column: 3;
+	grid-row: 1;
+}
+
+.kidia-shared-builder-toolbar .kidia-page-availability > .kidia-page-availability__copy > .kidia-toggle-state {
+	margin-top: 0 !important;
+}
 
 .kidia-builder-toolbar--home {
 	align-items: center;
@@ -166,8 +199,9 @@
 }
 
 .kidia-builder-toolbar--home .kidia-page-availability {
-	min-width: 202px;
-	grid-template-columns: 30px minmax(0, 1fr) 42px;
+	width: 236px;
+	min-width: 236px;
+	grid-template-columns: 42px minmax(118px, 1fr) 38px;
 	gap: 7px;
 	padding-block: 3px;
 }
