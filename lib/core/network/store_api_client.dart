@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:kidia_store_app/core/config/app_config.dart';
 import 'package:kidia_store_app/core/network/store_api_exception.dart';
 
-// Temporary CI trigger while the committed embedded preview is rebuilt.
 class StoreApiResponse {
   const StoreApiResponse({
     required this.data,
