@@ -36,11 +36,15 @@ for (const page of ["home", "category", "catalog", "product", "wishlist", "accou
   assert.match(service, new RegExp(`'${page}'\\s*=>`), `Quick Setup must expose an independent ${page} design step.`);
 }
 assert.match(service, /submitted\['page_themes'\]/, "Theme application must accept independent page selections.");
+assert.match(service, /secondary_color/, "Setup identity must persist the secondary application color.");
+assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
+assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
 assert.match(service, /strip_catalog_images/, "Saved themes must exclude product and category catalog images.");
 assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
 assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile_App_Exporter\(\)\)->register/, "The app exporter must load and register with the plugin.");
 assert.match(exporter, /woomobile-app-build-package[\s\S]*app-config\.json[\s\S]*push-config\.json[\s\S]*dart-defines\.json/, "Export App must download a portable build package.");
+assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");
 assert.match(exporter, /Kidia_Mobile_Push_Service::client_configuration/, "Every exported application must inherit the plugin's public Push bootstrap.");
 for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key", "webhook_secret"]) {
   assert.doesNotMatch(exporter, new RegExp(`\\['${secret}'\\]`), `Export App must never expose ${secret}.`);
@@ -59,6 +63,8 @@ assert.doesNotMatch(admin, /remove_submenu_page\(\s*'kidia-mobile-cms',\s*'kidia
 assert.match(admin, /Kidia_Mobile_Setup_Wizard\(\) \)->is_complete/, "First visit must resolve setup state.");
 assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme gallery.");
 assert.match(wizardTemplate, /Choose %s page design/, "Every design step heading must clearly identify that it configures a page.");
+assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, "The second setup step must select required and optional application pages.");
+assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
 assert.match(wizardTemplate, /Export your application[\s\S]*name="export_after_apply"[\s\S]*Export App/, "Setup Wizard must finish with Export App.");
@@ -131,17 +137,18 @@ assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*h
 assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
-  <div class="kidia-setup-progress">${Array.from({ length: 9 }, () => "<span></span>").join("")}</div>
+  <div class="kidia-setup-progress">${Array.from({ length: 10 }, () => "<span></span>").join("")}</div>
   <form class="kidia-setup-form">
-    <section class="kidia-setup-step" data-step="1"><input required value="Store"></section>
-    <section class="kidia-setup-step" data-step="2"></section>
-    <section class="kidia-setup-step" data-step="3"></section>
-    <section class="kidia-setup-step" data-step="4"></section>
-    <section class="kidia-setup-step" data-step="5"></section>
-    <section class="kidia-setup-step" data-step="6"></section>
-    <section class="kidia-setup-step" data-step="7"></section>
-    <section class="kidia-setup-step" data-step="8"><h3 data-review-name></h3></section>
-    <section class="kidia-setup-step" data-step="9"></section>
+    <section class="kidia-setup-step" data-step="1"><span data-step-number></span><input required value="Store"></section>
+    <section class="kidia-setup-step" data-step="2"><span data-step-number></span><input type="checkbox" data-page-toggle="home" checked><input type="checkbox" data-page-toggle="category"><input type="checkbox" data-page-toggle="catalog" checked><input type="checkbox" data-page-toggle="product" checked><input type="checkbox" data-page-toggle="wishlist" checked><input type="checkbox" data-page-toggle="account" checked></section>
+    <section class="kidia-setup-step" data-step="3" data-theme-page="home"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="4" data-theme-page="category"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="5" data-theme-page="catalog"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="6" data-theme-page="product"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="7" data-theme-page="wishlist"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="8" data-theme-page="account"><span data-step-number></span><input type="radio" required checked></section>
+    <section class="kidia-setup-step" data-step="9"><span data-step-number></span><h3 data-review-name></h3><span data-review-page="category"></span></section>
+    <section class="kidia-setup-step" data-step="10"><span data-step-number></span></section>
     <input name="setup[app_name]" value="Store">
     <button type="button" class="kidia-setup-back"></button>
     <button type="button" class="kidia-setup-next"></button>
@@ -153,9 +160,14 @@ wizardDom.window.eval(read("admin", "assets", "setup-wizard.js"));
 const next = wizardDom.window.document.querySelector(".kidia-setup-next");
 next.click();
 assert.equal(wizardDom.window.document.querySelector('[data-step="2"]').classList.contains("is-active"), true, "Continue must advance the wizard.");
-for (let step = 3; step <= 9; step++) next.click();
+next.click();
+assert.equal(wizardDom.window.document.querySelector('[data-step="3"]').classList.contains("is-active"), true, "Required Home theme step must follow page selection.");
+next.click();
+assert.equal(wizardDom.window.document.querySelector('[data-step="5"]').classList.contains("is-active"), true, "An unselected optional page theme step must be skipped.");
+for (let step = 4; step <= 8; step++) next.click();
 assert.equal(next.hidden, true, "Continue must disappear on the final setup step.");
 assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Export App must appear only on the final setup step.");
+assert.equal(wizardDom.window.document.querySelector('[data-step="4"] input').disabled, true, "Inputs for an unselected page theme must be disabled.");
 
 const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></div></body>`, { runScripts: "outside-only" });
 shellDom.window.scrollTo = () => {};
