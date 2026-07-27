@@ -1274,20 +1274,22 @@
 
 .kidia-element-picker__grid {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 8px;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 10px;
 }
 
 .kidia-element-card {
-	display: flex;
-	align-items: flex-start;
+	display: grid;
+	aspect-ratio: 1;
+	align-content: center;
+	justify-items: center;
 	min-width: 0;
 	gap: 9px;
-	padding: 11px;
+	padding: 14px 9px;
 	border: 1px solid #dcdcde;
 	border-radius: 8px;
 	background: #fff;
-	text-align: start;
+	text-align: center;
 	cursor: pointer;
 	transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
@@ -1321,10 +1323,9 @@
 }
 
 .kidia-element-card p {
-	margin: 3px 0 0;
-	color: #646970;
-	font-size: 12px;
+	display: none;
 }
+.kidia-builder-block__type,.kidia-builder-status{display:none!important}
 
 .kidia-element-picker__empty {
 	padding: 26px;

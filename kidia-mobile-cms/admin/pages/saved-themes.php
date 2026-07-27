@@ -28,8 +28,8 @@ defined( 'ABSPATH' ) || exit;
 					<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
 					<input type="hidden" name="theme_operation" value="import">
 					<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
-					<input type="file" name="theme_file" accept="application/json,.json" required>
-					<button type="submit" class="button"><?php esc_html_e( 'Import Theme', 'kidia-mobile-cms' ); ?></button>
+					<label class="kidia-theme-file"><input type="file" name="theme_file" accept="application/json,.json" required><span class="button"><?php esc_html_e( 'Choose theme file', 'kidia-mobile-cms' ); ?></span><b data-theme-file-name><?php esc_html_e( 'No file selected', 'kidia-mobile-cms' ); ?></b></label>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Import Theme', 'kidia-mobile-cms' ); ?></button>
 				</form>
 			</div>
 			<div class="kidia-saved-themes__grid">
@@ -63,7 +63,7 @@ defined( 'ABSPATH' ) || exit;
 					<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
 					<input type="hidden" name="theme_operation" value="import">
 					<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
-					<input type="file" name="theme_file" accept="application/json,.json" required>
+					<label class="kidia-theme-file"><input type="file" name="theme_file" accept="application/json,.json" required><span class="button"><?php esc_html_e( 'Choose theme file', 'kidia-mobile-cms' ); ?></span><b data-theme-file-name><?php esc_html_e( 'No file selected', 'kidia-mobile-cms' ); ?></b></label>
 					<button type="submit" class="button button-primary"><?php esc_html_e( 'Import Theme', 'kidia-mobile-cms' ); ?></button>
 				</form>
 			</div>
