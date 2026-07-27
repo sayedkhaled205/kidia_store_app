@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - work/khaled-layout
       - agent/rebuild-embedded-flutter-preview
       - agent/header-product-tabs-controls
       - agent/fix-preview-wishlist-toolbar
