@@ -245,7 +245,20 @@ $category_image = static function ( WP_Term $category ): string {
 			</div></div>
 
 		<?php elseif ( 'abandoned-carts' === $store_tab ) : ?>
-			<div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Carts in view', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) count( $abandoned_carts ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) count( array_filter( $abandoned_carts, static fn( $cart ) => 'abandoned' === $cart['status'] ) ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) count( array_filter( $abandoned_carts, static fn( $cart ) => in_array( $cart['status'], array( 'recovered', 'converted' ), true ) ) ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( array_sum( array_map( static fn( $cart ) => 'abandoned' === $cart['status'] ? (float) $cart['cart_total'] : 0.0, $abandoned_carts ) ) ) ); ?></b></div></div>
+			<?php
+			$import_total     = absint( $abandoned_import['total'] ?? 0 );
+			$import_processed = absint( $abandoned_import['processed'] ?? 0 );
+			$import_progress  = $import_total > 0 ? min( 100, (int) floor( 100 * $import_processed / $import_total ) ) : 100;
+			?>
+			<?php if ( 'running' === (string) ( $abandoned_import['phase'] ?? '' ) ) : ?>
+				<section class="kidia-cart-import-state">
+					<span class="dashicons dashicons-database-import"></span>
+					<div><strong><?php esc_html_e( 'Importing all retained WooCommerce carts in the background', 'kidia-mobile-cms' ); ?></strong><p><?php echo esc_html( sprintf( __( '%1$d of %2$d stored sessions checked · %3$d carts imported. You can leave this page and continue your work.', 'kidia-mobile-cms' ), $import_processed, $import_total, absint( $abandoned_import['imported'] ?? 0 ) ) ); ?></p><i><b style="width:<?php echo esc_attr( (string) $import_progress ); ?>%"></b></i></div>
+				</section>
+			<?php elseif ( 'complete' === (string) ( $abandoned_import['phase'] ?? '' ) ) : ?>
+				<section class="kidia-cart-import-state is-complete"><span class="dashicons dashicons-yes-alt"></span><div><strong><?php esc_html_e( 'WooCommerce cart history is synced', 'kidia-mobile-cms' ); ?></strong><p><?php echo esc_html( sprintf( __( '%1$d retained sessions were checked and %2$d carts with products were imported.', 'kidia-mobile-cms' ), $import_processed, absint( $abandoned_import['imported'] ?? 0 ) ) ); ?></p></div></section>
+			<?php endif; ?>
+			<div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Carts found', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['carts'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $abandoned_summary['potential_value'] ?? 0 ) ) ); ?></b></div></div>
 			<?php if ( isset( $_GET['recovery_result'] ) ) : ?><div class="notice notice-info inline"><p><?php echo esc_html( 'created' === $_GET['recovery_result'] ? sprintf( __( '%d personal recovery offers were created.', 'kidia-mobile-cms' ), absint( $_GET['recovery_count'] ?? 0 ) ) : __( 'No recovery offer was created. Select carts with a customer email and check the schedule.', 'kidia-mobile-cms' ) ); ?></p></div><?php endif; ?>
 			<form class="kidia-recovery-builder" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="kidia_mobile_create_recovery_campaign"><?php wp_nonce_field( 'kidia_mobile_create_recovery_campaign', 'kidia_mobile_recovery_nonce' ); ?>

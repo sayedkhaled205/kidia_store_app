@@ -96,6 +96,7 @@ final class Kidia_Mobile_CMS {
 
 		(new Kidia_Mobile_License_Manager())->register();
 		(new Kidia_Mobile_Analytics())->register();
+		Kidia_Mobile_AI_Analysis_Job::register();
 		(new Kidia_Mobile_Product_Channel_Visibility())->register();
 		(new Kidia_Mobile_Recovery_Campaigns())->register();
 		(new Kidia_Mobile_Push_Service())->register();

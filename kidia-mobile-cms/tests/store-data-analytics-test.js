@@ -265,6 +265,28 @@ assert.match(
   "The incremental job must calculate progress from completed order and product records.",
 );
 assert.match(
+  aiInsights,
+  /Continue in background[\s\S]*View results[\s\S]*Cancel analysis/,
+  "Long analysis must be parkable or cancellable from the real progress surface.",
+);
+for (const backgroundMarker of [
+  "kidia_mobile_background_ai_analysis",
+  "kidia_mobile_ai_analysis_status",
+  "kidia_mobile_cancel_ai_analysis",
+  "is-docked",
+]) {
+  assert.match(
+    shellScript,
+    new RegExp(backgroundMarker),
+    `Parked analysis must include ${backgroundMarker}.`,
+  );
+}
+assert.match(
+  aiAnalysisJob,
+  /BACKGROUND_HOOK[\s\S]*continue_in_background[\s\S]*run_background[\s\S]*as_enqueue_async_action[\s\S]*wp_schedule_single_event/,
+  "A parked job must continue through Action Scheduler with a WP-Cron fallback.",
+);
+assert.match(
   aiAnalysisJob,
   /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*paginate'\s*=>\s*true[\s\S]*isset\( \$result->orders \)/,
   "Large stores must use a compact bounded job state and explicitly paginated WooCommerce order batches.",
@@ -348,6 +370,26 @@ assert.match(
   analytics,
   /sync_website_sessions[\s\S]*woocommerce_sessions[\s\S]*session_value/,
   "Abandoned carts must import existing WooCommerce session carts.",
+);
+assert.match(
+  analytics,
+  /WEBSITE_IMPORT_OPTION[\s\S]*session_id > %d[\s\S]*ORDER BY session_id ASC[\s\S]*schedule_website_session_import/,
+  "Historical cart import must advance through every retained WooCommerce session instead of rereading the first batch.",
+);
+assert.match(
+  analytics,
+  /abandoned_summary[\s\S]*COUNT\(\*\) AS carts[\s\S]*potential_value/,
+  "Abandoned-cart headline totals must cover the complete filtered dataset, not only the visible table rows.",
+);
+assert.match(
+  admin,
+  /array\( 'customers', 'abandoned-carts' \)[\s\S]*'all_time'/,
+  "Abandoned Carts must open on all retained history by default.",
+);
+assert.match(
+  storeData,
+  /Importing all retained WooCommerce carts in the background[\s\S]*Carts found[\s\S]*\$abandoned_summary/,
+  "The page must show historical import progress and complete cart totals.",
 );
 assert.match(aiInsights, /AI Offer Studio[\s\S]*Tracked sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
 assert.match(
