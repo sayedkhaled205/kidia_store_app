@@ -132,6 +132,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
+		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
@@ -423,11 +424,28 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
 		}
 		$store_tab = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
+		$store_source = isset( $_GET['store_source'] ) ? sanitize_key( wp_unslash( $_GET['store_source'] ) ) : 'all';
+		$store_source = in_array( $store_source, array( 'all', 'website', 'mobile' ), true ) ? $store_source : 'all';
 		$allowed   = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'settings' );
 		$store_tab = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
 		$products  = function_exists( 'wc_get_products' ) ? wc_get_products( array( 'limit' => 12, 'orderby' => 'date', 'order' => 'DESC', 'status' => array( 'publish', 'draft', 'pending' ) ) ) : array();
-		$orders    = function_exists( 'wc_get_orders' ) ? wc_get_orders( array( 'limit' => 12, 'orderby' => 'date', 'order' => 'DESC' ) ) : array();
+		$order_args = array( 'limit' => 30, 'orderby' => 'date', 'order' => 'DESC' );
+		if ( 'mobile' === $store_source ) {
+			$order_args['meta_key'] = '_kidia_order_source';
+			$order_args['meta_value'] = 'mobile';
+		} elseif ( 'website' === $store_source ) {
+			$order_args['meta_query'] = array(
+				'relation' => 'OR',
+				array( 'key' => '_kidia_order_source', 'compare' => 'NOT EXISTS' ),
+				array( 'key' => '_kidia_order_source', 'value' => 'website' ),
+			);
+		}
+		$orders    = function_exists( 'wc_get_orders' ) ? wc_get_orders( $order_args ) : array();
 		$customers = get_users( array( 'role__in' => array( 'customer', 'subscriber' ), 'number' => 12, 'orderby' => 'registered', 'order' => 'DESC' ) );
+		if ( 'all' !== $store_source ) {
+			$customer_ids = array_values( array_unique( array_filter( array_map( static fn( $order ) => absint( $order->get_customer_id() ), $orders ) ) ) );
+			$customers = $customer_ids ? get_users( array( 'include' => $customer_ids, 'number' => 30 ) ) : array();
+		}
 		$categories = taxonomy_exists( 'product_cat' ) ? get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false, 'number' => 24 ) ) : array();
 		$coupons   = get_posts( array( 'post_type' => 'shop_coupon', 'post_status' => array( 'publish', 'draft' ), 'numberposts' => 12 ) );
 		$category_count = taxonomy_exists( 'product_cat' ) ? wp_count_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false ) ) : 0;
@@ -451,6 +469,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$provider_connected = (bool) has_action( 'kidia_mobile_send_push_notification' );
 		$subscribed_customers = absint( get_option( 'kidia_mobile_push_subscribed_customers', 0 ) );
 		$registered_devices = absint( get_option( 'kidia_mobile_push_registered_devices', 0 ) );
+		$automations = get_option( 'kidia_mobile_push_automations', array() );
+		$automations = is_array( $automations ) ? $automations : array();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/push-notifications.php';
 	}
 
@@ -466,23 +486,85 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-push-notifications', 'push_error' => 'missing' ), admin_url( 'admin.php' ) ) );
 			exit;
 		}
+		$type = sanitize_key( wp_unslash( $_POST['push_type'] ?? 'broadcast' ) );
+		$type = in_array( $type, array( 'broadcast', 'offer', 'order', 'restock', 'abandoned_cart', 'welcome', 'custom' ), true ) ? $type : 'broadcast';
+		$delivery = sanitize_key( wp_unslash( $_POST['push_delivery'] ?? 'now' ) );
+		$delivery = in_array( $delivery, array( 'now', 'scheduled', 'automation' ), true ) ? $delivery : 'now';
+		$audience = sanitize_key( wp_unslash( $_POST['push_audience'] ?? 'all' ) );
+		$audience = in_array( $audience, array( 'all', 'customers', 'guests', 'segment', 'test' ), true ) ? $audience : 'all';
 		$payload = array(
 			'id'         => wp_generate_uuid4(),
+			'type'       => $type,
 			'title'      => mb_substr( $title, 0, 100 ),
 			'message'    => mb_substr( $message, 0, 500 ),
-			'audience'   => in_array( sanitize_key( wp_unslash( $_POST['push_audience'] ?? 'all' ) ), array( 'all', 'customers', 'guests' ), true ) ? sanitize_key( wp_unslash( $_POST['push_audience'] ?? 'all' ) ) : 'all',
+			'audience'   => $audience,
 			'action_url' => esc_url_raw( wp_unslash( $_POST['push_action_url'] ?? '' ) ),
 			'image_url'  => esc_url_raw( wp_unslash( $_POST['push_image_url'] ?? '' ) ),
+			'cta_label'  => sanitize_text_field( wp_unslash( $_POST['push_cta_label'] ?? '' ) ),
+			'coupon'     => sanitize_text_field( wp_unslash( $_POST['push_coupon'] ?? '' ) ),
+			'product_id' => absint( $_POST['push_product_id'] ?? 0 ),
+			'order_status' => sanitize_key( wp_unslash( $_POST['push_order_status'] ?? '' ) ),
+			'priority'   => 'high' === sanitize_key( wp_unslash( $_POST['push_priority'] ?? '' ) ) ? 'high' : 'normal',
+			'sound'      => ! empty( $_POST['push_sound'] ),
+			'badge'      => absint( $_POST['push_badge'] ?? 0 ),
+			'expiry_hours' => max( 1, min( 168, absint( $_POST['push_expiry_hours'] ?? 24 ) ) ),
+			'segment'    => array(
+				'min_orders' => absint( $_POST['push_min_orders'] ?? 0 ),
+				'min_spent' => (float) ( $_POST['push_min_spent'] ?? 0 ),
+				'inactive_days' => absint( $_POST['push_inactive_days'] ?? 0 ),
+			),
+			'delivery'   => $delivery,
 			'created_at' => time(),
-			'status'     => has_action( 'kidia_mobile_send_push_notification' ) ? 'queued' : 'provider_required',
+			'status'     => 'saved',
 		);
-		do_action( 'kidia_mobile_send_push_notification', $payload );
+		if ( 'scheduled' === $delivery ) {
+			$scheduled_raw = sanitize_text_field( wp_unslash( $_POST['push_schedule_at'] ?? '' ) );
+			$timestamp = $scheduled_raw ? strtotime( $scheduled_raw . ' ' . wp_timezone_string() ) : false;
+			if ( ! $timestamp || $timestamp <= time() ) {
+				wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-push-notifications', 'push_error' => 'schedule' ), admin_url( 'admin.php' ) ) );
+				exit;
+			}
+			$payload['scheduled_at'] = $timestamp;
+			$payload['status'] = 'scheduled';
+			wp_schedule_single_event( $timestamp, 'kidia_mobile_dispatch_scheduled_push', array( $payload ) );
+		} elseif ( 'automation' === $delivery ) {
+			$payload['status'] = 'automation_saved';
+			$automations = get_option( 'kidia_mobile_push_automations', array() );
+			$automations = is_array( $automations ) ? $automations : array();
+			$automations[ $type ] = $payload;
+			update_option( 'kidia_mobile_push_automations', $automations, false );
+		} else {
+			$payload = $this->dispatch_push_payload( $payload );
+		}
 		$history = get_option( 'kidia_mobile_push_history', array() );
 		$history = is_array( $history ) ? $history : array();
 		array_unshift( $history, $payload );
 		update_option( 'kidia_mobile_push_history', array_slice( $history, 0, 100 ), false );
 		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-push-notifications', 'push_sent' => '1' ), admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/** Sends a scheduled payload and refreshes its history status. */
+	public function dispatch_scheduled_push( array $payload ): void {
+		$payload = $this->dispatch_push_payload( $payload );
+		$history = get_option( 'kidia_mobile_push_history', array() );
+		$history = is_array( $history ) ? $history : array();
+		foreach ( $history as &$item ) {
+			if ( ( $item['id'] ?? '' ) === ( $payload['id'] ?? '' ) ) {
+				$item = $payload;
+				break;
+			}
+		}
+		unset( $item );
+		update_option( 'kidia_mobile_push_history', array_slice( $history, 0, 100 ), false );
+	}
+
+	/** Passes one normalized payload to the configured push provider. */
+	private function dispatch_push_payload( array $payload ): array {
+		$payload['sent_at'] = time();
+		$payload['status'] = has_action( 'kidia_mobile_send_push_notification' ) ? 'queued' : 'provider_required';
+		do_action( 'kidia_mobile_send_push_notification', $payload );
+		return $payload;
 	}
 
 	/** Applies a complete application preset. */

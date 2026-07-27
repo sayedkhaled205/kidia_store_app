@@ -418,15 +418,11 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       // outside this generic checkout. A dedicated gateway adapter can provide
       // them later without ever persisting secrets in this repository.
       'payment_data': const <Map<String, String>>[],
-      if (submission.customFields.isNotEmpty) ...<String, dynamic>{
-        // Classic checkout plugins do not register their fields in the Store
-        // API additional_fields schema. Sending those keys at the top level
-        // makes WooCommerce reject an otherwise valid order. Our registered
-        // extension validates and persists the filtered classic fields.
-        'extensions': <String, dynamic>{
-          'woo_mobile_cms': <String, dynamic>{
-            'checkout_fields': submission.customFields,
-          },
+      // The extension namespace also marks this order as originating from the
+      // mobile app, even when this store has no custom checkout fields.
+      'extensions': <String, dynamic>{
+        'woo_mobile_cms': <String, dynamic>{
+          'checkout_fields': submission.customFields,
         },
       },
     };

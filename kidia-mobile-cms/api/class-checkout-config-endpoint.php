@@ -130,6 +130,9 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 		}
 
 		$extensions = $request->get_param( 'extensions' );
+		if ( is_array( $extensions ) && isset( $extensions['woo_mobile_cms'] ) ) {
+			$order->update_meta_data( '_kidia_order_source', 'mobile' );
+		}
 		$values     = is_array( $extensions ) &&
 			isset( $extensions['woo_mobile_cms']['checkout_fields'] ) &&
 			is_array( $extensions['woo_mobile_cms']['checkout_fields'] )
