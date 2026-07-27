@@ -35,8 +35,14 @@ defined( 'ABSPATH' ) || exit;
 			<div class="kidia-saved-themes__grid">
 				<?php foreach ( $saved_themes as $saved_theme_id => $saved_theme ) : ?>
 					<article>
-						<span class="dashicons dashicons-admin-appearance"></span>
-						<div>
+						<?php $theme_color = sanitize_hex_color( (string) ( $saved_theme['theme']['identity']['primary_color'] ?? $saved_theme['theme']['primary_color'] ?? '#2f806e' ) ) ?: '#2f806e'; ?>
+						<div class="kidia-saved-theme-phone" style="--theme-color:<?php echo esc_attr( $theme_color ); ?>">
+							<div class="kidia-saved-theme-phone__bar"><i></i><i></i><i></i></div>
+							<div class="kidia-saved-theme-phone__hero"></div>
+							<div class="kidia-saved-theme-phone__dots"><i></i><i></i><i></i></div>
+							<div class="kidia-saved-theme-phone__grid"><i></i><i></i><i></i><i></i></div>
+						</div>
+						<div class="kidia-saved-theme-meta">
 							<h3><?php echo esc_html( (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) ) ); ?></h3>
 							<p><?php echo ! empty( $saved_theme['created_at'] ) ? esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $saved_theme['created_at'] ) ) ) : ''; ?></p>
 						</div>
@@ -47,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
 									<input type="hidden" name="theme_operation" value="<?php echo esc_attr( $theme_operation ); ?>">
 									<input type="hidden" name="theme_id" value="<?php echo esc_attr( (string) $saved_theme_id ); ?>">
 									<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
-									<button type="submit" class="button<?php echo 'apply' === $theme_operation ? ' button-primary' : ''; ?>"><?php echo esc_html( $theme_label ); ?></button>
+									<button type="submit" class="button kidia-theme-action--<?php echo esc_attr( $theme_operation ); ?><?php echo 'apply' === $theme_operation ? ' button-primary' : ''; ?>"><?php echo esc_html( $theme_label ); ?></button>
 								</form>
 							<?php endforeach; ?>
 						</div>

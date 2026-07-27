@@ -79,6 +79,39 @@
 	const previewMessage = document.querySelector('[data-push-preview-message]');
 	if (pushTitle && previewTitle) pushTitle.addEventListener('input', function () { previewTitle.textContent = pushTitle.value.trim() || 'Your notification title'; });
 	if (pushMessage && previewMessage) pushMessage.addEventListener('input', function () { previewMessage.textContent = pushMessage.value.trim() || 'Your message will appear here.'; });
+	const pushTypeInputs = document.querySelectorAll('[data-push-type]');
+	const syncPushType = function () {
+		const checked = document.querySelector('[data-push-type]:checked');
+		const type = checked ? checked.value : 'broadcast';
+		document.querySelectorAll('[data-push-field]').forEach(function (field) {
+			field.hidden = !field.dataset.pushField.split(/\s+/).includes(type);
+		});
+	};
+	pushTypeInputs.forEach(function (input) { input.addEventListener('change', syncPushType); });
+	syncPushType();
+	const pushAudience = document.querySelector('[data-push-audience]');
+	const pushSegment = document.querySelector('[data-push-segment]');
+	if (pushAudience && pushSegment) {
+		const syncAudience = function () { pushSegment.hidden = pushAudience.value !== 'segment'; };
+		pushAudience.addEventListener('change', syncAudience); syncAudience();
+	}
+	const pushDelivery = document.querySelector('[data-push-delivery]');
+	const pushSchedule = document.querySelector('[data-push-schedule]');
+	if (pushDelivery && pushSchedule) {
+		const syncDelivery = function () { pushSchedule.hidden = pushDelivery.value !== 'scheduled'; };
+		pushDelivery.addEventListener('change', syncDelivery); syncDelivery();
+	}
+	document.addEventListener('click', function (event) {
+		const button = event.target.closest('[data-copy-link],[data-copy-text]');
+		if (!button) return;
+		const value = button.dataset.copyLink || button.dataset.copyText || '';
+		if (!value || !navigator.clipboard) return;
+		const original = button.textContent;
+		navigator.clipboard.writeText(value).then(function () {
+			button.textContent = 'Copied';
+			window.setTimeout(function () { button.textContent = original; }, 1400);
+		});
+	});
 	document.querySelectorAll('.wrap > .notice-success').forEach(function (notice) {
 		notice.classList.add('kidia-global-save-toast');
 		window.setTimeout(function () { notice.classList.add('is-leaving'); }, 2600);
