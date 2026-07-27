@@ -36,7 +36,7 @@ final bundleDetailProvider =
         }
       }
       return _BundleDetail(
-        id: '$id',
+        id: id,
         name: '${data['name'] ?? 'Bundle'}',
         description: '${data['description'] ?? ''}',
         type: '${data['type'] ?? 'fixed'}',

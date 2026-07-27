@@ -1640,7 +1640,7 @@ class BundleCollectionBlockWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           scrollDirection: Axis.horizontal,
           itemCount: block.items.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (BuildContext context, int index) => SizedBox(
             width: block.layout == 'banner'
                 ? MediaQuery.sizeOf(context).width - 48
