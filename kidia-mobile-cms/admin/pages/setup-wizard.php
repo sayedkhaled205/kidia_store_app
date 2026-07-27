@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 			<p><?php esc_html_e( 'Choose a complete storefront, connect it to your WooCommerce catalog, then review the application before applying it.', 'kidia-mobile-cms' ); ?></p>
 		</div>
 		<div class="kidia-setup-progress" aria-label="<?php esc_attr_e( 'Setup progress', 'kidia-mobile-cms' ); ?>">
-			<?php $progress_steps = count( $setup_pages ) + 3; ?>
+			<?php $progress_steps = count( $setup_pages ) + 4; ?>
 			<?php for ( $progress_step = 1; $progress_step <= $progress_steps; $progress_step++ ) : ?>
 				<span class="<?php echo 1 === $progress_step ? 'is-active' : ''; ?>"><?php echo esc_html( (string) $progress_step ); ?></span>
 				<?php if ( $progress_step < $progress_steps ) : ?><i></i><?php endif; ?>
@@ -22,9 +22,9 @@ defined( 'ABSPATH' ) || exit;
 		<input type="hidden" name="action" value="kidia_mobile_apply_setup_wizard">
 		<?php wp_nonce_field( 'kidia_mobile_apply_setup_wizard', 'kidia_mobile_setup_nonce' ); ?>
 
-		<section class="kidia-setup-step is-active" data-step="1">
+		<section class="kidia-setup-step is-active" data-step="1" data-step-kind="identity">
 			<div class="kidia-setup-step-heading">
-				<span>01</span>
+				<span data-step-number>01</span>
 				<div><h2><?php esc_html_e( 'Application identity', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Set the name, logo and language customers will see.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
 			<div class="kidia-setup-identity-grid">
@@ -32,6 +32,7 @@ defined( 'ABSPATH' ) || exit;
 				<label><span><?php esc_html_e( 'Language', 'kidia-mobile-cms' ); ?></span><select name="setup[language]"><option value="ar" <?php selected( 'ar', $identity['language'] ); ?>>العربية</option><option value="en" <?php selected( 'en', $identity['language'] ); ?>>English</option></select></label>
 				<label><span><?php esc_html_e( 'Direction', 'kidia-mobile-cms' ); ?></span><select name="setup[direction]"><option value="rtl" <?php selected( 'rtl', $identity['direction'] ); ?>>RTL</option><option value="ltr" <?php selected( 'ltr', $identity['direction'] ); ?>>LTR</option></select></label>
 				<label><span><?php esc_html_e( 'Brand color', 'kidia-mobile-cms' ); ?></span><input type="color" name="setup[primary_color]" value="<?php echo esc_attr( (string) $identity['primary_color'] ); ?>"></label>
+				<label><span><?php esc_html_e( 'Secondary color', 'kidia-mobile-cms' ); ?></span><input type="color" name="setup[secondary_color]" value="<?php echo esc_attr( (string) $identity['secondary_color'] ); ?>"></label>
 				<div class="kidia-setup-logo-field">
 					<span><?php esc_html_e( 'Application logo', 'kidia-mobile-cms' ); ?></span>
 					<div class="kidia-setup-logo-preview"><?php if ( ! empty( $identity['logo_url'] ) ) : ?><img src="<?php echo esc_url( (string) $identity['logo_url'] ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?></div>
@@ -42,7 +43,31 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</section>
 
-		<?php $setup_step = 2; ?>
+		<?php
+		$saved_enabled_pages = is_array( $identity['enabled_pages'] ?? null ) ? $identity['enabled_pages'] : array_keys( $setup_pages );
+		?>
+		<section class="kidia-setup-step" data-step="2" data-step-kind="pages">
+			<div class="kidia-setup-step-heading">
+				<span data-step-number>02</span>
+				<div><h2><?php esc_html_e( 'Choose application pages', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Required store pages are always included. Choose the optional pages you want to create and customize.', 'kidia-mobile-cms' ); ?></p></div>
+			</div>
+			<div class="kidia-page-selection-grid">
+				<?php foreach ( $setup_pages as $page_key => $page_details ) : ?>
+					<?php $is_required = ! empty( $page_details['required'] ); ?>
+					<label class="kidia-page-choice <?php echo $is_required ? 'is-required' : ''; ?>">
+						<?php if ( $is_required ) : ?><input type="hidden" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1"><?php endif; ?>
+						<input type="checkbox" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1" data-page-toggle="<?php echo esc_attr( $page_key ); ?>" <?php checked( $is_required || in_array( $page_key, $saved_enabled_pages, true ) ); ?> <?php disabled( $is_required ); ?>>
+						<span class="kidia-page-choice__icon dashicons <?php echo esc_attr( (string) $page_details['icon'] ); ?>"></span>
+						<span class="kidia-page-choice__copy"><strong><?php echo esc_html( (string) $page_details['name'] ); ?></strong><small><?php echo esc_html( (string) $page_details['description'] ); ?></small></span>
+						<span class="kidia-page-choice__status"><?php echo $is_required ? esc_html__( 'Required', 'kidia-mobile-cms' ) : esc_html__( 'Optional', 'kidia-mobile-cms' ); ?></span>
+						<span class="kidia-page-choice__switch" aria-hidden="true"></span>
+					</label>
+				<?php endforeach; ?>
+			</div>
+			<p class="kidia-page-selection-note"><span class="dashicons dashicons-info-outline"></span><?php esc_html_e( 'Only selected pages will receive a theme step and appear in the generated application.', 'kidia-mobile-cms' ); ?></p>
+		</section>
+
+		<?php $setup_step = 3; ?>
 		<?php foreach ( $setup_pages as $page_key => $page_details ) : ?>
 			<?php
 			$saved_page_themes = is_array( $identity['page_themes'] ?? null ) ? $identity['page_themes'] : array();
@@ -50,7 +75,7 @@ defined( 'ABSPATH' ) || exit;
 			?>
 			<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>" data-theme-page="<?php echo esc_attr( $page_key ); ?>">
 				<div class="kidia-setup-step-heading">
-					<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+					<span data-step-number><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
 					<div><h2><?php echo esc_html( sprintf( __( 'Choose %s page design', 'kidia-mobile-cms' ), $page_details['name'] ) ); ?></h2><p><?php echo esc_html( $page_details['description'] ); ?></p></div>
 				</div>
 				<div class="kidia-theme-gallery">
@@ -81,12 +106,12 @@ defined( 'ABSPATH' ) || exit;
 
 		<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>">
 			<div class="kidia-setup-step-heading">
-				<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+				<span data-step-number><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
 				<div><h2><?php esc_html_e( 'Review and apply', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'A snapshot of the current application is created before the new theme is applied.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
 			<div class="kidia-review-card">
 				<div class="kidia-review-icon"><span class="dashicons dashicons-smartphone"></span></div>
-				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><p><?php esc_html_e( 'Each application page will use the design selected in its own setup step.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><?php foreach ( $setup_pages as $page_details ) : ?><span><?php echo esc_html( $page_details['name'] ); ?></span><?php endforeach; ?></div></div>
+				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><p><?php esc_html_e( 'Each selected application page will use the design chosen in its own setup step.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><?php foreach ( $setup_pages as $page_key => $page_details ) : ?><span data-review-page="<?php echo esc_attr( $page_key ); ?>"><?php echo esc_html( (string) $page_details['name'] ); ?></span><?php endforeach; ?></div></div>
 			</div>
 			<div class="kidia-catalog-summary">
 				<div><span class="dashicons dashicons-products"></span><strong><?php echo esc_html( number_format_i18n( $catalog_stats['products'] ) ); ?></strong><small><?php esc_html_e( 'Products ready', 'kidia-mobile-cms' ); ?></small></div>
@@ -98,7 +123,7 @@ defined( 'ABSPATH' ) || exit;
 		<?php ++$setup_step; ?>
 		<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>">
 			<div class="kidia-setup-step-heading">
-				<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+				<span data-step-number><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
 				<div><h2><?php esc_html_e( 'Export your application', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Apply the selected setup and download the final build package as the last step.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
 			<div class="kidia-export-ready-card <?php echo ! empty( $push_export_config['enabled'] ) ? 'is-ready' : 'needs-push'; ?>">

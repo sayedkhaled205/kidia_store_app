@@ -69,7 +69,9 @@ final class Kidia_Mobile_App_Exporter {
 				'language'      => (string) ( $identity['language'] ?? 'en' ),
 				'direction'     => (string) ( $identity['direction'] ?? 'ltr' ),
 				'primaryColor'  => (string) ( $identity['primary_color'] ?? '#2F806E' ),
+				'secondaryColor'=> (string) ( $identity['secondary_color'] ?? '#EAF6F2' ),
 				'logoUrl'       => esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) ),
+				'enabledPages'  => array_values( is_array( $identity['enabled_pages'] ?? null ) ? $identity['enabled_pages'] : array_keys( Kidia_Mobile_Setup_Wizard::setup_pages() ) ),
 			),
 			'store'        => array(
 				'url'      => home_url( '/' ),

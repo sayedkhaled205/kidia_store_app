@@ -84,15 +84,15 @@ final class Kidia_Mobile_Setup_Wizard {
 		return compact( 'name', 'description', 'primary', 'soft', 'ink', 'card_style', 'blocks', 'sample_copy' );
 	}
 
-	/** @return array<string,array<string,string>> */
+	/** @return array<string,array<string,mixed>> */
 	public static function setup_pages(): array {
 		return array(
-			'home'     => array( 'name' => __( 'Storefront', 'kidia-mobile-cms' ), 'description' => __( 'Home page sections, promotions and product discovery.', 'kidia-mobile-cms' ) ),
-			'category' => array( 'name' => __( 'Categories', 'kidia-mobile-cms' ), 'description' => __( 'Category navigation, cards and subcategory presentation.', 'kidia-mobile-cms' ) ),
-			'catalog'  => array( 'name' => __( 'Catalog', 'kidia-mobile-cms' ), 'description' => __( 'Product browsing, filters, sorting and product cards.', 'kidia-mobile-cms' ) ),
-			'product'  => array( 'name' => __( 'Product', 'kidia-mobile-cms' ), 'description' => __( 'Product information, gallery, actions, tabs and recommendations.', 'kidia-mobile-cms' ) ),
-			'wishlist' => array( 'name' => __( 'Wishlist', 'kidia-mobile-cms' ), 'description' => __( 'Sign-in, empty and saved-product wishlist states.', 'kidia-mobile-cms' ) ),
-			'account'  => array( 'name' => __( 'Account', 'kidia-mobile-cms' ), 'description' => __( 'Customer profile, orders and account navigation.', 'kidia-mobile-cms' ) ),
+			'home'     => array( 'name' => __( 'Storefront', 'kidia-mobile-cms' ), 'description' => __( 'Home page sections, promotions and product discovery.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-store', 'required' => true ),
+			'category' => array( 'name' => __( 'Categories', 'kidia-mobile-cms' ), 'description' => __( 'Category navigation, cards and subcategory presentation.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-category', 'required' => false ),
+			'catalog'  => array( 'name' => __( 'Catalog', 'kidia-mobile-cms' ), 'description' => __( 'Product browsing, filters, sorting and product cards.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-grid-view', 'required' => false ),
+			'product'  => array( 'name' => __( 'Product', 'kidia-mobile-cms' ), 'description' => __( 'Product information, gallery, actions, tabs and recommendations.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-products', 'required' => true ),
+			'wishlist' => array( 'name' => __( 'Wishlist', 'kidia-mobile-cms' ), 'description' => __( 'Sign-in, empty and saved-product wishlist states.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-heart', 'required' => false ),
+			'account'  => array( 'name' => __( 'Account', 'kidia-mobile-cms' ), 'description' => __( 'Customer profile, orders and account navigation.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-admin-users', 'required' => false ),
 		);
 	}
 
@@ -195,8 +195,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				'language'      => is_rtl() ? 'ar' : 'en',
 				'direction'     => is_rtl() ? 'rtl' : 'ltr',
 				'primary_color' => '#2F806E',
+				'secondary_color' => '#EAF6F2',
 				'theme'         => 'aurora',
 				'page_themes'   => array_fill_keys( array_keys( self::setup_pages() ), 'aurora' ),
+				'enabled_pages' => array_keys( self::setup_pages() ),
 			)
 		);
 	}
@@ -213,12 +215,14 @@ final class Kidia_Mobile_Setup_Wizard {
 		$theme_key = $page_themes['home'];
 		$theme     = $themes[ $theme_key ];
 		$primary   = sanitize_hex_color( (string) ( $submitted['primary_color'] ?? '' ) ) ?: $theme['primary'];
+		$secondary = sanitize_hex_color( (string) ( $submitted['secondary_color'] ?? '' ) ) ?: $theme['soft'];
 		$app_name  = sanitize_text_field( (string) ( $submitted['app_name'] ?? get_bloginfo( 'name' ) ) );
 		$app_name  = '' !== $app_name ? $app_name : get_bloginfo( 'name' );
 		$logo_id   = absint( $submitted['logo_id'] ?? 0 );
 		$logo_url  = $logo_id ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : esc_url_raw( (string) ( $submitted['logo_url'] ?? '' ) );
 		$language  = sanitize_key( (string) ( $submitted['language'] ?? ( is_rtl() ? 'ar' : 'en' ) ) );
 		$direction = 'rtl' === ( $submitted['direction'] ?? '' ) ? 'rtl' : 'ltr';
+		$enabled_pages = $this->sanitize_enabled_pages( $submitted['enabled_pages'] ?? null );
 
 		$this->create_backup();
 		update_option(
@@ -230,15 +234,17 @@ final class Kidia_Mobile_Setup_Wizard {
 				'language'      => $language,
 				'direction'     => $direction,
 				'primary_color' => $primary,
+				'secondary_color' => $secondary,
 				'theme'         => $theme_key,
 				'page_themes'   => $page_themes,
+				'enabled_pages' => $enabled_pages,
 			),
 			false
 		);
 
-		$this->apply_home( $theme, $primary, $app_name, $logo_url );
-		$this->apply_pages( $page_themes, $themes, $primary, $app_name, $logo_url );
-		$this->apply_category( $themes[ $page_themes['category'] ] );
+		$this->apply_home( $theme, $primary, $secondary, $app_name, $logo_url );
+		$this->apply_pages( $page_themes, $themes, $enabled_pages, $primary, $secondary, $app_name, $logo_url );
+		$this->apply_category( $themes[ $page_themes['category'] ], in_array( 'category', $enabled_pages, true ) );
 		$this->apply_extras( $theme, $themes[ $page_themes['product'] ], $primary, $app_name, $logo_url );
 
 		update_option(
@@ -247,6 +253,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'completed'    => true,
 				'theme'        => $theme_key,
 				'page_themes'  => $page_themes,
+				'enabled_pages'=> $enabled_pages,
 				'completed_at' => time(),
 				'source'       => 'built_in',
 				'build_required' => true,
@@ -258,7 +265,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	}
 
 	/** @param array<string,mixed> $theme */
-	private function apply_home( array $theme, string $primary, string $app_name, string $logo_url ): void {
+	private function apply_home( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): void {
 		$blocks = array();
 		$slides = $this->catalog_slides( (array) $theme['sample_copy'] );
 		foreach ( $theme['blocks'] as $index => $type ) {
@@ -271,7 +278,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings,
 				array(
 					'primary_color'   => $primary,
-					'accent_color'    => $theme['soft'],
+					'accent_color'    => $secondary,
 					'background_color'=> '#FFFFFF',
 					'text_color'      => $theme['ink'],
 					'card_style'      => $theme['card_style'],
@@ -339,14 +346,23 @@ final class Kidia_Mobile_Setup_Wizard {
 	/**
 	 * @param array<string,string> $page_themes Selected theme key for each setup page.
 	 * @param array<string,array<string,mixed>> $themes Available theme definitions.
+	 * @param array<int,string> $enabled_pages Pages selected during setup.
 	 */
-	private function apply_pages( array $page_themes, array $themes, string $primary, string $app_name, string $logo_url ): void {
+	private function apply_pages( array $page_themes, array $themes, array $enabled_pages, string $primary, string $secondary, string $app_name, string $logo_url ): void {
 		$store = new Kidia_Mobile_Page_Layout_Store();
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
 			$setup_page = 'size_chart' === $page ? 'product' : $page;
+			$page_enabled = in_array( $setup_page, $enabled_pages, true );
+			if ( ! $page_enabled ) {
+				$layout = $store->get_layout( $page );
+				$layout['enabled'] = false;
+				$store->save_layout( $page, $layout );
+				continue;
+			}
 			$theme_key  = $page_themes[ $setup_page ] ?? $page_themes['home'] ?? 'aurora';
 			$theme      = $themes[ $theme_key ] ?? $themes['aurora'];
 			$layout = $store->default_layout( $page );
+			$layout['enabled'] = true;
 			foreach ( array( 'header', 'footer' ) as $chrome ) {
 				if ( ! isset( $layout[ $chrome ]['settings'] ) || ! is_array( $layout[ $chrome ]['settings'] ) ) {
 					continue;
@@ -370,6 +386,9 @@ final class Kidia_Mobile_Setup_Wizard {
 					}
 					$element['settings']['primary_color']     = $primary;
 					$element['settings']['background_color'] = '#FFFFFF';
+					if ( array_key_exists( 'accent_color', $element['settings'] ) ) {
+						$element['settings']['accent_color'] = $secondary;
+					}
 					if ( array_key_exists( 'card_style', $element['settings'] ) ) {
 						$element['settings']['card_style'] = $theme['card_style'];
 					}
@@ -381,9 +400,14 @@ final class Kidia_Mobile_Setup_Wizard {
 	}
 
 	/** @param array<string,mixed> $theme */
-	private function apply_category( array $theme ): void {
+	private function apply_category( array $theme, bool $enabled ): void {
 		$store    = new Kidia_Mobile_Category_Page_Store();
 		$current  = $store->get_settings();
+		if ( ! $enabled ) {
+			$current['enabled'] = false;
+			$store->save_settings( $current );
+			return;
+		}
 		$general  = array_merge(
 			$current['general'],
 			array(
@@ -398,6 +422,26 @@ final class Kidia_Mobile_Setup_Wizard {
 			)
 		);
 		$store->save_settings( array( 'enabled' => true, 'general' => $general, 'categories' => $current['categories'] ) );
+	}
+
+	/**
+	 * Keeps required commerce pages enabled and accepts only known optional pages.
+	 *
+	 * @param mixed $submitted Raw enabled page map from the setup form.
+	 * @return array<int,string>
+	 */
+	private function sanitize_enabled_pages( $submitted ): array {
+		$pages = self::setup_pages();
+		if ( ! is_array( $submitted ) ) {
+			return array_keys( $pages );
+		}
+		$enabled = array();
+		foreach ( $pages as $page => $details ) {
+			if ( ! empty( $details['required'] ) || ! empty( $submitted[ $page ] ) ) {
+				$enabled[] = $page;
+			}
+		}
+		return $enabled;
 	}
 
 	/**
