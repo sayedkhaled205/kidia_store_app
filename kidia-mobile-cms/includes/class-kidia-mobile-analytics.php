@@ -1035,10 +1035,10 @@ final class Kidia_Mobile_Analytics {
 			static fn( $left, $right ) => $right['event_count'] <=> $left['event_count']
 		);
 		$snapshot['products']      = array_values( $products );
-		$snapshot['product_sales'] = array_map(
-			static fn( $row ) => absint( $row['event_count'] ?? 0 ),
-			$products
-		);
+		$snapshot['product_sales'] = array();
+		foreach ( $products as $product_id => $product_row ) {
+			$snapshot['product_sales'][ absint( $product_id ) ] = absint( $product_row['event_count'] ?? 0 );
+		}
 		arsort( $pairs );
 		foreach ( array_slice( $pairs, 0, 20, true ) as $key => $count ) {
 			$ids = array_map( 'absint', explode( ':', (string) $key ) );
@@ -1090,12 +1090,12 @@ final class Kidia_Mobile_Analytics {
 	/** Stable cache key shared by the incremental job and readers. */
 	public static function commerce_cache_key( int $from, int $to, string $source = 'all' ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_commerce_snapshot_v4_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_commerce_snapshot_v5_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	private static function summary_cache_key( int $from, int $to, string $source = 'all' ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_analytics_summary_v2_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_analytics_summary_v3_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	/** @return array<string,mixed> */
