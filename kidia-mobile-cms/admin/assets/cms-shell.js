@@ -159,7 +159,8 @@
 	}
 	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
 	if (aiGenerateForm) {
-		aiGenerateForm.addEventListener('submit', function () {
+		aiGenerateForm.addEventListener('submit', async function (event) {
+			event.preventDefault();
 			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
 			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
 			const overlay = document.querySelector('[data-ai-progress-overlay]');
@@ -167,31 +168,74 @@
 			const ring = overlay && overlay.querySelector('[data-ai-progress-ring]');
 			const bar = overlay && overlay.querySelector('[data-ai-progress-bar]');
 			const stage = overlay && overlay.querySelector('[data-ai-progress-stage]');
+			const count = overlay && overlay.querySelector('[data-ai-progress-count]');
+			const note = overlay && overlay.querySelector('[data-ai-progress-note]');
 			if (!button) return;
 			button.disabled = true;
 			button.classList.add('is-generating');
-			if (label) label.textContent = 'Analyzing data & generating offers...';
+			if (label) label.textContent = 'Generating offers from store data...';
 			if (overlay) {
 				overlay.hidden = false;
 				document.body.classList.add('kidia-ai-is-generating');
-				let progress = 2;
-				const renderProgress = function () {
+			}
+			const renderProgress = function (payload) {
+				const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
 					if (value) value.textContent = progress + '%';
 					if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
 					if (bar) bar.style.width = progress + '%';
-					if (!stage) return;
-					if (progress < 22) stage.textContent = 'Reading all paid orders and available products…';
-					else if (progress < 48) stage.textContent = 'Measuring stock rotation and sales velocity…';
-					else if (progress < 70) stage.textContent = 'Finding product relationships and funnel opportunities…';
-					else stage.textContent = 'Building ranked offers and executable decisions…';
-				};
-				renderProgress();
-				window.setInterval(function () {
-					if (progress >= 94) return;
-					progress += progress < 24 ? 3 : (progress < 68 ? 2 : 1);
-					progress = Math.min(94, progress);
-					renderProgress();
-				}, 420);
+				if (stage && payload.stage) stage.textContent = payload.stage;
+				if (count) {
+					count.textContent =
+						Number(payload.processed || 0).toLocaleString() + ' / ' +
+						Number(payload.total || 0).toLocaleString() + ' records completed';
+				}
+			};
+			const request = async function (action, values) {
+				const body = new URLSearchParams(Object.assign({
+					action: action,
+					nonce: aiGenerateForm.dataset.aiAnalysisNonce || ''
+				}, values || {}));
+				const response = await window.fetch(window.ajaxurl || '', {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+					body: body.toString()
+				});
+				const json = await response.json();
+				if (!response.ok || !json.success) {
+					throw new Error((json.data && json.data.message) || 'The analysis could not be completed.');
+				}
+				return json.data;
+			};
+			try {
+				const source = aiGenerateForm.querySelector('[name="ai_source"]');
+				const preset = aiGenerateForm.querySelector('[name="date_preset"]');
+				const from = aiGenerateForm.querySelector('[name="date_from"]');
+				const to = aiGenerateForm.querySelector('[name="date_to"]');
+				let payload = await request('kidia_mobile_start_ai_analysis', {
+					source: source ? source.value : 'all',
+					date_preset: preset ? preset.value : 'all_time',
+					date_from: from ? from.value : '',
+					date_to: to ? to.value : ''
+				});
+				renderProgress(payload);
+				while (!payload.done) {
+					payload = await request('kidia_mobile_step_ai_analysis', {job_id: payload.job_id});
+					renderProgress(payload);
+				}
+				const destination = new URL(window.location.href);
+				const data = new FormData(aiGenerateForm);
+				data.forEach(function (item, key) { destination.searchParams.set(key, item); });
+				destination.searchParams.set('ai_generate', '1');
+				destination.searchParams.set('ai_ready', '1');
+				window.location.assign(destination.toString());
+			} catch (error) {
+				if (stage) stage.textContent = error && error.message ? error.message : 'The analysis could not be completed.';
+				if (note) note.textContent = 'No incomplete result was published. You can retry safely.';
+				if (count) count.textContent = 'Analysis stopped';
+				button.disabled = false;
+				button.classList.remove('is-generating');
+				if (label) label.textContent = 'Retry offer generation';
 			}
 		});
 	}
@@ -203,6 +247,21 @@
 				const target = tab.dataset.aiWorkspaceTab;
 				aiWorkspaceTabs.forEach(function (item) { item.classList.toggle('is-active', item === tab); });
 				aiWorkspacePanels.forEach(function (panel) { panel.hidden = panel.dataset.aiWorkspacePanel !== target; });
+			});
+		});
+	}
+	const aiPlaybookButtons = document.querySelectorAll('[data-ai-playbook-kind]');
+	const aiDecisionCards = document.querySelectorAll('[data-ai-decision-kind]');
+	if (aiPlaybookButtons.length && aiDecisionCards.length) {
+		aiPlaybookButtons.forEach(function (button) {
+			button.addEventListener('click', function () {
+				const wasActive = button.classList.contains('is-active');
+				const kinds = String(button.dataset.aiPlaybookKind || 'all').split(',');
+				aiPlaybookButtons.forEach(function (item) { item.classList.remove('is-active'); });
+				if (!wasActive) button.classList.add('is-active');
+				aiDecisionCards.forEach(function (card) {
+					card.hidden = !wasActive && !kinds.includes('all') && !kinds.includes(card.dataset.aiDecisionKind);
+				});
 			});
 		});
 	}

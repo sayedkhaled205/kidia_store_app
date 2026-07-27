@@ -24,6 +24,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-license-manage
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-analytics.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-product-channel-visibility.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-ai-offer-engine.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-ai-analysis-job.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-recovery-campaigns.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-push-service.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-app-exporter.php';

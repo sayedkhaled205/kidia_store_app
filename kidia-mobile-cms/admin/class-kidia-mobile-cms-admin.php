@@ -140,6 +140,8 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
+		add_action( 'wp_ajax_kidia_mobile_start_ai_analysis', array( $this, 'start_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_step_ai_analysis', array( $this, 'step_ai_analysis' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
 
@@ -764,7 +766,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 *
 	 * @return array{preset:string,from:int,to:int}
 	 */
-	private function store_data_date_range( string $preset ): array {
+	private function store_data_date_range( string $preset, ?array $request = null ): array {
 		$allowed = array( 'all_time', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'previous_month', 'last_year', 'custom' );
 		$preset  = in_array( $preset, $allowed, true ) ? $preset : 'last_30_days';
 		$zone    = wp_timezone();
@@ -797,8 +799,9 @@ final class Kidia_Mobile_CMS_Admin {
 				$from = $today->modify( '-1 year +1 day' );
 				break;
 			case 'custom':
-				$custom_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
-				$custom_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
+				$request     = null === $request ? $_GET : $request;
+				$custom_from = isset( $request['date_from'] ) ? sanitize_text_field( wp_unslash( $request['date_from'] ) ) : '';
+				$custom_to   = isset( $request['date_to'] ) ? sanitize_text_field( wp_unslash( $request['date_to'] ) ) : '';
 				$parsed_from = DateTimeImmutable::createFromFormat( '!Y-m-d', $custom_from, $zone );
 				$parsed_to   = DateTimeImmutable::createFromFormat( '!Y-m-d', $custom_to, $zone );
 				if ( false !== $parsed_from && false !== $parsed_to && $parsed_to >= $parsed_from ) {
@@ -854,8 +857,6 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
 		}
-		$ai_generated = isset( $_GET['ai_generate'] )
-			&& '1' === sanitize_text_field( wp_unslash( $_GET['ai_generate'] ) );
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : 'all_time';
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];
@@ -863,6 +864,9 @@ final class Kidia_Mobile_CMS_Admin {
 		$date_preset = $date_range['preset'];
 		$ai_source   = isset( $_GET['ai_source'] ) ? sanitize_key( wp_unslash( $_GET['ai_source'] ) ) : 'all';
 		$ai_source   = in_array( $ai_source, array( 'all', 'website', 'mobile' ), true ) ? $ai_source : 'all';
+		$ai_generated = isset( $_GET['ai_ready'] )
+			&& '1' === sanitize_text_field( wp_unslash( $_GET['ai_ready'] ) )
+			&& Kidia_Mobile_Analytics::has_commerce_snapshot( $date_from, $date_to, $ai_source );
 		$ai_kind     = isset( $_GET['ai_kind'] ) ? sanitize_key( wp_unslash( $_GET['ai_kind'] ) ) : 'all';
 		$kind_keys   = array( 'all', 'campaign', 'merchandising', 'inventory', 'funnel', 'timing' );
 		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
@@ -896,6 +900,39 @@ final class Kidia_Mobile_CMS_Admin {
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/ai-insights.php';
 	}
 
+	/** Starts a bounded, measurable AI Studio analysis job. */
+	public function start_ai_analysis(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$preset = sanitize_key( (string) wp_unslash( $_POST['date_preset'] ?? 'all_time' ) );
+		$range  = $this->store_data_date_range( $preset, $_POST );
+		$from   = absint( $range['from'] );
+		$to     = absint( $range['to'] );
+		$source = sanitize_key( (string) wp_unslash( $_POST['source'] ?? 'all' ) );
+		$source = in_array( $source, array( 'all', 'website', 'mobile' ), true ) ? $source : 'all';
+		$result = Kidia_Mobile_AI_Analysis_Job::start( $from, $to, $source, get_current_user_id() );
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
+		}
+		wp_send_json_success( $result );
+	}
+
+	/** Processes one real analysis batch and reports completed records. */
+	public function step_ai_analysis(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
+		$result = Kidia_Mobile_AI_Analysis_Job::step( $job_id, get_current_user_id() );
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
+		}
+		wp_send_json_success( $result );
+	}
+
 	/** Turns one reviewed AI recommendation into an owner-approved draft or live action. */
 	public function build_ai_action(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -918,12 +955,35 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_action_error' => 'not_found' ), admin_url( 'admin.php' ) ) );
 			exit;
 		}
+		$recommended_product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
+		if ( $recommended_product_ids ) {
+			$available_product_ids = array();
+			foreach ( $recommended_product_ids as $product_id ) {
+				$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+				if ( $product instanceof WC_Product && $product->is_in_stock() ) {
+					$available_product_ids[] = $product_id;
+				}
+			}
+			if ( empty( $available_product_ids ) ) {
+				wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_action_error' => 'stock_changed' ), admin_url( 'admin.php' ) ) );
+				exit;
+			}
+			$recommendation['product_ids'] = $available_product_ids;
+			$recommendation['products'] = array_values(
+				array_filter(
+					(array) ( $recommendation['products'] ?? array() ),
+					static fn( $product ) => in_array( absint( $product['id'] ?? 0 ), $available_product_ids, true )
+				)
+			);
+		}
 		$action_type = sanitize_key( (string) wp_unslash( $_POST['ai_action_type'] ?? $recommendation['implementation'] ?? 'store_action' ) );
 		$allowed = array( 'coupon', 'bundle', 'placement', 'merchandising', 'shipping_rule', 'store_action', 'schedule' );
 		$action_type = in_array( $action_type, $allowed, true ) ? $action_type : 'store_action';
 		$status = 'publish' === sanitize_key( (string) wp_unslash( $_POST['ai_action_status'] ?? 'draft' ) ) ? 'publish' : 'draft';
 		$channel = sanitize_key( (string) wp_unslash( $_POST['ai_action_channel'] ?? $source ) );
 		$channel = in_array( $channel, array( 'all', 'website', 'mobile' ), true ) ? $channel : 'all';
+		$placement = sanitize_key( (string) wp_unslash( $_POST['ai_placement'] ?? $recommendation['recommended_placement'] ?? 'home' ) );
+		$placement = in_array( $placement, array( 'home', 'product', 'category', 'search', 'cart', 'checkout', 'confirmation' ), true ) ? $placement : 'home';
 		$created_id = '';
 		if ( 'coupon' === $action_type && class_exists( 'WC_Coupon' ) ) {
 			$type = sanitize_key( (string) wp_unslash( $_POST['ai_discount_type'] ?? $recommendation['discount_type'] ?? 'percent' ) );
@@ -983,9 +1043,18 @@ final class Kidia_Mobile_CMS_Admin {
 			);
 			update_option( 'kidia_mobile_ai_action_drafts', array_slice( $actions, -200, null, true ), false );
 		}
+		$publication = $this->publish_ai_action_placement(
+			$action_type,
+			$created_id,
+			$recommendation,
+			$channel,
+			$placement,
+			'publish' === $status
+		);
 		$args = array(
 			'page'            => 'kidia-mobile-ai-insights',
 			'ai_generate'     => '1',
+			'ai_ready'        => '1',
 			'ai_action_saved' => '1',
 			'ai_action_id'    => $created_id,
 			'ai_source'       => $source,
@@ -1009,11 +1078,15 @@ final class Kidia_Mobile_CMS_Admin {
 		$history[ $history_id ] = array(
 			'id'                => $history_id,
 			'offer_id'          => $id,
+			'analysis_from'     => $from,
+			'analysis_to'       => $to,
+			'analysis_source'   => $source,
 			'created_reference' => $created_id,
 			'type'              => $action_type,
 			'status'            => $status,
 			'channel'           => $channel,
-			'placement'         => sanitize_key( (string) wp_unslash( $_POST['ai_placement'] ?? $recommendation['recommended_placement'] ?? 'home' ) ),
+			'placement'         => $placement,
+			'publication'       => $publication,
 			'name'              => sanitize_text_field( (string) wp_unslash( $_POST['ai_action_name'] ?? $recommendation['title'] ) ),
 			'recommendation'    => $recommendation,
 			'duration_hours'    => max( 1, min( 720, absint( $_POST['ai_duration_hours'] ?? $recommendation['duration_hours'] ?? 48 ) ) ),
@@ -1054,13 +1127,180 @@ final class Kidia_Mobile_CMS_Admin {
 			} elseif ( 'bundle' === $type && '' !== $reference ) {
 				Kidia_Mobile_Bundle_Recipes::set_status( $reference, 'draft' );
 			}
+			$this->set_ai_home_placement_enabled( (string) ( $row['publication']['block_id'] ?? '' ), false );
 			$history[ $history_id ]['status'] = 'stopped';
+		} else {
+			if ( 'coupon' === $type && class_exists( 'WC_Coupon' ) && absint( $reference ) > 0 ) {
+				$coupon = new WC_Coupon( absint( $reference ) );
+				if ( $coupon->get_id() > 0 ) {
+					$coupon->set_status( 'publish' );
+					$coupon->save();
+				}
+			} elseif ( 'bundle' === $type && '' !== $reference ) {
+				Kidia_Mobile_Bundle_Recipes::set_status( $reference, 'published' );
+			} else {
+				$actions = get_option( 'kidia_mobile_ai_action_drafts', array() );
+				$actions = is_array( $actions ) ? $actions : array();
+				if ( is_array( $actions[ $reference ] ?? null ) ) {
+					$actions[ $reference ]['status'] = 'publish';
+					update_option( 'kidia_mobile_ai_action_drafts', $actions, false );
+				}
+			}
+			$existing_block_id = (string) ( $row['publication']['block_id'] ?? '' );
+			if ( '' !== $existing_block_id ) {
+				$this->set_ai_home_placement_enabled( $existing_block_id, true );
+				$publication = (array) $row['publication'];
+			} else {
+				$publication = $this->publish_ai_action_placement(
+					$type,
+					$reference,
+					is_array( $row['recommendation'] ?? null ) ? $row['recommendation'] : array(),
+					(string) ( $row['channel'] ?? 'all' ),
+					(string) ( $row['placement'] ?? 'home' ),
+					true
+				);
+			}
+			$history[ $history_id ]['publication'] = $publication;
+			$history[ $history_id ]['status']      = 'publish';
 		}
 		$history[ $history_id ]['owner_decision'] = $decision;
 		$history[ $history_id ]['updated_at']     = time();
 		update_option( 'kidia_mobile_ai_action_history_v1', $history, false );
-		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_result_saved' => '1' ), admin_url( 'admin.php' ) ) );
+		$redirect_args = array(
+			'page'            => 'kidia-mobile-ai-insights',
+			'ai_result_saved' => '1',
+			'ai_generate'     => '1',
+			'ai_ready'        => '1',
+			'ai_source'       => (string) ( $row['analysis_source'] ?? 'all' ),
+			'date_preset'     => 'custom',
+			'date_from'       => wp_date( 'Y-m-d', absint( $row['analysis_from'] ?? time() ) ),
+			'date_to'         => wp_date( 'Y-m-d', absint( $row['analysis_to'] ?? time() ) ),
+		);
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/**
+	 * Publishes an approved decision into a runtime target. Home placements become
+	 * real Home Builder blocks; other targets are exported as approved runtime rules.
+	 *
+	 * @return array{target:string,block_id:string}
+	 */
+	private function publish_ai_action_placement(
+		string $type,
+		string $reference,
+		array $recommendation,
+		string $channel,
+		string $placement,
+		bool $approved
+	): array {
+		$result = array( 'target' => $approved ? $placement : 'draft', 'block_id' => '' );
+		if ( ! $approved || '' === $reference ) {
+			return $result;
+		}
+
+		$runtime = get_option( 'kidia_mobile_ai_published_actions_v1', array() );
+		$runtime = is_array( $runtime ) ? $runtime : array();
+		$runtime[ $reference ] = array(
+			'id'             => $reference,
+			'type'           => sanitize_key( $type ),
+			'channel'        => in_array( $channel, array( 'website', 'mobile' ), true ) ? $channel : 'all',
+			'placement'      => sanitize_key( $placement ),
+			'product_ids'    => array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) ),
+			'discount_type'  => sanitize_key( (string) ( $recommendation['discount_type'] ?? '' ) ),
+			'discount_value' => max( 0, (float) ( $recommendation['discount_value'] ?? 0 ) ),
+			'published_at'   => time(),
+		);
+		update_option( 'kidia_mobile_ai_published_actions_v1', array_slice( $runtime, -200, null, true ), false );
+		if ( 'home' !== $placement || ! class_exists( 'Kidia_Mobile_Layout_Store' ) ) {
+			return $result;
+		}
+
+		$layout = ( new Kidia_Mobile_Layout_Store() )->get_layout();
+		foreach ( $layout as $existing ) {
+			$settings = is_array( $existing['settings'] ?? null ) ? $existing['settings'] : array();
+			$is_match = ( 'bundle' === $type && in_array( $reference, array_filter( explode( ',', (string) ( $settings['bundle_ids'] ?? '' ) ) ), true ) )
+				|| ( 'coupon' === $type && $reference === (string) ( $settings['ai_coupon_id'] ?? '' ) )
+				|| $reference === (string) ( $settings['ai_action_reference'] ?? '' );
+			if ( $is_match ) {
+				$result['block_id'] = sanitize_key( (string) ( $existing['id'] ?? '' ) );
+				return $result;
+			}
+		}
+
+		$block_type = 'bundle' === $type
+			? 'bundle_collection'
+			: ( 'coupon' === $type ? 'coupon_banner' : 'product_carousel' );
+		$block = Kidia_Mobile_Block_Registry::create( $block_type, count( $layout ) + 1 );
+		if ( ! is_array( $block ) ) {
+			return $result;
+		}
+		$block['name']    = sanitize_text_field( 'AI: ' . (string) ( $recommendation['title'] ?? __( 'Approved offer', 'kidia-mobile-cms' ) ) );
+		$block['enabled'] = true;
+		$block['status']  = 'published';
+		if ( 'bundle' === $type ) {
+			$block['settings'] = array_merge(
+				(array) $block['settings'],
+				array(
+					'title'      => (string) ( $recommendation['title'] ?? __( 'Selected bundle', 'kidia-mobile-cms' ) ),
+					'subtitle'   => (string) ( $recommendation['summary'] ?? '' ),
+					'source'     => 'manual',
+					'bundle_ids' => $reference,
+					'channel'    => $channel,
+				)
+			);
+		} elseif ( 'coupon' === $type && class_exists( 'WC_Coupon' ) ) {
+			$coupon = new WC_Coupon( absint( $reference ) );
+			$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
+			$block['settings'] = array_merge(
+				(array) $block['settings'],
+				array(
+					'title'               => (string) ( $recommendation['title'] ?? __( 'Limited offer', 'kidia-mobile-cms' ) ),
+					'description'         => (string) ( $recommendation['summary'] ?? '' ),
+					'coupon_code'         => $coupon->get_code(),
+					'action_type'         => 1 === count( $product_ids ) ? 'product' : '',
+					'action_value'        => 1 === count( $product_ids ) ? (string) $product_ids[0] : '',
+					'ai_coupon_id'        => $reference,
+					'ai_action_reference' => $reference,
+				)
+			);
+		} else {
+			$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
+			$block['settings'] = array_merge(
+				(array) $block['settings'],
+				array(
+					'title'               => (string) ( $recommendation['title'] ?? __( 'Recommended products', 'kidia-mobile-cms' ) ),
+					'subtitle'            => (string) ( $recommendation['summary'] ?? '' ),
+					'source'              => 'manual',
+					'product_ids'         => implode( ',', $product_ids ),
+					'limit'               => max( 1, count( $product_ids ) ),
+					'ai_action_reference' => $reference,
+				)
+			);
+		}
+		$layout[] = $block;
+		if ( ( new Kidia_Mobile_Layout_Store() )->save_layout( $layout ) ) {
+			$result['block_id'] = sanitize_key( (string) ( $block['id'] ?? '' ) );
+		}
+		return $result;
+	}
+
+	/** Enables or disables the exact Home Builder block owned by one AI action. */
+	private function set_ai_home_placement_enabled( string $block_id, bool $enabled ): void {
+		$block_id = sanitize_key( $block_id );
+		if ( '' === $block_id || ! class_exists( 'Kidia_Mobile_Layout_Store' ) ) {
+			return;
+		}
+		$store  = new Kidia_Mobile_Layout_Store();
+		$layout = $store->get_layout();
+		foreach ( $layout as &$block ) {
+			if ( $block_id === sanitize_key( (string) ( $block['id'] ?? '' ) ) ) {
+				$block['enabled'] = $enabled;
+				break;
+			}
+		}
+		unset( $block );
+		$store->save_layout( $layout );
 	}
 
 	/** Push composer, provider status and delivery history. */

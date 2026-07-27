@@ -21,6 +21,10 @@ const aiOffers = readPlugin(
   "includes",
   "class-kidia-mobile-ai-offer-engine.php",
 );
+const aiAnalysisJob = readPlugin(
+  "includes",
+  "class-kidia-mobile-ai-analysis-job.php",
+);
 const recovery = readPlugin(
   "includes",
   "class-kidia-mobile-recovery-campaigns.php",
@@ -227,7 +231,7 @@ assert.match(
 );
 assert.match(
   analytics,
-  /kidia_analytics_summary_v1_[\s\S]*get_transient[\s\S]*set_transient/,
+  /kidia_analytics_summary_v2_[\s\S]*get_transient[\s\S]*set_transient/,
   "One generated AI summary must be reused instead of running the same heavy queries twice.",
 );
 assert.match(
@@ -237,7 +241,7 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Analyze Store & Generate Offers[\s\S]*Ready to build data-backed offers/,
+  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Generate Offers from Store Data[\s\S]*Ready to build data-backed offers/,
   "AI Studio must open in a lightweight ready state and expose an explicit generate action.",
 );
 assert.match(
@@ -247,8 +251,28 @@ assert.match(
 );
 assert.match(
   shellScript,
-  /data-ai-progress-overlay[\s\S]*kidia-ai-progress[\s\S]*Measuring stock rotation[\s\S]*Building ranked offers/,
-  "The AI progress surface must advance through meaningful analysis stages.",
+  /payload\.progress[\s\S]*records completed[\s\S]*kidia_mobile_start_ai_analysis[\s\S]*kidia_mobile_step_ai_analysis/,
+  "The AI progress surface must advance from measured server batches.",
+);
+assert.doesNotMatch(
+  shellScript,
+  /setInterval[\s\S]*progress\s*\+=/,
+  "AI Studio must never display timer-estimated progress.",
+);
+assert.match(
+  aiAnalysisJob,
+  /ORDER_BATCH[\s\S]*PRODUCT_BATCH[\s\S]*orders_processed[\s\S]*products_processed[\s\S]*100 \* \$processed \/ \$total/,
+  "The incremental job must calculate progress from completed order and product records.",
+);
+assert.match(
+  aiAnalysisJob,
+  /stock_status' => 'instock'[\s\S]*process_order_batch[\s\S]*process_product_batch[\s\S]*store_commerce_snapshot/,
+  "The job must analyze all paid orders in bounded batches and only currently in-stock products.",
+);
+assert.match(
+  admin,
+  /wp_ajax_kidia_mobile_start_ai_analysis[\s\S]*wp_ajax_kidia_mobile_step_ai_analysis[\s\S]*ai_ready[\s\S]*has_commerce_snapshot/,
+  "AI results must render only after a completed server snapshot exists.",
 );
 assert.match(
   analytics,
@@ -368,8 +392,18 @@ assert.match(
   "Approved AI actions and owner result decisions must be retained.",
 );
 assert.match(
+  admin,
+  /publish_ai_action_placement[\s\S]*bundle_collection[\s\S]*coupon_banner[\s\S]*product_carousel[\s\S]*save_layout/,
+  "Approved Home decisions must publish a real matching Home Builder block.",
+);
+assert.match(
+  admin,
+  /recommended_product_ids[\s\S]*is_in_stock\(\)[\s\S]*stock_changed/,
+  "Every reviewed action must recheck live stock before it can execute.",
+);
+assert.match(
   aiInsights,
-  /Generated Decisions[\s\S]*Actions & Results[\s\S]*Approve continue[\s\S]*Approve stop/,
+  /Generated Decisions[\s\S]*Actions & Results[\s\S]*Products included in this action[\s\S]*Approve continue[\s\S]*Approve stop/,
   "AI Studio must separate generated decisions from executed actions and results.",
 );
 assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);

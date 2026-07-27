@@ -637,7 +637,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function summary( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_analytics_summary_v1_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = self::summary_cache_key( $from, $to, $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return array_merge( self::empty_summary(), $cached );
@@ -898,7 +898,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function commerce_snapshot( int $from, int $to, string $source = 'all' ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_commerce_snapshot_v3_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = self::commerce_cache_key( $from, $to, $source );
 		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return array_merge( self::empty_commerce_snapshot(), $cached );
@@ -1071,8 +1071,35 @@ final class Kidia_Mobile_Analytics {
 		return $snapshot;
 	}
 
+	/** Returns whether a completed incremental snapshot exists for this selection. */
+	public static function has_commerce_snapshot( int $from, int $to, string $source = 'all' ): bool {
+		return is_array( get_transient( self::commerce_cache_key( $from, $to, $source ) ) );
+	}
+
+	/** Stores a complete incremental snapshot and invalidates its derived summary. */
+	public static function store_commerce_snapshot( int $from, int $to, string $source, array $snapshot ): void {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		set_transient(
+			self::commerce_cache_key( $from, $to, $source ),
+			array_merge( self::empty_commerce_snapshot(), $snapshot ),
+			6 * HOUR_IN_SECONDS
+		);
+		delete_transient( self::summary_cache_key( $from, $to, $source ) );
+	}
+
+	/** Stable cache key shared by the incremental job and readers. */
+	public static function commerce_cache_key( int $from, int $to, string $source = 'all' ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_commerce_snapshot_v4_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
+	private static function summary_cache_key( int $from, int $to, string $source = 'all' ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_analytics_summary_v2_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
 	/** @return array<string,mixed> */
-	private static function empty_commerce_snapshot(): array {
+	public static function empty_commerce_snapshot(): array {
 		return array(
 			'orders'              => 0,
 			'orders_scanned'      => 0,
@@ -1084,6 +1111,7 @@ final class Kidia_Mobile_Analytics {
 			'catalog_in_stock'    => 0,
 			'products'            => array(),
 			'product_sales'       => array(),
+			'catalog_rows'        => array(),
 			'pairs'               => array(),
 			'activity_hours'      => array(),
 			'orders_available'    => 0,
