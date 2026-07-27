@@ -32,16 +32,16 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 	$GLOBALS['kidia_mobile_element_card_styles_printed'] = true;
 	?>
 	<style id="kidia-mobile-element-card-actions">
-		.kidia-builder-block__header {
-			display: grid;
+		.kidia-builder-wrap .kidia-builder-block__header {
+			display: grid !important;
 			grid-template-columns: minmax(0, 1fr);
 			gap: 10px;
 			min-height: 0;
 			padding: 12px;
 		}
 
-		.kidia-builder-block__left {
-			display: grid;
+		.kidia-builder-wrap .kidia-builder-block__left {
+			display: grid !important;
 			grid-template-columns: 38px minmax(0, 1fr);
 			align-items: center;
 			gap: 10px;
@@ -69,29 +69,32 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 			font-size: 14px;
 		}
 
-		.kidia-builder-block__actions {
-			display: grid;
-			grid-template-columns: minmax(112px, auto) minmax(108px, auto) minmax(108px, auto) minmax(102px, auto);
-			align-items: stretch;
+		.kidia-builder-wrap .kidia-builder-block__actions {
+			display: grid !important;
+			grid-template-columns: max-content max-content 42px max-content;
+			align-items: center;
 			justify-content: start;
 			gap: 8px;
 			width: 100%;
+			min-width: 0;
 			padding-top: 10px;
 			border-top: 1px solid #e8efed;
 			direction: rtl;
 		}
 
-		.kidia-builder-block__actions .button,
-		.kidia-builder-block__actions .kidia-builder-switch--card {
+		.kidia-builder-wrap .kidia-builder-block__actions .button {
 			box-sizing: border-box;
-			width: 100%;
+			width: auto !important;
+			min-width: 0;
+			height: 38px;
 			min-height: 38px;
 			margin: 0;
 			border-radius: 7px;
+			white-space: nowrap;
 		}
 
-		.kidia-builder-block__actions .button {
-			display: inline-flex;
+		.kidia-builder-wrap .kidia-builder-block__actions .button {
+			display: inline-flex !important;
 			align-items: center;
 			justify-content: center;
 			gap: 6px;
@@ -99,32 +102,30 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 			font-weight: 600;
 		}
 
-		.kidia-builder-block__actions .kidia-toggle-block-settings {
-			width: 100%;
-			padding-inline: 12px;
+		.kidia-builder-wrap .kidia-builder-block__actions .kidia-toggle-block-settings {
+			width: 42px !important;
+			padding-inline: 0;
 			border-color: #2f806e;
 			color: #236b59;
 		}
 
-		.kidia-builder-block__actions .kidia-builder-switch--card {
-			display: inline-flex;
+		.kidia-builder-wrap .kidia-builder-block__actions .kidia-builder-switch--card {
+			display: inline-flex !important;
 			align-items: center;
 			justify-content: center;
-			gap: 8px;
-			padding-inline: 10px;
-			border: 1px solid #d8e5e1;
-			background: #f7fbfa;
+			gap: 7px;
+			width: auto !important;
+			min-height: 0;
+			margin: 0;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			white-space: nowrap;
 		}
 
-		.kidia-builder-block__actions .kidia-builder-switch--card::before {
-			content: "Visible";
-			color: #2c3338;
-			font-size: 12px;
-			font-weight: 600;
-		}
-
-		.kidia-builder-block__actions .kidia-builder-switch__state {
-			display: none;
+		.kidia-builder-wrap .kidia-builder-block__actions .kidia-builder-switch__state {
+			display: inline-block;
+			white-space: nowrap;
 		}
 
 		.kidia-builder-block__actions .kidia-delete-block {
@@ -137,12 +138,6 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 			font-size: 18px;
 		}
 
-		@media (max-width: 1180px) {
-			.kidia-builder-block__actions {
-				grid-template-columns: repeat(2, minmax(0, 1fr));
-			}
-		}
-
 		@media (max-width: 782px) {
 			.kidia-builder-block__title {
 				grid-template-columns: minmax(0, 1fr);
@@ -153,8 +148,8 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 				display: none;
 			}
 
-			.kidia-builder-block__actions {
-				grid-template-columns: minmax(0, 1fr);
+			.kidia-builder-wrap .kidia-builder-block__actions {
+				grid-template-columns: repeat(2, max-content);
 			}
 		}
 	</style>
@@ -216,7 +211,6 @@ if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
 				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
 			>
 				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
-				<span><?php esc_html_e( 'Settings', 'kidia-mobile-cms' ); ?></span>
 			</button>
 
 			<button
