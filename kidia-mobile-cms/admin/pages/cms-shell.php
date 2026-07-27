@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 				</a>
 			<?php endforeach; ?>
 		</nav>
-		<form class="kidia-cms-save-theme" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="var themeName=window.prompt('<?php echo esc_js( __( 'Enter a name for this theme', 'kidia-mobile-cms' ) ); ?>','');if(themeName===null){return false;}themeName=themeName.trim();if(!themeName){window.alert('<?php echo esc_js( __( 'Please enter a theme name.', 'kidia-mobile-cms' ) ); ?>');return false;}var saveAction=document.querySelector('input[name=&quot;action&quot;][value^=&quot;kidia_mobile_save_&quot;]');var editorForm=saveAction?saveAction.form:null;if(editorForm&&editorForm!==this){var field=document.createElement('input');field.type='hidden';field.name='kidia_save_theme_name';field.value=themeName;editorForm.appendChild(field);if(typeof editorForm.requestSubmit==='function'){editorForm.requestSubmit();}else{editorForm.submit();}return false;}this.elements.theme_name.value=themeName;return true;">
+		<form class="kidia-cms-save-theme" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-kidia-save-theme>
 			<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
 			<input type="hidden" name="theme_operation" value="save">
 			<input type="hidden" name="theme_name" value="">
@@ -36,6 +36,17 @@ defined( 'ABSPATH' ) || exit;
 		</form>
 	</div>
 <?php endif; ?>
+<div class="kidia-theme-name-modal" data-kidia-theme-modal hidden>
+	<div class="kidia-theme-name-modal__backdrop" data-kidia-theme-cancel></div>
+	<div class="kidia-theme-name-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-name-title">
+		<span class="kidia-theme-name-modal__icon dashicons dashicons-saved"></span>
+		<h2 id="kidia-theme-name-title"><?php esc_html_e( 'Save your theme', 'kidia-mobile-cms' ); ?></h2>
+		<p><?php esc_html_e( 'Enter a clear name so you can find and apply this design later.', 'kidia-mobile-cms' ); ?></p>
+		<input type="text" maxlength="80" data-kidia-theme-name placeholder="<?php esc_attr_e( 'Theme name', 'kidia-mobile-cms' ); ?>">
+		<small data-kidia-theme-error hidden><?php esc_html_e( 'Please enter a theme name.', 'kidia-mobile-cms' ); ?></small>
+		<div><button type="button" class="button" data-kidia-theme-cancel><?php esc_html_e( 'Cancel', 'kidia-mobile-cms' ); ?></button><button type="button" class="button button-primary" data-kidia-theme-confirm><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button></div>
+	</div>
+</div>
 <?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>
 	<div class="kidia-cms-billing-warning" role="alert">
 		<span class="dashicons dashicons-warning" aria-hidden="true"></span>

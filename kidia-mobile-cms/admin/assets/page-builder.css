@@ -29,7 +29,7 @@
 .kidia-page-card__header { position:relative; display:flex; min-height:70px; align-items:center; justify-content:flex-start; gap:12px; padding:9px 12px; }
 .kidia-page-card__header { direction:rtl; }
 .kidia-page-card__header > div,.kidia-page-card__identity { display:flex; min-width:0; align-items:center; gap:8px; }
-.kidia-page-card__header small { color:#646970; font-size:11px; }
+.kidia-page-card__header small { display:none; }
 .kidia-page-card__identity strong { font-size:13px; }
 .kidia-page-card__header .kidia-page-drag {
 	background: transparent;
@@ -40,18 +40,18 @@
 .kidia-page-card__header-color { display:flex; align-items:center; gap:9px; color:#236b59; font-size:12px; font-weight:700; }
 .kidia-page-card__header-color input[type="color"] { width:82px; height:35px; margin:0; padding:3px; border:1px solid #8fbeb2; border-radius:7px; background:#fff; cursor:pointer; }
 .kidia-page-card__header > .kidia-card-actions,
-.kidia-builder-block__header > .kidia-card-actions { position:absolute; top:50%; left:12px; margin:0; transform:translateY(-50%); }
+.kidia-builder-block__header > .kidia-card-actions { position:absolute; top:50%; left:18px; margin:0; transform:translateY(-50%); }
 	.kidia-card-actions,
 .kidia-builder-block__actions.kidia-card-actions {
 	display:grid!important;
-	width:330px;
-	min-width:330px;
-	grid-template-columns:88px 88px 50px 86px;
+	width:310px;
+	min-width:310px;
+	grid-template-columns:82px 82px 44px 84px;
 	align-items:center;
 	justify-items:center;
-	gap:4px;
+	gap:2px;
 	direction:ltr!important;
-	flex:0 0 330px;
+	flex:0 0 310px;
 }
 .kidia-card-actions > .kidia-chrome-transfer-actions { display:contents!important; }
 .kidia-card-action--primary { grid-column:1; grid-row:1; }

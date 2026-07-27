@@ -102,7 +102,7 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: nowrap;
-	gap: 7px;
+	gap: 6px;
 }
 
 .kidia-shared-builder-toolbar .kidia-builder-toolbar__actions {
@@ -120,9 +120,10 @@
 	justify-content: center;
 	gap: 5px;
 	margin: 0;
-	padding-inline: 13px;
+	padding-inline: 11px;
 	white-space: nowrap;
 }
+.kidia-shared-builder-toolbar .kidia-page-availability{min-width:158px;grid-template-columns:32px 1fr 38px;gap:7px;padding-inline:8px}
 
 .kidia-shared-builder-toolbar .kidia-builder-toolbar__context {
 	margin-inline-start: 6px;
