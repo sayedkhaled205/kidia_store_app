@@ -72,6 +72,8 @@ assert.match(shellTemplate, /kidia-cms-tabs/, "Customize Your Pages must preserv
 assert.doesNotMatch(shellTemplate, /kidia-cms-more/, "The obsolete More menu must not appear in the page header.");
 assert.doesNotMatch(shellTemplate, /window\.prompt/, "Save Theme must not use the browser prompt.");
 assert.match(shellTemplate, /data-kidia-save-theme[\s\S]*data-kidia-theme-modal[\s\S]*data-kidia-theme-name[\s\S]*Save Theme/, "Every page header must open the centered themed Save Theme dialog.");
+assert.doesNotMatch(shellTemplate.match(/<form class="kidia-cms-save-theme"[\s\S]*?<\/form>/)?.[0] || "", /dashicons/, "The compact Save Theme button must not render a trailing icon.");
+assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*width:max-content;[^}]*min-width:0;/, "The Save Theme button must fit its label instead of keeping an oversized width.");
 assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s\S]*requestSubmit/, "The themed Save Theme dialog must preserve unsaved builder fields before creating the named theme.");
 assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Theme import must use the WooMobile file control and theme-colored action.");
 assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");

@@ -240,7 +240,7 @@ function runHomeBuilderTest() {
   assert.match(actionValue.textContent, /Clothes/, "Category actions must load WooCommerce category choices.");
   assert.match(builderCss, /\.kidia-builder-wrap\s*\{[\s\S]*?max-width:\s*1380px;/, "The full Builder workspace must keep its original desktop width.");
   assert.match(builderCss, /grid-template-columns:\s*350px minmax\(0, 1fr\)/, "The editor must reserve the larger canonical phone preview without crowding the settings.");
-	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*313\.5px;[\s\S]*?margin-inline:\s*auto;/, "The Home phone must display the complete proportionally reduced viewport centered beside the element editor.");
+	assert.match(builderCss, /\.kidia-mobile-preview__device\s*\{[\s\S]*?width:\s*330px;[\s\S]*?margin-inline:\s*auto;/, "The Home phone must display the complete restored viewport centered beside the element editor.");
 	assert.match(builderCss, /\.kidia-mobile-preview\s*\{[\s\S]*?transform:\s*none;/, "The Home phone must remain centered in its reserved preview column on every page.");
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
@@ -512,11 +512,11 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(pageBuilder, /kidia-page-builder__heading|kidia-page-phone__speaker/, "Shared page builders must start directly with their workspace and use an even phone frame.");
 	assert.doesNotMatch(categoryBuilder, /kidia-category-phone__status/, "The Category preview must not render a fake operating-system status bar.");
 	assert.doesNotMatch(categoryBuilder, /<h1>[\s\S]*Category Page Builder|Control the Category element once|kidia-category-phone__speaker/, "Category must omit its redundant heading and decorative phone speaker.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*313\.5px;/, "The Home phone must be reduced by five percent without clipping its content.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*width:\s*330px;/, "The Home phone must use the restored full preview width.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[^}]*border:\s*3px solid #2f806e;[^}]*background:\s*#2f806e;/, "The Home phone frame must use the Kidia brand color.");
-	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline:auto;/, "Every page phone must use the same proportional five-percent reduction and remain centered.");
+	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*width:330px;[^}]*margin-inline:auto;/, "Every page phone must use the same restored width and remain centered.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "Every page phone frame must use the Kidia brand color.");
-	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:313\.5px;[^}]*margin-inline:auto;/, "The Category phone must use the same proportional five-percent reduction and remain centered.");
+	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*width:330px;[^}]*margin-inline:auto;/, "The Category phone must use the same restored width and remain centered.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-phone\s*\{[^}]*border:3px solid #2f806e;[^}]*background:#2f806e;/, "The Category phone frame must use the Kidia brand color.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-preview\s*\{[^}]*transform:none/, "Page phones must remain centered in their preview column.");
 	assert.match(readAsset("category-builder.css"), /\.kidia-category-mobile-preview\s*\{[^}]*transform:none/, "The Category phone must remain centered in its preview column.");
@@ -527,10 +527,10 @@ function runMergeControlsContractTest() {
 	const flutterPreviewBridge = readAsset("flutter-preview-bridge.js");
 	const homeBlockTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:82px 82px 44px 84px;[\s\S]*gap:2px;[\s\S]*direction:ltr!important;/, "Every closed element card must keep its four actions compact and close together.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*662\.89px;/, "Home preview height must be reduced by five percent.");
-	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:662\.89px;/, "Every page preview height must use the same five-percent reduction.");
-	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:662\.89px;/, "Category preview height must use the same five-percent reduction.");
-	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*zoom:\.8286125;/, "Flutter must keep the canonical mobile viewport and zoom the complete interactive screen, including its footer, by five percent.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*697\.78px;/, "Home preview must restore the taller mobile frame.");
+	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:697\.78px;/, "Every page preview must use the restored mobile height.");
+	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:697\.78px;/, "Category preview must use the restored mobile height.");
+	assert.match(pageBuilderCss, /\.kidia-flutter-preview\s*\{[^}]*width:360px;[^}]*height:800px;[^}]*zoom:\.872222;/, "Flutter must keep the canonical mobile viewport and scale the complete interactive screen to the restored frame.");
 	assert.match(pageBuilder, /file_exists\( KIDIA_MOBILE_CMS_PATH \. 'admin\/flutter-preview\/index\.html' \)[\s\S]*id="kidia-flutter-preview"[\s\S]*kidia-legacy-preview-fallback/, "Page builders must use the embedded Flutter Web preview with the legacy preview retained only as a local fallback.");
 	assert.match(flutterPreviewBridge, /fetch\(String\(config\.layoutPreviewEndpoint\)[\s\S]*body: JSON\.stringify\(\{ layout: serializeLayout\(\) \}\)[\s\S]*sendLayout\(layout\)/, "Unsaved fields must pass through the canonical server normalizer before Flutter renders them.");
 	assert.match(flutterPreviewBridge, /controller\.abort\(\)[\s\S]*requestNumber[\s\S]*number === requestNumber/, "A newer field value must cancel and supersede an older preview request instead of appearing late.");
@@ -546,7 +546,12 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(pageBuilderCss, /\.kidia-page-card__body[^,{]*\.kidia-card-actions/, "The shared action layout must never target controls inside an open element body.");
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-page-card__header \.kidia-chrome-transfer-actions\s*\{[^}]*order:/, "No page-specific Header/Footer rule may override the canonical closed-card action slots.");
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card \.kidia-card-actions\s*\{[^}]*margin-inline/, "Header and Footer must not shift the shared action strip away from the common physical left edge.");
-	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*min-height:28px;[^}]*padding-inline:8px;[^}]*font-size:12px;/, "Fixed Header and Footer transfer buttons must match the standard element action-button dimensions.");
+	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*height:38px;[^}]*min-height:38px;[^}]*font-size:12px;/, "Fixed Header and Footer transfer buttons must match the standard element action-button dimensions.");
+	assert.doesNotMatch(builderToolbar, /<style\b/, "The shared toolbar must not inject page-specific CSS that overrides the common layout.");
+	assert.doesNotMatch(homeBlockTemplate, /<style\b/, "Home element cards must rely on the common closed-card action grid.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-builder-status\s*\{\s*display:none!important\s*\}/, "Only the publication badge may stay hidden.");
+	assert.doesNotMatch(readAsset("home-builder.css"), /\.kidia-builder-block__type\s*,\s*\.kidia-builder-status\s*\{\s*display:none!important/, "Element type must remain visible below the element name.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-element-picker__content\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/, "Add Element types must render as adjacent grid tiles.");
 	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
 	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,\s*item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
 	for (const titleSetting of ["title_font_size", "title_font_weight", "title_alignment", "title_max_width_percent", "title_letter_spacing", "title_line_height", "title_transform"]) {

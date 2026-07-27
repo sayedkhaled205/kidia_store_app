@@ -125,6 +125,80 @@
 }
 .kidia-shared-builder-toolbar .kidia-page-availability{min-width:158px;grid-template-columns:32px 1fr 38px;gap:7px;padding-inline:8px}
 
+.kidia-builder-toolbar--home {
+	align-items: center;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__primary-actions,
+.kidia-builder-toolbar--home .kidia-builder-toolbar__secondary-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: 7px;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__primary-actions {
+	direction: rtl;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__secondary-actions {
+	direction: ltr;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__secondary-actions input[type="submit"] {
+	order: 1;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__secondary-actions #kidia-expand-all {
+	order: 2;
+}
+
+.kidia-builder-toolbar--home .kidia-builder-toolbar__secondary-actions #kidia-collapse-all {
+	order: 3;
+}
+
+.kidia-builder-toolbar--home :is(.button, .kidia-page-availability) {
+	box-sizing: border-box;
+	height: 38px;
+	min-height: 38px;
+	margin: 0;
+	white-space: nowrap;
+}
+
+.kidia-builder-toolbar--home .kidia-page-availability {
+	min-width: 202px;
+	grid-template-columns: 30px minmax(0, 1fr) 42px;
+	gap: 7px;
+	padding-block: 3px;
+}
+
+.kidia-builder-toolbar--home .kidia-page-availability__icon {
+	width: 30px;
+	height: 30px;
+}
+
+.kidia-builder-toolbar--home .kidia-page-availability__copy {
+	display: flex !important;
+	align-items: center;
+	gap: 5px;
+	line-height: 1;
+}
+
+.kidia-builder-toolbar--home .kidia-page-availability > .kidia-page-availability__copy > .kidia-toggle-state {
+	margin-top: 0 !important;
+}
+
+.kidia-builder-toolbar--home .button .dashicons {
+	display: inline-grid;
+	width: 18px;
+	height: 18px;
+	place-items: center;
+	flex: 0 0 18px;
+	font-size: 18px;
+	line-height: 18px;
+	vertical-align: middle;
+}
+
 .kidia-shared-builder-toolbar .kidia-builder-toolbar__context {
 	margin-inline-start: 6px;
 	color: #236b59;
@@ -191,6 +265,7 @@
 	:is(.kidia-page-builder, .kidia-builder-wrap, .kidia-category-builder) .kidia-shared-builder-toolbar { width: 100%; }
 	.kidia-shared-builder-toolbar { flex-wrap: wrap; }
 	.kidia-shared-builder-toolbar :is(.kidia-builder-toolbar__actions,.kidia-builder-toolbar__save) { flex-wrap: wrap; }
+	.kidia-builder-toolbar--home :is(.kidia-builder-toolbar__primary-actions,.kidia-builder-toolbar__secondary-actions) { flex-wrap: wrap; }
 }
 
 /* Every settings section starts with its first field on the physical right. */
