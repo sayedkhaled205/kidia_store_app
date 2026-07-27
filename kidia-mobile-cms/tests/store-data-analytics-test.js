@@ -227,6 +227,21 @@ assert.match(
 );
 assert.match(
   analytics,
+  /kidia_analytics_summary_v1_[\s\S]*get_transient[\s\S]*set_transient/,
+  "One generated AI summary must be reused instead of running the same heavy queries twice.",
+);
+assert.match(
+  admin,
+  /ai_generated[\s\S]*if \( \$ai_generated \)[\s\S]*Kidia_Mobile_Analytics::summary[\s\S]*Kidia_Mobile_AI_Offer_Engine::recommendations/,
+  "AI Studio must not calculate analytics until Generate Analysis is requested.",
+);
+assert.match(
+  aiInsights,
+  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Generate Analysis[\s\S]*Ready when you are/,
+  "AI Studio must open in a lightweight ready state and expose an explicit generate action.",
+);
+assert.match(
+  analytics,
   /funnel_snapshot[\s\S]*view_item[\s\S]*add_to_cart[\s\S]*begin_checkout[\s\S]*purchase/,
   "AI Studio must build a closed tracked funnel in the real journey order.",
 );

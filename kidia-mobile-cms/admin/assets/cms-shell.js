@@ -157,6 +157,17 @@
 		datePreset.addEventListener('change', syncCustomDates);
 		syncCustomDates();
 	}
+	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
+	if (aiGenerateForm) {
+		aiGenerateForm.addEventListener('submit', function () {
+			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
+			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
+			if (!button) return;
+			button.disabled = true;
+			button.classList.add('is-generating');
+			if (label) label.textContent = 'Generating analysis...';
+		});
+	}
 	const recoveryDelivery = document.querySelector('[data-recovery-delivery]');
 	const recoverySchedule = document.querySelector('[data-recovery-schedule]');
 	if (recoveryDelivery && recoverySchedule) {
