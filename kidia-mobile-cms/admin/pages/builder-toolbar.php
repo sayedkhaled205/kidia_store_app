@@ -61,49 +61,6 @@ if ( ! isset( $GLOBALS['kidia_mobile_home_builder_ui_styles_printed'] ) ) {
 			gap: 7px;
 		}
 
-		/* Fixed header/footer cards: icon, name, status, expand, copy and paste. */
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-page-card__header {
-			display: flex;
-			align-items: center;
-			justify-content: flex-start;
-			gap: 10px;
-			direction: rtl;
-		}
-
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-fixed-chrome-identity {
-			display: inline-flex;
-			align-items: center;
-			gap: 7px;
-			margin-inline-end: 0;
-			white-space: nowrap;
-		}
-
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-card-actions {
-			display: flex;
-			align-items: center;
-			flex: 1;
-			gap: 8px;
-			direction: rtl;
-		}
-
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-fixed-chrome-toggle { order: 1; }
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-fixed-chrome-expand { order: 2; }
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-chrome-transfer-actions {
-			order: 3;
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-			direction: rtl;
-		}
-
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-builder-switch__state::before {
-			content: "Inactive";
-		}
-
-		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-builder-switch input:checked ~ .kidia-builder-switch__state::before {
-			content: "Active";
-		}
-
 		@media (max-width: 1120px) {
 			.kidia-builder-toolbar--home {
 				align-items: stretch;
