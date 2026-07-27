@@ -27,6 +27,8 @@ class MobileAnalytics {
               sendTimeout: const Duration(seconds: 4),
             ),
           ),
+      // The public constructor parameter remains `preferences` for test injection.
+      // ignore: prefer_initializing_formals
       _preferences = preferences;
 
   static const String _clientKey = 'kidia_mobile_analytics_client_v1';
