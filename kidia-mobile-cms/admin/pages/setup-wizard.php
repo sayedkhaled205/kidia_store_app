@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 			<p><?php esc_html_e( 'Choose a complete storefront, connect it to your WooCommerce catalog, then review the application before applying it.', 'kidia-mobile-cms' ); ?></p>
 		</div>
 		<div class="kidia-setup-progress" aria-label="<?php esc_attr_e( 'Setup progress', 'kidia-mobile-cms' ); ?>">
-			<?php $progress_steps = count( $setup_pages ) + 2; ?>
+			<?php $progress_steps = count( $setup_pages ) + 3; ?>
 			<?php for ( $progress_step = 1; $progress_step <= $progress_steps; $progress_step++ ) : ?>
 				<span class="<?php echo 1 === $progress_step ? 'is-active' : ''; ?>"><?php echo esc_html( (string) $progress_step ); ?></span>
 				<?php if ( $progress_step < $progress_steps ) : ?><i></i><?php endif; ?>
@@ -95,12 +95,34 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 		</section>
 
+		<?php ++$setup_step; ?>
+		<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>">
+			<div class="kidia-setup-step-heading">
+				<span><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
+				<div><h2><?php esc_html_e( 'Export your application', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Apply the selected setup and download the final build package as the last step.', 'kidia-mobile-cms' ); ?></p></div>
+			</div>
+			<div class="kidia-export-ready-card <?php echo ! empty( $push_export_config['enabled'] ) ? 'is-ready' : 'needs-push'; ?>">
+				<span class="kidia-review-icon"><span class="dashicons dashicons-download"></span></span>
+				<div>
+					<h3><?php esc_html_e( 'WooMobile build package', 'kidia-mobile-cms' ); ?></h3>
+					<p><?php esc_html_e( 'Includes the store URL, application identity, API endpoints and the public Push bootstrap used by every app generated from this plugin.', 'kidia-mobile-cms' ); ?></p>
+					<ul>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Server credentials stay securely in WordPress.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'The app reads the current Push configuration from the plugin automatically.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons <?php echo ! empty( $push_export_config['enabled'] ) ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span><?php echo ! empty( $push_export_config['enabled'] ) ? esc_html__( 'Push is connected and ready for this export.', 'kidia-mobile-cms' ) : esc_html__( 'The app can be exported now; connect FCM or OneSignal to activate real Push delivery.', 'kidia-mobile-cms' ); ?></li>
+					</ul>
+					<?php if ( empty( $push_export_config['enabled'] ) ) : ?><a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-push-notifications' ) ); ?>"><?php esc_html_e( 'Open Push connection settings', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
+					<?php if ( ! empty( $app_export_state['exported_at'] ) ) : ?><small><?php echo esc_html( sprintf( __( 'Last export: %s', 'kidia-mobile-cms' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $app_export_state['exported_at'] ) ) ) ); ?></small><?php endif; ?>
+				</div>
+			</div>
+		</section>
+
 		<div class="kidia-setup-actions">
 			<button type="button" class="button kidia-setup-back" hidden><?php esc_html_e( 'Back', 'kidia-mobile-cms' ); ?></button>
 			<div></div>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms' ) ); ?>" class="button kidia-setup-skip"><?php esc_html_e( 'Exit setup', 'kidia-mobile-cms' ); ?></a>
 			<button type="button" class="button button-primary kidia-setup-next"><?php esc_html_e( 'Continue', 'kidia-mobile-cms' ); ?></button>
-			<button type="submit" class="button button-primary kidia-setup-apply" hidden><?php esc_html_e( 'Apply theme', 'kidia-mobile-cms' ); ?></button>
+			<button type="submit" name="export_after_apply" value="1" class="button button-primary kidia-setup-apply" hidden><span class="dashicons dashicons-download" aria-hidden="true"></span><?php esc_html_e( 'Export App', 'kidia-mobile-cms' ); ?></button>
 		</div>
 	</form>
 </div>

@@ -9,8 +9,12 @@ const root = path.resolve(__dirname, "..");
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 
 const service = read("includes", "class-kidia-mobile-setup-wizard.php");
+const exporter = read("includes", "class-kidia-mobile-app-exporter.php");
+const pushService = read("includes", "class-kidia-mobile-push-service.php");
+const bootstrap = read("includes", "class-kidia-mobile-cms.php");
 const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const wizardTemplate = read("admin", "pages", "setup-wizard.php");
+const dashboardTemplate = read("admin", "pages", "dashboard.php");
 const savedThemesTemplate = read("admin", "pages", "saved-themes.php");
 const shellTemplate = read("admin", "pages", "cms-shell.php");
 const wizardCss = read("admin", "assets", "setup-wizard.css");
@@ -35,6 +39,14 @@ assert.match(service, /submitted\['page_themes'\]/, "Theme application must acce
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
 assert.match(service, /strip_catalog_images/, "Saved themes must exclude product and category catalog images.");
 assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
+assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile_App_Exporter\(\)\)->register/, "The app exporter must load and register with the plugin.");
+assert.match(exporter, /woomobile-app-build-package[\s\S]*app-config\.json[\s\S]*push-config\.json[\s\S]*dart-defines\.json/, "Export App must download a portable build package.");
+assert.match(exporter, /Kidia_Mobile_Push_Service::client_configuration/, "Every exported application must inherit the plugin's public Push bootstrap.");
+for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key", "webhook_secret"]) {
+  assert.doesNotMatch(exporter, new RegExp(`\\['${secret}'\\]`), `Export App must never expose ${secret}.`);
+}
+assert.match(pushService, /'\/push\/config'[\s\S]*public_configuration/, "Exported apps must be able to refresh public Push configuration from WordPress.");
+assert.match(pushService, /fcm_api_key[\s\S]*fcm_app_id[\s\S]*fcm_sender_id/, "FCM exports must contain the public Firebase client fields.");
 
 assert.match(admin, /admin_post_kidia_mobile_apply_setup_wizard/, "Wizard apply action must be registered.");
 assert.match(admin, /admin_post_kidia_mobile_manage_saved_theme/, "Saved theme actions must be registered.");
@@ -49,6 +61,8 @@ assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme 
 assert.match(wizardTemplate, /Choose %s page design/, "Every design step heading must clearly identify that it configures a page.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
+assert.match(wizardTemplate, /Export your application[\s\S]*name="export_after_apply"[\s\S]*Export App/, "Setup Wizard must finish with Export App.");
+assert.match(dashboardTemplate, /Build your app[\s\S]*kidia_mobile_export_app[\s\S]*Export App/, "Overview must expose Export App in the last launch step.");
 assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
@@ -115,7 +129,7 @@ assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*h
 assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
-  <div class="kidia-setup-progress">${Array.from({ length: 8 }, () => "<span></span>").join("")}</div>
+  <div class="kidia-setup-progress">${Array.from({ length: 9 }, () => "<span></span>").join("")}</div>
   <form class="kidia-setup-form">
     <section class="kidia-setup-step" data-step="1"><input required value="Store"></section>
     <section class="kidia-setup-step" data-step="2"></section>
@@ -125,6 +139,7 @@ const wizardDom = new JSDOM(`<!doctype html><body>
     <section class="kidia-setup-step" data-step="6"></section>
     <section class="kidia-setup-step" data-step="7"></section>
     <section class="kidia-setup-step" data-step="8"><h3 data-review-name></h3></section>
+    <section class="kidia-setup-step" data-step="9"></section>
     <input name="setup[app_name]" value="Store">
     <button type="button" class="kidia-setup-back"></button>
     <button type="button" class="kidia-setup-next"></button>
@@ -136,9 +151,9 @@ wizardDom.window.eval(read("admin", "assets", "setup-wizard.js"));
 const next = wizardDom.window.document.querySelector(".kidia-setup-next");
 next.click();
 assert.equal(wizardDom.window.document.querySelector('[data-step="2"]').classList.contains("is-active"), true, "Continue must advance the wizard.");
-for (let step = 3; step <= 8; step++) next.click();
+for (let step = 3; step <= 9; step++) next.click();
 assert.equal(next.hidden, true, "Continue must disappear on the final setup step.");
-assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Apply Theme must appear only on the final setup step.");
+assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Export App must appear only on the final setup step.");
 
 const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></div></body>`, { runScripts: "outside-only" });
 shellDom.window.scrollTo = () => {};

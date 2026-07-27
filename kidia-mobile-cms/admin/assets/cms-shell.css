@@ -64,6 +64,7 @@ body[class*="kidia-mobile"] #wpbody-content{
 	color:#4d5d59;
 	text-decoration:none;
 	font-weight:650;
+	white-space:nowrap;
 }
 .kidia-cms-sidebar__nav a:hover,
 .kidia-cms-sidebar__nav a.is-active{

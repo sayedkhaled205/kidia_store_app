@@ -40,6 +40,9 @@ final class Kidia_Mobile_Push_Service {
 			'onesignal_app_id'   => '',
 			'onesignal_api_key'  => '',
 			'fcm_project_id'     => '',
+			'fcm_api_key'        => '',
+			'fcm_app_id'         => '',
+			'fcm_sender_id'      => '',
 			'fcm_client_email'   => '',
 			'fcm_private_key'    => '',
 			'webhook_url'        => '',
@@ -47,6 +50,44 @@ final class Kidia_Mobile_Push_Service {
 		);
 		$saved = get_option( self::SETTINGS_OPTION, array() );
 		return array_merge( $defaults, is_array( $saved ) ? $saved : array() );
+	}
+
+	/** @return array<string,mixed> Public settings embedded in every exported application. */
+	public static function client_configuration(): array {
+		$settings = self::settings();
+		$status   = self::connection_status();
+		$provider = (string) $status['provider'];
+		$client_ready = false;
+		$config = array();
+		if ( 'onesignal' === $provider ) {
+			$client_ready = '' !== trim( (string) $settings['onesignal_app_id'] );
+			$config['oneSignalAppId'] = (string) $settings['onesignal_app_id'];
+		} elseif ( 'fcm' === $provider ) {
+			$client_ready = '' !== trim( (string) $settings['fcm_project_id'] )
+				&& '' !== trim( (string) $settings['fcm_api_key'] )
+				&& '' !== trim( (string) $settings['fcm_app_id'] )
+				&& '' !== trim( (string) $settings['fcm_sender_id'] );
+			$config['firebase'] = array(
+				'projectId'         => (string) $settings['fcm_project_id'],
+				'apiKey'            => (string) $settings['fcm_api_key'],
+				'appId'             => (string) $settings['fcm_app_id'],
+				'messagingSenderId' => (string) $settings['fcm_sender_id'],
+			);
+		}
+		return array_merge(
+			array(
+				'enabled'             => ! empty( $status['connected'] ) && $client_ready,
+				'provider'            => $provider,
+				'serverConnected'     => ! empty( $status['connected'] ),
+				'clientReady'         => $client_ready,
+				'requiresNativeSetup' => ! $client_ready,
+				'configUrl'           => rest_url( 'woo-mobile/v1/push/config' ),
+				'registrationUrl'     => rest_url( 'woo-mobile/v1/push/devices' ),
+				'eventsUrl'           => rest_url( 'woo-mobile/v1/push/events' ),
+				'openActionContract'  => 'destination + destination_id + action_url',
+			),
+			$config
+		);
 	}
 
 	/** @return array{connected:bool,provider:string,label:string,reason:string,devices:int} */
@@ -84,6 +125,15 @@ final class Kidia_Mobile_Push_Service {
 	public function register_routes(): void {
 		register_rest_route(
 			'woo-mobile/v1',
+			'/push/config',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'public_configuration' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+		register_rest_route(
+			'woo-mobile/v1',
 			'/push/devices',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -100,6 +150,10 @@ final class Kidia_Mobile_Push_Service {
 				'permission_callback' => '__return_true',
 			)
 		);
+	}
+
+	public function public_configuration(): WP_REST_Response {
+		return rest_ensure_response( self::client_configuration() );
 	}
 
 	public function register_device( WP_REST_Request $request ) {
@@ -158,6 +212,9 @@ final class Kidia_Mobile_Push_Service {
 			'onesignal_app_id'  => sanitize_text_field( (string) ( $raw['onesignal_app_id'] ?? '' ) ),
 			'onesignal_api_key' => $this->secret_or_existing( $raw['onesignal_api_key'] ?? '', $current['onesignal_api_key'] ),
 			'fcm_project_id'    => sanitize_key( (string) ( $raw['fcm_project_id'] ?? '' ) ),
+			'fcm_api_key'       => sanitize_text_field( (string) ( $raw['fcm_api_key'] ?? '' ) ),
+			'fcm_app_id'        => sanitize_text_field( (string) ( $raw['fcm_app_id'] ?? '' ) ),
+			'fcm_sender_id'     => sanitize_text_field( (string) ( $raw['fcm_sender_id'] ?? '' ) ),
 			'fcm_client_email'  => sanitize_email( (string) ( $raw['fcm_client_email'] ?? '' ) ),
 			'fcm_private_key'   => $this->secret_or_existing( $raw['fcm_private_key'] ?? '', $current['fcm_private_key'] ),
 			'webhook_url'       => esc_url_raw( (string) ( $raw['webhook_url'] ?? '' ) ),

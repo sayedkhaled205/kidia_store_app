@@ -391,6 +391,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$identity     = $wizard->identity();
 		$themes       = Kidia_Mobile_Setup_Wizard::themes();
 		$setup_pages  = Kidia_Mobile_Setup_Wizard::setup_pages();
+		$push_export_config = Kidia_Mobile_Push_Service::client_configuration();
+		$app_export_state   = Kidia_Mobile_App_Exporter::state();
 		$catalog_stats  = array( 'products' => 0, 'categories' => 0, 'images' => 0 );
 		$catalog_images = array();
 		if ( function_exists( 'wp_count_posts' ) ) {
@@ -1021,6 +1023,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$provider_status = Kidia_Mobile_Push_Service::connection_status();
 		$provider_connected = ! empty( $provider_status['connected'] );
 		$provider_settings = Kidia_Mobile_Push_Service::settings();
+		$push_client_config = Kidia_Mobile_Push_Service::client_configuration();
 		$push_metrics = Kidia_Mobile_Push_Service::aggregate_metrics();
 		$subscribed_customers = absint( get_option( 'kidia_mobile_push_subscribed_customers', 0 ) );
 		$registered_devices = absint( get_option( 'kidia_mobile_push_registered_devices', 0 ) );
@@ -1243,6 +1246,9 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$submitted = isset( $_POST['setup'] ) && is_array( $_POST['setup'] ) ? wp_unslash( $_POST['setup'] ) : array();
 		$theme     = ( new Kidia_Mobile_Setup_Wizard() )->apply( is_array( $submitted ) ? $submitted : array() );
+		if ( ! empty( $_POST['export_after_apply'] ) ) {
+			( new Kidia_Mobile_App_Exporter() )->download();
+		}
 		wp_safe_redirect(
 			add_query_arg(
 				array(
@@ -1686,6 +1692,9 @@ final class Kidia_Mobile_CMS_Admin {
 					'https://woomobile.app/connect'
 				)
 			);
+			$app_export_state   = Kidia_Mobile_App_Exporter::state();
+			$app_export_current = Kidia_Mobile_App_Exporter::is_current();
+			$push_export_config = Kidia_Mobile_Push_Service::client_configuration();
 
     		require
     			KIDIA_MOBILE_CMS_PATH .
