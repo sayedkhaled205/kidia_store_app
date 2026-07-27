@@ -160,6 +160,12 @@ final class Kidia_Mobile_Recovery_Campaigns {
 			if ( $coupon_id <= 0 ) {
 				continue;
 			}
+			if ( class_exists( 'Kidia_Mobile_Coupon_Channel' ) ) {
+				Kidia_Mobile_Coupon_Channel::set(
+					$coupon_id,
+					'mobile' === sanitize_key( (string) $cart['source'] ) ? 'mobile' : 'website'
+				);
+			}
 
 			$token = wp_generate_uuid4();
 			$row = array(
@@ -214,13 +220,14 @@ final class Kidia_Mobile_Recovery_Campaigns {
 	}
 
 	private function dispatch( int $campaign_id, array $payload ): void {
-		$payload['sent_at'] = time();
-		$payload['status']  = has_action( 'kidia_mobile_send_push_notification' ) ? 'queued' : 'provider_required';
-		do_action( 'kidia_mobile_send_push_notification', $payload );
+		$payload = class_exists( 'Kidia_Mobile_Push_Service' )
+			? Kidia_Mobile_Push_Service::dispatch( $payload )
+			: array_merge( $payload, array( 'sent_at' => time(), 'status' => 'provider_required' ) );
+		$campaign_status = 'sent' === (string) ( $payload['status'] ?? '' ) ? 'sent' : (string) ( $payload['status'] ?? 'provider_required' );
 		global $wpdb;
 		$wpdb->update(
 			self::table(),
-			array( 'status' => 'sent', 'sent_at' => current_time( 'mysql', true ) ),
+			array( 'status' => $campaign_status, 'sent_at' => current_time( 'mysql', true ) ),
 			array( 'id' => $campaign_id ),
 			array( '%s', '%s' ),
 			array( '%d' )

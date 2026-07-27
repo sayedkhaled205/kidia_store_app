@@ -302,6 +302,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         context.push('/cart');
         return;
 
+      case 'bundle':
+        if (value.isEmpty) {
+          _showMissingActionValue(context);
+          return;
+        }
+        context.push('/bundle/$encodedValue');
+        return;
+
       case 'account':
         context.go('/account');
         return;

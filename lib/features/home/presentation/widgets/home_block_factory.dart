@@ -34,6 +34,11 @@ abstract final class HomeBlockFactory {
         block: productGridBlock,
         onAction: onAction,
       ),
+      BundleCollectionBlock bundleCollectionBlock =>
+        BundleCollectionBlockWidget(
+          block: bundleCollectionBlock,
+          onAction: onAction,
+        ),
       SectionHeaderBlock sectionHeaderBlock => SectionHeaderBlockWidget(
         block: sectionHeaderBlock,
         onAction: onAction,

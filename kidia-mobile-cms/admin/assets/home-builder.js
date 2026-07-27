@@ -557,6 +557,13 @@
 			items = limitedItems(runtimeData.items, count, 6);
 			return '<section class="kidia-preview-section kidia-preview-section--products">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-product-grid" style="--kidia-preview-columns:' + columns + '">' + (items.length ? items.map(function (product) { return renderProductCard(product, settings); }).join("") : sampleCards(count, "kidia-preview-product-card", "Product")) + "</div></section>";
 
+		case "bundle_collection":
+			count = Math.round(numberInRange(settings.limit, 6, 1, 12));
+			items = limitedItems(runtimeData.items, count, 12);
+			return '<section class="kidia-preview-section kidia-preview-section--bundles">' + blockHeading(settings, name, runtimeData) + '<div class="kidia-preview-bundle-row is-' + escapeHtml(settings.layout || "carousel") + '">' + (items.length ? items.map(function (bundle) {
+				return '<article class="kidia-preview-bundle-card" style="border-radius:' + numberInRange(settings.card_radius, 16, 0, 40) + 'px"><span class="dashicons dashicons-products"></span><strong>' + escapeHtml(bundle.name || "Bundle") + '</strong><small>' + escapeHtml(bundle.description || "") + '</small>' + (settings.show_discount === "" || !bundle.discount_value ? "" : '<b>' + escapeHtml(String(bundle.discount_value)) + '% off</b>') + '<em>' + escapeHtml(bundle.cta_label || "Customize bundle") + '</em></article>';
+			}).join("") : sampleCards(Math.min(count, 3), "kidia-preview-bundle-card", "Bundle")) + "</div></section>";
+
 		case "section_header":
 			return '<div class="kidia-preview-section-heading kidia-preview-section-heading--standalone"><div><strong>' + escapeHtml(settings.title || name) + "</strong>" + (settings.subtitle ? "<small>" + escapeHtml(settings.subtitle) + "</small>" : "") + "</div>" + (settings.show_view_all === "" ? "" : "<span>" + escapeHtml(settings.view_all_label || "View all") + " ‹</span>") + "</div>";
 

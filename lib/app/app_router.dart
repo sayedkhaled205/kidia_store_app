@@ -13,6 +13,7 @@ import '../features/auth/presentation/auth_screen.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/auth/presentation/social_auth_callback_screen.dart';
 import '../features/brands/presentation/brands_screen.dart';
+import '../features/bundles/presentation/bundle_builder_screen.dart';
 import '../features/cart/data/network/cart_token_store.dart';
 import '../features/cart/domain/entities/cart_item.dart';
 import '../features/cart/presentation/adapters/product_purchase_selection.dart'
@@ -88,6 +89,14 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                   child: HomePage(),
                 ),
                 routes: [
+                  GoRoute(
+                    path: 'bundle/:bundleId',
+                    builder: (context, state) {
+                      final String bundleId =
+                          state.pathParameters['bundleId'] ?? '';
+                      return BundleBuilderScreen(bundleId: bundleId);
+                    },
+                  ),
                   GoRoute(
                     path: 'product/:productId',
                     builder: (context, state) {

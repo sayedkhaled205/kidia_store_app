@@ -106,6 +106,7 @@ function homeMarkup() {
     homeBlock("spacer", 14, input("height", "24")),
     homeBlock("quick_links", 15, `${input("title", "Shop by age")}${input("layout", "carousel")}${input("columns", "4")}<div class="kidia-repeatable-items">${repeatableItem}</div><button type="button" class="kidia-add-repeatable-item">Add Link</button><script type="text/html" class="tmpl-kidia-repeatable-item">${repeatableTemplate}</script>`),
     homeBlock("banner_grid", 16, `${input("title", "Collections")}${input("layout", "featured")}${input("columns", "2")}${input("aspect_ratio", "1")}<div class="kidia-repeatable-items">${repeatableItem}</div><button type="button" class="kidia-add-repeatable-item">Add Banner</button><script type="text/html" class="tmpl-kidia-repeatable-item">${repeatableTemplate}</script>`),
+    homeBlock("bundle_collection", 17, `${input("title", "Bundles selected for you")}${input("subtitle", "Save more together")}${input("layout", "carousel")}${input("columns", "2")}${input("limit", "4")}`),
   ].join("");
 
   const createTemplate = homeBlock("spacer", 987654321, input("height", "32"), "__BLOCK_NAME__")
@@ -208,14 +209,25 @@ function runHomeBuilderTest() {
           ],
         },
       },
+      {
+        id: "bundle_collection_17",
+        type: "bundle_collection",
+        data: {
+          title: "Bundles selected for you",
+          items: [
+            { id: "bundle_1", name: "Complete the look", description: "Choose any two products", discount_value: 10, cta_label: "Customize bundle" },
+            { id: "bundle_2", name: "Frequently bought together", description: "A measured product pair", discount_value: 15, cta_label: "Add bundle" },
+          ],
+        },
+      },
     ],
   };
   window.eval(readAsset("home-builder.js"));
 
   assert.equal(window.kidiaHomeBuilderBooted, true, "Home Builder must boot.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 17, "All 17 element editors must load.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 17, "Every editor must use the compact essentials panel.");
-  assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 17, "Every editor must use the shared settings panel.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "All 18 element editors must load.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-essentials").length, 18, "Every editor must use the compact essentials panel.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-settings-content").length, 18, "Every editor must use the shared settings panel.");
   const actionType = window.document.querySelector('[name="blocks[3][settings][action_type]"]');
   let actionValue = window.document.querySelector('[name="blocks[3][settings][action_value]"]');
   assert.equal(actionValue.tagName, "SELECT", "Product actions must replace Action Value with a product selector.");
@@ -251,7 +263,7 @@ function runHomeBuilderTest() {
     ".kidia-preview-section-heading--standalone", ".kidia-preview-brand-row", ".kidia-preview-promo",
     ".kidia-preview-coupon", ".kidia-preview-countdown", ".kidia-preview-video",
     ".kidia-preview-text", ".kidia-preview-divider", ".kidia-preview-spacer",
-    ".kidia-preview-quick-links", ".kidia-preview-banner-grid",
+    ".kidia-preview-quick-links", ".kidia-preview-banner-grid", ".kidia-preview-bundle-row",
   ];
   previewSelectors.forEach((selector) => assert.ok(window.document.querySelector(selector), `${selector} must render in the phone preview.`));
   assert.equal(window.document.querySelectorAll(".kidia-preview-product-row .kidia-preview-product-card img").length, 3, "Product Carousel must render real API product images.");
@@ -312,13 +324,13 @@ function runHomeBuilderTest() {
   click(window, window.document.getElementById("kidia-expand-all"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 0, "Expand All must open every element.");
   click(window, window.document.getElementById("kidia-collapse-all"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 17, "Collapse All must close every element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 18, "Collapse All must close every element.");
 
   const firstBlock = window.document.querySelector(".kidia-builder-block");
   click(window, firstBlock.querySelector(".kidia-duplicate-block"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Duplicate must clone an element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 19, "Duplicate must clone an element.");
   click(window, firstBlock.nextElementSibling.querySelector(".kidia-delete-block"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 17, "Remove must delete the selected element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Remove must delete the selected element.");
 
   const hero = window.document.querySelector('[data-type="hero_slider"]');
   click(window, hero.querySelector(".kidia-add-hero-block-item"));
@@ -398,10 +410,10 @@ function runHomeBuilderTest() {
   assert.equal(window.document.getElementById("kidia-create-element-modal").hidden, false, "Choosing a type must open the create dialog.");
   window.document.getElementById("kidia-create-element-name").value = "Extra Space";
   click(window, window.document.getElementById("kidia-create-element-submit"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 18, "Creating an element must append its template.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 19, "Creating an element must append its template.");
   assert.equal(hero.nextElementSibling.dataset.type, "spacer", "Creating an element must place it directly below the selected element.");
 
-  console.log("Home Builder: all 17 previews and toolbar/editor interactions passed.");
+  console.log("Home Builder: all 18 previews and toolbar/editor interactions passed.");
 }
 
 function runMergeControlsContractTest() {
@@ -426,7 +438,7 @@ function runMergeControlsContractTest() {
 	assert.ok(schemaMap, "The Home registry schema map must remain discoverable by the coverage contract.");
 	const homeTypes = Array.from(schemaMap[1].matchAll(/^\s*'([a-z_]+)'\s*=>\s*'[a-z-]+',?$/gm), function (match) { return match[1]; });
 
-	assert.equal(homeTypes.length, 17, "The Section Layout contract must cover all 17 registered Home element types.");
+	assert.equal(homeTypes.length, 18, "The Section Layout contract must cover all 18 registered Home element types.");
 	assert.equal((builderToolbar.match(/id="kidia-add-element"/g) || []).length, 1, "Add Element must render exactly once in the shared toolbar.");
 	const addElementIndex = homePage.indexOf("admin/pages/builder-toolbar.php");
 	const renderedBlockIndex = homePage.indexOf("admin/templates/block-template.php");

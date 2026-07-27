@@ -366,6 +366,54 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
+		$top_viewed = $summary['top_products'][0] ?? null;
+		if ( is_array( $top_viewed ) && absint( $top_viewed['event_count'] ?? 0 ) >= 3 ) {
+			$product_id = absint( $top_viewed['object_id'] ?? 0 );
+			$offers[] = self::offer(
+				'popular-' . $product_id,
+				'popular',
+				__( 'Feature the most-viewed product', 'kidia-mobile-cms' ),
+				sprintf( __( '%1$s is the most-viewed product with %2$d measured views.', 'kidia-mobile-cms' ), sanitize_text_field( (string) $top_viewed['event_label'] ), absint( $top_viewed['event_count'] ) ),
+				array(
+					sprintf( __( '%d measured views', 'kidia-mobile-cms' ), absint( $top_viewed['event_count'] ) ),
+					__( 'Use a Popular now placement without discounting the product.', 'kidia-mobile-cms' ),
+					__( 'Fallback safely to best sellers when visitor history is not available.', 'kidia-mobile-cms' ),
+				),
+				min( 91, 60 + absint( $top_viewed['event_count'] ) ),
+				'low',
+				'percent',
+				0,
+				168,
+				'all',
+				$source,
+				$product_id ? array( $product_id ) : array()
+			);
+		}
+
+		$top_purchase = $summary['top_purchases'][0] ?? null;
+		if ( is_array( $top_purchase ) && absint( $top_purchase['event_count'] ?? 0 ) >= 2 ) {
+			$product_id = absint( $top_purchase['object_id'] ?? 0 );
+			$offers[] = self::offer(
+				'best-seller-' . $product_id,
+				'best_seller',
+				__( 'Use a proven best-seller recommendation', 'kidia-mobile-cms' ),
+				sprintf( __( '%1$s led the selected period with %2$d tracked purchases.', 'kidia-mobile-cms' ), sanitize_text_field( (string) $top_purchase['event_label'] ), absint( $top_purchase['event_count'] ) ),
+				array(
+					sprintf( __( '%d tracked purchases', 'kidia-mobile-cms' ), absint( $top_purchase['event_count'] ) ),
+					__( 'Place it on Home or Category pages as social proof.', 'kidia-mobile-cms' ),
+					__( 'Do not add a discount unless margin and funnel evidence justify one.', 'kidia-mobile-cms' ),
+				),
+				min( 94, 65 + absint( $top_purchase['event_count'] ) * 2 ),
+				'low',
+				'percent',
+				0,
+				168,
+				'all',
+				$source,
+				$product_id ? array( $product_id ) : array()
+			);
+		}
+
 		$offers = array_values(
 			array_filter(
 				$offers,
@@ -378,6 +426,41 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			: array();
 		set_transient( $cache_key, $offers, 10 * MINUTE_IN_SECONDS );
 		return $offers;
+	}
+
+	/**
+	 * Playbooks researched from leading commerce recommendation systems and
+	 * grouped for a usable interface rather than an overlapping tag cloud.
+	 *
+	 * @return array<string,array{label:string,items:list<string>}>
+	 */
+	public static function playbook_groups(): array {
+		return array(
+			'personalization' => array(
+				'label' => __( 'Personalized discovery', 'kidia-mobile-cms' ),
+				'items' => array( 'Recommended for you', 'Recently viewed', 'Continue shopping', 'Buy again', 'First purchase', 'VIP', 'Win-back' ),
+			),
+			'relationships' => array(
+				'label' => __( 'Product relationships', 'kidia-mobile-cms' ),
+				'items' => array( 'Frequently bought together', 'Complementary products', 'Related products', 'Viewed this, viewed that', 'Viewed this, bought that', 'More like this', 'Visual similarity', 'Complete the look' ),
+			),
+			'merchandising' => array(
+				'label' => __( 'Merchandising & demand', 'kidia-mobile-cms' ),
+				'items' => array( 'Trending now', 'Best sellers', 'Most viewed', 'Most added to cart', 'High conversion', 'Search-demand merchandising', 'Category cross-sell', 'New launch' ),
+			),
+			'offers' => array(
+				'label' => __( 'Offers & basket growth', 'kidia-mobile-cms' ),
+				'items' => array( 'AOV lift', 'Free shipping threshold', 'BOGO', 'Quantity break', 'Cart recovery', 'Checkout rescue', 'Bundle discount', 'Personal coupon' ),
+			),
+			'inventory' => array(
+				'label' => __( 'Inventory & timing', 'kidia-mobile-cms' ),
+				'items' => array( 'Slow-stock rescue', 'Overstock clearance', 'Low-stock urgency', 'Restock priority', 'Seasonal clearance', 'Peak-time scheduling' ),
+			),
+			'funnel' => array(
+				'label' => __( 'Funnel decisions', 'kidia-mobile-cms' ),
+				'items' => array( 'High view / low purchase', 'Registration friction', 'Search with no results', 'Product removal friction', 'Checkout drop-off', 'Channel comparison' ),
+			),
+		);
 	}
 
 	/**
@@ -533,6 +616,8 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'search_demand'          => 'merchandising',
 			'category_merchandising' => 'merchandising',
 			'peak_timing'            => 'timing',
+			'popular'                => 'merchandising',
+			'best_seller'            => 'merchandising',
 		);
 		$kind     = $kind_map[ $scheme ] ?? 'campaign';
 		$is_offer = $discount_value > 0;
@@ -544,6 +629,29 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'timing'        => __( 'Improve campaign engagement by testing the strongest observed activity window.', 'kidia-mobile-cms' ),
 		);
 		$expected_outcome = $expected_outcomes[ $kind ] ?? $expected_outcomes['campaign'];
+		$implementation_map = array(
+			'bundle'                 => 'bundle',
+			'popular'                => 'placement',
+			'best_seller'            => 'placement',
+			'search_demand'          => 'merchandising',
+			'category_merchandising' => 'merchandising',
+			'remove_friction'        => 'store_action',
+			'signup_friction'        => 'store_action',
+			'peak_timing'            => 'schedule',
+			'free_shipping'          => 'shipping_rule',
+		);
+		$implementation = $implementation_map[ $scheme ] ?? ( $is_offer ? 'coupon' : 'store_action' );
+		$placement_map = array(
+			'popular'       => 'home',
+			'best_seller'   => 'home',
+			'bundle'        => 'product',
+			'high_interest' => 'product',
+			'search_demand' => 'search',
+			'category_merchandising' => 'category',
+			'cart_recovery' => 'cart',
+			'free_shipping' => 'checkout',
+		);
+		$recommended_placement = $placement_map[ $scheme ] ?? 'analytics';
 		return compact(
 			'id',
 			'scheme',
@@ -560,7 +668,9 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'product_ids',
 			'kind',
 			'is_offer',
-			'expected_outcome'
+			'expected_outcome',
+			'implementation',
+			'recommended_placement'
 		);
 	}
 }

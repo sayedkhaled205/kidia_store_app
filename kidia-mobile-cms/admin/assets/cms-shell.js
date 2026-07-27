@@ -85,14 +85,32 @@
 	if (pushMessage) pushMessage.addEventListener('input', syncPushPreview);
 	syncPushPreview();
 	const pushTypeInputs = document.querySelectorAll('[data-push-type]');
+	const pushDestination = document.querySelector('[data-push-destination]');
+	const recommendedDestinations = {
+		broadcast: 'home',
+		offer: 'offers',
+		order: 'order',
+		restock: 'product',
+		abandoned_cart: 'cart',
+		welcome: 'home',
+		custom: 'home'
+	};
 	const syncPushType = function () {
 		const checked = document.querySelector('[data-push-type]:checked');
 		const type = checked ? checked.value : 'broadcast';
 		document.querySelectorAll('[data-push-field]').forEach(function (field) {
 			field.hidden = !field.dataset.pushField.split(/\s+/).includes(type);
 		});
+		if (pushDestination && pushDestination.dataset.userChanged !== '1') {
+			pushDestination.value = recommendedDestinations[type] || 'home';
+		}
 	};
 	pushTypeInputs.forEach(function (input) { input.addEventListener('change', syncPushType); });
+	if (pushDestination) {
+		pushDestination.addEventListener('change', function () {
+			pushDestination.dataset.userChanged = '1';
+		});
+	}
 	syncPushType();
 	const pushAudience = document.querySelector('[data-push-audience]');
 	const pushSegment = document.querySelector('[data-push-segment]');
@@ -102,9 +120,32 @@
 	}
 	const pushDelivery = document.querySelector('[data-push-delivery]');
 	const pushSchedule = document.querySelector('[data-push-schedule]');
-	if (pushDelivery && pushSchedule) {
-		const syncDelivery = function () { pushSchedule.hidden = pushDelivery.value !== 'scheduled'; };
+	const pushAutomation = document.querySelector('[data-push-automation]');
+	if (pushDelivery) {
+		const syncDelivery = function () {
+			if (pushSchedule) pushSchedule.hidden = pushDelivery.value !== 'scheduled';
+			if (pushAutomation) pushAutomation.hidden = pushDelivery.value !== 'automation';
+		};
 		pushDelivery.addEventListener('change', syncDelivery); syncDelivery();
+	}
+	const pushActionStyle = document.querySelector('[data-push-action-style]');
+	const pushButtonLabel = document.querySelector('[data-push-button-label]');
+	if (pushActionStyle && pushButtonLabel) {
+		const syncPushActionStyle = function () {
+			pushButtonLabel.hidden = pushActionStyle.value !== 'button';
+		};
+		pushActionStyle.addEventListener('change', syncPushActionStyle);
+		syncPushActionStyle();
+	}
+	const pushProvider = document.querySelector('[data-push-provider]');
+	if (pushProvider) {
+		const syncPushProvider = function () {
+			document.querySelectorAll('[data-provider-fields]').forEach(function (field) {
+				field.hidden = field.dataset.providerFields !== pushProvider.value;
+			});
+		};
+		pushProvider.addEventListener('change', syncPushProvider);
+		syncPushProvider();
 	}
 	const datePreset = document.querySelector('.kidia-date-filter select[name="date_preset"]');
 	if (datePreset) {

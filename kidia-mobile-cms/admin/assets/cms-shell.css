@@ -1047,3 +1047,72 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	.kidia-ai-decision-card>header{grid-template-columns:42px 1fr}
 	.kidia-ai-decision-card>header>b{grid-column:1/-1;width:max-content}
 }
+
+/* AI Studio review/build workflow and organized playbook library. */
+.kidia-ai-playbooks[open]{width:min(760px,100%)}
+.kidia-ai-playbooks>div.kidia-ai-playbook-groups{
+	position:static;
+	display:grid;
+	width:100%;
+	grid-template-columns:repeat(2,minmax(0,1fr));
+	gap:10px;
+	margin-top:8px;
+	padding:12px;
+	box-shadow:none;
+}
+.kidia-ai-playbook-groups section{min-width:0;padding:11px;border:1px solid #dfebe8;border-radius:11px;background:#fbfdfc}
+.kidia-ai-playbook-groups h3{margin:0 0 8px;color:#174e42;font-size:13px}
+.kidia-ai-playbook-groups section>div{display:flex;flex-wrap:wrap;gap:5px}
+.kidia-ai-action-builder{border:1px solid #c8dfd9;border-radius:12px;background:#fff}
+.kidia-ai-action-builder>summary{width:100%;border:0!important;border-radius:11px!important;cursor:pointer;list-style:none}
+.kidia-ai-action-builder>summary::-webkit-details-marker{display:none}
+.kidia-ai-action-builder>form{padding:14px;border-top:1px solid #dce9e5}
+.kidia-ai-action-grid,.kidia-ai-bundle-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kidia-ai-action-grid label,.kidia-ai-bundle-grid label,.kidia-ai-bundle-description{display:grid;gap:5px}
+.kidia-ai-action-grid label>span,.kidia-ai-bundle-grid label>span,.kidia-ai-bundle-description>span{color:#52645f;font-size:11px;font-weight:750}
+.kidia-ai-action-grid :is(input,select),.kidia-ai-bundle-grid :is(input,select),.kidia-ai-bundle-description textarea{width:100%;min-height:40px;border-color:#b9d4cd;border-radius:8px}
+.kidia-ai-check{display:flex!important;align-items:center;gap:8px;padding:9px;border-radius:8px;background:#eef7f4}
+.kidia-ai-action-builder form>footer,.kidia-ai-bundle-studio form>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;padding-top:12px;border-top:1px solid #dce8e5}
+.kidia-ai-action-builder form>footer p{margin:0;color:#657771;font-size:11px}
+.kidia-ai-bundle-studio{margin:16px 0;padding:19px;border:1px solid var(--kidia-ai-border);border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,71,61,.045)}
+.kidia-ai-bundle-studio>header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
+.kidia-ai-bundle-studio>header>div{display:flex;align-items:center;gap:10px}
+.kidia-ai-bundle-studio>header .dashicons{display:grid;width:42px;height:42px;place-items:center;border-radius:11px;background:#e5f4ef;color:#236b59;font-size:22px}
+.kidia-ai-bundle-studio h2{margin:0 0 3px;color:#174e42}
+.kidia-ai-bundle-studio header p{margin:0;color:#687873}
+.kidia-ai-bundle-studio>header>b{padding:7px 10px;border-radius:99px;background:#edf7f4;color:#236b59;white-space:nowrap}
+.kidia-ai-bundle-description{margin-top:10px}
+.kidia-data-page:has(.kidia-data-panel--abandoned-carts) .kidia-data-hero{margin-bottom:18px}
+body.kidia-cms-plugin-page :is(.button,button):not(.button-link){display:inline-flex;align-items:center;justify-content:center;border-radius:9px;line-height:1.2;text-align:center}
+body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-color:#2f806e}
+.kidia-push-provider{margin-top:16px;overflow:hidden;border:1px solid #d6e5e1;border-radius:14px;background:#fff}
+.kidia-push-provider>summary{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:11px;padding:15px 17px;color:#174e42;cursor:pointer;list-style:none}
+.kidia-push-provider>summary::-webkit-details-marker{display:none}
+.kidia-push-provider>summary>.dashicons{display:grid;width:36px;height:36px;place-items:center;border-radius:9px;background:#e5f4ef;color:#2f806e}
+.kidia-push-provider>summary>div{display:grid;gap:3px}
+.kidia-push-provider>summary small{color:#667771;font-weight:400}
+.kidia-push-provider>summary>b{padding:6px 9px;border-radius:99px;background:#edf7f4;color:#236b59;font-size:11px}
+.kidia-push-provider>form{padding:16px;border-top:1px solid #e0ebe8;background:#fbfdfc}
+.kidia-push-provider-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kidia-push-provider-grid label{display:grid;gap:5px}
+.kidia-push-provider-grid label.is-wide{grid-column:1/-1}
+.kidia-push-provider-grid label>span{color:#52645f;font-size:11px;font-weight:750}
+.kidia-push-provider-grid :is(input,select,textarea){width:100%;border-color:#b9d4cd;border-radius:8px}
+.kidia-push-provider [data-provider-fields][hidden]{display:none!important}
+.kidia-push-provider form>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;padding-top:12px;border-top:1px solid #e0ebe8}
+.kidia-push-provider form>footer p{margin:0;color:#657771;font-size:11px}
+.kidia-push-stats.is-four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kidia-push-form-stack{display:grid;gap:12px}
+.kidia-push-automation{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;border:1px solid #c8dfd9;border-radius:10px;background:#eef7f4}
+.kidia-push-automation[hidden],[data-push-button-label][hidden]{display:none!important}
+.kidia-push-submit .button{width:auto!important;min-width:178px;min-height:44px;padding:6px 20px!important;border-radius:10px!important}
+.kidia-coupon-actions form{display:flex;align-items:center;gap:5px}
+.kidia-coupon-actions form select{width:auto;min-width:142px;min-height:34px;border-color:#b9d4cd;border-radius:8px;font-size:11px}
+.kidia-coupon-actions form button{white-space:nowrap}
+@media(max-width:900px){
+	.kidia-ai-playbooks[open]{width:100%}
+	.kidia-ai-playbooks>div.kidia-ai-playbook-groups,.kidia-ai-action-grid,.kidia-ai-bundle-grid{grid-template-columns:1fr}
+	.kidia-ai-bundle-studio>header,.kidia-ai-action-builder form>footer{align-items:stretch;flex-direction:column}
+	.kidia-push-provider-grid,.kidia-push-automation,.kidia-push-stats.is-four{grid-template-columns:1fr}
+	.kidia-push-provider form>footer{align-items:stretch;flex-direction:column}
+}
