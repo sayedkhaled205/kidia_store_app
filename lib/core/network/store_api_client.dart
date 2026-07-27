@@ -75,6 +75,7 @@ class DioStoreApiClient implements StoreApiClient {
           followRedirects: false,
           headers: const <String, dynamic>{
             'Accept': 'application/json',
+            'X-Kidia-Channel': 'mobile',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
           },

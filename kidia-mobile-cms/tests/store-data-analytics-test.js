@@ -13,6 +13,10 @@ const readRepository = (...parts) =>
 
 const bootstrap = readPlugin("includes", "class-kidia-mobile-cms.php");
 const analytics = readPlugin("includes", "class-kidia-mobile-analytics.php");
+const productVisibility = readPlugin(
+  "includes",
+  "class-kidia-mobile-product-channel-visibility.php",
+);
 const admin = readPlugin("admin", "class-kidia-mobile-cms-admin.php");
 const storeData = readPlugin("admin", "pages", "store-data.php");
 const splash = readPlugin("admin", "pages", "splash-screen.php");
@@ -22,6 +26,12 @@ const mobileAnalytics = readRepository(
   "core",
   "analytics",
   "mobile_analytics.dart",
+);
+const storeApiClient = readRepository(
+  "lib",
+  "core",
+  "network",
+  "store_api_client.dart",
 );
 const auth = readRepository(
   "lib",
@@ -58,6 +68,7 @@ for (const route of ["/analytics/event", "/analytics/cart"]) {
   assert.match(analytics, new RegExp(route), `${route} must be registered.`);
 }
 for (const event of [
+  "site_visit",
   "app_open",
   "registration_started",
   "sign_up",
@@ -75,7 +86,6 @@ for (const event of [
 for (const marker of [
   "_kidia_mobile_customer",
   "_kidia_mobile_customer_sessions_v1",
-  "_kidia_website_customer",
   "WP_User_Query",
 ]) {
   assert.match(
@@ -84,6 +94,11 @@ for (const marker of [
     `Customer source filtering must use ${marker}.`,
   );
 }
+assert.match(
+  analytics,
+  /_kidia_website_customer/,
+  "Website customer activity must be marked for dual-channel badges.",
+);
 assert.doesNotMatch(
   admin,
   /customer_ids[\s\S]*get_customer_id\(\)[\s\S]*get_users/,
@@ -102,11 +117,32 @@ for (const preset of [
   assert.match(admin, new RegExp(`'${preset}'`), `${preset} must be supported.`);
 }
 assert.match(storeData, /'abandoned-carts'[\s\S]*Abandoned Carts/);
-assert.match(storeData, /'Analytics'[\s\S]*Mobile App only/);
+assert.match(
+  storeData,
+  /source_tabs[\s\S]*analytics[\s\S]*Website[\s\S]*Mobile App/,
+  "Analytics must support All, Website and Mobile App source filters.",
+);
+assert.doesNotMatch(storeData, /Mobile App only/);
 assert.match(storeData, /Main categories[\s\S]*Subcategories/);
-assert.match(storeData, /Mobile sales funnel[\s\S]*Sales opportunities/);
+assert.match(storeData, /Sales funnel[\s\S]*Sales opportunities/);
 assert.match(storeData, /Website[\s\S]*Mobile App/);
 assert.match(storeData, /kidia-source-badges[\s\S]*is-website[\s\S]*is-mobile/);
+assert.match(storeData, /product_search[\s\S]*product_page/);
+assert.match(storeData, /Hide from mobile[\s\S]*Hide from website/);
+assert.doesNotMatch(storeData, /General store settings/);
+assert.match(admin, /abandoned_carts[\s\S]*Abandoned Carts/);
+assert.match(admin, /posts_per_page'[\s\S]*product_per_page[\s\S]*fields'[\s\S]*ids/);
+assert.doesNotMatch(
+  storeData,
+  /wc_get_customer_order_count|wc_get_customer_total_spent/,
+  "Customer cards must use primed WooCommerce user meta without N+1 totals.",
+);
+assert.match(analytics, /source varchar\(12\)[\s\S]*source_event_time/);
+assert.match(analytics, /summary\( int \$from, int \$to, string \$source/);
+assert.match(productVisibility, /MOBILE_META[\s\S]*WEBSITE_META/);
+assert.match(productVisibility, /woocommerce_store_api_product_query/);
+assert.match(productVisibility, /woocommerce_product_query_meta_query/);
+assert.match(storeApiClient, /X-Kidia-Channel'[\s\S]*mobile/);
 assert.match(splash, /kidia-page-toolbar[\s\S]*kidia-builder-cards-scroll/);
 assert.match(
   admin,
@@ -115,7 +151,7 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /\.kidia-data-tabs\{[\s\S]*repeat\(9,minmax\(138px,1fr\)\)/,
+  /\.kidia-data-tabs\{[\s\S]*repeat\(7,minmax\(138px,1fr\)\)/,
   "Store tabs must keep a stable minimum width.",
 );
 assert.match(

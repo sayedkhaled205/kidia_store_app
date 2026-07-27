@@ -69,9 +69,9 @@ assert.match(admin, /saved_theme_redirect[\s\S]*save_current_theme[\s\S]*kidia-m
 assert.match(admin, /'account'[\s\S]*'checkout'\s*=>\s*\$tab\(\s*__\(\s*'Checkout'/, "Checkout must appear immediately after Account in the page tabs.");
 assert.doesNotMatch(admin, /'size_chart'\s*=>\s*\$tab[\s\S]*'similar'\s*=>\s*\$tab/, "Size Chart and Similar Products must not remain in the main page header.");
 assert.match(admin, /'store_data'\s*=>\s*\$tab\([\s\S]*'push'\s*=>\s*\$tab\(/, "Store Data and Push Notifications must be available in the CMS sidebar.");
-assert.match(admin, /function store_data_page[\s\S]*wc_get_products[\s\S]*wc_get_orders/, "Store Data must read the live WooCommerce catalog and orders.");
+assert.match(admin, /function store_data_page[\s\S]*WP_Query[\s\S]*wc_get_product[\s\S]*wc_get_orders/, "Store Data must read the paginated live WooCommerce catalog and orders.");
 assert.match(admin, /function send_push_notification[\s\S]*kidia_mobile_send_push_notification[\s\S]*kidia_mobile_push_history/, "Push Notifications must validate, dispatch and record notifications.");
-for (const tab of ["Products", "Categories", "Discounts", "Customers", "Orders", "Reports", "Analytics", "Settings"]) {
+for (const tab of ["Products", "Categories", "Discounts", "Customers", "Orders", "Reports", "Analytics"]) {
   assert.match(storeDataTemplate, new RegExp(`'${tab}'`), `Store Data must expose the ${tab} workspace.`);
 }
 for (const editor of ["get_edit_post_link", "get_edit_term_link", "get_edit_user_link"]) {
@@ -82,7 +82,8 @@ for (const layout of ["kidia-data-table", "kidia-order-list", "kidia-customer-li
 }
 assert.match(storeDataTemplate, /data-copy-link[\s\S]*data-copy-text/, "Products, categories and coupons must expose useful copy actions.");
 assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers, reports and abandoned carts must filter All, Website and Mobile App data.");
-assert.match(storeDataTemplate, /Mobile App only/, "Analytics must be explicitly limited to the mobile app.");
+assert.doesNotMatch(storeDataTemplate, /Mobile App only/, "Analytics must not be locked to one channel.");
+assert.match(storeDataTemplate, /source_tabs[\s\S]*analytics/, "Analytics must expose the shared source filter.");
 assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification types.");
 assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s\S]*push_delivery[\s\S]*Live preview[\s\S]*History/, "Push Notifications must provide compose, targeting, delivery, live preview and history.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");

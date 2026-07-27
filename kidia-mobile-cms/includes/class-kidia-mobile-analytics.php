@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Analytics {
 
-	private const DB_VERSION = '1';
+	private const DB_VERSION = '2';
 	private const DB_OPTION  = 'kidia_mobile_analytics_db_version';
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
@@ -17,6 +17,7 @@ final class Kidia_Mobile_Analytics {
 
 	/** @var list<string> */
 	private const EVENTS = array(
+		'site_visit',
 		'app_open',
 		'app_resume',
 		'registration_started',
@@ -38,10 +39,18 @@ final class Kidia_Mobile_Analytics {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( 'user_register', array( $this, 'mark_website_registration' ) );
 		add_action( 'wp_login', array( $this, 'mark_website_login' ), 10, 2 );
+		add_action( 'wp', array( $this, 'capture_website_page_activity' ), 30 );
+		add_action( 'woocommerce_register_form_start', array( $this, 'capture_website_registration_start' ) );
+		add_action( 'register_form', array( $this, 'capture_website_registration_start' ) );
 		add_action( 'woocommerce_cart_updated', array( $this, 'capture_website_cart' ) );
 		add_action( 'woocommerce_add_to_cart', array( $this, 'capture_website_cart' ), 50 );
 		add_action( 'woocommerce_cart_item_removed', array( $this, 'capture_website_cart' ), 50 );
+		add_action( 'woocommerce_add_to_cart', array( $this, 'capture_website_add_to_cart' ), 20, 6 );
+		add_action( 'woocommerce_cart_item_removed', array( $this, 'capture_website_remove_from_cart' ), 20, 2 );
 		add_action( 'woocommerce_checkout_order_created', array( $this, 'capture_completed_order' ) );
+		add_action( 'woocommerce_payment_complete', array( $this, 'capture_paid_order' ) );
+		add_action( 'woocommerce_order_status_processing', array( $this, 'capture_paid_order' ) );
+		add_action( 'woocommerce_order_status_completed', array( $this, 'capture_paid_order' ) );
 	}
 
 	public function maybe_install(): void {
@@ -62,6 +71,7 @@ final class Kidia_Mobile_Analytics {
 				client_id varchar(64) NOT NULL,
 				session_id varchar(64) NOT NULL DEFAULT '',
 				user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+				source varchar(12) NOT NULL DEFAULT 'mobile',
 				event_name varchar(50) NOT NULL,
 				object_id bigint(20) unsigned NOT NULL DEFAULT 0,
 				event_label varchar(191) NOT NULL DEFAULT '',
@@ -71,6 +81,7 @@ final class Kidia_Mobile_Analytics {
 				occurred_at datetime NOT NULL,
 				PRIMARY KEY  (id),
 				KEY event_time (event_name, occurred_at),
+				KEY source_event_time (source, event_name, occurred_at),
 				KEY client_time (client_id, occurred_at),
 				KEY user_time (user_id, occurred_at),
 				KEY object_event (object_id, event_name)
@@ -170,6 +181,7 @@ final class Kidia_Mobile_Analytics {
 				'client_id'    => $client_id,
 				'session_id'   => $this->identifier( $request->get_param( 'session_id' ) ),
 				'user_id'      => $user_id,
+				'source'       => 'mobile',
 				'event_name'   => $event,
 				'object_id'    => $object_id,
 				'event_label'  => mb_substr( $label, 0, 191 ),
@@ -178,7 +190,7 @@ final class Kidia_Mobile_Analytics {
 				'properties'   => wp_json_encode( $properties ),
 				'occurred_at'  => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%d', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
+			array( '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
 		);
 
 		if ( $user_id > 0 ) {
@@ -240,6 +252,107 @@ final class Kidia_Mobile_Analytics {
 		return rest_ensure_response( array( 'recorded' => true ) );
 	}
 
+	/** Capture the website-side entry and intent events used by the channel filter. */
+	public function capture_website_page_activity(): void {
+		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return;
+		}
+
+		$this->record_website_event( 'site_visit', 0, '', 0.0, array(), 30 * MINUTE_IN_SECONDS );
+		if ( function_exists( 'is_product' ) && is_product() ) {
+			$product_id = get_queried_object_id();
+			$product    = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+			$this->record_website_event(
+				'view_item',
+				$product_id,
+				$product instanceof WC_Product ? $product->get_name() : '',
+				0.0,
+				array(),
+				5 * MINUTE_IN_SECONDS
+			);
+		} elseif ( function_exists( 'is_product_category' ) && is_product_category() ) {
+			$category = get_queried_object();
+			if ( $category instanceof WP_Term ) {
+				$this->record_website_event( 'view_category', $category->term_id, $category->name, 0.0, array(), 10 * MINUTE_IN_SECONDS );
+			}
+		}
+
+		if ( is_search() ) {
+			$query = sanitize_text_field( get_search_query() );
+			if ( '' !== $query ) {
+				$this->record_website_event( 'search', 0, $query, 0.0, array(), 10 * MINUTE_IN_SECONDS );
+			}
+		}
+		if ( function_exists( 'is_checkout' ) && is_checkout() && ( ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'order-received' ) ) ) {
+			$this->record_website_event( 'begin_checkout', 0, '', 0.0, array(), 30 * MINUTE_IN_SECONDS );
+		}
+	}
+
+	public function capture_website_registration_start(): void {
+		$this->record_website_event( 'registration_started', 0, '', 0.0, array(), 30 * MINUTE_IN_SECONDS );
+	}
+
+	/** Capture a website add-to-cart event without waiting for the next page load. */
+	public function capture_website_add_to_cart( string $cart_item_key, int $product_id, int $quantity, int $variation_id, array $variation, array $cart_item_data ): void {
+		unset( $cart_item_key, $variation_id, $variation, $cart_item_data );
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		$this->record_website_event(
+			'add_to_cart',
+			$product_id,
+			$product instanceof WC_Product ? $product->get_name() : '',
+			0.0,
+			array( 'quantity' => max( 1, $quantity ) )
+		);
+	}
+
+	/** Capture removal intent before WooCommerce discards the removed line. */
+	public function capture_website_remove_from_cart( string $cart_item_key, $cart ): void {
+		$item = is_object( $cart ) && isset( $cart->removed_cart_contents[ $cart_item_key ] )
+			? $cart->removed_cart_contents[ $cart_item_key ]
+			: array();
+		$product_id = absint( $item['product_id'] ?? 0 );
+		$product    = $product_id > 0 && function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		$this->record_website_event(
+			'remove_from_cart',
+			$product_id,
+			$product instanceof WC_Product ? $product->get_name() : '',
+			0.0,
+			array( 'quantity' => max( 1, absint( $item['quantity'] ?? 1 ) ) )
+		);
+	}
+
+	/** Record paid website orders once, including product-level purchase demand. */
+	public function capture_paid_order( $order_or_id ): void {
+		$order = $order_or_id instanceof WC_Order
+			? $order_or_id
+			: ( function_exists( 'wc_get_order' ) ? wc_get_order( absint( $order_or_id ) ) : null );
+		if ( ! $order instanceof WC_Order || 'mobile' === $order->get_meta( '_kidia_order_source' ) ) {
+			return;
+		}
+		if ( 'yes' === $order->get_meta( '_kidia_website_analytics_recorded' ) ) {
+			return;
+		}
+
+		$this->record_website_event(
+			'purchase',
+			$order->get_id(),
+			(string) $order->get_order_number(),
+			(float) $order->get_total(),
+			array( 'order_id' => $order->get_id() )
+		);
+		foreach ( $order->get_items() as $item ) {
+			$this->record_website_event(
+				'purchase_item',
+				absint( $item->get_product_id() ),
+				$item->get_name(),
+				(float) $item->get_total(),
+				array( 'quantity' => max( 1, absint( $item->get_quantity() ) ) )
+			);
+		}
+		$order->update_meta_data( '_kidia_website_analytics_recorded', 'yes' );
+		$order->save();
+	}
+
 	public function capture_website_cart(): void {
 		if ( is_admin() && ! wp_doing_ajax() ) {
 			return;
@@ -278,6 +391,14 @@ final class Kidia_Mobile_Analytics {
 				'currency'       => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
 			)
 		);
+		$this->record_website_event(
+			'cart_updated',
+			0,
+			'',
+			(float) WC()->cart->get_total( 'edit' ),
+			array( 'item_count' => WC()->cart->get_cart_contents_count() ),
+			MINUTE_IN_SECONDS
+		);
 		if ( get_current_user_id() > 0 ) {
 			self::mark_website_customer( get_current_user_id() );
 		}
@@ -309,11 +430,15 @@ final class Kidia_Mobile_Analytics {
 			update_user_meta( $user_id, self::ORIGIN_META, 'website' );
 		}
 		self::mark_website_customer( $user_id );
+		if ( ! is_admin() || wp_doing_ajax() ) {
+			$this->record_website_event( 'sign_up', $user_id, '', 0.0, array( 'user_id' => $user_id ) );
+		}
 	}
 
 	public function mark_website_login( string $user_login, WP_User $user ): void {
 		unset( $user_login );
 		self::mark_website_customer( $user->ID );
+		$this->record_website_event( 'login', $user->ID, '', 0.0, array( 'user_id' => $user->ID ) );
 	}
 
 	public static function mark_mobile_registration( int $user_id ): void {
@@ -366,20 +491,25 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return array<string,mixed>
 	 */
-	public static function summary( int $from, int $to ): array {
+	public static function summary( int $from, int $to, string $source = 'all' ): array {
 		global $wpdb;
 		$table = self::events_table();
 		$start = gmdate( 'Y-m-d H:i:s', $from );
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$event_args = array( $start, $end );
+		if ( 'all' !== $source ) {
+			$event_args[] = $source;
+		}
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT event_name, COUNT(*) AS event_count, COUNT(DISTINCT client_id) AS unique_clients,
 					SUM(event_value) AS event_value
 				FROM {$table}
-				WHERE occurred_at BETWEEN %s AND %s
+				WHERE occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY event_name",
-				$start,
-				$end
+				...$event_args
 			),
 			ARRAY_A
 		);
@@ -395,17 +525,35 @@ final class Kidia_Mobile_Analytics {
 			}
 		}
 
-		$visitors = (int) $events['app_open']['unique'];
+		$visitor_args = array( $start, $end );
+		if ( 'all' !== $source ) {
+			$visitor_args[] = $source;
+		}
+		$visitors = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT client_id)
+				FROM {$table}
+				WHERE event_name IN ('app_open','site_visit')
+				AND occurred_at BETWEEN %s AND %s {$source_sql}",
+				...$visitor_args
+			)
+		);
+		$new_args = array();
+		if ( 'all' !== $source ) {
+			$new_args[] = $source;
+		}
+		$new_args[] = $start;
+		$new_args[] = $end;
 		$new      = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM (
 					SELECT client_id, MIN(occurred_at) AS first_seen
 					FROM {$table}
+					WHERE event_name IN ('app_open','site_visit') {$source_sql}
 					GROUP BY client_id
 					HAVING first_seen BETWEEN %s AND %s
 				) AS first_visits",
-				$start,
-				$end
+				...$new_args
 			)
 		);
 
@@ -414,11 +562,11 @@ final class Kidia_Mobile_Analytics {
 			'visitors'        => $visitors,
 			'new_users'       => min( $visitors, $new ),
 			'returning_users' => max( 0, $visitors - $new ),
-			'top_products'    => self::top_objects( $from, $to, 'view_item' ),
-			'top_purchases'   => self::top_objects( $from, $to, 'purchase_item' ),
-			'top_categories'  => self::top_objects( $from, $to, 'view_category' ),
-			'top_searches'    => self::top_labels( $from, $to, 'search' ),
-			'activity_hours'  => self::activity_hours( $from, $to ),
+			'top_products'    => self::top_objects( $from, $to, 'view_item', $source ),
+			'top_purchases'   => self::top_objects( $from, $to, 'purchase_item', $source ),
+			'top_categories'  => self::top_objects( $from, $to, 'view_category', $source ),
+			'top_searches'    => self::top_labels( $from, $to, 'search', $source ),
+			'activity_hours'  => self::activity_hours( $from, $to, $source ),
 		);
 	}
 
@@ -477,21 +625,24 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return list<array<string,mixed>>
 	 */
-	private static function top_objects( int $from, int $to, string $event ): array {
+	private static function top_objects( int $from, int $to, string $event, string $source ): array {
 		global $wpdb;
 		$table = self::events_table();
+		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$args = array( $event, gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
+		if ( 'all' !== $source ) {
+			$args[] = $source;
+		}
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT object_id, MAX(event_label) AS event_label, COUNT(*) AS event_count,
 					COUNT(DISTINCT client_id) AS unique_clients
 				FROM {$table}
-				WHERE event_name = %s AND object_id > 0 AND occurred_at BETWEEN %s AND %s
+				WHERE event_name = %s AND object_id > 0 AND occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY object_id
 				ORDER BY event_count DESC
 				LIMIT 8",
-				$event,
-				gmdate( 'Y-m-d H:i:s', $from ),
-				gmdate( 'Y-m-d H:i:s', $to )
+				...$args
 			),
 			ARRAY_A
 		);
@@ -515,20 +666,23 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return list<array<string,mixed>>
 	 */
-	private static function top_labels( int $from, int $to, string $event ): array {
+	private static function top_labels( int $from, int $to, string $event, string $source ): array {
 		global $wpdb;
 		$table = self::events_table();
+		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$args = array( $event, gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
+		if ( 'all' !== $source ) {
+			$args[] = $source;
+		}
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT event_label, COUNT(*) AS event_count, COUNT(DISTINCT client_id) AS unique_clients
 				FROM {$table}
-				WHERE event_name = %s AND event_label <> '' AND occurred_at BETWEEN %s AND %s
+				WHERE event_name = %s AND event_label <> '' AND occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY event_label
 				ORDER BY event_count DESC
 				LIMIT 8",
-				$event,
-				gmdate( 'Y-m-d H:i:s', $from ),
-				gmdate( 'Y-m-d H:i:s', $to )
+				...$args
 			),
 			ARRAY_A
 		);
@@ -537,19 +691,23 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return list<array{hour:int,event_count:int}>
 	 */
-	private static function activity_hours( int $from, int $to ): array {
+	private static function activity_hours( int $from, int $to, string $source ): array {
 		global $wpdb;
 		$table = self::events_table();
+		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$args = array( gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
+		if ( 'all' !== $source ) {
+			$args[] = $source;
+		}
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT HOUR(occurred_at) AS activity_hour, COUNT(*) AS event_count
 				FROM {$table}
-				WHERE occurred_at BETWEEN %s AND %s
+				WHERE occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY activity_hour
 				ORDER BY event_count DESC
 				LIMIT 6",
-				gmdate( 'Y-m-d H:i:s', $from ),
-				gmdate( 'Y-m-d H:i:s', $to )
+				...$args
 			),
 			ARRAY_A
 		);
@@ -561,6 +719,88 @@ final class Kidia_Mobile_Analytics {
 			),
 			$rows
 		);
+	}
+
+	/**
+	 * Store a trusted server-side website event.
+	 *
+	 * @param array<string,mixed> $properties Event properties.
+	 */
+	private function record_website_event(
+		string $event,
+		int $object_id = 0,
+		string $label = '',
+		float $value = 0.0,
+		array $properties = array(),
+		int $deduplicate_for = 0
+	): void {
+		if ( ! in_array( $event, self::EVENTS, true ) ) {
+			return;
+		}
+		$client_id = $this->website_client_id();
+		if ( '' === $client_id ) {
+			return;
+		}
+		if ( $deduplicate_for > 0 ) {
+			$key = 'kidia_web_event_' . substr( hash( 'sha256', $event . '|' . $client_id . '|' . $object_id . '|' . $label ), 0, 28 );
+			if ( get_transient( $key ) ) {
+				return;
+			}
+			set_transient( $key, 1, $deduplicate_for );
+		}
+
+		$this->maybe_install();
+		$session_id = '';
+		if ( function_exists( 'WC' ) && WC() && WC()->session ) {
+			$session_id = $this->identifier( (string) WC()->session->get_customer_id() );
+		}
+		global $wpdb;
+		$wpdb->insert(
+			self::events_table(),
+			array(
+				'client_id'   => $client_id,
+				'session_id'  => $session_id,
+				'user_id'     => get_current_user_id(),
+				'source'      => 'website',
+				'event_name'  => $event,
+				'object_id'   => max( 0, $object_id ),
+				'event_label' => mb_substr( sanitize_text_field( $label ), 0, 191 ),
+				'event_value' => max( 0, $value ),
+				'currency'    => function_exists( 'get_woocommerce_currency' ) ? mb_substr( get_woocommerce_currency(), 0, 12 ) : '',
+				'properties'  => wp_json_encode( $this->sanitize_properties( $properties ) ),
+				'occurred_at' => current_time( 'mysql', true ),
+			),
+			array( '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
+		);
+	}
+
+	private function website_client_id(): string {
+		static $client_id = '';
+		if ( '' !== $client_id ) {
+			return $client_id;
+		}
+
+		$client_id = $this->identifier( $_COOKIE['kidia_website_client'] ?? '' );
+		if ( '' !== $client_id ) {
+			return $client_id;
+		}
+		$client_id = 'web-' . wp_generate_uuid4();
+		$_COOKIE['kidia_website_client'] = $client_id;
+		if ( ! headers_sent() ) {
+			setcookie(
+				'kidia_website_client',
+				$client_id,
+				array(
+					'expires'  => time() + YEAR_IN_SECONDS,
+					'path'     => defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/',
+					'domain'   => defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '',
+					'secure'   => is_ssl(),
+					'httponly' => true,
+					'samesite' => 'Lax',
+				)
+			);
+		}
+		return $client_id;
 	}
 
 	/**
