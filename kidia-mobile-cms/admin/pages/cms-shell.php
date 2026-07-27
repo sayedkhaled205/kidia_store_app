@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
 			<input type="hidden" name="theme_operation" value="save">
 			<input type="hidden" name="theme_name" value="">
 			<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
-			<button type="submit" class="button button-primary"><span class="dashicons dashicons-saved" aria-hidden="true"></span><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button>
+			<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button>
 		</form>
 	</div>
 <?php endif; ?>

@@ -40,7 +40,7 @@
 }
 
 .kidia-mobile-preview__device {
-	width: 313.5px;
+	width: 330px;
 	margin-inline: auto;
 	padding: 5px;
 	border: 3px solid #2f806e;
@@ -51,7 +51,7 @@
 
 .kidia-mobile-preview__screen {
 	position: relative;
-	height: 662.89px;
+	height: 697.78px;
 	overflow-y: auto;
 	border-radius: 21px;
 	background: #f7f8fa;
@@ -62,7 +62,7 @@
 
 .kidia-mobile-preview__content { display:flex; min-height:100%; flex-direction:column; padding-bottom:0; }
 .kidia-mobile-preview__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; zoom:.8286125; }
+.kidia-mobile-preview__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; zoom:.872222; }
 .kidia-mobile-preview__screen > .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-preview-home-body { flex:1; overflow:hidden; padding-bottom:0; }
 .kidia-preview-block-frame { overflow:hidden; background:#fff; }
@@ -1191,30 +1191,39 @@
 }
 
 .kidia-element-picker__content {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-content: start;
+	gap: 10px;
 	overflow-y: auto;
 	padding: 16px 18px;
 }
 
 .kidia-element-group + .kidia-element-group {
-	margin-block-start: 8px;
+	margin-block-start: 0;
 }
 
 .kidia-element-group {
+	min-width: 0;
 	overflow: hidden;
 	border: 1px solid #dcdcde;
-	border-radius: 8px;
+	border-radius: 10px;
 	background: #fff;
 }
 
 .kidia-element-group__summary {
 	display: flex;
+	position: relative;
+	aspect-ratio: 1;
+	flex-direction: column;
 	align-items: center;
-	justify-content: space-between;
-	min-height: 48px;
-	gap: 12px;
-	padding: 9px 12px;
+	justify-content: center;
+	min-height: 116px;
+	gap: 10px;
+	padding: 14px 10px;
 	cursor: pointer;
 	list-style: none;
+	text-align: center;
 }
 
 .kidia-element-group__summary::-webkit-details-marker {
@@ -1223,6 +1232,9 @@
 
 .kidia-element-group__summary::after {
 	content: "\f347";
+	position: absolute;
+	inset-inline-start: 8px;
+	inset-block-end: 8px;
 	font: 20px/1 dashicons;
 	color: #646970;
 	transition: transform 0.18s ease;
@@ -1234,17 +1246,25 @@
 
 .kidia-element-group__identity {
 	display: flex;
+	min-width: 0;
+	flex-direction: column;
 	align-items: center;
-	gap: 7px;
-	font-size: 15px;
+	gap: 9px;
+	font-size: 13px;
 }
 
 .kidia-element-group__identity .dashicons {
 	color: var(--kidia-picker-accent);
+	width: 28px;
+	height: 28px;
+	font-size: 28px;
 }
 
 .kidia-element-group__count {
-	margin-inline-start: auto;
+	position: absolute;
+	inset-block-start: 8px;
+	inset-inline-end: 8px;
+	margin: 0;
 	padding: 2px 8px;
 	border-radius: 999px;
 	background: #f0f0f1;
@@ -1254,15 +1274,21 @@
 }
 
 .kidia-element-group__body {
-	padding: 12px;
+	padding: 9px;
 	border-block-start: 1px solid #e8eaed;
 	background: #fbfcfd;
 }
 
 .kidia-element-group__actions {
 	display: flex;
-	justify-content: flex-end;
-	margin-block-end: 10px;
+	justify-content: stretch;
+	margin: 0;
+}
+
+.kidia-element-group__actions .button {
+	width: 100%;
+	min-height: 34px;
+	justify-content: center;
 }
 
 .kidia-element-group__empty {
@@ -1325,7 +1351,11 @@
 .kidia-element-card p {
 	display: none;
 }
-.kidia-builder-block__type,.kidia-builder-status{display:none!important}
+.kidia-builder-status{display:none!important}
+
+.kidia-element-picker__empty {
+	grid-column: 1 / -1;
+}
 
 .kidia-element-picker__empty {
 	padding: 26px;
@@ -1357,6 +1387,12 @@
 	border-color: var(--kidia-picker-accent-dark) !important;
 	background: var(--kidia-picker-accent-soft) !important;
 	color: var(--kidia-picker-accent-dark) !important;
+}
+
+@media (max-width: 782px) {
+	.kidia-element-picker__content {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }
 
 /* Promo Strip Actions & Navigation follows the approved fixed two-row map. */
