@@ -23,7 +23,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	public static function settings(): array {
 		return array(
 			'minimum_confidence'       => 55,
-			'maximum_recommendations'  => 48,
+			'maximum_recommendations'  => 60,
 			'high_interest_min_views'  => 10,
 			'low_conversion_percent'   => 8,
 			'slow_stock_min_age_days'  => 30,
@@ -39,7 +39,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function recommendations( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_ai_offers_v4_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = self::recommendation_cache_key( $from, $to, $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -64,7 +64,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'poor'   => __( 'Poor-performing products', 'kidia-mobile-cms' ),
 		);
 		foreach ( $rotation_segments as $segment => $products ) {
-			foreach ( array_slice( $products, 0, 4 ) as $product ) {
+			foreach ( array_slice( $products, 0, 10 ) as $product ) {
 				$discount = 0.0;
 				$scheme   = $segment . '_rotation';
 				$title    = __( 'Protect demand without discounting', 'kidia-mobile-cms' );
@@ -154,18 +154,6 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		}
 
 		$bundles = ! empty( $commerce['pairs'] ) ? array_slice( (array) $commerce['pairs'], 0, 8 ) : array();
-		if ( empty( $bundles ) ) {
-			$fallback_bundle = self::frequent_pair( $from, $to, $source );
-			$bundles = empty( $fallback_bundle )
-				? array()
-				: array(
-					array(
-						'product_ids' => $fallback_bundle['ids'],
-						'names'       => $fallback_bundle['names'],
-						'count'       => $fallback_bundle['count'],
-					)
-				);
-		}
 		foreach ( $bundles as $bundle ) {
 			$bundle_ids   = array_values( array_filter( array_map( 'absint', (array) ( $bundle['product_ids'] ?? array() ) ) ) );
 			$bundle_names = array_values( array_map( 'sanitize_text_field', (array) ( $bundle['names'] ?? array() ) ) );
@@ -484,7 +472,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function rotation_segments( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_ai_rotation_v1_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = self::rotation_cache_key( $from, $to, $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return array_merge( self::empty_rotation_segments(), $cached );
@@ -497,35 +485,52 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		$commerce   = Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source );
 		$sales_map  = is_array( $commerce['product_sales'] ?? null ) ? $commerce['product_sales'] : array();
 		$period_days = max( 1, (int) ceil( max( DAY_IN_SECONDS, $to - $from ) / DAY_IN_SECONDS ) );
-		$product_ids = wc_get_products(
-			array(
-				'status'       => 'publish',
-				'stock_status' => 'instock',
-				'limit'        => -1,
-				'return'       => 'ids',
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
-			)
-		);
 		$rows       = array();
 		$velocities = array();
-		foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
-			$product = wc_get_product( $product_id );
-			if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
+		$catalog_rows = is_array( $commerce['catalog_rows'] ?? null ) ? $commerce['catalog_rows'] : array();
+		if ( empty( $catalog_rows ) ) {
+			$product_ids = wc_get_products(
+				array(
+					'status'       => 'publish',
+					'stock_status' => 'instock',
+					'limit'        => -1,
+					'return'       => 'ids',
+					'orderby'      => 'ID',
+					'order'        => 'ASC',
+				)
+			);
+			foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
+				$product = wc_get_product( $product_id );
+				if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
+					continue;
+				}
+				$created = $product->get_date_created();
+				$catalog_rows[] = array(
+					'id'       => $product_id,
+					'name'     => $product->get_name(),
+					'stock'    => $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null,
+					'age_days' => $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1,
+				);
+			}
+		}
+		foreach ( $catalog_rows as $catalog_row ) {
+			$product_id = absint( $catalog_row['id'] ?? 0 );
+			if ( $product_id <= 0 ) {
 				continue;
 			}
-			$created = $product->get_date_created();
-			$age     = $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1;
+			$age     = max( 1, absint( $catalog_row['age_days'] ?? 1 ) );
 			$sales   = absint( $sales_map[ $product_id ] ?? 0 );
 			$days    = max( 1, min( $period_days, $age ) );
 			$velocity = $sales / $days;
 			if ( $sales > 0 ) {
 				$velocities[] = $velocity;
 			}
-			$stock = $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null;
+			$stock = array_key_exists( 'stock', $catalog_row ) && null !== $catalog_row['stock']
+				? max( 0, (int) $catalog_row['stock'] )
+				: null;
 			$rows[] = array(
 				'id'          => $product_id,
-				'name'        => $product->get_name(),
+				'name'        => sanitize_text_field( (string) ( $catalog_row['name'] ?? '#' . $product_id ) ),
 				'sales'       => $sales,
 				'stock'       => $stock,
 				'age_days'    => $age,
@@ -562,6 +567,22 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		unset( $segment_rows );
 		set_transient( $cache_key, $segments, 10 * MINUTE_IN_SECONDS );
 		return $segments;
+	}
+
+	/** Clears derived decisions after a fresh incremental store snapshot. */
+	public static function clear_cache( int $from, int $to, string $source = 'all' ): void {
+		delete_transient( self::recommendation_cache_key( $from, $to, $source ) );
+		delete_transient( self::rotation_cache_key( $from, $to, $source ) );
+	}
+
+	private static function recommendation_cache_key( int $from, int $to, string $source ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_ai_offers_v5_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
+	private static function rotation_cache_key( int $from, int $to, string $source ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_ai_rotation_v2_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	/** @return array{fast:array,medium:array,slow:array,poor:array} */
