@@ -48,6 +48,11 @@ abstract final class HomeBlockModel {
         enabled: enabled,
         data: data,
       ),
+      HomeBlockType.bundleCollection => _parseBundleCollection(
+        id: id,
+        enabled: enabled,
+        data: data,
+      ),
       HomeBlockType.sectionHeader => _parseSectionHeader(
         id: id,
         enabled: enabled,
@@ -545,7 +550,7 @@ abstract final class HomeBlockModel {
     );
   }
 
-	static ProductWishlistAppearance _parseWishlistAppearance(Map<String, dynamic> data) {
+  static ProductWishlistAppearance _parseWishlistAppearance(Map<String, dynamic> data) {
 	  return ProductWishlistAppearance(
 		enabled: _optionalBool(data, 'show_wishlist', fallback: false),
 		iconVariant: _optionalString(data, 'product_wishlist_icon_variant') ?? 'heart',
@@ -562,6 +567,101 @@ abstract final class HomeBlockModel {
 		),
 	  );
 	}
+
+  static BundleCollectionBlock _parseBundleCollection({
+    required String id,
+    required bool enabled,
+    required Map<String, dynamic> data,
+  }) {
+    final String layout = _optionalString(data, 'layout') ?? 'carousel';
+    if (!const <String>{'carousel', 'grid', 'banner'}.contains(layout)) {
+      throw FormatException('Unsupported bundle layout: $layout');
+    }
+    final String ctaMode = _optionalString(data, 'cta_mode') ?? 'auto';
+    if (!const <String>{'auto', 'add', 'customize'}.contains(ctaMode)) {
+      throw FormatException('Unsupported bundle action mode: $ctaMode');
+    }
+
+    return BundleCollectionBlock(
+      id: id,
+      enabled: enabled,
+      presentation: _parsePresentation(data),
+      title: _optionalString(data, 'title'),
+      subtitle: _optionalString(data, 'subtitle'),
+      layout: layout,
+      columns: _boundedInt(
+        data,
+        'columns',
+        fallback: 2,
+        minimum: 1,
+        maximum: 3,
+      ),
+      showImage: _optionalBool(data, 'show_image', fallback: true),
+      showPrice: _optionalBool(data, 'show_price', fallback: true),
+      showDiscount: _optionalBool(data, 'show_discount', fallback: true),
+      ctaMode: ctaMode,
+      cardRadius: _boundedDouble(
+        data,
+        'card_radius',
+        fallback: 16,
+        minimum: 0,
+        maximum: 40,
+      ),
+      items: _requiredMapList(
+        data,
+        'items',
+      ).map(_parseBundleItem).toList(growable: false),
+    );
+  }
+
+  static HomeBundleItem _parseBundleItem(Map<String, dynamic> json) {
+    final List<int> productIds = (json['product_ids'] is List
+            ? json['product_ids'] as List<dynamic>
+            : const <dynamic>[])
+        .map((dynamic value) => int.tryParse('$value') ?? 0)
+        .where((int value) => value > 0)
+        .toList(growable: false);
+    return HomeBundleItem(
+      id: _requiredString(json, 'id'),
+      productId: _boundedInt(
+        json,
+        'product_id',
+        fallback: 0,
+        minimum: 0,
+        maximum: 2147483647,
+      ),
+      name: _requiredString(json, 'name'),
+      description: _optionalString(json, 'description') ?? '',
+      type: _optionalString(json, 'type') ?? 'fixed',
+      imageUrl: _optionalUrl(json, 'image_url'),
+      pricing: _optionalString(json, 'pricing') ?? 'none',
+      discountValue: _boundedDouble(
+        json,
+        'discount_value',
+        fallback: 0,
+        minimum: 0,
+        maximum: 1000000000,
+      ),
+      minimumItems: _boundedInt(
+        json,
+        'minimum_items',
+        fallback: 1,
+        minimum: 1,
+        maximum: 100,
+      ),
+      maximumItems: _boundedInt(
+        json,
+        'maximum_items',
+        fallback: 2,
+        minimum: 1,
+        maximum: 100,
+      ),
+      productIds: productIds,
+      ctaLabel: _optionalString(json, 'cta_label') ?? 'Choose bundle',
+      action: _parseAction(json['action']) ??
+          HomeAction(type: 'bundle', value: _requiredString(json, 'id')),
+    );
+  }
 
   static String _productActionPosition(String? value, {required String fallback}) {
     const Set<String> allowed = <String>{

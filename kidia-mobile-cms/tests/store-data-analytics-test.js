@@ -25,6 +25,18 @@ const recovery = readPlugin(
   "includes",
   "class-kidia-mobile-recovery-campaigns.php",
 );
+const pushService = readPlugin(
+  "includes",
+  "class-kidia-mobile-push-service.php",
+);
+const couponChannel = readPlugin(
+  "includes",
+  "class-kidia-mobile-coupon-channel.php",
+);
+const bundleRecipes = readPlugin(
+  "includes",
+  "class-kidia-mobile-bundle-recipes.php",
+);
 const admin = readPlugin("admin", "class-kidia-mobile-cms-admin.php");
 const storeData = readPlugin("admin", "pages", "store-data.php");
 const push = readPlugin("admin", "pages", "push-notifications.php");
@@ -33,6 +45,21 @@ const splash = readPlugin("admin", "pages", "splash-screen.php");
 const shellCss = readPlugin("admin", "assets", "cms-shell.css");
 const shellScript = readPlugin("admin", "assets", "cms-shell.js");
 const splashScript = readPlugin("admin", "assets", "splash-screen.js");
+const homeBlockModel = readRepository(
+  "lib",
+  "features",
+  "home",
+  "data",
+  "models",
+  "home_block_model.dart",
+);
+const bundleScreen = readRepository(
+  "lib",
+  "features",
+  "bundles",
+  "presentation",
+  "bundle_builder_screen.dart",
+);
 const mobileAnalytics = readRepository(
   "lib",
   "core",
@@ -135,7 +162,6 @@ assert.match(
   /source_tabs[\s\S]*analytics[\s\S]*Website[\s\S]*Mobile App/,
   "Analytics must support All, Website and Mobile App source filters.",
 );
-assert.doesNotMatch(storeData, /Mobile App only/);
 assert.match(storeData, /Main categories[\s\S]*Subcategories/);
 assert.match(storeData, /Sales funnel[\s\S]*Sales opportunities/);
 assert.match(storeData, /Website[\s\S]*Mobile App/);
@@ -175,18 +201,24 @@ assert.match(aiOffers, /signal_catalog[\s\S]*sales_velocity[\s\S]*frequent_pair/
 assert.match(aiOffers, /remove_friction[\s\S]*signup_friction[\s\S]*search_demand[\s\S]*peak_timing/);
 assert.match(aiOffers, /minimum_confidence[\s\S]*maximum_recommendations[\s\S]*protect_margin/);
 assert.match(aiInsights, /AI Offer Studio[\s\S]*Sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
-assert.match(aiInsights, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Registration friction[\s\S]*Peak-time scheduling/);
+assert.match(aiOffers, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Peak-time scheduling[\s\S]*Registration friction/);
 assert.match(aiInsights, /Why this recommendation[\s\S]*Decision target:[\s\S]*Profit risk/);
 assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*minimum_confidence[\s\S]*date_preset/);
 assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);
 assert.doesNotMatch(push, /kidia-ai-offer-studio|data-ai-scheme-filter|data-ai-scheme-card/);
-assert.match(push, /ai_offer_id|data-ai-scheme|Offer settings/);
-assert.match(push, /Push delivery is not connected yet[\s\S]*push-delivery integration/);
+assert.match(push, /Delivery connection[\s\S]*Setup required[\s\S]*Firebase Cloud Messaging[\s\S]*OneSignal/);
 for (const recoveryField of ["kidia_mobile_recovery_campaigns", "tracking_token", "converted_at"]) {
   assert.match(recovery, new RegExp(recoveryField), `Recovery storage must include ${recoveryField}.`);
 }
 assert.match(recovery, /set_usage_limit\( 1 \)[\s\S]*set_email_restrictions[\s\S]*set_date_expires/);
 assert.match(recovery, /attribute_order[\s\S]*get_coupon_codes[\s\S]*customer_email/);
+assert.match(pushService, /\/push\/devices[\s\S]*\/push\/events[\s\S]*dispatch_onesignal[\s\S]*dispatch_fcm[\s\S]*dispatch_webhook/);
+assert.match(pushService, /trigger_automation[\s\S]*cooldown_hours[\s\S]*stop_on_purchase/);
+assert.match(couponChannel, /_kidia_coupon_channel[\s\S]*Website only[\s\S]*Mobile App only/);
+assert.match(bundleRecipes, /mix_match[\s\S]*build_box[\s\S]*buy_x_get_y[\s\S]*frequently_bought[\s\S]*subscription/);
+assert.match(bundleRecipes, /\/claim[\s\S]*validate_bundle_coupon[\s\S]*minimum_items[\s\S]*maximum_items/);
+assert.match(homeBlockModel, /HomeBlockType\.bundleCollection[\s\S]*_parseBundleCollection/);
+assert.match(bundleScreen, /bundleDetailProvider[\s\S]*addProductPurchaseSelectionProvider[\s\S]*applyCoupon/);
 for (const recoveryControl of ["cart_ids\\[\\]", "Create coupons & send", "Recovery attribution"]) {
   assert.match(storeData, new RegExp(recoveryControl), `Recovery UI must expose ${recoveryControl}.`);
 }

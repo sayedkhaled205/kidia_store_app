@@ -25,6 +25,9 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-analytics.php'
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-product-channel-visibility.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-ai-offer-engine.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-recovery-campaigns.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-push-service.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-coupon-channel.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-bundle-recipes.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +52,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-divider
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-spacer-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-quick-links-block.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-banner-grid-block.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/blocks/class-kidia-mobile-bundle-block.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -92,6 +96,9 @@ final class Kidia_Mobile_CMS {
 		(new Kidia_Mobile_Analytics())->register();
 		(new Kidia_Mobile_Product_Channel_Visibility())->register();
 		(new Kidia_Mobile_Recovery_Campaigns())->register();
+		(new Kidia_Mobile_Push_Service())->register();
+		(new Kidia_Mobile_Coupon_Channel())->register();
+		(new Kidia_Mobile_Bundle_Recipes())->register();
 
 		$this->register_blocks();
 
@@ -178,6 +185,10 @@ final class Kidia_Mobile_CMS {
 
 		Kidia_Mobile_Block_Registry::register(
 			new Kidia_Mobile_Spacer_Block()
+		);
+
+		Kidia_Mobile_Block_Registry::register(
+			new Kidia_Mobile_Bundle_Block()
 		);
 
 		Kidia_Mobile_Block_Registry::register(

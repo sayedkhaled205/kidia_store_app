@@ -133,7 +133,9 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
 		add_action( 'admin_post_kidia_mobile_save_ai_insights', array( $this, 'save_ai_insights_settings' ) );
+		add_action( 'admin_post_kidia_mobile_build_ai_action', array( $this, 'build_ai_action' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
+		add_action( 'admin_post_kidia_mobile_set_coupon_channel', array( $this, 'set_coupon_channel' ) );
 		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
@@ -523,6 +525,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$coupon_status = isset( $_GET['coupon_status'] ) ? sanitize_key( wp_unslash( $_GET['coupon_status'] ) ) : 'all';
 		$coupon_type   = isset( $_GET['coupon_type'] ) ? sanitize_key( wp_unslash( $_GET['coupon_type'] ) ) : 'all';
 		$coupon_scope  = isset( $_GET['coupon_scope'] ) ? sanitize_key( wp_unslash( $_GET['coupon_scope'] ) ) : 'all';
+		$coupon_channel = isset( $_GET['coupon_channel'] ) ? sanitize_key( wp_unslash( $_GET['coupon_channel'] ) ) : 'any';
 		$coupon_query  = null;
 		$coupons       = array();
 		$coupon_total  = 0;
@@ -567,6 +570,15 @@ final class Kidia_Mobile_CMS_Admin {
 				$meta_query[] = array( 'key' => '_product_ids', 'value' => '', 'compare' => '!=' );
 			} elseif ( 'category' === $coupon_scope ) {
 				$meta_query[] = array( 'key' => '_product_categories', 'value' => 'a:0:{}', 'compare' => '!=' );
+			}
+			if ( 'all' === $coupon_channel ) {
+				$meta_query[] = array(
+					'relation' => 'OR',
+					array( 'key' => Kidia_Mobile_Coupon_Channel::META_KEY, 'compare' => 'NOT EXISTS' ),
+					array( 'key' => Kidia_Mobile_Coupon_Channel::META_KEY, 'value' => 'all' ),
+				);
+			} elseif ( in_array( $coupon_channel, array( 'website', 'mobile' ), true ) ) {
+				$meta_query[] = array( 'key' => Kidia_Mobile_Coupon_Channel::META_KEY, 'value' => $coupon_channel );
 			}
 			if ( count( $meta_query ) > 1 ) {
 				$coupon_args['meta_query'] = $meta_query;
@@ -897,6 +909,108 @@ final class Kidia_Mobile_CMS_Admin {
 		exit;
 	}
 
+	/** Turns one reviewed AI recommendation into an owner-approved draft or live action. */
+	public function build_ai_action(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to build AI actions.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_build_ai_action', 'kidia_mobile_ai_action_nonce' );
+		$id     = sanitize_text_field( (string) wp_unslash( $_POST['ai_offer_id'] ?? '' ) );
+		$source = sanitize_key( (string) wp_unslash( $_POST['ai_source'] ?? 'all' ) );
+		$source = in_array( $source, array( 'all', 'website', 'mobile' ), true ) ? $source : 'all';
+		$from   = absint( $_POST['ai_from'] ?? 0 );
+		$to     = absint( $_POST['ai_to'] ?? 0 );
+		$recommendation = null;
+		foreach ( Kidia_Mobile_AI_Offer_Engine::recommendations( $from, $to, $source ) as $candidate ) {
+			if ( $id === (string) ( $candidate['id'] ?? '' ) ) {
+				$recommendation = $candidate;
+				break;
+			}
+		}
+		if ( ! is_array( $recommendation ) ) {
+			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_action_error' => 'not_found' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+		$action_type = sanitize_key( (string) wp_unslash( $_POST['ai_action_type'] ?? $recommendation['implementation'] ?? 'store_action' ) );
+		$allowed = array( 'coupon', 'bundle', 'placement', 'merchandising', 'shipping_rule', 'store_action', 'schedule' );
+		$action_type = in_array( $action_type, $allowed, true ) ? $action_type : 'store_action';
+		$status = 'publish' === sanitize_key( (string) wp_unslash( $_POST['ai_action_status'] ?? 'draft' ) ) ? 'publish' : 'draft';
+		$channel = sanitize_key( (string) wp_unslash( $_POST['ai_action_channel'] ?? $source ) );
+		$channel = in_array( $channel, array( 'all', 'website', 'mobile' ), true ) ? $channel : 'all';
+		$created_id = '';
+		if ( 'coupon' === $action_type && class_exists( 'WC_Coupon' ) ) {
+			$type = sanitize_key( (string) wp_unslash( $_POST['ai_discount_type'] ?? $recommendation['discount_type'] ?? 'percent' ) );
+			$type = in_array( $type, array( 'percent', 'fixed_cart', 'fixed_product' ), true ) ? $type : 'percent';
+			$value = max( 0, (float) ( $_POST['ai_discount_value'] ?? $recommendation['discount_value'] ?? 0 ) );
+			$value = 'percent' === $type ? min( 100, $value ) : $value;
+			if ( $value > 0 ) {
+				$coupon = new WC_Coupon();
+				$coupon->set_code( 'KIDIA-AI-' . strtoupper( wp_generate_password( 8, false, false ) ) );
+				$coupon->set_discount_type( $type );
+				$coupon->set_amount( $value );
+				$coupon->set_individual_use( true );
+				$coupon->set_usage_limit_per_user( 1 );
+				$coupon->set_date_expires( time() + max( 1, min( 720, absint( $_POST['ai_duration_hours'] ?? 48 ) ) ) * HOUR_IN_SECONDS );
+				$coupon->set_description( sprintf( __( 'AI Studio action: %s', 'kidia-mobile-cms' ), (string) $recommendation['title'] ) );
+				$coupon->set_product_ids( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) );
+				$coupon->set_status( 'publish' === $status ? 'publish' : 'draft' );
+				$coupon_id = $coupon->save();
+				if ( $coupon_id > 0 ) {
+					Kidia_Mobile_Coupon_Channel::set( $coupon_id, $channel );
+					$created_id = (string) $coupon_id;
+				}
+			}
+		} elseif ( 'bundle' === $action_type ) {
+			$created_id = Kidia_Mobile_Bundle_Recipes::store(
+				array(
+					'name'            => sanitize_text_field( (string) wp_unslash( $_POST['ai_action_name'] ?? $recommendation['title'] ) ),
+					'description'     => (string) $recommendation['summary'],
+					'type'            => sanitize_key( (string) wp_unslash( $_POST['ai_bundle_type'] ?? 'frequently_bought' ) ),
+					'channel'         => $channel,
+					'status'          => 'publish' === $status ? 'published' : 'draft',
+					'product_ids'     => implode( ',', array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ),
+					'minimum_items'   => absint( $_POST['ai_bundle_minimum'] ?? 2 ),
+					'maximum_items'   => absint( $_POST['ai_bundle_maximum'] ?? 2 ),
+					'pricing'         => sanitize_key( (string) wp_unslash( $_POST['ai_bundle_pricing'] ?? 'percentage' ) ),
+					'discount_value'  => (float) ( $_POST['ai_discount_value'] ?? $recommendation['discount_value'] ?? 0 ),
+					'allow_variants'  => ! empty( $_POST['ai_bundle_variants'] ),
+					'allow_repeats'   => ! empty( $_POST['ai_bundle_repeats'] ),
+					'stock_policy'    => sanitize_key( (string) wp_unslash( $_POST['ai_bundle_stock_policy'] ?? 'all_components' ) ),
+					'coupon_stacking' => ! empty( $_POST['ai_coupon_stacking'] ),
+					'ai_source'       => 'co_purchase',
+				)
+			);
+		} else {
+			$actions = get_option( 'kidia_mobile_ai_action_drafts', array() );
+			$actions = is_array( $actions ) ? $actions : array();
+			$created_id = wp_generate_uuid4();
+			$actions[ $created_id ] = array(
+				'id'          => $created_id,
+				'type'        => $action_type,
+				'status'      => $status,
+				'channel'     => $channel,
+				'placement'   => sanitize_key( (string) wp_unslash( $_POST['ai_placement'] ?? $recommendation['recommended_placement'] ?? 'home' ) ),
+				'name'        => sanitize_text_field( (string) wp_unslash( $_POST['ai_action_name'] ?? $recommendation['title'] ) ),
+				'recommendation' => $recommendation,
+				'created_at'  => time(),
+			);
+			update_option( 'kidia_mobile_ai_action_drafts', array_slice( $actions, -200, null, true ), false );
+		}
+		$args = array( 'page' => 'kidia-mobile-ai-insights', 'ai_action_saved' => '1', 'ai_action_id' => $created_id );
+		if ( ! empty( $_POST['ai_promote_push'] ) ) {
+			$args = array(
+				'page'        => 'kidia-mobile-push-notifications',
+				'ai_offer_id' => $id,
+				'ai_source'   => $source,
+				'ai_from'     => $from,
+				'ai_to'       => $to,
+				'optional_promotion' => '1',
+			);
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
 	/** Push composer, provider status and delivery history. */
 	public function push_notifications_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -904,7 +1018,10 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$history = get_option( 'kidia_mobile_push_history', array() );
 		$history = is_array( $history ) ? array_slice( $history, 0, 30 ) : array();
-		$provider_connected = (bool) has_action( 'kidia_mobile_send_push_notification' );
+		$provider_status = Kidia_Mobile_Push_Service::connection_status();
+		$provider_connected = ! empty( $provider_status['connected'] );
+		$provider_settings = Kidia_Mobile_Push_Service::settings();
+		$push_metrics = Kidia_Mobile_Push_Service::aggregate_metrics();
 		$subscribed_customers = absint( get_option( 'kidia_mobile_push_subscribed_customers', 0 ) );
 		$registered_devices = absint( get_option( 'kidia_mobile_push_registered_devices', 0 ) );
 		$automations = get_option( 'kidia_mobile_push_automations', array() );
@@ -921,13 +1038,31 @@ final class Kidia_Mobile_CMS_Admin {
 				foreach ( Kidia_Mobile_AI_Offer_Engine::recommendations( $prefill_from, $prefill_to, $prefill_source ) as $candidate ) {
 					if ( $prefill_id === (string) ( $candidate['id'] ?? '' ) ) {
 						$prefill_offer      = $candidate;
-						$selected_push_type = 'ai_offer';
+						$selected_push_type = 'offer';
 						break;
 					}
 				}
 			}
 		}
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/push-notifications.php';
+	}
+
+	/** Updates one coupon's website/mobile availability from Store Data. */
+	public function set_coupon_channel(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to update coupons.', 'kidia-mobile-cms' ) );
+		}
+		$coupon_id = absint( $_POST['coupon_id'] ?? 0 );
+		check_admin_referer( 'kidia_mobile_set_coupon_channel_' . $coupon_id, 'kidia_mobile_coupon_channel_nonce' );
+		if ( $coupon_id <= 0 || 'shop_coupon' !== get_post_type( $coupon_id ) ) {
+			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-store-data', 'store_tab' => 'discounts', 'coupon_error' => 'missing' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+		$channel = sanitize_key( (string) wp_unslash( $_POST['coupon_channel'] ?? 'all' ) );
+		Kidia_Mobile_Coupon_Channel::set( $coupon_id, $channel );
+		$redirect = wp_get_referer();
+		wp_safe_redirect( $redirect ? add_query_arg( 'coupon_updated', '1', $redirect ) : add_query_arg( array( 'page' => 'kidia-mobile-store-data', 'store_tab' => 'discounts', 'coupon_updated' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/** Validates, records and dispatches one notification through the configured provider hook. */
@@ -964,12 +1099,27 @@ final class Kidia_Mobile_CMS_Admin {
 			'sound'      => ! empty( $_POST['push_sound'] ),
 			'badge'      => absint( $_POST['push_badge'] ?? 0 ),
 			'expiry_hours' => max( 1, min( 168, absint( $_POST['push_expiry_hours'] ?? 24 ) ) ),
+			'destination' => in_array( sanitize_key( wp_unslash( $_POST['push_destination'] ?? 'home' ) ), array( 'home', 'product', 'category', 'subcategory', 'collection', 'cart', 'checkout', 'wishlist', 'order', 'account', 'offers', 'search', 'custom', 'external' ), true )
+				? sanitize_key( wp_unslash( $_POST['push_destination'] ?? 'home' ) )
+				: 'home',
+			'destination_id' => sanitize_text_field( wp_unslash( $_POST['push_destination_id'] ?? '' ) ),
+			'action_style' => 'button' === sanitize_key( wp_unslash( $_POST['push_action_style'] ?? 'link' ) ) ? 'button' : 'link',
 			'segment'    => array(
 				'min_orders' => absint( $_POST['push_min_orders'] ?? 0 ),
 				'min_spent' => (float) ( $_POST['push_min_spent'] ?? 0 ),
 				'inactive_days' => absint( $_POST['push_inactive_days'] ?? 0 ),
 			),
 			'delivery'   => $delivery,
+			'automation' => array(
+				'enabled'       => 'automation' === $delivery,
+				'trigger'       => sanitize_key( wp_unslash( $_POST['push_trigger'] ?? $type ) ),
+				'delay_minutes' => min( 43200, absint( $_POST['push_delay_minutes'] ?? 30 ) ),
+				'max_sends'     => min( 20, max( 1, absint( $_POST['push_max_sends'] ?? 3 ) ) ),
+				'cooldown_hours'=> min( 8760, max( 1, absint( $_POST['push_cooldown_hours'] ?? 24 ) ) ),
+				'allowed_from'  => sanitize_text_field( wp_unslash( $_POST['push_allowed_from'] ?? '09:00' ) ),
+				'allowed_to'    => sanitize_text_field( wp_unslash( $_POST['push_allowed_to'] ?? '21:00' ) ),
+				'stop_on_purchase' => ! empty( $_POST['push_stop_on_purchase'] ),
+			),
 			'created_at' => time(),
 			'status'     => 'saved',
 		);
@@ -1001,7 +1151,8 @@ final class Kidia_Mobile_CMS_Admin {
 			$payload['status'] = 'automation_saved';
 			$automations = get_option( 'kidia_mobile_push_automations', array() );
 			$automations = is_array( $automations ) ? $automations : array();
-			$automations[ $type ] = $payload;
+			$automation_key = sanitize_key( (string) ( $payload['automation']['trigger'] ?? $type ) );
+			$automations[ $automation_key ] = $payload;
 			update_option( 'kidia_mobile_push_automations', $automations, false );
 		} else {
 			$payload = $this->dispatch_push_payload( $payload );
@@ -1069,10 +1220,7 @@ final class Kidia_Mobile_CMS_Admin {
 
 	/** Passes one normalized payload to the configured push provider. */
 	private function dispatch_push_payload( array $payload ): array {
-		$payload['sent_at'] = time();
-		$payload['status'] = has_action( 'kidia_mobile_send_push_notification' ) ? 'queued' : 'provider_required';
-		do_action( 'kidia_mobile_send_push_notification', $payload );
-		return $payload;
+		return Kidia_Mobile_Push_Service::dispatch( $payload );
 	}
 
 	/** Applies a complete application preset. */

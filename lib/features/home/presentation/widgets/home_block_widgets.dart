@@ -1572,6 +1572,210 @@ class ProductGridBlockWidget extends StatelessWidget {
   }
 }
 
+class BundleCollectionBlockWidget extends StatelessWidget {
+  const BundleCollectionBlockWidget({
+    required this.block,
+    required this.onAction,
+    super.key,
+  });
+
+  final BundleCollectionBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        if (block.title != null)
+          HomeBlockTitle(
+            title: block.title!,
+            showAction: false,
+            actionLabel: '',
+            onPressed: null,
+          ),
+        if (block.subtitle != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              block.subtitle!,
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+    if (block.items.isEmpty) {
+      return heading;
+    }
+
+    final Widget content;
+    if (block.layout == 'grid') {
+      final int columns = block.columns.clamp(1, 3).toInt();
+      content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: block.items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 245,
+          ),
+          itemBuilder: (BuildContext context, int index) => _BundleCard(
+            item: block.items[index],
+            block: block,
+            onAction: onAction,
+          ),
+        ),
+      );
+    } else {
+      content = SizedBox(
+        height: block.layout == 'banner' ? 190 : 245,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: block.items.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (BuildContext context, int index) => SizedBox(
+            width: block.layout == 'banner'
+                ? MediaQuery.sizeOf(context).width - 48
+                : 220,
+            child: _BundleCard(
+              item: block.items[index],
+              block: block,
+              onAction: onAction,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(children: <Widget>[heading, content]),
+    );
+  }
+}
+
+class _BundleCard extends StatelessWidget {
+  const _BundleCard({
+    required this.item,
+    required this.block,
+    required this.onAction,
+  });
+
+  final HomeBundleItem item;
+  final BundleCollectionBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(block.cardRadius),
+        side: BorderSide(color: primary.withValues(alpha: 0.18)),
+      ),
+      child: InkWell(
+        onTap: () => onAction(item.action),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (block.showImage)
+                Expanded(
+                  child: item.imageUrl == null
+                      ? DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.09),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.inventory_2_outlined,
+                            color: primary,
+                            size: 42,
+                          ),
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AppNetworkImage(
+                            imageUrl: item.imageUrl!,
+                            fit: BoxFit.cover,
+                            semanticLabel: item.name,
+                          ),
+                        ),
+                ),
+              if (block.showImage) const SizedBox(height: 10),
+              Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (item.description.isNotEmpty)
+                Text(
+                  item.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  if (block.showDiscount && item.discountValue > 0)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          item.pricing == 'percentage'
+                              ? '${item.discountValue.toStringAsFixed(0)}% خصم'
+                              : 'وفر ${item.discountValue.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    item.ctaLabel,
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_back, color: primary, size: 18),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class SectionHeaderBlockWidget extends StatelessWidget {
   const SectionHeaderBlockWidget({
     required this.block,

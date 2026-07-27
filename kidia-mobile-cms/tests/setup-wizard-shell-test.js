@@ -83,15 +83,14 @@ for (const layout of ["kidia-data-table", "kidia-order-list", "kidia-customer-li
 }
 assert.match(storeDataTemplate, /data-copy-link[\s\S]*data-copy-text/, "Products, categories and coupons must expose useful copy actions.");
 assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers, reports and abandoned carts must filter All, Website and Mobile App data.");
-assert.doesNotMatch(storeDataTemplate, /Mobile App only/, "Analytics must not be locked to one channel.");
 assert.match(storeDataTemplate, /source_tabs[\s\S]*analytics/, "Analytics must expose the shared source filter.");
-assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*AI Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification types.");
+assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification journeys without forcing AI Studio into Push.");
 assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s\S]*push_delivery[\s\S]*Live preview[\s\S]*History/, "Push Notifications must provide compose, targeting, delivery, live preview and history.");
-assert.match(pushTemplate, /Content[\s\S]*Offer settings[\s\S]*Audience and delivery/, "Push composer controls must be divided into clear task groups.");
+assert.match(pushTemplate, /Message[\s\S]*Open destination[\s\S]*Audience & delivery/, "Push composer controls must be divided into clear task groups.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");
 assert.match(shellScript, /date_preset[\s\S]*customDates[\s\S]*input\.disabled/, "Custom dates must remain disabled until Custom is selected.");
 assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engine::recommendations/, "AI Offer Studio must have its own evidence-backed page.");
-assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'ai_offer'/, "A reviewed AI offer must prefill the editable push composer.");
+assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An optional reviewed AI offer push must prefill the editable offer composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");

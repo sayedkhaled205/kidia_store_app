@@ -8,6 +8,7 @@ enum HomeBlockType {
   imageBanner('image_banner'),
   productCarousel('product_carousel'),
   productGrid('product_grid'),
+  bundleCollection('bundle_collection'),
   sectionHeader('section_header'),
   brandCarousel('brand_carousel'),
   promoStrip('promo_strip'),
@@ -516,6 +517,67 @@ class ProductGridBlock extends HomeBlock {
   final bool imageSwipeEnabled;
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
+}
+
+class HomeBundleItem {
+  const HomeBundleItem({
+    required this.id,
+    required this.productId,
+    required this.name,
+    required this.description,
+    required this.type,
+    required this.imageUrl,
+    required this.pricing,
+    required this.discountValue,
+    required this.minimumItems,
+    required this.maximumItems,
+    required this.productIds,
+    required this.ctaLabel,
+    required this.action,
+  });
+
+  final String id;
+  final int productId;
+  final String name;
+  final String description;
+  final String type;
+  final String? imageUrl;
+  final String pricing;
+  final double discountValue;
+  final int minimumItems;
+  final int maximumItems;
+  final List<int> productIds;
+  final String ctaLabel;
+  final HomeAction action;
+}
+
+class BundleCollectionBlock extends HomeBlock {
+  const BundleCollectionBlock({
+    required super.id,
+    required super.enabled,
+    super.presentation,
+    required this.title,
+    required this.subtitle,
+    required this.layout,
+    required this.columns,
+    required this.showImage,
+    required this.showPrice,
+    required this.showDiscount,
+    required this.ctaMode,
+    required this.cardRadius,
+    required this.items,
+  }) : super(type: HomeBlockType.bundleCollection);
+
+  final String? title;
+  final String? subtitle;
+  final String layout;
+  final int columns;
+  final bool showImage;
+  final bool showPrice;
+  final bool showDiscount;
+  final String ctaMode;
+  final double cardRadius;
+  final List<HomeBundleItem> items;
 }
 
 class SectionHeaderBlock extends HomeBlock {
