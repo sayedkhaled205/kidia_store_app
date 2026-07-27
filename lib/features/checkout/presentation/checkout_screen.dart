@@ -70,6 +70,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _onControllerChanged() {
+    if (!mounted) {
+      return;
+    }
     final Cart? cart = _controller.cart;
     if (!_checkoutTracked &&
         cart != null &&
@@ -77,18 +80,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         (_controller.status == CheckoutStatus.ready ||
             _controller.status == CheckoutStatus.submitting)) {
       _checkoutTracked = true;
-      ref
-          .read(mobileAnalyticsProvider)
-          .trackInBackground(
-            'begin_checkout',
-            value: _cartValue(cart),
-            currency: cart.totals.currency.code,
-            authToken: _authToken,
-          );
+      _analytics?.trackInBackground(
+        'begin_checkout',
+        value: _cartValue(cart),
+        currency: cart.totals.currency.code,
+        authToken: _authToken,
+      );
     }
-    if (mounted) {
-      setState(() {});
-    }
+    setState(() {});
   }
 
   @override
@@ -148,38 +147,46 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
     final Cart? cart = _controller.cart;
-    ref
-        .read(mobileAnalyticsProvider)
-        .trackInBackground(
-          'purchase',
-          value: cart == null ? 0 : _cartValue(cart),
-          currency: cart?.totals.currency.code ?? '',
-          orderId: result.orderId,
-          authToken: _authToken,
-        );
+    final MobileAnalytics? analytics = _analytics;
+    final String authToken = _authToken;
+    analytics?.trackInBackground(
+      'purchase',
+      value: cart == null ? 0 : _cartValue(cart),
+      currency: cart?.totals.currency.code ?? '',
+      orderId: result.orderId,
+      authToken: authToken,
+    );
     if (cart != null) {
       for (final item in cart.items) {
         final int lineMinor = int.tryParse(item.totals.totalMinor) ?? 0;
-        ref
-            .read(mobileAnalyticsProvider)
-            .trackInBackground(
-              'purchase_item',
-              objectId: item.productId,
-              label: item.name,
-              value:
-                  lineMinor /
-                  math.pow(10, item.totals.currency.minorUnit),
-              currency: item.totals.currency.code,
-              orderId: result.orderId,
-              authToken: _authToken,
-            );
+        analytics?.trackInBackground(
+          'purchase_item',
+          objectId: item.productId,
+          label: item.name,
+          value: lineMinor / math.pow(10, item.totals.currency.minorUnit),
+          currency: item.totals.currency.code,
+          orderId: result.orderId,
+          authToken: authToken,
+        );
       }
     }
     widget.onOrderSuccess?.call(result);
   }
 
+  ProviderContainer? get _providerContainer {
+    try {
+      return ProviderScope.containerOf(context, listen: false);
+    } on StateError {
+      return null;
+    }
+  }
+
+  MobileAnalytics? get _analytics =>
+      _providerContainer?.read(mobileAnalyticsProvider);
+
   String get _authToken =>
-      ref.read(authControllerProvider).asData?.value?.token ?? '';
+      _providerContainer?.read(authControllerProvider).asData?.value?.token ??
+      '';
 
   double _cartValue(Cart cart) {
     final int minor = int.tryParse(cart.totals.priceMinor) ?? 0;
