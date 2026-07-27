@@ -61,6 +61,67 @@ if ( ! isset( $GLOBALS['kidia_mobile_home_builder_ui_styles_printed'] ) ) {
 			gap: 7px;
 		}
 
+		/* Keep card controls readable and centered at every browser zoom level. */
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-page-card__header {
+			display: flex !important;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 10px 14px;
+		}
+
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-fixed-chrome-identity {
+			min-width: 0;
+			margin-inline-start: auto;
+			white-space: nowrap;
+		}
+
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-card-actions,
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-chrome-transfer-actions {
+			display: inline-flex !important;
+			align-items: center;
+			flex-wrap: nowrap;
+			gap: 8px;
+			width: auto;
+		}
+
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-card-actions .button {
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			width: auto !important;
+			min-width: 42px;
+			height: 38px;
+			min-height: 38px;
+			margin: 0;
+			padding-inline: 12px;
+			border-color: #2f806e;
+			border-radius: 7px;
+			color: #236b59;
+			font-weight: 600;
+			line-height: 1;
+			white-space: nowrap;
+		}
+
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-card-actions .kidia-card-action--expand {
+			width: 42px !important;
+			padding-inline: 0;
+		}
+
+		.kidia-builder-wrap .kidia-fixed-chrome-card .kidia-builder-switch--card {
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			gap: 7px;
+			width: auto !important;
+			min-height: 0;
+			margin: 0;
+			padding: 0;
+			border: 0;
+			background: transparent;
+			white-space: nowrap;
+		}
+
 		@media (max-width: 1120px) {
 			.kidia-builder-toolbar--home {
 				align-items: stretch;
