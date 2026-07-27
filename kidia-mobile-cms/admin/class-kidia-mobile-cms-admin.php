@@ -749,7 +749,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 * @return array{preset:string,from:int,to:int}
 	 */
 	private function store_data_date_range( string $preset ): array {
-		$allowed = array( 'all_time', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'previous_month', 'custom' );
+		$allowed = array( 'all_time', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'previous_month', 'last_year', 'custom' );
 		$preset  = in_array( $preset, $allowed, true ) ? $preset : 'last_30_days';
 		$zone    = wp_timezone();
 		$today   = new DateTimeImmutable( 'today', $zone );
@@ -776,6 +776,9 @@ final class Kidia_Mobile_CMS_Admin {
 			case 'previous_month':
 				$from = $today->modify( 'first day of previous month' );
 				$to   = $today->modify( 'first day of this month -1 second' );
+				break;
+			case 'last_year':
+				$from = $today->modify( '-1 year +1 day' );
 				break;
 			case 'custom':
 				$custom_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
