@@ -27,13 +27,13 @@ class MobileAnalytics {
               sendTimeout: const Duration(seconds: 4),
             ),
           ),
-      _preferences = preferences ?? SharedPreferences.getInstance();
+      _preferences = preferences;
 
   static const String _clientKey = 'kidia_mobile_analytics_client_v1';
   static final String _sessionId = _randomIdentifier();
 
   final Dio _dio;
-  final Future<SharedPreferences> _preferences;
+  Future<SharedPreferences>? _preferences;
 
   Future<void> track(
     String event, {
@@ -142,7 +142,8 @@ class MobileAnalytics {
   }
 
   Future<String> _clientId() async {
-    final SharedPreferences preferences = await _preferences;
+    final SharedPreferences preferences = await (_preferences ??=
+        SharedPreferences.getInstance());
     final String existing = preferences.getString(_clientKey)?.trim() ?? '';
     if (existing.length >= 8 && existing.length <= 64) {
       return existing;
