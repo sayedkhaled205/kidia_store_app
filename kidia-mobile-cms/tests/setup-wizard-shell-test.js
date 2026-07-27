@@ -53,8 +53,8 @@ assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no 
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
 assert.match(shellTemplate, /kidia-cms-sidebar/, "Shell must expose the primary left navigation.");
-assert.match(shellTemplate, /show_page_tabs/, "Page tabs must only appear inside Design Your Pages.");
-assert.match(shellTemplate, /kidia-cms-tabs/, "Design Your Pages must preserve the existing top page tabs.");
+assert.match(shellTemplate, /show_page_tabs/, "Page tabs must only appear inside Customize Your Pages.");
+assert.match(shellTemplate, /kidia-cms-tabs/, "Customize Your Pages must preserve the existing top page tabs.");
 assert.doesNotMatch(shellTemplate, /kidia-cms-more/, "The obsolete More menu must not appear in the page header.");
 assert.doesNotMatch(shellTemplate, /window\.prompt/, "Save Theme must not use the browser prompt.");
 assert.match(shellTemplate, /data-kidia-save-theme[\s\S]*data-kidia-theme-modal[\s\S]*data-kidia-theme-name[\s\S]*Save Theme/, "Every page header must open the centered themed Save Theme dialog.");
@@ -62,13 +62,14 @@ assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s
 assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Theme import must use the WooMobile file control and theme-colored action.");
 assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");
 assert.match(admin, /'setup'\s*=>\s*\$tab\(\s*__\(\s*'Setup Wizard'/, "Setup Wizard must follow Overview.");
-assert.match(admin, /'splash'\s*=>\s*\$tab\(\s*__\(\s*'Splash Page'/, "Splash Page must have its own sidebar destination.");
-assert.match(admin, /'pages'\s*=>\s*\$tab\(\s*__\(\s*'Design Your Pages'/, "Design Your Pages must follow Splash Page.");
+assert.match(admin, /\$tabs\s*=\s*array\([\s\S]*'splash'\s*=>\s*\$tab\(\s*__\(\s*'Splash'/, "Splash must be the first page tab.");
+assert.match(admin, /'pages'\s*=>\s*\$tab\(\s*__\(\s*'Customize Your Pages'/, "Customize Your Pages must own the page-builder sidebar destination.");
+assert.doesNotMatch(admin, /'splash'\s*=>\s*\$tab\(\s*__\(\s*'Splash Page'/, "Splash must not remain a standalone sidebar destination.");
 assert.match(admin, /'saved_themes'\s*=>\s*\$tab\(\s*__\(\s*'Saved Themes'/, "Saved Themes must have its own sidebar destination.");
 assert.match(admin, /saved_theme_redirect[\s\S]*save_current_theme[\s\S]*kidia-mobile-saved-themes/, "Named page-header saves must persist the latest builder state and open Saved Themes.");
 assert.match(admin, /'account'[\s\S]*'checkout'\s*=>\s*\$tab\(\s*__\(\s*'Checkout'/, "Checkout must appear immediately after Account in the page tabs.");
 assert.doesNotMatch(admin, /'size_chart'\s*=>\s*\$tab[\s\S]*'similar'\s*=>\s*\$tab/, "Size Chart and Similar Products must not remain in the main page header.");
-assert.match(admin, /'store_data'\s*=>\s*\$tab\([\s\S]*'push'\s*=>\s*\$tab\(/, "Store Data and Push Notifications must be available in the CMS sidebar.");
+assert.match(admin, /'store_data'\s*=>\s*\$tab\([\s\S]*'ai_insights'\s*=>\s*\$tab\([\s\S]*'push'\s*=>\s*\$tab\(/, "Store Data, AI Offer Studio and Push Notifications must be available in the CMS sidebar.");
 assert.match(admin, /function store_data_page[\s\S]*WP_Query[\s\S]*wc_get_product[\s\S]*wc_get_orders/, "Store Data must read the paginated live WooCommerce catalog and orders.");
 assert.match(admin, /function send_push_notification[\s\S]*kidia_mobile_send_push_notification[\s\S]*kidia_mobile_push_history/, "Push Notifications must validate, dispatch and record notifications.");
 for (const tab of ["Products", "Categories", "Discounts", "Customers", "Orders", "Reports", "Analytics"]) {
@@ -89,8 +90,8 @@ assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s
 assert.match(pushTemplate, /Content[\s\S]*Offer settings[\s\S]*Audience and delivery/, "Push composer controls must be divided into clear task groups.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");
 assert.match(shellScript, /date_preset[\s\S]*customDates[\s\S]*input\.disabled/, "Custom dates must remain disabled until Custom is selected.");
-assert.match(shellScript, /data-ai-scheme-filter[\s\S]*data-ai-scheme-card[\s\S]*card\.hidden/, "AI offer type filtering must work without reloading the page.");
-assert.match(shellScript, /data-ai-offer[\s\S]*ai_offer[\s\S]*data-ai-discount-value/, "A reviewed AI offer must populate the editable push composer.");
+assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engine::recommendations/, "AI Offer Studio must have its own evidence-backed page.");
+assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'ai_offer'/, "A reviewed AI offer must prefill the editable push composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");

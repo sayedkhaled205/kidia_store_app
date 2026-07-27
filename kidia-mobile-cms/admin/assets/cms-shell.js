@@ -77,8 +77,13 @@
 	const pushMessage = document.querySelector('[data-push-message]');
 	const previewTitle = document.querySelector('[data-push-preview-title]');
 	const previewMessage = document.querySelector('[data-push-preview-message]');
-	if (pushTitle && previewTitle) pushTitle.addEventListener('input', function () { previewTitle.textContent = pushTitle.value.trim() || 'Your notification title'; });
-	if (pushMessage && previewMessage) pushMessage.addEventListener('input', function () { previewMessage.textContent = pushMessage.value.trim() || 'Your message will appear here.'; });
+	const syncPushPreview = function () {
+		if (pushTitle && previewTitle) previewTitle.textContent = pushTitle.value.trim() || 'Your notification title';
+		if (pushMessage && previewMessage) previewMessage.textContent = pushMessage.value.trim() || 'Your message will appear here.';
+	};
+	if (pushTitle) pushTitle.addEventListener('input', syncPushPreview);
+	if (pushMessage) pushMessage.addEventListener('input', syncPushPreview);
+	syncPushPreview();
 	const pushTypeInputs = document.querySelectorAll('[data-push-type]');
 	const syncPushType = function () {
 		const checked = document.querySelector('[data-push-type]:checked');
@@ -118,6 +123,15 @@
 		recoveryDelivery.addEventListener('change', syncRecoveryDelivery);
 		syncRecoveryDelivery();
 	}
+	const recoveryActionStyle = document.querySelector('[data-recovery-action-style]');
+	const recoveryButtonLabel = document.querySelector('[data-recovery-button-label]');
+	if (recoveryActionStyle && recoveryButtonLabel) {
+		const syncRecoveryAction = function () {
+			recoveryButtonLabel.hidden = recoveryActionStyle.value !== 'button';
+		};
+		recoveryActionStyle.addEventListener('change', syncRecoveryAction);
+		syncRecoveryAction();
+	}
 	const selectAllCarts = document.querySelector('[data-select-all-carts]');
 	if (selectAllCarts) {
 		selectAllCarts.addEventListener('change', function () {
@@ -126,50 +140,6 @@
 			});
 		});
 	}
-	const aiSchemeFilter = document.querySelector('[data-ai-scheme-filter]');
-	if (aiSchemeFilter) {
-		const syncAiSchemes = function () {
-			const selected = aiSchemeFilter.value;
-			document.querySelectorAll('[data-ai-scheme-card]').forEach(function (card) {
-				card.hidden = selected !== 'all' && card.dataset.aiSchemeCard !== selected;
-			});
-		};
-		aiSchemeFilter.addEventListener('change', syncAiSchemes);
-		syncAiSchemes();
-	}
-	document.querySelectorAll('[data-ai-offer]').forEach(function (button) {
-		button.addEventListener('click', function () {
-			const aiType = document.querySelector('[data-push-type][value="ai_offer"]');
-			if (aiType) {
-				aiType.checked = true;
-				aiType.dispatchEvent(new Event('change', { bubbles: true }));
-			}
-			const values = {
-				'[data-ai-scheme]': button.dataset.scheme,
-				'[data-ai-confidence]': button.dataset.confidence,
-				'[data-ai-source]': button.dataset.source,
-				'[data-ai-products]': button.dataset.products,
-				'[data-ai-discount-value]': button.dataset.discountValue,
-				'[data-ai-duration]': button.dataset.duration
-			};
-			Object.keys(values).forEach(function (selector) {
-				const field = document.querySelector(selector);
-				if (field) field.value = values[selector] || '';
-			});
-			const typeField = document.querySelector('[data-ai-discount-type]');
-			if (typeField) typeField.value = button.dataset.discountType || 'percent';
-			if (pushTitle) {
-				pushTitle.value = button.dataset.title || '';
-				pushTitle.dispatchEvent(new Event('input', { bubbles: true }));
-			}
-			if (pushMessage) {
-				pushMessage.value = button.dataset.message || '';
-				pushMessage.dispatchEvent(new Event('input', { bubbles: true }));
-			}
-			const builder = document.querySelector('.kidia-push-builder');
-			if (builder) builder.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		});
-	});
 	document.addEventListener('click', function (event) {
 		const button = event.target.closest('[data-copy-link],[data-copy-text]');
 		if (!button) return;

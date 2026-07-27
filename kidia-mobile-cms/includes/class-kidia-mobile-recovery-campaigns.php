@@ -127,6 +127,11 @@ final class Kidia_Mobile_Recovery_Campaigns {
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['recovery_message'] ?? __( 'Complete your order before your personal offer expires.', 'kidia-mobile-cms' ) ) );
 		$default_url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' );
 		$base_url    = esc_url_raw( wp_unslash( $_POST['recovery_action_url'] ?? $default_url ) );
+		$action_style = sanitize_key( wp_unslash( $_POST['recovery_action_style'] ?? 'link' ) );
+		$action_style = in_array( $action_style, array( 'link', 'button' ), true ) ? $action_style : 'link';
+		$cta_label = 'button' === $action_style
+			? mb_substr( sanitize_text_field( wp_unslash( $_POST['recovery_cta_label'] ?? __( 'Complete purchase', 'kidia-mobile-cms' ) ) ), 0, 30 )
+			: '';
 		$group_id = wp_generate_uuid4();
 		$created  = 0;
 
@@ -186,6 +191,8 @@ final class Kidia_Mobile_Recovery_Campaigns {
 				'target_user_id'   => absint( $cart['user_id'] ),
 				'target_email'     => $email,
 				'action_url'       => add_query_arg( array( 'coupon' => $code, 'kidia_recovery' => $token ), $base_url ),
+				'action_style'     => $action_style,
+				'cta_label'        => $cta_label,
 				'tracking_url'     => rest_url( 'woo-mobile/v1/recovery/open/' . $token ),
 				'recovery_token'   => $token,
 				'recovery_cart_id' => absint( $cart['id'] ),

@@ -265,8 +265,10 @@ $category_image = static function ( WP_Term $category ): string {
 							<header><span class="dashicons dashicons-format-chat"></span><div><h4><?php esc_html_e( 'Notification message', 'kidia-mobile-cms' ); ?></h4><p><?php esc_html_e( 'Use {coupon} in the message to insert each personal code.', 'kidia-mobile-cms' ); ?></p></div></header>
 							<div class="kidia-recovery-fields">
 								<label><span><?php esc_html_e( 'Notification title', 'kidia-mobile-cms' ); ?></span><input type="text" name="recovery_title" maxlength="100" value="<?php esc_attr_e( 'Your cart is waiting', 'kidia-mobile-cms' ); ?>" required></label>
+								<label><span><?php esc_html_e( 'Action display', 'kidia-mobile-cms' ); ?></span><select name="recovery_action_style" data-recovery-action-style><option value="link"><?php esc_html_e( 'Open link', 'kidia-mobile-cms' ); ?></option><option value="button"><?php esc_html_e( 'Button', 'kidia-mobile-cms' ); ?></option></select></label>
 								<label class="is-wide"><span><?php esc_html_e( 'Message', 'kidia-mobile-cms' ); ?></span><textarea name="recovery_message" rows="3" maxlength="500" required><?php esc_html_e( 'Complete your order with code {coupon} before your personal offer expires.', 'kidia-mobile-cms' ); ?></textarea></label>
-								<label class="is-wide"><span><?php esc_html_e( 'Open link', 'kidia-mobile-cms' ); ?></span><input type="url" name="recovery_action_url" value="<?php echo esc_attr( function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' ) ); ?>"></label>
+								<label data-recovery-button-label hidden><span><?php esc_html_e( 'Button text', 'kidia-mobile-cms' ); ?></span><input type="text" name="recovery_cta_label" maxlength="30" value="<?php esc_attr_e( 'Complete purchase', 'kidia-mobile-cms' ); ?>"></label>
+								<label class="is-wide"><span><?php esc_html_e( 'Destination URL', 'kidia-mobile-cms' ); ?></span><input type="url" name="recovery_action_url" value="<?php echo esc_attr( function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' ) ); ?>"></label>
 							</div>
 						</section>
 						<section class="kidia-recovery-group is-delivery">

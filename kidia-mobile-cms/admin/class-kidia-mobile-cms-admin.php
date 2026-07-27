@@ -132,6 +132,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
+		add_action( 'admin_post_kidia_mobile_save_ai_insights', array( $this, 'save_ai_insights_settings' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
 		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
@@ -374,6 +375,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_submenu_page( null, __( 'Setup & Themes', 'kidia-mobile-cms' ), __( 'Setup & Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-setup', array( $this, 'setup_wizard_page' ) );
 		add_submenu_page( null, __( 'Saved Themes', 'kidia-mobile-cms' ), __( 'Saved Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-saved-themes', array( $this, 'saved_themes_page' ) );
 		add_submenu_page( null, __( 'Store Data', 'kidia-mobile-cms' ), __( 'Store Data', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-store-data', array( $this, 'store_data_page' ) );
+		add_submenu_page( null, __( 'AI Offer Studio', 'kidia-mobile-cms' ), __( 'AI Offer Studio', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-ai-insights', array( $this, 'ai_insights_page' ) );
 		add_submenu_page( null, __( 'Push Notifications', 'kidia-mobile-cms' ), __( 'Push Notifications', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-push-notifications', array( $this, 'push_notifications_page' ) );
 
 	}
@@ -833,6 +835,68 @@ final class Kidia_Mobile_CMS_Admin {
 		return $root;
 	}
 
+	/** Renders the independent explainable growth and recommendation workspace. */
+	public function ai_insights_page(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+		}
+		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : 'last_30_days';
+		$date_range  = $this->store_data_date_range( $date_preset );
+		$date_from   = $date_range['from'];
+		$date_to     = $date_range['to'];
+		$date_preset = $date_range['preset'];
+		$ai_source   = isset( $_GET['ai_source'] ) ? sanitize_key( wp_unslash( $_GET['ai_source'] ) ) : 'all';
+		$ai_source   = in_array( $ai_source, array( 'all', 'website', 'mobile' ), true ) ? $ai_source : 'all';
+		$ai_kind     = isset( $_GET['ai_kind'] ) ? sanitize_key( wp_unslash( $_GET['ai_kind'] ) ) : 'all';
+		$kind_keys   = array( 'all', 'campaign', 'merchandising', 'inventory', 'funnel', 'timing' );
+		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
+		$ai_settings = Kidia_Mobile_AI_Offer_Engine::settings();
+		$minimum_confidence = isset( $_GET['minimum_confidence'] )
+			? min( 95, max( 30, absint( $_GET['minimum_confidence'] ) ) )
+			: absint( $ai_settings['minimum_confidence'] );
+		$ai_summary = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $ai_source );
+		$all_recommendations = Kidia_Mobile_AI_Offer_Engine::recommendations( $date_from, $date_to, $ai_source );
+		$ai_recommendations  = array_values(
+			array_filter(
+				$all_recommendations,
+				static function ( array $item ) use ( $ai_kind, $minimum_confidence ): bool {
+					return ( 'all' === $ai_kind || $ai_kind === ( $item['kind'] ?? '' ) )
+						&& absint( $item['confidence'] ?? 0 ) >= $minimum_confidence;
+				}
+			)
+		);
+		$ai_signal_volume = array_sum(
+			array_map(
+				static fn( $event ) => absint( $event['count'] ?? 0 ),
+				$ai_summary['events']
+			)
+		);
+		$ai_signal_count = count( Kidia_Mobile_AI_Offer_Engine::signal_catalog() );
+		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/ai-insights.php';
+	}
+
+	/** Saves owner-controlled evidence thresholds for the AI workspace. */
+	public function save_ai_insights_settings(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_save_ai_insights', 'kidia_mobile_ai_nonce' );
+		$raw = isset( $_POST['ai_settings'] ) && is_array( $_POST['ai_settings'] )
+			? wp_unslash( $_POST['ai_settings'] )
+			: array();
+		update_option( 'kidia_mobile_ai_insights_settings', Kidia_Mobile_AI_Offer_Engine::sanitize_settings( $raw ), false );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'kidia-mobile-ai-insights',
+					'updated' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
 	/** Push composer, provider status and delivery history. */
 	public function push_notifications_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -845,12 +909,24 @@ final class Kidia_Mobile_CMS_Admin {
 		$registered_devices = absint( get_option( 'kidia_mobile_push_registered_devices', 0 ) );
 		$automations = get_option( 'kidia_mobile_push_automations', array() );
 		$automations = is_array( $automations ) ? $automations : array();
-		$ai_source = isset( $_GET['ai_source'] ) ? sanitize_key( wp_unslash( $_GET['ai_source'] ) ) : 'all';
-		$ai_source = in_array( $ai_source, array( 'all', 'website', 'mobile' ), true ) ? $ai_source : 'all';
-		$ai_from = strtotime( '-89 days midnight', current_time( 'timestamp' ) );
-		$ai_to   = strtotime( 'tomorrow midnight', current_time( 'timestamp' ) ) - 1;
-		$ai_offers = Kidia_Mobile_AI_Offer_Engine::recommendations( $ai_from, $ai_to, $ai_source );
-		$ai_signal_count = count( Kidia_Mobile_AI_Offer_Engine::signal_catalog() );
+		$selected_push_type = 'broadcast';
+		$prefill_offer      = null;
+		$prefill_id = isset( $_GET['ai_offer_id'] ) ? sanitize_text_field( wp_unslash( $_GET['ai_offer_id'] ) ) : '';
+		if ( '' !== $prefill_id ) {
+			$prefill_source = isset( $_GET['ai_source'] ) ? sanitize_key( wp_unslash( $_GET['ai_source'] ) ) : 'all';
+			$prefill_source = in_array( $prefill_source, array( 'all', 'website', 'mobile' ), true ) ? $prefill_source : 'all';
+			$prefill_from   = max( 0, absint( $_GET['ai_from'] ?? 0 ) );
+			$prefill_to     = max( $prefill_from, absint( $_GET['ai_to'] ?? 0 ) );
+			if ( $prefill_from > 0 && $prefill_to >= $prefill_from ) {
+				foreach ( Kidia_Mobile_AI_Offer_Engine::recommendations( $prefill_from, $prefill_to, $prefill_source ) as $candidate ) {
+					if ( $prefill_id === (string) ( $candidate['id'] ?? '' ) ) {
+						$prefill_offer      = $candidate;
+						$selected_push_type = 'ai_offer';
+						break;
+					}
+				}
+			}
+		}
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/push-notifications.php';
 	}
 
@@ -1251,6 +1327,7 @@ final class Kidia_Mobile_CMS_Admin {
 		};
 		$tabs = array(
 			'overview'   => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
+			'splash'     => $tab( __( 'Splash', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
 			'home'       => $tab( __( 'Home', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-home' ),
 			'category'   => $tab( __( 'Categories', 'kidia-mobile-cms' ), 'kidia-mobile-category-builder', 'dashicons-category' ),
 			'catalog'    => $tab( __( 'Catalog', 'kidia-mobile-cms' ), 'kidia-mobile-catalog-builder', 'dashicons-grid-view' ),
@@ -1274,6 +1351,7 @@ final class Kidia_Mobile_CMS_Admin {
 			'kidia-mobile-setup'                => 'setup',
 			'kidia-mobile-saved-themes'         => 'saved_themes',
 			'kidia-mobile-store-data'           => 'store_data',
+			'kidia-mobile-ai-insights'           => 'ai_insights',
 			'kidia-mobile-push-notifications'   => 'push',
 		);
 		$active_tab = $active_map[ $page ] ?? 'overview';
@@ -1284,15 +1362,15 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
 			$active_tab = 'setup';
 		}
-		$builder_tabs = array( 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout' );
+		$builder_tabs = array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout' );
 		$show_page_tabs = in_array( $active_tab, $builder_tabs, true );
 		$sidebar_items = array(
 			'overview' => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
 			'setup'    => $tab( __( 'Setup Wizard', 'kidia-mobile-cms' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
-			'splash'   => $tab( __( 'Splash Page', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
-			'pages'    => $tab( __( 'Design Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-appearance' ),
+			'pages'    => $tab( __( 'Customize Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-admin-appearance' ),
 			'saved_themes' => $tab( __( 'Saved Themes', 'kidia-mobile-cms' ), 'kidia-mobile-saved-themes', 'dashicons-portfolio' ),
 			'store_data' => $tab( __( 'Store Data', 'kidia-mobile-cms' ), 'kidia-mobile-store-data', 'dashicons-database' ),
+			'ai_insights' => $tab( __( 'AI Offer Studio', 'kidia-mobile-cms' ), 'kidia-mobile-ai-insights', 'dashicons-lightbulb' ),
 			'abandoned_carts' => array(
 				'label' => __( 'Abandoned Carts', 'kidia-mobile-cms' ),
 				'icon'  => 'dashicons-cart',
@@ -1309,7 +1387,7 @@ final class Kidia_Mobile_CMS_Admin {
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
-			: ( in_array( $active_tab, array( 'setup', 'splash', 'saved_themes', 'store_data', 'abandoned_carts', 'push' ), true ) ? $active_tab : 'overview' );
+			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'abandoned_carts', 'push' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
@@ -1328,6 +1406,7 @@ final class Kidia_Mobile_CMS_Admin {
 					'kidia-mobile-setup',
 					'kidia-mobile-saved-themes',
 					'kidia-mobile-store-data',
+					'kidia-mobile-ai-insights',
 					'kidia-mobile-push-notifications',
 				),
 				array_keys( self::PAGE_BUILDER_SLUGS )
