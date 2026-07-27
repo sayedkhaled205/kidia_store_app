@@ -132,6 +132,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
+		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
 		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
@@ -427,11 +428,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$store_tab    = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
 		$store_source = isset( $_GET['store_source'] ) ? sanitize_key( wp_unslash( $_GET['store_source'] ) ) : 'all';
 		$store_source = in_array( $store_source, array( 'all', 'website', 'mobile' ), true ) ? $store_source : 'all';
-		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts', 'settings' );
+		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts' );
 		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
-		if ( 'analytics' === $store_tab ) {
-			$store_source = 'mobile';
-		}
 
 		$date_default = 'customers' === $store_tab ? 'all_time' : 'last_30_days';
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
@@ -442,9 +440,48 @@ final class Kidia_Mobile_CMS_Admin {
 		$previous_to = $date_from - 1;
 		$previous_from = $previous_to - ( $date_to - $date_from );
 
-		$products = 'products' === $store_tab && function_exists( 'wc_get_products' )
-			? wc_get_products( array( 'limit' => 24, 'orderby' => 'date', 'order' => 'DESC', 'status' => array( 'publish', 'draft', 'pending' ) ) )
-			: array();
+		$product_page     = max( 1, absint( $_GET['product_page'] ?? 1 ) );
+		$product_per_page = 20;
+		$product_search   = isset( $_GET['product_search'] )
+			? sanitize_text_field( wp_unslash( $_GET['product_search'] ) )
+			: '';
+		$product_query    = null;
+		$products         = array();
+		$product_total    = 0;
+		$product_pages    = 1;
+		if ( 'products' === $store_tab && function_exists( 'wc_get_product' ) ) {
+			$product_query_args = array(
+				'post_type'              => 'product',
+				'post_status'            => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+				'posts_per_page'         => $product_per_page,
+				'paged'                  => $product_page,
+				'orderby'                => 'date',
+				'order'                  => 'DESC',
+				'fields'                 => 'ids',
+				'no_found_rows'          => false,
+				'update_post_meta_cache' => true,
+				'update_post_term_cache' => false,
+			);
+			if ( '' !== $product_search ) {
+				$product_query_args['s'] = $product_search;
+				$sku_product_id = function_exists( 'wc_get_product_id_by_sku' )
+					? absint( wc_get_product_id_by_sku( $product_search ) )
+					: 0;
+				if ( $sku_product_id > 0 ) {
+					unset( $product_query_args['s'] );
+					$product_query_args['post__in'] = array( $sku_product_id );
+				}
+			}
+			$product_query = new WP_Query( $product_query_args );
+			foreach ( $product_query->posts as $product_id ) {
+				$product = wc_get_product( $product_id );
+				if ( $product instanceof WC_Product ) {
+					$products[] = $product;
+				}
+			}
+			$product_total = absint( $product_query->found_posts );
+			$product_pages = max( 1, absint( $product_query->max_num_pages ) );
+		}
 		$coupons = 'discounts' === $store_tab ? get_posts(
 			array(
 				'post_type'      => 'shop_coupon',
@@ -489,7 +526,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$customer_page = max( 1, absint( $_GET['customer_page'] ?? 1 ) );
 		$customer_args = array(
 			'role__in'    => array( 'customer', 'subscriber' ),
-			'number'      => 50,
+			'number'      => 24,
 			'paged'       => $customer_page,
 			'orderby'     => 'registered',
 			'order'       => 'DESC',
@@ -510,18 +547,22 @@ final class Kidia_Mobile_CMS_Admin {
 				array( 'key' => '_kidia_mobile_customer', 'value' => '1' ),
 				array( 'key' => '_kidia_mobile_customer_sessions_v1', 'compare' => 'EXISTS' ),
 			);
-		} elseif ( 'website' === $store_source ) {
-			$customer_args['meta_query'] = array(
-				'relation' => 'OR',
-				array( 'key' => '_kidia_website_customer', 'value' => '1' ),
-				array( 'key' => '_kidia_customer_origin', 'value' => 'website' ),
-				array( 'key' => '_kidia_customer_origin', 'compare' => 'NOT EXISTS' ),
-			);
 		}
 		$customer_query = 'customers' === $store_tab ? new WP_User_Query( $customer_args ) : null;
 		$customers      = $customer_query instanceof WP_User_Query ? $customer_query->get_results() : array();
+		if ( ! empty( $customers ) ) {
+			update_meta_cache( 'user', wp_list_pluck( $customers, 'ID' ) );
+		}
+		if ( 'website' === $store_source ) {
+			$customers = array_values(
+				array_filter(
+					$customers,
+					static fn( WP_User $customer ): bool => Kidia_Mobile_Analytics::customer_sources( $customer->ID )['website']
+				)
+			);
+		}
 		$customer_total = $customer_query instanceof WP_User_Query ? absint( $customer_query->get_total() ) : 0;
-		$customer_pages = max( 1, (int) ceil( $customer_total / 50 ) );
+		$customer_pages = max( 1, (int) ceil( $customer_total / 24 ) );
 
 		$order_revenue = 0.0;
 		$order_units   = 0;
@@ -560,8 +601,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$analytics = Kidia_Mobile_Analytics::empty_summary();
 		$analytics_previous = Kidia_Mobile_Analytics::empty_summary();
 		if ( 'analytics' === $store_tab ) {
-			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to );
-			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to );
+			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source );
+			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
 		}
 		$abandoned_carts = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::abandoned_carts( $date_from, $date_to, $store_source, 150 )
@@ -570,23 +611,51 @@ final class Kidia_Mobile_CMS_Admin {
 		$category_count = taxonomy_exists( 'product_cat' )
 			? wp_count_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false ) )
 			: 0;
-		$customer_count_query = new WP_User_Query(
-			array(
-				'role__in'    => array( 'customer', 'subscriber' ),
-				'fields'      => 'ID',
-				'number'      => 1,
-				'count_total' => true,
-			)
-		);
+		$user_counts = count_users();
+		$role_counts = is_array( $user_counts['avail_roles'] ?? null ) ? $user_counts['avail_roles'] : array();
+		$post_counts = wp_count_posts( 'product' );
 		$counts = array(
-			'products'         => is_object( wp_count_posts( 'product' ) ) ? absint( wp_count_posts( 'product' )->publish ?? 0 ) : 0,
+			'products'         => is_object( $post_counts ) ? absint( $post_counts->publish ?? 0 ) : 0,
 			'categories'       => is_wp_error( $category_count ) ? 0 : absint( $category_count ),
 			'discounts'        => is_object( wp_count_posts( 'shop_coupon' ) ) ? absint( wp_count_posts( 'shop_coupon' )->publish ?? 0 ) : count( $coupons ),
-			'customers'        => absint( $customer_count_query->get_total() ),
+			'customers'        => absint( $role_counts['customer'] ?? 0 ) + absint( $role_counts['subscriber'] ?? 0 ),
 			'orders'           => function_exists( 'wc_orders_count' ) ? absint( wc_orders_count( 'processing' ) + wc_orders_count( 'completed' ) + wc_orders_count( 'on-hold' ) ) : count( $orders ),
 			'abandoned-carts'  => Kidia_Mobile_Analytics::abandoned_count(),
 		);
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';
+	}
+
+	/** Toggle a product's visibility on the website or mobile app. */
+	public function toggle_product_channel(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to change product visibility.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_toggle_product_channel' );
+
+		$product_id = absint( $_POST['product_id'] ?? 0 );
+		$channel    = isset( $_POST['channel'] ) ? sanitize_key( wp_unslash( $_POST['channel'] ) ) : '';
+		$hidden     = isset( $_POST['hidden'] ) && '1' === (string) wp_unslash( $_POST['hidden'] );
+		if ( $product_id <= 0 || ! in_array( $channel, array( 'website', 'mobile' ), true ) || 'product' !== get_post_type( $product_id ) ) {
+			wp_die( esc_html__( 'The product visibility request is invalid.', 'kidia-mobile-cms' ) );
+		}
+
+		$meta_key = 'mobile' === $channel
+			? Kidia_Mobile_Product_Channel_Visibility::MOBILE_META
+			: Kidia_Mobile_Product_Channel_Visibility::WEBSITE_META;
+		if ( $hidden ) {
+			update_post_meta( $product_id, $meta_key, 'yes' );
+		} else {
+			delete_post_meta( $product_id, $meta_key );
+		}
+		clean_post_cache( $product_id );
+
+		$redirect = wp_get_referer();
+		$redirect = $redirect ? $redirect : add_query_arg(
+			array( 'page' => 'kidia-mobile-store-data', 'store_tab' => 'products' ),
+			admin_url( 'admin.php' )
+		);
+		wp_safe_redirect( add_query_arg( 'channel_visibility_updated', '1', $redirect ) );
+		exit;
 	}
 
 	/**
@@ -1062,6 +1131,10 @@ final class Kidia_Mobile_CMS_Admin {
 			'kidia-mobile-push-notifications'   => 'push',
 		);
 		$active_tab = $active_map[ $page ] ?? 'overview';
+		$store_data_tab = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : '';
+		if ( 'kidia-mobile-store-data' === $page && 'abandoned-carts' === $store_data_tab ) {
+			$active_tab = 'abandoned_carts';
+		}
 		if ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) {
 			$active_tab = 'setup';
 		}
@@ -1074,11 +1147,23 @@ final class Kidia_Mobile_CMS_Admin {
 			'pages'    => $tab( __( 'Design Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-appearance' ),
 			'saved_themes' => $tab( __( 'Saved Themes', 'kidia-mobile-cms' ), 'kidia-mobile-saved-themes', 'dashicons-portfolio' ),
 			'store_data' => $tab( __( 'Store Data', 'kidia-mobile-cms' ), 'kidia-mobile-store-data', 'dashicons-database' ),
+			'abandoned_carts' => array(
+				'label' => __( 'Abandoned Carts', 'kidia-mobile-cms' ),
+				'icon'  => 'dashicons-cart',
+				'url'   => add_query_arg(
+					array(
+						'page'         => 'kidia-mobile-store-data',
+						'store_tab'    => 'abandoned-carts',
+						'store_source' => 'all',
+					),
+					admin_url( 'admin.php' )
+				),
+			),
 			'push' => $tab( __( 'Push Notifications', 'kidia-mobile-cms' ), 'kidia-mobile-push-notifications', 'dashicons-megaphone' ),
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
-			: ( in_array( $active_tab, array( 'setup', 'splash', 'saved_themes', 'store_data', 'push' ), true ) ? $active_tab : 'overview' );
+			: ( in_array( $active_tab, array( 'setup', 'splash', 'saved_themes', 'store_data', 'abandoned_carts', 'push' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
