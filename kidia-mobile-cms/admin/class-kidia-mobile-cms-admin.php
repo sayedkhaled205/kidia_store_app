@@ -142,6 +142,10 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'wp_ajax_kidia_mobile_apply_product_icon_settings', array( $this, 'apply_product_icon_settings' ) );
 		add_action( 'wp_ajax_kidia_mobile_start_ai_analysis', array( $this, 'start_ai_analysis' ) );
 		add_action( 'wp_ajax_kidia_mobile_step_ai_analysis', array( $this, 'step_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_background_ai_analysis', array( $this, 'background_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_cancel_ai_analysis', array( $this, 'cancel_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_ai_analysis_status', array( $this, 'ai_analysis_status' ) );
+		add_action( 'wp_ajax_kidia_mobile_dismiss_ai_analysis', array( $this, 'dismiss_ai_analysis' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
 
@@ -442,7 +446,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts' );
 		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
 
-		$date_default = 'customers' === $store_tab ? 'all_time' : 'last_30_days';
+		$date_default = in_array( $store_tab, array( 'customers', 'abandoned-carts' ), true ) ? 'all_time' : 'last_30_days';
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];
@@ -708,6 +712,12 @@ final class Kidia_Mobile_CMS_Admin {
 		$abandoned_carts = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::abandoned_carts( $date_from, $date_to, $store_source, 150 )
 			: array();
+		$abandoned_summary = 'abandoned-carts' === $store_tab
+			? Kidia_Mobile_Analytics::abandoned_summary( $date_from, $date_to, $store_source )
+			: array();
+		$abandoned_import = 'abandoned-carts' === $store_tab
+			? Kidia_Mobile_Analytics::website_session_import_status()
+			: array();
 		$recovery_stats = 'abandoned-carts' === $store_tab ? Kidia_Mobile_Recovery_Campaigns::stats() : array();
 		$recovery_campaigns = 'abandoned-carts' === $store_tab ? Kidia_Mobile_Recovery_Campaigns::recent( 50 ) : array();
 
@@ -931,6 +941,59 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
 		}
 		wp_send_json_success( $result );
+	}
+
+	/** Moves an active analysis from browser-driven batches to the server queue. */
+	public function background_ai_analysis(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
+		$result = Kidia_Mobile_AI_Analysis_Job::continue_in_background( $job_id, get_current_user_id() );
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
+		}
+		wp_send_json_success( $result );
+	}
+
+	/** Cancels an active analysis without storing its partial accumulator. */
+	public function cancel_ai_analysis(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
+		$result = Kidia_Mobile_AI_Analysis_Job::cancel( $job_id, get_current_user_id() );
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
+		}
+		wp_send_json_success( $result );
+	}
+
+	/** Reads background progress without processing another batch in the browser. */
+	public function ai_analysis_status(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
+		$result = Kidia_Mobile_AI_Analysis_Job::status( $job_id, get_current_user_id() );
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ), 404 );
+		}
+		wp_send_json_success( $result );
+	}
+
+	/** Hides a finished background-analysis notice for the current user. */
+	public function dismiss_ai_analysis(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
+		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
+		Kidia_Mobile_AI_Analysis_Job::dismiss( $job_id, get_current_user_id() );
+		wp_send_json_success( array( 'dismissed' => true ) );
 	}
 
 	/** Turns one reviewed AI recommendation into an owner-approved draft or live action. */
@@ -2256,6 +2319,16 @@ final class Kidia_Mobile_CMS_Admin {
 					);
 					wp_enqueue_style( 'kidia-mobile-cms-shell', KIDIA_MOBILE_CMS_URL . 'admin/assets/cms-shell.css', array( 'kidia-mobile-admin-theme' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/cms-shell.css' ) );
 					wp_enqueue_script( 'kidia-mobile-cms-shell', KIDIA_MOBILE_CMS_URL . 'admin/assets/cms-shell.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/cms-shell.js' ), true );
+					wp_localize_script(
+						'kidia-mobile-cms-shell',
+						'kidiaCMSBackground',
+						array(
+							'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+							'aiNonce'     => wp_create_nonce( 'kidia_mobile_ai_analysis' ),
+							'activeAiJob' => Kidia_Mobile_AI_Analysis_Job::active_job_id( get_current_user_id() ),
+							'aiUrl'       => add_query_arg( array( 'page' => 'kidia-mobile-ai-insights' ), admin_url( 'admin.php' ) ),
+						)
+					);
 					if (
 						'kidia-mobile-cms' !== $page
 						&& $this->is_public_cms_page( $page )

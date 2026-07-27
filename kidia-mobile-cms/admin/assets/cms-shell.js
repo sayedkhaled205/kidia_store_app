@@ -158,78 +158,214 @@
 		syncCustomDates();
 	}
 	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
+	const aiBackgroundConfig = window.kidiaCMSBackground || {};
+	const aiRequest = async function (action, values) {
+		const nonce = aiGenerateForm
+			? aiGenerateForm.dataset.aiAnalysisNonce || ''
+			: aiBackgroundConfig.aiNonce || '';
+		const body = new URLSearchParams(Object.assign({action: action, nonce: nonce}, values || {}));
+		const response = await window.fetch(aiBackgroundConfig.ajaxUrl || window.ajaxurl || '', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+			body: body.toString()
+		});
+		const json = await response.json();
+		if (!response.ok || !json.success) {
+			throw new Error((json.data && json.data.message) || 'The analysis could not be completed.');
+		}
+		return json.data;
+	};
+	const createAiDock = function () {
+		const current = document.querySelector('[data-ai-progress-overlay]');
+		if (current) return current;
+		const dock = document.createElement('div');
+		dock.className = 'kidia-ai-progress-overlay is-docked is-global';
+		dock.dataset.aiProgressOverlay = '';
+		dock.setAttribute('aria-live', 'polite');
+		dock.innerHTML =
+			'<div class="kidia-ai-progress-card">' +
+			'<div class="kidia-ai-progress-ring" data-ai-progress-ring style="--kidia-ai-progress:0"><strong data-ai-progress-value>0%</strong></div>' +
+			'<h2>Store analysis</h2><p data-ai-progress-stage>Reading store data in the background…</p>' +
+			'<strong class="kidia-ai-progress-count" data-ai-progress-count>Checking progress…</strong>' +
+			'<div class="kidia-ai-progress-track"><i data-ai-progress-bar></i></div>' +
+			'<small data-ai-progress-note>You can continue using every CMS page while this runs.</small>' +
+			'<div class="kidia-ai-progress-actions">' +
+			'<a class="button button-primary" data-ai-view-results hidden>View results</a>' +
+			'<button class="button kidia-ai-cancel-button" type="button" data-ai-cancel-button>Cancel analysis</button>' +
+			'</div></div>';
+		document.body.appendChild(dock);
+		return dock;
+	};
+	const renderAiProgress = function (overlay, payload) {
+		if (!overlay) return;
+		const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
+		const value = overlay.querySelector('[data-ai-progress-value]');
+		const ring = overlay.querySelector('[data-ai-progress-ring]');
+		const bar = overlay.querySelector('[data-ai-progress-bar]');
+		const stage = overlay.querySelector('[data-ai-progress-stage]');
+		const count = overlay.querySelector('[data-ai-progress-count]');
+		if (value) value.textContent = progress + '%';
+		if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
+		if (bar) bar.style.width = progress + '%';
+		if (stage && payload.stage) stage.textContent = payload.stage;
+		if (count) {
+			count.textContent =
+				Number(payload.processed || 0).toLocaleString() + ' / ' +
+				Number(payload.total || 0).toLocaleString() + ' records completed';
+		}
+		const view = overlay.querySelector('[data-ai-view-results]');
+		const cancel = overlay.querySelector('[data-ai-cancel-button]');
+		const background = overlay.querySelector('[data-ai-background-button]');
+		if (payload.cancelled) {
+			overlay.hidden = true;
+			document.body.classList.remove('kidia-ai-is-generating');
+			return;
+		}
+		if (payload.done) {
+			if (stage) stage.textContent = 'Analysis complete. Your decisions are ready.';
+			if (view) {
+				view.hidden = false;
+				view.href = payload.result_url || aiBackgroundConfig.aiUrl || '#';
+			}
+			if (background) background.hidden = true;
+			if (cancel) cancel.textContent = 'Dismiss';
+			overlay.dataset.aiComplete = '1';
+		}
+	};
+	const pollBackgroundJob = async function (jobId, overlay) {
+		let active = true;
+		overlay.dataset.aiPollingJob = jobId;
+		while (active && document.body.contains(overlay) && overlay.dataset.aiPollingJob === jobId) {
+			try {
+				const payload = await aiRequest('kidia_mobile_ai_analysis_status', {job_id: jobId});
+				if (overlay.dataset.aiPollingJob !== jobId) return;
+				renderAiProgress(overlay, payload);
+				active = !payload.done && !payload.cancelled;
+				if (active) {
+					await new Promise(function (resolve) { window.setTimeout(resolve, 3000); });
+				}
+			} catch (error) {
+				const note = overlay.querySelector('[data-ai-progress-note]');
+				if (note) note.textContent = error && error.message ? error.message : 'Background status is unavailable.';
+				active = false;
+			}
+		}
+	};
+	const bindAiOverlayActions = function (overlay, getJobId, setForeground) {
+		if (!overlay || overlay.dataset.aiActionsBound === '1') return;
+		overlay.dataset.aiActionsBound = '1';
+		const background = overlay.querySelector('[data-ai-background-button]');
+		const cancel = overlay.querySelector('[data-ai-cancel-button]');
+		if (background) {
+			background.addEventListener('click', async function () {
+				const jobId = getJobId();
+				if (!jobId) return;
+				background.disabled = true;
+				try {
+					const payload = await aiRequest('kidia_mobile_background_ai_analysis', {job_id: jobId});
+					setForeground(false);
+					overlay.classList.add('is-docked');
+					document.body.classList.remove('kidia-ai-is-generating');
+					background.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>Running in background';
+					renderAiProgress(overlay, payload);
+					pollBackgroundJob(jobId, overlay);
+				} catch (error) {
+					background.disabled = false;
+					const note = overlay.querySelector('[data-ai-progress-note]');
+					if (note) note.textContent = error && error.message ? error.message : 'Could not move the analysis to the background.';
+				}
+			});
+		}
+		if (cancel) {
+			cancel.addEventListener('click', async function () {
+				const jobId = getJobId();
+				if (!jobId) {
+					overlay.hidden = true;
+					return;
+				}
+				cancel.disabled = true;
+				try {
+					if (overlay.dataset.aiComplete === '1') {
+						await aiRequest('kidia_mobile_dismiss_ai_analysis', {job_id: jobId});
+					} else {
+						setForeground(false);
+						await aiRequest('kidia_mobile_cancel_ai_analysis', {job_id: jobId});
+					}
+					if (overlay.classList.contains('is-global')) {
+						overlay.remove();
+					} else {
+						overlay.hidden = true;
+						overlay.classList.remove('is-docked');
+						delete overlay.dataset.aiComplete;
+						cancel.disabled = false;
+						const backgroundButton = overlay.querySelector('[data-ai-background-button]');
+						if (backgroundButton) {
+							backgroundButton.hidden = false;
+							backgroundButton.disabled = false;
+							backgroundButton.innerHTML = '<span class="dashicons dashicons-migrate"></span>Continue in background';
+						}
+						const generateButton = document.querySelector('[data-ai-generate-button]');
+						const generateLabel = document.querySelector('[data-ai-generate-label]');
+						if (generateButton) {
+							generateButton.disabled = false;
+							generateButton.classList.remove('is-generating');
+						}
+						if (generateLabel) generateLabel.textContent = 'Generate offers from store data';
+					}
+					document.body.classList.remove('kidia-ai-is-generating');
+				} catch (error) {
+					cancel.disabled = false;
+				}
+			});
+		}
+	};
 	if (aiGenerateForm) {
+		let activeJobId = String(aiBackgroundConfig.activeAiJob || '');
+		let foreground = true;
+		const overlay = document.querySelector('[data-ai-progress-overlay]');
+		bindAiOverlayActions(overlay, function () { return activeJobId; }, function (value) { foreground = value; });
 		aiGenerateForm.addEventListener('submit', async function (event) {
 			event.preventDefault();
 			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
 			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
-			const overlay = document.querySelector('[data-ai-progress-overlay]');
-			const value = overlay && overlay.querySelector('[data-ai-progress-value]');
-			const ring = overlay && overlay.querySelector('[data-ai-progress-ring]');
-			const bar = overlay && overlay.querySelector('[data-ai-progress-bar]');
-			const stage = overlay && overlay.querySelector('[data-ai-progress-stage]');
-			const count = overlay && overlay.querySelector('[data-ai-progress-count]');
 			const note = overlay && overlay.querySelector('[data-ai-progress-note]');
+			const count = overlay && overlay.querySelector('[data-ai-progress-count]');
+			const stage = overlay && overlay.querySelector('[data-ai-progress-stage]');
 			if (!button) return;
+			foreground = true;
+			activeJobId = '';
+			if (overlay) overlay.dataset.aiPollingJob = 'foreground';
 			button.disabled = true;
 			button.classList.add('is-generating');
 			if (label) label.textContent = 'Generating offers from store data...';
 			if (overlay) {
 				overlay.hidden = false;
+				overlay.classList.remove('is-docked');
+				delete overlay.dataset.aiComplete;
 				document.body.classList.add('kidia-ai-is-generating');
 			}
-			const renderProgress = function (payload) {
-				const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
-					if (value) value.textContent = progress + '%';
-					if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
-					if (bar) bar.style.width = progress + '%';
-				if (stage && payload.stage) stage.textContent = payload.stage;
-				if (count) {
-					count.textContent =
-						Number(payload.processed || 0).toLocaleString() + ' / ' +
-						Number(payload.total || 0).toLocaleString() + ' records completed';
-				}
-			};
-			const request = async function (action, values) {
-				const body = new URLSearchParams(Object.assign({
-					action: action,
-					nonce: aiGenerateForm.dataset.aiAnalysisNonce || ''
-				}, values || {}));
-				const response = await window.fetch(window.ajaxurl || '', {
-					method: 'POST',
-					credentials: 'same-origin',
-					headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
-					body: body.toString()
-				});
-				const json = await response.json();
-				if (!response.ok || !json.success) {
-					throw new Error((json.data && json.data.message) || 'The analysis could not be completed.');
-				}
-				return json.data;
-			};
 			try {
 				const source = aiGenerateForm.querySelector('[name="ai_source"]');
 				const preset = aiGenerateForm.querySelector('[name="date_preset"]');
 				const from = aiGenerateForm.querySelector('[name="date_from"]');
 				const to = aiGenerateForm.querySelector('[name="date_to"]');
-				let payload = await request('kidia_mobile_start_ai_analysis', {
+				let payload = await aiRequest('kidia_mobile_start_ai_analysis', {
 					source: source ? source.value : 'all',
 					date_preset: preset ? preset.value : 'all_time',
 					date_from: from ? from.value : '',
 					date_to: to ? to.value : ''
 				});
-				renderProgress(payload);
-				while (!payload.done) {
-					payload = await request('kidia_mobile_step_ai_analysis', {job_id: payload.job_id});
-					renderProgress(payload);
+				activeJobId = payload.job_id;
+				renderAiProgress(overlay, payload);
+				while (!payload.done && foreground) {
+					payload = await aiRequest('kidia_mobile_step_ai_analysis', {job_id: activeJobId});
+					renderAiProgress(overlay, payload);
 				}
-				const destination = new URL(window.location.href);
-				const data = new FormData(aiGenerateForm);
-				data.forEach(function (item, key) { destination.searchParams.set(key, item); });
-				destination.searchParams.set('ai_generate', '1');
-				destination.searchParams.set('ai_ready', '1');
-				window.location.assign(destination.toString());
+				if (payload.cancelled || !foreground) return;
+				window.location.assign(payload.result_url || window.location.href);
 			} catch (error) {
+				if (!foreground) return;
 				if (stage) stage.textContent = error && error.message ? error.message : 'The analysis could not be completed.';
 				if (note) note.textContent = 'No incomplete result was published. You can retry safely.';
 				if (count) count.textContent = 'Analysis stopped';
@@ -238,6 +374,17 @@
 				if (label) label.textContent = 'Retry offer generation';
 			}
 		});
+	}
+	const configuredJob = String(aiBackgroundConfig.activeAiJob || '');
+	const viewingAiResult = new URL(window.location.href).searchParams.get('ai_ready') === '1';
+	if (configuredJob && !viewingAiResult) {
+		const dock = createAiDock();
+		dock.hidden = false;
+		dock.classList.add('is-docked');
+		bindAiOverlayActions(dock, function () { return configuredJob; }, function () {});
+		pollBackgroundJob(configuredJob, dock);
+	} else if (configuredJob && viewingAiResult) {
+		aiRequest('kidia_mobile_dismiss_ai_analysis', {job_id: configuredJob}).catch(function () {});
 	}
 	const aiWorkspaceTabs = document.querySelectorAll('[data-ai-workspace-tab]');
 	const aiWorkspacePanels = document.querySelectorAll('[data-ai-workspace-panel]');

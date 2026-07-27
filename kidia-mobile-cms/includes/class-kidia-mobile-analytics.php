@@ -14,6 +14,10 @@ final class Kidia_Mobile_Analytics {
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
 	private const ORIGIN_META = '_kidia_customer_origin';
+	private const WEBSITE_IMPORT_OPTION = 'kidia_mobile_website_cart_import_v2';
+	private const WEBSITE_IMPORT_HOOK = 'kidia_mobile_import_website_cart_sessions';
+	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v2';
+	private const WEBSITE_IMPORT_BATCH = 300;
 
 	/** @var list<string> */
 	private const EVENTS = array(
@@ -52,6 +56,8 @@ final class Kidia_Mobile_Analytics {
 		add_action( 'woocommerce_payment_complete', array( $this, 'capture_paid_order' ) );
 		add_action( 'woocommerce_order_status_processing', array( $this, 'capture_paid_order' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'capture_paid_order' ) );
+		add_action( self::WEBSITE_IMPORT_HOOK, array( $this, 'run_website_session_import' ) );
+		add_action( 'init', array( $this, 'ensure_website_session_import' ), 25 );
 	}
 
 	public function maybe_install(): void {
@@ -1156,8 +1162,47 @@ final class Kidia_Mobile_Analytics {
 		return $rows;
 	}
 
+	/**
+	 * Returns complete filtered totals independently from the limited table page.
+	 *
+	 * @return array{carts:int,abandoned:int,recovered:int,potential_value:float}
+	 */
+	public static function abandoned_summary( int $from, int $to, string $source = 'all' ): array {
+		global $wpdb;
+		$table      = self::carts_table();
+		$threshold  = gmdate( 'Y-m-d H:i:s', time() - 30 * MINUTE_IN_SECONDS );
+		$where      = 'last_activity_at BETWEEN %s AND %s AND item_count > 0';
+		$args       = array( gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
+		if ( in_array( $source, array( 'website', 'mobile' ), true ) ) {
+			$where .= ' AND source = %s';
+			$args[] = $source;
+		}
+		$where .= " AND (status IN ('abandoned','recovered','converted') OR (status = 'active' AND last_activity_at <= %s))";
+		$args[] = $threshold;
+		$row    = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT
+					COUNT(*) AS carts,
+					SUM(CASE WHEN status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s) THEN 1 ELSE 0 END) AS abandoned,
+					SUM(CASE WHEN status IN ('recovered','converted') THEN 1 ELSE 0 END) AS recovered,
+					SUM(CASE WHEN status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s) THEN cart_total ELSE 0 END) AS potential_value
+				FROM {$table}
+				WHERE {$where}",
+				$threshold,
+				$threshold,
+				...$args
+			),
+			ARRAY_A
+		);
+		return array(
+			'carts'           => absint( $row['carts'] ?? 0 ),
+			'abandoned'       => absint( $row['abandoned'] ?? 0 ),
+			'recovered'       => absint( $row['recovered'] ?? 0 ),
+			'potential_value' => max( 0, (float) ( $row['potential_value'] ?? 0 ) ),
+		);
+	}
+
 	public static function abandoned_count(): int {
-		self::sync_website_sessions();
 		global $wpdb;
 		$table     = self::carts_table();
 		$threshold = gmdate( 'Y-m-d H:i:s', time() - 30 * MINUTE_IN_SECONDS );
@@ -1174,95 +1219,227 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	/**
-	 * Imports live WooCommerce session carts so abandoned-cart reporting works
-	 * even when the cart existed before this analytics table was introduced.
+	 * Starts a one-time, cursor-based import of every retained WooCommerce cart
+	 * session. The old implementation repeatedly read only the first 300 rows.
+	 *
+	 * @return array<string,int|string>
 	 */
-	public static function sync_website_sessions( int $limit = 300 ): int {
-		if ( get_transient( 'kidia_website_session_sync_lock' ) ) {
-			return 0;
+	public function ensure_website_session_import(): array {
+		$state = self::website_session_import_status();
+		if ( in_array( (string) ( $state['phase'] ?? '' ), array( 'running', 'complete' ), true ) ) {
+			if ( 'running' === (string) $state['phase'] ) {
+				self::schedule_website_session_import();
+			}
+			return $state;
 		}
-		set_transient( 'kidia_website_session_sync_lock', 1, 5 * MINUTE_IN_SECONDS );
 
 		global $wpdb;
 		$sessions_table = $wpdb->prefix . 'woocommerce_sessions';
-		$table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sessions_table ) );
+		$table_exists   = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sessions_table ) );
 		if ( $sessions_table !== $table_exists ) {
+			$state = array(
+				'phase'     => 'unavailable',
+				'processed' => 0,
+				'total'     => 0,
+				'imported'  => 0,
+				'cursor'    => 0,
+			);
+			update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
+			return $state;
+		}
+
+		$cart_pattern = '%' . $wpdb->esc_like( 'cart' ) . '%';
+		$total        = absint(
+			$wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$sessions_table} WHERE session_value LIKE %s",
+					$cart_pattern
+				)
+			)
+		);
+		$state        = array(
+			'phase'      => $total > 0 ? 'running' : 'complete',
+			'processed'  => 0,
+			'total'      => $total,
+			'imported'   => 0,
+			'cursor'     => 0,
+			'started_at' => time(),
+		);
+		update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
+		if ( $total > 0 ) {
+			self::schedule_website_session_import();
+		}
+		return $state;
+	}
+
+	/** Action Scheduler / WP-Cron callback for one historical-cart batch. */
+	public function run_website_session_import(): void {
+		self::process_website_session_import_batch( self::WEBSITE_IMPORT_BATCH );
+	}
+
+	/**
+	 * Imports one real batch immediately and leaves the rest to the server queue.
+	 * This keeps the Abandoned Carts page responsive on large stores.
+	 */
+	public static function sync_website_sessions( int $limit = self::WEBSITE_IMPORT_BATCH ): int {
+		$service = new self();
+		$state   = $service->ensure_website_session_import();
+		if ( 'running' !== (string) ( $state['phase'] ?? '' ) ) {
+			return 0;
+		}
+		return self::process_website_session_import_batch( max( 1, min( 1000, $limit ) ) );
+	}
+
+	/** @return array<string,int|string> */
+	public static function website_session_import_status(): array {
+		$state = get_option( self::WEBSITE_IMPORT_OPTION, array() );
+		return is_array( $state )
+			? array_merge(
+				array(
+					'phase'     => 'not_started',
+					'processed' => 0,
+					'total'     => 0,
+					'imported'  => 0,
+					'cursor'    => 0,
+				),
+				$state
+			)
+			: array( 'phase' => 'not_started', 'processed' => 0, 'total' => 0, 'imported' => 0, 'cursor' => 0 );
+	}
+
+	/** Processes the next ordered session-id range exactly once. */
+	private static function process_website_session_import_batch( int $limit ): int {
+		if ( get_transient( self::WEBSITE_IMPORT_LOCK ) ) {
+			return 0;
+		}
+		set_transient( self::WEBSITE_IMPORT_LOCK, 1, 2 * MINUTE_IN_SECONDS );
+
+		$state = self::website_session_import_status();
+		if ( 'running' !== (string) ( $state['phase'] ?? '' ) ) {
+			delete_transient( self::WEBSITE_IMPORT_LOCK );
 			return 0;
 		}
 
-		$rows = $wpdb->get_results(
+		global $wpdb;
+		$sessions_table = $wpdb->prefix . 'woocommerce_sessions';
+		$cart_pattern   = '%' . $wpdb->esc_like( 'cart' ) . '%';
+		$rows           = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT session_key, session_value, session_expiry
+				"SELECT session_id, session_key, session_value, session_expiry
 				FROM {$sessions_table}
-				WHERE session_expiry >= %d
-				ORDER BY session_expiry ASC
+				WHERE session_id > %d AND session_value LIKE %s
+				ORDER BY session_id ASC
 				LIMIT %d",
-				time() - 7 * DAY_IN_SECONDS,
-				max( 1, min( 1000, $limit ) )
+				absint( $state['cursor'] ?? 0 ),
+				$cart_pattern,
+				$limit
 			),
 			ARRAY_A
 		);
-		$synced = 0;
-		$expiration = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
-		$service = new self();
+		$imported = 0;
+		$cursor   = absint( $state['cursor'] ?? 0 );
 		foreach ( $rows as $row ) {
-			$session = maybe_unserialize( $row['session_value'] ?? '' );
-			if ( ! is_array( $session ) ) {
-				continue;
+			$cursor = max( $cursor, absint( $row['session_id'] ?? 0 ) );
+			if ( self::import_website_session_row( $row ) ) {
+				++$imported;
 			}
-			$cart = maybe_unserialize( $session['cart'] ?? array() );
-			if ( ! is_array( $cart ) || empty( $cart ) ) {
-				continue;
-			}
-			$customer = maybe_unserialize( $session['customer'] ?? array() );
-			$customer = is_array( $customer ) ? $customer : array();
-			$items = array();
-			$total = 0.0;
-			foreach ( $cart as $cart_item ) {
-				if ( ! is_array( $cart_item ) ) {
-					continue;
-				}
-				$product_id = absint( $cart_item['product_id'] ?? 0 );
-				$quantity   = max( 1, absint( $cart_item['quantity'] ?? 1 ) );
-				if ( $product_id <= 0 ) {
-					continue;
-				}
-				$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
-				$items[] = array(
-					'product_id' => $product_id,
-					'name'       => $product instanceof WC_Product ? $product->get_name() : '',
-					'quantity'   => $quantity,
-				);
-				$total += max( 0, (float) ( $cart_item['line_total'] ?? 0 ) )
-					+ max( 0, (float) ( $cart_item['line_tax'] ?? 0 ) );
-			}
-			if ( empty( $items ) ) {
-				continue;
-			}
-			$session_key = sanitize_text_field( (string) ( $row['session_key'] ?? '' ) );
-			$user_id = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
-			$expiry = absint( $row['session_expiry'] ?? 0 );
-			$last_activity = max( time() - 30 * DAY_IN_SECONDS, $expiry - $expiration );
-			$service->upsert_cart(
-				array(
-					'cart_key'        => hash( 'sha256', 'website|' . $session_key ),
-					'source'          => 'website',
-					'client_id'       => '',
-					'session_id'      => $session_key,
-					'user_id'         => $user_id,
-					'customer_name'   => trim( sanitize_text_field( (string) ( $customer['first_name'] ?? '' ) ) . ' ' . sanitize_text_field( (string) ( $customer['last_name'] ?? '' ) ) ),
-					'customer_email'  => sanitize_email( (string) ( $customer['email'] ?? '' ) ),
-					'items'           => $items,
-					'item_count'      => array_sum( array_column( $items, 'quantity' ) ),
-					'cart_total'      => $total,
-					'currency'        => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
-					'started_at'      => gmdate( 'Y-m-d H:i:s', $last_activity ),
-					'last_activity_at' => gmdate( 'Y-m-d H:i:s', $last_activity ),
-				)
-			);
-			++$synced;
 		}
-		return $synced;
+
+		$state['cursor']    = $cursor;
+		$state['processed'] = min(
+			absint( $state['total'] ?? 0 ),
+			absint( $state['processed'] ?? 0 ) + count( $rows )
+		);
+		$state['imported']  = absint( $state['imported'] ?? 0 ) + $imported;
+		if ( count( $rows ) < $limit ) {
+			$state['phase']        = 'complete';
+			$state['completed_at'] = time();
+			$state['processed']    = max( absint( $state['processed'] ), absint( $state['total'] ) );
+		}
+		update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
+		delete_transient( self::WEBSITE_IMPORT_LOCK );
+		if ( 'running' === (string) $state['phase'] ) {
+			self::schedule_website_session_import( true );
+		}
+		return $imported;
+	}
+
+	/** Imports one serialized WooCommerce session when it still contains items. */
+	private static function import_website_session_row( array $row ): bool {
+		$session = maybe_unserialize( $row['session_value'] ?? '' );
+		if ( ! is_array( $session ) ) {
+			return false;
+		}
+		$cart = maybe_unserialize( $session['cart'] ?? array() );
+		if ( ! is_array( $cart ) || empty( $cart ) ) {
+			return false;
+		}
+		$customer = maybe_unserialize( $session['customer'] ?? array() );
+		$customer = is_array( $customer ) ? $customer : array();
+		$items    = array();
+		$total    = 0.0;
+		foreach ( $cart as $cart_item ) {
+			if ( ! is_array( $cart_item ) ) {
+				continue;
+			}
+			$product_id = absint( $cart_item['product_id'] ?? 0 );
+			$quantity   = max( 1, absint( $cart_item['quantity'] ?? 1 ) );
+			if ( $product_id <= 0 ) {
+				continue;
+			}
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+			$items[] = array(
+				'product_id' => $product_id,
+				'name'       => $product instanceof WC_Product ? $product->get_name() : '',
+				'quantity'   => $quantity,
+			);
+			$total += max( 0, (float) ( $cart_item['line_total'] ?? 0 ) )
+				+ max( 0, (float) ( $cart_item['line_tax'] ?? 0 ) );
+		}
+		if ( empty( $items ) ) {
+			return false;
+		}
+
+		$session_key  = sanitize_text_field( (string) ( $row['session_key'] ?? '' ) );
+		if ( '' === $session_key ) {
+			return false;
+		}
+		$user_id      = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
+		$expiry       = absint( $row['session_expiry'] ?? 0 );
+		$expiration   = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
+		$last_activity = $expiry > 0 ? max( 1, $expiry - $expiration ) : time();
+		( new self() )->upsert_cart(
+			array(
+				'cart_key'         => hash( 'sha256', 'website|' . $session_key ),
+				'source'           => 'website',
+				'client_id'        => '',
+				'session_id'       => $session_key,
+				'user_id'          => $user_id,
+				'customer_name'    => trim( sanitize_text_field( (string) ( $customer['first_name'] ?? '' ) ) . ' ' . sanitize_text_field( (string) ( $customer['last_name'] ?? '' ) ) ),
+				'customer_email'   => sanitize_email( (string) ( $customer['email'] ?? '' ) ),
+				'items'            => $items,
+				'item_count'       => array_sum( array_column( $items, 'quantity' ) ),
+				'cart_total'       => $total,
+				'currency'         => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
+				'started_at'       => gmdate( 'Y-m-d H:i:s', $last_activity ),
+				'last_activity_at' => gmdate( 'Y-m-d H:i:s', $last_activity ),
+			)
+		);
+		return true;
+	}
+
+	/** Schedules the next import batch without requiring the admin page to stay open. */
+	private static function schedule_website_session_import( bool $from_runner = false ): void {
+		if ( ! $from_runner && function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( self::WEBSITE_IMPORT_HOOK, array(), 'kidia-mobile-cms' ) ) {
+			return;
+		}
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( self::WEBSITE_IMPORT_HOOK, array(), 'kidia-mobile-cms', false );
+			return;
+		}
+		if ( ! wp_next_scheduled( self::WEBSITE_IMPORT_HOOK ) ) {
+			wp_schedule_single_event( time() + 1, self::WEBSITE_IMPORT_HOOK );
+		}
 	}
 
 	/**
@@ -1531,7 +1708,7 @@ final class Kidia_Mobile_Analytics {
 					WHEN status='recovered' THEN status
 					ELSE VALUES(status)
 				END,
-				last_activity_at=VALUES(last_activity_at)",
+				last_activity_at=GREATEST(last_activity_at,VALUES(last_activity_at))",
 			(string) $cart['cart_key'],
 			(string) $cart['source'],
 			(string) $cart['client_id'],
