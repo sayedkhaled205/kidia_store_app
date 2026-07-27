@@ -132,7 +132,6 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
-		add_action( 'admin_post_kidia_mobile_save_ai_insights', array( $this, 'save_ai_insights_settings' ) );
 		add_action( 'admin_post_kidia_mobile_build_ai_action', array( $this, 'build_ai_action' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
 		add_action( 'admin_post_kidia_mobile_set_coupon_channel', array( $this, 'set_coupon_channel' ) );
@@ -864,18 +863,13 @@ final class Kidia_Mobile_CMS_Admin {
 		$ai_kind     = isset( $_GET['ai_kind'] ) ? sanitize_key( wp_unslash( $_GET['ai_kind'] ) ) : 'all';
 		$kind_keys   = array( 'all', 'campaign', 'merchandising', 'inventory', 'funnel', 'timing' );
 		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
-		$ai_settings = Kidia_Mobile_AI_Offer_Engine::settings();
-		$minimum_confidence = isset( $_GET['minimum_confidence'] )
-			? min( 95, max( 30, absint( $_GET['minimum_confidence'] ) ) )
-			: absint( $ai_settings['minimum_confidence'] );
 		$ai_summary = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $ai_source );
 		$all_recommendations = Kidia_Mobile_AI_Offer_Engine::recommendations( $date_from, $date_to, $ai_source );
 		$ai_recommendations  = array_values(
 			array_filter(
 				$all_recommendations,
-				static function ( array $item ) use ( $ai_kind, $minimum_confidence ): bool {
-					return ( 'all' === $ai_kind || $ai_kind === ( $item['kind'] ?? '' ) )
-						&& absint( $item['confidence'] ?? 0 ) >= $minimum_confidence;
+				static function ( array $item ) use ( $ai_kind ): bool {
+					return 'all' === $ai_kind || $ai_kind === ( $item['kind'] ?? '' );
 				}
 			)
 		);
@@ -887,28 +881,6 @@ final class Kidia_Mobile_CMS_Admin {
 		);
 		$ai_signal_count = count( Kidia_Mobile_AI_Offer_Engine::signal_catalog() );
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/ai-insights.php';
-	}
-
-	/** Saves owner-controlled evidence thresholds for the AI workspace. */
-	public function save_ai_insights_settings(): void {
-		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
-		}
-		check_admin_referer( 'kidia_mobile_save_ai_insights', 'kidia_mobile_ai_nonce' );
-		$raw = isset( $_POST['ai_settings'] ) && is_array( $_POST['ai_settings'] )
-			? wp_unslash( $_POST['ai_settings'] )
-			: array();
-		update_option( 'kidia_mobile_ai_insights_settings', Kidia_Mobile_AI_Offer_Engine::sanitize_settings( $raw ), false );
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'    => 'kidia-mobile-ai-insights',
-					'updated' => '1',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
-		exit;
 	}
 
 	/** Turns one reviewed AI recommendation into an owner-approved draft or live action. */

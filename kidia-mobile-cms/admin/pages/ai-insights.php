@@ -49,6 +49,7 @@ $funnel = array(
 $playbook_groups = Kidia_Mobile_AI_Offer_Engine::playbook_groups();
 $playbook_count = array_sum( array_map( static fn( $group ) => count( $group['items'] ?? array() ), $playbook_groups ) );
 $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
+$commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'] : array();
 ?>
 <div class="wrap kidia-ai-page">
 	<header class="kidia-ai-page__hero">
@@ -56,26 +57,30 @@ $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 		<div class="kidia-ai-page__trust"><strong><?php echo esc_html( (string) $ai_signal_count ); ?>+</strong><span><?php esc_html_e( 'documented signals', 'kidia-mobile-cms' ); ?></span></div>
 	</header>
 
-	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'AI analysis settings saved.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
-	<?php if ( isset( $_GET['ai_action_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The reviewed AI action was saved. Nothing else was activated automatically.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+		<?php if ( isset( $_GET['ai_action_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The reviewed AI action was saved. Nothing else was activated automatically.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['bundle_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Bundle recipe saved and is ready for Home Page or app placement.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 
 	<form class="kidia-date-filter kidia-ai-filter-bar" method="get">
 		<input type="hidden" name="page" value="kidia-mobile-ai-insights">
 		<label><span><?php esc_html_e( 'Channel', 'kidia-mobile-cms' ); ?></span><select name="ai_source"><?php foreach ( $source_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $ai_source, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 		<label><span><?php esc_html_e( 'Recommendation type', 'kidia-mobile-cms' ); ?></span><select name="ai_kind"><?php foreach ( $kind_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $ai_kind, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
-		<label><span><?php esc_html_e( 'Minimum confidence', 'kidia-mobile-cms' ); ?></span><select name="minimum_confidence"><?php foreach ( array( 30, 40, 50, 60, 70, 80, 90 ) as $confidence ) : ?><option value="<?php echo esc_attr( (string) $confidence ); ?>" <?php selected( $minimum_confidence, $confidence ); ?>><?php echo esc_html( $confidence . '%+' ); ?></option><?php endforeach; ?></select></label>
-		<label><span><?php esc_html_e( 'Period', 'kidia-mobile-cms' ); ?></span><select name="date_preset"><?php foreach ( $date_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $date_preset, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
+			<label><span><?php esc_html_e( 'Period', 'kidia-mobile-cms' ); ?></span><select name="date_preset"><?php foreach ( $date_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $date_preset, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 		<label><span><?php esc_html_e( 'From', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_from" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_from ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
 		<label><span><?php esc_html_e( 'To', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_to" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_to ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
 		<button class="button button-primary" type="submit"><?php esc_html_e( 'Apply', 'kidia-mobile-cms' ); ?></button>
 	</form>
 
 	<section class="kidia-ai-overview">
-		<article><span class="dashicons dashicons-database"></span><div><small><?php esc_html_e( 'Signals in period', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) $ai_signal_volume ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'WooCommerce orders analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['orders'] ?? 0 ) ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-products"></span><div><small><?php esc_html_e( 'Units analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['units'] ?? 0 ) ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-store"></span><div><small><?php esc_html_e( 'Catalog products', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['catalog_products'] ?? 0 ) ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-visibility"></span><div><small><?php esc_html_e( 'Live behaviour signals', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) $ai_signal_volume ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-lightbulb"></span><div><small><?php esc_html_e( 'Recommendations found', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) count( $all_recommendations ) ); ?></strong></div></article>
-		<article><span class="dashicons dashicons-groups"></span><div><small><?php esc_html_e( 'Visitors', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $ai_summary['visitors'] ) ); ?></strong></div></article>
-		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'Tracked purchases', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $event( 'purchase' )['count'] ) ); ?></strong></div></article>
+	</section>
+
+	<section class="kidia-ai-data-coverage">
+		<span class="dashicons dashicons-yes-alt"></span>
+		<div><strong><?php esc_html_e( 'Automatic store analysis is active', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'The engine combines historical WooCommerce orders, product relationships, catalog age, stock, sales velocity and live website/app behaviour. You do not configure analysis rules; you only review the strongest generated actions.', 'kidia-mobile-cms' ); ?></p></div>
 	</section>
 
 	<div class="kidia-ai-analysis-grid">
@@ -86,9 +91,9 @@ $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 		<section class="kidia-ai-demand-panel">
 			<header><div><span class="dashicons dashicons-chart-line"></span><div><h2><?php esc_html_e( 'Demand signals', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'What customers view, search for and buy in this period.', 'kidia-mobile-cms' ); ?></p></div></div></header>
 			<div>
+				<article><small><?php esc_html_e( 'Best-selling product', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) ( $ai_summary['top_purchases'][0]['event_label'] ?? '—' ) ); ?></strong><span><?php echo esc_html( (string) absint( $ai_summary['top_purchases'][0]['event_count'] ?? 0 ) ); ?> <?php esc_html_e( 'units', 'kidia-mobile-cms' ); ?></span></article>
 				<article><small><?php esc_html_e( 'Top viewed product', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) ( $ai_summary['top_products'][0]['event_label'] ?? '—' ) ); ?></strong><span><?php echo esc_html( (string) absint( $ai_summary['top_products'][0]['event_count'] ?? 0 ) ); ?> <?php esc_html_e( 'views', 'kidia-mobile-cms' ); ?></span></article>
 				<article><small><?php esc_html_e( 'Top search', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) ( $ai_summary['top_searches'][0]['event_label'] ?? '—' ) ); ?></strong><span><?php echo esc_html( (string) absint( $ai_summary['top_searches'][0]['event_count'] ?? 0 ) ); ?> <?php esc_html_e( 'searches', 'kidia-mobile-cms' ); ?></span></article>
-				<article><small><?php esc_html_e( 'Top category', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) ( $ai_summary['top_categories'][0]['event_label'] ?? '—' ) ); ?></strong><span><?php echo esc_html( (string) absint( $ai_summary['top_categories'][0]['event_count'] ?? 0 ) ); ?> <?php esc_html_e( 'views', 'kidia-mobile-cms' ); ?></span></article>
 			</div>
 		</section>
 	</div>
@@ -141,12 +146,12 @@ $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 				<?php endforeach; ?>
 			</div>
 		<?php else : ?>
-			<div class="kidia-ai-empty"><span class="dashicons dashicons-database"></span><div><strong><?php esc_html_e( 'No recommendation matches these filters yet', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Lower the confidence filter, widen the period or wait for more real store activity. The studio does not invent evidence.', 'kidia-mobile-cms' ); ?></p></div></div>
+			<div class="kidia-ai-empty"><span class="dashicons dashicons-database"></span><div><strong><?php esc_html_e( 'No recommendation matches these filters yet', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Widen the period or wait for more real store activity. The studio does not invent evidence.', 'kidia-mobile-cms' ); ?></p></div></div>
 		<?php endif; ?>
 	</section>
 
-	<section class="kidia-ai-bundle-studio">
-		<header><div><span class="dashicons dashicons-products"></span><div><h2><?php esc_html_e( 'Universal Bundle Builder', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Create any bundle concept manually or start from an AI recommendation. Fixed bundles can behave like a product; choice bundles open a customer selection page.', 'kidia-mobile-cms' ); ?></p></div></div><b><?php echo esc_html( sprintf( _n( '%d saved bundle', '%d saved bundles', count( $bundle_recipes ), 'kidia-mobile-cms' ), count( $bundle_recipes ) ) ); ?></b></header>
+	<details class="kidia-ai-bundle-studio">
+		<summary><div><span class="dashicons dashicons-products"></span><div><h2><?php esc_html_e( 'Optional manual bundle builder', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'AI recommendations are generated above. Open this only when you want to create a bundle without an analytical recommendation.', 'kidia-mobile-cms' ); ?></p></div></div><b><?php echo esc_html( sprintf( _n( '%d saved bundle', '%d saved bundles', count( $bundle_recipes ), 'kidia-mobile-cms' ), count( $bundle_recipes ) ) ); ?></b></summary>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_bundle_recipe"><?php wp_nonce_field( 'kidia_mobile_save_bundle_recipe', 'kidia_mobile_bundle_nonce' ); ?>
 			<div class="kidia-ai-bundle-grid">
@@ -170,23 +175,6 @@ $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 			</div>
 			<label class="kidia-ai-bundle-description"><span><?php esc_html_e( 'Customer-facing description', 'kidia-mobile-cms' ); ?></span><textarea name="bundle[description]" rows="3"></textarea></label>
 			<footer><button class="button button-primary" type="submit"><?php esc_html_e( 'Save bundle recipe', 'kidia-mobile-cms' ); ?></button></footer>
-		</form>
-	</section>
-
-	<details class="kidia-ai-settings">
-		<summary><span class="dashicons dashicons-admin-generic"></span><div><strong><?php esc_html_e( 'Analysis settings', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Control when the engine is allowed to recommend an action.', 'kidia-mobile-cms' ); ?></small></div></summary>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="kidia_mobile_save_ai_insights"><?php wp_nonce_field( 'kidia_mobile_save_ai_insights', 'kidia_mobile_ai_nonce' ); ?>
-			<div>
-				<label><span><?php esc_html_e( 'Minimum confidence', 'kidia-mobile-cms' ); ?></span><input type="number" min="30" max="95" name="ai_settings[minimum_confidence]" value="<?php echo esc_attr( (string) $ai_settings['minimum_confidence'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'Maximum recommendations', 'kidia-mobile-cms' ); ?></span><input type="number" min="4" max="24" name="ai_settings[maximum_recommendations]" value="<?php echo esc_attr( (string) $ai_settings['maximum_recommendations'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'High-interest minimum views', 'kidia-mobile-cms' ); ?></span><input type="number" min="3" max="1000" name="ai_settings[high_interest_min_views]" value="<?php echo esc_attr( (string) $ai_settings['high_interest_min_views'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'Low-conversion threshold (%)', 'kidia-mobile-cms' ); ?></span><input type="number" min="1" max="50" name="ai_settings[low_conversion_percent]" value="<?php echo esc_attr( (string) $ai_settings['low_conversion_percent'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'Slow-stock minimum age (days)', 'kidia-mobile-cms' ); ?></span><input type="number" min="14" max="730" name="ai_settings[slow_stock_min_age_days]" value="<?php echo esc_attr( (string) $ai_settings['slow_stock_min_age_days'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'Slow-stock minimum units', 'kidia-mobile-cms' ); ?></span><input type="number" min="1" max="1000" name="ai_settings[slow_stock_min_units]" value="<?php echo esc_attr( (string) $ai_settings['slow_stock_min_units'] ); ?>"></label>
-				<label class="kidia-ai-margin-check"><input type="checkbox" name="ai_settings[protect_margin]" value="1" <?php checked( ! empty( $ai_settings['protect_margin'] ) ); ?>><span><?php esc_html_e( 'Prefer non-discount actions and protect margin', 'kidia-mobile-cms' ); ?></span></label>
-			</div>
-			<button class="button button-primary" type="submit"><?php esc_html_e( 'Save analysis settings', 'kidia-mobile-cms' ); ?></button>
 		</form>
 	</details>
 </div>

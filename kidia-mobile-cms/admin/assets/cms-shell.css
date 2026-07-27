@@ -963,12 +963,16 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-filter-bar label:nth-of-type(2){flex-basis:210px}
 .kidia-ai-filter-bar :is(select,input){width:100%;min-width:0}
 .kidia-ai-filter-bar .button{min-width:98px}
-.kidia-ai-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:16px}
+.kidia-ai-overview{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin-bottom:12px}
 .kidia-ai-overview article{display:flex;min-height:102px;align-items:center;gap:12px;padding:15px;border:1px solid var(--kidia-ai-border);border-radius:14px;background:#fff}
 .kidia-ai-overview article>.dashicons{display:grid;width:42px;height:42px;flex:0 0 42px;place-items:center;border-radius:11px;background:#e5f4ef;color:#236b59;font-size:21px}
 .kidia-ai-overview article>div{display:grid;gap:3px}
 .kidia-ai-overview small{color:#677873;font-weight:650}
 .kidia-ai-overview strong{color:var(--kidia-ai-dark);font-size:24px;font-variant-numeric:tabular-nums}
+.kidia-ai-data-coverage{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:14px 16px;border:1px solid #b9d9d1;border-radius:13px;background:#eef8f5}
+.kidia-ai-data-coverage>.dashicons{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border-radius:50%;background:#2f806e;color:#fff}
+.kidia-ai-data-coverage strong{color:var(--kidia-ai-dark)}
+.kidia-ai-data-coverage p{margin:3px 0 0;color:#5e706a;line-height:1.5}
 .kidia-ai-analysis-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:16px}
 .kidia-ai-analysis-grid>section,.kidia-ai-recommendation-section,.kidia-ai-settings{border:1px solid var(--kidia-ai-border);border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,71,61,.045)}
 .kidia-ai-analysis-grid>section{padding:18px}
@@ -1076,12 +1080,14 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-action-builder form>footer,.kidia-ai-bundle-studio form>footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;padding-top:12px;border-top:1px solid #dce8e5}
 .kidia-ai-action-builder form>footer p{margin:0;color:#657771;font-size:11px}
 .kidia-ai-bundle-studio{margin:16px 0;padding:19px;border:1px solid var(--kidia-ai-border);border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,71,61,.045)}
-.kidia-ai-bundle-studio>header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
-.kidia-ai-bundle-studio>header>div{display:flex;align-items:center;gap:10px}
-.kidia-ai-bundle-studio>header .dashicons{display:grid;width:42px;height:42px;place-items:center;border-radius:11px;background:#e5f4ef;color:#236b59;font-size:22px}
+.kidia-ai-bundle-studio>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;list-style:none}
+.kidia-ai-bundle-studio>summary::-webkit-details-marker{display:none}
+.kidia-ai-bundle-studio[open]>summary{margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
+.kidia-ai-bundle-studio>summary>div{display:flex;align-items:center;gap:10px}
+.kidia-ai-bundle-studio>summary .dashicons{display:grid;width:42px;height:42px;place-items:center;border-radius:11px;background:#e5f4ef;color:#236b59;font-size:22px}
 .kidia-ai-bundle-studio h2{margin:0 0 3px;color:#174e42}
-.kidia-ai-bundle-studio header p{margin:0;color:#687873}
-.kidia-ai-bundle-studio>header>b{padding:7px 10px;border-radius:99px;background:#edf7f4;color:#236b59;white-space:nowrap}
+.kidia-ai-bundle-studio summary p{margin:0;color:#687873}
+.kidia-ai-bundle-studio>summary>b{padding:7px 10px;border-radius:99px;background:#edf7f4;color:#236b59;white-space:nowrap}
 .kidia-ai-bundle-description{margin-top:10px}
 .kidia-data-page:has(.kidia-data-panel--abandoned-carts) .kidia-data-hero{margin-bottom:18px}
 body.kidia-cms-plugin-page :is(.button,button):not(.button-link){display:inline-flex;align-items:center;justify-content:center;border-radius:9px;line-height:1.2;text-align:center}
@@ -1113,7 +1119,7 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 @media(max-width:900px){
 	.kidia-ai-playbooks[open]{width:100%}
 	.kidia-ai-playbooks>div.kidia-ai-playbook-groups,.kidia-ai-action-grid,.kidia-ai-bundle-grid{grid-template-columns:1fr}
-	.kidia-ai-bundle-studio>header,.kidia-ai-action-builder form>footer{align-items:stretch;flex-direction:column}
+	.kidia-ai-bundle-studio>summary,.kidia-ai-action-builder form>footer{align-items:stretch;flex-direction:column}
 	.kidia-push-provider-grid,.kidia-push-automation,.kidia-push-stats.is-four{grid-template-columns:1fr}
 	.kidia-push-provider form>footer{align-items:stretch;flex-direction:column}
 }

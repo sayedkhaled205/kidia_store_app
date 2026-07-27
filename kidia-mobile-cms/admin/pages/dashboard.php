@@ -130,16 +130,10 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 									<?php esc_html_e( 'Export App', 'kidia-mobile-cms' ); ?>
 								</button>
 							</form>
-							<?php if ( ! empty( $app_export_state['exported_at'] ) ) : ?>
-								<small class="kidia-app-export-meta"><?php echo esc_html( sprintf( __( 'Last export: %s', 'kidia-mobile-cms' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $app_export_state['exported_at'] ) ) ) ); ?></small>
-							<?php endif; ?>
-							<?php if ( empty( $push_export_config['enabled'] ) ) : ?>
-								<a class="kidia-app-export-push-link" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-push-notifications' ) ); ?>"><?php esc_html_e( 'Complete Push connection for automatic notification setup', 'kidia-mobile-cms' ); ?></a>
-							<?php endif; ?>
 						<?php endif; ?>
-						<?php if ( $step_current ) : ?>
+						<?php if ( $step_current && 3 !== $journey_index ) : ?>
 							<strong><?php esc_html_e( 'Current step', 'kidia-mobile-cms' ); ?></strong>
-						<?php elseif ( $step_complete ) : ?>
+						<?php elseif ( $step_complete && 3 !== $journey_index ) : ?>
 							<strong><?php esc_html_e( 'Complete', 'kidia-mobile-cms' ); ?></strong>
 						<?php endif; ?>
 					</div>
@@ -381,12 +375,15 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-app-export-action {
-		margin: 10px 0 6px;
+		display: flex;
+		justify-content: center;
+		margin: 13px 0 0;
 	}
 
 	.kidia-app-export-action .button {
 		display: inline-flex;
-		min-height: 38px;
+		width: min(100%, 230px);
+		min-height: 44px;
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
@@ -398,19 +395,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		width: 17px;
 		height: 17px;
 		font-size: 17px;
-	}
-
-	.kidia-app-export-meta,
-	.kidia-app-export-push-link {
-		display: block;
-		margin-top: 5px;
-		font-size: 10px;
-		line-height: 1.35;
-	}
-
-	.kidia-app-export-push-link {
-		color: #236b59;
-		font-weight: 700;
 	}
 
 	.kidia-dashboard__card {

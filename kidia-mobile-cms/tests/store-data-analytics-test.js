@@ -45,6 +45,11 @@ const splash = readPlugin("admin", "pages", "splash-screen.php");
 const shellCss = readPlugin("admin", "assets", "cms-shell.css");
 const shellScript = readPlugin("admin", "assets", "cms-shell.js");
 const splashScript = readPlugin("admin", "assets", "splash-screen.js");
+const websiteAnalytics = readPlugin(
+  "public",
+  "assets",
+  "website-analytics.js",
+);
 const homeBlockModel = readRepository(
   "lib",
   "features",
@@ -103,9 +108,23 @@ assert.match(
 for (const table of ["kidia_mobile_events", "kidia_mobile_carts"]) {
   assert.match(analytics, new RegExp(table), `${table} must be persisted.`);
 }
-for (const route of ["/analytics/event", "/analytics/cart"]) {
+for (const route of [
+  "/analytics/event",
+  "/analytics/cart",
+  "/analytics/website-event",
+]) {
   assert.match(analytics, new RegExp(route), `${route} must be registered.`);
 }
+assert.match(
+  analytics,
+  /wp_enqueue_scripts[\s\S]*website-analytics\.js[\s\S]*record_website_event_request/,
+  "Website analytics must bypass full-page caches through the browser tracker.",
+);
+assert.match(
+  websiteAnalytics,
+  /site_visit[\s\S]*add_to_cart[\s\S]*remove_from_cart/,
+  "The website tracker must record visits and commerce intent.",
+);
 for (const event of [
   "site_visit",
   "app_open",
@@ -200,10 +219,41 @@ assert.match(shellCss, /screen-reader-shortcut\[href="#wpbody-content"\]\{displa
 assert.match(aiOffers, /signal_catalog[\s\S]*sales_velocity[\s\S]*frequent_pair/);
 assert.match(aiOffers, /remove_friction[\s\S]*signup_friction[\s\S]*search_demand[\s\S]*peak_timing/);
 assert.match(aiOffers, /minimum_confidence[\s\S]*maximum_recommendations[\s\S]*protect_margin/);
+assert.match(aiOffers, /automatic_profile[\s\S]*high_interest_min_views[\s\S]*minimum_confidence/);
+assert.match(
+  analytics,
+  /commerce_snapshot[\s\S]*wc_get_orders[\s\S]*orders_scanned[\s\S]*pairs/,
+  "AI Studio must analyze historical WooCommerce orders and product pairs.",
+);
+assert.match(
+  analytics,
+  /sync_website_sessions[\s\S]*woocommerce_sessions[\s\S]*session_value/,
+  "Abandoned carts must import existing WooCommerce session carts.",
+);
 assert.match(aiInsights, /AI Offer Studio[\s\S]*Sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
 assert.match(aiOffers, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Peak-time scheduling[\s\S]*Registration friction/);
 assert.match(aiInsights, /Why this recommendation[\s\S]*Decision target:[\s\S]*Profit risk/);
-assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*minimum_confidence[\s\S]*date_preset/);
+assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*date_preset/);
+assert.doesNotMatch(
+  aiInsights,
+  /Save analysis settings|name="ai_settings\[/,
+  "Owners must review generated actions rather than configure analysis rules.",
+);
+assert.doesNotMatch(
+  admin,
+  /kidia_mobile_save_ai_insights|save_ai_insights_settings/,
+  "The removed manual analysis settings must not remain as a hidden admin endpoint.",
+);
+assert.match(
+  aiInsights,
+  /WooCommerce orders analysed[\s\S]*Best-selling product/,
+  "AI Studio must expose the real data used to generate recommendations.",
+);
+assert.match(
+  aiInsights,
+  /Automatic store analysis is active[\s\S]*historical WooCommerce orders[\s\S]*product relationships/,
+  "AI Studio must explain that its analysis is automatic and data-driven.",
+);
 assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);
 assert.doesNotMatch(push, /kidia-ai-offer-studio|data-ai-scheme-filter|data-ai-scheme-card/);
 assert.match(push, /Delivery connection[\s\S]*Setup required[\s\S]*Firebase Cloud Messaging[\s\S]*OneSignal/);

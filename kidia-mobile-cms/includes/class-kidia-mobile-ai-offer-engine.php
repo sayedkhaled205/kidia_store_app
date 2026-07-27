@@ -13,39 +13,22 @@ defined( 'ABSPATH' ) || exit;
 final class Kidia_Mobile_AI_Offer_Engine {
 
 	/**
-	 * Store-owner controls used by the evidence engine.
+	 * Automatic guardrails used by the evidence engine.
+	 *
+	 * These are derived by the plugin and are deliberately not owner setup
+	 * fields. The owner reviews the resulting action, not the analysis recipe.
 	 *
 	 * @return array<string,int|bool>
 	 */
 	public static function settings(): array {
-		$defaults = array(
-			'minimum_confidence'       => 50,
-			'maximum_recommendations'  => 16,
+		return array(
+			'minimum_confidence'       => 35,
+			'maximum_recommendations'  => 24,
 			'high_interest_min_views'  => 3,
 			'low_conversion_percent'   => 8,
 			'slow_stock_min_age_days'  => 30,
 			'slow_stock_min_units'     => 5,
 			'protect_margin'           => true,
-		);
-		$saved = get_option( 'kidia_mobile_ai_insights_settings', array() );
-		return array_merge( $defaults, is_array( $saved ) ? $saved : array() );
-	}
-
-	/**
-	 * Sanitizes settings before persistence.
-	 *
-	 * @param array<string,mixed> $raw Submitted values.
-	 * @return array<string,int|bool>
-	 */
-	public static function sanitize_settings( array $raw ): array {
-		return array(
-			'minimum_confidence'       => min( 95, max( 30, absint( $raw['minimum_confidence'] ?? 50 ) ) ),
-			'maximum_recommendations'  => min( 24, max( 4, absint( $raw['maximum_recommendations'] ?? 16 ) ) ),
-			'high_interest_min_views'  => min( 1000, max( 3, absint( $raw['high_interest_min_views'] ?? 3 ) ) ),
-			'low_conversion_percent'   => min( 50, max( 1, absint( $raw['low_conversion_percent'] ?? 8 ) ) ),
-			'slow_stock_min_age_days'  => min( 730, max( 14, absint( $raw['slow_stock_min_age_days'] ?? 30 ) ) ),
-			'slow_stock_min_units'     => min( 1000, max( 1, absint( $raw['slow_stock_min_units'] ?? 5 ) ) ),
-			'protect_margin'           => ! empty( $raw['protect_margin'] ),
 		);
 	}
 
@@ -56,15 +39,16 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function recommendations( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$settings  = self::settings();
-		$cache_key = 'kidia_ai_offers_' . md5( $from . '|' . $to . '|' . $source . '|' . wp_json_encode( $settings ) );
+		$cache_key = 'kidia_ai_offers_v2_' . md5( $from . '|' . $to . '|' . $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
 		}
 
 		$summary = Kidia_Mobile_Analytics::summary( $from, $to, $source );
+		$settings = self::automatic_profile( $summary );
 		$events  = $summary['events'];
+		$commerce = is_array( $summary['commerce'] ?? null ) ? $summary['commerce'] : array();
 		$views   = absint( $events['view_item']['count'] ?? 0 );
 		$carts   = absint( $events['add_to_cart']['count'] ?? 0 );
 		$checks  = absint( $events['begin_checkout']['count'] ?? 0 );
@@ -75,7 +59,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		foreach ( $summary['top_purchases'] as $row ) {
 			$purchases[ absint( $row['object_id'] ) ] = absint( $row['event_count'] );
 		}
-		foreach ( array_slice( $summary['top_products'], 0, 4 ) as $row ) {
+		foreach ( array_slice( $summary['top_products'], 0, 12 ) as $row ) {
 			$product_id = absint( $row['object_id'] );
 			$product_views = absint( $row['event_count'] );
 			$product_buys  = absint( $purchases[ $product_id ] ?? 0 );
@@ -104,12 +88,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				$source,
 				array( $product_id )
 			);
-			break;
 		}
 
 		$slow_products = self::slow_stock_products( $settings );
-		if ( ! empty( $slow_products ) ) {
-			$product = $slow_products[0];
+		foreach ( array_slice( $slow_products, 0, 6 ) as $product ) {
 			$offers[] = self::offer(
 				'slow-stock-' . $product['id'],
 				'slow_stock',
@@ -137,26 +119,44 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		$bundle = self::frequent_pair( $from, $to, $source );
-		if ( ! empty( $bundle ) ) {
+		$bundles = ! empty( $commerce['pairs'] ) ? array_slice( (array) $commerce['pairs'], 0, 8 ) : array();
+		if ( empty( $bundles ) ) {
+			$fallback_bundle = self::frequent_pair( $from, $to, $source );
+			$bundles = empty( $fallback_bundle )
+				? array()
+				: array(
+					array(
+						'product_ids' => $fallback_bundle['ids'],
+						'names'       => $fallback_bundle['names'],
+						'count'       => $fallback_bundle['count'],
+					)
+				);
+		}
+		foreach ( $bundles as $bundle ) {
+			$bundle_ids   = array_values( array_filter( array_map( 'absint', (array) ( $bundle['product_ids'] ?? array() ) ) ) );
+			$bundle_names = array_values( array_map( 'sanitize_text_field', (array) ( $bundle['names'] ?? array() ) ) );
+			$bundle_count = absint( $bundle['count'] ?? 0 );
+			if ( count( $bundle_ids ) < 2 || count( $bundle_names ) < 2 || $bundle_count < 2 ) {
+				continue;
+			}
 			$offers[] = self::offer(
-				'bundle-' . implode( '-', $bundle['ids'] ),
+				'bundle-' . implode( '-', $bundle_ids ),
 				'bundle',
 				__( 'Frequently bought together bundle', 'kidia-mobile-cms' ),
-				sprintf( __( '%1$s and %2$s appeared together in %3$d paid orders.', 'kidia-mobile-cms' ), $bundle['names'][0], $bundle['names'][1], $bundle['count'] ),
+				sprintf( __( '%1$s and %2$s appeared together in %3$d paid orders.', 'kidia-mobile-cms' ), $bundle_names[0], $bundle_names[1], $bundle_count ),
 				array(
-					sprintf( __( '%d co-purchases', 'kidia-mobile-cms' ), $bundle['count'] ),
+					sprintf( __( '%d co-purchases', 'kidia-mobile-cms' ), $bundle_count ),
 					__( 'Bundle only the measured pair; do not discount unrelated products.', 'kidia-mobile-cms' ),
 					__( 'Recommended as a limited product-scoped coupon.', 'kidia-mobile-cms' ),
 				),
-				min( 94, 58 + $bundle['count'] * 4 ),
+				min( 94, 58 + $bundle_count * 4 ),
 				'low',
 				'percent',
 				! empty( $settings['protect_margin'] ) ? 8 : 10,
 				96,
 				'all',
 				$source,
-				$bundle['ids']
+				$bundle_ids
 			);
 		}
 
@@ -390,8 +390,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 
-		$top_purchase = $summary['top_purchases'][0] ?? null;
-		if ( is_array( $top_purchase ) && absint( $top_purchase['event_count'] ?? 0 ) >= 2 ) {
+		foreach ( array_slice( (array) $summary['top_purchases'], 0, 6 ) as $top_purchase ) {
+			if ( ! is_array( $top_purchase ) || absint( $top_purchase['event_count'] ?? 0 ) < 1 ) {
+				continue;
+			}
 			$product_id = absint( $top_purchase['object_id'] ?? 0 );
 			$offers[] = self::offer(
 				'best-seller-' . $product_id,
@@ -420,12 +422,42 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				static fn( $offer ) => absint( $offer['confidence'] ?? 0 ) >= absint( $settings['minimum_confidence'] )
 			)
 		);
+		usort(
+			$offers,
+			static function ( array $left, array $right ): int {
+				$confidence = absint( $right['confidence'] ?? 0 ) <=> absint( $left['confidence'] ?? 0 );
+				if ( 0 !== $confidence ) {
+					return $confidence;
+				}
+				return count( (array) ( $right['product_ids'] ?? array() ) )
+					<=> count( (array) ( $left['product_ids'] ?? array() ) );
+			}
+		);
 		$offers = apply_filters( 'kidia_mobile_ai_offer_recommendations', $offers, $summary, $source, $from, $to );
 		$offers = is_array( $offers )
 			? array_values( array_slice( $offers, 0, absint( $settings['maximum_recommendations'] ) ) )
 			: array();
 		set_transient( $cache_key, $offers, 10 * MINUTE_IN_SECONDS );
 		return $offers;
+	}
+
+	/**
+	 * Calibrates evidence thresholds from current store volume. The store owner
+	 * reviews the outcome, while the engine owns the analytical thresholds.
+	 *
+	 * @param array<string,mixed> $summary Current analytical snapshot.
+	 * @return array<string,int|bool>
+	 */
+	private static function automatic_profile( array $summary ): array {
+		$settings = self::settings();
+		$visitors = absint( $summary['visitors'] ?? 0 );
+		$orders   = absint( $summary['commerce']['orders'] ?? 0 );
+		$catalog  = absint( $summary['commerce']['catalog_products'] ?? 0 );
+		$settings['high_interest_min_views'] = max( 3, min( 25, (int) ceil( max( 1, $visitors ) * .01 ) ) );
+		$settings['slow_stock_min_age_days'] = $orders >= 100 ? 45 : 30;
+		$settings['slow_stock_min_units'] = $catalog >= 1000 ? 8 : 3;
+		$settings['minimum_confidence'] = $orders >= 50 || $visitors >= 500 ? 45 : 35;
+		return $settings;
 	}
 
 	/**
@@ -501,7 +533,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			array(
 				'status'       => 'publish',
 				'stock_status' => 'instock',
-				'limit'        => 80,
+				'limit'        => 250,
 				'orderby'      => 'date',
 				'order'        => 'ASC',
 			)
