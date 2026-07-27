@@ -3,8 +3,8 @@
 .kidia-category-workspace { container-type:inline-size; direction:ltr; display:grid; grid-template-columns:350px minmax(0,1fr); align-items:start; gap:10px; }
 .kidia-category-editor { direction: rtl; min-width: 0; }
 .kidia-category-mobile-preview { position: sticky; top: var(--kidia-preview-sticky-top, 134px); direction: rtl; text-align: center; transform:translateX(max(0px,calc(11.5cqw - 41.4px))); }
-.kidia-category-phone { width:330px; margin-inline:auto; padding:5px; border:3px solid #2f806e; border-radius:29px; background:#2f806e; box-shadow:none; }
-.kidia-category-phone__screen { position:relative; height:697.78px; overflow-y:auto; border-radius:21px; background:#f7f8fa; }
+.kidia-category-phone { width:322px; margin-inline:auto; padding:5px; border:3px solid #2f806e; border-radius:29px; background:#2f806e; box-shadow:none; }
+.kidia-category-phone__screen { position:relative; height:680px; overflow-y:auto; border-radius:21px; background:#f7f8fa; }
 .kidia-category-phone__screen { scrollbar-width: none; }
 .kidia-category-phone__screen::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .kidia-category-phone__header { padding: 13px; background: #fff; border-bottom: 1px solid #edf0f2; font-size: 17px; font-weight: 800; }
@@ -32,7 +32,7 @@
 .kidia-category-preview-content.is-opening-separate_page .kidia-category-preview-expand,
 .kidia-category-preview-content.is-opening-expand_inline .kidia-category-preview-expand { border:0; background:transparent; box-shadow:none; }
 .kidia-category-phone__screen:has(> .kidia-flutter-preview) { overflow:hidden; }
-.kidia-category-phone__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; zoom:.872222; }
+.kidia-category-phone__screen > .kidia-flutter-preview { position:absolute; top:0; left:0; display:block; width:360px; height:800px; min-height:0; border:0; background:#fff; pointer-events:auto; touch-action:pan-y; zoom:.85; }
 .kidia-category-phone__screen > .kidia-legacy-preview-fallback[hidden] { display:none!important; }
 .kidia-category-preview-content.is-layout-visual_grid,
 .kidia-category-preview-content.is-layout-circular_grid,

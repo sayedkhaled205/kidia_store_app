@@ -194,6 +194,12 @@ test("Home iframe wheel is relayed before CanvasKit can consume it", () => {
   });
 });
 
+test("Non-Home iframe keeps native wheel scrolling", () => {
+  const bridge = fs.readFileSync(path.join(assets, "flutter-preview-bridge.js"), "utf8");
+  assert.doesNotMatch(bridge, /relayPreviewWheel|bindPreviewWheel/);
+  assert.doesNotMatch(bridge, /kidia-preview-scroll[\s\S]*preventDefault/);
+});
+
 test("Builder workspace fixes navigation, toolbar, and phone while only cards scroll", () => {
   const bridge = fs.readFileSync(path.join(assets, "flutter-home-preview-bridge.js"), "utf8");
   const sharedStyles = fs.readFileSync(path.join(assets, "admin-theme.css"), "utf8");

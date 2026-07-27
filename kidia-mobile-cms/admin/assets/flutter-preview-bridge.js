@@ -97,31 +97,9 @@
 		try { frame.contentWindow.focus(); } catch (_) {}
 	}
 	frame.setAttribute("tabindex", "0");
-	function relayPreviewWheel(event) {
-		if (!event.deltaY || !frame.contentWindow) { return; }
-		frame.contentWindow.postMessage(JSON.stringify({
-			type: "kidia-preview-scroll",
-			page: String(config.page || ""),
-			deltaY: Math.max(-180, Math.min(180, Number(event.deltaY)))
-		}), frameOrigin);
-		event.preventDefault();
-		event.stopImmediatePropagation();
-	}
-	function bindPreviewWheel() {
-		try {
-			frame.contentWindow.removeEventListener("wheel", relayPreviewWheel, true);
-			frame.contentWindow.addEventListener("wheel", relayPreviewWheel, { capture: true, passive: false });
-			if (frame.contentDocument) {
-				frame.contentDocument.removeEventListener("wheel", relayPreviewWheel, true);
-				frame.contentDocument.addEventListener("wheel", relayPreviewWheel, { capture: true, passive: false });
-			}
-		} catch (_) {}
-	}
 	frame.addEventListener("mouseenter", focusPreview);
 	frame.addEventListener("pointerenter", focusPreview);
 	frame.addEventListener("click", focusPreview);
-	frame.addEventListener("load", bindPreviewWheel);
-	bindPreviewWheel();
 
 	// A cached Flutter shell can finish loading before this footer script runs.
 	waitForFlutter();
