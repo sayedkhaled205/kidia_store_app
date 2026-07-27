@@ -582,7 +582,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 
 	private static function rotation_cache_key( int $from, int $to, string $source ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_ai_rotation_v2_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_ai_rotation_v3_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	/** @return array{fast:array,medium:array,slow:array,poor:array} */

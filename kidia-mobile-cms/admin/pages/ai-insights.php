@@ -61,6 +61,8 @@ $playbook_group_kinds = array(
 );
 $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'] : array();
+$orders_scanned = absint( $commerce['orders_scanned'] ?? $commerce['orders'] ?? 0 );
+$orders_available = absint( $commerce['orders_available'] ?? $orders_scanned );
 $rotation_group_meta = array(
 	'fast' => array(
 		'label'       => __( 'Fast-moving products', 'kidia-mobile-cms' ),
@@ -83,6 +85,10 @@ $rotation_group_meta = array(
 		'description' => __( 'Funnel, timing, merchandising and basket decisions supported by store-level evidence.', 'kidia-mobile-cms' ),
 	),
 );
+$rotation_product_counts = array();
+foreach ( array( 'fast', 'medium', 'slow', 'poor' ) as $rotation_key ) {
+	$rotation_product_counts[ $rotation_key ] = count( $ai_rotation_segments[ $rotation_key ] ?? array() );
+}
 $action_result = static function ( array $row ): array {
 	$uses       = 0;
 	$type       = sanitize_key( (string) ( $row['type'] ?? '' ) );
@@ -153,7 +159,7 @@ $action_result = static function ( array $row ): array {
 
 	<?php if ( $ai_generated ) : ?>
 	<section class="kidia-ai-overview">
-		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'WooCommerce orders analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['orders'] ?? 0 ) ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'Paid WooCommerce orders analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) $orders_scanned ); ?></strong><?php if ( $orders_available > $orders_scanned ) : ?><em><?php echo esc_html( sprintf( __( '%d paid orders found', 'kidia-mobile-cms' ), $orders_available ) ); ?></em><?php endif; ?></div></article>
 		<article><span class="dashicons dashicons-products"></span><div><small><?php esc_html_e( 'Units analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['units'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-store"></span><div><small><?php esc_html_e( 'In-stock products analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['catalog_in_stock'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-visibility"></span><div><small><?php esc_html_e( 'Live behaviour signals', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) $ai_signal_volume ); ?></strong></div></article>
@@ -179,11 +185,24 @@ $action_result = static function ( array $row ): array {
 				);
 				?>
 			</p>
+			<?php if ( $orders_available > $orders_scanned ) : ?>
+				<small class="kidia-ai-coverage-warning"><?php esc_html_e( 'The previous stored result was incomplete. Generate again to process every paid order with the corrected batched analyser.', 'kidia-mobile-cms' ); ?></small>
+			<?php endif; ?>
 			<?php if ( ! empty( $tracked_funnel['unmatched_purchases'] ) ) : ?>
 				<small><?php echo esc_html( sprintf( __( '%d purchase events were excluded from the funnel because their earlier journey steps were not tracked.', 'kidia-mobile-cms' ), absint( $tracked_funnel['unmatched_purchases'] ) ) ); ?></small>
 			<?php endif; ?>
 		</div>
 	</section>
+
+	<nav class="kidia-ai-rotation-summary" aria-label="<?php esc_attr_e( 'Product rotation groups', 'kidia-mobile-cms' ); ?>">
+		<?php foreach ( array( 'fast', 'medium', 'slow', 'poor' ) as $rotation_key ) : ?>
+			<a class="is-<?php echo esc_attr( $rotation_key ); ?>" href="#kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>">
+				<span><?php echo esc_html( (string) $rotation_group_meta[ $rotation_key ]['label'] ); ?></span>
+				<strong><?php echo esc_html( (string) $rotation_product_counts[ $rotation_key ] ); ?></strong>
+				<small><?php esc_html_e( 'in-stock products', 'kidia-mobile-cms' ); ?></small>
+			</a>
+		<?php endforeach; ?>
+	</nav>
 
 	<div class="kidia-ai-analysis-grid">
 		<section class="kidia-ai-funnel-panel">
@@ -235,18 +254,25 @@ $action_result = static function ( array $row ): array {
 						static fn( $item ) => $rotation_key === ( $item['rotation_segment'] ?? 'storewide' )
 					)
 				);
-				if ( empty( $rotation_recommendations ) ) {
+				$is_product_rotation = array_key_exists( $rotation_key, $rotation_product_counts );
+				if ( empty( $rotation_recommendations ) && ! $is_product_rotation ) {
 					continue;
 				}
-				$catalog_count = 'storewide' === $rotation_key
+				$catalog_count = ! $is_product_rotation
 					? count( $rotation_recommendations )
-					: count( $ai_rotation_segments[ $rotation_key ] ?? array() );
+					: $rotation_product_counts[ $rotation_key ];
 				?>
-				<section class="kidia-ai-rotation-group is-<?php echo esc_attr( $rotation_key ); ?>">
+				<section id="kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>" class="kidia-ai-rotation-group is-<?php echo esc_attr( $rotation_key ); ?>">
 					<header>
 						<div><h3><?php echo esc_html( (string) $rotation_meta['label'] ); ?></h3><p><?php echo esc_html( (string) $rotation_meta['description'] ); ?></p></div>
 						<b><?php echo esc_html( sprintf( _n( '%d product', '%d products', $catalog_count, 'kidia-mobile-cms' ), $catalog_count ) ); ?></b>
 					</header>
+					<?php if ( empty( $rotation_recommendations ) ) : ?>
+						<div class="kidia-ai-segment-empty">
+							<strong><?php esc_html_e( 'No action is needed for this group under the current filters.', 'kidia-mobile-cms' ); ?></strong>
+							<p><?php esc_html_e( 'The products are still classified here; widen the recommendation type to show any matching decisions.', 'kidia-mobile-cms' ); ?></p>
+						</div>
+					<?php else : ?>
 					<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
 				<?php foreach ( $rotation_recommendations as $recommendation ) :
 					$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'campaign' ) );
@@ -309,6 +335,7 @@ $action_result = static function ( array $row ): array {
 					</article>
 				<?php endforeach; ?>
 					</div>
+					<?php endif; ?>
 				</section>
 			<?php endforeach; ?>
 			</div>

@@ -9,11 +9,15 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_AI_Analysis_Job {
 
-	private const JOB_PREFIX = 'kidia_mobile_ai_job_v2_';
+	private const JOB_PREFIX = 'kidia_mobile_ai_job_v3_';
 
 	private const ORDER_BATCH = 200;
 
 	private const PRODUCT_BATCH = 120;
+
+	private const MAX_PAIR_KEYS = 1200;
+
+	private const CUSTOMER_BITMAP_BYTES = 8192;
 
 	/** Starts one user-owned analysis job without scanning the store. */
 	public static function start( int $from, int $to, string $source, int $user_id ): array {
@@ -70,12 +74,10 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'product_offset'    => 0,
 			'products_processed'=> 0,
 			'snapshot'          => Kidia_Mobile_Analytics::empty_commerce_snapshot(),
-			'customers'         => array(),
 			'products'          => array(),
-			'product_customers' => array(),
 			'pairs'             => array(),
 			'hours'             => array(),
-			'catalog_rows'      => array(),
+			'customer_bitmap'   => str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES ),
 			'started_at'        => time(),
 		);
 		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
@@ -115,12 +117,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				array(
 					'limit'    => self::ORDER_BATCH,
 					'page'     => max( 1, absint( $job['order_page'] ) ),
-					'paginate' => false,
+					'paginate' => true,
 					'return'   => 'objects',
 				)
 			)
 		);
-		$batch          = is_array( $result ) ? $result : array();
+		$batch          = is_object( $result ) && isset( $result->orders )
+			? (array) $result->orders
+			: ( is_array( $result ) ? $result : array() );
 		$available      = array_fill_keys( array_map( 'absint', (array) $job['product_ids'] ), true );
 		$processed_rows = 0;
 		foreach ( $batch as $order ) {
@@ -133,7 +137,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$customer_key = $order->get_customer_id() > 0
 				? 'user-' . $order->get_customer_id()
 				: 'email-' . hash( 'sha256', strtolower( (string) $order->get_billing_email() ) );
-			$job['customers'][ $customer_key ] = true;
+			self::bitmap_add( $job['customer_bitmap'], $customer_key );
 			$order_product_ids = array();
 			foreach ( $order->get_items() as $item ) {
 				$product_id = absint( $item->get_product_id() );
@@ -144,6 +148,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				$job['snapshot']['units'] += $quantity;
 				if ( ! isset( $job['products'][ $product_id ] ) ) {
 					$job['products'][ $product_id ] = array(
+						'id'             => $product_id,
 						'object_id'      => $product_id,
 						'event_label'    => sanitize_text_field( $item->get_name() ),
 						'event_count'    => 0,
@@ -155,7 +160,6 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				$job['products'][ $product_id ]['event_count'] += $quantity;
 				$job['products'][ $product_id ]['order_count'] += 1;
 				$job['products'][ $product_id ]['revenue'] += max( 0, (float) $item->get_total() );
-				$job['product_customers'][ $product_id ][ $customer_key ] = true;
 				$order_product_ids[] = $product_id;
 			}
 			$order_product_ids = array_values( array_unique( $order_product_ids ) );
@@ -171,6 +175,10 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				$hour = absint( wp_date( 'G', $created->getTimestamp() ) );
 				$job['hours'][ $hour ] = ( $job['hours'][ $hour ] ?? 0 ) + 1;
 			}
+		}
+		if ( count( $job['pairs'] ) > self::MAX_PAIR_KEYS * 2 ) {
+			arsort( $job['pairs'] );
+			$job['pairs'] = array_slice( $job['pairs'], 0, self::MAX_PAIR_KEYS, true );
 		}
 		$job['orders_processed'] = min(
 			absint( $job['order_total'] ),
@@ -205,18 +213,18 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				'age_days'      => $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1,
 				'image_url'     => $product->get_image_id() ? (string) wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_thumbnail' ) : '',
 			);
-			$job['catalog_rows'][] = $row;
-			if ( isset( $job['products'][ $product->get_id() ] ) ) {
-				$job['products'][ $product->get_id() ] = array_merge(
-					$job['products'][ $product->get_id() ],
-					array(
-						'price'         => $row['price'],
-						'regular_price' => $row['regular_price'],
-						'stock'         => $row['stock'],
-						'image_url'     => $row['image_url'],
-					)
+			$sales_row = is_array( $job['products'][ $product->get_id() ] ?? null )
+				? $job['products'][ $product->get_id() ]
+				: array(
+					'id'             => $product->get_id(),
+					'object_id'      => $product->get_id(),
+					'event_label'    => $product->get_name(),
+					'event_count'    => 0,
+					'unique_clients' => 0,
+					'order_count'    => 0,
+					'revenue'        => 0.0,
 				);
-			}
+			$job['products'][ $product->get_id() ] = array_merge( $sales_row, $row );
 		}
 		$job['product_offset']     = $offset + count( $ids );
 		$job['products_processed'] = min( count( (array) $job['product_ids'] ), absint( $job['product_offset'] ) );
@@ -228,23 +236,28 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	/** Stores the complete snapshot, clears derived caches and generates decisions. */
 	private static function finalize( array &$job ): void {
 		$snapshot = $job['snapshot'];
-		$snapshot['customers'] = count( (array) $job['customers'] );
+		$snapshot['customers'] = self::bitmap_estimate( (string) $job['customer_bitmap'] );
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
 			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
 			: 0.0;
 		foreach ( $job['products'] as $product_id => &$product_row ) {
-			$product_row['unique_clients'] = count( $job['product_customers'][ $product_id ] ?? array() );
+			$product_row['unique_clients'] = absint( $product_row['order_count'] ?? 0 );
 			$product_row['order_share'] = $snapshot['orders'] > 0
 				? round( 100 * absint( $product_row['order_count'] ) / $snapshot['orders'], 1 )
 				: 0.0;
 		}
 		unset( $product_row );
-		uasort( $job['products'], static fn( $left, $right ) => $right['event_count'] <=> $left['event_count'] );
-		$snapshot['products']      = array_values( $job['products'] );
-		$snapshot['product_sales'] = array_map(
-			static fn( $row ) => absint( $row['event_count'] ?? 0 ),
-			$job['products']
+		$catalog_rows = array_values( $job['products'] );
+		$sold_rows    = array_filter(
+			$job['products'],
+			static fn( $row ) => absint( $row['event_count'] ?? 0 ) > 0
 		);
+		uasort( $sold_rows, static fn( $left, $right ) => $right['event_count'] <=> $left['event_count'] );
+		$snapshot['products']      = array_values( $sold_rows );
+		$snapshot['product_sales'] = array();
+		foreach ( $job['products'] as $product_id => $product_row ) {
+			$snapshot['product_sales'][ absint( $product_id ) ] = absint( $product_row['event_count'] ?? 0 );
+		}
 		arsort( $job['pairs'] );
 		foreach ( array_slice( $job['pairs'], 0, 50, true ) as $key => $count ) {
 			$ids = array_map( 'absint', explode( ':', (string) $key ) );
@@ -262,8 +275,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$snapshot['activity_hours'][] = array( 'hour' => absint( $hour ), 'event_count' => absint( $count ) );
 		}
 		$snapshot['catalog_products'] = function_exists( 'wp_count_posts' ) ? absint( wp_count_posts( 'product' )->publish ?? 0 ) : 0;
-		$snapshot['catalog_in_stock'] = count( $job['catalog_rows'] );
-		$snapshot['catalog_rows']     = array_values( $job['catalog_rows'] );
+		$snapshot['catalog_in_stock'] = count( $catalog_rows );
+		$snapshot['catalog_rows']     = $catalog_rows;
 		$snapshot['orders_scanned']   = absint( $job['orders_processed'] );
 		$snapshot['orders_available'] = absint( $job['order_total'] );
 		$snapshot['truncated']        = $snapshot['orders_scanned'] < $snapshot['orders_available'];
@@ -336,5 +349,33 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	private static function key( string $job_id ): string {
 		return self::JOB_PREFIX . md5( $job_id );
+	}
+
+	/** Adds a customer identifier to a fixed-size probabilistic set. */
+	private static function bitmap_add( string &$bitmap, string $customer_key ): void {
+		if ( strlen( $bitmap ) !== self::CUSTOMER_BITMAP_BYTES ) {
+			$bitmap = str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES );
+		}
+		$hash       = unpack( 'Nvalue', substr( hash( 'sha256', $customer_key, true ), 0, 4 ) );
+		$bit        = absint( $hash['value'] ?? 0 ) % ( self::CUSTOMER_BITMAP_BYTES * 8 );
+		$byte_index = intdiv( $bit, 8 );
+		$mask       = 1 << ( $bit % 8 );
+		$bitmap[ $byte_index ] = chr( ord( $bitmap[ $byte_index ] ) | $mask );
+	}
+
+	/** Estimates distinct customers without storing thousands of hashes in one transient. */
+	private static function bitmap_estimate( string $bitmap ): int {
+		$bits      = self::CUSTOMER_BITMAP_BYTES * 8;
+		$set_bits  = 0;
+		$byte_count = min( self::CUSTOMER_BITMAP_BYTES, strlen( $bitmap ) );
+		for ( $index = 0; $index < $byte_count; ++$index ) {
+			$value = ord( $bitmap[ $index ] );
+			while ( $value > 0 ) {
+				$set_bits += $value & 1;
+				$value >>= 1;
+			}
+		}
+		$zero_bits = max( 1, $bits - $set_bits );
+		return max( 0, (int) round( -$bits * log( $zero_bits / $bits ) ) );
 	}
 }

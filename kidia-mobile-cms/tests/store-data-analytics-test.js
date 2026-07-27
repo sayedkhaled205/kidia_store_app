@@ -231,7 +231,7 @@ assert.match(
 );
 assert.match(
   analytics,
-  /kidia_analytics_summary_v2_[\s\S]*get_transient[\s\S]*set_transient/,
+  /kidia_analytics_summary_v3_[\s\S]*get_transient[\s\S]*set_transient/,
   "One generated AI summary must be reused instead of running the same heavy queries twice.",
 );
 assert.match(
@@ -263,6 +263,36 @@ assert.match(
   aiAnalysisJob,
   /ORDER_BATCH[\s\S]*PRODUCT_BATCH[\s\S]*orders_processed[\s\S]*products_processed[\s\S]*100 \* \$processed \/ \$total/,
   "The incremental job must calculate progress from completed order and product records.",
+);
+assert.match(
+  aiAnalysisJob,
+  /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*paginate'\s*=>\s*true[\s\S]*isset\( \$result->orders \)/,
+  "Large stores must use a compact bounded job state and explicitly paginated WooCommerce order batches.",
+);
+assert.doesNotMatch(
+  aiAnalysisJob,
+  /'customers'\s*=>\s*array\(\)[\s\S]*'product_customers'\s*=>\s*array\(\)/,
+  "The analysis job must not retain every customer-to-product key in one oversized transient.",
+);
+assert.match(
+  aiAnalysisJob,
+  /product_sales'\]\s*=\s*array\(\)[\s\S]*foreach \( \$job\['products'\] as \$product_id => \$product_row \)[\s\S]*product_sales'\]\[\s*absint\( \$product_id \)\s*\]/,
+  "Product sales must remain keyed by the real WooCommerce product ID for rotation classification.",
+);
+assert.match(
+  aiInsights,
+  /Fast-moving products[\s\S]*Medium-moving products[\s\S]*Slow-moving products[\s\S]*Poor-performing products[\s\S]*kidia-ai-rotation-summary/,
+  "AI Studio must expose the four product-rotation groups before the recommendation cards.",
+);
+assert.match(
+  aiInsights,
+  /empty\( \$rotation_recommendations \) && ! \$is_product_rotation[\s\S]*kidia-ai-segment-empty/,
+  "Rotation groups must remain visible even when the current recommendation filter has no matching action.",
+);
+assert.match(
+  shellCss,
+  /kidia-ai-decision-products article\{[^}]*min-height:60px[\s\S]*width:52px;height:52px/,
+  "Product recommendation cards must use a compact container with a larger product image.",
 );
 assert.match(
   aiAnalysisJob,
