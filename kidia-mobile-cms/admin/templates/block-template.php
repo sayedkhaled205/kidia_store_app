@@ -27,6 +27,139 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 	? 'published'
 	: 'draft';
 $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] ) ? $block_data['settings'] : $block->get_default_settings();
+
+if ( ! isset( $GLOBALS['kidia_mobile_element_card_styles_printed'] ) ) {
+	$GLOBALS['kidia_mobile_element_card_styles_printed'] = true;
+	?>
+	<style id="kidia-mobile-element-card-actions">
+		.kidia-builder-block__header {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 10px;
+			min-height: 0;
+			padding: 12px;
+		}
+
+		.kidia-builder-block__left {
+			display: grid;
+			grid-template-columns: 38px minmax(0, 1fr);
+			align-items: center;
+			gap: 10px;
+			width: 100%;
+		}
+
+		.kidia-builder-drag {
+			width: 38px;
+			height: 38px;
+			flex-basis: 38px;
+			border: 1px solid #d9e8e3;
+			background: #f2f8f6;
+		}
+
+		.kidia-builder-block__title {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) max-content max-content;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.kidia-builder-block__title strong {
+			grid-column: auto;
+			min-width: 0;
+			font-size: 14px;
+		}
+
+		.kidia-builder-block__actions {
+			display: grid;
+			grid-template-columns: minmax(112px, auto) minmax(108px, auto) minmax(108px, auto) minmax(102px, auto);
+			align-items: stretch;
+			justify-content: start;
+			gap: 8px;
+			width: 100%;
+			padding-top: 10px;
+			border-top: 1px solid #e8efed;
+			direction: rtl;
+		}
+
+		.kidia-builder-block__actions .button,
+		.kidia-builder-block__actions .kidia-builder-switch--card {
+			box-sizing: border-box;
+			width: 100%;
+			min-height: 38px;
+			margin: 0;
+			border-radius: 7px;
+		}
+
+		.kidia-builder-block__actions .button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			padding-inline: 12px;
+			font-weight: 600;
+		}
+
+		.kidia-builder-block__actions .kidia-toggle-block-settings {
+			width: 100%;
+			padding-inline: 12px;
+			border-color: #2f806e;
+			color: #236b59;
+		}
+
+		.kidia-builder-block__actions .kidia-builder-switch--card {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			padding-inline: 10px;
+			border: 1px solid #d8e5e1;
+			background: #f7fbfa;
+		}
+
+		.kidia-builder-block__actions .kidia-builder-switch--card::before {
+			content: "Visible";
+			color: #2c3338;
+			font-size: 12px;
+			font-weight: 600;
+		}
+
+		.kidia-builder-block__actions .kidia-builder-switch__state {
+			display: none;
+		}
+
+		.kidia-builder-block__actions .kidia-delete-block {
+			background: #fff8f8;
+		}
+
+		.kidia-builder-block__actions .dashicons {
+			width: 18px;
+			height: 18px;
+			font-size: 18px;
+		}
+
+		@media (max-width: 1180px) {
+			.kidia-builder-block__actions {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 782px) {
+			.kidia-builder-block__title {
+				grid-template-columns: minmax(0, 1fr);
+			}
+
+			.kidia-builder-block__type,
+			.kidia-builder-status {
+				display: none;
+			}
+
+			.kidia-builder-block__actions {
+				grid-template-columns: minmax(0, 1fr);
+			}
+		}
+	</style>
+	<?php
+}
 ?>
 
 <div
@@ -41,7 +174,7 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 
 		<div class="kidia-builder-block__left">
 
-			<span class="dashicons dashicons-move kidia-builder-drag"></span>
+			<span class="dashicons dashicons-move kidia-builder-drag" title="<?php esc_attr_e( 'Drag to reorder', 'kidia-mobile-cms' ); ?>"></span>
 
 			<div class="kidia-builder-block__title">
 
@@ -80,14 +213,17 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 			<button
 				type="button"
 				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
+				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
 			>
-				<span class="dashicons dashicons-arrow-down-alt2"></span>
+				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+				<span><?php esc_html_e( 'Settings', 'kidia-mobile-cms' ); ?></span>
 			</button>
 
 			<button
 				type="button"
 				class="button kidia-duplicate-block kidia-card-action kidia-card-action--secondary"
 			>
+				<span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
 				<?php esc_html_e(
 					'Duplicate',
 					'kidia-mobile-cms'
@@ -98,6 +234,7 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 				type="button"
 				class="button button-link-delete kidia-delete-block kidia-card-action kidia-card-action--primary"
 			>
+				<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 				<?php esc_html_e(
 					'Remove',
 					'kidia-mobile-cms'
@@ -107,7 +244,6 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 		</div>
 
 	</div>
-
 	<div class="kidia-builder-block__body">
 
 		<input
