@@ -22,6 +22,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-checkout-field
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-setup-wizard.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-license-manager.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-analytics.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-product-channel-visibility.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -87,6 +88,7 @@ final class Kidia_Mobile_CMS {
 
 		(new Kidia_Mobile_License_Manager())->register();
 		(new Kidia_Mobile_Analytics())->register();
+		(new Kidia_Mobile_Product_Channel_Visibility())->register();
 
 		$this->register_blocks();
 
