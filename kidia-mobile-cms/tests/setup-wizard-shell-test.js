@@ -84,9 +84,11 @@ assert.match(storeDataTemplate, /data-copy-link[\s\S]*data-copy-text/, "Products
 assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers, reports and abandoned carts must filter All, Website and Mobile App data.");
 assert.doesNotMatch(storeDataTemplate, /Mobile App only/, "Analytics must not be locked to one channel.");
 assert.match(storeDataTemplate, /source_tabs[\s\S]*analytics/, "Analytics must expose the shared source filter.");
-assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification types.");
+assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*AI Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification types.");
 assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s\S]*push_delivery[\s\S]*Live preview[\s\S]*History/, "Push Notifications must provide compose, targeting, delivery, live preview and history.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");
+assert.match(shellScript, /date_preset[\s\S]*customDates[\s\S]*input\.disabled/, "Custom dates must remain disabled until Custom is selected.");
+assert.match(shellScript, /data-ai-offer[\s\S]*ai_offer[\s\S]*data-ai-discount-value/, "A reviewed AI offer must populate the editable push composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");

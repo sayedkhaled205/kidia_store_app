@@ -17,8 +17,17 @@ const productVisibility = readPlugin(
   "includes",
   "class-kidia-mobile-product-channel-visibility.php",
 );
+const aiOffers = readPlugin(
+  "includes",
+  "class-kidia-mobile-ai-offer-engine.php",
+);
+const recovery = readPlugin(
+  "includes",
+  "class-kidia-mobile-recovery-campaigns.php",
+);
 const admin = readPlugin("admin", "class-kidia-mobile-cms-admin.php");
 const storeData = readPlugin("admin", "pages", "store-data.php");
+const push = readPlugin("admin", "pages", "push-notifications.php");
 const splash = readPlugin("admin", "pages", "splash-screen.php");
 const shellCss = readPlugin("admin", "assets", "cms-shell.css");
 const mobileAnalytics = readRepository(
@@ -128,6 +137,7 @@ assert.match(storeData, /Sales funnel[\s\S]*Sales opportunities/);
 assert.match(storeData, /Website[\s\S]*Mobile App/);
 assert.match(storeData, /kidia-source-badges[\s\S]*is-website[\s\S]*is-mobile/);
 assert.match(storeData, /product_search[\s\S]*product_page/);
+assert.match(storeData, /product_visibility[\s\S]*Shown everywhere[\s\S]*Hidden from both/);
 assert.match(storeData, /Hide from mobile[\s\S]*Hide from website/);
 assert.doesNotMatch(storeData, /General store settings/);
 assert.match(admin, /abandoned_carts[\s\S]*Abandoned Carts/);
@@ -142,6 +152,27 @@ assert.match(analytics, /summary\( int \$from, int \$to, string \$source/);
 assert.match(productVisibility, /MOBILE_META[\s\S]*WEBSITE_META/);
 assert.match(productVisibility, /woocommerce_store_api_product_query/);
 assert.match(productVisibility, /woocommerce_product_query_meta_query/);
+assert.match(admin, /coupon_page[\s\S]*coupon_status[\s\S]*coupon_type[\s\S]*coupon_scope/);
+assert.match(storeData, /Search coupon name or code[\s\S]*Individual use only[\s\S]*Specific categories/);
+for (const couponDetail of ["Unlimited remaining", "allowed emails", "Excludes sale items"]) {
+  assert.match(storeData, new RegExp(couponDetail), `Coupon rows must expose ${couponDetail}.`);
+}
+assert.match(storeData, /disabled\( 'custom' !== \$date_preset \)/);
+assert.match(shellCss, /kidia-date-filter input:disabled[\s\S]*cursor:not-allowed/);
+assert.match(shellCss, /kidia-product-actions\{[^}]*flex-wrap:nowrap/);
+assert.match(shellCss, /screen-reader-shortcut\[href="#wpbody-content"\]\{display:none!important\}/);
+assert.match(aiOffers, /signal_catalog[\s\S]*sales_velocity[\s\S]*frequent_pair/);
+assert.match(push, /AI Offer Studio[\s\S]*Frequently bought together[\s\S]*Slow-stock rescue/);
+assert.match(push, /Profit risk[\s\S]*Review this offer/);
+for (const recoveryField of ["kidia_mobile_recovery_campaigns", "tracking_token", "converted_at"]) {
+  assert.match(recovery, new RegExp(recoveryField), `Recovery storage must include ${recoveryField}.`);
+}
+assert.match(recovery, /set_usage_limit\( 1 \)[\s\S]*set_email_restrictions[\s\S]*set_date_expires/);
+assert.match(recovery, /attribute_order[\s\S]*get_coupon_codes[\s\S]*customer_email/);
+for (const recoveryControl of ["cart_ids\\[\\]", "Create coupons & send", "Recovery attribution"]) {
+  assert.match(storeData, new RegExp(recoveryControl), `Recovery UI must expose ${recoveryControl}.`);
+}
+assert.match(bootstrap, /class-kidia-mobile-ai-offer-engine\.php[\s\S]*class-kidia-mobile-recovery-campaigns\.php/);
 assert.match(storeApiClient, /X-Kidia-Channel'[\s\S]*mobile/);
 assert.match(splash, /kidia-page-toolbar[\s\S]*kidia-builder-cards-scroll/);
 assert.match(

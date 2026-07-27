@@ -623,6 +623,32 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	/**
+	 * Returns normalized carts for an explicitly selected admin recovery action.
+	 *
+	 * @param list<int> $ids Cart row ids.
+	 * @return list<array<string,mixed>>
+	 */
+	public static function carts_by_ids( array $ids ): array {
+		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+		global $wpdb;
+		$table        = self::carts_table();
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = $wpdb->get_results(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id IN ({$placeholders}) AND item_count > 0", ...$ids ),
+			ARRAY_A
+		);
+		foreach ( $rows as &$row ) {
+			$row['items'] = json_decode( (string) $row['items'], true );
+			$row['items'] = is_array( $row['items'] ) ? $row['items'] : array();
+		}
+		unset( $row );
+		return $rows;
+	}
+
+	/**
 	 * @return list<array<string,mixed>>
 	 */
 	private static function top_objects( int $from, int $to, string $event, string $source ): array {
