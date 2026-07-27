@@ -53,6 +53,47 @@ $playbook_groups = Kidia_Mobile_AI_Offer_Engine::playbook_groups();
 $playbook_count = array_sum( array_map( static fn( $group ) => count( $group['items'] ?? array() ), $playbook_groups ) );
 $bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
 $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'] : array();
+$rotation_group_meta = array(
+	'fast' => array(
+		'label'       => __( 'Fast-moving products', 'kidia-mobile-cms' ),
+		'description' => __( 'Protect availability, increase visibility and grow basket size without unnecessary discounting.', 'kidia-mobile-cms' ),
+	),
+	'medium' => array(
+		'label'       => __( 'Medium-moving products', 'kidia-mobile-cms' ),
+		'description' => __( 'Use controlled incentives and product relationships to move these products into the fast group.', 'kidia-mobile-cms' ),
+	),
+	'slow' => array(
+		'label'       => __( 'Slow-moving products', 'kidia-mobile-cms' ),
+		'description' => __( 'Run measured product offers and bundles that improve sell-through while protecting margin.', 'kidia-mobile-cms' ),
+	),
+	'poor' => array(
+		'label'       => __( 'Poor-performing products', 'kidia-mobile-cms' ),
+		'description' => __( 'Use short clearance tests, then stop or revise decisions that do not recover cash and stock.', 'kidia-mobile-cms' ),
+	),
+	'storewide' => array(
+		'label'       => __( 'Store-wide decisions', 'kidia-mobile-cms' ),
+		'description' => __( 'Funnel, timing, merchandising and basket decisions supported by store-level evidence.', 'kidia-mobile-cms' ),
+	),
+);
+$action_result = static function ( array $row ): array {
+	$uses       = 0;
+	$type       = sanitize_key( (string) ( $row['type'] ?? '' ) );
+	$reference  = absint( $row['created_reference'] ?? 0 );
+	$created_at = absint( $row['created_at'] ?? 0 );
+	$duration   = max( 1, absint( $row['duration_hours'] ?? 48 ) );
+	$elapsed    = $created_at > 0 ? ( time() - $created_at ) / HOUR_IN_SECONDS : 0;
+	if ( 'coupon' === $type && $reference > 0 && class_exists( 'WC_Coupon' ) ) {
+		$coupon = new WC_Coupon( $reference );
+		$uses   = $coupon->get_id() > 0 ? absint( $coupon->get_usage_count() ) : 0;
+	}
+	if ( $uses > 0 ) {
+		return array( 'state' => 'positive', 'uses' => $uses, 'label' => __( 'Continue while gross profit stays positive', 'kidia-mobile-cms' ) );
+	}
+	if ( $elapsed >= $duration ) {
+		return array( 'state' => 'review', 'uses' => 0, 'label' => __( 'No measured conversion: review or stop this action', 'kidia-mobile-cms' ) );
+	}
+	return array( 'state' => 'collecting', 'uses' => $uses, 'label' => __( 'Collecting results until the decision window closes', 'kidia-mobile-cms' ) );
+};
 ?>
 <div class="wrap kidia-ai-page">
 	<header class="kidia-ai-page__hero">
@@ -73,16 +114,27 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 		<label><span><?php esc_html_e( 'To', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_to" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_to ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
 		<button class="button button-primary kidia-ai-generate-button" type="submit" data-ai-generate-button>
 			<span class="dashicons dashicons-update"></span>
-			<span data-ai-generate-label><?php echo esc_html( $ai_generated ? __( 'Generate again', 'kidia-mobile-cms' ) : __( 'Generate Analysis', 'kidia-mobile-cms' ) ); ?></span>
+			<span data-ai-generate-label><?php echo esc_html( $ai_generated ? __( 'Refresh Offers from Store Data', 'kidia-mobile-cms' ) : __( 'Analyze Store & Generate Offers', 'kidia-mobile-cms' ) ); ?></span>
 			<span class="spinner" data-ai-generate-spinner></span>
 		</button>
 	</form>
+	<div class="kidia-ai-progress-overlay" data-ai-progress-overlay hidden aria-live="polite" aria-busy="true">
+		<div class="kidia-ai-progress-card">
+			<div class="kidia-ai-progress-ring" data-ai-progress-ring style="--kidia-ai-progress:0">
+				<strong data-ai-progress-value>0%</strong>
+			</div>
+			<h2><?php esc_html_e( 'Analyzing store data & generating offers', 'kidia-mobile-cms' ); ?></h2>
+			<p data-ai-progress-stage><?php esc_html_e( 'Preparing the selected store data…', 'kidia-mobile-cms' ); ?></p>
+			<div class="kidia-ai-progress-track"><i data-ai-progress-bar></i></div>
+				<small><?php esc_html_e( 'This is estimated progress while the server completes the selected analysis. The page opens only after the generated decisions are ready.', 'kidia-mobile-cms' ); ?></small>
+		</div>
+	</div>
 
 	<?php if ( $ai_generated ) : ?>
 	<section class="kidia-ai-overview">
 		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'WooCommerce orders analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['orders'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-products"></span><div><small><?php esc_html_e( 'Units analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['units'] ?? 0 ) ); ?></strong></div></article>
-		<article><span class="dashicons dashicons-store"></span><div><small><?php esc_html_e( 'Catalog products', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['catalog_products'] ?? 0 ) ); ?></strong></div></article>
+		<article><span class="dashicons dashicons-store"></span><div><small><?php esc_html_e( 'In-stock products analysed', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['catalog_in_stock'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-visibility"></span><div><small><?php esc_html_e( 'Live behaviour signals', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) $ai_signal_volume ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-lightbulb"></span><div><small><?php esc_html_e( 'Recommendations found', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) count( $all_recommendations ) ); ?></strong></div></article>
 	</section>
@@ -95,9 +147,11 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 				<?php
 				echo esc_html(
 					sprintf(
-						/* translators: 1: historical paid orders, 2: tracked days, 3: requested days. */
-						__( '%1$d paid WooCommerce orders were analysed for product, revenue and bundle decisions. Live funnel tracking covers %2$d of %3$d selected days; historical orders are never inserted into Add to cart or Checkout counts.', 'kidia-mobile-cms' ),
-						absint( $commerce['orders'] ?? 0 ),
+						/* translators: 1: scanned orders, 2: available orders, 3: in-stock products, 4: tracked days, 5: requested days. */
+						__( '%1$d of %2$d paid WooCommerce orders and all %3$d currently in-stock products were analysed. Live funnel tracking covers %4$d of %5$d selected days; historical orders are never inserted into Add to cart or Checkout counts.', 'kidia-mobile-cms' ),
+						absint( $commerce['orders_scanned'] ?? 0 ),
+						absint( $commerce['orders_available'] ?? 0 ),
+						absint( $commerce['catalog_in_stock'] ?? 0 ),
 						absint( $coverage['tracked_days'] ?? 0 ),
 						absint( $coverage['requested_days'] ?? 0 )
 					)
@@ -125,6 +179,11 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 		</section>
 	</div>
 
+	<nav class="kidia-ai-workspace-tabs" aria-label="<?php esc_attr_e( 'AI Studio workspace', 'kidia-mobile-cms' ); ?>">
+		<button type="button" class="is-active" data-ai-workspace-tab="decisions"><?php esc_html_e( 'Generated Decisions', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) count( $ai_recommendations ) ); ?></b></button>
+		<button type="button" data-ai-workspace-tab="results"><?php esc_html_e( 'Actions & Results', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) count( $ai_action_history ) ); ?></b></button>
+	</nav>
+	<div data-ai-workspace-panel="decisions">
 	<section class="kidia-ai-recommendation-section">
 		<header>
 			<div>
@@ -147,8 +206,28 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 			</details>
 		</header>
 		<?php if ( $ai_recommendations ) : ?>
-			<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
-				<?php foreach ( $ai_recommendations as $recommendation ) :
+			<div class="kidia-ai-rotation-groups">
+			<?php foreach ( $rotation_group_meta as $rotation_key => $rotation_meta ) :
+				$rotation_recommendations = array_values(
+					array_filter(
+						$ai_recommendations,
+						static fn( $item ) => $rotation_key === ( $item['rotation_segment'] ?? 'storewide' )
+					)
+				);
+				if ( empty( $rotation_recommendations ) ) {
+					continue;
+				}
+				$catalog_count = 'storewide' === $rotation_key
+					? count( $rotation_recommendations )
+					: count( $ai_rotation_segments[ $rotation_key ] ?? array() );
+				?>
+				<section class="kidia-ai-rotation-group is-<?php echo esc_attr( $rotation_key ); ?>">
+					<header>
+						<div><h3><?php echo esc_html( (string) $rotation_meta['label'] ); ?></h3><p><?php echo esc_html( (string) $rotation_meta['description'] ); ?></p></div>
+						<b><?php echo esc_html( sprintf( _n( '%d product', '%d products', $catalog_count, 'kidia-mobile-cms' ), $catalog_count ) ); ?></b>
+					</header>
+					<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
+				<?php foreach ( $rotation_recommendations as $recommendation ) :
 					$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'campaign' ) );
 					$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
 					$recommended_action = sanitize_key( (string) ( $recommendation['implementation'] ?? 'store_action' ) );
@@ -208,17 +287,54 @@ $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'
 						<footer><span><?php echo esc_html( sprintf( __( 'Profit risk: %s', 'kidia-mobile-cms' ), ucfirst( (string) $recommendation['risk'] ) ) ); ?></span><?php if ( $product_ids && get_edit_post_link( $product_ids[0] ) ) : ?><a class="button" href="<?php echo esc_url( get_edit_post_link( $product_ids[0] ) ); ?>"><?php esc_html_e( 'Review product', 'kidia-mobile-cms' ); ?></a><?php endif; ?></footer>
 					</article>
 				<?php endforeach; ?>
+					</div>
+				</section>
+			<?php endforeach; ?>
 			</div>
 		<?php else : ?>
 			<div class="kidia-ai-empty"><span class="dashicons dashicons-database"></span><div><strong><?php esc_html_e( 'No recommendation matches these filters yet', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Widen the period or wait for more real store activity. The studio does not invent evidence.', 'kidia-mobile-cms' ); ?></p></div></div>
+		<?php endif; ?>
+	</section>
+	</div>
+	<section class="kidia-ai-results-panel" data-ai-workspace-panel="results" hidden>
+		<header><div><span class="dashicons dashicons-chart-line"></span><div><h2><?php esc_html_e( 'Actions & Results', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Every approved decision stays here with its execution status, measured outcome and next recommended step.', 'kidia-mobile-cms' ); ?></p></div></div></header>
+		<?php if ( $ai_action_history ) : ?>
+			<div class="kidia-ai-result-list">
+				<?php foreach ( $ai_action_history as $history_id => $history_row ) :
+					$result = $action_result( (array) $history_row );
+					$history_recommendation = is_array( $history_row['recommendation'] ?? null ) ? $history_row['recommendation'] : array();
+					?>
+					<article class="is-<?php echo esc_attr( (string) $result['state'] ); ?>">
+						<header><div><small><?php echo esc_html( strtoupper( (string) ( $history_row['type'] ?? 'action' ) ) ); ?> · <?php echo esc_html( strtoupper( (string) ( $history_row['channel'] ?? 'all' ) ) ); ?></small><h3><?php echo esc_html( (string) ( $history_row['name'] ?? 'AI action' ) ); ?></h3></div><b><?php echo esc_html( ucfirst( (string) ( $history_row['status'] ?? 'draft' ) ) ); ?></b></header>
+						<div class="kidia-ai-result-metrics">
+							<span><small><?php esc_html_e( 'Measured conversions', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( (string) absint( $result['uses'] ?? 0 ) ); ?></strong></span>
+							<span><small><?php esc_html_e( 'Placement', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( ucfirst( (string) ( $history_row['placement'] ?? 'home' ) ) ); ?></strong></span>
+							<span><small><?php esc_html_e( 'Started', 'kidia-mobile-cms' ); ?></small><strong><?php echo esc_html( absint( $history_row['created_at'] ?? 0 ) ? wp_date( get_option( 'date_format' ), absint( $history_row['created_at'] ) ) : '—' ); ?></strong></span>
+						</div>
+						<p><b><?php esc_html_e( 'Next decision:', 'kidia-mobile-cms' ); ?></b> <?php echo esc_html( (string) $result['label'] ); ?></p>
+						<?php if ( ! empty( $history_recommendation['success_metric'] ) ) : ?><small><?php echo esc_html( (string) $history_recommendation['success_metric'] ); ?></small><?php endif; ?>
+						<footer>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<input type="hidden" name="action" value="kidia_mobile_review_ai_result">
+								<input type="hidden" name="history_id" value="<?php echo esc_attr( (string) $history_id ); ?>">
+								<?php wp_nonce_field( 'kidia_mobile_review_ai_result', 'kidia_mobile_ai_result_nonce' ); ?>
+								<button class="button" type="submit" name="result_decision" value="continue"><?php esc_html_e( 'Approve continue', 'kidia-mobile-cms' ); ?></button>
+								<button class="button button-secondary" type="submit" name="result_decision" value="stop"><?php esc_html_e( 'Approve stop', 'kidia-mobile-cms' ); ?></button>
+							</form>
+						</footer>
+					</article>
+				<?php endforeach; ?>
+			</div>
+		<?php else : ?>
+			<div class="kidia-ai-empty"><span class="dashicons dashicons-chart-line"></span><div><strong><?php esc_html_e( 'No approved actions yet', 'kidia-mobile-cms' ); ?></strong><p><?php esc_html_e( 'Build and approve a generated decision; its execution and results will appear here.', 'kidia-mobile-cms' ); ?></p></div></div>
 		<?php endif; ?>
 	</section>
 	<?php else : ?>
 		<section class="kidia-ai-ready-state">
 			<span class="dashicons dashicons-chart-area"></span>
 			<div>
-				<h2><?php esc_html_e( 'Ready when you are', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Choose the channel and period, then generate the analysis. AI Studio does not scan orders or calculate recommendations while this page is opening.', 'kidia-mobile-cms' ); ?></p>
+				<h2><?php esc_html_e( 'Ready to build data-backed offers', 'kidia-mobile-cms' ); ?></h2>
+				<p><?php esc_html_e( 'Choose the channel and period, then analyze the store and generate executable offers. AI Studio stays light until you start this process.', 'kidia-mobile-cms' ); ?></p>
 			</div>
 		</section>
 	<?php endif; ?>

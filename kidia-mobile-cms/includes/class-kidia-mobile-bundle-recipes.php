@@ -146,6 +146,20 @@ final class Kidia_Mobile_Bundle_Recipes {
 		return (string) $recipe['id'];
 	}
 
+	/** Updates a reviewed bundle lifecycle without rebuilding its recipe. */
+	public static function set_status( string $id, string $status ): bool {
+		$id     = sanitize_key( $id );
+		$status = 'published' === sanitize_key( $status ) ? 'published' : 'draft';
+		$rows   = self::all();
+		if ( '' === $id || ! is_array( $rows[ $id ] ?? null ) ) {
+			return false;
+		}
+		$rows[ $id ]['status']     = $status;
+		$rows[ $id ]['updated_at'] = time();
+		update_option( self::OPTION, $rows, false );
+		return true;
+	}
+
 	/** @return array<string,mixed> */
 	public static function sanitize( array $raw ): array {
 		$types = array(

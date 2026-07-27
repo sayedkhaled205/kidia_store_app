@@ -131,8 +131,9 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_save_checkout_suggestions', array( $this, 'save_checkout_suggestions' ) );
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
-		add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
-		add_action( 'admin_post_kidia_mobile_build_ai_action', array( $this, 'build_ai_action' ) );
+			add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
+			add_action( 'admin_post_kidia_mobile_build_ai_action', array( $this, 'build_ai_action' ) );
+			add_action( 'admin_post_kidia_mobile_review_ai_result', array( $this, 'review_ai_result' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
 		add_action( 'admin_post_kidia_mobile_set_coupon_channel', array( $this, 'set_coupon_channel' ) );
 		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
@@ -867,9 +868,11 @@ final class Kidia_Mobile_CMS_Admin {
 		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
 		$ai_summary         = Kidia_Mobile_Analytics::empty_summary();
 		$all_recommendations = array();
+		$ai_rotation_segments = array( 'fast' => array(), 'medium' => array(), 'slow' => array(), 'poor' => array() );
 		if ( $ai_generated ) {
 			$ai_summary         = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $ai_source );
 			$all_recommendations = Kidia_Mobile_AI_Offer_Engine::recommendations( $date_from, $date_to, $ai_source );
+			$ai_rotation_segments = Kidia_Mobile_AI_Offer_Engine::rotation_segments( $date_from, $date_to, $ai_source );
 		}
 		$ai_recommendations  = array_values(
 			array_filter(
@@ -886,6 +889,10 @@ final class Kidia_Mobile_CMS_Admin {
 			)
 		);
 		$ai_signal_count = count( Kidia_Mobile_AI_Offer_Engine::signal_catalog() );
+		$ai_action_history = get_option( 'kidia_mobile_ai_action_history_v1', array() );
+		$ai_action_history = is_array( $ai_action_history )
+			? array_reverse( array_slice( $ai_action_history, -100, null, true ), true )
+			: array();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/ai-insights.php';
 	}
 
@@ -996,7 +1003,63 @@ final class Kidia_Mobile_CMS_Admin {
 				'optional_promotion' => '1',
 			);
 		}
+		$history = get_option( 'kidia_mobile_ai_action_history_v1', array() );
+		$history = is_array( $history ) ? $history : array();
+		$history_id = wp_generate_uuid4();
+		$history[ $history_id ] = array(
+			'id'                => $history_id,
+			'offer_id'          => $id,
+			'created_reference' => $created_id,
+			'type'              => $action_type,
+			'status'            => $status,
+			'channel'           => $channel,
+			'placement'         => sanitize_key( (string) wp_unslash( $_POST['ai_placement'] ?? $recommendation['recommended_placement'] ?? 'home' ) ),
+			'name'              => sanitize_text_field( (string) wp_unslash( $_POST['ai_action_name'] ?? $recommendation['title'] ) ),
+			'recommendation'    => $recommendation,
+			'duration_hours'    => max( 1, min( 720, absint( $_POST['ai_duration_hours'] ?? $recommendation['duration_hours'] ?? 48 ) ) ),
+			'owner_decision'    => 'publish' === $status ? 'approved' : 'draft',
+			'created_at'        => time(),
+			'updated_at'        => time(),
+		);
+		update_option( 'kidia_mobile_ai_action_history_v1', array_slice( $history, -200, null, true ), false );
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/** Applies an owner-approved continue or stop decision from Actions & Results. */
+	public function review_ai_result(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to review AI actions.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_review_ai_result', 'kidia_mobile_ai_result_nonce' );
+		$history_id = sanitize_text_field( (string) wp_unslash( $_POST['history_id'] ?? '' ) );
+		$decision   = sanitize_key( (string) wp_unslash( $_POST['result_decision'] ?? '' ) );
+		$decision   = in_array( $decision, array( 'continue', 'stop' ), true ) ? $decision : '';
+		$history    = get_option( 'kidia_mobile_ai_action_history_v1', array() );
+		$history    = is_array( $history ) ? $history : array();
+		if ( '' === $decision || ! is_array( $history[ $history_id ] ?? null ) ) {
+			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_result_error' => 'not_found' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+		$row       = $history[ $history_id ];
+		$type      = sanitize_key( (string) ( $row['type'] ?? '' ) );
+		$reference = sanitize_text_field( (string) ( $row['created_reference'] ?? '' ) );
+		if ( 'stop' === $decision ) {
+			if ( 'coupon' === $type && class_exists( 'WC_Coupon' ) && absint( $reference ) > 0 ) {
+				$coupon = new WC_Coupon( absint( $reference ) );
+				if ( $coupon->get_id() > 0 ) {
+					$coupon->set_status( 'draft' );
+					$coupon->save();
+				}
+			} elseif ( 'bundle' === $type && '' !== $reference ) {
+				Kidia_Mobile_Bundle_Recipes::set_status( $reference, 'draft' );
+			}
+			$history[ $history_id ]['status'] = 'stopped';
+		}
+		$history[ $history_id ]['owner_decision'] = $decision;
+		$history[ $history_id ]['updated_at']     = time();
+		update_option( 'kidia_mobile_ai_action_history_v1', $history, false );
+		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-ai-insights', 'ai_result_saved' => '1' ), admin_url( 'admin.php' ) ) );
 		exit;
 	}
 

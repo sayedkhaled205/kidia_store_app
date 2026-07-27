@@ -23,7 +23,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	public static function settings(): array {
 		return array(
 			'minimum_confidence'       => 55,
-			'maximum_recommendations'  => 24,
+			'maximum_recommendations'  => 48,
 			'high_interest_min_views'  => 10,
 			'low_conversion_percent'   => 8,
 			'slow_stock_min_age_days'  => 30,
@@ -39,7 +39,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	 */
 	public static function recommendations( int $from, int $to, string $source = 'all' ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_ai_offers_v3_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = 'kidia_ai_offers_v4_' . md5( $from . '|' . $to . '|' . $source );
 		$cached    = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
@@ -56,6 +56,66 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		$buys    = absint( $funnel['purchased'] ?? 0 );
 		$historical_orders = absint( $commerce['orders'] ?? 0 );
 		$offers  = array();
+		$rotation_segments = self::rotation_segments( $from, $to, $source );
+		$rotation_labels   = array(
+			'fast'   => __( 'Fast-moving products', 'kidia-mobile-cms' ),
+			'medium' => __( 'Medium-moving products', 'kidia-mobile-cms' ),
+			'slow'   => __( 'Slow-moving products', 'kidia-mobile-cms' ),
+			'poor'   => __( 'Poor-performing products', 'kidia-mobile-cms' ),
+		);
+		foreach ( $rotation_segments as $segment => $products ) {
+			foreach ( array_slice( $products, 0, 4 ) as $product ) {
+				$discount = 0.0;
+				$scheme   = $segment . '_rotation';
+				$title    = __( 'Protect demand without discounting', 'kidia-mobile-cms' );
+				$risk     = 'low';
+				$duration = 168;
+				if ( 'medium' === $segment ) {
+					$title    = __( 'Accelerate a medium-moving product', 'kidia-mobile-cms' );
+					$discount = 5.0;
+					$duration = 96;
+				} elseif ( 'slow' === $segment ) {
+					$title    = __( 'Move slow stock with a controlled offer', 'kidia-mobile-cms' );
+					$discount = self::discount_for_slow_stock( $product, true );
+					$risk     = 'medium';
+					$duration = 72;
+				} elseif ( 'poor' === $segment ) {
+					$title    = __( 'Clear poor-performing stock safely', 'kidia-mobile-cms' );
+					$discount = max( 12, self::discount_for_slow_stock( $product, false ) );
+					$risk     = 'medium';
+					$duration = 72;
+				}
+				$recommendation = self::offer(
+					'rotation-' . $segment . '-' . absint( $product['id'] ?? 0 ),
+					$scheme,
+					$title,
+					sprintf(
+						__( '%1$s is classified as %2$s from its selected-period sales, stock, age and selling velocity.', 'kidia-mobile-cms' ),
+						sanitize_text_field( (string) ( $product['name'] ?? '' ) ),
+						$rotation_labels[ $segment ] ?? $segment
+					),
+					array(
+						sprintf( __( '%d units sold in the selected period', 'kidia-mobile-cms' ), absint( $product['sales'] ?? 0 ) ),
+						sprintf( __( 'Sales velocity: %.3f units/day', 'kidia-mobile-cms' ), (float) ( $product['velocity'] ?? 0 ) ),
+						sprintf( __( '%d days in store', 'kidia-mobile-cms' ), absint( $product['age_days'] ?? 0 ) ),
+						null === ( $product['stock'] ?? null )
+							? __( 'Stock status: available (quantity is not managed)', 'kidia-mobile-cms' )
+							: sprintf( __( '%d units currently available', 'kidia-mobile-cms' ), absint( $product['stock'] ) ),
+					),
+					min( 96, 64 + min( 28, absint( $product['sales'] ?? 0 ) * 2 ) ),
+					$risk,
+					'percent',
+					$discount,
+					$duration,
+					'engaged',
+					$source,
+					array( absint( $product['id'] ?? 0 ) )
+				);
+				$recommendation['rotation_segment'] = $segment;
+				$recommendation['rotation_label']   = $rotation_labels[ $segment ] ?? $segment;
+				$offers[] = $recommendation;
+			}
+		}
 
 		$purchases = array();
 		foreach ( (array) ( $summary['tracked_top_purchases'] ?? array() ) as $row ) {
@@ -90,36 +150,6 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'engaged',
 				$source,
 				array( $product_id )
-			);
-		}
-
-		$slow_products = self::slow_stock_products( $settings, $commerce );
-		foreach ( array_slice( $slow_products, 0, 6 ) as $product ) {
-			$discount = self::discount_for_slow_stock( $product, ! empty( $settings['protect_margin'] ) );
-			$offers[] = self::offer(
-				'slow-stock-' . $product['id'],
-				'slow_stock',
-				__( 'Rescue slow-moving stock', 'kidia-mobile-cms' ),
-				sprintf(
-					__( '%1$s has %2$d units in stock, has been listed for %3$d days and sold %4$d units in the selected period.', 'kidia-mobile-cms' ),
-					$product['name'],
-					$product['stock'],
-					$product['age_days'],
-					$product['sales']
-				),
-				array(
-					sprintf( __( '%d days in store', 'kidia-mobile-cms' ), $product['age_days'] ),
-					sprintf( __( '%d available units', 'kidia-mobile-cms' ), $product['stock'] ),
-					sprintf( __( 'Sales velocity: %.2f units/day', 'kidia-mobile-cms' ), $product['velocity'] ),
-				),
-				78,
-				'medium',
-				'percent',
-				$discount,
-				72,
-				'engaged',
-				$source,
-				array( $product['id'] )
 			);
 		}
 
@@ -446,6 +476,110 @@ final class Kidia_Mobile_AI_Offer_Engine {
 	}
 
 	/**
+	 * Classifies every currently available catalog product from real selected-period
+	 * sales. The result is cached with the analytical snapshot so opening the page
+	 * stays light and repeated filtering never scans the catalog again.
+	 *
+	 * @return array{fast:list<array<string,mixed>>,medium:list<array<string,mixed>>,slow:list<array<string,mixed>>,poor:list<array<string,mixed>>}
+	 */
+	public static function rotation_segments( int $from, int $to, string $source = 'all' ): array {
+		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$cache_key = 'kidia_ai_rotation_v1_' . md5( $from . '|' . $to . '|' . $source );
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return array_merge( self::empty_rotation_segments(), $cached );
+		}
+		$segments = self::empty_rotation_segments();
+		if ( ! function_exists( 'wc_get_products' ) || ! function_exists( 'wc_get_product' ) ) {
+			return $segments;
+		}
+
+		$commerce   = Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source );
+		$sales_map  = is_array( $commerce['product_sales'] ?? null ) ? $commerce['product_sales'] : array();
+		$period_days = max( 1, (int) ceil( max( DAY_IN_SECONDS, $to - $from ) / DAY_IN_SECONDS ) );
+		$product_ids = wc_get_products(
+			array(
+				'status'       => 'publish',
+				'stock_status' => 'instock',
+				'limit'        => -1,
+				'return'       => 'ids',
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			)
+		);
+		$rows       = array();
+		$velocities = array();
+		foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
+			$product = wc_get_product( $product_id );
+			if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
+				continue;
+			}
+			$created = $product->get_date_created();
+			$age     = $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1;
+			$sales   = absint( $sales_map[ $product_id ] ?? 0 );
+			$days    = max( 1, min( $period_days, $age ) );
+			$velocity = $sales / $days;
+			if ( $sales > 0 ) {
+				$velocities[] = $velocity;
+			}
+			$stock = $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null;
+			$rows[] = array(
+				'id'          => $product_id,
+				'name'        => $product->get_name(),
+				'sales'       => $sales,
+				'stock'       => $stock,
+				'age_days'    => $age,
+				'period_days' => $days,
+				'velocity'    => round( $velocity, 4 ),
+				'opportunity' => round( $age * max( 1, null === $stock ? 1 : $stock ) / max( 1, $sales + 1 ), 2 ),
+			);
+		}
+		sort( $velocities, SORT_NUMERIC );
+		$fast_threshold   = self::percentile( $velocities, .75 );
+		$medium_threshold = self::percentile( $velocities, .40 );
+		foreach ( $rows as $row ) {
+			$sales    = absint( $row['sales'] ?? 0 );
+			$velocity = (float) ( $row['velocity'] ?? 0 );
+			$age      = absint( $row['age_days'] ?? 0 );
+			if ( $sales > 0 && $velocity >= max( .0001, $fast_threshold ) ) {
+				$segments['fast'][] = $row;
+			} elseif ( $sales > 0 && $velocity >= max( .0001, $medium_threshold ) ) {
+				$segments['medium'][] = $row;
+			} elseif ( $sales > 0 || $age < 120 ) {
+				$segments['slow'][] = $row;
+			} else {
+				$segments['poor'][] = $row;
+			}
+		}
+		foreach ( $segments as $segment => &$segment_rows ) {
+			usort(
+				$segment_rows,
+				in_array( $segment, array( 'fast', 'medium' ), true )
+					? static fn( $left, $right ) => ( $right['sales'] <=> $left['sales'] ) ?: ( $right['velocity'] <=> $left['velocity'] )
+					: static fn( $left, $right ) => $right['opportunity'] <=> $left['opportunity']
+			);
+		}
+		unset( $segment_rows );
+		set_transient( $cache_key, $segments, 10 * MINUTE_IN_SECONDS );
+		return $segments;
+	}
+
+	/** @return array{fast:array,medium:array,slow:array,poor:array} */
+	private static function empty_rotation_segments(): array {
+		return array( 'fast' => array(), 'medium' => array(), 'slow' => array(), 'poor' => array() );
+	}
+
+	/** @param list<float|int> $sorted */
+	private static function percentile( array $sorted, float $percentile ): float {
+		$count = count( $sorted );
+		if ( 0 === $count ) {
+			return 0.0;
+		}
+		$index = max( 0, min( $count - 1, (int) floor( ( $count - 1 ) * $percentile ) ) );
+		return (float) $sorted[ $index ];
+	}
+
+	/**
 	 * Playbooks researched from leading commerce recommendation systems and
 	 * grouped for a usable interface rather than an overlapping tag cloud.
 	 *
@@ -670,6 +804,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'peak_timing'            => 'timing',
 			'popular'                => 'merchandising',
 			'best_seller'            => 'merchandising',
+			'fast_rotation'          => 'merchandising',
+			'medium_rotation'        => 'campaign',
+			'slow_rotation'          => 'inventory',
+			'poor_rotation'          => 'inventory',
 		);
 		$kind     = $kind_map[ $scheme ] ?? 'campaign';
 		$is_offer = $discount_value > 0;
@@ -691,6 +829,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'signup_friction'        => 'store_action',
 			'peak_timing'            => 'schedule',
 			'free_shipping'          => 'shipping_rule',
+			'fast_rotation'          => 'placement',
+			'medium_rotation'        => 'coupon',
+			'slow_rotation'          => 'coupon',
+			'poor_rotation'          => 'coupon',
 		);
 		$implementation = $implementation_map[ $scheme ] ?? ( $is_offer ? 'coupon' : 'store_action' );
 		$placement_map = array(
@@ -702,9 +844,14 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'category_merchandising' => 'category',
 			'cart_recovery' => 'cart',
 			'free_shipping' => 'checkout',
+			'fast_rotation' => 'home',
+			'medium_rotation' => 'product',
+			'slow_rotation' => 'home',
+			'poor_rotation' => 'home',
 		);
 		$recommended_placement = $placement_map[ $scheme ] ?? 'analytics';
 		$products = self::product_snapshots( $product_ids );
+		$product_ids = array_values( array_map( 'absint', array_column( $products, 'id' ) ) );
 		$product_names = array_values(
 			array_filter(
 				array_map(
@@ -739,6 +886,8 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			? __( 'Verify gross margin before publishing; stop the test if incremental gross profit falls.', 'kidia-mobile-cms' )
 			: __( 'Compare the selected placement with the previous period or a holdout before keeping it.', 'kidia-mobile-cms' );
 		$analysis_grade = $confidence >= 80 ? 'strong' : ( $confidence >= 65 ? 'good' : 'exploratory' );
+		$rotation_segment = 'storewide';
+		$rotation_label   = __( 'Store-wide decisions', 'kidia-mobile-cms' );
 		return compact(
 			'id',
 			'scheme',
@@ -763,7 +912,9 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'metrics',
 			'success_metric',
 			'guardrail',
-			'analysis_grade'
+			'analysis_grade',
+			'rotation_segment',
+			'rotation_label'
 		);
 	}
 
@@ -784,6 +935,9 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				);
 			case 'high_interest':
 			case 'slow_stock':
+			case 'medium_rotation':
+			case 'slow_rotation':
+			case 'poor_rotation':
 				return sprintf(
 					__( 'Run a %1$s product-only offer on %2$s for %3$d hours.', 'kidia-mobile-cms' ),
 					$discount,
@@ -804,6 +958,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				);
 			case 'popular':
 			case 'best_seller':
+			case 'fast_rotation':
 				return sprintf(
 					__( 'Place %1$s in the %2$s recommendations without discounting it.', 'kidia-mobile-cms' ),
 					$target,
@@ -841,6 +996,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'aov_lift'               => __( 'Average order value and gross profit per order', 'kidia-mobile-cms' ),
 			'popular'                => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
 			'best_seller'            => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
+			'fast_rotation'          => __( 'Product conversion, stock cover and gross profit without discount cost', 'kidia-mobile-cms' ),
+			'medium_rotation'        => __( 'Incremental units, product conversion and gross profit after discount', 'kidia-mobile-cms' ),
+			'slow_rotation'          => __( 'Sell-through, stock cover and incremental gross profit', 'kidia-mobile-cms' ),
+			'poor_rotation'          => __( 'Clearance sell-through, recovered cash and remaining stock', 'kidia-mobile-cms' ),
 			'search_demand'          => __( 'Search exits, product clicks and purchases after search', 'kidia-mobile-cms' ),
 			'category_merchandising' => __( 'Category click-through and revenue per visitor', 'kidia-mobile-cms' ),
 			'peak_timing'            => __( 'Campaign conversion compared with a quieter-hour holdout', 'kidia-mobile-cms' ),
@@ -861,7 +1020,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		$products = array();
 		foreach ( array_slice( array_values( array_unique( array_filter( array_map( 'absint', $product_ids ) ) ) ), 0, 6 ) as $product_id ) {
 			$product = wc_get_product( $product_id );
-			if ( ! $product instanceof WC_Product ) {
+			if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
 				continue;
 			}
 			$products[] = array(

@@ -237,8 +237,18 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Generate Analysis[\s\S]*Ready when you are/,
+  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Analyze Store & Generate Offers[\s\S]*Ready to build data-backed offers/,
   "AI Studio must open in a lightweight ready state and expose an explicit generate action.",
+);
+assert.match(
+  aiInsights,
+  /data-ai-progress-overlay[\s\S]*data-ai-progress-value[\s\S]*Analyzing store data & generating offers[\s\S]*data-ai-progress-stage/,
+  "Generating decisions must show centered staged percentage progress.",
+);
+assert.match(
+  shellScript,
+  /data-ai-progress-overlay[\s\S]*kidia-ai-progress[\s\S]*Measuring stock rotation[\s\S]*Building ranked offers/,
+  "The AI progress surface must advance through meaningful analysis stages.",
 );
 assert.match(
   analytics,
@@ -265,10 +275,20 @@ assert.match(
   /tracked_top_purchases[\s\S]*high-interest/,
   "High-interest conversion decisions must compare tracked views with tracked purchases.",
 );
+assert.doesNotMatch(
+  analytics,
+  /kidia_mobile_ai_maximum_historical_orders|20000/,
+  "AI Studio must not silently stop at a fixed historical-order sample.",
+);
 assert.match(
   analytics,
-  /kidia_mobile_ai_maximum_historical_orders[\s\S]*20000/,
-  "Large stores must not be silently reduced to the old small order sample.",
+  /foreach \( \$batch as \$order \)[\s\S]*maximum_pages[\s\S]*orders_scanned[\s\S]*orders_available/,
+  "Historical orders must be aggregated page by page without retaining every order object.",
+);
+assert.match(
+  analytics,
+  /stock_status' => 'instock'[\s\S]*catalog_in_stock[\s\S]*product_sales/,
+  "AI product decisions must expose all currently in-stock catalog products and their measured sales.",
 );
 assert.match(
   analytics,
@@ -276,6 +296,21 @@ assert.match(
   "Abandoned carts must import existing WooCommerce session carts.",
 );
 assert.match(aiInsights, /AI Offer Studio[\s\S]*Tracked sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
+assert.match(
+  aiInsights,
+  /Fast-moving products[\s\S]*Medium-moving products[\s\S]*Slow-moving products[\s\S]*Poor-performing products/,
+  "Generated decisions must be organized into the four requested stock-rotation groups.",
+);
+assert.match(
+  aiOffers,
+  /rotation_segments[\s\S]*fast_rotation[\s\S]*medium_rotation[\s\S]*slow_rotation[\s\S]*poor_rotation/,
+  "AI Studio must calculate rotation groups and a group-specific executable decision.",
+);
+assert.match(
+  aiOffers,
+  /stock_status' => 'instock'[\s\S]*is_in_stock/,
+  "Out-of-stock products must never enter generated decisions.",
+);
 assert.match(aiOffers, /Frequently bought together[\s\S]*Slow-stock rescue[\s\S]*Peak-time scheduling[\s\S]*Registration friction/);
 assert.match(aiInsights, /Why this recommendation[\s\S]*Decision target:[\s\S]*Profit risk/);
 assert.match(aiInsights, /ai_source[\s\S]*ai_kind[\s\S]*date_preset/);
@@ -326,6 +361,16 @@ assert.match(
   admin,
   /ai_insights_page[\s\S]*:\s*'all_time'[\s\S]*:\s*'all'/,
   "AI Studio must default to all store history and both channels.",
+);
+assert.match(
+  admin,
+  /kidia_mobile_ai_action_history_v1[\s\S]*review_ai_result[\s\S]*owner_decision/,
+  "Approved AI actions and owner result decisions must be retained.",
+);
+assert.match(
+  aiInsights,
+  /Generated Decisions[\s\S]*Actions & Results[\s\S]*Approve continue[\s\S]*Approve stop/,
+  "AI Studio must separate generated decisions from executed actions and results.",
 );
 assert.match(aiInsights, /disabled\( 'custom' !== \$date_preset \)/);
 assert.doesNotMatch(push, /kidia-ai-offer-studio|data-ai-scheme-filter|data-ai-scheme-card/);

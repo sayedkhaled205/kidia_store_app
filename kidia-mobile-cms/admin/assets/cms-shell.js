@@ -162,10 +162,48 @@
 		aiGenerateForm.addEventListener('submit', function () {
 			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
 			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
+			const overlay = document.querySelector('[data-ai-progress-overlay]');
+			const value = overlay && overlay.querySelector('[data-ai-progress-value]');
+			const ring = overlay && overlay.querySelector('[data-ai-progress-ring]');
+			const bar = overlay && overlay.querySelector('[data-ai-progress-bar]');
+			const stage = overlay && overlay.querySelector('[data-ai-progress-stage]');
 			if (!button) return;
 			button.disabled = true;
 			button.classList.add('is-generating');
-			if (label) label.textContent = 'Generating analysis...';
+			if (label) label.textContent = 'Analyzing data & generating offers...';
+			if (overlay) {
+				overlay.hidden = false;
+				document.body.classList.add('kidia-ai-is-generating');
+				let progress = 2;
+				const renderProgress = function () {
+					if (value) value.textContent = progress + '%';
+					if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
+					if (bar) bar.style.width = progress + '%';
+					if (!stage) return;
+					if (progress < 22) stage.textContent = 'Reading all paid orders and available products…';
+					else if (progress < 48) stage.textContent = 'Measuring stock rotation and sales velocity…';
+					else if (progress < 70) stage.textContent = 'Finding product relationships and funnel opportunities…';
+					else stage.textContent = 'Building ranked offers and executable decisions…';
+				};
+				renderProgress();
+				window.setInterval(function () {
+					if (progress >= 94) return;
+					progress += progress < 24 ? 3 : (progress < 68 ? 2 : 1);
+					progress = Math.min(94, progress);
+					renderProgress();
+				}, 420);
+			}
+		});
+	}
+	const aiWorkspaceTabs = document.querySelectorAll('[data-ai-workspace-tab]');
+	const aiWorkspacePanels = document.querySelectorAll('[data-ai-workspace-panel]');
+	if (aiWorkspaceTabs.length && aiWorkspacePanels.length) {
+		aiWorkspaceTabs.forEach(function (tab) {
+			tab.addEventListener('click', function () {
+				const target = tab.dataset.aiWorkspaceTab;
+				aiWorkspaceTabs.forEach(function (item) { item.classList.toggle('is-active', item === tab); });
+				aiWorkspacePanels.forEach(function (panel) { panel.hidden = panel.dataset.aiWorkspacePanel !== target; });
+			});
 		});
 	}
 	const recoveryDelivery = document.querySelector('[data-recovery-delivery]');
