@@ -898,7 +898,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function commerce_snapshot( int $from, int $to, string $source = 'all' ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = 'kidia_commerce_snapshot_v2_' . md5( $from . '|' . $to . '|' . $source );
+		$cache_key = 'kidia_commerce_snapshot_v3_' . md5( $from . '|' . $to . '|' . $source );
 		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return array_merge( self::empty_commerce_snapshot(), $cached );
@@ -929,9 +929,14 @@ final class Kidia_Mobile_Analytics {
 			);
 		}
 
-		$orders = array();
-		$total_available = 0;
-		$maximum_orders  = max( 1000, absint( apply_filters( 'kidia_mobile_ai_maximum_historical_orders', 20000 ) ) );
+		$snapshot             = self::empty_commerce_snapshot();
+		$total_available      = 0;
+		$customers            = array();
+		$products             = array();
+		$product_customers    = array();
+		$product_availability = array();
+		$pairs                = array();
+		$hours                = array();
 		do {
 			$result = wc_get_orders( $args );
 			$batch  = is_object( $result ) && isset( $result->orders )
@@ -942,71 +947,66 @@ final class Kidia_Mobile_Analytics {
 					? absint( $result->total )
 					: count( $batch );
 			}
-			$remaining = max( 0, $maximum_orders - count( $orders ) );
-			$orders = array_merge( $orders, array_slice( $batch, 0, $remaining ) );
 			$maximum_pages = is_object( $result ) && isset( $result->max_num_pages )
 				? max( 1, absint( $result->max_num_pages ) )
 				: 1;
-			++$args['page'];
-		} while (
-			! empty( $batch )
-			&& count( $orders ) < $maximum_orders
-			&& absint( $args['page'] ) <= $maximum_pages
-		);
-		$snapshot = self::empty_commerce_snapshot();
-		$customers = array();
-		$products  = array();
-		$product_customers = array();
-		$pairs     = array();
-		$hours     = array();
-		foreach ( $orders as $order ) {
-			if ( ! $order instanceof WC_Order ) {
-				continue;
-			}
-			++$snapshot['orders'];
-			$snapshot['revenue'] += max( 0, (float) $order->get_total() );
-			$customer_key = $order->get_customer_id() > 0
-				? 'user-' . $order->get_customer_id()
-				: 'email-' . hash( 'sha256', strtolower( (string) $order->get_billing_email() ) );
-			$customers[ $customer_key ] = true;
-			$order_product_ids = array();
-			foreach ( $order->get_items() as $item ) {
-				$product_id = absint( $item->get_product_id() );
-				$quantity   = max( 1, absint( $item->get_quantity() ) );
-				if ( $product_id <= 0 ) {
+			foreach ( $batch as $order ) {
+				if ( ! $order instanceof WC_Order ) {
 					continue;
 				}
-				$snapshot['units'] += $quantity;
-				if ( ! isset( $products[ $product_id ] ) ) {
-					$products[ $product_id ] = array(
-						'object_id'      => $product_id,
-						'event_label'    => sanitize_text_field( $item->get_name() ),
-						'event_count'    => 0,
-						'unique_clients' => 0,
-						'order_count'    => 0,
-						'revenue'        => 0.0,
-					);
+				++$snapshot['orders'];
+				$snapshot['revenue'] += max( 0, (float) $order->get_total() );
+				$customer_key = $order->get_customer_id() > 0
+					? 'user-' . $order->get_customer_id()
+					: 'email-' . hash( 'sha256', strtolower( (string) $order->get_billing_email() ) );
+				$customers[ $customer_key ] = true;
+				$order_product_ids = array();
+				foreach ( $order->get_items() as $item ) {
+					$product_id = absint( $item->get_product_id() );
+					$quantity   = max( 1, absint( $item->get_quantity() ) );
+					if ( $product_id <= 0 ) {
+						continue;
+					}
+					if ( ! array_key_exists( $product_id, $product_availability ) ) {
+						$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+						$product_availability[ $product_id ] = $product instanceof WC_Product && $product->is_in_stock();
+					}
+					if ( ! $product_availability[ $product_id ] ) {
+						continue;
+					}
+					$snapshot['units'] += $quantity;
+					if ( ! isset( $products[ $product_id ] ) ) {
+						$products[ $product_id ] = array(
+							'object_id'      => $product_id,
+							'event_label'    => sanitize_text_field( $item->get_name() ),
+							'event_count'    => 0,
+							'unique_clients' => 0,
+							'order_count'    => 0,
+							'revenue'        => 0.0,
+						);
+					}
+					$products[ $product_id ]['event_count'] += $quantity;
+					$products[ $product_id ]['order_count'] += 1;
+					$products[ $product_id ]['revenue'] += max( 0, (float) $item->get_total() );
+					$product_customers[ $product_id ][ $customer_key ] = true;
+					$order_product_ids[] = $product_id;
 				}
-				$products[ $product_id ]['event_count'] += $quantity;
-				$products[ $product_id ]['order_count'] += 1;
-				$products[ $product_id ]['revenue'] += max( 0, (float) $item->get_total() );
-				$product_customers[ $product_id ][ $customer_key ] = true;
-				$order_product_ids[] = $product_id;
-			}
-			$order_product_ids = array_values( array_unique( $order_product_ids ) );
-			sort( $order_product_ids );
-			for ( $left = 0; $left < count( $order_product_ids ); ++$left ) {
-				for ( $right = $left + 1; $right < count( $order_product_ids ); ++$right ) {
-					$key = $order_product_ids[ $left ] . ':' . $order_product_ids[ $right ];
-					$pairs[ $key ] = ( $pairs[ $key ] ?? 0 ) + 1;
+				$order_product_ids = array_values( array_unique( $order_product_ids ) );
+				sort( $order_product_ids );
+				for ( $left = 0; $left < count( $order_product_ids ); ++$left ) {
+					for ( $right = $left + 1; $right < count( $order_product_ids ); ++$right ) {
+						$key = $order_product_ids[ $left ] . ':' . $order_product_ids[ $right ];
+						$pairs[ $key ] = ( $pairs[ $key ] ?? 0 ) + 1;
+					}
+				}
+				$created = $order->get_date_created();
+				if ( $created ) {
+					$hour = absint( wp_date( 'G', $created->getTimestamp() ) );
+					$hours[ $hour ] = ( $hours[ $hour ] ?? 0 ) + 1;
 				}
 			}
-			$created = $order->get_date_created();
-			if ( $created ) {
-				$hour = absint( wp_date( 'G', $created->getTimestamp() ) );
-				$hours[ $hour ] = ( $hours[ $hour ] ?? 0 ) + 1;
-			}
-		}
+			++$args['page'];
+		} while ( ! empty( $batch ) && absint( $args['page'] ) <= $maximum_pages );
 
 		$snapshot['customers'] = count( $customers );
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
@@ -1034,7 +1034,11 @@ final class Kidia_Mobile_Analytics {
 			$products,
 			static fn( $left, $right ) => $right['event_count'] <=> $left['event_count']
 		);
-		$snapshot['products'] = array_values( array_slice( $products, 0, 25, true ) );
+		$snapshot['products']      = array_values( $products );
+		$snapshot['product_sales'] = array_map(
+			static fn( $row ) => absint( $row['event_count'] ?? 0 ),
+			$products
+		);
 		arsort( $pairs );
 		foreach ( array_slice( $pairs, 0, 20, true ) as $key => $count ) {
 			$ids = array_map( 'absint', explode( ':', (string) $key ) );
@@ -1057,8 +1061,11 @@ final class Kidia_Mobile_Analytics {
 		$snapshot['catalog_products'] = function_exists( 'wp_count_posts' )
 			? absint( wp_count_posts( 'product' )->publish ?? 0 )
 			: 0;
-		$snapshot['orders_scanned']   = count( $orders );
-		$snapshot['orders_available'] = max( $total_available, count( $orders ) );
+		$snapshot['catalog_in_stock'] = function_exists( 'wc_get_products' )
+			? count( wc_get_products( array( 'status' => 'publish', 'stock_status' => 'instock', 'limit' => -1, 'return' => 'ids' ) ) )
+			: 0;
+		$snapshot['orders_scanned']   = $snapshot['orders'];
+		$snapshot['orders_available'] = max( $total_available, $snapshot['orders'] );
 		$snapshot['truncated']        = $snapshot['orders_available'] > $snapshot['orders_scanned'];
 		set_transient( $cache_key, $snapshot, 10 * MINUTE_IN_SECONDS );
 		return $snapshot;
@@ -1074,7 +1081,9 @@ final class Kidia_Mobile_Analytics {
 			'customers'           => 0,
 			'average_order_value' => 0.0,
 			'catalog_products'    => 0,
+			'catalog_in_stock'    => 0,
 			'products'            => array(),
+			'product_sales'       => array(),
 			'pairs'               => array(),
 			'activity_hours'      => array(),
 			'orders_available'    => 0,
@@ -1273,26 +1282,32 @@ final class Kidia_Mobile_Analytics {
 				WHERE event_name = %s AND object_id > 0 AND occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY object_id
 				ORDER BY event_count DESC
-				LIMIT 8",
+				LIMIT 50",
 				...$args
 			),
 			ARRAY_A
 		);
+		$filtered = array();
 		foreach ( $rows as &$row ) {
 			if ( 'view_category' === $event && taxonomy_exists( 'product_cat' ) ) {
 				$category = get_term( absint( $row['object_id'] ), 'product_cat' );
 				if ( $category instanceof WP_Term ) {
 					$row['event_label'] = $category->name;
 				}
+				$filtered[] = $row;
 			} else {
 				$product = function_exists( 'wc_get_product' ) ? wc_get_product( absint( $row['object_id'] ) ) : null;
-				if ( is_object( $product ) && method_exists( $product, 'get_name' ) ) {
+				if ( $product instanceof WC_Product && $product->is_in_stock() ) {
 					$row['event_label'] = $product->get_name();
+					$filtered[] = $row;
 				}
+			}
+			if ( count( $filtered ) >= 8 ) {
+				break;
 			}
 		}
 		unset( $row );
-		return $rows;
+		return array_values( $filtered );
 	}
 
 	/**

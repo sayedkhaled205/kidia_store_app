@@ -968,6 +968,45 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-generate-button .spinner{display:none;float:none;margin:0}
 .kidia-ai-generate-button.is-generating>.dashicons{display:none}
 .kidia-ai-generate-button.is-generating .spinner{display:inline-block;visibility:visible}
+.kidia-ai-progress-overlay{
+	position:fixed;
+	z-index:100000;
+	inset:0;
+	display:grid;
+	place-items:center;
+	padding:24px;
+	background:rgba(238,247,244,.88);
+	backdrop-filter:blur(5px);
+}
+.kidia-ai-progress-overlay[hidden]{display:none!important}
+.kidia-ai-progress-card{
+	display:grid;
+	width:min(460px,calc(100vw - 40px));
+	justify-items:center;
+	gap:10px;
+	padding:30px;
+	border:1px solid #b9d9d1;
+	border-radius:20px;
+	background:#fff;
+	box-shadow:0 24px 70px rgba(23,78,66,.2);
+	text-align:center;
+}
+.kidia-ai-progress-ring{
+	--kidia-ai-progress:0;
+	display:grid;
+	width:116px;
+	height:116px;
+	place-items:center;
+	border-radius:50%;
+	background:conic-gradient(#2f806e calc(var(--kidia-ai-progress) * 1%),#e4efec 0);
+}
+.kidia-ai-progress-ring::before{content:"";grid-area:1/1;width:88px;height:88px;border-radius:50%;background:#fff}
+.kidia-ai-progress-ring strong{z-index:1;grid-area:1/1;color:#174e42;font-size:25px;font-variant-numeric:tabular-nums}
+.kidia-ai-progress-card h2{margin:4px 0 0;color:#174e42;font-size:21px}
+.kidia-ai-progress-card p{min-height:22px;margin:0;color:#526761}
+.kidia-ai-progress-track{width:100%;height:9px;overflow:hidden;border-radius:99px;background:#e4efec}
+.kidia-ai-progress-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#236b59,#74c3b1);transition:width .28s ease}
+.kidia-ai-progress-card small{color:#75847f;line-height:1.45}
 .kidia-ai-ready-state{display:flex;min-height:230px;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;padding:28px;border:1px dashed #9fc8be;border-radius:16px;background:linear-gradient(135deg,#eff8f5,#fff);text-align:start}
 .kidia-ai-ready-state>.dashicons{display:grid;width:56px;height:56px;flex:0 0 56px;place-items:center;border-radius:15px;background:#dff1eb;color:#236b59;font-size:29px}
 .kidia-ai-ready-state h2{margin:0 0 6px;color:var(--kidia-ai-dark);font-size:20px}
@@ -1013,6 +1052,43 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-playbooks>div{position:absolute;z-index:20;top:calc(100% + 7px);inset-inline-end:0;display:flex;width:min(560px,80vw);flex-wrap:wrap;gap:6px;padding:13px;border:1px solid var(--kidia-ai-border);border-radius:12px;background:#fff;box-shadow:0 16px 38px rgba(23,78,66,.16)}
 .kidia-ai-playbooks span{padding:6px 9px;border-radius:99px;background:#edf7f4;color:#315f55;font-size:11px;font-weight:700}
 .kidia-ai-recommendations--workspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kidia-ai-workspace-tabs{display:flex;gap:7px;margin:0 0 12px;padding:6px;border:1px solid var(--kidia-ai-border);border-radius:13px;background:#edf5f2}
+.kidia-ai-workspace-tabs button{display:flex;min-height:42px;align-items:center;justify-content:center;gap:8px;padding:8px 16px;border:0;border-radius:9px;background:transparent;color:#49625b;font-weight:800;cursor:pointer}
+.kidia-ai-workspace-tabs button b{display:grid;min-width:24px;height:24px;place-items:center;padding:0 6px;border-radius:99px;background:#dceae6;color:#315f55;font-size:11px}
+.kidia-ai-workspace-tabs button.is-active{background:#2f806e;color:#fff;box-shadow:0 5px 13px rgba(47,128,110,.18)}
+.kidia-ai-workspace-tabs button.is-active b{background:#fff;color:#236b59}
+[data-ai-workspace-panel][hidden]{display:none!important}
+.kidia-ai-rotation-groups{display:grid;gap:15px}
+.kidia-ai-rotation-group{overflow:hidden;border:1px solid #d8e7e3;border-radius:14px;background:#f9fcfb}
+.kidia-ai-rotation-group>header{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 16px;border-bottom:1px solid #dfeae7;background:#eef7f4}
+.kidia-ai-rotation-group>header h3{margin:0 0 3px;color:#174e42;font-size:17px}
+.kidia-ai-rotation-group>header p{margin:0;color:#657771;font-size:12px}
+.kidia-ai-rotation-group>header>b{flex:0 0 auto;padding:7px 10px;border-radius:99px;background:#fff;color:#236b59;font-size:11px}
+.kidia-ai-rotation-group>.kidia-ai-recommendations{padding:12px}
+.kidia-ai-rotation-group.is-fast>header{border-inline-start:5px solid #2f806e}
+.kidia-ai-rotation-group.is-medium>header{border-inline-start:5px solid #68aa9a}
+.kidia-ai-rotation-group.is-slow>header{border-inline-start:5px solid #d4932d}
+.kidia-ai-rotation-group.is-poor>header{border-inline-start:5px solid #bd584d}
+.kidia-ai-results-panel{padding:19px;border:1px solid var(--kidia-ai-border);border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(31,71,61,.045)}
+.kidia-ai-results-panel>header>div{display:flex;align-items:center;gap:10px;margin-bottom:15px;padding-bottom:14px;border-bottom:1px solid #e0ebe8}
+.kidia-ai-results-panel>header .dashicons{display:grid;width:40px;height:40px;place-items:center;border-radius:10px;background:#e7f5f1;color:#236b59}
+.kidia-ai-results-panel h2{margin:0 0 3px;color:#174e42}
+.kidia-ai-results-panel header p{margin:0;color:#687873}
+.kidia-ai-result-list{display:grid;gap:10px}
+.kidia-ai-result-list>article{display:grid;gap:11px;padding:14px;border:1px solid #d8e7e3;border-inline-start:5px solid #7aaea2;border-radius:12px;background:#fbfdfc}
+.kidia-ai-result-list>article.is-positive{border-inline-start-color:#2f806e}
+.kidia-ai-result-list>article.is-review{border-inline-start-color:#bd584d}
+.kidia-ai-result-list>article>header{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.kidia-ai-result-list h3{margin:2px 0 0;color:#174e42}
+.kidia-ai-result-list header small{color:#687873;font-weight:700}
+.kidia-ai-result-list header>b{padding:6px 9px;border-radius:99px;background:#edf7f4;color:#236b59;font-size:11px}
+.kidia-ai-result-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.kidia-ai-result-metrics span{display:grid;gap:3px;padding:9px;border-radius:9px;background:#eff7f5}
+.kidia-ai-result-metrics small{color:#687873}
+.kidia-ai-result-metrics strong{color:#174e42}
+.kidia-ai-result-list>article>p{margin:0;color:#526761}
+.kidia-ai-result-list>article>small{color:#687873}
+.kidia-ai-result-list footer form{display:flex;justify-content:flex-end;gap:7px;padding-top:10px;border-top:1px solid #e0ebe8}
 .kidia-ai-decision-card{display:flex;min-width:0;min-height:330px;flex-direction:column;gap:13px;margin:0;padding:16px;border:1px solid #d6e5e1;border-radius:14px;background:#fbfdfc}
 .kidia-ai-decision-card>header{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px}
 .kidia-ai-decision-card>header>.dashicons{display:grid;width:42px;height:42px;place-items:center;border-radius:11px;background:#dff1eb;color:#236b59;font-size:22px}
@@ -1073,6 +1149,7 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	.kidia-ai-page__hero,.kidia-ai-recommendation-section>header{align-items:stretch;flex-direction:column}
 	.kidia-ai-page__trust{width:100%}
 	.kidia-ai-recommendations--workspace{grid-template-columns:1fr}
+	.kidia-ai-rotation-group>header{align-items:flex-start;flex-direction:column}
 	.kidia-ai-demand-panel>div{grid-template-columns:1fr}
 }
 @media(max-width:600px){
@@ -1081,6 +1158,8 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	.kidia-ai-funnel-panel article>i{grid-column:1}
 	.kidia-ai-decision-card>header{grid-template-columns:42px 1fr}
 	.kidia-ai-decision-card>header>b{grid-column:1/-1;width:max-content}
+	.kidia-ai-workspace-tabs,.kidia-ai-result-list footer form{flex-direction:column}
+	.kidia-ai-result-metrics{grid-template-columns:1fr}
 }
 
 /* AI Studio review/build workflow and organized playbook library. */
