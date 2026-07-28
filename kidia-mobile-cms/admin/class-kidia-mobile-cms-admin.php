@@ -683,7 +683,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$paid_order_count = 0;
 		$order_statuses = array();
 		$product_performance = array();
-		$paid_statuses = function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' );
+		$paid_statuses = Kidia_Mobile_Analytics::revenue_order_statuses();
 		foreach ( $orders as $order ) {
 			if ( ! is_object( $order ) || ! method_exists( $order, 'get_total' ) ) {
 				continue;
@@ -741,7 +741,7 @@ final class Kidia_Mobile_CMS_Admin {
 			'categories'       => is_wp_error( $category_count ) ? 0 : absint( $category_count ),
 			'discounts'        => is_object( wp_count_posts( 'shop_coupon' ) ) ? absint( wp_count_posts( 'shop_coupon' )->publish ?? 0 ) : count( $coupons ),
 			'customers'        => absint( $role_counts['customer'] ?? 0 ) + absint( $role_counts['subscriber'] ?? 0 ),
-			'orders'           => function_exists( 'wc_orders_count' ) ? absint( wc_orders_count( 'processing' ) + wc_orders_count( 'completed' ) + wc_orders_count( 'on-hold' ) ) : count( $orders ),
+			'orders'           => function_exists( 'wc_orders_count' ) ? Kidia_Mobile_Analytics::total_order_count() : count( $orders ),
 			'abandoned-carts'  => Kidia_Mobile_Analytics::abandoned_count(),
 		);
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';

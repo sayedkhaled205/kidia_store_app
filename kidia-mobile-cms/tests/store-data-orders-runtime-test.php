@@ -40,6 +40,42 @@ function sanitize_key( $value ): string {
 	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) ) ?: '';
 }
 
+function wc_get_is_paid_statuses(): array {
+	return array( 'processing', 'completed' );
+}
+
+function wc_get_order_statuses(): array {
+	return array(
+		'wc-pending'        => 'Pending payment',
+		'wc-processing'     => 'Processing',
+		'wc-on-hold'        => 'On hold',
+		'wc-completed'      => 'Completed',
+		'wc-cancelled'      => 'Cancelled',
+		'wc-refunded'       => 'Refunded',
+		'wc-failed'         => 'Failed',
+		'wc-checkout-draft' => 'Draft',
+		'wc-done-2'         => 'DONE 2',
+		'wc-confirmed-ar'   => 'تم التأكيد',
+		'wc-editing'        => 'تعديل',
+	);
+}
+
+function wc_orders_count( string $status ): int {
+	$counts = array(
+		'pending'      => 4,
+		'processing'   => 10,
+		'on-hold'      => 3,
+		'completed'    => 20,
+		'cancelled'    => 2,
+		'refunded'     => 1,
+		'failed'       => 5,
+		'done-2'       => 120,
+		'confirmed-ar' => 200,
+		'editing'      => 30,
+	);
+	return $counts[ $status ] ?? 0;
+}
+
 function wc_get_orders( array $args ): object {
 	$GLOBALS['kidia_query_calls'][] = $args;
 	if ( 'native' === $GLOBALS['kidia_query_mode'] ) {
@@ -95,5 +131,20 @@ $GLOBALS['kidia_query_calls'] = array();
 $native = Kidia_Mobile_Analytics::orders_in_period( $from, $to, 'website' );
 kidia_orders_assert( array_map( static fn( WC_Order $order ): int => $order->get_id(), $native ) === array( 20 ), 'A valid native range result must be returned directly.' );
 kidia_orders_assert( 1 === count( $GLOBALS['kidia_query_calls'] ), 'A successful native range must not run the fallback.' );
+
+$revenue_statuses = Kidia_Mobile_Analytics::revenue_order_statuses();
+kidia_orders_assert( in_array( 'done-2', $revenue_statuses, true ), 'Custom DONE 2 orders must contribute to revenue.' );
+kidia_orders_assert( in_array( 'confirmed-ar', $revenue_statuses, true ), 'Custom confirmed orders must contribute to revenue.' );
+kidia_orders_assert( in_array( 'editing', $revenue_statuses, true ), 'Custom editing workflow orders must contribute to revenue.' );
+kidia_orders_assert( ! in_array( 'pending', $revenue_statuses, true ), 'Pending core orders must not be counted as paid revenue.' );
+kidia_orders_assert( ! in_array( 'cancelled', $revenue_statuses, true ), 'Cancelled core orders must not be counted as paid revenue.' );
+kidia_orders_assert( ! in_array( 'refunded', $revenue_statuses, true ), 'Refunded core orders must not be counted as paid revenue.' );
+kidia_orders_assert( ! in_array( 'failed', $revenue_statuses, true ), 'Failed core orders must not be counted as paid revenue.' );
+
+$countable_statuses = Kidia_Mobile_Analytics::countable_order_statuses();
+kidia_orders_assert( in_array( 'pending', $countable_statuses, true ), 'Pending orders must remain in the real order total.' );
+kidia_orders_assert( in_array( 'done-2', $countable_statuses, true ), 'Custom statuses must remain in the real order total.' );
+kidia_orders_assert( ! in_array( 'checkout-draft', $countable_statuses, true ), 'Checkout drafts must not inflate the order total.' );
+kidia_orders_assert( 390 === Kidia_Mobile_Analytics::total_order_count(), 'The order total must sum every built-in and custom real order status.' );
 
 echo "Store Data order runtime tests passed.\n";
