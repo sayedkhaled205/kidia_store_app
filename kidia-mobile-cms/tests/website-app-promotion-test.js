@@ -17,6 +17,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const template = read("admin", "pages", "website-app-promotion.php");
 const adminScript = read("admin", "assets", "website-app-promotion.js");
 const adminCss = read("admin", "assets", "website-app-promotion.css");
+const shellCss = read("admin", "assets", "cms-shell.css");
 const publicScript = read("public", "assets", "website-app-promotion.js");
 const publicCss = read("public", "assets", "website-app-promotion.css");
 
@@ -95,6 +96,21 @@ assert.match(
   admin,
   /kidia-mobile-website-app-promotion[\s\S]*website_promotion[\s\S]*Promote App on Website/,
   "The campaign builder must be a first-class CMS sidebar page.",
+);
+assert.match(
+  admin,
+  /'website_promotion'\s*=>[\s\S]*'dashicons-smartphone'/,
+  "The website promotion sidebar item must use a clear app icon.",
+);
+assert.match(
+  shellCss,
+  /\.kidia-cms-sidebar\{[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;/,
+  "The sidebar must widen into the outer gutter without moving the content edge.",
+);
+assert.match(
+  shellCss,
+  /\.kidia-cms-sidebar__nav a:focus,[\s\S]*box-shadow:inset 0 0 0 2px #2f806e;/,
+  "Sidebar keyboard focus must use the Kidia brand color instead of WordPress blue.",
 );
 assert.match(
   admin,
