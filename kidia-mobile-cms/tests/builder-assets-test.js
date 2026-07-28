@@ -768,31 +768,16 @@ function runMergeControlsContractTest() {
 	assert.match(checkoutSuggestions, /draggable="true"/, "Checkout fields must be draggable.");
 	assert.match(checkoutFieldStore, /get_checkout_fields\(\s*\$group\s*\)[\s\S]*OPTION[\s\S]*checkout_groups/, "Default Fields must snapshot WooCommerce's filtered runtime schema for the mobile checkout API.");
 	assert.match(checkoutEndpoint, /Kidia_Mobile_Checkout_Fields_Store[\s\S]*checkout_groups/, "The checkout API must serve the saved field-builder schema.");
+	assert.match(checkoutFieldStore, /DESIGN_OPTION[\s\S]*classic[\s\S]*summary_first[\s\S]*compact[\s\S]*save_design/, "Checkout must persist exactly the three supported real layouts.");
+	assert.match(checkoutEndpoint, /'design'\s*=>\s*\$checkout_store->design\(\)/, "The checkout API must send the selected design to the native app.");
 	assert.match(checkoutFieldBuilder, /function reindex/, "The checkout field editor must keep submitted indexes stable.");
 	assert.match(checkoutFieldBuilder, /dragstart[\s\S]*dragover/, "The checkout field editor must reorder cards.");
 	assert.match(checkoutFieldBuilder, /data-checkout-add-field/, "The checkout field editor must bind the add-field action.");
-	assert.equal((checkoutSuggestions.match(/kidia-settings-section-title--suggested-(?:appearance|products-actions)/g) || []).length, 2, "Suggested Products must render exactly the two requested merged sections.");
-	assert.match(checkoutSuggestions, /suggested-appearance[\s\S]*suggestions\[image_ratio\][\s\S]*suggestions\[title\][\s\S]*suggestions\[button_label\][\s\S]*button_color[\s\S]*suggested-products-actions/, "Image, text and appearance controls must remain together in the first Suggested Products section.");
-	assert.match(checkoutSuggestions, /suggested-products-actions[\s\S]*suggestions\[source\][\s\S]*category_id[\s\S]*manual_product_ids[\s\S]*limit[\s\S]*columns/, "Products and action data must remain together in the second Suggested Products section.");
-	assert.doesNotMatch(checkoutSuggestions, />Products & Data<|>Image Settings<|>Text & Content<|>Colors & Appearance<|>Actions & Navigation</, "Suggested Products must not render the five old section headings.");
-	assert.match(settingsSections, /suggested_products:\s*"Products, Actions & Image"/, "Suggested Products must expose one combined runtime heading for image, action, and product controls.");
-	assert.match(settingsSections, /kidia-checkout-suggestions-fields[\s\S]*\^\(image\|actions\|products\)\$[\s\S]*suggestionKey === "button_label"[\s\S]*section = "suggested_products"/, "Only Checkout Suggested Products may merge Image Settings, Actions & Navigation, and Products & Data at runtime.");
-	const suggestedDom = new JSDOM(`<!doctype html><html><body><div class="kidia-page-fields kidia-checkout-suggestions-fields">
-		<div class="kidia-page-field"><label>Image ratio</label><input name="suggestions[image_ratio]" value="1"></div>
-		<div class="kidia-page-field"><label>Section title</label><input name="suggestions[title]" value="Suggested"></div>
-		<div class="kidia-page-field"><label>Add button label</label><input name="suggestions[button_label]" value="Add"></div>
-		<div class="kidia-page-field"><label>Source</label><select name="suggestions[source]"><option>latest</option></select></div>
-	</div></body></html>`, { runScripts: "outside-only" });
-	suggestedDom.window.eval(settingsSections);
-	suggestedDom.window.document.dispatchEvent(new suggestedDom.window.Event("DOMContentLoaded"));
-	const suggestedHeading = suggestedDom.window.document.querySelector(".kidia-settings-section-title--suggested_products");
-	assert.ok(suggestedHeading, "Suggested Products must build the combined runtime section.");
-	assert.equal(suggestedHeading.textContent, "Products, Actions & Image", "The merged Suggested Products heading must describe all three combined groups.");
-	const suggestedFields = [];
-	for (let field = suggestedHeading.nextElementSibling; field && !field.classList.contains("kidia-settings-section-title"); field = field.nextElementSibling) {
-		suggestedFields.push(field.querySelector("[name]").name);
-	}
-	assert.deepEqual(suggestedFields, ["suggestions[image_ratio]", "suggestions[button_label]", "suggestions[source]"], "Image, action, and product fields must be together without pulling Text & Content into the merged section.");
+	assert.equal((checkoutSuggestions.match(/name="checkout_design"/g) || []).length, 1, "Checkout must render one three-choice design selector.");
+	assert.match(checkoutSuggestions, /Kidia_Mobile_Checkout_Fields_Store::designs\(\)[\s\S]*name="checkout_design"[\s\S]*kidia-checkout-design-option__preview/, "Every supported checkout design must render as a selectable visual layout card.");
+	assert.doesNotMatch(checkoutSuggestions, /Suggested Products|suggestions\[/, "Suggested Products must be completely removed from the Checkout builder.");
+	assert.doesNotMatch(checkoutEndpoint, /'suggestions'\s*=>|get_suggestions|wc_get_products/, "Checkout API must not query or return suggested products.");
+	assert.doesNotMatch(settingsSections, /suggested_products|kidia-checkout-suggestions-fields/, "Removed checkout suggestions must not retain runtime settings grouping.");
 	const splashScreen = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "splash-screen.php"), "utf8");
 	assert.equal((splashScreen.match(/class="kidia-settings-section-title(?:\s[^\"]*)?"/g) || []).length, 2, "Splash Screen must contain exactly two settings sections.");
 	["image_url", "image_width", "image_height", "image_fit", "image_shape", "store_name", "show_store_name", "text_color", "background_color", "background_color_end", "duration_ms", "show_loader", "loader_color"].forEach(function (key) {
@@ -1510,26 +1495,53 @@ function runUnsavedChangesDialogTest() {
 }
 
 function runCommercePreviewTest() {
-  const markup = `<!doctype html><html><body><div id="kidia-commerce-preview" data-preview-kind="checkout"></div><form class="kidia-commerce-preview-form">
+  const relatedMarkup = `<!doctype html><html><body><div id="kidia-commerce-preview" data-preview-kind="related"></div><form class="kidia-commerce-preview-form">
     <input type="hidden" name="suggestions[enabled]" value="0"><input type="checkbox" name="suggestions[enabled]" value="1" checked>
     <input name="suggestions[title]" value="You may also need"><input name="suggestions[columns]" value="2"><input name="suggestions[limit]" value="2">
     <input name="suggestions[card_radius]" value="14"><input name="suggestions[image_ratio]" value="1"><input name="suggestions[button_label]" value="Add">
     <input type="checkbox" name="suggestions[show_price]" checked><input type="checkbox" name="suggestions[show_rating]">
     <input name="suggestions[button_color]" value="#2F806E"><input name="suggestions[button_text_color]" value="#FFFFFF">
   </form></body></html>`;
-  const dom = new JSDOM(markup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
-  const { window } = dom;
-  window.requestAnimationFrame = (callback) => callback();
-  window.kidiaCommercePreview = { products: [{ name: "Pink Set", price: "450 EGP", image_url: "https://example.com/pink.jpg" }, { name: "Blue Set", price: "390 EGP", image_url: "https://example.com/blue.jpg" }] };
-  window.eval(readAsset("commerce-preview.js"));
-  window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
-  assert.equal(window.document.querySelectorAll(".kidia-commerce-card").length, 2, "Commerce previews must use real WooCommerce product cards.");
-  assert.match(window.document.getElementById("kidia-commerce-preview").textContent, /Pink Set/, "Commerce previews must show real product content.");
-  const title = window.document.querySelector('[name="suggestions[title]"]');
+  const relatedDom = new JSDOM(relatedMarkup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+  const relatedWindow = relatedDom.window;
+  relatedWindow.requestAnimationFrame = (callback) => callback();
+  relatedWindow.kidiaCommercePreview = { products: [{ name: "Pink Set", price: "450 EGP", image_url: "https://example.com/pink.jpg" }, { name: "Blue Set", price: "390 EGP", image_url: "https://example.com/blue.jpg" }] };
+  relatedWindow.eval(readAsset("commerce-preview.js"));
+  relatedWindow.document.dispatchEvent(new relatedWindow.Event("DOMContentLoaded"));
+  assert.equal(relatedWindow.document.querySelectorAll(".kidia-commerce-card").length, 2, "Related-product previews must keep real WooCommerce product cards.");
+  assert.match(relatedWindow.document.getElementById("kidia-commerce-preview").textContent, /Pink Set/, "Related-product previews must show real product content.");
+  const title = relatedWindow.document.querySelector('[name="suggestions[title]"]');
   title.value = "Complete your order";
-  title.dispatchEvent(new window.Event("input", { bubbles: true }));
-  assert.match(window.document.getElementById("kidia-commerce-preview").textContent, /Complete your order/, "Commerce previews must update during input without saving.");
-  console.log("Commerce previews: real products and instant settings updates passed.");
+  title.dispatchEvent(new relatedWindow.Event("input", { bubbles: true }));
+  assert.match(relatedWindow.document.getElementById("kidia-commerce-preview").textContent, /Complete your order/, "Related-product previews must update during input without saving.");
+
+  const checkoutMarkup = `<!doctype html><html><body><div id="kidia-commerce-preview" data-preview-kind="checkout"></div><form class="kidia-commerce-preview-form">
+    <input type="radio" name="checkout_design" value="classic" checked>
+    <input type="radio" name="checkout_design" value="summary_first">
+    <input type="radio" name="checkout_design" value="compact">
+    <input type="hidden" name="checkout[enabled]" value="0"><input type="checkbox" name="checkout[enabled]" value="1" checked>
+    <section data-checkout-field>
+      <input type="hidden" name="checkout[fields][0][enabled]" value="0"><input type="checkbox" name="checkout[fields][0][enabled]" value="1" checked>
+      <input name="checkout[fields][0][label]" value="Phone"><input name="checkout[fields][0][placeholder]" value="Your phone">
+      <select name="checkout[fields][0][group]"><option value="billing" selected>Billing</option></select>
+      <select name="checkout[fields][0][type]"><option value="tel" selected>Phone</option></select>
+      <input type="hidden" name="checkout[fields][0][required]" value="0"><input type="checkbox" name="checkout[fields][0][required]" value="1" checked>
+    </section>
+  </form></body></html>`;
+  const checkoutDom = new JSDOM(checkoutMarkup, { runScripts: "outside-only", url: "https://example.com/wp-admin/admin.php" });
+  const checkoutWindow = checkoutDom.window;
+  checkoutWindow.requestAnimationFrame = (callback) => callback();
+  checkoutWindow.eval(readAsset("commerce-preview.js"));
+  checkoutWindow.document.dispatchEvent(new checkoutWindow.Event("DOMContentLoaded"));
+  assert.equal(checkoutWindow.document.querySelectorAll(".kidia-commerce-card").length, 0, "Checkout preview must not render Suggested Products.");
+  assert.match(checkoutWindow.document.getElementById("kidia-commerce-preview").textContent, /Phone \*/, "Checkout preview must keep the selected fields.");
+  assert.ok(checkoutWindow.document.querySelector(".kidia-commerce-screen.is-checkout-classic"), "Checkout preview must render the selected real design.");
+  const compact = checkoutWindow.document.querySelector('[name="checkout_design"][value="compact"]');
+  compact.checked = true;
+  compact.dispatchEvent(new checkoutWindow.Event("change", { bubbles: true }));
+  assert.ok(checkoutWindow.document.querySelector(".kidia-commerce-screen.is-checkout-compact"), "Changing checkout design must update the live preview without saving.");
+  assert.match(readAsset("page-builder.css"), /\.kidia-commerce-screen\{[^}]*overflow-y:auto[^}]*touch-action:pan-y/, "Checkout preview content must keep native mouse and touch scrolling.");
+  console.log("Commerce previews: checkout designs, selected fields, no suggestions, and scrolling passed.");
 }
 
 function runUniformChromeSettingsContractTest() {

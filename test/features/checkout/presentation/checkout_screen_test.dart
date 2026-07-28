@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:kidia_store_app/features/checkout/presentation/checkout_screen.dart';
 
@@ -239,6 +240,54 @@ void main() {
     );
     expect(Directionality.of(formContext), TextDirection.rtl);
     expect(find.byKey(const Key('checkout-place-order')), findsOneWidget);
+  });
+
+  for (final CheckoutDesign design in CheckoutDesign.values) {
+    testWidgets('renders the ${design.apiValue} checkout design', (
+      WidgetTester tester,
+    ) async {
+      _useTallSurface(tester);
+      await tester.pumpWidget(
+        _testApp(
+          CheckoutScreen(
+            repository: FakeCheckoutRepository(),
+            design: design,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('checkout-design-${design.apiValue}')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('checkout-place-order')), findsOneWidget);
+    });
+  }
+
+  testWidgets('mobile checkout remains scrollable on a short viewport', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 620);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      _testApp(CheckoutScreen(repository: FakeCheckoutRepository())),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder scrollFinder = find.byKey(const Key('checkout-form-scroll'));
+    final ScrollableState scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: scrollFinder,
+        matching: find.byType(Scrollable),
+      ).first,
+    );
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    await tester.drag(scrollFinder, const Offset(0, -280));
+    await tester.pumpAndSettle();
+    expect(scrollable.position.pixels, greaterThan(0));
   });
 }
 

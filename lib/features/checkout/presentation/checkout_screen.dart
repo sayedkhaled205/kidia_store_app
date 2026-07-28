@@ -11,10 +11,8 @@ import 'package:kidia_store_app/features/checkout/data/models/checkout_country_d
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:kidia_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_suggestions.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
-import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({
@@ -23,16 +21,14 @@ class CheckoutScreen extends ConsumerStatefulWidget {
     this.customerEmail = '',
     this.onOrderSuccess,
     this.onBackToCart,
-    this.suggestions = const CheckoutSuggestions(),
-    this.onAddSuggestion,
+    this.design = CheckoutDesign.classic,
   });
 
   final CheckoutRepository repository;
   final String customerEmail;
   final ValueChanged<CheckoutOrderResult>? onOrderSuccess;
   final VoidCallback? onBackToCart;
-  final CheckoutSuggestions suggestions;
-  final AddProductPurchaseSelection? onAddSuggestion;
+  final CheckoutDesign design;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -130,8 +126,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           controller: _controller,
           copy: copy,
           onSubmit: _submit,
-          suggestions: widget.suggestions,
-          onAddSuggestion: widget.onAddSuggestion,
+          design: widget.design,
         );
     }
   }
@@ -200,150 +195,112 @@ class _CheckoutReady extends StatelessWidget {
     required this.controller,
     required this.copy,
     required this.onSubmit,
-    required this.suggestions,
-    required this.onAddSuggestion,
+    required this.design,
   });
 
   final GlobalKey<FormState> formKey;
   final CheckoutController controller;
   final _CheckoutCopy copy;
   final VoidCallback onSubmit;
-  final CheckoutSuggestions suggestions;
-  final AddProductPurchaseSelection? onAddSuggestion;
+  final CheckoutDesign design;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final bool wide = constraints.maxWidth >= 920;
-        final Widget form = Form(
-          key: formKey,
-          child: _CheckoutForm(controller: controller, copy: copy),
-        );
-        final Widget summary = _OrderSummary(
-          controller: controller,
-          copy: copy,
-          onSubmit: onSubmit,
-        );
-
-        if (wide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: SingleChildScrollView(
-                  key: const Key('checkout-form-scroll'),
-                  padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 16, 40),
-                  child: form,
-                ),
-              ),
-              SizedBox(
-                width: 390,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsetsDirectional.fromSTEB(16, 24, 24, 40),
-                  child: summary,
-                ),
-              ),
-            ],
+    return _CheckoutDesignScope(
+      design: design,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool wide = constraints.maxWidth >= 920;
+          final Widget form = Form(
+            key: formKey,
+            child: _CheckoutForm(controller: controller, copy: copy),
           );
-        }
+          final Widget summary = _OrderSummary(
+            controller: controller,
+            copy: copy,
+            onSubmit: onSubmit,
+          );
 
-        return SingleChildScrollView(
-          key: const Key('checkout-form-scroll'),
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 36),
-          child: Column(children: <Widget>[
-            form,
-            if (suggestions.enabled && suggestions.products.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 18),
-              _CheckoutSuggestionsSection(settings: suggestions, onAdd: onAddSuggestion),
-            ],
-            const SizedBox(height: 18),
-            summary,
-          ]),
-        );
-      },
-    );
-  }
-}
-
-class _CheckoutSuggestionsSection extends StatelessWidget {
-  const _CheckoutSuggestionsSection({required this.settings, required this.onAdd});
-  final CheckoutSuggestions settings;
-  final AddProductPurchaseSelection? onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color = _suggestionColor(settings.buttonColor, Theme.of(context).colorScheme.primary);
-    return _CheckoutSection(
-      title: settings.title,
-      icon: Icons.add_shopping_cart_rounded,
-      child: SizedBox(
-        height: 190,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: settings.products.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 10),
-          itemBuilder: (BuildContext context, int index) {
-            final CheckoutSuggestionProduct product = settings.products[index];
-            return SizedBox(
-              width: 135,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
-                    Expanded(
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: <Widget>[
-                          product.imageUrl.isEmpty
-                              ? const Icon(Icons.inventory_2_outlined)
-                              : Image.network(
-                                  product.imageUrl,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) =>
-                                      const Icon(Icons.inventory_2_outlined),
-                                ),
-                          if (product.inStock)
-                            PositionedDirectional(
-                              end: 0,
-                              bottom: 0,
-                              child: ProductQuickAddButton(
-                                productId: product.id,
-                              ),
-                            ),
-                        ],
+          if (wide) {
+            final List<Widget> columns = design == CheckoutDesign.summaryFirst
+                ? <Widget>[
+                  SizedBox(
+                    width: 390,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        24,
+                        24,
+                        16,
+                        40,
                       ),
+                      child: summary,
                     ),
-                    Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                    Text(product.price, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
-                    SizedBox(height: 30, child: FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: color, padding: EdgeInsets.zero),
-                      onPressed: product.inStock && onAdd != null ? () async {
-                        final result = await onAdd!(ProductPurchaseSelection(productId: product.id));
-                        if (context.mounted && !result.succeeded) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                result.message ?? 'Could not add product',
-                              ),
-                            ),
-                          );
-                        }
-                      } : null,
-                      child: Text(settings.buttonLabel, style: const TextStyle(fontSize: 11)),
-                    )),
-                  ]),
-                ),
-              ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const Key('checkout-form-scroll'),
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        16,
+                        24,
+                        24,
+                        40,
+                      ),
+                      child: form,
+                    ),
+                  ),
+                ]
+              : <Widget>[
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const Key('checkout-form-scroll'),
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        24,
+                        24,
+                        16,
+                        40,
+                      ),
+                      child: form,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 390,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        16,
+                        24,
+                        24,
+                        40,
+                      ),
+                      child: summary,
+                    ),
+                  ),
+                  ];
+            return Row(
+              key: Key('checkout-design-${design.apiValue}'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: columns,
             );
-          },
-        ),
+          }
+
+          final List<Widget> content = design == CheckoutDesign.summaryFirst
+              ? <Widget>[summary, const SizedBox(height: 18), form]
+              : <Widget>[form, const SizedBox(height: 18), summary];
+          return SingleChildScrollView(
+            key: const Key('checkout-form-scroll'),
+            primary: true,
+            physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 36),
+            child: Column(
+              key: Key('checkout-design-${design.apiValue}'),
+              children: content,
+            ),
+          );
+        },
       ),
     );
   }
 }
-
-Color _suggestionColor(String value, Color fallback) { final String hex = value.replaceFirst('#', ''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex) ? Color(int.parse('FF$hex', radix: 16)) : fallback; }
 
 class _CheckoutForm extends StatelessWidget {
   const _CheckoutForm({required this.controller, required this.copy});
@@ -1048,6 +1005,27 @@ class _SummaryLine extends StatelessWidget {
   }
 }
 
+class _CheckoutDesignScope extends InheritedWidget {
+  const _CheckoutDesignScope({
+    required this.design,
+    required super.child,
+  });
+
+  final CheckoutDesign design;
+
+  static CheckoutDesign of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<_CheckoutDesignScope>()
+            ?.design ??
+        CheckoutDesign.classic;
+  }
+
+  @override
+  bool updateShouldNotify(_CheckoutDesignScope oldWidget) {
+    return oldWidget.design != design;
+  }
+}
+
 class _CheckoutSection extends StatelessWidget {
   const _CheckoutSection({
     required this.title,
@@ -1061,32 +1039,58 @@ class _CheckoutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(icon),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+    final CheckoutDesign design = _CheckoutDesignScope.of(context);
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final double padding = design == CheckoutDesign.compact ? 12 : 18;
+    final Widget content = Padding(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                icon,
+                size: design == CheckoutDesign.compact ? 19 : null,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            child,
-          ],
-        ),
+              ),
+            ],
+          ),
+          SizedBox(height: design == CheckoutDesign.compact ? 10 : 16),
+          child,
+        ],
       ),
+    );
+    if (design == CheckoutDesign.compact) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border.all(color: colors.outlineVariant),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: content,
+      );
+    }
+    return Card(
+      margin: EdgeInsets.zero,
+      color: design == CheckoutDesign.summaryFirst
+          ? colors.surfaceContainerLowest
+          : null,
+      shape: design == CheckoutDesign.summaryFirst
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: colors.primary.withValues(alpha: .28)),
+            )
+          : null,
+      child: content,
     );
   }
 }

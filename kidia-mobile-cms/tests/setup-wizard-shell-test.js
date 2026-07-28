@@ -36,7 +36,8 @@ assert.match(service, /Kidia_Mobile_Layout_Store/, "Themes must update the Home 
 assert.match(service, /Kidia_Mobile_Page_Layout_Store/, "Themes must update application page builders.");
 assert.match(service, /Kidia_Mobile_Category_Page_Store/, "Themes must update the Category builder.");
 assert.match(service, /kidia_mobile_splash_screen/, "Themes must configure the Splash screen.");
-assert.match(service, /kidia_mobile_checkout_suggestions/, "Themes must configure checkout recommendations.");
+assert.match(service, /Kidia_Mobile_Checkout_Fields_Store::DESIGN_OPTION/, "Themes must preserve the selected checkout design.");
+assert.doesNotMatch(service, /kidia_mobile_checkout_suggestions/, "Themes must not restore removed Checkout Suggested Products.");
 for (const page of ["home", "category", "catalog", "product", "wishlist", "account"]) {
   assert.match(service, new RegExp(`'${page}'\\s*=>`), `Quick Setup must expose ${page} in page selection.`);
 }
