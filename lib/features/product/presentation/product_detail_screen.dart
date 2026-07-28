@@ -18,6 +18,7 @@ import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_pr
 import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
@@ -964,7 +965,10 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
   }
 
   Future<List<CatalogProduct>> _load() async {
-    if (AppConfig.isCmsPreview) return _previewRelatedProducts;
+    if (AppConfig.isCmsPreview &&
+        !CmsPreviewLayoutBridge.useDemoCatalog) {
+      return _previewRelatedProducts;
+    }
     final page = await widget.repository
         .getProducts(
           CatalogProductQuery(

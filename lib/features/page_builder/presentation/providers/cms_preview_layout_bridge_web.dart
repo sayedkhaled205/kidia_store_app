@@ -11,6 +11,8 @@ class CmsPreviewLayoutBridge {
       <String, Map<String, dynamic>>{};
   static Map<String, dynamic>? _home;
   static Map<String, dynamic>? _category;
+  static Map<String, dynamic>? _demoCatalog;
+  static Completer<Map<String, dynamic>>? _demoCatalogReady;
   static final StreamController<String> _changes =
       StreamController<String>.broadcast();
   static final StreamController<String> _focusTargets =
@@ -18,6 +20,7 @@ class CmsPreviewLayoutBridge {
   static final StreamController<double> _homeScrollDeltas =
       StreamController<double>.broadcast();
   static bool _listening = false;
+  static bool useDemoCatalog = false;
 
   static Stream<Map<String, dynamic>?> layoutsFor(String page) async* {
     _listen();
@@ -51,6 +54,14 @@ class CmsPreviewLayoutBridge {
   static Stream<double> get homeScrollDeltas {
     _listen();
     return _homeScrollDeltas.stream;
+  }
+
+  static Future<Map<String, dynamic>> get demoCatalog {
+    _listen();
+    final Map<String, dynamic>? current = _demoCatalog;
+    if (current != null) return Future<Map<String, dynamic>>.value(current);
+    _demoCatalogReady ??= Completer<Map<String, dynamic>>();
+    return _demoCatalogReady!.future;
   }
 
   static void _listen() {
@@ -90,6 +101,13 @@ class CmsPreviewLayoutBridge {
       }
       if (page == 'category' && message['category'] is Map) {
         _category = Map<String, dynamic>.from(message['category'] as Map);
+      }
+      if (message['demo_catalog'] is Map) {
+        _demoCatalog = Map<String, dynamic>.from(
+          message['demo_catalog'] as Map,
+        );
+        final Completer<Map<String, dynamic>>? ready = _demoCatalogReady;
+        if (ready != null && !ready.isCompleted) ready.complete(_demoCatalog!);
       }
       _changes.add(page);
     });

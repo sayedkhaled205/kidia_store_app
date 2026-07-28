@@ -104,10 +104,14 @@ defined( 'ABSPATH' ) || exit;
 								<div class="kidia-theme-phone-top"><b><?php echo esc_html( (string) $theme['name'] ); ?></b><i></i></div>
 								<div class="kidia-theme-search"></div>
 								<div class="kidia-theme-hero" style="background-image:linear-gradient(0deg,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('<?php echo esc_url( $hero_url ); ?>')"><span><?php echo esc_html( (string) $theme['sample_copy'][0] ); ?></span></div>
-								<div class="kidia-theme-categories"><i></i><i></i><i></i></div>
+								<div class="kidia-theme-categories">
+									<?php for ( $sample_index = 1; $sample_index <= 3; $sample_index++ ) : ?>
+										<i style="background-image:url('<?php echo esc_url( Kidia_Mobile_Setup_Wizard::asset_url( $theme, 'category', $sample_index ) ); ?>')"></i>
+									<?php endfor; ?>
+								</div>
 								<div class="kidia-theme-products">
-									<?php for ( $sample_index = 0; $sample_index < 2; $sample_index++ ) : ?>
-										<i<?php if ( ! empty( $catalog_images[ $sample_index ] ) ) : ?> style="background-image:url('<?php echo esc_url( $catalog_images[ $sample_index ] ); ?>')"<?php endif; ?>></i>
+									<?php for ( $sample_index = 1; $sample_index <= 2; $sample_index++ ) : ?>
+										<i style="background-image:url('<?php echo esc_url( Kidia_Mobile_Setup_Wizard::asset_url( $theme, 'product', $sample_index ) ); ?>')"></i>
 									<?php endfor; ?>
 								</div>
 								<div class="kidia-theme-footer"><i></i><i></i><i></i><i></i></div>
@@ -133,7 +137,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="kidia-review-card">
 				<div class="kidia-review-icon"><span class="dashicons dashicons-smartphone"></span></div>
-				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><strong data-review-theme><?php echo esc_html( (string) $themes[ $selected_theme ]['name'] ); ?></strong><p><?php esc_html_e( 'One complete theme will be installed across every selected page, using real store products and catalog images automatically.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><?php foreach ( $setup_pages as $page_key => $page_details ) : ?><span data-review-page="<?php echo esc_attr( $page_key ); ?>"><?php echo esc_html( (string) $page_details['name'] ); ?></span><?php endforeach; ?></div></div>
+				<div><h3 data-review-name><?php echo esc_html( (string) $identity['app_name'] ); ?></h3><strong data-review-theme><?php echo esc_html( (string) $themes[ $selected_theme ]['name'] ); ?></strong><p><?php esc_html_e( 'The preview uses the theme package only. After applying it, live product sections connect to your WooCommerce catalog.', 'kidia-mobile-cms' ); ?></p><div class="kidia-review-tags"><?php foreach ( $setup_pages as $page_key => $page_details ) : ?><span data-review-page="<?php echo esc_attr( $page_key ); ?>"><?php echo esc_html( (string) $page_details['name'] ); ?></span><?php endforeach; ?></div></div>
 			</div>
 			<div class="kidia-catalog-summary">
 				<div><span class="dashicons dashicons-products"></span><strong><?php echo esc_html( number_format_i18n( $catalog_stats['products'] ) ); ?></strong><small><?php esc_html_e( 'Products ready', 'kidia-mobile-cms' ); ?></small></div>

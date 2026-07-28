@@ -139,6 +139,10 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 	public function preview_home_layout( WP_REST_Request $request ): WP_REST_Response {
 		$submitted = $request->get_param( 'blocks' );
 		$submitted = is_array( $submitted ) ? $submitted : array();
+		$demo_catalog = $request->get_param( 'demo_catalog' );
+		$demo_catalog = is_array( $demo_catalog ) ? $demo_catalog : array();
+		$demo_products = $this->sanitize_demo_products( $demo_catalog['products'] ?? array() );
+		$demo_categories = $this->sanitize_demo_categories( $demo_catalog['categories'] ?? array() );
 		$blocks    = array();
 
 		foreach ( array_values( $submitted ) as $order => $instance ) {
@@ -156,6 +160,20 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 				$api_block = null;
 			}
 			if ( is_array( $api_block ) ) {
+				if ( in_array( (string) ( $api_block['type'] ?? '' ), array( 'product_grid', 'product_carousel' ), true ) && ! empty( $demo_products ) ) {
+					$api_block['data']['items'] = $demo_products;
+				}
+				if ( 'category_grid' === (string) ( $api_block['type'] ?? '' ) && ! empty( $demo_categories ) ) {
+					$api_block['data']['items'] = array_map(
+						static fn ( array $category ): array => array(
+							'id'        => $category['id'],
+							'name'      => $category['name'],
+							'image_url' => $category['image_url'],
+							'action'    => array( 'type' => 'category', 'value' => (string) $category['id'] ),
+						),
+						$demo_categories
+					);
+				}
 				$blocks[] = $api_block;
 			}
 		}
@@ -172,6 +190,64 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 		);
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
 		return $response;
+	}
+
+	/** @param mixed $items @return array<int,array<string,mixed>> */
+	private function sanitize_demo_products( $items ): array {
+		if ( ! is_array( $items ) ) {
+			return array();
+		}
+		$products = array();
+		foreach ( array_slice( array_values( $items ), 0, 12 ) as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			$id        = absint( $item['id'] ?? 0 );
+			$name      = sanitize_text_field( (string) ( $item['name'] ?? '' ) );
+			$image_url = esc_url_raw( (string) ( $item['image_url'] ?? '' ) );
+			$price     = is_numeric( $item['price'] ?? null ) ? number_format( (float) $item['price'], 2, '.', '' ) : '';
+			if ( 0 === $id || '' === $name || '' === $image_url || '' === $price ) {
+				continue;
+			}
+			$image_urls = array_values( array_filter( array_map( 'esc_url_raw', is_array( $item['image_urls'] ?? null ) ? $item['image_urls'] : array( $image_url ) ) ) );
+			$products[] = array(
+				'id'              => $id,
+				'name'            => $name,
+				'image_url'       => $image_url,
+				'image_urls'      => $image_urls,
+				'price'           => $price,
+				'regular_price'   => is_numeric( $item['regular_price'] ?? null ) ? number_format( (float) $item['regular_price'], 2, '.', '' ) : null,
+				'currency_code'   => sanitize_text_field( (string) ( $item['currency_code'] ?? 'USD' ) ),
+				'currency_symbol' => sanitize_text_field( (string) ( $item['currency_symbol'] ?? '$' ) ),
+				'in_stock'        => ! empty( $item['in_stock'] ),
+				'badge'           => empty( $item['badge'] ) ? null : sanitize_text_field( (string) $item['badge'] ),
+				'rating'          => max( 0, min( 5, (float) ( $item['rating'] ?? 0 ) ) ),
+				'review_count'    => absint( $item['review_count'] ?? 0 ),
+				'discount_percent'=> empty( $item['regular_price'] ) ? 0 : max( 0, min( 99, (int) round( ( ( (float) $item['regular_price'] - (float) $price ) / max( 0.01, (float) $item['regular_price'] ) ) * 100 ) ) ),
+				'action'          => array( 'type' => 'product', 'value' => (string) $id ),
+			);
+		}
+		return $products;
+	}
+
+	/** @param mixed $items @return array<int,array<string,mixed>> */
+	private function sanitize_demo_categories( $items ): array {
+		if ( ! is_array( $items ) ) {
+			return array();
+		}
+		$categories = array();
+		foreach ( array_slice( array_values( $items ), 0, 12 ) as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+			$id        = absint( $item['id'] ?? 0 );
+			$name      = sanitize_text_field( (string) ( $item['name'] ?? '' ) );
+			$image_url = esc_url_raw( (string) ( $item['image_url'] ?? '' ) );
+			if ( 0 < $id && '' !== $name && '' !== $image_url ) {
+				$categories[] = array( 'id' => $id, 'name' => $name, 'image_url' => $image_url );
+			}
+		}
+		return $categories;
 	}
 
 	/**
