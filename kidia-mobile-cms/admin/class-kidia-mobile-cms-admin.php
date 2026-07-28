@@ -446,7 +446,9 @@ final class Kidia_Mobile_CMS_Admin {
 		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts' );
 		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
 
-		$date_default = in_array( $store_tab, array( 'customers', 'abandoned-carts' ), true ) ? 'all_time' : 'last_30_days';
+		$date_default = in_array( $store_tab, array( 'customers', 'abandoned-carts' ), true )
+			? 'all_time'
+			: ( in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? 'today' : 'last_30_days' );
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];
@@ -617,17 +619,19 @@ final class Kidia_Mobile_CMS_Admin {
 			}
 		}
 
-		$order_args = array(
-			'limit'        => in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? -1 : 60,
-			'orderby'      => 'date',
-			'order'        => 'DESC',
-			// WooCommerce accepts second-precision ranges as UTC timestamps.
-			'date_created' => $date_from . '...' . $date_to,
-		);
-		$order_args = $this->store_data_order_source_args( $order_args, $store_source );
-		$orders     = in_array( $store_tab, array( 'orders', 'reports' ), true ) && function_exists( 'wc_get_orders' )
-			? wc_get_orders( $order_args )
-			: array();
+		$orders = array();
+		if ( 'reports' === $store_tab ) {
+			$orders = Kidia_Mobile_Analytics::orders_in_period( $date_from, $date_to, $store_source );
+		} elseif ( 'orders' === $store_tab && function_exists( 'wc_get_orders' ) ) {
+			$order_args = array(
+				'limit'        => 60,
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+				'date_created' => $date_from . '...' . $date_to,
+			);
+			$order_args = $this->store_data_order_source_args( $order_args, $store_source );
+			$orders     = wc_get_orders( $order_args );
+		}
 
 		$customer_page = max( 1, absint( $_GET['customer_page'] ?? 1 ) );
 		$customer_args = array(
