@@ -2425,6 +2425,33 @@ final class Kidia_Mobile_CMS_Admin {
 							);
 						} else {
 							wp_enqueue_script( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.js' ), true );
+							$setup_preview_product_id = 1;
+							if ( function_exists( 'wc_get_products' ) ) {
+								$setup_preview_product_ids = wc_get_products( array( 'status' => 'publish', 'limit' => 1, 'return' => 'ids' ) );
+								if ( ! empty( $setup_preview_product_ids[0] ) ) {
+									$setup_preview_product_id = absint( $setup_preview_product_ids[0] );
+								}
+							}
+							$setup_preview_wizard = new Kidia_Mobile_Setup_Wizard();
+							$setup_theme_snapshots = array();
+							foreach ( array_keys( Kidia_Mobile_Setup_Wizard::themes() ) as $setup_theme_key ) {
+								$setup_theme_snapshots[ $setup_theme_key ] = $setup_preview_wizard->preview_snapshot( (string) $setup_theme_key );
+							}
+							wp_localize_script(
+								'kidia-mobile-setup-wizard',
+								'kidiaSetupThemePreview',
+								array(
+									'flutterUrl' => KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html',
+									'layoutPreviewBase' => rest_url( 'woo-mobile/v1/page-layout/' ),
+									'homePreviewEndpoint' => rest_url( 'woomobileapp/v1/home-layout/preview' ),
+									'categoryPreviewEndpoint' => rest_url( 'woo-mobile/v1/category-page/preview' ),
+									'restNonce' => wp_create_nonce( 'wp_rest' ),
+									'productId' => $setup_preview_product_id,
+									'version' => KIDIA_MOBILE_CMS_VERSION,
+									'themes' => $setup_theme_snapshots,
+									'errorLabel' => __( 'The real theme preview could not be loaded. Try opening it again.', 'kidia-mobile-cms' ),
+								)
+							);
 						}
 						return;
 					}

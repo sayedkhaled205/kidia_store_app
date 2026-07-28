@@ -11,7 +11,7 @@
 
 	function pageEnabled(page) {
 		const toggle = form.querySelector('[data-page-toggle="' + page + '"]');
-		return !toggle || toggle.checked;
+		return !toggle || toggle.dataset.requiredPage === '1' || toggle.checked;
 	}
 
 	function activeSteps() {
@@ -52,15 +52,26 @@
 	}
 
 	function updateActionTheme() {
-		const activeStep = activeSteps()[current];
-		const selected = (activeStep && activeStep.querySelector('.kidia-theme-card input:checked'))
-			|| form.querySelector('input[name="setup[theme]"]:checked');
-		const card = selected && selected.closest('.kidia-theme-card');
-		const brand = form.querySelector('[name="setup[primary_color]"]');
-		const primary = card
-			? window.getComputedStyle(card).getPropertyValue('--theme-primary').trim()
-			: (brand ? brand.value : '');
-		form.style.setProperty('--kidia-setup-theme-color', primary || '#2f806e');
+		form.style.setProperty('--kidia-setup-theme-color', '#2f806e');
+	}
+
+	function normalizeHex(value) {
+		const normalized = String(value || '').trim().toUpperCase();
+		return /^#[0-9A-F]{6}$/.test(normalized) ? normalized : '';
+	}
+
+	function syncColorPair(key, source) {
+		const picker = form.querySelector('[data-color-picker="' + key + '"]');
+		const code = form.querySelector('[data-color-code="' + key + '"]');
+		if (!picker || !code) return;
+		if (source === code) {
+			const valid = normalizeHex(code.value);
+			code.classList.toggle('is-invalid', !valid);
+			if (valid) picker.value = valid;
+			return;
+		}
+		code.value = String(picker.value || '').toUpperCase();
+		code.classList.remove('is-invalid');
 	}
 
 	function selectedThemeCard() {
@@ -117,32 +128,157 @@
 				const styles = window.getComputedStyle(card);
 				primary.value = styles.getPropertyValue('--theme-primary').trim() || primary.value;
 				secondary.value = styles.getPropertyValue('--theme-soft').trim() || secondary.value;
+				syncColorPair('primary', primary);
+				syncColorPair('secondary', secondary);
 			}
 			updateThemeReview();
+		}
+		if (event.target.matches('[data-color-picker]')) {
+			syncColorPair(event.target.dataset.colorPicker, event.target);
+		}
+		if (event.target.matches('[data-color-code]')) {
+			syncColorPair(event.target.dataset.colorCode, event.target);
 		}
 		if (event.target.matches('.kidia-theme-card input, [name="setup[primary_color]"], [name="setup[secondary_color]"]')) {
 			updateActionTheme();
 		}
 	});
+	form.addEventListener('input', function (event) {
+		if (event.target.matches('[data-color-picker]')) {
+			syncColorPair(event.target.dataset.colorPicker, event.target);
+		}
+		if (event.target.matches('[data-color-code]')) {
+			syncColorPair(event.target.dataset.colorCode, event.target);
+		}
+	});
 
 	const modal = document.querySelector('.kidia-theme-modal');
+	const previewConfig = window.kidiaSetupThemePreview || {};
+	const previewFrame = modal && modal.querySelector('[data-theme-modal-frame]');
+	const previewLoading = modal && modal.querySelector('[data-theme-modal-loading]');
+	const previewLoadingLabel = previewLoading && previewLoading.querySelector('b');
+	const previewLoadingDefault = previewLoadingLabel ? previewLoadingLabel.textContent : '';
+	const previewPageButtons = modal ? Array.from(modal.querySelectorAll('[data-theme-modal-page]')) : [];
 	let previewedCard = null;
+	let previewSnapshot = null;
+	let previewPage = 'home';
+	let previewFrameReady = false;
+	let previewPayload = null;
+	let previewRequest = 0;
+	let previewFrameOrigin = window.location.origin;
+
+	function setPreviewLoading(state, message) {
+		if (!previewLoading) return;
+		previewLoading.hidden = !state;
+		previewLoading.classList.toggle('is-error', Boolean(message));
+		if (previewLoadingLabel) previewLoadingLabel.textContent = message || previewLoadingDefault;
+	}
+
+	function postPreviewJson(url, body) {
+		return window.fetch(String(url), {
+			method: 'POST',
+			credentials: 'same-origin',
+			cache: 'no-store',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-WP-Nonce': String(previewConfig.restNonce || '')
+			},
+			body: JSON.stringify(body)
+		}).then(function (response) {
+			if (!response.ok) throw new Error('Theme preview request failed with HTTP ' + response.status + '.');
+			return response.json();
+		});
+	}
+
+	function previewPageLayout(snapshot, page) {
+		const pages = snapshot && snapshot.pages && typeof snapshot.pages === 'object' ? snapshot.pages : {};
+		return pages[page] && typeof pages[page] === 'object' ? pages[page] : {};
+	}
+
+	function buildPreviewPayload(snapshot, page) {
+		const layoutRequest = postPreviewJson(
+			String(previewConfig.layoutPreviewBase || '') + encodeURIComponent(page) + '/preview',
+			{ layout: previewPageLayout(snapshot, page) }
+		);
+		if (page === 'home') {
+			return Promise.all([
+				layoutRequest,
+				postPreviewJson(previewConfig.homePreviewEndpoint, { blocks: Array.isArray(snapshot.home) ? snapshot.home : [] })
+			]).then(function (payloads) {
+				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], home: payloads[1] };
+			});
+		}
+		if (page === 'category') {
+			const category = snapshot.category && typeof snapshot.category === 'object' ? snapshot.category : {};
+			return Promise.all([
+				layoutRequest,
+				postPreviewJson(previewConfig.categoryPreviewEndpoint, {
+					general: category.general && typeof category.general === 'object' ? category.general : {}
+				})
+			]).then(function (payloads) {
+				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], category: payloads[1] };
+			});
+		}
+		return layoutRequest.then(function (layout) {
+			return { type: 'kidia-preview-layout', page: page, layout: layout };
+		});
+	}
+
+	function deliverPreviewPayload() {
+		if (!previewFrameReady || !previewPayload || !previewFrame || !previewFrame.contentWindow) return;
+		previewFrame.contentWindow.postMessage(JSON.stringify(previewPayload), previewFrameOrigin);
+		previewPayload = null;
+		setPreviewLoading(false);
+	}
+
+	function selectPreviewPage(page) {
+		if (!previewSnapshot || !previewFrame || !previewConfig.flutterUrl) return;
+		previewPage = page;
+		previewFrameReady = false;
+		previewPayload = null;
+		const currentRequest = ++previewRequest;
+		previewPageButtons.forEach(function (button) {
+			const selected = button.dataset.themeModalPage === page;
+			button.classList.toggle('is-active', selected);
+			if (selected) button.setAttribute('aria-current', 'page');
+			else button.removeAttribute('aria-current');
+		});
+		setPreviewLoading(true);
+		const previewUrl = new URL(String(previewConfig.flutterUrl), window.location.href);
+		previewUrl.searchParams.set('page', page);
+		previewUrl.searchParams.set('v', String(previewConfig.version || Date.now()));
+		if (page === 'product') previewUrl.searchParams.set('product', String(previewConfig.productId || 1));
+		previewFrameOrigin = previewUrl.origin;
+		previewFrame.src = previewUrl.toString();
+		buildPreviewPayload(previewSnapshot, page).then(function (payload) {
+			if (currentRequest !== previewRequest || page !== previewPage) return;
+			previewPayload = payload;
+			deliverPreviewPayload();
+		}).catch(function (error) {
+			if (currentRequest !== previewRequest) return;
+			if (window.console && window.console.warn) window.console.warn(error);
+			setPreviewLoading(true, String(previewConfig.errorLabel || 'The real theme preview could not be loaded.'));
+		});
+	}
+
 	function closeThemeModal() {
 		if (!modal) return;
+		previewRequest += 1;
+		previewSnapshot = null;
+		previewPayload = null;
+		previewFrameReady = false;
+		if (previewFrame) previewFrame.removeAttribute('src');
 		modal.hidden = true;
 		document.body.classList.remove('kidia-theme-preview-open');
 	}
 	function openThemeModal(card) {
 		if (!modal || !card) return;
 		previewedCard = card;
-		const copy = JSON.parse(card.dataset.themeCopy || '[]');
+		previewSnapshot = previewConfig.themes && previewConfig.themes[card.dataset.themeKey]
+			? previewConfig.themes[card.dataset.themeKey]
+			: null;
+		if (!previewSnapshot) return;
 		modal.querySelector('[data-theme-modal-name]').textContent = card.dataset.themeName || '';
-		modal.querySelectorAll('[data-theme-modal-copy]').forEach(function (node) {
-			node.textContent = copy[Number(node.dataset.themeModalCopy)] || '';
-		});
-		modal.querySelectorAll('[data-theme-modal-hero]').forEach(function (node) {
-			node.style.backgroundImage = "linear-gradient(0deg,rgba(0,0,0,.34),rgba(0,0,0,.02)),url('" + (card.dataset.themeHero || '') + "')";
-		});
 		const styles = window.getComputedStyle(card);
 		for (const property of ['--theme-primary', '--theme-soft', '--theme-ink', '--theme-surface']) {
 			modal.style.setProperty(property, styles.getPropertyValue(property).trim());
@@ -150,6 +286,7 @@
 		modal.hidden = false;
 		document.body.classList.add('kidia-theme-preview-open');
 		modal.querySelector('.kidia-theme-modal__close').focus();
+		selectPreviewPage('home');
 	}
 	form.querySelectorAll('.kidia-theme-preview-button').forEach(function (button) {
 		button.addEventListener('click', function (event) {
@@ -159,6 +296,11 @@
 		});
 	});
 	if (modal) {
+		previewPageButtons.forEach(function (button) {
+			button.addEventListener('click', function () {
+				selectPreviewPage(button.dataset.themeModalPage || 'home');
+			});
+		});
 		modal.querySelectorAll('[data-theme-modal-close]').forEach(function (button) {
 			button.addEventListener('click', closeThemeModal);
 		});
@@ -174,6 +316,17 @@
 			if (event.key === 'Escape' && !modal.hidden) closeThemeModal();
 		});
 	}
+	window.addEventListener('message', function (event) {
+		if (!previewFrame || event.source !== previewFrame.contentWindow || event.origin !== previewFrameOrigin) return;
+		let message = event.data;
+		if (typeof message === 'string') {
+			try { message = JSON.parse(message); } catch (_) { return; }
+		}
+		if (message && message.type === 'kidia-flutter-preview-ready') {
+			previewFrameReady = true;
+			deliverPreviewPayload();
+		}
+	});
 
 	const chooseLogo = form.querySelector('.kidia-setup-choose-logo');
 	if (chooseLogo && window.wp && wp.media) {

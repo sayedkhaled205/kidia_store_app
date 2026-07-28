@@ -31,8 +31,20 @@ defined( 'ABSPATH' ) || exit;
 				<label><span><?php esc_html_e( 'Application name', 'kidia-mobile-cms' ); ?></span><input type="text" name="setup[app_name]" value="<?php echo esc_attr( (string) $identity['app_name'] ); ?>" required></label>
 				<label><span><?php esc_html_e( 'Language', 'kidia-mobile-cms' ); ?></span><select name="setup[language]"><option value="ar" <?php selected( 'ar', $identity['language'] ); ?>>العربية</option><option value="en" <?php selected( 'en', $identity['language'] ); ?>>English</option></select></label>
 				<label><span><?php esc_html_e( 'Direction', 'kidia-mobile-cms' ); ?></span><select name="setup[direction]"><option value="rtl" <?php selected( 'rtl', $identity['direction'] ); ?>>RTL</option><option value="ltr" <?php selected( 'ltr', $identity['direction'] ); ?>>LTR</option></select></label>
-				<label><span><?php esc_html_e( 'Brand color', 'kidia-mobile-cms' ); ?></span><input type="color" name="setup[primary_color]" value="<?php echo esc_attr( (string) $identity['primary_color'] ); ?>"></label>
-				<label><span><?php esc_html_e( 'Secondary color', 'kidia-mobile-cms' ); ?></span><input type="color" name="setup[secondary_color]" value="<?php echo esc_attr( (string) $identity['secondary_color'] ); ?>"></label>
+				<label class="kidia-setup-color-field">
+					<span><?php esc_html_e( 'Brand color', 'kidia-mobile-cms' ); ?></span>
+					<span class="kidia-setup-color-control">
+						<input type="color" name="setup[primary_color]" value="<?php echo esc_attr( (string) $identity['primary_color'] ); ?>" data-color-picker="primary">
+						<input type="text" value="<?php echo esc_attr( strtoupper( (string) $identity['primary_color'] ) ); ?>" data-color-code="primary" aria-label="<?php esc_attr_e( 'Brand color code', 'kidia-mobile-cms' ); ?>" maxlength="7" spellcheck="false">
+					</span>
+				</label>
+				<label class="kidia-setup-color-field">
+					<span><?php esc_html_e( 'Secondary color', 'kidia-mobile-cms' ); ?></span>
+					<span class="kidia-setup-color-control">
+						<input type="color" name="setup[secondary_color]" value="<?php echo esc_attr( (string) $identity['secondary_color'] ); ?>" data-color-picker="secondary">
+						<input type="text" value="<?php echo esc_attr( strtoupper( (string) $identity['secondary_color'] ) ); ?>" data-color-code="secondary" aria-label="<?php esc_attr_e( 'Secondary color code', 'kidia-mobile-cms' ); ?>" maxlength="7" spellcheck="false">
+					</span>
+				</label>
 				<div class="kidia-setup-logo-field">
 					<span><?php esc_html_e( 'Application logo', 'kidia-mobile-cms' ); ?></span>
 					<div class="kidia-setup-logo-preview"><?php if ( ! empty( $identity['logo_url'] ) ) : ?><img src="<?php echo esc_url( (string) $identity['logo_url'] ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?></div>
@@ -55,12 +67,15 @@ defined( 'ABSPATH' ) || exit;
 				<?php foreach ( $setup_pages as $page_key => $page_details ) : ?>
 					<?php $is_required = ! empty( $page_details['required'] ); ?>
 					<label class="kidia-page-choice <?php echo $is_required ? 'is-required' : ''; ?>">
-						<?php if ( $is_required ) : ?><input type="hidden" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1"><?php endif; ?>
-						<input type="checkbox" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1" data-page-toggle="<?php echo esc_attr( $page_key ); ?>" <?php checked( $is_required || in_array( $page_key, $saved_enabled_pages, true ) ); ?> <?php disabled( $is_required ); ?>>
+						<?php if ( $is_required ) : ?>
+							<input type="hidden" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1" data-page-toggle="<?php echo esc_attr( $page_key ); ?>" data-required-page="1">
+						<?php else : ?>
+							<input type="checkbox" name="setup[enabled_pages][<?php echo esc_attr( $page_key ); ?>]" value="1" data-page-toggle="<?php echo esc_attr( $page_key ); ?>" <?php checked( in_array( $page_key, $saved_enabled_pages, true ) ); ?>>
+						<?php endif; ?>
 						<span class="kidia-page-choice__icon dashicons <?php echo esc_attr( (string) $page_details['icon'] ); ?>"></span>
 						<span class="kidia-page-choice__copy"><strong><?php echo esc_html( (string) $page_details['name'] ); ?></strong><small><?php echo esc_html( (string) $page_details['description'] ); ?></small></span>
 						<span class="kidia-page-choice__status"><?php echo $is_required ? esc_html__( 'Required', 'kidia-mobile-cms' ) : esc_html__( 'Optional', 'kidia-mobile-cms' ); ?></span>
-						<span class="kidia-page-choice__switch" aria-hidden="true"></span>
+						<?php if ( ! $is_required ) : ?><span class="kidia-page-choice__switch" aria-hidden="true"></span><?php endif; ?>
 					</label>
 				<?php endforeach; ?>
 			</div>
@@ -82,7 +97,7 @@ defined( 'ABSPATH' ) || exit;
 			<div class="kidia-theme-gallery">
 				<?php foreach ( $themes as $key => $theme ) : ?>
 					<?php $hero_url = Kidia_Mobile_Setup_Wizard::hero_url( $theme ); ?>
-					<label class="kidia-theme-card" data-theme-name="<?php echo esc_attr( (string) $theme['name'] ); ?>" data-theme-hero="<?php echo esc_url( $hero_url ); ?>" data-theme-copy="<?php echo esc_attr( wp_json_encode( array_values( $theme['sample_copy'] ) ) ); ?>" style="--theme-primary:<?php echo esc_attr( $theme['primary'] ); ?>;--theme-soft:<?php echo esc_attr( $theme['soft'] ); ?>;--theme-ink:<?php echo esc_attr( $theme['ink'] ); ?>;--theme-surface:<?php echo esc_attr( $theme['surface'] ); ?>">
+					<label class="kidia-theme-card" data-theme-key="<?php echo esc_attr( $key ); ?>" data-theme-name="<?php echo esc_attr( (string) $theme['name'] ); ?>" data-theme-hero="<?php echo esc_url( $hero_url ); ?>" data-theme-copy="<?php echo esc_attr( wp_json_encode( array_values( $theme['sample_copy'] ) ) ); ?>" style="--theme-primary:<?php echo esc_attr( $theme['primary'] ); ?>;--theme-soft:<?php echo esc_attr( $theme['soft'] ); ?>;--theme-ink:<?php echo esc_attr( $theme['ink'] ); ?>;--theme-surface:<?php echo esc_attr( $theme['surface'] ); ?>">
 						<input type="radio" name="setup[theme]" value="<?php echo esc_attr( $key ); ?>" <?php checked( $selected_theme, $key ); ?> required>
 						<div class="kidia-theme-preview">
 							<div class="kidia-theme-phone">
@@ -162,11 +177,25 @@ defined( 'ABSPATH' ) || exit;
 		<div class="kidia-theme-modal__backdrop" data-theme-modal-close></div>
 		<div class="kidia-theme-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-modal-title">
 			<button type="button" class="kidia-theme-modal__close" data-theme-modal-close aria-label="<?php esc_attr_e( 'Close preview', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
-			<div class="kidia-theme-modal__heading"><span><?php esc_html_e( 'Complete theme preview', 'kidia-mobile-cms' ); ?></span><h2 id="kidia-theme-modal-title" data-theme-modal-name></h2><p><?php esc_html_e( 'The preview shows how one identity continues through the Storefront, Catalog and Product pages.', 'kidia-mobile-cms' ); ?></p></div>
-			<div class="kidia-theme-modal__screens">
-				<div class="kidia-theme-screen kidia-theme-screen--home"><b><?php esc_html_e( 'Storefront', 'kidia-mobile-cms' ); ?></b><div class="kidia-theme-screen__header"></div><div class="kidia-theme-screen__hero" data-theme-modal-hero></div><div class="kidia-theme-screen__circles"><i></i><i></i><i></i><i></i></div><strong data-theme-modal-copy="0"></strong><div class="kidia-theme-screen__products"><i></i><i></i></div></div>
-				<div class="kidia-theme-screen kidia-theme-screen--catalog"><b><?php esc_html_e( 'Catalog', 'kidia-mobile-cms' ); ?></b><div class="kidia-theme-screen__header"></div><strong data-theme-modal-copy="1"></strong><div class="kidia-theme-screen__filters"><i></i><i></i><i></i></div><div class="kidia-theme-screen__grid"><i></i><i></i><i></i><i></i></div></div>
-				<div class="kidia-theme-screen kidia-theme-screen--product"><b><?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?></b><div class="kidia-theme-screen__header"></div><div class="kidia-theme-screen__product-image" data-theme-modal-hero></div><strong data-theme-modal-copy="2"></strong><div class="kidia-theme-screen__lines"><i></i><i></i><i></i></div><button type="button"><?php esc_html_e( 'Add to bag', 'kidia-mobile-cms' ); ?></button></div>
+			<div class="kidia-theme-modal__heading"><span><?php esc_html_e( 'Complete theme preview', 'kidia-mobile-cms' ); ?></span><h2 id="kidia-theme-modal-title" data-theme-modal-name></h2><p><?php esc_html_e( 'Browse every real Flutter page generated from this theme’s own settings and store imagery.', 'kidia-mobile-cms' ); ?></p></div>
+			<div class="kidia-theme-modal__workspace">
+				<nav class="kidia-theme-modal__pages" aria-label="<?php esc_attr_e( 'Theme preview pages', 'kidia-mobile-cms' ); ?>">
+					<?php foreach ( $setup_pages as $preview_page => $preview_page_data ) : ?>
+						<button type="button" data-theme-modal-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
+							<span class="dashicons <?php echo esc_attr( (string) $preview_page_data['icon'] ); ?>" aria-hidden="true"></span>
+							<?php echo esc_html( (string) $preview_page_data['name'] ); ?>
+						</button>
+					<?php endforeach; ?>
+				</nav>
+				<div class="kidia-theme-modal__stage">
+					<div class="kidia-theme-modal__device">
+						<iframe data-theme-modal-frame title="<?php esc_attr_e( 'Real Flutter theme preview', 'kidia-mobile-cms' ); ?>" loading="eager" allow="clipboard-read; clipboard-write"></iframe>
+					</div>
+					<div class="kidia-theme-modal__loading" data-theme-modal-loading role="status">
+						<span class="spinner is-active" aria-hidden="true"></span>
+						<b><?php esc_html_e( 'Loading real theme page…', 'kidia-mobile-cms' ); ?></b>
+					</div>
+				</div>
 			</div>
 			<button type="button" class="button button-primary kidia-theme-modal__select"><?php esc_html_e( 'Use this complete theme', 'kidia-mobile-cms' ); ?></button>
 		</div>
