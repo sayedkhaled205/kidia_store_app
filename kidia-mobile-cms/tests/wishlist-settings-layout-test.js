@@ -48,10 +48,10 @@ assert.match(toolbar, /kidia-page-availability/, "The page-level On/Off control 
 assert.match(home, /\$kidia_toolbar_page_toggle\s*=\s*false;/, "Home must not expose Page status because it is always required.");
 assert.match(page, /\$kidia_toolbar_page_toggle\s*=\s*true;/, "Every optional shared page must expose Page status in its toolbar.");
 assert.match(category, /\$kidia_toolbar_page_toggle\s*=\s*true;/, "Category must expose Page status in its toolbar.");
-assert.match(css, /\.kidia-shared-builder-toolbar \.kidia-page-availability\s*\{[^}]*width:236px;[^}]*grid-template-columns:42px minmax\(118px,1fr\) 38px;/, "Page status must reserve separate switch, label, and icon columns without overlap.");
+assert.match(css, /\.kidia-shared-builder-toolbar \.kidia-page-availability\s*\{[^}]*width:194px;[^}]*height:32px;[^}]*grid-template-columns:38px minmax\(100px,1fr\) 28px;/, "Page status must reserve compact separate switch, label, and icon columns without overlap.");
 assert.match(css, /\.kidia-shared-builder-toolbar \.kidia-page-availability__copy\s*\{[^}]*display:\s*flex !important;[^}]*flex-direction:\s*row;[^}]*white-space:\s*nowrap;/, "Page status and Active or Disabled must stay on one line on every optional page.");
 assert.doesNotMatch(toolbar, /kidia-builder-toolbar__context/, "The shared toolbar must not repeat the current page title.");
-assert.match(css, /kidia-builder-toolbar__actions,.kidia-builder-toolbar__save\)[^{]*\{[^}]*flex-wrap:\s*nowrap;/, "Desktop builder toolbar controls must stay on one row.");
+assert.match(css, /\.kidia-shared-builder-toolbar :is\([\s\S]*?\.kidia-builder-toolbar__actions,[\s\S]*?\.kidia-builder-toolbar__save,[\s\S]*?\)\s*\{[^}]*flex-wrap:\s*nowrap;/, "Desktop builder toolbar controls must stay on one row.");
 
 console.log("Shared builder toolbar and Wishlist Products settings layout: ok");
 
