@@ -60,7 +60,10 @@ assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile
 assert.match(exporter, /woomobile-app-build-package[\s\S]*app-config\.json[\s\S]*push-config\.json[\s\S]*dart-defines\.json/, "Export App must download a portable build package.");
 assert.match(exporter, /admin_post_kidia_mobile_build_app[\s\S]*admin_post_kidia_mobile_download_apk[\s\S]*wp_ajax_kidia_mobile_app_build_start[\s\S]*wp_ajax_kidia_mobile_app_build_status/, "APK builds must expose fallback, asynchronous start, status and download actions.");
 assert.match(exporter, /start_build\(\)[\s\S]*'platform'\s*=>\s*'android'[\s\S]*'artifact'\s*=>\s*'apk'/, "Build APK must queue a real Android APK artifact.");
+assert.match(exporter, /ASYNC_HOOK[\s\S]*queue_build\(\)[\s\S]*as_enqueue_async_action[\s\S]*wp_schedule_single_event[\s\S]*process_queued_build/, "APK creation must leave the Overview request immediately and dispatch the slow remote build in the background.");
+assert.match(exporter, /START_TIMEOUT[\s\S]*did not start in time/, "A background build that never starts must return to a retryable failure state.");
 assert.match(exporter, /refresh_build\(\)[\s\S]*handle_download_apk[\s\S]*download_url/, "APK builds must poll for completion before exposing the download.");
+assert.match(exporter, /refresh_build\(\s*true\s*\)/, "Downloading must refresh the remote build so an expired signed APK URL is replaced.");
 assert.match(licenseManager, /BUILD_API_BASE_URL[\s\S]*build_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "The build service must reuse installation-bound license authorization without exposing it to the browser.");
 assert.match(licenseManager, /PUSH_API_BASE_URL[\s\S]*push_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "Managed Push delivery must reuse installation-bound license authorization.");
 assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");

@@ -37,7 +37,8 @@ function builderConfig() {
       ready: "Your APK is ready to install.",
       buildDownload: "Build & Download APK",
       download: "Download APK",
-      retry: "Try Build & Download Again"
+      retry: "Try Build & Download Again",
+      timeout: "The APK build request took too long. Please try again."
     }
   };
 }
@@ -168,9 +169,41 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.querySelectorAll("[data-build-action]").length, 1, "Failure must not reveal a second download button.");
 }
 
+async function testHungStartRequestReturnsToRetry() {
+  const dom = new JSDOM(markup("idle"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+
+  dom.window.kidiaAppBuilder = {
+    ...builderConfig(),
+    requestTimeout: 100
+  };
+  dom.window.fetch = (_url, options) => new Promise((_resolve, reject) => {
+    options.signal.addEventListener("abort", () => {
+      const error = new Error("aborted");
+      error.name = "AbortError";
+      reject(error);
+    });
+  });
+  dom.window.eval(script);
+
+  root.querySelector("[data-build-action]").click();
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  await flush();
+
+  const button = root.querySelector("[data-build-action]");
+  assert.equal(root.dataset.status, "failed", "A hung start request must not leave Overview on Starting forever.");
+  assert.equal(root.querySelector("[data-build-message]").textContent, "The APK build request took too long. Please try again.");
+  assert.equal(button.disabled, false);
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Try Build & Download Again");
+}
+
 (async function () {
   await testReadyBuildDownloadsFromTheSameControl();
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
+  await testHungStartRequestReturnsToRetry();
   console.log("APK single build-and-download control tests passed.");
 })();
