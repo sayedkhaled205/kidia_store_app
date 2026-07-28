@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.43/, "The plugin header must be version 1.45.43.");
+assert.match(plugin, /Version:\s+1\.45\.44/, "The plugin header must be version 1.45.44.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -38,18 +38,13 @@ assert.match(shell, /payment is overdue/, "Past-due subscriptions must show a Wo
 assert.match(shell, /grace_days_remaining/, "The warning must include the remaining grace period.");
 assert.match(
   shellCss,
-  /html:has\(body\[class\*="kidia-mobile"\]\)\{[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
-  "Every CMS screen must reserve the same document scrollbar gutter so the fixed sidebar cannot shift."
+  /\.kidia-cms-sidebar\{[\s\S]*position:absolute;[\s\S]*inset-block:0;[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;/,
+  "The CMS sidebar must stay inside the rounded workspace card using its original layout."
 );
-assert.match(
+assert.doesNotMatch(
   shellCss,
-  /Fixed viewport rail contract[\s\S]*@media\(min-width:783px\)[\s\S]*\.kidia-cms-sidebar\{[\s\S]*position:fixed!important;[\s\S]*inset-block-start:50px!important;[\s\S]*inset-block-end:auto!important;[\s\S]*inset-inline-start:18px!important;[\s\S]*width:236px!important;[\s\S]*height:calc\(100vh - 68px\)!important;/,
-  "The CMS sidebar must keep one fixed viewport position and size across desktop pages."
-);
-assert.match(
-  shellCss,
-  /Fixed viewport rail contract[\s\S]*#wpbody-content\{[\s\S]*padding-inline-start:220px!important;/,
-  "Every CMS page must permanently reserve the same content gutter for the fixed sidebar."
+  /body\[class\*="kidia-mobile"\] \.kidia-cms-sidebar\{[\s\S]*position:fixed!important;/,
+  "A global fixed viewport override must not pull the sidebar outside the workspace card."
 );
 assert.match(admin, /admin_post_kidia_mobile_activate_license/, "The activation handler must be registered.");
 assert.doesNotMatch(admin, /admin_post_kidia_mobile_deactivate_license/, "Customers must not be able to deactivate a site-bound license.");
