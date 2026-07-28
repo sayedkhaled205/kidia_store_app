@@ -336,8 +336,28 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /step_lock_key[\s\S]*started_at[\s\S]*time\(\) - \$lock_started < 45/,
-  "A crashed batch lock must become recoverable instead of freezing the job indefinitely.",
+  /\$lock_token = self::acquire_step_lock[\s\S]*Always[\s\S]*\$latest = get_transient\( self::key\( \$job_id \) \)[\s\S]*release_step_lock[\s\S]*private static function acquire_step_lock[\s\S]*add_option\(/,
+  "Every batch must own an atomic lock and reload the latest saved job before processing.",
+);
+assert.match(
+  aiAnalysisJob,
+  /continue_in_background[\s\S]*Parking often happens[\s\S]*acquire_step_lock[\s\S]*\$latest = get_transient[\s\S]*release_step_lock/,
+  "Parking the analysis must never overwrite a completed first batch with an older zero-progress copy.",
+);
+assert.doesNotMatch(
+  aiAnalysisJob,
+  /get_transient\( self::step_lock_key[\s\S]*set_transient\(\s*self::step_lock_key/,
+  "The browser and scheduler must not share a non-atomic transient lock.",
+);
+assert.match(
+  aiAnalysisJob,
+  /'revision'\s*=>\s*0[\s\S]*\$job\['revision'\]\s*=\s*absint[\s\S]*'busy'\s*=>\s*\$busy/,
+  "Every saved batch must expose a monotonic revision and mark lock contention as busy.",
+);
+assert.match(
+  shellScript,
+  /currentRevision[\s\S]*currentProcessed[\s\S]*payload\.busy[\s\S]*revision < currentRevision[\s\S]*processed < currentProcessed/,
+  "An older or busy response must never move the visible analysis progress backwards.",
 );
 assert.match(
   aiInsights,
@@ -358,6 +378,16 @@ assert.match(
   shellCss,
   /kidia-ai-page \.button>\.dashicons\{[\s\S]*place-items:center[\s\S]*vertical-align:middle/,
   "AI Studio button icons must remain vertically centered with their labels.",
+);
+assert.match(
+  shellScript,
+  /positionAiDock[\s\S]*localStorage\.setItem[\s\S]*bindAiDockDrag[\s\S]*pointerdown[\s\S]*pointermove/,
+  "The parked analysis card must be freely draggable and remember its safe screen position.",
+);
+assert.match(
+  shellCss,
+  /kidia-ai-progress-overlay\.is-docked \.kidia-ai-progress-card\{[\s\S]*cursor:grab[\s\S]*touch-action:none/,
+  "The parked analysis card must expose mouse and touch dragging.",
 );
 for (const backgroundMarker of [
   "kidia_mobile_background_ai_analysis",

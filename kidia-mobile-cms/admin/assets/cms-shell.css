@@ -1050,7 +1050,12 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	box-shadow:0 18px 55px rgba(23,78,66,.25);
 	text-align:start;
 	pointer-events:auto;
+	cursor:grab;
+	touch-action:none;
+	user-select:none;
 }
+.kidia-ai-progress-overlay.is-docked.is-dragging .kidia-ai-progress-card{cursor:grabbing}
+.kidia-ai-progress-overlay.is-docked .kidia-ai-progress-card :is(button,a,input,select,textarea){cursor:pointer}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-ring{width:58px;height:58px;grid-row:1/4}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-ring::before{width:44px;height:44px}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-ring strong{font-size:14px}
