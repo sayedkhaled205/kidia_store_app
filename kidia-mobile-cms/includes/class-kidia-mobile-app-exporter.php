@@ -15,6 +15,7 @@ final class Kidia_Mobile_App_Exporter {
 		add_action( 'admin_post_kidia_mobile_export_app', array( $this, 'handle_export' ) );
 		add_action( 'admin_post_kidia_mobile_build_app', array( $this, 'handle_build' ) );
 		add_action( 'admin_post_kidia_mobile_download_apk', array( $this, 'handle_download_apk' ) );
+		add_action( 'wp_ajax_kidia_mobile_app_build_start', array( $this, 'handle_build_start' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_build_status', array( $this, 'handle_build_status' ) );
 	}
 
@@ -192,6 +193,18 @@ final class Kidia_Mobile_App_Exporter {
 		}
 		check_ajax_referer( 'kidia_mobile_app_build_status', 'nonce' );
 		$result = $this->refresh_build();
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
+		}
+		wp_send_json_success( $this->browser_state( $result ) );
+	}
+
+	public function handle_build_start(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to build this application.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_build_app', 'nonce' );
+		$result = $this->start_build();
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
