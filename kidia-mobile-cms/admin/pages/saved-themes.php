@@ -34,19 +34,54 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="kidia-saved-themes__grid">
 				<?php foreach ( $saved_themes as $saved_theme_id => $saved_theme ) : ?>
-					<article>
-						<?php $theme_color = sanitize_hex_color( (string) ( $saved_theme['theme']['identity']['primary_color'] ?? $saved_theme['theme']['primary_color'] ?? '#2f806e' ) ) ?: '#2f806e'; ?>
-						<div class="kidia-saved-theme-phone" style="--theme-color:<?php echo esc_attr( $theme_color ); ?>">
+					<?php
+					$theme_preview = $wizard->saved_theme_preview( is_array( $saved_theme ) ? $saved_theme : array() );
+					$theme_images  = is_array( $theme_preview['images'] ?? null ) ? $theme_preview['images'] : array();
+					$theme_name    = (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) );
+					?>
+					<article data-saved-theme-card>
+						<div
+							class="kidia-saved-theme-phone<?php echo $theme_images ? ' has-theme-artwork' : ''; ?>"
+							data-saved-theme-phone
+							dir="<?php echo esc_attr( (string) $theme_preview['direction'] ); ?>"
+							style="--theme-color:<?php echo esc_attr( (string) $theme_preview['primary'] ); ?>;--theme-soft:<?php echo esc_attr( (string) $theme_preview['soft'] ); ?>;--theme-ink:<?php echo esc_attr( (string) $theme_preview['ink'] ); ?>"
+						>
 							<div class="kidia-saved-theme-phone__bar"><i></i><i></i><i></i></div>
-							<div class="kidia-saved-theme-phone__hero"></div>
+							<div class="kidia-saved-theme-phone__brand">
+								<?php if ( ! empty( $theme_preview['logo_url'] ) ) : ?>
+									<img src="<?php echo esc_url( (string) $theme_preview['logo_url'] ); ?>" alt="">
+								<?php else : ?>
+									<b><?php echo esc_html( (string) $theme_preview['app_name'] ); ?></b>
+								<?php endif; ?>
+								<i></i>
+							</div>
+							<div class="kidia-saved-theme-phone__hero">
+								<?php if ( isset( $theme_images[0] ) ) : ?>
+									<img src="<?php echo esc_url( (string) $theme_images[0] ); ?>" alt="<?php echo esc_attr( sprintf( __( '%s theme preview', 'kidia-mobile-cms' ), $theme_name ) ); ?>" loading="lazy">
+								<?php endif; ?>
+							</div>
 							<div class="kidia-saved-theme-phone__dots"><i></i><i></i><i></i></div>
-							<div class="kidia-saved-theme-phone__grid"><i></i><i></i><i></i><i></i></div>
+							<div class="kidia-saved-theme-phone__grid">
+								<?php for ( $preview_tile = 1; $preview_tile <= 4; ++$preview_tile ) : ?>
+									<i>
+										<?php if ( isset( $theme_images[ $preview_tile ] ) ) : ?>
+											<img src="<?php echo esc_url( (string) $theme_images[ $preview_tile ] ); ?>" alt="" loading="lazy">
+										<?php endif; ?>
+									</i>
+								<?php endfor; ?>
+							</div>
 						</div>
 						<div class="kidia-saved-theme-meta">
-							<h3><?php echo esc_html( (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) ) ); ?></h3>
+							<h3><?php echo esc_html( $theme_name ); ?></h3>
 							<p><?php echo ! empty( $saved_theme['created_at'] ) ? esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $saved_theme['created_at'] ) ) ) : ''; ?></p>
 						</div>
 						<div class="kidia-saved-themes__actions">
+							<button
+								type="button"
+								class="button kidia-theme-action--preview"
+								data-saved-theme-preview
+								data-theme-name="<?php echo esc_attr( $theme_name ); ?>"
+							><?php esc_html_e( 'Preview', 'kidia-mobile-cms' ); ?></button>
 							<?php foreach ( array( 'apply' => __( 'Apply', 'kidia-mobile-cms' ), 'export' => __( 'Export', 'kidia-mobile-cms' ), 'delete' => __( 'Delete', 'kidia-mobile-cms' ) ) as $theme_operation => $theme_label ) : ?>
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" <?php if ( in_array( $theme_operation, array( 'apply', 'delete' ), true ) ) : ?>onsubmit="return window.confirm('<?php echo esc_js( 'apply' === $theme_operation ? __( 'Applying this theme replaces your current changes and creates a new build. Continue?', 'kidia-mobile-cms' ) : __( 'Delete this saved theme?', 'kidia-mobile-cms' ) ); ?>');"<?php endif; ?>>
 									<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
@@ -60,6 +95,19 @@ defined( 'ABSPATH' ) || exit;
 					</article>
 				<?php endforeach; ?>
 			</div>
+			<dialog class="kidia-saved-theme-dialog" data-saved-theme-dialog aria-labelledby="kidia-saved-theme-dialog-title">
+				<button type="button" class="kidia-saved-theme-dialog__close" data-saved-theme-dialog-close aria-label="<?php esc_attr_e( 'Close preview', 'kidia-mobile-cms' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
+				<div class="kidia-saved-theme-dialog__content">
+					<div class="kidia-saved-theme-dialog__phone" data-saved-theme-dialog-phone></div>
+					<div>
+						<span class="kidia-setup-eyebrow"><?php esc_html_e( 'Theme preview', 'kidia-mobile-cms' ); ?></span>
+						<h2 id="kidia-saved-theme-dialog-title" data-saved-theme-dialog-title></h2>
+						<p><?php esc_html_e( 'This preview uses the banners, branding and colors saved with this exact theme.', 'kidia-mobile-cms' ); ?></p>
+					</div>
+				</div>
+			</dialog>
 		<?php else : ?>
 			<div class="kidia-saved-themes__empty">
 				<span class="dashicons dashicons-upload" aria-hidden="true"></span>

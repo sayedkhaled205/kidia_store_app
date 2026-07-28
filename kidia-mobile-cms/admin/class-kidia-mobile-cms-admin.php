@@ -621,7 +621,7 @@ final class Kidia_Mobile_CMS_Admin {
 			'limit'        => in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? -1 : 60,
 			'orderby'      => 'date',
 			'order'        => 'DESC',
-			'date_created' => gmdate( 'Y-m-d H:i:s', $date_from ) . '...' . gmdate( 'Y-m-d H:i:s', $date_to ),
+			'date_created' => $date_from . '...' . $date_to,
 		);
 		$order_args = $this->store_data_order_source_args( $order_args, $store_source );
 		$orders     = in_array( $store_tab, array( 'orders', 'reports' ), true ) && function_exists( 'wc_get_orders' )
@@ -706,7 +706,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$analytics = Kidia_Mobile_Analytics::empty_summary();
 		$analytics_previous = Kidia_Mobile_Analytics::empty_summary();
 		if ( 'analytics' === $store_tab ) {
-			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source, true );
+			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source );
 			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
 		}
 		$abandoned_carts = 'abandoned-carts' === $store_tab
@@ -2394,7 +2394,9 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( in_array( $page, array( 'kidia-mobile-setup', 'kidia-mobile-saved-themes' ), true ) || ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) ) {
 						wp_enqueue_media();
 						wp_enqueue_style( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.css', array( 'kidia-mobile-cms-shell' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.css' ) );
-						if ( 'kidia-mobile-saved-themes' !== $page ) {
+						if ( 'kidia-mobile-saved-themes' === $page ) {
+							wp_enqueue_script( 'kidia-mobile-saved-themes', KIDIA_MOBILE_CMS_URL . 'admin/assets/saved-themes.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/saved-themes.js' ), true );
+						} else {
 							wp_enqueue_script( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.js' ), true );
 						}
 						return;
