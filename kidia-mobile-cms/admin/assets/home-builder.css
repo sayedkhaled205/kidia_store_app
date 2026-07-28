@@ -444,23 +444,7 @@
 	align-items: center;
 	justify-content: flex-end;
 	flex: 0 0 auto;
-	gap: 5px;
 	direction: rtl;
-}
-
-.kidia-builder-block__actions .button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 28px;
-	margin: 0;
-	padding-inline: 8px;
-	font-size: 12px;
-}
-
-.kidia-builder-block__actions .kidia-toggle-block-settings {
-	width: 30px;
-	padding: 0;
 }
 
 .kidia-builder-block__actions .kidia-toggle-block-settings .dashicons {

@@ -526,7 +526,7 @@ function runMergeControlsContractTest() {
 	const categoryBuilderCss = readAsset("category-builder.css");
 	const flutterPreviewBridge = readAsset("flutter-preview-bridge.js");
 	const homeBlockTemplate = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
-	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*grid-template-columns:74px 74px 40px 88px;[\s\S]*gap:2px;[\s\S]*direction:ltr!important;/, "Every closed element card must keep its four actions compact and close together.");
+	assert.match(pageBuilderCss, /\.kidia-card-actions,[\s\S]*display:grid!important;[\s\S]*width:290px;[\s\S]*grid-template-columns:74px 74px 40px 96px;[\s\S]*gap:2px!important;[\s\S]*direction:ltr!important;/, "Every closed element card must use the same four compact action slots with enough room for the complete On/Off label.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__screen\s*\{[^}]*height:\s*680px;/, "Home preview must use the balanced intermediate mobile height.");
 	assert.match(pageBuilderCss, /\.kidia-page-phone__screen\s*\{[^}]*height:680px;/, "Every page preview must use the same balanced mobile height.");
 	assert.match(categoryBuilderCss, /\.kidia-category-phone__screen\s*\{[^}]*height:680px;/, "Category preview must use the same balanced mobile height.");
@@ -549,12 +549,12 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(pageBuilderCss, /\.kidia-page-card__body[^,{]*\.kidia-card-actions/, "The shared action layout must never target controls inside an open element body.");
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-page-card__header \.kidia-chrome-transfer-actions\s*\{[^}]*order:/, "No page-specific Header/Footer rule may override the canonical closed-card action slots.");
 	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-card \.kidia-card-actions\s*\{[^}]*margin-inline/, "Header and Footer must not shift the shared action strip away from the common physical left edge.");
-	assert.match(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.button\s*\{[^}]*height:34px;[^}]*min-height:34px;[^}]*font-size:11px;/, "Fixed Header and Footer transfer buttons must match the compact standard element action-button dimensions.");
-	assert.match(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-toggle\s*\{[^}]*height:\s*34px;[^}]*min-height:\s*34px;/, "Fixed Header and Footer On/Off controls must have the exact same explicit height as every normal card toggle.");
+	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-chrome-transfer-actions \.(?:button|dashicons)\s*\{/, "Header and Footer must not override the shared card button or icon dimensions.");
+	assert.doesNotMatch(readAsset("chrome-layout.css"), /\.kidia-fixed-chrome-toggle(?:\s|\.|\{|>)/, "Header and Footer must not keep a separate On/Off implementation outside the shared card component.");
 	assert.match(pageBuilderCss, /\.kidia-page-card__header > \.kidia-card-actions,[\s\S]*left:12px;/, "Header, Footer, and element action groups must share the same physical anchor.");
 	assert.match(pageBuilderCss, /\.kidia-builder-block__actions\.kidia-card-actions\s*\{[^}]*justify-content:start!important;/, "Home element grid tracks must align exactly like Header and Footer instead of shifting right.");
 	assert.match(pageBuilderCss, /\.kidia-card-actions \.button\.kidia-card-action\s*\{[^}]*height:34px;[^}]*padding:0 6px;[^}]*border-radius:7px!important;[^}]*font-size:11px;/, "Every Header, Footer, and element card action button must share one compact size and shape.");
-	assert.match(pageBuilderCss, /\.kidia-card-actions \.kidia-card-action--toggle\s*\{[^}]*width:88px;[^}]*height:34px;[^}]*direction:rtl;/, "Every exterior card toggle must occupy the exact same compact slot and dimensions.");
+	assert.match(pageBuilderCss, /\.kidia-card-actions \.kidia-card-action--toggle\s*\{[^}]*width:96px;[^}]*height:34px;[^}]*overflow:visible;[^}]*direction:rtl;/, "Every exterior card toggle must occupy the same unclipped slot and dimensions.");
 	assert.doesNotMatch(flutterPreviewBridge, /relayPreviewWheel|event\.preventDefault\(\)[\s\S]*kidia-preview-scroll/, "Non-Home Flutter previews must retain their native wheel scrolling instead of sending events to the Home-only scroll bridge.");
 	assert.doesNotMatch(builderToolbar, /<style\b/, "The shared toolbar must not inject page-specific CSS that overrides the common layout.");
 	assert.doesNotMatch(homeBlockTemplate, /<style\b/, "Home element cards must rely on the common closed-card action grid.");
@@ -1550,7 +1550,7 @@ function runUniformChromeSettingsContractTest() {
 	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-fields\s*\{[^}]*grid-auto-flow:\s*row;/, "Header fields must keep a stable row-first order.");
 	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-field\s*\{[^}]*align-items:\s*flex-start;[^}]*direction:\s*rtl;/, "Every Header field must start from the right like the Home element grids.");
 	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="footer"\][^{]*\{[^}]*direction:\s*rtl/, "The already-correct Footer field order must remain untouched.");
-	assert.match(styles, /\.kidia-fixed-chrome-toggle\s*\{[^}]*width:\s*88px;/, "The fixed card On/Off control must be styled by the shared component rather than Home-only CSS.");
+	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-toggle(?:\s|\.|\{|>)/, "The fixed card On/Off control must rely exclusively on the shared card component.");
 	assert.match(chrome, /closest\("\.kidia-fixed-chrome-expand"\)[\s\S]*card\.classList\.toggle\("is-open",\s*opening\)/, "The shared component must own Header/Footer expand behavior on every page.");
 	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
 	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
