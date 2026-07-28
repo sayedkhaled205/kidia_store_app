@@ -41,7 +41,6 @@ function homeBlock(type, index, settings, name = type) {
         <button type="button" class="kidia-delete-block">Remove</button>
       </div>
       <div class="kidia-builder-block__body">
-        <button type="button" class="kidia-element-editor__back">Back to Elements</button>
         <input class="kidia-block-id" name="blocks[${index}][id]" value="${type}_${index}">
         <input class="kidia-block-library-id" name="blocks[${index}][library_id]" value="${type}_${index}">
         <input class="kidia-block-source-library-id" name="blocks[${index}][source_library_id]" value="">
@@ -133,7 +132,6 @@ function homeMarkup() {
       <div class="kidia-element-group" data-element-category="products">Products</div>
       <button type="button" class="kidia-create-element" data-block-type="spacer" data-block-label="Spacer">Create Spacer</button>
     </div>
-    <div id="kidia-create-element-modal" hidden aria-hidden="true"><h2 id="kidia-create-element-title"></h2><input id="kidia-create-element-name"><span id="kidia-create-element-error" hidden></span><button id="kidia-create-element-submit" type="button">Create</button></div>
     <input id="kidia-element-picker-search"><div id="kidia-element-picker-no-results" hidden></div>
     <form id="kidia-home-builder-form"><input id="kidia-home-builder-payload"><div id="kidia-home-builder">${blocks}</div></form>
     <div id="kidia-mobile-preview-content"></div>
@@ -266,8 +264,11 @@ function runHomeBuilderTest() {
   assert.match(readAsset("../pages/home-builder.php"), /Page Structure[\s\S]*Hero & Banners[\s\S]*Products[\s\S]*Content[\s\S]*Layout[\s\S]*Marketing/, "Home element categories must cover the agreed six groups.");
   assert.match(readAsset("../templates/block-template.php"), /kidia-builder-block__icon[\s\S]*kidia-duplicate-block[\s\S]*kidia-delete-block[\s\S]*kidia-toggle-block-settings[\s\S]*kidia-card-action--toggle/, "Every element row must match the Header action pattern with icon, Duplicate, Remove, expand, and On/Off.");
   assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-builder-block__type|kidia-builder-block__category/, "The element name must not be repeated below the row title.");
-  assert.match(readAsset("../templates/block-template.php"), /kidia-element-editor__back[\s\S]*Back to Elements/, "The dedicated editor must expose a clear Back control.");
-  assert.match(readAsset("home-builder.js"), /kidia-builder-block__header[\s\S]*openBlockEditor\(block\)/, "Clicking an element row must open its dedicated editor.");
+  assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-element-editor__back|Back to Elements/, "Element settings must be controlled only by the row arrow.");
+  assert.doesNotMatch(readAsset("home-builder.js"), /target\.closest\("\.kidia-builder-block__header"\)[\s\S]{0,180}openBlockEditor\(block\)/, "Clicking the element row must not open its editor.");
+  assert.match(readAsset("home-builder.js"), /target\.closest\("\.kidia-toggle-block-settings"\)[\s\S]*block\.classList\.contains\("is-editing"\)[\s\S]*closeBlockEditor\(\)[\s\S]*openBlockEditor\(block\)/, "The row arrow alone must toggle the dedicated editor.");
+  assert.doesNotMatch(readAsset("../pages/home-builder.php"), /kidia-create-element-modal|kidia-create-element-name|Create and Add/, "Add Elements must not ask for a custom name.");
+  assert.match(readAsset("home-builder.js"), /appendTemplate\("tmpl-kidia-block-" \+ type,\s*type,\s*generateId\(type\),\s*label,\s*true\)/, "Choosing an element type must add it immediately with its default label.");
   assert.match(readAsset("home-builder.js"), /picker\.querySelectorAll\("\.kidia-element-group"\)[\s\S]*group\.hidden/, "Category buttons must filter the cards inside Add Elements only.");
   assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must keep the original three-column layout.");
   assert.match(builderCss, /--kidia-field-width:\s*64\.9351%;/, "The wider 77% card must preserve controls at 50% of their original width.");
@@ -345,11 +346,14 @@ function runHomeBuilderTest() {
 
   const firstBlock = window.document.querySelector(".kidia-builder-block");
   click(window, firstBlock.querySelector(".kidia-block-name"));
-  assert.equal(firstBlock.classList.contains("is-collapsed"), false, "Clicking the card identity must open the element editor.");
-  assert.equal(window.document.getElementById("kidia-home-builder").classList.contains("is-editing"), true, "Opening an element must switch the list into its dedicated editor view.");
-  click(window, firstBlock.querySelector(".kidia-element-editor__back"));
-  assert.equal(firstBlock.classList.contains("is-collapsed"), true, "Back must close the dedicated element editor.");
-  assert.equal(window.document.getElementById("kidia-home-builder").classList.contains("is-editing"), false, "Back must restore the complete element list.");
+  assert.equal(firstBlock.classList.contains("is-collapsed"), true, "Clicking the card identity must not open the element editor.");
+  assert.equal(window.document.getElementById("kidia-home-builder").classList.contains("is-editing"), false, "The element list must remain visible after clicking the card identity.");
+  click(window, firstBlock.querySelector(".kidia-toggle-block-settings"));
+  assert.equal(firstBlock.classList.contains("is-collapsed"), false, "The down arrow must open the element editor.");
+  assert.equal(window.document.getElementById("kidia-home-builder").classList.contains("is-editing"), true, "Opening with the arrow must switch the list into its dedicated editor view.");
+  click(window, firstBlock.querySelector(".kidia-toggle-block-settings"));
+  assert.equal(firstBlock.classList.contains("is-collapsed"), true, "The up arrow must close the dedicated element editor.");
+  assert.equal(window.document.getElementById("kidia-home-builder").classList.contains("is-editing"), false, "Closing with the arrow must restore the complete element list.");
 
   click(window, window.document.querySelector('[data-kidia-element-category="products"]'));
   assert.equal(window.document.querySelectorAll('#kidia-element-picker .kidia-element-group[data-element-category="products"]:not([hidden])').length, 1, "Products filter must keep product cards visible inside Add Elements.");
@@ -443,11 +447,11 @@ function runHomeBuilderTest() {
   click(window, window.document.getElementById("kidia-add-element"));
   assert.equal(window.document.getElementById("kidia-element-picker").hidden, false, "Add Element must open the picker.");
   click(window, window.document.querySelector(".kidia-create-element"));
-  assert.equal(window.document.getElementById("kidia-create-element-modal").hidden, false, "Choosing a type must open the create dialog.");
-  window.document.getElementById("kidia-create-element-name").value = "Extra Space";
-  click(window, window.document.getElementById("kidia-create-element-submit"));
-  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 19, "Creating an element must append its template.");
-  assert.equal(hero.nextElementSibling.dataset.type, "spacer", "Creating an element must place it directly below the selected element.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 19, "Choosing an element must append its template immediately.");
+  assert.equal(hero.nextElementSibling.dataset.type, "spacer", "Choosing an element must place it directly below the selected element.");
+  assert.equal(hero.nextElementSibling.querySelector(".kidia-block-name-input").value, "Spacer", "A directly added element must use its default label.");
+  assert.equal(hero.nextElementSibling.classList.contains("is-collapsed"), true, "A directly added element must stay in the list until its arrow is pressed.");
+  assert.equal(window.document.getElementById("kidia-element-picker").hidden, true, "Direct addition must close Add Elements without another dialog.");
 
   console.log("Home Builder: all 18 previews and toolbar/editor interactions passed.");
 }
@@ -827,7 +831,7 @@ function runMergeControlsContractTest() {
 	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{[\s\S]*color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/, "Every Add Element icon must stay centered inside its tile.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity strong\s*\{[^}]*display:\s*block;[^}]*color:\s*#1d2327;[^}]*text-align:\s*center;/, "Every Add Element tile must keep its element name visible and centered.");
-	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-create-element-modal__body")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Element modal must not retain WordPress blue styling.");
+	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-builder-essentials")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Elements picker must not retain WordPress blue styling.");
 	assert.match(homeScript, /settings\.image_size[\s\S]*settings\.item_size/, "Category Grid and Quick Links image sizes must update the live preview.");
 	assert.match(homeScript, /activeInsertionBlock[\s\S]*insertAdjacentHTML\("afterend", html\)[\s\S]*is-insertion-target/, "Add Element must insert directly below the element selected by the user.");
 	assert.match(homeScript, /product_wishlist_icon_variant[\s\S]*product_wishlist_icon_size[\s\S]*product_wishlist_background_size[\s\S]*product_wishlist_position[\s\S]*product_wishlist_show_background[\s\S]*product_wishlist_background_color[\s\S]*product_wishlist_radius[\s\S]*product_wishlist_icon_color/, "Every product Wishlist appearance control must update the Home preview.");

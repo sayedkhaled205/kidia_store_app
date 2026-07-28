@@ -101,14 +101,6 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 
 	</div>
 	<div class="kidia-builder-block__body">
-		<div class="kidia-element-editor__toolbar">
-			<button type="button" class="button kidia-element-editor__back">
-				<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-				<?php esc_html_e( 'Back to Elements', 'kidia-mobile-cms' ); ?>
-			</button>
-			<strong><?php echo esc_html( $name ); ?></strong>
-		</div>
-
 		<input
 			type="hidden"
 			class="kidia-block-id"

@@ -539,23 +539,6 @@
 	box-shadow: 0 8px 30px rgba(29, 75, 63, 0.1);
 }
 
-.kidia-element-editor__toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	margin: -13px -13px 14px;
-	padding: 12px 14px;
-	border-block-end: 1px solid var(--kidia-border-soft);
-	background: #fff;
-}
-
-.kidia-element-editor__back {
-	display: inline-flex !important;
-	align-items: center;
-	gap: 5px;
-}
-
 .kidia-builder-essentials {
 	display: grid;
 	grid-template-columns: minmax(220px, 1.7fr) minmax(145px, .8fr) 108px;
