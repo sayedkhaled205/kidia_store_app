@@ -929,6 +929,89 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	/**
+	 * Returns statuses that represent revenue in Store Data.
+	 *
+	 * WooCommerce only exposes its built-in paid statuses through
+	 * wc_get_is_paid_statuses(). Stores commonly move paid orders into custom
+	 * workflow statuses afterwards, so limiting reports to the built-in list
+	 * makes those orders disappear. Every registered custom status is treated as
+	 * a revenue status, while known unpaid/failed core statuses remain excluded.
+	 *
+	 * @return string[]
+	 */
+	public static function revenue_order_statuses(): array {
+		$paid = function_exists( 'wc_get_is_paid_statuses' )
+			? (array) wc_get_is_paid_statuses()
+			: array( 'processing', 'completed' );
+		$paid = array_map( array( self::class, 'normalize_order_status' ), $paid );
+
+		$core_statuses = array(
+			'pending',
+			'processing',
+			'on-hold',
+			'completed',
+			'cancelled',
+			'refunded',
+			'failed',
+			'checkout-draft',
+		);
+		foreach ( self::registered_order_statuses() as $status ) {
+			if ( ! in_array( $status, $core_statuses, true ) ) {
+				$paid[] = $status;
+			}
+		}
+
+		return array_values( array_unique( array_filter( $paid ) ) );
+	}
+
+	/**
+	 * Returns every real order status used by Store Data counters.
+	 *
+	 * Checkout drafts are not orders yet, but pending/on-hold/custom workflow
+	 * statuses are real orders and must be included in the store-wide total.
+	 *
+	 * @return string[]
+	 */
+	public static function countable_order_statuses(): array {
+		return array_values(
+			array_filter(
+				self::registered_order_statuses(),
+				static fn( string $status ): bool => 'checkout-draft' !== $status
+			)
+		);
+	}
+
+	/** Returns the real WooCommerce order total across built-in and custom statuses. */
+	public static function total_order_count(): int {
+		if ( ! function_exists( 'wc_orders_count' ) ) {
+			return 0;
+		}
+
+		$total = 0;
+		foreach ( self::countable_order_statuses() as $status ) {
+			$total += absint( wc_orders_count( $status ) );
+		}
+		return $total;
+	}
+
+	/** @return string[] */
+	private static function registered_order_statuses(): array {
+		$statuses = function_exists( 'wc_get_order_statuses' )
+			? array_keys( (array) wc_get_order_statuses() )
+			: array( 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed' );
+		return array_values(
+			array_unique(
+				array_filter( array_map( array( self::class, 'normalize_order_status' ), $statuses ) )
+			)
+		);
+	}
+
+	private static function normalize_order_status( $status ): string {
+		$status = sanitize_key( (string) $status );
+		return str_starts_with( $status, 'wc-' ) ? substr( $status, 3 ) : $status;
+	}
+
+	/**
 	 * Reads orders from the active WooCommerce data store and verifies every
 	 * returned order against the requested UTC range and channel.
 	 *
@@ -1045,7 +1128,7 @@ final class Kidia_Mobile_Analytics {
 			$from,
 			$to,
 			$source,
-			function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' )
+			self::revenue_order_statuses()
 		);
 		$total_available      = count( $orders );
 		$customers            = array();
@@ -1194,7 +1277,7 @@ final class Kidia_Mobile_Analytics {
 	/** Stable cache key shared by the incremental job and readers. */
 	public static function commerce_cache_key( int $from, int $to, string $source = 'all' ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_commerce_snapshot_v5_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_commerce_snapshot_v6_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	private static function summary_cache_key( int $from, int $to, string $source = 'all' ): string {
