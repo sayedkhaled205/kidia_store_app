@@ -40,6 +40,7 @@ defined( 'ABSPATH' ) || exit;
 					$theme_name    = (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) );
 					?>
 					<article data-saved-theme-card>
+						<script type="application/json" data-saved-theme-snapshot><?php echo wp_json_encode( is_array( $saved_theme['snapshot'] ?? null ) ? $saved_theme['snapshot'] : array(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></script>
 						<div
 							class="kidia-saved-theme-phone<?php echo $theme_images ? ' has-theme-artwork' : ''; ?>"
 							data-saved-theme-phone
@@ -100,11 +101,32 @@ defined( 'ABSPATH' ) || exit;
 					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
 				</button>
 				<div class="kidia-saved-theme-dialog__content">
-					<div class="kidia-saved-theme-dialog__phone" data-saved-theme-dialog-phone></div>
-					<div>
+					<div class="kidia-saved-theme-dialog__intro">
 						<span class="kidia-setup-eyebrow"><?php esc_html_e( 'Theme preview', 'kidia-mobile-cms' ); ?></span>
 						<h2 id="kidia-saved-theme-dialog-title" data-saved-theme-dialog-title></h2>
-						<p><?php esc_html_e( 'This preview uses the banners, branding and colors saved with this exact theme.', 'kidia-mobile-cms' ); ?></p>
+						<p><?php esc_html_e( 'Browse the real application pages using this theme’s saved settings and your WooCommerce catalog.', 'kidia-mobile-cms' ); ?></p>
+					</div>
+					<nav class="kidia-saved-theme-dialog__pages" aria-label="<?php esc_attr_e( 'Theme pages', 'kidia-mobile-cms' ); ?>">
+						<?php foreach ( Kidia_Mobile_Setup_Wizard::setup_pages() as $preview_page => $preview_page_data ) : ?>
+							<button type="button" data-saved-theme-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
+								<span class="dashicons <?php echo esc_attr( (string) ( $preview_page_data['icon'] ?? 'dashicons-admin-page' ) ); ?>" aria-hidden="true"></span>
+								<?php echo esc_html( (string) ( $preview_page_data['name'] ?? $preview_page ) ); ?>
+							</button>
+						<?php endforeach; ?>
+					</nav>
+					<div class="kidia-saved-theme-dialog__stage">
+						<div class="kidia-saved-theme-dialog__device">
+							<iframe
+								data-saved-theme-dialog-frame
+								title="<?php echo esc_attr__( 'Real Flutter theme preview', 'kidia-mobile-cms' ); ?>"
+								loading="eager"
+								allow="clipboard-read; clipboard-write"
+							></iframe>
+						</div>
+						<div class="kidia-saved-theme-dialog__loading" data-saved-theme-loading role="status">
+							<span class="spinner is-active" aria-hidden="true"></span>
+							<b><?php esc_html_e( 'Loading real app preview…', 'kidia-mobile-cms' ); ?></b>
+						</div>
 					</div>
 				</div>
 			</dialog>

@@ -2397,6 +2397,27 @@ final class Kidia_Mobile_CMS_Admin {
 						wp_enqueue_style( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.css', array( 'kidia-mobile-cms-shell' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.css' ) );
 						if ( 'kidia-mobile-saved-themes' === $page ) {
 							wp_enqueue_script( 'kidia-mobile-saved-themes', KIDIA_MOBILE_CMS_URL . 'admin/assets/saved-themes.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/saved-themes.js' ), true );
+							$preview_product_id = 1;
+							if ( function_exists( 'wc_get_products' ) ) {
+								$preview_product_ids = wc_get_products( array( 'status' => 'publish', 'limit' => 1, 'return' => 'ids' ) );
+								if ( ! empty( $preview_product_ids[0] ) ) {
+									$preview_product_id = absint( $preview_product_ids[0] );
+								}
+							}
+							wp_localize_script(
+								'kidia-mobile-saved-themes',
+								'kidiaSavedThemePreview',
+								array(
+									'flutterUrl'              => KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html',
+									'layoutPreviewBase'       => rest_url( 'woo-mobile/v1/page-layout/' ),
+									'homePreviewEndpoint'     => rest_url( 'woomobileapp/v1/home-layout/preview' ),
+									'categoryPreviewEndpoint' => rest_url( 'woo-mobile/v1/category-page/preview' ),
+									'restNonce'               => wp_create_nonce( 'wp_rest' ),
+									'productId'               => $preview_product_id,
+									'version'                 => KIDIA_MOBILE_CMS_VERSION,
+									'errorLabel'              => __( 'The real preview could not be loaded. Try opening it again.', 'kidia-mobile-cms' ),
+								)
+							);
 						} else {
 							wp_enqueue_script( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.js' ), true );
 						}

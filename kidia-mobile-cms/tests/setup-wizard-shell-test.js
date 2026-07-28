@@ -97,7 +97,9 @@ assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s
 assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Theme import must use the WooMobile file control and theme-colored action.");
 assert.match(savedThemesTemplate, /data-saved-theme-phone[\s\S]*theme_images[\s\S]*data-saved-theme-preview/, "Every saved theme card must show its own artwork and expose Preview.");
 assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must provide a focused large preview dialog.");
-assert.match(savedThemesScript, /cloneNode\(true\)[\s\S]*showModal/, "Preview must open the selected theme's own phone inside the dialog.");
+assert.match(savedThemesTemplate, /data-saved-theme-snapshot[\s\S]*Kidia_Mobile_Setup_Wizard::setup_pages\(\)[\s\S]*data-saved-theme-page[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must expose every application page in the real Flutter surface.");
+assert.match(savedThemesScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Saved Theme Preview must send the stored page layouts to the real Flutter preview.");
+assert.match(admin, /kidiaSavedThemePreview[\s\S]*flutterUrl[\s\S]*layoutPreviewBase[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint/, "Saved Theme Preview must receive authenticated live-preview endpoints.");
 assert.match(admin, /kidia-mobile-saved-themes[\s\S]*admin\/assets\/saved-themes\.js/, "The Saved Themes page must load its preview interactions.");
 assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");
 assert.match(admin, /'setup'\s*=>\s*\$tab\(\s*__\(\s*'Setup Wizard'/, "Setup Wizard must follow Overview.");
@@ -193,19 +195,32 @@ assert.equal(shellDom.window.document.querySelector(".kidia-cms-more"), null, "M
 
 const savedThemeDom = new JSDOM(`<!doctype html><body>
   <article data-saved-theme-card>
+    <script type="application/json" data-saved-theme-snapshot>{"home":[],"pages":{"home":{"elements":[]}}}</script>
     <div class="kidia-saved-theme-phone" data-saved-theme-phone><img src="theme-banner.jpg" alt=""></div>
     <button type="button" data-saved-theme-preview data-theme-name="Fashion Theme">Preview</button>
   </article>
   <dialog data-saved-theme-dialog>
     <button type="button" data-saved-theme-dialog-close></button>
-    <div data-saved-theme-dialog-phone></div>
     <h2 data-saved-theme-dialog-title></h2>
+    <button type="button" data-saved-theme-page="home"></button>
+    <button type="button" data-saved-theme-page="account"></button>
+    <iframe data-saved-theme-dialog-frame></iframe>
+    <div data-saved-theme-loading><b>Loading</b></div>
   </dialog>
-</body>`, { runScripts: "outside-only" });
+</body>`, { runScripts: "outside-only", url: "https://example.test/wp-admin/admin.php" });
+savedThemeDom.window.kidiaSavedThemePreview = {
+  flutterUrl: "https://example.test/wp-content/plugins/kidia/admin/flutter-preview/index.html",
+  layoutPreviewBase: "https://example.test/wp-json/woo-mobile/v1/page-layout/",
+  homePreviewEndpoint: "https://example.test/wp-json/woomobileapp/v1/home-layout/preview",
+  categoryPreviewEndpoint: "https://example.test/wp-json/woo-mobile/v1/category-page/preview",
+  restNonce: "nonce",
+  version: "test"
+};
+savedThemeDom.window.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 savedThemeDom.window.eval(savedThemesScript);
 savedThemeDom.window.document.querySelector("[data-saved-theme-preview]").click();
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog]").hasAttribute("open"), true, "Preview must open without applying the theme.");
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-title]").textContent, "Fashion Theme", "Preview must show the selected theme name.");
-assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-phone] img").getAttribute("src"), "theme-banner.jpg", "Preview must clone the selected theme artwork.");
+assert.match(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-frame]").src, /page=home/, "Preview must open the real Flutter Home page first.");
 
 console.log("Setup wizard and unified CMS shell tests passed.");
