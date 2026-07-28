@@ -1158,28 +1158,10 @@ final class Kidia_Mobile_Setup_Wizard {
 			),
 			false
 		);
-		update_option(
-			'kidia_mobile_checkout_suggestions',
-			array(
-				'enabled'           => true,
-				'title'             => __( 'You may also like', 'kidia-mobile-cms' ),
-				'source'            => 'featured',
-				'category_id'       => 0,
-				'manual_product_ids'=> '',
-				'limit'             => 6,
-				'columns'           => 2,
-				'card_style'        => $product_theme['card_style'],
-				'card_radius'       => 16,
-				'image_ratio'       => 1,
-				'show_price'        => true,
-				'show_regular_price'=> true,
-				'show_rating'       => false,
-				'button_label'      => __( 'Add', 'kidia-mobile-cms' ),
-				'button_color'      => $primary,
-				'button_text_color' => '#FFFFFF',
-			),
-			false
-		);
+		$checkout_design = 'minimal' === $product_theme['card_style']
+			? 'compact'
+			: ( 'elevated' === $product_theme['card_style'] ? 'summary_first' : 'classic' );
+		( new Kidia_Mobile_Checkout_Fields_Store() )->save_design( $checkout_design );
 	}
 
 	private function block_name( string $type, array $copy ): string {
@@ -1213,7 +1195,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			'pages'      => array(),
 			'category'   => ( new Kidia_Mobile_Category_Page_Store() )->get_settings(),
 			'splash'     => get_option( 'kidia_mobile_splash_screen', array() ),
-			'checkout'   => get_option( 'kidia_mobile_checkout_suggestions', array() ),
+			'checkout_design' => get_option( Kidia_Mobile_Checkout_Fields_Store::DESIGN_OPTION, 'classic' ),
 			'checkout_fields' => get_option( Kidia_Mobile_Checkout_Fields_Store::OPTION, array() ),
 			'identity'   => get_option( self::IDENTITY_OPTION, array() ),
 		);
@@ -1237,7 +1219,10 @@ final class Kidia_Mobile_Setup_Wizard {
 		if ( is_array( $snapshot['category'] ?? null ) ) {
 			( new Kidia_Mobile_Category_Page_Store() )->save_settings( $snapshot['category'] );
 		}
-		foreach ( array( 'splash' => 'kidia_mobile_splash_screen', 'checkout' => 'kidia_mobile_checkout_suggestions', 'checkout_fields' => Kidia_Mobile_Checkout_Fields_Store::OPTION, 'identity' => self::IDENTITY_OPTION ) as $key => $option ) {
+		if ( isset( $snapshot['checkout_design'] ) && is_scalar( $snapshot['checkout_design'] ) ) {
+			( new Kidia_Mobile_Checkout_Fields_Store() )->save_design( (string) $snapshot['checkout_design'] );
+		}
+		foreach ( array( 'splash' => 'kidia_mobile_splash_screen', 'checkout_fields' => Kidia_Mobile_Checkout_Fields_Store::OPTION, 'identity' => self::IDENTITY_OPTION ) as $key => $option ) {
 			if ( is_array( $snapshot[ $key ] ?? null ) ) {
 				update_option( $option, $snapshot[ $key ], false );
 			}

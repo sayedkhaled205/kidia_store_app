@@ -1,5 +1,5 @@
 <?php
-/** Checkout fields and suggestions builder. */
+/** Checkout design and fields builder. */
 defined( 'ABSPATH' ) || exit;
 
 $checkout_field_types = array(
@@ -74,6 +74,38 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 				</div>
 				<?php submit_button( __( 'Save Checkout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
 			</div>
+			<section class="kidia-checkout-design-panel">
+				<div class="kidia-checkout-design-heading">
+					<div>
+						<h2><?php esc_html_e( 'Checkout Design', 'kidia-mobile-cms' ); ?></h2>
+						<p><?php esc_html_e( 'Choose the real mobile checkout layout first, then select and arrange its fields below.', 'kidia-mobile-cms' ); ?></p>
+					</div>
+				</div>
+				<div class="kidia-checkout-designs">
+					<?php foreach ( Kidia_Mobile_Checkout_Fields_Store::designs() as $design_key => $design_label ) : ?>
+						<label class="kidia-checkout-design-option">
+							<input type="radio" name="checkout_design" value="<?php echo esc_attr( $design_key ); ?>" <?php checked( $checkout_design, $design_key ); ?>>
+							<span class="kidia-checkout-design-option__preview is-<?php echo esc_attr( $design_key ); ?>" aria-hidden="true">
+								<i class="kidia-checkout-design-option__summary"></i>
+								<i></i><i></i><i></i>
+								<b></b>
+							</span>
+							<strong><?php echo esc_html( $design_label ); ?></strong>
+							<small>
+								<?php
+								echo esc_html(
+									'classic' === $design_key
+										? __( 'Fields first, then the order summary.', 'kidia-mobile-cms' )
+										: ( 'summary_first' === $design_key
+											? __( 'Order summary first, then the fields.', 'kidia-mobile-cms' )
+											: __( 'Smaller cards and tighter spacing.', 'kidia-mobile-cms' ) )
+								);
+								?>
+							</small>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</section>
 			<section class="kidia-checkout-fields-panel">
 				<div class="kidia-checkout-fields-heading">
 					<div><h2><?php esc_html_e( 'Checkout Fields', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Drag to reorder. Default Fields reads the live WooCommerce schema after every installed plugin has modified it.', 'kidia-mobile-cms' ); ?></p></div>
@@ -86,27 +118,6 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 				</div>
 				<div class="kidia-checkout-fields-list" data-checkout-fields-list>
 					<?php foreach ( $checkout_fields['fields'] as $field_index => $field ) { $render_checkout_field( $field, (string) $field_index ); } ?>
-				</div>
-			</section>
-			<section class="kidia-page-card kidia-checkout-suggestions-card">
-				<div class="kidia-page-card__header">
-					<div><span class="dashicons dashicons-cart"></span><strong><?php esc_html_e( 'Suggested Products', 'kidia-mobile-cms' ); ?></strong></div>
-					<label class="kidia-page-master-toggle"><input type="hidden" name="suggestions[enabled]" value="0"><input type="checkbox" name="suggestions[enabled]" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label>
-				</div>
-				<div class="kidia-page-card__body">
-					<div class="kidia-page-fields kidia-checkout-suggestions-fields">
-						<div class="kidia-settings-section-title kidia-settings-section-title--suggested-appearance"><?php esc_html_e( 'Content & Appearance', 'kidia-mobile-cms' ); ?></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Image ratio', 'kidia-mobile-cms' ); ?></label><input type="number" step="0.1" name="suggestions[image_ratio]" value="<?php echo esc_attr( (string) $settings['image_ratio'] ); ?>"></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Section title', 'kidia-mobile-cms' ); ?></label><input type="text" name="suggestions[title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Add button label', 'kidia-mobile-cms' ); ?></label><input type="text" name="suggestions[button_label]" value="<?php echo esc_attr( (string) $settings['button_label'] ); ?>"></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Card style', 'kidia-mobile-cms' ); ?></label><select name="suggestions[card_style]"><?php foreach ( array( 'minimal' => 'Minimal', 'no_shadow' => 'No shadow', 'outlined' => 'Outlined', 'elevated' => 'Elevated' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['card_style'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Card radius', 'kidia-mobile-cms' ); ?></label><input type="number" name="suggestions[card_radius]" value="<?php echo esc_attr( (string) $settings['card_radius'] ); ?>"></div>
-						<?php foreach ( array( 'show_price' => 'Show price', 'show_regular_price' => 'Show regular price', 'show_rating' => 'Show rating' ) as $key => $label ) : ?><div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="0"><input type="checkbox" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( ! empty( $settings[ $key ] ) ); ?>><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label></div><?php endforeach; ?>
-						<?php foreach ( array( 'button_color' => 'Button color', 'button_text_color' => 'Button text color' ) as $key => $label ) : ?><div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="color" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $settings[ $key ] ); ?>"></div><?php endforeach; ?>
-						<div class="kidia-settings-section-title kidia-settings-section-title--suggested-products-actions"><?php esc_html_e( 'Products & Actions', 'kidia-mobile-cms' ); ?></div>
-						<div class="kidia-page-field"><label><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></label><select name="suggestions[source]"><?php foreach ( array( 'latest' => 'Latest', 'featured' => 'Featured', 'on_sale' => 'On sale', 'category' => 'Category', 'manual' => 'Manual IDs' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['source'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-						<?php foreach ( array( 'category_id' => 'Category ID', 'manual_product_ids' => 'Manual Product IDs', 'limit' => 'Product limit', 'columns' => 'Columns' ) as $key => $label ) : ?><div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="<?php echo in_array( $key, array( 'category_id', 'limit', 'columns' ), true ) ? 'number' : 'text'; ?>" name="suggestions[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>"></div><?php endforeach; ?>
-					</div>
 				</div>
 			</section>
 			<template data-checkout-field-template><?php $render_checkout_field( array( 'enabled' => true, 'label' => __( 'New field', 'kidia-mobile-cms' ), 'key' => '', 'group' => 'billing', 'type' => 'text', 'placeholder' => '', 'required' => false, 'priority' => 100, 'options' => array(), 'default' => '', 'autocomplete' => '' ), '__INDEX__' ); ?></template>

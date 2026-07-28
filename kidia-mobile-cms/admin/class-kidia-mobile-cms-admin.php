@@ -1745,8 +1745,9 @@ final class Kidia_Mobile_CMS_Admin {
 
 	public function checkout_suggestions_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) ); }
-		$defaults=array('enabled'=>true,'title'=>__('You may also need','kidia-mobile-cms'),'source'=>'featured','category_id'=>0,'manual_product_ids'=>'','limit'=>6,'columns'=>2,'card_style'=>'outlined','card_radius'=>14,'image_ratio'=>1,'show_price'=>true,'show_regular_price'=>true,'show_rating'=>false,'button_label'=>__('Add','kidia-mobile-cms'),'button_color'=>'#2F806E','button_text_color'=>'#FFFFFF'); $saved=get_option('kidia_mobile_checkout_suggestions',array()); $settings=array_merge($defaults,is_array($saved)?$saved:array());
-		$checkout_fields = ( new Kidia_Mobile_Checkout_Fields_Store() )->get();
+		$checkout_store  = new Kidia_Mobile_Checkout_Fields_Store();
+		$checkout_fields = $checkout_store->get();
+		$checkout_design = $checkout_store->design();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/checkout-suggestions.php';
 	}
 
@@ -1763,27 +1764,11 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$checkout = isset( $_POST['checkout'] ) && is_array( $_POST['checkout'] ) ? wp_unslash( $_POST['checkout'] ) : array();
 		$field_store->save( is_array( $checkout ) ? $checkout : array() );
-		$row    = isset( $_POST['suggestions'] ) && is_array( $_POST['suggestions'] ) ? wp_unslash( $_POST['suggestions'] ) : array();
-		$source = in_array( $row['source'] ?? '', array( 'latest', 'featured', 'on_sale', 'category', 'manual' ), true ) ? sanitize_key( $row['source'] ) : 'featured';
-		$clean  = array(
-			'enabled'            => ! empty( $row['enabled'] ),
-			'title'              => sanitize_text_field( (string) ( $row['title'] ?? '' ) ),
-			'source'             => $source,
-			'category_id'        => absint( $row['category_id'] ?? 0 ),
-			'manual_product_ids' => sanitize_text_field( (string) ( $row['manual_product_ids'] ?? '' ) ),
-			'limit'              => min( 20, max( 1, absint( $row['limit'] ?? 6 ) ) ),
-			'columns'            => min( 3, max( 1, absint( $row['columns'] ?? 2 ) ) ),
-			'card_style'         => in_array( $row['card_style'] ?? '', array( 'minimal', 'no_shadow', 'outlined', 'elevated' ), true ) ? sanitize_key( $row['card_style'] ) : 'outlined',
-			'card_radius'        => min( 40, absint( $row['card_radius'] ?? 14 ) ),
-			'image_ratio'        => min( 2, max( .5, (float) ( $row['image_ratio'] ?? 1 ) ) ),
-			'show_price'         => ! empty( $row['show_price'] ),
-			'show_regular_price' => ! empty( $row['show_regular_price'] ),
-			'show_rating'        => ! empty( $row['show_rating'] ),
-			'button_label'       => sanitize_text_field( (string) ( $row['button_label'] ?? '' ) ),
-			'button_color'       => sanitize_hex_color( $row['button_color'] ?? '' ) ?: '#2F806E',
-			'button_text_color'  => sanitize_hex_color( $row['button_text_color'] ?? '' ) ?: '#FFFFFF',
+		$field_store->save_design(
+			isset( $_POST['checkout_design'] )
+				? sanitize_key( wp_unslash( $_POST['checkout_design'] ) )
+				: 'classic'
 		);
-		update_option( 'kidia_mobile_checkout_suggestions', $clean, false );
 		$fallback = add_query_arg( array( 'page' => 'kidia-mobile-checkout-suggestions', 'updated' => '1', 'saved_at' => time() ), admin_url( 'admin.php' ) );
 		wp_safe_redirect( $this->saved_theme_redirect( $fallback ) );
 		exit;
@@ -2536,7 +2521,11 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( 'kidia-mobile-splash-screen' === $page ) {
 						wp_enqueue_script( 'kidia-mobile-splash-screen', KIDIA_MOBILE_CMS_URL . 'admin/assets/splash-screen.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/splash-screen.js' ), true ); return;
 					}
-					if ( in_array( $page, array( 'kidia-mobile-similar-products', 'kidia-mobile-checkout-suggestions' ), true ) ) {
+					if ( 'kidia-mobile-checkout-suggestions' === $page ) {
+						wp_enqueue_script( 'kidia-mobile-commerce-preview', KIDIA_MOBILE_CMS_URL . 'admin/assets/commerce-preview.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/commerce-preview.js' ), true );
+						return;
+					}
+					if ( 'kidia-mobile-similar-products' === $page ) {
 						$preview_products = array();
 						if ( function_exists( 'wc_get_products' ) ) {
 							foreach ( wc_get_products( array( 'status' => 'publish', 'limit' => 8, 'orderby' => 'date', 'order' => 'DESC' ) ) as $product ) {

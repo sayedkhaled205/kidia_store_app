@@ -28,8 +28,8 @@ import '../features/categories/presentation/categories_screen.dart';
 import '../features/checkout/data/network/checkout_api_transport.dart';
 import '../features/checkout/data/repositories/store_api_checkout_repository.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
-import '../features/checkout/presentation/checkout_suggestions_provider.dart';
-import '../features/checkout/domain/entities/checkout_suggestions.dart';
+import '../features/checkout/presentation/checkout_presentation_provider.dart';
+import '../features/checkout/domain/entities/checkout_presentation.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/orders/presentation/customer_orders_screen.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
@@ -514,10 +514,9 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
               customerEmail: session.user.email,
               onBackToCart: () => context.go('/cart'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
-              suggestions:
-                  ref.watch(checkoutSuggestionsProvider).value ??
-                  const CheckoutSuggestions(),
-              onAddSuggestion: ref.read(addProductPurchaseSelectionProvider),
+              design:
+                  ref.watch(checkoutPresentationProvider).value?.design ??
+                  CheckoutDesign.classic,
             );
           },
         ),

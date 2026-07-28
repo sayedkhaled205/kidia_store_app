@@ -9,6 +9,30 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Checkout_Fields_Store {
 	public const OPTION = 'kidia_mobile_checkout_fields_builder';
+	public const DESIGN_OPTION = 'kidia_mobile_checkout_design';
+
+	/** @return array<string,string> */
+	public static function designs(): array {
+		return array(
+			'classic'       => __( 'Classic', 'kidia-mobile-cms' ),
+			'summary_first' => __( 'Summary First', 'kidia-mobile-cms' ),
+			'compact'       => __( 'Compact', 'kidia-mobile-cms' ),
+		);
+	}
+
+	public function design(): string {
+		$design = sanitize_key( (string) get_option( self::DESIGN_OPTION, 'classic' ) );
+		return array_key_exists( $design, self::designs() ) ? $design : 'classic';
+	}
+
+	public function save_design( string $design ): void {
+		$design = sanitize_key( $design );
+		update_option(
+			self::DESIGN_OPTION,
+			array_key_exists( $design, self::designs() ) ? $design : 'classic',
+			false
+		);
+	}
 
 	/** @return array{enabled:bool,fields:array<int,array<string,mixed>>} */
 	public function get(): array {

@@ -25,7 +25,6 @@
 		pagination: "Pagination",
 		section_layout: "Section Layout Settings",
 		filter_options: "Available Filters",
-		suggested_products: "Products, Actions & Image",
 		general: "General Settings"
 	};
 	var sectionLayoutPattern = /\[(?:margin_top|margin_bottom|space_up|space_down|block_background|element_background_color)\]$/;
@@ -79,14 +78,6 @@
 			/* Category keeps its opening, column, and visibility controls together with Layout & Spacing. */
 			if (container.classList.contains("kidia-category-general-fields") && /^(visibility|products|general)$/.test(section)) {
 				section = "layout";
-			}
-			if (container.classList.contains("kidia-checkout-suggestions-fields")) {
-				var suggestionInput = node.querySelector("input[name],select[name],textarea[name]");
-				var suggestionMatch = suggestionInput && suggestionInput.name.match(/^suggestions\[([^\]]+)\]/);
-				var suggestionKey = suggestionMatch ? suggestionMatch[1] : "";
-				if (/^(image|actions|products)$/.test(section) || suggestionKey === "button_label") {
-					section = "suggested_products";
-				}
 			}
 			if (productType && section !== "section_layout") {
 				var productInput = node.querySelector("input[name],select[name],textarea[name]");
