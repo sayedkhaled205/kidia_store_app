@@ -71,8 +71,9 @@ for (const controls of actionSets) {
   assert.deepEqual(pick(controls.querySelector(".kidia-builder-switch__state"), stateProperties), pick(baseline.querySelector(".kidia-builder-switch__state"), stateProperties), `${controls.dataset.actions} On/Off label must remain unclipped.`);
 }
 
-assert.equal(window.getComputedStyle(baseline).width, "290px");
-assert.equal(window.getComputedStyle(baseline).gridTemplateColumns, "74px 74px 40px 96px");
+assert.equal(window.getComputedStyle(baseline).width, "304px");
+assert.equal(window.getComputedStyle(baseline).gridTemplateColumns, "74px 74px 40px 104px");
+assert.equal(window.getComputedStyle(baseline).gap, "4px");
 assert.equal(window.getComputedStyle(baseline.querySelector(".kidia-card-action--toggle")).overflow, "visible");
 
 const toolbarButton = document.querySelector(".kidia-shared-builder-toolbar > .button");

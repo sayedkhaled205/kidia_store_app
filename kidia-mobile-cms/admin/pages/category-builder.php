@@ -75,7 +75,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 ?>
 
 <div class="wrap kidia-category-builder">
-	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Category page saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Category page restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Category page saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-category-workspace">
 		<aside class="kidia-category-mobile-preview" aria-label="<?php echo esc_attr__( 'Live category preview', 'kidia-mobile-cms' ); ?>">
 			<div class="kidia-category-phone">
@@ -97,7 +97,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				$kidia_toolbar_title = sprintf( __( '%d WooCommerce categories', 'kidia-mobile-cms' ), count( $terms ) );
 				$kidia_toolbar_save_label = __( 'Save Category Page', 'kidia-mobile-cms' );
 				$kidia_toolbar_show_add = false;
-				$kidia_toolbar_restore_product = false;
+				$kidia_toolbar_show_restore = true;
 				$kidia_toolbar_page_toggle = true;
 				$kidia_toolbar_page_enabled = ! empty( $category_layout['enabled'] );
 				include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';

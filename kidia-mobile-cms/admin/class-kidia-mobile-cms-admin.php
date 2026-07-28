@@ -1815,8 +1815,8 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
 			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
 		}
-		if ( 'product' === $page && isset( $_POST['restore_product_defaults'] ) ) {
-			( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( 'product' );
+		if ( isset( $_POST['restore_defaults'] ) || ( 'product' === $page && isset( $_POST['restore_product_defaults'] ) ) ) {
+			( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( $page );
 			$slug = array_search( $page, self::PAGE_BUILDER_SLUGS, true );
 			if ( function_exists( 'nocache_headers' ) ) {
 				nocache_headers();
@@ -1974,6 +1974,18 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_category_builder', 'kidia_mobile_category_builder_nonce' );
+		if ( isset( $_POST['restore_defaults'] ) ) {
+			( new Kidia_Mobile_Category_Page_Store() )->save_settings(
+				array(
+					'enabled'    => true,
+					'general'    => Kidia_Mobile_Category_Page_Store::general_defaults(),
+					'categories' => array(),
+				)
+			);
+			( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( 'category' );
+			wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-category-builder', 'restored' => '1', 'restored_at' => time() ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
 
 		$rows = isset( $_POST['categories'] ) ? wp_unslash( $_POST['categories'] ) : array();
 		$clean = array();
@@ -2175,6 +2187,13 @@ final class Kidia_Mobile_CMS_Admin {
         			'kidia_mobile_save_home_builder',
         			'kidia_mobile_home_builder_nonce'
         		);
+				if ( isset( $_POST['restore_defaults'] ) ) {
+					$home_store = new Kidia_Mobile_Layout_Store();
+					$home_store->save_layout( $home_store->get_default_layout() );
+					( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( 'home' );
+					wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-home-builder', 'restored' => '1', 'restored_at' => time() ), admin_url( 'admin.php' ) ) );
+					exit;
+				}
 
 				$payload = isset( $_POST['blocks_payload'] )
 					? wp_unslash( $_POST['blocks_payload'] )

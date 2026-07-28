@@ -28,7 +28,6 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 				<small><?php echo esc_html( (string) ( $field['key'] ?? '' ) ); ?></small>
 			</div>
 			<div class="kidia-card-actions kidia-checkout-field-actions">
-				<span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span>
 				<button type="button" class="button kidia-checkout-field-remove kidia-card-action kidia-card-action--secondary"><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button>
 				<button type="button" class="button kidia-page-expand kidia-card-action kidia-card-action--expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
 				<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle">
@@ -70,7 +69,7 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 			<div class="kidia-page-toolbar kidia-checkout-toolbar">
 				<div>
 					<button type="button" class="button button-primary" data-checkout-add-field><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add Field', 'kidia-mobile-cms' ); ?></button>
-					<button type="submit" class="button" name="restore_checkout_fields" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Replace the builder fields with the checkout fields currently registered by WooCommerce and installed plugins?', 'kidia-mobile-cms' ) ); ?>');"><span class="dashicons dashicons-update"></span><?php esc_html_e( 'Default Fields', 'kidia-mobile-cms' ); ?></button>
+					<button type="submit" class="button" name="restore_checkout_fields" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Replace the builder fields with the checkout fields currently registered by WooCommerce and installed plugins?', 'kidia-mobile-cms' ) ); ?>');"><span class="dashicons dashicons-update"></span><?php esc_html_e( 'Restore Defaults', 'kidia-mobile-cms' ); ?></button>
 				</div>
 				<?php submit_button( __( 'Save Checkout', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
 			</div>
@@ -108,12 +107,11 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 			</section>
 			<section class="kidia-checkout-fields-panel">
 				<div class="kidia-checkout-fields-heading">
-					<div><h2><?php esc_html_e( 'Checkout Fields', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Drag to reorder. Default Fields reads the live WooCommerce schema after every installed plugin has modified it.', 'kidia-mobile-cms' ); ?></p></div>
+					<div><h2><?php esc_html_e( 'Checkout Fields', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Drag to reorder. Restore Defaults reads the live WooCommerce schema after every installed plugin has modified it.', 'kidia-mobile-cms' ); ?></p></div>
 					<label class="kidia-page-status-control">
 						<input type="hidden" name="checkout[enabled]" value="0">
 						<input type="checkbox" name="checkout[enabled]" value="1" <?php checked( ! empty( $checkout_fields['enabled'] ) ); ?>>
-						<span class="kidia-page-status-control__icon"><span class="dashicons dashicons-yes-alt"></span></span>
-						<span><b><?php esc_html_e( 'Checkout fields', 'kidia-mobile-cms' ); ?></b><small data-page-status-copy></small></span>
+						<span><b><?php esc_html_e( 'Checkout fields status', 'kidia-mobile-cms' ); ?></b><small data-page-status-copy></small></span>
 					</label>
 				</div>
 				<div class="kidia-checkout-fields-list" data-checkout-fields-list>
