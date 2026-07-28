@@ -17,6 +17,9 @@ function __( string $value, string $domain = '' ): string { unset( $domain ); re
 function absint( $value ): int { return abs( (int) $value ); }
 function sanitize_text_field( $value ): string { return trim( strip_tags( (string) $value ) ); }
 function wp_generate_uuid4(): string { return 'runtime-job-' . ++$GLOBALS['kidia_ai_uuid']; }
+function kidia_ai_database_accepts( $value ): bool {
+	return 1 === preg_match( '//u', serialize( $value ) );
+}
 function get_transient( string $key ) { return $GLOBALS['kidia_ai_transients'][ $key ] ?? false; }
 function set_transient( string $key, $value, int $expiration = 0 ): bool {
 	unset( $expiration );
@@ -29,7 +32,7 @@ function set_transient( string $key, $value, int $expiration = 0 ): bool {
 function delete_transient( string $key ): bool { unset( $GLOBALS['kidia_ai_transients'][ $key ] ); return true; }
 function add_option( string $key, $value = '', string $deprecated = '', $autoload = 'yes' ): bool {
 	unset( $deprecated, $autoload );
-	if ( array_key_exists( $key, $GLOBALS['kidia_ai_options'] ) ) {
+	if ( array_key_exists( $key, $GLOBALS['kidia_ai_options'] ) || ! kidia_ai_database_accepts( $value ) ) {
 		return false;
 	}
 	$GLOBALS['kidia_ai_options'][ $key ] = $value;
@@ -38,6 +41,9 @@ function add_option( string $key, $value = '', string $deprecated = '', $autoloa
 function get_option( string $key, $default = false ) { return $GLOBALS['kidia_ai_options'][ $key ] ?? $default; }
 function update_option( string $key, $value, $autoload = null ): bool {
 	unset( $autoload );
+	if ( ! kidia_ai_database_accepts( $value ) ) {
+		return false;
+	}
 	if ( array_key_exists( $key, $GLOBALS['kidia_ai_options'] ) && $GLOBALS['kidia_ai_options'][ $key ] === $value ) {
 		return false;
 	}
@@ -141,6 +147,13 @@ function kidia_ai_runtime_assert( bool $condition, string $message ): void {
 
 require dirname( __DIR__ ) . '/includes/class-kidia-mobile-ai-analysis-job.php';
 
+$binary_bitmap    = str_repeat( "\0", 8192 );
+$binary_bitmap[0] = chr( 128 );
+kidia_ai_runtime_assert(
+	false === add_option( 'invalid-utf8-analysis-control', array( 'customer_bitmap' => $binary_bitmap ), '', 'no' ),
+	'The runtime must reproduce MySQL refusing an analysis job with an invalid utf8mb4 bitmap.'
+);
+
 kidia_ai_runtime_assert(
 	false === set_transient( 'oversized-analysis-control', str_repeat( 'x', 4096 ), HOUR_IN_SECONDS ),
 	'The runtime must reproduce an object cache refusing a large analysis value.'
@@ -175,6 +188,14 @@ delete_option( $lock_key );
 
 $first = Kidia_Mobile_AI_Analysis_Job::status( $job_id, 7, true );
 kidia_ai_runtime_assert( 2 === $first['processed'] && 1 === $first['revision'], 'The first saved batch must advance monotonically.' );
+$saved_after_first = get_option( $job_key, false );
+kidia_ai_runtime_assert(
+	is_array( $saved_after_first )
+		&& 16384 === strlen( (string) ( $saved_after_first['customer_bitmap'] ?? '' ) )
+		&& 1 === preg_match( '/\A[0-9a-f]+\z/D', (string) $saved_after_first['customer_bitmap'] )
+		&& kidia_ai_database_accepts( $saved_after_first ),
+	'The first processed batch must persist its customer bitmap as database-safe ASCII.'
+);
 
 add_option( $lock_key, array( 'started_at' => time(), 'token' => 'other-runner' ), '', 'no' );
 $busy_after_first = Kidia_Mobile_AI_Analysis_Job::continue_in_background( $job_id, 7 );
@@ -197,5 +218,9 @@ kidia_ai_runtime_assert(
 	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['orders_scanned'] ?? 0 ),
 	'Finalization must publish all scanned orders after the cache-size failure scenario.'
 );
+kidia_ai_runtime_assert(
+	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['customers'] ?? 0 ),
+	'ASCII bitmap persistence must preserve the distinct-customer estimate.'
+);
 
-fwrite( STDOUT, "AI analysis runtime batches and atomic locking passed.\n" );
+echo "AI analysis runtime batches, database-safe persistence and atomic locking passed.\n";

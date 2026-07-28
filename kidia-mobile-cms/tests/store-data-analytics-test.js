@@ -356,8 +356,13 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /JOB_PREFIX = 'kidia_mobile_ai_job_v5_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
+  /JOB_PREFIX = 'kidia_mobile_ai_job_v6_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
   "Large AI jobs must persist in non-autoloaded database options instead of size-limited transients.",
+);
+assert.match(
+  aiAnalysisJob,
+  /customer_bitmap'\s*=>\s*str_repeat\(\s*'00'[\s\S]*ASCII-hex probabilistic set[\s\S]*hexdec[\s\S]*dechex/,
+  "The customer bitmap must remain valid utf8mb4 when WordPress serializes it into wp_options.",
 );
 assert.doesNotMatch(
   aiAnalysisJob,

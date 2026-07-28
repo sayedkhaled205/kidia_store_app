@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_AI_Analysis_Job {
 
-	private const JOB_PREFIX = 'kidia_mobile_ai_job_v5_';
+	private const JOB_PREFIX = 'kidia_mobile_ai_job_v6_';
 
 	private const CANCEL_PREFIX = 'kidia_mobile_ai_cancel_v1_';
 
@@ -99,7 +99,11 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'products'          => array(),
 			'pairs'             => array(),
 			'hours'             => array(),
-			'customer_bitmap'   => str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES ),
+			/*
+			 * Keep the bitmap database-safe. Raw binary eventually contains
+			 * invalid utf8mb4 bytes and makes update_option() fail on MySQL.
+			 */
+			'customer_bitmap'   => str_repeat( '00', self::CUSTOMER_BITMAP_BYTES ),
 			'background'        => false,
 			'revision'          => 0,
 			'started_at'        => time(),
@@ -662,25 +666,33 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		return (bool) get_transient( self::cancel_key( $job_id ) );
 	}
 
-	/** Adds a customer identifier to a fixed-size probabilistic set. */
+	/** Adds a customer identifier to an ASCII-hex probabilistic set. */
 	private static function bitmap_add( string &$bitmap, string $customer_key ): void {
-		if ( strlen( $bitmap ) !== self::CUSTOMER_BITMAP_BYTES ) {
-			$bitmap = str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES );
+		$hex_length = self::CUSTOMER_BITMAP_BYTES * 2;
+		if ( strlen( $bitmap ) !== $hex_length || 1 !== preg_match( '/\A[0-9a-f]+\z/D', $bitmap ) ) {
+			$bitmap = str_repeat( '00', self::CUSTOMER_BITMAP_BYTES );
 		}
 		$hash       = unpack( 'Nvalue', substr( hash( 'sha256', $customer_key, true ), 0, 4 ) );
 		$bit        = absint( $hash['value'] ?? 0 ) % ( self::CUSTOMER_BITMAP_BYTES * 8 );
 		$byte_index = intdiv( $bit, 8 );
 		$mask       = 1 << ( $bit % 8 );
-		$bitmap[ $byte_index ] = chr( ord( $bitmap[ $byte_index ] ) | $mask );
+		$hex_index  = $byte_index * 2;
+		$value      = hexdec( $bitmap[ $hex_index ] . $bitmap[ $hex_index + 1 ] ) | $mask;
+		$encoded    = str_pad( dechex( $value ), 2, '0', STR_PAD_LEFT );
+		$bitmap[ $hex_index ]     = $encoded[0];
+		$bitmap[ $hex_index + 1 ] = $encoded[1];
 	}
 
 	/** Estimates distinct customers without storing thousands of hashes in one transient. */
 	private static function bitmap_estimate( string $bitmap ): int {
-		$bits      = self::CUSTOMER_BITMAP_BYTES * 8;
-		$set_bits  = 0;
-		$byte_count = min( self::CUSTOMER_BITMAP_BYTES, strlen( $bitmap ) );
-		for ( $index = 0; $index < $byte_count; ++$index ) {
-			$value = ord( $bitmap[ $index ] );
+		$bits       = self::CUSTOMER_BITMAP_BYTES * 8;
+		$set_bits   = 0;
+		$hex_length = self::CUSTOMER_BITMAP_BYTES * 2;
+		if ( strlen( $bitmap ) !== $hex_length || 1 !== preg_match( '/\A[0-9a-f]+\z/D', $bitmap ) ) {
+			return 0;
+		}
+		for ( $index = 0; $index < self::CUSTOMER_BITMAP_BYTES; ++$index ) {
+			$value = hexdec( substr( $bitmap, $index * 2, 2 ) );
 			while ( $value > 0 ) {
 				$set_bits += $value & 1;
 				$value >>= 1;
