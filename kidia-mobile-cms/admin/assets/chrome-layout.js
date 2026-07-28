@@ -306,6 +306,45 @@
     row.columns[1].items = ["cart"];
     return { rows: [row] };
   }
+  function headerPreset(name) {
+    var row, second;
+    if (name === "search") {
+      row = makeRow(2);
+      row.columns[0].width = 70;
+      row.columns[0].items = ["logo"];
+      row.columns[1].width = 30;
+      row.columns[1].items = ["cart"];
+      second = makeRow(1);
+      second.columns[0].items = ["search_bar"];
+      return { rows: [row, second] };
+    }
+    if (name === "centered") {
+      row = makeRow(3);
+      row.columns[0].items = ["menu"];
+      row.columns[1].items = ["logo"];
+      row.columns[2].items = ["cart"];
+      return { rows: [row] };
+    }
+    if (name === "page") {
+      row = makeRow(3);
+      row.columns[0].items = ["back"];
+      row.columns[1].items = ["title"];
+      row.columns[2].items = ["cart"];
+      return { rows: [row] };
+    }
+    if (name === "actions") {
+      row = makeRow(3);
+      row.columns[0].items = ["menu", "search"];
+      row.columns[1].items = ["logo"];
+      row.columns[2].items = ["account", "cart"];
+      return { rows: [row] };
+    }
+    row = makeRow(3);
+    row.columns[0].items = ["logo"];
+    row.columns[1].items = ["search"];
+    row.columns[2].items = ["wishlist", "cart"];
+    return { rows: [row] };
+  }
   function previewLayout(card, part, key) {
     return normalize(
       parse(field(card, key || "layout_json") || { value: "" }, part),
@@ -1854,6 +1893,7 @@
       canvas = composer.querySelector(".kidia-chrome-layout"),
       palette = composer.querySelector(".kidia-chrome-palette__items"),
       reset = composer.querySelector(".kidia-chrome-reset"),
+      presets = composer.querySelector(".kidia-header-presets"),
       card = composer.closest(".kidia-fixed-chrome-card");
     if (!input || !canvas || !palette || !card) {
       return;
@@ -1891,6 +1931,19 @@
       input.value = JSON.stringify(layout);
       composer.classList.toggle("has-invalid-layout", !valid());
       input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    function syncPresetSelection(selected) {
+      if (!presets) {
+        return;
+      }
+      Array.prototype.forEach.call(
+        presets.querySelectorAll("[data-header-preset]"),
+        function (button) {
+          var active = button.dataset.headerPreset === selected;
+          button.classList.toggle("is-selected", active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        },
+      );
     }
     function columnsTemplate(row) {
       return row.columns
@@ -2191,9 +2244,22 @@
     });
     composer.addEventListener("kidia:chrome-layout-replaced", function () {
       layout = normalize(parse(input, part));
+      syncPresetSelection("");
       render();
       composer.classList.toggle("has-invalid-layout", !valid());
     });
+    if (presets) {
+      presets.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-header-preset]");
+        if (!button) {
+          return;
+        }
+        layout = normalize(headerPreset(button.dataset.headerPreset));
+        syncPresetSelection(button.dataset.headerPreset);
+        save();
+        render();
+      });
+    }
     var form = composer.closest("form");
     if (form) {
       form.addEventListener(
@@ -2228,6 +2294,7 @@
       if (variant !== "collapsed") {
         restoreSettings(card, part, page);
       }
+      syncPresetSelection("");
       save();
       render();
     });
