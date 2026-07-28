@@ -385,7 +385,18 @@ final class Kidia_Mobile_CMS_Admin {
 		add_submenu_page( null, __( 'Store Data', 'kidia-mobile-cms' ), __( 'Store Data', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-store-data', array( $this, 'store_data_page' ) );
 		add_submenu_page( null, __( 'AI Offer Studio', 'kidia-mobile-cms' ), __( 'AI Offer Studio', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-ai-insights', array( $this, 'ai_insights_page' ) );
 		add_submenu_page( null, __( 'Push Notifications', 'kidia-mobile-cms' ), __( 'Push Notifications', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-push-notifications', array( $this, 'push_notifications_page' ) );
+		add_submenu_page( null, __( 'Website App Promotion', 'kidia-mobile-cms' ), __( 'Website App Promotion', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-website-app-promotion', array( $this, 'website_app_promotion_page' ) );
 
+	}
+
+	/** Renders website-to-app promotion campaigns and settings. */
+	public function website_app_promotion_page(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+		}
+		$promotion_settings = Kidia_Mobile_Website_App_Promotion::settings();
+		$promotion_metrics  = Kidia_Mobile_Website_App_Promotion::metrics();
+		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/website-app-promotion.php';
 	}
 
 	/** Renders the guided first-run setup and reusable theme gallery. */
@@ -1868,6 +1879,7 @@ final class Kidia_Mobile_CMS_Admin {
 			'kidia-mobile-store-data'           => 'store_data',
 			'kidia-mobile-ai-insights'           => 'ai_insights',
 			'kidia-mobile-push-notifications'   => 'push',
+			'kidia-mobile-website-app-promotion' => 'website_promotion',
 		);
 		$active_tab = $active_map[ $page ] ?? 'overview';
 		$store_data_tab = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : '';
@@ -1899,10 +1911,11 @@ final class Kidia_Mobile_CMS_Admin {
 				),
 			),
 			'push' => $tab( __( 'Push Notifications', 'kidia-mobile-cms' ), 'kidia-mobile-push-notifications', 'dashicons-megaphone' ),
+			'website_promotion' => $tab( __( 'Promote App on Website', 'kidia-mobile-cms' ), 'kidia-mobile-website-app-promotion', 'dashicons-welcome-view-site' ),
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
-			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'abandoned_carts', 'push' ), true ) ? $active_tab : 'overview' );
+			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'abandoned_carts', 'push', 'website_promotion' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
@@ -1923,6 +1936,7 @@ final class Kidia_Mobile_CMS_Admin {
 					'kidia-mobile-store-data',
 					'kidia-mobile-ai-insights',
 					'kidia-mobile-push-notifications',
+					'kidia-mobile-website-app-promotion',
 				),
 				array_keys( self::PAGE_BUILDER_SLUGS )
 			),
@@ -2370,6 +2384,29 @@ final class Kidia_Mobile_CMS_Admin {
 									'retry'         => __( 'Try Build & Download Again', 'kidia-mobile-cms' ),
 								),
 							)
+						);
+					}
+					if ( 'kidia-mobile-website-app-promotion' === $page ) {
+						wp_enqueue_media();
+						wp_enqueue_style(
+							'kidia-mobile-website-app-promotion-admin',
+							KIDIA_MOBILE_CMS_URL . 'admin/assets/website-app-promotion.css',
+							array( 'kidia-mobile-cms-shell' ),
+							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/website-app-promotion.css' )
+						);
+						wp_enqueue_script(
+							'kidia-mobile-qrcode',
+							KIDIA_MOBILE_CMS_URL . 'public/assets/vendor/qrcode.min.js',
+							array(),
+							'1.0.0',
+							true
+						);
+						wp_enqueue_script(
+							'kidia-mobile-website-app-promotion-admin',
+							KIDIA_MOBILE_CMS_URL . 'admin/assets/website-app-promotion.js',
+							array( 'kidia-mobile-qrcode' ),
+							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/website-app-promotion.js' ),
+							true
 						);
 					}
 					if (

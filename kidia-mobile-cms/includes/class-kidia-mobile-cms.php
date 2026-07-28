@@ -30,6 +30,7 @@ require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-push-service.p
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-app-exporter.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-coupon-channel.php';
 require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-bundle-recipes.php';
+require_once KIDIA_MOBILE_CMS_PATH . 'includes/class-kidia-mobile-website-app-promotion.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +104,7 @@ final class Kidia_Mobile_CMS {
 		(new Kidia_Mobile_App_Exporter())->register();
 		(new Kidia_Mobile_Coupon_Channel())->register();
 		(new Kidia_Mobile_Bundle_Recipes())->register();
+		(new Kidia_Mobile_Website_App_Promotion())->register();
 
 		$this->register_blocks();
 
