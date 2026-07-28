@@ -1338,10 +1338,10 @@ html:has(body[class*="kidia-mobile"]){
 	body[class*="kidia-mobile"] .kidia-cms-sidebar{
 		position:fixed!important;
 		inset-block-start:50px!important;
-		inset-block-end:18px!important;
+		inset-block-end:auto!important;
 		inset-inline-start:18px!important;
 		width:236px!important;
-		height:auto!important;
+		height:calc(100vh - 68px)!important;
 		min-height:0!important;
 		overflow-x:hidden;
 		overflow-y:auto;
