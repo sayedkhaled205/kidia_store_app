@@ -28,13 +28,12 @@ void main() {
   };
   runApp(
     ProviderScope(
-      overrides: usesThemeDemo
-          ? <Override>[
-              catalogRepositoryProvider.overrideWithValue(
-                CmsPreviewCatalogRepository(),
-              ),
-            ]
-          : const <Override>[],
+      overrides: [
+        if (usesThemeDemo)
+          catalogRepositoryProvider.overrideWithValue(
+            CmsPreviewCatalogRepository(),
+          ),
+      ],
       child: KidiaApp(
         router: createAppRouter(initialLocation: initialLocation),
       ),
