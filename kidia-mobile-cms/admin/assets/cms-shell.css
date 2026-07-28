@@ -1318,3 +1318,29 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 	.kidia-ai-progress-card{width:min(460px,calc(100vw - 28px));padding:22px 16px}
 	.kidia-ai-progress-actions{grid-template-columns:1fr}
 }
+
+
+/*
+ * Fixed viewport rail contract.
+ * The navigation keeps one size and one viewport anchor on every desktop CMS
+ * screen. Only the page workspace scrolls or repaints during navigation.
+ */
+@media(min-width:783px){
+	body[class*="kidia-mobile"] .kidia-cms-sidebar{
+		position:fixed!important;
+		inset-block-start:50px!important;
+		inset-block-end:18px!important;
+		inset-inline-start:18px!important;
+		width:236px!important;
+		height:auto!important;
+		min-height:0!important;
+		overflow-x:hidden;
+		overflow-y:auto;
+		overscroll-behavior:contain;
+		scrollbar-width:thin;
+		contain:layout paint;
+	}
+	body[class*="kidia-mobile"] #wpbody-content{
+		padding-inline-start:220px!important;
+	}
+}
