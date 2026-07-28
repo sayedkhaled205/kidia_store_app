@@ -14,9 +14,9 @@ final class Kidia_Mobile_Analytics {
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
 	private const ORIGIN_META = '_kidia_customer_origin';
-	private const WEBSITE_IMPORT_OPTION = 'kidia_mobile_website_cart_import_v2';
+	private const WEBSITE_IMPORT_OPTION = 'kidia_mobile_website_cart_import_v3';
 	private const WEBSITE_IMPORT_HOOK = 'kidia_mobile_import_website_cart_sessions';
-	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v2';
+	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v3';
 	private const WEBSITE_IMPORT_BATCH = 300;
 
 	/** @var list<string> */
@@ -1284,13 +1284,9 @@ final class Kidia_Mobile_Analytics {
 			return $state;
 		}
 
-		$cart_pattern = '%' . $wpdb->esc_like( 'cart' ) . '%';
 		$total        = absint(
 			$wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$sessions_table} WHERE session_value LIKE %s",
-					$cart_pattern
-				)
+				"SELECT COUNT(*) FROM {$sessions_table}"
 			)
 		);
 		$state        = array(
@@ -1358,16 +1354,14 @@ final class Kidia_Mobile_Analytics {
 
 		global $wpdb;
 		$sessions_table = $wpdb->prefix . 'woocommerce_sessions';
-		$cart_pattern   = '%' . $wpdb->esc_like( 'cart' ) . '%';
 		$rows           = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT session_id, session_key, session_value, session_expiry
 				FROM {$sessions_table}
-				WHERE session_id > %d AND session_value LIKE %s
+				WHERE session_id > %d
 				ORDER BY session_id ASC
 				LIMIT %d",
 				absint( $state['cursor'] ?? 0 ),
-				$cart_pattern,
 				$limit
 			),
 			ARRAY_A

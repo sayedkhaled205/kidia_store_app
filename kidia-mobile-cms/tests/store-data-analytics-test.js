@@ -483,6 +483,21 @@ assert.match(
 );
 assert.match(
   analytics,
+  /WEBSITE_IMPORT_OPTION\s*=\s*'kidia_mobile_website_cart_import_v3'/,
+  "Historical cart import must use a fresh state version so a previously completed zero-result scan is retried.",
+);
+assert.match(
+  analytics,
+  /SELECT COUNT\(\*\) FROM \{\$sessions_table\}[\s\S]*WHERE session_id > %d[\s\S]*import_website_session_row/,
+  "Historical cart import must inspect every retained WooCommerce session and decide after deserializing it whether it contains a cart.",
+);
+assert.doesNotMatch(
+  analytics,
+  /session_value LIKE/,
+  "Serialized WooCommerce carts must not be discarded by a fragile SQL text filter.",
+);
+assert.match(
+  analytics,
   /abandoned_summary[\s\S]*COUNT\(\*\) AS carts[\s\S]*potential_value/,
   "Abandoned-cart headline totals must cover the complete filtered dataset, not only the visible table rows.",
 );
