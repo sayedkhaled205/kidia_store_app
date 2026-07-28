@@ -55,6 +55,49 @@ $library_options = array(
 $library_items = array();
 $layout_counts = array();
 
+/**
+ * Friendly categories used to organise Home elements without changing their
+ * saved page order.
+ *
+ * @var array<string,array{label:string,types:array<int,string>}>
+ */
+$element_categories = array(
+	'page-structure' => array(
+		'label' => __( 'Page Structure', 'kidia-mobile-cms' ),
+		'types' => array( 'app_header' ),
+	),
+	'hero-banners' => array(
+		'label' => __( 'Hero & Banners', 'kidia-mobile-cms' ),
+		'types' => array( 'hero_slider', 'image_banner', 'banner_grid', 'video_banner' ),
+	),
+	'products' => array(
+		'label' => __( 'Products', 'kidia-mobile-cms' ),
+		'types' => array( 'category_grid', 'product_carousel', 'product_grid', 'brand_carousel', 'bundle_collection' ),
+	),
+	'content' => array(
+		'label' => __( 'Content', 'kidia-mobile-cms' ),
+		'types' => array( 'section_header', 'text_block', 'quick_links' ),
+	),
+	'layout' => array(
+		'label' => __( 'Layout', 'kidia-mobile-cms' ),
+		'types' => array( 'divider', 'spacer' ),
+	),
+	'marketing' => array(
+		'label' => __( 'Marketing', 'kidia-mobile-cms' ),
+		'types' => array( 'promo_strip', 'coupon_banner', 'countdown' ),
+	),
+);
+
+$element_category_by_type = array();
+foreach ( $element_categories as $category_key => $category ) {
+	foreach ( $category['types'] as $category_type ) {
+		$element_category_by_type[ $category_type ] = array(
+			'key'   => $category_key,
+			'label' => $category['label'],
+		);
+	}
+}
+
 foreach ( $blocks as $layout_block ) {
 	if ( ! is_array( $layout_block ) ) {
 		continue;
@@ -178,6 +221,17 @@ foreach ( $library_options as $type => $option_name ) {
 		<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'header'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
+		<nav class="kidia-element-category-filter" aria-label="<?php echo esc_attr__( 'Filter Home elements by category', 'kidia-mobile-cms' ); ?>">
+			<button type="button" class="button is-active" data-kidia-element-category="all" aria-pressed="true">
+				<?php esc_html_e( 'All', 'kidia-mobile-cms' ); ?>
+			</button>
+			<?php foreach ( $element_categories as $category_key => $category ) : ?>
+				<button type="button" class="button" data-kidia-element-category="<?php echo esc_attr( $category_key ); ?>" aria-pressed="false">
+					<?php echo esc_html( $category['label'] ); ?>
+				</button>
+			<?php endforeach; ?>
+		</nav>
+
 		<div
 			id="kidia-home-builder"
 			class="kidia-builder-list"
@@ -273,6 +327,17 @@ foreach ( $library_options as $type => $option_name ) {
 							?? ''
 						)
 					);
+
+				$definition = $block->get_definition();
+				$category = $element_category_by_type[ $type ] ?? array(
+					'key'   => 'content',
+					'label' => __( 'Content', 'kidia-mobile-cms' ),
+				);
+				$block_data['element_icon'] = sanitize_html_class(
+					(string) ( $definition['icon'] ?? 'dashicons-screenoptions' )
+				);
+				$block_data['element_category_key'] = sanitize_key( $category['key'] );
+				$block_data['element_category_label'] = sanitize_text_field( $category['label'] );
 
 				include
 					KIDIA_MOBILE_CMS_PATH .

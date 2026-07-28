@@ -27,6 +27,9 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 	? 'published'
 	: 'draft';
 $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] ) ? $block_data['settings'] : $block->get_default_settings();
+$element_icon = isset( $block_data['element_icon'] ) ? (string) $block_data['element_icon'] : 'dashicons-screenoptions';
+$element_category_key = isset( $block_data['element_category_key'] ) ? (string) $block_data['element_category_key'] : 'content';
+$element_category_label = isset( $block_data['element_category_label'] ) ? (string) $block_data['element_category_label'] : __( 'Content', 'kidia-mobile-cms' );
 ?>
 
 <div
@@ -35,6 +38,7 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 	data-type="<?php echo esc_attr( $type ); ?>"
 	data-library-id="<?php echo esc_attr( $library_id ); ?>"
 	data-label="<?php echo esc_attr( $block->get_label() ); ?>"
+	data-element-category="<?php echo esc_attr( $element_category_key ); ?>"
 >
 
 	<div class="kidia-builder-block__header">
@@ -42,6 +46,10 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 		<div class="kidia-builder-block__left">
 
 			<span class="dashicons dashicons-move kidia-builder-drag" title="<?php esc_attr_e( 'Drag to reorder', 'kidia-mobile-cms' ); ?>"></span>
+
+			<span class="kidia-builder-block__icon" aria-hidden="true">
+				<span class="dashicons <?php echo esc_attr( $element_icon ); ?>"></span>
+			</span>
 
 			<div class="kidia-builder-block__title">
 
@@ -53,16 +61,8 @@ $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'
 					<?php echo esc_html( $block->get_label() ); ?>
 				</span>
 
-				<span
-					class="kidia-builder-status kidia-builder-status--<?php echo esc_attr( $status ); ?>"
-				>
-					<?php
-					echo esc_html(
-						'published' === $status
-							? __( 'Published', 'kidia-mobile-cms' )
-							: __( 'Draft', 'kidia-mobile-cms' )
-					);
-					?>
+				<span class="kidia-builder-block__category">
+					<?php echo esc_html( $element_category_label ); ?>
 				</span>
 
 			</div>
