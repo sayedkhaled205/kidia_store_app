@@ -31,7 +31,8 @@
 	position: relative;
 	display: inline-flex;
 	width: 88px;
-	height: 20px;
+	height: 34px;
+	min-height: 34px;
 	flex: 0 0 88px;
 	align-items: center;
 }
@@ -114,7 +115,7 @@
 .kidia-collapsed-header-settings[hidden] { display:none!important; }
 .kidia-fixed-chrome-card > .kidia-page-card__header { justify-content:space-between; gap:12px; direction:rtl; }
 .kidia-fixed-chrome-card > .kidia-page-card__header .kidia-fixed-chrome-identity { margin:0; direction:rtl; }
-.kidia-chrome-transfer-actions .button { display:inline-flex; height:38px; min-height:38px; align-items:center; justify-content:center; gap:5px; margin:0; padding:0 8px; border-radius:7px!important; font-size:12px; line-height:1; }
+.kidia-chrome-transfer-actions .button { display:inline-flex; height:34px; min-height:34px; align-items:center; justify-content:center; gap:4px; margin:0; padding:0 6px; border-radius:7px!important; font-size:11px; line-height:1; }
 .kidia-chrome-transfer-actions .dashicons { width:16px; height:16px; font-size:16px; }
 .kidia-chrome-transfer-status { max-width:160px; color:#236b59; font-size:11px; font-weight:700; }
 .kidia-chrome-transfer-status.is-error { color:#b42318; }
