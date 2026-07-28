@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.40/, "The plugin header must be version 1.45.40.");
+assert.match(plugin, /Version:\s+1\.45\.40/, "The plugin header must be version 1.45.41.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -43,7 +43,7 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /Fixed viewport rail contract[\s\S]*@media\(min-width:783px\)[\s\S]*\.kidia-cms-sidebar\{[\s\S]*position:fixed!important;[\s\S]*inset-block-start:50px!important;[\s\S]*inset-block-end:18px!important;[\s\S]*inset-inline-start:18px!important;[\s\S]*width:236px!important;/,
+  /Fixed viewport rail contract[\s\S]*@media\(min-width:783px\)[\s\S]*\.kidia-cms-sidebar\{[\s\S]*position:fixed!important;[\s\S]*inset-block-start:50px!important;[\s\S]*inset-block-end:auto!important;[\s\S]*inset-inline-start:18px!important;[\s\S]*width:236px!important;[\s\S]*height:calc\(100vh - 68px\)!important;/,
   "The CMS sidebar must keep one fixed viewport position and size across desktop pages."
 );
 assert.match(
