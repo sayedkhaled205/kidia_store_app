@@ -538,13 +538,28 @@ assert.doesNotMatch(
 );
 assert.match(
   analytics,
-  /ensure_website_session_import\( bool \$force_refresh = false \)[\s\S]*WEBSITE_IMPORT_REFRESH[\s\S]*ensure_website_session_import\( true \)/,
-  "Opening Abandoned Carts must refresh a previously completed session scan instead of trusting a stale zero result.",
+  /ensure_website_session_import\( bool \$force_refresh = false \)[\s\S]*'complete' ===[\s\S]*! \$force_refresh[\s\S]*sync_website_sessions[\s\S]*ensure_website_session_import\(\)/,
+  "Opening Abandoned Carts must preserve a completed import instead of restarting its counters.",
+);
+assert.doesNotMatch(
+  analytics,
+  /sync_website_sessions[\s\S]{0,500}ensure_website_session_import\( true \)/,
+  "Normal report reads must never force a completed historical import back to zero.",
+);
+assert.match(
+  analytics,
+  /acquire_website_import_lock[\s\S]*add_option\(\s*self::WEBSITE_IMPORT_LOCK[\s\S]*release_website_import_lock/,
+  "Foreground polling and the background runner must own each cursor batch atomically.",
 );
 assert.match(
   analytics,
   /_woocommerce_persistent_cart_[\s\S]*persistent_total[\s\S]*import_persistent_cart_row/,
   "Historical import must include WooCommerce persistent carts for registered customers, not only active session rows.",
+);
+assert.match(
+  analytics,
+  /\$last_activity\s*=\s*\$expiry > 0 \? min\(\s*time\(\)[\s\S]*website_session_expiration[\s\S]*WC_VERSION[\s\S]*'10\.1'[\s\S]*WEEK_IN_SECONDS/,
+  "Imported session activity must use WooCommerce's guest and registered-customer lifetimes without producing future dates.",
 );
 assert.match(
   analytics,
@@ -575,6 +590,16 @@ assert.match(
   storeData,
   /Importing all retained WooCommerce carts in the background[\s\S]*Carts found[\s\S]*\$abandoned_summary/,
   "The page must show historical import progress and complete cart totals.",
+);
+assert.match(
+  storeData,
+  /data-kidia-live-store-data="abandoned-carts-overview"[\s\S]*data-kidia-live-store-data="abandoned-carts-table"/,
+  "Abandoned-cart progress, totals and rows must expose live-update regions.",
+);
+assert.match(
+  shellScript,
+  /querySelectorAll\('\[data-kidia-live-store-data\]'\)[\s\S]*freshRegions\.find[\s\S]*region\.innerHTML = fresh\.innerHTML/,
+  "Every Store Data live region must refresh automatically without a browser reload.",
 );
 assert.match(aiInsights, /AI Offer Studio[\s\S]*Tracked sales funnel[\s\S]*Demand signals[\s\S]*Decision-ready recommendations/);
 assert.match(
