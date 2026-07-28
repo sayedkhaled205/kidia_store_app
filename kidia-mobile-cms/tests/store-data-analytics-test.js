@@ -346,13 +346,23 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /\$lock_token = self::acquire_step_lock[\s\S]*Always[\s\S]*\$latest = get_transient\( self::key\( \$job_id \) \)[\s\S]*release_step_lock[\s\S]*private static function acquire_step_lock[\s\S]*add_option\(/,
+  /\$lock_token = self::acquire_step_lock[\s\S]*Always[\s\S]*\$latest = self::read_job\( \$job_id \)[\s\S]*release_step_lock[\s\S]*private static function acquire_step_lock[\s\S]*add_option\(/,
   "Every batch must own an atomic lock and reload the latest saved job before processing.",
 );
 assert.match(
   aiAnalysisJob,
-  /continue_in_background[\s\S]*Parking often happens[\s\S]*acquire_step_lock[\s\S]*\$latest = get_transient[\s\S]*release_step_lock/,
+  /continue_in_background[\s\S]*Parking often happens[\s\S]*acquire_step_lock[\s\S]*\$latest = self::read_job[\s\S]*release_step_lock/,
   "Parking the analysis must never overwrite a completed first batch with an older zero-progress copy.",
+);
+assert.match(
+  aiAnalysisJob,
+  /JOB_PREFIX = 'kidia_mobile_ai_job_v5_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
+  "Large AI jobs must persist in non-autoloaded database options instead of size-limited transients.",
+);
+assert.doesNotMatch(
+  aiAnalysisJob,
+  /set_transient\(\s*self::key\(/,
+  "Analysis job state must never be written through an object-cache-backed transient.",
 );
 assert.doesNotMatch(
   aiAnalysisJob,
