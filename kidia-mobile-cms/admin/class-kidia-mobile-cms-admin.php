@@ -2369,12 +2369,14 @@ final class Kidia_Mobile_CMS_Admin {
 									'kidia_mobile_download_nonce'
 								),
 								'labels'      => array(
-									'queued'   => __( 'APK build queued…', 'kidia-mobile-cms' ),
-									'building' => __( 'Building your APK…', 'kidia-mobile-cms' ),
-									'ready'    => __( 'Your APK is ready to install.', 'kidia-mobile-cms' ),
-									'failed'   => __( 'The APK build failed.', 'kidia-mobile-cms' ),
-									'download' => __( 'Download APK', 'kidia-mobile-cms' ),
-									'retry'    => __( 'Try Again', 'kidia-mobile-cms' ),
+									'queued'        => __( 'APK build queued…', 'kidia-mobile-cms' ),
+									'building'      => __( 'Building your APK…', 'kidia-mobile-cms' ),
+									'ready'         => __( 'Your APK is ready to install.', 'kidia-mobile-cms' ),
+									'failed'        => __( 'The APK build failed.', 'kidia-mobile-cms' ),
+									'starting'      => __( 'Starting APK build…', 'kidia-mobile-cms' ),
+									'buildDownload' => __( 'Build & Download APK', 'kidia-mobile-cms' ),
+									'download'      => __( 'Download APK', 'kidia-mobile-cms' ),
+									'retry'         => __( 'Try Build & Download Again', 'kidia-mobile-cms' ),
 								),
 							)
 						);
