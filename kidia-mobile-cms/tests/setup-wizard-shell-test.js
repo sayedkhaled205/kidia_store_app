@@ -55,13 +55,15 @@ assert.match(exporter, /admin_post_kidia_mobile_build_app[\s\S]*admin_post_kidia
 assert.match(exporter, /start_build\(\)[\s\S]*'platform'\s*=>\s*'android'[\s\S]*'artifact'\s*=>\s*'apk'/, "Build APK must queue a real Android APK artifact.");
 assert.match(exporter, /refresh_build\(\)[\s\S]*handle_download_apk[\s\S]*download_url/, "APK builds must poll for completion before exposing the download.");
 assert.match(licenseManager, /BUILD_API_BASE_URL[\s\S]*build_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "The build service must reuse installation-bound license authorization without exposing it to the browser.");
+assert.match(licenseManager, /PUSH_API_BASE_URL[\s\S]*push_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "Managed Push delivery must reuse installation-bound license authorization.");
 assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");
 assert.match(exporter, /Kidia_Mobile_Push_Service::client_configuration/, "Every exported application must inherit the plugin's public Push bootstrap.");
 for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key", "webhook_secret"]) {
   assert.doesNotMatch(exporter, new RegExp(`\\['${secret}'\\]`), `Export App must never expose ${secret}.`);
 }
 assert.match(pushService, /'\/push\/config'[\s\S]*public_configuration/, "Exported apps must be able to refresh public Push configuration from WordPress.");
-assert.match(pushService, /fcm_api_key[\s\S]*fcm_app_id[\s\S]*fcm_sender_id/, "FCM exports must contain the public Firebase client fields.");
+assert.match(pushService, /'mode'\s*=>\s*'managed'[\s\S]*'provisionOnBuild'\s*=>\s*true[\s\S]*'requiresNativeSetup'\s*=>\s*false/, "Application builds must provision managed Push without customer Firebase setup.");
+assert.doesNotMatch(pushService, /onesignal_api_key|fcm_private_key|fcm_client_email|webhook_secret/, "Provider credentials must not be stored by the WordPress plugin.");
 
 assert.match(admin, /admin_post_kidia_mobile_apply_setup_wizard/, "Wizard apply action must be registered.");
 assert.match(admin, /admin_post_kidia_mobile_manage_saved_theme/, "Saved theme actions must be registered.");
@@ -126,9 +128,12 @@ assert.match(storeDataTemplate, /data-copy-link[\s\S]*data-copy-text/, "Products
 assert.match(storeDataTemplate, /store_source[\s\S]*Website[\s\S]*Mobile App/, "Orders, customers, reports and abandoned carts must filter All, Website and Mobile App data.");
 assert.match(storeDataTemplate, /source_tabs[\s\S]*analytics/, "Analytics must expose the shared source filter.");
 assert.match(pushTemplate, /Broadcast[\s\S]*Offer[\s\S]*Order update[\s\S]*Back in stock[\s\S]*Abandoned cart[\s\S]*Welcome[\s\S]*Custom/, "Push Notifications must expose all supported notification journeys without forcing AI Studio into Push.");
+assert.match(pushTemplate, /Push connection managed automatically[\s\S]*no provider selection or Firebase keys are required/, "Push Notifications must explain its automatic managed connection.");
+assert.doesNotMatch(pushTemplate, /data-push-provider|OneSignal App ID|Service-account private key/, "Push Notifications must not ask customers to choose or configure a vendor.");
 assert.match(pushTemplate, /push_title[\s\S]*push_message[\s\S]*push_audience[\s\S]*push_delivery[\s\S]*Live preview[\s\S]*History/, "Push Notifications must provide compose, targeting, delivery, live preview and history.");
 assert.match(pushTemplate, /Message[\s\S]*Open destination[\s\S]*Audience & delivery/, "Push composer controls must be divided into clear task groups.");
 assert.match(shellScript, /data-push-title[\s\S]*data-push-preview-title/, "Push notification copy must update its live preview.");
+assert.match(shellScript, /data-push-submit-label[\s\S]*Schedule notification[\s\S]*Save automation[\s\S]*Send notification/, "The primary Push action must describe the selected delivery mode.");
 assert.match(shellScript, /date_preset[\s\S]*customDates[\s\S]*input\.disabled/, "Custom dates must remain disabled until Custom is selected.");
 assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engine::recommendations/, "AI Offer Studio must have its own evidence-backed page.");
 assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An optional reviewed AI offer push must prefill the editable offer composer.");
