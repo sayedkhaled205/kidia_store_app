@@ -10,6 +10,8 @@ defined( 'ABSPATH' ) || exit;
 final class Kidia_Mobile_App_Exporter {
 
 	private const STATE_OPTION = 'kidia_mobile_app_export_state_v1';
+	private const ASYNC_HOOK = 'kidia_mobile_process_app_build';
+	private const START_TIMEOUT = 180;
 
 	public function register(): void {
 		add_action( 'admin_post_kidia_mobile_export_app', array( $this, 'handle_export' ) );
@@ -17,6 +19,7 @@ final class Kidia_Mobile_App_Exporter {
 		add_action( 'admin_post_kidia_mobile_download_apk', array( $this, 'handle_download_apk' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_build_start', array( $this, 'handle_build_start' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_build_status', array( $this, 'handle_build_status' ) );
+		add_action( self::ASYNC_HOOK, array( $this, 'process_queued_build' ), 10, 1 );
 	}
 
 	/** @return array<string,mixed> */
@@ -110,7 +113,7 @@ final class Kidia_Mobile_App_Exporter {
 		}
 		check_admin_referer( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce' );
 
-		$result = $this->start_build();
+		$result = $this->queue_build();
 		$args   = array(
 			'page'         => 'kidia-mobile-cms',
 			'build_notice' => is_wp_error( $result ) ? 'error' : 'started',
@@ -128,9 +131,94 @@ final class Kidia_Mobile_App_Exporter {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function start_build() {
+		return $this->queue_build();
+	}
+
+	/**
+	 * Saves the build locally before dispatching the slow remote request.
+	 *
+	 * Action Scheduler is bundled with WooCommerce and keeps the Overview AJAX
+	 * response fast even when the remote build provider takes time to enqueue
+	 * the Android job. WordPress Cron remains available as a safe fallback.
+	 *
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function queue_build() {
 		$license = new Kidia_Mobile_License_Manager();
 		if ( ! $license->is_active() ) {
 			return new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+		}
+
+		$request_token = wp_generate_uuid4();
+		$state         = array_merge(
+			self::default_state(),
+			array(
+				'hash'          => self::configuration_hash(),
+				'status'        => 'queued',
+				'progress'      => 1,
+				'message'       => __( 'Preparing your APK build…', 'kidia-mobile-cms' ),
+				'started_at'    => time(),
+				'request_token' => $request_token,
+			)
+		);
+		update_option( self::STATE_OPTION, $state, false );
+
+		$scheduled = false;
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			$scheduled = (bool) as_enqueue_async_action(
+				self::ASYNC_HOOK,
+				array( $request_token ),
+				'kidia-mobile-cms',
+				true
+			);
+		} else {
+			$scheduled = (bool) wp_schedule_single_event(
+				time(),
+				self::ASYNC_HOOK,
+				array( $request_token )
+			);
+			if ( $scheduled && function_exists( 'spawn_cron' ) ) {
+				spawn_cron( time() );
+			}
+		}
+
+		if ( ! $scheduled ) {
+			$error = new WP_Error( 'build_queue_failed', __( 'The APK build could not be queued. Please try again.', 'kidia-mobile-cms' ) );
+			$this->save_build_error( $error->get_error_message() );
+			return $error;
+		}
+
+		return $state;
+	}
+
+	/**
+	 * Starts the remote build outside the request that rendered Overview.
+	 */
+	public function process_queued_build( string $request_token ): void {
+		$state = self::state();
+		if (
+			'' === $request_token
+			|| ! hash_equals( (string) $state['request_token'], $request_token )
+			|| '' !== (string) $state['build_id']
+			|| 'queued' !== (string) $state['status']
+		) {
+			return;
+		}
+
+		$this->dispatch_build( $request_token );
+	}
+
+	/**
+	 * Queues a real Android APK build with the WooMobile build service.
+	 *
+	 * @return array<string,mixed>|WP_Error
+	 */
+	private function dispatch_build( string $request_token ) {
+		$license = new Kidia_Mobile_License_Manager();
+		if ( ! $license->is_active() ) {
+			$error = new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+			$this->save_build_error( $error->get_error_message() );
+			return $error;
 		}
 
 		$manifest = self::manifest();
@@ -151,7 +239,12 @@ final class Kidia_Mobile_App_Exporter {
 			return $response;
 		}
 
-		$build = $this->normalize_build_response( $response, self::configuration_hash() );
+		$state = self::state();
+		if ( ! hash_equals( (string) $state['request_token'], $request_token ) ) {
+			return new WP_Error( 'build_replaced', __( 'A newer APK build has already started.', 'kidia-mobile-cms' ) );
+		}
+
+		$build = $this->normalize_build_response( $response, (string) $state['hash'], $state );
 		if ( '' === (string) $build['build_id'] ) {
 			$error = new WP_Error( 'invalid_build_response', __( 'The build service did not return a build ID.', 'kidia-mobile-cms' ) );
 			$this->save_build_error( $error->get_error_message() );
@@ -167,13 +260,21 @@ final class Kidia_Mobile_App_Exporter {
 	 *
 	 * @return array<string,mixed>|WP_Error
 	 */
-	public function refresh_build() {
+	public function refresh_build( bool $force = false ) {
 		$state    = self::state();
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' === $build_id ) {
+			if (
+				'queued' === (string) $state['status']
+				&& absint( $state['started_at'] ) > 0
+				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
+			) {
+				$this->save_build_error( __( 'The APK build service did not start in time. Please try again.', 'kidia-mobile-cms' ) );
+				return self::state();
+			}
 			return $state;
 		}
-		if ( in_array( (string) $state['status'], array( 'ready', 'failed' ), true ) ) {
+		if ( 'failed' === (string) $state['status'] || ( 'ready' === (string) $state['status'] && ! $force ) ) {
 			return $state;
 		}
 
@@ -204,7 +305,7 @@ final class Kidia_Mobile_App_Exporter {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to build this application.', 'kidia-mobile-cms' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_build_app', 'nonce' );
-		$result = $this->start_build();
+		$result = $this->queue_build();
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
@@ -217,7 +318,7 @@ final class Kidia_Mobile_App_Exporter {
 		}
 		check_admin_referer( 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce' );
 
-		$result = $this->refresh_build();
+		$result = $this->refresh_build( true );
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ) );
 		}
@@ -322,7 +423,9 @@ final class Kidia_Mobile_App_Exporter {
 			? $response['build']
 			: ( isset( $response['data']['build'] ) && is_array( $response['data']['build'] )
 				? $response['data']['build']
-				: ( isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response ) );
+				: ( isset( $response['data'] ) && is_array( $response['data'] )
+					? $response['data']
+					: ( isset( $response['result'] ) && is_array( $response['result'] ) ? $response['result'] : $response ) ) );
 		$state = wp_parse_args( is_array( $previous ) ? $previous : array(), self::default_state() );
 
 		$remote_status = sanitize_key( (string) ( $raw['status'] ?? 'queued' ) );
@@ -335,6 +438,9 @@ final class Kidia_Mobile_App_Exporter {
 			'succeeded'  => 'ready',
 			'success'    => 'ready',
 			'completed'  => 'ready',
+			'complete'   => 'ready',
+			'done'       => 'ready',
+			'finished'   => 'ready',
 			'ready'      => 'ready',
 			'failed'     => 'failed',
 			'error'      => 'failed',
@@ -342,7 +448,17 @@ final class Kidia_Mobile_App_Exporter {
 			'canceled'   => 'failed',
 		);
 		$status        = $status_map[ $remote_status ] ?? 'queued';
-		$download_url = (string) ( $raw['downloadUrl'] ?? $raw['download_url'] ?? $raw['artifact']['downloadUrl'] ?? $raw['artifact']['download_url'] ?? '' );
+		$download_url = (string) (
+			$raw['downloadUrl']
+			?? $raw['download_url']
+			?? $raw['artifactUrl']
+			?? $raw['artifact_url']
+			?? $raw['artifact']['downloadUrl']
+			?? $raw['artifact']['download_url']
+			?? $raw['artifact']['url']
+			?? $raw['download']['url']
+			?? ''
+		);
 		$file_name     = (string) ( $raw['fileName'] ?? $raw['file_name'] ?? $raw['artifact']['fileName'] ?? $raw['artifact']['file_name'] ?? '' );
 		$progress      = max( 0, min( 100, absint( $raw['progress'] ?? ( 'ready' === $status ? 100 : 0 ) ) ) );
 
@@ -404,6 +520,7 @@ final class Kidia_Mobile_App_Exporter {
 			'completed_at'  => 0,
 			'download_url'  => '',
 			'apk_file_name' => '',
+			'request_token' => '',
 		);
 	}
 }

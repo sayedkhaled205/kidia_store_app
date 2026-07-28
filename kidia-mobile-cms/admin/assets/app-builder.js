@@ -7,6 +7,7 @@
 
 	const autoDownload = new WeakSet();
 	let timer = 0;
+	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
 
 	function label(status, fallback) {
 		return (config.labels && config.labels[status]) || fallback || '';
@@ -94,24 +95,46 @@
 		timer = window.setTimeout(poll, delay);
 	}
 
+	async function request(body) {
+		const controller = typeof window.AbortController === 'function'
+			? new window.AbortController()
+			: null;
+		const timeout = window.setTimeout(function () {
+			if (controller) controller.abort();
+		}, requestTimeout);
+
+		try {
+			const response = await fetch(config.ajaxUrl, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: body.toString(),
+				signal: controller ? controller.signal : undefined
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload.success) {
+				throw new Error(payload.data && payload.data.message ? payload.data.message : label('failed'));
+			}
+			return payload.data || {};
+		} catch (error) {
+			if (error && error.name === 'AbortError') {
+				throw new Error(label('timeout', 'The APK build request took too long. Please try again.'));
+			}
+			throw error;
+		} finally {
+			window.clearTimeout(timeout);
+		}
+	}
+
 	async function poll() {
 		const body = new URLSearchParams({
 			action: 'kidia_mobile_app_build_status',
 			nonce: config.nonce || ''
 		});
 		try {
-			const response = await fetch(config.ajaxUrl, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: body.toString()
-			});
-			const payload = await response.json();
-			if (!response.ok || !payload.success) {
-				throw new Error(payload.data && payload.data.message ? payload.data.message : label('failed'));
-			}
-			render(payload.data || {});
-			if (isBuilding(payload.data.status)) schedulePoll(4000);
+			const state = await request(body);
+			render(state);
+			if (isBuilding(state.status)) schedulePoll(4000);
 		} catch (error) {
 			roots.forEach(function (root) {
 				const message = root.querySelector('[data-build-message]');
@@ -137,18 +160,9 @@
 		});
 
 		try {
-			const response = await fetch(config.ajaxUrl, {
-				method: 'POST',
-				credentials: 'same-origin',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: body.toString()
-			});
-			const payload = await response.json();
-			if (!response.ok || !payload.success) {
-				throw new Error(payload.data && payload.data.message ? payload.data.message : label('failed'));
-			}
-			render(payload.data || {});
-			if (isBuilding(payload.data.status)) schedulePoll(4000);
+			const state = await request(body);
+			render(state);
+			if (isBuilding(state.status)) schedulePoll(4000);
 		} catch (error) {
 			autoDownload.delete(root);
 			render({
