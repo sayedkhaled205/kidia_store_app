@@ -22,6 +22,9 @@
   const sessionId =
     window.sessionStorage?.getItem(sessionKey) ||
     `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const queueKey = "kidia_website_analytics_queue_v1";
+  let flushing = false;
+  let memoryQueue = [];
 
   try {
     window.localStorage?.setItem(cookieName, clientId);
@@ -31,8 +34,64 @@
     // Tracking remains functional when browser storage is unavailable.
   }
 
+  const readQueue = () => {
+    try {
+      const value = JSON.parse(window.localStorage?.getItem(queueKey) || "[]");
+      memoryQueue = Array.isArray(value) ? value.slice(-200) : memoryQueue;
+    } catch (_error) {
+      // Fall back to the in-memory copy for privacy-restricted browsers.
+    }
+    return memoryQueue.slice();
+  };
+  const writeQueue = (queue) => {
+    memoryQueue = queue.slice(-200);
+    try {
+      window.localStorage?.setItem(queueKey, JSON.stringify(memoryQueue));
+    } catch (_error) {
+      // The current request still runs when persistent storage is unavailable.
+    }
+  };
+  const eventId = () =>
+    window.crypto?.randomUUID?.() ||
+    `event-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const flush = async () => {
+    if (flushing || !window.navigator.onLine) {
+      return;
+    }
+    flushing = true;
+    try {
+      let queue = readQueue();
+      while (queue.length) {
+        const current = queue[0];
+        const response = await fetch(config.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(current),
+          credentials: "same-origin",
+          keepalive: true,
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          break;
+        }
+        queue = readQueue();
+        const recordedIndex = queue.findIndex(
+          (item) => item.event_id === current.event_id,
+        );
+        if (recordedIndex >= 0) {
+          queue.splice(recordedIndex, 1);
+        }
+        writeQueue(queue);
+      }
+    } catch (_error) {
+      // Keep the unsent events for the next page load or online signal.
+    } finally {
+      flushing = false;
+    }
+  };
   const send = (event, details = {}) => {
-    const payload = JSON.stringify({
+    const payload = {
+      event_id: eventId(),
       event,
       client_id: clientId,
       session_id: sessionId,
@@ -41,23 +100,17 @@
       label: String(details.label || ""),
       value: Number(details.value || 0),
       properties: details.properties || {},
-    });
-
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(
-        config.endpoint,
-        new Blob([payload], { type: "application/json" }),
-      );
-      return;
-    }
-    fetch(config.endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-      credentials: "same-origin",
-      keepalive: true,
-    }).catch(() => {});
+    };
+    const queue = readQueue();
+    queue.push(payload);
+    writeQueue(queue);
+    void flush();
   };
+
+  window.addEventListener("online", () => {
+    void flush();
+  });
+  void flush();
 
   send("site_visit", {
     properties: {

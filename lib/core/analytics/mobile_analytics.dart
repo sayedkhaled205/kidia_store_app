@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -32,10 +33,13 @@ class MobileAnalytics {
       _preferences = preferences;
 
   static const String _clientKey = 'kidia_mobile_analytics_client_v1';
+  static const String _queueKey = 'kidia_mobile_analytics_queue_v1';
   static final String _sessionId = _randomIdentifier();
 
   final Dio _dio;
   Future<SharedPreferences>? _preferences;
+  bool _flushing = false;
+  Future<void> _pipeline = Future<void>.value();
 
   Future<void> track(
     String event, {
@@ -49,9 +53,14 @@ class MobileAnalytics {
   }) async {
     if (!_enabled) return;
     try {
-      await _dio.post<void>(
-        _endpoint('/wp-json/woo-mobile/v1/analytics/event'),
-        data: <String, Object?>{
+      final String stableEventId = orderId > 0 && event == 'purchase'
+          ? 'mobile-purchase-$orderId'
+          : orderId > 0 && event == 'purchase_item' && objectId > 0
+          ? 'mobile-purchase-item-$orderId-$objectId'
+          : 'mobile-event-${_randomIdentifier()}';
+      final Future<void> operation = _pipeline.then((_) async {
+        await _enqueue(<String, Object?>{
+          'event_id': stableEventId,
           'event': event,
           'client_id': await _clientId(),
           'session_id': _sessionId,
@@ -62,15 +71,13 @@ class MobileAnalytics {
             'currency': currency.trim().toUpperCase(),
           if (orderId > 0) 'order_id': orderId,
           if (properties.isNotEmpty) 'properties': properties,
-        },
-        options: Options(
-          headers: authToken.trim().isEmpty
-              ? null
-              : <String, String>{'X-Kidia-Session': authToken.trim()},
-        ),
-      );
-    } catch (_) {
-      // Analytics must not interrupt shopping, authentication or checkout.
+        });
+        await _flush(authToken: authToken);
+      });
+      _pipeline = operation.catchError((Object _) {});
+      await operation;
+    } on Object {
+      // Analytics must never interrupt shopping, authentication or checkout.
     }
   }
 
@@ -153,6 +160,61 @@ class MobileAnalytics {
     final String created = _randomIdentifier();
     await preferences.setString(_clientKey, created);
     return created;
+  }
+
+  Future<void> _enqueue(Map<String, Object?> payload) async {
+    final SharedPreferences preferences = await (_preferences ??=
+        SharedPreferences.getInstance());
+    final List<String> queue = List<String>.from(
+      preferences.getStringList(_queueKey) ?? const <String>[],
+    );
+    queue.add(jsonEncode(payload));
+    if (queue.length > 200) {
+      queue.removeRange(0, queue.length - 200);
+    }
+    await preferences.setStringList(_queueKey, queue);
+  }
+
+  Future<void> _flush({String authToken = ''}) async {
+    if (_flushing) return;
+    _flushing = true;
+    try {
+      final SharedPreferences preferences = await (_preferences ??=
+          SharedPreferences.getInstance());
+      final List<String> queue = List<String>.from(
+        preferences.getStringList(_queueKey) ?? const <String>[],
+      );
+      while (queue.isNotEmpty) {
+        Map<String, Object?> payload;
+        try {
+          payload = Map<String, Object?>.from(
+            jsonDecode(queue.first) as Map,
+          );
+        } on Object {
+          queue.removeAt(0);
+          await preferences.setStringList(_queueKey, queue);
+          continue;
+        }
+        try {
+          await _dio.post<void>(
+            _endpoint('/wp-json/woo-mobile/v1/analytics/event'),
+            data: payload,
+            options: Options(
+              headers: authToken.trim().isEmpty
+                  ? null
+                  : <String, String>{'X-Kidia-Session': authToken.trim()},
+            ),
+          );
+        } on Object {
+          // Keep this event and every later event for the next app activity.
+          break;
+        }
+        queue.removeAt(0);
+        await preferences.setStringList(_queueKey, queue);
+      }
+    } finally {
+      _flushing = false;
+    }
   }
 
   static String _randomIdentifier() {
