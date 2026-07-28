@@ -196,6 +196,9 @@
 	}
 
 	function buildPreviewPayload(snapshot, page) {
+		const demoCatalog = snapshot && snapshot.demo_catalog && typeof snapshot.demo_catalog === 'object'
+			? snapshot.demo_catalog
+			: { products: [], categories: [] };
 		const layoutRequest = postPreviewJson(
 			String(previewConfig.layoutPreviewBase || '') + encodeURIComponent(page) + '/preview',
 			{ layout: previewPageLayout(snapshot, page) }
@@ -203,9 +206,12 @@
 		if (page === 'home') {
 			return Promise.all([
 				layoutRequest,
-				postPreviewJson(previewConfig.homePreviewEndpoint, { blocks: Array.isArray(snapshot.home) ? snapshot.home : [] })
+				postPreviewJson(previewConfig.homePreviewEndpoint, {
+					blocks: Array.isArray(snapshot.home) ? snapshot.home : [],
+					demo_catalog: demoCatalog
+				})
 			]).then(function (payloads) {
-				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], home: payloads[1] };
+				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], home: payloads[1], demo_catalog: demoCatalog };
 			});
 		}
 		if (page === 'category') {
@@ -216,11 +222,11 @@
 					general: category.general && typeof category.general === 'object' ? category.general : {}
 				})
 			]).then(function (payloads) {
-				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], category: payloads[1] };
+				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], category: payloads[1], demo_catalog: demoCatalog };
 			});
 		}
 		return layoutRequest.then(function (layout) {
-			return { type: 'kidia-preview-layout', page: page, layout: layout };
+			return { type: 'kidia-preview-layout', page: page, layout: layout, demo_catalog: demoCatalog };
 		});
 	}
 
@@ -246,8 +252,9 @@
 		setPreviewLoading(true);
 		const previewUrl = new URL(String(previewConfig.flutterUrl), window.location.href);
 		previewUrl.searchParams.set('page', page);
+		previewUrl.searchParams.set('demo', '1');
 		previewUrl.searchParams.set('v', String(previewConfig.version || Date.now()));
-		if (page === 'product') previewUrl.searchParams.set('product', String(previewConfig.productId || 1));
+		if (page === 'product') previewUrl.searchParams.set('product', '9001');
 		previewFrameOrigin = previewUrl.origin;
 		previewFrame.src = previewUrl.toString();
 		buildPreviewPayload(previewSnapshot, page).then(function (payload) {

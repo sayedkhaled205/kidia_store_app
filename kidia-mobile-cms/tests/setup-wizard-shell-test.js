@@ -7,6 +7,15 @@ const { JSDOM } = require("jsdom");
 
 const root = path.resolve(__dirname, "..");
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
+const webpDimensions = (file) => {
+  const buffer = fs.readFileSync(file);
+  const marker = buffer.indexOf(Buffer.from([0x9d, 0x01, 0x2a]));
+  assert.ok(marker > 0, `${file} must contain a decodable VP8 frame.`);
+  return {
+    width: buffer.readUInt16LE(marker + 3) & 0x3fff,
+    height: buffer.readUInt16LE(marker + 5) & 0x3fff
+  };
+};
 
 const service = read("includes", "class-kidia-mobile-setup-wizard.php");
 const exporter = read("includes", "class-kidia-mobile-app-exporter.php");
@@ -24,12 +33,44 @@ const shellCss = read("admin", "assets", "cms-shell.css");
 const shellScript = read("admin", "assets", "cms-shell.js");
 const storeDataTemplate = read("admin", "pages", "store-data.php");
 const pushTemplate = read("admin", "pages", "push-notifications.php");
+const previewMain = read("..", "lib", "cms_preview_main.dart");
+const previewCatalog = read("..", "lib", "features", "catalog", "data", "repositories", "cms_preview_catalog_repository.dart");
+const previewBridge = read("..", "lib", "features", "page_builder", "presentation", "providers", "cms_preview_layout_bridge_web.dart");
 
-for (const theme of ["fashion", "beauty", "electronics", "home_living", "kids_baby", "sports_fitness", "grocery", "luxury", "coffee", "multi_store"]) {
+const builtInThemes = ["fashion", "beauty", "electronics", "home_living", "kids_baby", "sports_fitness", "grocery", "luxury", "coffee", "multi_store", "jewelry", "pet_care"];
+const idealThemeAssetSizes = {
+  hero: { width: 1200, height: 600 },
+  banner: { width: 800, height: 600 },
+  category: { width: 480, height: 480 }
+};
+const themeProductAssetSizes = {
+  fashion: { width: 810, height: 600 },
+  beauty: { width: 600, height: 600 },
+  electronics: { width: 600, height: 667 },
+  home_living: { width: 720, height: 600 },
+  kids_baby: { width: 600, height: 600 },
+  sports_fitness: { width: 660, height: 600 },
+  grocery: { width: 600, height: 698 },
+  luxury: { width: 870, height: 600 },
+  coffee: { width: 648, height: 600 },
+  multi_store: { width: 600, height: 667 },
+  jewelry: { width: 720, height: 600 },
+  pet_care: { width: 600, height: 600 }
+};
+for (const theme of builtInThemes) {
   assert.match(service, new RegExp(`'${theme}'\\s*=>`), `Theme ${theme} must be registered.`);
 }
-for (const asset of ["fashion.webp", "beauty.webp", "electronics.webp", "home-living.webp", "kids-baby.webp", "sports-fitness.webp", "grocery.webp", "luxury.webp", "coffee.webp", "multi-store.webp"]) {
-  assert.equal(fs.existsSync(path.join(root, "admin", "assets", "theme-previews", asset)), true, `Theme image ${asset} must be bundled with the plugin.`);
+assert.equal(builtInThemes.length, 12, "Quick Setup must provide exactly twelve complete themes.");
+for (const theme of builtInThemes) {
+  for (const role of ["hero", "banner", "category", "product"]) {
+    for (let index = 1; index <= 6; index += 1) {
+      const asset = path.join(root, "admin", "assets", "theme-previews", theme, `${role}-${index}.webp`);
+      assert.equal(fs.existsSync(asset), true, `Theme asset ${theme}/${role}-${index}.webp must be bundled.`);
+      assert.ok(fs.statSync(asset).size > 1000, `Theme asset ${theme}/${role}-${index}.webp must contain real artwork.`);
+      const idealSize = role === "product" ? themeProductAssetSizes[theme] : idealThemeAssetSizes[role];
+      assert.deepEqual(webpDimensions(asset), idealSize, `Theme asset ${theme}/${role}-${index}.webp must match its ideal setting ratio.`);
+    }
+  }
 }
 assert.match(service, /create_backup\(\)/, "Applying a theme must snapshot the current application.");
 assert.match(service, /Kidia_Mobile_Layout_Store/, "Themes must update the Home builder.");
@@ -42,9 +83,11 @@ for (const page of ["home", "category", "catalog", "product", "wishlist", "accou
   assert.match(service, new RegExp(`'${page}'\\s*=>`), `Quick Setup must expose ${page} in page selection.`);
 }
 assert.match(service, /array_fill_keys\(\s*array_keys\(\s*self::setup_pages\(\)\s*\),\s*\$theme_key\s*\)/, "One selected store theme must be shared by all enabled pages.");
-assert.match(service, /catalog_slides\(\s*\$theme\s*\)[\s\S]*setup_theme_hero[\s\S]*hero_url/, "Theme installation must place the bundled real image in the live Home hero.");
+assert.match(service, /catalog_slides\(\s*\$theme\s*\)[\s\S]*setup_theme_hero_[\s\S]*asset_url/, "Theme installation must place multiple bundled images in the live Home hero.");
+assert.doesNotMatch(service.match(/private function catalog_slides[\s\S]*?return \$slides;\s*\}/)?.[0] || "", /wc_get_products|wp_get_attachment_image_url/, "Built-in theme slides must never read merchant products or media.");
+assert.match(service, /build_demo_catalog[\s\S]*theme_demo_labels[\s\S]*product-\d|asset_url\(\s*\$theme,\s*'product'/, "Every built-in theme must include its own demo products and artwork.");
 assert.match(service, /preview_snapshot[\s\S]*build_home[\s\S]*build_page_layout[\s\S]*build_category_settings/, "Built-in preview and installation must share the same real theme builders.");
-assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'/, "Every built-in theme must define a distinct multi-page layout profile.");
+assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'[\s\S]*'jewelry'[\s\S]*'pet_care'/, "Every built-in theme must define a distinct multi-page layout profile.");
 for (const pageDesign of ["catalog", "product", "wishlist", "account"]) {
   assert.match(service, new RegExp(`'${pageDesign}'\\s*=>\\s*array`), `Complete themes must configure the ${pageDesign} page.`);
 }
@@ -93,7 +136,8 @@ assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity m
 assert.match(wizardTemplate, /data-color-picker="primary"[\s\S]*data-color-code="primary"[\s\S]*data-color-picker="secondary"[\s\S]*data-color-code="secondary"/, "Both application colors must expose a picker and editable HEX code.");
 assert.match(wizardTemplate, /if \( \$is_required \)[\s\S]*type="hidden"[\s\S]*data-required-page="1"[\s\S]*else[\s\S]*type="checkbox"[\s\S]*if \( ! \$is_required \)[\s\S]*kidia-page-choice__switch/, "Required pages must stay enabled without rendering a checkbox or On/Off switch.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
-assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
+assert.doesNotMatch(wizardTemplate, /catalog_images/, "Theme cards must never use merchant catalog images.");
+assert.match(wizardTemplate, /asset_url\(\s*\$theme,\s*'category'[\s\S]*asset_url\(\s*\$theme,\s*'product'/, "Theme cards must use their bundled category and product artwork.");
 assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
 assert.match(dashboardTemplate, /Build & Download APK/, "Overview must label the combined APK action clearly.");
 assert.match(dashboardTemplate, /data-build-form[\s\S]*data-build-form-action[\s\S]*data-build-action/, "Overview must expose one stateful build/download control in the last launch step.");
@@ -166,6 +210,11 @@ const wizardScript = read("admin", "assets", "setup-wizard.js");
 assert.match(wizardScript, /setProperty\('--kidia-setup-theme-color', '#2f806e'\)/, "Setup actions must keep the WooMobile brand color.");
 assert.match(wizardScript, /normalizeHex[\s\S]*data-color-code[\s\S]*syncColorPair/, "Editable HEX color values must stay synchronized with their color pickers.");
 assert.match(wizardScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Built-in theme preview must render real Home, Category and page layouts in Flutter.");
+assert.match(wizardScript, /demo_catalog[\s\S]*searchParams\.set\('demo', '1'\)[\s\S]*searchParams\.set\('product', '9001'\)/, "Built-in previews must route every page through the theme-only demo catalog.");
+assert.match(previewMain, /catalogRepositoryProvider\.overrideWithValue[\s\S]*CmsPreviewCatalogRepository/, "Flutter theme previews must replace the live catalog repository.");
+assert.match(previewCatalog, /CmsPreviewLayoutBridge\.demoCatalog/, "The preview catalog must read only the selected theme payload.");
+assert.doesNotMatch(previewCatalog, /Dio|StoreApi|apiBaseUrl|wc_/, "The preview catalog must never call the merchant store.");
+assert.match(previewBridge, /demo_catalog[\s\S]*_demoCatalogReady/, "The preview bridge must deliver the bundled demo catalog before product pages render.");
 assert.match(wizardScript, /kidia-theme-modal__select/, "Full preview must allow selecting the previewed complete theme.");
 assert.match(wizardScript, /document\.querySelector\('\.kidia-setup-hero'\)/, "Wizard navigation must keep the Setup & Themes hero visible.");
 assert.match(wizardScript, /history\.scrollRestoration = 'manual'/, "Wizard must ignore stale browser scroll restoration.");
@@ -241,6 +290,7 @@ assert.equal(wizardDom.window.document.querySelector('[data-color-picker="primar
 wizardDom.window.document.querySelector(".kidia-theme-preview-button").click();
 assert.equal(wizardDom.window.document.querySelector(".kidia-theme-modal").hidden, false, "Theme preview must open without applying the theme.");
 assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=home/, "Built-in theme preview must open the real Flutter Home page.");
+assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /demo=1/, "Built-in theme preview must not load merchant data.");
 wizardDom.window.document.querySelector('[data-theme-modal-page="account"]').click();
 assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=account/, "Theme preview navigation must render every selected application page.");
 

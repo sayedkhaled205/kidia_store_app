@@ -1,5 +1,6 @@
 class CmsPreviewLayoutBridge {
   const CmsPreviewLayoutBridge._();
+  static bool useDemoCatalog = false;
 
   static Stream<Map<String, dynamic>?> layoutsFor(String page) =>
       const Stream<Map<String, dynamic>?>.empty();
@@ -15,4 +16,9 @@ class CmsPreviewLayoutBridge {
 
   static Stream<double> get homeScrollDeltas =>
       const Stream<double>.empty();
+
+  static Future<Map<String, dynamic>> get demoCatalog =>
+      Future<Map<String, dynamic>>.value(
+        const <String, dynamic>{'products': <dynamic>[], 'categories': <dynamic>[]},
+      );
 }

@@ -411,7 +411,6 @@ final class Kidia_Mobile_CMS_Admin {
 		$push_export_config = Kidia_Mobile_Push_Service::client_configuration();
 		$app_export_state   = Kidia_Mobile_App_Exporter::state();
 		$catalog_stats  = array( 'products' => 0, 'categories' => 0, 'images' => 0 );
-		$catalog_images = array();
 		if ( function_exists( 'wp_count_posts' ) ) {
 			$count = wp_count_posts( 'product' );
 			$catalog_stats['products'] = is_object( $count ) ? absint( $count->publish ?? 0 ) : 0;
@@ -424,12 +423,6 @@ final class Kidia_Mobile_CMS_Admin {
 			foreach ( wc_get_products( array( 'status' => 'publish', 'limit' => 100, 'return' => 'objects' ) ) as $product ) {
 				if ( is_object( $product ) && method_exists( $product, 'get_image_id' ) && $product->get_image_id() ) {
 					++$catalog_stats['images'];
-					if ( count( $catalog_images ) < 3 ) {
-						$image_url = wp_get_attachment_image_url( absint( $product->get_image_id() ), 'woocommerce_thumbnail' );
-						if ( $image_url ) {
-							$catalog_images[] = (string) $image_url;
-						}
-					}
 				}
 			}
 		}
@@ -2475,13 +2468,6 @@ final class Kidia_Mobile_CMS_Admin {
 							);
 						} else {
 							wp_enqueue_script( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.js' ), true );
-							$setup_preview_product_id = 1;
-							if ( function_exists( 'wc_get_products' ) ) {
-								$setup_preview_product_ids = wc_get_products( array( 'status' => 'publish', 'limit' => 1, 'return' => 'ids' ) );
-								if ( ! empty( $setup_preview_product_ids[0] ) ) {
-									$setup_preview_product_id = absint( $setup_preview_product_ids[0] );
-								}
-							}
 							$setup_preview_wizard = new Kidia_Mobile_Setup_Wizard();
 							$setup_theme_snapshots = array();
 							foreach ( array_keys( Kidia_Mobile_Setup_Wizard::themes() ) as $setup_theme_key ) {
@@ -2496,7 +2482,7 @@ final class Kidia_Mobile_CMS_Admin {
 									'homePreviewEndpoint' => rest_url( 'woomobileapp/v1/home-layout/preview' ),
 									'categoryPreviewEndpoint' => rest_url( 'woo-mobile/v1/category-page/preview' ),
 									'restNonce' => wp_create_nonce( 'wp_rest' ),
-									'productId' => $setup_preview_product_id,
+									'productId' => 9001,
 									'version' => KIDIA_MOBILE_CMS_VERSION,
 									'themes' => $setup_theme_snapshots,
 									'errorLabel' => __( 'The real theme preview could not be loaded. Try opening it again.', 'kidia-mobile-cms' ),

@@ -10,6 +10,7 @@ import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_
 import 'package:kidia_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
@@ -106,12 +107,14 @@ class WishlistScreen extends StatefulWidget {
 
 class _WishlistScreenState extends State<WishlistScreen> {
   late WishlistController _controller;
+  Future<List<CatalogProduct>>? _themeDemoProducts;
   Timer? _snackBarTimer;
 
   @override
   void initState() {
     super.initState();
     _createController();
+    _loadThemeDemoProducts();
   }
 
   @override
@@ -122,7 +125,16 @@ class _WishlistScreenState extends State<WishlistScreen> {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
       _createController();
+      _loadThemeDemoProducts();
     }
+  }
+
+  void _loadThemeDemoProducts() {
+    _themeDemoProducts = CmsPreviewLayoutBridge.useDemoCatalog
+        ? widget.catalogRepository
+              .getProducts(CatalogProductQuery(perPage: 6))
+              .then((page) => page.items)
+        : null;
   }
 
   void _createController() {
@@ -176,7 +188,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                   (previewState == 'products' ||
                       previewState.isEmpty && !signedOutGate))
                 Text(
-                  '${previewState == 'products' && _controller.length == 0 ? _previewWishlistProducts.length : _controller.length}',
+                  '${previewState == 'products' && _controller.length == 0 ? (CmsPreviewLayoutBridge.useDemoCatalog ? 6 : _previewWishlistProducts.length) : _controller.length}',
                   key: const Key('wishlist-count'),
                 ),
               if (_controller.mutationError != null)
@@ -215,6 +227,25 @@ class _WishlistScreenState extends State<WishlistScreen> {
       return _buildEmptyState(copy, layout);
     }
     if (previewState == 'products') {
+      if (CmsPreviewLayoutBridge.useDemoCatalog) {
+        return FutureBuilder<List<CatalogProduct>>(
+          future: _themeDemoProducts,
+          builder: (
+            BuildContext context,
+            AsyncSnapshot<List<CatalogProduct>> snapshot,
+          ) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return _buildProductState(
+              copy,
+              layout,
+              snapshot.data!,
+              previewOnly: true,
+            );
+          },
+        );
+      }
       return _buildProductState(
         copy,
         layout,
@@ -628,7 +659,8 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
         .round()
         .clamp(2, 12)
         .toInt();
-    if (AppConfig.isCmsPreview) {
+    if (AppConfig.isCmsPreview &&
+        !CmsPreviewLayoutBridge.useDemoCatalog) {
       return _previewWishlistProducts.take(limit).toList(growable: false);
     }
     final page = await widget.repository
