@@ -809,6 +809,26 @@
 		}
 	}
 
+	function openBlockEditor(block) {
+		if (!block) {
+			return;
+		}
+		getBlocks().forEach(function (candidate) {
+			candidate.classList.toggle("is-editing", candidate === block);
+			setCollapsed(candidate, candidate !== block);
+		});
+		builder.classList.add("is-editing");
+		block.scrollIntoView({ block: "start", behavior: "smooth" });
+	}
+
+	function closeBlockEditor() {
+		getBlocks().forEach(function (block) {
+			block.classList.remove("is-editing");
+			setCollapsed(block, true);
+		});
+		builder.classList.remove("is-editing");
+	}
+
 	function collapseAll(collapsed) {
 		getBlocks().forEach(function (block) {
 			setCollapsed(block, collapsed);
@@ -1210,7 +1230,7 @@
 			target.closest(".kidia-builder-block__header") &&
 			!target.closest("button,label,input,select,textarea,a,.kidia-builder-drag")
 		) {
-			setCollapsed(block, false);
+			openBlockEditor(block);
 			return;
 		}
 
@@ -1242,7 +1262,12 @@
 		}
 
 		if (target.closest(".kidia-toggle-block-settings")) {
-			setCollapsed(block, !block.classList.contains("is-collapsed"));
+			openBlockEditor(block);
+			return;
+		}
+
+		if (target.closest(".kidia-element-editor__back")) {
+			closeBlockEditor();
 			return;
 		}
 
@@ -1254,6 +1279,9 @@
 				return;
 			}
 			block.remove();
+			if (builder.classList.contains("is-editing")) {
+				closeBlockEditor();
+			}
 			updateIndexes();
 			ensureEmptyState();
 			markDirty();
@@ -1350,16 +1378,16 @@
 		}
 	});
 
-	toArray(document.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (filterButton) {
+	toArray(picker ? picker.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]") : []).forEach(function (filterButton) {
 		filterButton.addEventListener("click", function () {
 			var selectedCategory = filterButton.dataset.kidiaElementCategory || "all";
-			toArray(document.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (button) {
+			toArray(picker.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (button) {
 				var active = button === filterButton;
 				button.classList.toggle("is-active", active);
 				button.setAttribute("aria-pressed", active ? "true" : "false");
 			});
-			getBlocks().forEach(function (block) {
-				block.hidden = selectedCategory !== "all" && block.dataset.elementCategory !== selectedCategory;
+			toArray(picker.querySelectorAll(".kidia-element-group")).forEach(function (group) {
+				group.hidden = selectedCategory !== "all" && group.dataset.elementCategory !== selectedCategory;
 			});
 		});
 	});

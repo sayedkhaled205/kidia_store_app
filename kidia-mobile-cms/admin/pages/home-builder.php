@@ -221,17 +221,6 @@ foreach ( $library_options as $type => $option_name ) {
 		<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 		<?php $chrome_layout = $home_chrome; $chrome_part = 'header'; $chrome_page = 'home'; include KIDIA_MOBILE_CMS_PATH . 'admin/pages/fixed-chrome-card.php'; ?>
 
-		<nav class="kidia-element-category-filter" aria-label="<?php echo esc_attr__( 'Filter Home elements by category', 'kidia-mobile-cms' ); ?>">
-			<button type="button" class="button is-active" data-kidia-element-category="all" aria-pressed="true">
-				<?php esc_html_e( 'All', 'kidia-mobile-cms' ); ?>
-			</button>
-			<?php foreach ( $element_categories as $category_key => $category ) : ?>
-				<button type="button" class="button" data-kidia-element-category="<?php echo esc_attr( $category_key ); ?>" aria-pressed="false">
-					<?php echo esc_html( $category['label'] ); ?>
-				</button>
-			<?php endforeach; ?>
-		</nav>
-
 		<div
 			id="kidia-home-builder"
 			class="kidia-builder-list"
@@ -374,6 +363,16 @@ foreach ( $library_options as $type => $option_name ) {
 		aria-modal="true"
 		aria-labelledby="kidia-element-picker-title"
 	>
+		<nav class="kidia-element-category-filter" aria-label="<?php echo esc_attr__( 'Filter elements by category', 'kidia-mobile-cms' ); ?>">
+			<button type="button" class="button is-active" data-kidia-element-category="all" aria-pressed="true">
+				<?php esc_html_e( 'All', 'kidia-mobile-cms' ); ?>
+			</button>
+			<?php foreach ( $element_categories as $category_key => $category ) : ?>
+				<button type="button" class="button" data-kidia-element-category="<?php echo esc_attr( $category_key ); ?>" aria-pressed="false">
+					<?php echo esc_html( $category['label'] ); ?>
+				</button>
+			<?php endforeach; ?>
+		</nav>
 
 		<div class="kidia-element-picker__header">
 
@@ -467,18 +466,24 @@ foreach ( $library_options as $type => $option_name ) {
 				// Home Builder is the only authoring surface. Legacy Library records
 				// remain in the database for migration, but are not offered here.
 				$type_items = array();
+				$picker_category = $element_category_by_type[ $type ] ?? array(
+					'key'   => 'content',
+					'label' => __( 'Content', 'kidia-mobile-cms' ),
+				);
 				?>
 
 				<details
 					class="kidia-element-group"
 					data-element-group="<?php echo esc_attr( $type ); ?>"
+					data-element-category="<?php echo esc_attr( $picker_category['key'] ); ?>"
 				>
 					<summary class="kidia-element-group__summary">
 						<span class="kidia-element-group__identity">
 								<span
 									class="dashicons <?php echo esc_attr( $icon ); ?>"
-								></span>
+							></span>
 							<strong><?php echo esc_html( $label ); ?></strong>
+							<small><?php echo esc_html( $picker_category['label'] ); ?></small>
 						</span>
 						<span class="kidia-element-group__count">
 							<?php
