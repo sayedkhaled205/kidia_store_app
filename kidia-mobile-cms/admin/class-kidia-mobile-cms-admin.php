@@ -1911,7 +1911,7 @@ final class Kidia_Mobile_CMS_Admin {
 				),
 			),
 			'push' => $tab( __( 'Push Notifications', 'kidia-mobile-cms' ), 'kidia-mobile-push-notifications', 'dashicons-megaphone' ),
-			'website_promotion' => $tab( __( 'Promote App on Website', 'kidia-mobile-cms' ), 'kidia-mobile-website-app-promotion', 'dashicons-welcome-view-site' ),
+			'website_promotion' => $tab( __( 'Promote App on Website', 'kidia-mobile-cms' ), 'kidia-mobile-website-app-promotion', 'dashicons-smartphone' ),
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
