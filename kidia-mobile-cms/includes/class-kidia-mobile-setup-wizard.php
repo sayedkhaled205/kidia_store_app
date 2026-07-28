@@ -107,6 +107,63 @@ final class Kidia_Mobile_Setup_Wizard {
 		return is_array( $themes ) ? $themes : array();
 	}
 
+	/**
+	 * Returns lightweight, display-only data for a saved-theme preview.
+	 *
+	 * The preview is derived from the saved snapshot itself so two saved themes
+	 * with different banners, branding or colors never share a generic mockup.
+	 *
+	 * @param array<string,mixed> $saved_theme Saved theme record.
+	 * @return array<string,mixed>
+	 */
+	public function saved_theme_preview( array $saved_theme ): array {
+		$snapshot  = is_array( $saved_theme['snapshot'] ?? null ) ? $saved_theme['snapshot'] : array();
+		$identity  = is_array( $snapshot['identity'] ?? null ) ? $snapshot['identity'] : array();
+		$home      = is_array( $snapshot['home'] ?? null ) ? $snapshot['home'] : array();
+		$image_urls = array();
+		$this->collect_preview_image_urls( $home, $image_urls );
+
+		if ( empty( $image_urls ) ) {
+			$this->collect_preview_image_urls( $snapshot['splash'] ?? array(), $image_urls );
+		}
+
+		$primary = sanitize_hex_color( (string) ( $identity['primary_color'] ?? '' ) ) ?: '#2F806E';
+		$soft    = sanitize_hex_color( (string) ( $identity['secondary_color'] ?? '' ) ) ?: '#EAF6F2';
+		$ink     = '#182D28';
+		$blocks  = array();
+
+		foreach ( $home as $block ) {
+			if ( ! is_array( $block ) || false === (bool) ( $block['enabled'] ?? true ) ) {
+				continue;
+			}
+			$type = sanitize_key( (string) ( $block['type'] ?? '' ) );
+			if ( '' !== $type ) {
+				$blocks[] = $type;
+			}
+			$settings = is_array( $block['settings'] ?? null ) ? $block['settings'] : array();
+			if ( '#2F806E' === strtoupper( $primary ) ) {
+				$primary = sanitize_hex_color( (string) ( $settings['primary_color'] ?? '' ) ) ?: $primary;
+			}
+			if ( '#EAF6F2' === strtoupper( $soft ) ) {
+				$soft = sanitize_hex_color( (string) ( $settings['accent_color'] ?? '' ) ) ?: $soft;
+			}
+			if ( '#182D28' === strtoupper( $ink ) ) {
+				$ink = sanitize_hex_color( (string) ( $settings['text_color'] ?? '' ) ) ?: $ink;
+			}
+		}
+
+		return array(
+			'app_name'  => sanitize_text_field( (string) ( $identity['app_name'] ?? $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) ) ),
+			'primary'   => $primary,
+			'soft'      => $soft,
+			'ink'       => $ink,
+			'logo_url'  => esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) ),
+			'images'    => array_slice( array_values( array_unique( $image_urls ) ), 0, 5 ),
+			'blocks'    => array_values( array_unique( $blocks ) ),
+			'direction' => 'rtl' === ( $identity['direction'] ?? '' ) ? 'rtl' : 'ltr',
+		);
+	}
+
 	public function save_current_theme( string $name ): string {
 		$name = sanitize_text_field( $name );
 		if ( '' === $name ) {
@@ -597,5 +654,33 @@ final class Kidia_Mobile_Setup_Wizard {
 			$value[ $key ] = $this->strip_catalog_images( $item, $catalog_context || in_array( (string) $key, array( 'products', 'categories' ), true ) );
 		}
 		return $value;
+	}
+
+	/**
+	 * Finds actual design artwork retained in a saved theme snapshot.
+	 *
+	 * @param mixed             $value Snapshot node.
+	 * @param array<int,string> $image_urls Collected image URLs.
+	 */
+	private function collect_preview_image_urls( $value, array &$image_urls ): void {
+		if ( ! is_array( $value ) || count( $image_urls ) >= 5 ) {
+			return;
+		}
+		foreach ( $value as $key => $item ) {
+			if ( count( $image_urls ) >= 5 ) {
+				break;
+			}
+			if (
+				is_string( $item )
+				&& in_array( (string) $key, array( 'image_url', 'mobile_image_url', 'desktop_image_url', 'background_image', 'thumbnail_url' ), true )
+			) {
+				$image_url = esc_url_raw( $item );
+				if ( '' !== $image_url ) {
+					$image_urls[] = $image_url;
+				}
+				continue;
+			}
+			$this->collect_preview_image_urls( $item, $image_urls );
+		}
 	}
 }

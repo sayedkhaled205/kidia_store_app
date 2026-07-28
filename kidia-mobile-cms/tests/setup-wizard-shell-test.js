@@ -17,6 +17,7 @@ const admin = read("admin", "class-kidia-mobile-cms-admin.php");
 const wizardTemplate = read("admin", "pages", "setup-wizard.php");
 const dashboardTemplate = read("admin", "pages", "dashboard.php");
 const savedThemesTemplate = read("admin", "pages", "saved-themes.php");
+const savedThemesScript = read("admin", "assets", "saved-themes.js");
 const shellTemplate = read("admin", "pages", "cms-shell.php");
 const wizardCss = read("admin", "assets", "setup-wizard.css");
 const shellCss = read("admin", "assets", "cms-shell.css");
@@ -42,6 +43,7 @@ assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required an
 assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
 assert.match(service, /strip_catalog_images/, "Saved themes must exclude product and category catalog images.");
+assert.match(service, /saved_theme_preview[\s\S]*collect_preview_image_urls/, "Saved theme cards must derive their artwork from the stored theme snapshot.");
 assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
 assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile_App_Exporter\(\)\)->register/, "The app exporter must load and register with the plugin.");
 assert.match(exporter, /woomobile-app-build-package[\s\S]*app-config\.json[\s\S]*push-config\.json[\s\S]*dart-defines\.json/, "Export App must download a portable build package.");
@@ -87,6 +89,10 @@ assert.doesNotMatch(shellTemplate.match(/<form class="kidia-cms-save-theme"[\s\S
 assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*width:max-content;[^}]*min-width:0;/, "The Save Theme button must fit its label instead of keeping an oversized width.");
 assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s\S]*requestSubmit/, "The themed Save Theme dialog must preserve unsaved builder fields before creating the named theme.");
 assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Theme import must use the WooMobile file control and theme-colored action.");
+assert.match(savedThemesTemplate, /data-saved-theme-phone[\s\S]*theme_images[\s\S]*data-saved-theme-preview/, "Every saved theme card must show its own artwork and expose Preview.");
+assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must provide a focused large preview dialog.");
+assert.match(savedThemesScript, /cloneNode\(true\)[\s\S]*showModal/, "Preview must open the selected theme's own phone inside the dialog.");
+assert.match(admin, /kidia-mobile-saved-themes[\s\S]*admin\/assets\/saved-themes\.js/, "The Saved Themes page must load its preview interactions.");
 assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");
 assert.match(admin, /'setup'\s*=>\s*\$tab\(\s*__\(\s*'Setup Wizard'/, "Setup Wizard must follow Overview.");
 assert.match(admin, /\$tabs\s*=\s*array\([\s\S]*'splash'\s*=>\s*\$tab\(\s*__\(\s*'Splash'/, "Splash must be the first page tab.");
@@ -178,5 +184,22 @@ const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></
 shellDom.window.scrollTo = () => {};
 shellDom.window.eval(read("admin", "assets", "cms-shell.js"));
 assert.equal(shellDom.window.document.querySelector(".kidia-cms-more"), null, "More menu must remain removed.");
+
+const savedThemeDom = new JSDOM(`<!doctype html><body>
+  <article data-saved-theme-card>
+    <div class="kidia-saved-theme-phone" data-saved-theme-phone><img src="theme-banner.jpg" alt=""></div>
+    <button type="button" data-saved-theme-preview data-theme-name="Fashion Theme">Preview</button>
+  </article>
+  <dialog data-saved-theme-dialog>
+    <button type="button" data-saved-theme-dialog-close></button>
+    <div data-saved-theme-dialog-phone></div>
+    <h2 data-saved-theme-dialog-title></h2>
+  </dialog>
+</body>`, { runScripts: "outside-only" });
+savedThemeDom.window.eval(savedThemesScript);
+savedThemeDom.window.document.querySelector("[data-saved-theme-preview]").click();
+assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog]").hasAttribute("open"), true, "Preview must open without applying the theme.");
+assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-title]").textContent, "Fashion Theme", "Preview must show the selected theme name.");
+assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-phone] img").getAttribute("src"), "theme-banner.jpg", "Preview must clone the selected theme artwork.");
 
 console.log("Setup wizard and unified CMS shell tests passed.");

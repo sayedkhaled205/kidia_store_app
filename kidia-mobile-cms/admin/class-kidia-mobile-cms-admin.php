@@ -2395,7 +2395,9 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( in_array( $page, array( 'kidia-mobile-setup', 'kidia-mobile-saved-themes' ), true ) || ( 'kidia-mobile-cms' === $page && ! ( new Kidia_Mobile_Setup_Wizard() )->is_complete() ) ) {
 						wp_enqueue_media();
 						wp_enqueue_style( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.css', array( 'kidia-mobile-cms-shell' ), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.css' ) );
-						if ( 'kidia-mobile-saved-themes' !== $page ) {
+						if ( 'kidia-mobile-saved-themes' === $page ) {
+							wp_enqueue_script( 'kidia-mobile-saved-themes', KIDIA_MOBILE_CMS_URL . 'admin/assets/saved-themes.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/saved-themes.js' ), true );
+						} else {
 							wp_enqueue_script( 'kidia-mobile-setup-wizard', KIDIA_MOBILE_CMS_URL . 'admin/assets/setup-wizard.js', array(), KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/setup-wizard.js' ), true );
 						}
 						return;
