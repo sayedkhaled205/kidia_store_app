@@ -13,7 +13,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	private const CANCEL_PREFIX = 'kidia_mobile_ai_cancel_v1_';
 
-	private const STEP_LOCK_PREFIX = 'kidia_mobile_ai_step_lock_v1_';
+	private const STEP_LOCK_PREFIX = 'kidia_mobile_ai_step_lock_v2_';
 
 	private const ACTIVE_JOB_META = '_kidia_mobile_active_ai_job_v1';
 
@@ -99,6 +99,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'hours'             => array(),
 			'customer_bitmap'   => str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES ),
 			'background'        => false,
+			'revision'          => 0,
 			'started_at'        => time(),
 			'updated_at'        => time(),
 		);
@@ -122,22 +123,35 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
 			return self::payload( $job, true );
 		}
-		$lock = get_transient( self::step_lock_key( $job_id ) );
-		if ( $lock ) {
-			$lock_started = is_array( $lock ) ? absint( $lock['started_at'] ?? 0 ) : time();
-			if ( $lock_started > 0 && time() - $lock_started < 45 ) {
-				return self::payload( $job, false );
-			}
-			delete_transient( self::step_lock_key( $job_id ) );
+
+		$lock_token = self::acquire_step_lock( $job_id );
+		if ( '' === $lock_token ) {
+			$latest = get_transient( self::key( $job_id ) );
+			$latest = is_array( $latest ) ? $latest : $job;
+			return self::payload( $latest, false, true );
 		}
-		set_transient(
-			self::step_lock_key( $job_id ),
-			array(
-				'started_at' => time(),
-				'token'      => wp_generate_uuid4(),
-			),
-			MINUTE_IN_SECONDS
-		);
+
+		/*
+		 * A scheduler request and a browser request can arrive together. Always
+		 * reload after owning the atomic lock so an older request can never
+		 * overwrite a batch that another runner has already saved.
+		 */
+		$latest = get_transient( self::key( $job_id ) );
+		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+		}
+		$job = $latest;
+		if ( self::is_cancelled( $job_id ) || 'cancelled' === (string) ( $job['phase'] ?? '' ) ) {
+			$job['phase'] = 'cancelled';
+			set_transient( self::key( $job_id ), $job, HOUR_IN_SECONDS );
+			self::release_step_lock( $job_id, $lock_token );
+			return self::payload( $job, true );
+		}
+		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return self::payload( $job, true );
+		}
 
 		$phase = (string) ( $job['phase'] ?? '' );
 		if ( 'orders' === $phase ) {
@@ -147,8 +161,12 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		} elseif ( 'finalize' === $phase ) {
 			self::finalize( $job );
 			$job['completed_at'] = time();
-			set_transient( self::key( $job_id ), $job, 6 * HOUR_IN_SECONDS );
-			delete_transient( self::step_lock_key( $job_id ) );
+			$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
+			if ( ! set_transient( self::key( $job_id ), $job, 6 * HOUR_IN_SECONDS ) ) {
+				self::release_step_lock( $job_id, $lock_token );
+				return array( 'error' => __( 'The completed analysis could not be saved. No partial result was published.', 'kidia-mobile-cms' ) );
+			}
+			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
 		}
 
@@ -156,8 +174,12 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$job['phase'] = 'cancelled';
 		}
 		$job['updated_at'] = time();
-		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
-		delete_transient( self::step_lock_key( $job_id ) );
+		$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
+		if ( ! set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS ) ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return array( 'error' => __( 'This analysis batch could not be saved. Completed records were not reset.', 'kidia-mobile-cms' ) );
+		}
+		self::release_step_lock( $job_id, $lock_token );
 		return self::payload( $job, 'cancelled' === (string) $job['phase'] );
 	}
 
@@ -183,8 +205,35 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true ) ) {
 			return self::payload( $job, true );
 		}
+
+		/*
+		 * Parking often happens while the first browser batch is still in
+		 * flight. Never write the earlier copy read above over a newly saved
+		 * batch. If that batch owns the lock, scheduling is enough: the
+		 * background runner will continue from its saved revision.
+		 */
+		$lock_token = self::acquire_step_lock( $job_id );
+		if ( '' === $lock_token ) {
+			$latest = get_transient( self::key( $job_id ) );
+			self::schedule_background( $job_id );
+			return self::payload( is_array( $latest ) ? $latest : $job, false, true );
+		}
+		$latest = get_transient( self::key( $job_id ) );
+		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+		}
+		$job = $latest;
+		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true ) ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return self::payload( $job, true );
+		}
 		$job['background'] = true;
-		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
+		if ( ! set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS ) ) {
+			self::release_step_lock( $job_id, $lock_token );
+			return array( 'error' => __( 'The analysis could not be moved to the background without losing progress.', 'kidia-mobile-cms' ) );
+		}
+		self::release_step_lock( $job_id, $lock_token );
 		self::schedule_background( $job_id );
 		return self::payload( $job, false );
 	}
@@ -459,7 +508,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	}
 
 	/** Builds a measured progress payload for the browser. */
-	private static function payload( array $job, bool $done ): array {
+	private static function payload( array $job, bool $done, bool $busy = false ): array {
 		$order_total   = absint( $job['order_total'] ?? 0 );
 		$product_total = count( (array) ( $job['product_ids'] ?? array() ) );
 		$total         = max( 1, $order_total + $product_total );
@@ -485,6 +534,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'done'               => $done,
 			'cancelled'          => $cancelled,
 			'background'         => ! empty( $job['background'] ),
+			'busy'               => $busy,
+			'revision'           => absint( $job['revision'] ?? 0 ),
 			'phase'              => $phase,
 			'stage'              => $stage,
 			'progress'           => $progress,
@@ -520,6 +571,41 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	private static function step_lock_key( string $job_id ): string {
 		return self::STEP_LOCK_PREFIX . md5( $job_id );
+	}
+
+	/**
+	 * Acquires a database-backed atomic lock for one batch.
+	 *
+	 * add_option() is atomic because option_name is unique. A transient
+	 * get-then-set lock is not atomic and allowed the browser and scheduler to
+	 * process stale copies of the same job at the same time.
+	 */
+	private static function acquire_step_lock( string $job_id ): string {
+		$key   = self::step_lock_key( $job_id );
+		$token = wp_generate_uuid4();
+		$value = array(
+			'started_at' => time(),
+			'token'      => $token,
+		);
+		if ( add_option( $key, $value, '', 'no' ) ) {
+			return $token;
+		}
+		$existing = get_option( $key, array() );
+		$started  = is_array( $existing ) ? absint( $existing['started_at'] ?? 0 ) : 0;
+		if ( $started > 0 && time() - $started < 90 ) {
+			return '';
+		}
+		delete_option( $key );
+		return add_option( $key, $value, '', 'no' ) ? $token : '';
+	}
+
+	/** Releases only the exact lock owned by this request. */
+	private static function release_step_lock( string $job_id, string $token ): void {
+		$key      = self::step_lock_key( $job_id );
+		$existing = get_option( $key, array() );
+		if ( is_array( $existing ) && hash_equals( (string) ( $existing['token'] ?? '' ), $token ) ) {
+			delete_option( $key );
+		}
 	}
 
 	private static function is_cancelled( string $job_id ): bool {

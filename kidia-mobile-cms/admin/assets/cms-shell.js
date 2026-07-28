@@ -159,6 +159,7 @@
 	}
 	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
 	const aiBackgroundConfig = window.kidiaCMSBackground || {};
+	const aiDockPositionKey = 'kidia_ai_progress_position_v1';
 	const aiRequest = async function (action, values) {
 		const nonce = aiGenerateForm
 			? aiGenerateForm.dataset.aiAnalysisNonce || ''
@@ -197,8 +198,89 @@
 		document.body.appendChild(dock);
 		return dock;
 	};
+	const resetAiProgressVersion = function (overlay, jobId) {
+		if (!overlay) return;
+		overlay.dataset.aiProgressJob = String(jobId || '');
+		overlay.dataset.aiProgressRevision = '-1';
+		overlay.dataset.aiProgressProcessed = '-1';
+	};
+	const positionAiDock = function (overlay, left, top, remember) {
+		if (!overlay || !overlay.classList.contains('is-docked')) return;
+		const width = Math.max(1, overlay.offsetWidth || 380);
+		const height = Math.max(1, overlay.offsetHeight || 180);
+		const maxLeft = Math.max(8, window.innerWidth - width - 8);
+		const maxTop = Math.max(8, window.innerHeight - height - 8);
+		const safeLeft = Math.max(8, Math.min(maxLeft, Number(left) || 8));
+		const safeTop = Math.max(8, Math.min(maxTop, Number(top) || 8));
+		overlay.style.left = safeLeft + 'px';
+		overlay.style.top = safeTop + 'px';
+		overlay.style.right = 'auto';
+		overlay.style.bottom = 'auto';
+		if (remember) {
+			try {
+				window.localStorage.setItem(aiDockPositionKey, JSON.stringify({left: safeLeft, top: safeTop}));
+			} catch (error) {}
+		}
+	};
+	const restoreAiDockPosition = function (overlay) {
+		if (!overlay || !overlay.classList.contains('is-docked')) return;
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(aiDockPositionKey) || 'null');
+			if (saved && Number.isFinite(Number(saved.left)) && Number.isFinite(Number(saved.top))) {
+				positionAiDock(overlay, saved.left, saved.top, false);
+			}
+		} catch (error) {}
+	};
+	const bindAiDockDrag = function (overlay) {
+		if (!overlay || overlay.dataset.aiDragBound === '1') return;
+		const card = overlay.querySelector('.kidia-ai-progress-card');
+		if (!card) return;
+		overlay.dataset.aiDragBound = '1';
+		card.addEventListener('pointerdown', function (event) {
+			if (
+				!overlay.classList.contains('is-docked') ||
+				event.button !== 0 ||
+				event.target.closest('button,a,input,select,textarea')
+			) return;
+			event.preventDefault();
+			const start = overlay.getBoundingClientRect();
+			const offsetX = event.clientX - start.left;
+			const offsetY = event.clientY - start.top;
+			overlay.classList.add('is-dragging');
+			if (typeof card.setPointerCapture === 'function') card.setPointerCapture(event.pointerId);
+			const move = function (moveEvent) {
+				positionAiDock(overlay, moveEvent.clientX - offsetX, moveEvent.clientY - offsetY, false);
+			};
+			const stop = function () {
+				overlay.classList.remove('is-dragging');
+				const current = overlay.getBoundingClientRect();
+				positionAiDock(overlay, current.left, current.top, true);
+				card.removeEventListener('pointermove', move);
+				card.removeEventListener('pointerup', stop);
+				card.removeEventListener('pointercancel', stop);
+			};
+			card.addEventListener('pointermove', move);
+			card.addEventListener('pointerup', stop);
+			card.addEventListener('pointercancel', stop);
+		});
+	};
 	const renderAiProgress = function (overlay, payload) {
 		if (!overlay) return;
+		const payloadJob = String(payload.job_id || '');
+		const currentJob = String(overlay.dataset.aiProgressJob || '');
+		if (currentJob && payloadJob && currentJob !== payloadJob) return;
+		if (!currentJob && payloadJob) overlay.dataset.aiProgressJob = payloadJob;
+		const revision = Number(payload.revision || 0);
+		const processed = Number(payload.processed || 0);
+		const currentRevision = Number(overlay.dataset.aiProgressRevision || -1);
+		const currentProcessed = Number(overlay.dataset.aiProgressProcessed || -1);
+		if (
+			!payload.done &&
+			!payload.cancelled &&
+			(payload.busy || revision < currentRevision || (revision === currentRevision && processed < currentProcessed))
+		) return;
+		overlay.dataset.aiProgressRevision = String(revision);
+		overlay.dataset.aiProgressProcessed = String(processed);
 		const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
 		const progressLabel = Number.isInteger(progress) ? progress.toFixed(0) : progress.toFixed(1);
 		const value = overlay.querySelector('[data-ai-progress-value]');
@@ -237,6 +319,14 @@
 			overlay.dataset.aiComplete = '1';
 		}
 	};
+	if (window.__KIDIA_AI_PROGRESS_TEST__) {
+		window.KidiaAiProgressTest = {
+			render: renderAiProgress,
+			reset: resetAiProgressVersion,
+			position: positionAiDock,
+			bindDrag: bindAiDockDrag
+		};
+	}
 	const pollBackgroundJob = async function (jobId, overlay) {
 		let active = true;
 		let failures = 0;
@@ -278,6 +368,7 @@
 					const payload = await aiRequest('kidia_mobile_background_ai_analysis', {job_id: jobId});
 					setForeground(false);
 					overlay.classList.add('is-docked');
+					restoreAiDockPosition(overlay);
 					document.body.classList.remove('kidia-ai-is-generating');
 					background.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>Running in background';
 					renderAiProgress(overlay, payload);
@@ -347,6 +438,7 @@
 			if (!button) return;
 			foreground = true;
 			activeJobId = '';
+			resetAiProgressVersion(overlay, '');
 			if (overlay) overlay.dataset.aiPollingJob = 'foreground';
 			button.disabled = true;
 			button.classList.add('is-generating');
@@ -370,6 +462,7 @@
 					date_to: to ? to.value : ''
 				});
 				activeJobId = payload.job_id;
+				resetAiProgressVersion(overlay, activeJobId);
 				renderAiProgress(overlay, payload);
 				let failures = 0;
 				while (!payload.done && foreground) {
@@ -406,11 +499,20 @@
 		const dock = createAiDock();
 		dock.hidden = false;
 		dock.classList.add('is-docked');
+		resetAiProgressVersion(dock, configuredJob);
+		restoreAiDockPosition(dock);
 		bindAiOverlayActions(dock, function () { return configuredJob; }, function () {});
 		pollBackgroundJob(configuredJob, dock);
 	} else if (configuredJob && viewingAiResult) {
 		aiRequest('kidia_mobile_dismiss_ai_analysis', {job_id: configuredJob}).catch(function () {});
 	}
+	document.querySelectorAll('[data-ai-progress-overlay]').forEach(bindAiDockDrag);
+	window.addEventListener('resize', function () {
+		document.querySelectorAll('[data-ai-progress-overlay].is-docked').forEach(function (overlay) {
+			const current = overlay.getBoundingClientRect();
+			positionAiDock(overlay, current.left, current.top, false);
+		});
+	});
 	const aiWorkspaceTabs = document.querySelectorAll('[data-ai-workspace-tab]');
 	const aiWorkspacePanels = document.querySelectorAll('[data-ai-workspace-panel]');
 	if (aiWorkspaceTabs.length && aiWorkspacePanels.length) {
