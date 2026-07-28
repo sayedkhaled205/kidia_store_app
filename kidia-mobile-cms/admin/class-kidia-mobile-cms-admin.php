@@ -621,7 +621,8 @@ final class Kidia_Mobile_CMS_Admin {
 			'limit'        => in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? -1 : 60,
 			'orderby'      => 'date',
 			'order'        => 'DESC',
-			'date_created' => gmdate( 'Y-m-d H:i:s', $date_from ) . '...' . gmdate( 'Y-m-d H:i:s', $date_to ),
+			// WooCommerce accepts second-precision ranges as UTC timestamps.
+			'date_created' => $date_from . '...' . $date_to,
 		);
 		$order_args = $this->store_data_order_source_args( $order_args, $store_source );
 		$orders     = in_array( $store_tab, array( 'orders', 'reports' ), true ) && function_exists( 'wc_get_orders' )
