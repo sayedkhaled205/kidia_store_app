@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_AI_Analysis_Job {
 
-	private const JOB_PREFIX = 'kidia_mobile_ai_job_v4_';
+	private const JOB_PREFIX = 'kidia_mobile_ai_job_v5_';
 
 	private const CANCEL_PREFIX = 'kidia_mobile_ai_cancel_v1_';
 
@@ -40,9 +40,11 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		}
 		$existing_job_id = self::active_job_id( $user_id );
 		if ( '' !== $existing_job_id ) {
-			$existing_job = get_transient( self::key( $existing_job_id ) );
+			$existing_job = self::read_job( $existing_job_id );
 			if ( is_array( $existing_job ) && ! in_array( (string) ( $existing_job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true ) ) {
 				self::cancel( $existing_job_id, $user_id );
+			} else {
+				self::delete_job( $existing_job_id );
 			}
 		}
 
@@ -103,7 +105,9 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'started_at'        => time(),
 			'updated_at'        => time(),
 		);
-		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
+		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
+			return array( 'error' => __( 'The analysis could not be started because its durable state could not be saved.', 'kidia-mobile-cms' ) );
+		}
 		update_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
 
 		return self::payload( $job, false );
@@ -111,13 +115,13 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Processes exactly one bounded batch and returns measured progress. */
 	public static function step( string $job_id, int $user_id ): array {
-		$job = get_transient( self::key( $job_id ) );
+		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
 		if ( self::is_cancelled( $job_id ) || 'cancelled' === (string) ( $job['phase'] ?? '' ) ) {
 			$job['phase'] = 'cancelled';
-			set_transient( self::key( $job_id ), $job, HOUR_IN_SECONDS );
+			self::write_job( $job, HOUR_IN_SECONDS );
 			return self::payload( $job, true );
 		}
 		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
@@ -126,7 +130,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 		$lock_token = self::acquire_step_lock( $job_id );
 		if ( '' === $lock_token ) {
-			$latest = get_transient( self::key( $job_id ) );
+			$latest = self::read_job( $job_id );
 			$latest = is_array( $latest ) ? $latest : $job;
 			return self::payload( $latest, false, true );
 		}
@@ -136,7 +140,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		 * reload after owning the atomic lock so an older request can never
 		 * overwrite a batch that another runner has already saved.
 		 */
-		$latest = get_transient( self::key( $job_id ) );
+		$latest = self::read_job( $job_id );
 		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
@@ -144,7 +148,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$job = $latest;
 		if ( self::is_cancelled( $job_id ) || 'cancelled' === (string) ( $job['phase'] ?? '' ) ) {
 			$job['phase'] = 'cancelled';
-			set_transient( self::key( $job_id ), $job, HOUR_IN_SECONDS );
+			self::write_job( $job, HOUR_IN_SECONDS );
 			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
 		}
@@ -162,7 +166,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			self::finalize( $job );
 			$job['completed_at'] = time();
 			$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
-			if ( ! set_transient( self::key( $job_id ), $job, 6 * HOUR_IN_SECONDS ) ) {
+			if ( ! self::write_job( $job, 6 * HOUR_IN_SECONDS ) ) {
 				self::release_step_lock( $job_id, $lock_token );
 				return array( 'error' => __( 'The completed analysis could not be saved. No partial result was published.', 'kidia-mobile-cms' ) );
 			}
@@ -175,7 +179,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		}
 		$job['updated_at'] = time();
 		$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
-		if ( ! set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS ) ) {
+		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return array( 'error' => __( 'This analysis batch could not be saved. Completed records were not reset.', 'kidia-mobile-cms' ) );
 		}
@@ -185,7 +189,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Returns the current state and can safely advance one batch as a scheduler fallback. */
 	public static function status( string $job_id, int $user_id, bool $advance = false ): array {
-		$job = get_transient( self::key( $job_id ) );
+		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
@@ -198,7 +202,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Parks a browser-owned job and schedules it on the server. */
 	public static function continue_in_background( string $job_id, int $user_id ): array {
-		$job = get_transient( self::key( $job_id ) );
+		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
@@ -214,11 +218,11 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		 */
 		$lock_token = self::acquire_step_lock( $job_id );
 		if ( '' === $lock_token ) {
-			$latest = get_transient( self::key( $job_id ) );
+			$latest = self::read_job( $job_id );
 			self::schedule_background( $job_id );
 			return self::payload( is_array( $latest ) ? $latest : $job, false, true );
 		}
-		$latest = get_transient( self::key( $job_id ) );
+		$latest = self::read_job( $job_id );
 		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
@@ -229,7 +233,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			return self::payload( $job, true );
 		}
 		$job['background'] = true;
-		if ( ! set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS ) ) {
+		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return array( 'error' => __( 'The analysis could not be moved to the background without losing progress.', 'kidia-mobile-cms' ) );
 		}
@@ -240,14 +244,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Cancels future batches without publishing a partial result. */
 	public static function cancel( string $job_id, int $user_id ): array {
-		$job = get_transient( self::key( $job_id ) );
+		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
 		set_transient( self::cancel_key( $job_id ), 1, HOUR_IN_SECONDS );
 		$job['phase']        = 'cancelled';
 		$job['cancelled_at'] = time();
-		set_transient( self::key( $job_id ), $job, HOUR_IN_SECONDS );
+		self::write_job( $job, HOUR_IN_SECONDS );
 		delete_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
 		return self::payload( $job, true );
 	}
@@ -255,7 +259,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	/** Returns the current user's last running or completed background job id. */
 	public static function active_job_id( int $user_id ): string {
 		$job_id = sanitize_text_field( (string) get_user_meta( $user_id, self::ACTIVE_JOB_META, true ) );
-		if ( '' !== $job_id && ! is_array( get_transient( self::key( $job_id ) ) ) ) {
+		if ( '' !== $job_id && ! is_array( self::read_job( $job_id ) ) ) {
 			delete_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
 			return '';
 		}
@@ -265,11 +269,12 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	/** Removes a completed job from the user's global progress dock. */
 	public static function dismiss( string $job_id, int $user_id ): void {
 		delete_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
+		self::delete_job( $job_id );
 	}
 
 	/** Runs one queued batch, then queues the next one until completion. */
 	public static function run_background( string $job_id ): void {
-		$job = get_transient( self::key( $job_id ) );
+		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) ) {
 			return;
 		}
@@ -563,6 +568,51 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	private static function key( string $job_id ): string {
 		return self::JOB_PREFIX . md5( $job_id );
+	}
+
+	/**
+	 * Reads one analysis job from durable, non-autoloaded WordPress storage.
+	 *
+	 * Large stores quickly exceed the per-item limit used by Redis or
+	 * Memcached-backed transients. Options are persisted to the database first,
+	 * so a cache refusing the large value cannot discard completed batches.
+	 */
+	private static function read_job( string $job_id ) {
+		$job = get_option( self::key( $job_id ), false );
+		if ( ! is_array( $job ) ) {
+			return false;
+		}
+		$expires_at = absint( $job['expires_at'] ?? 0 );
+		if ( $expires_at > 0 && $expires_at <= time() ) {
+			self::delete_job( $job_id );
+			return false;
+		}
+		return $job;
+	}
+
+	/** Persists a complete batch in the database without autoloading it. */
+	private static function write_job( array &$job, int $expiration ): bool {
+		$key               = self::key( (string) ( $job['id'] ?? '' ) );
+		$job['expires_at'] = time() + max( MINUTE_IN_SECONDS, $expiration );
+		$existing          = get_option( $key, false );
+		if ( false === $existing && add_option( $key, $job, '', 'no' ) ) {
+			return true;
+		}
+		if ( update_option( $key, $job, false ) ) {
+			return true;
+		}
+
+		/*
+		 * WordPress returns false when update_option() receives an identical
+		 * value. Treat a byte-for-byte-equivalent saved job as success.
+		 */
+		$saved = get_option( $key, false );
+		return is_array( $saved ) && $saved === $job;
+	}
+
+	/** Removes persisted job state after dismissal or replacement. */
+	private static function delete_job( string $job_id ): void {
+		delete_option( self::key( $job_id ) );
 	}
 
 	private static function cancel_key( string $job_id ): string {
