@@ -25,9 +25,9 @@ $manage_urls = array(
 $tab_url = static function ( string $tab, ?string $source = null ) use ( $store_tab, $store_source, $date_preset, $date_from, $date_to ): string {
 	$target_preset = $tab === $store_tab
 		? $date_preset
-		: ( 'customers' === $tab
-			? 'all_time'
-			: ( in_array( $tab, array( 'reports', 'analytics' ), true ) ? 'today' : 'last_30_days' ) );
+		: ( in_array( $tab, array( 'abandoned-carts', 'reports', 'analytics' ), true )
+			? 'today'
+			: ( 'customers' === $tab ? 'all_time' : 'last_30_days' ) );
 	return add_query_arg(
 		array(
 			'page'         => 'kidia-mobile-store-data',

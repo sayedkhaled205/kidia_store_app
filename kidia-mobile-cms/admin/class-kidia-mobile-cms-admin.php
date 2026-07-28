@@ -446,9 +446,9 @@ final class Kidia_Mobile_CMS_Admin {
 		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts' );
 		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
 
-		$date_default = in_array( $store_tab, array( 'customers', 'abandoned-carts' ), true )
-			? 'all_time'
-			: ( in_array( $store_tab, array( 'reports', 'analytics' ), true ) ? 'today' : 'last_30_days' );
+		$date_default = in_array( $store_tab, array( 'abandoned-carts', 'reports', 'analytics' ), true )
+			? 'today'
+			: ( 'customers' === $store_tab ? 'all_time' : 'last_30_days' );
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];

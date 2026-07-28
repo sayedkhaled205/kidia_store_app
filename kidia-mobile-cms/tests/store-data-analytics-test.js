@@ -266,13 +266,13 @@ assert.match(
 );
 assert.match(
   admin,
-  /array\(\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
-  "Analytics and Reports must default to Today.",
+  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
+  "Abandoned Carts, Analytics and Reports must default to Today.",
 );
 assert.match(
   storeData,
-  /in_array\(\s*\$tab,\s*array\(\s*'reports',\s*'analytics'\s*\),\s*true\s*\)\s*\?\s*'today'/,
-  "Navigation into Analytics or Reports must keep Today as the default.",
+  /in_array\(\s*\$tab,\s*array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\),\s*true\s*\)[\s\S]*\?\s*'today'/,
+  "Navigation into Abandoned Carts, Analytics or Reports must keep Today as the default.",
 );
 assert.match(
   analytics,
@@ -518,7 +518,7 @@ assert.match(
 );
 assert.match(
   analytics,
-  /WEBSITE_IMPORT_OPTION\s*=\s*'kidia_mobile_website_cart_import_v3'/,
+  /WEBSITE_IMPORT_OPTION\s*=\s*'kidia_mobile_website_cart_import_v4'/,
   "Historical cart import must use a fresh state version so a previously completed zero-result scan is retried.",
 );
 assert.match(
@@ -533,13 +533,38 @@ assert.doesNotMatch(
 );
 assert.match(
   analytics,
+  /ensure_website_session_import\( bool \$force_refresh = false \)[\s\S]*WEBSITE_IMPORT_REFRESH[\s\S]*ensure_website_session_import\( true \)/,
+  "Opening Abandoned Carts must refresh a previously completed session scan instead of trusting a stale zero result.",
+);
+assert.match(
+  analytics,
+  /_woocommerce_persistent_cart_[\s\S]*persistent_total[\s\S]*import_persistent_cart_row/,
+  "Historical import must include WooCommerce persistent carts for registered customers, not only active session rows.",
+);
+assert.match(
+  analytics,
+  /decode_stored_array[\s\S]*maybe_unserialize[\s\S]*json_decode/,
+  "Session import must decode the nested formats used by WooCommerce and compatible session handlers.",
+);
+assert.match(
+  analytics,
+  /abandoned_carts[\s\S]*status <> 'empty'[\s\S]*'active' === \$row\['status'\][\s\S]*\$threshold/,
+  "Current carts must appear immediately as active and only change to abandoned after the inactivity threshold.",
+);
+assert.match(
+  analytics,
   /abandoned_summary[\s\S]*COUNT\(\*\) AS carts[\s\S]*potential_value/,
   "Abandoned-cart headline totals must cover the complete filtered dataset, not only the visible table rows.",
 );
 assert.match(
   admin,
-  /array\( 'customers', 'abandoned-carts' \)[\s\S]*'all_time'/,
-  "Abandoned Carts must open on all retained history by default.",
+  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
+  "Abandoned Carts must open on Today by default.",
+);
+assert.match(
+  storeData,
+  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
+  "Links into Abandoned Carts must preserve the Today default.",
 );
 assert.match(
   storeData,

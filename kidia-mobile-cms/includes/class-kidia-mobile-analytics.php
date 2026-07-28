@@ -14,10 +14,11 @@ final class Kidia_Mobile_Analytics {
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
 	private const ORIGIN_META = '_kidia_customer_origin';
-	private const WEBSITE_IMPORT_OPTION = 'kidia_mobile_website_cart_import_v3';
+	private const WEBSITE_IMPORT_OPTION = 'kidia_mobile_website_cart_import_v4';
 	private const WEBSITE_IMPORT_HOOK = 'kidia_mobile_import_website_cart_sessions';
-	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v3';
+	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v4';
 	private const WEBSITE_IMPORT_BATCH = 300;
+	private const WEBSITE_IMPORT_REFRESH = 5 * MINUTE_IN_SECONDS;
 
 	/** @var list<string> */
 	private const EVENTS = array(
@@ -1237,8 +1238,7 @@ final class Kidia_Mobile_Analytics {
 			$where .= ' AND source = %s';
 			$args[] = $source;
 		}
-		$where .= " AND (status IN ('abandoned','recovered','converted') OR (status = 'active' AND last_activity_at <= %s))";
-		$args[] = $threshold;
+		$where .= " AND status <> 'empty'";
 		$args[] = max( 1, min( 250, $limit ) );
 		$rows   = $wpdb->get_results(
 			$wpdb->prepare(
@@ -1250,7 +1250,7 @@ final class Kidia_Mobile_Analytics {
 			ARRAY_A
 		);
 		foreach ( $rows as &$row ) {
-			if ( 'active' === $row['status'] ) {
+			if ( 'active' === $row['status'] && (string) $row['last_activity_at'] <= $threshold ) {
 				$row['status'] = 'abandoned';
 			}
 			$row['items'] = json_decode( (string) $row['items'], true );
@@ -1269,14 +1269,12 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$table      = self::carts_table();
 		$threshold  = gmdate( 'Y-m-d H:i:s', time() - 30 * MINUTE_IN_SECONDS );
-		$where      = 'last_activity_at BETWEEN %s AND %s AND item_count > 0';
+		$where      = "last_activity_at BETWEEN %s AND %s AND item_count > 0 AND status <> 'empty'";
 		$args       = array( gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
 		if ( in_array( $source, array( 'website', 'mobile' ), true ) ) {
 			$where .= ' AND source = %s';
 			$args[] = $source;
 		}
-		$where .= " AND (status IN ('abandoned','recovered','converted') OR (status = 'active' AND last_activity_at <= %s))";
-		$args[] = $threshold;
 		$row    = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
@@ -1322,12 +1320,18 @@ final class Kidia_Mobile_Analytics {
 	 *
 	 * @return array<string,int|string>
 	 */
-	public function ensure_website_session_import(): array {
+	public function ensure_website_session_import( bool $force_refresh = false ): array {
 		$state = self::website_session_import_status();
-		if ( in_array( (string) ( $state['phase'] ?? '' ), array( 'running', 'complete' ), true ) ) {
-			if ( 'running' === (string) $state['phase'] ) {
-				self::schedule_website_session_import();
-			}
+		if ( 'running' === (string) ( $state['phase'] ?? '' ) ) {
+			self::schedule_website_session_import();
+			return $state;
+		}
+		$completed_at = absint( $state['completed_at'] ?? 0 );
+		if (
+			'complete' === (string) ( $state['phase'] ?? '' )
+			&& ! $force_refresh
+			&& $completed_at > time() - self::WEBSITE_IMPORT_REFRESH
+		) {
 			return $state;
 		}
 
@@ -1346,19 +1350,32 @@ final class Kidia_Mobile_Analytics {
 			return $state;
 		}
 
-		$total        = absint(
+		$persistent_key   = '_woocommerce_persistent_cart_' . get_current_blog_id();
+		$session_total    = absint( $wpdb->get_var( "SELECT COUNT(*) FROM {$sessions_table}" ) );
+		$persistent_total = absint(
 			$wpdb->get_var(
-				"SELECT COUNT(*) FROM {$sessions_table}"
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s",
+					$persistent_key
+				)
 			)
 		);
+		$total        = $session_total + $persistent_total;
 		$state        = array(
-			'phase'      => $total > 0 ? 'running' : 'complete',
-			'processed'  => 0,
-			'total'      => $total,
-			'imported'   => 0,
-			'cursor'     => 0,
-			'started_at' => time(),
+			'phase'             => $total > 0 ? 'running' : 'complete',
+			'processed'         => 0,
+			'total'             => $total,
+			'imported'          => 0,
+			'cursor'            => 0,
+			'session_cursor'    => 0,
+			'persistent_cursor' => 0,
+			'session_total'     => $session_total,
+			'persistent_total'  => $persistent_total,
+			'started_at'        => time(),
 		);
+		if ( 0 === $total ) {
+			$state['completed_at'] = time();
+		}
 		update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
 		if ( $total > 0 ) {
 			self::schedule_website_session_import();
@@ -1377,7 +1394,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function sync_website_sessions( int $limit = self::WEBSITE_IMPORT_BATCH ): int {
 		$service = new self();
-		$state   = $service->ensure_website_session_import();
+		$state   = $service->ensure_website_session_import( true );
 		if ( 'running' !== (string) ( $state['phase'] ?? '' ) ) {
 			return 0;
 		}
@@ -1395,10 +1412,12 @@ final class Kidia_Mobile_Analytics {
 					'total'     => 0,
 					'imported'  => 0,
 					'cursor'    => 0,
+					'session_cursor'    => 0,
+					'persistent_cursor' => 0,
 				),
 				$state
 			)
-			: array( 'phase' => 'not_started', 'processed' => 0, 'total' => 0, 'imported' => 0, 'cursor' => 0 );
+			: array( 'phase' => 'not_started', 'processed' => 0, 'total' => 0, 'imported' => 0, 'cursor' => 0, 'session_cursor' => 0, 'persistent_cursor' => 0 );
 	}
 
 	/** Processes the next ordered session-id range exactly once. */
@@ -1416,34 +1435,79 @@ final class Kidia_Mobile_Analytics {
 
 		global $wpdb;
 		$sessions_table = $wpdb->prefix . 'woocommerce_sessions';
-		$rows           = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT session_id, session_key, session_value, session_expiry
-				FROM {$sessions_table}
-				WHERE session_id > %d
-				ORDER BY session_id ASC
-				LIMIT %d",
-				absint( $state['cursor'] ?? 0 ),
-				$limit
-			),
-			ARRAY_A
-		);
+		$remaining      = $limit;
+		$session_cursor = absint( $state['session_cursor'] ?? $state['cursor'] ?? 0 );
+		$rows           = $remaining > 0
+			? $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT session_id, session_key, session_value, session_expiry
+					FROM {$sessions_table}
+					WHERE session_id > %d
+					ORDER BY session_id ASC
+					LIMIT %d",
+					$session_cursor,
+					$remaining
+				),
+				ARRAY_A
+			)
+			: array();
 		$imported = 0;
-		$cursor   = absint( $state['cursor'] ?? 0 );
 		foreach ( $rows as $row ) {
-			$cursor = max( $cursor, absint( $row['session_id'] ?? 0 ) );
+			$session_cursor = max( $session_cursor, absint( $row['session_id'] ?? 0 ) );
 			if ( self::import_website_session_row( $row ) ) {
 				++$imported;
 			}
 		}
+		$remaining -= count( $rows );
+		$session_complete = count( $rows ) < $limit
+			|| absint( $state['processed'] ?? 0 ) + count( $rows ) >= absint( $state['session_total'] ?? 0 );
 
-		$state['cursor']    = $cursor;
-		$state['processed'] = min(
+		$persistent_rows   = array();
+		$persistent_cursor = absint( $state['persistent_cursor'] ?? 0 );
+		$persistent_limit  = 0;
+		if ( $session_complete && $remaining > 0 ) {
+			$persistent_limit = $remaining;
+			$persistent_key  = '_woocommerce_persistent_cart_' . get_current_blog_id();
+			$persistent_rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT umeta_id, user_id, meta_value
+					FROM {$wpdb->usermeta}
+					WHERE meta_key = %s AND umeta_id > %d
+					ORDER BY umeta_id ASC
+					LIMIT %d",
+					$persistent_key,
+					$persistent_cursor,
+					$remaining
+				),
+				ARRAY_A
+			);
+			foreach ( $persistent_rows as $row ) {
+				$persistent_cursor = max( $persistent_cursor, absint( $row['umeta_id'] ?? 0 ) );
+				if ( self::import_persistent_cart_row( $row ) ) {
+					++$imported;
+				}
+			}
+		}
+
+		$state['cursor']            = $session_cursor;
+		$state['session_cursor']    = $session_cursor;
+		$state['persistent_cursor'] = $persistent_cursor;
+		$state['processed']         = min(
 			absint( $state['total'] ?? 0 ),
-			absint( $state['processed'] ?? 0 ) + count( $rows )
+			absint( $state['processed'] ?? 0 ) + count( $rows ) + count( $persistent_rows )
 		);
-		$state['imported']  = absint( $state['imported'] ?? 0 ) + $imported;
-		if ( count( $rows ) < $limit ) {
+		$state['imported']          = absint( $state['imported'] ?? 0 ) + $imported;
+		$persistent_processed = max(
+			0,
+			absint( $state['processed'] ?? 0 ) - absint( $state['session_total'] ?? 0 )
+		);
+		$persistent_complete = $session_complete
+			&& (
+				0 === absint( $state['persistent_total'] ?? 0 )
+				|| $persistent_processed >= absint( $state['persistent_total'] ?? 0 )
+				|| ( $persistent_limit > 0 && count( $persistent_rows ) < $persistent_limit )
+			);
+		if ( $persistent_complete ) {
 			$state['phase']        = 'complete';
 			$state['completed_at'] = time();
 			$state['processed']    = max( absint( $state['processed'] ), absint( $state['total'] ) );
@@ -1458,37 +1522,14 @@ final class Kidia_Mobile_Analytics {
 
 	/** Imports one serialized WooCommerce session when it still contains items. */
 	private static function import_website_session_row( array $row ): bool {
-		$session = maybe_unserialize( $row['session_value'] ?? '' );
-		if ( ! is_array( $session ) ) {
+		$session = self::decode_stored_array( $row['session_value'] ?? '' );
+		$cart    = self::decode_stored_array( $session['cart'] ?? array() );
+		if ( empty( $cart ) ) {
 			return false;
 		}
-		$cart = maybe_unserialize( $session['cart'] ?? array() );
-		if ( ! is_array( $cart ) || empty( $cart ) ) {
-			return false;
-		}
-		$customer = maybe_unserialize( $session['customer'] ?? array() );
-		$customer = is_array( $customer ) ? $customer : array();
-		$items    = array();
-		$total    = 0.0;
-		foreach ( $cart as $cart_item ) {
-			if ( ! is_array( $cart_item ) ) {
-				continue;
-			}
-			$product_id = absint( $cart_item['product_id'] ?? 0 );
-			$quantity   = max( 1, absint( $cart_item['quantity'] ?? 1 ) );
-			if ( $product_id <= 0 ) {
-				continue;
-			}
-			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
-			$items[] = array(
-				'product_id' => $product_id,
-				'name'       => $product instanceof WC_Product ? $product->get_name() : '',
-				'quantity'   => $quantity,
-			);
-			$total += max( 0, (float) ( $cart_item['line_total'] ?? 0 ) )
-				+ max( 0, (float) ( $cart_item['line_tax'] ?? 0 ) );
-		}
-		if ( empty( $items ) ) {
+		$customer = self::decode_stored_array( $session['customer'] ?? array() );
+		$normalized = self::normalize_imported_cart( $cart );
+		if ( empty( $normalized['items'] ) ) {
 			return false;
 		}
 
@@ -1496,10 +1537,104 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $session_key ) {
 			return false;
 		}
-		$user_id      = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
-		$expiry       = absint( $row['session_expiry'] ?? 0 );
-		$expiration   = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
+		$user_id       = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
+		$expiry        = absint( $row['session_expiry'] ?? 0 );
+		$expiration    = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
 		$last_activity = $expiry > 0 ? max( 1, $expiry - $expiration ) : time();
+		return self::upsert_imported_website_cart(
+			$session_key,
+			$user_id,
+			$customer,
+			$normalized,
+			$last_activity
+		);
+	}
+
+	/** Imports the durable WooCommerce cart kept for a registered customer. */
+	private static function import_persistent_cart_row( array $row ): bool {
+		$stored = self::decode_stored_array( $row['meta_value'] ?? '' );
+		$cart   = self::decode_stored_array( $stored['cart'] ?? $stored );
+		if ( empty( $cart ) ) {
+			return false;
+		}
+		$normalized = self::normalize_imported_cart( $cart );
+		$user_id    = absint( $row['user_id'] ?? 0 );
+		if ( $user_id <= 0 || empty( $normalized['items'] ) ) {
+			return false;
+		}
+		$user = get_userdata( $user_id );
+		$last_active = absint( get_user_meta( $user_id, 'wc_last_active', true ) );
+		$customer = array(
+			'first_name' => $user instanceof WP_User ? $user->first_name : '',
+			'last_name'  => $user instanceof WP_User ? $user->last_name : '',
+			'email'      => $user instanceof WP_User ? $user->user_email : '',
+		);
+		return self::upsert_imported_website_cart(
+			(string) $user_id,
+			$user_id,
+			$customer,
+			$normalized,
+			$last_active > 0 ? $last_active : time()
+		);
+	}
+
+	/** Decodes nested WordPress serialization and JSON used by session handlers. */
+	private static function decode_stored_array( $value ): array {
+		for ( $attempt = 0; $attempt < 3; ++$attempt ) {
+			if ( is_array( $value ) ) {
+				return $value;
+			}
+			if ( ! is_string( $value ) || '' === $value ) {
+				return array();
+			}
+			$decoded = maybe_unserialize( $value );
+			if ( $decoded !== $value ) {
+				$value = $decoded;
+				continue;
+			}
+			$decoded = json_decode( wp_unslash( $value ), true );
+			return is_array( $decoded ) ? $decoded : array();
+		}
+		return is_array( $value ) ? $value : array();
+	}
+
+	/** @return array{items:list<array<string,int|string>>,total:float} */
+	private static function normalize_imported_cart( array $cart ): array {
+		$items = array();
+		$total = 0.0;
+		foreach ( $cart as $cart_item ) {
+			if ( ! is_array( $cart_item ) ) {
+				continue;
+			}
+			$product_id = absint( $cart_item['product_id'] ?? 0 );
+			$product_id = $product_id > 0 ? $product_id : absint( $cart_item['variation_id'] ?? 0 );
+			$lookup_id  = absint( $cart_item['variation_id'] ?? 0 ) ?: $product_id;
+			$quantity   = max( 1, absint( $cart_item['quantity'] ?? 1 ) );
+			if ( $product_id <= 0 ) {
+				continue;
+			}
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $lookup_id ) : null;
+			$items[] = array(
+				'product_id' => $product_id,
+				'name'       => $product instanceof WC_Product ? $product->get_name() : '',
+				'quantity'   => $quantity,
+			);
+			if ( isset( $cart_item['line_total'] ) || isset( $cart_item['line_tax'] ) ) {
+				$total += max( 0, (float) ( $cart_item['line_total'] ?? 0 ) )
+					+ max( 0, (float) ( $cart_item['line_tax'] ?? 0 ) );
+			} elseif ( $product instanceof WC_Product ) {
+				$total += max( 0, (float) $product->get_price() ) * $quantity;
+			}
+		}
+		return array( 'items' => $items, 'total' => $total );
+	}
+
+	/** Writes one normalized website cart and reports whether it contained products. */
+	private static function upsert_imported_website_cart( string $session_key, int $user_id, array $customer, array $normalized, int $last_activity ): bool {
+		$items = is_array( $normalized['items'] ?? null ) ? $normalized['items'] : array();
+		if ( '' === $session_key || empty( $items ) ) {
+			return false;
+		}
 		( new self() )->upsert_cart(
 			array(
 				'cart_key'         => hash( 'sha256', 'website|' . $session_key ),
@@ -1511,7 +1646,7 @@ final class Kidia_Mobile_Analytics {
 				'customer_email'   => sanitize_email( (string) ( $customer['email'] ?? '' ) ),
 				'items'            => $items,
 				'item_count'       => array_sum( array_column( $items, 'quantity' ) ),
-				'cart_total'       => $total,
+				'cart_total'       => max( 0, (float) ( $normalized['total'] ?? 0 ) ),
 				'currency'         => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
 				'started_at'       => gmdate( 'Y-m-d H:i:s', $last_activity ),
 				'last_activity_at' => gmdate( 'Y-m-d H:i:s', $last_activity ),
