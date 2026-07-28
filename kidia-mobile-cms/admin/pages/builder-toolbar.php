@@ -21,7 +21,6 @@ $kidia_render_add_button = static function (): void {
 			<label class="kidia-page-availability" aria-label="<?php esc_attr_e( 'Page availability', 'kidia-mobile-cms' ); ?>">
 				<input type="hidden" name="layout[enabled]" value="0">
 				<input type="checkbox" name="layout[enabled]" value="1" <?php checked( $kidia_toolbar_page_enabled ); ?>>
-				<span class="kidia-page-availability__icon"><span class="dashicons dashicons-visibility"></span></span>
 				<span class="kidia-page-availability__copy"><strong><?php esc_html_e( 'Page status', 'kidia-mobile-cms' ); ?></strong><small class="kidia-toggle-state"></small></span>
 			</label>
 		</div>
@@ -43,7 +42,6 @@ $kidia_render_add_button = static function (): void {
 				<label class="kidia-page-availability" aria-label="<?php esc_attr_e( 'Page availability', 'kidia-mobile-cms' ); ?>">
 					<input type="hidden" name="layout[enabled]" value="0">
 					<input type="checkbox" name="layout[enabled]" value="1" <?php checked( $kidia_toolbar_page_enabled ); ?>>
-					<span class="kidia-page-availability__icon"><span class="dashicons dashicons-visibility"></span></span>
 					<span class="kidia-page-availability__copy"><strong><?php esc_html_e( 'Page status', 'kidia-mobile-cms' ); ?></strong><small class="kidia-toggle-state"></small></span>
 				</label>
 			<?php endif; ?>
