@@ -1660,20 +1660,22 @@ final class Kidia_Mobile_CMS_Admin {
 				$wizard->start_blank();
 			} elseif ( 'import' === $operation ) {
 				$file = isset( $_FILES['theme_file'] ) && is_array( $_FILES['theme_file'] ) ? $_FILES['theme_file'] : array();
-				if ( UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || empty( $file['tmp_name'] ) || (int) ( $file['size'] ?? 0 ) > 2097152 ) {
+				if ( UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || empty( $file['tmp_name'] ) || (int) ( $file['size'] ?? 0 ) > 62914560 ) {
 					throw new InvalidArgumentException( 'invalid_theme_file' );
 				}
 				$contents = file_get_contents( (string) $file['tmp_name'] );
 				$wizard->import_saved_theme( is_string( $contents ) ? $contents : '' );
 			} elseif ( 'export' === $operation ) {
 				$theme_id = sanitize_key( (string) ( $_POST['theme_id'] ?? '' ) );
-				$export   = $wizard->export_saved_theme( $theme_id );
+				$export_mode = sanitize_key( (string) ( $_POST['export_mode'] ?? 'settings' ) );
+				$include_images = 'settings_and_images' === $export_mode;
+				$export   = $wizard->export_saved_theme( $theme_id, $include_images );
 				if ( null === $export ) {
 					throw new InvalidArgumentException( 'saved_theme_not_found' );
 				}
 				nocache_headers();
 				header( 'Content-Type: application/json; charset=utf-8' );
-				header( 'Content-Disposition: attachment; filename="woomobile-theme-' . sanitize_file_name( $theme_id ) . '.json"' );
+				header( 'Content-Disposition: attachment; filename="woomobile-theme-' . sanitize_file_name( $theme_id ) . ( $include_images ? '-with-images' : '-settings' ) . '.json"' );
 				echo wp_json_encode( $export, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 				exit;
 			} else {

@@ -84,6 +84,16 @@ defined( 'ABSPATH' ) || exit;
 								data-theme-name="<?php echo esc_attr( $theme_name ); ?>"
 							><?php esc_html_e( 'Preview', 'kidia-mobile-cms' ); ?></button>
 							<?php foreach ( array( 'apply' => __( 'Apply', 'kidia-mobile-cms' ), 'export' => __( 'Export', 'kidia-mobile-cms' ), 'delete' => __( 'Delete', 'kidia-mobile-cms' ) ) as $theme_operation => $theme_label ) : ?>
+								<?php if ( 'export' === $theme_operation ) : ?>
+									<button
+										type="button"
+										class="button kidia-theme-action--export"
+										data-saved-theme-export
+										data-theme-id="<?php echo esc_attr( (string) $saved_theme_id ); ?>"
+										data-theme-name="<?php echo esc_attr( $theme_name ); ?>"
+									><?php echo esc_html( $theme_label ); ?></button>
+									<?php continue; ?>
+								<?php endif; ?>
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" <?php if ( in_array( $theme_operation, array( 'apply', 'delete' ), true ) ) : ?>onsubmit="return window.confirm('<?php echo esc_js( 'apply' === $theme_operation ? __( 'Applying this theme replaces your current changes and creates a new build. Continue?', 'kidia-mobile-cms' ) : __( 'Delete this saved theme?', 'kidia-mobile-cms' ) ); ?>');"<?php endif; ?>>
 									<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
 									<input type="hidden" name="theme_operation" value="<?php echo esc_attr( $theme_operation ); ?>">
@@ -116,12 +126,14 @@ defined( 'ABSPATH' ) || exit;
 					</nav>
 					<div class="kidia-saved-theme-dialog__stage">
 						<div class="kidia-saved-theme-dialog__device">
-							<iframe
-								data-saved-theme-dialog-frame
-								title="<?php echo esc_attr__( 'Real Flutter theme preview', 'kidia-mobile-cms' ); ?>"
-								loading="eager"
-								allow="clipboard-read; clipboard-write"
-							></iframe>
+							<div class="kidia-saved-theme-dialog__screen">
+								<iframe
+									data-saved-theme-dialog-frame
+									title="<?php echo esc_attr__( 'Real Flutter theme preview', 'kidia-mobile-cms' ); ?>"
+									loading="eager"
+									allow="clipboard-read; clipboard-write"
+								></iframe>
+							</div>
 						</div>
 						<div class="kidia-saved-theme-dialog__loading" data-saved-theme-loading role="status">
 							<span class="spinner is-active" aria-hidden="true"></span>
@@ -129,6 +141,32 @@ defined( 'ABSPATH' ) || exit;
 						</div>
 					</div>
 				</div>
+			</dialog>
+			<dialog class="kidia-saved-theme-export-dialog" data-saved-theme-export-dialog aria-labelledby="kidia-saved-theme-export-title">
+				<button type="button" class="kidia-saved-theme-export-dialog__close" data-saved-theme-export-close aria-label="<?php esc_attr_e( 'Close export options', 'kidia-mobile-cms' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-saved-theme-export-form>
+					<input type="hidden" name="action" value="kidia_mobile_manage_saved_theme">
+					<input type="hidden" name="theme_operation" value="export">
+					<input type="hidden" name="theme_id" value="" data-saved-theme-export-id>
+					<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
+					<span class="kidia-setup-eyebrow"><?php esc_html_e( 'Export theme', 'kidia-mobile-cms' ); ?></span>
+					<h2 id="kidia-saved-theme-export-title"><?php esc_html_e( 'What do you want to export?', 'kidia-mobile-cms' ); ?></h2>
+					<p data-saved-theme-export-name></p>
+					<div class="kidia-saved-theme-export-dialog__choices">
+						<button type="submit" name="export_mode" value="settings" class="kidia-saved-theme-export-choice">
+							<span class="dashicons dashicons-admin-settings" aria-hidden="true"></span>
+							<strong><?php esc_html_e( 'Settings only', 'kidia-mobile-cms' ); ?></strong>
+							<small><?php esc_html_e( 'Export the complete theme settings and keep image URLs only.', 'kidia-mobile-cms' ); ?></small>
+						</button>
+						<button type="submit" name="export_mode" value="settings_and_images" class="kidia-saved-theme-export-choice is-primary">
+							<span class="dashicons dashicons-format-gallery" aria-hidden="true"></span>
+							<strong><?php esc_html_e( 'Settings and images', 'kidia-mobile-cms' ); ?></strong>
+							<small><?php esc_html_e( 'Embed every theme image except WooCommerce product images.', 'kidia-mobile-cms' ); ?></small>
+						</button>
+					</div>
+				</form>
 			</dialog>
 		<?php else : ?>
 			<div class="kidia-saved-themes__empty">

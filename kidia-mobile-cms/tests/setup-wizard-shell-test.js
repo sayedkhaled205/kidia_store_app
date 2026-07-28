@@ -51,7 +51,8 @@ assert.match(service, /secondary_color/, "Setup identity must persist the second
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
 assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
-assert.match(service, /strip_catalog_images/, "Saved themes must exclude product and category catalog images.");
+assert.match(service, /strip_product_images/, "Saved themes must exclude WooCommerce product images.");
+assert.doesNotMatch(service, /\$snapshot\['category'\]\['categories'\][\s\S]{0,500}\['image_url'\]\s*=\s*''/, "Saved themes must retain category artwork for settings-and-images exports.");
 assert.match(service, /saved_theme_preview[\s\S]*collect_preview_image_urls/, "Saved theme cards must derive their artwork from the stored theme snapshot.");
 assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
 assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile_App_Exporter\(\)\)->register/, "The app exporter must load and register with the plugin.");
@@ -108,6 +109,11 @@ assert.match(savedThemesTemplate, /data-saved-theme-phone[\s\S]*theme_images[\s\
 assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must provide a focused large preview dialog.");
 assert.match(savedThemesTemplate, /data-saved-theme-snapshot[\s\S]*Kidia_Mobile_Setup_Wizard::setup_pages\(\)[\s\S]*data-saved-theme-page[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must expose every application page in the real Flutter surface.");
 assert.match(savedThemesScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Saved Theme Preview must send the stored page layouts to the real Flutter preview.");
+assert.match(savedThemesTemplate, /kidia-saved-theme-dialog__device[\s\S]*kidia-saved-theme-dialog__screen[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must reuse the clean Page Builder phone and screen structure.");
+assert.match(wizardCss, /\.kidia-saved-theme-dialog__device:before\{display:none;content:none\}[\s\S]*\.kidia-saved-theme-dialog__screen\{[^}]*height:680px[\s\S]*zoom:\.85/, "Saved Theme Preview must remove the earpiece and show the full 800px Flutter surface at the Page Builder scale.");
+assert.match(savedThemesTemplate, /data-saved-theme-export[\s\S]*data-saved-theme-export-dialog[\s\S]*value="settings"[\s\S]*value="settings_and_images"/, "Export must ask whether to include settings only or settings and non-product images.");
+assert.match(service, /export_saved_theme\(\s*string \$id,\s*bool \$include_images[\s\S]*export_theme_images[\s\S]*collect_theme_image_urls[\s\S]*import_theme_images[\s\S]*replace_theme_image_urls/, "Saved theme files must embed and restore selected non-product images.");
+assert.match(admin, /export_mode[\s\S]*settings_and_images[\s\S]*export_saved_theme\(\s*\$theme_id,\s*\$include_images\s*\)/, "The export handler must honor the selected image mode.");
 assert.match(admin, /kidiaSavedThemePreview[\s\S]*flutterUrl[\s\S]*layoutPreviewBase[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint/, "Saved Theme Preview must receive authenticated live-preview endpoints.");
 assert.match(admin, /preview_snapshot[\s\S]*kidiaSetupThemePreview[\s\S]*flutterUrl[\s\S]*layoutPreviewBase[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint/, "Setup themes must receive their exact generated layouts and authenticated Flutter preview endpoints.");
 assert.match(admin, /kidia-mobile-saved-themes[\s\S]*admin\/assets\/saved-themes\.js/, "The Saved Themes page must load its preview interactions.");
@@ -242,6 +248,7 @@ const savedThemeDom = new JSDOM(`<!doctype html><body>
     <script type="application/json" data-saved-theme-snapshot>{"home":[],"pages":{"home":{"elements":[]}}}</script>
     <div class="kidia-saved-theme-phone" data-saved-theme-phone><img src="theme-banner.jpg" alt=""></div>
     <button type="button" data-saved-theme-preview data-theme-name="Fashion Theme">Preview</button>
+    <button type="button" data-saved-theme-export data-theme-id="theme-123" data-theme-name="Fashion Theme">Export</button>
   </article>
   <dialog data-saved-theme-dialog>
     <button type="button" data-saved-theme-dialog-close></button>
@@ -250,6 +257,15 @@ const savedThemeDom = new JSDOM(`<!doctype html><body>
     <button type="button" data-saved-theme-page="account"></button>
     <iframe data-saved-theme-dialog-frame></iframe>
     <div data-saved-theme-loading><b>Loading</b></div>
+  </dialog>
+  <dialog data-saved-theme-export-dialog>
+    <button type="button" data-saved-theme-export-close></button>
+    <form data-saved-theme-export-form>
+      <input data-saved-theme-export-id>
+      <p data-saved-theme-export-name></p>
+      <button type="submit" name="export_mode" value="settings">Settings</button>
+      <button type="submit" name="export_mode" value="settings_and_images">Images</button>
+    </form>
   </dialog>
 </body>`, { runScripts: "outside-only", url: "https://example.test/wp-admin/admin.php" });
 savedThemeDom.window.kidiaSavedThemePreview = {
@@ -266,5 +282,8 @@ savedThemeDom.window.document.querySelector("[data-saved-theme-preview]").click(
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog]").hasAttribute("open"), true, "Preview must open without applying the theme.");
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-title]").textContent, "Fashion Theme", "Preview must show the selected theme name.");
 assert.match(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-frame]").src, /page=home/, "Preview must open the real Flutter Home page first.");
+savedThemeDom.window.document.querySelector("[data-saved-theme-export]").click();
+assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-export-dialog]").hasAttribute("open"), true, "Export must open the two-choice dialog.");
+assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-export-id]").value, "theme-123", "Export must target the selected saved theme.");
 
 console.log("Setup wizard and unified CMS shell tests passed.");

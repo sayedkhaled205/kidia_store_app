@@ -314,16 +314,21 @@ final class Kidia_Mobile_Setup_Wizard {
 	}
 
 	/** @return array<string,mixed>|null */
-	public function export_saved_theme( string $id ): ?array {
+	public function export_saved_theme( string $id, bool $include_images = false ): ?array {
 		$themes = $this->saved_themes();
 		if ( ! isset( $themes[ $id ] ) ) {
 			return null;
 		}
-		return array(
-			'schema' => 'woomobileapp-saved-theme',
-			'version' => 1,
-			'theme' => $themes[ $id ],
+		$payload = array(
+			'schema'      => 'woomobileapp-saved-theme',
+			'version'     => 2,
+			'export_mode' => $include_images ? 'settings_and_images' : 'settings',
+			'theme'       => $themes[ $id ],
 		);
+		if ( $include_images ) {
+			$payload['assets'] = $this->export_theme_images( (array) ( $themes[ $id ]['snapshot'] ?? array() ) );
+		}
+		return $payload;
 	}
 
 	public function import_saved_theme( string $json ): string {
@@ -331,16 +336,252 @@ final class Kidia_Mobile_Setup_Wizard {
 		if ( ! is_array( $payload ) || 'woomobileapp-saved-theme' !== ( $payload['schema'] ?? '' ) || ! is_array( $payload['theme']['snapshot'] ?? null ) ) {
 			throw new InvalidArgumentException( __( 'The selected file is not a valid WooMobile saved theme.', 'kidia-mobile-cms' ) );
 		}
+		$snapshot = $payload['theme']['snapshot'];
+		if ( ! empty( $payload['assets'] ) && is_array( $payload['assets'] ) ) {
+			$image_map = $this->import_theme_images( $payload['assets'] );
+			$snapshot  = $this->replace_theme_image_urls( $snapshot, $image_map );
+		}
 		$id     = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : uniqid( 'theme_', true );
 		$themes = $this->saved_themes();
 		$themes[ $id ] = array(
 			'id'         => $id,
 			'name'       => sanitize_text_field( (string) ( $payload['theme']['name'] ?? __( 'Imported theme', 'kidia-mobile-cms' ) ) ),
 			'created_at' => time(),
-			'snapshot'   => $this->sanitize_snapshot( $payload['theme']['snapshot'] ),
+			'snapshot'   => $this->sanitize_snapshot( $snapshot ),
 		);
 		update_option( self::SAVED_THEMES_OPTION, $themes, false );
 		return $id;
+	}
+
+	/**
+	 * Embeds all portable theme artwork while deliberately excluding product
+	 * catalog images. Each asset retains its original URL so import can rewrite
+	 * every matching setting to the newly uploaded media URL.
+	 *
+	 * @param array<string,mixed> $snapshot Saved theme snapshot.
+	 * @return array<int,array<string,string>>
+	 */
+	private function export_theme_images( array $snapshot ): array {
+		$image_urls = array();
+		$this->collect_theme_image_urls( $snapshot, $image_urls );
+		$assets = array();
+		$total_bytes = 0;
+		foreach ( array_values( array_unique( $image_urls ) ) as $image_url ) {
+			$asset = $this->read_theme_image( $image_url );
+			if ( null === $asset ) {
+				continue;
+			}
+			$asset_bytes = strlen( base64_decode( $asset['data'], true ) ?: '' );
+			if ( $asset_bytes < 1 || $total_bytes + $asset_bytes > 41943040 ) {
+				continue;
+			}
+			$total_bytes += $asset_bytes;
+			$assets[] = $asset;
+		}
+		return $assets;
+	}
+
+	/**
+	 * @param mixed             $value Snapshot node.
+	 * @param array<int,string> $image_urls Collected image URLs.
+	 */
+	private function collect_theme_image_urls( $value, array &$image_urls, bool $product_context = false ): void {
+		if ( ! is_array( $value ) ) {
+			return;
+		}
+		$node_type = strtolower( (string) ( $value['type'] ?? $value['source'] ?? $value['action_type'] ?? '' ) );
+		$product_context = $product_context || false !== strpos( $node_type, 'product' );
+		foreach ( $value as $key => $item ) {
+			$key = (string) $key;
+			$child_product_context = $product_context || 'products' === $key;
+			if (
+				! $child_product_context
+				&& is_string( $item )
+				&& preg_match( '/(?:image|logo|thumbnail|background|banner|splash|icon)(?:_url)?$/i', $key )
+			) {
+				$image_url = esc_url_raw( $item );
+				if ( '' !== $image_url && preg_match( '#^https?://#i', $image_url ) ) {
+					$image_urls[] = $image_url;
+				}
+				continue;
+			}
+			$this->collect_theme_image_urls( $item, $image_urls, $child_product_context );
+		}
+	}
+
+	/** @return array<string,string>|null */
+	private function read_theme_image( string $image_url ): ?array {
+		$contents = '';
+		$mime     = '';
+		$local_path = $this->theme_image_local_path( $image_url );
+		if ( '' !== $local_path && is_readable( $local_path ) ) {
+			$size = filesize( $local_path );
+			if ( false === $size || $size < 1 || $size > 12582912 ) {
+				return null;
+			}
+			$contents = file_get_contents( $local_path );
+			if ( function_exists( 'wp_get_image_mime' ) ) {
+				$mime = (string) wp_get_image_mime( $local_path );
+			}
+		} else {
+			$response = wp_safe_remote_get(
+				$image_url,
+				array(
+					'timeout'             => 20,
+					'redirection'         => 3,
+					'limit_response_size' => 12582912,
+				)
+			);
+			if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+				return null;
+			}
+			$contents = wp_remote_retrieve_body( $response );
+			$mime     = strtolower( trim( (string) strtok( (string) wp_remote_retrieve_header( $response, 'content-type' ), ';' ) ) );
+		}
+		if ( ! is_string( $contents ) || '' === $contents || strlen( $contents ) > 12582912 ) {
+			return null;
+		}
+		if ( '' === $mime && function_exists( 'finfo_open' ) ) {
+			$finfo = finfo_open( FILEINFO_MIME_TYPE );
+			$mime  = $finfo ? (string) finfo_buffer( $finfo, $contents ) : '';
+			if ( $finfo ) {
+				finfo_close( $finfo );
+			}
+		}
+		$allowed_mimes = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif' );
+		if ( ! in_array( $mime, $allowed_mimes, true ) ) {
+			return null;
+		}
+		$path = (string) parse_url( $image_url, PHP_URL_PATH );
+		$filename = sanitize_file_name( (string) wp_basename( rawurldecode( $path ) ) );
+		if ( '' === $filename ) {
+			$filename = 'theme-image.' . $this->image_extension_for_mime( $mime );
+		}
+		if ( '' === pathinfo( $filename, PATHINFO_EXTENSION ) ) {
+			$filename .= '.' . $this->image_extension_for_mime( $mime );
+		}
+		return array(
+			'source'   => $image_url,
+			'filename' => $filename,
+			'mime'     => $mime,
+			'data'     => base64_encode( $contents ),
+		);
+	}
+
+	private function theme_image_local_path( string $image_url ): string {
+		$clean_url = (string) strtok( $image_url, '?#' );
+		$locations = array(
+			array( trailingslashit( KIDIA_MOBILE_CMS_URL ), trailingslashit( KIDIA_MOBILE_CMS_PATH ) ),
+		);
+		$uploads = wp_upload_dir();
+		if ( empty( $uploads['error'] ) && ! empty( $uploads['baseurl'] ) && ! empty( $uploads['basedir'] ) ) {
+			$locations[] = array( trailingslashit( (string) $uploads['baseurl'] ), trailingslashit( (string) $uploads['basedir'] ) );
+		}
+		if ( defined( 'WP_CONTENT_DIR' ) ) {
+			$locations[] = array( trailingslashit( content_url() ), trailingslashit( WP_CONTENT_DIR ) );
+		}
+		foreach ( $locations as $location ) {
+			if ( 0 !== strpos( $clean_url, $location[0] ) ) {
+				continue;
+			}
+			$base_path = realpath( $location[1] );
+			$candidate = realpath( $location[1] . ltrim( rawurldecode( substr( $clean_url, strlen( $location[0] ) ) ), '/\\' ) );
+			if ( false !== $base_path && false !== $candidate && ( $candidate === $base_path || 0 === strpos( $candidate, $base_path . DIRECTORY_SEPARATOR ) ) ) {
+				return $candidate;
+			}
+		}
+		return '';
+	}
+
+	private function image_extension_for_mime( string $mime ): string {
+		$extensions = array(
+			'image/jpeg' => 'jpg',
+			'image/png'  => 'png',
+			'image/gif'  => 'gif',
+			'image/webp' => 'webp',
+			'image/avif' => 'avif',
+		);
+		return $extensions[ $mime ] ?? 'jpg';
+	}
+
+	/**
+	 * @param array<int,mixed> $assets Embedded exported images.
+	 * @return array<string,array{url:string,id:int}>
+	 */
+	private function import_theme_images( array $assets ): array {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$image_map = array();
+		$total_bytes = 0;
+		foreach ( array_slice( $assets, 0, 250 ) as $asset ) {
+			if ( ! is_array( $asset ) ) {
+				continue;
+			}
+			$source   = esc_url_raw( (string) ( $asset['source'] ?? '' ) );
+			$filename = sanitize_file_name( (string) ( $asset['filename'] ?? '' ) );
+			$mime     = sanitize_mime_type( (string) ( $asset['mime'] ?? '' ) );
+			$contents = base64_decode( (string) ( $asset['data'] ?? '' ), true );
+			if (
+				'' === $source
+				|| '' === $filename
+				|| ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif' ), true )
+				|| ! is_string( $contents )
+				|| '' === $contents
+				|| strlen( $contents ) > 12582912
+				|| $total_bytes + strlen( $contents ) > 41943040
+			) {
+				continue;
+			}
+			$total_bytes += strlen( $contents );
+			$temp_file = wp_tempnam( $filename );
+			if ( ! $temp_file || false === file_put_contents( $temp_file, $contents ) ) {
+				continue;
+			}
+			$attachment_id = media_handle_sideload(
+				array(
+					'name'     => $filename,
+					'tmp_name' => $temp_file,
+				),
+				0,
+				sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) )
+			);
+			if ( is_wp_error( $attachment_id ) ) {
+				@unlink( $temp_file );
+				continue;
+			}
+			$uploaded_url = wp_get_attachment_url( (int) $attachment_id );
+			if ( $uploaded_url ) {
+				$image_map[ $source ] = array( 'url' => (string) $uploaded_url, 'id' => (int) $attachment_id );
+			}
+		}
+		return $image_map;
+	}
+
+	/**
+	 * @param mixed                               $value Snapshot node.
+	 * @param array<string,array{url:string,id:int}> $image_map Imported URL map.
+	 * @return mixed
+	 */
+	private function replace_theme_image_urls( $value, array $image_map ) {
+		if ( is_string( $value ) ) {
+			return isset( $image_map[ $value ] ) ? $image_map[ $value ]['url'] : $value;
+		}
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
+		foreach ( $value as $key => $item ) {
+			if ( is_string( $item ) && isset( $image_map[ $item ] ) ) {
+				$value[ $key ] = $image_map[ $item ]['url'];
+				$id_key = preg_replace( '/_url$/', '_id', (string) $key );
+				if ( is_string( $id_key ) && $id_key !== (string) $key && array_key_exists( $id_key, $value ) ) {
+					$value[ $id_key ] = $image_map[ $item ]['id'];
+				}
+				continue;
+			}
+			$value[ $key ] = $this->replace_theme_image_urls( $item, $image_map );
+		}
+		return $value;
 	}
 
 	public function start_blank(): void {
@@ -1012,37 +1253,28 @@ final class Kidia_Mobile_Setup_Wizard {
 
 	/** @param array<string,mixed> $snapshot @return array<string,mixed> */
 	private function sanitize_snapshot( array $snapshot ): array {
-		if ( isset( $snapshot['category']['categories'] ) && is_array( $snapshot['category']['categories'] ) ) {
-			foreach ( $snapshot['category']['categories'] as &$category ) {
-				if ( is_array( $category ) ) {
-					$category['image_id'] = 0;
-					$category['image_url'] = '';
-				}
-			}
-			unset( $category );
-		}
-		$snapshot['home'] = $this->strip_catalog_images( $snapshot['home'] ?? array() );
+		$snapshot['home'] = $this->strip_product_images( $snapshot['home'] ?? array() );
 		if ( isset( $snapshot['pages'] ) && is_array( $snapshot['pages'] ) ) {
 			foreach ( $snapshot['pages'] as $page => $layout ) {
-				$snapshot['pages'][ $page ] = $this->strip_catalog_images( $layout );
+				$snapshot['pages'][ $page ] = $this->strip_product_images( $layout );
 			}
 		}
 		return $snapshot;
 	}
 
 	/** @param mixed $value @return mixed */
-	private function strip_catalog_images( $value, bool $catalog_context = false ) {
+	private function strip_product_images( $value, bool $product_context = false ) {
 		if ( ! is_array( $value ) ) {
 			return $value;
 		}
-		$type = strtolower( (string) ( $value['type'] ?? $value['source'] ?? '' ) );
-		$catalog_context = $catalog_context || false !== strpos( $type, 'product' ) || false !== strpos( $type, 'category' );
+		$type = strtolower( (string) ( $value['type'] ?? $value['source'] ?? $value['action_type'] ?? '' ) );
+		$product_context = $product_context || false !== strpos( $type, 'product' );
 		foreach ( $value as $key => $item ) {
-			if ( $catalog_context && in_array( (string) $key, array( 'image_id', 'image_url', 'thumbnail', 'thumbnail_url', 'attachment_id' ), true ) ) {
+			if ( $product_context && in_array( (string) $key, array( 'image_id', 'image_url', 'mobile_image_url', 'desktop_image_url', 'background_image', 'thumbnail', 'thumbnail_url', 'attachment_id' ), true ) ) {
 				$value[ $key ] = is_int( $item ) ? 0 : '';
 				continue;
 			}
-			$value[ $key ] = $this->strip_catalog_images( $item, $catalog_context || in_array( (string) $key, array( 'products', 'categories' ), true ) );
+			$value[ $key ] = $this->strip_product_images( $item, $product_context || 'products' === (string) $key );
 		}
 		return $value;
 	}
