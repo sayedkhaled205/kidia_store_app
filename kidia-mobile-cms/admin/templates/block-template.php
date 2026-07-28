@@ -40,6 +40,14 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 	data-label="<?php echo esc_attr( $block->get_label() ); ?>"
 	data-element-category="<?php echo esc_attr( $element_category_key ); ?>"
 >
+	<button
+		type="button"
+		class="button-link kidia-delete-block kidia-builder-block__remove"
+		aria-label="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
+		title="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
+	>
+		<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+	</button>
 
 	<div class="kidia-builder-block__header">
 
@@ -82,7 +90,7 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
 				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
 			>
-				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+				<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
 			</button>
 
 			<button
@@ -96,21 +104,19 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 				); ?>
 			</button>
 
-			<button
-				type="button"
-				class="button button-link-delete kidia-delete-block kidia-card-action kidia-card-action--primary"
-			>
-				<span class="dashicons dashicons-trash" aria-hidden="true"></span>
-				<?php esc_html_e(
-					'Remove',
-					'kidia-mobile-cms'
-				); ?>
-			</button>
+			<span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span>
 
 		</div>
 
 	</div>
 	<div class="kidia-builder-block__body">
+		<div class="kidia-element-editor__toolbar">
+			<button type="button" class="button kidia-element-editor__back">
+				<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
+				<?php esc_html_e( 'Back to Elements', 'kidia-mobile-cms' ); ?>
+			</button>
+			<strong><?php echo esc_html( $name ); ?></strong>
+		</div>
 
 		<input
 			type="hidden"

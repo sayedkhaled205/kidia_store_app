@@ -78,14 +78,14 @@ assert.deepEqual(
   pick(homeActions, actionProperties),
   {
     display: "grid",
-    position: "static",
-    left: "auto",
-    width: "100%",
-    "min-width": "0",
+    position: "absolute",
+    left: "12px",
+    width: "304px",
+    "min-width": "304px",
     "grid-template-columns": "74px 74px 40px 104px",
     gap: "4px",
   },
-  "Home element actions must stay contained inside the grid card."
+  "Home element actions must stay clear and consistent with the Header and Footer rows."
 );
 
 assert.equal(window.getComputedStyle(baseline).width, "304px");
@@ -100,4 +100,4 @@ assert.equal(window.getComputedStyle(pageStatus).height, "34px", "Page status mu
 assert.equal(window.getComputedStyle(pageStatus).width, "138px", "Page status must stay compact after removing the eye.");
 assert.equal(window.getComputedStyle(pageStatus).gridTemplateColumns, "38px minmax(82px,1fr)", "Page status must contain only switch and copy columns.");
 
-console.log("Shared controls render consistently, with Home actions contained inside element grid cards.");
+console.log("Shared controls render consistently, with Home actions contained inside compact element rows.");
