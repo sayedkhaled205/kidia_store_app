@@ -251,18 +251,28 @@ assert.match(
 );
 assert.match(
   admin,
-  /'date_created'\s*=>\s*\$date_from\s*\.\s*'\.\.\.'\s*\.\s*\$date_to/,
-  "Store Data reports must query WooCommerce with its supported UTC timestamp range.",
+  /'reports'\s*===\s*\$store_tab[\s\S]*Kidia_Mobile_Analytics::orders_in_period\(\s*\$date_from,\s*\$date_to,\s*\$store_source\s*\)/,
+  "Store Data reports must use the verified shared WooCommerce order source.",
 );
 assert.match(
   analytics,
-  /'date_created'\s*=>\s*\$from\s*\.\s*'\.\.\.'\s*\.\s*\$to/,
-  "Analytics commerce totals must query WooCommerce with its supported UTC timestamp range.",
+  /function orders_in_period[\s\S]*'date_created'\s*=>\s*\$from\s*\.\s*'\.\.\.'\s*\.\s*\$to[\s\S]*unset\(\s*\$args\['date_created'\]\s*\)[\s\S]*collect_orders_in_period/,
+  "Analytics and reports must fall back to verified order dates when the native range returns no rows.",
 );
-assert.doesNotMatch(
-  `${admin}\n${analytics}`,
-  /'date_created'\s*=>\s*gmdate\(\s*'Y-m-d H:i:s'/,
-  "WooCommerce date ranges must not use unsupported date-time strings.",
+assert.match(
+  analytics,
+  /get_date_created\(\)[\s\S]*getTimestamp\(\)[\s\S]*\$created_at\s*<\s*\$from[\s\S]*\$created_at\s*>\s*\$to/,
+  "Fallback results must be checked against the exact requested timestamps.",
+);
+assert.match(
+  admin,
+  /array\(\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
+  "Analytics and Reports must default to Today.",
+);
+assert.match(
+  storeData,
+  /in_array\(\s*\$tab,\s*array\(\s*'reports',\s*'analytics'\s*\),\s*true\s*\)\s*\?\s*'today'/,
+  "Navigation into Analytics or Reports must keep Today as the default.",
 );
 assert.match(
   analytics,

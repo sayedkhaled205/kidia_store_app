@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Analytics {
 
-	private const DB_VERSION = '3';
+	private const DB_VERSION = '4';
 	private const DB_OPTION  = 'kidia_mobile_analytics_db_version';
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
@@ -929,6 +929,99 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	/**
+	 * Reads orders from the active WooCommerce data store and verifies every
+	 * returned order against the requested UTC range and channel.
+	 *
+	 * Some stores can return an empty result for a supported date range while
+	 * their unfiltered order query still returns the real orders. In that case
+	 * the fallback walks newest-first pages and applies the same range locally.
+	 * This keeps Reports and Analytics compatible with both CPT and HPOS storage.
+	 *
+	 * @param string[] $statuses Optional WooCommerce order statuses.
+	 * @return WC_Order[]
+	 */
+	public static function orders_in_period( int $from, int $to, string $source = 'all', array $statuses = array() ): array {
+		if ( ! function_exists( 'wc_get_orders' ) || $to < $from ) {
+			return array();
+		}
+
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$args   = array(
+			'limit'        => 250,
+			'page'         => 1,
+			'paginate'     => true,
+			'type'         => 'shop_order',
+			'date_created' => $from . '...' . $to,
+			'orderby'      => 'date',
+			'order'        => 'DESC',
+			'return'       => 'objects',
+		);
+		if ( ! empty( $statuses ) ) {
+			$args['status'] = array_values( array_filter( array_map( 'sanitize_key', $statuses ) ) );
+		}
+
+		$orders = self::collect_orders_in_period( $args, $from, $to, $source, false );
+		if ( ! empty( $orders ) ) {
+			return $orders;
+		}
+
+		unset( $args['date_created'] );
+		$args['page'] = 1;
+		return self::collect_orders_in_period( $args, $from, $to, $source, true );
+	}
+
+	/**
+	 * @param array<string,mixed> $args WooCommerce order query arguments.
+	 * @return WC_Order[]
+	 */
+	private static function collect_orders_in_period( array $args, int $from, int $to, string $source, bool $stop_at_older_order ): array {
+		$orders        = array();
+		$maximum_pages = 1;
+		do {
+			$result = wc_get_orders( $args );
+			$batch  = is_object( $result ) && isset( $result->orders )
+				? (array) $result->orders
+				: ( is_array( $result ) ? $result : array() );
+			if ( is_object( $result ) && isset( $result->max_num_pages ) ) {
+				$maximum_pages = max( 1, absint( $result->max_num_pages ) );
+			}
+
+			$reached_older_order = false;
+			foreach ( $batch as $order ) {
+				if ( ! $order instanceof WC_Order ) {
+					continue;
+				}
+				$created = $order->get_date_created();
+				if ( ! $created ) {
+					continue;
+				}
+				$created_at = $created->getTimestamp();
+				if ( $created_at < $from ) {
+					$reached_older_order = true;
+					continue;
+				}
+				if ( $created_at > $to ) {
+					continue;
+				}
+				$order_source = 'mobile' === (string) $order->get_meta( '_kidia_order_source' )
+					? 'mobile'
+					: 'website';
+				if ( 'all' !== $source && $source !== $order_source ) {
+					continue;
+				}
+				$orders[] = $order;
+			}
+
+			++$args['page'];
+			if ( $stop_at_older_order && $reached_older_order ) {
+				break;
+			}
+		} while ( ! empty( $batch ) && absint( $args['page'] ) <= $maximum_pages );
+
+		return $orders;
+	}
+
+	/**
 	 * Reads real historical WooCommerce orders so AI Studio has useful evidence
 	 * immediately, including stores that installed tracking after years of sales.
 	 *
@@ -947,51 +1040,21 @@ final class Kidia_Mobile_Analytics {
 			return self::empty_commerce_snapshot();
 		}
 
-		$args = array(
-			'limit'        => 250,
-			'page'         => 1,
-			'paginate'     => true,
-			'status'       => function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' ),
-			// Numeric ranges are interpreted by WooCommerce as exact UTC seconds.
-			'date_created' => $from . '...' . $to,
-			'orderby'      => 'date',
-			'order'        => 'DESC',
-			'return'       => 'objects',
-		);
-		if ( 'mobile' === $source ) {
-			$args['meta_query'] = array(
-				array( 'key' => '_kidia_order_source', 'value' => 'mobile' ),
-			);
-		} elseif ( 'website' === $source ) {
-			$args['meta_query'] = array(
-				'relation' => 'OR',
-				array( 'key' => '_kidia_order_source', 'compare' => 'NOT EXISTS' ),
-				array( 'key' => '_kidia_order_source', 'value' => 'website' ),
-			);
-		}
-
 		$snapshot             = self::empty_commerce_snapshot();
-		$total_available      = 0;
+		$orders               = self::orders_in_period(
+			$from,
+			$to,
+			$source,
+			function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' )
+		);
+		$total_available      = count( $orders );
 		$customers            = array();
 		$products             = array();
 		$product_customers    = array();
 		$product_availability = array();
 		$pairs                = array();
 		$hours                = array();
-		do {
-			$result = wc_get_orders( $args );
-			$batch  = is_object( $result ) && isset( $result->orders )
-				? (array) $result->orders
-				: ( is_array( $result ) ? $result : array() );
-			if ( 1 === absint( $args['page'] ) ) {
-				$total_available = is_object( $result ) && isset( $result->total )
-					? absint( $result->total )
-					: count( $batch );
-			}
-			$maximum_pages = is_object( $result ) && isset( $result->max_num_pages )
-				? max( 1, absint( $result->max_num_pages ) )
-				: 1;
-			foreach ( $batch as $order ) {
+		foreach ( $orders as $order ) {
 				if ( ! $order instanceof WC_Order ) {
 					continue;
 				}
@@ -1045,9 +1108,7 @@ final class Kidia_Mobile_Analytics {
 					$hour = absint( wp_date( 'G', $created->getTimestamp() ) );
 					$hours[ $hour ] = ( $hours[ $hour ] ?? 0 ) + 1;
 				}
-			}
-			++$args['page'];
-		} while ( ! empty( $batch ) && absint( $args['page'] ) <= $maximum_pages );
+		}
 
 		$snapshot['customers'] = count( $customers );
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
