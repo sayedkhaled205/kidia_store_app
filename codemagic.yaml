@@ -1,0 +1,32 @@
+workflows:
+  woomobile-release:
+    name: WooMobile Android and iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.gradle/caches
+    scripts:
+      - name: Install Flutter dependencies
+        script: flutter pub get
+      - name: Analyze Flutter project
+        script: flutter analyze
+      - name: Run Flutter tests
+        script: flutter test
+      - name: Build Android APK
+        script: flutter build apk --release
+      - name: Build Android App Bundle
+        script: flutter build appbundle --release
+      - name: Build unsigned iOS application
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/**/*.aab
+      - build/ios/iphoneos/*.app
+      - flutter_drive.log
