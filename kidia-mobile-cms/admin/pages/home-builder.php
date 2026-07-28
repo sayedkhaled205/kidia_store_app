@@ -472,12 +472,15 @@ foreach ( $library_options as $type => $option_name ) {
 				);
 				?>
 
-				<details
+				<button
+					type="button"
 					class="kidia-element-group"
 					data-element-group="<?php echo esc_attr( $type ); ?>"
 					data-element-category="<?php echo esc_attr( $picker_category['key'] ); ?>"
+					data-block-type="<?php echo esc_attr( $type ); ?>"
+					data-block-label="<?php echo esc_attr( $label ); ?>"
 				>
-					<summary class="kidia-element-group__summary">
+					<span class="kidia-element-group__summary">
 						<span class="kidia-element-group__identity">
 								<span
 									class="dashicons <?php echo esc_attr( $icon ); ?>"
@@ -485,122 +488,8 @@ foreach ( $library_options as $type => $option_name ) {
 							<strong><?php echo esc_html( $label ); ?></strong>
 							<small><?php echo esc_html( $picker_category['label'] ); ?></small>
 						</span>
-						<span class="kidia-element-group__count">
-							<?php
-							echo esc_html(
-								(string) ( $layout_counts[ $type ] ?? 0 )
-							);
-							?>
-						</span>
-					</summary>
-
-					<div class="kidia-element-group__body">
-						<div class="kidia-element-group__actions">
-						<button
-							type="button"
-							class="button kidia-create-element"
-							data-block-type="<?php echo esc_attr( $type ); ?>"
-							data-block-label="<?php echo esc_attr( $label ); ?>"
-						>
-							<?php
-								esc_html_e(
-									'Create New',
-									'kidia-mobile-cms'
-								);
-								?>
-						</button>
-
-						</div>
-
-					<?php if ( ! empty( $type_items ) ) : ?>
-
-						<div class="kidia-element-picker__grid">
-
-							<?php foreach ( $type_items as $library_item ) : ?>
-
-								<?php
-								if (
-									! is_array( $library_item )
-									|| empty( $library_item['id'] )
-								) {
-									continue;
-								}
-
-								$library_id = sanitize_key(
-									(string) $library_item['id']
-								);
-
-								$item_name = ! empty(
-									$library_item['name']
-								)
-									? sanitize_text_field(
-										(string) $library_item['name']
-									)
-									: $label;
-
-								$item_status = isset(
-									$library_item['status']
-								)
-									? sanitize_key(
-										(string) $library_item['status']
-									)
-									: 'draft';
-								?>
-
-								<button
-									type="button"
-									class="kidia-element-card kidia-add-library-element"
-									data-block-type="<?php echo esc_attr( $type ); ?>"
-									data-library-id="<?php echo esc_attr( $library_id ); ?>"
-									data-block-name="<?php echo esc_attr( $item_name ); ?>"
-									data-template-id="<?php
-										echo esc_attr(
-											'tmpl-kidia-library-' .
-											$type .
-											'-' .
-											$library_id
-										);
-									?>"
-								>
-
-									<span
-										class="dashicons <?php echo esc_attr( $icon ); ?>"
-									></span>
-
-									<div>
-
-										<strong>
-											<?php echo esc_html( $item_name ); ?>
-										</strong>
-
-										<p>
-											<?php
-												echo esc_html(
-													'published' === $item_status
-														? __(
-															'Published',
-															'kidia-mobile-cms'
-														)
-														: __(
-															'Draft',
-															'kidia-mobile-cms'
-														)
-												);
-												?>
-										</p>
-
-									</div>
-
-								</button>
-
-							<?php endforeach; ?>
-
-						</div>
-
-					<?php endif; ?>
-					</div>
-
-				</details>
+					</span>
+				</button>
 
 			<?php endforeach; ?>
 
