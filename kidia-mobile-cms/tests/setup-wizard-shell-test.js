@@ -107,6 +107,9 @@ assert.match(exporter, /ASYNC_HOOK[\s\S]*queue_build\(\)[\s\S]*as_enqueue_async_
 assert.match(exporter, /START_TIMEOUT[\s\S]*did not start in time/, "A background build that never starts must return to a retryable failure state.");
 assert.match(exporter, /refresh_build\(\)[\s\S]*handle_download_apk[\s\S]*download_url/, "APK builds must poll for completion before exposing the download.");
 assert.match(exporter, /refresh_build\(\s*true\s*\)/, "Downloading must refresh the remote build so an expired signed APK URL is replaced.");
+assert.match(exporter, /configuration_hash[\s\S]*plugin_version[\s\S]*provision_push/, "The APK request must use the production service's snake_case contract.");
+assert.match(exporter, /wp_safe_remote_get[\s\S]*'stream'\s*=>\s*true[\s\S]*application\/vnd\.android\.package-archive[\s\S]*Content-Disposition:\s*attachment/, "The finished APK must be streamed as a verified browser attachment instead of only redirecting to an external URL.");
+assert.match(exporter, /MB_IN_BYTES[\s\S]*PK\\x03\\x04/, "The download must reject empty, HTML, or otherwise invalid APK artifacts.");
 assert.match(licenseManager, /BUILD_API_BASE_URL[\s\S]*build_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "The build service must reuse installation-bound license authorization without exposing it to the browser.");
 assert.match(licenseManager, /PUSH_API_BASE_URL[\s\S]*push_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "Managed Push delivery must reuse installation-bound license authorization.");
 assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");

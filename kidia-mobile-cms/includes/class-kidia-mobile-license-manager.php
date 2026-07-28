@@ -239,12 +239,13 @@ final class Kidia_Mobile_License_Manager {
 		$status = wp_remote_retrieve_response_code( $response );
 		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( $status < 200 || $status >= 300 || ! is_array( $data ) || ( isset( $data['ok'] ) && empty( $data['ok'] ) ) ) {
-			$message = is_array( $data ) && isset( $data['error']['message'] )
-				? sanitize_text_field( (string) $data['error']['message'] )
-				: __( 'The WooMobile build service rejected the request.', 'kidia-mobile-cms' );
+			$message = $this->remote_error_message(
+				$data,
+				__( 'The WooMobile build service rejected the request.', 'kidia-mobile-cms' )
+			);
 			$code = is_array( $data ) && isset( $data['error']['code'] )
 				? sanitize_key( (string) $data['error']['code'] )
-				: 'build_request_failed';
+				: ( 422 === $status ? 'build_validation_failed' : 'build_request_failed' );
 			return new WP_Error( $code ?: 'build_request_failed', $message );
 		}
 
@@ -344,6 +345,42 @@ final class Kidia_Mobile_License_Manager {
 	 */
 	private function save_state( array $state ): void {
 		update_option( self::STATE_OPTION, $state, false );
+	}
+
+	/**
+	 * Extracts both the WooMobile error envelope and Laravel validation errors.
+	 *
+	 * @param mixed  $data     Decoded remote response.
+	 * @param string $fallback Message used for a non-JSON response.
+	 */
+	private function remote_error_message( $data, string $fallback ): string {
+		if ( ! is_array( $data ) ) {
+			return $fallback;
+		}
+
+		$message = '';
+		if ( isset( $data['error']['message'] ) ) {
+			$message = (string) $data['error']['message'];
+		} elseif ( isset( $data['message'] ) ) {
+			$message = (string) $data['message'];
+		}
+
+		$validation = array();
+		if ( isset( $data['errors'] ) && is_array( $data['errors'] ) ) {
+			foreach ( $data['errors'] as $messages ) {
+				if ( is_array( $messages ) ) {
+					$validation = array_merge( $validation, array_map( 'strval', $messages ) );
+				} elseif ( is_scalar( $messages ) ) {
+					$validation[] = (string) $messages;
+				}
+			}
+		}
+		if ( ! empty( $validation ) ) {
+			$message = implode( ' ', array_slice( $validation, 0, 3 ) );
+		}
+
+		$message = sanitize_text_field( $message );
+		return '' !== $message ? $message : $fallback;
 	}
 
 	/**

@@ -29,14 +29,21 @@ class WP_Error {
 
 final class Kidia_Mobile_License_Manager {
 	public static int $requests = 0;
+	public static array $bodies = array();
+	public static bool $fail_push_once = false;
 
 	public function is_active(): bool {
 		return true;
 	}
 
-	public function build_service_request( string $path = '', string $method = 'GET', array $body = array() ): array {
+	public function build_service_request( string $path = '', string $method = 'GET', array $body = array() ) {
 		self::$requests++;
+		self::$bodies[] = $body;
 		if ( 'POST' === $method ) {
+			if ( self::$fail_push_once && ! empty( $body['provision_push'] ) ) {
+				self::$fail_push_once = false;
+				return new WP_Error( 'push_provisioning_unavailable', 'Managed Push is not ready.' );
+			}
 			return array(
 				'data' => array(
 					'build' => array(
@@ -181,12 +188,26 @@ $remote = Kidia_Mobile_App_Exporter::state();
 kidia_build_assert( 1 === Kidia_Mobile_License_Manager::$requests, 'The background action must contact the remote build service once.' );
 kidia_build_assert( 'build-123' === $remote['build_id'], 'The background action must persist the remote build ID.' );
 kidia_build_assert( 'queued' === $remote['status'], 'Remote queued status must remain pollable.' );
+$request_body = Kidia_Mobile_License_Manager::$bodies[0];
+kidia_build_assert( isset( $request_body['configuration_hash'] ), 'The build service requires the canonical configuration_hash field.' );
+kidia_build_assert( isset( $request_body['plugin_version'] ), 'The build service requires the canonical plugin_version field.' );
+kidia_build_assert( true === $request_body['provision_push'], 'The first build attempt should provision managed Push.' );
+kidia_build_assert( ! isset( $request_body['configurationHash'] ), 'Legacy camelCase build fields must not fail Laravel validation again.' );
 
-$remote['status'] = 'ready';
-$remote['download_url'] = 'https://downloads.example.test/expired-app.apk';
-update_option( 'kidia_mobile_app_export_state_v1', $remote );
+Kidia_Mobile_License_Manager::$fail_push_once = true;
+$fallback_queued = $exporter->queue_build();
+$exporter->process_queued_build( $fallback_queued['request_token'] );
+$fallback_build = Kidia_Mobile_App_Exporter::state();
+$last_two_bodies = array_slice( Kidia_Mobile_License_Manager::$bodies, -2 );
+kidia_build_assert( true === $last_two_bodies[0]['provision_push'], 'Managed Push should be attempted first.' );
+kidia_build_assert( false === $last_two_bodies[1]['provision_push'], 'An unavailable optional Push provisioner must not prevent the APK build.' );
+kidia_build_assert( 'build-123' === $fallback_build['build_id'], 'The APK must still receive a build ID when optional Push provisioning is unavailable.' );
+
+$fallback_build['status'] = 'ready';
+$fallback_build['download_url'] = 'https://downloads.example.test/expired-app.apk';
+update_option( 'kidia_mobile_app_export_state_v1', $fallback_build );
 $refreshed = $exporter->refresh_build( true );
-kidia_build_assert( 2 === Kidia_Mobile_License_Manager::$requests, 'Download must refresh the ready remote build.' );
+kidia_build_assert( 4 === Kidia_Mobile_License_Manager::$requests, 'Download must refresh the ready remote build.' );
 kidia_build_assert( 'ready' === $refreshed['status'], 'Finished must normalize to a ready APK.' );
 kidia_build_assert( 'https://downloads.example.test/fresh-app.apk' === $refreshed['download_url'], 'Download must replace an expired signed URL.' );
 

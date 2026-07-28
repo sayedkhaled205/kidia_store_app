@@ -225,15 +225,15 @@ final class Kidia_Mobile_App_Exporter {
 		$response = $license->build_service_request(
 			'',
 			'POST',
-			array(
-				'platform'          => 'android',
-				'artifact'          => 'apk',
-				'configurationHash' => self::configuration_hash(),
-				'pluginVersion'     => defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '',
-				'provisionPush'     => true,
-				'manifest'          => $manifest,
-			)
+			$this->build_request_payload( $manifest, true )
 		);
+		if ( is_wp_error( $response ) && $this->can_retry_without_push( $response ) ) {
+			$response = $license->build_service_request(
+				'',
+				'POST',
+				$this->build_request_payload( $manifest, false )
+			);
+		}
 		if ( is_wp_error( $response ) ) {
 			$this->save_build_error( $response->get_error_message() );
 			return $response;
@@ -333,7 +333,99 @@ final class Kidia_Mobile_App_Exporter {
 			wp_die( esc_html__( 'The APK download link returned by the build service is invalid.', 'kidia-mobile-cms' ) );
 		}
 
-		wp_redirect( $url, 302, 'Woo Mobile CMS' ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		$this->stream_remote_apk(
+			$url,
+			sanitize_file_name( (string) $result['apk_file_name'] )
+		);
+		exit;
+	}
+
+	/**
+	 * Builds the canonical Laravel API payload.
+	 *
+	 * Build service validators use snake_case. Earlier plugin versions sent
+	 * camelCase keys, so authenticated requests reached the service but failed
+	 * validation before a build ID could be created.
+	 *
+	 * @param array<string,mixed> $manifest App build manifest.
+	 * @return array<string,mixed>
+	 */
+	private function build_request_payload( array $manifest, bool $provision_push ): array {
+		return array(
+			'platform'           => 'android',
+			'artifact'           => 'apk',
+			'configuration_hash' => self::configuration_hash(),
+			'plugin_version'     => defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '',
+			'provision_push'     => $provision_push,
+			'manifest'           => $manifest,
+		);
+	}
+
+	private function can_retry_without_push( WP_Error $error ): bool {
+		return in_array(
+			$error->get_error_code(),
+			array(
+				'build_request_failed',
+				'build_validation_failed',
+				'push_provisioning_failed',
+				'push_provisioning_unavailable',
+			),
+			true
+		);
+	}
+
+	/**
+	 * Proxies the signed artifact through WordPress as a verified attachment.
+	 *
+	 * A redirect to a short-lived cross-origin URL can finish without a browser
+	 * download. Streaming the artifact gives the response an APK filename and
+	 * refuses HTML/error bodies that only look like successful downloads.
+	 */
+	private function stream_remote_apk( string $url, string $file_name ): void {
+		$file_name = preg_match( '/\.apk$/i', $file_name )
+			? $file_name
+			: ( preg_replace( '/\.[^.]+$/', '', $file_name ?: 'woomobile-app' ) . '.apk' );
+		$temp_file = wp_tempnam( $file_name );
+		if ( ! $temp_file ) {
+			wp_die( esc_html__( 'A temporary APK download file could not be created.', 'kidia-mobile-cms' ) );
+		}
+
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'             => 300,
+				'redirection'         => 5,
+				'stream'              => true,
+				'filename'            => $temp_file,
+				'limit_response_size' => 300 * MB_IN_BYTES,
+			)
+		);
+		$status   = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
+		$size     = is_file( $temp_file ) ? (int) filesize( $temp_file ) : 0;
+		$handle   = $size > 0 ? fopen( $temp_file, 'rb' ) : false;
+		$magic    = is_resource( $handle ) ? (string) fread( $handle, 4 ) : '';
+		if ( is_resource( $handle ) ) {
+			fclose( $handle );
+		}
+
+		if (
+			is_wp_error( $response )
+			|| $status < 200
+			|| $status >= 300
+			|| $size < MB_IN_BYTES
+			|| "PK\x03\x04" !== $magic
+		) {
+			wp_delete_file( $temp_file );
+			wp_die( esc_html__( 'The build service did not return a valid Android APK. Please build the app again.', 'kidia-mobile-cms' ) );
+		}
+
+		nocache_headers();
+		header( 'Content-Type: application/vnd.android.package-archive' );
+		header( 'Content-Disposition: attachment; filename="' . $file_name . '"' );
+		header( 'Content-Length: ' . (string) $size );
+		header( 'X-Content-Type-Options: nosniff' );
+		readfile( $temp_file );
+		wp_delete_file( $temp_file );
 		exit;
 	}
 
