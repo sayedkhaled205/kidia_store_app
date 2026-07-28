@@ -265,7 +265,7 @@ void main() {
     });
   }
 
-  testWidgets('mobile checkout remains scrollable on a short viewport', (
+  testWidgets('mobile checkout keeps scrolling on a short viewport', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(390, 620);
