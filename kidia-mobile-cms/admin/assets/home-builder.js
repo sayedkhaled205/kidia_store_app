@@ -1184,7 +1184,7 @@
 			return;
 		}
 
-		createButton = target.closest(".kidia-create-element");
+		createButton = target.closest(".kidia-create-element, .kidia-element-group[data-block-type]");
 		if (createButton) {
 			openCreateModal(createButton.dataset.blockType || "", createButton.dataset.blockLabel || "");
 			return;

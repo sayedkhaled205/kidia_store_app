@@ -40,15 +40,6 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 	data-label="<?php echo esc_attr( $block->get_label() ); ?>"
 	data-element-category="<?php echo esc_attr( $element_category_key ); ?>"
 >
-	<button
-		type="button"
-		class="button-link kidia-delete-block kidia-builder-block__remove"
-		aria-label="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
-		title="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
-	>
-		<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-	</button>
-
 	<div class="kidia-builder-block__header">
 
 		<div class="kidia-builder-block__left">
@@ -65,37 +56,15 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 					<?php echo esc_html( $name ); ?>
 				</strong>
 
-				<span class="kidia-builder-block__type">
-					<?php echo esc_html( $block->get_label() ); ?>
-				</span>
-
-				<span class="kidia-builder-block__category">
-					<?php echo esc_html( $element_category_label ); ?>
-				</span>
-
 			</div>
 
 		</div>
 
 		<div class="kidia-builder-block__actions kidia-card-actions">
 
-			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
-				<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( true, ! empty( $block_data['enabled'] ) ); ?>>
-				<span class="kidia-builder-switch__track"></span>
-				<span class="kidia-builder-switch__state"></span>
-			</label>
-
 			<button
 				type="button"
-				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
-				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
-			>
-				<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-			</button>
-
-			<button
-				type="button"
-				class="button kidia-duplicate-block kidia-card-action kidia-card-action--secondary"
+				class="button kidia-duplicate-block kidia-card-action kidia-card-action--primary"
 			>
 				<span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
 				<?php esc_html_e(
@@ -104,7 +73,29 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 				); ?>
 			</button>
 
-			<span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span>
+			<button
+				type="button"
+				class="button kidia-delete-block kidia-card-action kidia-card-action--secondary"
+				aria-label="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
+			>
+				<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+				<?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?>
+			</button>
+
+			<button
+				type="button"
+				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
+				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
+				aria-expanded="false"
+			>
+				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+			</button>
+
+			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
+				<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( true, ! empty( $block_data['enabled'] ) ); ?>>
+				<span class="kidia-builder-switch__track"></span>
+				<span class="kidia-builder-switch__state"></span>
+			</label>
 
 		</div>
 
