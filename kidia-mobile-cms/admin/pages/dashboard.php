@@ -63,6 +63,23 @@ if ( 'ready' === $build_status && ! $app_export_current ) {
 	$build_state['message'] = __( 'Application settings changed. Build a new APK to include the latest setup.', 'kidia-mobile-cms' );
 }
 $build_in_progress = in_array( $build_status, array( 'queued', 'building' ), true );
+$build_auto_download = isset( $_GET['build_notice'] )
+	&& 'started' === sanitize_key( wp_unslash( $_GET['build_notice'] ) );
+$build_action = $build_step_complete
+	? 'kidia_mobile_download_apk'
+	: 'kidia_mobile_build_app';
+$build_button_label = $build_step_complete
+	? __( 'Download APK', 'kidia-mobile-cms' )
+	: ( 'failed' === $build_status
+		? __( 'Try Build & Download Again', 'kidia-mobile-cms' )
+		: ( $build_in_progress
+			? __( 'Building APK…', 'kidia-mobile-cms' )
+			: __( 'Build & Download APK', 'kidia-mobile-cms' )
+		)
+	);
+$build_button_icon = $build_step_complete
+	? 'dashicons-download'
+	: ( $build_in_progress ? 'dashicons-update' : 'dashicons-smartphone' );
 $journey_steps = array(
 	array(
 		'title'       => __( 'Purchase and connect', 'kidia-mobile-cms' ),
@@ -147,6 +164,8 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								class="kidia-app-build"
 								data-kidia-app-build
 								data-status="<?php echo esc_attr( $build_status ); ?>"
+								data-can-build="<?php echo $setup_step_complete ? '1' : '0'; ?>"
+								data-auto-download="<?php echo $build_auto_download ? '1' : '0'; ?>"
 							>
 								<p class="kidia-app-build__status" data-build-message>
 									<?php
@@ -170,23 +189,21 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 									></span>
 								</div>
 								<div class="kidia-app-build__actions">
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-										<input type="hidden" name="action" value="kidia_mobile_build_app">
-										<?php wp_nonce_field( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce' ); ?>
-										<button type="submit" class="button button-primary" <?php disabled( ! $setup_step_complete || $build_in_progress ); ?>>
-											<span class="dashicons dashicons-smartphone" aria-hidden="true"></span>
-											<?php echo $build_step_complete ? esc_html__( 'Build New APK', 'kidia-mobile-cms' ) : esc_html__( 'Build APK', 'kidia-mobile-cms' ); ?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-build-form>
+										<input type="hidden" name="action" value="<?php echo esc_attr( $build_action ); ?>" data-build-form-action>
+										<?php wp_nonce_field( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce', false ); ?>
+										<?php wp_nonce_field( 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce', false ); ?>
+										<button
+											type="submit"
+											class="button button-primary kidia-app-build__button<?php echo $build_in_progress ? ' is-loading' : ''; ?>"
+											data-build-action
+											aria-busy="<?php echo $build_in_progress ? 'true' : 'false'; ?>"
+											<?php disabled( ! $setup_step_complete || $build_in_progress ); ?>
+										>
+											<span class="dashicons <?php echo esc_attr( $build_button_icon ); ?>" data-build-action-icon aria-hidden="true"></span>
+											<span data-build-action-label><?php echo esc_html( $build_button_label ); ?></span>
 										</button>
 									</form>
-									<a
-										class="button button-primary"
-										data-build-download
-										href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'kidia_mobile_download_apk' ), admin_url( 'admin-post.php' ) ), 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce' ) ); ?>"
-										<?php echo $build_step_complete ? '' : 'hidden'; ?>
-									>
-										<span class="dashicons dashicons-download" aria-hidden="true"></span>
-										<?php esc_html_e( 'Download APK', 'kidia-mobile-cms' ); ?>
-									</a>
 								</div>
 								<details class="kidia-app-build__advanced">
 									<summary><?php esc_html_e( 'Developer build files', 'kidia-mobile-cms' ); ?></summary>
@@ -472,11 +489,13 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-app-build__actions form {
+		width: 100%;
 		margin: 0;
 	}
 
 	.kidia-app-build__actions .button {
 		display: inline-flex;
+		width: 100%;
 		min-height: 38px;
 		align-items: center;
 		justify-content: center;
@@ -489,6 +508,16 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		width: 17px;
 		height: 17px;
 		font-size: 17px;
+	}
+
+	.kidia-app-build__button.is-loading .dashicons {
+		animation: kidia-app-build-spin .85s linear infinite;
+	}
+
+	@keyframes kidia-app-build-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.kidia-app-build__advanced {
