@@ -952,7 +952,8 @@ final class Kidia_Mobile_Analytics {
 			'page'         => 1,
 			'paginate'     => true,
 			'status'       => function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' ),
-			'date_created' => gmdate( 'Y-m-d H:i:s', $from ) . '...' . gmdate( 'Y-m-d H:i:s', $to ),
+			// Numeric ranges are interpreted by WooCommerce as exact UTC seconds.
+			'date_created' => $from . '...' . $to,
 			'orderby'      => 'date',
 			'order'        => 'DESC',
 			'return'       => 'objects',

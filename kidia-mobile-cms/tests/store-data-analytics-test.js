@@ -250,6 +250,21 @@ assert.match(
   "The Analytics page must always request a fresh source-of-truth summary.",
 );
 assert.match(
+  admin,
+  /'date_created'\s*=>\s*\$date_from\s*\.\s*'\.\.\.'\s*\.\s*\$date_to/,
+  "Store Data reports must query WooCommerce with its supported UTC timestamp range.",
+);
+assert.match(
+  analytics,
+  /'date_created'\s*=>\s*\$from\s*\.\s*'\.\.\.'\s*\.\s*\$to/,
+  "Analytics commerce totals must query WooCommerce with its supported UTC timestamp range.",
+);
+assert.doesNotMatch(
+  `${admin}\n${analytics}`,
+  /'date_created'\s*=>\s*gmdate\(\s*'Y-m-d H:i:s'/,
+  "WooCommerce date ranges must not use unsupported date-time strings.",
+);
+assert.match(
   analytics,
   /kidia_mobile_analytics_write_failed[\s\S]*'recorded'[\s\S]*'deduplicated'/,
   "The ingestion API must report failed writes and acknowledge duplicate retries.",
