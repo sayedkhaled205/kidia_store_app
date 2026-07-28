@@ -88,6 +88,32 @@ $footer_icon_symbols = array(
 	<div class="kidia-page-card__body" hidden>
 		<div class="kidia-chrome-composer" data-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
 			<?php if ( 'header' === $chrome_part ) : ?><div class="kidia-chrome-composer__heading"><h3><?php esc_html_e( 'Regular header', 'kidia-mobile-cms' ); ?></h3></div><?php endif; ?>
+			<?php if ( 'header' === $chrome_part ) : ?>
+			<section class="kidia-header-presets" aria-labelledby="kidia-header-presets-title">
+				<div class="kidia-header-presets__heading">
+					<strong id="kidia-header-presets-title"><?php esc_html_e( 'Quick header presets', 'kidia-mobile-cms' ); ?></strong>
+					<span><?php esc_html_e( 'Choose a popular layout, then customize it below.', 'kidia-mobile-cms' ); ?></span>
+				</div>
+				<div class="kidia-header-presets__grid">
+					<?php
+					$header_presets = array(
+						'standard' => array( 'Standard store', 'Logo, search and cart' ),
+						'search'   => array( 'Search first', 'Full-width product search' ),
+						'centered' => array( 'Centered brand', 'Menu, centered logo and cart' ),
+						'page'     => array( 'Page title', 'Back, centered title and cart' ),
+						'actions'  => array( 'Action rich', 'Menu, search, account and cart' ),
+					);
+					foreach ( $header_presets as $preset_key => $preset_copy ) :
+						?>
+						<button type="button" class="kidia-header-preset" data-header-preset="<?php echo esc_attr( $preset_key ); ?>" aria-pressed="false">
+							<span class="kidia-header-preset__preview kidia-header-preset__preview--<?php echo esc_attr( $preset_key ); ?>" aria-hidden="true"><i></i><i></i><i></i></span>
+							<strong><?php echo esc_html( $preset_copy[0] ); ?></strong>
+							<small><?php echo esc_html( $preset_copy[1] ); ?></small>
+						</button>
+					<?php endforeach; ?>
+				</div>
+			</section>
+			<?php endif; ?>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php echo esc_attr( $chrome_title ); ?>"></div>
 			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
