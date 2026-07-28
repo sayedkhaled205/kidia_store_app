@@ -461,6 +461,65 @@
 			});
 		});
 	}
+	const liveStoreData = document.querySelector('[data-kidia-live-store-data]');
+	if (liveStoreData) {
+		let liveTimer = 0;
+		let liveRequest = null;
+		const scheduleLiveRefresh = function () {
+			window.clearTimeout(liveTimer);
+			liveTimer = window.setTimeout(refreshLiveStoreData, 5000);
+		};
+		const refreshLiveStoreData = async function () {
+			if (document.visibilityState !== 'visible' || !window.navigator.onLine) {
+				scheduleLiveRefresh();
+				return;
+			}
+			const active = document.activeElement;
+			if (active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
+				scheduleLiveRefresh();
+				return;
+			}
+			liveRequest = new AbortController();
+			const timeout = window.setTimeout(function () { liveRequest.abort(); }, 12000);
+			try {
+				const url = new URL(window.location.href);
+				url.searchParams.set('kidia_live', String(Date.now()));
+				const response = await fetch(url.toString(), {
+					credentials: 'same-origin',
+					cache: 'no-store',
+					headers: {'X-Kidia-Live-Data': '1'},
+					signal: liveRequest.signal
+				});
+				if (!response.ok) throw new Error('Live Store Data request failed');
+				const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+				const fresh = page.querySelector('[data-kidia-live-store-data]');
+				if (
+					fresh &&
+					fresh.dataset.kidiaLiveStoreData === liveStoreData.dataset.kidiaLiveStoreData &&
+					fresh.innerHTML !== liveStoreData.innerHTML
+				) {
+					liveStoreData.innerHTML = fresh.innerHTML;
+				}
+			} catch (_error) {
+				// Keep the last verified values and retry without blanking the report.
+			} finally {
+				window.clearTimeout(timeout);
+				liveRequest = null;
+				scheduleLiveRefresh();
+			}
+		};
+		document.addEventListener('visibilitychange', function () {
+			if (document.visibilityState === 'visible') {
+				window.clearTimeout(liveTimer);
+				void refreshLiveStoreData();
+			}
+		});
+		window.addEventListener('online', function () {
+			window.clearTimeout(liveTimer);
+			void refreshLiveStoreData();
+		});
+		scheduleLiveRefresh();
+	}
 	document.addEventListener('click', function (event) {
 		const button = event.target.closest('[data-copy-link],[data-copy-text]');
 		if (!button) return;
