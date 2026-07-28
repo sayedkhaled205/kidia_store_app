@@ -137,13 +137,16 @@ assert.match(wizardTemplate, /Preview full theme[\s\S]*data-theme-modal-page[\s\
 assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, "The second setup step must select required and optional application pages.");
 assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
 assert.match(wizardTemplate, /data-color-picker="primary"[\s\S]*data-color-code="primary"[\s\S]*data-color-picker="secondary"[\s\S]*data-color-code="secondary"/, "Both application colors must expose a picker and editable HEX code.");
+assert.match(wizardCss, /\.kidia-setup-color-control\{display:flex!important;[^}]*align-items:stretch;[^}]*width:100%}/, "Each color picker and HEX code must stay in one compact row.");
+assert.match(wizardCss, /\.kidia-setup-color-control input\[type=text\]\{[^}]*width:auto!important;[^}]*flex:1 1 auto;[^}]*direction:ltr;/, "HEX fields must share the color row without wrapping and keep the hash on the left.");
 assert.match(wizardTemplate, /if \( \$is_required \)[\s\S]*type="hidden"[\s\S]*data-required-page="1"[\s\S]*else[\s\S]*type="checkbox"[\s\S]*if \( ! \$is_required \)[\s\S]*kidia-page-choice__switch/, "Required pages must stay enabled without rendering a checkbox or On/Off switch.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.doesNotMatch(wizardTemplate, /catalog_images/, "Theme cards must never use merchant catalog images.");
 assert.match(wizardTemplate, /asset_url\(\s*\$theme,\s*'category'[\s\S]*asset_url\(\s*\$theme,\s*'product'/, "Theme cards must use their bundled category and product artwork.");
 assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
-assert.match(dashboardTemplate, /Build & Download APK/, "Overview must label the combined APK action clearly.");
-assert.match(dashboardTemplate, /data-build-form[\s\S]*data-build-form-action[\s\S]*data-build-action/, "Overview must expose one stateful build/download control in the last launch step.");
+assert.match(dashboardTemplate, /kidia-customer-journey__build-step[\s\S]*data-kidia-app-build[\s\S]*kidia-app-build__card-form[\s\S]*data-build-form-action[\s\S]*kidia-app-build__card-button[\s\S]*data-build-action/, "The fourth launch card must be the single stateful build/download button.");
+assert.doesNotMatch(dashboardTemplate, /Developer build files|Download configuration ZIP/, "The compact build card must not render developer copy or a second action.");
+assert.match(dashboardTemplate, /\.kidia-app-build__card-button\s*\{[^}]*background:\s*#174e42;/, "The complete build card button must use the dark WooMobile color.");
 assert.doesNotMatch(dashboardTemplate, /data-build-download/, "Overview must not render a second APK download button.");
 assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
@@ -206,7 +209,7 @@ assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engin
 assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An optional reviewed AI offer push must prefill the editable offer composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /kidia-theme-modal__workspace[\s\S]*kidia-theme-modal__device[\s\S]*iframe/, "Full theme preview must host the real Flutter application surface.");
-assert.match(wizardCss, /kidia-setup-color-control[\s\S]*grid-template-columns:48px minmax\(0,1fr\)/, "Color picker and HEX code must stay compact and side by side.");
+assert.match(wizardCss, /kidia-setup-color-control\{display:flex!important;[^}]*align-items:stretch;[^}]*width:100%}/, "Color picker and HEX code must stay compact and side by side.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");
 const wizardScript = read("admin", "assets", "setup-wizard.js");

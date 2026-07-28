@@ -61,9 +61,9 @@
 .kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
 .kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid input[type=text],
 .kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid select{min-height:42px;height:42px}
-.kidia-setup-color-control{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px}
-.kidia-setup-color-control input[type=color]{width:48px!important;min-width:48px;height:42px!important;padding:4px}
-.kidia-setup-color-control input[type=text]{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.kidia-setup-color-control{display:flex!important;align-items:stretch;gap:8px;width:100%}
+.kidia-setup-color-control input[type=color]{width:48px!important;min-width:48px;max-width:48px;flex:0 0 48px;height:42px!important;padding:4px}
+.kidia-setup-color-control input[type=text]{width:auto!important;min-width:0;flex:1 1 auto;direction:ltr;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .kidia-setup-color-control input[type=text].is-invalid{border-color:#c83f31!important;box-shadow:0 0 0 1px #c83f31!important}
 .kidia-setup-step[data-step-kind=identity] .kidia-setup-logo-field{grid-column:auto;display:grid;grid-template-columns:52px minmax(110px,1fr);grid-template-areas:"label label" "preview button";gap:6px 9px;min-height:0;padding:0;border:0}
 .kidia-setup-step[data-step-kind=identity] .kidia-setup-logo-field>span{grid-area:label;margin:0}
