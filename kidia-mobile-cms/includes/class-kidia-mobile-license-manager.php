@@ -10,6 +10,7 @@ defined( 'ABSPATH' ) || exit;
 final class Kidia_Mobile_License_Manager {
 
 	private const API_BASE_URL       = 'https://api.woomobile.app/api/v1/licenses';
+	private const BUILD_API_BASE_URL = 'https://api.woomobile.app/api/v1/builds';
 	private const STATE_OPTION       = 'kidia_mobile_license_state';
 	private const INSTALLATION_OPTION = 'kidia_mobile_installation_id';
 	private const CRON_HOOK          = 'kidia_mobile_verify_license';
@@ -184,6 +185,69 @@ final class Kidia_Mobile_License_Manager {
 
 	public function is_active(): bool {
 		return ! empty( $this->status()['active'] );
+	}
+
+	/**
+	 * Sends an authenticated request to the WooMobile APK build service.
+	 *
+	 * The activation token never reaches the browser. Build requests reuse the
+	 * same installation-bound authorization as license verification.
+	 *
+	 * @param string              $path   Build resource path, relative to /builds.
+	 * @param string              $method HTTP method.
+	 * @param array<string,mixed> $body   Optional JSON request body.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function build_service_request( string $path = '', string $method = 'GET', array $body = array() ) {
+		$state = $this->state();
+		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
+		if ( '' === $token || ! $this->is_active() ) {
+			return new WP_Error( 'license_not_activated', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+		}
+
+		$path = '/' . ltrim( $path, '/' );
+		if ( '/' !== $path && ! preg_match( '#^/[a-zA-Z0-9/_-]+$#', $path ) ) {
+			return new WP_Error( 'invalid_build_path', __( 'The application build path is invalid.', 'kidia-mobile-cms' ) );
+		}
+
+		$method = strtoupper( $method );
+		if ( ! in_array( $method, array( 'GET', 'POST' ), true ) ) {
+			return new WP_Error( 'invalid_build_method', __( 'The application build request is invalid.', 'kidia-mobile-cms' ) );
+		}
+
+		$base_url = (string) apply_filters( 'kidia_mobile_build_api_base_url', self::BUILD_API_BASE_URL );
+		$args     = array(
+			'timeout' => 30,
+			'method'  => $method,
+			'headers' => array(
+				'Accept'                   => 'application/json',
+				'Content-Type'             => 'application/json',
+				'Authorization'            => 'Bearer ' . $token,
+				'X-WooMobile-Installation' => $this->installation_id(),
+			),
+		);
+		if ( 'POST' === $method ) {
+			$args['body'] = wp_json_encode( $body );
+		}
+
+		$response = wp_remote_request( untrailingslashit( $base_url ) . ( '/' === $path ? '' : $path ), $args );
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'build_service_unavailable', __( 'Could not contact the WooMobile build service. Please try again.', 'kidia-mobile-cms' ) );
+		}
+
+		$status = wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( $status < 200 || $status >= 300 || ! is_array( $data ) || ( isset( $data['ok'] ) && empty( $data['ok'] ) ) ) {
+			$message = is_array( $data ) && isset( $data['error']['message'] )
+				? sanitize_text_field( (string) $data['error']['message'] )
+				: __( 'The WooMobile build service rejected the request.', 'kidia-mobile-cms' );
+			$code = is_array( $data ) && isset( $data['error']['code'] )
+				? sanitize_key( (string) $data['error']['code'] )
+				: 'build_request_failed';
+			return new WP_Error( $code ?: 'build_request_failed', $message );
+		}
+
+		return $data;
 	}
 
 	public function scheduled_verify(): void {
