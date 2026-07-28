@@ -1321,6 +1321,15 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 
 
 /*
+ * Reserve the vertical scrollbar track on every CMS screen. Without this,
+ * pages that gain a document scrollbar shift the fixed RTL rail by its width.
+ */
+html:has(body[class*="kidia-mobile"]){
+	overflow-y:scroll;
+	scrollbar-gutter:stable;
+}
+
+/*
  * Fixed viewport rail contract.
  * The navigation keeps one size and one viewport anchor on every desktop CMS
  * screen. Only the page workspace scrolls or repaints during navigation.
