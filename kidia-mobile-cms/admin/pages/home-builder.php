@@ -81,7 +81,9 @@ foreach ( $library_options as $type => $option_name ) {
 
 <div class="wrap kidia-builder-wrap">
 
-	<?php if (
+	<?php if ( isset( $_GET['restored'] ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Home page restored to defaults.', 'kidia-mobile-cms' ); ?></p></div>
+	<?php elseif (
 		isset( $_GET['updated'] )
 		&& '1' === sanitize_key(
 			wp_unslash( $_GET['updated'] )
@@ -169,7 +171,7 @@ foreach ( $library_options as $type => $option_name ) {
 		$kidia_toolbar_title = __( 'Home Page', 'kidia-mobile-cms' );
 		$kidia_toolbar_save_label = __( 'Save Home Layout', 'kidia-mobile-cms' );
 		$kidia_toolbar_show_add = true;
-		$kidia_toolbar_restore_product = false;
+		$kidia_toolbar_show_restore = true;
 		$kidia_toolbar_page_toggle = false;
 		include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
 		?>

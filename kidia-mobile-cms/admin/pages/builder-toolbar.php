@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 $kidia_toolbar_save_label = isset( $kidia_toolbar_save_label ) ? (string) $kidia_toolbar_save_label : __( 'Save Layout', 'kidia-mobile-cms' );
 $kidia_toolbar_show_add = ! empty( $kidia_toolbar_show_add );
-$kidia_toolbar_restore_product = ! empty( $kidia_toolbar_restore_product );
+$kidia_toolbar_show_restore = ! empty( $kidia_toolbar_show_restore ) || ! empty( $kidia_toolbar_restore_product );
 $kidia_toolbar_page_toggle = ! empty( $kidia_toolbar_page_toggle );
 $kidia_toolbar_page_enabled = ! isset( $kidia_toolbar_page_enabled ) || ! empty( $kidia_toolbar_page_enabled );
 $kidia_render_add_button = static function (): void {
@@ -27,6 +27,9 @@ $kidia_render_add_button = static function (): void {
 		<div class="kidia-builder-toolbar__secondary-actions">
 			<button type="button" class="button" id="kidia-collapse-all"><?php esc_html_e( 'Collapse All', 'kidia-mobile-cms' ); ?></button>
 			<button type="button" class="button" id="kidia-expand-all"><?php esc_html_e( 'Expand All', 'kidia-mobile-cms' ); ?></button>
+			<?php if ( $kidia_toolbar_show_restore ) : ?>
+				<button type="submit" class="button kidia-restore-defaults" name="restore_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore this page to its default settings? Other pages will not be affected.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Defaults', 'kidia-mobile-cms' ); ?></button>
+			<?php endif; ?>
 			<?php submit_button( $kidia_toolbar_save_label, 'primary', 'submit', false ); ?>
 		</div>
 	<?php else : ?>
@@ -45,8 +48,8 @@ $kidia_render_add_button = static function (): void {
 					<span class="kidia-page-availability__copy"><strong><?php esc_html_e( 'Page status', 'kidia-mobile-cms' ); ?></strong><small class="kidia-toggle-state"></small></span>
 				</label>
 			<?php endif; ?>
-			<?php if ( $kidia_toolbar_restore_product ) : ?>
-				<button type="submit" class="button kidia-restore-product-defaults" name="restore_product_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore every Product Page setting to its default value? This does not affect any other page.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Product Defaults', 'kidia-mobile-cms' ); ?></button>
+			<?php if ( $kidia_toolbar_show_restore ) : ?>
+				<button type="submit" class="button kidia-restore-defaults" name="restore_defaults" value="1" formnovalidate onclick="return window.confirm('<?php echo esc_js( __( 'Restore this page to its default settings? Other pages will not be affected.', 'kidia-mobile-cms' ) ); ?>');"><?php esc_html_e( 'Restore Defaults', 'kidia-mobile-cms' ); ?></button>
 			<?php endif; ?>
 			<?php submit_button( $kidia_toolbar_save_label, 'primary', 'submit', false ); ?>
 		</div>

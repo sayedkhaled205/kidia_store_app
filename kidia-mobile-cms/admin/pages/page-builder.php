@@ -98,7 +98,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 }
 ?>
 <div class="wrap kidia-page-builder" data-page="<?php echo esc_attr( $page ); ?>">
-	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Product Page settings restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page settings restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
 			<div class="kidia-page-phone"><div class="kidia-page-phone__screen">
@@ -117,7 +117,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			$kidia_toolbar_title = $page_label;
 			$kidia_toolbar_save_label = __( 'Save Page Layout', 'kidia-mobile-cms' );
 			$kidia_toolbar_show_add = 'wishlist' === $page;
-			$kidia_toolbar_restore_product = 'product' === $page;
+			$kidia_toolbar_show_restore = true;
 			$kidia_toolbar_page_toggle = true;
 			$kidia_toolbar_page_enabled = ! empty( $layout['enabled'] );
 			include KIDIA_MOBILE_CMS_PATH . 'admin/pages/builder-toolbar.php';
