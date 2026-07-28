@@ -941,6 +941,17 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 }
 .kidia-ai-page *{box-sizing:border-box}
 .kidia-ai-page .button{display:inline-flex;min-height:38px;align-items:center;justify-content:center;border-radius:9px;font-weight:750;line-height:1.2}
+.kidia-ai-page .button>.dashicons{
+	display:grid;
+	width:18px;
+	height:18px;
+	flex:0 0 18px;
+	place-items:center;
+	margin:0;
+	font-size:18px;
+	line-height:1;
+	vertical-align:middle;
+}
 .kidia-ai-page .button-primary{border-color:#236b59!important;background:#2f806e!important;color:#fff!important;box-shadow:none!important}
 .kidia-ai-page .button-primary:hover,.kidia-ai-page .button-primary:focus{border-color:#174e42!important;background:#236b59!important;color:#fff!important}
 .kidia-ai-page :is(input,select):focus{border-color:#2f806e!important;box-shadow:0 0 0 1px #2f806e!important}
@@ -968,8 +979,7 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-filter-bar label:nth-of-type(2){flex-basis:210px}
 .kidia-ai-filter-bar :is(select,input){width:100%;min-width:0}
 .kidia-ai-filter-bar .button{min-width:98px}
-.kidia-ai-generate-button{min-width:178px!important;gap:7px;white-space:nowrap}
-.kidia-ai-generate-button>.dashicons{width:18px;height:18px;font-size:18px}
+.kidia-ai-generate-button{min-width:178px!important;align-items:center!important;justify-content:center!important;gap:7px;white-space:nowrap}
 .kidia-ai-generate-button .spinner{display:none;float:none;margin:0}
 .kidia-ai-generate-button.is-generating>.dashicons{display:none}
 .kidia-ai-generate-button.is-generating .spinner{display:inline-block;visibility:visible}
@@ -986,7 +996,8 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-progress-overlay[hidden]{display:none!important}
 .kidia-ai-progress-card{
 	display:grid;
-	width:min(460px,calc(100vw - 40px));
+	grid-template-columns:minmax(0,1fr);
+	width:min(680px,calc(100vw - 48px));
 	justify-items:center;
 	gap:10px;
 	padding:30px;
@@ -996,6 +1007,7 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	box-shadow:0 24px 70px rgba(23,78,66,.2);
 	text-align:center;
 }
+.kidia-ai-progress-card>*{min-width:0;max-width:100%}
 .kidia-ai-progress-ring{
 	--kidia-ai-progress:0;
 	display:grid;
@@ -1009,13 +1021,14 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-progress-ring strong{z-index:1;grid-area:1/1;color:#174e42;font-size:25px;font-variant-numeric:tabular-nums}
 .kidia-ai-progress-card h2{margin:4px 0 0;color:#174e42;font-size:21px}
 .kidia-ai-progress-card p{min-height:22px;margin:0;color:#526761}
-.kidia-ai-progress-count{color:#315f55;font-size:13px;font-variant-numeric:tabular-nums}
+.kidia-ai-progress-count{direction:ltr;color:#315f55;font-size:13px;font-variant-numeric:tabular-nums;unicode-bidi:isolate}
 .kidia-ai-progress-track{width:100%;height:9px;overflow:hidden;border-radius:99px;background:#e4efec}
 .kidia-ai-progress-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#236b59,#74c3b1);transition:width .28s ease}
 .kidia-ai-progress-card small{color:#75847f;line-height:1.45}
-.kidia-ai-progress-actions{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:4px}
-.kidia-ai-progress-actions .button{gap:5px}
-.kidia-ai-progress-actions .dashicons{width:17px;height:17px;font-size:17px}
+.kidia-ai-progress-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:8px;width:100%;margin-top:4px}
+.kidia-ai-progress-actions .button{display:inline-flex!important;width:100%;min-width:0;align-items:center!important;justify-content:center!important;gap:6px;padding-inline:12px!important;line-height:1.2!important;white-space:nowrap}
+.kidia-ai-progress-actions .button>.dashicons{display:grid;width:18px;height:18px;flex:0 0 18px;place-items:center;margin:0;font-size:18px;line-height:1;vertical-align:middle}
+.kidia-ai-progress-actions [hidden]{display:none!important}
 .kidia-ai-cancel-button{border-color:#d9aaa5!important;background:#fff!important;color:#a33f36!important}
 .kidia-ai-progress-overlay.is-docked{
 	inset:auto 22px 22px auto;
@@ -1046,7 +1059,7 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-count{font-size:11px}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-track{height:7px;grid-column:1/-1;margin-top:5px}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-card>small{grid-column:1/-1;font-size:10px}
-.kidia-ai-progress-overlay.is-docked .kidia-ai-progress-actions{grid-column:1/-1;justify-content:flex-end;margin-top:5px}
+.kidia-ai-progress-overlay.is-docked .kidia-ai-progress-actions{grid-column:1/-1;grid-template-columns:repeat(2,max-content);justify-content:flex-end;margin-top:5px}
 .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-actions .button{min-height:32px;padding:2px 9px;font-size:11px}
 .kidia-ai-progress-overlay.is-docked [data-ai-background-button]{display:none}
 .kidia-ai-ready-state{display:flex;min-height:230px;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;padding:28px;border:1px dashed #9fc8be;border-radius:16px;background:linear-gradient(135deg,#eff8f5,#fff);text-align:start}
@@ -1299,4 +1312,6 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 @media(max-width:650px){
 	.kidia-ai-decision-products{grid-template-columns:1fr}
 	.kidia-ai-decision-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+	.kidia-ai-progress-card{width:min(460px,calc(100vw - 28px));padding:22px 16px}
+	.kidia-ai-progress-actions{grid-template-columns:1fr}
 }

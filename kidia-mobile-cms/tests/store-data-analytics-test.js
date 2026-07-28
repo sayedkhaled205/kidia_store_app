@@ -251,8 +251,18 @@ assert.match(
 );
 assert.match(
   shellScript,
-  /payload\.progress[\s\S]*records completed[\s\S]*kidia_mobile_start_ai_analysis[\s\S]*kidia_mobile_step_ai_analysis/,
+  /payload\.progress[\s\S]*records completed[\s\S]*kidia_mobile_start_ai_analysis[\s\S]*kidia_mobile_ai_analysis_status/,
   "The AI progress surface must advance from measured server batches.",
+);
+assert.match(
+  shellScript,
+  /progressLabel[\s\S]*toFixed\(1\)[\s\S]*setAttribute\('dir', 'ltr'\)/,
+  "Large-store progress must show a real fractional percentage and an unambiguous processed/total order.",
+);
+assert.match(
+  shellScript,
+  /kidia_mobile_ai_analysis_status'[\s\S]*advance: '1'[\s\S]*Retrying without losing completed records/,
+  "Foreground and parked analysis must self-advance and retry temporary batch failures.",
 );
 assert.doesNotMatch(
   shellScript,
@@ -265,9 +275,34 @@ assert.match(
   "The incremental job must calculate progress from completed order and product records.",
 );
 assert.match(
+  aiAnalysisJob,
+  /status\( string \$job_id, int \$user_id, bool \$advance = false \)[\s\S]*return self::step\( \$job_id, \$user_id \)/,
+  "Status polling must advance one protected batch when the server scheduler stalls.",
+);
+assert.match(
+  aiAnalysisJob,
+  /step_lock_key[\s\S]*started_at[\s\S]*time\(\) - \$lock_started < 45/,
+  "A crashed batch lock must become recoverable instead of freezing the job indefinitely.",
+);
+assert.match(
   aiInsights,
   /Continue in background[\s\S]*View results[\s\S]*Cancel analysis/,
   "Long analysis must be parkable or cancellable from the real progress surface.",
+);
+assert.match(
+  shellCss,
+  /kidia-ai-progress-card\{[\s\S]*grid-template-columns:minmax\(0,1fr\)[\s\S]*width:min\(680px[\s\S]*kidia-ai-progress-card>\*\{min-width:0;max-width:100%\}/,
+  "The progress surface must keep every child inside the card.",
+);
+assert.match(
+  shellCss,
+  /kidia-ai-progress-actions\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)[\s\S]*kidia-ai-progress-actions \[hidden\]\{display:none!important\}/,
+  "Progress actions must stay aligned and keep View results hidden until completion.",
+);
+assert.match(
+  shellCss,
+  /kidia-ai-page \.button>\.dashicons\{[\s\S]*place-items:center[\s\S]*vertical-align:middle/,
+  "AI Studio button icons must remain vertically centered with their labels.",
 );
 for (const backgroundMarker of [
   "kidia_mobile_background_ai_analysis",

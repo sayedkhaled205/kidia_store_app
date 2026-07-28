@@ -100,6 +100,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'customer_bitmap'   => str_repeat( "\0", self::CUSTOMER_BITMAP_BYTES ),
 			'background'        => false,
 			'started_at'        => time(),
+			'updated_at'        => time(),
 		);
 		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
 		update_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
@@ -121,10 +122,22 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
 			return self::payload( $job, true );
 		}
-		if ( get_transient( self::step_lock_key( $job_id ) ) ) {
-			return self::payload( $job, false );
+		$lock = get_transient( self::step_lock_key( $job_id ) );
+		if ( $lock ) {
+			$lock_started = is_array( $lock ) ? absint( $lock['started_at'] ?? 0 ) : time();
+			if ( $lock_started > 0 && time() - $lock_started < 45 ) {
+				return self::payload( $job, false );
+			}
+			delete_transient( self::step_lock_key( $job_id ) );
 		}
-		set_transient( self::step_lock_key( $job_id ), 1, MINUTE_IN_SECONDS );
+		set_transient(
+			self::step_lock_key( $job_id ),
+			array(
+				'started_at' => time(),
+				'token'      => wp_generate_uuid4(),
+			),
+			MINUTE_IN_SECONDS
+		);
 
 		$phase = (string) ( $job['phase'] ?? '' );
 		if ( 'orders' === $phase ) {
@@ -142,18 +155,22 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( self::is_cancelled( $job_id ) ) {
 			$job['phase'] = 'cancelled';
 		}
+		$job['updated_at'] = time();
 		set_transient( self::key( $job_id ), $job, 2 * HOUR_IN_SECONDS );
 		delete_transient( self::step_lock_key( $job_id ) );
 		return self::payload( $job, 'cancelled' === (string) $job['phase'] );
 	}
 
-	/** Returns the current measured state without advancing the job. */
-	public static function status( string $job_id, int $user_id ): array {
+	/** Returns the current state and can safely advance one batch as a scheduler fallback. */
+	public static function status( string $job_id, int $user_id, bool $advance = false ): array {
 		$job = get_transient( self::key( $job_id ) );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
 		$done = in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true );
+		if ( $advance && ! $done ) {
+			return self::step( $job_id, $user_id );
+		}
 		return self::payload( $job, $done );
 	}
 
@@ -451,7 +468,9 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			absint( $job['orders_processed'] ?? 0 ) + absint( $job['products_processed'] ?? 0 )
 		);
 		$cancelled = 'cancelled' === (string) ( $job['phase'] ?? '' );
-		$progress = $done && ! $cancelled ? 100 : min( 99, (int) floor( 100 * $processed / $total ) );
+		$progress = $done && ! $cancelled
+			? 100
+			: min( 99.9, round( 10 * ( 100 * $processed / $total ) ) / 10 );
 		$phase    = (string) ( $job['phase'] ?? 'orders' );
 		$stage    = __( 'Reading paid WooCommerce orders', 'kidia-mobile-cms' );
 		if ( 'products' === $phase ) {

@@ -200,16 +200,18 @@
 	const renderAiProgress = function (overlay, payload) {
 		if (!overlay) return;
 		const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
+		const progressLabel = Number.isInteger(progress) ? progress.toFixed(0) : progress.toFixed(1);
 		const value = overlay.querySelector('[data-ai-progress-value]');
 		const ring = overlay.querySelector('[data-ai-progress-ring]');
 		const bar = overlay.querySelector('[data-ai-progress-bar]');
 		const stage = overlay.querySelector('[data-ai-progress-stage]');
 		const count = overlay.querySelector('[data-ai-progress-count]');
-		if (value) value.textContent = progress + '%';
+		if (value) value.textContent = progressLabel + '%';
 		if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
 		if (bar) bar.style.width = progress + '%';
 		if (stage && payload.stage) stage.textContent = payload.stage;
 		if (count) {
+			count.setAttribute('dir', 'ltr');
 			count.textContent =
 				Number(payload.processed || 0).toLocaleString() + ' / ' +
 				Number(payload.total || 0).toLocaleString() + ' records completed';
@@ -218,37 +220,47 @@
 		const cancel = overlay.querySelector('[data-ai-cancel-button]');
 		const background = overlay.querySelector('[data-ai-background-button]');
 		if (payload.cancelled) {
+			overlay.setAttribute('aria-busy', 'false');
 			overlay.hidden = true;
 			document.body.classList.remove('kidia-ai-is-generating');
 			return;
 		}
 		if (payload.done) {
+			overlay.setAttribute('aria-busy', 'false');
 			if (stage) stage.textContent = 'Analysis complete. Your decisions are ready.';
 			if (view) {
 				view.hidden = false;
 				view.href = payload.result_url || aiBackgroundConfig.aiUrl || '#';
 			}
 			if (background) background.hidden = true;
-			if (cancel) cancel.textContent = 'Dismiss';
+			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Dismiss';
 			overlay.dataset.aiComplete = '1';
 		}
 	};
 	const pollBackgroundJob = async function (jobId, overlay) {
 		let active = true;
+		let failures = 0;
 		overlay.dataset.aiPollingJob = jobId;
 		while (active && document.body.contains(overlay) && overlay.dataset.aiPollingJob === jobId) {
 			try {
-				const payload = await aiRequest('kidia_mobile_ai_analysis_status', {job_id: jobId});
+				const payload = await aiRequest('kidia_mobile_ai_analysis_status', {job_id: jobId, advance: '1'});
 				if (overlay.dataset.aiPollingJob !== jobId) return;
 				renderAiProgress(overlay, payload);
 				active = !payload.done && !payload.cancelled;
+				failures = 0;
 				if (active) {
-					await new Promise(function (resolve) { window.setTimeout(resolve, 3000); });
+					await new Promise(function (resolve) { window.setTimeout(resolve, 1200); });
 				}
 			} catch (error) {
 				const note = overlay.querySelector('[data-ai-progress-note]');
-				if (note) note.textContent = error && error.message ? error.message : 'Background status is unavailable.';
-				active = false;
+				failures += 1;
+				if (note) note.textContent = failures < 4
+					? 'The server paused this batch. Retrying without losing completed records…'
+					: (error && error.message ? error.message : 'Background status is unavailable.');
+				active = failures < 4;
+				if (active) {
+					await new Promise(function (resolve) { window.setTimeout(resolve, 1800); });
+				}
 			}
 		}
 	};
@@ -341,6 +353,7 @@
 			if (label) label.textContent = 'Generating offers from store data...';
 			if (overlay) {
 				overlay.hidden = false;
+				overlay.setAttribute('aria-busy', 'true');
 				overlay.classList.remove('is-docked');
 				delete overlay.dataset.aiComplete;
 				document.body.classList.add('kidia-ai-is-generating');
@@ -358,9 +371,21 @@
 				});
 				activeJobId = payload.job_id;
 				renderAiProgress(overlay, payload);
+				let failures = 0;
 				while (!payload.done && foreground) {
-					payload = await aiRequest('kidia_mobile_step_ai_analysis', {job_id: activeJobId});
-					renderAiProgress(overlay, payload);
+					try {
+						payload = await aiRequest('kidia_mobile_ai_analysis_status', {job_id: activeJobId, advance: '1'});
+						renderAiProgress(overlay, payload);
+						failures = 0;
+					} catch (stepError) {
+						failures += 1;
+						if (failures >= 4) throw stepError;
+						if (note) note.textContent = 'The server paused this batch. Retrying without losing completed records…';
+						await new Promise(function (resolve) { window.setTimeout(resolve, 1800); });
+					}
+					if (!payload.done && foreground) {
+						await new Promise(function (resolve) { window.setTimeout(resolve, 350); });
+					}
 				}
 				if (payload.cancelled || !foreground) return;
 				window.location.assign(payload.result_url || window.location.href);
