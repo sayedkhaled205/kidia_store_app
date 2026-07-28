@@ -145,6 +145,6 @@ $countable_statuses = Kidia_Mobile_Analytics::countable_order_statuses();
 kidia_orders_assert( in_array( 'pending', $countable_statuses, true ), 'Pending orders must remain in the real order total.' );
 kidia_orders_assert( in_array( 'done-2', $countable_statuses, true ), 'Custom statuses must remain in the real order total.' );
 kidia_orders_assert( ! in_array( 'checkout-draft', $countable_statuses, true ), 'Checkout drafts must not inflate the order total.' );
-kidia_orders_assert( 390 === Kidia_Mobile_Analytics::total_order_count(), 'The order total must sum every built-in and custom real order status.' );
+kidia_orders_assert( 395 === Kidia_Mobile_Analytics::total_order_count(), 'The order total must sum every built-in and custom real order status.' );
 
 echo "Store Data order runtime tests passed.\n";
