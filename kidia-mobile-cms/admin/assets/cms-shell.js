@@ -121,10 +121,16 @@
 	const pushDelivery = document.querySelector('[data-push-delivery]');
 	const pushSchedule = document.querySelector('[data-push-schedule]');
 	const pushAutomation = document.querySelector('[data-push-automation]');
+	const pushSubmitLabel = document.querySelector('[data-push-submit-label]');
 	if (pushDelivery) {
 		const syncDelivery = function () {
 			if (pushSchedule) pushSchedule.hidden = pushDelivery.value !== 'scheduled';
 			if (pushAutomation) pushAutomation.hidden = pushDelivery.value !== 'automation';
+			if (pushSubmitLabel) {
+				pushSubmitLabel.textContent = pushDelivery.value === 'scheduled'
+					? 'Schedule notification'
+					: (pushDelivery.value === 'automation' ? 'Save automation' : 'Send notification');
+			}
 		};
 		pushDelivery.addEventListener('change', syncDelivery); syncDelivery();
 	}
@@ -136,16 +142,6 @@
 		};
 		pushActionStyle.addEventListener('change', syncPushActionStyle);
 		syncPushActionStyle();
-	}
-	const pushProvider = document.querySelector('[data-push-provider]');
-	if (pushProvider) {
-		const syncPushProvider = function () {
-			document.querySelectorAll('[data-provider-fields]').forEach(function (field) {
-				field.hidden = field.dataset.providerFields !== pushProvider.value;
-			});
-		};
-		pushProvider.addEventListener('change', syncPushProvider);
-		syncPushProvider();
 	}
 	const datePreset = document.querySelector('.kidia-date-filter select[name="date_preset"]');
 	if (datePreset) {

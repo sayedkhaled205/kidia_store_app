@@ -139,11 +139,11 @@ defined( 'ABSPATH' ) || exit;
 					<h3><?php esc_html_e( 'Installable Android APK', 'kidia-mobile-cms' ); ?></h3>
 					<p><?php esc_html_e( 'WooMobile will compile your store URL, application identity, selected pages and public Push bootstrap into one APK you can install on your phone.', 'kidia-mobile-cms' ); ?></p>
 					<ul>
-						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Server credentials stay securely in WordPress.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'WooMobile manages Push credentials securely outside WordPress.', 'kidia-mobile-cms' ); ?></li>
 						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'The build continues in the background, so you can return to Overview later.', 'kidia-mobile-cms' ); ?></li>
-						<li><span class="dashicons <?php echo ! empty( $push_export_config['enabled'] ) ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span><?php echo ! empty( $push_export_config['enabled'] ) ? esc_html__( 'Push is connected and will be included in this APK.', 'kidia-mobile-cms' ) : esc_html__( 'The APK can be built now; connect FCM or OneSignal to activate real Push delivery.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons <?php echo ! empty( $push_export_config['enabled'] ) ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span><?php echo ! empty( $push_export_config['enabled'] ) ? esc_html__( 'A private Push connection will be created automatically for this APK.', 'kidia-mobile-cms' ) : esc_html__( 'Activate the WooMobile license to include managed Push in this APK.', 'kidia-mobile-cms' ); ?></li>
 					</ul>
-					<?php if ( empty( $push_export_config['enabled'] ) ) : ?><a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-push-notifications' ) ); ?>"><?php esc_html_e( 'Open Push connection settings', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
+					<?php if ( empty( $push_export_config['enabled'] ) ) : ?><a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms' ) ); ?>"><?php esc_html_e( 'Activate WooMobile license', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
 					<?php if ( ! empty( $app_export_state['completed_at'] ) ) : ?><small><?php echo esc_html( sprintf( __( 'Last APK build: %s', 'kidia-mobile-cms' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $app_export_state['completed_at'] ) ) ) ); ?></small><?php endif; ?>
 				</div>
 			</div>

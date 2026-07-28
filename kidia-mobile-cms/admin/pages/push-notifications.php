@@ -33,35 +33,22 @@ $destination_labels = array(
 <div class="wrap kidia-push-page">
 	<header class="kidia-push-hero">
 		<div><span class="dashicons dashicons-megaphone"></span><div><h1><?php esc_html_e( 'Push Notifications', 'kidia-mobile-cms' ); ?></h1><p><?php esc_html_e( 'Compose messages, build automatic journeys and measure delivery, opens and sales.', 'kidia-mobile-cms' ); ?></p></div></div>
-		<span class="kidia-provider-status <?php echo $provider_connected ? 'is-connected' : ''; ?>"><?php echo esc_html( (string) $provider_status['label'] ); ?></span>
+		<span class="kidia-push-status <?php echo $push_connected ? 'is-connected' : ''; ?>"><?php echo esc_html( (string) $push_status['label'] ); ?></span>
 	</header>
 
-	<?php if ( isset( $_GET['provider_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Push provider settings saved. Use a test audience before enabling an automation.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
-	<?php if ( isset( $_GET['push_sent'] ) ) : ?><div class="kidia-toast is-visible"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Notification saved successfully.', 'kidia-mobile-cms' ); ?></div><?php elseif ( isset( $_GET['push_error'] ) ) : ?><div class="notice notice-error"><p><?php esc_html_e( 'Check the required fields and scheduled time.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['push_sent'] ) ) : ?><div class="kidia-toast is-visible"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Notification saved successfully.', 'kidia-mobile-cms' ); ?></div><?php elseif ( isset( $_GET['push_error'] ) ) : ?><div class="notice notice-error"><p><?php echo esc_html( 'delivery' === sanitize_key( wp_unslash( $_GET['push_error'] ) ) ? __( 'The notification could not be delivered. Build the application first, then try again.', 'kidia-mobile-cms' ) : __( 'Check the required fields and scheduled time.', 'kidia-mobile-cms' ) ); ?></p></div><?php endif; ?>
 
-	<details class="kidia-push-provider" <?php echo $provider_connected ? '' : 'open'; ?>>
-		<summary><span class="dashicons dashicons-cloud"></span><div><strong><?php esc_html_e( 'Delivery connection', 'kidia-mobile-cms' ); ?></strong><small><?php echo esc_html( (string) $provider_status['reason'] ); ?></small></div><b><?php echo $provider_connected ? esc_html__( 'Connected', 'kidia-mobile-cms' ) : esc_html__( 'Setup required', 'kidia-mobile-cms' ); ?></b></summary>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="kidia_mobile_save_push_provider"><?php wp_nonce_field( 'kidia_mobile_save_push_provider', 'kidia_mobile_push_provider_nonce' ); ?>
-			<div class="kidia-push-provider-grid">
-				<label><span><?php esc_html_e( 'Provider', 'kidia-mobile-cms' ); ?></span><select name="push_provider[provider]" data-push-provider><option value="none" <?php selected( 'none', $provider_settings['provider'] ); ?>>Choose provider</option><option value="fcm" <?php selected( 'fcm', $provider_settings['provider'] ); ?>>Firebase Cloud Messaging</option><option value="onesignal" <?php selected( 'onesignal', $provider_settings['provider'] ); ?>>OneSignal</option><option value="webhook" <?php selected( 'webhook', $provider_settings['provider'] ); ?>>Signed webhook</option></select></label>
-				<label data-provider-fields="onesignal"><span>OneSignal App ID</span><input type="text" name="push_provider[onesignal_app_id]" value="<?php echo esc_attr( (string) $provider_settings['onesignal_app_id'] ); ?>"></label>
-				<label data-provider-fields="onesignal"><span>OneSignal REST API key</span><input type="password" name="push_provider[onesignal_api_key]" placeholder="<?php echo empty( $provider_settings['onesignal_api_key'] ) ? '' : esc_attr__( 'Saved — leave blank to keep', 'kidia-mobile-cms' ); ?>"></label>
-				<label data-provider-fields="fcm"><span>Firebase project ID</span><input type="text" name="push_provider[fcm_project_id]" value="<?php echo esc_attr( (string) $provider_settings['fcm_project_id'] ); ?>"></label>
-				<label data-provider-fields="fcm"><span><?php esc_html_e( 'Firebase Web API key (public app config)', 'kidia-mobile-cms' ); ?></span><input type="text" name="push_provider[fcm_api_key]" value="<?php echo esc_attr( (string) $provider_settings['fcm_api_key'] ); ?>"></label>
-				<label data-provider-fields="fcm"><span><?php esc_html_e( 'Firebase application ID', 'kidia-mobile-cms' ); ?></span><input type="text" name="push_provider[fcm_app_id]" value="<?php echo esc_attr( (string) $provider_settings['fcm_app_id'] ); ?>"></label>
-				<label data-provider-fields="fcm"><span><?php esc_html_e( 'Firebase messaging sender ID', 'kidia-mobile-cms' ); ?></span><input type="text" name="push_provider[fcm_sender_id]" value="<?php echo esc_attr( (string) $provider_settings['fcm_sender_id'] ); ?>"></label>
-				<label data-provider-fields="fcm"><span>Service-account client email</span><input type="email" name="push_provider[fcm_client_email]" value="<?php echo esc_attr( (string) $provider_settings['fcm_client_email'] ); ?>"></label>
-				<label class="is-wide" data-provider-fields="fcm"><span>Service-account private key</span><textarea name="push_provider[fcm_private_key]" rows="4" placeholder="<?php echo empty( $provider_settings['fcm_private_key'] ) ? '-----BEGIN PRIVATE KEY-----' : esc_attr__( 'Saved — leave blank to keep', 'kidia-mobile-cms' ); ?>"></textarea></label>
-				<label data-provider-fields="webhook"><span><?php esc_html_e( 'Webhook URL', 'kidia-mobile-cms' ); ?></span><input type="url" name="push_provider[webhook_url]" value="<?php echo esc_attr( (string) $provider_settings['webhook_url'] ); ?>"></label>
-				<label data-provider-fields="webhook"><span><?php esc_html_e( 'Signing secret', 'kidia-mobile-cms' ); ?></span><input type="password" name="push_provider[webhook_secret]" placeholder="<?php echo empty( $provider_settings['webhook_secret'] ) ? '' : esc_attr__( 'Saved — leave blank to keep', 'kidia-mobile-cms' ); ?>"></label>
-			</div>
-			<footer><p><?php echo ! empty( $push_client_config['enabled'] ) ? esc_html__( 'Push is ready for export. Every application generated by this plugin inherits this public client configuration automatically; server secrets stay in WordPress.', 'kidia-mobile-cms' ) : esc_html__( 'Connect the server and public client fields once. Every later application export will inherit them automatically; server secrets never leave WordPress.', 'kidia-mobile-cms' ); ?></p><button class="button button-primary" type="submit"><?php esc_html_e( 'Save delivery connection', 'kidia-mobile-cms' ); ?></button></footer>
-		</form>
-	</details>
+	<div class="kidia-push-managed">
+		<span class="dashicons dashicons-cloud-saved"></span>
+		<div>
+			<strong><?php esc_html_e( 'Push connection managed automatically', 'kidia-mobile-cms' ); ?></strong>
+			<p><?php echo esc_html( (string) $push_status['reason'] ); ?> <?php esc_html_e( 'Each application uses its own private connection; no provider selection or Firebase keys are required.', 'kidia-mobile-cms' ); ?></p>
+		</div>
+		<b><?php esc_html_e( 'Included', 'kidia-mobile-cms' ); ?></b>
+	</div>
 
 	<div class="kidia-push-stats is-four">
-		<div><span class="dashicons dashicons-smartphone"></span><b><?php echo esc_html( (string) $provider_status['devices'] ); ?></b><small><?php esc_html_e( 'Registered devices', 'kidia-mobile-cms' ); ?></small></div>
+		<div><span class="dashicons dashicons-smartphone"></span><b><?php echo esc_html( (string) $push_status['devices'] ); ?></b><small><?php esc_html_e( 'Registered devices', 'kidia-mobile-cms' ); ?></small></div>
 		<div><span class="dashicons dashicons-yes-alt"></span><b><?php echo esc_html( (string) ( $push_metrics['delivered'] ?? 0 ) ); ?></b><small><?php esc_html_e( 'Delivered', 'kidia-mobile-cms' ); ?></small></div>
 		<div><span class="dashicons dashicons-visibility"></span><b><?php echo esc_html( (string) ( $push_metrics['opened'] ?? 0 ) ); ?></b><small><?php esc_html_e( 'Opened', 'kidia-mobile-cms' ); ?></small></div>
 		<div><span class="dashicons dashicons-chart-line"></span><b><?php echo esc_html( (string) ( $push_metrics['converted'] ?? 0 ) ); ?></b><small><?php esc_html_e( 'Converted', 'kidia-mobile-cms' ); ?></small></div>
@@ -110,7 +97,7 @@ $destination_labels = array(
 				</div>
 
 				<details class="kidia-push-advanced"><summary><?php esc_html_e( 'Advanced options', 'kidia-mobile-cms' ); ?></summary><div class="kidia-push-fields"><label class="is-wide"><span><?php esc_html_e( 'Image URL', 'kidia-mobile-cms' ); ?></span><input type="url" name="push_image_url" placeholder="https://"></label><label><span><?php esc_html_e( 'Priority', 'kidia-mobile-cms' ); ?></span><select name="push_priority"><option value="normal">Normal</option><option value="high">High</option></select></label><label><span><?php esc_html_e( 'Expires after (hours)', 'kidia-mobile-cms' ); ?></span><input type="number" name="push_expiry_hours" min="1" max="168" value="24"></label><label><span><?php esc_html_e( 'App badge number', 'kidia-mobile-cms' ); ?></span><input type="number" name="push_badge" min="0"></label><label class="kidia-push-check"><input type="checkbox" name="push_sound" value="1" checked><span><?php esc_html_e( 'Play notification sound', 'kidia-mobile-cms' ); ?></span></label></div></details>
-				<div class="kidia-push-submit"><button class="button button-primary" type="submit"><span class="dashicons dashicons-paper-plane"></span><?php esc_html_e( 'Save & continue', 'kidia-mobile-cms' ); ?></button></div>
+				<div class="kidia-push-submit"><button class="button button-primary" type="submit" data-push-submit><span class="dashicons dashicons-paper-plane"></span><span data-push-submit-label><?php esc_html_e( 'Send notification', 'kidia-mobile-cms' ); ?></span></button></div>
 			</section>
 
 			<aside class="kidia-push-preview"><small><?php esc_html_e( 'Live preview', 'kidia-mobile-cms' ); ?></small><div class="kidia-push-phone"><div class="kidia-push-clock">9:41</div><div class="kidia-push-bubble"><span>W</span><div><b data-push-preview-title><?php esc_html_e( 'Your notification title', 'kidia-mobile-cms' ); ?></b><p data-push-preview-message><?php esc_html_e( 'Your message will appear here.', 'kidia-mobile-cms' ); ?></p></div><small><?php esc_html_e( 'now', 'kidia-mobile-cms' ); ?></small></div></div></aside>

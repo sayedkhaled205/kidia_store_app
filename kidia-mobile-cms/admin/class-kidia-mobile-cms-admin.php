@@ -1375,10 +1375,8 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$history = get_option( 'kidia_mobile_push_history', array() );
 		$history = is_array( $history ) ? array_slice( $history, 0, 30 ) : array();
-		$provider_status = Kidia_Mobile_Push_Service::connection_status();
-		$provider_connected = ! empty( $provider_status['connected'] );
-		$provider_settings = Kidia_Mobile_Push_Service::settings();
-		$push_client_config = Kidia_Mobile_Push_Service::client_configuration();
+		$push_status = Kidia_Mobile_Push_Service::connection_status();
+		$push_connected = ! empty( $push_status['connected'] );
 		$push_metrics = Kidia_Mobile_Push_Service::aggregate_metrics();
 		$subscribed_customers = absint( get_option( 'kidia_mobile_push_subscribed_customers', 0 ) );
 		$registered_devices = absint( get_option( 'kidia_mobile_push_registered_devices', 0 ) );
@@ -1519,7 +1517,13 @@ final class Kidia_Mobile_CMS_Admin {
 		$history = is_array( $history ) ? $history : array();
 		array_unshift( $history, $payload );
 		update_option( 'kidia_mobile_push_history', array_slice( $history, 0, 100 ), false );
-		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-push-notifications', 'push_sent' => '1' ), admin_url( 'admin.php' ) ) );
+		$redirect_args = array( 'page' => 'kidia-mobile-push-notifications' );
+		if ( 'now' === $delivery && 'sent' !== (string) ( $payload['status'] ?? '' ) ) {
+			$redirect_args['push_error'] = 'delivery';
+		} else {
+			$redirect_args['push_sent'] = '1';
+		}
+		wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
 
@@ -1576,7 +1580,7 @@ final class Kidia_Mobile_CMS_Admin {
 		return $coupon->save() > 0 ? $code : '';
 	}
 
-	/** Passes one normalized payload to the configured push provider. */
+	/** Passes one normalized payload to the managed WooMobile Push service. */
 	private function dispatch_push_payload( array $payload ): array {
 		return Kidia_Mobile_Push_Service::dispatch( $payload );
 	}

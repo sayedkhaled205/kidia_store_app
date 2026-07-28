@@ -1,9 +1,9 @@
 <?php
 /**
- * Push provider, device registry and delivery analytics.
+ * Managed Push device registry, delivery and analytics.
  *
- * Supports Firebase Cloud Messaging HTTP v1, OneSignal and a signed webhook.
- * Credentials remain inside WordPress and are never exposed by the REST API.
+ * Every application receives an isolated Firebase project during the WooMobile
+ * build. Provider credentials stay on the platform and never enter WordPress.
  *
  * @package Kidia_Mobile_CMS
  */
@@ -12,14 +12,14 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Push_Service {
 
-	private const SETTINGS_OPTION = 'kidia_mobile_push_provider_settings';
+	private const LEGACY_SETTINGS_OPTION = 'kidia_mobile_push_provider_settings';
 	private const DEVICES_OPTION  = 'kidia_mobile_push_devices_v1';
 	private const METRICS_OPTION  = 'kidia_mobile_push_metrics_v1';
 	private const AUTOMATION_LOG  = 'kidia_mobile_push_automation_log_v1';
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
-		add_action( 'admin_post_kidia_mobile_save_push_provider', array( $this, 'save_provider' ) );
+		add_action( 'admin_init', array( $this, 'delete_legacy_credentials' ) );
 		add_action( 'kidia_mobile_trigger_push_automation', array( $this, 'trigger_automation' ), 10, 2 );
 		add_action( 'kidia_mobile_dispatch_automation_push', array( $this, 'dispatch_automation' ), 10, 2 );
 		add_action( 'kidia_mobile_scan_push_automations', array( $this, 'scan_automations' ) );
@@ -33,93 +33,53 @@ final class Kidia_Mobile_Push_Service {
 		}
 	}
 
-	/** @return array<string,mixed> */
-	public static function settings(): array {
-		$defaults = array(
-			'provider'           => 'none',
-			'onesignal_app_id'   => '',
-			'onesignal_api_key'  => '',
-			'fcm_project_id'     => '',
-			'fcm_api_key'        => '',
-			'fcm_app_id'         => '',
-			'fcm_sender_id'      => '',
-			'fcm_client_email'   => '',
-			'fcm_private_key'    => '',
-			'webhook_url'        => '',
-			'webhook_secret'     => '',
-		);
-		$saved = get_option( self::SETTINGS_OPTION, array() );
-		return array_merge( $defaults, is_array( $saved ) ? $saved : array() );
-	}
-
 	/** @return array<string,mixed> Public settings embedded in every exported application. */
 	public static function client_configuration(): array {
-		$settings = self::settings();
-		$status   = self::connection_status();
-		$provider = (string) $status['provider'];
-		$client_ready = false;
-		$config = array();
-		if ( 'onesignal' === $provider ) {
-			$client_ready = '' !== trim( (string) $settings['onesignal_app_id'] );
-			$config['oneSignalAppId'] = (string) $settings['onesignal_app_id'];
-		} elseif ( 'fcm' === $provider ) {
-			$client_ready = '' !== trim( (string) $settings['fcm_project_id'] )
-				&& '' !== trim( (string) $settings['fcm_api_key'] )
-				&& '' !== trim( (string) $settings['fcm_app_id'] )
-				&& '' !== trim( (string) $settings['fcm_sender_id'] );
-			$config['firebase'] = array(
-				'projectId'         => (string) $settings['fcm_project_id'],
-				'apiKey'            => (string) $settings['fcm_api_key'],
-				'appId'             => (string) $settings['fcm_app_id'],
-				'messagingSenderId' => (string) $settings['fcm_sender_id'],
-			);
-		}
-		return array_merge(
-			array(
-				'enabled'             => ! empty( $status['connected'] ) && $client_ready,
-				'provider'            => $provider,
-				'serverConnected'     => ! empty( $status['connected'] ),
-				'clientReady'         => $client_ready,
-				'requiresNativeSetup' => ! $client_ready,
-				'configUrl'           => rest_url( 'woo-mobile/v1/push/config' ),
-				'registrationUrl'     => rest_url( 'woo-mobile/v1/push/devices' ),
-				'eventsUrl'           => rest_url( 'woo-mobile/v1/push/events' ),
-				'openActionContract'  => 'destination + destination_id + action_url',
-			),
-			$config
+		$status = self::connection_status();
+		return array(
+			'enabled'              => ! empty( $status['license_active'] ),
+			'mode'                 => 'managed',
+			'applicationReference' => self::application_reference(),
+			'provisionOnBuild'     => true,
+			'serverConnected'      => ! empty( $status['license_active'] ),
+			'clientReady'          => ! empty( $status['license_active'] ),
+			'requiresNativeSetup'  => false,
+			'configUrl'            => rest_url( 'woo-mobile/v1/push/config' ),
+			'registrationUrl'      => rest_url( 'woo-mobile/v1/push/devices' ),
+			'eventsUrl'            => rest_url( 'woo-mobile/v1/push/events' ),
+			'openActionContract'   => 'destination + destination_id + action_url',
 		);
 	}
 
-	/** @return array{connected:bool,provider:string,label:string,reason:string,devices:int} */
+	/** @return array{connected:bool,license_active:bool,mode:string,label:string,reason:string,devices:int} */
 	public static function connection_status(): array {
-		$settings = self::settings();
-		$provider = sanitize_key( (string) $settings['provider'] );
-		$connected = false;
-		if ( 'onesignal' === $provider ) {
-			$connected = '' !== trim( (string) $settings['onesignal_app_id'] )
-				&& '' !== trim( (string) $settings['onesignal_api_key'] );
-		} elseif ( 'fcm' === $provider ) {
-			$connected = '' !== trim( (string) $settings['fcm_project_id'] )
-				&& is_email( (string) $settings['fcm_client_email'] )
-				&& str_contains( (string) $settings['fcm_private_key'], 'BEGIN PRIVATE KEY' );
-		} elseif ( 'webhook' === $provider ) {
-			$connected = (bool) wp_http_validate_url( (string) $settings['webhook_url'] );
-		}
-		$labels = array(
-			'none'      => __( 'Not configured', 'kidia-mobile-cms' ),
-			'fcm'       => __( 'Firebase Cloud Messaging', 'kidia-mobile-cms' ),
-			'onesignal' => __( 'OneSignal', 'kidia-mobile-cms' ),
-			'webhook'   => __( 'Signed webhook', 'kidia-mobile-cms' ),
-		);
+		$license_active = class_exists( 'Kidia_Mobile_License_Manager' )
+			&& ( new Kidia_Mobile_License_Manager() )->is_active();
+		$build_state = class_exists( 'Kidia_Mobile_App_Exporter' )
+			? Kidia_Mobile_App_Exporter::state()
+			: array();
+		$connected = $license_active && 'ready' === (string) ( $build_state['status'] ?? 'idle' );
 		return array(
-			'connected' => $connected,
-			'provider'  => $provider,
-			'label'     => $labels[ $provider ] ?? $labels['none'],
-			'reason'    => $connected
-				? __( 'Provider credentials are configured. Send a test notification before publishing automations.', 'kidia-mobile-cms' )
-				: __( 'Choose a provider and save valid credentials. Messages remain drafts until delivery is connected.', 'kidia-mobile-cms' ),
-			'devices'   => count( self::devices() ),
+			'connected'      => $connected,
+			'license_active' => $license_active,
+			'mode'           => 'managed',
+			'label'          => $connected
+				? __( 'Push ready', 'kidia-mobile-cms' )
+				: ( $license_active ? __( 'Build app to activate', 'kidia-mobile-cms' ) : __( 'License required', 'kidia-mobile-cms' ) ),
+			'reason'         => $connected
+				? __( 'WooMobile manages this application connection automatically.', 'kidia-mobile-cms' )
+				: ( $license_active
+					? __( 'Your private Push connection is created automatically with the first application build.', 'kidia-mobile-cms' )
+					: __( 'Activate the WooMobile license, then build the application to enable Push.', 'kidia-mobile-cms' ) ),
+			'devices'        => count( self::devices() ),
 		);
+	}
+
+	/** Removes credentials saved by plugin versions that exposed provider setup. */
+	public function delete_legacy_credentials(): void {
+		if ( false !== get_option( self::LEGACY_SETTINGS_OPTION, false ) ) {
+			delete_option( self::LEGACY_SETTINGS_OPTION );
+		}
 	}
 
 	public function register_routes(): void {
@@ -196,42 +156,13 @@ final class Kidia_Mobile_Push_Service {
 		return rest_ensure_response( array( 'recorded' => true ) );
 	}
 
-	public function save_provider(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to configure push delivery.', 'kidia-mobile-cms' ) );
-		}
-		check_admin_referer( 'kidia_mobile_save_push_provider', 'kidia_mobile_push_provider_nonce' );
-		$raw = isset( $_POST['push_provider'] ) && is_array( $_POST['push_provider'] )
-			? wp_unslash( $_POST['push_provider'] )
-			: array();
-		$provider = sanitize_key( (string) ( $raw['provider'] ?? 'none' ) );
-		$provider = in_array( $provider, array( 'none', 'fcm', 'onesignal', 'webhook' ), true ) ? $provider : 'none';
-		$current = self::settings();
-		$clean = array(
-			'provider'          => $provider,
-			'onesignal_app_id'  => sanitize_text_field( (string) ( $raw['onesignal_app_id'] ?? '' ) ),
-			'onesignal_api_key' => $this->secret_or_existing( $raw['onesignal_api_key'] ?? '', $current['onesignal_api_key'] ),
-			'fcm_project_id'    => sanitize_key( (string) ( $raw['fcm_project_id'] ?? '' ) ),
-			'fcm_api_key'       => sanitize_text_field( (string) ( $raw['fcm_api_key'] ?? '' ) ),
-			'fcm_app_id'        => sanitize_text_field( (string) ( $raw['fcm_app_id'] ?? '' ) ),
-			'fcm_sender_id'     => sanitize_text_field( (string) ( $raw['fcm_sender_id'] ?? '' ) ),
-			'fcm_client_email'  => sanitize_email( (string) ( $raw['fcm_client_email'] ?? '' ) ),
-			'fcm_private_key'   => $this->secret_or_existing( $raw['fcm_private_key'] ?? '', $current['fcm_private_key'] ),
-			'webhook_url'       => esc_url_raw( (string) ( $raw['webhook_url'] ?? '' ) ),
-			'webhook_secret'    => $this->secret_or_existing( $raw['webhook_secret'] ?? '', $current['webhook_secret'] ),
-		);
-		update_option( self::SETTINGS_OPTION, $clean, false );
-		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-push-notifications', 'provider_saved' => '1' ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
 	/** @return array<string,mixed> */
 	public static function dispatch( array $payload ): array {
 		$status = self::connection_status();
 		$payload['sent_at'] = time();
 		if ( ! $status['connected'] ) {
-			$payload['status'] = 'provider_required';
-			$payload['delivery'] = array( 'provider' => $status['provider'], 'sent' => 0, 'failed' => 0 );
+			$payload['status'] = empty( $status['license_active'] ) ? 'license_required' : 'build_required';
+			$payload['delivery'] = array( 'mode' => 'managed', 'sent' => 0, 'failed' => 0, 'errors' => array( (string) $status['reason'] ) );
 			return $payload;
 		}
 		$devices = array_values( array_filter( self::devices(), static fn( $device ) => ! empty( $device['enabled'] ) ) );
@@ -245,19 +176,12 @@ final class Kidia_Mobile_Push_Service {
 		if ( 'test' === (string) ( $payload['audience'] ?? '' ) ) {
 			$devices = array_values( array_filter( $devices, static fn( $device ) => ! empty( $device['test'] ) ) );
 		}
-		if ( empty( $devices ) && 'webhook' !== $status['provider'] ) {
+		if ( empty( $devices ) ) {
 			$payload['status'] = 'no_devices';
-			$payload['delivery'] = array( 'provider' => $status['provider'], 'sent' => 0, 'failed' => 0 );
+			$payload['delivery'] = array( 'mode' => 'managed', 'sent' => 0, 'failed' => 0, 'errors' => array() );
 			return $payload;
 		}
-		$result = array( 'sent' => 0, 'failed' => 0, 'provider' => $status['provider'], 'errors' => array() );
-		if ( 'onesignal' === $status['provider'] ) {
-			$result = self::dispatch_onesignal( $payload, $devices );
-		} elseif ( 'fcm' === $status['provider'] ) {
-			$result = self::dispatch_fcm( $payload, $devices );
-		} elseif ( 'webhook' === $status['provider'] ) {
-			$result = self::dispatch_webhook( $payload );
-		}
+		$result = self::dispatch_managed( $payload, $devices );
 		$payload['delivery'] = $result;
 		$payload['status'] = $result['sent'] > 0 ? 'sent' : 'failed';
 		$metrics = get_option( self::METRICS_OPTION, array() );
@@ -418,140 +342,61 @@ final class Kidia_Mobile_Push_Service {
 		return is_array( $devices ) ? $devices : array();
 	}
 
-	private function secret_or_existing( $submitted, $existing ): string {
-		$value = trim( (string) $submitted );
-		return '' === $value ? (string) $existing : $value;
-	}
-
 	/** @return array<string,mixed> */
-	private static function dispatch_onesignal( array $payload, array $devices ): array {
-		$settings = self::settings();
-		$body = array(
-			'app_id'             => $settings['onesignal_app_id'],
-			'include_player_ids' => array_values( array_map( static fn( $device ) => (string) $device['token'], $devices ) ),
-			'headings'           => array( 'en' => (string) $payload['title'] ),
-			'contents'           => array( 'en' => (string) $payload['message'] ),
-			'data'               => self::action_data( $payload ),
+	private static function dispatch_managed( array $payload, array $devices ): array {
+		$targets = array_map(
+			static function ( array $device ): array {
+				return array(
+					'token'    => (string) ( $device['token'] ?? '' ),
+					'platform' => (string) ( $device['platform'] ?? 'android' ),
+					'locale'   => (string) ( $device['locale'] ?? '' ),
+				);
+			},
+			array_slice( $devices, 0, 500 )
 		);
-		$response = wp_remote_post(
-			'https://api.onesignal.com/notifications',
-			array(
-				'timeout' => 20,
-				'headers' => array( 'Authorization' => 'Key ' . $settings['onesignal_api_key'], 'Content-Type' => 'application/json' ),
-				'body'    => wp_json_encode( $body ),
-			)
+		$request = array(
+			'applicationReference' => self::application_reference(),
+			'siteUrl'              => home_url( '/' ),
+			'notification'         => array(
+				'id'          => (string) ( $payload['id'] ?? wp_generate_uuid4() ),
+				'title'       => (string) ( $payload['title'] ?? '' ),
+				'message'     => (string) ( $payload['message'] ?? '' ),
+				'imageUrl'    => (string) ( $payload['image_url'] ?? '' ),
+				'priority'    => (string) ( $payload['priority'] ?? 'normal' ),
+				'sound'       => ! empty( $payload['sound'] ),
+				'badge'       => absint( $payload['badge'] ?? 0 ),
+				'expiryHours' => max( 1, min( 168, absint( $payload['expiry_hours'] ?? 24 ) ) ),
+				'data'        => self::action_data( $payload ),
+			),
+			'targets'              => $targets,
 		);
-		$ok = ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) >= 200 && wp_remote_retrieve_response_code( $response ) < 300;
-		return array(
-			'provider' => 'onesignal',
-			'sent'     => $ok ? count( $devices ) : 0,
-			'failed'   => $ok ? 0 : count( $devices ),
-			'errors'   => $ok ? array() : array( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_body( $response ) ),
-		);
-	}
-
-	/** @return array<string,mixed> */
-	private static function dispatch_fcm( array $payload, array $devices ): array {
-		$settings = self::settings();
-		$token = self::fcm_access_token( $settings );
-		if ( is_wp_error( $token ) ) {
-			return array( 'provider' => 'fcm', 'sent' => 0, 'failed' => count( $devices ), 'errors' => array( $token->get_error_message() ) );
-		}
-		$sent = 0;
-		$errors = array();
-		foreach ( array_slice( $devices, 0, 500 ) as $device ) {
-			$body = array(
-				'message' => array(
-					'token'        => (string) $device['token'],
-					'notification' => array( 'title' => (string) $payload['title'], 'body' => (string) $payload['message'] ),
-					'data'         => array_map( 'strval', self::action_data( $payload ) ),
-					'android'      => array( 'priority' => 'high' === ( $payload['priority'] ?? 'normal' ) ? 'HIGH' : 'NORMAL' ),
-				),
+		$response = ( new Kidia_Mobile_License_Manager() )->push_service_request( 'notifications', 'POST', $request );
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'mode'   => 'managed',
+				'sent'   => 0,
+				'failed' => count( $targets ),
+				'errors' => array( $response->get_error_message() ),
 			);
-			$response = wp_remote_post(
-				'https://fcm.googleapis.com/v1/projects/' . rawurlencode( (string) $settings['fcm_project_id'] ) . '/messages:send',
-				array(
-					'timeout' => 15,
-					'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ),
-					'body'    => wp_json_encode( $body ),
-				)
-			);
-			$ok = ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response );
-			if ( $ok ) {
-				++$sent;
-			} elseif ( count( $errors ) < 5 ) {
-				$errors[] = is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_body( $response );
-			}
 		}
-		return array( 'provider' => 'fcm', 'sent' => $sent, 'failed' => count( $devices ) - $sent, 'errors' => $errors );
-	}
 
-	private static function fcm_access_token( array $settings ) {
-		$cached = get_transient( 'kidia_mobile_fcm_access_token' );
-		if ( is_string( $cached ) && '' !== $cached ) {
-			return $cached;
-		}
-		$now = time();
-		$header = self::base64url( wp_json_encode( array( 'alg' => 'RS256', 'typ' => 'JWT' ) ) );
-		$claims = self::base64url(
-			wp_json_encode(
-				array(
-					'iss'   => $settings['fcm_client_email'],
-					'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-					'aud'   => 'https://oauth2.googleapis.com/token',
-					'iat'   => $now,
-					'exp'   => $now + 3600,
-				)
-			)
-		);
-		$unsigned = $header . '.' . $claims;
-		$signature = '';
-		if ( ! function_exists( 'openssl_sign' ) || ! openssl_sign( $unsigned, $signature, (string) $settings['fcm_private_key'], OPENSSL_ALGO_SHA256 ) ) {
-			return new WP_Error( 'kidia_fcm_key_invalid', __( 'Firebase private key could not sign the access request.', 'kidia-mobile-cms' ) );
-		}
-		$response = wp_remote_post(
-			'https://oauth2.googleapis.com/token',
-			array(
-				'timeout' => 20,
-				'body'    => array(
-					'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-					'assertion'  => $unsigned . '.' . self::base64url( $signature ),
-				),
-			)
-		);
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new WP_Error( 'kidia_fcm_auth_failed', __( 'Firebase authentication failed. Check the service-account fields.', 'kidia-mobile-cms' ) );
-		}
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
-		$token = sanitize_text_field( (string) ( $data['access_token'] ?? '' ) );
-		if ( '' === $token ) {
-			return new WP_Error( 'kidia_fcm_token_missing', __( 'Firebase did not return an access token.', 'kidia-mobile-cms' ) );
-		}
-		set_transient( 'kidia_mobile_fcm_access_token', $token, max( 60, absint( $data['expires_in'] ?? 3600 ) - 120 ) );
-		return $token;
-	}
-
-	/** @return array<string,mixed> */
-	private static function dispatch_webhook( array $payload ): array {
-		$settings = self::settings();
-		$body = wp_json_encode( array( 'event' => 'kidia.push.send', 'payload' => $payload ) );
-		$response = wp_remote_post(
-			(string) $settings['webhook_url'],
-			array(
-				'timeout' => 20,
-				'headers' => array(
-					'Content-Type'      => 'application/json',
-					'X-Kidia-Signature' => hash_hmac( 'sha256', (string) $body, (string) $settings['webhook_secret'] ),
-				),
-				'body' => $body,
-			)
-		);
-		$ok = ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) >= 200 && wp_remote_retrieve_response_code( $response ) < 300;
+		$raw = isset( $response['delivery'] ) && is_array( $response['delivery'] )
+			? $response['delivery']
+			: ( isset( $response['data']['delivery'] ) && is_array( $response['data']['delivery'] )
+				? $response['data']['delivery']
+				: ( isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response ) );
+		$accepted = ! empty( $raw['accepted'] );
+		$sent     = isset( $raw['sent'] ) ? absint( $raw['sent'] ) : ( $accepted ? count( $targets ) : 0 );
+		$failed   = isset( $raw['failed'] ) ? absint( $raw['failed'] ) : max( 0, count( $targets ) - $sent );
+		$errors   = isset( $raw['errors'] ) && is_array( $raw['errors'] )
+			? array_slice( array_map( 'sanitize_text_field', $raw['errors'] ), 0, 5 )
+			: array();
 		return array(
-			'provider' => 'webhook',
-			'sent'     => $ok ? 1 : 0,
-			'failed'   => $ok ? 0 : 1,
-			'errors'   => $ok ? array() : array( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_body( $response ) ),
+			'mode'      => 'managed',
+			'requestId' => sanitize_text_field( (string) ( $raw['requestId'] ?? $raw['request_id'] ?? '' ) ),
+			'sent'      => min( count( $targets ), $sent ),
+			'failed'    => min( count( $targets ), $failed ),
+			'errors'    => $errors,
 		);
 	}
 
@@ -567,7 +412,7 @@ final class Kidia_Mobile_Push_Service {
 		);
 	}
 
-	private static function base64url( string $value ): string {
-		return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
+	private static function application_reference(): string {
+		return 'app_' . substr( hash( 'sha256', strtolower( untrailingslashit( home_url( '/' ) ) ) ), 0, 32 );
 	}
 }
