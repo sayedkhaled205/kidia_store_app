@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - main
-      - agent/rebuild-embedded-flutter-preview
-      - agent/header-product-tabs-controls
-      - agent/fix-preview-wishlist-toolbar
-      - agent/fix-home-preview-content
-      - agent/fix-home-preview-scroll-layout
-      - agent/fix-home-preview-scroll-final
+      - 'agent/**'
     paths:
+      - '.github/workflows/rebuild-cms-preview.yml'
       - 'lib/**'
       - 'web/**'
       - 'pubspec.yaml'
@@ -36,8 +32,10 @@ jobs:
       - run: bash tool/build_cms_flutter_preview.sh
       - name: Commit current Flutter preview bundle
         run: |
+          zip -qr /tmp/kidia-mobile-cms.zip kidia-mobile-cms
+          mv /tmp/kidia-mobile-cms.zip kidia-mobile-cms.zip
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add kidia-mobile-cms/admin/flutter-preview
+          git add kidia-mobile-cms/admin/flutter-preview kidia-mobile-cms.zip
           git diff --cached --quiet || git commit -m "Build current Flutter preview bundle"
           git push origin HEAD:${{ github.ref_name }}
