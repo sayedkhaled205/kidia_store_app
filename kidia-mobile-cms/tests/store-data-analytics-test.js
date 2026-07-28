@@ -112,6 +112,11 @@ assert.match(
 for (const table of ["kidia_mobile_events", "kidia_mobile_carts"]) {
   assert.match(analytics, new RegExp(table), `${table} must be persisted.`);
 }
+assert.match(
+  analytics,
+  /event_id varchar\(64\) NULL[\s\S]*UNIQUE KEY event_id/,
+  "Analytics writes must have a durable idempotency key.",
+);
 for (const route of [
   "/analytics/event",
   "/analytics/cart",
@@ -126,8 +131,8 @@ assert.match(
 );
 assert.match(
   websiteAnalytics,
-  /site_visit[\s\S]*add_to_cart[\s\S]*remove_from_cart/,
-  "The website tracker must record visits and commerce intent.",
+  /kidia_website_analytics_queue_v1[\s\S]*event_id[\s\S]*site_visit[\s\S]*add_to_cart[\s\S]*remove_from_cart/,
+  "The website tracker must durably queue visits and commerce intent.",
 );
 for (const event of [
   "site_visit",
@@ -233,6 +238,41 @@ assert.match(
   analytics,
   /kidia_analytics_summary_v3_[\s\S]*get_transient[\s\S]*set_transient/,
   "One generated AI summary must be reused instead of running the same heavy queries twice.",
+);
+assert.match(
+  analytics,
+  /summary\( int \$from, int \$to, string \$source = 'all', bool \$fresh = false \)[\s\S]*if \( ! \$fresh \)[\s\S]*get_transient[\s\S]*commerce_snapshot\( \$from, \$to, \$source, \$fresh \)/,
+  "Store Data must be able to bypass stale summary and commerce caches.",
+);
+assert.match(
+  admin,
+  /Kidia_Mobile_Analytics::summary\( \$date_from, \$date_to, \$store_source, true \)/,
+  "The Analytics page must always request a fresh source-of-truth summary.",
+);
+assert.match(
+  analytics,
+  /kidia_mobile_analytics_write_failed[\s\S]*'recorded'[\s\S]*'deduplicated'/,
+  "The ingestion API must report failed writes and acknowledge duplicate retries.",
+);
+assert.match(
+  mobileAnalytics,
+  /kidia_mobile_analytics_queue_v1[\s\S]*event_id[\s\S]*_enqueue[\s\S]*_flush/,
+  "The mobile app must persist and retry analytics events.",
+);
+assert.match(
+  storeData,
+  /data-kidia-live-store-data="reports"[\s\S]*data-kidia-live-store-data="analytics"/,
+  "Reports and Analytics must expose a live-updating data region.",
+);
+assert.match(
+  shellScript,
+  /data-kidia-live-store-data[\s\S]*5000[\s\S]*cache:\s*'no-store'/,
+  "Visible Reports and Analytics must refresh from the live source every five seconds.",
+);
+assert.match(
+  storeData,
+  /analytics\['commerce'\]\['orders'\][\s\S]*Paid orders[\s\S]*Paid revenue/,
+  "Analytics order KPIs must use WooCommerce paid orders and revenue as the source of truth.",
 );
 assert.match(
   admin,

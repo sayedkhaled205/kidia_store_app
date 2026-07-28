@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_Analytics {
 
-	private const DB_VERSION = '2';
+	private const DB_VERSION = '3';
 	private const DB_OPTION  = 'kidia_mobile_analytics_db_version';
 	private const MOBILE_META = '_kidia_mobile_customer';
 	private const WEBSITE_META = '_kidia_website_customer';
@@ -75,6 +75,7 @@ final class Kidia_Mobile_Analytics {
 		dbDelta(
 			"CREATE TABLE {$events} (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				event_id varchar(64) NULL DEFAULT NULL,
 				client_id varchar(64) NOT NULL,
 				session_id varchar(64) NOT NULL DEFAULT '',
 				user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -87,6 +88,7 @@ final class Kidia_Mobile_Analytics {
 				properties longtext NULL,
 				occurred_at datetime NOT NULL,
 				PRIMARY KEY  (id),
+				UNIQUE KEY event_id (event_id),
 				KEY event_time (event_name, occurred_at),
 				KEY source_event_time (source, event_name, occurred_at),
 				KEY client_time (client_id, occurred_at),
@@ -257,16 +259,17 @@ final class Kidia_Mobile_Analytics {
 				? 5 * MINUTE_IN_SECONDS
 				: ( in_array( $event, array( 'add_to_cart', 'remove_from_cart' ), true ) ? 15 : 0 ) );
 
+		$deduplication_key = '';
 		if ( $deduplicate_for > 0 ) {
-			$key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
-			if ( get_transient( $key ) ) {
+			$deduplication_key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
+			if ( get_transient( $deduplication_key ) ) {
 				return rest_ensure_response( array( 'recorded' => false, 'deduplicated' => true ) );
 			}
-			set_transient( $key, 1, $deduplicate_for );
 		}
 
-		$this->insert_event(
+		$result = $this->insert_event(
 			array(
+				'event_id'    => $this->identifier( $request->get_param( 'event_id' ) ),
 				'client_id'   => $client_id,
 				'session_id'  => $this->identifier( $request->get_param( 'session_id' ) ),
 				'user_id'     => get_current_user_id(),
@@ -280,7 +283,23 @@ final class Kidia_Mobile_Analytics {
 			)
 		);
 
-		return rest_ensure_response( array( 'recorded' => true ) );
+		if ( 'failed' === $result ) {
+			return new WP_Error(
+				'kidia_website_analytics_write_failed',
+				__( 'The analytics event could not be stored.', 'kidia-mobile-cms' ),
+				array( 'status' => 500 )
+			);
+		}
+		if ( 'inserted' === $result && '' !== $deduplication_key ) {
+			set_transient( $deduplication_key, 1, $deduplicate_for );
+		}
+
+		return rest_ensure_response(
+			array(
+				'recorded'     => 'inserted' === $result,
+				'deduplicated' => 'duplicate' === $result,
+			)
+		);
 	}
 
 	public function record_event( WP_REST_Request $request ) {
@@ -318,24 +337,28 @@ final class Kidia_Mobile_Analytics {
 		$properties = $request->get_param( 'properties' );
 		$properties = is_array( $properties ) ? $this->sanitize_properties( $properties ) : array();
 
-		global $wpdb;
-		$wpdb->insert(
-			self::events_table(),
+		$result = $this->insert_event(
 			array(
-				'client_id'    => $client_id,
-				'session_id'   => $this->identifier( $request->get_param( 'session_id' ) ),
-				'user_id'      => $user_id,
-				'source'       => 'mobile',
-				'event_name'   => $event,
-				'object_id'    => $object_id,
-				'event_label'  => mb_substr( $label, 0, 191 ),
-				'event_value'  => $value,
-				'currency'     => mb_substr( $currency, 0, 12 ),
-				'properties'   => wp_json_encode( $properties ),
-				'occurred_at'  => current_time( 'mysql', true ),
-			),
-			array( '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
+				'event_id'    => $this->identifier( $request->get_param( 'event_id' ) ),
+				'client_id'   => $client_id,
+				'session_id'  => $this->identifier( $request->get_param( 'session_id' ) ),
+				'user_id'     => $user_id,
+				'source'      => 'mobile',
+				'event_name'  => $event,
+				'object_id'   => $object_id,
+				'event_label' => mb_substr( $label, 0, 191 ),
+				'event_value' => $value,
+				'currency'    => mb_substr( $currency, 0, 12 ),
+				'properties'  => $properties,
+			)
 		);
+		if ( 'failed' === $result ) {
+			return new WP_Error(
+				'kidia_mobile_analytics_write_failed',
+				__( 'The analytics event could not be stored.', 'kidia-mobile-cms' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		if ( $user_id > 0 ) {
 			self::mark_mobile_customer( $user_id );
@@ -348,7 +371,12 @@ final class Kidia_Mobile_Analytics {
 			);
 		}
 
-		return rest_ensure_response( array( 'recorded' => true ) );
+		return rest_ensure_response(
+			array(
+				'recorded'     => 'inserted' === $result,
+				'deduplicated' => 'duplicate' === $result,
+			)
+		);
 	}
 
 	public function record_mobile_cart( WP_REST_Request $request ) {
@@ -641,12 +669,14 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return array<string,mixed>
 	 */
-	public static function summary( int $from, int $to, string $source = 'all' ): array {
+	public static function summary( int $from, int $to, string $source = 'all', bool $fresh = false ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$cache_key = self::summary_cache_key( $from, $to, $source );
-		$cached    = get_transient( $cache_key );
-		if ( is_array( $cached ) ) {
-			return array_merge( self::empty_summary(), $cached );
+		if ( ! $fresh ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) ) {
+				return array_merge( self::empty_summary(), $cached );
+			}
 		}
 
 		global $wpdb;
@@ -718,7 +748,7 @@ final class Kidia_Mobile_Analytics {
 		 * kept separate. Replacing tracked purchase events with order-history
 		 * totals makes an impossible funnel (purchases without tracked carts).
 		 */
-		$commerce = self::commerce_snapshot( $from, $to, $source );
+		$commerce = self::commerce_snapshot( $from, $to, $source, $fresh );
 		$tracked_top_purchases = self::top_objects( $from, $to, 'purchase_item', $source );
 		$top_purchases         = $tracked_top_purchases;
 		if ( ! empty( $commerce['products'] ) ) {
@@ -744,7 +774,9 @@ final class Kidia_Mobile_Analytics {
 			'coverage'              => self::coverage_snapshot( $from, $to, $source, $commerce ),
 			'commerce'              => $commerce,
 		);
-		set_transient( $cache_key, $summary, 10 * MINUTE_IN_SECONDS );
+		if ( ! $fresh ) {
+			set_transient( $cache_key, $summary, 10 * MINUTE_IN_SECONDS );
+		}
 		return $summary;
 	}
 
@@ -902,12 +934,14 @@ final class Kidia_Mobile_Analytics {
 	 *
 	 * @return array<string,mixed>
 	 */
-	public static function commerce_snapshot( int $from, int $to, string $source = 'all' ): array {
+	public static function commerce_snapshot( int $from, int $to, string $source = 'all', bool $fresh = false ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$cache_key = self::commerce_cache_key( $from, $to, $source );
-		$cached = get_transient( $cache_key );
-		if ( is_array( $cached ) ) {
-			return array_merge( self::empty_commerce_snapshot(), $cached );
+		if ( ! $fresh ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) ) {
+				return array_merge( self::empty_commerce_snapshot(), $cached );
+			}
 		}
 		if ( ! function_exists( 'wc_get_orders' ) ) {
 			return self::empty_commerce_snapshot();
@@ -1073,7 +1107,9 @@ final class Kidia_Mobile_Analytics {
 		$snapshot['orders_scanned']   = $snapshot['orders'];
 		$snapshot['orders_available'] = max( $total_available, $snapshot['orders'] );
 		$snapshot['truncated']        = $snapshot['orders_available'] > $snapshot['orders_scanned'];
-		set_transient( $cache_key, $snapshot, 10 * MINUTE_IN_SECONDS );
+		if ( ! $fresh ) {
+			set_transient( $cache_key, $snapshot, 10 * MINUTE_IN_SECONDS );
+		}
 		return $snapshot;
 	}
 
@@ -1593,12 +1629,12 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $client_id ) {
 			return;
 		}
+		$deduplication_key = '';
 		if ( $deduplicate_for > 0 ) {
-			$key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
-			if ( get_transient( $key ) ) {
+			$deduplication_key = $this->website_event_cache_key( $event, $client_id, $object_id, $label );
+			if ( get_transient( $deduplication_key ) ) {
 				return;
 			}
-			set_transient( $key, 1, $deduplicate_for );
 		}
 
 		$this->maybe_install();
@@ -1606,7 +1642,7 @@ final class Kidia_Mobile_Analytics {
 		if ( function_exists( 'WC' ) && WC() && WC()->session ) {
 			$session_id = $this->identifier( (string) WC()->session->get_customer_id() );
 		}
-		$this->insert_event(
+		$result = $this->insert_event(
 			array(
 				'client_id'   => $client_id,
 				'session_id'  => $session_id,
@@ -1620,14 +1656,34 @@ final class Kidia_Mobile_Analytics {
 				'properties'  => $this->sanitize_properties( $properties ),
 			)
 		);
+		if ( 'inserted' === $result && '' !== $deduplication_key ) {
+			set_transient( $deduplication_key, 1, $deduplicate_for );
+		}
 	}
 
-	/** @param array<string,mixed> $event */
-	private function insert_event( array $event ): void {
+	/**
+	 * @param array<string,mixed> $event Event payload.
+	 * @return string inserted, duplicate or failed.
+	 */
+	private function insert_event( array $event ): string {
 		global $wpdb;
-		$wpdb->insert(
+		$event_id = $this->identifier( $event['event_id'] ?? '' );
+		if ( '' !== $event_id ) {
+			$exists = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT id FROM ' . self::events_table() . ' WHERE event_id = %s LIMIT 1',
+					$event_id
+				)
+			);
+			if ( null !== $exists ) {
+				return 'duplicate';
+			}
+		}
+
+		$inserted = $wpdb->insert(
 			self::events_table(),
 			array(
+				'event_id'    => '' === $event_id ? null : $event_id,
 				'client_id'   => $this->identifier( $event['client_id'] ?? '' ),
 				'session_id'  => $this->identifier( $event['session_id'] ?? '' ),
 				'user_id'     => absint( $event['user_id'] ?? 0 ),
@@ -1640,8 +1696,23 @@ final class Kidia_Mobile_Analytics {
 				'properties'  => wp_json_encode( $this->sanitize_properties( (array) ( $event['properties'] ?? array() ) ) ),
 				'occurred_at' => current_time( 'mysql', true ),
 			),
-			array( '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%f', '%s', '%s', '%s' )
 		);
+		if ( false !== $inserted ) {
+			return 'inserted';
+		}
+		if ( '' !== $event_id ) {
+			$exists = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT id FROM ' . self::events_table() . ' WHERE event_id = %s LIMIT 1',
+					$event_id
+				)
+			);
+			if ( null !== $exists ) {
+				return 'duplicate';
+			}
+		}
+		return 'failed';
 	}
 
 	private function website_event_cache_key( string $event, string $client_id, int $object_id, string $label ): string {
