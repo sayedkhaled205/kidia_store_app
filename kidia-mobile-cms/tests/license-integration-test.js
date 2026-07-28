@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.39/, "The plugin header must be version 1.45.39.");
+assert.match(plugin, /Version:\s+1\.45\.39/, "The plugin header must be version 1.45.40.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -36,6 +36,11 @@ assert.match(manager, /'hourly'/, "Subscription recovery and suspension must be 
 assert.match(manager, /license_inactive/, "A definitive server suspension must invalidate the cached local state.");
 assert.match(shell, /payment is overdue/, "Past-due subscriptions must show a WordPress workspace warning.");
 assert.match(shell, /grace_days_remaining/, "The warning must include the remaining grace period.");
+assert.match(
+  shellCss,
+  /html:has\(body\[class\*="kidia-mobile"\]\)\{[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
+  "Every CMS screen must reserve the same document scrollbar gutter so the fixed sidebar cannot shift."
+);
 assert.match(
   shellCss,
   /Fixed viewport rail contract[\s\S]*@media\(min-width:783px\)[\s\S]*\.kidia-cms-sidebar\{[\s\S]*position:fixed!important;[\s\S]*inset-block-start:50px!important;[\s\S]*inset-block-end:18px!important;[\s\S]*inset-inline-start:18px!important;[\s\S]*width:236px!important;/,
