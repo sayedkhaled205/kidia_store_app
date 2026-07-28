@@ -8,7 +8,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   plugin:
@@ -55,3 +55,32 @@ jobs:
           --dart-define=STORE_URL=https://example.com
           --dart-define=STORE_NAME=Kidia
           --dart-define=STORE_LOCALE=ar
+      - name: Upload Android debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  package:
+    name: Build plugin package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'work/overview-apk-build'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Build installable plugin ZIP
+        run: |
+          rm -f kidia-mobile-cms.zip
+          zip -qr kidia-mobile-cms.zip kidia-mobile-cms
+      - name: Commit plugin ZIP
+        run: |
+          git add kidia-mobile-cms.zip
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Build current plugin package"
+          git push origin HEAD:${{ github.head_ref }}
