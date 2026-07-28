@@ -8,6 +8,9 @@
 	const loadingLabel = loading && loading.querySelector('b');
 	const defaultLoadingText = loadingLabel ? loadingLabel.textContent : '';
 	const pageButtons = dialog ? Array.from(dialog.querySelectorAll('[data-saved-theme-page]')) : [];
+	const exportDialog = document.querySelector('[data-saved-theme-export-dialog]');
+	const exportThemeId = exportDialog && exportDialog.querySelector('[data-saved-theme-export-id]');
+	const exportThemeName = exportDialog && exportDialog.querySelector('[data-saved-theme-export-name]');
 	const config = window.kidiaSavedThemePreview || {};
 	let activePage = 'home';
 	let activeSnapshot = null;
@@ -176,6 +179,30 @@
 			const inside = event.clientX >= bounds.left && event.clientX <= bounds.right
 				&& event.clientY >= bounds.top && event.clientY <= bounds.bottom;
 			if (!inside) closeDialog();
+		});
+	}
+
+	if (exportDialog) {
+		const closeExport = function () {
+			if (typeof exportDialog.close === 'function') exportDialog.close();
+			else exportDialog.removeAttribute('open');
+		};
+		const closeButton = exportDialog.querySelector('[data-saved-theme-export-close]');
+		if (closeButton) closeButton.addEventListener('click', closeExport);
+		exportDialog.addEventListener('click', function (event) {
+			if (event.target !== exportDialog) return;
+			const bounds = exportDialog.getBoundingClientRect();
+			const inside = event.clientX >= bounds.left && event.clientX <= bounds.right
+				&& event.clientY >= bounds.top && event.clientY <= bounds.bottom;
+			if (!inside) closeExport();
+		});
+		document.querySelectorAll('[data-saved-theme-export]').forEach(function (button) {
+			button.addEventListener('click', function () {
+				if (exportThemeId) exportThemeId.value = button.getAttribute('data-theme-id') || '';
+				if (exportThemeName) exportThemeName.textContent = button.getAttribute('data-theme-name') || '';
+				if (typeof exportDialog.showModal === 'function') exportDialog.showModal();
+				else exportDialog.setAttribute('open', '');
+			});
 		});
 	}
 

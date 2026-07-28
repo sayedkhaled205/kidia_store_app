@@ -20,6 +20,22 @@
 @media(max-width:1100px){.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:220px 1fr}.kidia-theme-modal__screens{grid-template-columns:repeat(3,190px);gap:14px}.kidia-theme-screen{min-height:380px}.kidia-theme-screen__hero{height:100px}.kidia-theme-screen__product-image{height:155px}}
 @media(max-width:782px){.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr;min-height:265px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-preview{padding:10px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-phone{width:118px;height:225px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-hero{height:62px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card-copy{padding:18px 15px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card-copy h3{font-size:18px}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card-copy p{font-size:12px}.kidia-theme-modal{padding:10px}.kidia-theme-modal__dialog{width:calc(100vw - 20px);max-height:calc(100vh - 20px);padding:22px 14px}.kidia-theme-modal__screens{grid-template-columns:repeat(3,180px);justify-content:start;overflow-x:auto;padding:4px 4px 14px}.kidia-theme-modal__heading{padding:0 32px}.kidia-theme-modal__heading h2{font-size:23px}}
 
+.kidia-saved-theme-export-dialog{width:min(620px,calc(100vw - 32px));max-width:none;padding:0;border:0;border-radius:22px;background:#fff;box-shadow:0 26px 80px rgba(17,51,43,.28);color:#1f2933}
+.kidia-saved-theme-export-dialog::backdrop{background:rgba(18,38,33,.58);backdrop-filter:blur(3px)}
+.kidia-saved-theme-export-dialog form{padding:38px}
+.kidia-saved-theme-export-dialog h2{margin:2px 0 6px;font-size:27px}
+.kidia-saved-theme-export-dialog form>p{min-height:20px;margin:0;color:#65736f;font-weight:700}
+.kidia-saved-theme-export-dialog__close{position:absolute;z-index:2;top:16px;right:16px;display:grid;width:38px;height:38px;padding:0;place-items:center;border:1px solid #d7e5e1;border-radius:50%;background:#fff;color:#275f52;cursor:pointer}
+.rtl .kidia-saved-theme-export-dialog__close{right:auto;left:16px}
+.kidia-saved-theme-export-dialog__choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.kidia-saved-theme-export-choice{display:flex;min-height:168px;flex-direction:column;align-items:flex-start;gap:8px;padding:20px;border:1px solid #cfe2dc;border-radius:16px;background:#f8fbfa;color:#314b45;cursor:pointer;text-align:start;transition:.16s ease}
+.kidia-saved-theme-export-choice:hover{border-color:#2f806e;box-shadow:0 9px 22px rgba(47,128,110,.12);transform:translateY(-1px)}
+.kidia-saved-theme-export-choice.is-primary{border-color:#2f806e;background:#eaf6f2;color:#1f6f61}
+.kidia-saved-theme-export-choice .dashicons{width:30px;height:30px;color:#2f806e;font-size:30px}
+.kidia-saved-theme-export-choice strong{font-size:17px}
+.kidia-saved-theme-export-choice small{color:#65736f;font-size:12px;line-height:1.55}
+@media(max-width:560px){.kidia-saved-theme-export-dialog form{padding:34px 22px 24px}.kidia-saved-theme-export-dialog__choices{grid-template-columns:1fr}.kidia-saved-theme-export-choice{min-height:130px}}
+
 /* Saved themes use the same real Flutter renderer as the page builders. */
 .kidia-saved-theme-dialog{width:min(980px,calc(100vw - 40px));max-height:calc(100vh - 32px);overflow:auto}
 .kidia-saved-theme-dialog__content{display:grid;grid-template-columns:minmax(300px,1fr) 430px;grid-template-areas:"intro stage" "pages stage";align-items:start;gap:24px 42px;padding:42px 52px}
@@ -88,3 +104,12 @@
 @media(max-width:1280px){.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1000px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__workspace{grid-template-columns:1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-theme-modal__stage{min-height:610px}}
 @media(max-width:782px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid,.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{width:calc(100vw - 20px);padding:20px 12px}.kidia-theme-modal__device{width:247px;height:533px}.kidia-theme-modal__device iframe{zoom:.686}}
+
+/* Saved Themes uses the exact clean Page Builder phone frame. */
+.kidia-saved-theme-dialog__stage{min-height:724px}
+.kidia-saved-theme-dialog__device{width:322px;height:auto;padding:5px;overflow:visible;border:3px solid #2f806e;border-radius:29px;background:#2f806e;box-shadow:none;box-sizing:border-box}
+.kidia-saved-theme-dialog__device:before{display:none;content:none}
+.kidia-saved-theme-dialog__screen{position:relative;height:680px;overflow:hidden;border-radius:21px;background:#f7f8fa}
+.kidia-saved-theme-dialog__device iframe{position:absolute;top:0;left:0;display:block;width:360px;height:800px;min-height:0;border:0;border-radius:0;background:#fff;pointer-events:auto;touch-action:pan-y;zoom:.85}
+@media(max-width:850px){.kidia-saved-theme-dialog__stage{min-height:714px}}
+@media(max-width:560px){.kidia-saved-theme-dialog__device{width:278px}.kidia-saved-theme-dialog__screen{height:582px}.kidia-saved-theme-dialog__device iframe{zoom:.728}.kidia-saved-theme-dialog__stage{min-height:615px}}
