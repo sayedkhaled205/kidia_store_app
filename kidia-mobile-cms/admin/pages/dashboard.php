@@ -168,7 +168,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								aria-busy="<?php echo $build_in_progress ? 'true' : 'false'; ?>"
 								<?php disabled( ! $setup_step_complete || $build_in_progress ); ?>
 							>
-								<span class="kidia-customer-journey__number" aria-hidden="true">4</span>
 								<span class="kidia-app-build__card-label" data-build-action-label><?php echo esc_html( $build_button_label ); ?></span>
 								<span class="kidia-app-build__progress" data-build-progress <?php echo $build_in_progress ? '' : 'hidden'; ?>>
 									<span
@@ -451,7 +450,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		overflow: hidden;
 		padding: 0;
 		border: 0;
-		background: #174e42;
+		background: #2f806e;
 		opacity: 1;
 	}
 
@@ -463,30 +462,29 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	.kidia-app-build__card-button {
 		position: relative;
-		display: grid;
+		display: flex;
 		width: 100%;
 		height: 100%;
 		min-height: 120px;
-		grid-template-columns: 34px minmax(0, 1fr);
 		align-items: center;
-		gap: 10px;
-		padding: 16px;
-		border: 1px solid #174e42;
+		justify-content: center;
+		padding: 22px 24px;
+		border: 1px solid #2f806e;
 		border-radius: 14px;
-		background: #174e42;
+		background: #2f806e;
 		color: #ffffff;
-		font: inherit;
-		text-align: start;
+		font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+		text-align: center;
 		cursor: pointer;
 		transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 	}
 
 	.kidia-app-build__card-button:hover,
 	.kidia-app-build__card-button:focus {
-		border-color: #103a31;
-		background: #103a31;
+		border-color: #287260;
+		background: #287260;
 		color: #ffffff;
-		box-shadow: 0 10px 24px rgba(23, 78, 66, .24);
+		box-shadow: 0 10px 24px rgba(47, 128, 110, .24);
 	}
 
 	.kidia-app-build__card-button:focus-visible {
@@ -499,22 +497,20 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-app-build__card-button:disabled {
-		background: #174e42;
+		background: #2f806e;
 		color: #ffffff;
 		cursor: not-allowed;
 		opacity: .68;
 	}
 
-	.kidia-customer-journey__build-step .kidia-customer-journey__number {
-		border-color: rgba(255, 255, 255, .58);
-		background: rgba(255, 255, 255, .14);
-		color: #ffffff;
-	}
-
 	.kidia-app-build__card-label {
-		font-size: 15px;
-		font-weight: 800;
-		line-height: 1.35;
+		display: block;
+		max-width: 230px;
+		font-size: clamp(17px, 1.35vw, 20px);
+		font-weight: 700;
+		line-height: 1.28;
+		letter-spacing: -.015em;
+		text-wrap: balance;
 	}
 
 	.kidia-app-build__progress {
@@ -536,13 +532,13 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		transition: width .25s ease;
 	}
 
-	.kidia-app-build__card-button.is-loading .kidia-customer-journey__number {
+	.kidia-app-build__card-button.is-loading .kidia-app-build__card-label {
 		animation: kidia-app-build-pulse 1s ease-in-out infinite alternate;
 	}
 
 	@keyframes kidia-app-build-pulse {
 		to {
-			background: rgba(255, 255, 255, .3);
+			opacity: .62;
 		}
 	}
 
