@@ -146,7 +146,9 @@ assert.match(wizardTemplate, /asset_url\(\s*\$theme,\s*'category'[\s\S]*asset_ur
 assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
 assert.match(dashboardTemplate, /kidia-customer-journey__build-step[\s\S]*data-kidia-app-build[\s\S]*kidia-app-build__card-form[\s\S]*data-build-form-action[\s\S]*kidia-app-build__card-button[\s\S]*data-build-action/, "The fourth launch card must be the single stateful build/download button.");
 assert.doesNotMatch(dashboardTemplate, /Developer build files|Download configuration ZIP/, "The compact build card must not render developer copy or a second action.");
-assert.match(dashboardTemplate, /\.kidia-app-build__card-button\s*\{[^}]*background:\s*#174e42;/, "The complete build card button must use the dark WooMobile color.");
+assert.match(dashboardTemplate, /\.kidia-app-build__card-button\s*\{[^}]*justify-content:\s*center;[^}]*background:\s*#2f806e;/, "The complete build card button must use the light WooMobile color and center its label.");
+assert.doesNotMatch(dashboardTemplate, /kidia-app-build__card-button[\s\S]{0,500}kidia-customer-journey__number[^}]*>4</, "The complete build card button must not show a fourth-step number.");
+assert.match(dashboardTemplate, /\.kidia-app-build__card-label\s*\{[^}]*font-size:\s*clamp\([^}]*font-weight:\s*700;[^}]*text-wrap:\s*balance;/, "The build action label must use balanced, polished typography.");
 assert.doesNotMatch(dashboardTemplate, /data-build-download/, "Overview must not render a second APK download button.");
 assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
