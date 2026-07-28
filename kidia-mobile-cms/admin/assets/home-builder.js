@@ -1206,6 +1206,14 @@
 			return;
 		}
 
+		if (
+			target.closest(".kidia-builder-block__header") &&
+			!target.closest("button,label,input,select,textarea,a,.kidia-builder-drag")
+		) {
+			setCollapsed(block, false);
+			return;
+		}
+
 		if (target.closest(".kidia-add-promo-message")) {
 			var messages = block.querySelector(".kidia-promo-messages");
 			var sample = block.querySelector('[name*="[settings]"]');
@@ -1340,6 +1348,20 @@
 				renderPreview();
 			});
 		}
+	});
+
+	toArray(document.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (filterButton) {
+		filterButton.addEventListener("click", function () {
+			var selectedCategory = filterButton.dataset.kidiaElementCategory || "all";
+			toArray(document.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (button) {
+				var active = button === filterButton;
+				button.classList.toggle("is-active", active);
+				button.setAttribute("aria-pressed", active ? "true" : "false");
+			});
+			getBlocks().forEach(function (block) {
+				block.hidden = selectedCategory !== "all" && block.dataset.elementCategory !== selectedCategory;
+			});
+		});
 	});
 
 	builder.addEventListener("change", function (event) {

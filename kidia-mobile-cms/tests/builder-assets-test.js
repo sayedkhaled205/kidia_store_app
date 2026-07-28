@@ -25,8 +25,13 @@ function mediaField(name, value, inputClass, buttonClass, previewClass) {
 }
 
 function homeBlock(type, index, settings, name = type) {
+  const category = ["hero_slider", "image_banner", "banner_grid", "video_banner"].includes(type)
+    ? "hero-banners"
+    : ["category_grid", "product_carousel", "product_grid", "brand_carousel", "bundle_collection"].includes(type)
+      ? "products"
+      : "content";
   return `
-    <div class="kidia-builder-block is-collapsed" data-type="${type}" data-library-id="${type}_${index}">
+    <div class="kidia-builder-block is-collapsed" data-type="${type}" data-library-id="${type}_${index}" data-element-category="${category}">
       <div class="kidia-builder-block__header">
         <span class="kidia-builder-drag"></span>
         <strong class="kidia-block-name">${name}</strong>
@@ -122,6 +127,10 @@ function homeMarkup() {
     <div id="kidia-create-element-modal" hidden aria-hidden="true"><h2 id="kidia-create-element-title"></h2><input id="kidia-create-element-name"><span id="kidia-create-element-error" hidden></span><button id="kidia-create-element-submit" type="button">Create</button></div>
     <input id="kidia-element-picker-search"><div id="kidia-element-picker-no-results" hidden></div>
     <div class="kidia-element-group">Layout</div>
+    <nav class="kidia-element-category-filter">
+      <button type="button" data-kidia-element-category="all">All</button>
+      <button type="button" data-kidia-element-category="products">Products</button>
+    </nav>
     <form id="kidia-home-builder-form"><input id="kidia-home-builder-payload"><div id="kidia-home-builder">${blocks}</div></form>
     <div id="kidia-mobile-preview-content"></div>
     <script type="text/html" id="tmpl-kidia-block-spacer">${createTemplate}</script>
@@ -245,8 +254,16 @@ function runHomeBuilderTest() {
 	assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element header must keep its identity on the right.");
 	assert.match(builderCss, /\.kidia-builder-block__actions\s*\{[\s\S]*?direction:\s*rtl;/, "Every Home element must keep Remove, Duplicate, expand, and On/Off in one stable order.");
 	assert.doesNotMatch(builderCss, /data-type="product_carousel"[^\{]*\.kidia-builder-block__actions\s*\{[^}]*direction:\s*ltr;/, "Product Carousel must not reverse the shared element action order.");
-  assert.match(builderCss, /\.kidia-builder-block\s*\{[\s\S]*?width:\s*77%;/, "Element cards must be 10% wider than their previous 70% width.");
-  assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?min-height:\s*70px;/, "Collapsed element cards must use the requested 70px height.");
+  assert.match(builderCss, /\.kidia-builder-list\s*\{[\s\S]*?grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/, "Home elements must use four square cards per row when space allows.");
+  assert.match(builderCss, /@media \(max-width: 1320px\)[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/, "Home elements must fall back to three cards per row at narrower desktop widths.");
+  assert.match(builderCss, /\.kidia-builder-block:not\(\.is-collapsed\)\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1;/, "An opened element editor must span the complete grid.");
+  assert.match(builderCss, /\.kidia-builder-block__header\s*\{[\s\S]*?min-height:\s*220px;/, "Collapsed Home elements must have a balanced square-card header.");
+  assert.match(builderCss, /\.kidia-builder-block__icon\s*\{[\s\S]*?width:\s*54px;[\s\S]*?height:\s*54px;/, "Every Home element card must show a consistent type icon.");
+  assert.match(builderCss, /\.kidia-element-category-filter[\s\S]*?\.kidia-element-category-filter \.button\.is-active/, "Home elements must expose a visible category filter.");
+  assert.match(readAsset("../pages/home-builder.php"), /Page Structure[\s\S]*Hero & Banners[\s\S]*Products[\s\S]*Content[\s\S]*Layout[\s\S]*Marketing/, "Home element categories must cover the agreed six groups.");
+  assert.match(readAsset("../templates/block-template.php"), /kidia-builder-block__icon[\s\S]*kidia-builder-block__category[\s\S]*kidia-builder-block__actions/, "Every element card must show its icon and category above its controls.");
+  assert.match(readAsset("home-builder.js"), /kidia-builder-block__header[\s\S]*setCollapsed\(block, false\)/, "Clicking an element card must open its editor.");
+  assert.match(readAsset("home-builder.js"), /kidia-element-category-filter \[data-kidia-element-category\][\s\S]*block\.hidden/, "Category buttons must filter the visible Home element cards.");
   assert.match(builderCss, /\.kidia-builder-grid\s*\{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/, "Element settings must keep the original three-column layout.");
   assert.match(builderCss, /--kidia-field-width:\s*64\.9351%;/, "The wider 77% card must preserve controls at 50% of their original width.");
   assert.match(builderCss, /input\[type="text"\],[\s\S]*?width:\s*var\(--kidia-field-width\);/, "Settings controls must use the calculated half-original width.");
@@ -321,12 +338,23 @@ function runHomeBuilderTest() {
   assert.equal(categoryFrame().style.marginTop, "0px", "Zero space above must join adjacent sections without a separator.");
   assert.equal(categoryFrame().style.marginBottom, "0px", "Zero space below must join adjacent sections without a separator.");
 
+  const firstBlock = window.document.querySelector(".kidia-builder-block");
+  click(window, firstBlock.querySelector(".kidia-block-name"));
+  assert.equal(firstBlock.classList.contains("is-collapsed"), false, "Clicking the card identity must open the element editor.");
+  click(window, firstBlock.querySelector(".kidia-toggle-block-settings"));
+  assert.equal(firstBlock.classList.contains("is-collapsed"), true, "The expand control must still close an open element.");
+
+  click(window, window.document.querySelector('[data-kidia-element-category="products"]'));
+  assert.equal(window.document.querySelectorAll('.kidia-builder-block[data-element-category="products"]:not([hidden])').length, 5, "Products filter must keep only product-related elements visible.");
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block[hidden]").length, 13, "Products filter must hide elements from the other categories.");
+  click(window, window.document.querySelector('[data-kidia-element-category="all"]'));
+  assert.equal(window.document.querySelectorAll(".kidia-builder-block[hidden]").length, 0, "All filter must restore every element card.");
+
   click(window, window.document.getElementById("kidia-expand-all"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 0, "Expand All must open every element.");
   click(window, window.document.getElementById("kidia-collapse-all"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block.is-collapsed").length, 18, "Collapse All must close every element.");
 
-  const firstBlock = window.document.querySelector(".kidia-builder-block");
   click(window, firstBlock.querySelector(".kidia-duplicate-block"));
   assert.equal(window.document.querySelectorAll(".kidia-builder-block").length, 19, "Duplicate must clone an element.");
   click(window, firstBlock.nextElementSibling.querySelector(".kidia-delete-block"));

@@ -65,11 +65,28 @@ const actionSets = [...document.querySelectorAll("[data-actions]")];
 const baseline = actionSets.find((node) => node.dataset.actions === "page");
 
 for (const controls of actionSets) {
-  assert.deepEqual(pick(controls, actionProperties), pick(baseline, actionProperties), `${controls.dataset.actions} actions must match the normal page card.`);
+  if (controls.dataset.actions !== "home") {
+    assert.deepEqual(pick(controls, actionProperties), pick(baseline, actionProperties), `${controls.dataset.actions} actions must match the normal page card.`);
+  }
   assert.deepEqual(pick(controls.querySelector(".kidia-card-action--primary"), buttonProperties), pick(baseline.querySelector(".kidia-card-action--primary"), buttonProperties), `${controls.dataset.actions} buttons must match the normal page card.`);
   assert.deepEqual(pick(controls.querySelector(".kidia-card-action--toggle"), toggleProperties), pick(baseline.querySelector(".kidia-card-action--toggle"), toggleProperties), `${controls.dataset.actions} On/Off must match the normal page card.`);
   assert.deepEqual(pick(controls.querySelector(".kidia-builder-switch__state"), stateProperties), pick(baseline.querySelector(".kidia-builder-switch__state"), stateProperties), `${controls.dataset.actions} On/Off label must remain unclipped.`);
 }
+
+const homeActions = actionSets.find((node) => node.dataset.actions === "home");
+assert.deepEqual(
+  pick(homeActions, actionProperties),
+  {
+    display: "grid",
+    position: "static",
+    left: "auto",
+    width: "100%",
+    "min-width": "0",
+    "grid-template-columns": "74px 74px 40px 104px",
+    gap: "4px",
+  },
+  "Home element actions must stay contained inside the grid card."
+);
 
 assert.equal(window.getComputedStyle(baseline).width, "304px");
 assert.equal(window.getComputedStyle(baseline).gridTemplateColumns, "74px 74px 40px 104px");
@@ -83,4 +100,4 @@ assert.equal(window.getComputedStyle(pageStatus).height, "34px", "Page status mu
 assert.equal(window.getComputedStyle(pageStatus).width, "138px", "Page status must stay compact after removing the eye.");
 assert.equal(window.getComputedStyle(pageStatus).gridTemplateColumns, "38px minmax(82px,1fr)", "Page status must contain only switch and copy columns.");
 
-console.log("Shared Header, Footer, Home, Category, and page card controls render identically.");
+console.log("Shared controls render consistently, with Home actions contained inside element grid cards.");
