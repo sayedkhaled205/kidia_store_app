@@ -559,8 +559,8 @@
 			});
 		});
 	}
-	const liveStoreData = document.querySelector('[data-kidia-live-store-data]');
-	if (liveStoreData) {
+	const liveStoreRegions = Array.from(document.querySelectorAll('[data-kidia-live-store-data]'));
+	if (liveStoreRegions.length) {
 		let liveTimer = 0;
 		let liveRequest = null;
 		const scheduleLiveRefresh = function () {
@@ -573,7 +573,11 @@
 				return;
 			}
 			const active = document.activeElement;
-			if (active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
+			if (
+				active &&
+				/^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName) &&
+				!liveStoreRegions.some(function (region) { return region.contains(active); })
+			) {
 				scheduleLiveRefresh();
 				return;
 			}
@@ -590,14 +594,25 @@
 				});
 				if (!response.ok) throw new Error('Live Store Data request failed');
 				const page = new DOMParser().parseFromString(await response.text(), 'text/html');
-				const fresh = page.querySelector('[data-kidia-live-store-data]');
-				if (
-					fresh &&
-					fresh.dataset.kidiaLiveStoreData === liveStoreData.dataset.kidiaLiveStoreData &&
-					fresh.innerHTML !== liveStoreData.innerHTML
-				) {
-					liveStoreData.innerHTML = fresh.innerHTML;
-				}
+				const freshRegions = Array.from(page.querySelectorAll('[data-kidia-live-store-data]'));
+				liveStoreRegions.forEach(function (region) {
+					const key = region.dataset.kidiaLiveStoreData;
+					const fresh = freshRegions.find(function (candidate) {
+						return candidate.dataset.kidiaLiveStoreData === key;
+					});
+					if (!fresh || fresh.innerHTML === region.innerHTML) return;
+
+					const selectedCartIds = Array.from(
+						region.querySelectorAll('input[name="cart_ids[]"]:checked')
+					).map(function (input) { return input.value; });
+					region.innerHTML = fresh.innerHTML;
+					selectedCartIds.forEach(function (cartId) {
+						const checkbox = Array.from(
+							region.querySelectorAll('input[name="cart_ids[]"]')
+						).find(function (input) { return input.value === cartId; });
+						if (checkbox && !checkbox.disabled) checkbox.checked = true;
+					});
+				});
 			} catch (_error) {
 				// Keep the last verified values and retry without blanking the report.
 			} finally {

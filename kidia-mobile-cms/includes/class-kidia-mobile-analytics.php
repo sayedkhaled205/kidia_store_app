@@ -18,7 +18,6 @@ final class Kidia_Mobile_Analytics {
 	private const WEBSITE_IMPORT_HOOK = 'kidia_mobile_import_website_cart_sessions';
 	private const WEBSITE_IMPORT_LOCK = 'kidia_mobile_website_cart_import_lock_v4';
 	private const WEBSITE_IMPORT_BATCH = 300;
-	private const WEBSITE_IMPORT_REFRESH = 5 * MINUTE_IN_SECONDS;
 
 	/** @var list<string> */
 	private const EVENTS = array(
@@ -1326,11 +1325,9 @@ final class Kidia_Mobile_Analytics {
 			self::schedule_website_session_import();
 			return $state;
 		}
-		$completed_at = absint( $state['completed_at'] ?? 0 );
 		if (
 			'complete' === (string) ( $state['phase'] ?? '' )
 			&& ! $force_refresh
-			&& $completed_at > time() - self::WEBSITE_IMPORT_REFRESH
 		) {
 			return $state;
 		}
@@ -1394,7 +1391,7 @@ final class Kidia_Mobile_Analytics {
 	 */
 	public static function sync_website_sessions( int $limit = self::WEBSITE_IMPORT_BATCH ): int {
 		$service = new self();
-		$state   = $service->ensure_website_session_import( true );
+		$state   = $service->ensure_website_session_import();
 		if ( 'running' !== (string) ( $state['phase'] ?? '' ) ) {
 			return 0;
 		}
@@ -1422,14 +1419,13 @@ final class Kidia_Mobile_Analytics {
 
 	/** Processes the next ordered session-id range exactly once. */
 	private static function process_website_session_import_batch( int $limit ): int {
-		if ( get_transient( self::WEBSITE_IMPORT_LOCK ) ) {
+		if ( ! self::acquire_website_import_lock() ) {
 			return 0;
 		}
-		set_transient( self::WEBSITE_IMPORT_LOCK, 1, 2 * MINUTE_IN_SECONDS );
 
 		$state = self::website_session_import_status();
 		if ( 'running' !== (string) ( $state['phase'] ?? '' ) ) {
-			delete_transient( self::WEBSITE_IMPORT_LOCK );
+			self::release_website_import_lock();
 			return 0;
 		}
 
@@ -1513,11 +1509,34 @@ final class Kidia_Mobile_Analytics {
 			$state['processed']    = max( absint( $state['processed'] ), absint( $state['total'] ) );
 		}
 		update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
-		delete_transient( self::WEBSITE_IMPORT_LOCK );
+		self::release_website_import_lock();
 		if ( 'running' === (string) $state['phase'] ) {
 			self::schedule_website_session_import( true );
 		}
 		return $imported;
+	}
+
+	/**
+	 * Owns one import batch atomically so an admin poll and the background queue
+	 * can never process the same cursor at the same time.
+	 */
+	private static function acquire_website_import_lock(): bool {
+		$expires_at = time() + 2 * MINUTE_IN_SECONDS;
+		if ( add_option( self::WEBSITE_IMPORT_LOCK, $expires_at, '', false ) ) {
+			return true;
+		}
+
+		$current_expiry = absint( get_option( self::WEBSITE_IMPORT_LOCK, 0 ) );
+		if ( $current_expiry >= time() ) {
+			return false;
+		}
+
+		delete_option( self::WEBSITE_IMPORT_LOCK );
+		return add_option( self::WEBSITE_IMPORT_LOCK, $expires_at, '', false );
+	}
+
+	private static function release_website_import_lock(): void {
+		delete_option( self::WEBSITE_IMPORT_LOCK );
 	}
 
 	/** Imports one serialized WooCommerce session when it still contains items. */
@@ -1539,8 +1558,8 @@ final class Kidia_Mobile_Analytics {
 		}
 		$user_id       = ctype_digit( $session_key ) ? absint( $session_key ) : 0;
 		$expiry        = absint( $row['session_expiry'] ?? 0 );
-		$expiration    = max( HOUR_IN_SECONDS, absint( apply_filters( 'wc_session_expiration', 48 * HOUR_IN_SECONDS ) ) );
-		$last_activity = $expiry > 0 ? max( 1, $expiry - $expiration ) : time();
+		$expiration    = self::website_session_expiration( $user_id > 0 );
+		$last_activity = $expiry > 0 ? min( time(), max( 1, $expiry - $expiration ) ) : time();
 		return self::upsert_imported_website_cart(
 			$session_key,
 			$user_id,
@@ -1548,6 +1567,25 @@ final class Kidia_Mobile_Analytics {
 			$normalized,
 			$last_activity
 		);
+	}
+
+	/**
+	 * Mirrors WooCommerce's stored-session lifetime. Since WooCommerce 10.1,
+	 * registered-customer sessions default to seven days while guest sessions
+	 * remain at two days.
+	 */
+	private static function website_session_expiration( bool $registered_customer ): int {
+		$default = 2 * DAY_IN_SECONDS;
+		if (
+			$registered_customer
+			&& defined( 'WC_VERSION' )
+			&& version_compare( WC_VERSION, '10.1', '>=' )
+		) {
+			$default = WEEK_IN_SECONDS;
+		}
+		$expiration = absint( apply_filters( 'wc_session_expiration', $default ) );
+		$maximum    = defined( 'MONTH_IN_SECONDS' ) ? MONTH_IN_SECONDS : 30 * DAY_IN_SECONDS;
+		return max( HOUR_IN_SECONDS, min( $maximum, $expiration ?: $default ) );
 	}
 
 	/** Imports the durable WooCommerce cart kept for a registered customer. */
