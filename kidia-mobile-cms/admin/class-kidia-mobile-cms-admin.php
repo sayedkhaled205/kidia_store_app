@@ -1599,8 +1599,19 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$submitted = isset( $_POST['setup'] ) && is_array( $_POST['setup'] ) ? wp_unslash( $_POST['setup'] ) : array();
 		$theme     = ( new Kidia_Mobile_Setup_Wizard() )->apply( is_array( $submitted ) ? $submitted : array() );
-		if ( ! empty( $_POST['export_after_apply'] ) ) {
-			( new Kidia_Mobile_App_Exporter() )->download();
+		if ( ! empty( $_POST['build_after_apply'] ) || ! empty( $_POST['export_after_apply'] ) ) {
+			$result = ( new Kidia_Mobile_App_Exporter() )->start_build();
+			$args   = array(
+				'page'         => 'kidia-mobile-cms',
+				'setup_done'   => '1',
+				'theme'        => $theme,
+				'build_notice' => is_wp_error( $result ) ? 'error' : 'started',
+			);
+			if ( is_wp_error( $result ) ) {
+				$args['build_message'] = $result->get_error_message();
+			}
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+			exit;
 		}
 		wp_safe_redirect(
 			add_query_arg(
@@ -2329,6 +2340,39 @@ final class Kidia_Mobile_CMS_Admin {
 							'aiUrl'       => add_query_arg( array( 'page' => 'kidia-mobile-ai-insights' ), admin_url( 'admin.php' ) ),
 						)
 					);
+					if ( in_array( $page, array( 'kidia-mobile-cms', 'kidia-mobile-setup' ), true ) ) {
+						wp_enqueue_script(
+							'kidia-mobile-app-builder',
+							KIDIA_MOBILE_CMS_URL . 'admin/assets/app-builder.js',
+							array(),
+							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/app-builder.js' ),
+							true
+						);
+						wp_localize_script(
+							'kidia-mobile-app-builder',
+							'kidiaAppBuilder',
+							array(
+								'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+								'nonce'       => wp_create_nonce( 'kidia_mobile_app_build_status' ),
+								'downloadUrl' => wp_nonce_url(
+									add_query_arg(
+										array( 'action' => 'kidia_mobile_download_apk' ),
+										admin_url( 'admin-post.php' )
+									),
+									'kidia_mobile_download_apk',
+									'kidia_mobile_download_nonce'
+								),
+								'labels'      => array(
+									'queued'   => __( 'APK build queued…', 'kidia-mobile-cms' ),
+									'building' => __( 'Building your APK…', 'kidia-mobile-cms' ),
+									'ready'    => __( 'Your APK is ready to install.', 'kidia-mobile-cms' ),
+									'failed'   => __( 'The APK build failed.', 'kidia-mobile-cms' ),
+									'download' => __( 'Download APK', 'kidia-mobile-cms' ),
+									'retry'    => __( 'Try Again', 'kidia-mobile-cms' ),
+								),
+							)
+						);
+					}
 					if (
 						'kidia-mobile-cms' !== $page
 						&& $this->is_public_cms_page( $page )

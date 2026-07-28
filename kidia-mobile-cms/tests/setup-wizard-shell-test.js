@@ -10,6 +10,7 @@ const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 
 const service = read("includes", "class-kidia-mobile-setup-wizard.php");
 const exporter = read("includes", "class-kidia-mobile-app-exporter.php");
+const licenseManager = read("includes", "class-kidia-mobile-license-manager.php");
 const pushService = read("includes", "class-kidia-mobile-push-service.php");
 const bootstrap = read("includes", "class-kidia-mobile-cms.php");
 const admin = read("admin", "class-kidia-mobile-cms-admin.php");
@@ -44,6 +45,10 @@ assert.match(service, /strip_catalog_images/, "Saved themes must exclude product
 assert.match(service, /build_required/, "Applying or importing a theme must request a fresh application build.");
 assert.match(bootstrap, /class-kidia-mobile-app-exporter\.php[\s\S]*Kidia_Mobile_App_Exporter\(\)\)->register/, "The app exporter must load and register with the plugin.");
 assert.match(exporter, /woomobile-app-build-package[\s\S]*app-config\.json[\s\S]*push-config\.json[\s\S]*dart-defines\.json/, "Export App must download a portable build package.");
+assert.match(exporter, /admin_post_kidia_mobile_build_app[\s\S]*admin_post_kidia_mobile_download_apk[\s\S]*wp_ajax_kidia_mobile_app_build_status/, "APK builds must expose start, status and download actions.");
+assert.match(exporter, /start_build\(\)[\s\S]*'platform'\s*=>\s*'android'[\s\S]*'artifact'\s*=>\s*'apk'/, "Build APK must queue a real Android APK artifact.");
+assert.match(exporter, /refresh_build\(\)[\s\S]*handle_download_apk[\s\S]*download_url/, "APK builds must poll for completion before exposing the download.");
+assert.match(licenseManager, /BUILD_API_BASE_URL[\s\S]*build_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "The build service must reuse installation-bound license authorization without exposing it to the browser.");
 assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");
 assert.match(exporter, /Kidia_Mobile_Push_Service::client_configuration/, "Every exported application must inherit the plugin's public Push bootstrap.");
 for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key", "webhook_secret"]) {
@@ -67,8 +72,8 @@ assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, 
 assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
-assert.match(wizardTemplate, /Export your application[\s\S]*name="export_after_apply"[\s\S]*Export App/, "Setup Wizard must finish with Export App.");
-assert.match(dashboardTemplate, /Build your app[\s\S]*kidia_mobile_export_app[\s\S]*Export App/, "Overview must expose Export App in the last launch step.");
+assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
+assert.match(dashboardTemplate, /Build your app[\s\S]*kidia_mobile_build_app[\s\S]*Build APK[\s\S]*kidia_mobile_download_apk[\s\S]*Download APK/, "Overview must expose APK build and download actions in the last launch step.");
 assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
@@ -166,7 +171,7 @@ next.click();
 assert.equal(wizardDom.window.document.querySelector('[data-step="5"]').classList.contains("is-active"), true, "An unselected optional page theme step must be skipped.");
 for (let step = 4; step <= 8; step++) next.click();
 assert.equal(next.hidden, true, "Continue must disappear on the final setup step.");
-assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Export App must appear only on the final setup step.");
+assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Build APK must appear only on the final setup step.");
 assert.equal(wizardDom.window.document.querySelector('[data-step="4"] input').disabled, true, "Inputs for an unselected page theme must be disabled.");
 
 const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></div></body>`, { runScripts: "outside-only" });

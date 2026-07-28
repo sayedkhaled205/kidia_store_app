@@ -48,6 +48,21 @@ $connection_step_complete = $website_connected;
 $license_step_complete    = $connection_step_complete && $license_active;
 $setup_step_complete      = $license_step_complete && $setup_complete;
 $build_step_complete      = $setup_step_complete && $app_export_current;
+$build_state              = wp_parse_args(
+	is_array( $app_export_state ?? null ) ? $app_export_state : array(),
+	array(
+		'status'        => 'idle',
+		'progress'      => 0,
+		'message'       => '',
+		'apk_file_name' => '',
+	)
+);
+$build_status             = sanitize_key( (string) $build_state['status'] );
+if ( 'ready' === $build_status && ! $app_export_current ) {
+	$build_status          = 'idle';
+	$build_state['message'] = __( 'Application settings changed. Build a new APK to include the latest setup.', 'kidia-mobile-cms' );
+}
+$build_in_progress = in_array( $build_status, array( 'queued', 'building' ), true );
 $journey_steps = array(
 	array(
 		'title'       => __( 'Purchase and connect', 'kidia-mobile-cms' ),
@@ -66,7 +81,7 @@ $journey_steps = array(
 	),
 	array(
 		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
-		'description' => __( 'Export the application build package with its store and push connection ready for the WooMobile build pipeline.', 'kidia-mobile-cms' ),
+		'description' => __( 'Build a real Android APK, then download it directly to install on your phone.', 'kidia-mobile-cms' ),
 		'complete'    => $build_step_complete,
 	),
 );
@@ -89,6 +104,12 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	<?php if ( isset( $_GET['license_error'] ) ) : ?>
 		<div class="notice notice-error inline"><p><?php echo esc_html( sanitize_text_field( wp_unslash( $_GET['license_error'] ) ) ); ?></p></div>
+	<?php endif; ?>
+
+	<?php if ( isset( $_GET['build_notice'] ) && 'started' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
+		<div class="notice notice-success inline"><p><?php esc_html_e( 'Your APK build has started. You can leave this page and return later.', 'kidia-mobile-cms' ); ?></p></div>
+	<?php elseif ( isset( $_GET['build_notice'] ) && 'error' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
+		<div class="notice notice-error inline"><p><?php echo esc_html( isset( $_GET['build_message'] ) ? sanitize_text_field( wp_unslash( $_GET['build_message'] ) ) : __( 'The APK build could not be started.', 'kidia-mobile-cms' ) ); ?></p></div>
 	<?php endif; ?>
 
 	<section class="kidia-customer-journey" aria-labelledby="kidia-customer-journey-title">
@@ -122,14 +143,60 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						<h3><?php echo esc_html( (string) $journey_step['title'] ); ?></h3>
 						<p><?php echo esc_html( (string) $journey_step['description'] ); ?></p>
 						<?php if ( 3 === $journey_index ) : ?>
-							<form class="kidia-app-export-action" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-								<input type="hidden" name="action" value="kidia_mobile_export_app">
-								<?php wp_nonce_field( 'kidia_mobile_export_app', 'kidia_mobile_export_nonce' ); ?>
-								<button type="submit" class="button button-primary" <?php disabled( ! $setup_step_complete ); ?>>
-									<span class="dashicons dashicons-download" aria-hidden="true"></span>
-									<?php esc_html_e( 'Export App', 'kidia-mobile-cms' ); ?>
-								</button>
-							</form>
+							<div
+								class="kidia-app-build"
+								data-kidia-app-build
+								data-status="<?php echo esc_attr( $build_status ); ?>"
+							>
+								<p class="kidia-app-build__status" data-build-message>
+									<?php
+									echo esc_html(
+										(string) $build_state['message'] ?: (
+											$build_step_complete
+												? __( 'Your APK is ready to install.', 'kidia-mobile-cms' )
+												: __( 'Build an APK after completing the application setup.', 'kidia-mobile-cms' )
+										)
+									);
+									?>
+								</p>
+								<div class="kidia-app-build__progress" data-build-progress <?php echo $build_in_progress ? '' : 'hidden'; ?>>
+									<span
+										data-build-progress-value
+										role="progressbar"
+										aria-valuemin="0"
+										aria-valuemax="100"
+										aria-valuenow="<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>"
+										style="width:<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>%"
+									></span>
+								</div>
+								<div class="kidia-app-build__actions">
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<input type="hidden" name="action" value="kidia_mobile_build_app">
+										<?php wp_nonce_field( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce' ); ?>
+										<button type="submit" class="button button-primary" <?php disabled( ! $setup_step_complete || $build_in_progress ); ?>>
+											<span class="dashicons dashicons-smartphone" aria-hidden="true"></span>
+											<?php echo $build_step_complete ? esc_html__( 'Build New APK', 'kidia-mobile-cms' ) : esc_html__( 'Build APK', 'kidia-mobile-cms' ); ?>
+										</button>
+									</form>
+									<a
+										class="button button-primary"
+										data-build-download
+										href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'kidia_mobile_download_apk' ), admin_url( 'admin-post.php' ) ), 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce' ) ); ?>"
+										<?php echo $build_step_complete ? '' : 'hidden'; ?>
+									>
+										<span class="dashicons dashicons-download" aria-hidden="true"></span>
+										<?php esc_html_e( 'Download APK', 'kidia-mobile-cms' ); ?>
+									</a>
+								</div>
+								<details class="kidia-app-build__advanced">
+									<summary><?php esc_html_e( 'Developer build files', 'kidia-mobile-cms' ); ?></summary>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<input type="hidden" name="action" value="kidia_mobile_export_app">
+										<?php wp_nonce_field( 'kidia_mobile_export_app', 'kidia_mobile_export_nonce' ); ?>
+										<button type="submit" class="button" <?php disabled( ! $setup_step_complete ); ?>><?php esc_html_e( 'Download configuration ZIP', 'kidia-mobile-cms' ); ?></button>
+									</form>
+								</details>
+							</div>
 						<?php endif; ?>
 						<?php if ( $step_current && 3 !== $journey_index ) : ?>
 							<strong><?php esc_html_e( 'Current step', 'kidia-mobile-cms' ); ?></strong>
@@ -374,16 +441,43 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		font-size: 11px;
 	}
 
-	.kidia-app-export-action {
-		display: flex;
-		justify-content: center;
-		margin: 13px 0 0;
+	.kidia-app-build {
+		margin: 12px 0 0;
 	}
 
-	.kidia-app-export-action .button {
+	.kidia-app-build__status {
+		min-height: 34px;
+	}
+
+	.kidia-app-build__progress {
+		overflow: hidden;
+		height: 7px;
+		margin: 9px 0 12px;
+		border-radius: 999px;
+		background: #e0ebe8;
+	}
+
+	.kidia-app-build__progress span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: linear-gradient(90deg, #2f806e, #58ad98);
+		transition: width .25s ease;
+	}
+
+	.kidia-app-build__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 7px;
+	}
+
+	.kidia-app-build__actions form {
+		margin: 0;
+	}
+
+	.kidia-app-build__actions .button {
 		display: inline-flex;
-		width: min(100%, 230px);
-		min-height: 44px;
+		min-height: 38px;
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
@@ -391,10 +485,24 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		border-radius: 10px;
 	}
 
-	.kidia-app-export-action .dashicons {
+	.kidia-app-build__actions .dashicons {
 		width: 17px;
 		height: 17px;
 		font-size: 17px;
+	}
+
+	.kidia-app-build__advanced {
+		margin-top: 10px;
+		color: #60706c;
+		font-size: 11px;
+	}
+
+	.kidia-app-build__advanced summary {
+		cursor: pointer;
+	}
+
+	.kidia-app-build__advanced form {
+		margin-top: 8px;
 	}
 
 	.kidia-dashboard__card {
