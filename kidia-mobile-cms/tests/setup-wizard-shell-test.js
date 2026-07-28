@@ -42,6 +42,11 @@ for (const page of ["home", "category", "catalog", "product", "wishlist", "accou
 }
 assert.match(service, /array_fill_keys\(\s*array_keys\(\s*self::setup_pages\(\)\s*\),\s*\$theme_key\s*\)/, "One selected store theme must be shared by all enabled pages.");
 assert.match(service, /catalog_slides\(\s*\$theme\s*\)[\s\S]*setup_theme_hero[\s\S]*hero_url/, "Theme installation must place the bundled real image in the live Home hero.");
+assert.match(service, /preview_snapshot[\s\S]*build_home[\s\S]*build_page_layout[\s\S]*build_category_settings/, "Built-in preview and installation must share the same real theme builders.");
+assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'/, "Every built-in theme must define a distinct multi-page layout profile.");
+for (const pageDesign of ["catalog", "product", "wishlist", "account"]) {
+  assert.match(service, new RegExp(`'${pageDesign}'\\s*=>\\s*array`), `Complete themes must configure the ${pageDesign} page.`);
+}
 assert.match(service, /secondary_color/, "Setup identity must persist the secondary application color.");
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
 assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
@@ -77,9 +82,11 @@ assert.match(admin, /Kidia_Mobile_Setup_Wizard\(\) \)->is_complete/, "First visi
 assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme gallery.");
 assert.match(wizardTemplate, /Choose a complete store theme/, "Setup must select one complete store theme instead of one design per page.");
 assert.doesNotMatch(wizardTemplate, /setup\[page_themes\]/, "Setup must not mix unrelated designs across different pages.");
-assert.match(wizardTemplate, /Preview full theme[\s\S]*kidia-theme-modal__screens[\s\S]*Storefront[\s\S]*Catalog[\s\S]*Product/, "Every complete theme must have a multi-page preview.");
+assert.match(wizardTemplate, /Preview full theme[\s\S]*data-theme-modal-page[\s\S]*data-theme-modal-frame/, "Every complete theme must have a real all-page Flutter preview.");
 assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, "The second setup step must select required and optional application pages.");
 assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
+assert.match(wizardTemplate, /data-color-picker="primary"[\s\S]*data-color-code="primary"[\s\S]*data-color-picker="secondary"[\s\S]*data-color-code="secondary"/, "Both application colors must expose a picker and editable HEX code.");
+assert.match(wizardTemplate, /if \( \$is_required \)[\s\S]*type="hidden"[\s\S]*data-required-page="1"[\s\S]*else[\s\S]*type="checkbox"[\s\S]*if \( ! \$is_required \)[\s\S]*kidia-page-choice__switch/, "Required pages must stay enabled without rendering a checkbox or On/Off switch.");
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.match(wizardTemplate, /catalog_images/, "Wizard previews must use real catalog images when available.");
 assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
@@ -102,6 +109,7 @@ assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must 
 assert.match(savedThemesTemplate, /data-saved-theme-snapshot[\s\S]*Kidia_Mobile_Setup_Wizard::setup_pages\(\)[\s\S]*data-saved-theme-page[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must expose every application page in the real Flutter surface.");
 assert.match(savedThemesScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Saved Theme Preview must send the stored page layouts to the real Flutter preview.");
 assert.match(admin, /kidiaSavedThemePreview[\s\S]*flutterUrl[\s\S]*layoutPreviewBase[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint/, "Saved Theme Preview must receive authenticated live-preview endpoints.");
+assert.match(admin, /preview_snapshot[\s\S]*kidiaSetupThemePreview[\s\S]*flutterUrl[\s\S]*layoutPreviewBase[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint/, "Setup themes must receive their exact generated layouts and authenticated Flutter preview endpoints.");
 assert.match(admin, /kidia-mobile-saved-themes[\s\S]*admin\/assets\/saved-themes\.js/, "The Saved Themes page must load its preview interactions.");
 assert.match(admin, /'overview'\s*=>\s*\$tab\(\s*__\(\s*'Overview'/, "The sidebar must start with Overview.");
 assert.match(admin, /'setup'\s*=>\s*\$tab\(\s*__\(\s*'Setup Wizard'/, "Setup Wizard must follow Overview.");
@@ -138,12 +146,15 @@ assert.match(shellScript, /date_preset[\s\S]*customDates[\s\S]*input\.disabled/,
 assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engine::recommendations/, "AI Offer Studio must have its own evidence-backed page.");
 assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An optional reviewed AI offer push must prefill the editable offer composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
-assert.match(wizardCss, /kidia-theme-modal__screens[\s\S]*grid-template-columns:repeat\(3/, "Full theme preview must show three connected application screens.");
+assert.match(wizardCss, /kidia-theme-modal__workspace[\s\S]*kidia-theme-modal__device[\s\S]*iframe/, "Full theme preview must host the real Flutter application surface.");
+assert.match(wizardCss, /kidia-setup-color-control[\s\S]*grid-template-columns:48px minmax\(0,1fr\)/, "Color picker and HEX code must stay compact and side by side.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");
 const wizardScript = read("admin", "assets", "setup-wizard.js");
-assert.match(wizardScript, /getPropertyValue\('--theme-primary'\)/, "Setup actions must follow the design selected on the current page.");
-assert.match(wizardScript, /data-theme-modal-hero[\s\S]*Use this complete theme|kidia-theme-modal__select/, "Full preview must allow selecting the previewed complete theme.");
+assert.match(wizardScript, /setProperty\('--kidia-setup-theme-color', '#2f806e'\)/, "Setup actions must keep the WooMobile brand color.");
+assert.match(wizardScript, /normalizeHex[\s\S]*data-color-code[\s\S]*syncColorPair/, "Editable HEX color values must stay synchronized with their color pickers.");
+assert.match(wizardScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Built-in theme preview must render real Home, Category and page layouts in Flutter.");
+assert.match(wizardScript, /kidia-theme-modal__select/, "Full preview must allow selecting the previewed complete theme.");
 assert.match(wizardScript, /document\.querySelector\('\.kidia-setup-hero'\)/, "Wizard navigation must keep the Setup & Themes hero visible.");
 assert.match(wizardScript, /history\.scrollRestoration = 'manual'/, "Wizard must ignore stale browser scroll restoration.");
 assert.match(wizardScript, /show\(0, false\)/, "Initial wizard rendering must not scroll past the top hero.");
@@ -166,19 +177,38 @@ const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-setup-progress">${Array.from({ length: 5 }, () => "<span></span>").join("")}</div>
   <form class="kidia-setup-form">
     <section class="kidia-setup-step" data-step="1"><span data-step-number></span><input required value="Store"></section>
-    <section class="kidia-setup-step" data-step="2"><span data-step-number></span><input type="checkbox" data-page-toggle="home" checked><input type="checkbox" data-page-toggle="category"><input type="checkbox" data-page-toggle="catalog" checked><input type="checkbox" data-page-toggle="product" checked><input type="checkbox" data-page-toggle="wishlist" checked><input type="checkbox" data-page-toggle="account" checked></section>
-    <section class="kidia-setup-step" data-step="3"><span data-step-number></span><label class="kidia-theme-card" data-theme-name="Fashion" style="--theme-primary:#222;--theme-soft:#eee"><input type="radio" name="setup[theme]" required checked></label></section>
+    <section class="kidia-setup-step" data-step="2"><span data-step-number></span><input type="hidden" data-page-toggle="home" data-required-page="1"><input type="checkbox" data-page-toggle="category"><input type="checkbox" data-page-toggle="catalog" checked><input type="hidden" data-page-toggle="product" data-required-page="1"><input type="checkbox" data-page-toggle="wishlist" checked><input type="checkbox" data-page-toggle="account" checked></section>
+    <section class="kidia-setup-step" data-step="3"><span data-step-number></span><label class="kidia-theme-card" data-theme-key="fashion" data-theme-name="Fashion" style="--theme-primary:#222222;--theme-soft:#eeeeee;--theme-ink:#111111;--theme-surface:#ffffff"><input type="radio" name="setup[theme]" required checked><button type="button" class="kidia-theme-preview-button">Preview</button></label></section>
     <section class="kidia-setup-step" data-step="4"><span data-step-number></span><h3 data-review-name></h3><strong data-review-theme></strong><span data-review-page="category"></span></section>
     <section class="kidia-setup-step" data-step="5"><span data-step-number></span></section>
     <input name="setup[app_name]" value="Store">
-    <input name="setup[primary_color]" value="#2c2926">
-    <input name="setup[secondary_color]" value="#f2e9df">
+    <input type="color" name="setup[primary_color]" value="#2c2926" data-color-picker="primary"><input type="text" value="#2C2926" data-color-code="primary">
+    <input type="color" name="setup[secondary_color]" value="#f2e9df" data-color-picker="secondary"><input type="text" value="#F2E9DF" data-color-code="secondary">
     <button type="button" class="kidia-setup-back"></button>
     <button type="button" class="kidia-setup-next"></button>
     <button type="submit" class="kidia-setup-apply"></button>
   </form>
+  <div class="kidia-theme-modal" hidden>
+    <button type="button" class="kidia-theme-modal__close" data-theme-modal-close></button>
+    <h2 data-theme-modal-name></h2>
+    <button type="button" data-theme-modal-page="home"></button>
+    <button type="button" data-theme-modal-page="account"></button>
+    <iframe data-theme-modal-frame></iframe>
+    <div data-theme-modal-loading><b>Loading</b></div>
+    <button type="button" class="kidia-theme-modal__select"></button>
+  </div>
 </body>`, { runScripts: "outside-only", url: "https://example.test/wp-admin/admin.php" });
 wizardDom.window.scrollTo = () => {};
+wizardDom.window.kidiaSetupThemePreview = {
+  flutterUrl: "https://example.test/wp-content/plugins/kidia/admin/flutter-preview/index.html",
+  layoutPreviewBase: "https://example.test/wp-json/woo-mobile/v1/page-layout/",
+  homePreviewEndpoint: "https://example.test/wp-json/woomobileapp/v1/home-layout/preview",
+  categoryPreviewEndpoint: "https://example.test/wp-json/woo-mobile/v1/category-page/preview",
+  themes: { fashion: { home: [], pages: { home: {}, account: {} }, category: { general: {} } } },
+  restNonce: "nonce",
+  version: "test"
+};
+wizardDom.window.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 wizardDom.window.eval(read("admin", "assets", "setup-wizard.js"));
 const next = wizardDom.window.document.querySelector(".kidia-setup-next");
 next.click();
@@ -192,6 +222,15 @@ next.click();
 assert.equal(next.hidden, true, "Continue must disappear on the final setup step.");
 assert.equal(wizardDom.window.document.querySelector(".kidia-setup-apply").hidden, false, "Build APK must appear only on the final setup step.");
 assert.equal(wizardDom.window.document.querySelector('[data-review-page="category"]').hidden, true, "Unselected optional pages must stay out of the final theme review.");
+const primaryCode = wizardDom.window.document.querySelector('[data-color-code="primary"]');
+primaryCode.value = "#123ABC";
+primaryCode.dispatchEvent(new wizardDom.window.Event("input", { bubbles: true }));
+assert.equal(wizardDom.window.document.querySelector('[data-color-picker="primary"]').value, "#123abc", "Typing a HEX value must update the submitted color picker.");
+wizardDom.window.document.querySelector(".kidia-theme-preview-button").click();
+assert.equal(wizardDom.window.document.querySelector(".kidia-theme-modal").hidden, false, "Theme preview must open without applying the theme.");
+assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=home/, "Built-in theme preview must open the real Flutter Home page.");
+wizardDom.window.document.querySelector('[data-theme-modal-page="account"]').click();
+assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=account/, "Theme preview navigation must render every selected application page.");
 
 const shellDom = new JSDOM(`<!doctype html><body><div class="kidia-cms-shell"></div></body>`, { runScripts: "outside-only" });
 shellDom.window.scrollTo = () => {};
