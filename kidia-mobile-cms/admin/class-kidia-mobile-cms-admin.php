@@ -971,14 +971,15 @@ final class Kidia_Mobile_CMS_Admin {
 		wp_send_json_success( $result );
 	}
 
-	/** Reads background progress without processing another batch in the browser. */
+	/** Reads progress and optionally advances one self-healing browser batch. */
 	public function ai_analysis_status(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
-		$result = Kidia_Mobile_AI_Analysis_Job::status( $job_id, get_current_user_id() );
+		$advance = ! empty( $_POST['advance'] );
+		$result  = Kidia_Mobile_AI_Analysis_Job::status( $job_id, get_current_user_id(), $advance );
 		if ( isset( $result['error'] ) ) {
 			wp_send_json_error( array( 'message' => $result['error'] ), 404 );
 		}

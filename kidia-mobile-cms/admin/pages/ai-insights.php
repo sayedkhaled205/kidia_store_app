@@ -156,7 +156,7 @@ $action_result = static function ( array $row ): array {
 			<small data-ai-progress-note><?php esc_html_e( 'The percentage is calculated from completed WooCommerce orders and in-stock products—not from a timer.', 'kidia-mobile-cms' ); ?></small>
 			<div class="kidia-ai-progress-actions">
 				<button class="button button-primary" type="button" data-ai-background-button><span class="dashicons dashicons-migrate"></span><?php esc_html_e( 'Continue in background', 'kidia-mobile-cms' ); ?></button>
-				<button class="button" type="button" data-ai-view-results hidden><span class="dashicons dashicons-chart-area"></span><?php esc_html_e( 'View results', 'kidia-mobile-cms' ); ?></button>
+				<a class="button" data-ai-view-results hidden><span class="dashicons dashicons-chart-area"></span><?php esc_html_e( 'View results', 'kidia-mobile-cms' ); ?></a>
 				<button class="button kidia-ai-cancel-button" type="button" data-ai-cancel-button><span class="dashicons dashicons-no-alt"></span><?php esc_html_e( 'Cancel analysis', 'kidia-mobile-cms' ); ?></button>
 			</div>
 		</div>
