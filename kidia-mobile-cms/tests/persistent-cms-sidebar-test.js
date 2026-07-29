@@ -22,6 +22,21 @@ assert.match(
 );
 assert.match(
   styles,
+  /html\{[\s\S]*overflow-x:clip;[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
+  "The WordPress document must keep a stable vertical gutter without horizontal page scrolling."
+);
+assert.match(
+  styles,
+  /#wpbody-content\{[\s\S]*width:calc\(100% - 36px\);[\s\S]*max-width:calc\(100% - 36px\);/,
+  "The shared frame must fit the WordPress content box on every desktop CMS view."
+);
+assert.doesNotMatch(
+  styles,
+  /#wpbody-content\{[^}]*width:calc\(100vw/,
+  "Viewport-based CMS frame widths must not reintroduce horizontal overflow."
+);
+assert.match(
+  styles,
   /:is\(\.kidia-page-master-toggle,\.kidia-page-toggle\) input\[type="checkbox"\]:checked::before\{[\s\S]*inset-inline-start:23px!important;[\s\S]*transform:none!important;/,
   "Standard page switches must position their thumb logically in both RTL and LTR."
 );
