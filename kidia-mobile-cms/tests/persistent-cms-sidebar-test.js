@@ -9,6 +9,26 @@ const script = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "cms-shell.js"),
   "utf8"
 );
+const styles = fs.readFileSync(
+  path.resolve(__dirname, "..", "admin", "assets", "cms-shell.css"),
+  "utf8"
+);
+
+assert.match(
+  styles,
+  /#wpbody-content\{\s*min-height:calc\(100vh - 68px\)!important;/,
+  "Every desktop CMS workspace must reach at least the bottom of the shared sidebar."
+);
+assert.match(
+  styles,
+  /:is\(\.kidia-page-master-toggle,\.kidia-page-toggle\) input\[type="checkbox"\]:checked::before\{[\s\S]*inset-inline-start:23px!important;[\s\S]*transform:none!important;/,
+  "Standard page switches must position their thumb logically in both RTL and LTR."
+);
+assert.match(
+  styles,
+  /\.kidia-builder-switch input:checked \+ \.kidia-builder-switch__track::after\{[\s\S]*inset-inline-start:21px!important;[\s\S]*transform:none!important;/,
+  "Card switches must use the same reliable logical thumb positioning."
+);
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
   <main id="wpbody-content">
@@ -46,6 +66,7 @@ dom.window.fetch = async () => ({
 });
 
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
+const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 dom.window.eval(script);
 originalSidebar.querySelector("a:last-child").dispatchEvent(
   new dom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
@@ -54,6 +75,11 @@ originalSidebar.querySelector("a:last-child").dispatchEvent(
 setTimeout(() => {
   const currentSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
   assert.strictEqual(currentSidebar, originalSidebar, "Navigation must retain the exact Overview sidebar DOM node.");
+  assert.strictEqual(
+    dom.window.document.querySelector("#wpbody-content"),
+    originalWorkspace,
+    "Navigation must retain the exact shared CMS workspace frame."
+  );
   assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Setup content");
   assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Setup Wizard");
   assert.equal(dom.window.location.search, "?page=kidia-mobile-setup");
