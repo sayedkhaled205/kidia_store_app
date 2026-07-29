@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'KIDIA_MOBILE_CMS_VERSION',
-	'1.45.55'
+	'1.45.56'
 );
 
 if ( ! defined( 'KIDIA_MOBILE_LICENSE_PUBLIC_KEY' ) ) {
