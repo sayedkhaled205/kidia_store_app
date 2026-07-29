@@ -410,6 +410,11 @@ assert.match(
   "The parked analysis card must be freely draggable and remember its safe screen position.",
 );
 assert.match(
+  shellScript,
+  /kidia:cms-before-page-change[\s\S]*persistAiProgressAcrossNavigation[\s\S]*document\.body\.appendChild\(overlay\)[\s\S]*pollBackgroundJob/,
+  "An active analysis card must survive CMS view changes without a reload or a new job.",
+);
+assert.match(
   shellCss,
   /kidia-ai-progress-overlay\.is-docked \.kidia-ai-progress-card\{[\s\S]*cursor:grab[\s\S]*touch-action:none/,
   "The parked analysis card must expose mouse and touch dragging.",
@@ -595,6 +600,36 @@ assert.match(
   storeData,
   /data-kidia-live-store-data="abandoned-carts-overview"[\s\S]*data-kidia-live-store-data="abandoned-carts-table"/,
   "Abandoned-cart progress, totals and rows must expose live-update regions.",
+);
+assert.match(
+  storeData,
+  /Bought an alternative order[\s\S]*Returning customer[\s\S]*First-time customer[\s\S]*data-abandoned-cart-details/,
+  "Every abandoned-cart row must expose the three customer segments and an order-details action.",
+);
+assert.match(
+  storeData,
+  /Cart order|View 3 details/,
+  "Each abandoned cart must provide a button that opens its three detail groups.",
+);
+assert.match(
+  analytics,
+  /abandoned_cart_order_insight[\s\S]*10 \* DAY_IN_SECONDS[\s\S]*customer_segment/,
+  "Abandoned-cart insights must compare purchases within ten days and classify the customer.",
+);
+assert.match(
+  shellScript,
+  /kidia_mobile_abandoned_cart_details[\s\S]*Customer order history[\s\S]*Possible alternative order/,
+  "The details action must load cart contents, customer order history and the possible alternative order.",
+);
+assert.match(
+  storeData,
+  /Completed — WooCommerce cart history is synced[\s\S]*Results are shown below automatically/,
+  "The abandoned-cart import card must become Completed and expose refreshed results automatically.",
+);
+assert.match(
+  shellScript,
+  /Completed\. Loading your results…[\s\S]*view\.hidden = true[\s\S]*window\.location\.assign\(resultUrl\)/,
+  "AI Offer Studio must become Completed and open its generated results automatically without a View results step.",
 );
 assert.match(
   shellScript,
