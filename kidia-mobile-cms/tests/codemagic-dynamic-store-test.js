@@ -43,6 +43,11 @@ assert.match(
   /'dartDefines'\s*=>\s*array\([\s\S]*'STORE_NAME'[\s\S]*'STORE_LOCALE'[\s\S]*'PUSH_CONFIG_URL'/,
   "The WordPress build manifest must send the customer application values."
 );
+assert.match(
+  exporter,
+  /'queued'\s*===\s*\(string\)\s*\$state\['status'\][\s\S]*time\(\)\s*-\s*5[\s\S]*dispatch_build/,
+  "A delayed Action Scheduler queue must be rescued by status polling."
+);
 for (const field of [
   "store_url",
   "app_name",
