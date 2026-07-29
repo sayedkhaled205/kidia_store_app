@@ -51,6 +51,8 @@ $campaigns = array(
 $click_rate = $promotion_metrics['views'] > 0
 	? round( ( $promotion_metrics['clicks'] / $promotion_metrics['views'] ) * 100, 1 )
 	: 0;
+$preview_url  = Kidia_Mobile_Website_App_Promotion::preview_url();
+$preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 ?>
 <div class="wrap kidia-app-promotion-admin" data-promotion-admin>
 	<header class="kidia-app-promotion-hero">
@@ -246,15 +248,19 @@ $click_rate = $promotion_metrics['views'] > 0
 			<aside class="kidia-app-promotion-preview">
 				<header><div><strong><?php esc_html_e( 'Live preview', 'kidia-mobile-cms' ); ?></strong><small data-preview-campaign-label><?php esc_html_e( 'Smart Banner', 'kidia-mobile-cms' ); ?></small></div><div><button type="button" class="is-active" data-preview-device="mobile"><span class="dashicons dashicons-smartphone"></span></button><button type="button" data-preview-device="desktop"><span class="dashicons dashicons-desktop"></span></button></div></header>
 				<div class="kidia-promotion-device is-mobile" data-promotion-preview>
-					<div class="kidia-promotion-browser">
-						<div class="kidia-promotion-browser__bar"><i></i><i></i><i></i><span>yourstore.com</span></div>
-						<div class="kidia-promotion-store">
-							<div class="kidia-promotion-store__header"><b data-preview-store-name><?php echo esc_html( $value( 'app_name' ) ); ?></b><span></span></div>
-							<div class="kidia-promotion-store__hero"></div>
-							<div class="kidia-promotion-store__cards"><i></i><i></i><i></i><i></i></div>
-							<div class="kidia-promotion-store__lines"><i></i><i></i><i></i></div>
+					<div class="kidia-promotion-screen" data-promotion-screen>
+						<div class="kidia-promotion-browser" data-promotion-browser>
+							<div class="kidia-promotion-browser__bar"><i></i><i></i><i></i><span><?php echo esc_html( $preview_host ); ?></span></div>
+							<div class="kidia-promotion-live-site">
+								<iframe
+									src="<?php echo esc_url( $preview_url ); ?>"
+									title="<?php esc_attr_e( 'Live website campaign preview', 'kidia-mobile-cms' ); ?>"
+									loading="eager"
+									data-promotion-site-frame
+								></iframe>
+							</div>
+							<div class="kidia-promotion-preview-output" data-preview-output></div>
 						</div>
-						<div class="kidia-promotion-preview-output" data-preview-output></div>
 					</div>
 				</div>
 				<p class="kidia-app-promotion-preview__hint"><span class="dashicons dashicons-info-outline"></span><?php esc_html_e( 'Preview updates while you type. The live website also applies device, page and frequency rules.', 'kidia-mobile-cms' ); ?></p>
