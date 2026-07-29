@@ -1339,7 +1339,163 @@ final class Kidia_Mobile_Analytics {
 			$row['items'] = is_array( $row['items'] ) ? $row['items'] : array();
 		}
 		unset( $row );
+		return self::add_abandoned_customer_segments( $rows );
+	}
+
+	/**
+	 * Classifies visible carts with one batched order read, avoiding one query per row.
+	 *
+	 * @param list<array<string,mixed>> $rows
+	 * @return list<array<string,mixed>>
+	 */
+	private static function add_abandoned_customer_segments( array $rows ): array {
+		if ( empty( $rows ) || ! function_exists( 'wc_get_orders' ) ) {
+			return $rows;
+		}
+		$cart_times = array_map(
+			static fn( array $row ): int => max( 1, (int) strtotime( (string) ( $row['last_activity_at'] ?? '' ) . ' UTC' ) ),
+			$rows
+		);
+		$orders = self::orders_in_period(
+			min( $cart_times ) - 10 * DAY_IN_SECONDS,
+			max( $cart_times ) + 10 * DAY_IN_SECONDS,
+			'all',
+			array( 'wc-processing', 'wc-completed', 'wc-on-hold' )
+		);
+		$orders_by_customer = array();
+		foreach ( $orders as $order ) {
+			$created = $order->get_date_created();
+			if ( ! $created ) {
+				continue;
+			}
+			$order_row = array(
+				'id'         => absint( $order->get_id() ),
+				'created_at' => (int) $created->getTimestamp(),
+			);
+			$user_id = absint( $order->get_customer_id() );
+			$email = strtolower( sanitize_email( (string) $order->get_billing_email() ) );
+			if ( $user_id ) {
+				$orders_by_customer[ 'user:' . $user_id ][] = $order_row;
+			}
+			if ( $email ) {
+				$orders_by_customer[ 'email:' . $email ][] = $order_row;
+			}
+		}
+
+		foreach ( $rows as &$row ) {
+			$cart_time = max( 1, (int) strtotime( (string) ( $row['last_activity_at'] ?? '' ) . ' UTC' ) );
+			$key = ! empty( $row['user_id'] )
+				? 'user:' . absint( $row['user_id'] )
+				: 'email:' . strtolower( sanitize_email( (string) ( $row['customer_email'] ?? '' ) ) );
+			$customer_orders = $orders_by_customer[ $key ] ?? array();
+			$alternative_id = absint( $row['order_id'] ?? 0 );
+			$has_previous = false;
+			foreach ( $customer_orders as $order_row ) {
+				if ( abs( (int) $order_row['created_at'] - $cart_time ) <= 10 * DAY_IN_SECONDS ) {
+					$alternative_id = $alternative_id ?: absint( $order_row['id'] );
+				}
+				if ( (int) $order_row['created_at'] < $cart_time ) {
+					$has_previous = true;
+				}
+			}
+			if ( ! $has_previous && ! empty( $row['user_id'] ) && function_exists( 'wc_get_customer_order_count' ) ) {
+				$has_previous = wc_get_customer_order_count( absint( $row['user_id'] ) ) > 0;
+			}
+			$row['alternative_order_id'] = $alternative_id;
+			$row['customer_segment'] = $alternative_id ? 'alternative' : ( $has_previous ? 'returning' : 'first_time' );
+		}
+		unset( $row );
 		return $rows;
+	}
+
+	/**
+	 * Loads the order context for one abandoned cart only when its details are opened.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function abandoned_cart_order_insight( int $cart_id ): array {
+		global $wpdb;
+		$cart = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT * FROM ' . self::carts_table() . ' WHERE id = %d LIMIT 1',
+				$cart_id
+			),
+			ARRAY_A
+		);
+		if ( ! is_array( $cart ) ) {
+			return array();
+		}
+
+		$items = json_decode( (string) ( $cart['items'] ?? '' ), true );
+		$cart['items'] = is_array( $items ) ? $items : array();
+		$cart_time = strtotime( (string) ( $cart['last_activity_at'] ?? '' ) . ' UTC' );
+		$cart_time = $cart_time > 0 ? $cart_time : time();
+		$orders = array();
+
+		if ( function_exists( 'wc_get_orders' ) ) {
+			$query = array(
+				'limit'   => 20,
+				'orderby' => 'date',
+				'order'   => 'DESC',
+				'return'  => 'objects',
+			);
+			if ( ! empty( $cart['user_id'] ) ) {
+				$query['customer_id'] = absint( $cart['user_id'] );
+			} elseif ( ! empty( $cart['customer_email'] ) ) {
+				$query['billing_email'] = sanitize_email( (string) $cart['customer_email'] );
+			} else {
+				return array(
+					'cart'             => $cart,
+					'orders'           => array(),
+					'alternative'      => null,
+					'customer_segment' => 'first_time',
+				);
+			}
+			$result = wc_get_orders( $query );
+			$orders = is_array( $result ) ? $result : array();
+		}
+
+		$paid_statuses = array( 'processing', 'completed', 'on-hold' );
+		$history = array();
+		$alternative = null;
+		$has_previous_purchase = false;
+		foreach ( $orders as $order ) {
+			if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_id' ) ) ) {
+				continue;
+			}
+			$created = $order->get_date_created();
+			$created_at = $created && is_callable( array( $created, 'getTimestamp' ) )
+				? (int) $created->getTimestamp()
+				: 0;
+			$status = (string) $order->get_status();
+			$is_purchase = in_array( $status, $paid_statuses, true );
+			$row = array(
+				'id'         => absint( $order->get_id() ),
+				'created_at' => $created_at,
+				'date'       => $created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $created_at ) : '—',
+				'status'     => $status,
+				'total'      => (float) $order->get_total(),
+				'currency'   => (string) $order->get_currency(),
+			);
+			$history[] = $row;
+			if ( $is_purchase && $created_at < $cart_time ) {
+				$has_previous_purchase = true;
+			}
+			if (
+				$is_purchase
+				&& abs( $created_at - $cart_time ) <= 10 * DAY_IN_SECONDS
+				&& ( ! $alternative || abs( $created_at - $cart_time ) < abs( (int) $alternative['created_at'] - $cart_time ) )
+			) {
+				$alternative = $row;
+			}
+		}
+
+		return array(
+			'cart'             => $cart,
+			'orders'           => $history,
+			'alternative'      => $alternative,
+			'customer_segment' => $alternative ? 'alternative' : ( $has_previous_purchase ? 'returning' : 'first_time' ),
+		);
 	}
 
 	/**

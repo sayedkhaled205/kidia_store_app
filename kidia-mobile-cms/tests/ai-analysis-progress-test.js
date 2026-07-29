@@ -81,6 +81,26 @@ hook.render(overlay, {
 assert.equal(value.textContent, "1%");
 assert.match(count.textContent, /^300\s*\/\s*29,080 records completed$/);
 
+const pageContent = window.document.createElement("main");
+pageContent.appendChild(overlay);
+window.document.body.appendChild(pageContent);
+const sameOverlay = overlay;
+assert.equal(
+  hook.persistAcrossNavigation(overlay, "job-1"),
+  true,
+  "An active analysis must be promoted to the persistent CMS layer before a page swap.",
+);
+assert.equal(
+  overlay,
+  sameOverlay,
+  "Navigation must preserve the same progress card instead of recreating or refreshing it.",
+);
+assert.equal(overlay.parentElement, window.document.body);
+assert.equal(overlay.classList.contains("is-docked"), true);
+assert.equal(overlay.classList.contains("is-global"), true);
+assert.equal(value.textContent, "1%");
+assert.match(count.textContent, /^300\s*\/\s*29,080 records completed$/);
+
 Object.defineProperties(overlay, {
   offsetWidth: { value: 380 },
   offsetHeight: { value: 180 },
