@@ -214,16 +214,8 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	public function admin_body_class( string $classes ): string {
 		$page = $this->effective_cms_page();
-		$builder_pages = array_merge(
-			array(
-				'kidia-mobile-home-builder',
-				'kidia-mobile-category-builder',
-				'kidia-mobile-splash-screen',
-			),
-			array_keys( self::PAGE_BUILDER_SLUGS )
-		);
 
-		if ( in_array( $page, $builder_pages, true ) ) {
+		if ( $this->is_builder_screen( $page ) ) {
 			$classes .= ' kidia-cms-builder-screen';
 		}
 		if ( $this->is_public_cms_page( $page ) ) {
@@ -239,6 +231,20 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 
 		return $classes;
+	}
+
+	/** Returns whether the selected CMS view owns the fixed Builder workspace. */
+	private function is_builder_screen( string $page ): bool {
+		$builder_pages = array_merge(
+			array(
+				'kidia-mobile-home-builder',
+				'kidia-mobile-category-builder',
+				'kidia-mobile-splash-screen',
+			),
+			array_keys( self::PAGE_BUILDER_SLUGS )
+		);
+
+		return in_array( $page, $builder_pages, true );
 	}
 
 	/**
@@ -1970,6 +1976,7 @@ final class Kidia_Mobile_CMS_Admin {
 				'view'          => $view,
 				'activeSidebar' => $active_sidebar,
 				'showPageTabs'  => in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true ),
+				'builderScreen' => $this->is_builder_screen( $this->effective_cms_page() ),
 				'styles'        => $this->cms_fragment_assets( wp_styles(), 'css' ),
 				'scripts'       => $this->cms_fragment_assets( wp_scripts(), 'js' ),
 			)

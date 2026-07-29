@@ -1612,6 +1612,7 @@ function runUniformChromeSettingsContractTest() {
 	assert.match(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="header"\] \.kidia-page-field\s*\{[^}]*align-items:\s*flex-start;[^}]*direction:\s*rtl;/, "Every Header field must start from the right like the Home element grids.");
 	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-card\[data-chrome-part="footer"\][^{]*\{[^}]*direction:\s*rtl/, "The already-correct Footer field order must remain untouched.");
 	assert.doesNotMatch(styles, /\.kidia-fixed-chrome-toggle(?:\s|\.|\{|>)/, "The fixed card On/Off control must rely exclusively on the shared card component.");
+	assert.doesNotMatch(template, /kidia-fixed-chrome-toggle/, "Header and Footer markup must use the exact shared card On/Off class list.");
 	assert.match(chrome, /closest\("\.kidia-fixed-chrome-expand"\)[\s\S]*card\.classList\.toggle\("is-open",\s*opening\)/, "The shared component must own Header/Footer expand behavior on every page.");
 	assert.doesNotMatch(home, /closest\("\.kidia-fixed-chrome-expand"\)/, "Home must not keep a separate Header/Footer expand implementation.");
 	assert.doesNotMatch(category, /\.kidia-fixed-chrome-expand, \.kidia-category-element-expand/, "Category must not keep a separate Header/Footer expand implementation.");
@@ -1682,6 +1683,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.match(adminTheme, /body\.kidia-cms-builder-screen :is\(\.kidia-mobile-preview,\.kidia-page-preview,\.kidia-category-mobile-preview\)\s*\{[\s\S]*position:\s*relative !important;[\s\S]*overflow:\s*hidden;/, "All phone previews must keep the same viewport coordinates while cards scroll.");
 	assert.match(adminTheme, /body\.kidia-cms-builder-screen[\s\S]*\.kidia-shared-builder-toolbar\s*\{[\s\S]*position:\s*relative;[\s\S]*top:\s*auto;/, "The page toolbar must live outside the card rail and never be crossed by cards.");
 	assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*history\.scrollRestoration = 'manual'[\s\S]*window\.scrollTo/, "A Builder must discard restored document scroll before the fixed workspace appears.");
+	assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Dynamic CMS navigation must preserve the fixed Builder workspace after view changes.");
 	assert.match(homePreviewBridge, /data-kidia-builder-cards-scroll[\s\S]*\(cards \|\| window\)\.scrollBy/, "Keyboard navigation must scroll the card rail rather than the whole page.");
 	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");

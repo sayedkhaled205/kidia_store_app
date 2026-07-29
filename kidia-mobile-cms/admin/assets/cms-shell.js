@@ -1,7 +1,19 @@
 (function () {
 	'use strict';
 	const shell = document.querySelector('.kidia-cms-shell');
-	const fixedBuilder = document.body.classList.contains('kidia-cms-builder-screen');
+
+	function syncBuilderScreen(enabled) {
+		const active = Boolean(enabled);
+		document.body.classList.toggle('kidia-cms-builder-screen', active);
+		document.documentElement.classList.toggle('kidia-cms-builder-screen', active);
+		if (!active) return;
+		if ('scrollRestoration' in history) {
+			history.scrollRestoration = 'manual';
+		}
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+	}
+
+	syncBuilderScreen(document.body.classList.contains('kidia-cms-builder-screen'));
 
 	/* One permanent CMS shell; the server returns view fragments only. */
 	function installPersistentCmsNavigation() {
@@ -132,6 +144,7 @@
 					viewCache.set(cacheKey, payload);
 					await loadAssets(payload);
 				}
+				syncBuilderScreen(payload.builderScreen);
 				updateNavigation(payload);
 				Array.from(currentContent.childNodes).forEach(function (node) {
 					if (node !== sidebar && node !== shell) node.remove();
@@ -206,13 +219,6 @@
 		input.addEventListener('keydown', function (event) {
 			if (event.key === 'Enter') { event.preventDefault(); modal.querySelector('[data-kidia-theme-confirm]').click(); }
 		});
-	}
-
-	if (fixedBuilder) {
-		if ('scrollRestoration' in history) {
-			history.scrollRestoration = 'manual';
-		}
-		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 	}
 
 	function syncPreviewOffset() {

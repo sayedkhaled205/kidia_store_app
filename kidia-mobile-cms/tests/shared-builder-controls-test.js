@@ -9,12 +9,11 @@ const pluginRoot = path.resolve(__dirname, "..");
 const asset = (name) => fs.readFileSync(path.join(pluginRoot, "admin", "assets", name), "utf8");
 
 function actions(kind) {
-  const fixed = kind === "header" || kind === "footer" ? " kidia-fixed-chrome-toggle" : "";
   return `<div class="kidia-card-actions${kind === "home" ? " kidia-builder-block__actions" : ""}" data-actions="${kind}">
     <button class="button kidia-card-action kidia-card-action--primary"><span class="dashicons"></span>Copy</button>
     <button class="button kidia-card-action kidia-card-action--secondary"><span class="dashicons"></span>Paste</button>
     <button class="button kidia-card-action kidia-card-action--expand"><span class="dashicons"></span></button>
-    <label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle${fixed}">
+    <label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle">
       <input type="checkbox">
       <span class="kidia-builder-switch__track"></span>
       <span class="kidia-builder-switch__state"></span>

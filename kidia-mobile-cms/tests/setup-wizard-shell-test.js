@@ -161,6 +161,7 @@ assert.doesNotMatch(shellTemplate, /window\.prompt/, "Save Theme must not use th
 assert.match(shellTemplate, /data-kidia-save-theme[\s\S]*data-kidia-theme-modal[\s\S]*data-kidia-theme-name[\s\S]*Save Theme/, "Every page header must open the centered themed Save Theme dialog.");
 assert.doesNotMatch(shellTemplate.match(/<form class="kidia-cms-save-theme"[\s\S]*?<\/form>/)?.[0] || "", /dashicons/, "The compact Save Theme button must not render a trailing icon.");
 assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*width:max-content;[^}]*min-width:0;/, "The Save Theme button must fit its label instead of keeping an oversized width.");
+assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*border-color:#236b59!important;[^}]*background:#2f806e!important;[^}]*color:#fff!important;/, "Save Theme must keep the Kidia color instead of inheriting WordPress blue.");
 assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s\S]*requestSubmit/, "The themed Save Theme dialog must preserve unsaved builder fields before creating the named theme.");
 assert.match(shellScript, /installPersistentCmsNavigation[\s\S]*kidia_mobile_cms_view[\s\S]*response\.json\(\)[\s\S]*node !== sidebar && node !== shell[\s\S]*history\.pushState/, "CMS navigation must request only a view fragment and retain the one sidebar and frame.");
 assert.doesNotMatch(shellScript.slice(0, shellScript.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "CMS navigation must never fetch another WordPress document.");
@@ -246,6 +247,7 @@ assert.match(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position:fixed!
 assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*height:calc\(100% - 24px\)!important;[\s\S]*margin-bottom:6px;[\s\S]*overflow:hidden!important;/, "Builder documents must remain fixed while the frame extends low enough to contain the complete phone.");
 assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
+assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Fragment navigation must restore or release the fixed Builder workspace for the destination.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-setup-progress">${Array.from({ length: 5 }, () => "<span></span>").join("")}</div>
