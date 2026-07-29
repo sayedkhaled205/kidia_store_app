@@ -1459,6 +1459,11 @@ final class Kidia_Mobile_Analytics {
 		$history = array();
 		$alternative = null;
 		$has_previous_purchase = false;
+		$customer = array(
+			'name'     => sanitize_text_field( (string) ( $cart['customer_name'] ?? '' ) ),
+			'phones'   => array(),
+			'province' => '',
+		);
 		foreach ( $orders as $order ) {
 			if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_id' ) ) ) {
 				continue;
@@ -1476,8 +1481,31 @@ final class Kidia_Mobile_Analytics {
 				'status'     => $status,
 				'total'      => (float) $order->get_total(),
 				'currency'   => (string) $order->get_currency(),
+				'edit_url'   => is_callable( array( $order, 'get_edit_order_url' ) ) ? (string) $order->get_edit_order_url() : '',
 			);
 			$history[] = $row;
+			if ( '' === $customer['name'] && is_callable( array( $order, 'get_formatted_billing_full_name' ) ) ) {
+				$customer['name'] = sanitize_text_field( (string) $order->get_formatted_billing_full_name() );
+			}
+			foreach ( array( 'get_billing_phone', 'get_shipping_phone' ) as $phone_method ) {
+				if ( is_callable( array( $order, $phone_method ) ) ) {
+					$phone = sanitize_text_field( (string) $order->{$phone_method}() );
+					if ( '' !== $phone ) {
+						$customer['phones'][] = $phone;
+					}
+				}
+			}
+			if ( '' === $customer['province'] ) {
+				foreach ( array( 'get_billing_state', 'get_shipping_state' ) as $state_method ) {
+					if ( is_callable( array( $order, $state_method ) ) ) {
+						$state = sanitize_text_field( (string) $order->{$state_method}() );
+						if ( '' !== $state ) {
+							$customer['province'] = $state;
+							break;
+						}
+					}
+				}
+			}
 			if ( $is_purchase && $created_at < $cart_time ) {
 				$has_previous_purchase = true;
 			}
@@ -1489,11 +1517,28 @@ final class Kidia_Mobile_Analytics {
 				$alternative = $row;
 			}
 		}
+		$user_id = absint( $cart['user_id'] ?? 0 );
+		if ( $user_id > 0 && function_exists( 'get_user_meta' ) ) {
+			foreach ( array( 'billing_phone', 'shipping_phone' ) as $phone_key ) {
+				$phone = sanitize_text_field( (string) get_user_meta( $user_id, $phone_key, true ) );
+				if ( '' !== $phone ) {
+					$customer['phones'][] = $phone;
+				}
+			}
+			if ( '' === $customer['province'] ) {
+				$customer['province'] = sanitize_text_field( (string) get_user_meta( $user_id, 'billing_state', true ) );
+				if ( '' === $customer['province'] ) {
+					$customer['province'] = sanitize_text_field( (string) get_user_meta( $user_id, 'shipping_state', true ) );
+				}
+			}
+		}
+		$customer['phones'] = array_values( array_unique( array_filter( $customer['phones'] ) ) );
 
 		return array(
 			'cart'             => $cart,
 			'orders'           => $history,
 			'alternative'      => $alternative,
+			'customer'         => $customer,
 			'customer_segment' => $alternative ? 'alternative' : ( $has_previous_purchase ? 'returning' : 'first_time' ),
 		);
 	}

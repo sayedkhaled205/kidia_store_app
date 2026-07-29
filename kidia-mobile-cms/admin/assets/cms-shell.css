@@ -679,13 +679,19 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-cart-details-row>td{padding:0!important;border-top:0!important;background:#f6faf8}
 .kidia-cart-details-content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px}
 .kidia-cart-details-content section{min-width:0;padding:12px;border:1px solid #dce9e5;border-radius:10px;background:#fff}
+.kidia-cart-details-stack{display:grid;min-width:0;gap:10px}
 .kidia-cart-details-content h4{margin:0 0 9px;color:#174e42;font-size:13px}
 .kidia-cart-details-content h4 small{color:#70807b;font-weight:600}
 .kidia-cart-details-content ul{display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.kidia-cart-details-content li,.kidia-cart-alternative-order{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #edf2f0}
+.kidia-cart-details-content li,.kidia-cart-alternative-order{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #edf2f0}
 .kidia-cart-details-content li:last-child{border-bottom:0}
 .kidia-cart-details-content li span,.kidia-cart-details-content p{margin:0;color:#687873}
 .kidia-cart-details-content li em,.kidia-cart-alternative-order em{color:#2f806e;font-style:normal;font-weight:700;white-space:nowrap}
+.kidia-cart-details-content .kidia-open-order-button{min-height:30px;padding:2px 10px;border-color:#2f806e;color:#174e42;font-size:12px;font-weight:700;line-height:24px;white-space:nowrap}
+.kidia-customer-summary{display:grid;gap:7px;margin:0}
+.kidia-customer-summary div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px}
+.kidia-customer-summary dt{color:#70807b;font-size:12px;font-weight:600}
+.kidia-customer-summary dd{margin:0;color:#174e42;font-weight:700;overflow-wrap:anywhere}
 .kidia-cart-details-loading,.kidia-cart-details-error{grid-column:1/-1;padding:12px}
 .kidia-cart-details-error{color:#a43d3d}
 .kidia-status.is-abandoned{background:#fff0df;color:#9a5700}

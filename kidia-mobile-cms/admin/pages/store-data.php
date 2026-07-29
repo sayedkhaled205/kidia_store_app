@@ -332,7 +332,7 @@ $category_image = static function ( WP_Term $category ): string {
 							<td><span class="kidia-source-badge is-<?php echo esc_attr( $cart['source'] ); ?>"><?php echo esc_html( $source_labels[ $cart['source'] ] ?? ucfirst( $cart['source'] ) ); ?></span></td>
 							<td><?php echo esc_html( get_date_from_gmt( $cart['last_activity_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?><small><?php echo esc_html( human_time_diff( strtotime( $cart['last_activity_at'] . ' UTC' ), time() ) . ' ' . __( 'ago', 'kidia-mobile-cms' ) ); ?></small></td>
 							<td><span class="kidia-status is-<?php echo esc_attr( $cart['status'] ); ?>"><?php echo esc_html( ucfirst( $cart['status'] ) ); ?></span><?php if ( ! empty( $cart['alternative_order_id'] ) ) : ?><small><?php echo esc_html( sprintf( __( 'Possible alternative #%d', 'kidia-mobile-cms' ), absint( $cart['alternative_order_id'] ) ) ); ?></small><?php endif; ?></td>
-							<td><button type="button" class="button kidia-cart-details-button" data-abandoned-cart-details="<?php echo esc_attr( (string) $cart['id'] ); ?>" aria-expanded="false"><?php esc_html_e( 'View 3 details', 'kidia-mobile-cms' ); ?></button></td>
+							<td><button type="button" class="button kidia-cart-details-button" data-abandoned-cart-details="<?php echo esc_attr( (string) $cart['id'] ); ?>" aria-expanded="false"><?php esc_html_e( 'View details', 'kidia-mobile-cms' ); ?></button></td>
 						</tr>
 						<tr class="kidia-cart-details-row" data-abandoned-cart-details-row="<?php echo esc_attr( (string) $cart['id'] ); ?>" hidden><td colspan="8"><div class="kidia-cart-details-content" aria-live="polite"></div></td></tr>
 					<?php endforeach; ?>

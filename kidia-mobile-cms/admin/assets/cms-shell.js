@@ -887,6 +887,7 @@
 			const cart = insight.cart || {};
 			const orders = Array.isArray(insight.orders) ? insight.orders : [];
 			const alternative = insight.alternative || null;
+			const customer = insight.customer || {};
 			const items = Array.isArray(cart.items) ? cart.items : [];
 			const itemHtml = items.length
 				? '<ul>' + items.map(function (item) {
@@ -895,16 +896,29 @@
 				: '<p>No cart items are available.</p>';
 			const historyHtml = orders.length
 				? '<ul>' + orders.map(function (order) {
-					return '<li><strong>#' + escapeHtml(order.id) + '</strong><span>' + escapeHtml(order.date) + '</span><em>' + escapeHtml(order.status) + ' · ' + escapeHtml(order.total) + ' ' + escapeHtml(order.currency) + '</em></li>';
+					const openOrder = order.edit_url
+						? '<a class="button kidia-open-order-button" href="' + escapeHtml(order.edit_url) + '" target="_blank" rel="noopener">Open order</a>'
+						: '';
+					return '<li><strong>#' + escapeHtml(order.id) + '</strong><span>' + escapeHtml(order.date) + '</span><em>' + escapeHtml(order.status) + ' · ' + escapeHtml(order.total) + ' ' + escapeHtml(order.currency) + '</em>' + openOrder + '</li>';
 				}).join('') + '</ul>'
 				: '<p>No previous orders were found for this customer.</p>';
 			const alternativeHtml = alternative
-				? '<div class="kidia-cart-alternative-order"><strong>#' + escapeHtml(alternative.id) + '</strong><span>' + escapeHtml(alternative.date) + '</span><em>' + escapeHtml(alternative.total) + ' ' + escapeHtml(alternative.currency) + '</em></div>'
+				? '<div class="kidia-cart-alternative-order"><strong>#' + escapeHtml(alternative.id) + '</strong><span>' + escapeHtml(alternative.date) + '</span><em>' + escapeHtml(alternative.total) + ' ' + escapeHtml(alternative.currency) + '</em>' + (alternative.edit_url ? '<a class="button kidia-open-order-button" href="' + escapeHtml(alternative.edit_url) + '" target="_blank" rel="noopener">Open order</a>' : '') + '</div>'
 				: '<p>No order was placed within 10 days before or after this cart.</p>';
+			const customerPhones = Array.isArray(customer.phones) ? customer.phones : [];
+			const customerHtml =
+				'<dl class="kidia-customer-summary">' +
+					'<div><dt>Name</dt><dd>' + escapeHtml(customer.name || cart.customer_name || '—') + '</dd></div>' +
+					'<div><dt>Phone</dt><dd>' + escapeHtml(customerPhones.length ? customerPhones.join(' / ') : '—') + '</dd></div>' +
+					'<div><dt>Province</dt><dd>' + escapeHtml(customer.province || '—') + '</dd></div>' +
+				'</dl>';
 			content.innerHTML =
 				'<section><h4>1. Cart order</h4>' + itemHtml + '</section>' +
 				'<section><h4>2. Customer order history</h4>' + historyHtml + '</section>' +
-				'<section><h4>3. Possible alternative order <small>±10 days</small></h4>' + alternativeHtml + '</section>';
+				'<div class="kidia-cart-details-stack">' +
+					'<section><h4>3. Possible alternative order <small>±10 days</small></h4>' + alternativeHtml + '</section>' +
+					'<section><h4>Customer details</h4>' + customerHtml + '</section>' +
+				'</div>';
 			content.dataset.loaded = '1';
 			const segment = String(insight.customer_segment || 'first_time');
 			const marker = document.querySelector('[data-abandoned-cart-row="' + CSS.escape(cartId) + '"] .kidia-cart-segment');
@@ -961,12 +975,36 @@
 					const selectedCartIds = Array.from(
 						region.querySelectorAll('input[name="cart_ids[]"]:checked')
 					).map(function (input) { return input.value; });
+					const expandedCartDetails = Array.from(
+						region.querySelectorAll('[data-abandoned-cart-details][aria-expanded="true"]')
+					).map(function (button) {
+						const cartId = String(button.dataset.abandonedCartDetails || '');
+						const detailsRow = region.querySelector('[data-abandoned-cart-details-row="' + CSS.escape(cartId) + '"]');
+						const detailsContent = detailsRow ? detailsRow.querySelector('.kidia-cart-details-content') : null;
+						return {
+							cartId: cartId,
+							html: detailsContent ? detailsContent.innerHTML : '',
+							loaded: detailsContent ? detailsContent.dataset.loaded : '',
+							loading: detailsContent ? detailsContent.dataset.loading : ''
+						};
+					});
 					region.innerHTML = fresh.innerHTML;
 					selectedCartIds.forEach(function (cartId) {
 						const checkbox = Array.from(
 							region.querySelectorAll('input[name="cart_ids[]"]')
 						).find(function (input) { return input.value === cartId; });
 						if (checkbox && !checkbox.disabled) checkbox.checked = true;
+					});
+					expandedCartDetails.forEach(function (details) {
+						const button = region.querySelector('[data-abandoned-cart-details="' + CSS.escape(details.cartId) + '"]');
+						const detailsRow = region.querySelector('[data-abandoned-cart-details-row="' + CSS.escape(details.cartId) + '"]');
+						const detailsContent = detailsRow ? detailsRow.querySelector('.kidia-cart-details-content') : null;
+						if (!button || !detailsRow || !detailsContent) return;
+						button.setAttribute('aria-expanded', 'true');
+						detailsRow.hidden = false;
+						detailsContent.innerHTML = details.html;
+						if (details.loaded) detailsContent.dataset.loaded = details.loaded;
+						if (details.loading) detailsContent.dataset.loading = details.loading;
 					});
 				});
 			} catch (_error) {

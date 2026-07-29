@@ -608,7 +608,7 @@ assert.match(
 );
 assert.match(
   storeData,
-  /Cart order|View 3 details/,
+  /Cart order|View details/,
   "Each abandoned cart must provide a button that opens its three detail groups.",
 );
 assert.match(
@@ -620,6 +620,21 @@ assert.match(
   shellScript,
   /kidia_mobile_abandoned_cart_details[\s\S]*Customer order history[\s\S]*Possible alternative order/,
   "The details action must load cart contents, customer order history and the possible alternative order.",
+);
+assert.match(
+  shellScript,
+  /edit_url[\s\S]*Open order[\s\S]*expandedCartDetails[\s\S]*aria-expanded', 'true'/,
+  "Order details must link to WooCommerce orders and remain expanded across live table refreshes.",
+);
+assert.match(
+  shellScript,
+  /Name[\s\S]*Phone[\s\S]*Province[\s\S]*kidia-cart-details-stack[\s\S]*Customer details/,
+  "The last details column must stack the alternative order above a compact customer summary.",
+);
+assert.match(
+  analytics,
+  /get_billing_phone[\s\S]*get_shipping_phone[\s\S]*billing_state[\s\S]*shipping_state[\s\S]*'customer'/,
+  "Abandoned-cart insights must include the customer's available phone numbers and province.",
 );
 assert.match(
   storeData,
