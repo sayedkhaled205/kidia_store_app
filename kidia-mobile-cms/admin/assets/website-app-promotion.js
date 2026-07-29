@@ -13,7 +13,7 @@
   const typeCards = [...admin.querySelectorAll("[data-promotion-type]")];
   const panels = [...admin.querySelectorAll("[data-promotion-campaign-panel]")];
   let selectedCampaign = "smart_banner";
-  let selectedDevice = "mobile";
+  let selectedDevice = "desktop";
   const previewSizes = {
     mobile: { width: 390, height: 844 },
     desktop: { width: 1366, height: 768 },
@@ -46,7 +46,7 @@
     previewScreen.style.height = `${Math.round(size.height * scale)}px`;
   };
   const setDevice = (device) => {
-    selectedDevice = device in previewSizes ? device : "mobile";
+    selectedDevice = device in previewSizes ? device : "desktop";
     preview.classList.toggle("is-mobile", selectedDevice === "mobile");
     preview.classList.toggle("is-desktop", selectedDevice === "desktop");
     admin.classList.toggle("is-desktop-preview", selectedDevice === "desktop");
