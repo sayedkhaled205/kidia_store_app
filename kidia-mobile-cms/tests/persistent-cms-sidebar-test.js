@@ -41,6 +41,12 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
         <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </aside>
+    <div class="kidia-cms-shell" data-kidia-cms-shell>
+      <nav class="kidia-cms-tabs">
+        <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
+        <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
+      </nav>
+    </div>
     <section data-page-content>Overview content</section>
   </main>
 </body></html>`;
@@ -53,6 +59,12 @@ const next = `<!doctype html><html><head><title>Setup</title></head>
         <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </aside>
+    <div class="kidia-cms-shell" data-kidia-cms-shell>
+      <nav class="kidia-cms-tabs">
+        <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
+        <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
+      </nav>
+    </div>
     <section data-page-content>Setup content</section>
   </main>
 </body></html>`;
@@ -69,6 +81,7 @@ dom.window.fetch = async () => ({
 });
 
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
+const originalShell = dom.window.document.querySelector("[data-kidia-cms-shell]");
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 dom.window.eval(script);
 originalSidebar.querySelector("a:last-child").dispatchEvent(
@@ -79,12 +92,18 @@ setTimeout(() => {
   const currentSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
   assert.strictEqual(currentSidebar, originalSidebar, "Navigation must retain the exact Overview sidebar DOM node.");
   assert.strictEqual(
+    dom.window.document.querySelector("[data-kidia-cms-shell]"),
+    originalShell,
+    "Navigation must retain the exact shared top frame DOM node."
+  );
+  assert.strictEqual(
     dom.window.document.querySelector("#wpbody-content"),
     originalWorkspace,
     "Navigation must retain the exact shared CMS workspace frame."
   );
   assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Setup content");
   assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Setup Wizard");
+  assert.equal(originalShell.querySelector("a.is-active").textContent, "Setup Wizard");
   assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=setup");
   assert.equal(dom.window.document.title, "Setup");
   console.log("Persistent CMS sidebar runtime test passed.");

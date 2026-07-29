@@ -75,10 +75,19 @@
 				link.classList.toggle('is-active', link.href === activeHref);
 			});
 		};
+		const updateActiveTabs = function (currentShell, incomingShell) {
+			if (!currentShell || !incomingShell) return;
+			const active = incomingShell.querySelector('.kidia-cms-tabs a.is-active');
+			const activeHref = active ? new URL(active.href, window.location.href).href : '';
+			currentShell.querySelectorAll('.kidia-cms-tabs a').forEach(function (link) {
+				link.classList.toggle('is-active', link.href === activeHref);
+			});
+		};
 		const loadPage = async function (url, pushState) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
+			const shell = document.querySelector('[data-kidia-cms-shell]');
 			const currentContent = document.querySelector('#wpbody-content');
-			if (!sidebar || !currentContent) {
+			if (!sidebar || !shell || !currentContent) {
 				return;
 			}
 			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
@@ -96,16 +105,18 @@
 				const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
 				const incomingContent = nextDocument.querySelector('#wpbody-content');
 				const incomingSidebar = nextDocument.querySelector('[data-kidia-cms-sidebar]');
-				if (!incomingContent || !incomingSidebar) throw new Error('CMS page shell is missing');
+				const incomingShell = nextDocument.querySelector('[data-kidia-cms-shell]');
+				if (!incomingContent || !incomingSidebar || !incomingShell) throw new Error('CMS page shell is missing');
 
 				syncStyles(nextDocument);
 				updateActiveSidebar(sidebar, incomingSidebar);
+				updateActiveTabs(shell, incomingShell);
 				const children = Array.from(incomingContent.childNodes).filter(function (node) {
-					return node !== incomingSidebar;
+					return node !== incomingSidebar && node !== incomingShell;
 				}).map(function (node) {
 					return document.importNode(node, true);
 				});
-				currentContent.replaceChildren(sidebar, ...children);
+				currentContent.replaceChildren(sidebar, shell, ...children);
 				['kidia-cms-builder-screen', 'kidia-cms-license-preview'].forEach(function (className) {
 					document.body.classList.toggle(className, nextDocument.body.classList.contains(className));
 				});
@@ -120,7 +131,9 @@
 				message.className = 'notice notice-error kidia-cms-navigation-error';
 				message.setAttribute('role', 'alert');
 				message.textContent = 'The requested Woo Mobile CMS view could not be loaded. Please try again.';
-				Array.from(currentContent.childNodes).forEach(function (node) { if (node !== sidebar) node.remove(); });
+				Array.from(currentContent.childNodes).forEach(function (node) {
+					if (node !== sidebar && node !== shell) node.remove();
+				});
 				currentContent.appendChild(message);
 			} finally {
 				currentContent.classList.remove('is-kidia-page-loading');
