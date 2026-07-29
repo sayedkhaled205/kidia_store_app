@@ -3,6 +3,138 @@
 	const shell = document.querySelector('.kidia-cms-shell');
 	const fixedBuilder = document.body.classList.contains('kidia-cms-builder-screen');
 
+	/*
+	 * Keep the Overview sidebar alive while moving between Woo Mobile CMS pages.
+	 *
+	 * WordPress normally performs a complete document navigation for every admin
+	 * page. That destroys and recreates the shared sidebar, which makes it flash
+	 * and lets each page's document geometry move it. The navigator below keeps
+	 * the existing sidebar node and swaps only the adjacent CMS document.
+	 */
+	function installPersistentCmsNavigation() {
+		if (window.kidiaCmsNavigatorInstalled) return;
+		window.kidiaCmsNavigatorInstalled = true;
+
+		const pluginPage = function (url) {
+			try {
+				const target = new URL(url, window.location.href);
+				return target.origin === window.location.origin &&
+					target.pathname.endsWith('/wp-admin/admin.php') &&
+					/^kidia-mobile-/.test(target.searchParams.get('page') || '');
+			} catch (_error) {
+				return false;
+			}
+		};
+		const isPluginAsset = function (node) {
+			const source = node.getAttribute('src') || node.getAttribute('href') || '';
+			const id = node.id || '';
+			return source.indexOf('/kidia-mobile-cms/') !== -1 || id.indexOf('kidia-mobile-') === 0;
+		};
+		const syncStyles = function (nextDocument) {
+			const current = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).filter(isPluginAsset);
+			const incoming = Array.from(nextDocument.head.querySelectorAll('link[rel="stylesheet"]')).filter(isPluginAsset);
+			const incomingUrls = new Set(incoming.map(function (link) { return link.href; }));
+			current.forEach(function (link) {
+				if (link.id === 'kidia-mobile-cms-shell-css' || incomingUrls.has(link.href)) return;
+				link.remove();
+			});
+			const currentUrls = new Set(Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(function (link) { return link.href; }));
+			incoming.forEach(function (link) {
+				if (!currentUrls.has(link.href)) document.head.appendChild(document.importNode(link, true));
+			});
+		};
+		const runPageScripts = async function (nextDocument) {
+			const incoming = Array.from(nextDocument.querySelectorAll('script')).filter(function (script) {
+				return isPluginAsset(script);
+			});
+			const old = Array.from(document.querySelectorAll('script')).filter(function (script) {
+				return isPluginAsset(script);
+			});
+			old.forEach(function (script) {
+				script.remove();
+			});
+			for (const source of incoming) {
+				const script = document.createElement('script');
+				Array.from(source.attributes).forEach(function (attribute) {
+					script.setAttribute(attribute.name, attribute.value);
+				});
+				script.textContent = source.textContent;
+				const loaded = new Promise(function (resolve) {
+					if (!script.src) { resolve(); return; }
+					script.addEventListener('load', resolve, { once: true });
+					script.addEventListener('error', resolve, { once: true });
+				});
+				document.body.appendChild(script);
+				await loaded;
+			}
+		};
+		const updateActiveSidebar = function (currentSidebar, incomingSidebar) {
+			const active = incomingSidebar && incomingSidebar.querySelector('a.is-active');
+			const activeHref = active ? new URL(active.href, window.location.href).href : '';
+			currentSidebar.querySelectorAll('a').forEach(function (link) {
+				link.classList.toggle('is-active', link.href === activeHref);
+			});
+		};
+		const loadPage = async function (url, pushState) {
+			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
+			const currentContent = document.querySelector('#wpbody-content');
+			if (!sidebar || !currentContent) {
+				window.location.assign(url);
+				return;
+			}
+			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
+			const controller = new AbortController();
+			window.kidiaCmsNavigationController = controller;
+			currentContent.classList.add('is-kidia-page-loading');
+			try {
+				const response = await fetch(url, {
+					credentials: 'same-origin',
+					cache: 'no-store',
+					headers: { 'X-Kidia-CMS-Navigation': '1' },
+					signal: controller.signal
+				});
+				if (!response.ok) throw new Error('CMS page request failed');
+				const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+				const incomingContent = nextDocument.querySelector('#wpbody-content');
+				const incomingSidebar = nextDocument.querySelector('[data-kidia-cms-sidebar]');
+				if (!incomingContent || !incomingSidebar) throw new Error('CMS page shell is missing');
+
+				syncStyles(nextDocument);
+				updateActiveSidebar(sidebar, incomingSidebar);
+				const children = Array.from(incomingContent.childNodes).filter(function (node) {
+					return node !== incomingSidebar;
+				}).map(function (node) {
+					return document.importNode(node, true);
+				});
+				currentContent.replaceChildren(sidebar, ...children);
+				document.body.className = nextDocument.body.className;
+				document.title = nextDocument.title;
+				if (pushState) history.pushState({ kidiaCmsPage: true }, '', response.url || url);
+				window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+				await runPageScripts(nextDocument);
+				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
+			} catch (error) {
+				if (error.name === 'AbortError') return;
+				window.location.assign(url);
+			} finally {
+				currentContent.classList.remove('is-kidia-page-loading');
+			}
+		};
+
+		document.addEventListener('click', function (event) {
+			const link = event.target.closest('[data-kidia-cms-sidebar] a, .kidia-cms-tabs a');
+			if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			if (!pluginPage(link.href)) return;
+			event.preventDefault();
+			void loadPage(link.href, true);
+		});
+		window.addEventListener('popstate', function () {
+			if (pluginPage(window.location.href)) void loadPage(window.location.href, false);
+		});
+	}
+
+	installPersistentCmsNavigation();
+
 	function initThemeModal() {
 		const saveForm = document.querySelector('[data-kidia-save-theme]');
 		const modal = document.querySelector('[data-kidia-theme-modal]');
