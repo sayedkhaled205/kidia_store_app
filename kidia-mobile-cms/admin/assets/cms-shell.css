@@ -433,7 +433,11 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
  */
 @media(min-width:1101px){
 	html.kidia-cms-builder-screen,
-	html:has(body.kidia-cms-builder-screen),
+	html:has(body.kidia-cms-builder-screen){
+		overflow-x:clip!important;
+		overflow-y:scroll!important;
+		scrollbar-gutter:stable!important;
+	}
 	body.kidia-cms-builder-screen{
 		overflow:hidden!important;
 	}

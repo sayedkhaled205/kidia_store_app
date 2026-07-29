@@ -27,6 +27,16 @@ assert.match(
 );
 assert.match(
   styles,
+  /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\)\{[\s\S]*overflow-x:clip!important;[\s\S]*overflow-y:scroll!important;[\s\S]*scrollbar-gutter:stable!important;/,
+  "Entering Customize must keep the outer scrollbar gutter reserved so the shared sidebar cannot shift horizontally."
+);
+assert.doesNotMatch(
+  styles,
+  /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\),\s*body\.kidia-cms-builder-screen\{[\s\S]*overflow:hidden!important;/,
+  "Customize must not hide overflow on the document root and release the shared scrollbar gutter."
+);
+assert.match(
+  styles,
   /#wpbody-content\{[\s\S]*width:calc\(100% - 36px\);[\s\S]*max-width:calc\(100% - 36px\);/,
   "The shared frame must fit the WordPress content box on every desktop CMS view."
 );
@@ -51,7 +61,8 @@ assert.match(admin, /Returns one CMS view without another WordPress document, si
 assert.match(admin, /'builderScreen'\s*=>\s*\$this->is_builder_screen/, "Every fragment must report whether its view owns the fixed Builder workspace.");
 assert.match(admin, /'version'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/, "The shell and every fragment must expose the active plugin version.");
 assert.match(script, /version:\s*currentVersion/, "Every fragment request must identify the version of the running shell.");
-assert.match(script, /loaded\.conflict[\s\S]*hardNavigate\(cacheKey\)/, "Conflicting versions of the same asset must force a clean document load.");
+assert.match(script, /pluginAsset\(asset\)[\s\S]*loaded\.conflict[\s\S]*hardNavigate\(cacheKey\)/, "Only conflicting plugin assets may force a clean document load.");
+assert.doesNotMatch(script, /classList\.add\('is-kidia-page-loading'\)/, "Fragment navigation must not dim the existing shell while the next view loads.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
@@ -215,7 +226,77 @@ setTimeout(() => {
         1,
         "Navigation must never combine old and current copies of the shell stylesheet."
       );
-      console.log("Persistent CMS sidebar and asset version runtime tests passed.");
+
+      const builderDom = new JSDOM(`<!doctype html><html><head>
+        <link id="wp-media-css" rel="stylesheet" href="https://store.test/wp-admin/load-styles.php?c=1&dir=rtl&load=media-views&ver=6.9">
+        <link id="kidia-mobile-cms-shell-css" rel="stylesheet" href="https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.60-current">
+        <script id="jquery-core-js" src="https://store.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.1"></script>
+      </head><body class="wp-admin kidia-mobile-cms">
+        <main id="wpbody-content">
+          <aside data-kidia-cms-sidebar>
+            <a data-kidia-sidebar-view="pages" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Design Your Pages</a>
+          </aside>
+          <div class="kidia-cms-shell" data-kidia-cms-shell>
+            <a data-kidia-page-view="home" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Home</a>
+          </div>
+          <section data-page-content>Overview content</section>
+        </main>
+      </body></html>`, {
+        runScripts: "outside-only",
+        url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-cms"
+      });
+      builderDom.window.scrollTo = () => {};
+      builderDom.window.kidiaCMSNavigation = {
+        ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
+        nonce: "test-nonce",
+        version: "1.45.60"
+      };
+      let builderForcedUrl = "";
+      builderDom.window.kidiaCmsHardNavigate = (url) => {
+        builderForcedUrl = url;
+      };
+      builderDom.window.fetch = async () => ({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            html: "<section data-page-content>Home Builder content</section>",
+            view: "home",
+            activeSidebar: "pages",
+            showPageTabs: true,
+            builderScreen: true,
+            version: "1.45.60",
+            styles: [
+              {
+                handle: "wp-media",
+                src: "https://store.test/wp-admin/load-styles.php?c=1&dir=rtl&load=media-views&ver=6.9.1"
+              },
+              {
+                handle: "kidia-mobile-cms-shell",
+                src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.60-current"
+              }
+            ],
+            scripts: [{
+              handle: "jquery-core",
+              src: "https://store.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.2"
+            }]
+          }
+        })
+      });
+      const builderSidebar = builderDom.window.document.querySelector("[data-kidia-cms-sidebar]");
+      const builderShell = builderDom.window.document.querySelector("[data-kidia-cms-shell]");
+      builderDom.window.eval(script);
+      builderSidebar.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
+        new builderDom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
+      );
+      setTimeout(() => {
+        assert.equal(builderForcedUrl, "", "WordPress and Media query-version differences must not reload the document.");
+        assert.strictEqual(builderDom.window.document.querySelector("[data-kidia-cms-sidebar]"), builderSidebar, "Builder navigation must retain the sidebar DOM node.");
+        assert.strictEqual(builderDom.window.document.querySelector("[data-kidia-cms-shell]"), builderShell, "Builder navigation must retain the shared frame DOM node.");
+        assert.equal(builderDom.window.document.querySelector("[data-page-content]").textContent, "Home Builder content");
+        assert.equal(builderDom.window.document.querySelector("#wpbody-content").classList.contains("is-kidia-page-loading"), false);
+        console.log("Persistent CMS sidebar and asset version runtime tests passed.");
+      }, 25);
     }, 25);
   }, 25);
 }, 25);
