@@ -162,6 +162,10 @@ assert.match(shellTemplate, /data-kidia-save-theme[\s\S]*data-kidia-theme-modal[
 assert.doesNotMatch(shellTemplate.match(/<form class="kidia-cms-save-theme"[\s\S]*?<\/form>/)?.[0] || "", /dashicons/, "The compact Save Theme button must not render a trailing icon.");
 assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*width:max-content;[^}]*min-width:0;/, "The Save Theme button must fit its label instead of keeping an oversized width.");
 assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s\S]*requestSubmit/, "The themed Save Theme dialog must preserve unsaved builder fields before creating the named theme.");
+assert.match(shellScript, /installPersistentCmsNavigation[\s\S]*X-Kidia-CMS-Navigation[\s\S]*replaceChildren\(sidebar,[\s\S]*history\.pushState/, "CMS navigation must retain the existing Overview sidebar node and replace only the adjacent page document.");
+assert.match(shellScript, /window\.kidiaCmsNavigatorInstalled/, "Persistent CMS navigation must be installed once even when page assets are refreshed.");
+assert.match(shellCss, /#wpbody-content\.is-kidia-page-loading \.kidia-cms-sidebar\{[^}]*opacity:1;[^}]*pointer-events:auto;/, "The persistent sidebar must never show the adjacent page loading state.");
+assert.equal(fs.existsSync(path.join(root, "tests", "persistent-cms-sidebar-test.js")), true, "The persistent sidebar must have a runtime identity test.");
 assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Theme import must use the WooMobile file control and theme-colored action.");
 assert.match(savedThemesTemplate, /data-saved-theme-phone[\s\S]*theme_images[\s\S]*data-saved-theme-preview/, "Every saved theme card must show its own artwork and expose Preview.");
 assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must provide a focused large preview dialog.");

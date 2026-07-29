@@ -58,6 +58,16 @@ body[class*="kidia-mobile"] #wpbody-content{
 	border-radius:17px 0 0 17px;
 	background:#fff;
 }
+/* Only the adjacent page content changes during CMS navigation. The original
+ * Overview sidebar remains visible and interactive throughout the request. */
+#wpbody-content.is-kidia-page-loading > :not(.kidia-cms-sidebar){
+	opacity:.45;
+	pointer-events:none;
+}
+#wpbody-content.is-kidia-page-loading .kidia-cms-sidebar{
+	opacity:1;
+	pointer-events:auto;
+}
 .rtl .kidia-cms-sidebar{
 	border-radius:0 17px 17px 0;
 }
