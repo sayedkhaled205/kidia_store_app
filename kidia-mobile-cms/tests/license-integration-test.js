@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.46/, "The plugin header must be version 1.45.47.");
+assert.match(plugin, /Version:\s+1\.45\.47/, "The plugin header must be version 1.45.47.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -43,7 +43,7 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /@media\\(min-width:961px\\)\\{[\\s\\S]*#wpbody-content\\{width:calc\\(100vw - 216px\\)\\}/,
+  /@media\(min-width:961px\)\{[\s\S]*#wpbody-content\{width:calc\(100vw - 216px\)\}/,
   "Desktop CMS pages must keep the Overview workspace width when a document scrollbar appears."
 );
 assert.doesNotMatch(
