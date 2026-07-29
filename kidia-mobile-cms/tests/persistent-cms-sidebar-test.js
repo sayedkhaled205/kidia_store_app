@@ -31,7 +31,7 @@ assert.match(
   "Card switches must use the same reliable logical thumb positioning."
 );
 assert.match(admin, /private const CMS_VIEWS = array[\\s\\S]*store-data/, "Navigation destinations must be views of one CMS screen.");
-assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\\.location\\.assign\\(/, "Navigation must not destroy the shell.");
+assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
   <main id="wpbody-content">
