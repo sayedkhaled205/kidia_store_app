@@ -59,7 +59,7 @@ for (const field of [
 }
 assert.match(
   exporter,
-  /'schema_version'\s*=>[\s\S]*'pages'\s*=>[\s\S]*'settings_snapshot'\s*=>\s*\$snapshot/,
+  /'schema_version'\s*=>\s*\(string\)[\s\S]*'pages'\s*=>[\s\S]*'settings_snapshot'\s*=>\s*\$snapshot/,
   "The settings snapshot must expose the Laravel schema_version and pages contract."
 );
 

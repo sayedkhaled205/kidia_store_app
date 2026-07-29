@@ -388,7 +388,7 @@ final class Kidia_Mobile_App_Exporter {
 		$snapshot    = array_merge(
 			$manifest,
 			array(
-				'schema_version' => absint( $manifest['schemaVersion'] ?? 1 ),
+				'schema_version' => (string) absint( $manifest['schemaVersion'] ?? 1 ),
 				'pages'          => array_values( is_array( $application['enabledPages'] ?? null ) ? $application['enabledPages'] : array() ),
 			)
 		);
