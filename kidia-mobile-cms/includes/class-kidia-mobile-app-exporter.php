@@ -382,7 +382,13 @@ final class Kidia_Mobile_App_Exporter {
 	 * @return array<string,mixed>
 	 */
 	private function build_request_payload( array $manifest, bool $provision_push ): array {
+		$application = is_array( $manifest['application'] ?? null ) ? $manifest['application'] : array();
+		$store       = is_array( $manifest['store'] ?? null ) ? $manifest['store'] : array();
+
 		return array(
+			'store_url'          => esc_url_raw( (string) ( $store['url'] ?? home_url( '/' ) ) ),
+			'app_name'           => sanitize_text_field( (string) ( $application['name'] ?? get_bloginfo( 'name' ) ) ),
+			'package_name'       => sanitize_text_field( (string) ( $application['androidPackage'] ?? '' ) ),
 			'platform'           => 'android',
 			'artifact'           => 'apk',
 			'configuration_hash' => self::configuration_hash(),
