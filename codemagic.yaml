@@ -13,6 +13,19 @@ workflows:
         - $HOME/Library/Caches/CocoaPods
         - $HOME/.gradle/caches
     scripts:
+      - name: Validate customer build configuration
+        script: |
+          if [ -z "${STORE_URL:-}" ]; then
+            echo "STORE_URL is required and must be supplied by the WooMobile build request."
+            exit 1
+          fi
+          case "$STORE_URL" in
+            https://*) ;;
+            *)
+              echo "STORE_URL must be a valid HTTPS store origin."
+              exit 1
+              ;;
+          esac
       - name: Install Flutter dependencies
         script: flutter pub get
       - name: Analyze Flutter project
@@ -20,11 +33,26 @@ workflows:
       - name: Run Flutter tests
         script: flutter test
       - name: Build Android APK
-        script: flutter build apk --release
+        script: |
+          flutter build apk --release \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android App Bundle
-        script: flutter build appbundle --release
+        script: |
+          flutter build appbundle --release \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build unsigned iOS application
-        script: flutter build ios --release --no-codesign
+        script: |
+          flutter build ios --release --no-codesign \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/**/*.aab
