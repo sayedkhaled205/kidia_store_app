@@ -90,8 +90,8 @@ body[class*="kidia-mobile"] #wpbody-content{
 
 /* One reliable switch geometry across every CMS page. These rules target the
  * switch components only; ordinary checkbox and radio controls remain native.
- * Positioning the thumb by its logical inset keeps both RTL and LTR correct
- * without competing translateX rules from individual page stylesheets. */
+ * The physical thumb positions keep Off on the left and On on the right in
+ * both RTL and LTR editors without competing translateX rules. */
 body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) input[type="checkbox"]{
 	position:relative!important;
 	box-sizing:border-box!important;
@@ -112,8 +112,9 @@ body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) inp
 body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) input[type="checkbox"]::before{
 	content:""!important;
 	position:absolute!important;
-	inset-block-start:3px!important;
-	inset-inline-start:3px!important;
+	top:3px!important;
+	right:auto!important;
+	left:3px!important;
 	float:none!important;
 	box-sizing:border-box!important;
 	width:16px!important;
@@ -124,7 +125,7 @@ body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) inp
 	background:#fff!important;
 	box-shadow:0 1px 3px rgba(29,35,39,.22)!important;
 	transform:none!important;
-	transition:inset-inline-start .18s ease!important;
+	transition:left .18s ease!important;
 }
 body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) input[type="checkbox"]::after{
 	content:none!important;
@@ -134,23 +135,26 @@ body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) inp
 	background:#2f806e!important;
 }
 body.kidia-cms-plugin-page :is(.kidia-page-master-toggle,.kidia-page-toggle) input[type="checkbox"]:checked::before{
-	inset-inline-start:23px!important;
+	right:auto!important;
+	left:23px!important;
 	transform:none!important;
 }
 body.kidia-cms-plugin-page .kidia-builder-switch__track::after,
 body.kidia-cms-plugin-page .kidia-promotion-switch>span::after{
-	inset-block-start:3px!important;
-	inset-inline-start:3px!important;
-	left:auto!important;
+	top:3px!important;
+	right:auto!important;
+	left:3px!important;
 	transform:none!important;
-	transition:inset-inline-start .18s ease!important;
+	transition:left .18s ease!important;
 }
 body.kidia-cms-plugin-page .kidia-builder-switch input:checked + .kidia-builder-switch__track::after{
-	inset-inline-start:21px!important;
+	right:auto!important;
+	left:21px!important;
 	transform:none!important;
 }
 body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
-	inset-inline-start:19px!important;
+	right:auto!important;
+	left:19px!important;
 	transform:none!important;
 }
 /* Only the adjacent page content changes during CMS navigation. The original
