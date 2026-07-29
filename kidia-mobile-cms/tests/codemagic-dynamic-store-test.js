@@ -57,5 +57,10 @@ for (const field of [
     `The Laravel build request must include the required ${field} field.`
   );
 }
+assert.match(
+  exporter,
+  /'schema_version'\s*=>[\s\S]*'pages'\s*=>[\s\S]*'settings_snapshot'\s*=>\s*\$snapshot/,
+  "The settings snapshot must expose the Laravel schema_version and pages contract."
+);
 
 console.log("Codemagic dynamic customer build contract verified.");
