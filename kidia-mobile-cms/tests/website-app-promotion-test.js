@@ -124,8 +124,8 @@ assert.match(
 );
 assert.match(
   template,
-  /data-preview-device="mobile"[\s\S]*data-preview-device="desktop"[\s\S]*data-promotion-preview/,
-  "The campaign builder must include mobile and desktop live previews.",
+  /data-preview-device="mobile"[\s\S]*class="is-active" data-preview-device="desktop"[\s\S]*kidia-promotion-device is-desktop/,
+  "The campaign builder must open on the laptop preview while keeping mobile available.",
 );
 assert.match(
   template,
@@ -263,15 +263,19 @@ const adminPreview = adminDom.window.document.querySelector(
 );
 Object.defineProperty(adminPreview, "clientWidth", { value: 700 });
 adminDom.window.eval(adminScript);
-adminDom.window.document
-  .querySelector('[data-preview-device="desktop"]')
-  .click();
 assert.equal(
   adminDom.window.document
     .querySelector("[data-promotion-admin]")
     .classList.contains("is-desktop-preview"),
   true,
-  "Choosing desktop must expand the laptop preview rail.",
+  "The campaign builder must expand the laptop preview rail by default.",
+);
+assert.equal(
+  adminDom.window.document
+    .querySelector('[data-preview-device="desktop"]')
+    .classList.contains("is-active"),
+  true,
+  "The laptop control must be selected by default.",
 );
 assert.equal(
   adminDom.window.document.querySelector("[data-promotion-screen]").style.width,

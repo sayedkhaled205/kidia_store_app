@@ -246,8 +246,8 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 			</main>
 
 			<aside class="kidia-app-promotion-preview">
-				<header><div><strong><?php esc_html_e( 'Live preview', 'kidia-mobile-cms' ); ?></strong><small data-preview-campaign-label><?php esc_html_e( 'Smart Banner', 'kidia-mobile-cms' ); ?></small></div><div><button type="button" class="is-active" data-preview-device="mobile"><span class="dashicons dashicons-smartphone"></span></button><button type="button" data-preview-device="desktop"><span class="dashicons dashicons-desktop"></span></button></div></header>
-				<div class="kidia-promotion-device is-mobile" data-promotion-preview>
+				<header><div><strong><?php esc_html_e( 'Live preview', 'kidia-mobile-cms' ); ?></strong><small data-preview-campaign-label><?php esc_html_e( 'Smart Banner', 'kidia-mobile-cms' ); ?></small></div><div><button type="button" data-preview-device="mobile"><span class="dashicons dashicons-smartphone"></span></button><button type="button" class="is-active" data-preview-device="desktop"><span class="dashicons dashicons-desktop"></span></button></div></header>
+				<div class="kidia-promotion-device is-desktop" data-promotion-preview>
 					<div class="kidia-promotion-screen" data-promotion-screen>
 						<div class="kidia-promotion-browser" data-promotion-browser>
 							<div class="kidia-promotion-browser__bar"><i></i><i></i><i></i><span><?php echo esc_html( $preview_host ); ?></span></div>
