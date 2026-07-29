@@ -33,12 +33,17 @@ body[class*="kidia-mobile"] #wpbody-content{
 }
 .kidia-cms-sidebar{
 	position:absolute;
-	inset-block:0;
+	inset-block-start:0;
+	inset-block-end:auto;
 	/* Grow into the outer WordPress gutter, keeping the content-side edge fixed. */
 	inset-inline-start:-16px;
 	z-index:10025;
 	box-sizing:border-box;
 	width:236px;
+	height:calc(100vh - 102px);
+	min-height:0;
+	overflow-x:hidden;
+	overflow-y:auto;
 	padding:22px 14px;
 	border-inline-end:1px solid #dce7e3;
 	border-radius:17px 0 0 17px;
@@ -212,6 +217,7 @@ body[class*="kidia-mobile"] #wpbody-content{
 		inset:auto;
 		display:flex;
 		width:auto;
+		height:auto;
 		padding:9px 10px;
 		border:0;
 		border-bottom:1px solid #dce7e3;

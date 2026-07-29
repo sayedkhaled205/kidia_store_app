@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.44/, "The plugin header must be version 1.45.44.");
+assert.match(plugin, /Version:\s+1\.45\.45/, "The plugin header must be version 1.45.45.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -38,8 +38,8 @@ assert.match(shell, /payment is overdue/, "Past-due subscriptions must show a Wo
 assert.match(shell, /grace_days_remaining/, "The warning must include the remaining grace period.");
 assert.match(
   shellCss,
-  /\.kidia-cms-sidebar\{[\s\S]*position:absolute;[\s\S]*inset-block:0;[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;/,
-  "The CMS sidebar must stay inside the rounded workspace card using its original layout."
+  /\.kidia-cms-sidebar\{[\s\S]*position:absolute;[\s\S]*inset-block-start:0;[\s\S]*inset-block-end:auto;[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;[\s\S]*height:calc\(100vh - 102px\);/,
+  "Every desktop CMS page must keep the same Overview sidebar geometry inside the rounded workspace card."
 );
 assert.doesNotMatch(
   shellCss,
