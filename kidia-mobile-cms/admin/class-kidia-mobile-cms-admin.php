@@ -151,6 +151,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'wp_ajax_kidia_mobile_cancel_ai_analysis', array( $this, 'cancel_ai_analysis' ) );
 		add_action( 'wp_ajax_kidia_mobile_ai_analysis_status', array( $this, 'ai_analysis_status' ) );
 		add_action( 'wp_ajax_kidia_mobile_dismiss_ai_analysis', array( $this, 'dismiss_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_abandoned_cart_details', array( $this, 'abandoned_cart_details' ) );
 		add_action( 'wp_ajax_kidia_mobile_cms_view', array( $this, 'cms_view_fragment' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
@@ -756,6 +757,21 @@ final class Kidia_Mobile_CMS_Admin {
 			'abandoned-carts'  => Kidia_Mobile_Analytics::abandoned_count(),
 		);
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';
+	}
+
+	/** Return one abandoned cart's cart, customer-history and alternative-order context. */
+	public function abandoned_cart_details(): void {
+		check_ajax_referer( 'kidia_mobile_abandoned_cart_details', 'nonce' );
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to view these order details.', 'kidia-mobile-cms' ) ), 403 );
+		}
+
+		$cart_id = absint( $_POST['cart_id'] ?? 0 );
+		$insight = $cart_id ? Kidia_Mobile_Analytics::abandoned_cart_order_insight( $cart_id ) : array();
+		if ( empty( $insight ) ) {
+			wp_send_json_error( array( 'message' => __( 'This abandoned cart could not be found.', 'kidia-mobile-cms' ) ), 404 );
+		}
+		wp_send_json_success( $insight );
 	}
 
 	/** Toggle a product's visibility on the website or mobile app. */
@@ -2516,6 +2532,7 @@ final class Kidia_Mobile_CMS_Admin {
 						array(
 							'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 							'aiNonce'     => wp_create_nonce( 'kidia_mobile_ai_analysis' ),
+							'cartNonce'   => wp_create_nonce( 'kidia_mobile_abandoned_cart_details' ),
 							'activeAiJob' => Kidia_Mobile_AI_Analysis_Job::active_job_id( get_current_user_id() ),
 							'aiUrl'       => add_query_arg( array( 'page' => 'kidia-mobile-ai-insights' ), admin_url( 'admin.php' ) ),
 						)

@@ -27,6 +27,16 @@ assert.match(
 );
 assert.match(
   styles,
+  /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\)\{[\s\S]*overflow-x:clip!important;[\s\S]*overflow-y:scroll!important;[\s\S]*scrollbar-gutter:stable!important;/,
+  "Entering Customize must keep the outer scrollbar gutter reserved so the shared sidebar cannot shift horizontally."
+);
+assert.doesNotMatch(
+  styles,
+  /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\),\s*body\.kidia-cms-builder-screen\{[\s\S]*overflow:hidden!important;/,
+  "Customize must not hide overflow on the document root and release the shared scrollbar gutter."
+);
+assert.match(
+  styles,
   /#wpbody-content\{[\s\S]*width:calc\(100% - 36px\);[\s\S]*max-width:calc\(100% - 36px\);/,
   "The shared frame must fit the WordPress content box on every desktop CMS view."
 );

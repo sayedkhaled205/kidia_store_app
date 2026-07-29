@@ -221,6 +221,9 @@
 				}
 				syncBuilderScreen(payload.builderScreen);
 				updateNavigation(payload);
+				document.dispatchEvent(new CustomEvent('kidia:cms-before-page-change', {
+					detail: { url: cacheKey }
+				}));
 				Array.from(currentContent.childNodes).forEach(function (node) {
 					if (node !== sidebar && node !== shell) node.remove();
 				});
@@ -506,6 +509,20 @@
 			card.addEventListener('pointercancel', stop);
 		});
 	};
+	const persistAiProgressAcrossNavigation = function (overlay, jobId) {
+		if (
+			!overlay ||
+			!jobId ||
+			overlay.hidden ||
+			overlay.dataset.aiComplete === '1'
+		) return false;
+		overlay.classList.add('is-docked', 'is-global');
+		document.body.appendChild(overlay);
+		restoreAiDockPosition(overlay);
+		bindAiDockDrag(overlay);
+		document.body.classList.remove('kidia-ai-is-generating');
+		return true;
+	};
 	const renderAiProgress = function (overlay, payload) {
 		if (!overlay) return;
 		const payloadJob = String(payload.job_id || '');
@@ -551,14 +568,18 @@
 		}
 		if (payload.done) {
 			overlay.setAttribute('aria-busy', 'false');
-			if (stage) stage.textContent = 'Analysis complete. Your decisions are ready.';
-			if (view) {
-				view.hidden = false;
-				view.href = payload.result_url || aiBackgroundConfig.aiUrl || '#';
-			}
+			if (stage) stage.textContent = 'Completed. Loading your results…';
+			if (view) view.hidden = true;
 			if (background) background.hidden = true;
 			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Dismiss';
 			overlay.dataset.aiComplete = '1';
+			const resultUrl = payload.result_url || aiBackgroundConfig.aiUrl || '';
+			if (resultUrl && overlay.dataset.aiResultOpening !== '1') {
+				overlay.dataset.aiResultOpening = '1';
+				window.setTimeout(function () {
+					window.location.assign(resultUrl);
+				}, 250);
+			}
 		}
 	};
 	if (window.__KIDIA_AI_PROGRESS_TEST__) {
@@ -566,7 +587,8 @@
 			render: renderAiProgress,
 			reset: resetAiProgressVersion,
 			position: positionAiDock,
-			bindDrag: bindAiDockDrag
+			bindDrag: bindAiDockDrag,
+			persistAcrossNavigation: persistAiProgressAcrossNavigation
 		};
 	}
 	const pollBackgroundJob = async function (jobId, overlay) {
@@ -670,6 +692,23 @@
 		let foreground = true;
 		const overlay = document.querySelector('[data-ai-progress-overlay]');
 		bindAiOverlayActions(overlay, function () { return activeJobId; }, function (value) { foreground = value; });
+		document.addEventListener('kidia:cms-before-page-change', function () {
+			if (!persistAiProgressAcrossNavigation(overlay, activeJobId)) return;
+			foreground = false;
+			if (overlay.dataset.aiPollingJob !== activeJobId) {
+				pollBackgroundJob(activeJobId, overlay);
+			}
+			aiRequest('kidia_mobile_background_ai_analysis', {job_id: activeJobId})
+				.then(function (payload) { renderAiProgress(overlay, payload); })
+				.catch(function (error) {
+					const note = overlay.querySelector('[data-ai-progress-note]');
+					if (note) {
+						note.textContent = error && error.message
+							? error.message
+							: 'The analysis is still running. Reconnecting to its progress…';
+					}
+				});
+		});
 		aiGenerateForm.addEventListener('submit', async function (event) {
 			event.preventDefault();
 			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
@@ -805,6 +844,77 @@
 			});
 		});
 	}
+	document.addEventListener('click', async function (event) {
+		const button = event.target.closest('[data-abandoned-cart-details]');
+		if (!button) return;
+		const cartId = String(button.dataset.abandonedCartDetails || '');
+		const row = document.querySelector('[data-abandoned-cart-details-row="' + CSS.escape(cartId) + '"]');
+		const content = row ? row.querySelector('.kidia-cart-details-content') : null;
+		if (!row || !content) return;
+		if (button.getAttribute('aria-expanded') === 'true') {
+			row.hidden = true;
+			button.setAttribute('aria-expanded', 'false');
+			return;
+		}
+		row.hidden = false;
+		button.setAttribute('aria-expanded', 'true');
+		if (content.dataset.loaded === '1' || content.dataset.loading === '1') return;
+		content.dataset.loading = '1';
+		content.innerHTML = '<p class="kidia-cart-details-loading">Loading order details…</p>';
+		const escapeHtml = function (value) {
+			const node = document.createElement('span');
+			node.textContent = String(value == null ? '' : value);
+			return node.innerHTML;
+		};
+		try {
+			const config = window.kidiaCMSBackground || {};
+			const body = new URLSearchParams({
+				action: 'kidia_mobile_abandoned_cart_details',
+				nonce: String(config.cartNonce || ''),
+				cart_id: cartId
+			});
+			const response = await fetch(config.ajaxUrl || window.ajaxurl || '', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+				body: body.toString()
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload.success) {
+				throw new Error(payload.data && payload.data.message ? payload.data.message : 'Order details could not be loaded.');
+			}
+			const insight = payload.data || {};
+			const cart = insight.cart || {};
+			const orders = Array.isArray(insight.orders) ? insight.orders : [];
+			const alternative = insight.alternative || null;
+			const items = Array.isArray(cart.items) ? cart.items : [];
+			const itemHtml = items.length
+				? '<ul>' + items.map(function (item) {
+					return '<li><strong>' + escapeHtml(item.name || 'Product') + '</strong><span>× ' + escapeHtml(item.quantity || 1) + '</span></li>';
+				}).join('') + '</ul>'
+				: '<p>No cart items are available.</p>';
+			const historyHtml = orders.length
+				? '<ul>' + orders.map(function (order) {
+					return '<li><strong>#' + escapeHtml(order.id) + '</strong><span>' + escapeHtml(order.date) + '</span><em>' + escapeHtml(order.status) + ' · ' + escapeHtml(order.total) + ' ' + escapeHtml(order.currency) + '</em></li>';
+				}).join('') + '</ul>'
+				: '<p>No previous orders were found for this customer.</p>';
+			const alternativeHtml = alternative
+				? '<div class="kidia-cart-alternative-order"><strong>#' + escapeHtml(alternative.id) + '</strong><span>' + escapeHtml(alternative.date) + '</span><em>' + escapeHtml(alternative.total) + ' ' + escapeHtml(alternative.currency) + '</em></div>'
+				: '<p>No order was placed within 10 days before or after this cart.</p>';
+			content.innerHTML =
+				'<section><h4>1. Cart order</h4>' + itemHtml + '</section>' +
+				'<section><h4>2. Customer order history</h4>' + historyHtml + '</section>' +
+				'<section><h4>3. Possible alternative order <small>±10 days</small></h4>' + alternativeHtml + '</section>';
+			content.dataset.loaded = '1';
+			const segment = String(insight.customer_segment || 'first_time');
+			const marker = document.querySelector('[data-abandoned-cart-row="' + CSS.escape(cartId) + '"] .kidia-cart-segment');
+			if (marker) marker.className = 'kidia-cart-segment is-' + segment;
+		} catch (error) {
+			content.innerHTML = '<p class="kidia-cart-details-error">' + escapeHtml(error.message || 'Order details could not be loaded.') + '</p>';
+		} finally {
+			delete content.dataset.loading;
+		}
+	});
 	const liveStoreRegions = Array.from(document.querySelectorAll('[data-kidia-live-store-data]'));
 	if (liveStoreRegions.length) {
 		let liveTimer = 0;

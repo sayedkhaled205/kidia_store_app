@@ -433,7 +433,11 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
  */
 @media(min-width:1101px){
 	html.kidia-cms-builder-screen,
-	html:has(body.kidia-cms-builder-screen),
+	html:has(body.kidia-cms-builder-screen){
+		overflow-x:clip!important;
+		overflow-y:scroll!important;
+		scrollbar-gutter:stable!important;
+	}
 	body.kidia-cms-builder-screen{
 		overflow:hidden!important;
 	}
@@ -665,6 +669,25 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-opportunities article>.dashicons{display:grid;width:34px;height:34px;flex:0 0 34px;place-items:center;border-radius:9px;background:#dff1eb;color:#236b59}
 .kidia-opportunities p{margin:4px 0 0;color:#63736e;line-height:1.5}
 .kidia-abandoned-table td>small{display:block;margin-top:3px;color:#70807b}
+.kidia-cart-segment-legend{display:flex;flex-wrap:wrap;gap:9px 16px;margin:12px 0 8px;color:#5f706b;font-size:12px;font-weight:650}
+.kidia-cart-segment-legend span,.kidia-cart-customer{display:inline-flex;align-items:center;gap:7px}
+.kidia-cart-segment-legend i,.kidia-cart-segment{display:inline-block;width:9px;height:9px;flex:0 0 9px;border-radius:50%;box-shadow:0 0 0 3px rgba(23,78,66,.08)}
+.kidia-cart-segment-legend .is-alternative,.kidia-cart-segment.is-alternative{background:#2f806e}
+.kidia-cart-segment-legend .is-returning,.kidia-cart-segment.is-returning{background:#d89028}
+.kidia-cart-segment-legend .is-first_time,.kidia-cart-segment.is-first_time{background:#7e8d89}
+.kidia-cart-details-button{white-space:nowrap}
+.kidia-cart-details-row>td{padding:0!important;border-top:0!important;background:#f6faf8}
+.kidia-cart-details-content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px}
+.kidia-cart-details-content section{min-width:0;padding:12px;border:1px solid #dce9e5;border-radius:10px;background:#fff}
+.kidia-cart-details-content h4{margin:0 0 9px;color:#174e42;font-size:13px}
+.kidia-cart-details-content h4 small{color:#70807b;font-weight:600}
+.kidia-cart-details-content ul{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.kidia-cart-details-content li,.kidia-cart-alternative-order{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #edf2f0}
+.kidia-cart-details-content li:last-child{border-bottom:0}
+.kidia-cart-details-content li span,.kidia-cart-details-content p{margin:0;color:#687873}
+.kidia-cart-details-content li em,.kidia-cart-alternative-order em{color:#2f806e;font-style:normal;font-weight:700;white-space:nowrap}
+.kidia-cart-details-loading,.kidia-cart-details-error{grid-column:1/-1;padding:12px}
+.kidia-cart-details-error{color:#a43d3d}
 .kidia-status.is-abandoned{background:#fff0df;color:#9a5700}
 .kidia-status.is-recovered,.kidia-status.is-converted{background:#e2f7ef;color:#167558}
 .kidia-cart-import-state{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:14px 16px;border:1px solid #b9d9d1;border-radius:12px;background:#eef8f5}
@@ -676,6 +699,7 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-cart-import-state i b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#236b59,#74c3b1)}
 .kidia-cart-import-state.is-complete{border-color:#b8dfcf;background:#effaf5}
 .kidia-cart-import-state.is-complete>.dashicons{background:#24795f}
+@media(max-width:1100px){.kidia-cart-details-content{grid-template-columns:1fr}}
 
 @media(min-width:1101px){
 	body.kidia-cms-builder-screen .kidia-splash-builder .kidia-page-toolbar{
