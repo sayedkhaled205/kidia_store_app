@@ -18,6 +18,11 @@ const plugin = read("kidia-mobile-cms.php");
 assert.match(plugin, /Version:\s+1\.45\.56/, "The plugin header must be version 1.45.56.");
 assert.match(
   plugin,
+  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.56'/,
+  "The runtime plugin version must match the 1.45.56 header."
+);
+assert.match(
+  plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
   "The production Ed25519 public key must be bundled with the plugin."
 );
