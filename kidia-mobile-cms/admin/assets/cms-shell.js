@@ -73,6 +73,16 @@
 				return String(src || '');
 			}
 		};
+		const pluginAsset = function (asset) {
+			if (/^kidia-mobile(?:-|$)/.test(String(asset.handle || ''))) {
+				return true;
+			}
+			try {
+				return new URL(asset.src, window.location.href).pathname.indexOf('/plugins/kidia-mobile-cms/') !== -1;
+			} catch (_error) {
+				return false;
+			}
+		};
 		const findLoadedAsset = function (asset, type) {
 			const expectedUrl = absoluteAssetUrl(asset.src);
 			const selector = type === 'css'
@@ -91,10 +101,16 @@
 			const exact = samePath.find(function (node) {
 				return absoluteAssetUrl(node[urlProperty]) === expectedUrl;
 			});
-			const conflict = [byHandle].concat(samePath).filter(Boolean).find(function (node) {
-				return absoluteAssetUrl(node[urlProperty]) !== expectedUrl;
-			});
-			return { exact: exact || null, conflict: conflict || null };
+			const compatible = byHandle || samePath[0] || null;
+			const conflict = pluginAsset(asset)
+				? [byHandle].concat(samePath).filter(Boolean).find(function (node) {
+					return absoluteAssetUrl(node[urlProperty]) !== expectedUrl;
+				})
+				: null;
+			return {
+				exact: exact || (!pluginAsset(asset) ? compatible : null),
+				conflict: conflict || null
+			};
 		};
 		const hardNavigate = function (url) {
 			viewCache.clear();
@@ -163,7 +179,6 @@
 			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
 			const controller = new AbortController();
 			window.kidiaCmsNavigationController = controller;
-			currentContent.classList.add('is-kidia-page-loading');
 			try {
 				let payload;
 				if (viewCache.has(cacheKey)) {
