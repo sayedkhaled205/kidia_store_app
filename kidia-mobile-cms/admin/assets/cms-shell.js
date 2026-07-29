@@ -3,84 +3,93 @@
 	const shell = document.querySelector('.kidia-cms-shell');
 	const fixedBuilder = document.body.classList.contains('kidia-cms-builder-screen');
 
-	/*
-	 * Keep the Overview sidebar alive while moving between Woo Mobile CMS pages.
-	 *
-	 * WordPress normally performs a complete document navigation for every admin
-	 * page. That destroys and recreates the shared sidebar, which makes it flash
-	 * and lets each page's document geometry move it. The navigator below keeps
-	 * the existing sidebar node and swaps only the adjacent CMS document.
-	 */
+	/* One permanent CMS shell; the server returns view fragments only. */
 	function installPersistentCmsNavigation() {
 		if (window.kidiaCmsNavigatorInstalled) return;
 		window.kidiaCmsNavigatorInstalled = true;
+		const config = window.kidiaCMSNavigation || {};
+		const viewCache = new Map();
+		const legacyViews = {
+			'kidia-mobile-home-builder': 'home',
+			'kidia-mobile-category-builder': 'category',
+			'kidia-mobile-catalog-builder': 'catalog',
+			'kidia-mobile-product-builder': 'product',
+			'kidia-mobile-wishlist-builder': 'wishlist',
+			'kidia-mobile-account-builder': 'account',
+			'kidia-mobile-splash-screen': 'splash',
+			'kidia-mobile-checkout-suggestions': 'checkout',
+			'kidia-mobile-setup': 'setup',
+			'kidia-mobile-saved-themes': 'saved-themes',
+			'kidia-mobile-store-data': 'store-data',
+			'kidia-mobile-ai-insights': 'ai-insights',
+			'kidia-mobile-push-notifications': 'push',
+			'kidia-mobile-website-app-promotion': 'website-promotion'
+		};
 
 		const pluginPage = function (url) {
 			try {
 				const target = new URL(url, window.location.href);
 				return target.origin === window.location.origin &&
 					target.pathname.endsWith('/wp-admin/admin.php') &&
-					target.searchParams.get('page') === 'kidia-mobile-cms';
+					(target.searchParams.get('page') === 'kidia-mobile-cms' || Boolean(legacyViews[target.searchParams.get('page')]));
 			} catch (_error) {
 				return false;
 			}
 		};
-		const isPluginAsset = function (node) {
-			const source = node.getAttribute('src') || node.getAttribute('href') || '';
-			const id = node.id || '';
-			return source.indexOf('/kidia-mobile-cms/') !== -1 || id.indexOf('kidia-mobile-') === 0;
+		const keyFor = function (url) {
+			const target = new URL(url, window.location.href);
+			const legacyView = legacyViews[target.searchParams.get('page')];
+			if (legacyView) {
+				target.searchParams.set('page', 'kidia-mobile-cms');
+				target.searchParams.set('view', legacyView);
+			}
+			target.hash = '';
+			return target.href;
 		};
-		const syncStyles = function (nextDocument) {
-			const current = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).filter(isPluginAsset);
-			const incoming = Array.from(nextDocument.head.querySelectorAll('link[rel="stylesheet"]')).filter(isPluginAsset);
-			const incomingUrls = new Set(incoming.map(function (link) { return link.href; }));
-			current.forEach(function (link) {
-				if (link.id === 'kidia-mobile-cms-shell-css' || incomingUrls.has(link.href)) return;
-				link.remove();
-			});
-			const currentUrls = new Set(Array.from(document.head.querySelectorAll('link[rel="stylesheet"]')).map(function (link) { return link.href; }));
-			incoming.forEach(function (link) {
-				if (!currentUrls.has(link.href)) document.head.appendChild(document.importNode(link, true));
-			});
+		const appendInline = function (code) {
+			if (!code) return;
+			const script = document.createElement('script');
+			script.textContent = code;
+			document.head.appendChild(script);
+			script.remove();
 		};
-		const runPageScripts = async function (nextDocument) {
-			const incoming = Array.from(nextDocument.querySelectorAll('script')).filter(function (script) {
-				return isPluginAsset(script);
+		const loadAssets = async function (payload) {
+			(payload.styles || []).forEach(function (asset) {
+				if (document.getElementById(asset.handle + '-css')) return;
+				const link = document.createElement('link');
+				link.id = asset.handle + '-css';
+				link.rel = 'stylesheet';
+				link.href = asset.src;
+				document.head.appendChild(link);
 			});
-			const old = Array.from(document.querySelectorAll('script')).filter(function (script) {
-				return isPluginAsset(script);
-			});
-			old.forEach(function (script) {
-				script.remove();
-			});
-			for (const source of incoming) {
+			let loadedNewScript = false;
+			for (const asset of (payload.scripts || [])) {
+				if (document.getElementById(asset.handle + '-js')) continue;
+				(asset.before || []).forEach(appendInline);
 				const script = document.createElement('script');
-				Array.from(source.attributes).forEach(function (attribute) {
-					script.setAttribute(attribute.name, attribute.value);
-				});
-				script.textContent = source.textContent;
-				const loaded = new Promise(function (resolve) {
-					if (!script.src) { resolve(); return; }
+				script.id = asset.handle + '-js';
+				script.src = asset.src;
+				await new Promise(function (resolve) {
 					script.addEventListener('load', resolve, { once: true });
 					script.addEventListener('error', resolve, { once: true });
+					document.body.appendChild(script);
 				});
-				document.body.appendChild(script);
-				await loaded;
+				(asset.after || []).forEach(appendInline);
+				loadedNewScript = true;
+			}
+			if (loadedNewScript) {
+				document.dispatchEvent(new Event('DOMContentLoaded'));
 			}
 		};
-		const updateActiveSidebar = function (currentSidebar, incomingSidebar) {
-			const active = incomingSidebar && incomingSidebar.querySelector('a.is-active');
-			const activeHref = active ? new URL(active.href, window.location.href).href : '';
-			currentSidebar.querySelectorAll('a').forEach(function (link) {
-				link.classList.toggle('is-active', link.href === activeHref);
+		const updateNavigation = function (payload) {
+			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
+			const shell = document.querySelector('[data-kidia-cms-shell]');
+			sidebar.querySelectorAll('[data-kidia-sidebar-view]').forEach(function (link) {
+				link.classList.toggle('is-active', link.dataset.kidiaSidebarView === payload.activeSidebar);
 			});
-		};
-		const updateActiveTabs = function (currentShell, incomingShell) {
-			if (!currentShell || !incomingShell) return;
-			const active = incomingShell.querySelector('.kidia-cms-tabs a.is-active');
-			const activeHref = active ? new URL(active.href, window.location.href).href : '';
-			currentShell.querySelectorAll('.kidia-cms-tabs a').forEach(function (link) {
-				link.classList.toggle('is-active', link.href === activeHref);
+			shell.hidden = !payload.showPageTabs;
+			shell.querySelectorAll('[data-kidia-page-view]').forEach(function (link) {
+				link.classList.toggle('is-active', link.dataset.kidiaPageView === (payload.view === 'pages' ? 'splash' : payload.view));
 			});
 		};
 		const loadPage = async function (url, pushState) {
@@ -90,40 +99,45 @@
 			if (!sidebar || !shell || !currentContent) {
 				return;
 			}
+			const cacheKey = keyFor(url);
 			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
 			const controller = new AbortController();
 			window.kidiaCmsNavigationController = controller;
 			currentContent.classList.add('is-kidia-page-loading');
 			try {
-				const response = await fetch(url, {
+				let payload;
+				if (viewCache.has(cacheKey)) {
+					payload = viewCache.get(cacheKey);
+				} else {
+					const body = new URLSearchParams({
+						action: 'kidia_mobile_cms_view',
+						nonce: String(config.nonce || ''),
+						target: cacheKey
+					});
+					const response = await fetch(config.ajaxUrl || window.ajaxurl || '', {
+						method: 'POST',
 					credentials: 'same-origin',
 					cache: 'no-store',
-					headers: { 'X-Kidia-CMS-Navigation': '1' },
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+						body: body.toString(),
 					signal: controller.signal
 				});
 				if (!response.ok) throw new Error('CMS page request failed');
-				const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
-				const incomingContent = nextDocument.querySelector('#wpbody-content');
-				const incomingSidebar = nextDocument.querySelector('[data-kidia-cms-sidebar]');
-				const incomingShell = nextDocument.querySelector('[data-kidia-cms-shell]');
-				if (!incomingContent || !incomingSidebar || !incomingShell) throw new Error('CMS page shell is missing');
-
-				syncStyles(nextDocument);
-				updateActiveSidebar(sidebar, incomingSidebar);
-				updateActiveTabs(shell, incomingShell);
-				const children = Array.from(incomingContent.childNodes).filter(function (node) {
-					return node !== incomingSidebar && node !== incomingShell;
-				}).map(function (node) {
-					return document.importNode(node, true);
+					const result = await response.json();
+					if (!result.success || !result.data || typeof result.data.html !== 'string') throw new Error('CMS view is missing');
+					payload = result.data;
+					const template = document.createElement('template');
+					template.innerHTML = payload.html;
+					payload.nodes = Array.from(template.content.childNodes);
+					viewCache.set(cacheKey, payload);
+					await loadAssets(payload);
+				}
+				updateNavigation(payload);
+				Array.from(currentContent.childNodes).forEach(function (node) {
+					if (node !== sidebar && node !== shell) node.remove();
 				});
-				currentContent.replaceChildren(sidebar, shell, ...children);
-				['kidia-cms-builder-screen', 'kidia-cms-license-preview'].forEach(function (className) {
-					document.body.classList.toggle(className, nextDocument.body.classList.contains(className));
-				});
-				document.title = nextDocument.title;
-				if (pushState) history.pushState({ kidiaCmsPage: true }, '', response.url || url);
-				window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-				await runPageScripts(nextDocument);
+				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
+				if (pushState) history.pushState({ kidiaCmsPage: true }, '', cacheKey);
 				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
 			} catch (error) {
 				if (error.name === 'AbortError') return;
@@ -141,7 +155,7 @@
 		};
 
 		document.addEventListener('click', function (event) {
-			const link = event.target.closest('[data-kidia-cms-sidebar] a, .kidia-cms-tabs a');
+			const link = event.target.closest('#wpbody-content a');
 			if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 			if (!pluginPage(link.href)) return;
 			event.preventDefault();

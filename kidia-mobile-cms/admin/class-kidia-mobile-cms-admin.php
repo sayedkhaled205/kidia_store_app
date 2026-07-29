@@ -151,6 +151,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'wp_ajax_kidia_mobile_cancel_ai_analysis', array( $this, 'cancel_ai_analysis' ) );
 		add_action( 'wp_ajax_kidia_mobile_ai_analysis_status', array( $this, 'ai_analysis_status' ) );
 		add_action( 'wp_ajax_kidia_mobile_dismiss_ai_analysis', array( $this, 'dismiss_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_cms_view', array( $this, 'cms_view_fragment' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
 		add_action( 'current_screen', array( $this, 'suppress_external_admin_notices' ), 999 );
 
@@ -179,6 +180,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$allowed        = array(
 			'kidia_mobile_activate_license',
 			'kidia_mobile_verify_license',
+			'kidia_mobile_cms_view',
 		);
 
 		if (
@@ -1919,6 +1921,132 @@ final class Kidia_Mobile_CMS_Admin {
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
 
+	/**
+	 * Returns one CMS view without another WordPress document, sidebar or frame.
+	 *
+	 * The browser owns the only shell. This endpoint renders only the selected
+	 * callback and describes assets that are not already present in that shell.
+	 */
+	public function cms_view_fragment(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_cms_view', 'nonce' );
+
+		$target = isset( $_POST['target'] ) ? esc_url_raw( wp_unslash( (string) $_POST['target'] ) ) : '';
+		$query  = wp_parse_url( $target, PHP_URL_QUERY );
+		$args   = array();
+		if ( is_string( $query ) ) {
+			parse_str( $query, $args );
+		}
+		$view = isset( $args['view'] ) ? sanitize_key( (string) $args['view'] ) : 'overview';
+		if ( ! isset( self::CMS_VIEWS[ $view ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown CMS view.', 'kidia-mobile-cms' ) ), 404 );
+		}
+
+		foreach ( $args as $key => $value ) {
+			if ( is_scalar( $value ) ) {
+				$_GET[ sanitize_key( (string) $key ) ] = sanitize_text_field( (string) $value );
+			}
+		}
+		$_GET['page'] = 'kidia-mobile-cms';
+		$_GET['view'] = $view;
+
+		$this->enqueue_assets( '' );
+		ob_start();
+		$this->render_effective_cms_view();
+		$html = (string) ob_get_clean();
+
+		$active_sidebar = in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true )
+			? 'pages'
+			: str_replace( '-', '_', $view );
+		if ( 'store-data' === $view && 'abandoned-carts' === (string) ( $args['store_tab'] ?? '' ) ) {
+			$active_sidebar = 'abandoned_carts';
+		}
+
+		wp_send_json_success(
+			array(
+				'html'          => $html,
+				'view'          => $view,
+				'activeSidebar' => $active_sidebar,
+				'showPageTabs'  => in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true ),
+				'styles'        => $this->cms_fragment_assets( wp_styles(), 'css' ),
+				'scripts'       => $this->cms_fragment_assets( wp_scripts(), 'js' ),
+			)
+		);
+	}
+
+	/** Renders the callback selected by effective_cms_page(), without the shell. */
+	private function render_effective_cms_view(): void {
+		$page = $this->effective_cms_page();
+		if ( 'kidia-mobile-cms' === $page ) {
+			$this->dashboard_page();
+			return;
+		}
+		if ( 'kidia-mobile-home-builder' === $page ) {
+			$this->home_builder_page();
+			return;
+		}
+		if ( 'kidia-mobile-category-builder' === $page ) {
+			$this->category_builder_page();
+			return;
+		}
+		if ( isset( self::PAGE_BUILDER_SLUGS[ $page ] ) ) {
+			$this->page_builder_page();
+			return;
+		}
+		$callbacks = array(
+			'kidia-mobile-splash-screen'         => 'splash_screen_page',
+			'kidia-mobile-checkout-suggestions' => 'checkout_suggestions_page',
+			'kidia-mobile-setup'                => 'setup_wizard_page',
+			'kidia-mobile-saved-themes'         => 'saved_themes_page',
+			'kidia-mobile-store-data'           => 'store_data_page',
+			'kidia-mobile-ai-insights'          => 'ai_insights_page',
+			'kidia-mobile-push-notifications'   => 'push_notifications_page',
+			'kidia-mobile-website-app-promotion'=> 'website_app_promotion_page',
+		);
+		if ( isset( $callbacks[ $page ] ) ) {
+			$this->{$callbacks[ $page ]}();
+		}
+	}
+
+	/**
+	 * @param WP_Dependencies $dependencies Registered styles or scripts.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function cms_fragment_assets( $dependencies, string $type ): array {
+		$dependencies->all_deps( $dependencies->queue );
+		$assets = array();
+		foreach ( $dependencies->to_do as $handle ) {
+			$item = $dependencies->registered[ $handle ] ?? null;
+			if ( ! $item || empty( $item->src ) ) {
+				continue;
+			}
+			$src = (string) $item->src;
+			if ( 0 === strpos( $src, '/' ) ) {
+				$src = site_url( $src );
+			}
+			if ( false === strpos( $src, '://' ) ) {
+				$src = trailingslashit( site_url() ) . ltrim( $src, '/' );
+			}
+			$version = $item->ver ?? $dependencies->default_version;
+			if ( $version ) {
+				$src = add_query_arg( 'ver', (string) $version, $src );
+			}
+			$asset = array( 'handle' => $handle, 'src' => $src );
+			if ( 'js' === $type ) {
+				$asset['before'] = array_values( (array) $dependencies->get_data( $handle, 'before' ) );
+				$data = $dependencies->get_data( $handle, 'data' );
+				if ( is_string( $data ) && '' !== $data ) {
+					$asset['before'][] = $data;
+				}
+				$asset['after'] = array_values( (array) $dependencies->get_data( $handle, 'after' ) );
+			}
+			$assets[] = $asset;
+		}
+		return $assets;
+	}
+
 	private function is_public_cms_page( string $page ): bool {
 		return in_array(
 			$page,
@@ -2382,6 +2510,14 @@ final class Kidia_Mobile_CMS_Admin {
 							'aiNonce'     => wp_create_nonce( 'kidia_mobile_ai_analysis' ),
 							'activeAiJob' => Kidia_Mobile_AI_Analysis_Job::active_job_id( get_current_user_id() ),
 							'aiUrl'       => add_query_arg( array( 'page' => 'kidia-mobile-ai-insights' ), admin_url( 'admin.php' ) ),
+						)
+					);
+					wp_localize_script(
+						'kidia-mobile-cms-shell',
+						'kidiaCMSNavigation',
+						array(
+							'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+							'nonce'   => wp_create_nonce( 'kidia_mobile_cms_view' ),
 						)
 					);
 					if ( in_array( $page, array( 'kidia-mobile-cms', 'kidia-mobile-setup' ), true ) ) {
