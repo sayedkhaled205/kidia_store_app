@@ -9,6 +9,7 @@ const script = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "cms-shell.js"),
   "utf8"
 );
+const admin = fs.readFileSync(path.resolve(__dirname, "..", "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
 const styles = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "cms-shell.css"),
   "utf8"
@@ -29,25 +30,27 @@ assert.match(
   /\.kidia-builder-switch input:checked \+ \.kidia-builder-switch__track::after\{[\s\S]*inset-inline-start:21px!important;[\s\S]*transform:none!important;/,
   "Card switches must use the same reliable logical thumb positioning."
 );
+assert.match(admin, /private const CMS_VIEWS = array[\s\S]*store-data/, "Navigation destinations must be views of one CMS screen.");
+assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
   <main id="wpbody-content">
     <aside data-kidia-cms-sidebar>
       <nav class="kidia-cms-sidebar__nav">
         <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
-        <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-setup">Setup Wizard</a>
+        <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </aside>
     <section data-page-content>Overview content</section>
   </main>
 </body></html>`;
 const next = `<!doctype html><html><head><title>Setup</title></head>
-<body class="wp-admin kidia-mobile-setup">
+<body class="wp-admin kidia-mobile-cms">
   <main id="wpbody-content">
     <aside data-kidia-cms-sidebar>
       <nav class="kidia-cms-sidebar__nav">
         <a href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
-        <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-setup">Setup Wizard</a>
+        <a class="is-active" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </aside>
     <section data-page-content>Setup content</section>
@@ -61,7 +64,7 @@ const dom = new JSDOM(initial, {
 dom.window.scrollTo = () => {};
 dom.window.fetch = async () => ({
   ok: true,
-  url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-setup",
+  url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup",
   text: async () => next
 });
 
@@ -82,7 +85,7 @@ setTimeout(() => {
   );
   assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Setup content");
   assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Setup Wizard");
-  assert.equal(dom.window.location.search, "?page=kidia-mobile-setup");
+  assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=setup");
   assert.equal(dom.window.document.title, "Setup");
   console.log("Persistent CMS sidebar runtime test passed.");
 }, 25);

@@ -20,7 +20,7 @@
 				const target = new URL(url, window.location.href);
 				return target.origin === window.location.origin &&
 					target.pathname.endsWith('/wp-admin/admin.php') &&
-					/^kidia-mobile-/.test(target.searchParams.get('page') || '');
+					target.searchParams.get('page') === 'kidia-mobile-cms';
 			} catch (_error) {
 				return false;
 			}
@@ -79,7 +79,6 @@
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
 			const currentContent = document.querySelector('#wpbody-content');
 			if (!sidebar || !currentContent) {
-				window.location.assign(url);
 				return;
 			}
 			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
@@ -107,7 +106,9 @@
 					return document.importNode(node, true);
 				});
 				currentContent.replaceChildren(sidebar, ...children);
-				document.body.className = nextDocument.body.className;
+				['kidia-cms-builder-screen', 'kidia-cms-license-preview'].forEach(function (className) {
+					document.body.classList.toggle(className, nextDocument.body.classList.contains(className));
+				});
 				document.title = nextDocument.title;
 				if (pushState) history.pushState({ kidiaCmsPage: true }, '', response.url || url);
 				window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -115,7 +116,12 @@
 				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
 			} catch (error) {
 				if (error.name === 'AbortError') return;
-				window.location.assign(url);
+				const message = document.createElement('div');
+				message.className = 'notice notice-error kidia-cms-navigation-error';
+				message.setAttribute('role', 'alert');
+				message.textContent = 'The requested Woo Mobile CMS view could not be loaded. Please try again.';
+				Array.from(currentContent.childNodes).forEach(function (node) { if (node !== sidebar) node.remove(); });
+				currentContent.appendChild(message);
 			} finally {
 				currentContent.classList.remove('is-kidia-page-loading');
 			}
