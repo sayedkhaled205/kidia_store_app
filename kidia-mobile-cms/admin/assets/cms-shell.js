@@ -21,6 +21,7 @@
 		window.kidiaCmsNavigatorInstalled = true;
 		const config = window.kidiaCMSNavigation || {};
 		const viewCache = new Map();
+		const currentVersion = String(config.version || '');
 		const legacyViews = {
 			'kidia-mobile-home-builder': 'home',
 			'kidia-mobile-category-builder': 'category',
@@ -65,18 +66,64 @@
 			document.head.appendChild(script);
 			script.remove();
 		};
+		const absoluteAssetUrl = function (src) {
+			try {
+				return new URL(src, window.location.href).href;
+			} catch (_error) {
+				return String(src || '');
+			}
+		};
+		const findLoadedAsset = function (asset, type) {
+			const expectedUrl = absoluteAssetUrl(asset.src);
+			const selector = type === 'css'
+				? 'link[rel="stylesheet"][href]'
+				: 'script[src]';
+			const urlProperty = type === 'css' ? 'href' : 'src';
+			const byHandle = document.getElementById(asset.handle + '-' + type);
+			const samePath = Array.from(document.querySelectorAll(selector)).filter(function (node) {
+				try {
+					return new URL(node[urlProperty], window.location.href).pathname ===
+						new URL(expectedUrl, window.location.href).pathname;
+				} catch (_error) {
+					return false;
+				}
+			});
+			const exact = samePath.find(function (node) {
+				return absoluteAssetUrl(node[urlProperty]) === expectedUrl;
+			});
+			const conflict = [byHandle].concat(samePath).filter(Boolean).find(function (node) {
+				return absoluteAssetUrl(node[urlProperty]) !== expectedUrl;
+			});
+			return { exact: exact || null, conflict: conflict || null };
+		};
+		const hardNavigate = function (url) {
+			viewCache.clear();
+			if (typeof window.kidiaCmsHardNavigate === 'function') {
+				window.kidiaCmsHardNavigate(url);
+				return;
+			}
+			window.location.href = url;
+		};
 		const loadAssets = async function (payload) {
-			(payload.styles || []).forEach(function (asset) {
-				if (document.getElementById(asset.handle + '-css')) return;
+			for (const asset of (payload.styles || [])) {
+				const loaded = findLoadedAsset(asset, 'css');
+				if (loaded.conflict) return false;
+				if (loaded.exact) continue;
 				const link = document.createElement('link');
 				link.id = asset.handle + '-css';
 				link.rel = 'stylesheet';
 				link.href = asset.src;
-				document.head.appendChild(link);
-			});
+				await new Promise(function (resolve) {
+					link.addEventListener('load', resolve, { once: true });
+					link.addEventListener('error', resolve, { once: true });
+					document.head.appendChild(link);
+				});
+			}
 			let loadedNewScript = false;
 			for (const asset of (payload.scripts || [])) {
-				if (document.getElementById(asset.handle + '-js')) continue;
+				const loaded = findLoadedAsset(asset, 'js');
+				if (loaded.conflict) return false;
+				if (loaded.exact) continue;
 				(asset.before || []).forEach(appendInline);
 				const script = document.createElement('script');
 				script.id = asset.handle + '-js';
@@ -92,6 +139,7 @@
 			if (loadedNewScript) {
 				document.dispatchEvent(new Event('DOMContentLoaded'));
 			}
+			return true;
 		};
 		const updateNavigation = function (payload) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
@@ -124,6 +172,7 @@
 					const body = new URLSearchParams({
 						action: 'kidia_mobile_cms_view',
 						nonce: String(config.nonce || ''),
+						version: currentVersion,
 						target: cacheKey
 					});
 					const response = await fetch(config.ajaxUrl || window.ajaxurl || '', {
@@ -138,11 +187,22 @@
 					const result = await response.json();
 					if (!result.success || !result.data || typeof result.data.html !== 'string') throw new Error('CMS view is missing');
 					payload = result.data;
+					if (
+						currentVersion &&
+						payload.version &&
+						String(payload.version) !== currentVersion
+					) {
+						hardNavigate(cacheKey);
+						return;
+					}
 					const template = document.createElement('template');
 					template.innerHTML = payload.html;
 					payload.nodes = Array.from(template.content.childNodes);
+					if (!await loadAssets(payload)) {
+						hardNavigate(cacheKey);
+						return;
+					}
 					viewCache.set(cacheKey, payload);
-					await loadAssets(payload);
 				}
 				syncBuilderScreen(payload.builderScreen);
 				updateNavigation(payload);
