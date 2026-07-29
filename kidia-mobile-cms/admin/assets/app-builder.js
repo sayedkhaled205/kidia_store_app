@@ -7,6 +7,7 @@
 
 	const autoDownload = new WeakSet();
 	let timer = 0;
+	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
 
 	function label(status, fallback) {
@@ -33,6 +34,7 @@
 		if (button) {
 			button.disabled = building || (!ready && !canBuild);
 			button.classList.toggle('is-loading', building);
+			button.hidden = building;
 			button.setAttribute('aria-busy', building ? 'true' : 'false');
 		}
 		if (buttonLabel) {
@@ -136,14 +138,26 @@
 		});
 		try {
 			const state = await request(body);
+			pollFailures = 0;
 			render(state);
 			if (isBuilding(state.status)) schedulePoll(4000);
 		} catch (error) {
+			pollFailures += 1;
+			if (pollFailures >= 3) {
+				autoDownload.delete(roots[0]);
+				render({
+					status: 'failed',
+					progress: 0,
+					message: error.message || label('failed'),
+					downloadReady: false
+				});
+				return;
+			}
 			roots.forEach(function (root) {
 				const message = root.querySelector('[data-build-message]');
 				if (message) message.textContent = error.message || label('failed');
 			});
-			schedulePoll(8000);
+			schedulePoll(5000);
 		}
 	}
 
