@@ -385,6 +385,13 @@ final class Kidia_Mobile_App_Exporter {
 		$application = is_array( $manifest['application'] ?? null ) ? $manifest['application'] : array();
 		$store       = is_array( $manifest['store'] ?? null ) ? $manifest['store'] : array();
 		$version     = defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '1.0.0';
+		$snapshot    = array_merge(
+			$manifest,
+			array(
+				'schema_version' => absint( $manifest['schemaVersion'] ?? 1 ),
+				'pages'          => array_values( is_array( $application['enabledPages'] ?? null ) ? $application['enabledPages'] : array() ),
+			)
+		);
 
 		return array(
 			'store_url'          => esc_url_raw( (string) ( $store['url'] ?? home_url( '/' ) ) ),
@@ -392,7 +399,7 @@ final class Kidia_Mobile_App_Exporter {
 			'package_name'       => sanitize_text_field( (string) ( $application['androidPackage'] ?? '' ) ),
 			'version_name'       => sanitize_text_field( $version ),
 			'version_code'       => time(),
-			'settings_snapshot'  => $manifest,
+			'settings_snapshot'  => $snapshot,
 			'platform'           => 'android',
 			'artifact'           => 'apk',
 			'configuration_hash' => self::configuration_hash(),
