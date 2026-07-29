@@ -130,7 +130,8 @@
 .kidia-app-promotion-types p{min-height:48px;margin:7px 0;color:#6c7e79;font-size:11px;line-height:1.45}
 .kidia-app-promotion-types small{color:#2f806e;font-size:10px;font-weight:700}
 .kidia-app-promotion-types button{margin-top:auto;padding:6px 0 0;border:0;background:transparent;color:#236b59;font-size:11px;font-weight:700;text-align:left;cursor:pointer}
-.kidia-app-promotion-workspace{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:14px;align-items:start}
+.kidia-app-promotion-workspace{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:14px;align-items:start;transition:grid-template-columns .25s ease}
+.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:minmax(460px,.82fr) minmax(640px,1.18fr)}
 .kidia-app-promotion-workspace main{min-width:0}
 .kidia-promotion-fields{display:grid;gap:13px}
 .kidia-promotion-fields.is-three{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -190,19 +191,29 @@
 .kidia-app-promotion-preview>header>div:last-child{display:flex;padding:3px;border-radius:9px;background:#edf4f2}
 .kidia-app-promotion-preview>header button{display:grid;width:32px;height:29px;place-items:center;padding:0;border:0;background:transparent;color:#66807a;cursor:pointer}
 .kidia-app-promotion-preview>header button.is-active{background:#fff;color:#2f806e;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.kidia-promotion-device{padding:18px;background:linear-gradient(145deg,#eef5f3,#ddeae6)}
-.kidia-promotion-browser{position:relative;height:570px;margin:auto;border:6px solid #263b36;border-radius:28px;background:#fff;box-shadow:0 12px 30px rgba(14,49,40,.2);overflow:hidden;transition:.25s}
-.kidia-promotion-device.is-mobile .kidia-promotion-browser{width:280px}
-.kidia-promotion-device.is-desktop .kidia-promotion-browser{width:100%;height:460px;border-width:5px;border-radius:13px}
+.kidia-promotion-device{min-width:0;padding:18px;background:linear-gradient(145deg,#eef5f3,#ddeae6);overflow:hidden}
+.kidia-promotion-screen{position:relative;width:280px;height:606px;margin:auto;transition:width .25s,height .25s}
+.kidia-promotion-browser{
+	position:absolute;
+	top:0;
+	left:0;
+	width:390px;
+	height:844px;
+	border:6px solid #263b36;
+	border-radius:28px;
+	background:#fff;
+	box-shadow:0 12px 30px rgba(14,49,40,.2);
+	overflow:hidden;
+	transform:scale(var(--preview-scale,.718));
+	transform-origin:top left;
+	transition:border-radius .25s,box-shadow .25s;
+}
+.kidia-promotion-device.is-desktop .kidia-promotion-browser{width:1366px;height:768px;border-width:5px;border-radius:13px}
 .kidia-promotion-browser__bar{display:flex;height:31px;align-items:center;gap:4px;padding:0 8px;background:#eef2f1}
 .kidia-promotion-browser__bar i{width:5px;height:5px;border-radius:50%;background:#9aacaa}
-.kidia-promotion-browser__bar span{margin:auto;padding:3px 24px;border-radius:5px;background:#fff;color:#96a3a0;font-size:7px}
-.kidia-promotion-store{padding:12px}
-.kidia-promotion-store__header{display:flex;align-items:center;justify-content:space-between}
-.kidia-promotion-store__header b{font-size:9px}.kidia-promotion-store__header span{width:50px;height:7px;border-radius:5px;background:#dce5e3}
-.kidia-promotion-store__hero{height:105px;margin:11px 0;border-radius:10px;background:linear-gradient(135deg,#c5ddd7,#7fb6a8)}
-.kidia-promotion-store__cards{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.kidia-promotion-store__cards i{height:48px;border-radius:7px;background:#edf1f0}
-.kidia-promotion-store__lines{display:grid;gap:7px;margin-top:13px}.kidia-promotion-store__lines i{height:8px;border-radius:5px;background:#edf1f0}.kidia-promotion-store__lines i:nth-child(2){width:80%}.kidia-promotion-store__lines i:nth-child(3){width:65%}
+.kidia-promotion-browser__bar span{max-width:70%;margin:auto;padding:3px 24px;border-radius:5px;background:#fff;color:#71807c;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kidia-promotion-live-site{position:absolute;inset:31px 0 0;background:#fff}
+.kidia-promotion-live-site iframe{display:block;width:100%;height:100%;border:0;background:#fff}
 .kidia-promotion-preview-output{position:absolute;inset:31px 0 0;pointer-events:none}
 .kidia-preview-promo{
 	--brand:#2f806e;
@@ -230,7 +241,23 @@
 .kidia-preview-promo.is-desktop_qr{right:9px;bottom:9px;width:155px;border-radius:11px;flex-wrap:wrap}.kidia-preview-promo.is-desktop_qr canvas{width:55px!important;height:55px!important}.kidia-preview-promo.is-desktop_qr .kidia-preview-promo__copy{flex-basis:60px}
 .kidia-preview-promo.is-floating_button{right:auto;bottom:12px;left:12px;border-radius:999px;background:var(--brand);color:#fff}.kidia-preview-promo.is-floating_button .kidia-preview-promo__logo{width:24px;height:24px;flex-basis:24px;background:rgba(255,255,255,.18)}.kidia-preview-promo.is-floating_button .kidia-preview-promo__copy small{color:#fff}
 .kidia-preview-promo.is-inline_banner{position:relative;top:90px;right:8px;left:8px;border-radius:11px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo{gap:14px;padding:14px 18px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo__logo{width:52px;height:52px;flex-basis:52px;border-radius:12px;font-size:20px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo__copy strong{font-size:17px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo__copy small{margin-top:4px;font-size:13px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo__button{padding:11px 16px;border-radius:8px;font-size:13px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo__close{font-size:20px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-bottom_sheet{right:24px;bottom:24px;left:auto;width:420px;min-height:180px;padding:24px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-popup{width:440px;min-height:300px;padding:32px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-popup .kidia-preview-promo__logo{width:76px;height:76px;flex-basis:76px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-desktop_qr{right:24px;bottom:24px;width:290px;padding:18px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-desktop_qr canvas{width:110px!important;height:110px!important}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-desktop_qr .kidia-preview-promo__copy{flex-basis:110px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-floating_button{bottom:24px;left:24px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-floating_button .kidia-preview-promo__logo{width:38px;height:38px;flex-basis:38px}
+.kidia-promotion-device.is-desktop .kidia-preview-promo.is-inline_banner{top:130px;right:28px;left:28px}
 .kidia-app-promotion-preview__hint{display:flex;gap:7px;margin:0;padding:12px 15px;color:#6a7b76;font-size:11px;line-height:1.45}
 @media(max-width:1350px){.kidia-app-promotion-types{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-app-promotion-types article{min-height:160px}.kidia-app-promotion-types p{min-height:32px}}
-@media(max-width:1120px){.kidia-app-promotion-workspace{grid-template-columns:1fr}.kidia-app-promotion-preview{position:relative;top:auto;max-width:620px}.kidia-app-promotion-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1240px){.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:minmax(420px,.9fr) minmax(540px,1.1fr)}}
+@media(max-width:1120px){.kidia-app-promotion-workspace,.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:1fr}.kidia-app-promotion-preview{position:relative;top:auto;max-width:none}.kidia-app-promotion-admin:not(.is-desktop-preview) .kidia-app-promotion-preview{max-width:620px}.kidia-app-promotion-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:782px){.kidia-app-promotion-hero{align-items:flex-start;flex-direction:column}.kidia-app-promotion-stats,.kidia-app-promotion-types,.kidia-promotion-fields.is-three{grid-template-columns:1fr}.kidia-app-promotion-types article{min-height:0}.kidia-app-promotion-types p{min-height:0}.kidia-app-promotion-workspace{display:block}.kidia-app-promotion-preview{margin-top:14px}.kidia-promotion-colors{grid-template-columns:repeat(3,1fr)}}

@@ -129,6 +129,31 @@ assert.match(
 );
 assert.match(
   template,
+  /Kidia_Mobile_Website_App_Promotion::preview_url\(\)[\s\S]*data-promotion-site-frame/,
+  "The campaign preview must load the current customer's real website.",
+);
+assert.doesNotMatch(
+  template,
+  /kidia-promotion-store__(?:hero|cards|lines)/,
+  "The real website preview must replace the old decorative skeleton.",
+);
+assert.match(
+  service,
+  /preview_url\(\)[\s\S]*wp_create_nonce\([\s\S]*home_url\(\s*'\/'\s*\)/,
+  "The live preview URL must be dynamic per WordPress installation and nonce protected.",
+);
+assert.match(
+  service,
+  /is_preview_request\(\)[\s\S]*current_user_can\(\s*'manage_options'\s*\)[\s\S]*wp_verify_nonce/,
+  "Only an authenticated administrator may suppress saved campaigns in preview mode.",
+);
+assert.match(
+  service,
+  /enqueue_assets\(\)[\s\S]*is_preview_request\(\)[\s\S]*render_footer\(\)[\s\S]*is_preview_request\(\)/,
+  "Preview mode must prevent the saved campaign from rendering behind the draft overlay.",
+);
+assert.match(
+  template,
   /\[woo_mobile_app_promo\]/,
   "Inline promotions must expose a placement shortcode.",
 );
@@ -141,6 +166,31 @@ assert.match(
   adminCss,
   /\.kidia-app-promotion-workspace[\s\S]*grid-template-columns:minmax\(0,1fr\) 370px/,
   "The editor must keep a dedicated sticky preview rail.",
+);
+assert.match(
+  adminCss,
+  /is-desktop-preview[\s\S]*grid-template-columns:minmax\(460px,.82fr\) minmax\(640px,1.18fr\)/,
+  "Desktop preview mode must widen the preview rail without changing mobile mode.",
+);
+assert.match(
+  adminCss,
+  /\.kidia-promotion-device\.is-desktop \.kidia-promotion-browser\{width:1366px;height:768px/,
+  "The desktop website preview must use a real 1366 by 768 laptop viewport.",
+);
+assert.match(
+  adminCss,
+  /\.kidia-promotion-live-site iframe\{[\s\S]*width:100%;height:100%;border:0/,
+  "The customer's website iframe must fill the laptop viewport.",
+);
+assert.match(
+  adminScript,
+  /previewSizes[\s\S]*desktop:\s*\{\s*width:\s*1366,\s*height:\s*768\s*\}[\s\S]*is-desktop-preview/,
+  "Desktop selection must switch to the real laptop viewport.",
+);
+assert.match(
+  adminScript,
+  /resizePreview[\s\S]*--preview-scale[\s\S]*ResizeObserver/,
+  "The laptop preview must rescale automatically when its available width changes.",
 );
 assert.match(
   publicScript,
@@ -181,6 +231,57 @@ assert.equal(
   fs.existsSync(path.join(root, "public", "assets", "vendor", "qrcode.LICENSE")),
   true,
   "The bundled QR generator must preserve its license.",
+);
+
+const adminDom = new JSDOM(
+  `<!doctype html><body>
+    <div data-promotion-admin>
+      <form data-promotion-form></form>
+      <article data-promotion-type="smart_banner"><strong>Smart Banner</strong><input type="checkbox"></article>
+      <div data-promotion-campaign-panel="smart_banner"></div>
+      <small data-preview-campaign-label></small>
+      <button data-preview-device="mobile"></button>
+      <button data-preview-device="desktop"></button>
+      <div data-promotion-preview>
+        <div data-promotion-screen><div data-promotion-browser><div data-preview-output></div></div></div>
+      </div>
+    </div>
+  </body>`,
+  { runScripts: "outside-only", url: "https://store.example/wp-admin/admin.php" },
+);
+adminDom.window.ResizeObserver = class ResizeObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {
+    this.callback();
+  }
+};
+adminDom.window.requestAnimationFrame = (callback) => callback();
+const adminPreview = adminDom.window.document.querySelector(
+  "[data-promotion-preview]",
+);
+Object.defineProperty(adminPreview, "clientWidth", { value: 700 });
+adminDom.window.eval(adminScript);
+adminDom.window.document
+  .querySelector('[data-preview-device="desktop"]')
+  .click();
+assert.equal(
+  adminDom.window.document
+    .querySelector("[data-promotion-admin]")
+    .classList.contains("is-desktop-preview"),
+  true,
+  "Choosing desktop must expand the laptop preview rail.",
+);
+assert.equal(
+  adminDom.window.document.querySelector("[data-promotion-screen]").style.width,
+  "700px",
+  "The 1366px laptop viewport must scale to the available preview width.",
+);
+assert.equal(
+  adminDom.window.document.querySelector("[data-promotion-screen]").style.height,
+  "394px",
+  "Responsive scaling must preserve the laptop aspect ratio.",
 );
 
 const dom = new JSDOM(
