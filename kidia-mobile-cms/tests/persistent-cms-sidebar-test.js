@@ -82,7 +82,7 @@ dom.window.scrollTo = () => {};
 dom.window.kidiaCMSNavigation = {
   ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
   nonce: "test-nonce",
-  version: "1.45.59"
+  version: "1.45.60"
 };
 const requestedVersions = [];
 dom.window.fetch = async (_url, options = {}) => {
@@ -100,7 +100,7 @@ dom.window.fetch = async (_url, options = {}) => {
         activeSidebar: builderScreen ? "pages" : "setup",
         showPageTabs: builderScreen,
         builderScreen,
-        version: "1.45.59",
+        version: "1.45.60",
         styles: [],
         scripts: []
       }
@@ -148,7 +148,7 @@ setTimeout(() => {
     assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), false, "The document root must be released with the Builder body.");
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
-    assert.deepEqual(requestedVersions, ["1.45.59", "1.45.59"], "Every navigation request must carry the running asset version.");
+    assert.deepEqual(requestedVersions, ["1.45.60", "1.45.60"], "Every navigation request must carry the running asset version.");
 
     const staleDom = new JSDOM(`<!doctype html><html><head>
       <link id="legacy-kidia-shell-css" rel="stylesheet" href="https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.52-old">
@@ -170,7 +170,7 @@ setTimeout(() => {
     staleDom.window.kidiaCMSNavigation = {
       ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
       nonce: "test-nonce",
-      version: "1.45.59"
+      version: "1.45.60"
     };
     let forcedUrl = "";
     staleDom.window.kidiaCmsHardNavigate = (url) => {
@@ -186,10 +186,10 @@ setTimeout(() => {
           activeSidebar: "pages",
           showPageTabs: true,
           builderScreen: true,
-          version: "1.45.59",
+          version: "1.45.60",
           styles: [{
             handle: "kidia-mobile-cms-shell",
-            src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.59-new"
+            src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.60-new"
           }],
           scripts: []
         }

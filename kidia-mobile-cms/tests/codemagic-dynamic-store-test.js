@@ -43,5 +43,12 @@ assert.match(
   /'dartDefines'\s*=>\s*array\([\s\S]*'STORE_NAME'[\s\S]*'STORE_LOCALE'[\s\S]*'PUSH_CONFIG_URL'/,
   "The WordPress build manifest must send the customer application values."
 );
+for (const field of ["store_url", "app_name", "package_name"]) {
+  assert.match(
+    exporter,
+    new RegExp(`'${field}'\\s*=>`),
+    `The Laravel build request must include the required ${field} field.`
+  );
+}
 
 console.log("Codemagic dynamic customer build contract verified.");
