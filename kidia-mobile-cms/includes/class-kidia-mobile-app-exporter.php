@@ -384,15 +384,19 @@ final class Kidia_Mobile_App_Exporter {
 	private function build_request_payload( array $manifest, bool $provision_push ): array {
 		$application = is_array( $manifest['application'] ?? null ) ? $manifest['application'] : array();
 		$store       = is_array( $manifest['store'] ?? null ) ? $manifest['store'] : array();
+		$version     = defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '1.0.0';
 
 		return array(
 			'store_url'          => esc_url_raw( (string) ( $store['url'] ?? home_url( '/' ) ) ),
 			'app_name'           => sanitize_text_field( (string) ( $application['name'] ?? get_bloginfo( 'name' ) ) ),
 			'package_name'       => sanitize_text_field( (string) ( $application['androidPackage'] ?? '' ) ),
+			'version_name'       => sanitize_text_field( $version ),
+			'version_code'       => time(),
+			'settings_snapshot'  => $manifest,
 			'platform'           => 'android',
 			'artifact'           => 'apk',
 			'configuration_hash' => self::configuration_hash(),
-			'plugin_version'     => defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '',
+			'plugin_version'     => $version,
 			'provision_push'     => $provision_push,
 			'manifest'           => $manifest,
 		);

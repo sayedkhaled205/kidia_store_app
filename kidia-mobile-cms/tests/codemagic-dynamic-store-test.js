@@ -43,7 +43,14 @@ assert.match(
   /'dartDefines'\s*=>\s*array\([\s\S]*'STORE_NAME'[\s\S]*'STORE_LOCALE'[\s\S]*'PUSH_CONFIG_URL'/,
   "The WordPress build manifest must send the customer application values."
 );
-for (const field of ["store_url", "app_name", "package_name"]) {
+for (const field of [
+  "store_url",
+  "app_name",
+  "package_name",
+  "version_name",
+  "version_code",
+  "settings_snapshot",
+]) {
   assert.match(
     exporter,
     new RegExp(`'${field}'\\s*=>`),
