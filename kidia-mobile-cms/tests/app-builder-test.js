@@ -135,6 +135,7 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.match(requestBody, /nonce=build-nonce/);
   assert.equal(root.dataset.status, "building");
   assert.equal(button.disabled, true);
+  assert.equal(button.hidden, true, "Progress must render in the card instead of inside the action button.");
   assert.equal(button.classList.contains("is-loading"), true, "The same button must show its loading state during a long build.");
   assert.equal(button.getAttribute("aria-busy"), "true");
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Building your APK… 15%");
@@ -241,6 +242,7 @@ async function testActiveBuildCanBeCancelled() {
   assert.equal(cancelButton.hidden, true);
   assert.equal(root.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
   assert.equal(root.querySelector("[data-build-action]").disabled, false);
+  assert.equal(root.querySelector("[data-build-action]").hidden, false);
 }
 
 (async function () {
