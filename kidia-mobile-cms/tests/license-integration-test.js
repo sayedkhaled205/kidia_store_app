@@ -15,11 +15,11 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.57/, "The plugin header must be version 1.45.57.");
+assert.match(plugin, /Version:\s+1\.45\.58/, "The plugin header must be version 1.45.58.");
 assert.match(
   plugin,
-  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.57'/,
-  "The runtime plugin version must match the 1.45.57 header."
+  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.58'/,
+  "The runtime plugin version must match the 1.45.58 header."
 );
 assert.match(
   plugin,
@@ -89,12 +89,12 @@ assert.match(
   /if \( \$license_active \)[\s\S]*else[\s\S]*class="kidia-license-form"/,
   "The activation form must only render while the license is inactive."
 );
-assert.match(
+assert.doesNotMatch(
   dashboard,
-  /class="kidia-setup-overview[\s\S]*class="kidia-dashboard__primary-action[\s\S]*<\/a>[\s\S]*<\/div>/,
-  "The Setup & Themes action must render inside the setup overview card."
+  /class="kidia-setup-overview/,
+  "The removed Setup workspace strip must not render inside the license card."
 );
-assert.match(dashboard, /Setup & Themes/, "Overview must link to Setup & Themes.");
+assert.doesNotMatch(dashboard, />Setup workspace ready</, "Overview must not repeat the Setup workspace status.");
 assert.doesNotMatch(dashboard, /kidia_mobile_deactivate_license/, "The license UI must not expose deactivation.");
 assert.match(dashboard, /Start Setup Wizard/, "Successful activation must offer the setup wizard.");
 assert.match(dashboard, /Continue Manually/, "Successful activation must allow manual setup.");

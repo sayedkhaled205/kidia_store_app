@@ -19,9 +19,10 @@ function markup(status, autoDownload = false) {
           <input type="hidden" name="kidia_mobile_download_nonce" value="download-nonce">
           <button type="submit" data-build-action>
             <span class="dashicons dashicons-smartphone" data-build-action-icon></span>
-            <span data-build-action-label>Build & Download APK</span>
+            <span data-build-action-label>Build & Download Your App</span>
           </button>
         </form>
+        <button type="button" data-build-cancel ${["queued", "building"].includes(status) ? "" : "hidden"}>Cancel Build</button>
       </div>
     </div>
   </body>`;
@@ -31,13 +32,15 @@ function builderConfig() {
   return {
     ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
     nonce: "status-nonce",
+    cancelNonce: "cancel-nonce",
     labels: {
       starting: "Starting APK build…",
       building: "Building your APK…",
       ready: "Your APK is ready to install.",
-      buildDownload: "Build & Download APK",
+      buildDownload: "Build & Download Your App",
       download: "Download APK",
-      retry: "Try Build & Download Again",
+      cancelled: "Build cancelled.",
+      cancelFailed: "The build could not be cancelled.",
       timeout: "The APK build request took too long. Please try again."
     }
   };
@@ -136,6 +139,7 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.equal(button.getAttribute("aria-busy"), "true");
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Building your APK… 15%");
   assert.equal(root.querySelector("[data-build-progress]").hidden, false);
+  assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Cancel must appear while the build is active.");
 }
 
 async function testFailedBuildReturnsTheSameControlToRetry() {
@@ -165,7 +169,7 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.querySelector("[data-build-form-action]").value, "kidia_mobile_build_app");
   assert.equal(button.disabled, false);
   assert.equal(button.classList.contains("is-loading"), false);
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Try Build & Download Again");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
   assert.equal(root.querySelectorAll("[data-build-action]").length, 1, "Failure must not reveal a second download button.");
 }
 
@@ -197,7 +201,46 @@ async function testHungStartRequestReturnsToRetry() {
   assert.equal(root.dataset.status, "failed", "A hung start request must not leave Overview on Starting forever.");
   assert.equal(root.querySelector("[data-build-message]").textContent, "The APK build request took too long. Please try again.");
   assert.equal(button.disabled, false);
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Try Build & Download Again");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
+}
+
+async function testActiveBuildCanBeCancelled() {
+  const dom = new JSDOM(markup("building"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  const requests = [];
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async (_url, options) => {
+    requests.push(options.body.toString());
+    const cancelling = options.body.toString().includes("kidia_mobile_app_build_cancel");
+    return {
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: cancelling
+          ? { status: "cancelled", progress: 0, message: "Build cancelled.", downloadReady: false }
+          : { status: "building", progress: 20, message: "Building.", downloadReady: false }
+      })
+    };
+  };
+  dom.window.setTimeout = () => 0;
+  dom.window.eval(script);
+
+  const cancelButton = root.querySelector("[data-build-cancel]");
+  assert.equal(cancelButton.hidden, false, "Cancel must be visible when the page loads with an active build.");
+  cancelButton.click();
+  await flush();
+
+  assert.equal(requests.some((body) => body.includes("action=kidia_mobile_app_build_cancel")), true);
+  assert.equal(requests.some((body) => body.includes("nonce=cancel-nonce")), true);
+  assert.equal(root.dataset.status, "cancelled");
+  assert.equal(root.querySelector("[data-build-message]").textContent, "Build cancelled.");
+  assert.equal(cancelButton.hidden, true);
+  assert.equal(root.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
+  assert.equal(root.querySelector("[data-build-action]").disabled, false);
 }
 
 (async function () {
@@ -205,5 +248,6 @@ async function testHungStartRequestReturnsToRetry() {
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
+  await testActiveBuildCanBeCancelled();
   console.log("APK single build-and-download control tests passed.");
 })();
