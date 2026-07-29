@@ -27,6 +27,11 @@ final class Kidia_Mobile_CMS_Admin {
 		'kidia-mobile-account-builder'  => 'account',
 	);
 
+	/** @var array<string,string> Public routes inside the single CMS screen. */
+	private const CMS_VIEWS = array(
+		'overview'=>'kidia-mobile-cms','setup'=>'kidia-mobile-setup','pages'=>'kidia-mobile-splash-screen','splash'=>'kidia-mobile-splash-screen','home'=>'kidia-mobile-home-builder','category'=>'kidia-mobile-category-builder','catalog'=>'kidia-mobile-catalog-builder','product'=>'kidia-mobile-product-builder','wishlist'=>'kidia-mobile-wishlist-builder','account'=>'kidia-mobile-account-builder','checkout'=>'kidia-mobile-checkout-suggestions','saved-themes'=>'kidia-mobile-saved-themes','store-data'=>'kidia-mobile-store-data','ai-insights'=>'kidia-mobile-ai-insights','push'=>'kidia-mobile-push-notifications','website-promotion'=>'kidia-mobile-website-app-promotion',
+	);
+
 	/**
 	 * Library editor page slugs keyed by element type.
 	 *
@@ -206,9 +211,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 * @return string
 	 */
 	public function admin_body_class( string $classes ): string {
-		$page = isset( $_GET['page'] )
-			? sanitize_key( wp_unslash( $_GET['page'] ) )
-			: '';
+		$page = $this->effective_cms_page();
 		$builder_pages = array_merge(
 			array(
 				'kidia-mobile-home-builder',
@@ -242,7 +245,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 * @return void
 	 */
 	public function suppress_external_admin_notices(): void {
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$page = $this->effective_cms_page();
 		if ( ! current_user_can( self::CAPABILITY ) || ! $this->is_public_cms_page( $page ) ) {
 			return;
 		}
@@ -1783,7 +1786,7 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
 		}
-		$slug = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$slug = $this->effective_cms_page();
 		$page = self::PAGE_BUILDER_SLUGS[ $slug ] ?? '';
 		if ( '' === $page ) {
 			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
@@ -1837,12 +1840,14 @@ final class Kidia_Mobile_CMS_Admin {
 
 	/** Renders the shared top navigation on every public CMS screen. */
 	public function render_cms_shell(): void {
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$page = $this->effective_cms_page();
 		if ( ! current_user_can( self::CAPABILITY ) || ! $this->is_public_cms_page( $page ) ) {
 			return;
 		}
 		$tab = static function ( string $label, string $page_slug, string $icon ): array {
-			return array( 'label' => $label, 'icon' => $icon, 'url' => add_query_arg( 'page', $page_slug, admin_url( 'admin.php' ) ) );
+			$view = array_search( $page_slug, self::CMS_VIEWS, true ); $args = array( 'page' => 'kidia-mobile-cms' );
+			if ( false !== $view && 'overview' !== $view ) { $args['view'] = $view; }
+			return array( 'label' => $label, 'icon' => $icon, 'url' => add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		};
 		$tabs = array(
 			'overview'   => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
@@ -1896,7 +1901,8 @@ final class Kidia_Mobile_CMS_Admin {
 				'icon'  => 'dashicons-cart',
 				'url'   => add_query_arg(
 					array(
-						'page'         => 'kidia-mobile-store-data',
+						'page'         => 'kidia-mobile-cms',
+						'view'         => 'store-data',
 						'store_tab'    => 'abandoned-carts',
 						'store_source' => 'all',
 					),
@@ -1935,6 +1941,14 @@ final class Kidia_Mobile_CMS_Admin {
 			),
 			true
 		);
+	}
+
+	/** Resolves the active view while the browser remains on one WordPress page. */
+	private function effective_cms_page(): string {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( 'kidia-mobile-cms' !== $page ) { return $page; }
+		$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'overview';
+		return self::CMS_VIEWS[ $view ] ?? 'kidia-mobile-cms';
 	}
 
 	/** Renders the WooCommerce category hierarchy editor. */
@@ -2030,8 +2044,17 @@ final class Kidia_Mobile_CMS_Admin {
     				)
     			);
     		}
+			$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'overview';
+			if ( isset( self::CMS_VIEWS[ $view ] ) && 'overview' !== $view ) {
+				$legacy_page = self::CMS_VIEWS[ $view ];
+				if ( 'kidia-mobile-home-builder' === $legacy_page ) { $this->home_builder_page(); return; }
+				if ( 'kidia-mobile-category-builder' === $legacy_page ) { $this->category_builder_page(); return; }
+				if ( isset( self::PAGE_BUILDER_SLUGS[ $legacy_page ] ) ) { $this->page_builder_page(); return; }
+				$callbacks = array('kidia-mobile-splash-screen'=>'splash_screen_page','kidia-mobile-checkout-suggestions'=>'checkout_suggestions_page','kidia-mobile-setup'=>'setup_wizard_page','kidia-mobile-saved-themes'=>'saved_themes_page','kidia-mobile-store-data'=>'store_data_page','kidia-mobile-ai-insights'=>'ai_insights_page','kidia-mobile-push-notifications'=>'push_notifications_page','kidia-mobile-website-app-promotion'=>'website_app_promotion_page');
+				if ( isset( $callbacks[ $legacy_page ] ) ) { $this->{$callbacks[ $legacy_page ]}(); return; }
+			}
 
-    		$monitor = new Kidia_Mobile_CMS_API_Monitor();
+			$monitor = new Kidia_Mobile_CMS_API_Monitor();
 
     		$api = $monitor->get_status();
 			$license_manager = new Kidia_Mobile_License_Manager();
@@ -2335,9 +2358,7 @@ final class Kidia_Mobile_CMS_Admin {
 			public function enqueue_assets(
 					string $hook_suffix
 				): void {
-					$page = isset( $_GET['page'] )
-						? sanitize_key( wp_unslash( $_GET['page'] ) )
-						: '';
+					$page = $this->effective_cms_page();
 					$is_kidia_page = 0 === strpos( $page, 'kidia-mobile-' )
 						|| 'kidia-mobile-cms_page_kidia-mobile-home-builder' === $hook_suffix;
 
