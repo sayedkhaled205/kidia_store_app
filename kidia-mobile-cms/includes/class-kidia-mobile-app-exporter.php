@@ -19,6 +19,7 @@ final class Kidia_Mobile_App_Exporter {
 		add_action( 'admin_post_kidia_mobile_download_apk', array( $this, 'handle_download_apk' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_build_start', array( $this, 'handle_build_start' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_build_status', array( $this, 'handle_build_status' ) );
+		add_action( 'wp_ajax_kidia_mobile_app_build_cancel', array( $this, 'handle_build_cancel' ) );
 		add_action( self::ASYNC_HOOK, array( $this, 'process_queued_build' ), 10, 1 );
 	}
 
@@ -274,7 +275,7 @@ final class Kidia_Mobile_App_Exporter {
 			}
 			return $state;
 		}
-		if ( 'failed' === (string) $state['status'] || ( 'ready' === (string) $state['status'] && ! $force ) ) {
+		if ( in_array( (string) $state['status'], array( 'failed', 'cancelled' ), true ) || ( 'ready' === (string) $state['status'] && ! $force ) ) {
 			return $state;
 		}
 
@@ -310,6 +311,36 @@ final class Kidia_Mobile_App_Exporter {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
 		wp_send_json_success( $this->browser_state( $result ) );
+	}
+
+	public function handle_build_cancel(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to cancel this build.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
+
+		$state = self::state();
+		if ( ! in_array( (string) $state['status'], array( 'queued', 'building' ), true ) ) {
+			wp_send_json_success( $this->browser_state( $state ) );
+		}
+
+		$build_id = sanitize_text_field( (string) $state['build_id'] );
+		if ( '' !== $build_id ) {
+			$result = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
+			}
+		}
+
+		$state['status']        = 'cancelled';
+		$state['progress']      = 0;
+		$state['message']       = __( 'Build cancelled.', 'kidia-mobile-cms' );
+		$state['completed_at']  = time();
+		$state['download_url']  = '';
+		$state['request_token'] = wp_generate_uuid4();
+		update_option( self::STATE_OPTION, $state, false );
+
+		wp_send_json_success( $this->browser_state( $state ) );
 	}
 
 	public function handle_download_apk(): void {
@@ -536,8 +567,8 @@ final class Kidia_Mobile_App_Exporter {
 			'ready'      => 'ready',
 			'failed'     => 'failed',
 			'error'      => 'failed',
-			'cancelled'  => 'failed',
-			'canceled'   => 'failed',
+			'cancelled'  => 'cancelled',
+			'canceled'   => 'cancelled',
 		);
 		$status        = $status_map[ $remote_status ] ?? 'queued';
 		$download_url = (string) (
@@ -559,7 +590,7 @@ final class Kidia_Mobile_App_Exporter {
 		$state['progress']      = $progress;
 		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'kidia-mobile-cms' ) : '' ) ) );
 		$state['started_at']    = absint( $state['started_at'] ) ?: time();
-		$state['completed_at']  = in_array( $status, array( 'ready', 'failed' ), true ) ? time() : 0;
+		$state['completed_at']  = in_array( $status, array( 'ready', 'failed', 'cancelled' ), true ) ? time() : 0;
 		$state['download_url']  = esc_url_raw( $download_url );
 		$state['apk_file_name'] = sanitize_file_name( $file_name ?: 'woomobile-app.apk' );
 		$state['hash']          = $hash;
