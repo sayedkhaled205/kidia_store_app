@@ -195,7 +195,7 @@
 @media(min-width:783px){.kidia-page-card__header:has(>.kidia-card-actions),.kidia-builder-block__header:has(>.kidia-card-actions){padding-left:334px}}
 
 /* Checkout Fields Builder */
-.kidia-checkout-toolbar>div{display:flex;align-items:center;gap:8px}.kidia-checkout-toolbar .button{display:inline-flex;align-items:center;gap:5px;margin:0}
+.kidia-checkout-toolbar>div{display:flex;align-items:center;gap:8px}.kidia-checkout-toolbar .button{display:inline-flex;align-items:center;justify-content:center;gap:5px;margin:0}.kidia-checkout-toolbar .button>.dashicons{display:grid!important;width:20px;height:20px;flex:0 0 20px;align-self:center;place-items:center;margin:0;font-size:20px;line-height:20px!important;vertical-align:middle}.kidia-checkout-toolbar .button>.dashicons::before{display:block;width:20px;height:20px;line-height:20px!important}
 .kidia-checkout-fields-panel,.kidia-checkout-design-panel{width:77%;margin:0 0 12px auto;padding:16px;border:1px solid #d8e5e1;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(35,107,89,.06)}
 .kidia-checkout-fields-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid #dfeae7}.kidia-checkout-fields-heading h2{margin:0 0 5px;color:#236b59;font-size:18px}.kidia-checkout-fields-heading p{max-width:660px;margin:0;color:#687571;font-size:12px;line-height:1.5}
 .kidia-checkout-design-heading{margin-bottom:14px}.kidia-checkout-design-heading h2{margin:0 0 5px;color:#236b59;font-size:18px}.kidia-checkout-design-heading p{margin:0;color:#687571;font-size:12px;line-height:1.5}

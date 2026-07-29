@@ -808,6 +808,7 @@ function runMergeControlsContractTest() {
 	assert.match(checkoutSuggestions, /data-checkout-add-field/, "Checkout fields must be addable.");
 	assert.match(checkoutSuggestions, /kidia-checkout-field-remove/, "Checkout fields must be removable.");
 	assert.match(checkoutSuggestions, /draggable="true"/, "Checkout fields must be draggable.");
+	assert.match(pageBuilderCss, /\.kidia-checkout-toolbar \.button>\.dashicons\{[^}]*display:grid!important;[^}]*align-self:center;[^}]*place-items:center;[^}]*line-height:20px!important;/, "Checkout toolbar icons must stay vertically centered inside Add Field and Restore Defaults.");
 	assert.match(checkoutSuggestions, /name="checkout\[enabled\]"[\s\S]*kidia-page-status-control__track[\s\S]*Checkout fields status/, "Checkout status must use a dedicated track instead of exposing the native WordPress checkbox.");
 	assert.match(pageBuilderCss, /\.kidia-page-status-control>input\[type=checkbox\]\{[^}]*clip-path:inset\(50%\)!important;[^}]*opacity:0!important;[^}]*pointer-events:none!important[^}]*\}/, "Checkout status must fully hide the native WordPress checkbox geometry.");
 	assert.match(pageBuilderCss, /\.kidia-page-status-control__track\{[^}]*grid-column:2;[^}]*border-radius:999px;[^}]*background:#a7aaad[^}]*\}[\s\S]*input\[type=checkbox\]:checked \+ \.kidia-page-status-control__track:before\{[^}]*left:23px/, "Checkout status must keep both Off and On thumbs inside its dedicated track.");
