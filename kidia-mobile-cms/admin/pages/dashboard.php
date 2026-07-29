@@ -154,49 +154,55 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						data-can-build="<?php echo $setup_step_complete ? '1' : '0'; ?>"
 						data-auto-download="<?php echo $build_auto_download ? '1' : '0'; ?>"
 					>
-						<form class="kidia-app-build__card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-build-form>
-							<input type="hidden" name="action" value="<?php echo esc_attr( $build_action ); ?>" data-build-form-action>
-							<?php wp_nonce_field( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce', false ); ?>
-							<?php wp_nonce_field( 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce', false ); ?>
-							<button
-								type="submit"
-								class="kidia-app-build__card-button<?php echo $build_in_progress ? ' is-loading' : ''; ?>"
-								data-build-action
-								aria-busy="<?php echo $build_in_progress ? 'true' : 'false'; ?>"
-								<?php disabled( ! $setup_step_complete || $build_in_progress ); ?>
-							>
-								<span class="kidia-app-build__card-label" data-build-action-label><?php echo esc_html( $build_button_label ); ?></span>
-								<span class="kidia-app-build__progress" data-build-progress <?php echo $build_in_progress ? '' : 'hidden'; ?>>
-									<span
-										data-build-progress-value
-										role="progressbar"
-										aria-valuemin="0"
-										aria-valuemax="100"
-										aria-valuenow="<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>"
-										style="width:<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>%"
-									></span>
-								</span>
-								<span class="screen-reader-text" data-build-message>
-									<?php
-									echo esc_html(
-										(string) $build_state['message'] ?: (
-											$build_step_complete
-												? __( 'Your APK is ready to install.', 'kidia-mobile-cms' )
-												: __( 'Build an APK after completing the application setup.', 'kidia-mobile-cms' )
-										)
-									);
-									?>
-								</span>
-							</button>
-						</form>
-						<button
-							type="button"
-							class="kidia-app-build__cancel"
-							data-build-cancel
-							<?php echo $build_in_progress ? '' : 'hidden'; ?>
-						>
-							<?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?>
-						</button>
+						<div class="kidia-app-build__card">
+							<strong class="kidia-app-build__title"><?php esc_html_e( 'Build & Download Your App', 'kidia-mobile-cms' ); ?></strong>
+							<p class="kidia-app-build__message" data-build-message>
+								<?php
+								echo esc_html(
+									(string) $build_state['message'] ?: (
+										$build_step_complete
+											? __( 'Your APK is ready to install.', 'kidia-mobile-cms' )
+											: __( 'Build an APK after completing the application setup.', 'kidia-mobile-cms' )
+									)
+								);
+								?>
+							</p>
+							<div class="kidia-app-build__progress" data-build-progress <?php echo $build_in_progress ? '' : 'hidden'; ?>>
+								<span
+									data-build-progress-value
+									role="progressbar"
+									aria-valuemin="0"
+									aria-valuemax="100"
+									aria-valuenow="<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>"
+									style="width:<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>%"
+								></span>
+							</div>
+							<div class="kidia-app-build__actions">
+								<form class="kidia-app-build__card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-build-form>
+									<input type="hidden" name="action" value="<?php echo esc_attr( $build_action ); ?>" data-build-form-action>
+									<?php wp_nonce_field( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce', false ); ?>
+									<?php wp_nonce_field( 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce', false ); ?>
+									<button
+										type="submit"
+										class="kidia-app-build__card-button"
+										data-build-action
+										aria-busy="<?php echo $build_in_progress ? 'true' : 'false'; ?>"
+										<?php echo $build_in_progress ? 'hidden' : ''; ?>
+										<?php disabled( ! $setup_step_complete || $build_in_progress ); ?>
+									>
+										<span class="kidia-app-build__card-label" data-build-action-label><?php echo esc_html( $build_button_label ); ?></span>
+									</button>
+								</form>
+								<button
+									type="button"
+									class="kidia-app-build__cancel"
+									data-build-cancel
+									<?php echo $build_in_progress ? '' : 'hidden'; ?>
+								>
+									<?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?>
+								</button>
+							</div>
+						</div>
 					</li>
 				<?php else : ?>
 					<li class="<?php echo esc_attr( $step_class ); ?>">
@@ -436,32 +442,55 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-customer-journey__steps li.kidia-customer-journey__build-step {
-		position: relative;
 		display: block;
-		overflow: hidden;
 		padding: 0;
-		border: 0;
-		background: #2f806e;
+		border-color: #cfe2dc;
+		background: #f8fcfb;
 		opacity: 1;
 	}
 
+	.kidia-app-build__card {
+		display: flex;
+		min-height: 120px;
+		box-sizing: border-box;
+		flex-direction: column;
+		justify-content: center;
+		padding: 15px;
+	}
+
+	.kidia-app-build__title {
+		color: #173f36;
+		font-size: 14px;
+	}
+
+	.kidia-app-build__message {
+		min-height: 32px;
+		margin: 5px 0 9px !important;
+		color: #60706c !important;
+		font-size: 11px !important;
+		line-height: 1.4 !important;
+	}
+
+	.kidia-app-build__actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
 	.kidia-app-build__card-form {
-		width: 100%;
-		height: 100%;
+		flex: 1;
 		margin: 0;
 	}
 
 	.kidia-app-build__card-button {
-		position: relative;
-		display: flex;
+		display: inline-flex;
 		width: 100%;
-		height: 100%;
-		min-height: 120px;
+		min-height: 34px;
 		align-items: center;
 		justify-content: center;
-		padding: 22px 24px;
+		padding: 7px 12px;
 		border: 1px solid #2f806e;
-		border-radius: 14px;
+		border-radius: 9px;
 		background: #2f806e;
 		color: #ffffff;
 		font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -496,56 +525,45 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	.kidia-app-build__card-label {
 		display: block;
-		max-width: 230px;
-		font-size: clamp(17px, 1.35vw, 20px);
+		font-size: clamp(11px, .85vw, 12px);
 		font-weight: 700;
-		line-height: 1.28;
-		letter-spacing: -.015em;
+		line-height: 1.3;
 		text-wrap: balance;
 	}
 
 	.kidia-app-build__progress {
-		position: absolute;
-		right: 16px;
-		bottom: 13px;
-		left: 16px;
 		overflow: hidden;
-		height: 5px;
+		width: 100%;
+		height: 7px;
+		margin: 0 0 10px;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, .24);
+		background: #dcebe7;
 	}
 
 	.kidia-app-build__progress span {
 		display: block;
 		height: 100%;
 		border-radius: inherit;
-		background: #ffffff;
+		background: #2f806e;
 		transition: width .25s ease;
 	}
 
-	.kidia-app-build__card-button.is-loading .kidia-app-build__card-label {
-		animation: kidia-app-build-pulse 1s ease-in-out infinite alternate;
-	}
-
 	.kidia-app-build__cancel {
-		position: absolute;
-		right: 50%;
-		bottom: 14px;
-		z-index: 2;
-		padding: 7px 16px;
-		border: 1px solid rgba(255, 255, 255, .78);
-		border-radius: 999px;
+		flex: 1;
+		min-height: 34px;
+		padding: 7px 12px;
+		border: 1px solid #d7a5a5;
+		border-radius: 9px;
 		background: #ffffff;
 		color: #a52b2b;
 		font-weight: 700;
 		line-height: 1.2;
 		cursor: pointer;
-		transform: translateX(50%);
 	}
 
 	.kidia-app-build__cancel:hover,
 	.kidia-app-build__cancel:focus {
-		border-color: #ffffff;
+		border-color: #b45a5a;
 		background: #fff5f5;
 		color: #8c1f1f;
 	}
@@ -557,20 +575,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	.kidia-app-build__cancel[hidden] {
 		display: none;
-	}
-
-	.kidia-app-build__card-button.is-loading {
-		padding-bottom: 58px;
-	}
-
-	.kidia-app-build__card-button.is-loading .kidia-app-build__progress {
-		bottom: 50px;
-	}
-
-	@keyframes kidia-app-build-pulse {
-		to {
-			opacity: .62;
-		}
 	}
 
 	.kidia-dashboard__card {
