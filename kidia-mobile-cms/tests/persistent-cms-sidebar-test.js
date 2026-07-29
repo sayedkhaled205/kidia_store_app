@@ -48,6 +48,7 @@ assert.match(
 assert.match(admin, /private const CMS_VIEWS = array[\s\S]*store-data/, "Navigation destinations must be views of one CMS screen.");
 assert.match(admin, /wp_ajax_kidia_mobile_cms_view[\s\S]*cms_view_fragment/, "CMS views must use the fragment endpoint.");
 assert.match(admin, /Returns one CMS view without another WordPress document, sidebar or frame/, "The endpoint must return view content only.");
+assert.match(admin, /'builderScreen'\s*=>\s*\$this->is_builder_screen/, "Every fragment must report whether its view owns the fixed Builder workspace.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
@@ -56,12 +57,14 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
     <aside data-kidia-cms-sidebar>
       <nav class="kidia-cms-sidebar__nav">
         <a class="is-active" data-kidia-sidebar-view="overview" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
+        <a data-kidia-sidebar-view="pages" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Design Your Pages</a>
         <a data-kidia-sidebar-view="setup" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </aside>
     <div class="kidia-cms-shell" data-kidia-cms-shell>
       <nav class="kidia-cms-tabs">
         <a class="is-active" data-kidia-page-view="overview" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
+        <a data-kidia-page-view="home" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Home</a>
         <a data-kidia-page-view="setup" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </div>
@@ -77,26 +80,31 @@ dom.window.kidiaCMSNavigation = {
   ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
   nonce: "test-nonce"
 };
-dom.window.fetch = async () => ({
-  ok: true,
-  json: async () => ({
-    success: true,
-    data: {
-      html: "<section data-page-content>Setup content</section>",
-      view: "setup",
-      activeSidebar: "setup",
-      showPageTabs: false,
-      styles: [],
-      scripts: []
-    }
-  })
-});
+dom.window.fetch = async (_url, options = {}) => {
+  const target = new URLSearchParams(String(options.body || "")).get("target") || "";
+  const builderScreen = target.includes("view=home");
+  return {
+    ok: true,
+    json: async () => ({
+      success: true,
+      data: {
+        html: `<section data-page-content>${builderScreen ? "Home" : "Setup"} content</section>`,
+        view: builderScreen ? "home" : "setup",
+        activeSidebar: builderScreen ? "pages" : "setup",
+        showPageTabs: builderScreen,
+        builderScreen,
+        styles: [],
+        scripts: []
+      }
+    })
+  };
+};
 
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
 const originalShell = dom.window.document.querySelector("[data-kidia-cms-shell]");
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 dom.window.eval(script);
-originalSidebar.querySelector("a:last-child").dispatchEvent(
+originalSidebar.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
   new dom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
 );
 
@@ -113,11 +121,25 @@ setTimeout(() => {
     originalWorkspace,
     "Navigation must retain the exact shared CMS workspace frame."
   );
-  assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Setup content");
-  assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Setup Wizard");
-  assert.equal(originalShell.hidden, true);
-  assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=setup");
-  assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
-  assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
-  console.log("Persistent CMS sidebar runtime test passed.");
+  assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Home content");
+  assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Design Your Pages");
+  assert.equal(originalShell.hidden, false);
+  assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=home");
+  assert.equal(dom.window.document.body.classList.contains("kidia-cms-builder-screen"), true, "Entering a Builder fragment must restore the fixed body workspace.");
+  assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), true, "The document root must lock with the Builder body.");
+
+  originalSidebar.querySelector('[data-kidia-sidebar-view="setup"]').dispatchEvent(
+    new dom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
+  );
+  setTimeout(() => {
+    assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Setup content");
+    assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Setup Wizard");
+    assert.equal(originalShell.hidden, true);
+    assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=setup");
+    assert.equal(dom.window.document.body.classList.contains("kidia-cms-builder-screen"), false, "Leaving a Builder fragment must release the fixed body workspace.");
+    assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), false, "The document root must be released with the Builder body.");
+    assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
+    assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
+    console.log("Persistent CMS sidebar runtime test passed.");
+  }, 25);
 }, 25);

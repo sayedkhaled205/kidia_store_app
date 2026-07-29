@@ -10,7 +10,8 @@ const banner = read("includes/blocks/class-kidia-mobile-banner-grid-block.php");
 
 const chromeTemplate = read("admin/pages/fixed-chrome-card.php");
 const pageBuilderCss = read("admin/assets/page-builder.css");
-assert.match(chromeTemplate, /kidia-fixed-chrome-toggle[\s\S]*kidia-builder-switch__track[\s\S]*kidia-builder-switch__state/, "Fixed Header and Footer must use the exact normal-element switch structure.");
+assert.match(chromeTemplate, /kidia-card-actions[\s\S]*kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle[\s\S]*kidia-builder-switch__track[\s\S]*kidia-builder-switch__state/, "Fixed Header and Footer must use the exact normal-element switch structure.");
+assert.doesNotMatch(chromeTemplate, /kidia-fixed-chrome-toggle/, "Fixed Header and Footer must not retain a legacy switch class that can restore a separate appearance.");
 assert.match(chromeTemplate, /class="kidia-card-actions"[\s\S]*kidia-card-action--primary[\s\S]*kidia-card-action--secondary[\s\S]*kidia-card-action--expand[\s\S]*kidia-card-action--toggle/, "Fixed Header and Footer must use the canonical four-slot closed-card action strip.");
 assert.match(pageBuilderCss, /\.kidia-card-action--toggle\s*\{\s*grid-column:4;\s*grid-row:1;\s*direction:rtl;\s*\}/, "Fixed Header and Footer On/Off must stay in the canonical fourth action slot without changing its original direction or appearance.");
 assert.match(banner, /kidia-hero-block-item__header[\s\S]*Banner[\s\S]*kidia-repeatable-item-actions[\s\S]*kidia-remove-repeatable-item[\s\S]*kidia-add-repeatable-item[\s\S]*kidia-banner-item-toggle[\s\S]*kidia-toggle-state/, "Banner must use the same title, Remove, Add and On/Off header structure as Slider.");

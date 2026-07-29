@@ -82,7 +82,7 @@ $footer_icon_symbols = array(
 				<span class="kidia-chrome-transfer-status" role="status" aria-live="polite"></span>
 			</div>
 			<button type="button" class="button kidia-fixed-chrome-expand kidia-page-expand kidia-card-action kidia-card-action--expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
-			<label class="kidia-builder-switch kidia-builder-switch--card kidia-fixed-chrome-toggle kidia-card-action kidia-card-action--toggle"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="0"><input type="checkbox" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="1" <?php checked( ! empty( $chrome_component['enabled'] ) ); ?>><span class="kidia-builder-switch__track"></span><span class="kidia-builder-switch__state"></span></label>
+			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="0"><input type="checkbox" name="<?php echo esc_attr( $chrome_prefix ); ?>[enabled]" value="1" <?php checked( ! empty( $chrome_component['enabled'] ) ); ?>><span class="kidia-builder-switch__track"></span><span class="kidia-builder-switch__state"></span></label>
 		</div>
 	</div>
 	<div class="kidia-page-card__body" hidden>
