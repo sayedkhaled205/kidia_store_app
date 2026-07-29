@@ -15,7 +15,7 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.54/, "The plugin header must be version 1.45.54.");
+assert.match(plugin, /Version:\s+1\.45\.55/, "The plugin header must be version 1.45.55.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_LICENSE_PUBLIC_KEY[\s\S]*pno\+qR490JO\/niHqlK82hXz0SwloDlwShxnmimmLQz0=/,
@@ -43,8 +43,18 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /@media\(min-width:961px\)\{[\s\S]*#wpbody-content\{float:left!important;width:calc\(100vw - 216px\)\}/,
-  "Desktop CMS pages must keep the Overview workspace width when a document scrollbar appears."
+  /html\{[\s\S]*overflow-x:clip;[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
+  "CMS pages must reserve the document scrollbar gutter and prevent page-level horizontal scrolling."
+);
+assert.match(
+  shellCss,
+  /#wpbody-content\{[\s\S]*width:calc\(100% - 36px\);[\s\S]*max-width:calc\(100% - 36px\);/,
+  "The CMS frame must use the available WordPress content width instead of the viewport width."
+);
+assert.doesNotMatch(
+  shellCss,
+  /#wpbody-content\{[^}]*width:calc\(100vw/,
+  "The CMS frame must not include the browser scrollbar in its width."
 );
 assert.doesNotMatch(
   shellCss,
