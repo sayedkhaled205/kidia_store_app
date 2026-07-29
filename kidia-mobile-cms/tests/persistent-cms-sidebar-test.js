@@ -49,6 +49,9 @@ assert.match(admin, /private const CMS_VIEWS = array[\s\S]*store-data/, "Navigat
 assert.match(admin, /wp_ajax_kidia_mobile_cms_view[\s\S]*cms_view_fragment/, "CMS views must use the fragment endpoint.");
 assert.match(admin, /Returns one CMS view without another WordPress document, sidebar or frame/, "The endpoint must return view content only.");
 assert.match(admin, /'builderScreen'\s*=>\s*\$this->is_builder_screen/, "Every fragment must report whether its view owns the fixed Builder workspace.");
+assert.match(admin, /'version'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/, "The shell and every fragment must expose the active plugin version.");
+assert.match(script, /version:\s*currentVersion/, "Every fragment request must identify the version of the running shell.");
+assert.match(script, /loaded\.conflict[\s\S]*hardNavigate\(cacheKey\)/, "Conflicting versions of the same asset must force a clean document load.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
@@ -78,10 +81,14 @@ const dom = new JSDOM(initial, {
 dom.window.scrollTo = () => {};
 dom.window.kidiaCMSNavigation = {
   ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
-  nonce: "test-nonce"
+  nonce: "test-nonce",
+  version: "1.45.60"
 };
+const requestedVersions = [];
 dom.window.fetch = async (_url, options = {}) => {
-  const target = new URLSearchParams(String(options.body || "")).get("target") || "";
+  const request = new URLSearchParams(String(options.body || ""));
+  const target = request.get("target") || "";
+  requestedVersions.push(request.get("version"));
   const builderScreen = target.includes("view=home");
   return {
     ok: true,
@@ -93,6 +100,7 @@ dom.window.fetch = async (_url, options = {}) => {
         activeSidebar: builderScreen ? "pages" : "setup",
         showPageTabs: builderScreen,
         builderScreen,
+        version: "1.45.60",
         styles: [],
         scripts: []
       }
@@ -140,6 +148,74 @@ setTimeout(() => {
     assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), false, "The document root must be released with the Builder body.");
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
-    console.log("Persistent CMS sidebar runtime test passed.");
+    assert.deepEqual(requestedVersions, ["1.45.60", "1.45.60"], "Every navigation request must carry the running asset version.");
+
+    const staleDom = new JSDOM(`<!doctype html><html><head>
+      <link id="legacy-kidia-shell-css" rel="stylesheet" href="https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.52-old">
+    </head><body class="wp-admin kidia-mobile-cms">
+      <main id="wpbody-content">
+        <aside data-kidia-cms-sidebar>
+          <a data-kidia-sidebar-view="pages" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Design Your Pages</a>
+        </aside>
+        <div class="kidia-cms-shell" data-kidia-cms-shell>
+          <a data-kidia-page-view="home" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home">Home</a>
+        </div>
+        <section data-page-content>Overview content</section>
+      </main>
+    </body></html>`, {
+      runScripts: "outside-only",
+      url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-cms"
+    });
+    staleDom.window.scrollTo = () => {};
+    staleDom.window.kidiaCMSNavigation = {
+      ajaxUrl: "https://store.test/wp-admin/admin-ajax.php",
+      nonce: "test-nonce",
+      version: "1.45.60"
+    };
+    let forcedUrl = "";
+    staleDom.window.kidiaCmsHardNavigate = (url) => {
+      forcedUrl = url;
+    };
+    staleDom.window.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          html: "<section data-page-content>Home content</section>",
+          view: "home",
+          activeSidebar: "pages",
+          showPageTabs: true,
+          builderScreen: true,
+          version: "1.45.60",
+          styles: [{
+            handle: "kidia-mobile-cms-shell",
+            src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.60-new"
+          }],
+          scripts: []
+        }
+      })
+    });
+    staleDom.window.eval(script);
+    staleDom.window.document.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
+      new staleDom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
+    );
+    setTimeout(() => {
+      assert.equal(
+        forcedUrl,
+        "https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=home",
+        "A stale stylesheet must reload the requested view as a clean document."
+      );
+      assert.equal(
+        staleDom.window.document.querySelector("[data-page-content]").textContent,
+        "Overview content",
+        "The stale shell must not be mutated before the clean document load."
+      );
+      assert.equal(
+        staleDom.window.document.querySelectorAll('link[href*="cms-shell.css"]').length,
+        1,
+        "Navigation must never combine old and current copies of the shell stylesheet."
+      );
+      console.log("Persistent CMS sidebar and asset version runtime tests passed.");
+    }, 25);
   }, 25);
 }, 25);

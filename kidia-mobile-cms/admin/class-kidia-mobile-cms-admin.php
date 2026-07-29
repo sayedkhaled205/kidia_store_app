@@ -1977,6 +1977,7 @@ final class Kidia_Mobile_CMS_Admin {
 				'activeSidebar' => $active_sidebar,
 				'showPageTabs'  => in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true ),
 				'builderScreen' => $this->is_builder_screen( $this->effective_cms_page() ),
+				'version'       => KIDIA_MOBILE_CMS_VERSION,
 				'styles'        => $this->cms_fragment_assets( wp_styles(), 'css' ),
 				'scripts'       => $this->cms_fragment_assets( wp_scripts(), 'js' ),
 			)
@@ -2525,6 +2526,7 @@ final class Kidia_Mobile_CMS_Admin {
 						array(
 							'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 							'nonce'   => wp_create_nonce( 'kidia_mobile_cms_view' ),
+							'version' => KIDIA_MOBILE_CMS_VERSION,
 						)
 					);
 					if ( in_array( $page, array( 'kidia-mobile-cms', 'kidia-mobile-setup' ), true ) ) {
