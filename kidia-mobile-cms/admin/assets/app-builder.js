@@ -22,6 +22,7 @@
 		const button = root.querySelector('[data-build-action]');
 		const buttonLabel = root.querySelector('[data-build-action-label]');
 		const icon = root.querySelector('[data-build-action-icon]');
+		const cancelButton = root.querySelector('[data-build-cancel]');
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
 		const building = isBuilding(status);
@@ -40,11 +41,13 @@
 			} else if (building) {
 				const percentage = progress > 0 ? ' ' + progress + '%' : '';
 				buttonLabel.textContent = label('building', 'Building your APK…') + percentage;
-			} else if (status === 'failed') {
-				buttonLabel.textContent = label('retry', 'Try Build & Download Again');
 			} else {
-				buttonLabel.textContent = label('buildDownload', 'Build & Download APK');
+				buttonLabel.textContent = label('buildDownload', 'Build & Download Your App');
 			}
+		}
+		if (cancelButton) {
+			cancelButton.hidden = !building;
+			cancelButton.disabled = false;
 		}
 		if (icon) {
 			icon.className = 'dashicons ' + (
@@ -174,6 +177,32 @@
 		}
 	}
 
+	async function cancelBuild(root) {
+		if (!isBuilding(root.dataset.status)) return;
+
+		if (timer) {
+			window.clearTimeout(timer);
+			timer = 0;
+		}
+		const cancelButton = root.querySelector('[data-build-cancel]');
+		if (cancelButton) cancelButton.disabled = true;
+		const body = new URLSearchParams({
+			action: 'kidia_mobile_app_build_cancel',
+			nonce: config.cancelNonce || ''
+		});
+
+		try {
+			const state = await request(body);
+			autoDownload.delete(root);
+			render(state);
+		} catch (error) {
+			if (cancelButton) cancelButton.disabled = false;
+			const message = root.querySelector('[data-build-message]');
+			if (message) message.textContent = error.message || label('cancelFailed', 'The build could not be cancelled.');
+			schedulePoll(4000);
+		}
+	}
+
 	roots.forEach(function (root) {
 		const form = root.querySelector('[data-build-form]');
 		if (root.dataset.autoDownload === '1') autoDownload.add(root);
@@ -186,6 +215,13 @@
 			if (root.dataset.canBuild !== '1' || isBuilding(root.dataset.status)) return;
 			startBuild(root);
 		});
+
+		const cancelButton = root.querySelector('[data-build-cancel]');
+		if (cancelButton) {
+			cancelButton.addEventListener('click', function () {
+				cancelBuild(root);
+			});
+		}
 	});
 
 	const active = roots.some(function (root) {

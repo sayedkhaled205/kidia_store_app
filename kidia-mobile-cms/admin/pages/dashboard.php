@@ -70,12 +70,9 @@ $build_action = $build_step_complete
 	: 'kidia_mobile_build_app';
 $build_button_label = $build_step_complete
 	? __( 'Download APK', 'kidia-mobile-cms' )
-	: ( 'failed' === $build_status
-		? __( 'Try Build & Download Again', 'kidia-mobile-cms' )
-		: ( $build_in_progress
+	: ( $build_in_progress
 			? __( 'Building APK…', 'kidia-mobile-cms' )
-			: __( 'Build & Download APK', 'kidia-mobile-cms' )
-		)
+			: __( 'Build & Download Your App', 'kidia-mobile-cms' )
 	);
 $journey_steps = array(
 	array(
@@ -192,6 +189,14 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								</span>
 							</button>
 						</form>
+						<button
+							type="button"
+							class="kidia-app-build__cancel"
+							data-build-cancel
+							<?php echo $build_in_progress ? '' : 'hidden'; ?>
+						>
+							<?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?>
+						</button>
 					</li>
 				<?php else : ?>
 					<li class="<?php echo esc_attr( $step_class ); ?>">
@@ -288,21 +293,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 				</form>
 			<?php endif; ?>
 
-			<div class="kidia-setup-overview <?php echo $license_active ? 'is-ready' : 'is-locked'; ?>">
-				<span class="dashicons <?php echo $license_active ? 'dashicons-unlock' : 'dashicons-lock'; ?>" aria-hidden="true"></span>
-				<div>
-					<strong><?php echo $license_active ? esc_html__( 'Setup workspace ready', 'kidia-mobile-cms' ) : esc_html__( 'Setup unlocks after activation', 'kidia-mobile-cms' ); ?></strong>
-					<span><?php echo $license_active ? esc_html__( 'Open Setup & Themes to use the wizard or configure the app manually.', 'kidia-mobile-cms' ) : esc_html__( 'The default theme stays active while configuration tools are locked.', 'kidia-mobile-cms' ); ?></span>
-				</div>
-				<a
-					class="kidia-dashboard__primary-action <?php echo $license_active ? '' : 'is-disabled'; ?>"
-					href="<?php echo $license_active ? esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ) : '#'; ?>"
-					<?php echo $license_active ? '' : 'aria-disabled="true" tabindex="-1"'; ?>
-				>
-					<span><?php echo $setup_complete ? esc_html__( 'Open Setup & Themes', 'kidia-mobile-cms' ) : esc_html__( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?></span>
-					<span class="dashicons dashicons-arrow-left-alt" aria-hidden="true"></span>
-				</a>
-			</div>
 		</section>
 
 	</div>
@@ -446,6 +436,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-customer-journey__steps li.kidia-customer-journey__build-step {
+		position: relative;
 		display: block;
 		overflow: hidden;
 		padding: 0;
@@ -534,6 +525,46 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	.kidia-app-build__card-button.is-loading .kidia-app-build__card-label {
 		animation: kidia-app-build-pulse 1s ease-in-out infinite alternate;
+	}
+
+	.kidia-app-build__cancel {
+		position: absolute;
+		right: 50%;
+		bottom: 14px;
+		z-index: 2;
+		padding: 7px 16px;
+		border: 1px solid rgba(255, 255, 255, .78);
+		border-radius: 999px;
+		background: #ffffff;
+		color: #a52b2b;
+		font-weight: 700;
+		line-height: 1.2;
+		cursor: pointer;
+		transform: translateX(50%);
+	}
+
+	.kidia-app-build__cancel:hover,
+	.kidia-app-build__cancel:focus {
+		border-color: #ffffff;
+		background: #fff5f5;
+		color: #8c1f1f;
+	}
+
+	.kidia-app-build__cancel:disabled {
+		cursor: wait;
+		opacity: .62;
+	}
+
+	.kidia-app-build__cancel[hidden] {
+		display: none;
+	}
+
+	.kidia-app-build__card-button.is-loading {
+		padding-bottom: 58px;
+	}
+
+	.kidia-app-build__card-button.is-loading .kidia-app-build__progress {
+		bottom: 50px;
 	}
 
 	@keyframes kidia-app-build-pulse {

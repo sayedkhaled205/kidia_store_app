@@ -2541,6 +2541,7 @@ final class Kidia_Mobile_CMS_Admin {
 							array(
 								'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 								'nonce'       => wp_create_nonce( 'kidia_mobile_app_build_status' ),
+								'cancelNonce' => wp_create_nonce( 'kidia_mobile_app_build_cancel' ),
 								'downloadUrl' => wp_nonce_url(
 									add_query_arg(
 										array( 'action' => 'kidia_mobile_download_apk' ),
@@ -2556,9 +2557,10 @@ final class Kidia_Mobile_CMS_Admin {
 									'failed'        => __( 'The APK build failed.', 'kidia-mobile-cms' ),
 									'timeout'       => __( 'The APK build request took too long. Please try again.', 'kidia-mobile-cms' ),
 									'starting'      => __( 'Starting APK build…', 'kidia-mobile-cms' ),
-									'buildDownload' => __( 'Build & Download APK', 'kidia-mobile-cms' ),
+									'buildDownload' => __( 'Build & Download Your App', 'kidia-mobile-cms' ),
 									'download'      => __( 'Download APK', 'kidia-mobile-cms' ),
-									'retry'         => __( 'Try Build & Download Again', 'kidia-mobile-cms' ),
+									'cancelled'     => __( 'Build cancelled.', 'kidia-mobile-cms' ),
+									'cancelFailed'  => __( 'The build could not be cancelled.', 'kidia-mobile-cms' ),
 								),
 							)
 						);
