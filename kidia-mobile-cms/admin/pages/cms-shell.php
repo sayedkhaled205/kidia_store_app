@@ -9,19 +9,18 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woo Mobile CMS sections', 'kidia-mobile-cms' ); ?>">
 		<?php foreach ( $sidebar_items as $key => $item ) : ?>
-			<a href="<?php echo esc_url( $item['url'] ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
+			<a href="<?php echo esc_url( $item['url'] ); ?>" data-kidia-sidebar-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
 				<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
 				<span><?php echo esc_html( $item['label'] ); ?></span>
 			</a>
 		<?php endforeach; ?>
 	</nav>
 </aside>
-<?php if ( $show_page_tabs ) : ?>
-	<div class="kidia-cms-shell" data-kidia-cms-shell>
+	<div class="kidia-cms-shell" data-kidia-cms-shell<?php echo $show_page_tabs ? '' : ' hidden'; ?>>
 		<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application pages', 'kidia-mobile-cms' ); ?>">
 			<?php foreach ( $tabs as $key => $tab ) : ?>
 				<?php if ( 'overview' === $key ) { continue; } ?>
-				<a href="<?php echo esc_url( $tab['url'] ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>">
+				<a href="<?php echo esc_url( $tab['url'] ); ?>" data-kidia-page-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>">
 					<span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span>
 					<span><?php echo esc_html( $tab['label'] ); ?></span>
 				</a>
@@ -35,7 +34,6 @@ defined( 'ABSPATH' ) || exit;
 			<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button>
 		</form>
 	</div>
-<?php endif; ?>
 <div class="kidia-theme-name-modal" data-kidia-theme-modal hidden>
 	<div class="kidia-theme-name-modal__backdrop" data-kidia-theme-cancel></div>
 	<div class="kidia-theme-name-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-name-title">

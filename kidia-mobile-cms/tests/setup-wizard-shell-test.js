@@ -154,7 +154,7 @@ assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no 
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
 assert.match(shellTemplate, /kidia-cms-sidebar/, "Shell must expose the primary left navigation.");
-assert.match(shellTemplate, /show_page_tabs/, "Page tabs must only appear inside Customize Your Pages.");
+assert.match(shellTemplate, /data-kidia-cms-shell[\s\S]*\$show_page_tabs \? '' : ' hidden'/, "The one permanent page frame must hide outside Customize without being removed.");
 assert.match(shellTemplate, /kidia-cms-tabs/, "Customize Your Pages must preserve the existing top page tabs.");
 assert.doesNotMatch(shellTemplate, /kidia-cms-more/, "The obsolete More menu must not appear in the page header.");
 assert.doesNotMatch(shellTemplate, /window\.prompt/, "Save Theme must not use the browser prompt.");
@@ -162,7 +162,8 @@ assert.match(shellTemplate, /data-kidia-save-theme[\s\S]*data-kidia-theme-modal[
 assert.doesNotMatch(shellTemplate.match(/<form class="kidia-cms-save-theme"[\s\S]*?<\/form>/)?.[0] || "", /dashicons/, "The compact Save Theme button must not render a trailing icon.");
 assert.match(shellCss, /\.kidia-cms-save-theme \.button\s*\{[^}]*width:max-content;[^}]*min-width:0;/, "The Save Theme button must fit its label instead of keeping an oversized width.");
 assert.match(shellScript, /data-kidia-theme-modal[\s\S]*kidia_save_theme_name[\s\S]*requestSubmit/, "The themed Save Theme dialog must preserve unsaved builder fields before creating the named theme.");
-assert.match(shellScript, /installPersistentCmsNavigation[\s\S]*X-Kidia-CMS-Navigation[\s\S]*replaceChildren\(sidebar,[\s\S]*history\.pushState/, "CMS navigation must retain the existing Overview sidebar node and replace only the adjacent page document.");
+assert.match(shellScript, /installPersistentCmsNavigation[\s\S]*kidia_mobile_cms_view[\s\S]*response\.json\(\)[\s\S]*node !== sidebar && node !== shell[\s\S]*history\.pushState/, "CMS navigation must request only a view fragment and retain the one sidebar and frame.");
+assert.doesNotMatch(shellScript.slice(0, shellScript.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "CMS navigation must never fetch another WordPress document.");
 assert.match(shellScript, /window\.kidiaCmsNavigatorInstalled/, "Persistent CMS navigation must be installed once even when page assets are refreshed.");
 assert.match(shellCss, /#wpbody-content\.is-kidia-page-loading \.kidia-cms-sidebar\{[^}]*opacity:1;[^}]*pointer-events:auto;/, "The persistent sidebar must never show the adjacent page loading state.");
 assert.equal(fs.existsSync(path.join(root, "tests", "persistent-cms-sidebar-test.js")), true, "The persistent sidebar must have a runtime identity test.");
