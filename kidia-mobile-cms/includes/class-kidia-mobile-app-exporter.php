@@ -267,6 +267,28 @@ final class Kidia_Mobile_App_Exporter {
 		if ( '' === $build_id ) {
 			if (
 				'queued' === (string) $state['status']
+				&& '' !== (string) $state['request_token']
+				&& absint( $state['started_at'] ) > 0
+				&& absint( $state['started_at'] ) <= ( time() - 5 )
+			) {
+				/*
+				 * Action Scheduler and WP-Cron can be delayed or disabled on
+				 * managed hosts. Let the first status request rescue a queued
+				 * build so Overview never remains at 1% indefinitely.
+				 */
+				$state['status']   = 'building';
+				$state['progress'] = max( 2, absint( $state['progress'] ) );
+				$state['message']  = __( 'Connecting to the APK build service…', 'kidia-mobile-cms' );
+				update_option( self::STATE_OPTION, $state, false );
+
+				$result = $this->dispatch_build( (string) $state['request_token'] );
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
+				return $result;
+			}
+			if (
+				in_array( (string) $state['status'], array( 'queued', 'building' ), true )
 				&& absint( $state['started_at'] ) > 0
 				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
 			) {
