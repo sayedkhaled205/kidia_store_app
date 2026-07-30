@@ -472,6 +472,11 @@ assert.match(
   "The job must analyze all paid orders in bounded batches and only currently in-stock products.",
 );
 assert.match(
+  aiAnalysisJob,
+  /'status'\s*=>\s*Kidia_Mobile_Analytics::revenue_order_statuses\(\)/,
+  "The incremental AI job must include paid orders moved into registered custom workflow statuses.",
+);
+assert.match(
   admin,
   /wp_ajax_kidia_mobile_start_ai_analysis[\s\S]*wp_ajax_kidia_mobile_step_ai_analysis[\s\S]*ai_ready[\s\S]*has_commerce_snapshot/,
   "AI results must render only after a completed server snapshot exists.",
