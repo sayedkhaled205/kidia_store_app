@@ -62,9 +62,9 @@ kidia_collapsed_header_assert( false === strpos( $markup, 'scroll_up_header' ), 
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_transition]"' ), 'Collapsed transition options must render below the collapsed composer.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][collapse_speed]"' ), 'Collapsed transition speed must render below the collapsed composer.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'collapse_preset' ), 'Collapsed presets must be removed.' );
-kidia_collapsed_header_assert( false !== strpos( $markup, 'smooth_compact' ), 'The smooth compact Search + Cart behavior must be available as a transition.' );
-kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-compact-search-transition' ), 'The wide Search transition must replace the draggable collapsed-header composer with one Search row.' );
-kidia_collapsed_header_assert( false !== strpos( $markup, 'name="layout[header][settings][compact_search_width_percent]"' ), 'The transition Search row must expose its own percentage width.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'smooth_compact' ), 'The smooth layout behavior must remain available as a transition.' );
+kidia_collapsed_header_assert( false === strpos( $markup, 'kidia-compact-search-transition' ), 'No transition may replace the draggable collapsed-header Rows editor with a required Search row.' );
+kidia_collapsed_header_assert( false !== strpos( $markup, 'compact_layout_json' ) && false !== strpos( $markup, 'kidia-chrome-composer--collapsed' ), 'The collapsed header must persist its own independent row layout.' );
 kidia_collapsed_header_assert( false === strpos( $markup, 'Collapsed header behavior and appearance' ), 'The redundant collapsed-header explanation block must be removed.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'data-chrome-copy' ) && false !== strpos( $markup, 'data-chrome-paste' ), 'Every fixed header card must expose Copy and Paste actions.' );
 kidia_collapsed_header_assert( false !== strpos( $markup, 'kidia-page-field--image' ) && false !== strpos( $markup, 'kidia-page-media-preview' ), 'The logo image field must expose the shared working media-picker wrapper and preview.' );

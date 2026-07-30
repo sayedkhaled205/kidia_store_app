@@ -261,7 +261,7 @@ function runHomeBuilderTest() {
   assert.match(builderCss, /\.kidia-builder-block__icon\s*\{[\s\S]*?width:\s*40px;[\s\S]*?height:\s*40px;/, "Every Home element row must keep a compact, consistent type icon.");
   assert.match(builderCss, /\.kidia-builder-list\.is-editing > \.kidia-builder-block:not\(\.is-editing\)[\s\S]*?display:\s*none;/, "Editing an element must replace the rows with its dedicated editor view.");
   assert.match(builderCss, /\.kidia-element-picker__panel > \.kidia-element-category-filter/, "Category filters must live at the top of Add Elements.");
-  assert.match(readAsset("../pages/home-builder.php"), /Page Structure[\s\S]*Hero & Banners[\s\S]*Products[\s\S]*Content[\s\S]*Layout[\s\S]*Marketing/, "Home element categories must cover the agreed six groups.");
+  assert.match(readAsset("../pages/home-builder.php"), /Visual[\s\S]*Products[\s\S]*Content[\s\S]*Marketing & Layout/, "Home elements must use the four concise agreed categories.");
   assert.match(readAsset("../templates/block-template.php"), /kidia-builder-block__icon[\s\S]*kidia-duplicate-block[\s\S]*kidia-delete-block[\s\S]*kidia-toggle-block-settings[\s\S]*kidia-card-action--toggle/, "Every element row must match the Header action pattern with icon, Duplicate, Remove, expand, and On/Off.");
   assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-builder-block__type|kidia-builder-block__category/, "The element name must not be repeated below the row title.");
   assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-element-editor__back|Back to Elements/, "Element settings must be controlled only by the row arrow.");
@@ -600,7 +600,7 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(homeBlockTemplate, /<style\b/, "Home element cards must rely on the common closed-card action grid.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-builder-status\s*\{\s*display:none!important\s*\}/, "Only the publication badge may stay hidden.");
 	assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-builder-block__type/, "Element rows must not repeat the type below the element name.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-element-picker__content\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/, "Add Element types must render as adjacent grid tiles.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-element-picker__content\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "Add Element types must render as larger adjacent grid tiles.");
 	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
 	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,\s*item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
 	assert.match(chromeTemplate, /Quick header presets[\s\S]*'standard'[\s\S]*'search'[\s\S]*'centered'[\s\S]*'page'[\s\S]*'actions'[\s\S]*data-header-preset=/, "Header must expose five easy-to-scan preset choices.");
@@ -831,6 +831,16 @@ function runMergeControlsContractTest() {
 	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{[\s\S]*color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/, "Every Add Element icon must stay centered inside its tile.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity strong\s*\{[^}]*display:\s*block;[^}]*color:\s*#1d2327;[^}]*text-align:\s*center;/, "Every Add Element tile must keep its element name visible and centered.");
+	assert.match(homeBuilderCss, /\.kidia-element-picker__content\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "Add Elements must use three larger cards per row.");
+	assert.match(homeBuilderCss, /\.kidia-element-group__summary\s*\{[^}]*min-height:\s*144px;/, "Add Element cards must be tall enough to show their icon and complete name clearly.");
+	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*width:\s*38px;[^}]*height:\s*38px;/, "Add Element icons must use the larger readable size.");
+	assert.match(homeBuilderCss, /\.kidia-builder-cards-scroll::\-webkit-scrollbar[\s\S]*background:\s*var\(--kidia-picker-accent,\s*#2f806e\)/, "The builder content rail must expose a visible branded scrollbar.");
+	const homeBuilderTemplate = readAsset("../pages/home-builder.php");
+	const categoryDefinition = homeBuilderTemplate.slice(homeBuilderTemplate.indexOf("$element_categories = array("), homeBuilderTemplate.indexOf("$element_category_by_type = array();"));
+	assert.equal((categoryDefinition.match(/'label'\s*=>\s*__\(/g) || []).length, 4, "Add Elements must use four concise categories in addition to All.");
+	["app_header", "hero_slider", "image_banner", "banner_grid", "video_banner", "category_grid", "product_carousel", "product_grid", "brand_carousel", "bundle_collection", "section_header", "text_block", "quick_links", "promo_strip", "coupon_banner", "countdown", "divider", "spacer"].forEach(function (type) {
+		assert.match(categoryDefinition, new RegExp("\\b" + type + "\\b"), type + " must be assigned to an Add Elements category.");
+	});
 	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-builder-essentials")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Elements picker must not retain WordPress blue styling.");
 	assert.match(homeScript, /settings\.image_size[\s\S]*settings\.item_size/, "Category Grid and Quick Links image sizes must update the live preview.");
 	assert.match(homeScript, /activeInsertionBlock[\s\S]*insertAdjacentHTML\("afterend", html\)[\s\S]*is-insertion-target/, "Add Element must insert directly below the element selected by the user.");
@@ -1368,8 +1378,7 @@ function runCollapsedHeaderToggleTest() {
 	  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
 	  card.querySelector('[name$="[collapse_transition]"]').value = "smooth_compact";
 	  card.querySelector('[name$="[collapse_transition]"]').dispatchEvent(new window.Event("change", { bubbles: true }));
-	  assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Wide Search must hide the draggable collapsed-header composer.");
-	  assert.equal(card.querySelector(".kidia-compact-search-transition").hidden, false, "Wide Search must show one dedicated Search row.");
+	  assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Every transition must keep the draggable collapsed-header Rows editor visible.");
 	  const halfwayPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapseProgress: 0.5 });
 	  assert.equal((halfwayPreview.match(/class="kidia-app-search"/g) || []).length, 1, "PatPat-style preview must move and resize the same Search instead of replacing it with a second Search.");
 	  assert.match(halfwayPreview, /kidia-app-header-morphing-search/, "The single Search must use the morphing layer.");
@@ -1392,8 +1401,8 @@ function runCollapsedHeaderToggleTest() {
   toggle.checked = false;
 	toggle.dispatchEvent(new window.Event("change", { bubbles: true }));
   assert.deepEqual(Array.from(new window.FormData(window.document.querySelector("form")).getAll(toggle.name)), ["0"], "Off must submit an explicit zero value.");
-	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, true, "Wide Search keeps the legacy composer hidden while turning the feature Off.");
-	assert.equal(card.querySelector(".kidia-compact-search-transition").classList.contains("is-disabled"), true, "Turning Wide Search Off must gray out its single Search row.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Turning the feature Off must keep its Rows visible for review.");
+	assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").classList.contains("is-disabled"), true, "Turning the feature Off must gray out the Rows editor without replacing it.");
 	assert.equal(new window.FormData(window.document.querySelector("form")).get('layout[header][settings][compact_layout_json]'), collapsed, "Turning Off must preserve the complete collapsed layout so it returns unchanged when enabled again.");
 	  console.log("Collapsed header: persistent On/Off toggle and scroll-accurate preview passed.");
 }

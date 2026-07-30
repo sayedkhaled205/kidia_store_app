@@ -1534,27 +1534,13 @@
       return;
     }
     var toggle = card.querySelector(".kidia-collapsed-header-enabled"),
-      visible = !!(toggle && toggle.checked),
-      smooth =
-        value(card, "collapse_transition", "smooth_compact") ===
-        "smooth_compact";
+      visible = !!(toggle && toggle.checked);
     var composer = card.querySelector(".kidia-chrome-composer--collapsed"),
-      settings = card.querySelector(".kidia-collapsed-header-settings"),
-      searchTransition = card.querySelector(
-        ".kidia-compact-search-transition",
-      );
+      settings = card.querySelector(".kidia-collapsed-header-settings");
     if (composer) {
-      composer.hidden = smooth;
+      composer.hidden = false;
       composer.classList.toggle("is-disabled", !visible);
       composer.setAttribute("aria-disabled", visible ? "false" : "true");
-    }
-    if (searchTransition) {
-      searchTransition.hidden = !smooth;
-      searchTransition.classList.toggle("is-disabled", !visible);
-      searchTransition.setAttribute(
-        "aria-disabled",
-        visible ? "false" : "true",
-      );
     }
     if (settings) {
       settings.hidden = !visible;
