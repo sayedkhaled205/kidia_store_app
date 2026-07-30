@@ -662,6 +662,11 @@ assert.match(
   "AI Offer Studio must become Completed and open its generated results automatically without a View results step.",
 );
 assert.match(
+  aiAnalysisJob,
+  /date_preset[\s\S]*sanitize_date_preset[\s\S]*'all_time'[\s\S]*result_args[\s\S]*'custom' === \$date_preset/,
+  "AI result URLs must preserve the selected preset and only add explicit dates for Custom ranges.",
+);
+assert.match(
   shellScript,
   /querySelectorAll\('\[data-kidia-live-store-data\]'\)[\s\S]*freshRegions\.find[\s\S]*region\.innerHTML = fresh\.innerHTML/,
   "Every Store Data live region must refresh automatically without a browser reload.",

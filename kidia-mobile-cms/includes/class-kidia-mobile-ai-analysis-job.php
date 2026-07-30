@@ -33,8 +33,9 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	}
 
 	/** Starts one user-owned analysis job without scanning the store. */
-	public static function start( int $from, int $to, string $source, int $user_id ): array {
+	public static function start( int $from, int $to, string $source, int $user_id, string $date_preset = 'custom' ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$date_preset = self::sanitize_date_preset( $date_preset );
 		if ( ! function_exists( 'wc_get_orders' ) || ! function_exists( 'wc_get_products' ) ) {
 			return array( 'error' => __( 'WooCommerce is required to analyse store data.', 'kidia-mobile-cms' ) );
 		}
@@ -87,6 +88,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'user_id'           => $user_id,
 			'from'              => $from,
 			'to'                => $to,
+			'date_preset'       => $date_preset,
 			'source'            => $source,
 			'phase'             => $order_total > 0 ? 'orders' : 'products',
 			'order_page'        => 1,
@@ -538,6 +540,21 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		} elseif ( 'cancelled' === $phase ) {
 			$stage = __( 'Analysis cancelled. No partial result was published.', 'kidia-mobile-cms' );
 		}
+		$date_preset = self::sanitize_date_preset(
+			(string) ( $job['date_preset'] ?? ( absint( $job['from'] ?? 0 ) <= 1 ? 'all_time' : 'custom' ) )
+		);
+		$result_args = array(
+			'page'        => 'kidia-mobile-ai-insights',
+			'ai_source'   => (string) ( $job['source'] ?? 'all' ),
+			'ai_kind'     => 'all',
+			'date_preset' => $date_preset,
+			'ai_generate' => '1',
+			'ai_ready'    => '1',
+		);
+		if ( 'custom' === $date_preset ) {
+			$result_args['date_from'] = wp_date( 'Y-m-d', absint( $job['from'] ?? 0 ) );
+			$result_args['date_to']   = wp_date( 'Y-m-d', absint( $job['to'] ?? 0 ) );
+		}
 		return array(
 			'job_id'             => (string) $job['id'],
 			'done'               => $done,
@@ -554,20 +571,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'orders_total'       => $order_total,
 			'products_processed' => absint( $job['products_processed'] ?? 0 ),
 			'products_total'     => $product_total,
-			'result_url'         => add_query_arg(
-				array(
-					'page'        => 'kidia-mobile-ai-insights',
-					'ai_source'   => (string) ( $job['source'] ?? 'all' ),
-					'ai_kind'     => 'all',
-					'date_preset' => 'custom',
-					'date_from'   => wp_date( 'Y-m-d', absint( $job['from'] ?? 0 ) ),
-					'date_to'     => wp_date( 'Y-m-d', absint( $job['to'] ?? 0 ) ),
-					'ai_generate' => '1',
-					'ai_ready'    => '1',
-				),
-				admin_url( 'admin.php' )
-			),
+			'result_url'         => add_query_arg( $result_args, admin_url( 'admin.php' ) ),
 		);
+	}
+
+	/** Keeps result URLs on the same analytics snapshot key used by the job. */
+	private static function sanitize_date_preset( string $preset ): string {
+		$allowed = array( 'all_time', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'this_month', 'previous_month', 'last_year', 'custom' );
+		return in_array( $preset, $allowed, true ) ? $preset : 'custom';
 	}
 
 	private static function key( string $job_id ): string {

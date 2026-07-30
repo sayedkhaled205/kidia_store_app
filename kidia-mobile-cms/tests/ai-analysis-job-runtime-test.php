@@ -159,9 +159,14 @@ kidia_ai_runtime_assert(
 	'The runtime must reproduce an object cache refusing a large analysis value.'
 );
 
-$started = Kidia_Mobile_AI_Analysis_Job::start( 1, 2000000000, 'all', 7 );
+$started = Kidia_Mobile_AI_Analysis_Job::start( 1, 2000000000, 'all', 7, 'all_time' );
 $job_id  = (string) $started['job_id'];
 kidia_ai_runtime_assert( 0 === $started['processed'] && 0 === $started['revision'], 'A new job must start at revision zero.' );
+kidia_ai_runtime_assert(
+	false !== strpos( (string) $started['result_url'], 'date_preset=all_time' )
+		&& false === strpos( (string) $started['result_url'], 'date_from=' ),
+	'An all-time job must reopen the exact all-time snapshot instead of a custom 1970 range.'
+);
 
 $job_key_method = new ReflectionMethod( Kidia_Mobile_AI_Analysis_Job::class, 'key' );
 if ( PHP_VERSION_ID < 80100 ) {
@@ -214,6 +219,11 @@ for ( $attempt = 0; $attempt < 20 && empty( $completed['done'] ); ++$attempt ) {
 kidia_ai_runtime_assert( true === $completed['done'], 'The oversized durable job must finish every order and product batch.' );
 kidia_ai_runtime_assert( 100 === $completed['progress'], 'A fully persisted job must reach 100 percent.' );
 kidia_ai_runtime_assert( 'complete' === $completed['phase'], 'The durable job must publish its final complete state.' );
+kidia_ai_runtime_assert(
+	false !== strpos( (string) $completed['result_url'], 'date_preset=all_time' )
+		&& false === strpos( (string) $completed['result_url'], 'date_from=' ),
+	'The completed result URL must preserve the original all-time snapshot key.'
+);
 kidia_ai_runtime_assert(
 	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['orders_scanned'] ?? 0 ),
 	'Finalization must publish all scanned orders after the cache-size failure scenario.'
