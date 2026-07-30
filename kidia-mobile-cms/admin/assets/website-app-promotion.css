@@ -131,7 +131,9 @@
 .kidia-app-promotion-types small{color:#2f806e;font-size:10px;font-weight:700}
 .kidia-app-promotion-types button{margin-top:auto;padding:6px 0 0;border:0;background:transparent;color:#236b59;font-size:11px;font-weight:700;text-align:left;cursor:pointer}
 .kidia-app-promotion-workspace{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:14px;align-items:start;transition:grid-template-columns .25s ease}
-.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:minmax(460px,.82fr) minmax(640px,1.18fr)}
+.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:minmax(0,1fr)}
+.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace main{grid-row:2}
+.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-preview{grid-row:1;position:relative;top:auto;width:100%;max-width:none}
 .kidia-app-promotion-workspace main{min-width:0}
 .kidia-promotion-fields{display:grid;gap:13px}
 .kidia-promotion-fields.is-three{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -188,9 +190,9 @@
 .kidia-app-promotion-preview>header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e2ebe8}
 .kidia-app-promotion-preview>header strong,.kidia-app-promotion-preview>header small{display:block}
 .kidia-app-promotion-preview>header small{margin-top:2px;color:#2f806e}
-.kidia-app-promotion-preview>header>div:last-child{display:flex;padding:3px;border-radius:9px;background:#edf4f2}
-.kidia-app-promotion-preview>header button{display:grid;width:32px;height:29px;place-items:center;padding:0;border:0;background:transparent;color:#66807a;cursor:pointer}
-.kidia-app-promotion-preview>header button.is-active{background:#fff;color:#2f806e;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.kidia-promotion-device-switch{display:flex;align-items:center;gap:8px;padding:0;background:transparent}
+.kidia-app-promotion-preview>header .kidia-promotion-device-switch button{display:grid;width:36px;height:34px;min-width:36px;place-items:center;margin:0!important;padding:0;border:1px solid #b8d8cf;background:#fff;color:#66807a;box-shadow:none;cursor:pointer}
+.kidia-app-promotion-preview>header .kidia-promotion-device-switch button.is-active{border-color:#2f806e;background:#e8f5f1;color:#236b59;box-shadow:0 0 0 1px #2f806e}
 .kidia-promotion-device{min-width:0;padding:18px;background:linear-gradient(145deg,#eef5f3,#ddeae6);overflow:hidden}
 .kidia-promotion-screen{position:relative;width:280px;height:606px;margin:auto;transition:width .25s,height .25s}
 .kidia-promotion-browser{
@@ -258,6 +260,5 @@
 .kidia-promotion-device.is-desktop .kidia-preview-promo.is-inline_banner{top:130px;right:28px;left:28px}
 .kidia-app-promotion-preview__hint{display:flex;gap:7px;margin:0;padding:12px 15px;color:#6a7b76;font-size:11px;line-height:1.45}
 @media(max-width:1350px){.kidia-app-promotion-types{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-app-promotion-types article{min-height:160px}.kidia-app-promotion-types p{min-height:32px}}
-@media(max-width:1240px){.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:minmax(420px,.9fr) minmax(540px,1.1fr)}}
 @media(max-width:1120px){.kidia-app-promotion-workspace,.kidia-app-promotion-admin.is-desktop-preview .kidia-app-promotion-workspace{grid-template-columns:1fr}.kidia-app-promotion-preview{position:relative;top:auto;max-width:none}.kidia-app-promotion-admin:not(.is-desktop-preview) .kidia-app-promotion-preview{max-width:620px}.kidia-app-promotion-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:782px){.kidia-app-promotion-hero{align-items:flex-start;flex-direction:column}.kidia-app-promotion-stats,.kidia-app-promotion-types,.kidia-promotion-fields.is-three{grid-template-columns:1fr}.kidia-app-promotion-types article{min-height:0}.kidia-app-promotion-types p{min-height:0}.kidia-app-promotion-workspace{display:block}.kidia-app-promotion-preview{margin-top:14px}.kidia-promotion-colors{grid-template-columns:repeat(3,1fr)}}
