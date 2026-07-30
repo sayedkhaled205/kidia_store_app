@@ -12,6 +12,9 @@ function markup(status, autoDownload = false) {
     <div data-kidia-app-build data-status="${status}" data-can-build="1" data-auto-download="${autoDownload ? "1" : "0"}">
       <p data-build-message>Queued</p>
       <div data-build-progress><span data-build-progress-value aria-valuenow="0"></span></div>
+      <div data-build-modal ${["queued", "building"].includes(status) ? "" : "hidden"}>
+        <p data-build-message>Queued</p>
+      </div>
       <div class="kidia-app-build__actions">
         <form method="post" data-build-form>
           <input type="hidden" name="action" value="kidia_mobile_build_app" data-build-form-action>
@@ -140,6 +143,7 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.equal(button.getAttribute("aria-busy"), "true");
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Building your APK… 15%");
   assert.equal(root.querySelector("[data-build-progress]").hidden, false);
+  assert.equal(root.querySelector("[data-build-modal]").hidden, false, "Clicking the full card must open the build progress dialog.");
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Cancel must appear while the build is active.");
 }
 
@@ -168,6 +172,7 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.dataset.status, "failed");
   assert.equal(root.querySelector("[data-build-message]").textContent, "The WooMobile build service rejected the request.");
   assert.equal(root.querySelector("[data-build-form-action]").value, "kidia_mobile_build_app");
+  assert.equal(root.querySelector("[data-build-modal]").hidden, true, "A failed provider request must close the progress dialog.");
   assert.equal(button.disabled, false);
   assert.equal(button.classList.contains("is-loading"), false);
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");

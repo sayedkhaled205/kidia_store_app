@@ -266,28 +266,6 @@ final class Kidia_Mobile_App_Exporter {
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' === $build_id ) {
 			if (
-				'queued' === (string) $state['status']
-				&& '' !== (string) $state['request_token']
-				&& absint( $state['started_at'] ) > 0
-				&& absint( $state['started_at'] ) <= ( time() - 5 )
-			) {
-				/*
-				 * Action Scheduler and WP-Cron can be delayed or disabled on
-				 * managed hosts. Let the first status request rescue a queued
-				 * build so Overview never remains at 1% indefinitely.
-				 */
-				$state['status']   = 'building';
-				$state['progress'] = max( 2, absint( $state['progress'] ) );
-				$state['message']  = __( 'Connecting to the APK build service…', 'kidia-mobile-cms' );
-				update_option( self::STATE_OPTION, $state, false );
-
-				$result = $this->dispatch_build( (string) $state['request_token'] );
-				if ( is_wp_error( $result ) ) {
-					return $result;
-				}
-				return $result;
-			}
-			if (
 				in_array( (string) $state['status'], array( 'queued', 'building' ), true )
 				&& absint( $state['started_at'] ) > 0
 				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
@@ -328,7 +306,32 @@ final class Kidia_Mobile_App_Exporter {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to build this application.', 'kidia-mobile-cms' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_build_app', 'nonce' );
-		$result = $this->queue_build();
+
+		$license = new Kidia_Mobile_License_Manager();
+		if ( ! $license->is_active() ) {
+			wp_send_json_error( array( 'message' => __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) ), 403 );
+		}
+
+		$request_token = wp_generate_uuid4();
+		$state         = array_merge(
+			self::default_state(),
+			array(
+				'hash'          => self::configuration_hash(),
+				'status'        => 'building',
+				'progress'      => 2,
+				'message'       => __( 'Connecting to the APK build service…', 'kidia-mobile-cms' ),
+				'started_at'    => time(),
+				'request_token' => $request_token,
+			)
+		);
+		update_option( self::STATE_OPTION, $state, false );
+
+		/*
+		 * The interactive card must confirm that the provider accepted the
+		 * request before returning success. This prevents a local "Queued"
+		 * state from being mistaken for a real Codemagic build.
+		 */
+		$result = $this->dispatch_build( $request_token );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
