@@ -208,7 +208,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 										type="button"
 										class="button kidia-app-build__cancel kidia-ai-cancel-button"
 										data-build-cancel
-										<?php echo $build_in_progress ? '' : 'hidden'; ?>
+										<?php echo 'idle' !== $build_status && 'cancelled' !== $build_status ? '' : 'hidden'; ?>
 									>
 										<span class="dashicons dashicons-no-alt"></span><?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?>
 									</button>
