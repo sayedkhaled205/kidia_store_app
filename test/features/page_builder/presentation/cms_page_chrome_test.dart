@@ -67,6 +67,56 @@ void main() {
     expect(_appBar(tester).preferredSize.height, 44);
   });
 
+  testWidgets('renders every configured collapsed header row', (
+    WidgetTester tester,
+  ) async {
+    final Map<String, dynamic> compactLayout = <String, dynamic>{
+      'rows': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'columns': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'width': 50,
+              'align': 'left',
+              'items': <String>['logo'],
+            },
+            <String, dynamic>{
+              'width': 50,
+              'align': 'right',
+              'items': <String>['cart'],
+            },
+          ],
+        },
+        <String, dynamic>{
+          'columns': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'width': 100,
+              'align': 'left',
+              'items': <String>['search_bar'],
+            },
+          ],
+        },
+      ],
+    };
+    await _pumpPage(
+      tester,
+      layout: _layout(
+        transition: 'fade_slide',
+        compactHeight: 44,
+        compactLayout: compactLayout,
+      ),
+    );
+
+    await tester.drag(
+      find.byKey(const Key('cms-page-scroll')),
+      const Offset(0, -240),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_appBar(tester).preferredSize.height, 120);
+    expect(find.text('Kidia'), findsOneWidget);
+    expect(find.text('Search products'), findsOneWidget);
+  });
+
   testWidgets('the real page controller drives the mobile collapsed header', (
     WidgetTester tester,
   ) async {
@@ -427,6 +477,7 @@ CmsPageLayout _layout({
   String speed = 'medium',
   double height = 80,
   double compactHeight = 52,
+  Map<String, dynamic>? compactLayout,
 }) {
   const Map<String, dynamic> regularLayout = <String, dynamic>{
     'rows': <Map<String, dynamic>>[
@@ -441,7 +492,7 @@ CmsPageLayout _layout({
       },
     ],
   };
-  const Map<String, dynamic> compactLayout = <String, dynamic>{
+  const Map<String, dynamic> defaultCompactLayout = <String, dynamic>{
     'rows': <Map<String, dynamic>>[
       <String, dynamic>{
         'columns': <Map<String, dynamic>>[
@@ -472,7 +523,7 @@ CmsPageLayout _layout({
         'collapse_speed': speed,
         'search_placeholder': 'Search products',
         'layout_json': regularLayout,
-        'compact_layout_json': compactLayout,
+        'compact_layout_json': compactLayout ?? defaultCompactLayout,
         'height': height,
         'compact_height': compactHeight,
       },

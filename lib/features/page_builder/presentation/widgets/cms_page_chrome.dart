@@ -36,6 +36,29 @@ double _regularHeaderHeight(CmsPageComponent header) {
       .toDouble();
 }
 
+double _compactHeaderHeight(CmsPageComponent header) {
+  final double configured =
+      header.number('compact_height', 60).clamp(44, 100).toDouble();
+  final int count =
+      _configuredHeaderRows(header, key: 'compact_layout_json').length;
+  if (count <= 1) {
+    return configured;
+  }
+  final double first =
+      header.number('row_1_height', 48).clamp(24, 100).toDouble();
+  final double remaining =
+      header.number('row_2_height', 48).clamp(24, 100).toDouble();
+  final double gap = (header.number('row_gap', 8).clamp(0, 24) -
+          header.number('row_merge', 0).clamp(0, 24))
+      .clamp(0, 24)
+      .toDouble();
+  final double padding =
+      header.number('vertical_padding', 8).clamp(0, 24).toDouble() * 2;
+  final double rowsHeight =
+      padding + first + (remaining * (count - 1)) + (gap * (count - 1));
+  return rowsHeight.clamp(configured, 360).toDouble();
+}
+
 typedef CmsPageLayoutWidgetBuilder = Widget Function(
   BuildContext context,
   CmsPageLayout layout,
@@ -254,9 +277,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
       'collapse_transition',
       'smooth_compact',
     );
-    final double compactHeight = widget.layout.header
-        .number('compact_height', 60)
-        .clamp(44, 100);
+    final double compactHeight = _compactHeaderHeight(widget.layout.header);
     final double compactContentHeight =
         widget.layout.header.number('search_height', 40).clamp(32, 64) +
         (widget.layout.header.number('vertical_padding', 8).clamp(0, 24) * 2);
@@ -336,9 +357,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   double get _visibleHeight {
     if (visibleHeight != null) return visibleHeight!;
     if (!compact) return _regularHeaderHeight(_header);
-    final double configured = _header
-        .number('compact_height', 60)
-        .clamp(44, 100);
+    final double configured = _compactHeaderHeight(_header);
     if (_header.string('collapse_transition', 'smooth_compact') !=
         'smooth_compact') {
       return configured;
@@ -1034,17 +1053,33 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['search', 'cart']}];
   }
 
-	List<Map<String, dynamic>> _compactLayoutRows() {
-		final dynamic raw = _header.json('compact_layout_json')['rows'];
-		if (raw is List) {
-			final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(1).toList();
-			if (rows.isNotEmpty) return rows;
-		}
-		return <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[
-			<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']},
-			<String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']},
-		]}];
-	}
+  List<Map<String, dynamic>> _compactLayoutRows() {
+    final dynamic raw = _header.json('compact_layout_json')['rows'];
+    if (raw is List) {
+      final rows = raw
+          .whereType<Map>()
+          .map((row) => Map<String, dynamic>.from(row))
+          .take(3)
+          .toList();
+      if (rows.isNotEmpty) return rows;
+    }
+    return <Map<String, dynamic>>[
+      <String, dynamic>{
+        'columns': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'width': 84,
+            'align': 'left',
+            'items': <String>['search_bar'],
+          },
+          <String, dynamic>{
+            'width': 16,
+            'align': 'right',
+            'items': <String>['cart'],
+          },
+        ],
+      },
+    ];
+  }
 
   Widget _slot(BuildContext context, dynamic rawItems, Alignment alignment, Color color) {
     final List<String> items = rawItems is List ? rawItems.map((item) => '$item').where((item) => item != 'subtitle').toList() : <String>[];

@@ -658,7 +658,18 @@
   }
   function visibleHeaderHeight(card, collapsed, layout) {
     if (collapsed) {
-      return number(card, "compact_height", 60, 44, 100);
+      var configured = number(card, "compact_height", 60, 44, 100),
+        count = ((layout && layout.rows) || []).length;
+      if (count <= 1) {
+        return configured;
+      }
+      var height =
+        number(card, "vertical_padding", 8, 0, 24) * 2 +
+        effectiveRowGap(card) * Math.max(0, count - 1);
+      for (var index = 0; index < count; index += 1) {
+        height += rowHeight(card, index);
+      }
+      return Math.max(configured, Math.min(360, height));
     }
     layout = layout || previewLayout(card, "header", "layout_json");
     var count = (layout.rows || []).length;
