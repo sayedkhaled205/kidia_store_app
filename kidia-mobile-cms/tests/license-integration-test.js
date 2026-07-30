@@ -19,7 +19,7 @@ assert.match(plugin, /Version:\s+1\.45\.73/, "The plugin header must be version 
 assert.match(
   plugin,
   /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.73'/,
-  "The runtime plugin version must match the 1.45.73 header."
+  "The runtime plugin version must match the 1.45.73 plugin header."
 );
 assert.match(
   plugin,
