@@ -6,6 +6,7 @@
 	if (!roots.length || !config.ajaxUrl) return;
 
 	const autoDownload = new WeakSet();
+	const openedProgress = new WeakSet();
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -16,6 +17,92 @@
 
 	function isBuilding(status) {
 		return ['queued', 'building'].includes(status);
+	}
+
+	function progressModal(root) {
+		return root.querySelector('[data-build-modal]');
+	}
+
+	function openProgress(root) {
+		const modal = progressModal(root);
+		if (!modal) return;
+		openedProgress.add(root);
+		modal.hidden = false;
+		modal.classList.remove('is-docked');
+		modal.style.removeProperty('left');
+		modal.style.removeProperty('top');
+		modal.style.removeProperty('right');
+		modal.style.removeProperty('bottom');
+		document.body.classList.add('kidia-ai-is-generating');
+	}
+
+	function closeProgress(root) {
+		const modal = progressModal(root);
+		if (!modal) return;
+		openedProgress.delete(root);
+		modal.hidden = true;
+		modal.classList.remove('is-docked', 'is-dragging');
+		document.body.classList.remove('kidia-ai-is-generating');
+	}
+
+	function dockProgress(root) {
+		const modal = progressModal(root);
+		if (!modal || modal.hidden) return;
+		modal.classList.add('is-docked');
+		document.body.classList.remove('kidia-ai-is-generating');
+		const stored = window.localStorage.getItem('kidiaAppBuildDockPosition');
+		if (!stored) return;
+		try {
+			const position = JSON.parse(stored);
+			const width = modal.offsetWidth || 380;
+			const height = modal.offsetHeight || 180;
+			const left = Math.max(8, Math.min(window.innerWidth - width - 8, Number(position.left)));
+			const top = Math.max(8, Math.min(window.innerHeight - height - 8, Number(position.top)));
+			modal.style.left = left + 'px';
+			modal.style.top = top + 'px';
+			modal.style.right = 'auto';
+			modal.style.bottom = 'auto';
+		} catch (_error) {
+			window.localStorage.removeItem('kidiaAppBuildDockPosition');
+		}
+	}
+
+	function bindDockDrag(root) {
+		const modal = progressModal(root);
+		const card = modal && modal.querySelector('.kidia-app-build__modal-card');
+		if (!modal || !card || card.dataset.buildDragBound === '1') return;
+		card.dataset.buildDragBound = '1';
+		card.addEventListener('pointerdown', function (event) {
+			if (!modal.classList.contains('is-docked') || event.target.closest('button, a, input')) return;
+			event.preventDefault();
+			const bounds = modal.getBoundingClientRect();
+			const offsetX = event.clientX - bounds.left;
+			const offsetY = event.clientY - bounds.top;
+			modal.classList.add('is-dragging');
+			if (typeof card.setPointerCapture === 'function') card.setPointerCapture(event.pointerId);
+			const move = function (moveEvent) {
+				const left = Math.max(8, Math.min(window.innerWidth - bounds.width - 8, moveEvent.clientX - offsetX));
+				const top = Math.max(8, Math.min(window.innerHeight - bounds.height - 8, moveEvent.clientY - offsetY));
+				modal.style.left = left + 'px';
+				modal.style.top = top + 'px';
+				modal.style.right = 'auto';
+				modal.style.bottom = 'auto';
+			};
+			const stop = function () {
+				modal.classList.remove('is-dragging');
+				const current = modal.getBoundingClientRect();
+				window.localStorage.setItem('kidiaAppBuildDockPosition', JSON.stringify({
+					left: Math.round(current.left),
+					top: Math.round(current.top)
+				}));
+				card.removeEventListener('pointermove', move);
+				card.removeEventListener('pointerup', stop);
+				card.removeEventListener('pointercancel', stop);
+			};
+			card.addEventListener('pointermove', move);
+			card.addEventListener('pointerup', stop);
+			card.addEventListener('pointercancel', stop);
+		});
 	}
 
 	function setActionState(root, status, progress, downloadReady) {
@@ -33,9 +120,9 @@
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
 		}
 		if (button) {
-			button.disabled = building || (!ready && !canBuild);
+			button.disabled = !ready && !building && !canBuild;
 			button.classList.toggle('is-loading', building);
-			button.hidden = building;
+			button.hidden = false;
 			button.setAttribute('aria-busy', building ? 'true' : 'false');
 		}
 		if (buttonLabel) {
@@ -52,7 +139,6 @@
 			cancelButton.hidden = !building;
 			cancelButton.disabled = false;
 		}
-		if (modal) modal.hidden = !building;
 		if (icon) {
 			icon.className = 'dashicons ' + (
 				ready
@@ -83,6 +169,9 @@
 			const messages = root.querySelectorAll('[data-build-message]');
 			const meter = root.querySelector('[data-build-progress]');
 			const value = root.querySelector('[data-build-progress-value]');
+			const ring = root.querySelector('[data-build-progress-ring]');
+			const progressLabel = root.querySelector('[data-build-progress-label]');
+			const stage = root.querySelector('[data-build-stage]');
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
@@ -94,7 +183,15 @@
 				value.style.width = progress + '%';
 				value.setAttribute('aria-valuenow', String(progress));
 			}
+			if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
+			if (progressLabel) progressLabel.textContent = progress + '%';
+			if (stage) stage.textContent = state.stage || (
+				status === 'queued'
+					? label('queued', 'Waiting for the build provider…')
+					: label(status, 'Preparing the Android application…')
+			);
 			setActionState(root, status, progress, downloadReady);
+			if (!isBuilding(status) && openedProgress.has(root)) closeProgress(root);
 			if (downloadReady) requestDownload(root);
 		});
 	}
@@ -174,6 +271,7 @@
 		});
 
 		autoDownload.add(root);
+		openProgress(root);
 		render({
 			status: 'building',
 			progress: 2,
@@ -214,6 +312,7 @@
 			const state = await request(body);
 			autoDownload.delete(root);
 			render(state);
+			closeProgress(root);
 		} catch (error) {
 			if (cancelButton) cancelButton.disabled = false;
 			root.querySelectorAll('[data-build-message]').forEach(function (message) {
@@ -232,9 +331,22 @@
 			if (root.dataset.status === 'ready') return;
 
 			event.preventDefault();
-			if (root.dataset.canBuild !== '1' || isBuilding(root.dataset.status)) return;
+			if (isBuilding(root.dataset.status)) {
+				openProgress(root);
+				schedulePoll(0);
+				return;
+			}
+			if (root.dataset.canBuild !== '1') return;
 			startBuild(root);
 		});
+
+		const backgroundButton = root.querySelector('[data-build-background]');
+		if (backgroundButton) {
+			backgroundButton.addEventListener('click', function () {
+				dockProgress(root);
+			});
+		}
+		bindDockDrag(root);
 
 		const cancelButton = root.querySelector('[data-build-cancel]');
 		if (cancelButton) {
