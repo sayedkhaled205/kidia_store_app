@@ -1335,6 +1335,7 @@ function runChromeComposerTest() {
 function runCollapsedHeaderToggleTest() {
   const regular = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["logo"] }, { width: 16, align: "right", items: ["cart"] }] }, { columns: [{ width: 100, align: "left", items: ["search_bar"] }] }] });
   const collapsed = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["search_bar"] }, { width: 16, align: "right", items: ["cart"] }] }] });
+  const collapsedRows = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["logo"] }, { width: 16, align: "right", items: ["cart"] }] }, { columns: [{ width: 100, align: "left", items: ["search_bar"] }] }] });
   const markup = `<!doctype html><html><body><form><section class="kidia-fixed-chrome-card" data-chrome-part="header">
     <input type="checkbox" name="layout[header][enabled]" value="1" checked>
     <input type="hidden" name="layout[header][settings][collapse_on_scroll]" value="0">
@@ -1343,6 +1344,8 @@ function runCollapsedHeaderToggleTest() {
     <input name="layout[header][settings][compact_layout_json]" value='${collapsed}'>
     <input name="layout[header][settings][title]" value="Products">
     <input name="layout[header][settings][height]" value="64">
+    <input name="layout[header][settings][row_1_height]" value="48">
+    <input name="layout[header][settings][row_2_height]" value="48">
     <input name="layout[header][settings][row_gap]" value="0">
     <input name="layout[header][settings][vertical_padding]" value="0">
     <input name="layout[header][settings][compact_height]" value="56">
@@ -1379,10 +1382,17 @@ function runCollapsedHeaderToggleTest() {
 	  assert.doesNotMatch(window.KidiaChromePreview.renderHeader(card, "Products"), /is-collapsed/, "On must still show the real regular header while the preview is at the top.");
 	  const collapsedPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
 	  assert.match(collapsedPreview, /is-collapsed/, "Scrolling the preview must show the collapsed header.");
-  assert.match(collapsedPreview, /height:56px/, "Collapsed height must use the exact configured value.");
+  assert.match(collapsedPreview, /height:56px/, "A single-row collapsed header must use the exact configured value.");
   assert.match(collapsedPreview, /kidia-app-header-item--cart/, "The saved compact layout must drive the collapsed preview.");
   assert.match(collapsedPreview, /is-transition-fade_slide/, "The selected collapsed transition must drive the preview.");
 	  assert.match(collapsedPreview, /--collapse-duration:420ms/, "The selected transition speed must drive the preview.");
+	  const compactInput = card.querySelector('[name$="[compact_layout_json]"]');
+	  compactInput.value = collapsedRows;
+	  const multiRowPreview = window.KidiaChromePreview.renderHeader(card, "Products", { collapsed: true });
+	  assert.match(multiRowPreview, /height:96px/, "A multi-row collapsed header must grow to show every configured row.");
+	  assert.match(multiRowPreview, /kidia-app-header-brand/, "The first saved compact row must drive the collapsed preview.");
+	  assert.match(multiRowPreview, /kidia-app-search/, "The second saved compact row must drive the collapsed preview.");
+	  compactInput.value = collapsed;
 	  card.querySelector('[name$="[collapse_transition]"]').value = "smooth_compact";
 	  card.querySelector('[name$="[collapse_transition]"]').dispatchEvent(new window.Event("change", { bubbles: true }));
 	  assert.equal(card.querySelector(".kidia-chrome-composer--collapsed").hidden, false, "Every transition must keep the draggable collapsed-header Rows editor visible.");
