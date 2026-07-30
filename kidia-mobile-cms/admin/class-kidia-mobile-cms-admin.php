@@ -975,7 +975,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$to     = absint( $range['to'] );
 		$source = sanitize_key( (string) wp_unslash( $_POST['source'] ?? 'all' ) );
 		$source = in_array( $source, array( 'all', 'website', 'mobile' ), true ) ? $source : 'all';
-		$result = Kidia_Mobile_AI_Analysis_Job::start( $from, $to, $source, get_current_user_id() );
+		$result = Kidia_Mobile_AI_Analysis_Job::start( $from, $to, $source, get_current_user_id(), (string) $range['preset'] );
 		if ( isset( $result['error'] ) ) {
 			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
 		}
