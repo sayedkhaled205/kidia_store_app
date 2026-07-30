@@ -245,7 +245,8 @@ assert.match(shellCss, /#wpfooter\{display:none\}/, "The unused WordPress footer
 assert.match(shellCss, /#adminmenuwrap\{[^}]*overflow-y:auto!important;[^}]*overscroll-behavior:contain;/, "The WordPress sidebar must scroll independently without extending the plugin page.");
 assert.match(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position:fixed!important;[^}]*bottom:0!important;/, "The WordPress sidebar must be constrained to the visible viewport.");
 assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
-assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*height:calc\(100% - 24px\)!important;[\s\S]*margin-bottom:6px;[\s\S]*overflow:hidden!important;/, "Builder documents must remain fixed while the frame extends low enough to contain the complete phone.");
+assert.match(shellCss, /body\.kidia-cms-builder-screen #wpcontent,\s*body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow:hidden!important;/, "Builder documents must remain fixed while the internal card rail owns scrolling.");
+assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*height:calc\(100% - 24px\)!important;[^}]*margin-bottom:6px;[^}]*overflow:visible!important;/, "The fixed Builder frame must contain the complete phone without clipping the shared sidebar gutter.");
 assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
 assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Fragment navigation must restore or release the fixed Builder workspace for the destination.");
 

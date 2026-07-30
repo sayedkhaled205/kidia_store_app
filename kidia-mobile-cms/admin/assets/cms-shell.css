@@ -456,7 +456,10 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 		min-height:0!important;
 		flex-direction:column;
 		margin-bottom:6px;
-		overflow:hidden!important;
+		/* The shared sidebar extends 16px into the outer frame gutter.
+		 * Keep that extension visible just like every non-Builder CMS page;
+		 * the Builder descendants below own the actual scroll clipping. */
+		overflow:visible!important;
 	}
 	body.kidia-cms-builder-screen .kidia-cms-shell{
 		position:relative;

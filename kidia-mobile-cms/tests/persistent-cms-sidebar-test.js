@@ -37,6 +37,21 @@ assert.doesNotMatch(
 );
 assert.match(
   styles,
+  /\.kidia-cms-sidebar\{[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;/,
+  "The shared sidebar must retain its full width and outer-gutter extension."
+);
+assert.match(
+  styles,
+  /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*overflow:visible!important;/,
+  "Customize must not clip the sidebar's 16px outer-gutter extension."
+);
+assert.doesNotMatch(
+  styles,
+  /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*overflow:hidden!important;/,
+  "Customize must not pull the visible sidebar edge left by clipping its outer gutter."
+);
+assert.match(
+  styles,
   /#wpbody-content\{[\s\S]*width:calc\(100% - 36px\);[\s\S]*max-width:calc\(100% - 36px\);/,
   "The shared frame must fit the WordPress content box on every desktop CMS view."
 );
