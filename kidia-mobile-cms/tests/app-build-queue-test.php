@@ -206,6 +206,10 @@ kidia_build_assert( 0 === Kidia_Mobile_License_Manager::$requests, 'The Overview
 kidia_build_assert( 'kidia_mobile_process_app_build' === $GLOBALS['kidia_test_scheduled']['hook'], 'The APK background hook must be scheduled.' );
 kidia_build_assert( 'kidia-mobile-cms' === $GLOBALS['kidia_test_scheduled']['group'], 'The background action must use the plugin group.' );
 
+$duplicate = $exporter->queue_build();
+kidia_build_assert( $queued['request_token'] === $duplicate['request_token'], 'A repeated request must return the existing active build.' );
+kidia_build_assert( 0 === Kidia_Mobile_License_Manager::$requests, 'A repeated request must not contact the remote build service.' );
+
 $exporter->process_queued_build( $queued['request_token'] );
 $remote = Kidia_Mobile_App_Exporter::state();
 kidia_build_assert( 1 === Kidia_Mobile_License_Manager::$requests, 'The background action must contact the remote build service once.' );
