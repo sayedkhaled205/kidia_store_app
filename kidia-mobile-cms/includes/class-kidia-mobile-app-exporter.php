@@ -149,6 +149,10 @@ final class Kidia_Mobile_App_Exporter {
 		if ( ! $license->is_active() ) {
 			return new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
 		}
+		$existing = self::state();
+		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
+			return new WP_Error( 'build_already_active', __( 'A build is already running. Cancel it before starting another build.', 'kidia-mobile-cms' ) );
+		}
 
 		$request_token = wp_generate_uuid4();
 		$state         = array_merge(
@@ -311,6 +315,10 @@ final class Kidia_Mobile_App_Exporter {
 		if ( ! $license->is_active() ) {
 			wp_send_json_error( array( 'message' => __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) ), 403 );
 		}
+		$existing = self::state();
+		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
+			wp_send_json_success( $this->browser_state( $existing ) );
+		}
 
 		$request_token = wp_generate_uuid4();
 		$state         = array_merge(
@@ -345,33 +353,21 @@ final class Kidia_Mobile_App_Exporter {
 		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
 
 		$state = self::state();
-		if ( ! in_array( (string) $state['status'], array( 'queued', 'building' ), true ) ) {
-			wp_send_json_success( $this->browser_state( $state ) );
-		}
-
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' !== $build_id ) {
 			$result = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
-			/*
-			 * Some deployed build-service versions do not expose the optional
-			 * remote cancel route yet. Cancellation must still stop local
-			 * polling and dismiss the progress card instead of trapping the
-			 * merchant inside a broken dialog.
-			 */
 			if ( is_wp_error( $result ) ) {
-				$state['remote_cancel_error'] = sanitize_text_field( $result->get_error_message() );
+				wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 			}
 		}
 
-		$state['status']        = 'cancelled';
-		$state['progress']      = 0;
-		$state['message']       = __( 'Build cancelled.', 'kidia-mobile-cms' );
-		$state['completed_at']  = time();
-		$state['download_url']  = '';
-		$state['request_token'] = wp_generate_uuid4();
-		update_option( self::STATE_OPTION, $state, false );
-
-		wp_send_json_success( $this->browser_state( $state ) );
+		delete_option( self::STATE_OPTION );
+		wp_send_json_success(
+			array_merge(
+				$this->browser_state( self::default_state() ),
+				array( 'dismissed' => true )
+			)
+		);
 	}
 
 	public function handle_download_apk(): void {

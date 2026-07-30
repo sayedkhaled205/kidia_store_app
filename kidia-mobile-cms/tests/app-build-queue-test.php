@@ -128,6 +128,11 @@ function update_option( string $name, $value ): bool {
 	return true;
 }
 
+function delete_option( string $name ): bool {
+	unset( $GLOBALS['kidia_test_options'][ $name ] );
+	return true;
+}
+
 function wp_parse_args( $args, array $defaults = array() ): array {
 	return array_merge( $defaults, is_array( $args ) ? $args : array() );
 }
@@ -217,6 +222,12 @@ kidia_build_assert( isset( $request_body['plugin_version'] ), 'The build service
 kidia_build_assert( true === $request_body['provision_push'], 'The first build attempt should provision managed Push.' );
 kidia_build_assert( ! isset( $request_body['configurationHash'] ), 'Legacy camelCase build fields must not fail Laravel validation again.' );
 
+$duplicate = $exporter->queue_build();
+kidia_build_assert( is_wp_error( $duplicate ), 'A second queued or active build must be rejected.' );
+kidia_build_assert( 'build_already_active' === $duplicate->get_error_code(), 'The duplicate build rejection must be explicit.' );
+
+$remote['status'] = 'failed';
+update_option( 'kidia_mobile_app_export_state_v1', $remote );
 Kidia_Mobile_License_Manager::$fail_push_once = true;
 $fallback_queued = $exporter->queue_build();
 $exporter->process_queued_build( $fallback_queued['request_token'] );

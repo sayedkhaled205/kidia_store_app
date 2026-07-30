@@ -177,7 +177,7 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.dataset.status, "failed");
   assert.equal(root.querySelector("[data-build-message]").textContent, "The WooMobile build service rejected the request.");
   assert.equal(root.querySelector("[data-build-form-action]").value, "kidia_mobile_build_app");
-  assert.equal(root.querySelector("[data-build-modal]").hidden, true, "A failed provider request must close the progress dialog.");
+  assert.equal(root.querySelector("[data-build-modal]").hidden, false, "A failed build card must remain visible until Cancel.");
   assert.equal(button.disabled, false);
   assert.equal(button.classList.contains("is-loading"), false);
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
@@ -232,7 +232,7 @@ async function testActiveBuildCanBeCancelled() {
       json: async () => ({
         success: true,
         data: cancelling
-          ? { status: "cancelled", progress: 0, message: "Build cancelled.", downloadReady: false }
+          ? { status: "idle", progress: 0, message: "", downloadReady: false, dismissed: true }
           : { status: "building", progress: 20, message: "Building.", downloadReady: false }
       })
     };
@@ -241,7 +241,7 @@ async function testActiveBuildCanBeCancelled() {
   dom.window.eval(script);
 
   const modal = root.querySelector("[data-build-modal]");
-  assert.equal(modal.hidden, true, "An existing build must never open the progress popup on page load.");
+  assert.equal(modal.hidden, false, "An existing build card must be restored after page load.");
   root.querySelector("[data-build-action]").click();
   assert.equal(modal.hidden, false, "Clicking the active build card must explicitly open progress.");
 
@@ -252,8 +252,8 @@ async function testActiveBuildCanBeCancelled() {
 
   assert.equal(requests.some((body) => body.includes("action=kidia_mobile_app_build_cancel")), true);
   assert.equal(requests.some((body) => body.includes("nonce=cancel-nonce")), true);
-  assert.equal(root.dataset.status, "cancelled");
-  assert.equal(root.querySelector("[data-build-message]").textContent, "Build cancelled.");
+  assert.equal(root.dataset.status, "idle");
+  assert.equal(modal.hidden, true);
   assert.equal(cancelButton.hidden, true);
   assert.equal(root.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
   assert.equal(root.querySelector("[data-build-action]").disabled, false);

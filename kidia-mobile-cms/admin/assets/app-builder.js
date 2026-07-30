@@ -19,6 +19,10 @@
 		return ['queued', 'building'].includes(status);
 	}
 
+	function hasStoredBuild(status) {
+		return status && status !== 'idle' && status !== 'cancelled';
+	}
+
 	function progressModal(root) {
 		return root.querySelector('[data-build-modal]');
 	}
@@ -115,6 +119,7 @@
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
 		const building = isBuilding(status);
+		const stored = hasStoredBuild(status);
 
 		if (formAction) {
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
@@ -136,7 +141,7 @@
 			}
 		}
 		if (cancelButton) {
-			cancelButton.hidden = !building;
+			cancelButton.hidden = !stored;
 			cancelButton.disabled = false;
 		}
 		if (icon) {
@@ -201,7 +206,7 @@
 				buildMeta.hidden = parts.length === 0;
 			}
 			setActionState(root, status, progress, downloadReady);
-			if (!isBuilding(status) && openedProgress.has(root)) closeProgress(root);
+			if (state.dismissed) closeProgress(root);
 			if (downloadReady) requestDownload(root);
 		});
 	}
@@ -305,7 +310,7 @@
 	}
 
 	async function cancelBuild(root) {
-		if (!isBuilding(root.dataset.status)) return;
+		if (!hasStoredBuild(root.dataset.status)) return;
 
 		if (timer) {
 			window.clearTimeout(timer);
@@ -372,6 +377,10 @@
 	if (active) poll();
 
 	roots.forEach(function (root) {
+		if (hasStoredBuild(root.dataset.status)) {
+			openProgress(root);
+			dockProgress(root);
+		}
 		if (root.dataset.status === 'ready') requestDownload(root);
 	});
 
