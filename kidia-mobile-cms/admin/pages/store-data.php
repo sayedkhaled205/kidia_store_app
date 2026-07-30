@@ -98,6 +98,22 @@ $high_interest_products = array_values(
 	)
 );
 $is_abandoned_page = 'abandoned-carts' === $store_tab;
+$cart_view_url = static function ( string $view, int $page_number = 1 ) use ( $store_source, $date_preset, $date_from, $date_to, $cart_per_page ): string {
+	return add_query_arg(
+		array(
+			'page'          => 'kidia-mobile-store-data',
+			'store_tab'     => 'abandoned-carts',
+			'store_source'  => $store_source,
+			'date_preset'   => $date_preset,
+			'date_from'     => 'custom' === $date_preset ? wp_date( 'Y-m-d', $date_from ) : false,
+			'date_to'       => 'custom' === $date_preset ? wp_date( 'Y-m-d', $date_to ) : false,
+			'cart_view'     => $view,
+			'cart_per_page' => $cart_per_page,
+			'cart_page'     => max( 1, $page_number ),
+		),
+		admin_url( 'admin.php' )
+	);
+};
 $category_image = static function ( WP_Term $category ): string {
 	$image_id = absint( get_term_meta( $category->term_id, 'thumbnail_id', true ) );
 	$image    = $image_id > 0 ? wp_get_attachment_image( $image_id, 'thumbnail', false, array( 'loading' => 'lazy' ) ) : '';
@@ -279,9 +295,14 @@ $category_image = static function ( WP_Term $category ): string {
 			<?php endif; ?>
 			<div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Carts found', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['carts'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $abandoned_summary['potential_value'] ?? 0 ) ) ); ?></b></div></div>
 			</div>
+			<nav class="kidia-cart-view-tabs" aria-label="<?php esc_attr_e( 'Cart status', 'kidia-mobile-cms' ); ?>">
+				<a class="<?php echo 'abandoned' === $cart_view ? 'is-active' : ''; ?>" href="<?php echo esc_url( $cart_view_url( 'abandoned' ) ); ?>"><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></a>
+				<a class="<?php echo 'recovered' === $cart_view ? 'is-active' : ''; ?>" href="<?php echo esc_url( $cart_view_url( 'recovered' ) ); ?>"><?php esc_html_e( 'Recovered', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></a>
+			</nav>
 			<?php if ( isset( $_GET['recovery_result'] ) ) : ?><div class="notice notice-info inline"><p><?php echo esc_html( 'created' === $_GET['recovery_result'] ? sprintf( __( '%d personal recovery offers were created.', 'kidia-mobile-cms' ), absint( $_GET['recovery_count'] ?? 0 ) ) : __( 'No recovery offer was created. Select carts with a customer email and check the schedule.', 'kidia-mobile-cms' ) ); ?></p></div><?php endif; ?>
 			<form class="kidia-recovery-builder" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="kidia_mobile_create_recovery_campaign"><?php wp_nonce_field( 'kidia_mobile_create_recovery_campaign', 'kidia_mobile_recovery_nonce' ); ?>
+				<?php if ( 'abandoned' === $cart_view ) : ?>
 				<details open>
 					<summary><span class="dashicons dashicons-megaphone"></span><?php esc_html_e( 'Send recovery offer to selected carts', 'kidia-mobile-cms' ); ?></summary>
 					<div class="kidia-recovery-controls">
@@ -320,12 +341,19 @@ $category_image = static function ( WP_Term $category ): string {
 					<span><i class="is-returning"></i><?php esc_html_e( 'Returning customer', 'kidia-mobile-cms' ); ?></span>
 					<span><i class="is-first_time"></i><?php esc_html_e( 'First-time customer', 'kidia-mobile-cms' ); ?></span>
 				</div>
+				<?php endif; ?>
+				<div class="kidia-cart-table-toolbar">
+					<strong><?php echo esc_html( 'recovered' === $cart_view ? __( 'Recovered orders', 'kidia-mobile-cms' ) : __( 'Abandoned orders', 'kidia-mobile-cms' ) ); ?></strong>
+					<label><span><?php esc_html_e( 'Orders per page', 'kidia-mobile-cms' ); ?></span><select data-cart-per-page>
+						<?php foreach ( array( 20, 50, 100 ) as $size ) : ?><option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( $cart_per_page, $size ); ?>><?php echo esc_html( (string) $size ); ?></option><?php endforeach; ?>
+					</select></label>
+				</div>
 				<div class="kidia-data-table-wrap"><table class="kidia-data-table kidia-abandoned-table">
-					<thead><tr><th><input type="checkbox" data-select-all-carts aria-label="<?php esc_attr_e( 'Select all carts', 'kidia-mobile-cms' ); ?>"></th><th><?php esc_html_e( 'Customer', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Items', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Value', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Last activity', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Status', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Details', 'kidia-mobile-cms' ); ?></th></tr></thead>
+					<thead><tr><?php if ( 'abandoned' === $cart_view ) : ?><th><input type="checkbox" data-select-all-carts aria-label="<?php esc_attr_e( 'Select all carts', 'kidia-mobile-cms' ); ?>"></th><?php endif; ?><th><?php esc_html_e( 'Customer', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Items', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Value', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Last activity', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Status', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Details', 'kidia-mobile-cms' ); ?></th></tr></thead>
 					<tbody data-kidia-live-store-data="abandoned-carts-table">
 					<?php foreach ( $abandoned_carts as $cart ) : ?>
 						<tr data-abandoned-cart-row="<?php echo esc_attr( (string) $cart['id'] ); ?>">
-							<td><input type="checkbox" name="cart_ids[]" value="<?php echo esc_attr( (string) $cart['id'] ); ?>" <?php disabled( empty( $cart['customer_email'] ) ); ?> aria-label="<?php esc_attr_e( 'Select cart', 'kidia-mobile-cms' ); ?>"></td>
+							<?php if ( 'abandoned' === $cart_view ) : ?><td><input type="checkbox" name="cart_ids[]" value="<?php echo esc_attr( (string) $cart['id'] ); ?>" <?php disabled( empty( $cart['customer_email'] ) ); ?> aria-label="<?php esc_attr_e( 'Select cart', 'kidia-mobile-cms' ); ?>"></td><?php endif; ?>
 							<td><strong class="kidia-cart-customer"><i class="kidia-cart-segment is-<?php echo esc_attr( $cart['customer_segment'] ?? 'first_time' ); ?>" aria-hidden="true"></i><?php echo esc_html( $cart['customer_name'] ?: __( 'Guest', 'kidia-mobile-cms' ) ); ?></strong><small><?php echo esc_html( $cart['customer_email'] ?: __( 'Email required for a personal coupon', 'kidia-mobile-cms' ) ); ?></small></td>
 							<td><strong><?php echo esc_html( (string) $cart['item_count'] ); ?></strong><small><?php echo esc_html( implode( ', ', array_slice( array_filter( array_column( $cart['items'], 'name' ) ), 0, 3 ) ) ); ?></small></td>
 							<td><?php echo wp_kses_post( $money( (float) $cart['cart_total'] ) ); ?></td>
@@ -334,15 +362,31 @@ $category_image = static function ( WP_Term $category ): string {
 							<td><span class="kidia-status is-<?php echo esc_attr( $cart['status'] ); ?>"><?php echo esc_html( ucfirst( $cart['status'] ) ); ?></span><?php if ( ! empty( $cart['alternative_order_id'] ) ) : ?><small><?php echo esc_html( sprintf( __( 'Possible alternative #%d', 'kidia-mobile-cms' ), absint( $cart['alternative_order_id'] ) ) ); ?></small><?php endif; ?></td>
 							<td><button type="button" class="button kidia-cart-details-button" data-abandoned-cart-details="<?php echo esc_attr( (string) $cart['id'] ); ?>" aria-expanded="false"><?php esc_html_e( 'View details', 'kidia-mobile-cms' ); ?></button></td>
 						</tr>
-						<tr class="kidia-cart-details-row" data-abandoned-cart-details-row="<?php echo esc_attr( (string) $cart['id'] ); ?>" hidden><td colspan="8"><div class="kidia-cart-details-content" aria-live="polite"></div></td></tr>
+						<tr class="kidia-cart-details-row" data-abandoned-cart-details-row="<?php echo esc_attr( (string) $cart['id'] ); ?>" hidden><td colspan="<?php echo 'abandoned' === $cart_view ? '8' : '7'; ?>"><div class="kidia-cart-details-content" aria-live="polite"></div></td></tr>
 					<?php endforeach; ?>
 					</tbody>
 				</table></div>
+				<?php if ( $cart_pages > 1 ) : ?><nav class="kidia-data-pagination" data-kidia-live-store-data="abandoned-carts-pagination" aria-label="<?php esc_attr_e( 'Cart pages', 'kidia-mobile-cms' ); ?>"><?php
+					echo wp_kses_post(
+						paginate_links(
+							array(
+								'base'      => str_replace( '999999', '%#%', esc_url( $cart_view_url( $cart_view, 999999 ) ) ),
+								'format'    => '',
+								'current'   => $cart_page,
+								'total'     => $cart_pages,
+								'prev_text' => '‹',
+								'next_text' => '›',
+							)
+						)
+					);
+				?></nav><?php endif; ?>
 			</form>
+			<?php if ( 'recovered' === $cart_view ) : ?>
 			<section class="kidia-recovery-attribution"><h3><?php esc_html_e( 'Recovery attribution', 'kidia-mobile-cms' ); ?></h3><p><?php esc_html_e( 'A conversion is counted only when the same customer uses the personal campaign coupon.', 'kidia-mobile-cms' ); ?></p><div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Sent', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) ( $recovery_stats['sent'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Opened', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) ( $recovery_stats['opened'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) ( $recovery_stats['converted'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Net recovered revenue', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $recovery_stats['revenue'] ?? 0 ) - (float) ( $recovery_stats['discount'] ?? 0 ) ) ); ?></b></div></div>
 				<div class="kidia-recovery-rates"><span><small><?php esc_html_e( 'Open rate', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( $rate( (float) ( $recovery_stats['opened'] ?? 0 ), (float) ( $recovery_stats['sent'] ?? 0 ) ) . '%' ); ?></b></span><span><small><?php esc_html_e( 'Conversion rate', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( $rate( (float) ( $recovery_stats['converted'] ?? 0 ), (float) ( $recovery_stats['sent'] ?? 0 ) ) . '%' ); ?></b></span><span><small><?php esc_html_e( 'Average time to convert', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( ( $recovery_stats['time_to_convert'] ?? 0 ) > 0 ? human_time_diff( time() - absint( $recovery_stats['time_to_convert'] ), time() ) : '—' ); ?></b></span><span><small><?php esc_html_e( 'Discount cost', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $recovery_stats['discount'] ?? 0 ) ) ); ?></b></span></div>
 				<?php if ( $recovery_campaigns ) : ?><div class="kidia-data-table-wrap"><table class="kidia-data-table"><thead><tr><th><?php esc_html_e( 'Customer', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Coupon', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Source', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'State', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Order', 'kidia-mobile-cms' ); ?></th><th><?php esc_html_e( 'Revenue / discount', 'kidia-mobile-cms' ); ?></th></tr></thead><tbody><?php foreach ( $recovery_campaigns as $campaign ) : ?><tr><td><?php echo esc_html( $campaign['customer_email'] ); ?></td><td><code><?php echo esc_html( $campaign['coupon_code'] ); ?></code></td><td><?php echo esc_html( ucfirst( $campaign['source'] ) ); ?></td><td><span class="kidia-status is-<?php echo esc_attr( $campaign['status'] ); ?>"><?php echo esc_html( ucfirst( $campaign['status'] ) ); ?></span></td><td><?php echo $campaign['order_id'] ? '#' . esc_html( (string) $campaign['order_id'] ) : '—'; ?></td><td><?php echo wp_kses_post( $money( (float) $campaign['order_total'] ) ); ?> / <?php echo wp_kses_post( $money( (float) $campaign['discount_total'] ) ); ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
 			</section>
+			<?php endif; ?>
 
 		<?php endif; ?>
 	</section>
