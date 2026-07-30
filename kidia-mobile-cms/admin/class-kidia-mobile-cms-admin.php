@@ -730,11 +730,28 @@ final class Kidia_Mobile_CMS_Admin {
 			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source, true );
 			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
 		}
-		$abandoned_carts = 'abandoned-carts' === $store_tab
-			? Kidia_Mobile_Analytics::abandoned_carts( $date_from, $date_to, $store_source, 150 )
-			: array();
+		$cart_view = isset( $_GET['cart_view'] ) ? sanitize_key( wp_unslash( $_GET['cart_view'] ) ) : 'abandoned';
+		$cart_view = in_array( $cart_view, array( 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
+		$cart_per_page = absint( $_GET['cart_per_page'] ?? 20 );
+		$cart_per_page = in_array( $cart_per_page, array( 20, 50, 100 ), true ) ? $cart_per_page : 20;
+		$cart_page = max( 1, absint( $_GET['cart_page'] ?? 1 ) );
 		$abandoned_summary = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::abandoned_summary( $date_from, $date_to, $store_source )
+			: array();
+		$cart_total = 'recovered' === $cart_view
+			? absint( $abandoned_summary['recovered'] ?? 0 )
+			: absint( $abandoned_summary['abandoned'] ?? 0 );
+		$cart_pages = max( 1, (int) ceil( $cart_total / $cart_per_page ) );
+		$cart_page  = min( $cart_page, $cart_pages );
+		$abandoned_carts = 'abandoned-carts' === $store_tab
+			? Kidia_Mobile_Analytics::abandoned_carts(
+				$date_from,
+				$date_to,
+				$store_source,
+				$cart_per_page,
+				( $cart_page - 1 ) * $cart_per_page,
+				$cart_view
+			)
 			: array();
 		$abandoned_import = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::website_session_import_status()
