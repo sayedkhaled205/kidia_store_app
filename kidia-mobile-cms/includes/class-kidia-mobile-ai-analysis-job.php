@@ -499,7 +499,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	private static function order_args( int $from, int $to, string $source, array $override ): array {
 		$args = array_merge(
 			array(
-				'status'       => function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : array( 'processing', 'completed' ),
+				/*
+				 * Use the same revenue definition as Store Data. WooCommerce's
+				 * wc_get_is_paid_statuses() only contains its core paid states,
+				 * while many stores move paid orders into registered workflow
+				 * states afterwards. Limiting this job to the core list makes a
+				 * complete run publish only that small subset.
+				 */
+				'status'       => Kidia_Mobile_Analytics::revenue_order_statuses(),
 				'date_created' => $from . '...' . $to,
 				'orderby'      => 'date',
 				'order'        => 'DESC',
