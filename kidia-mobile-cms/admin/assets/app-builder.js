@@ -24,6 +24,7 @@
 		const buttonLabel = root.querySelector('[data-build-action-label]');
 		const icon = root.querySelector('[data-build-action-icon]');
 		const cancelButton = root.querySelector('[data-build-cancel]');
+		const modal = root.querySelector('[data-build-modal]');
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
 		const building = isBuilding(status);
@@ -51,6 +52,7 @@
 			cancelButton.hidden = !building;
 			cancelButton.disabled = false;
 		}
+		if (modal) modal.hidden = !building;
 		if (icon) {
 			icon.className = 'dashicons ' + (
 				ready
@@ -78,13 +80,15 @@
 		roots.forEach(function (root) {
 			const status = state.status || root.dataset.status || 'idle';
 			const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
-			const message = root.querySelector('[data-build-message]');
+			const messages = root.querySelectorAll('[data-build-message]');
 			const meter = root.querySelector('[data-build-progress]');
 			const value = root.querySelector('[data-build-progress-value]');
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
-			if (message) message.textContent = state.message || label(status);
+			messages.forEach(function (message) {
+				message.textContent = state.message || label(status);
+			});
 			if (meter) meter.hidden = !isBuilding(status);
 			if (value) {
 				value.style.width = progress + '%';
@@ -154,8 +158,9 @@
 				return;
 			}
 			roots.forEach(function (root) {
-				const message = root.querySelector('[data-build-message]');
-				if (message) message.textContent = error.message || label('failed');
+				root.querySelectorAll('[data-build-message]').forEach(function (message) {
+					message.textContent = error.message || label('failed');
+				});
 			});
 			schedulePoll(5000);
 		}
@@ -170,8 +175,8 @@
 
 		autoDownload.add(root);
 		render({
-			status: 'queued',
-			progress: 0,
+			status: 'building',
+			progress: 2,
 			message: label('starting', 'Starting APK build…'),
 			downloadReady: false
 		});
@@ -211,8 +216,9 @@
 			render(state);
 		} catch (error) {
 			if (cancelButton) cancelButton.disabled = false;
-			const message = root.querySelector('[data-build-message]');
-			if (message) message.textContent = error.message || label('cancelFailed', 'The build could not be cancelled.');
+			root.querySelectorAll('[data-build-message]').forEach(function (message) {
+				message.textContent = error.message || label('cancelFailed', 'The build could not be cancelled.');
+			});
 			schedulePoll(4000);
 		}
 	}

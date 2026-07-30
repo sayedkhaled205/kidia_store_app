@@ -45,8 +45,13 @@ assert.match(
 );
 assert.match(
   exporter,
-  /'queued'\s*===\s*\(string\)\s*\$state\['status'\][\s\S]*time\(\)\s*-\s*5[\s\S]*dispatch_build/,
-  "A delayed Action Scheduler queue must be rescued by status polling."
+  /handle_build_start\(\)[\s\S]*'status'\s*=>\s*'building'[\s\S]*dispatch_build\(\s*\$request_token\s*\)[\s\S]*wp_send_json_success/,
+  "Interactive builds must wait for provider dispatch and a real build ID before returning success."
+);
+assert.doesNotMatch(
+  exporter,
+  /refresh_build\([\s\S]*Action Scheduler and WP-Cron can be delayed[\s\S]*dispatch_build/,
+  "Status polling must never start a provider build automatically."
 );
 for (const field of [
   "store_url",
