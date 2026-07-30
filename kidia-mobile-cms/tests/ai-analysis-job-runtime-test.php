@@ -75,6 +75,9 @@ function wp_schedule_single_event( int $timestamp, string $hook, array $args = a
 }
 
 final class Kidia_Mobile_Analytics {
+	public static function revenue_order_statuses(): array {
+		return array( 'processing', 'completed', 'ready-for-shipping', 'delivered' );
+	}
 	public static function empty_commerce_snapshot(): array {
 		return array(
 			'orders'         => 0,
@@ -125,6 +128,7 @@ class WC_Order {
 function wc_get_is_paid_statuses(): array { return array( 'processing', 'completed' ); }
 function wc_get_products( array $args ): array { unset( $args ); return range( 1, 600 ); }
 function wc_get_orders( array $args ) {
+	$GLOBALS['kidia_ai_order_queries'][] = $args;
 	if ( 1 === (int) ( $args['limit'] ?? 0 ) && 'ids' === ( $args['return'] ?? '' ) ) {
 		return (object) array( 'total' => 4, 'orders' => array( 1 ) );
 	}
@@ -162,6 +166,11 @@ kidia_ai_runtime_assert(
 $started = Kidia_Mobile_AI_Analysis_Job::start( 1, 2000000000, 'all', 7, 'all_time' );
 $job_id  = (string) $started['job_id'];
 kidia_ai_runtime_assert( 0 === $started['processed'] && 0 === $started['revision'], 'A new job must start at revision zero.' );
+kidia_ai_runtime_assert(
+	array( 'processing', 'completed', 'ready-for-shipping', 'delivered' )
+		=== ( $GLOBALS['kidia_ai_order_queries'][0]['status'] ?? array() ),
+	'The count query must include paid orders moved into registered custom workflow statuses.'
+);
 kidia_ai_runtime_assert(
 	false !== strpos( (string) $started['result_url'], 'date_preset=all_time' )
 		&& false === strpos( (string) $started['result_url'], 'date_from=' ),
@@ -227,6 +236,19 @@ kidia_ai_runtime_assert(
 kidia_ai_runtime_assert(
 	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['orders_scanned'] ?? 0 ),
 	'Finalization must publish all scanned orders after the cache-size failure scenario.'
+);
+kidia_ai_runtime_assert(
+	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['orders_available'] ?? 0 ),
+	'A completed snapshot must report the same full paid-order population that its count query returned.'
+);
+kidia_ai_runtime_assert(
+	array() === array_filter(
+		$GLOBALS['kidia_ai_order_queries'],
+		static fn( array $query ): bool =>
+			array( 'processing', 'completed', 'ready-for-shipping', 'delivered' )
+				!== ( $query['status'] ?? array() )
+	),
+	'Every paginated order batch must use the same complete revenue-status list as the count query.'
 );
 kidia_ai_runtime_assert(
 	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['customers'] ?? 0 ),
