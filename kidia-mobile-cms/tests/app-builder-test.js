@@ -6,6 +6,16 @@ const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
 const script = fs.readFileSync(path.resolve(__dirname, "..", "admin", "assets", "app-builder.js"), "utf8");
+assert.match(
+  script,
+  /dataset\.starting === '1'[\s\S]*dataset\.starting = '1'[\s\S]*finally[\s\S]*dataset\.starting = '0'/,
+  "The browser must suppress repeated build submissions while the first request is in flight."
+);
+assert.match(
+  script,
+  /temporary WordPress\/API\/network failure[\s\S]*schedulePoll\(Math\.min\(15000/,
+  "Transient polling errors must retry instead of freezing a real Codemagic build at its last percentage."
+);
 
 function markup(status, autoDownload = false) {
   return `<!doctype html><body>
@@ -177,7 +187,8 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.dataset.status, "failed");
   assert.equal(root.querySelector("[data-build-message]").textContent, "The WooMobile build service rejected the request.");
   assert.equal(root.querySelector("[data-build-form-action]").value, "kidia_mobile_build_app");
-  assert.equal(root.querySelector("[data-build-modal]").hidden, true, "A failed provider request must close the progress dialog.");
+  assert.equal(root.querySelector("[data-build-modal]").hidden, false, "A failed provider request must remain visible until explicit cancellation.");
+  assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Failure must keep a cancel action available to dismiss the card.");
   assert.equal(button.disabled, false);
   assert.equal(button.classList.contains("is-loading"), false);
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
@@ -240,8 +251,9 @@ async function testActiveBuildCanBeCancelled() {
   dom.window.setTimeout = () => 0;
   dom.window.eval(script);
 
-  const modal = root.querySelector("[data-build-modal]");
-  assert.equal(modal.hidden, true, "An existing build must never open the progress popup on page load.");
+  const modal = dom.window.document.querySelector("[data-build-modal]");
+  assert.equal(modal.hidden, false, "An existing build must restore its persistent progress card on page load.");
+  assert.equal(modal.classList.contains("is-global"), true);
   root.querySelector("[data-build-action]").click();
   assert.equal(modal.hidden, false, "Clicking the active build card must explicitly open progress.");
 
@@ -260,11 +272,49 @@ async function testActiveBuildCanBeCancelled() {
   assert.equal(root.querySelector("[data-build-action]").hidden, false);
 }
 
+async function testPersistentBuildDockSurvivesWithoutOverviewForm() {
+  const dom = new JSDOM(markup("building").replace(/<form[\s\S]*?<\/form>/, ""), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-ai-insights"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  const requests = [];
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async (_url, options) => {
+    requests.push(options.body.toString());
+    const cancelling = options.body.toString().includes("kidia_mobile_app_build_cancel");
+    return {
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: cancelling
+          ? { status: "cancelled", progress: 0, message: "Build cancelled.", downloadReady: false }
+          : { status: "building", progress: 42, message: "Building.", downloadReady: false }
+      })
+    };
+  };
+  dom.window.setTimeout = () => 0;
+  dom.window.eval(script);
+  await flush();
+
+  const modal = dom.window.document.querySelector("[data-build-modal]");
+  assert.equal(modal.hidden, false, "An active build dock must be restored after opening another CMS page.");
+  assert.equal(modal.classList.contains("is-global"), true, "The build dock must survive CMS fragment navigation.");
+  assert.equal(modal.parentElement, dom.window.document.body, "The build dock must live outside replaceable page content.");
+
+  root.querySelector("[data-build-cancel]").click();
+  await flush();
+  assert.equal(requests.some((body) => body.includes("action=kidia_mobile_app_build_cancel")), true);
+  assert.equal(modal.hidden, true, "Only explicit cancellation dismisses the persistent build dock.");
+}
+
 (async function () {
   await testReadyBuildDownloadsFromTheSameControl();
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
   await testActiveBuildCanBeCancelled();
+  await testPersistentBuildDockSurvivesWithoutOverviewForm();
   console.log("APK single build-and-download control tests passed.");
 })();
