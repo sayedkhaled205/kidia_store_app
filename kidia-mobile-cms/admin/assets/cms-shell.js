@@ -844,6 +844,15 @@
 			});
 		});
 	}
+	const cartPerPage = document.querySelector('[data-cart-per-page]');
+	if (cartPerPage) {
+		cartPerPage.addEventListener('change', function () {
+			const url = new URL(window.location.href);
+			url.searchParams.set('cart_per_page', cartPerPage.value);
+			url.searchParams.set('cart_page', '1');
+			window.location.assign(url.toString());
+		});
+	}
 	document.addEventListener('click', async function (event) {
 		const button = event.target.closest('[data-abandoned-cart-details]');
 		if (!button) return;

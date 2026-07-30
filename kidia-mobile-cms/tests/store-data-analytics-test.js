@@ -573,8 +573,8 @@ assert.match(
 );
 assert.match(
   analytics,
-  /abandoned_carts[\s\S]*status <> 'empty'[\s\S]*'active' === \$row\['status'\][\s\S]*\$threshold/,
-  "Current carts must appear immediately as active and only change to abandoned after the inactivity threshold.",
+  /abandoned_carts[\s\S]*status IN \('recovered','converted'\)[\s\S]*status = 'abandoned'[\s\S]*last_activity_at <= %s[\s\S]*LIMIT %d OFFSET %d/,
+  "Abandoned and recovered carts must be queried independently with real server-side pagination.",
 );
 assert.match(
   analytics,
@@ -585,6 +585,16 @@ assert.match(
   admin,
   /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
   "Abandoned Carts must open on Today by default.",
+);
+assert.match(
+  admin,
+  /cart_view[\s\S]*cart_per_page[\s\S]*array\( 20, 50, 100 \)[\s\S]*cart_page[\s\S]*cart_pages/,
+  "Abandoned carts must default to paginated status views with selectable page sizes.",
+);
+assert.match(
+  storeData,
+  /kidia-cart-view-tabs[\s\S]*Abandoned[\s\S]*Recovered[\s\S]*data-cart-per-page[\s\S]*paginate_links/,
+  "The cart workspace must expose Abandoned and Recovered tabs, a page-size control and numbered navigation.",
 );
 assert.match(
   storeData,
@@ -635,6 +645,11 @@ assert.match(
   analytics,
   /get_billing_phone[\s\S]*get_shipping_phone[\s\S]*billing_state[\s\S]*shipping_state[\s\S]*'customer'/,
   "Abandoned-cart insights must include the customer's available phone numbers and province.",
+);
+assert.match(
+  analytics,
+  /get_billing_country[\s\S]*get_shipping_country[\s\S]*province_label[\s\S]*get_states/,
+  "Province must use the order country to convert WooCommerce state codes into readable governorate names.",
 );
 assert.match(
   storeData,

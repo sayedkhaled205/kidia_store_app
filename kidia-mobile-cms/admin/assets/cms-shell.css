@@ -589,6 +589,13 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-data-pagination{display:flex;justify-content:center;gap:5px;margin-top:18px}
 	.kidia-data-pagination .page-numbers{display:grid;min-width:36px;height:36px;place-items:center;border:1px solid #b9d9d1;border-radius:8px;background:#fff;color:#236b59;text-decoration:none}
 	.kidia-data-pagination .current{background:#2f806e;color:#fff}
+.kidia-cart-view-tabs{display:flex;gap:6px;margin:18px 0 12px;padding:6px;border:1px solid #dce7e3;border-radius:12px;background:#f0f4f2}
+.kidia-cart-view-tabs a{display:flex;min-width:150px;min-height:40px;align-items:center;justify-content:center;gap:8px;border-radius:8px;color:#50615c;text-decoration:none;font-weight:750}
+.kidia-cart-view-tabs a.is-active{background:#fff;color:#236b59;box-shadow:0 2px 8px rgba(35,107,89,.09)}
+.kidia-cart-view-tabs b{padding:2px 7px;border-radius:99px;background:#e5f3ef;font-size:11px}
+.kidia-cart-table-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;padding:9px 12px;border:1px solid #dce7e3;border-radius:10px;background:#f7fbfa;color:#315f55}
+.kidia-cart-table-toolbar label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.kidia-cart-table-toolbar select{min-width:72px;min-height:32px;border-color:#b9d4cd;border-radius:7px;background:#fff}
 	.kidia-product-search{
 		display:flex;
 		align-items:center;

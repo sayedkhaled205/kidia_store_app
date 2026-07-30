@@ -1309,7 +1309,14 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return list<array<string,mixed>>
 	 */
-	public static function abandoned_carts( int $from, int $to, string $source = 'all', int $limit = 100 ): array {
+	public static function abandoned_carts(
+		int $from,
+		int $to,
+		string $source = 'all',
+		int $limit = 100,
+		int $offset = 0,
+		string $view = 'abandoned'
+	): array {
 		self::sync_website_sessions();
 		global $wpdb;
 		$table     = self::carts_table();
@@ -1320,13 +1327,19 @@ final class Kidia_Mobile_Analytics {
 			$where .= ' AND source = %s';
 			$args[] = $source;
 		}
-		$where .= " AND status <> 'empty'";
+		if ( 'recovered' === $view ) {
+			$where .= " AND status IN ('recovered','converted')";
+		} else {
+			$where .= " AND (status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s))";
+			$args[] = $threshold;
+		}
 		$args[] = max( 1, min( 250, $limit ) );
+		$args[] = max( 0, $offset );
 		$rows   = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE {$where}
 				ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, cart_total DESC, last_activity_at DESC
-				LIMIT %d",
+				LIMIT %d OFFSET %d",
 				...$args
 			),
 			ARRAY_A
@@ -1464,6 +1477,7 @@ final class Kidia_Mobile_Analytics {
 			'phones'   => array(),
 			'province' => '',
 		);
+		$province_country = '';
 		foreach ( $orders as $order ) {
 			if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_id' ) ) ) {
 				continue;
@@ -1496,11 +1510,20 @@ final class Kidia_Mobile_Analytics {
 				}
 			}
 			if ( '' === $customer['province'] ) {
-				foreach ( array( 'get_billing_state', 'get_shipping_state' ) as $state_method ) {
+				foreach (
+					array(
+						array( 'get_billing_state', 'get_billing_country' ),
+						array( 'get_shipping_state', 'get_shipping_country' ),
+					) as $address_methods
+				) {
+					list( $state_method, $country_method ) = $address_methods;
 					if ( is_callable( array( $order, $state_method ) ) ) {
 						$state = sanitize_text_field( (string) $order->{$state_method}() );
 						if ( '' !== $state ) {
 							$customer['province'] = $state;
+							$province_country = is_callable( array( $order, $country_method ) )
+								? sanitize_text_field( (string) $order->{$country_method}() )
+								: '';
 							break;
 						}
 					}
@@ -1527,11 +1550,14 @@ final class Kidia_Mobile_Analytics {
 			}
 			if ( '' === $customer['province'] ) {
 				$customer['province'] = sanitize_text_field( (string) get_user_meta( $user_id, 'billing_state', true ) );
+				$province_country = sanitize_text_field( (string) get_user_meta( $user_id, 'billing_country', true ) );
 				if ( '' === $customer['province'] ) {
 					$customer['province'] = sanitize_text_field( (string) get_user_meta( $user_id, 'shipping_state', true ) );
+					$province_country = sanitize_text_field( (string) get_user_meta( $user_id, 'shipping_country', true ) );
 				}
 			}
 		}
+		$customer['province'] = self::province_label( $customer['province'], $province_country );
 		$customer['phones'] = array_values( array_unique( array_filter( $customer['phones'] ) ) );
 
 		return array(
@@ -1541,6 +1567,45 @@ final class Kidia_Mobile_Analytics {
 			'customer'         => $customer,
 			'customer_segment' => $alternative ? 'alternative' : ( $has_previous_purchase ? 'returning' : 'first_time' ),
 		);
+	}
+
+	/**
+	 * Convert a stored WooCommerce state code into its governorate label.
+	 */
+	private static function province_label( string $state, string $country ): string {
+		$state   = sanitize_text_field( $state );
+		$country = strtoupper( sanitize_text_field( $country ) );
+		if ( '' === $state ) {
+			return '';
+		}
+		if ( '' === $country && preg_match( '/^[A-Z]{2}[A-Z0-9]{2,3}$/', strtoupper( $state ) ) ) {
+			$country = substr( strtoupper( $state ), 0, 2 );
+		}
+
+		$countries = null;
+		if ( function_exists( 'WC' ) && WC() && isset( WC()->countries ) ) {
+			$countries = WC()->countries;
+		}
+		if ( ! is_object( $countries ) || ! is_callable( array( $countries, 'get_states' ) ) ) {
+			return $state;
+		}
+
+		$states = $countries->get_states( $country );
+		if ( ! is_array( $states ) ) {
+			return $state;
+		}
+
+		$candidates = array( $state, strtoupper( $state ) );
+		if ( '' !== $country && 0 === strpos( strtoupper( $state ), $country ) ) {
+			$candidates[] = substr( strtoupper( $state ), strlen( $country ) );
+		}
+		foreach ( array_unique( $candidates ) as $candidate ) {
+			if ( isset( $states[ $candidate ] ) && '' !== (string) $states[ $candidate ] ) {
+				return sanitize_text_field( wp_strip_all_tags( (string) $states[ $candidate ] ) );
+			}
+		}
+
+		return $state;
 	}
 
 	/**
