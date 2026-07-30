@@ -352,8 +352,14 @@ final class Kidia_Mobile_App_Exporter {
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' !== $build_id ) {
 			$result = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
+			/*
+			 * Some deployed build-service versions do not expose the optional
+			 * remote cancel route yet. Cancellation must still stop local
+			 * polling and dismiss the progress card instead of trapping the
+			 * merchant inside a broken dialog.
+			 */
 			if ( is_wp_error( $result ) ) {
-				wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
+				$state['remote_cancel_error'] = sanitize_text_field( $result->get_error_message() );
 			}
 		}
 
