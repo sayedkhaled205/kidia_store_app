@@ -240,6 +240,8 @@
 		overscroll-behavior: contain;
 		padding-bottom: 16px;
 		scrollbar-gutter: stable;
+		scrollbar-color: #2f806e #e8f0ed;
+		scrollbar-width: auto;
 	}
 }
 

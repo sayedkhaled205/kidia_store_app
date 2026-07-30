@@ -1251,11 +1251,31 @@
 
 .kidia-element-picker__content {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	align-content: start;
-	gap: 10px;
+	gap: 12px;
 	overflow-y: auto;
 	padding: 16px 18px;
+	scrollbar-color: var(--kidia-picker-accent) #e8f0ed;
+	scrollbar-width: auto;
+}
+
+.kidia-element-picker__content::-webkit-scrollbar,
+.kidia-builder-cards-scroll::-webkit-scrollbar {
+	width: 12px;
+}
+
+.kidia-element-picker__content::-webkit-scrollbar-track,
+.kidia-builder-cards-scroll::-webkit-scrollbar-track {
+	border-radius: 999px;
+	background: #e8f0ed;
+}
+
+.kidia-element-picker__content::-webkit-scrollbar-thumb,
+.kidia-builder-cards-scroll::-webkit-scrollbar-thumb {
+	border: 3px solid #e8f0ed;
+	border-radius: 999px;
+	background: var(--kidia-picker-accent, #2f806e);
 }
 
 .kidia-element-group + .kidia-element-group {
@@ -1291,9 +1311,9 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-height: 112px;
-	gap: 7px;
-	padding: 10px 8px;
+	min-height: 144px;
+	gap: 10px;
+	padding: 16px 12px;
 	text-align: center;
 }
 
@@ -1304,19 +1324,19 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 9px;
-	font-size: 13px;
+	gap: 12px;
+	font-size: 14px;
 	text-align: center;
 }
 
 .kidia-element-group__identity .dashicons {
 	color: var(--kidia-picker-accent);
 	display: grid;
-	width: 28px;
-	height: 28px;
+	width: 38px;
+	height: 38px;
 	place-items: center;
-	font-size: 28px;
-	line-height: 28px;
+	font-size: 38px;
+	line-height: 38px;
 }
 
 .kidia-element-group__identity strong {
@@ -1324,8 +1344,8 @@
 	width: 100%;
 	max-width: 100%;
 	color: #1d2327;
-	font-size: 13px;
-	line-height: 1.3;
+	font-size: 14px;
+	line-height: 1.4;
 	text-align: center;
 	white-space: normal;
 	overflow-wrap: anywhere;
@@ -1336,7 +1356,7 @@
 	width: 100%;
 	overflow: hidden;
 	color: #64746f;
-	font-size: 10px;
+	font-size: 11px;
 	font-weight: 600;
 	line-height: 1.3;
 	text-overflow: ellipsis;

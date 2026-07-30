@@ -15,11 +15,11 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.77/, "The plugin header must be version 1.45.77.");
+assert.match(plugin, /Version:\s+1\.45\.78/, "The plugin header must be version 1.45.78.");
 assert.match(
   plugin,
   /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.77'/,
-  "The runtime plugin version must match the 1.45.77 plugin header."
+  "The runtime plugin version must match the 1.45.78 plugin header."
 );
 assert.match(
   plugin,

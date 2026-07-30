@@ -62,13 +62,9 @@ $layout_counts = array();
  * @var array<string,array{label:string,types:array<int,string>}>
  */
 $element_categories = array(
-	'page-structure' => array(
-		'label' => __( 'Page Structure', 'kidia-mobile-cms' ),
-		'types' => array( 'app_header' ),
-	),
-	'hero-banners' => array(
-		'label' => __( 'Hero & Banners', 'kidia-mobile-cms' ),
-		'types' => array( 'hero_slider', 'image_banner', 'banner_grid', 'video_banner' ),
+	'visual' => array(
+		'label' => __( 'Visual', 'kidia-mobile-cms' ),
+		'types' => array( 'app_header', 'hero_slider', 'image_banner', 'banner_grid', 'video_banner' ),
 	),
 	'products' => array(
 		'label' => __( 'Products', 'kidia-mobile-cms' ),
@@ -78,13 +74,9 @@ $element_categories = array(
 		'label' => __( 'Content', 'kidia-mobile-cms' ),
 		'types' => array( 'section_header', 'text_block', 'quick_links' ),
 	),
-	'layout' => array(
-		'label' => __( 'Layout', 'kidia-mobile-cms' ),
-		'types' => array( 'divider', 'spacer' ),
-	),
-	'marketing' => array(
-		'label' => __( 'Marketing', 'kidia-mobile-cms' ),
-		'types' => array( 'promo_strip', 'coupon_banner', 'countdown' ),
+	'marketing-layout' => array(
+		'label' => __( 'Marketing & Layout', 'kidia-mobile-cms' ),
+		'types' => array( 'promo_strip', 'coupon_banner', 'countdown', 'divider', 'spacer' ),
 	),
 );
 
