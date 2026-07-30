@@ -188,6 +188,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								<h2 id="kidia-app-build-title"><?php esc_html_e( 'Building your APK', 'kidia-mobile-cms' ); ?></h2>
 								<p class="kidia-app-build__message" data-build-message><?php echo esc_html( (string) $build_state['message'] ); ?></p>
 								<strong class="kidia-ai-progress-count" data-build-stage><?php esc_html_e( 'Connecting to the build service…', 'kidia-mobile-cms' ); ?></strong>
+								<small class="kidia-app-build__meta" data-build-meta hidden></small>
 								<div class="kidia-app-build__progress kidia-ai-progress-track" data-build-progress>
 									<span
 										data-build-progress-value
