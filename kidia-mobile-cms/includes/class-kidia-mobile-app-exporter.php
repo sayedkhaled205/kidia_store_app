@@ -10,6 +10,7 @@ defined( 'ABSPATH' ) || exit;
 final class Kidia_Mobile_App_Exporter {
 
 	private const STATE_OPTION = 'kidia_mobile_app_export_state_v1';
+	private const START_LOCK_OPTION = 'kidia_mobile_app_export_start_lock_v1';
 	private const ASYNC_HOOK = 'kidia_mobile_process_app_build';
 	private const START_TIMEOUT = 180;
 
@@ -148,6 +149,10 @@ final class Kidia_Mobile_App_Exporter {
 		$license = new Kidia_Mobile_License_Manager();
 		if ( ! $license->is_active() ) {
 			return new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+		}
+		$existing = self::state();
+		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
+			return $existing;
 		}
 
 		$request_token = wp_generate_uuid4();
@@ -312,6 +317,20 @@ final class Kidia_Mobile_App_Exporter {
 			wp_send_json_error( array( 'message' => __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) ), 403 );
 		}
 
+		$existing = self::state();
+		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
+			wp_send_json_success( $this->browser_state( $existing ) );
+		}
+		if ( ! add_option( self::START_LOCK_OPTION, time(), '', false ) ) {
+			$lock_started = absint( get_option( self::START_LOCK_OPTION, 0 ) );
+			if ( $lock_started > 0 && $lock_started < ( time() - self::START_TIMEOUT ) ) {
+				delete_option( self::START_LOCK_OPTION );
+			}
+			if ( ! add_option( self::START_LOCK_OPTION, time(), '', false ) ) {
+				wp_send_json_success( $this->browser_state( self::state() ) );
+			}
+		}
+
 		$request_token = wp_generate_uuid4();
 		$state         = array_merge(
 			self::default_state(),
@@ -331,7 +350,11 @@ final class Kidia_Mobile_App_Exporter {
 		 * request before returning success. This prevents a local "Queued"
 		 * state from being mistaken for a real Codemagic build.
 		 */
-		$result = $this->dispatch_build( $request_token );
+		try {
+			$result = $this->dispatch_build( $request_token );
+		} finally {
+			delete_option( self::START_LOCK_OPTION );
+		}
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
@@ -345,12 +368,15 @@ final class Kidia_Mobile_App_Exporter {
 		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
 
 		$state = self::state();
-		if ( ! in_array( (string) $state['status'], array( 'queued', 'building' ), true ) ) {
+		if ( in_array( (string) $state['status'], array( 'idle', 'cancelled' ), true ) ) {
 			wp_send_json_success( $this->browser_state( $state ) );
 		}
 
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
-		if ( '' !== $build_id ) {
+		if (
+			'' !== $build_id
+			&& in_array( (string) $state['status'], array( 'queued', 'building' ), true )
+		) {
 			$result = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
 			/*
 			 * Some deployed build-service versions do not expose the optional
