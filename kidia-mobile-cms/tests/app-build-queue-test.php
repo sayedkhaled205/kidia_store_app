@@ -31,6 +31,7 @@ final class Kidia_Mobile_License_Manager {
 	public static int $requests = 0;
 	public static array $bodies = array();
 	public static bool $fail_push_once = false;
+	public static bool $return_artifacts_list = false;
 
 	public function is_active(): bool {
 		return true;
@@ -50,6 +51,28 @@ final class Kidia_Mobile_License_Manager {
 						'id' => 'build-123',
 						'status' => 'queued',
 						'progress' => 2,
+					),
+				),
+			);
+		}
+
+		if ( self::$return_artifacts_list ) {
+			return array(
+				'data' => array(
+					'build' => array(
+						'_id' => 'codemagic-build-456',
+						'workflow_status' => 'success',
+						'progress' => 100,
+						'artifacts' => array(
+							array(
+								'name' => 'app-release.aab',
+								'url' => 'https://downloads.example.test/app-release.aab',
+							),
+							array(
+								'name' => 'app-release.apk',
+								'url' => 'https://downloads.example.test/app-release.apk?signature=fresh',
+							),
+						),
 					),
 				),
 			);
@@ -210,5 +233,12 @@ $refreshed = $exporter->refresh_build( true );
 kidia_build_assert( 4 === Kidia_Mobile_License_Manager::$requests, 'Download must refresh the ready remote build.' );
 kidia_build_assert( 'ready' === $refreshed['status'], 'Finished must normalize to a ready APK.' );
 kidia_build_assert( 'https://downloads.example.test/fresh-app.apk' === $refreshed['download_url'], 'Download must replace an expired signed URL.' );
+
+Kidia_Mobile_License_Manager::$return_artifacts_list = true;
+$refreshed = $exporter->refresh_build( true );
+kidia_build_assert( 'ready' === $refreshed['status'], 'A Codemagic success status must become a ready APK.' );
+kidia_build_assert( 'codemagic-build-456' === $refreshed['build_id'], 'Codemagic underscore IDs must be preserved.' );
+kidia_build_assert( 'https://downloads.example.test/app-release.apk?signature=fresh' === $refreshed['download_url'], 'The APK must be selected from a Codemagic artifacts list.' );
+kidia_build_assert( 'app-release.apk' === $refreshed['apk_file_name'], 'The Codemagic APK filename must be preserved.' );
 
 echo "APK background queue and fresh download URL tests passed.\n";
