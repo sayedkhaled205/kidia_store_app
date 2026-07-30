@@ -7,6 +7,11 @@
 
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
+	const progressModals = new WeakMap();
+	roots.forEach(function (root) {
+		const modal = root.querySelector('[data-build-modal]');
+		if (modal) progressModals.set(root, modal);
+	});
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -20,7 +25,7 @@
 	}
 
 	function progressModal(root) {
-		return root.querySelector('[data-build-modal]');
+		return progressModals.get(root) || null;
 	}
 
 	function openProgress(root) {
@@ -42,6 +47,15 @@
 		openedProgress.delete(root);
 		modal.hidden = true;
 		modal.classList.remove('is-docked', 'is-dragging');
+		document.body.classList.remove('kidia-ai-is-generating');
+	}
+
+	function persistProgress(root) {
+		const modal = progressModal(root);
+		if (!modal || !isBuilding(root.dataset.status)) return;
+		modal.hidden = false;
+		modal.classList.add('is-docked', 'is-global');
+		document.body.appendChild(modal);
 		document.body.classList.remove('kidia-ai-is-generating');
 	}
 
@@ -115,6 +129,7 @@
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
 		const building = isBuilding(status);
+		const cancellable = !['idle', 'cancelled'].includes(status);
 
 		if (formAction) {
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
@@ -136,7 +151,7 @@
 			}
 		}
 		if (cancelButton) {
-			cancelButton.hidden = !building;
+			cancelButton.hidden = !cancellable;
 			cancelButton.disabled = false;
 		}
 		if (icon) {
@@ -173,6 +188,7 @@
 			const progressLabel = root.querySelector('[data-build-progress-label]');
 			const stage = root.querySelector('[data-build-stage]');
 			const buildMeta = root.querySelector('[data-build-meta]');
+			const modal = progressModal(root);
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
@@ -201,7 +217,11 @@
 				buildMeta.hidden = parts.length === 0;
 			}
 			setActionState(root, status, progress, downloadReady);
-			if (!isBuilding(status) && openedProgress.has(root)) closeProgress(root);
+			if (status === 'cancelled') {
+				closeProgress(root);
+			} else if (modal && modal.classList.contains('is-global')) {
+				modal.hidden = false;
+			}
 			if (downloadReady) requestDownload(root);
 		});
 	}
@@ -254,26 +274,25 @@
 			if (isBuilding(state.status)) schedulePoll(4000);
 		} catch (error) {
 			pollFailures += 1;
-			if (pollFailures >= 3) {
-				autoDownload.delete(roots[0]);
-				render({
-					status: 'failed',
-					progress: 0,
-					message: error.message || label('failed'),
-					downloadReady: false
-				});
-				return;
-			}
 			roots.forEach(function (root) {
 				root.querySelectorAll('[data-build-message]').forEach(function (message) {
-					message.textContent = error.message || label('failed');
+					message.textContent = (error.message || label('failed')) + ' — retrying automatically…';
 				});
 			});
-			schedulePoll(5000);
+			// A temporary WordPress/API/network failure must never freeze a
+			// genuine Codemagic build at its last percentage. Keep polling until
+			// the server reports a terminal state or the user presses Cancel.
+			schedulePoll(Math.min(15000, 4000 + (pollFailures * 2000)));
 		}
 	}
 
 	async function startBuild(root) {
+		if (root.dataset.starting === '1' || isBuilding(root.dataset.status)) {
+			openProgress(root);
+			schedulePoll(0);
+			return;
+		}
+		root.dataset.starting = '1';
 		const nonce = root.querySelector('[name="kidia_mobile_build_nonce"]');
 		const body = new URLSearchParams({
 			action: 'kidia_mobile_app_build_start',
@@ -301,11 +320,13 @@
 				message: error.message || label('failed'),
 				downloadReady: false
 			});
+		} finally {
+			root.dataset.starting = '0';
 		}
 	}
 
 	async function cancelBuild(root) {
-		if (!isBuilding(root.dataset.status)) return;
+		if (['idle', 'cancelled'].includes(root.dataset.status)) return;
 
 		if (timer) {
 			window.clearTimeout(timer);
@@ -335,20 +356,20 @@
 	roots.forEach(function (root) {
 		const form = root.querySelector('[data-build-form]');
 		if (root.dataset.autoDownload === '1') autoDownload.add(root);
-		if (!form) return;
+		if (form) {
+			form.addEventListener('submit', function (event) {
+				if (root.dataset.status === 'ready') return;
 
-		form.addEventListener('submit', function (event) {
-			if (root.dataset.status === 'ready') return;
-
-			event.preventDefault();
-			if (isBuilding(root.dataset.status)) {
-				openProgress(root);
-				schedulePoll(0);
-				return;
-			}
-			if (root.dataset.canBuild !== '1') return;
-			startBuild(root);
-		});
+				event.preventDefault();
+				if (isBuilding(root.dataset.status)) {
+					openProgress(root);
+					schedulePoll(0);
+					return;
+				}
+				if (root.dataset.canBuild !== '1') return;
+				startBuild(root);
+			});
+		}
 
 		const backgroundButton = root.querySelector('[data-build-background]');
 		if (backgroundButton) {
@@ -364,6 +385,7 @@
 				cancelBuild(root);
 			});
 		}
+		persistProgress(root);
 	});
 
 	const active = roots.some(function (root) {
