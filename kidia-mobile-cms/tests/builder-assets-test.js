@@ -358,6 +358,13 @@ function runHomeBuilderTest() {
   click(window, window.document.querySelector('[data-kidia-element-category="products"]'));
   assert.equal(window.document.querySelectorAll('#kidia-element-picker .kidia-element-group[data-element-category="products"]:not([hidden])').length, 1, "Products filter must keep product cards visible inside Add Elements.");
   assert.equal(window.document.querySelectorAll("#kidia-element-picker .kidia-element-group[hidden]").length, 1, "Products filter must hide other Add Elements categories.");
+  assert.equal(window.document.querySelector('[data-kidia-element-category="products"]').getAttribute("aria-pressed"), "true", "The selected Add Elements category must expose its active state.");
+  window.document.getElementById("kidia-element-picker-search").value = "Layout";
+  window.document.getElementById("kidia-element-picker-search").dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(window.document.querySelectorAll('#kidia-element-picker .kidia-element-group:not([hidden])').length, 0, "Search must stay constrained to the selected Add Elements category.");
+  window.document.getElementById("kidia-element-picker-search").value = "";
+  window.document.getElementById("kidia-element-picker-search").dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(window.document.querySelectorAll('#kidia-element-picker .kidia-element-group[data-element-category="products"]:not([hidden])').length, 1, "Clearing search must restore the selected category instead of every card.");
   assert.equal(window.document.querySelectorAll(".kidia-builder-block[hidden]").length, 0, "Add Elements filters must never hide elements already placed on the Home page.");
   click(window, window.document.querySelector('[data-kidia-element-category="all"]'));
   assert.equal(window.document.querySelectorAll("#kidia-element-picker .kidia-element-group[hidden]").length, 0, "All must restore every Add Elements card.");
@@ -600,7 +607,7 @@ function runMergeControlsContractTest() {
 	assert.doesNotMatch(homeBlockTemplate, /<style\b/, "Home element cards must rely on the common closed-card action grid.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-builder-status\s*\{\s*display:none!important\s*\}/, "Only the publication badge may stay hidden.");
 	assert.doesNotMatch(readAsset("../templates/block-template.php"), /kidia-builder-block__type/, "Element rows must not repeat the type below the element name.");
-	assert.match(readAsset("home-builder.css"), /\.kidia-element-picker__content\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "Add Element types must render as larger adjacent grid tiles.");
+	assert.match(readAsset("home-builder.css"), /\.kidia-element-picker__content\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, "Add Element types must render as two large adjacent grid tiles.");
 	assert.match(pageStore, /title_font_size[\s\S]*title_font_weight[\s\S]*title_alignment[\s\S]*title_max_width_percent[\s\S]*title_offset_x[\s\S]*title_offset_y/, "Header Title must expose typography, width, alignment, and position controls.");
 	assert.match(readAsset("chrome-layout.js"), /title_font_size[\s\S]*title_font_weight[\s\S]*title_letter_spacing[\s\S]*positionStyle\(card,\s*item\)/, "The exact Header preview must apply every Title appearance and the shared position controls.");
 	assert.match(chromeTemplate, /Quick header presets[\s\S]*'standard'[\s\S]*'search'[\s\S]*'centered'[\s\S]*'page'[\s\S]*'actions'[\s\S]*data-header-preset=/, "Header must expose five easy-to-scan preset choices.");
@@ -831,9 +838,9 @@ function runMergeControlsContractTest() {
 	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{[\s\S]*color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/, "Every Add Element icon must stay centered inside its tile.");
 	assert.match(homeBuilderCss, /\.kidia-element-group__identity strong\s*\{[^}]*display:\s*block;[^}]*color:\s*#1d2327;[^}]*text-align:\s*center;/, "Every Add Element tile must keep its element name visible and centered.");
-	assert.match(homeBuilderCss, /\.kidia-element-picker__content\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/, "Add Elements must use three larger cards per row.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__summary\s*\{[^}]*min-height:\s*144px;/, "Add Element cards must be tall enough to show their icon and complete name clearly.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*width:\s*38px;[^}]*height:\s*38px;/, "Add Element icons must use the larger readable size.");
+	assert.match(homeBuilderCss, /\.kidia-element-picker__content\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)[^}]*overflow-y:\s*scroll;[^}]*scrollbar-gutter:\s*stable;/, "Add Elements must use two large cards per row with its own always-visible scroll rail.");
+	assert.match(homeBuilderCss, /\.kidia-element-group__summary\s*\{[^}]*min-height:\s*176px;/, "Add Element cards must be tall enough to show their icon and complete name clearly.");
+	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*width:\s*48px;[^}]*height:\s*48px;/, "Add Element icons must use the larger readable size.");
 	assert.match(homeBuilderCss, /\.kidia-builder-cards-scroll::\-webkit-scrollbar[\s\S]*background:\s*var\(--kidia-picker-accent,\s*#2f806e\)/, "The builder content rail must expose a visible branded scrollbar.");
 	const homeBuilderTemplate = readAsset("../pages/home-builder.php");
 	const categoryDefinition = homeBuilderTemplate.slice(homeBuilderTemplate.indexOf("$element_categories = array("), homeBuilderTemplate.indexOf("$element_category_by_type = array();"));

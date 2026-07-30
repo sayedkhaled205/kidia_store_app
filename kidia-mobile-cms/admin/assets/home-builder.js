@@ -1291,19 +1291,41 @@
 		}
 	});
 
-	toArray(picker ? picker.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]") : []).forEach(function (filterButton) {
-		filterButton.addEventListener("click", function () {
-			var selectedCategory = filterButton.dataset.kidiaElementCategory || "all";
+	function applyElementPickerFilters() {
+		var activeFilter = picker ? picker.querySelector(".kidia-element-category-filter [data-kidia-element-category].is-active") : null;
+		var selectedCategory = activeFilter ? activeFilter.dataset.kidiaElementCategory || "all" : "all";
+		var searchValue = searchInput ? searchInput.value.trim().toLocaleLowerCase() : "";
+		var visibleGroups = 0;
+		var noResults;
+
+		toArray(picker ? picker.querySelectorAll(".kidia-element-group") : []).forEach(function (group) {
+			var matchesCategory = selectedCategory === "all" || group.dataset.elementCategory === selectedCategory;
+			var matchesSearch = group.textContent.toLocaleLowerCase().indexOf(searchValue) !== -1;
+			var visible = matchesCategory && matchesSearch;
+			group.hidden = !visible;
+			visibleGroups += visible ? 1 : 0;
+		});
+
+		noResults = document.getElementById("kidia-element-picker-no-results");
+		if (noResults) {
+			noResults.hidden = visibleGroups !== 0;
+		}
+	}
+
+	if (picker) {
+		picker.addEventListener("click", function (event) {
+			var filterButton = event.target.closest(".kidia-element-category-filter [data-kidia-element-category]");
+			if (!filterButton || !picker.contains(filterButton)) {
+				return;
+			}
 			toArray(picker.querySelectorAll(".kidia-element-category-filter [data-kidia-element-category]")).forEach(function (button) {
 				var active = button === filterButton;
 				button.classList.toggle("is-active", active);
 				button.setAttribute("aria-pressed", active ? "true" : "false");
 			});
-			toArray(picker.querySelectorAll(".kidia-element-group")).forEach(function (group) {
-				group.hidden = selectedCategory !== "all" && group.dataset.elementCategory !== selectedCategory;
-			});
+			applyElementPickerFilters();
 		});
-	});
+	}
 
 	builder.addEventListener("change", function (event) {
 		var target = event.target;
@@ -1523,22 +1545,7 @@
 	});
 
 	if (searchInput) {
-		searchInput.addEventListener("input", function () {
-			var value = searchInput.value.trim().toLocaleLowerCase();
-			var visibleGroups = 0;
-			var noResults;
-
-			toArray(document.querySelectorAll(".kidia-element-group")).forEach(function (group) {
-				var matches = group.textContent.toLocaleLowerCase().indexOf(value) !== -1;
-				group.hidden = !matches;
-				visibleGroups += matches ? 1 : 0;
-			});
-
-			noResults = document.getElementById("kidia-element-picker-no-results");
-			if (noResults) {
-				noResults.hidden = visibleGroups !== 0;
-			}
-		});
+		searchInput.addEventListener("input", applyElementPickerFilters);
 	}
 
 	builder.addEventListener("pointerdown", function (event) {

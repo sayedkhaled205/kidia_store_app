@@ -1251,11 +1251,12 @@
 
 .kidia-element-picker__content {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	align-content: start;
-	gap: 12px;
-	overflow-y: auto;
-	padding: 16px 18px;
+	gap: 14px;
+	overflow-y: scroll;
+	padding: 18px;
+	scrollbar-gutter: stable;
 	scrollbar-color: var(--kidia-picker-accent) #e8f0ed;
 	scrollbar-width: auto;
 }
@@ -1307,13 +1308,12 @@
 .kidia-element-group__summary {
 	display: flex;
 	position: relative;
-	aspect-ratio: 1;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-height: 144px;
-	gap: 10px;
-	padding: 16px 12px;
+	min-height: 176px;
+	gap: 12px;
+	padding: 22px 16px;
 	text-align: center;
 }
 
@@ -1324,19 +1324,19 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 12px;
-	font-size: 14px;
+	gap: 14px;
+	font-size: 15px;
 	text-align: center;
 }
 
 .kidia-element-group__identity .dashicons {
 	color: var(--kidia-picker-accent);
 	display: grid;
-	width: 38px;
-	height: 38px;
+	width: 48px;
+	height: 48px;
 	place-items: center;
-	font-size: 38px;
-	line-height: 38px;
+	font-size: 48px;
+	line-height: 48px;
 }
 
 .kidia-element-group__identity strong {
@@ -1344,11 +1344,11 @@
 	width: 100%;
 	max-width: 100%;
 	color: #1d2327;
-	font-size: 14px;
-	line-height: 1.4;
+	font-size: 15px;
+	line-height: 1.45;
 	text-align: center;
 	white-space: normal;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .kidia-element-group__identity small {
@@ -1361,6 +1361,12 @@
 	line-height: 1.3;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+	.kidia-element-picker__content {
+		grid-template-columns: 1fr;
+	}
 }
 
 .kidia-element-group__empty {
