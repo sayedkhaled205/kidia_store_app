@@ -43,6 +43,18 @@ const count = overlay.querySelector("[data-ai-progress-count]");
 const hook = window.KidiaAiProgressTest;
 
 assert.ok(hook, "The real AI progress renderer must be testable.");
+const independentDock = hook.createDock();
+assert.notEqual(
+  independentDock,
+  overlay,
+  "The background progress card must not reuse the inline offer-generation card.",
+);
+assert.equal(independentDock.classList.contains("is-global"), true);
+assert.equal(
+  window.document.querySelectorAll("[data-ai-progress-overlay]").length,
+  2,
+  "Inline offer generation and global progress must remain visible together.",
+);
 hook.reset(overlay, "job-1");
 hook.render(overlay, {
   job_id: "job-1",

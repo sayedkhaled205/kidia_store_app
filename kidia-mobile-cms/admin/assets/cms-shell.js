@@ -225,7 +225,7 @@
 					detail: { url: cacheKey }
 				}));
 				Array.from(currentContent.childNodes).forEach(function (node) {
-					if (node !== sidebar && node !== shell) node.remove();
+					if (node !== sidebar && node !== shell && !(node.nodeType === 1 && node.matches('.kidia-ai-progress-overlay.is-global'))) node.remove();
 				});
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
 				if (pushState) history.pushState({ kidiaCmsPage: true }, '', cacheKey);
@@ -237,7 +237,7 @@
 				message.setAttribute('role', 'alert');
 				message.textContent = 'The requested Woo Mobile CMS view could not be loaded. Please try again.';
 				Array.from(currentContent.childNodes).forEach(function (node) {
-					if (node !== sidebar && node !== shell) node.remove();
+					if (node !== sidebar && node !== shell && !(node.nodeType === 1 && node.matches('.kidia-ai-progress-overlay.is-global'))) node.remove();
 				});
 				currentContent.appendChild(message);
 			} finally {
@@ -392,16 +392,26 @@
 		pushActionStyle.addEventListener('change', syncPushActionStyle);
 		syncPushActionStyle();
 	}
-	const datePreset = document.querySelector('.kidia-date-filter select[name="date_preset"]');
-	if (datePreset) {
-		const customDates = document.querySelectorAll('.kidia-date-filter input[type="date"]');
-		const syncCustomDates = function () {
-			const enabled = datePreset.value === 'custom';
-			customDates.forEach(function (input) { input.disabled = !enabled; });
-		};
-		datePreset.addEventListener('change', syncCustomDates);
-		syncCustomDates();
-	}
+	const initCustomDateFilters = function (root) {
+		(root || document).querySelectorAll('.kidia-date-filter').forEach(function (filter) {
+			const datePreset = filter.querySelector('select[name="date_preset"]');
+			if (!datePreset) return;
+			const customDates = filter.querySelectorAll('input[type="date"]');
+			const syncCustomDates = function () {
+				const enabled = datePreset.value === 'custom';
+				customDates.forEach(function (input) { input.disabled = !enabled; });
+			};
+			if (datePreset.dataset.kidiaCustomDatesBound !== '1') {
+				datePreset.dataset.kidiaCustomDatesBound = '1';
+				datePreset.addEventListener('change', syncCustomDates);
+			}
+			syncCustomDates();
+		});
+	};
+	initCustomDateFilters(document);
+	document.addEventListener('kidia:cms-page-ready', function () {
+		initCustomDateFilters(document);
+	});
 	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
 	const aiBackgroundConfig = window.kidiaCMSBackground || {};
 	const aiDockPositionKey = 'kidia_ai_progress_position_v1';
@@ -423,7 +433,7 @@
 		return json.data;
 	};
 	const createAiDock = function () {
-		const current = document.querySelector('[data-ai-progress-overlay]');
+		const current = document.querySelector('[data-ai-progress-overlay].is-global');
 		if (current) return current;
 		const dock = document.createElement('div');
 		dock.className = 'kidia-ai-progress-overlay is-docked is-global';
@@ -584,6 +594,7 @@
 	};
 	if (window.__KIDIA_AI_PROGRESS_TEST__) {
 		window.KidiaAiProgressTest = {
+			createDock: createAiDock,
 			render: renderAiProgress,
 			reset: resetAiProgressVersion,
 			position: positionAiDock,
