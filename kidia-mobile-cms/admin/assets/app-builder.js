@@ -172,6 +172,7 @@
 			const ring = root.querySelector('[data-build-progress-ring]');
 			const progressLabel = root.querySelector('[data-build-progress-label]');
 			const stage = root.querySelector('[data-build-stage]');
+			const buildMeta = root.querySelector('[data-build-meta]');
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
@@ -190,6 +191,15 @@
 					? label('queued', 'Waiting for the build provider…')
 					: label(status, 'Preparing the Android application…')
 			);
+			if (buildMeta) {
+				const parts = [];
+				if (state.buildId) parts.push('Build ID: ' + state.buildId);
+				if (state.updatedAt) {
+					parts.push('Last update: ' + new Date(Number(state.updatedAt) * 1000).toLocaleTimeString());
+				}
+				buildMeta.textContent = parts.join(' · ');
+				buildMeta.hidden = parts.length === 0;
+			}
 			setActionState(root, status, progress, downloadReady);
 			if (!isBuilding(status) && openedProgress.has(root)) closeProgress(root);
 			if (downloadReady) requestDownload(root);
