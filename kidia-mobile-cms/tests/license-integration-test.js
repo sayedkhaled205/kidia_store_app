@@ -18,7 +18,7 @@ const plugin = read("kidia-mobile-cms.php");
 assert.match(plugin, /Version:\s+1\.45\.78/, "The plugin header must be version 1.45.78.");
 assert.match(
   plugin,
-  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.77'/,
+  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.78'/,
   "The runtime plugin version must match the 1.45.78 plugin header."
 );
 assert.match(
