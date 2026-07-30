@@ -241,6 +241,9 @@ assert.equal(
 const adminMarkup = `
     <div data-promotion-admin>
       <form data-promotion-form></form>
+      <div class="kidia-app-promotion-state">Campaigns paused</div>
+      <input type="checkbox" data-promotion-master>
+      <span data-promotion-master-label>Off</span>
       <article data-promotion-type="smart_banner"><strong>Smart Banner</strong><input type="checkbox"></article>
       <div data-promotion-campaign-panel="smart_banner"></div>
       <small data-preview-campaign-label></small>
@@ -317,6 +320,24 @@ assert.equal(
   "394px",
   "Responsive scaling must preserve the laptop aspect ratio.",
 );
+const campaignToggle = adminDom.window.document.querySelector(
+  '[data-promotion-type="smart_banner"] input[type="checkbox"]',
+);
+campaignToggle.checked = true;
+campaignToggle.dispatchEvent(
+  new adminDom.window.Event("change", { bubbles: true }),
+);
+assert.equal(
+  adminDom.window.document.querySelector("[data-promotion-master]").checked,
+  true,
+  "Enabling a campaign must also enable the master publishing switch.",
+);
+assert.equal(
+  adminDom.window.document.querySelector("[data-promotion-master-label]")
+    .textContent,
+  "On",
+  "Automatically enabling publishing must update the visible master state.",
+);
 
 const dom = new JSDOM(
   `<!doctype html><body>
@@ -374,6 +395,61 @@ dom.window.KidiaAppPromotion = {
 };
 dom.window.eval(publicScript);
 
+const qrDom = new JSDOM(
+  `<!doctype html><body><div data-kidia-app-promo-root></div></body>`,
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+let generatedQrDestination = "";
+qrDom.window.matchMedia = () => ({ matches: false });
+qrDom.window.navigator.sendBeacon = () => true;
+qrDom.window.QRCode = function QRCode(holder, options) {
+  generatedQrDestination = options.text;
+  holder.append(qrDom.window.document.createElement("canvas"));
+};
+qrDom.window.QRCode.CorrectLevel = { M: 0 };
+qrDom.window.KidiaAppPromotion = {
+  ajaxUrl: "https://store.example/wp-admin/admin-ajax.php",
+  nonce: "nonce",
+  loggedIn: false,
+  page: { type: "home", path: "/" },
+  settings: {
+    enabled: true,
+    app_name: "Kidia",
+    tagline: "Scan to download",
+    primary_color: "#2f806e",
+    text_color: "#15352d",
+    surface_color: "#ffffff",
+    button_label: "Download app",
+    dismiss_label: "Not now",
+    android_url: "",
+    ios_url: "",
+    huawei_url: "",
+    smart_url: "",
+    deep_link: "",
+    qr_url: "https://download.example/kidia",
+    audience_devices: "all",
+    audience_users: "all",
+    page_target: "all",
+    custom_paths: "",
+    excluded_paths: "",
+    frequency: "always",
+    smart_banner: { enabled: false },
+    bottom_sheet: { enabled: false },
+    popup: { enabled: false },
+    desktop_qr: {
+      enabled: true,
+      position: "bottom-right",
+      delay: 0,
+    },
+    floating_button: { enabled: false },
+    inline_banner: { enabled: false },
+  },
+};
+qrDom.window.eval(publicScript);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -403,6 +479,23 @@ setTimeout(() => {
       ),
     ) > 0,
     "Dismissing one campaign must remember that campaign's frequency.",
+  );
+  const desktopQr = qrDom.window.document.querySelector(
+    ".kidia-app-promo--desktop_qr",
+  );
+  assert.ok(
+    desktopQr,
+    "The Desktop QR Card must render when only its custom QR destination is configured.",
+  );
+  assert.equal(
+    generatedQrDestination,
+    "https://download.example/kidia",
+    "The generated desktop QR code must use the custom QR destination.",
+  );
+  assert.equal(
+    desktopQr.querySelector(".kidia-app-promo__action").href,
+    "https://download.example/kidia",
+    "The Desktop QR Card action must use the same custom destination.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);
