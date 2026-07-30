@@ -12,8 +12,13 @@ function markup(status, autoDownload = false) {
     <div data-kidia-app-build data-status="${status}" data-can-build="1" data-auto-download="${autoDownload ? "1" : "0"}">
       <p data-build-message>Queued</p>
       <div data-build-progress><span data-build-progress-value aria-valuenow="0"></span></div>
-      <div data-build-modal ${["queued", "building"].includes(status) ? "" : "hidden"}>
+      <div data-build-modal hidden>
+        <div class="kidia-app-build__modal-card">
+          <div data-build-progress-ring><strong data-build-progress-label>0%</strong></div>
+          <strong data-build-stage>Waiting</strong>
         <p data-build-message>Queued</p>
+          <button type="button" data-build-background>Continue in background</button>
+        </div>
       </div>
       <div class="kidia-app-build__actions">
         <form method="post" data-build-form>
@@ -137,8 +142,8 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.match(requestBody, /action=kidia_mobile_app_build_start/, "The single control must start the build through AJAX without reloading Overview.");
   assert.match(requestBody, /nonce=build-nonce/);
   assert.equal(root.dataset.status, "building");
-  assert.equal(button.disabled, true);
-  assert.equal(button.hidden, true, "Progress must render in the card instead of inside the action button.");
+  assert.equal(button.disabled, false, "The active card remains clickable so the merchant can reopen progress.");
+  assert.equal(button.hidden, false, "The build card must remain present while progress is shown separately.");
   assert.equal(button.classList.contains("is-loading"), true, "The same button must show its loading state during a long build.");
   assert.equal(button.getAttribute("aria-busy"), "true");
   assert.equal(button.querySelector("[data-build-action-label]").textContent, "Building your APK… 15%");
@@ -234,6 +239,11 @@ async function testActiveBuildCanBeCancelled() {
   };
   dom.window.setTimeout = () => 0;
   dom.window.eval(script);
+
+  const modal = root.querySelector("[data-build-modal]");
+  assert.equal(modal.hidden, true, "An existing build must never open the progress popup on page load.");
+  root.querySelector("[data-build-action]").click();
+  assert.equal(modal.hidden, false, "Clicking the active build card must explicitly open progress.");
 
   const cancelButton = root.querySelector("[data-build-cancel]");
   assert.equal(cancelButton.hidden, false, "Cancel must be visible when the page loads with an active build.");
