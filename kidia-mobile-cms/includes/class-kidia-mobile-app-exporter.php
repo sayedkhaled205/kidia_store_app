@@ -597,9 +597,21 @@ final class Kidia_Mobile_App_Exporter {
 				: ( isset( $response['data'] ) && is_array( $response['data'] )
 					? $response['data']
 					: ( isset( $response['result'] ) && is_array( $response['result'] ) ? $response['result'] : $response ) ) );
+		if ( isset( $raw['build'] ) && is_array( $raw['build'] ) ) {
+			$raw = $raw['build'];
+		}
 		$state = wp_parse_args( is_array( $previous ) ? $previous : array(), self::default_state() );
 
-		$remote_status = sanitize_key( (string) ( $raw['status'] ?? 'queued' ) );
+		$remote_status = sanitize_key(
+			(string) (
+				$raw['status']
+				?? $raw['buildStatus']
+				?? $raw['build_status']
+				?? $raw['workflowStatus']
+				?? $raw['workflow_status']
+				?? 'queued'
+			)
+		);
 		$status_map    = array(
 			'pending'    => 'queued',
 			'queued'     => 'queued',
@@ -631,9 +643,22 @@ final class Kidia_Mobile_App_Exporter {
 			?? ''
 		);
 		$file_name     = (string) ( $raw['fileName'] ?? $raw['file_name'] ?? $raw['artifact']['fileName'] ?? $raw['artifact']['file_name'] ?? '' );
+		$artifacts     = is_array( $raw['artifacts'] ?? null ) ? $raw['artifacts'] : array();
+		foreach ( $artifacts as $artifact ) {
+			if ( ! is_array( $artifact ) ) {
+				continue;
+			}
+			$artifact_name = (string) ( $artifact['fileName'] ?? $artifact['file_name'] ?? $artifact['name'] ?? '' );
+			$artifact_url  = (string) ( $artifact['downloadUrl'] ?? $artifact['download_url'] ?? $artifact['url'] ?? '' );
+			if ( '' !== $artifact_url && preg_match( '/\.apk(?:$|\?)/i', $artifact_name . $artifact_url ) ) {
+				$download_url = $artifact_url;
+				$file_name    = $artifact_name ?: 'woomobile-app.apk';
+				break;
+			}
+		}
 		$progress      = max( 0, min( 100, absint( $raw['progress'] ?? ( 'ready' === $status ? 100 : 0 ) ) ) );
 
-		$state['build_id']      = sanitize_text_field( (string) ( $raw['id'] ?? $raw['buildId'] ?? $raw['build_id'] ?? $state['build_id'] ) );
+		$state['build_id']      = sanitize_text_field( (string) ( $raw['id'] ?? $raw['_id'] ?? $raw['buildId'] ?? $raw['build_id'] ?? $raw['codemagicBuildId'] ?? $raw['codemagic_build_id'] ?? $state['build_id'] ) );
 		$state['status']        = $status;
 		$state['progress']      = $progress;
 		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'kidia-mobile-cms' ) : '' ) ) );
@@ -642,6 +667,7 @@ final class Kidia_Mobile_App_Exporter {
 		$state['download_url']  = esc_url_raw( $download_url );
 		$state['apk_file_name'] = sanitize_file_name( $file_name ?: 'woomobile-app.apk' );
 		$state['hash']          = $hash;
+		$state['updated_at']    = time();
 
 		if ( 'ready' === $status && '' === $state['download_url'] ) {
 			$state['status']  = 'failed';
@@ -671,6 +697,9 @@ final class Kidia_Mobile_App_Exporter {
 			'status'       => sanitize_key( (string) $state['status'] ),
 			'progress'     => max( 0, min( 100, absint( $state['progress'] ) ) ),
 			'message'      => sanitize_text_field( (string) $state['message'] ),
+			'buildId'      => sanitize_text_field( (string) $state['build_id'] ),
+			'startedAt'    => absint( $state['started_at'] ),
+			'updatedAt'    => absint( $state['updated_at'] ),
 			'fileName'     => sanitize_file_name( (string) $state['apk_file_name'] ),
 			'current'      => self::is_current(),
 			'downloadReady'=> self::is_current(),
@@ -689,6 +718,7 @@ final class Kidia_Mobile_App_Exporter {
 			'message'       => '',
 			'started_at'    => 0,
 			'completed_at'  => 0,
+			'updated_at'    => 0,
 			'download_url'  => '',
 			'apk_file_name' => '',
 			'request_token' => '',
