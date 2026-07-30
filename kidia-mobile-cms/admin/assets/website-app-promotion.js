@@ -1,64 +1,65 @@
 (() => {
   "use strict";
 
-  const admin = document.querySelector("[data-promotion-admin]");
-  if (!admin) return;
+  const initializePromotionAdmin = () => {
+    const admin = document.querySelector("[data-promotion-admin]");
+    if (!admin || admin.dataset.promotionPreviewInitialized === "true") return;
+    admin.dataset.promotionPreviewInitialized = "true";
 
-  const form = admin.querySelector("[data-promotion-form]");
-  const preview = admin.querySelector("[data-promotion-preview]");
-  const previewScreen = admin.querySelector("[data-promotion-screen]");
-  const previewBrowser = admin.querySelector("[data-promotion-browser]");
-  const output = admin.querySelector("[data-preview-output]");
-  const campaignLabel = admin.querySelector("[data-preview-campaign-label]");
-  const typeCards = [...admin.querySelectorAll("[data-promotion-type]")];
-  const panels = [...admin.querySelectorAll("[data-promotion-campaign-panel]")];
-  let selectedCampaign = "smart_banner";
-  let selectedDevice = "desktop";
-  const previewSizes = {
-    mobile: { width: 390, height: 844 },
-    desktop: { width: 1366, height: 768 },
-  };
+    const form = admin.querySelector("[data-promotion-form]");
+    const preview = admin.querySelector("[data-promotion-preview]");
+    const previewScreen = admin.querySelector("[data-promotion-screen]");
+    const previewBrowser = admin.querySelector("[data-promotion-browser]");
+    const output = admin.querySelector("[data-preview-output]");
+    const campaignLabel = admin.querySelector("[data-preview-campaign-label]");
+    const typeCards = [...admin.querySelectorAll("[data-promotion-type]")];
+    const panels = [...admin.querySelectorAll("[data-promotion-campaign-panel]")];
+    let selectedCampaign = "smart_banner";
+    let selectedDevice = "desktop";
+    const previewSizes = {
+      mobile: { width: 390, height: 844 },
+      desktop: { width: 1366, height: 768 },
+    };
 
-  const fieldValue = (name, fallback = "") => {
-    const control = form.elements.namedItem(name);
-    return control ? String(control.value || fallback) : fallback;
-  };
-  const create = (tag, className, text) => {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  };
-  const resizePreview = () => {
-    if (!previewScreen || !previewBrowser) return;
-    const size = previewSizes[selectedDevice];
-    const computed = window.getComputedStyle(preview);
-    const horizontalPadding =
-      parseFloat(computed.paddingLeft || "0") +
-      parseFloat(computed.paddingRight || "0");
-    const availableWidth = Math.max(
-      240,
-      preview.clientWidth - horizontalPadding,
-    );
-    const scale = Math.min(1, availableWidth / size.width);
-    previewBrowser.style.setProperty("--preview-scale", String(scale));
-    previewScreen.style.width = `${Math.round(size.width * scale)}px`;
-    previewScreen.style.height = `${Math.round(size.height * scale)}px`;
-  };
-  const setDevice = (device) => {
-    selectedDevice = device in previewSizes ? device : "desktop";
-    preview.classList.toggle("is-mobile", selectedDevice === "mobile");
-    preview.classList.toggle("is-desktop", selectedDevice === "desktop");
-    admin.classList.toggle("is-desktop-preview", selectedDevice === "desktop");
-    admin.querySelectorAll("[data-preview-device]").forEach((button) => {
-      button.classList.toggle(
-        "is-active",
-        button.dataset.previewDevice === selectedDevice,
+    const fieldValue = (name, fallback = "") => {
+      const control = form.elements.namedItem(name);
+      return control ? String(control.value || fallback) : fallback;
+    };
+    const create = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    };
+    const resizePreview = () => {
+      if (!previewScreen || !previewBrowser) return;
+      const size = previewSizes[selectedDevice];
+      const computed = window.getComputedStyle(preview);
+      const horizontalPadding =
+        parseFloat(computed.paddingLeft || "0") +
+        parseFloat(computed.paddingRight || "0");
+      const availableWidth = Math.max(
+        240,
+        preview.clientWidth - horizontalPadding,
       );
-    });
-    resizePreview();
-    window.requestAnimationFrame?.(resizePreview);
-  };
+      const scale = Math.min(1, availableWidth / size.width);
+      previewBrowser.style.setProperty("--preview-scale", String(scale));
+      previewScreen.style.width = `${Math.round(size.width * scale)}px`;
+      previewScreen.style.height = `${Math.round(size.height * scale)}px`;
+    };
+    const setDevice = (device) => {
+      selectedDevice = device in previewSizes ? device : "desktop";
+      preview.classList.toggle("is-mobile", selectedDevice === "mobile");
+      preview.classList.toggle("is-desktop", selectedDevice === "desktop");
+      admin.classList.toggle("is-desktop-preview", selectedDevice === "desktop");
+      admin.querySelectorAll("[data-preview-device]").forEach((button) => {
+        const active = button.dataset.previewDevice === selectedDevice;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      resizePreview();
+      window.requestAnimationFrame?.(resizePreview);
+    };
   const selectCampaign = (key) => {
     selectedCampaign = key;
     typeCards.forEach((card) =>
@@ -240,6 +241,10 @@
     }, 1500);
   });
 
-  setDevice(selectedDevice);
-  selectCampaign(selectedCampaign);
+    setDevice(selectedDevice);
+    selectCampaign(selectedCampaign);
+  };
+
+  initializePromotionAdmin();
+  document.addEventListener("kidia:cms-page-ready", initializePromotionAdmin);
 })();

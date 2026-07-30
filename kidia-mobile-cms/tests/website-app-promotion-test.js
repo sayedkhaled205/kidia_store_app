@@ -169,8 +169,13 @@ assert.match(
 );
 assert.match(
   adminCss,
-  /is-desktop-preview[\s\S]*grid-template-columns:minmax\(460px,.82fr\) minmax\(640px,1.18fr\)/,
-  "Desktop preview mode must widen the preview rail without changing mobile mode.",
+  /is-desktop-preview \.kidia-app-promotion-workspace\{grid-template-columns:minmax\(0,1fr\)\}[\s\S]*is-desktop-preview \.kidia-app-promotion-preview\{grid-row:1;position:relative;top:auto;width:100%;max-width:none\}/,
+  "Desktop preview mode must place the laptop preview at full page width above the editor.",
+);
+assert.match(
+  adminCss,
+  /\.kidia-promotion-device-switch\{[\s\S]*gap:8px[\s\S]*\.kidia-promotion-device-switch button\{[\s\S]*width:36px[\s\S]*min-width:36px/,
+  "Mobile and laptop controls must have separate non-overlapping click targets.",
 );
 assert.match(
   adminCss,
@@ -233,20 +238,21 @@ assert.equal(
   "The bundled QR generator must preserve its license.",
 );
 
-const adminDom = new JSDOM(
-  `<!doctype html><body>
+const adminMarkup = `
     <div data-promotion-admin>
       <form data-promotion-form></form>
       <article data-promotion-type="smart_banner"><strong>Smart Banner</strong><input type="checkbox"></article>
       <div data-promotion-campaign-panel="smart_banner"></div>
       <small data-preview-campaign-label></small>
-      <button data-preview-device="mobile"></button>
-      <button data-preview-device="desktop"></button>
+      <button data-preview-device="mobile" aria-pressed="false"></button>
+      <button data-preview-device="desktop" aria-pressed="true"></button>
       <div data-promotion-preview>
         <div data-promotion-screen><div data-promotion-browser><div data-preview-output></div></div></div>
       </div>
     </div>
-  </body>`,
+`;
+const adminDom = new JSDOM(
+  "<!doctype html><body></body>",
   { runScripts: "outside-only", url: "https://store.example/wp-admin/admin.php" },
 );
 adminDom.window.ResizeObserver = class ResizeObserver {
@@ -258,11 +264,15 @@ adminDom.window.ResizeObserver = class ResizeObserver {
   }
 };
 adminDom.window.requestAnimationFrame = (callback) => callback();
+adminDom.window.eval(adminScript);
+adminDom.window.document.body.innerHTML = adminMarkup;
 const adminPreview = adminDom.window.document.querySelector(
   "[data-promotion-preview]",
 );
 Object.defineProperty(adminPreview, "clientWidth", { value: 700 });
-adminDom.window.eval(adminScript);
+adminDom.window.document.dispatchEvent(
+  new adminDom.window.CustomEvent("kidia:cms-page-ready"),
+);
 assert.equal(
   adminDom.window.document
     .querySelector("[data-promotion-admin]")
@@ -277,6 +287,26 @@ assert.equal(
   true,
   "The laptop control must be selected by default.",
 );
+adminDom.window.document
+  .querySelector('[data-preview-device="mobile"]')
+  .click();
+assert.equal(
+  adminDom.window.document
+    .querySelector("[data-promotion-preview]")
+    .classList.contains("is-mobile"),
+  true,
+  "The mobile control must still switch the live preview after fragment navigation.",
+);
+assert.equal(
+  adminDom.window.document
+    .querySelector('[data-preview-device="mobile"]')
+    .getAttribute("aria-pressed"),
+  "true",
+  "The selected device control must expose its active state.",
+);
+adminDom.window.document
+  .querySelector('[data-preview-device="desktop"]')
+  .click();
 assert.equal(
   adminDom.window.document.querySelector("[data-promotion-screen]").style.width,
   "700px",
