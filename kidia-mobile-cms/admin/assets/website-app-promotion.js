@@ -14,6 +14,9 @@
     const campaignLabel = admin.querySelector("[data-preview-campaign-label]");
     const typeCards = [...admin.querySelectorAll("[data-promotion-type]")];
     const panels = [...admin.querySelectorAll("[data-promotion-campaign-panel]")];
+    const master = admin.querySelector("[data-promotion-master]");
+    const masterLabel = admin.querySelector("[data-promotion-master-label]");
+    const state = admin.querySelector(".kidia-app-promotion-state");
     let selectedCampaign = "smart_banner";
     let selectedDevice = "desktop";
     const previewSizes = {
@@ -30,6 +33,18 @@
       if (className) node.className = className;
       if (text !== undefined) node.textContent = text;
       return node;
+    };
+    const updateMasterState = () => {
+      if (!master) return;
+      if (masterLabel) {
+        masterLabel.textContent = master.checked ? "On" : "Off";
+      }
+      state?.classList.toggle("is-live", master.checked);
+      if (state?.lastChild) {
+        state.lastChild.textContent = master.checked
+          ? "Campaigns live"
+          : "Campaigns paused";
+      }
     };
     const resizePreview = () => {
       if (!previewScreen || !previewBrowser) return;
@@ -176,6 +191,10 @@
     const toggle = card.querySelector('input[type="checkbox"]');
     toggle?.addEventListener("change", () => {
       card.classList.toggle("is-enabled", toggle.checked);
+      if (toggle.checked && master && !master.checked) {
+        master.checked = true;
+        updateMasterState();
+      }
     });
   });
 
@@ -196,18 +215,7 @@
     renderPreview();
   });
 
-  const master = admin.querySelector("[data-promotion-master]");
-  const masterLabel = admin.querySelector("[data-promotion-master-label]");
-  const state = admin.querySelector(".kidia-app-promotion-state");
-  master?.addEventListener("change", () => {
-    masterLabel.textContent = master.checked ? "On" : "Off";
-    state?.classList.toggle("is-live", master.checked);
-    if (state) {
-      state.lastChild.textContent = master.checked
-        ? "Campaigns live"
-        : "Campaigns paused";
-    }
-  });
+  master?.addEventListener("change", updateMasterState);
 
   admin.querySelector("[data-promotion-media]")?.addEventListener("click", () => {
     if (!window.wp?.media) return;

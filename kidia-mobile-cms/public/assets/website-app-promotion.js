@@ -67,7 +67,12 @@
     );
   };
   const destination = storeUrl();
-  if (!destination && !settings.deep_link) return;
+  const campaignDestination = (campaign) => {
+    if (campaign === "desktop_qr" && settings.qr_url) {
+      return settings.qr_url;
+    }
+    return destination || settings.deep_link || "";
+  };
 
   const lifetime = {
     daily: 86400000,
@@ -178,7 +183,10 @@
   const openDestination = (event, campaign) => {
     event?.preventDefault();
     track("click", campaign);
-    const fallback = destination;
+    const fallback =
+      campaign === "desktop_qr" && settings.qr_url
+        ? settings.qr_url
+        : destination;
     if (settings.deep_link && isMobile) {
       let pageHidden = false;
       const hidden = () => {
@@ -230,7 +238,7 @@
       node.append(qrHolder);
       if (window.QRCode) {
         new window.QRCode(qrHolder, {
-          text: settings.qr_url || settings.smart_url || destination,
+          text: campaignDestination(campaign),
           width: 92,
           height: 92,
           colorDark: settings.text_color || "#15352d",
@@ -252,7 +260,7 @@
         ? settings.open_label || "Open app"
         : settings.button_label || "Download app",
     );
-    action.href = destination || settings.deep_link || "#";
+    action.href = campaignDestination(campaign) || "#";
     action.rel = "noopener";
     action.addEventListener("click", (event) => openDestination(event, campaign));
     node.append(action);
@@ -275,6 +283,7 @@
   };
 
   const show = (displayType, campaign, slot = null) => {
+    if (!campaignDestination(campaign)) return;
     if (!canShow(campaign)) return;
     if (["popup", "bottom_sheet"].includes(displayType) && interruptionVisible) {
       return;
