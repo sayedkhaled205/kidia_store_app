@@ -211,7 +211,8 @@ test("Builder workspace fixes navigation, toolbar, and phone while only cards sc
   assert.match(bridge, /kidia-preview-scroll[\s\S]*contentWindow\.addEventListener\("wheel",\s*relayPreviewWheel/);
   assert.match(sharedStyles, /\.kidia-builder-cards-scroll\s*\{[\s\S]*overflow-y:\s*auto[\s\S]*scrollbar-gutter:\s*stable/);
   assert.match(sharedStyles, /:is\(\.kidia-mobile-preview,\.kidia-page-preview,\.kidia-category-mobile-preview\)[\s\S]*position:\s*relative !important/);
-  assert.match(shellStyles, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*overflow:hidden!important/);
+  assert.match(shellStyles, /body\.kidia-cms-builder-screen #wpcontent,\s*body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow:hidden!important/);
+  assert.match(shellStyles, /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*overflow:visible!important/);
 });
 
 test("every Flutter iframe and bundle URL is tied to the plugin version", () => {

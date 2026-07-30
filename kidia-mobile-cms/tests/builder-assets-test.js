@@ -1673,7 +1673,8 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 		assert.doesNotMatch(template, /<p[^>]*>[\s\S]{0,160}(?:Live preview —|Live mobile preview)/, "No explanatory caption may consume space below a phone preview.");
 	}
 	assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen[\s\S]*PAGE_BUILDER_SLUGS/, "Every Builder page must receive the fixed-workspace body class before it renders.");
-	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*display:flex;[\s\S]*overflow:hidden!important;/, "The WordPress document must not scroll behind a Builder.");
+	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpcontent,\s*body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow:hidden!important;/, "The WordPress document must not scroll behind a Builder.");
+	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*display:flex;[^}]*overflow:visible!important;/, "The fixed Builder frame must leave the shared sidebar's outer gutter visible.");
 	assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[\s\S]*height:calc\(100% - 24px\)!important;[\s\S]*margin-bottom:6px;/, "The Builder frame must extend downward without changing the phone position.");
 	assert.match(readAsset("home-builder.css"), /\.kidia-mobile-preview__device\s*\{[\s\S]*box-shadow:\s*none;/, "The Home phone frame must not cast a shadow.");
 	assert.match(readAsset("page-builder.css"), /\.kidia-page-phone\s*\{[^}]*box-shadow:none;/, "Shared page phone frames must not cast a shadow.");
