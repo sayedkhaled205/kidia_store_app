@@ -1332,6 +1332,59 @@ function runChromeComposerTest() {
   console.log("Header/Footer composer: rows, conditional sections and icon designs passed.");
 }
 
+function runDynamicChromeComposerBootTest() {
+  const layout = JSON.stringify({
+    rows: [
+      {
+        columns: [
+          { width: 50, align: "left", items: ["logo"] },
+          { width: 50, align: "right", items: ["cart"] },
+        ],
+      },
+    ],
+  });
+  const card = `<section class="kidia-fixed-chrome-card" data-element="header" data-chrome-part="header">
+    <div class="kidia-chrome-composer" data-part="header" data-page="home">
+      <input class="kidia-chrome-layout-json" name="layout[header][settings][layout_json]" value='${layout}'>
+      <div class="kidia-chrome-layout"></div>
+      <div class="kidia-chrome-palette"><div class="kidia-chrome-palette__items">
+        <button class="kidia-chrome-item" data-item="logo">Logo</button>
+        <button class="kidia-chrome-item" data-item="cart">Cart</button>
+      </div></div>
+      <button type="button" class="kidia-chrome-reset"></button>
+    </div>
+  </section>`;
+  const dom = new JSDOM("<!doctype html><html><body><main id=\"dynamic-content\"></main></body></html>", {
+    runScripts: "outside-only",
+    url: "https://example.com/wp-admin/admin.php?page=kidia-mobile-cms&view=home",
+  });
+  const { window } = dom;
+  window.eval(readAsset("chrome-layout.js"));
+  window.document.dispatchEvent(new window.Event("DOMContentLoaded"));
+  window.document.getElementById("dynamic-content").innerHTML = card;
+  window.document.dispatchEvent(new window.CustomEvent("kidia:cms-page-ready"));
+
+  assert.equal(
+    window.document.querySelectorAll(".kidia-chrome-row").length,
+    1,
+    "Rows must initialize after the persistent CMS shell injects a Builder page.",
+  );
+  assert.equal(
+    window.document.querySelector(".kidia-row-column-count").value,
+    "2",
+    "The dynamically initialized Header must preserve its saved column count.",
+  );
+
+  window.document.dispatchEvent(new window.CustomEvent("kidia:cms-page-ready"));
+  click(window, window.document.querySelector(".kidia-chrome-add-row"));
+  assert.equal(
+    window.document.querySelectorAll(".kidia-chrome-row").length,
+    2,
+    "Repeated shell-ready events must not bind duplicate Header controls.",
+  );
+  console.log("Dynamic Header/Footer composer boot: persistent shell navigation passed.");
+}
+
 function runCollapsedHeaderToggleTest() {
   const regular = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["logo"] }, { width: 16, align: "right", items: ["cart"] }] }, { columns: [{ width: 100, align: "left", items: ["search_bar"] }] }] });
   const collapsed = JSON.stringify({ rows: [{ columns: [{ width: 84, align: "left", items: ["search_bar"] }, { width: 16, align: "right", items: ["cart"] }] }] });
@@ -1728,6 +1781,7 @@ if (require.main === module) {
   runPageBuilderTest();
   runWishlistElementPickerTest();
   runChromeComposerTest();
+  runDynamicChromeComposerBootTest();
   runCollapsedHeaderToggleTest();
 	runFooterPreviewControlsTest();
 	runProductFooterButtonPreviewTest();
