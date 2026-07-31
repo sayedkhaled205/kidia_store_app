@@ -9,7 +9,7 @@ const script = fs.readFileSync(path.resolve(__dirname, "..", "admin", "assets", 
 
 function markup(status, autoDownload = false) {
   return `<!doctype html><body>
-    <div data-kidia-app-build data-status="${status}" data-can-build="1" data-auto-download="${autoDownload ? "1" : "0"}">
+    <div data-kidia-app-build data-status="${status}" data-can-build="1" data-auto-download="${autoDownload ? "1" : "0"}" data-completed-at="0">
       <p data-build-message>Queued</p>
       <div data-build-progress><span data-build-progress-value aria-valuenow="0"></span></div>
       <div data-build-modal hidden>
@@ -27,10 +27,14 @@ function markup(status, autoDownload = false) {
           <input type="hidden" name="kidia_mobile_download_nonce" value="download-nonce">
           <button type="submit" data-build-action>
             <span class="dashicons dashicons-smartphone" data-build-action-icon></span>
-            <span data-build-action-label>Build & Download Your App</span>
+            <span data-build-action-label>Build Your App</span>
           </button>
         </form>
         <button type="button" data-build-cancel ${["queued", "building"].includes(status) ? "" : "hidden"}>Cancel Build</button>
+      </div>
+      <div data-build-recent-choice hidden>
+        <button type="button" data-build-download-again>Download Again</button>
+        <button type="button" data-build-new-version>Build New Version</button>
       </div>
     </div>
   </body>`;
@@ -45,7 +49,7 @@ function builderConfig() {
       starting: "Starting APK build…",
       building: "Building your APK…",
       ready: "Your APK is ready to install.",
-      buildDownload: "Build & Download Your App",
+      buildDownload: "Build Your App",
 		download: "Download APK",
 		downloaded: "Download Completed",
       cancelled: "Build cancelled.",
@@ -105,8 +109,8 @@ async function testReadyBuildDownloadsFromTheSameControl() {
   assert.equal(root.querySelector("[data-build-progress-value]").getAttribute("aria-valuenow"), "100");
   assert.equal(root.querySelectorAll("[data-build-action]").length, 1, "Overview must expose one build/download control.");
   assert.equal(form.querySelector("[data-build-form-action]").value, "kidia_mobile_build_app");
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Download Completed");
-  assert.equal(button.hidden, true, "The download button must disappear after the download starts.");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build Your App");
+  assert.equal(button.hidden, false, "A completed card must allow the customer to build again.");
   assert.equal(downloadSubmits, 1, "A build started by this page must download automatically when the APK becomes ready.");
 }
 
@@ -162,7 +166,7 @@ async function testCompletedCardSurvivesBrowserReopen() {
 
   assert.equal(root.dataset.status, "downloaded", "Closing and reopening the browser must restore Download Completed for the same build.");
   assert.equal(root.querySelector("[data-build-message]").textContent, "Download Completed");
-  assert.equal(root.querySelector("[data-build-action]").hidden, true);
+  assert.equal(root.querySelector("[data-build-action]").hidden, false);
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Only Cancel may dismiss the completed card.");
   assert.equal(root.querySelector("[data-build-background]"), null, "Continue in background must not exist.");
 }
@@ -239,7 +243,7 @@ async function testFailedBuildReturnsTheSameControlToRetry() {
   assert.equal(root.querySelector("[data-build-modal]").hidden, false, "A failed build card must remain visible until Cancel.");
   assert.equal(button.disabled, false);
   assert.equal(button.classList.contains("is-loading"), false);
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build Your App");
   assert.equal(root.querySelectorAll("[data-build-action]").length, 1, "Failure must not reveal a second download button.");
 }
 
@@ -271,7 +275,7 @@ async function testHungStartRequestReturnsToRetry() {
   assert.equal(root.dataset.status, "failed", "A hung start request must not leave Overview on Starting forever.");
   assert.equal(root.querySelector("[data-build-message]").textContent, "The APK build request took too long. Please try again.");
   assert.equal(button.disabled, false);
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Build Your App");
 }
 
 async function testActiveBuildCanBeCancelled() {
@@ -315,9 +319,39 @@ async function testActiveBuildCanBeCancelled() {
   assert.equal(root.dataset.status, "idle");
   assert.equal(modal.hidden, true);
   assert.equal(cancelButton.hidden, true);
-  assert.equal(root.querySelector("[data-build-action-label]").textContent, "Build & Download Your App");
+  assert.equal(root.querySelector("[data-build-action-label]").textContent, "Build Your App");
   assert.equal(root.querySelector("[data-build-action]").disabled, false);
   assert.equal(root.querySelector("[data-build-action]").hidden, false);
+}
+
+async function testRecentBuildOffersDownloadOrNewVersion() {
+  const dom = new JSDOM(markup("downloaded"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  let requests = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async () => {
+    requests += 1;
+    return {
+      ok: true,
+      json: async () => ({ success: true, data: { status: "building", progress: 2, downloadReady: false } })
+    };
+  };
+  dom.window.setTimeout = () => 0;
+  dom.window.eval(script);
+
+  root.querySelector("[data-build-action]").click();
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 24 hours must present both choices.");
+  assert.equal(requests, 0, "Opening the recent-build choice must not start another build.");
+
+  root.querySelector("[data-build-new-version]").click();
+  await flush();
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true);
+  assert.equal(requests, 1, "Build New Version must reuse the existing build start request.");
 }
 
 (async function () {
@@ -328,5 +362,6 @@ async function testActiveBuildCanBeCancelled() {
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
   await testActiveBuildCanBeCancelled();
+  await testRecentBuildOffersDownloadOrNewVersion();
   console.log("APK single build-and-download control tests passed.");
 })();
