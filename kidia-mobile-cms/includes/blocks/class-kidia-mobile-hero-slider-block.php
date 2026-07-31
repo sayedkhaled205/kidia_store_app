@@ -193,42 +193,15 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				continue;
 			}
 
-			$action_type = isset( $item['action_type'] )
-				? sanitize_key( $item['action_type'] )
-				: '';
-
-			$allowed_action_types = array(
-				'',
-				'product',
-				'category',
-				'collection',
-				'brand',
-				'brands',
-				'search',
-				'external',
-			);
-
-			if ( ! in_array( $action_type, $allowed_action_types, true ) ) {
-				$action_type = '';
-			}
-
 			$item_id = sanitize_key( (string) ( $item['id'] ?? '' ) );
 			if ( '' === $item_id ) {
 				$item_id = 'hero_slide_' . ( absint( $index ) + 1 );
 			}
 
-			$button_position = sanitize_key( (string) ( $item['button_position'] ?? 'center_bottom' ) );
-			if ( ! in_array( $button_position, array( 'left', 'center', 'right', 'center_bottom' ), true ) ) {
-				$button_position = 'center_bottom';
-			}
-
 			$make_image_clickable = ! empty( $item['make_image_clickable'] );
 			$button_link = $this->sanitize_http_url( $item['button_link'] ?? '' );
-			if ( '' === $button_link && 'external' === $action_type ) {
-				$button_link = $this->sanitize_http_url( $item['action_value'] ?? '' );
-			}
-			if ( '' !== $button_link ) {
-				$action_type = 'external';
+			if ( '' === $button_link && ! empty( $item['action_value'] ) ) {
+				$button_link = $this->sanitize_http_url( (string) $item['action_value'] );
 			}
 
 			$sanitized_items[] = array(
@@ -244,15 +217,8 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 					? sanitize_textarea_field( $item['subtitle'] )
 					: '',
 				'button_label'       => sanitize_text_field( (string) ( $item['button_label'] ?? '' ) ),
-				'button_position'    => $button_position,
 				'button_link'        => $button_link,
 				'make_image_clickable' => $make_image_clickable,
-				'action_type'        => $action_type,
-				'action_value'    => '' !== $button_link
-					? $button_link
-					: ( 'external' === $action_type
-						? $this->sanitize_http_url( $item['action_value'] ?? '' )
-						: sanitize_text_field( (string) ( $item['action_value'] ?? '' ) ) ),
 			);
 		}
 
@@ -306,15 +272,6 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			$action = null;
 			if ( ! empty( $item['make_image_clickable'] ) ) {
 				$action = $this->build_action( 'external', (string) ( $item['button_link'] ?? '' ) );
-				if ( null === $action ) {
-					$action = $this->build_action( 'external', (string) ( $item['action_value'] ?? '' ) );
-				}
-			}
-			if ( null === $action ) {
-				$action = $this->build_action(
-					$item['action_type'],
-					$item['action_value']
-				);
 			}
 
 			$items[] = array(
@@ -327,7 +284,6 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 					? $item['subtitle']
 					: null,
 				'button_label'       => ! empty( $item['button_label'] ) ? $item['button_label'] : null,
-				'button_position'    => $item['button_position'] ?? 'center_bottom',
 				'button_link'        => ! empty( $item['button_link'] ) ? $item['button_link'] : null,
 				'make_image_clickable' => ! empty( $item['make_image_clickable'] ),
 				'action'             => $action,
@@ -485,11 +441,8 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'title'              => '',
 			'subtitle'           => '',
 			'button_label'       => '',
-			'button_position'    => 'center_bottom',
 			'button_link'        => '',
 			'make_image_clickable' => false,
-			'action_type'        => '',
-			'action_value'       => '',
 		);
 	}
 
@@ -514,10 +467,9 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 
 		$image_url = (string) $item['image_url'];
 		$button_link = (string) ( $item['button_link'] ?? '' );
-		if ( '' === $button_link && 'external' === ( $item['action_type'] ?? '' ) ) {
+		if ( '' === $button_link && ! empty( $item['action_value'] ) ) {
 			$button_link = (string) ( $item['action_value'] ?? '' );
 		}
-		$button_position = sanitize_key( (string) ( $item['button_position'] ?? 'center_bottom' ) );
 
 		?>
 		<div class="kidia-hero-block-item kidia-slider-editor-item">
@@ -604,22 +556,6 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			<p class="kidia-builder-field kidia-repeatable-field--button-link">
 				<label><?php echo esc_html__( 'Button Link', 'kidia-mobile-cms' ); ?></label>
 				<input type="url" placeholder="https://example.com" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_link]" value="<?php echo esc_attr( $button_link ); ?>">
-			</p>
-
-			<p class="kidia-builder-field kidia-repeatable-field--action-type">
-				<label><?php echo esc_html__( 'Action Type', 'kidia-mobile-cms' ); ?></label>
-				<select name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_type]">
-					<option value="" <?php selected( '', $item['action_type'] ?? '' ); ?>><?php esc_html_e( 'None', 'kidia-mobile-cms' ); ?></option>
-					<option value="product" <?php selected( 'product', $item['action_type'] ?? '' ); ?>><?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?></option>
-					<option value="category" <?php selected( 'category', $item['action_type'] ?? '' ); ?>><?php esc_html_e( 'Category', 'kidia-mobile-cms' ); ?></option>
-					<option value="collection" <?php selected( 'collection', $item['action_type'] ?? '' ); ?>><?php esc_html_e( 'Collection', 'kidia-mobile-cms' ); ?></option>
-					<option value="external" <?php selected( 'external', $item['action_type'] ?? '' ); ?>><?php esc_html_e( 'External', 'kidia-mobile-cms' ); ?></option>
-				</select>
-			</p>
-
-			<p class="kidia-builder-field kidia-repeatable-field--action-value">
-				<label><?php echo esc_html__( 'Action Value', 'kidia-mobile-cms' ); ?></label>
-				<input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]" value="<?php echo esc_attr( (string) ( $item['action_value'] ?? '' ) ); ?>">
 			</p>
 
 			<p class="kidia-builder-field kidia-repeatable-field--image-clickable">

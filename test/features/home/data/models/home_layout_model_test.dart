@@ -141,6 +141,37 @@ void main() {
       expect(layout.blocks.single, isA<SpacerBlock>());
     });
 
+    test('parses hero slider image clicks from button link', () {
+      final block =
+          HomeBlockModel.fromJson(<String, dynamic>{
+                'id': 'hero-1',
+                'type': 'hero_slider',
+                'enabled': true,
+                'data': <String, dynamic>{
+                  'aspect_ratio': 1.333,
+                  'overlay_position': 'bottom_center',
+                  'items': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'id': 'hero-slide-1',
+                      'image_url': 'https://example.com/hero.jpg',
+                      'title': 'Launch',
+                      'subtitle': 'New season',
+                      'button_label': 'Shop now',
+                      'button_link': 'https://example.com/deal',
+                      'make_image_clickable': true,
+                    },
+                  ],
+                },
+              })
+              as HeroSliderBlock;
+
+      final HeroSlide slide = block.items.single;
+      expect(slide.makeImageClickable, isTrue);
+      expect(slide.action, isNotNull);
+      expect(slide.action!.type, 'external');
+      expect(slide.action!.value, 'https://example.com/deal');
+    });
+
     test('parses every extended CMS block with typed data', () {
       final layout = HomeLayoutModel.fromJson(<String, dynamic>{
         'version': 4,
@@ -312,29 +343,27 @@ void main() {
     });
 
     test('uses the cumulative countdown unit selection when provided', () {
-      final layout = HomeLayoutModel.fromJson(
-        <String, dynamic>{
-          'version': 4,
-          'page': 'home',
-          'locale': 'en',
-          'updated_at': '2026-07-23T12:00:00Z',
-          'blocks': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'id': 'countdown-units',
-              'type': 'countdown',
-              'enabled': true,
-              'data': <String, dynamic>{
-                'visible_units': 'days_hours_minutes',
-                // Conflicting legacy flags prove the canonical dropdown wins.
-                'show_days': false,
-                'show_hours': false,
-                'show_minutes': false,
-                'show_seconds': true,
-              },
+      final layout = HomeLayoutModel.fromJson(<String, dynamic>{
+        'version': 4,
+        'page': 'home',
+        'locale': 'en',
+        'updated_at': '2026-07-23T12:00:00Z',
+        'blocks': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'countdown-units',
+            'type': 'countdown',
+            'enabled': true,
+            'data': <String, dynamic>{
+              'visible_units': 'days_hours_minutes',
+              // Conflicting legacy flags prove the canonical dropdown wins.
+              'show_days': false,
+              'show_hours': false,
+              'show_minutes': false,
+              'show_seconds': true,
             },
-          ],
-        },
-      );
+          },
+        ],
+      });
 
       final CountdownBlock countdown = layout.blocks.single as CountdownBlock;
       expect(countdown.showDays, isTrue);
@@ -413,15 +442,13 @@ void main() {
       });
 
       expect(layout.blocks, hasLength(2));
-      final QuickLinksBlock quickLinks =
-          layout.blocks[0] as QuickLinksBlock;
+      final QuickLinksBlock quickLinks = layout.blocks[0] as QuickLinksBlock;
       expect(quickLinks.layout, 'grid');
       expect(quickLinks.columns, 5);
       expect(quickLinks.items.single.subtitle, '0-2 years');
       expect(quickLinks.items.single.action?.value, '12');
 
-      final BannerGridBlock bannerGrid =
-          layout.blocks[1] as BannerGridBlock;
+      final BannerGridBlock bannerGrid = layout.blocks[1] as BannerGridBlock;
       expect(bannerGrid.layout, 'featured');
       expect(bannerGrid.aspectRatio, 0.75);
       expect(bannerGrid.imageFit, 'contain');
@@ -459,7 +486,8 @@ void main() {
         ],
       });
 
-      final HeroSliderBlock heroSlider = layout.blocks.single as HeroSliderBlock;
+      final HeroSliderBlock heroSlider =
+          layout.blocks.single as HeroSliderBlock;
       expect(heroSlider.aspectRatio, 2.0);
       expect(heroSlider.overlayPosition, 'bottom_center');
       expect(heroSlider.items.single.makeImageClickable, isTrue);

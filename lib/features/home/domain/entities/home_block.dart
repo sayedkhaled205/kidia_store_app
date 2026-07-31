@@ -169,7 +169,6 @@ class HeroSlide {
     required this.title,
     required this.subtitle,
     required this.buttonLabel,
-    required this.buttonPosition,
     required this.makeImageClickable,
     required this.action,
   });
@@ -179,7 +178,6 @@ class HeroSlide {
   final String? title;
   final String? subtitle;
   final String? buttonLabel;
-  final String buttonPosition;
   final bool makeImageClickable;
   final HomeAction? action;
 }
@@ -452,7 +450,7 @@ class ProductCarouselBlock extends HomeBlock {
     required this.quickAddEnabled,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
-	this.wishlistAppearance = const ProductWishlistAppearance(),
+    this.wishlistAppearance = const ProductWishlistAppearance(),
   }) : super(type: HomeBlockType.productCarousel);
 
   final String? title;
@@ -499,7 +497,7 @@ class ProductGridBlock extends HomeBlock {
     required this.quickAddEnabled,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
-	this.wishlistAppearance = const ProductWishlistAppearance(),
+    this.wishlistAppearance = const ProductWishlistAppearance(),
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;

@@ -116,9 +116,8 @@ $hero_settings = array(
 		array(
 			'image_url'          => 'https://example.com/hero.jpg',
 			'title'              => 'Launch',
-			'button_label'       => '',
+			'button_label'       => 'Shop now',
 			'button_link'        => 'https://example.com/deal',
-			'button_position'    => 'left',
 			'make_image_clickable' => true,
 		),
 	),
@@ -127,6 +126,10 @@ $hero_api = $hero->build_api_data( $hero_settings );
 kidia_home_assert( is_array( $hero_api ) && 'bottom_center' === $hero_api['overlay_position'], 'Hero Slider must preserve the new text position contract.' );
 kidia_home_assert( true === $hero_api['items'][0]['make_image_clickable'], 'Hero Slider slides must preserve the make image clickable flag.' );
 kidia_home_assert( 'https://example.com/deal' === $hero_api['items'][0]['button_link'], 'Hero Slider button links must remain available for image click handling.' );
+kidia_home_assert( ! array_key_exists( 'button_position', $hero_api['items'][0] ), 'Hero Slider API data must not expose the removed button position field.' );
+kidia_home_assert( ! array_key_exists( 'action_type', $hero_api['items'][0] ), 'Hero Slider API data must not expose the removed action type field.' );
+kidia_home_assert( ! array_key_exists( 'action_value', $hero_api['items'][0] ), 'Hero Slider API data must not expose the removed action value field.' );
+kidia_home_assert( 'external' === $hero_api['items'][0]['action']['type'] && 'https://example.com/deal' === $hero_api['items'][0]['action']['value'], 'Hero Slider image clicks must become an external action object from the button link.' );
 
 $coupon = new Kidia_Mobile_Coupon_Banner_Block();
 ob_start();
