@@ -23,7 +23,17 @@ assert.match(
 assert.match(
   styles,
   /html\{[\s\S]*overflow-x:clip;[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
-  "The WordPress document must keep a stable vertical gutter without horizontal page scrolling."
+  "The WordPress document must keep its stable outer scrollbar without horizontal page scrolling."
+);
+assert.match(
+  styles,
+  /body\.kidia-cms-plugin-page:not\(\.kidia-cms-builder-screen\) #wpbody\{[^}]*height:calc\(100vh - 32px\)!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
+  "Non-Builder CMS views must own a separate inner scrollbar on the physical content-side edge."
+);
+assert.doesNotMatch(
+  styles,
+  /#adminmenuwrap\{[^}]*overflow-y:(?:auto|scroll)!important;/,
+  "The black WordPress admin menu must keep using the outer WordPress document scrollbar."
 );
 assert.match(
   styles,
@@ -34,6 +44,16 @@ assert.doesNotMatch(
   styles,
   /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\),\s*body\.kidia-cms-builder-screen\{[\s\S]*overflow:hidden!important;/,
   "Customize must not hide overflow on the document root and release the shared scrollbar gutter."
+);
+assert.match(
+  styles,
+  /body\.kidia-cms-builder-screen\{[^}]*overflow-y:visible!important;/,
+  "Customize must leave the native WordPress outer scroll available for the black admin menu."
+);
+assert.doesNotMatch(
+  styles,
+  /body\.kidia-cms-builder-screen #wpwrap\{[^}]*overflow:hidden/,
+  "Customize must not clip the WordPress menu inside the plugin viewport."
 );
 assert.match(
   styles,
@@ -78,11 +98,17 @@ assert.match(admin, /'version'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/, "The shell and 
 assert.match(script, /version:\s*currentVersion/, "Every fragment request must identify the version of the running shell.");
 assert.match(script, /pluginAsset\(asset\)[\s\S]*loaded\.conflict[\s\S]*hardNavigate\(cacheKey\)/, "Only conflicting plugin assets may force a clean document load.");
 assert.doesNotMatch(script, /classList\.add\('is-kidia-page-loading'\)/, "Fragment navigation must not dim the existing shell while the next view loads.");
+assert.match(
+  script,
+  /function resetWorkspaceScroll\(\)[\s\S]*#wpbody[\s\S]*scrollTop = 0;[\s\S]*scrollLeft = 0;[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)/,
+  "Changing CMS views must start the new plugin page at the top of its independent inner scrollbar."
+);
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
-  <main id="wpbody-content">
+  <div id="wpbody">
+    <main id="wpbody-content">
     <aside data-kidia-cms-sidebar>
       <nav class="kidia-cms-sidebar__nav">
         <a class="is-active" data-kidia-sidebar-view="overview" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Overview</a>
@@ -98,7 +124,8 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
       </nav>
     </div>
     <section data-page-content>Overview content</section>
-  </main>
+    </main>
+  </div>
 </body></html>`;
 const dom = new JSDOM(initial, {
   runScripts: "outside-only",
@@ -137,6 +164,8 @@ dom.window.fetch = async (_url, options = {}) => {
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
 const originalShell = dom.window.document.querySelector("[data-kidia-cms-shell]");
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
+const originalScrollWorkspace = dom.window.document.querySelector("#wpbody");
+originalScrollWorkspace.scrollTop = 320;
 dom.window.eval(script);
 originalSidebar.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
   new dom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
@@ -156,6 +185,7 @@ setTimeout(() => {
     "Navigation must retain the exact shared CMS workspace frame."
   );
   assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Home content");
+  assert.equal(originalScrollWorkspace.scrollTop, 0, "A new CMS view must reset the plugin-owned inner scrollbar.");
   assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Design Your Pages");
   assert.equal(originalShell.hidden, false);
   assert.equal(dom.window.location.search, "?page=kidia-mobile-cms&view=home");

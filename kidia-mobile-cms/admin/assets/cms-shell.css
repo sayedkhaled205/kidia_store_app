@@ -44,22 +44,31 @@ body[class*="kidia-mobile"] #wpbody-content{
 }
 body[class*="kidia-mobile"] #wpbody-content{padding-bottom:0!important}
 body[class*="kidia-mobile"] #wpfooter{display:none}
-/* Keep WordPress' long admin menu from extending the plugin document. The
- * menu remains independently scrollable while the plugin page ends at its
- * own rounded workspace frame. */
+/* Keep the two desktop scroll owners separate. WordPress keeps its native
+ * document scrollbar at the browser edge, outside the black admin menu. The
+ * Woo Mobile workspace owns the inner scrollbar beside that menu. Using LTR
+ * only on the scroll box keeps its scrollbar on the physical right; the
+ * actual CMS content immediately returns to the document language direction. */
 @media(min-width:783px){
-	body[class*="kidia-mobile"] #adminmenuback,
-	body[class*="kidia-mobile"] #adminmenuwrap{
-		position:fixed!important;
-		top:32px!important;
-		bottom:0!important;
-		height:auto!important;
-	}
-	body[class*="kidia-mobile"] #adminmenuwrap{
+	body.kidia-cms-plugin-page:not(.kidia-cms-builder-screen) #wpbody{
+		box-sizing:border-box;
+		height:calc(100vh - 32px)!important;
+		min-height:0!important;
 		overflow-x:hidden!important;
-		overflow-y:auto!important;
+		overflow-y:scroll!important;
 		overscroll-behavior:contain;
-		scrollbar-width:thin;
+		scrollbar-gutter:stable;
+		direction:ltr;
+	}
+	html[dir="ltr"] body.kidia-cms-plugin-page:not(.kidia-cms-builder-screen) #wpbody{
+		direction:rtl;
+	}
+	html[dir="ltr"] body.kidia-cms-plugin-page:not(.kidia-cms-builder-screen) #wpbody-content{
+		direction:ltr;
+	}
+	html[dir="rtl"] body.kidia-cms-plugin-page:not(.kidia-cms-builder-screen) #wpbody-content,
+	.rtl body.kidia-cms-plugin-page:not(.kidia-cms-builder-screen) #wpbody-content{
+		direction:rtl;
 	}
 }
 
@@ -439,11 +448,11 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 		scrollbar-gutter:stable!important;
 	}
 	body.kidia-cms-builder-screen{
-		overflow:hidden!important;
+		/* WordPress keeps the outer document scroll for its black admin menu. */
+		overflow-y:visible!important;
 	}
 	body.kidia-cms-builder-screen #wpwrap{
 		height:calc(100vh - 32px);
-		overflow:hidden;
 	}
 	body.kidia-cms-builder-screen #wpcontent,
 	body.kidia-cms-builder-screen #wpbody{

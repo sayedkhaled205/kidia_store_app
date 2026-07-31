@@ -2,6 +2,13 @@
 	'use strict';
 	const shell = document.querySelector('.kidia-cms-shell');
 
+	function resetWorkspaceScroll() {
+		const workspace = document.querySelector('#wpbody');
+		if (!workspace) return;
+		workspace.scrollTop = 0;
+		workspace.scrollLeft = 0;
+	}
+
 	function syncBuilderScreen(enabled) {
 		const active = Boolean(enabled);
 		document.body.classList.toggle('kidia-cms-builder-screen', active);
@@ -229,6 +236,7 @@
 					if (node !== sidebar && node !== shell && !(node.nodeType === 1 && node.matches('.kidia-ai-progress-overlay.is-global'))) node.remove();
 				});
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
+				resetWorkspaceScroll();
 				if (pushState) history.pushState({ kidiaCmsPage: true }, '', cacheKey);
 				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
 			} catch (error) {
