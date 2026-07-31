@@ -30,6 +30,11 @@ assert.match(
   /body\.kidia-cms-plugin-page:not\(\.kidia-cms-builder-screen\) #wpbody\{[^}]*height:calc\(100vh - 32px\)!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
   "Non-Builder CMS views must own a separate inner scrollbar on the physical content-side edge."
 );
+assert.match(
+  styles,
+  /body\.kidia-cms-builder-screen #wpbody\{[^}]*height:100%!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
+  "Customize must keep the same plugin-owned scrollbar rail beside the WordPress menu."
+);
 assert.doesNotMatch(
   styles,
   /#adminmenuwrap\{[^}]*overflow-y:(?:auto|scroll)!important;/,

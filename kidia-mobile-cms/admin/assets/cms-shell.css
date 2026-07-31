@@ -454,10 +454,29 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 	body.kidia-cms-builder-screen #wpwrap{
 		height:calc(100vh - 32px);
 	}
-	body.kidia-cms-builder-screen #wpcontent,
-	body.kidia-cms-builder-screen #wpbody{
+	body.kidia-cms-builder-screen #wpcontent{
 		height:100%!important;
 		overflow:hidden!important;
+	}
+	body.kidia-cms-builder-screen #wpbody{
+		box-sizing:border-box;
+		height:100%!important;
+		min-height:0!important;
+		overflow-x:hidden!important;
+		overflow-y:scroll!important;
+		overscroll-behavior:contain;
+		scrollbar-gutter:stable;
+		direction:ltr;
+	}
+	html[dir="ltr"] body.kidia-cms-builder-screen #wpbody{
+		direction:rtl;
+	}
+	html[dir="ltr"] body.kidia-cms-builder-screen #wpbody-content{
+		direction:ltr;
+	}
+	html[dir="rtl"] body.kidia-cms-builder-screen #wpbody-content,
+	.rtl body.kidia-cms-builder-screen #wpbody-content{
+		direction:rtl;
 	}
 	body.kidia-cms-builder-screen #wpbody-content{
 		display:flex;
