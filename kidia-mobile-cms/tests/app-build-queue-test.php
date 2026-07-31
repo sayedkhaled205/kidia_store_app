@@ -51,22 +51,6 @@ final class Kidia_Mobile_License_Manager {
 				),
 			);
 		}
-		if ( 'POST' === $method ) {
-			if ( self::$fail_push_once && ! empty( $body['provision_push'] ) ) {
-				self::$fail_push_once = false;
-				return new WP_Error( 'push_provisioning_unavailable', 'Managed Push is not ready.' );
-			}
-			return array(
-				'data' => array(
-					'build' => array(
-						'id' => 'build-123',
-						'status' => 'queued',
-						'progress' => 2,
-					),
-				),
-			);
-		}
-
 		if ( self::$return_artifacts_list ) {
 			return array(
 				'data' => array(
@@ -84,6 +68,21 @@ final class Kidia_Mobile_License_Manager {
 								'url' => 'https://downloads.example.test/woomobile-build-files.zip?signature=fresh',
 							),
 						),
+					),
+				),
+			);
+		}
+		if ( 'POST' === $method ) {
+			if ( self::$fail_push_once && ! empty( $body['provision_push'] ) ) {
+				self::$fail_push_once = false;
+				return new WP_Error( 'push_provisioning_unavailable', 'Managed Push is not ready.' );
+			}
+			return array(
+				'data' => array(
+					'build' => array(
+						'id' => 'build-123',
+						'status' => 'queued',
+						'progress' => 2,
 					),
 				),
 			);
