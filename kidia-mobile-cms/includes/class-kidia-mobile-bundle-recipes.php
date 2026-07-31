@@ -121,7 +121,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'         => 'kidia-mobile-ai-insights',
+					'page'         => 'kidia-mobile-bundles',
 					'bundle_saved' => '1',
 					'bundle_id'    => $recipe['id'],
 				),

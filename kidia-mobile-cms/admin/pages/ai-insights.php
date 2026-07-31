@@ -59,7 +59,88 @@ $playbook_group_kinds = array(
 	'inventory'       => 'inventory,timing',
 	'funnel'          => 'funnel',
 );
-$bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
+$playbook_scheme_map = array(
+	'Recommended for you'          => array( 'popular', 'best_seller', 'fast_rotation' ),
+	'Recently viewed'              => array( 'popular', 'high_interest' ),
+	'Continue shopping'            => array( 'popular', 'category_merchandising' ),
+	'Buy again'                    => array( 'best_seller', 'fast_rotation' ),
+	'First purchase'               => array( 'signup_friction', 'high_interest' ),
+	'VIP'                          => array( 'aov_lift', 'best_seller' ),
+	'Win-back'                     => array( 'cart_recovery' ),
+	'Frequently bought together'   => array( 'bundle' ),
+	'Complementary products'       => array( 'bundle' ),
+	'Related products'             => array( 'bundle', 'popular' ),
+	'Viewed this, viewed that'     => array( 'popular', 'category_merchandising' ),
+	'Viewed this, bought that'     => array( 'bundle' ),
+	'More like this'               => array( 'popular', 'best_seller' ),
+	'Visual similarity'            => array( 'popular' ),
+	'Complete the look'            => array( 'bundle' ),
+	'Trending now'                 => array( 'popular', 'fast_rotation' ),
+	'Best sellers'                 => array( 'best_seller', 'fast_rotation' ),
+	'Most viewed'                  => array( 'popular', 'high_interest' ),
+	'Most added to cart'           => array( 'high_interest', 'popular' ),
+	'High conversion'              => array( 'best_seller', 'fast_rotation' ),
+	'Search-demand merchandising'  => array( 'search_demand' ),
+	'Category cross-sell'          => array( 'category_merchandising', 'bundle' ),
+	'New launch'                   => array( 'popular' ),
+	'AOV lift'                     => array( 'aov_lift' ),
+	'Free shipping threshold'      => array( 'free_shipping' ),
+	'BOGO'                         => array( 'bundle', 'fast_offer' ),
+	'Quantity break'               => array( 'fast_offer', 'medium_rotation' ),
+	'Cart recovery'                => array( 'cart_recovery' ),
+	'Checkout rescue'              => array( 'free_shipping', 'remove_friction' ),
+	'Bundle discount'              => array( 'bundle' ),
+	'Personal coupon'              => array( 'high_interest', 'medium_rotation' ),
+	'Slow-stock rescue'            => array( 'slow_stock', 'slow_rotation' ),
+	'Overstock clearance'          => array( 'slow_stock', 'poor_rotation' ),
+	'Low-stock urgency'            => array( 'fast_rotation' ),
+	'Restock priority'             => array( 'fast_rotation' ),
+	'Seasonal clearance'           => array( 'poor_rotation' ),
+	'Peak-time scheduling'         => array( 'peak_timing' ),
+	'High view / low purchase'     => array( 'high_interest' ),
+	'Registration friction'        => array( 'signup_friction' ),
+	'Search with no results'       => array( 'search_demand' ),
+	'Product removal friction'     => array( 'remove_friction' ),
+	'Checkout drop-off'            => array( 'remove_friction', 'free_shipping' ),
+	'Channel comparison'           => array( 'peak_timing', 'category_merchandising' ),
+);
+$idea_category_meta = array(
+	'offers' => array(
+		'label'       => __( 'Offers & campaigns', 'kidia-mobile-cms' ),
+		'description' => __( 'Executable discounts and short measured campaigns with a clear margin guardrail.', 'kidia-mobile-cms' ),
+	),
+	'bundles' => array(
+		'label'       => __( 'Products & bundles', 'kidia-mobile-cms' ),
+		'description' => __( 'Product relationships and basket-building decisions backed by store behaviour.', 'kidia-mobile-cms' ),
+	),
+	'merchandising' => array(
+		'label'       => __( 'Visibility & merchandising', 'kidia-mobile-cms' ),
+		'description' => __( 'Placement and discovery ideas that do not require an unnecessary discount.', 'kidia-mobile-cms' ),
+	),
+	'inventory' => array(
+		'label'       => __( 'Inventory actions', 'kidia-mobile-cms' ),
+		'description' => __( 'Stock and sell-through actions based on availability, age and sales velocity.', 'kidia-mobile-cms' ),
+	),
+	'funnel' => array(
+		'label'       => __( 'Sales-funnel improvements', 'kidia-mobile-cms' ),
+		'description' => __( 'Measured fixes for the customer journey before spending margin on a discount.', 'kidia-mobile-cms' ),
+	),
+	'timing' => array(
+		'label'       => __( 'Timing decisions', 'kidia-mobile-cms' ),
+		'description' => __( 'Campaign timing selected from observed store activity.', 'kidia-mobile-cms' ),
+	),
+);
+$idea_category = static function ( array $recommendation ) use ( $idea_category_meta ): string {
+	if ( ! empty( $recommendation['is_offer'] ) ) {
+		return 'offers';
+	}
+	$implementation = sanitize_key( (string) ( $recommendation['implementation'] ?? '' ) );
+	if ( 'bundle' === $implementation ) {
+		return 'bundles';
+	}
+	$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'merchandising' ) );
+	return isset( $idea_category_meta[ $kind ] ) ? $kind : 'merchandising';
+};
 $commerce = is_array( $ai_summary['commerce'] ?? null ) ? $ai_summary['commerce'] : array();
 $orders_scanned = absint( $commerce['orders_scanned'] ?? $commerce['orders'] ?? 0 );
 $orders_available = absint( $commerce['orders_available'] ?? $orders_scanned );
@@ -123,9 +204,8 @@ $action_result = static function ( array $row ): array {
 		<div class="kidia-ai-page__trust"><strong><?php echo esc_html( (string) $ai_signal_count ); ?>+</strong><span><?php esc_html_e( 'documented signals', 'kidia-mobile-cms' ); ?></span></div>
 	</header>
 
-		<?php if ( isset( $_GET['ai_action_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The reviewed AI action was saved. Nothing else was activated automatically.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['ai_action_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The reviewed AI action was saved. Nothing else was activated automatically.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 	<?php if ( isset( $_GET['ai_action_error'] ) && 'stock_changed' === sanitize_key( wp_unslash( $_GET['ai_action_error'] ) ) ) : ?><div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'This decision was not executed because its products are no longer in stock. Generate fresh offers before publishing.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
-	<?php if ( isset( $_GET['bundle_saved'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Bundle recipe saved and is ready for Home Page or app placement.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
 
 	<form class="kidia-date-filter kidia-ai-filter-bar" method="get" data-ai-generate-form
 		data-ai-analysis-nonce="<?php echo esc_attr( wp_create_nonce( 'kidia_mobile_ai_analysis' ) ); ?>"
@@ -199,13 +279,29 @@ $action_result = static function ( array $row ): array {
 		</div>
 	</section>
 
-	<nav class="kidia-ai-rotation-summary" aria-label="<?php esc_attr_e( 'Product rotation groups', 'kidia-mobile-cms' ); ?>">
-		<?php foreach ( array( 'fast', 'medium', 'slow', 'poor' ) as $rotation_key ) : ?>
-			<a class="is-<?php echo esc_attr( $rotation_key ); ?>" href="#kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>">
-				<span><?php echo esc_html( (string) $rotation_group_meta[ $rotation_key ]['label'] ); ?></span>
-				<strong><?php echo esc_html( (string) $rotation_product_counts[ $rotation_key ] ); ?></strong>
-				<small><?php esc_html_e( 'in-stock products', 'kidia-mobile-cms' ); ?></small>
-			</a>
+	<nav class="kidia-ai-rotation-summary" aria-label="<?php esc_attr_e( 'Choose one product group', 'kidia-mobile-cms' ); ?>" role="tablist">
+		<?php foreach ( $rotation_group_meta as $rotation_key => $rotation_meta ) :
+			$is_product_group = isset( $rotation_product_counts[ $rotation_key ] );
+			$selector_count   = $is_product_group
+				? $rotation_product_counts[ $rotation_key ]
+				: count(
+					array_filter(
+						$ai_recommendations,
+						static fn( $item ) => 'storewide' === ( $item['rotation_segment'] ?? 'storewide' )
+					)
+				);
+			?>
+			<button
+				type="button"
+				class="is-<?php echo esc_attr( $rotation_key ); ?><?php echo 'fast' === $rotation_key ? ' is-active' : ''; ?>"
+				data-ai-segment-tab="<?php echo esc_attr( $rotation_key ); ?>"
+				role="tab"
+				aria-selected="<?php echo 'fast' === $rotation_key ? 'true' : 'false'; ?>"
+				aria-controls="kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>">
+				<span><?php echo esc_html( (string) $rotation_meta['label'] ); ?></span>
+				<strong><?php echo esc_html( (string) $selector_count ); ?></strong>
+				<small><?php echo esc_html( $is_product_group ? __( 'in-stock products', 'kidia-mobile-cms' ) : __( 'store-wide decisions', 'kidia-mobile-cms' ) ); ?></small>
+			</button>
 		<?php endforeach; ?>
 	</nav>
 
@@ -244,12 +340,23 @@ $action_result = static function ( array $row ): array {
 					<?php foreach ( $playbook_groups as $group_key => $group ) : ?>
 						<section>
 							<h3><?php echo esc_html( (string) $group['label'] ); ?></h3>
-							<div><?php foreach ( (array) $group['items'] as $playbook ) : ?><button type="button" data-ai-playbook-kind="<?php echo esc_attr( $playbook_group_kinds[ $group_key ] ?? 'all' ); ?>"><?php echo esc_html( $playbook ); ?></button><?php endforeach; ?></div>
+							<div>
+								<?php foreach ( (array) $group['items'] as $playbook ) :
+									$schemes = $playbook_scheme_map[ (string) $playbook ] ?? array();
+									?>
+									<button
+										type="button"
+										data-ai-playbook-kind="<?php echo esc_attr( $playbook_group_kinds[ $group_key ] ?? 'all' ); ?>"
+										data-ai-playbook-schemes="<?php echo esc_attr( implode( ',', $schemes ) ); ?>"
+										aria-pressed="false"><?php echo esc_html( $playbook ); ?></button>
+								<?php endforeach; ?>
+							</div>
 						</section>
 					<?php endforeach; ?>
 				</div>
 			</details>
 		</header>
+		<p class="kidia-ai-filter-status" data-ai-filter-status aria-live="polite"><?php esc_html_e( 'Choose one product group above. Playbook buttons filter the ideas inside that group.', 'kidia-mobile-cms' ); ?></p>
 		<?php if ( $ai_recommendations ) : ?>
 			<div class="kidia-ai-rotation-groups">
 			<?php foreach ( $rotation_group_meta as $rotation_key => $rotation_meta ) :
@@ -258,33 +365,64 @@ $action_result = static function ( array $row ): array {
 						$ai_recommendations,
 						static fn( $item ) => $rotation_key === ( $item['rotation_segment'] ?? 'storewide' )
 					)
-				);
-				$is_product_rotation = array_key_exists( $rotation_key, $rotation_product_counts );
-				if ( empty( $rotation_recommendations ) && ! $is_product_rotation ) {
-					continue;
-				}
-				$catalog_count = ! $is_product_rotation
-					? count( $rotation_recommendations )
-					: $rotation_product_counts[ $rotation_key ];
-				?>
-				<section id="kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>" class="kidia-ai-rotation-group is-<?php echo esc_attr( $rotation_key ); ?>">
-					<header>
-						<div><h3><?php echo esc_html( (string) $rotation_meta['label'] ); ?></h3><p><?php echo esc_html( (string) $rotation_meta['description'] ); ?></p></div>
-						<b><?php echo esc_html( sprintf( _n( '%d product', '%d products', $catalog_count, 'kidia-mobile-cms' ), $catalog_count ) ); ?></b>
-					</header>
+					);
+					$is_product_rotation = array_key_exists( $rotation_key, $rotation_product_counts );
+					$catalog_count = ! $is_product_rotation
+						? count( $rotation_recommendations )
+						: $rotation_product_counts[ $rotation_key ];
+					?>
+					<section
+						id="kidia-ai-rotation-<?php echo esc_attr( $rotation_key ); ?>"
+						class="kidia-ai-rotation-group is-<?php echo esc_attr( $rotation_key ); ?>"
+						data-ai-segment-panel="<?php echo esc_attr( $rotation_key ); ?>"
+						role="tabpanel"
+						<?php echo 'fast' === $rotation_key ? '' : 'hidden'; ?>>
+						<header>
+							<div><h3><?php echo esc_html( (string) $rotation_meta['label'] ); ?></h3><p><?php echo esc_html( (string) $rotation_meta['description'] ); ?></p></div>
+							<b>
+								<?php
+								echo esc_html(
+									$is_product_rotation
+										? sprintf( _n( '%d product', '%d products', $catalog_count, 'kidia-mobile-cms' ), $catalog_count )
+										: sprintf( _n( '%d decision', '%d decisions', $catalog_count, 'kidia-mobile-cms' ), $catalog_count )
+								);
+								?>
+							</b>
+						</header>
 					<?php if ( empty( $rotation_recommendations ) ) : ?>
 						<div class="kidia-ai-segment-empty">
 							<strong><?php esc_html_e( 'No action is needed for this group under the current filters.', 'kidia-mobile-cms' ); ?></strong>
 							<p><?php esc_html_e( 'The products are still classified here; widen the recommendation type to show any matching decisions.', 'kidia-mobile-cms' ); ?></p>
 						</div>
-					<?php else : ?>
-					<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
-				<?php foreach ( $rotation_recommendations as $recommendation ) :
-					$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'campaign' ) );
-					$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
-					$recommended_action = sanitize_key( (string) ( $recommendation['implementation'] ?? 'store_action' ) );
-					?>
-					<article class="kidia-ai-decision-card is-<?php echo esc_attr( $kind ); ?>" data-ai-decision-kind="<?php echo esc_attr( $kind ); ?>">
+						<?php else :
+							$idea_recommendations = array();
+							foreach ( $rotation_recommendations as $recommendation ) {
+								$category_key = $idea_category( $recommendation );
+								$idea_recommendations[ $category_key ][] = $recommendation;
+							}
+							foreach ( $idea_category_meta as $category_key => $category_meta ) :
+								$category_recommendations = $idea_recommendations[ $category_key ] ?? array();
+								if ( empty( $category_recommendations ) ) {
+									continue;
+								}
+								?>
+								<section class="kidia-ai-idea-group is-<?php echo esc_attr( $category_key ); ?>" data-ai-idea-group="<?php echo esc_attr( $category_key ); ?>">
+									<header>
+										<div><h4><?php echo esc_html( (string) $category_meta['label'] ); ?></h4><p><?php echo esc_html( (string) $category_meta['description'] ); ?></p></div>
+										<b><?php echo esc_html( sprintf( _n( '%d idea', '%d ideas', count( $category_recommendations ), 'kidia-mobile-cms' ), count( $category_recommendations ) ) ); ?></b>
+									</header>
+									<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
+					<?php foreach ( $category_recommendations as $recommendation ) :
+						$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'campaign' ) );
+						$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) ) );
+						$recommended_action = sanitize_key( (string) ( $recommendation['implementation'] ?? 'store_action' ) );
+						$recommendation_category = $idea_category( $recommendation );
+						?>
+						<article
+							class="kidia-ai-decision-card is-<?php echo esc_attr( $kind ); ?>"
+							data-ai-decision-kind="<?php echo esc_attr( $kind ); ?>"
+							data-ai-decision-scheme="<?php echo esc_attr( sanitize_key( (string) ( $recommendation['scheme'] ?? '' ) ) ); ?>"
+							data-ai-decision-category="<?php echo esc_attr( $recommendation_category ); ?>">
 						<header><span class="dashicons <?php echo esc_attr( $kind_icons[ $kind ] ?? 'dashicons-lightbulb' ); ?>"></span><div><small><?php echo esc_html( $kind_labels[ $kind ] ?? ucfirst( $kind ) ); ?></small><h3><?php echo esc_html( (string) $recommendation['title'] ); ?></h3></div><b class="is-<?php echo esc_attr( (string) $recommendation['risk'] ); ?>"><?php echo esc_html( sprintf( __( '%d%% confidence', 'kidia-mobile-cms' ), absint( $recommendation['confidence'] ) ) ); ?></b></header>
 						<section class="kidia-ai-decision">
 							<small><?php esc_html_e( 'Recommended decision', 'kidia-mobile-cms' ); ?></small>
@@ -337,11 +475,17 @@ $action_result = static function ( array $row ): array {
 							</form>
 						</details>
 						<footer><span><?php echo esc_html( sprintf( __( 'Profit risk: %s', 'kidia-mobile-cms' ), ucfirst( (string) $recommendation['risk'] ) ) ); ?></span><?php if ( $product_ids && get_edit_post_link( $product_ids[0] ) ) : ?><a class="button" href="<?php echo esc_url( get_edit_post_link( $product_ids[0] ) ); ?>"><?php esc_html_e( 'Review product', 'kidia-mobile-cms' ); ?></a><?php endif; ?></footer>
-					</article>
-				<?php endforeach; ?>
-					</div>
-					<?php endif; ?>
-				</section>
+						</article>
+					<?php endforeach; ?>
+									</div>
+								</section>
+							<?php endforeach; ?>
+							<div class="kidia-ai-playbook-empty" data-ai-playbook-empty hidden>
+								<strong><?php esc_html_e( 'No matching idea in this product group', 'kidia-mobile-cms' ); ?></strong>
+								<p><?php esc_html_e( 'Choose another playbook or another product group. The studio only shows decisions supported by the selected store data.', 'kidia-mobile-cms' ); ?></p>
+							</div>
+						<?php endif; ?>
+					</section>
 			<?php endforeach; ?>
 			</div>
 		<?php else : ?>
@@ -406,31 +550,4 @@ $action_result = static function ( array $row ): array {
 		</section>
 	<?php endif; ?>
 
-	<details class="kidia-ai-bundle-studio">
-		<summary><div><span class="dashicons dashicons-products"></span><div><h2><?php esc_html_e( 'Optional manual bundle builder', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'AI recommendations are generated above. Open this only when you want to create a bundle without an analytical recommendation.', 'kidia-mobile-cms' ); ?></p></div></div><b><?php echo esc_html( sprintf( _n( '%d saved bundle', '%d saved bundles', count( $bundle_recipes ), 'kidia-mobile-cms' ), count( $bundle_recipes ) ) ); ?></b></summary>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="kidia_mobile_save_bundle_recipe"><?php wp_nonce_field( 'kidia_mobile_save_bundle_recipe', 'kidia_mobile_bundle_nonce' ); ?>
-			<div class="kidia-ai-bundle-grid">
-				<label><span><?php esc_html_e( 'Bundle name', 'kidia-mobile-cms' ); ?></span><input type="text" name="bundle[name]" required></label>
-				<label><span><?php esc_html_e( 'Concept', 'kidia-mobile-cms' ); ?></span><select name="bundle[type]"><?php foreach ( array( 'fixed' => 'Fixed bundle', 'multipack' => 'Multipack', 'mix_match' => 'Mix & Match', 'build_box' => 'Build your box', 'buy_x_get_y' => 'Buy X from A + Y from B', 'bogo' => 'BOGO', 'frequently_bought' => 'Frequently bought together', 'complete_look' => 'Complete the look', 'composite' => 'Composite step builder', 'quantity' => 'Quantity bundle', 'category' => 'Category bundle', 'gift' => 'Gift bundle', 'chained' => 'Chained products', 'addons' => 'Optional add-ons', 'mystery' => 'Mystery box', 'subscription' => 'Subscription bundle', 'ai' => 'AI-selected bundle' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
-				<label><span><?php esc_html_e( 'Product IDs', 'kidia-mobile-cms' ); ?></span><input type="text" name="bundle[product_ids]" placeholder="12, 45, 98"></label>
-				<label><span><?php esc_html_e( 'Category IDs', 'kidia-mobile-cms' ); ?></span><input type="text" name="bundle[category_ids]" placeholder="3, 7"></label>
-				<label><span><?php esc_html_e( 'Minimum items', 'kidia-mobile-cms' ); ?></span><input type="number" min="1" name="bundle[minimum_items]" value="2"></label>
-				<label><span><?php esc_html_e( 'Maximum items', 'kidia-mobile-cms' ); ?></span><input type="number" min="1" name="bundle[maximum_items]" value="2"></label>
-				<label><span><?php esc_html_e( 'Pricing rule', 'kidia-mobile-cms' ); ?></span><select name="bundle[pricing]"><option value="percentage">Percentage off</option><option value="fixed_discount">Fixed discount</option><option value="fixed">Fixed bundle price</option><option value="cheapest_free">Cheapest free</option><option value="tiered">Tiered</option><option value="none">No discount</option></select></label>
-				<label><span><?php esc_html_e( 'Value', 'kidia-mobile-cms' ); ?></span><input type="number" min="0" step=".01" name="bundle[discount_value]" value="10"></label>
-				<label><span><?php esc_html_e( 'Channel', 'kidia-mobile-cms' ); ?></span><select name="bundle[channel]"><option value="all">Website + Mobile App</option><option value="website">Website only</option><option value="mobile">Mobile App only</option></select></label>
-				<label><span><?php esc_html_e( 'Stock policy', 'kidia-mobile-cms' ); ?></span><select name="bundle[stock_policy]"><option value="all_components">Require all components</option><option value="hide_unavailable">Hide unavailable choices</option><option value="allow_backorder">Allow backorders</option></select></label>
-				<label><span><?php esc_html_e( 'Starts at', 'kidia-mobile-cms' ); ?></span><input type="datetime-local" name="bundle[starts_at]"></label>
-				<label><span><?php esc_html_e( 'Ends at', 'kidia-mobile-cms' ); ?></span><input type="datetime-local" name="bundle[ends_at]"></label>
-				<label class="kidia-ai-check"><input type="checkbox" name="bundle[allow_variants]" value="1" checked><span><?php esc_html_e( 'Customers may choose variants', 'kidia-mobile-cms' ); ?></span></label>
-				<label class="kidia-ai-check"><input type="checkbox" name="bundle[allow_repeats]" value="1"><span><?php esc_html_e( 'Allow repeated products', 'kidia-mobile-cms' ); ?></span></label>
-				<label class="kidia-ai-check"><input type="checkbox" name="bundle[coupon_stacking]" value="1"><span><?php esc_html_e( 'Allow coupon stacking', 'kidia-mobile-cms' ); ?></span></label>
-				<label class="kidia-ai-check"><input type="checkbox" name="bundle[create_product]" value="1"><span><?php esc_html_e( 'Create a WooCommerce product for fixed bundles', 'kidia-mobile-cms' ); ?></span></label>
-				<label><span><?php esc_html_e( 'Status', 'kidia-mobile-cms' ); ?></span><select name="bundle[status]"><option value="draft">Draft</option><option value="published">Published</option></select></label>
-			</div>
-			<label class="kidia-ai-bundle-description"><span><?php esc_html_e( 'Customer-facing description', 'kidia-mobile-cms' ); ?></span><textarea name="bundle[description]" rows="3"></textarea></label>
-			<footer><button class="button button-primary" type="submit"><?php esc_html_e( 'Save bundle recipe', 'kidia-mobile-cms' ); ?></button></footer>
-		</form>
-	</details>
-</div>
+	</div>

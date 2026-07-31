@@ -458,8 +458,8 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /empty\( \$rotation_recommendations \) && ! \$is_product_rotation[\s\S]*kidia-ai-segment-empty/,
-  "Rotation groups must remain visible even when the current recommendation filter has no matching action.",
+  /data-ai-segment-panel[\s\S]*empty\( \$rotation_recommendations \)[\s\S]*kidia-ai-segment-empty/,
+  "Every selectable rotation group must retain a clear empty state when the current recommendation filter has no matching action.",
 );
 assert.match(
   shellCss,

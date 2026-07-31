@@ -35,6 +35,7 @@
 			'kidia-mobile-saved-themes': 'saved-themes',
 			'kidia-mobile-store-data': 'store-data',
 			'kidia-mobile-ai-insights': 'ai-insights',
+			'kidia-mobile-bundles': 'bundles',
 			'kidia-mobile-push-notifications': 'push',
 			'kidia-mobile-website-app-promotion': 'website-promotion'
 		};
@@ -805,32 +806,6 @@
 			positionAiDock(overlay, current.left, current.top, false);
 		});
 	});
-	const aiWorkspaceTabs = document.querySelectorAll('[data-ai-workspace-tab]');
-	const aiWorkspacePanels = document.querySelectorAll('[data-ai-workspace-panel]');
-	if (aiWorkspaceTabs.length && aiWorkspacePanels.length) {
-		aiWorkspaceTabs.forEach(function (tab) {
-			tab.addEventListener('click', function () {
-				const target = tab.dataset.aiWorkspaceTab;
-				aiWorkspaceTabs.forEach(function (item) { item.classList.toggle('is-active', item === tab); });
-				aiWorkspacePanels.forEach(function (panel) { panel.hidden = panel.dataset.aiWorkspacePanel !== target; });
-			});
-		});
-	}
-	const aiPlaybookButtons = document.querySelectorAll('[data-ai-playbook-kind]');
-	const aiDecisionCards = document.querySelectorAll('[data-ai-decision-kind]');
-	if (aiPlaybookButtons.length && aiDecisionCards.length) {
-		aiPlaybookButtons.forEach(function (button) {
-			button.addEventListener('click', function () {
-				const wasActive = button.classList.contains('is-active');
-				const kinds = String(button.dataset.aiPlaybookKind || 'all').split(',');
-				aiPlaybookButtons.forEach(function (item) { item.classList.remove('is-active'); });
-				if (!wasActive) button.classList.add('is-active');
-				aiDecisionCards.forEach(function (card) {
-					card.hidden = !wasActive && !kinds.includes('all') && !kinds.includes(card.dataset.aiDecisionKind);
-				});
-			});
-		});
-	}
 	const recoveryDelivery = document.querySelector('[data-recovery-delivery]');
 	const recoverySchedule = document.querySelector('[data-recovery-schedule]');
 	if (recoveryDelivery && recoverySchedule) {
