@@ -91,7 +91,11 @@ class AppHeaderBlockWidget extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Icon(icon, size: (size ?? block.iconSize) * responsive, color: iconColor),
+                  Icon(
+                    icon,
+                    size: (size ?? block.iconSize) * responsive,
+                    color: iconColor,
+                  ),
                   if (label != null && label.isNotEmpty)
                     Text(
                       label,
@@ -116,6 +120,7 @@ class AppHeaderBlockWidget extends StatelessWidget {
       }
       actions.add(action);
     }
+
     if (block.showAccount) {
       addAction(
         actionButton(
@@ -127,9 +132,8 @@ class AppHeaderBlockWidget extends StatelessWidget {
               : Icons.person_outline_rounded,
           size: block.accountIconSize,
           label: block.showAccountLabel ? block.accountLabel : null,
-          onTap: () => onAction(
-            const HomeAction(type: 'account', value: 'account'),
-          ),
+          onTap: () =>
+              onAction(const HomeAction(type: 'account', value: 'account')),
         ),
       );
     }
@@ -138,9 +142,8 @@ class AppHeaderBlockWidget extends StatelessWidget {
         actionButton(
           tooltip: 'المفضلة',
           icon: Icons.favorite_border_rounded,
-          onTap: () => onAction(
-            const HomeAction(type: 'wishlist', value: 'wishlist'),
-          ),
+          onTap: () =>
+              onAction(const HomeAction(type: 'wishlist', value: 'wishlist')),
         ),
       );
     }
@@ -149,9 +152,7 @@ class AppHeaderBlockWidget extends StatelessWidget {
         actionButton(
           tooltip: 'البحث',
           icon: Icons.search_rounded,
-          onTap: () => onAction(
-            const HomeAction(type: 'search', value: ''),
-          ),
+          onTap: () => onAction(const HomeAction(type: 'search', value: '')),
         ),
       );
     }
@@ -160,9 +161,7 @@ class AppHeaderBlockWidget extends StatelessWidget {
         actionButton(
           tooltip: 'السلة',
           icon: Icons.shopping_bag_outlined,
-          onTap: () => onAction(
-            const HomeAction(type: 'cart', value: 'cart'),
-          ),
+          onTap: () => onAction(const HomeAction(type: 'cart', value: 'cart')),
         ),
       );
     }
@@ -195,7 +194,8 @@ class AppHeaderBlockWidget extends StatelessWidget {
       fallback: Theme.of(context).colorScheme.surface,
     );
     final double configuredHeight = block.height * responsive;
-    final double effectiveHeight = block.showSearch && block.searchStyle == 'bar'
+    final double effectiveHeight =
+        block.showSearch && block.searchStyle == 'bar'
         ? configuredHeight < 96 * responsive
               ? 96 * responsive
               : configuredHeight
@@ -232,19 +232,30 @@ class AppHeaderBlockWidget extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(bottom: 10 * responsive),
                   child: Material(
-                    color: _parseHexColor(block.searchBackground, fallback: Theme.of(context).colorScheme.surfaceContainerHighest),
+                    color: _parseHexColor(
+                      block.searchBackground,
+                      fallback: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(block.searchRadius * responsive),
+                      borderRadius: BorderRadius.circular(
+                        block.searchRadius * responsive,
+                      ),
                       side: BorderSide(
-                        color: _parseHexColor(block.searchBorderColor, fallback: Colors.transparent),
+                        color: _parseHexColor(
+                          block.searchBorderColor,
+                          fallback: Colors.transparent,
+                        ),
                         width: block.searchBorderWidth * responsive,
                       ),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(block.searchRadius * responsive),
-                      onTap: () => onAction(
-                        const HomeAction(type: 'search', value: ''),
+                      borderRadius: BorderRadius.circular(
+                        block.searchRadius * responsive,
                       ),
+                      onTap: () =>
+                          onAction(const HomeAction(type: 'search', value: '')),
                       child: SizedBox(
                         height: block.searchHeight * responsive,
                         child: Row(
@@ -253,7 +264,10 @@ class AppHeaderBlockWidget extends StatelessWidget {
                             Icon(
                               Icons.search_rounded,
                               size: 21 * responsive,
-                              color: _parseHexColor(block.searchIconColor, fallback: iconColor),
+                              color: _parseHexColor(
+                                block.searchIconColor,
+                                fallback: iconColor,
+                              ),
                             ),
                             SizedBox(width: 8 * responsive),
                             Expanded(
@@ -274,7 +288,10 @@ class AppHeaderBlockWidget extends StatelessWidget {
                               Icon(
                                 Icons.mic_none_rounded,
                                 size: 20 * responsive,
-                                color: _parseHexColor(block.searchIconColor, fallback: iconColor),
+                                color: _parseHexColor(
+                                  block.searchIconColor,
+                                  fallback: iconColor,
+                                ),
                               ),
                             if (block.showVoiceSearch)
                               SizedBox(width: 10 * responsive),
@@ -493,7 +510,9 @@ class _HeroSlideCard extends StatelessWidget {
             children: [
               AppNetworkImage(
                 imageUrl: slide.imageUrl,
-                fit: block.imageFit == 'contain' ? BoxFit.contain : BoxFit.cover,
+                fit: block.imageFit == 'contain'
+                    ? BoxFit.contain
+                    : BoxFit.cover,
                 semanticLabel: slide.title ?? slide.subtitle,
               ),
               DecoratedBox(
@@ -507,10 +526,14 @@ class _HeroSlideCard extends StatelessWidget {
                         : Alignment.centerLeft,
                     colors: <Color>[
                       Colors.black.withValues(
-                        alpha: (block.overlayStrength / 210).clamp(0.0, 0.35),
+                        alpha: (block.overlayStrength / 210)
+                            .clamp(0.0, 0.35)
+                            .toDouble(),
                       ),
                       Colors.black.withValues(
-                        alpha: (block.overlayStrength / 520).clamp(0.0, 0.16),
+                        alpha: (block.overlayStrength / 520)
+                            .clamp(0.0, 0.16)
+                            .toDouble(),
                       ),
                       Colors.transparent,
                     ],
@@ -569,7 +592,6 @@ class _HeroSlideCard extends StatelessWidget {
                                   ),
                             ),
                           ],
-
                         ],
                       ),
                     ),
@@ -587,17 +609,30 @@ class _HeroSlideCard extends StatelessWidget {
                     padding: const EdgeInsets.all(14),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: _parseHexColor(block.textColor, fallback: Colors.white),
+                        color: _parseHexColor(
+                          block.textColor,
+                          fallback: Colors.white,
+                        ),
                         borderRadius: BorderRadius.circular(999),
                         boxShadow: const <BoxShadow>[
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 1)),
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 8,
+                        ),
                         child: Text(
                           slide.buttonLabel!,
-                          style: const TextStyle(color: Color(0xFF1F2933), fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            color: Color(0xFF1F2933),
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ),
@@ -675,10 +710,18 @@ class CategoryGridBlockWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Column(
-                children: block.items.map((CategoryItem item) => Padding(
-                  padding: EdgeInsets.only(bottom: block.rowGap),
-                  child: _CategoryBannerCard(item: item, block: block, onAction: onAction),
-                )).toList(growable: false),
+                children: block.items
+                    .map(
+                      (CategoryItem item) => Padding(
+                        padding: EdgeInsets.only(bottom: block.rowGap),
+                        child: _CategoryBannerCard(
+                          item: item,
+                          block: block,
+                          onAction: onAction,
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
               ),
             )
           else if (block.layout == 'editorial_mosaic')
@@ -711,19 +754,24 @@ class CategoryGridBlockWidget extends StatelessWidget {
                       _ => WrapAlignment.end,
                     },
                     textDirection: TextDirection.ltr,
-                    children: block.items.map((CategoryItem item) => SizedBox(
-                      width: itemWidth,
-                      height: imageSize +
-                          (block.showNames ? (compact ? 36 : 45) : 4) +
-                          (cards ? 14 : 0),
-                      child: _CategoryBlockCard(
-                        item: item,
-                        block: block,
-                        imageSize: compact ? imageSize * .82 : imageSize,
-                        forceRounded: cards,
-                        onAction: onAction,
-                      ),
-                    )).toList(growable: false),
+                    children: block.items
+                        .map(
+                          (CategoryItem item) => SizedBox(
+                            width: itemWidth,
+                            height:
+                                imageSize +
+                                (block.showNames ? (compact ? 36 : 45) : 4) +
+                                (cards ? 14 : 0),
+                            child: _CategoryBlockCard(
+                              item: item,
+                              block: block,
+                              imageSize: compact ? imageSize * .82 : imageSize,
+                              forceRounded: cards,
+                              onAction: onAction,
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
                   );
                 },
               ),
@@ -743,36 +791,88 @@ class _CategoryEditorialMosaic extends StatelessWidget {
   Widget build(BuildContext context) {
     if (block.items.isEmpty) return const SizedBox.shrink();
     final CategoryItem featured = block.items.first;
-    final List<CategoryItem> secondary = block.items.skip(1).take(2).toList(growable: false);
-    final List<CategoryItem> remaining = block.items.skip(3).toList(growable: false);
-    return Column(children: <Widget>[
-      SizedBox(
-        height: 220,
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: <Widget>[
-          Expanded(flex: 2, child: _CategoryMosaicTile(item: featured, block: block, onAction: onAction, featured: true)),
-          if (secondary.isNotEmpty) SizedBox(width: block.gap),
-          if (secondary.isNotEmpty) Expanded(child: Column(children: secondary.map((CategoryItem item) => Expanded(child: Padding(
-            padding: EdgeInsets.only(bottom: item == secondary.last ? 0 : block.gap),
-            child: _CategoryMosaicTile(item: item, block: block, onAction: onAction),
-          ))).toList(growable: false))),
-        ]),
-      ),
-      if (remaining.isNotEmpty) ...<Widget>[
-        SizedBox(height: block.rowGap),
-        Wrap(
-          spacing: block.gap,
-          runSpacing: block.rowGap,
-          alignment: WrapAlignment.end,
-          textDirection: TextDirection.ltr,
-          children: remaining.map((CategoryItem item) => SizedBox(width: 110, height: 130, child: _CategoryMosaicTile(item: item, block: block, onAction: onAction))).toList(growable: false),
+    final List<CategoryItem> secondary = block.items
+        .skip(1)
+        .take(2)
+        .toList(growable: false);
+    final List<CategoryItem> remaining = block.items
+        .skip(3)
+        .toList(growable: false);
+    return Column(
+      children: <Widget>[
+        SizedBox(
+          height: 220,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 2,
+                child: _CategoryMosaicTile(
+                  item: featured,
+                  block: block,
+                  onAction: onAction,
+                  featured: true,
+                ),
+              ),
+              if (secondary.isNotEmpty) SizedBox(width: block.gap),
+              if (secondary.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    children: secondary
+                        .map(
+                          (CategoryItem item) => Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: item == secondary.last ? 0 : block.gap,
+                              ),
+                              child: _CategoryMosaicTile(
+                                item: item,
+                                block: block,
+                                onAction: onAction,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+            ],
+          ),
         ),
+        if (remaining.isNotEmpty) ...<Widget>[
+          SizedBox(height: block.rowGap),
+          Wrap(
+            spacing: block.gap,
+            runSpacing: block.rowGap,
+            alignment: WrapAlignment.end,
+            textDirection: TextDirection.ltr,
+            children: remaining
+                .map(
+                  (CategoryItem item) => SizedBox(
+                    width: 110,
+                    height: 130,
+                    child: _CategoryMosaicTile(
+                      item: item,
+                      block: block,
+                      onAction: onAction,
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }
 
 class _CategoryMosaicTile extends StatelessWidget {
-  const _CategoryMosaicTile({required this.item, required this.block, required this.onAction, this.featured = false});
+  const _CategoryMosaicTile({
+    required this.item,
+    required this.block,
+    required this.onAction,
+    this.featured = false,
+  });
   final CategoryItem item;
   final CategoryGridBlock block;
   final ValueChanged<HomeAction> onAction;
@@ -784,17 +884,52 @@ class _CategoryMosaicTile extends StatelessWidget {
     borderRadius: BorderRadius.circular(18),
     child: InkWell(
       onTap: item.action == null ? null : () => onAction(item.action!),
-      child: Stack(fit: StackFit.expand, children: <Widget>[
-        AppNetworkImage(imageUrl: item.imageUrl, fit: BoxFit.cover, semanticLabel: item.name),
-        const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[Colors.transparent, Color(0x99000000)]))),
-        if (block.showNames) Align(alignment: Alignment.bottomRight, child: Padding(padding: const EdgeInsets.all(12), child: Text(item.name, maxLines: featured ? 2 : 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: featured ? block.labelSize + 2 : block.labelSize, fontWeight: FontWeight.w800)))),
-      ]),
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          AppNetworkImage(
+            imageUrl: item.imageUrl,
+            fit: BoxFit.cover,
+            semanticLabel: item.name,
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[Colors.transparent, Color(0x99000000)],
+              ),
+            ),
+          ),
+          if (block.showNames)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  item.name,
+                  maxLines: featured ? 2 : 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: featured ? block.labelSize + 2 : block.labelSize,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
 
 class _CategoryBannerCard extends StatelessWidget {
-  const _CategoryBannerCard({required this.item, required this.block, required this.onAction});
+  const _CategoryBannerCard({
+    required this.item,
+    required this.block,
+    required this.onAction,
+  });
   final CategoryItem item;
   final CategoryGridBlock block;
   final ValueChanged<HomeAction> onAction;
@@ -807,11 +942,40 @@ class _CategoryBannerCard extends StatelessWidget {
       onTap: item.action == null ? null : () => onAction(item.action!),
       child: AspectRatio(
         aspectRatio: 2.6,
-        child: Stack(fit: StackFit.expand, children: <Widget>[
-          AppNetworkImage(imageUrl: item.imageUrl, fit: BoxFit.cover, semanticLabel: item.name),
-          const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: <Color>[Colors.transparent, Color(0x99000000)]))),
-          if (block.showNames) Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.all(16), child: Text(item.name, style: TextStyle(color: Colors.white, fontSize: block.labelSize + 2, fontWeight: FontWeight.w900)))),
-        ]),
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            AppNetworkImage(
+              imageUrl: item.imageUrl,
+              fit: BoxFit.cover,
+              semanticLabel: item.name,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: <Color>[Colors.transparent, Color(0x99000000)],
+                ),
+              ),
+            ),
+            if (block.showNames)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    item.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: block.labelSize + 2,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     ),
   );
@@ -834,43 +998,45 @@ class _CategoryBlockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-	final BorderRadius radius = forceRounded ? BorderRadius.circular(18) : switch (block.imageShape) {
-      'circle' => BorderRadius.circular(imageSize / 2),
-      'square' => BorderRadius.zero,
-      _ => BorderRadius.circular(18),
-    };
+    final BorderRadius radius = forceRounded
+        ? BorderRadius.circular(18)
+        : switch (block.imageShape) {
+            'circle' => BorderRadius.circular(imageSize / 2),
+            'square' => BorderRadius.zero,
+            _ => BorderRadius.circular(18),
+          };
     final Widget content = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ClipRRect(
-            borderRadius: radius,
-            child: AppNetworkImage(
-              imageUrl: item.imageUrl,
-              width: imageSize,
-              height: imageSize,
-              fit: BoxFit.cover,
-              semanticLabel: item.name,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        ClipRRect(
+          borderRadius: radius,
+          child: AppNetworkImage(
+            imageUrl: item.imageUrl,
+            width: imageSize,
+            height: imageSize,
+            fit: BoxFit.cover,
+            semanticLabel: item.name,
+          ),
+        ),
+        if (block.showNames) ...<Widget>[
+          const SizedBox(height: 8),
+          Text(
+            item.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _parseHexColor(
+                block.labelColor,
+                fallback: Theme.of(context).colorScheme.onSurface,
+              ),
+              fontSize: block.labelSize,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          if (block.showNames) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              item.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _parseHexColor(
-                  block.labelColor,
-                  fallback: Theme.of(context).colorScheme.onSurface,
-                ),
-                fontSize: block.labelSize,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
         ],
-      );
+      ],
+    );
     return Material(
       color: forceRounded ? Colors.white : Colors.transparent,
       elevation: forceRounded ? 2 : 0,
@@ -910,8 +1076,7 @@ class QuickLinksBlockWidget extends StatelessWidget {
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final double availableItemWidth =
-                    (constraints.maxWidth -
-                        ((block.columns - 1) * gap)) /
+                    (constraints.maxWidth - ((block.columns - 1) * gap)) /
                     block.columns;
                 final double gridItemSize = availableItemWidth < 1
                     ? 1
@@ -927,8 +1092,7 @@ class QuickLinksBlockWidget extends StatelessWidget {
                     crossAxisCount: block.columns,
                     crossAxisSpacing: gap,
                     mainAxisSpacing: gap,
-                    mainAxisExtent:
-                        gridItemSize + (block.showLabels ? 48 : 4),
+                    mainAxisExtent: gridItemSize + (block.showLabels ? 48 : 4),
                   ),
                   itemBuilder: (BuildContext context, int index) {
                     return _QuickLinkCard(
@@ -1164,9 +1328,7 @@ class BannerGridBlockWidget extends StatelessWidget {
             return SizedBox(
               width: wide ? constraints.maxWidth : halfWidth,
               child: AspectRatio(
-                aspectRatio: wide
-                    ? block.aspectRatio * 2
-                    : block.aspectRatio,
+                aspectRatio: wide ? block.aspectRatio * 2 : block.aspectRatio,
                 child: _tile(block.items[index]),
               ),
             );
@@ -1177,11 +1339,7 @@ class BannerGridBlockWidget extends StatelessWidget {
   }
 
   Widget _tile(BannerGridItem item) {
-    return _BannerGridTile(
-      item: item,
-      block: block,
-      onAction: onAction,
-    );
+    return _BannerGridTile(item: item, block: block, onAction: onAction);
   }
 }
 
@@ -1213,7 +1371,9 @@ class _BannerGridTile extends StatelessWidget {
             children: <Widget>[
               AppNetworkImage(
                 imageUrl: item.imageUrl,
-                fit: block.imageFit == 'contain' ? BoxFit.contain : BoxFit.cover,
+                fit: block.imageFit == 'contain'
+                    ? BoxFit.contain
+                    : BoxFit.cover,
                 semanticLabel: item.title ?? item.subtitle,
               ),
               if (item.title != null ||
@@ -1472,7 +1632,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     quickAddEnabled: block.quickAddEnabled,
                     imageSwipeEnabled: block.imageSwipeEnabled,
                     quickAddAppearance: block.quickAddAppearance,
-					wishlistAppearance: block.wishlistAppearance,
+                    wishlistAppearance: block.wishlistAppearance,
                   ),
                 );
               },
@@ -1563,7 +1723,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       quickAddEnabled: block.quickAddEnabled,
                       imageSwipeEnabled: block.imageSwipeEnabled,
                       quickAddAppearance: block.quickAddAppearance,
-					  wishlistAppearance: block.wishlistAppearance,
+                      wishlistAppearance: block.wishlistAppearance,
                     );
                   },
                 );
@@ -1723,9 +1883,9 @@ class _BundleCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
               ),
               if (item.description.isNotEmpty)
                 Text(
@@ -1972,9 +2132,9 @@ class _BrandTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ],
@@ -2008,12 +2168,17 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
   }
 
   @override
-  void initState() { super.initState(); _configureTimer(); }
+  void initState() {
+    super.initState();
+    _configureTimer();
+  }
 
   @override
   void didUpdateWidget(covariant PromoStripBlockWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.block.messages != widget.block.messages || oldWidget.block.enableTransition != widget.block.enableTransition || oldWidget.block.changeEverySeconds != widget.block.changeEverySeconds) {
+    if (oldWidget.block.messages != widget.block.messages ||
+        oldWidget.block.enableTransition != widget.block.enableTransition ||
+        oldWidget.block.changeEverySeconds != widget.block.changeEverySeconds) {
       _messageIndex = 0;
       _configureTimer();
     }
@@ -2022,13 +2187,22 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
   void _configureTimer() {
     _timer?.cancel();
     if (_messages.length < 2) return;
-    _timer = Timer.periodic(Duration(seconds: widget.block.changeEverySeconds), (_) {
-      if (mounted) setState(() => _messageIndex = (_messageIndex + 1) % _messages.length);
-    });
+    _timer = Timer.periodic(
+      Duration(seconds: widget.block.changeEverySeconds),
+      (_) {
+        if (mounted)
+          setState(
+            () => _messageIndex = (_messageIndex + 1) % _messages.length,
+          );
+      },
+    );
   }
 
   @override
-  void dispose() { _timer?.cancel(); super.dispose(); }
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2059,13 +2233,44 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Center(
                 child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: block.transitionDurationMilliseconds),
-                  transitionBuilder: (Widget child, Animation<double> animation) => switch (block.transitionEffect) {
-                    'slide_up' => SlideTransition(position: Tween<Offset>(begin: const Offset(0, .45), end: Offset.zero).animate(animation), child: FadeTransition(opacity: animation, child: child)),
-                    'slide_left' => SlideTransition(position: Tween<Offset>(begin: const Offset(.45, 0), end: Offset.zero).animate(animation), child: FadeTransition(opacity: animation, child: child)),
-                    'scale' => ScaleTransition(scale: animation, child: FadeTransition(opacity: animation, child: child)),
-                    _ => FadeTransition(opacity: animation, child: child),
-                  },
+                  duration: Duration(
+                    milliseconds: block.transitionDurationMilliseconds,
+                  ),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) =>
+                          switch (block.transitionEffect) {
+                            'slide_up' => SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, .45),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            ),
+                            'slide_left' => SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(.45, 0),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            ),
+                            'scale' => ScaleTransition(
+                              scale: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            ),
+                            _ => FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          },
                   child: Text(
                     _messages[_messageIndex],
                     key: ValueKey<int>(_messageIndex),
@@ -2083,8 +2288,13 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
         ),
       ),
     );
-    if (block.height != null) content = SizedBox(height: block.height, child: content);
-    if (block.width != null) content = FractionallySizedBox(widthFactor: block.width! / 100, child: content);
+    if (block.height != null)
+      content = SizedBox(height: block.height, child: content);
+    if (block.width != null)
+      content = FractionallySizedBox(
+        widthFactor: block.width! / 100,
+        child: content,
+      );
     return content;
   }
 }
@@ -2133,79 +2343,82 @@ class CouponBannerBlockWidget extends StatelessWidget {
                 ? null
                 : () => onAction!(block.action!),
             child: Stack(
-            children: [
-              if (hasImage) ...[
-                Positioned.fill(
-                  child: AppNetworkImage(
-                    imageUrl: block.imageUrl!,
-                    fit: BoxFit.cover,
-                    semanticLabel: block.title,
+              children: [
+                if (hasImage) ...[
+                  Positioned.fill(
+                    child: AppNetworkImage(
+                      imageUrl: block.imageUrl!,
+                      fit: BoxFit.cover,
+                      semanticLabel: block.title,
+                    ),
                   ),
-                ),
-                const Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                        colors: [Color(0xD9000000), Color(0x8A000000)],
+                  const Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [Color(0xD9000000), Color(0x8A000000)],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (block.title != null)
-                      Text(
-                        block.title!,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: foregroundColor,
-                          fontWeight: FontWeight.w900,
+                ],
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (block.title != null)
+                        Text(
+                          block.title!,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: foregroundColor,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                    if (block.description != null) ...[
-                      if (block.title != null) const SizedBox(height: 6),
-                      Text(
-                        block.description!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: foregroundColor,
-                          height: 1.5,
+                      if (block.description != null) ...[
+                        if (block.title != null) const SizedBox(height: 6),
+                        Text(
+                          block.description!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: foregroundColor,
+                            height: 1.5,
+                          ),
                         ),
-                      ),
-                    ],
-                    if (block.couponCode != null) ...[
-                      if (block.title != null || block.description != null)
-                        const SizedBox(height: 14),
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Semantics(
-                          button: true,
-                          label: 'نسخ كود الخصم ${block.couponCode}',
-                          child: FilledButton.tonalIcon(
-                            onPressed: () async {
-                              await _copyCouponCode(context, block.couponCode!);
-                            },
-                            icon: const Icon(Icons.copy_rounded),
-                            label: Text(block.couponCode!),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _parseHexColor(
-                                block.accentColor,
-                                fallback: colorScheme.primary,
+                      ],
+                      if (block.couponCode != null) ...[
+                        if (block.title != null || block.description != null)
+                          const SizedBox(height: 14),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Semantics(
+                            button: true,
+                            label: 'نسخ كود الخصم ${block.couponCode}',
+                            child: FilledButton.tonalIcon(
+                              onPressed: () async {
+                                await _copyCouponCode(
+                                  context,
+                                  block.couponCode!,
+                                );
+                              },
+                              icon: const Icon(Icons.copy_rounded),
+                              label: Text(block.couponCode!),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _parseHexColor(
+                                  block.accentColor,
+                                  fallback: colorScheme.primary,
+                                ),
+                                foregroundColor: Colors.white,
                               ),
-                              foregroundColor: Colors.white,
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           ),
         ),
@@ -2227,11 +2440,7 @@ class CouponBannerBlockWidget extends StatelessWidget {
 }
 
 class CountdownBlockWidget extends StatefulWidget {
-  const CountdownBlockWidget({
-    required this.block,
-    this.onAction,
-    super.key,
-  });
+  const CountdownBlockWidget({required this.block, this.onAction, super.key});
 
   final CountdownBlock block;
   final ValueChanged<HomeAction>? onAction;
@@ -2372,23 +2581,30 @@ class _CountdownBlockWidgetState extends State<CountdownBlockWidget> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
-            children: [
-              if (widget.block.title != null) ...[
-                Text(
-                  widget.block.title!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w900,
+                children: [
+                  if (widget.block.title != null) ...[
+                    Text(
+                      widget.block.title!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _countdownUnits(
+                      days,
+                      hours,
+                      minutes,
+                      seconds,
+                      boxColor,
+                      textColor,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: _countdownUnits(days, hours, minutes, seconds, boxColor, textColor),
-              ),
-            ],
+                ],
               ),
             ),
           ),
@@ -2397,12 +2613,47 @@ class _CountdownBlockWidgetState extends State<CountdownBlockWidget> {
     );
   }
 
-  List<Widget> _countdownUnits(int days, int hours, int minutes, int seconds, Color boxColor, Color textColor) {
+  List<Widget> _countdownUnits(
+    int days,
+    int hours,
+    int minutes,
+    int seconds,
+    Color boxColor,
+    Color textColor,
+  ) {
     final List<_CountdownUnit> units = <_CountdownUnit>[
-      if (widget.block.showDays) _CountdownUnit(value: days, label: 'يوم', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
-      if (widget.block.showHours) _CountdownUnit(value: hours, label: 'ساعة', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
-      if (widget.block.showMinutes) _CountdownUnit(value: minutes, label: 'دقيقة', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
-      if (widget.block.showSeconds) _CountdownUnit(value: seconds, label: 'ثانية', boxColor: boxColor, textColor: textColor, layoutStyle: widget.block.layoutStyle),
+      if (widget.block.showDays)
+        _CountdownUnit(
+          value: days,
+          label: 'يوم',
+          boxColor: boxColor,
+          textColor: textColor,
+          layoutStyle: widget.block.layoutStyle,
+        ),
+      if (widget.block.showHours)
+        _CountdownUnit(
+          value: hours,
+          label: 'ساعة',
+          boxColor: boxColor,
+          textColor: textColor,
+          layoutStyle: widget.block.layoutStyle,
+        ),
+      if (widget.block.showMinutes)
+        _CountdownUnit(
+          value: minutes,
+          label: 'دقيقة',
+          boxColor: boxColor,
+          textColor: textColor,
+          layoutStyle: widget.block.layoutStyle,
+        ),
+      if (widget.block.showSeconds)
+        _CountdownUnit(
+          value: seconds,
+          label: 'ثانية',
+          boxColor: boxColor,
+          textColor: textColor,
+          layoutStyle: widget.block.layoutStyle,
+        ),
     ];
     final List<Widget> children = <Widget>[];
     for (int i = 0; i < units.length; i++) {
@@ -2452,11 +2703,26 @@ class _CountdownUnit extends StatelessWidget {
           color: minimal || split ? Colors.transparent : boxColor,
           shape: circle ? BoxShape.circle : BoxShape.rectangle,
           borderRadius: circle ? null : BorderRadius.circular(flip ? 6 : 14),
-          border: minimal ? Border.all(color: textColor.withValues(alpha: .25)) : null,
-          gradient: flip ? LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[boxColor.withValues(alpha: .75), boxColor, boxColor.withValues(alpha: .8)]) : null,
+          border: minimal
+              ? Border.all(color: textColor.withValues(alpha: .25))
+              : null,
+          gradient: flip
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    boxColor.withValues(alpha: .75),
+                    boxColor,
+                    boxColor.withValues(alpha: .8),
+                  ],
+                )
+              : null,
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6, vertical: circle ? 14 : 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: circle ? 14 : 10,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2489,8 +2755,7 @@ class VideoBannerBlockWidget extends StatefulWidget {
   final ValueChanged<HomeAction> onAction;
 
   @override
-  State<VideoBannerBlockWidget> createState() =>
-      _VideoBannerBlockWidgetState();
+  State<VideoBannerBlockWidget> createState() => _VideoBannerBlockWidgetState();
 }
 
 class _VideoBannerBlockWidgetState extends State<VideoBannerBlockWidget> {
@@ -2574,9 +2839,8 @@ class _VideoBannerBlockWidgetState extends State<VideoBannerBlockWidget> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final VideoPlayerController? controller = _controller;
-    final bool ready = !_failed &&
-        controller != null &&
-        controller.value.isInitialized;
+    final bool ready =
+        !_failed && controller != null && controller.value.isInitialized;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -2798,7 +3062,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.quickAddEnabled = true,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance,
-	this.wishlistAppearance = const ProductWishlistAppearance(),
+    this.wishlistAppearance = const ProductWishlistAppearance(),
   });
 
   final HomeProductItem product;
@@ -2846,8 +3110,8 @@ class _HomeProductCardAdapter extends StatelessWidget {
       reviewCount: product.reviewCount,
       quickAddProductId: quickAddEnabled ? product.id : null,
       quickAddAppearance: quickAddAppearance,
-	  wishlistProductId: product.id,
-	  wishlistAppearance: wishlistAppearance,
+      wishlistProductId: product.id,
+      wishlistAppearance: wishlistAppearance,
       onTap: action == null
           ? null
           : () {
