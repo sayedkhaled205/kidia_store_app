@@ -22,15 +22,20 @@ class DioHomeRemoteDataSource implements HomeRemoteDataSource {
   Future<Map<String, dynamic>> fetchHomeLayout({
     required String locale,
   }) async {
-    Response<dynamic> response;
-    try {
-      response = await _fetch(_endpoint, locale);
-    } on DioException catch (error) {
-      final String? legacyEndpoint = _legacyEndpoint();
-      if (error.response?.statusCode != 404 || legacyEndpoint == null) {
-        rethrow;
+    final List<String> endpoints = _compatibleEndpoints();
+    late Response<dynamic> response;
+
+    for (var index = 0; index < endpoints.length; index += 1) {
+      try {
+        response = await _fetch(endpoints[index], locale);
+        break;
+      } on DioException catch (error) {
+        final bool canTryLegacyRoute =
+            error.response?.statusCode == 404 && index < endpoints.length - 1;
+        if (!canTryLegacyRoute) {
+          rethrow;
+        }
       }
-      response = await _fetch(legacyEndpoint, locale);
     }
 
     final Map<String, dynamic> responseJson = _normalizeJsonObject(
@@ -57,15 +62,28 @@ class DioHomeRemoteDataSource implements HomeRemoteDataSource {
         ),
       );
 
-  String? _legacyEndpoint() {
-    const String currentPath = '/wp-json/woo-mobile/v1/home-layout';
-    if (!_endpoint.contains(currentPath)) {
-      return null;
-    }
-    return _endpoint.replaceFirst(
-      currentPath,
+  List<String> _compatibleEndpoints() {
+    const List<String> paths = <String>[
+      '/wp-json/woomobileapp/v1/home-layout',
+      '/wp-json/woo-mobile/v1/home-layout',
       '/wp-json/kidia/v1/home-layout',
-    );
+    ];
+    String? matchedPath;
+    for (final String path in paths) {
+      if (_endpoint.contains(path)) {
+        matchedPath = path;
+        break;
+      }
+    }
+    if (matchedPath == null) {
+      return <String>[_endpoint];
+    }
+
+    return <String>[
+      _endpoint,
+      for (final String path in paths)
+        if (path != matchedPath) _endpoint.replaceFirst(matchedPath, path),
+    ];
   }
 
   Map<String, dynamic> _normalizeJsonObject(dynamic data) {
