@@ -16,6 +16,43 @@ defined( 'ABSPATH' ) || exit;
 		<?php endforeach; ?>
 	</nav>
 </aside>
+<?php
+$shell_build_state  = wp_parse_args(
+	is_array( $app_build_state ?? null ) ? $app_build_state : array(),
+	array( 'status' => 'idle', 'progress' => 0, 'message' => '', 'stage' => '', 'build_id' => '', 'updated_at' => 0 )
+);
+$shell_build_status = sanitize_key( (string) $shell_build_state['status'] );
+$shell_has_build    = ! in_array( $shell_build_status, array( 'idle', 'cancelled' ), true );
+?>
+<div
+	class="kidia-app-build__persistent"
+	data-kidia-app-build
+	data-build-persistent
+	data-status="<?php echo esc_attr( $shell_build_status ); ?>"
+	data-can-build="0"
+>
+	<div class="kidia-app-build__modal kidia-ai-progress-overlay<?php echo $shell_has_build ? ' is-docked' : ''; ?>" data-build-modal <?php echo $shell_has_build ? '' : 'hidden'; ?>>
+		<div class="kidia-app-build__modal-card kidia-ai-progress-card" role="dialog" aria-modal="true" aria-labelledby="kidia-persistent-build-title">
+			<div class="kidia-ai-progress-ring" data-build-progress-ring style="--kidia-ai-progress:<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>">
+				<strong data-build-progress-label><?php echo esc_html( absint( $shell_build_state['progress'] ) . '%' ); ?></strong>
+			</div>
+			<h2 id="kidia-persistent-build-title"><?php esc_html_e( 'Building your app', 'kidia-mobile-cms' ); ?></h2>
+			<p class="kidia-app-build__message" data-build-message><?php echo esc_html( (string) $shell_build_state['message'] ); ?></p>
+			<strong class="kidia-ai-progress-count" data-build-stage><?php echo esc_html( (string) ( $shell_build_state['stage'] ?: $shell_build_state['message'] ) ); ?></strong>
+			<small class="kidia-app-build__meta" data-build-meta>
+				<?php echo esc_html( '' !== (string) $shell_build_state['build_id'] ? 'Build ID: ' . (string) $shell_build_state['build_id'] : '' ); ?>
+			</small>
+			<div class="kidia-app-build__progress kidia-ai-progress-track" data-build-progress>
+				<span data-build-progress-value role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>" style="width:<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>%"></span>
+			</div>
+			<small data-build-note><?php esc_html_e( 'This card stays available across every CMS page until you cancel it.', 'kidia-mobile-cms' ); ?></small>
+			<div class="kidia-app-build__actions kidia-ai-progress-actions">
+				<button type="button" class="button button-primary" data-build-background><span class="dashicons dashicons-migrate"></span><?php esc_html_e( 'Continue in background', 'kidia-mobile-cms' ); ?></button>
+				<button type="button" class="button kidia-app-build__cancel kidia-ai-cancel-button" data-build-cancel <?php echo $shell_has_build ? '' : 'hidden'; ?>><span class="dashicons dashicons-no-alt"></span><?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?></button>
+			</div>
+		</div>
+	</div>
+</div>
 	<div class="kidia-cms-shell" data-kidia-cms-shell<?php echo $show_page_tabs ? '' : ' hidden'; ?>>
 		<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application pages', 'kidia-mobile-cms' ); ?>">
 			<?php foreach ( $tabs as $key => $tab ) : ?>

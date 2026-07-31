@@ -1969,6 +1969,7 @@ final class Kidia_Mobile_CMS_Admin {
 			? 'pages'
 			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'bundles', 'abandoned_carts', 'push', 'website_promotion' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
+		$app_build_state = Kidia_Mobile_App_Exporter::state();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
 
@@ -2586,7 +2587,7 @@ final class Kidia_Mobile_CMS_Admin {
 							true
 						);
 					}
-					if ( in_array( $page, array( 'kidia-mobile-cms', 'kidia-mobile-setup' ), true ) ) {
+					if ( $this->is_public_cms_page( $page ) ) {
 						wp_enqueue_script(
 							'kidia-mobile-app-builder',
 							KIDIA_MOBILE_CMS_URL . 'admin/assets/app-builder.js',

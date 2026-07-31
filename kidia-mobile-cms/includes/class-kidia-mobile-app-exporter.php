@@ -658,6 +658,7 @@ final class Kidia_Mobile_App_Exporter {
 		$state['status']        = $status;
 		$state['progress']      = $progress;
 		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'kidia-mobile-cms' ) : '' ) ) );
+		$state['stage']         = sanitize_text_field( (string) ( $raw['stage'] ?? $raw['currentStep'] ?? $raw['current_step'] ?? $state['message'] ) );
 		$state['started_at']    = absint( $state['started_at'] ) ?: time();
 		$state['completed_at']  = in_array( $status, array( 'ready', 'failed', 'cancelled' ), true ) ? time() : 0;
 		$state['download_url']  = esc_url_raw( $download_url );
@@ -693,6 +694,7 @@ final class Kidia_Mobile_App_Exporter {
 			'status'       => sanitize_key( (string) $state['status'] ),
 			'progress'     => max( 0, min( 100, absint( $state['progress'] ) ) ),
 			'message'      => sanitize_text_field( (string) $state['message'] ),
+			'stage'        => sanitize_text_field( (string) $state['stage'] ),
 			'buildId'      => sanitize_text_field( (string) $state['build_id'] ),
 			'startedAt'    => absint( $state['started_at'] ),
 			'updatedAt'    => absint( $state['updated_at'] ),
@@ -712,6 +714,7 @@ final class Kidia_Mobile_App_Exporter {
 			'status'        => 'idle',
 			'progress'      => 0,
 			'message'       => '',
+			'stage'         => '',
 			'started_at'    => 0,
 			'completed_at'  => 0,
 			'updated_at'    => 0,
