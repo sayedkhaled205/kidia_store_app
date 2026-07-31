@@ -9,6 +9,7 @@
 
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
+	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -21,8 +22,33 @@
 		return ['queued', 'building'].includes(status);
 	}
 
+	function normalizedStatus(status) {
+		return ['completed', 'finished'].includes(status) ? 'ready' : status;
+	}
+
 	function hasStoredBuild(status) {
 		return status && status !== 'idle' && status !== 'cancelled';
+	}
+
+	function completedBuildId() {
+		try {
+			return window.localStorage.getItem(completedStorageKey) || '';
+		} catch (_error) {
+			return '';
+		}
+	}
+
+	function rememberDownloadCompleted(buildId) {
+		if (!buildId) return;
+		try {
+			window.localStorage.setItem(completedStorageKey, buildId);
+		} catch (_error) {}
+	}
+
+	function forgetDownloadCompleted() {
+		try {
+			window.localStorage.removeItem(completedStorageKey);
+		} catch (_error) {}
 	}
 
 	function progressModal(root) {
@@ -120,6 +146,7 @@
 		const modal = root.querySelector('[data-build-modal]');
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
+		const downloaded = status === 'downloaded';
 		const building = isBuilding(status);
 		const stored = hasStoredBuild(status);
 
@@ -127,13 +154,15 @@
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
 		}
 		if (button) {
-			button.disabled = building || (!ready && !canBuild);
+			button.disabled = downloaded || building || (!ready && !canBuild);
 			button.classList.toggle('is-loading', building);
-			button.hidden = false;
+			button.hidden = downloaded;
 			button.setAttribute('aria-busy', building ? 'true' : 'false');
 		}
 		if (buttonLabel) {
-			if (ready) {
+			if (downloaded) {
+				buttonLabel.textContent = label('downloaded', 'Download Completed');
+			} else if (ready) {
 				buttonLabel.textContent = label('download', 'Download APK');
 			} else if (building) {
 				const currentStage = root.dataset.stage || label('building', 'Building your APK…');
@@ -159,20 +188,26 @@
 	function requestDownload(root) {
 		if (!autoDownload.has(root) || root.dataset.status !== 'ready') return;
 
+		const form = root.querySelector('[data-build-form]');
+		if (!form) return;
 		autoDownload.delete(root);
 		root.dataset.autoDownload = '0';
-		const form = root.querySelector('[data-build-form]');
 		const button = root.querySelector('[data-build-action]');
-		if (form && typeof form.requestSubmit === 'function') {
+		if (typeof form.requestSubmit === 'function') {
 			form.requestSubmit(button || undefined);
-		} else if (form) {
+		} else {
 			form.submit();
 		}
+		const buildId = root.dataset.buildId || '';
+		rememberDownloadCompleted(buildId);
+		render({ status: 'downloaded', progress: 100, buildId: buildId, message: label('downloaded', 'Download Completed'), downloadReady: false });
 	}
 
 	function render(state) {
 		roots().forEach(function (root) {
-			const status = state.status || root.dataset.status || 'idle';
+			let status = normalizedStatus(state.status || root.dataset.status || 'idle');
+			const buildId = String(state.buildId || root.dataset.buildId || '');
+			if (status === 'ready' && buildId && completedBuildId() === buildId) status = 'downloaded';
 			const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
 			const messages = root.querySelectorAll('[data-build-message]');
 			const meter = root.querySelector('[data-build-progress]');
@@ -180,10 +215,12 @@
 			const ring = root.querySelector('[data-build-progress-ring]');
 			const progressLabel = root.querySelector('[data-build-progress-label]');
 			const stage = root.querySelector('[data-build-stage]');
+			const title = root.querySelector('[data-build-title]');
 			const buildMeta = root.querySelector('[data-build-meta]');
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
+			if (buildId) root.dataset.buildId = buildId;
 			root.dataset.stage = state.stage || state.message || '';
 			messages.forEach(function (message) {
 				message.textContent = state.message || label(status);
@@ -200,6 +237,9 @@
 					? label('queued', 'Waiting for the build provider…')
 					: label(status, 'Preparing the Android application…')
 			);
+			if (title) title.textContent = status === 'downloaded'
+				? label('downloaded', 'Download Completed')
+				: label('buildTitle', 'Building your app');
 			if (buildMeta) {
 				const parts = [];
 				if (state.buildId) parts.push('Build ID: ' + state.buildId);
@@ -293,6 +333,7 @@
 			nonce: nonce ? nonce.value : ''
 		});
 
+		forgetDownloadCompleted();
 		autoDownload.add(root);
 		openProgress(root);
 		render({
@@ -334,6 +375,7 @@
 		try {
 			const state = await request(body);
 			autoDownload.delete(root);
+			forgetDownloadCompleted();
 			render(state);
 			closeProgress(root);
 		} catch (error) {
@@ -350,26 +392,20 @@
 			if (root.dataset.buildBound === '1') return;
 			root.dataset.buildBound = '1';
 			const form = root.querySelector('[data-build-form]');
-			if (root.dataset.autoDownload === '1') autoDownload.add(root);
+			if (root.dataset.autoDownload === '1' || isBuilding(root.dataset.status)) autoDownload.add(root);
 			if (form) form.addEventListener('submit', function (event) {
-			if (root.dataset.status === 'ready') return;
+				if (root.dataset.status === 'ready') return;
 
-			event.preventDefault();
-			if (isBuilding(root.dataset.status)) {
-				openProgress(root);
-				schedulePoll(0);
-				return;
-			}
-			if (root.dataset.canBuild !== '1') return;
-			startBuild(root);
+				event.preventDefault();
+				if (isBuilding(root.dataset.status)) {
+					openProgress(root);
+					schedulePoll(0);
+					return;
+				}
+				if (root.dataset.canBuild !== '1') return;
+				startBuild(root);
 			});
 
-			const backgroundButton = root.querySelector('[data-build-background]');
-			if (backgroundButton) {
-				backgroundButton.addEventListener('click', function () {
-					dockProgress(root);
-				});
-			}
 			bindDockDrag(root);
 
 			const cancelButton = root.querySelector('[data-build-cancel]');
@@ -389,14 +425,24 @@
 	if (active) poll();
 
 	roots().forEach(function (root) {
+		let initialStatus = normalizedStatus(root.dataset.status || 'idle');
+		if (initialStatus === 'ready' && root.dataset.buildId && completedBuildId() === root.dataset.buildId) {
+			initialStatus = 'downloaded';
+			root.dataset.status = initialStatus;
+			root.querySelectorAll('[data-build-message]').forEach(function (message) {
+				message.textContent = label('downloaded', 'Download Completed');
+			});
+			const initialTitle = root.querySelector('[data-build-title]');
+			if (initialTitle) initialTitle.textContent = label('downloaded', 'Download Completed');
+		}
 		const initialMeter = root.querySelector('[data-build-progress-value]');
 		const initialProgress = Number(initialMeter ? initialMeter.getAttribute('aria-valuenow') : 0);
-		setActionState(root, root.dataset.status || 'idle', initialProgress, root.dataset.status === 'ready');
+		setActionState(root, initialStatus, initialProgress, initialStatus === 'ready');
 		if (hasStoredBuild(root.dataset.status)) {
 			openProgress(root);
 			dockProgress(root);
 		}
-		if (root.dataset.status === 'ready') requestDownload(root);
+		if (initialStatus === 'ready') requestDownload(root);
 	});
 
 	window.addEventListener('beforeunload', function () {
