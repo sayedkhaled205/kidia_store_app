@@ -27,25 +27,25 @@ $kidia_render_add_button = static function (): void {
 		}
 
 		.kidia-element-picker__content {
-			grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+			grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 			align-content: start !important;
-			gap: 12px !important;
-			padding: 16px !important;
+			gap: 10px !important;
+			padding: 14px !important;
 		}
 
 		.kidia-element-picker__content .kidia-element-group {
 			display: block !important;
 			min-width: 0 !important;
-			min-height: 142px !important;
+			min-height: 124px !important;
 			overflow: visible !important;
 		}
 
 		.kidia-element-picker__content .kidia-element-group__summary {
 			display: flex !important;
-			min-height: 142px !important;
+			min-height: 124px !important;
 			align-items: center !important;
 			justify-content: center !important;
-			padding: 18px 14px !important;
+			padding: 14px 10px !important;
 		}
 
 		.kidia-element-picker__content .kidia-element-group__identity {
@@ -55,16 +55,16 @@ $kidia_render_add_button = static function (): void {
 			flex-direction: column !important;
 			align-items: center !important;
 			justify-content: center !important;
-			gap: 12px !important;
+			gap: 9px !important;
 		}
 
 		.kidia-element-picker__content .kidia-element-group__identity .dashicons {
 			display: grid !important;
-			width: 44px !important;
-			height: 44px !important;
+			width: 38px !important;
+			height: 38px !important;
 			place-items: center !important;
-			font-size: 44px !important;
-			line-height: 44px !important;
+			font-size: 38px !important;
+			line-height: 38px !important;
 			overflow: visible !important;
 		}
 
@@ -74,9 +74,9 @@ $kidia_render_add_button = static function (): void {
 			min-height: 20px !important;
 			overflow: visible !important;
 			color: #1d2327 !important;
-			font-size: 14px !important;
+			font-size: 13px !important;
 			font-weight: 700 !important;
-			line-height: 1.4 !important;
+			line-height: 1.35 !important;
 			text-align: center !important;
 			text-overflow: clip !important;
 			white-space: normal !important;
@@ -86,7 +86,13 @@ $kidia_render_add_button = static function (): void {
 			display: none !important;
 		}
 
-		@media (max-width: 560px) {
+		@media (max-width: 700px) {
+			.kidia-element-picker__content {
+				grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+			}
+		}
+
+		@media (max-width: 480px) {
 			.kidia-element-picker__content {
 				grid-template-columns: 1fr !important;
 			}
