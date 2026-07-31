@@ -64,7 +64,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'poor'   => __( 'Poor-performing products', 'kidia-mobile-cms' ),
 		);
 		foreach ( $rotation_segments as $segment => $products ) {
-			foreach ( array_slice( $products, 0, 10 ) as $product ) {
+			foreach ( array_slice( $products, 0, 10 ) as $product_index => $product ) {
 				$discount = 0.0;
 				$scheme   = $segment . '_rotation';
 				$title    = __( 'Protect demand without discounting', 'kidia-mobile-cms' );
@@ -114,6 +114,33 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				$recommendation['rotation_segment'] = $segment;
 				$recommendation['rotation_label']   = $rotation_labels[ $segment ] ?? $segment;
 				$offers[] = $recommendation;
+				if ( 'fast' === $segment && $product_index < 5 ) {
+					$fast_offer = self::offer(
+						'rotation-fast-offer-' . absint( $product['id'] ?? 0 ),
+						'fast_offer',
+						__( 'Grow basket value with a short fast-product offer', 'kidia-mobile-cms' ),
+						sprintf(
+							__( '%1$s is already fast-moving, so this is a short low-discount basket-growth test rather than a clearance action.', 'kidia-mobile-cms' ),
+							sanitize_text_field( (string) ( $product['name'] ?? '' ) )
+						),
+						array(
+							sprintf( __( '%d units sold in the selected period', 'kidia-mobile-cms' ), absint( $product['sales'] ?? 0 ) ),
+							sprintf( __( 'Sales velocity: %.3f units/day', 'kidia-mobile-cms' ), (float) ( $product['velocity'] ?? 0 ) ),
+							__( 'The offer is intentionally limited to 3% and 48 hours to protect margin on proven demand.', 'kidia-mobile-cms' ),
+						),
+						min( 94, 68 + min( 24, absint( $product['sales'] ?? 0 ) ) ),
+						'medium',
+						'percent',
+						3.0,
+						48,
+						'engaged',
+						$source,
+						array( absint( $product['id'] ?? 0 ) )
+					);
+					$fast_offer['rotation_segment'] = 'fast';
+					$fast_offer['rotation_label']   = $rotation_labels['fast'];
+					$offers[] = $fast_offer;
+				}
 			}
 		}
 
@@ -577,7 +604,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 
 	private static function recommendation_cache_key( int $from, int $to, string $source ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_ai_offers_v5_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_ai_offers_v6_' . md5( $from . '|' . $to . '|' . $source );
 	}
 
 	private static function rotation_cache_key( int $from, int $to, string $source ): string {
@@ -826,6 +853,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'popular'                => 'merchandising',
 			'best_seller'            => 'merchandising',
 			'fast_rotation'          => 'merchandising',
+			'fast_offer'             => 'campaign',
 			'medium_rotation'        => 'campaign',
 			'slow_rotation'          => 'inventory',
 			'poor_rotation'          => 'inventory',
@@ -851,6 +879,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'peak_timing'            => 'schedule',
 			'free_shipping'          => 'shipping_rule',
 			'fast_rotation'          => 'placement',
+			'fast_offer'             => 'coupon',
 			'medium_rotation'        => 'coupon',
 			'slow_rotation'          => 'coupon',
 			'poor_rotation'          => 'coupon',
@@ -866,6 +895,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'cart_recovery' => 'cart',
 			'free_shipping' => 'checkout',
 			'fast_rotation' => 'home',
+			'fast_offer'    => 'product',
 			'medium_rotation' => 'product',
 			'slow_rotation' => 'home',
 			'poor_rotation' => 'home',
@@ -956,6 +986,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				);
 			case 'high_interest':
 			case 'slow_stock':
+			case 'fast_offer':
 			case 'medium_rotation':
 			case 'slow_rotation':
 			case 'poor_rotation':
@@ -1018,6 +1049,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			'popular'                => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
 			'best_seller'            => __( 'Placement click-through and product conversion rate', 'kidia-mobile-cms' ),
 			'fast_rotation'          => __( 'Product conversion, stock cover and gross profit without discount cost', 'kidia-mobile-cms' ),
+			'fast_offer'             => __( 'Incremental basket value, units and gross profit after the controlled discount', 'kidia-mobile-cms' ),
 			'medium_rotation'        => __( 'Incremental units, product conversion and gross profit after discount', 'kidia-mobile-cms' ),
 			'slow_rotation'          => __( 'Sell-through, stock cover and incremental gross profit', 'kidia-mobile-cms' ),
 			'poor_rotation'          => __( 'Clearance sell-through, recovered cash and remaining stock', 'kidia-mobile-cms' ),
