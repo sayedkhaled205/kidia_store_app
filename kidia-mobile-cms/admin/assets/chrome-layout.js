@@ -1884,6 +1884,9 @@
     });
   }
   function boot(composer) {
+    if (composer.dataset.kidiaChromeBooted === "1") {
+      return;
+    }
     var part = composer.dataset.part,
       variant = composer.dataset.variant || "original",
       input = composer.querySelector(".kidia-chrome-layout-json"),
@@ -1895,6 +1898,7 @@
     if (!input || !canvas || !palette || !card) {
       return;
     }
+    composer.dataset.kidiaChromeBooted = "1";
     var layout = normalize(parse(input, part));
     function tile(item) {
       var source = palette.querySelector('[data-item="' + item + '"]'),
@@ -2298,7 +2302,7 @@
     render();
     composer.classList.toggle("has-invalid-layout", !valid());
   }
-  document.addEventListener("DOMContentLoaded", function () {
+  function bootChromeComposers() {
     Array.prototype.forEach.call(
       document.querySelectorAll(".kidia-fixed-chrome-card"),
       syncCollapsedVisibility,
@@ -2307,5 +2311,9 @@
       document.querySelectorAll(".kidia-chrome-composer"),
       boot,
     );
+  }
+  document.addEventListener("DOMContentLoaded", bootChromeComposers);
+  document.addEventListener("kidia:cms-page-ready", function () {
+    bootChromeComposers();
   });
 })();
