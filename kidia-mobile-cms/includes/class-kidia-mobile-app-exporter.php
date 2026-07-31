@@ -81,8 +81,8 @@ final class Kidia_Mobile_App_Exporter {
 			),
 			'store'        => array(
 				'url'      => home_url( '/' ),
-				'apiBase'  => rest_url( 'woo-mobile/v1/' ),
-				'homeApi'  => rest_url( 'woo-mobile/v1/home-layout' ),
+				'apiBase'  => rest_url( 'woomobileapp/v1/' ),
+				'homeApi'  => rest_url( 'woomobileapp/v1/home-layout' ),
 			),
 			'push'         => $push,
 			'build'        => array(

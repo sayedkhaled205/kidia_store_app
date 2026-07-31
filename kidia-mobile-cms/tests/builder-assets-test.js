@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 55921)
+Total output lines: 1797
+
 "use strict";
 
 const assert = require("node:assert/strict");
@@ -760,141 +763,7 @@ function runMergeControlsContractTest() {
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#carousel-fields .kidia-settings-section-title"), function (heading) { return heading.childNodes[0].textContent; }), ["Content & Data", "Actions & Navigation", "Card Layout", "Visibility & Display", "Quick Add", "Wishlist", "Section Layout Settings"], "Product Carousel must render the rebuilt sections in the approved order.");
 	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("carousel-fields")), 5, "Product Carousel must preserve all five shared Section Layout controls after regrouping.");
 	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#home-grid-fields .kidia-settings-section-title"), function (heading) { return heading.childNodes[0].textContent; }), ["Content & Data", "Actions & Navigation", "Card Layout", "Visibility & Display", "Quick Add", "Wishlist", "Section Layout Settings"], "Product Grid must render the same rebuilt sections in the approved order.");
-	assert.equal(sectionFieldCount(sectionDom.window.document.getElementById("home-grid-fields")), 5, "Product Grid must preserve all five shared Section Layout controls after regrouping.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#carousel-fields > .kidia-builder-grid, #home-grid-fields > .kidia-builder-grid").length, 0, "Product fields must not remain trapped in their original unsectioned grid.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#carousel-fields input[name]").length, carouselKeys.length + 6, "Product Carousel must preserve every setting exactly once, including the boolean fixture.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#home-grid-fields input[name]").length, productGridKeys.length + 5, "Product Grid must preserve every setting exactly once.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#carousel-fields > .kidia-product-icon-panel").length, 2, "Product Carousel must render Quick Add and Wishlist as complete panels.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#home-grid-fields > .kidia-product-icon-panel").length, 2, "Product Grid must render Quick Add and Wishlist as complete panels.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#carousel-fields.kidia-sectioned-settings-grid, #home-grid-fields.kidia-sectioned-settings-grid").length, 2, "Both Product builders must keep their ordinary settings grids after the icon panels are rebuilt.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#carousel-fields .kidia-product-icon-panel > .kidia-settings-section-title .kidia-product-icon-field").length, 2, "Each Product Carousel icon panel must keep its enable switch in the section header.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#home-grid-fields .kidia-product-icon-panel > .kidia-settings-section-title .kidia-product-icon-field").length, 2, "Each Product Grid icon panel must keep its enable switch in the section header.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-product-icon-panel .kidia-section-layout-panel").length, 0, "No previous Product section may absorb the independent Section Layout panel.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#page-boolean.kidia-unified-boolean, #home-boolean.kidia-unified-boolean, #category-boolean.kidia-unified-boolean").length, 3, "Page, Home, and Category boolean fields must all receive the shared On/Off control.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-unified-boolean__state").length, 3, "Each enhanced boolean must receive exactly one On/Off state label.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-unified-boolean__control > input[type=checkbox] + .kidia-unified-boolean__state").length, 3, "On/Off text must stay beside its switch inside one control instead of being separated by the field title.");
-	assert.equal(sectionDom.window.document.querySelectorAll("#master-boolean.kidia-unified-boolean").length, 0, "Existing card-level On/Off controls must not be wrapped or visually changed twice.");
-	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#product-fields > .kidia-section-layout-panel > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["background_color"]], "Page elements must render Merge, Space, and Background in the requested columns.");
-	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#category-fields > .kidia-section-layout-panel > .kidia-section-layout-grid > .kidia-section-layout-column"), function (column) { return Array.from(column.querySelectorAll("input[name]"), function (input) { return input.name.match(/\[([^\]]+)\]$/)[1]; }); }), [["margin_top", "margin_bottom"], ["space_up", "space_down"], ["element_background_color"]], "Category must use the same requested column order.");
-	assert.deepEqual(Array.from(sectionDom.window.document.querySelectorAll("#category-fields > .kidia-section-layout-panel input[name]"), function (input) { return input.value; }).sort(), ["1", "2", "3", "4", "5"], "Category Section Layout must preserve every saved field value while moving the fields into the independent panel.");
-	const categoryLayoutStyleDom = new JSDOM(`<!doctype html><html><head><style>${readAsset("admin-theme.css")}</style></head><body><div class="kidia-category-builder"><div class="kidia-section-layout-column"><label id="category-layout-label">Merge up<input type="number" value="7"></label></div></div></body></html>`);
-	const categoryLayoutLabelStyle = categoryLayoutStyleDom.window.getComputedStyle(categoryLayoutStyleDom.window.document.getElementById("category-layout-label"));
-	assert.deepEqual([categoryLayoutLabelStyle.display, categoryLayoutLabelStyle.flexDirection, categoryLayoutLabelStyle.alignItems, categoryLayoutLabelStyle.textAlign, categoryLayoutLabelStyle.direction], ["flex", "column", "flex-start", "right", "rtl"], "The browser must compute Category Section Layout labels with their title above the control and aligned from the right.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-quick-add-row").length, 0, "Quick Add must use the original settings grid without injected rows.");
-	assert.equal(sectionDom.window.document.querySelectorAll(".kidia-title-subtitle-row").length, 0, "Title and Subtitle fields must use the original settings grid.");
-
-	const isolatedLayoutMarkup = ["margin_top", "margin_bottom", "space_up", "space_down", "background_color"].map(function (key) {
-		return `<div class="kidia-page-field kidia-section-layout-field"><label>${key}</label><input name="layout[elements][0][settings][${key}]" value="0"></div>`;
-	}).join("");
-	const isolatedLayoutDom = new JSDOM(`<!doctype html><html><body><div class="kidia-page-builder"><section class="kidia-page-card" data-element="product_grid"><div id="isolated-card-body" class="kidia-page-card__body"><section id="previous-settings-section" class="previous-settings-section"><div id="isolated-fields" class="kidia-page-fields"><div class="kidia-page-field"><label>Grid columns</label><select name="layout[elements][0][settings][columns]"><option>2</option></select></div>${isolatedLayoutMarkup}</div></section></div></section></div></body></html>`, { runScripts: "outside-only" });
-	isolatedLayoutDom.window.eval(settingsSections);
-	isolatedLayoutDom.window.document.dispatchEvent(new isolatedLayoutDom.window.Event("DOMContentLoaded"));
-	const isolatedCardBody = isolatedLayoutDom.window.document.getElementById("isolated-card-body");
-	const isolatedPanel = isolatedCardBody.querySelector(":scope > .kidia-section-layout-panel");
-	assert.ok(isolatedPanel, "Section Layout Settings must be a direct child of the element card body.");
-	assert.equal(isolatedLayoutDom.window.document.querySelectorAll("#previous-settings-section .kidia-section-layout-panel").length, 0, "Section Layout Settings must never remain nested inside the preceding settings section.");
-	assert.equal(isolatedPanel.querySelectorAll(":scope > .kidia-section-layout-grid input[name]").length, 5, "Moving Section Layout outside the settings wrapper must preserve its five submitted values exactly once.");
-
-	const promoBlock = fs.readFileSync(path.join(pluginRoot, "includes", "blocks", "class-kidia-mobile-promo-strip-block.php"), "utf8");
-	const homeBuilderCss = readAsset("home-builder.css");
-	const homeScript = readAsset("home-builder.js");
-	const flutterHomePreviewBridge = readAsset("flutter-home-preview-bridge.js");
-	const pageScript = readAsset("page-builder.js");
-	const liveEndpoint = fs.readFileSync(path.join(pluginRoot, "api", "class-home-layout-endpoint.php"), "utf8");
-	const adminSource = fs.readFileSync(path.join(pluginRoot, "admin", "class-kidia-mobile-cms-admin.php"), "utf8");
-	assert.match(homeBuilderCss, /\.kidia-builder-switch input\[type="checkbox"\]\s*\{[\s\S]*clip-path:\s*inset\(50%\);[\s\S]*appearance:\s*none\s*!important;/, "Home switches must fully hide the native WordPress checkbox without changing their saved values.");
-	assert.match(homeBuilderCss, /\.kidia-builder-switch input\[type="checkbox"\]::before,[\s\S]*::after\s*\{[\s\S]*content:\s*none\s*!important;/, "Native WordPress checkbox marks must never leak behind the custom On/Off switch.");
-	assert.match(settingsSections, /classList\.contains\("kidia-promo-action-setting"\)\)\s*\{\s*return "actions";/, "All Promo Strip controls must stay together under Actions & Navigation.");
-	assert.match(promoBlock, /kidia-promo-action-setting--text[\s\S]*kidia-promo-action-setting--background[\s\S]*kidia-promo-action-setting--text-color[\s\S]*kidia-promo-action-setting--action-type[\s\S]*kidia-promo-action-setting--action-value/, "Promo Strip must expose the complete approved Actions & Navigation field set.");
-	assert.match(homeBuilderCss, /kidia-promo-action-setting--text\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--background\s*\{\s*grid-column:\s*2;[\s\S]*kidia-promo-action-setting--text-color\s*\{\s*grid-column:\s*3;[\s\S]*kidia-promo-action-setting--action-type\s*\{\s*grid-column:\s*1;[\s\S]*kidia-promo-action-setting--action-value\s*\{\s*grid-column:\s*2;/, "Actions & Navigation must follow the approved two-row map starting with Text on the right.");
-	const checkoutSuggestions = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "checkout-suggestions.php"), "utf8");
-	const checkoutFieldStore = fs.readFileSync(path.join(pluginRoot, "includes", "class-kidia-mobile-checkout-fields-store.php"), "utf8");
-	const checkoutEndpoint = fs.readFileSync(path.join(pluginRoot, "api", "class-checkout-config-endpoint.php"), "utf8");
-	const checkoutFieldBuilder = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "checkout-fields-builder.js"), "utf8");
-	assert.match(checkoutSuggestions, /Restore Defaults[\s\S]*data-checkout-fields-list[\s\S]*data-checkout-field-template/, "Checkout must expose live defaults, ordered field cards and an add-field template.");
-	assert.match(checkoutSuggestions, /data-checkout-add-field/, "Checkout fields must be addable.");
-	assert.match(checkoutSuggestions, /kidia-checkout-field-remove/, "Checkout fields must be removable.");
-	assert.match(checkoutSuggestions, /draggable="true"/, "Checkout fields must be draggable.");
-	assert.match(checkoutFieldStore, /get_checkout_fields\(\s*\$group\s*\)[\s\S]*OPTION[\s\S]*checkout_groups/, "Default Fields must snapshot WooCommerce's filtered runtime schema for the mobile checkout API.");
-	assert.match(checkoutEndpoint, /Kidia_Mobile_Checkout_Fields_Store[\s\S]*checkout_groups/, "The checkout API must serve the saved field-builder schema.");
-	assert.match(checkoutFieldStore, /DESIGN_OPTION[\s\S]*classic[\s\S]*summary_first[\s\S]*compact[\s\S]*save_design/, "Checkout must persist exactly the three supported real layouts.");
-	assert.match(checkoutEndpoint, /'design'\s*=>\s*\$checkout_store->design\(\)/, "The checkout API must send the selected design to the native app.");
-	assert.match(checkoutFieldBuilder, /function reindex/, "The checkout field editor must keep submitted indexes stable.");
-	assert.match(checkoutFieldBuilder, /dragstart[\s\S]*dragover/, "The checkout field editor must reorder cards.");
-	assert.match(checkoutFieldBuilder, /data-checkout-add-field/, "The checkout field editor must bind the add-field action.");
-	assert.equal((checkoutSuggestions.match(/name="checkout_design"/g) || []).length, 1, "Checkout must render one three-choice design selector.");
-	assert.match(checkoutSuggestions, /Kidia_Mobile_Checkout_Fields_Store::designs\(\)[\s\S]*name="checkout_design"[\s\S]*kidia-checkout-design-option__preview/, "Every supported checkout design must render as a selectable visual layout card.");
-	assert.doesNotMatch(checkoutSuggestions, /Suggested Products|suggestions\[/, "Suggested Products must be completely removed from the Checkout builder.");
-	assert.doesNotMatch(checkoutEndpoint, /'suggestions'\s*=>|get_suggestions|wc_get_products/, "Checkout API must not query or return suggested products.");
-	assert.doesNotMatch(settingsSections, /suggested_products|kidia-checkout-suggestions-fields/, "Removed checkout suggestions must not retain runtime settings grouping.");
-	const splashScreen = fs.readFileSync(path.join(pluginRoot, "admin", "pages", "splash-screen.php"), "utf8");
-	assert.equal((splashScreen.match(/class="kidia-settings-section-title(?:\s[^\"]*)?"/g) || []).length, 2, "Splash Screen must contain exactly two settings sections.");
-	["image_url", "image_width", "image_height", "image_fit", "image_shape", "store_name", "show_store_name", "text_color", "background_color", "background_color_end", "duration_ms", "show_loader", "loader_color"].forEach(function (key) {
-		assert.equal((splashScreen.match(new RegExp("splash\\[" + key + "\\]|['\\\"]" + key + "['\\\"]", "g")) || []).length >= 1, true, "Splash Screen must preserve the " + key + " field.");
-	});
-	assert.match(splashScreen, /data-splash-overlay[\s\S]*data-splash-replay/, "Splash Screen must expose an animated preview and a replay action.");
-	const splashScript = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "splash-screen.js"), "utf8");
-	assert.match(splashScript, /duration_ms[\s\S]*--kidia-splash-duration[\s\S]*is-playing[\s\S]*is-finished/, "Splash preview timing must follow the saved duration.");
-	assert.match(homeBuilderCss, /--kidia-picker-accent:\s*#2f806e;[\s\S]*\.kidia-element-group:hover,[\s\S]*border-color:\s*var\(--kidia-picker-accent\);[\s\S]*\.kidia-element-group__identity \.dashicons\s*\{[\s\S]*color:\s*var\(--kidia-picker-accent\);/, "Add Element icons, focus, and selection states must use Kidia green.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*display:\s*grid;[^}]*place-items:\s*center;/, "Every Add Element icon must stay centered inside its tile.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__identity strong\s*\{[^}]*display:\s*block;[^}]*color:\s*#1d2327;[^}]*text-align:\s*center;/, "Every Add Element tile must keep its element name visible and centered.");
-	assert.match(homeBuilderCss, /\.kidia-element-picker__content\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)[^}]*overflow-y:\s*scroll;[^}]*scrollbar-gutter:\s*stable;/, "Add Elements must use two large cards per row with its own always-visible scroll rail.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__summary\s*\{[^}]*min-height:\s*176px;/, "Add Element cards must be tall enough to show their icon and complete name clearly.");
-	assert.match(homeBuilderCss, /\.kidia-element-group__identity \.dashicons\s*\{[^}]*width:\s*48px;[^}]*height:\s*48px;/, "Add Element icons must use the larger readable size.");
-	assert.match(homeBuilderCss, /\.kidia-builder-cards-scroll::\-webkit-scrollbar[\s\S]*background:\s*var\(--kidia-picker-accent,\s*#2f806e\)/, "The builder content rail must expose a visible branded scrollbar.");
-	const homeBuilderTemplate = readAsset("../pages/home-builder.php");
-	const categoryDefinition = homeBuilderTemplate.slice(homeBuilderTemplate.indexOf("$element_categories = array("), homeBuilderTemplate.indexOf("$element_category_by_type = array();"));
-	assert.equal((categoryDefinition.match(/'label'\s*=>\s*__\(/g) || []).length, 4, "Add Elements must use four concise categories in addition to All.");
-	["app_header", "hero_slider", "image_banner", "banner_grid", "video_banner", "category_grid", "product_carousel", "product_grid", "brand_carousel", "bundle_collection", "section_header", "text_block", "quick_links", "promo_strip", "coupon_banner", "countdown", "divider", "spacer"].forEach(function (type) {
-		assert.match(categoryDefinition, new RegExp("\\b" + type + "\\b"), type + " must be assigned to an Add Elements category.");
-	});
-	assert.doesNotMatch(homeBuilderCss.slice(homeBuilderCss.indexOf(".kidia-element-picker,"), homeBuilderCss.indexOf(".kidia-builder-essentials")), /#2271b1|#f0f6fc|rgba\(34,\s*113,\s*177/, "The Add Elements picker must not retain WordPress blue styling.");
-	assert.match(homeScript, /settings\.image_size[\s\S]*settings\.item_size/, "Category Grid and Quick Links image sizes must update the live preview.");
-	assert.match(homeScript, /activeInsertionBlock[\s\S]*insertAdjacentHTML\("afterend", html\)[\s\S]*is-insertion-target/, "Add Element must insert directly below the element selected by the user.");
-	assert.match(homeScript, /product_wishlist_icon_variant[\s\S]*product_wishlist_icon_size[\s\S]*product_wishlist_background_size[\s\S]*product_wishlist_position[\s\S]*product_wishlist_show_background[\s\S]*product_wishlist_background_color[\s\S]*product_wishlist_radius[\s\S]*product_wishlist_icon_color/, "Every product Wishlist appearance control must update the Home preview.");
-	assert.match(homeScript, /quick_add_icon_style/, "Quick Add icon style must update the Home preview.");
-	assert.match(homeScript, /Date\.parse\(settings\.ends_at[\s\S]*settings\.expired_text[\s\S]*countdownDays[\s\S]*countdownSeconds/, "Countdown must use its real end date and expired label in the preview.");
-	assert.match(countdownBlockSource, /visible_units[\s\S]*days_hours[\s\S]*days_hours_minutes[\s\S]*days_hours_minutes_seconds[\s\S]*show_days[\s\S]*show_seconds/, "Countdown must save one cumulative unit choice and still publish the legacy unit flags for installed app versions.");
-	assert.doesNotMatch(countdownBlockSource, /foreach\s*\(\s*array\(\s*'days'\s*=>\s*'Show Days'/, "Countdown must no longer render four independent On/Off unit controls.");
-	assert.match(homeScript, /items_alignment/, "Category Grid alignment setting must be read by the preview.");
-	assert.match(homeScript, /is-align-/, "Category Grid alignment class must be rendered by the preview.");
-	assert.match(homeBuilderCss, /is-editorial_mosaic/, "Category Grid editorial mosaic must update the preview.");
-	assert.match(homeBuilderCss, /is-full_width_banners/, "Category Grid full-width banners must update the preview.");
-	assert.match(homeScript, /enable_transition[\s\S]*settings\.messages[\s\S]*change_every[\s\S]*transition_effect/, "Promo Strip rotating messages and transition controls must update the preview.");
-	assert.match(homeScript, /visible_units[\s\S]*days_hours_minutes_seconds[\s\S]*showCountdownDays[\s\S]*showCountdownSeconds[\s\S]*layout_style/, "Countdown cumulative unit dropdown and layout style must update the preview while retaining legacy flag fallback.");
-	assert.match(homeScript, /settings\.video_url[\s\S]*settings\.auto_play[\s\S]*settings\.muted[\s\S]*settings\.loop[\s\S]*playsinline/, "Video URL and every playback switch must update the preview video.");
-	assert.match(homeScript, /settings\.auto_play[\s\S]*Date\.now\(\) \/ numberInRange\(settings\.interval_ms/, "Hero Slider autoplay and interval must control its selected preview slide.");
-	["shadow", "icon_size", "icon_background", "icon_radius", "search_icon_color", "account_style", "account_label", "account_icon_size"].forEach(function (key) {
-		assert.ok(homeScript.slice(homeScript.indexOf("function renderAppHeader"), homeScript.indexOf("function renderBlock")).includes("settings." + key), "App Header " + key + " must update the Home preview.");
-	});
-	assert.match(liveEndpoint, /home-layout\/preview[\s\S]*preview_home_layout[\s\S]*Kidia_Mobile_Block_Registry::normalize[\s\S]*Kidia_Mobile_Block_Registry::build_api_block/, "Unsaved Home settings must use the same normalized API builder as Flutter.");
-	assert.match(liveEndpoint, /'version'\s*=>\s*4[\s\S]*'page'\s*=>\s*'home'[\s\S]*'locale'[\s\S]*'updated_at'[\s\S]*'blocks'/, "The live Home preview must return a complete Flutter Home layout instead of a blocks-only fragment.");
-	assert.match(adminSource, /livePreviewEndpoint[\s\S]*restNonce/, "The Home Builder must receive its protected live runtime endpoint.");
-	assert.match(homeScript, /livePreviewEndpoint[\s\S]*X-WP-Nonce[\s\S]*JSON\.stringify\(\{ blocks: serializeBlocks\(\) \}\)/, "Source and ID changes must refresh real preview data without saving.");
-	assert.match(homeScript, /function loadRuntimePreview\(\)[\s\S]*getElementById\("kidia-flutter-preview"\)[\s\S]*return;/, "The hidden HTML Home preview must not duplicate Flutter's expensive initial runtime query.");
-	assert.match(homeScript, /function requestLiveRuntimePreview\(\)[\s\S]*getElementById\("kidia-flutter-preview"\)[\s\S]*return;/, "The hidden HTML Home preview must not duplicate Flutter's live product queries.");
-	assert.match(flutterHomePreviewBridge, /setTimeout\(function \(\) \{[\s\S]*refresh\(false\);[\s\S]*\}, 140\)/, "Rapid Home field changes must be debounced before rebuilding product data.");
-	assert.match(pageScript, /products_per_page[\s\S]*filter_price[\s\S]*filter_sale[\s\S]*filter_brand[\s\S]*show_thumbnails[\s\S]*guest_title[\s\S]*show_addresses[\s\S]*show_profile/, "All previously disconnected page fields must update their live previews.");
-}
-
-function categoryGeneralSettings() {
-	  const field = (name, value, type = "text") => `<input type="${type}" name="category_general[${name}]" value="${value}">`;
-	  return `<section class="kidia-category-general">
-	    <select name="category_general[navigation_mode]"><option value="expand_inline" selected>Expand inline</option><option value="separate_page">Separate page</option></select>
-	    <select name="category_general[category_layout]"><option value="default" selected>Default Layout</option><option value="visual_grid">Two-column Cards</option><option value="circular_grid">Circular Grid</option><option value="compact_grid">Compact Grid</option><option value="sidebar">Sidebar</option></select>
-	    <select name="category_general[grid_columns]"><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select>
-	    ${field("card_radius", 17, "range")}${field("card_gap", 10, "range")}${field("card_width_percent", 100, "range")}${field("card_height", 0, "range")}${field("margin_top", 0, "range")}${field("margin_bottom", 0, "range")}<input type="checkbox" name="category_general[show_arrow]" value="1" checked>
-	    ${field("page_background_color", "#F7F8FA", "color")}${field("element_background_color", "#FFFFFF", "color")}${field("card_background_color", "#FFFFFF", "color")}
-	    ${field("card_shadow_color", "#000000", "color")}${field("card_shadow_strength", 10, "range")}${field("card_shadow_blur", 12, "range")}${field("card_shadow_offset_y", 4, "number")}
-	    <select name="category_general[card_style]"><option value="outlined" selected>Outlined</option><option value="elevated">Elevated</option></select>
-	    ${field("image_size", 68, "range")}${field("image_radius", 18, "range")}${field("image_scale", 100, "range")}
-	    ${field("border_width", 0, "number")}${field("border_color", "#DDE5E2", "color")}${field("background_color", "#FFFFFF", "color")}
-	    ${field("image_text_gap", 10, "range")}${field("font_size", 16, "range")}${field("font_color", "#1F2933", "color")}${field("line_height", 125, "range")}
-	    <select name="category_general[image_shape]"><option value="rounded" selected>Rounded</option><option value="circle">Circle</option></select>
-	    <select name="category_general[image_fit]"><option value="contain" selected>Contain</option></select>
-	    <select name="category_general[image_effect]"><option value="none" selected>None</option></select>
-	    <select name="category_general[image_position]"><option value="center" selected>Center</option></select>
-	    <select name="category_general[font_weight]"><option value="800" selected>800</option><option value="400">400</option></select>
+	assert.equal(sectionFieldCount(sectionDom.window.documen…5921 tokens truncated…selected>800</option><option value="400">400</option></select>
 	    <select name="category_general[text_align]"><option value="start" selected>Start</option><option value="center">Center</option></select>
 	    <select name="category_general[text_max_lines]"><option value="2" selected>2</option><option value="3">3</option></select>
 	  </section>`;
