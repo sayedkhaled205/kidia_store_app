@@ -53,8 +53,64 @@ workflows:
             --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Mark build successful
+        script: touch "$CM_BUILD_DIR/.woomobile-build-success"
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/**/*.aab
       - build/ios/iphoneos/*.app
       - flutter_drive.log
+    publishing:
+      scripts:
+        - name: Send build result to WooMobile API
+          script: |
+            set -u
+
+            if [ -z "${WOOMOBILE_CALLBACK_URL:-}" ] || \
+               [ -z "${WOOMOBILE_CALLBACK_TOKEN:-}" ] || \
+               [ -z "${WOOMOBILE_REQUEST_ID:-}" ] || \
+               [ -z "${CM_BUILD_ID:-}" ]; then
+              echo "WooMobile callback configuration is missing."
+              exit 1
+            fi
+
+            if [ -f "$CM_BUILD_DIR/.woomobile-build-success" ]; then
+              CALLBACK_STATUS="completed"
+              CALLBACK_PROGRESS="100"
+              CALLBACK_ERROR=""
+            else
+              CALLBACK_STATUS="failed"
+              CALLBACK_PROGRESS="0"
+              CALLBACK_ERROR="Codemagic build failed. Review the Codemagic build log."
+            fi
+
+            APK_PATH=$(find build/app/outputs/flutter-apk \
+              -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
+            AAB_PATH=$(find build/app/outputs/bundle \
+              -type f -name "*.aab" 2>/dev/null | head -n 1 || true)
+
+            CURL_ARGS=(
+              --silent
+              --show-error
+              --fail-with-body
+              --retry 3
+              --retry-delay 2
+              --request POST
+              --header "Authorization: Bearer ${WOOMOBILE_CALLBACK_TOKEN}"
+              --form-string "request_id=${WOOMOBILE_REQUEST_ID}"
+              --form-string "codemagic_build_id=${CM_BUILD_ID}"
+              --form-string "status=${CALLBACK_STATUS}"
+              --form-string "progress=${CALLBACK_PROGRESS}"
+            )
+
+            if [ -n "$CALLBACK_ERROR" ]; then
+              CURL_ARGS+=(--form-string "error=${CALLBACK_ERROR}")
+            fi
+            if [ -n "$APK_PATH" ]; then
+              CURL_ARGS+=(--form "apk=@${APK_PATH}")
+            fi
+            if [ -n "$AAB_PATH" ]; then
+              CURL_ARGS+=(--form "aab=@${AAB_PATH}")
+            fi
+
+            curl "${CURL_ARGS[@]}" "$WOOMOBILE_CALLBACK_URL"
