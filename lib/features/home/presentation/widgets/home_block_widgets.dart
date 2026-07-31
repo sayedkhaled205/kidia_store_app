@@ -2186,14 +2186,17 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
 
   void _configureTimer() {
     _timer?.cancel();
-    if (_messages.length < 2) return;
+    if (_messages.length < 2) {
+      return;
+    }
     _timer = Timer.periodic(
       Duration(seconds: widget.block.changeEverySeconds),
       (_) {
-        if (mounted)
+        if (mounted) {
           setState(
             () => _messageIndex = (_messageIndex + 1) % _messages.length,
           );
+        }
       },
     );
   }
@@ -2288,13 +2291,15 @@ class _PromoStripBlockWidgetState extends State<PromoStripBlockWidget> {
         ),
       ),
     );
-    if (block.height != null)
+    if (block.height != null) {
       content = SizedBox(height: block.height, child: content);
-    if (block.width != null)
+    }
+    if (block.width != null) {
       content = FractionallySizedBox(
         widthFactor: block.width! / 100,
         child: content,
       );
+    }
     return content;
   }
 }
