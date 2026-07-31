@@ -53,13 +53,32 @@ workflows:
             --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Package all application build files
+        script: |
+          set -euo pipefail
+
+          APK_PATH=$(find build/app/outputs/flutter-apk \
+            -type f -name "*.apk" | head -n 1)
+          AAB_PATH=$(find build/app/outputs/bundle \
+            -type f -name "*.aab" | head -n 1)
+          IOS_APP_PATH=$(find build/ios/iphoneos \
+            -maxdepth 1 -type d -name "*.app" | head -n 1)
+
+          PACKAGE_DIR="$CM_BUILD_DIR/build/woomobile-package"
+          OUTPUT_DIR="$CM_BUILD_DIR/build/woomobile-artifacts"
+          rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
+          mkdir -p "$PACKAGE_DIR" "$OUTPUT_DIR"
+
+          cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
+          cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$IOS_APP_PATH" "$PACKAGE_DIR/ios-app.zip"
+          ditto -c -k --sequesterRsrc \
+            "$PACKAGE_DIR" "$OUTPUT_DIR/woomobile-build-files.zip"
       - name: Mark build successful
         script: touch "$CM_BUILD_DIR/.woomobile-build-success"
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
-      - build/app/outputs/bundle/**/*.aab
-      - build/ios/iphoneos/*.app
-      - flutter_drive.log
+      - build/woomobile-artifacts/woomobile-build-files.zip
     publishing:
       scripts:
         - name: Send build result to WooMobile API
@@ -84,11 +103,6 @@ workflows:
               CALLBACK_ERROR="Codemagic build failed. Review the Codemagic build log."
             fi
 
-            APK_PATH=$(find build/app/outputs/flutter-apk \
-              -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
-            AAB_PATH=$(find build/app/outputs/bundle \
-              -type f -name "*.aab" 2>/dev/null | head -n 1 || true)
-
             CURL_ARGS=(
               --silent
               --show-error
@@ -105,12 +119,6 @@ workflows:
 
             if [ -n "$CALLBACK_ERROR" ]; then
               CURL_ARGS+=(--form-string "error=${CALLBACK_ERROR}")
-            fi
-            if [ -n "$APK_PATH" ]; then
-              CURL_ARGS+=(--form "apk=@${APK_PATH}")
-            fi
-            if [ -n "$AAB_PATH" ]; then
-              CURL_ARGS+=(--form "aab=@${AAB_PATH}")
             fi
 
             curl "${CURL_ARGS[@]}" "$WOOMOBILE_CALLBACK_URL"

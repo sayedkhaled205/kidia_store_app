@@ -40,22 +40,17 @@ final class Kidia_Mobile_License_Manager {
 	public function build_service_request( string $path = '', string $method = 'GET', array $body = array() ) {
 		self::$requests++;
 		self::$bodies[] = $body;
-		if ( 'POST' === $method ) {
-			if ( self::$fail_push_once && ! empty( $body['provision_push'] ) ) {
-				self::$fail_push_once = false;
-				return new WP_Error( 'push_provisioning_unavailable', 'Managed Push is not ready.' );
-			}
+		if ( str_ends_with( $path, '/download-link' ) && ! self::$return_artifacts_list ) {
 			return array(
-				'data' => array(
-					'build' => array(
-						'id' => 'build-123',
-						'status' => 'queued',
-						'progress' => 2,
-					),
+				'build' => array(
+					'id' => 'build-123',
+					'status' => 'finished',
+					'progress' => 100,
+					'download_url' => 'https://downloads.example.test/fresh-build-files.zip',
+					'file_name' => 'queue-test-build-files.zip',
 				),
 			);
 		}
-
 		if ( self::$return_artifacts_list ) {
 			return array(
 				'data' => array(
@@ -69,10 +64,25 @@ final class Kidia_Mobile_License_Manager {
 								'url' => 'https://downloads.example.test/app-release.aab',
 							),
 							array(
-								'name' => 'app-release.apk',
-								'url' => 'https://downloads.example.test/app-release.apk?signature=fresh',
+								'name' => 'woomobile-build-files.zip',
+								'url' => 'https://downloads.example.test/woomobile-build-files.zip?signature=fresh',
 							),
 						),
+					),
+				),
+			);
+		}
+		if ( 'POST' === $method ) {
+			if ( self::$fail_push_once && ! empty( $body['provision_push'] ) ) {
+				self::$fail_push_once = false;
+				return new WP_Error( 'push_provisioning_unavailable', 'Managed Push is not ready.' );
+			}
+			return array(
+				'data' => array(
+					'build' => array(
+						'id' => 'build-123',
+						'status' => 'queued',
+						'progress' => 2,
 					),
 				),
 			);
@@ -243,13 +253,14 @@ update_option( 'kidia_mobile_app_export_state_v1', $fallback_build );
 $refreshed = $exporter->refresh_build( true );
 kidia_build_assert( 4 === Kidia_Mobile_License_Manager::$requests, 'Download must refresh the ready remote build.' );
 kidia_build_assert( 'ready' === $refreshed['status'], 'Finished must normalize to a ready APK.' );
-kidia_build_assert( 'https://downloads.example.test/fresh-app.apk' === $refreshed['download_url'], 'Download must replace an expired signed URL.' );
+kidia_build_assert( 'https://downloads.example.test/fresh-build-files.zip' === $refreshed['download_url'], 'Download must replace an expired signed URL.' );
+kidia_build_assert( 'queue-test-build-files.zip' === $refreshed['apk_file_name'], 'Download must keep the build bundle filename.' );
 
 Kidia_Mobile_License_Manager::$return_artifacts_list = true;
 $refreshed = $exporter->refresh_build( true );
 kidia_build_assert( 'ready' === $refreshed['status'], 'A Codemagic success status must become a ready APK.' );
 kidia_build_assert( 'codemagic-build-456' === $refreshed['build_id'], 'Codemagic underscore IDs must be preserved.' );
-kidia_build_assert( 'https://downloads.example.test/app-release.apk?signature=fresh' === $refreshed['download_url'], 'The APK must be selected from a Codemagic artifacts list.' );
-kidia_build_assert( 'app-release.apk' === $refreshed['apk_file_name'], 'The Codemagic APK filename must be preserved.' );
+kidia_build_assert( 'https://downloads.example.test/woomobile-build-files.zip?signature=fresh' === $refreshed['download_url'], 'The combined build bundle must be selected from a Codemagic artifacts list.' );
+kidia_build_assert( 'woomobile-build-files.zip' === $refreshed['apk_file_name'], 'The combined build bundle filename must be preserved.' );
 
 echo "APK background queue and fresh download URL tests passed.\n";
