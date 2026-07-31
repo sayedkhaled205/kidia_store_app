@@ -142,11 +142,11 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.match(requestBody, /action=kidia_mobile_app_build_start/, "The single control must start the build through AJAX without reloading Overview.");
   assert.match(requestBody, /nonce=build-nonce/);
   assert.equal(root.dataset.status, "building");
-  assert.equal(button.disabled, false, "The active card remains clickable so the merchant can reopen progress.");
+  assert.equal(button.disabled, true, "Build must be greyed out and unclickable while a build is active.");
   assert.equal(button.hidden, false, "The build card must remain present while progress is shown separately.");
   assert.equal(button.classList.contains("is-loading"), true, "The same button must show its loading state during a long build.");
   assert.equal(button.getAttribute("aria-busy"), "true");
-  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Building your APK… 15%");
+  assert.equal(button.querySelector("[data-build-action-label]").textContent, "Preparing Android build. 15%", "The overview card must show the same current stage returned by the build service.");
   assert.equal(root.querySelector("[data-build-progress]").hidden, false);
   assert.equal(root.querySelector("[data-build-modal]").hidden, false, "Clicking the full card must open the build progress dialog.");
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Cancel must appear while the build is active.");
@@ -246,6 +246,7 @@ async function testActiveBuildCanBeCancelled() {
   assert.equal(modal.hidden, false, "Clicking the active build card must explicitly open progress.");
 
   const cancelButton = root.querySelector("[data-build-cancel]");
+  assert.equal(root.querySelector("[data-build-action]").disabled, true, "A building state restored from the server must keep Build disabled.");
   assert.equal(cancelButton.hidden, false, "Cancel must be visible when the page loads with an active build.");
   cancelButton.click();
   await flush();

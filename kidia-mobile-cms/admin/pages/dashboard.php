@@ -163,7 +163,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								class="kidia-app-build__card kidia-app-build__card-button"
 								data-build-action
 								aria-busy="<?php echo $build_in_progress ? 'true' : 'false'; ?>"
-								<?php echo $build_in_progress ? 'hidden' : ''; ?>
 								<?php disabled( ! $setup_step_complete || $build_in_progress ); ?>
 							>
 								<strong class="kidia-app-build__title" data-build-action-label><?php echo esc_html( $build_button_label ); ?></strong>
@@ -180,41 +179,6 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								</p>
 							</button>
 						</form>
-						<div class="kidia-app-build__modal kidia-ai-progress-overlay" data-build-modal hidden>
-							<div class="kidia-app-build__modal-card kidia-ai-progress-card" role="dialog" aria-modal="true" aria-labelledby="kidia-app-build-title">
-								<div class="kidia-ai-progress-ring" data-build-progress-ring style="--kidia-ai-progress:<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>">
-									<strong data-build-progress-label><?php echo esc_html( absint( $build_state['progress'] ) . '%' ); ?></strong>
-								</div>
-								<h2 id="kidia-app-build-title"><?php esc_html_e( 'Building your APK', 'kidia-mobile-cms' ); ?></h2>
-								<p class="kidia-app-build__message" data-build-message><?php echo esc_html( (string) $build_state['message'] ); ?></p>
-								<strong class="kidia-ai-progress-count" data-build-stage><?php esc_html_e( 'Connecting to the build service…', 'kidia-mobile-cms' ); ?></strong>
-								<small class="kidia-app-build__meta" data-build-meta hidden></small>
-								<div class="kidia-app-build__progress kidia-ai-progress-track" data-build-progress>
-									<span
-										data-build-progress-value
-										role="progressbar"
-										aria-valuemin="0"
-										aria-valuemax="100"
-										aria-valuenow="<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>"
-										style="width:<?php echo esc_attr( (string) absint( $build_state['progress'] ) ); ?>%"
-									></span>
-								</div>
-								<small data-build-note><?php esc_html_e( 'The build continues safely if you move this card to the side.', 'kidia-mobile-cms' ); ?></small>
-								<div class="kidia-app-build__actions kidia-ai-progress-actions">
-									<button type="button" class="button button-primary" data-build-background>
-										<span class="dashicons dashicons-migrate"></span><?php esc_html_e( 'Continue in background', 'kidia-mobile-cms' ); ?>
-									</button>
-									<button
-										type="button"
-										class="button kidia-app-build__cancel kidia-ai-cancel-button"
-										data-build-cancel
-										<?php echo 'idle' !== $build_status && 'cancelled' !== $build_status ? '' : 'hidden'; ?>
-									>
-										<span class="dashicons dashicons-no-alt"></span><?php esc_html_e( 'Cancel Build', 'kidia-mobile-cms' ); ?>
-									</button>
-								</div>
-							</div>
-						</div>
 					</li>
 				<?php else : ?>
 					<li class="<?php echo esc_attr( $step_class ); ?>">

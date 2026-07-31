@@ -2,8 +2,10 @@
 	'use strict';
 
 	const config = window.kidiaAppBuilder || {};
-	const roots = Array.from(document.querySelectorAll('[data-kidia-app-build]'));
-	if (!roots.length || !config.ajaxUrl) return;
+	if (!document.querySelector('[data-kidia-app-build]') || !config.ajaxUrl) return;
+	const roots = function () {
+		return Array.from(document.querySelectorAll('[data-kidia-app-build]'));
+	};
 
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
@@ -125,7 +127,7 @@
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
 		}
 		if (button) {
-			button.disabled = !ready && !building && !canBuild;
+			button.disabled = building || (!ready && !canBuild);
 			button.classList.toggle('is-loading', building);
 			button.hidden = false;
 			button.setAttribute('aria-busy', building ? 'true' : 'false');
@@ -134,8 +136,9 @@
 			if (ready) {
 				buttonLabel.textContent = label('download', 'Download APK');
 			} else if (building) {
+				const currentStage = root.dataset.stage || label('building', 'Building your APK…');
 				const percentage = progress > 0 ? ' ' + progress + '%' : '';
-				buttonLabel.textContent = label('building', 'Building your APK…') + percentage;
+				buttonLabel.textContent = currentStage + percentage;
 			} else {
 				buttonLabel.textContent = label('buildDownload', 'Build & Download Your App');
 			}
@@ -168,7 +171,7 @@
 	}
 
 	function render(state) {
-		roots.forEach(function (root) {
+		roots().forEach(function (root) {
 			const status = state.status || root.dataset.status || 'idle';
 			const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
 			const messages = root.querySelectorAll('[data-build-message]');
@@ -181,6 +184,7 @@
 			const downloadReady = status === 'ready' && state.downloadReady !== false;
 
 			root.dataset.status = status;
+			root.dataset.stage = state.stage || state.message || '';
 			messages.forEach(function (message) {
 				message.textContent = state.message || label(status);
 			});
@@ -191,7 +195,7 @@
 			}
 			if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
 			if (progressLabel) progressLabel.textContent = progress + '%';
-			if (stage) stage.textContent = state.stage || (
+			if (stage) stage.textContent = state.stage || state.message || (
 				status === 'queued'
 					? label('queued', 'Waiting for the build provider…')
 					: label(status, 'Preparing the Android application…')
@@ -207,6 +211,10 @@
 			}
 			setActionState(root, status, progress, downloadReady);
 			if (state.dismissed) closeProgress(root);
+			else if (root.hasAttribute('data-build-persistent') && hasStoredBuild(status)) {
+				openProgress(root);
+				dockProgress(root);
+			}
 			if (downloadReady) requestDownload(root);
 		});
 	}
@@ -260,7 +268,7 @@
 		} catch (error) {
 			pollFailures += 1;
 			if (pollFailures >= 3) {
-				autoDownload.delete(roots[0]);
+				roots().forEach(function (root) { autoDownload.delete(root); });
 				render({
 					status: 'failed',
 					progress: 0,
@@ -269,7 +277,7 @@
 				});
 				return;
 			}
-			roots.forEach(function (root) {
+			roots().forEach(function (root) {
 				root.querySelectorAll('[data-build-message]').forEach(function (message) {
 					message.textContent = error.message || label('failed');
 				});
@@ -337,12 +345,13 @@
 		}
 	}
 
-	roots.forEach(function (root) {
-		const form = root.querySelector('[data-build-form]');
-		if (root.dataset.autoDownload === '1') autoDownload.add(root);
-		if (!form) return;
-
-		form.addEventListener('submit', function (event) {
+	function bindRoots() {
+		roots().forEach(function (root) {
+			if (root.dataset.buildBound === '1') return;
+			root.dataset.buildBound = '1';
+			const form = root.querySelector('[data-build-form]');
+			if (root.dataset.autoDownload === '1') autoDownload.add(root);
+			if (form) form.addEventListener('submit', function (event) {
 			if (root.dataset.status === 'ready') return;
 
 			event.preventDefault();
@@ -353,30 +362,36 @@
 			}
 			if (root.dataset.canBuild !== '1') return;
 			startBuild(root);
+			});
+
+			const backgroundButton = root.querySelector('[data-build-background]');
+			if (backgroundButton) {
+				backgroundButton.addEventListener('click', function () {
+					dockProgress(root);
+				});
+			}
+			bindDockDrag(root);
+
+			const cancelButton = root.querySelector('[data-build-cancel]');
+			if (cancelButton) {
+				cancelButton.addEventListener('click', function () {
+					cancelBuild(root);
+				});
+			}
 		});
+	}
+	bindRoots();
+	document.addEventListener('kidia:cms-page-ready', bindRoots);
 
-		const backgroundButton = root.querySelector('[data-build-background]');
-		if (backgroundButton) {
-			backgroundButton.addEventListener('click', function () {
-				dockProgress(root);
-			});
-		}
-		bindDockDrag(root);
-
-		const cancelButton = root.querySelector('[data-build-cancel]');
-		if (cancelButton) {
-			cancelButton.addEventListener('click', function () {
-				cancelBuild(root);
-			});
-		}
-	});
-
-	const active = roots.some(function (root) {
+	const active = roots().some(function (root) {
 		return isBuilding(root.dataset.status);
 	});
 	if (active) poll();
 
-	roots.forEach(function (root) {
+	roots().forEach(function (root) {
+		const initialMeter = root.querySelector('[data-build-progress-value]');
+		const initialProgress = Number(initialMeter ? initialMeter.getAttribute('aria-valuenow') : 0);
+		setActionState(root, root.dataset.status || 'idle', initialProgress, root.dataset.status === 'ready');
 		if (hasStoredBuild(root.dataset.status)) {
 			openProgress(root);
 			dockProgress(root);
