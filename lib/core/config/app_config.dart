@@ -48,7 +48,7 @@ abstract final class AppConfig {
 
   static const String homeLayoutEndpoint = String.fromEnvironment(
     'HOME_LAYOUT_ENDPOINT',
-    defaultValue: '/wp-json/woo-mobile/v1/home-layout',
+    defaultValue: '/wp-json/woomobileapp/v1/home-layout',
   );
 
   static const String storeName = String.fromEnvironment(
