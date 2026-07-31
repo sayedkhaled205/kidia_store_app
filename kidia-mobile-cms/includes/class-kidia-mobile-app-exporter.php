@@ -671,6 +671,7 @@ final class Kidia_Mobile_App_Exporter {
 			'buildId'      => sanitize_text_field( (string) $state['build_id'] ),
 			'startedAt'    => absint( $state['started_at'] ),
 			'updatedAt'    => absint( $state['updated_at'] ),
+			'completedAt'  => absint( $state['completed_at'] ),
 			'fileName'     => sanitize_file_name( (string) $state['apk_file_name'] ),
 			'current'      => self::is_current(),
 			'downloadReady'=> self::is_current(),

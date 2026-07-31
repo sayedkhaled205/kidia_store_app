@@ -10,6 +10,7 @@
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
 	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
+	const recentBuildWindow = 24 * 60 * 60;
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -154,14 +155,14 @@
 			formAction.value = ready ? 'kidia_mobile_download_apk' : 'kidia_mobile_build_app';
 		}
 		if (button) {
-			button.disabled = downloaded || building || (!ready && !canBuild);
+			button.disabled = building || (!ready && !downloaded && !canBuild);
 			button.classList.toggle('is-loading', building);
-			button.hidden = downloaded;
+			button.hidden = false;
 			button.setAttribute('aria-busy', building ? 'true' : 'false');
 		}
 		if (buttonLabel) {
 			if (downloaded) {
-				buttonLabel.textContent = label('downloaded', 'Download Completed');
+				buttonLabel.textContent = label('buildDownload', 'Build Your App');
 			} else if (ready) {
 				buttonLabel.textContent = label('download', 'Download APK');
 			} else if (building) {
@@ -169,7 +170,7 @@
 				const percentage = progress > 0 ? ' ' + progress + '%' : '';
 				buttonLabel.textContent = currentStage + percentage;
 			} else {
-				buttonLabel.textContent = label('buildDownload', 'Build & Download Your App');
+				buttonLabel.textContent = label('buildDownload', 'Build Your App');
 			}
 		}
 		if (cancelButton) {
@@ -221,6 +222,7 @@
 
 			root.dataset.status = status;
 			if (buildId) root.dataset.buildId = buildId;
+			if (state.completedAt) root.dataset.completedAt = String(state.completedAt);
 			root.dataset.stage = state.stage || state.message || '';
 			messages.forEach(function (message) {
 				message.textContent = state.message || label(status);
@@ -387,6 +389,21 @@
 		}
 	}
 
+	function hasRecentCompletedBuild(root) {
+		const completedAt = Number(root.dataset.completedAt || 0);
+		return completedAt > 0 && Math.floor(Date.now() / 1000) - completedAt < recentBuildWindow;
+	}
+
+	function showRecentChoice(root) {
+		const choice = root.querySelector('[data-build-recent-choice]');
+		if (choice) choice.hidden = false;
+	}
+
+	function hideRecentChoice(root) {
+		const choice = root.querySelector('[data-build-recent-choice]');
+		if (choice) choice.hidden = true;
+	}
+
 	function bindRoots() {
 		roots().forEach(function (root) {
 			if (root.dataset.buildBound === '1') return;
@@ -403,6 +420,22 @@
 					return;
 				}
 				if (root.dataset.canBuild !== '1') return;
+				if (hasRecentCompletedBuild(root)) {
+					showRecentChoice(root);
+					return;
+				}
+				startBuild(root);
+			});
+
+			const downloadAgain = root.querySelector('[data-build-download-again]');
+			if (downloadAgain) downloadAgain.addEventListener('click', function () {
+				hideRecentChoice(root);
+				if (config.downloadUrl) window.location.href = config.downloadUrl;
+			});
+
+			const buildNewVersion = root.querySelector('[data-build-new-version]');
+			if (buildNewVersion) buildNewVersion.addEventListener('click', function () {
+				hideRecentChoice(root);
 				startBuild(root);
 			});
 

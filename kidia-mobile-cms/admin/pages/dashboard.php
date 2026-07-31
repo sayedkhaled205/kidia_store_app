@@ -72,7 +72,7 @@ $build_button_label = $build_step_complete
 	? __( 'Download APK', 'kidia-mobile-cms' )
 	: ( $build_in_progress
 			? __( 'Building APK…', 'kidia-mobile-cms' )
-			: __( 'Build & Download Your App', 'kidia-mobile-cms' )
+			: __( 'Build Your App', 'kidia-mobile-cms' )
 	);
 $journey_steps = array(
 	array(
@@ -152,6 +152,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						data-kidia-app-build
 						data-status="<?php echo esc_attr( $build_status ); ?>"
 						data-build-id="<?php echo esc_attr( (string) ( $build_state['build_id'] ?? '' ) ); ?>"
+						data-completed-at="<?php echo esc_attr( (string) absint( $build_state['completed_at'] ?? 0 ) ); ?>"
 						data-can-build="<?php echo $setup_step_complete ? '1' : '0'; ?>"
 						data-auto-download="<?php echo $build_auto_download ? '1' : '0'; ?>"
 					>
@@ -178,8 +179,19 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								);
 								?>
 								</p>
+								<small class="kidia-app-build__files" data-build-files><?php esc_html_e( 'app-release.aab — Google Play', 'kidia-mobile-cms' ); ?></small>
 							</button>
 						</form>
+						<div class="kidia-app-build__recent-choice" data-build-recent-choice hidden>
+							<div class="kidia-app-build__recent-choice-card" role="dialog" aria-modal="true" aria-labelledby="kidia-recent-build-title">
+								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A build is available from the last 24 hours', 'kidia-mobile-cms' ); ?></h3>
+								<p><?php esc_html_e( 'Download the latest version again or create a new build.', 'kidia-mobile-cms' ); ?></p>
+								<div class="kidia-app-build__recent-choice-actions">
+									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'kidia-mobile-cms' ); ?></button>
+									<button type="button" class="button" data-build-new-version><?php esc_html_e( 'Build New Version', 'kidia-mobile-cms' ); ?></button>
+								</div>
+							</div>
+						</div>
 					</li>
 				<?php else : ?>
 					<li class="<?php echo esc_attr( $step_class ); ?>">
@@ -456,12 +468,14 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 
 	.kidia-app-build__card-form {
 		flex: 1;
+		height: 100%;
 		margin: 0;
 	}
 
 	.kidia-app-build__card-button {
 		display: flex;
 		width: 100%;
+		height: 100%;
 		min-height: 120px;
 		box-sizing: border-box;
 		align-items: flex-start;
@@ -479,6 +493,49 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	}
 
 	.kidia-app-build__card-button .kidia-app-build__title {
+		width: 100%;
+		font-size: 15px;
+		font-weight: 800;
+		text-align: center;
+	}
+
+	.kidia-app-build__files {
+		width: 100%;
+		margin-top: 5px;
+		color: #e7f5f1;
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 1.4;
+		text-align: center;
+	}
+
+	.kidia-app-build__recent-choice {
+		position: fixed;
+		z-index: 100200;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: 20px;
+		background: rgba(12, 31, 27, .42);
+	}
+
+	.kidia-app-build__recent-choice[hidden] { display: none; }
+
+	.kidia-app-build__recent-choice-card {
+		width: min(420px, 100%);
+		box-sizing: border-box;
+		padding: 24px;
+		border-radius: 16px;
+		background: #fff;
+		box-shadow: 0 22px 60px rgba(12, 31, 27, .22);
+		text-align: center;
+	}
+
+	.kidia-app-build__recent-choice-card h3 { margin: 0 0 8px; }
+	.kidia-app-build__recent-choice-card p { margin: 0 0 18px; }
+	.kidia-app-build__recent-choice-actions { display: flex; justify-content: center; gap: 10px; }
+
+	.kidia-app-build__card-button .kidia-app-build__title {
 		color: #ffffff;
 	}
 
@@ -487,6 +544,11 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		margin-bottom: 0 !important;
 		color: #e7f5f1 !important;
 		text-align: start;
+	}
+
+	[data-kidia-app-build][data-status="idle"] .kidia-app-build__message,
+	[data-kidia-app-build][data-status="downloaded"] .kidia-app-build__message {
+		display: none;
 	}
 
 	.kidia-app-build__card-button:hover,

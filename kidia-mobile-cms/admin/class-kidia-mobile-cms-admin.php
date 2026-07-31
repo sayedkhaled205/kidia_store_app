@@ -2617,7 +2617,7 @@ final class Kidia_Mobile_CMS_Admin {
 									'failed'        => __( 'The APK build failed.', 'kidia-mobile-cms' ),
 									'timeout'       => __( 'The APK build request took too long. Please try again.', 'kidia-mobile-cms' ),
 									'starting'      => __( 'Starting APK build…', 'kidia-mobile-cms' ),
-									'buildDownload' => __( 'Build & Download Your App', 'kidia-mobile-cms' ),
+									'buildDownload' => __( 'Build Your App', 'kidia-mobile-cms' ),
 									'download'      => __( 'Download APK', 'kidia-mobile-cms' ),
 									'cancelled'     => __( 'Build cancelled.', 'kidia-mobile-cms' ),
 									'cancelFailed'  => __( 'The build could not be cancelled.', 'kidia-mobile-cms' ),

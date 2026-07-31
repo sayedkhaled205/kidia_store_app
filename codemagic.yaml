@@ -32,13 +32,6 @@ workflows:
         script: flutter analyze
       - name: Run Flutter tests
         script: flutter test
-      - name: Build Android APK
-        script: |
-          flutter build apk --release \
-            --dart-define="STORE_URL=$STORE_URL" \
-            --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
-            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
-            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android App Bundle
         script: |
           flutter build appbundle --release \
@@ -46,33 +39,19 @@ workflows:
             --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
-      - name: Build unsigned iOS application
-        script: |
-          flutter build ios --release --no-codesign \
-            --dart-define="STORE_URL=$STORE_URL" \
-            --dart-define="STORE_NAME=${STORE_NAME:-Woo Mobile Store}" \
-            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
-            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
-      - name: Package all application build files
+      - name: Package upload-ready application file
         script: |
           set -euo pipefail
 
-          APK_PATH=$(find build/app/outputs/flutter-apk \
-            -type f -name "*.apk" | head -n 1)
           AAB_PATH=$(find build/app/outputs/bundle \
             -type f -name "*.aab" | head -n 1)
-          IOS_APP_PATH=$(find build/ios/iphoneos \
-            -maxdepth 1 -type d -name "*.app" | head -n 1)
 
           PACKAGE_DIR="$CM_BUILD_DIR/build/woomobile-package"
           OUTPUT_DIR="$CM_BUILD_DIR/build/woomobile-artifacts"
           rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
           mkdir -p "$PACKAGE_DIR" "$OUTPUT_DIR"
 
-          cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
           cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
-          ditto -c -k --sequesterRsrc --keepParent \
-            "$IOS_APP_PATH" "$PACKAGE_DIR/ios-app.zip"
           ditto -c -k --sequesterRsrc \
             "$PACKAGE_DIR" "$OUTPUT_DIR/woomobile-build-files.zip"
       - name: Mark build successful
