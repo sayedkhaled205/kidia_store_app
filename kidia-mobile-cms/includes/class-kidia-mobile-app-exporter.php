@@ -283,7 +283,13 @@ final class Kidia_Mobile_App_Exporter {
 			return $state;
 		}
 
-		$response = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ), 'GET' );
+		$path     = rawurlencode( $build_id );
+		$method   = 'GET';
+		if ( $force ) {
+			$path  .= '/download-link';
+			$method = 'POST';
+		}
+		$response = ( new Kidia_Mobile_License_Manager() )->build_service_request( $path, $method );
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
@@ -391,10 +397,9 @@ final class Kidia_Mobile_App_Exporter {
 			wp_die( esc_html__( 'The APK download link returned by the build service is invalid.', 'kidia-mobile-cms' ) );
 		}
 
-		$this->stream_remote_apk(
-			$url,
-			sanitize_file_name( (string) $result['apk_file_name'] )
-		);
+		if ( ! $this->redirect_to_artifact( $url ) ) {
+			wp_die( esc_html__( 'The application download could not be started. Please try again.', 'kidia-mobile-cms' ) );
+		}
 		exit;
 	}
 
@@ -449,59 +454,16 @@ final class Kidia_Mobile_App_Exporter {
 		);
 	}
 
-	/**
-	 * Proxies the signed artifact through WordPress as a verified attachment.
-	 *
-	 * A redirect to a short-lived cross-origin URL can finish without a browser
-	 * download. Streaming the artifact gives the response an APK filename and
-	 * refuses HTML/error bodies that only look like successful downloads.
-	 */
-	private function stream_remote_apk( string $url, string $file_name ): void {
-		$file_name = preg_match( '/\.apk$/i', $file_name )
-			? $file_name
-			: ( preg_replace( '/\.[^.]+$/', '', $file_name ?: 'woomobile-app' ) . '.apk' );
-		$temp_file = wp_tempnam( $file_name );
-		if ( ! $temp_file ) {
-			wp_die( esc_html__( 'A temporary APK download file could not be created.', 'kidia-mobile-cms' ) );
-		}
-
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'timeout'             => 300,
-				'redirection'         => 5,
-				'stream'              => true,
-				'filename'            => $temp_file,
-				'limit_response_size' => 300 * MB_IN_BYTES,
-			)
-		);
-		$status   = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
-		$size     = is_file( $temp_file ) ? (int) filesize( $temp_file ) : 0;
-		$handle   = $size > 0 ? fopen( $temp_file, 'rb' ) : false;
-		$magic    = is_resource( $handle ) ? (string) fread( $handle, 4 ) : '';
-		if ( is_resource( $handle ) ) {
-			fclose( $handle );
-		}
-
-		if (
-			is_wp_error( $response )
-			|| $status < 200
-			|| $status >= 300
-			|| $size < MB_IN_BYTES
-			|| "PK\x03\x04" !== $magic
-		) {
-			wp_delete_file( $temp_file );
-			wp_die( esc_html__( 'The build service did not return a valid Android APK. Please build the app again.', 'kidia-mobile-cms' ) );
+	/** Redirects the browser to a short-lived URL created by the build API. */
+	private function redirect_to_artifact( string $url ): bool {
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
+		if ( 'https' !== $scheme || '' === $host ) {
+			return false;
 		}
 
 		nocache_headers();
-		header( 'Content-Type: application/vnd.android.package-archive' );
-		header( 'Content-Disposition: attachment; filename="' . $file_name . '"' );
-		header( 'Content-Length: ' . (string) $size );
-		header( 'X-Content-Type-Options: nosniff' );
-		readfile( $temp_file );
-		wp_delete_file( $temp_file );
-		exit;
+		return wp_redirect( $url, 302, 'WooMobile Build Download' ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 	}
 
 	public function download(): void {
@@ -640,17 +602,25 @@ final class Kidia_Mobile_App_Exporter {
 		);
 		$file_name     = (string) ( $raw['fileName'] ?? $raw['file_name'] ?? $raw['artifact']['fileName'] ?? $raw['artifact']['file_name'] ?? '' );
 		$artifacts     = is_array( $raw['artifacts'] ?? null ) ? $raw['artifacts'] : array();
+		$apk_fallback = array();
 		foreach ( $artifacts as $artifact ) {
 			if ( ! is_array( $artifact ) ) {
 				continue;
 			}
 			$artifact_name = (string) ( $artifact['fileName'] ?? $artifact['file_name'] ?? $artifact['name'] ?? '' );
 			$artifact_url  = (string) ( $artifact['downloadUrl'] ?? $artifact['download_url'] ?? $artifact['url'] ?? '' );
-			if ( '' !== $artifact_url && preg_match( '/\.apk(?:$|\?)/i', $artifact_name . $artifact_url ) ) {
+			if ( '' !== $artifact_url && preg_match( '/woomobile-build-files\.zip(?:$|\?)/i', $artifact_name . $artifact_url ) ) {
 				$download_url = $artifact_url;
-				$file_name    = $artifact_name ?: 'woomobile-app.apk';
+				$file_name    = $artifact_name ?: 'woomobile-build-files.zip';
 				break;
 			}
+			if ( empty( $apk_fallback ) && '' !== $artifact_url && preg_match( '/\.apk(?:$|\?)/i', $artifact_name . $artifact_url ) ) {
+				$apk_fallback = array( $artifact_url, $artifact_name );
+			}
+		}
+		if ( '' === $download_url && ! empty( $apk_fallback ) ) {
+			$download_url = (string) $apk_fallback[0];
+			$file_name    = (string) ( $apk_fallback[1] ?: 'woomobile-app.apk' );
 		}
 		$progress      = max( 0, min( 100, absint( $raw['progress'] ?? ( 'ready' === $status ? 100 : 0 ) ) ) );
 
@@ -662,7 +632,10 @@ final class Kidia_Mobile_App_Exporter {
 		$state['started_at']    = absint( $state['started_at'] ) ?: time();
 		$state['completed_at']  = in_array( $status, array( 'ready', 'failed', 'cancelled' ), true ) ? time() : 0;
 		$state['download_url']  = esc_url_raw( $download_url );
-		$state['apk_file_name'] = sanitize_file_name( $file_name ?: 'woomobile-app.apk' );
+		$default_file_name      = preg_match( '/\.zip(?:$|\?)/i', $download_url )
+			? 'woomobile-build-files.zip'
+			: 'woomobile-app.apk';
+		$state['apk_file_name'] = sanitize_file_name( $file_name ?: $default_file_name );
 		$state['hash']          = $hash;
 		$state['updated_at']    = time();
 
