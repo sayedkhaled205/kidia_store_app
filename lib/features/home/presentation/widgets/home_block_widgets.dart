@@ -507,10 +507,10 @@ class _HeroSlideCard extends StatelessWidget {
                         : Alignment.centerLeft,
                     colors: <Color>[
                       Colors.black.withValues(
-                        alpha: block.overlayStrength / 100,
+                        alpha: (block.overlayStrength / 210).clamp(0.0, 0.35),
                       ),
                       Colors.black.withValues(
-                        alpha: block.overlayStrength / 220,
+                        alpha: (block.overlayStrength / 520).clamp(0.0, 0.16),
                       ),
                       Colors.transparent,
                     ],
@@ -569,32 +569,36 @@ class _HeroSlideCard extends StatelessWidget {
                                   ),
                             ),
                           ],
-                          if (slide.buttonLabel != null) ...<Widget>[
-                            const SizedBox(height: 12),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: _parseHexColor(
-                                  block.textColor,
-                                  fallback: Colors.white,
-                                ),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 15,
-                                  vertical: 8,
-                                ),
-                                child: Text(
-                                  slide.buttonLabel!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1F2933),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+              if (slide.buttonLabel != null)
+                Align(
+                  alignment: switch (slide.buttonPosition) {
+                    'left' => Alignment.centerLeft,
+                    'center' => Alignment.center,
+                    'right' => Alignment.centerRight,
+                    _ => Alignment.bottomCenter,
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: _parseHexColor(block.textColor, fallback: Colors.white),
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 1)),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        child: Text(
+                          slide.buttonLabel!,
+                          style: const TextStyle(color: Color(0xFF1F2933), fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ),

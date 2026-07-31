@@ -243,12 +243,20 @@ abstract final class HomeBlockModel {
   }
 
   static HeroSlide _parseHeroSlide(Map<String, dynamic> json) {
+    final String buttonPosition =
+        _optionalString(json, 'button_position') ?? 'center_bottom';
+    if (!const <String>{'left', 'center', 'right', 'center_bottom'}
+        .contains(buttonPosition)) {
+      throw FormatException('Unsupported hero button position: $buttonPosition');
+    }
+
     return HeroSlide(
       id: _requiredString(json, 'id'),
       imageUrl: _requiredUrl(json, 'image_url'),
       title: _optionalString(json, 'title'),
       subtitle: _optionalString(json, 'subtitle'),
       buttonLabel: _optionalString(json, 'button_label'),
+      buttonPosition: buttonPosition,
       action: _parseAction(json['action']),
     );
   }
