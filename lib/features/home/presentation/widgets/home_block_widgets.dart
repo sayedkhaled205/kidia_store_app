@@ -493,18 +493,19 @@ class _HeroSlideCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeAction? action = slide.action;
+    final bool shouldUseImageAction = slide.makeImageClickable && action != null;
 
     return Semantics(
-      button: action != null,
+      button: shouldUseImageAction,
       label: slide.title ?? slide.subtitle,
       child: Material(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: InkWell(
-          onTap: action == null
-              ? null
-              : () {
-                  onAction(action);
-                },
+          onTap: shouldUseImageAction
+              ? () {
+                  onAction(action!);
+                }
+              : null,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -518,10 +519,10 @@ class _HeroSlideCard extends StatelessWidget {
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: block.overlayPosition == 'end'
+                    begin: block.overlayPosition == 'center_left' || block.overlayPosition == 'bottom_left'
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
-                    end: block.overlayPosition == 'end'
+                    end: block.overlayPosition == 'center_left' || block.overlayPosition == 'bottom_left'
                         ? Alignment.centerRight
                         : Alignment.centerLeft,
                     colors: <Color>[
@@ -545,9 +546,13 @@ class _HeroSlideCard extends StatelessWidget {
                   slide.buttonLabel != null)
                 Align(
                   alignment: switch (block.overlayPosition) {
+                    'center_left' => Alignment.centerLeft,
+                    'center_right' => Alignment.centerRight,
+                    'bottom_left' => Alignment.bottomLeft,
+                    'bottom_center' => Alignment.bottomCenter,
+                    'bottom_right' => Alignment.bottomRight,
                     'center' => Alignment.center,
-                    'end' => Alignment.centerLeft,
-                    _ => Alignment.centerRight,
+                    _ => Alignment.center,
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -555,11 +560,12 @@ class _HeroSlideCard extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 255),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: block.overlayPosition == 'center'
-                            ? CrossAxisAlignment.center
-                            : block.overlayPosition == 'end'
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
+                        crossAxisAlignment: switch (block.overlayPosition) {
+                          'center' => CrossAxisAlignment.center,
+                          'center_right' || 'bottom_right' => CrossAxisAlignment.end,
+                          'center_left' || 'bottom_left' => CrossAxisAlignment.start,
+                          _ => CrossAxisAlignment.center,
+                        },
                         children: [
                           if (slide.title != null)
                             Text(

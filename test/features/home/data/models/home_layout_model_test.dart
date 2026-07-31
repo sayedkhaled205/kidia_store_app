@@ -429,6 +429,43 @@ void main() {
       expect(bannerGrid.items.single.action?.value, 'summer');
     });
 
+    test('parses hero slider text positions and image clickability', () {
+      final layout = HomeLayoutModel.fromJson(<String, dynamic>{
+        'version': 4,
+        'page': 'home',
+        'locale': 'en',
+        'updated_at': '2026-07-15T20:00:00Z',
+        'blocks': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'hero-1',
+            'type': 'hero_slider',
+            'enabled': true,
+            'data': <String, dynamic>{
+              'aspect_ratio': 2,
+              'overlay_position': 'bottom_center',
+              'items': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 'hero-slide-1',
+                  'image_url': 'https://example.com/hero.jpg',
+                  'title': 'Launch',
+                  'button_label': null,
+                  'button_link': 'https://example.com/deal',
+                  'make_image_clickable': true,
+                  'button_position': 'left',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      final HeroSliderBlock heroSlider = layout.blocks.single as HeroSliderBlock;
+      expect(heroSlider.aspectRatio, 2.0);
+      expect(heroSlider.overlayPosition, 'bottom_center');
+      expect(heroSlider.items.single.makeImageClickable, isTrue);
+      expect(heroSlider.items.single.action?.value, 'https://example.com/deal');
+    });
+
     test('parses resolved WooCommerce category, product and brand items', () {
       final layout = HomeLayoutModel.fromJson(<String, dynamic>{
         'version': 4,

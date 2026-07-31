@@ -84,6 +84,7 @@ function is_wp_error( $value ): bool { return false; }
 
 require dirname( __DIR__ ) . '/includes/class-kidia-mobile-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-app-header-block.php';
+require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-hero-slider-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-coupon-banner-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-product-carousel-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-kidia-mobile-brand-carousel-block.php';
@@ -107,6 +108,25 @@ kidia_home_assert( 'Kidia Test Store' === $header_api['data']['title'], 'App Hea
 kidia_home_assert( '' === $header_api['data']['logo_url'], 'Unsafe App Header URLs must be rejected.' );
 kidia_home_assert( '#FFFFFF' === $header_api['data']['background_color'], 'App Header must expose its configurable background.' );
 kidia_home_assert( 'icon' === $header_api['data']['search_style'], 'App Header must expose its configurable search presentation.' );
+
+$hero = new Kidia_Mobile_Hero_Slider_Block();
+$hero_settings = array(
+	'overlay_position' => 'bottom_center',
+	'items'            => array(
+		array(
+			'image_url'          => 'https://example.com/hero.jpg',
+			'title'              => 'Launch',
+			'button_label'       => '',
+			'button_link'        => 'https://example.com/deal',
+			'button_position'    => 'left',
+			'make_image_clickable' => true,
+		),
+	),
+);
+$hero_api = $hero->build_api_data( $hero_settings );
+kidia_home_assert( is_array( $hero_api ) && 'bottom_center' === $hero_api['overlay_position'], 'Hero Slider must preserve the new text position contract.' );
+kidia_home_assert( true === $hero_api['items'][0]['make_image_clickable'], 'Hero Slider slides must preserve the make image clickable flag.' );
+kidia_home_assert( 'https://example.com/deal' === $hero_api['items'][0]['button_link'], 'Hero Slider button links must remain available for image click handling.' );
 
 $coupon = new Kidia_Mobile_Coupon_Banner_Block();
 ob_start();

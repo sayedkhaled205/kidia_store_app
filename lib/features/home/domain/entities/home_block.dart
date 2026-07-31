@@ -170,6 +170,7 @@ class HeroSlide {
     required this.subtitle,
     required this.buttonLabel,
     required this.buttonPosition,
+    required this.makeImageClickable,
     required this.action,
   });
 
@@ -179,6 +180,7 @@ class HeroSlide {
   final String? subtitle;
   final String? buttonLabel;
   final String buttonPosition;
+  final bool makeImageClickable;
   final HomeAction? action;
 }
 

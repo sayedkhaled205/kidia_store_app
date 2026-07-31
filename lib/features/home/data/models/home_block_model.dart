@@ -198,7 +198,7 @@ abstract final class HomeBlockModel {
 	final List<Map<String, dynamic>> items = _requiredMapList(data, 'items');
 	final String imageFit = _optionalString(data, 'image_fit') ?? 'cover';
 	final String overlayPosition =
-		_optionalString(data, 'overlay_position') ?? 'start';
+		_optionalString(data, 'overlay_position') ?? 'center';
 	final String indicatorStyle =
 		_optionalString(data, 'indicator_style') ?? 'pill';
 	final String indicatorPosition =
@@ -206,7 +206,7 @@ abstract final class HomeBlockModel {
 	if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
 	  throw FormatException('Unsupported hero image fit: $imageFit');
 	}
-	if (!const <String>{'start', 'center', 'end'}.contains(overlayPosition)) {
+	if (!const <String>{'center_left', 'center', 'center_right', 'bottom_left', 'bottom_center', 'bottom_right'}.contains(overlayPosition)) {
 	  throw FormatException('Unsupported hero overlay position: $overlayPosition');
 	}
 	if (!const <String>{'pill', 'dots'}.contains(indicatorStyle)) {
@@ -227,7 +227,7 @@ abstract final class HomeBlockModel {
       enabled: enabled,
       presentation: _parsePresentation(data),
       items: items.map(_parseHeroSlide).toList(growable: false),
-      aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 1.8),
+      aspectRatio: _positiveDouble(data, 'aspect_ratio', fallback: 1.333),
       autoPlay: _optionalBool(data, 'auto_play', fallback: true),
       intervalMilliseconds: _positiveInt(data, 'interval_ms', fallback: 4500),
       borderRadius: _boundedDouble(data, 'border_radius', fallback: 24, minimum: 0, maximum: 48),
@@ -250,6 +250,12 @@ abstract final class HomeBlockModel {
       throw FormatException('Unsupported hero button position: $buttonPosition');
     }
 
+    final bool makeImageClickable = _optionalBool(json, 'make_image_clickable', fallback: false);
+    final HomeAction? action = _parseAction(json['action']);
+    final HomeAction? fallbackAction = action ?? _parseAction(
+      makeImageClickable ? json['button_link'] : null,
+    );
+
     return HeroSlide(
       id: _requiredString(json, 'id'),
       imageUrl: _requiredUrl(json, 'image_url'),
@@ -257,7 +263,8 @@ abstract final class HomeBlockModel {
       subtitle: _optionalString(json, 'subtitle'),
       buttonLabel: _optionalString(json, 'button_label'),
       buttonPosition: buttonPosition,
-      action: _parseAction(json['action']),
+      makeImageClickable: makeImageClickable,
+      action: makeImageClickable ? fallbackAction : action,
     );
   }
 
