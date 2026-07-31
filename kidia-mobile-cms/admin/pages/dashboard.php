@@ -151,6 +151,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						class="<?php echo esc_attr( $step_class ); ?> kidia-customer-journey__build-step"
 						data-kidia-app-build
 						data-status="<?php echo esc_attr( $build_status ); ?>"
+						data-build-id="<?php echo esc_attr( (string) ( $build_state['build_id'] ?? '' ) ); ?>"
 						data-can-build="<?php echo $setup_step_complete ? '1' : '0'; ?>"
 						data-auto-download="<?php echo $build_auto_download ? '1' : '0'; ?>"
 					>
