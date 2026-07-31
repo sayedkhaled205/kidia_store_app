@@ -97,16 +97,26 @@ $footer_icon_symbols = array(
 				<div class="kidia-header-presets__grid">
 					<?php
 					$header_presets = array(
-						'standard' => array( 'Standard store', 'Logo, search and cart' ),
-						'search'   => array( 'Search first', 'Full-width product search' ),
-						'centered' => array( 'Centered brand', 'Menu, centered logo and cart' ),
-						'page'     => array( 'Page title', 'Back, centered title and cart' ),
-						'actions'  => array( 'Action rich', 'Menu, search, account and cart' ),
+						'standard' => array( 'Standard store', 'Logo, search and cart', array( array( array( 'logo' ), array( 'search' ), array( 'wishlist', 'cart' ) ) ) ),
+						'search'   => array( 'Search first', 'Full-width product search', array( array( array( 'logo' ), array( 'cart' ) ), array( array( 'search_bar' ) ) ) ),
+						'centered' => array( 'Centered brand', 'Menu, centered logo and cart', array( array( array( 'menu' ), array( 'logo' ), array( 'cart' ) ) ) ),
+						'page'     => array( 'Page title', 'Back, centered title and cart', array( array( array( 'back' ), array( 'title' ), array( 'cart' ) ) ) ),
+						'actions'  => array( 'Action rich', 'Menu, search, account and cart', array( array( array( 'menu', 'search' ), array( 'logo' ), array( 'account', 'cart' ) ) ) ),
 					);
 					foreach ( $header_presets as $preset_key => $preset_copy ) :
 						?>
 						<button type="button" class="kidia-header-preset" data-header-preset="<?php echo esc_attr( $preset_key ); ?>" aria-pressed="false">
-							<span class="kidia-header-preset__preview kidia-header-preset__preview--<?php echo esc_attr( $preset_key ); ?>" aria-hidden="true"><i></i><i></i><i></i></span>
+							<span class="kidia-header-preset__preview kidia-header-preset__preview--<?php echo esc_attr( $preset_key ); ?>" aria-hidden="true">
+								<?php foreach ( $preset_copy[2] as $preview_row ) : ?>
+									<span class="kidia-header-preset__row">
+										<?php foreach ( $preview_row as $preview_column ) : ?>
+											<span class="kidia-header-preset__column">
+												<?php foreach ( $preview_column as $preview_item ) : ?><i class="kidia-header-preset__item kidia-header-preset__item--<?php echo esc_attr( $preview_item ); ?>"></i><?php endforeach; ?>
+											</span>
+										<?php endforeach; ?>
+									</span>
+								<?php endforeach; ?>
+							</span>
 							<strong><?php echo esc_html( $preset_copy[0] ); ?></strong>
 							<small><?php echo esc_html( $preset_copy[1] ); ?></small>
 						</button>
