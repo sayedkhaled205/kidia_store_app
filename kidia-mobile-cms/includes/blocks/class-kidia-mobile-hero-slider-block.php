@@ -151,6 +151,19 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				$item_id = 'hero_slide_' . ( absint( $index ) + 1 );
 			}
 
+			$button_position = sanitize_key( (string) ( $item['button_position'] ?? 'center_bottom' ) );
+			if ( ! in_array( $button_position, array( 'left', 'center', 'right', 'center_bottom' ), true ) ) {
+				$button_position = 'center_bottom';
+			}
+
+			$button_link = $this->sanitize_http_url( $item['button_link'] ?? '' );
+			if ( '' === $button_link && 'external' === $action_type ) {
+				$button_link = $this->sanitize_http_url( $item['action_value'] ?? '' );
+			}
+			if ( '' !== $button_link ) {
+				$action_type = 'external';
+			}
+
 			$sanitized_items[] = array(
 				'id'           => $item_id,
 				'enabled'      => isset( $item['enabled'] )
@@ -163,11 +176,15 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				'subtitle'     => isset( $item['subtitle'] )
 					? sanitize_textarea_field( $item['subtitle'] )
 					: '',
-				'button_label' => sanitize_text_field( (string) ( $item['button_label'] ?? '' ) ),
-				'action_type'  => $action_type,
-				'action_value' => 'external' === $action_type
-					? $this->sanitize_http_url( $item['action_value'] ?? '' )
-					: sanitize_text_field( (string) ( $item['action_value'] ?? '' ) ),
+				'button_label'    => sanitize_text_field( (string) ( $item['button_label'] ?? '' ) ),
+				'button_position' => $button_position,
+				'button_link'     => $button_link,
+				'action_type'     => $action_type,
+				'action_value'    => '' !== $button_link
+					? $button_link
+					: ( 'external' === $action_type
+						? $this->sanitize_http_url( $item['action_value'] ?? '' )
+						: sanitize_text_field( (string) ( $item['action_value'] ?? '' ) ) ),
 			);
 		}
 
@@ -226,7 +243,9 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				'subtitle'  => ! empty( $item['subtitle'] )
 					? $item['subtitle']
 					: null,
-				'button_label' => ! empty( $item['button_label'] ) ? $item['button_label'] : null,
+				'button_label'    => ! empty( $item['button_label'] ) ? $item['button_label'] : null,
+				'button_position' => $item['button_position'] ?? 'center_bottom',
+				'button_link'     => ! empty( $item['button_link'] ) ? $item['button_link'] : null,
 				'action'    => $this->build_action(
 					$item['action_type'],
 					$item['action_value']
@@ -364,9 +383,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 			'image_url'    => '',
 			'title'        => '',
 			'subtitle'     => '',
-			'button_label' => '',
-			'action_type'  => '',
-			'action_value' => '',
+			'button_label'    => '',
+			'button_position' => 'center_bottom',
+			'button_link'     => '',
+			'action_type'     => '',
+			'action_value'    => '',
 		);
 	}
 
@@ -390,6 +411,11 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 		);
 
 		$image_url = (string) $item['image_url'];
+		$button_link = (string) ( $item['button_link'] ?? '' );
+		if ( '' === $button_link && 'external' === ( $item['action_type'] ?? '' ) ) {
+			$button_link = (string) ( $item['action_value'] ?? '' );
+		}
+		$button_position = sanitize_key( (string) ( $item['button_position'] ?? 'center_bottom' ) );
 
 		?>
 		<div class="kidia-hero-block-item kidia-slider-editor-item">
@@ -473,58 +499,19 @@ final class Kidia_Mobile_Hero_Slider_Block extends Kidia_Mobile_Block {
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_label]" value="<?php echo esc_attr( (string) $item['button_label'] ); ?>">
 			</p>
 
-			<p class="kidia-builder-field kidia-repeatable-field--action-type">
-				<label>
-					<?php echo esc_html__( 'Action Type', 'kidia-mobile-cms' ); ?>
-				</label>
-
-				<select
-					name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_type]"
-				>
-					<option value="">
-						<?php echo esc_html__( 'No Action', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="product" <?php selected( 'product', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'Product', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="category" <?php selected( 'category', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'Category', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="collection" <?php selected( 'collection', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'Collection', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="brand" <?php selected( 'brand', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'Brand', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="brands" <?php selected( 'brands', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'All Brands', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="search" <?php selected( 'search', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'Search', 'kidia-mobile-cms' ); ?>
-					</option>
-
-					<option value="external" <?php selected( 'external', $item['action_type'] ); ?>>
-						<?php echo esc_html__( 'External URL', 'kidia-mobile-cms' ); ?>
-					</option>
+			<p class="kidia-builder-field kidia-repeatable-field--button-position">
+				<label><?php echo esc_html__( 'Button Position', 'kidia-mobile-cms' ); ?></label>
+				<select name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_position]">
+					<option value="right" <?php selected( 'right', $button_position ); ?>><?php esc_html_e( 'Right', 'kidia-mobile-cms' ); ?></option>
+					<option value="center" <?php selected( 'center', $button_position ); ?>><?php esc_html_e( 'Center', 'kidia-mobile-cms' ); ?></option>
+					<option value="left" <?php selected( 'left', $button_position ); ?>><?php esc_html_e( 'Left', 'kidia-mobile-cms' ); ?></option>
+					<option value="center_bottom" <?php selected( 'center_bottom', $button_position ); ?>><?php esc_html_e( 'Center Bottom', 'kidia-mobile-cms' ); ?></option>
 				</select>
 			</p>
 
-			<p class="kidia-builder-field kidia-repeatable-field--action-value">
-				<label>
-					<?php echo esc_html__( 'Action Value', 'kidia-mobile-cms' ); ?>
-				</label>
-
-				<input
-					type="text"
-					name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]"
-					value="<?php echo esc_attr( (string) $item['action_value'] ); ?>"
-				>
+			<p class="kidia-builder-field kidia-repeatable-field--button-link">
+				<label><?php echo esc_html__( 'Button Link', 'kidia-mobile-cms' ); ?></label>
+				<input type="url" placeholder="https://example.com" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_link]" value="<?php echo esc_attr( $button_link ); ?>">
 			</p>
 		</div>
 		<?php
