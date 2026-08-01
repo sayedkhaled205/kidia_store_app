@@ -679,6 +679,11 @@ assert.match(
   "The permanent abandoned-cart import card must become Completed after a reload.",
 );
 assert.match(
+  shellTemplate,
+  /data-complete-auto-dismiss="5000"[\s\S]{0,180}hidden/,
+  "A completed cart import must be server-rendered hidden so a refresh cannot flash an old notice before JavaScript checks it.",
+);
+assert.match(
   shellScript,
   /if \(payload\.done\)[\s\S]*stage\.textContent = 'Completed'[\s\S]*dashicons-yes-alt[\s\S]*>OK/,
   "AI Offer Studio must remain Completed with OK until the owner acknowledges it.",
