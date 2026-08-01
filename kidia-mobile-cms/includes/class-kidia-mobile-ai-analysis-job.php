@@ -49,22 +49,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			}
 		}
 
-		$count_query = wc_get_orders(
-			self::order_args(
-				$from,
-				$to,
-				$source,
-				array(
-					'limit'    => 1,
-					'page'     => 1,
-					'paginate' => true,
-					'return'   => 'objects',
-				)
-			)
-		);
-		$order_total = is_object( $count_query ) && isset( $count_query->total )
-			? absint( $count_query->total )
-			: count( (array) $count_query );
+		/* Freeze the exact unique paid-order population before batching. */
+		$order_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) wc_get_orders(
+			self::order_args( $from, $to, $source, array(
+				'limit' => -1, 'paginate' => false, 'return' => 'ids',
+			) )
+		) ) ) ) );
+		sort( $order_ids, SORT_NUMERIC );
+		$order_total = count( $order_ids );
 		$product_ids = self::in_stock_product_ids();
 		$job_id = wp_generate_uuid4();
 		$job    = array(
@@ -75,7 +67,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'date_preset'       => $date_preset,
 			'source'            => $source,
 			'phase'             => $order_total > 0 ? 'orders' : 'products',
-			'order_page'        => 1,
+			'order_ids'         => $order_ids,
+			'order_offset'      => 0,
 			'orders_processed'  => 0,
 			'order_total'       => $order_total,
 			'product_ids'       => $product_ids,
@@ -296,22 +289,17 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Adds a real WooCommerce order batch to the analytical accumulator. */
 	private static function process_order_batch( array &$job ): void {
-		$result = wc_get_orders(
-			self::order_args(
-				absint( $job['from'] ),
-				absint( $job['to'] ),
-				(string) $job['source'],
-				array(
-					'limit'    => self::ORDER_BATCH,
-					'page'     => max( 1, absint( $job['order_page'] ) ),
-					'paginate' => true,
-					'return'   => 'ids',
-				)
-			)
-		);
-		$batch          = is_object( $result ) && isset( $result->orders )
-			? (array) $result->orders
-			: ( is_array( $result ) ? $result : array() );
+		$offset = absint( $job['order_offset'] ?? 0 );
+		$ids = array_slice( (array) ( $job['order_ids'] ?? array() ), $offset, self::ORDER_BATCH );
+		if ( empty( $ids ) ) { $job['phase'] = 'products'; return; }
+		$result = wc_get_orders( array(
+			'include' => array_map( 'absint', $ids ),
+			'limit' => count( $ids ),
+			'return' => 'objects',
+			'orderby' => 'ID',
+			'order' => 'ASC',
+		) );
+		$batch = is_array( $result ) ? $result : array();
 		$available      = array_fill_keys( array_map( 'absint', (array) $job['product_ids'] ), true );
 		$processed_rows = 0;
 		foreach ( $batch as $order ) {
@@ -370,17 +358,14 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			arsort( $job['pairs'] );
 			$job['pairs'] = array_slice( $job['pairs'], 0, self::MAX_PAIR_KEYS, true );
 		}
-		$job['orders_processed'] = min(
-			absint( $job['order_total'] ),
-			absint( $job['orders_processed'] ) + $processed_rows
-		);
-		++$job['order_page'];
-		if ( absint( $job['orders_processed'] ) >= absint( $job['order_total'] ) ) {
-			$job['phase'] = 'products';
-		} elseif ( empty( $batch ) ) {
+		if ( $processed_rows !== count( $ids ) ) {
 			$job['phase'] = 'failed';
-			$job['error'] = __( 'WooCommerce ended order pagination before every paid order was returned. No incomplete result was published.', 'kidia-mobile-cms' );
+			$job['error'] = __( 'WooCommerce did not return every frozen paid-order ID. No incomplete result was published.', 'kidia-mobile-cms' );
+			return;
 		}
+		$job['order_offset'] = $offset + count( $ids );
+		$job['orders_processed'] = min( absint( $job['order_total'] ), absint( $job['order_offset'] ) );
+		if ( absint( $job['order_offset'] ) >= absint( $job['order_total'] ) ) { $job['phase'] = 'products'; }
 	}
 
 	/**
