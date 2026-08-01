@@ -5,7 +5,9 @@ on:
     branches:
       - main
       - 'agent/**'
+      - 'work/**'
     paths:
+      - '.github/workflows/rebuild-cms-preview.yml'
       - 'lib/**'
       - 'web/**'
       - 'pubspec.yaml'
