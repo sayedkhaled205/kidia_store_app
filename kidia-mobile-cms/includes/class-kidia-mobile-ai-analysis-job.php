@@ -58,7 +58,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 					'limit'    => 1,
 					'page'     => 1,
 					'paginate' => true,
-					'return'   => 'ids',
+					'return'   => 'objects',
 				)
 			)
 		);
@@ -314,8 +314,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			: ( is_array( $result ) ? $result : array() );
 		$available      = array_fill_keys( array_map( 'absint', (array) $job['product_ids'] ), true );
 		$processed_rows = 0;
-		foreach ( $batch as $order_id ) {
-			$order = function_exists( 'wc_get_order' ) ? wc_get_order( absint( $order_id ) ) : null;
+		foreach ( $batch as $order ) {
 			if ( ! $order instanceof WC_Order ) {
 				continue;
 			}
