@@ -1482,6 +1482,8 @@ final class Kidia_Mobile_Setup_Wizard {
 					$layout[ $chrome ]['settings']['layout_json'] = wp_json_encode( $this->theme_header_layout( $profile ) );
 				}
 				if ( $is_family_pop ) {
+					// Keep the action beside the compact/wide search bar optically centred.
+					$layout[ $chrome ]['settings']['cart_offset_y'] = -2;
 					$row = static fn ( array $columns ): array => array( 'columns' => $columns );
 					$column = static fn ( float $width, array $items, string $align = 'center' ): array => compact( 'width', 'align', 'items' );
 					$family_headers = array(
