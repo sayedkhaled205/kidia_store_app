@@ -74,6 +74,7 @@
 .kidia-setup-actions .button{border-color:#2f806e!important;color:#236b59!important}
 .kidia-setup-actions .button-primary,
 .kidia-theme-modal__select{border-color:#236b59!important;background:#2f806e!important;color:#fff!important}
+.kidia-theme-modal__dialog>.kidia-theme-modal__select{margin:16px auto 20px!important}
 .kidia-theme-preview-button{border-color:#2f806e!important;background:#fff!important;color:#236b59!important}
 
 /* Each complete theme stays compact while showing its own installed layout. */

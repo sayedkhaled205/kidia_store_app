@@ -1684,7 +1684,7 @@ final class Kidia_Mobile_CMS_Admin {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'       => 'kidia-mobile-home-builder',
+					'page'       => 'kidia-mobile-splash-screen',
 					'setup_done' => '1',
 					'theme'      => $theme,
 				),

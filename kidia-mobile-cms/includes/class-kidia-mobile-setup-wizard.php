@@ -282,6 +282,54 @@ final class Kidia_Mobile_Setup_Wizard {
 		);
 	}
 
+	/** Returns the business-specific hero of each built-in storefront. */
+	private function signature_feature( string $profile ): array {
+		$features = array(
+			'fashion'          => array( 'type' => 'banner_grid', 'title' => __( 'The runway edit', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 2 ) ),
+			'beauty'           => array( 'type' => 'quick_links', 'title' => __( 'Shop by skin concern', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'grid', 'columns' => 4, 'item_size' => 70 ) ),
+			'electronics'      => array( 'type' => 'countdown', 'title' => __( 'Tech deal drop', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'flip_clock', 'show_seconds' => true ) ),
+			'home_living'      => array( 'type' => 'text_block', 'title' => __( 'Shop the room', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'left', 'title_size' => 30 ) ),
+			'kids_baby'        => array( 'type' => 'quick_links', 'title' => __( 'Shop by age', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 5, 'item_size' => 72 ) ),
+			'sports_fitness'   => array( 'type' => 'countdown', 'title' => __( 'Next performance drop', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'minimal_inline', 'show_seconds' => true ) ),
+			'grocery'          => array( 'type' => 'promo_strip', 'title' => __( 'Fresh today', 'kidia-mobile-cms' ), 'settings' => array( 'enable_transition' => true, 'transition_effect' => 'slide_left', 'height' => 34 ) ),
+			'luxury'           => array( 'type' => 'image_banner', 'title' => __( 'The private collection', 'kidia-mobile-cms' ), 'settings' => array( 'aspect_ratio' => .82, 'border_radius' => 0 ) ),
+			'coffee'           => array( 'type' => 'text_block', 'title' => __( 'Meet the roast', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 28 ) ),
+			'multi_store'      => array( 'type' => 'quick_links', 'title' => __( 'Browse every department', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'grid', 'columns' => 5, 'item_size' => 62 ) ),
+			'jewelry'          => array( 'type' => 'text_block', 'title' => __( 'Find the perfect gift', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 27 ) ),
+			'pet_care'         => array( 'type' => 'quick_links', 'title' => __( 'Shop by companion', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 76 ) ),
+			'family_pop'       => array( 'type' => 'quick_links', 'title' => __( 'Shop every age', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 64 ) ),
+			'marketplace_plus' => array( 'type' => 'countdown', 'title' => __( 'Today’s marketplace deals', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
+			'studio_fashion'   => array( 'type' => 'banner_grid', 'title' => __( 'The studio campaign', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 0 ) ),
+			'editorial_runway' => array( 'type' => 'image_banner', 'title' => __( 'The campaign story', 'kidia-mobile-cms' ), 'settings' => array( 'aspect_ratio' => .72, 'border_radius' => 0 ) ),
+		);
+		return $features[ $profile ] ?? $features['fashion'];
+	}
+
+	/** Creates a visibly distinct home header composition for every theme. */
+	private function theme_header_layout( string $profile ): array {
+		$row = static fn ( array $columns ): array => array( 'columns' => $columns );
+		$column = static fn ( float $width, array $items, string $align = 'center' ): array => compact( 'width', 'align', 'items' );
+		$layouts = array(
+			'fashion'          => array( $row( array( $column( 20, array( 'menu' ), 'left' ), $column( 60, array( 'logo' ) ), $column( 20, array( 'search', 'cart' ), 'right' ) ) ) ),
+			'beauty'           => array( $row( array( $column( 55, array( 'logo' ), 'left' ), $column( 45, array( 'wishlist', 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ),
+			'electronics'      => array( $row( array( $column( 24, array( 'logo' ), 'left' ), $column( 60, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ) ),
+			'home_living'      => array( $row( array( $column( 25, array( 'search' ), 'left' ), $column( 50, array( 'logo' ) ), $column( 25, array( 'account', 'cart' ), 'right' ) ) ) ),
+			'kids_baby'        => array( $row( array( $column( 60, array( 'logo' ), 'left' ), $column( 40, array( 'account', 'cart' ), 'right' ) ) ), $row( array( $column( 84, array( 'search_bar' ), 'left' ), $column( 16, array( 'wishlist' ), 'right' ) ) ) ),
+			'sports_fitness'   => array( $row( array( $column( 18, array( 'menu' ), 'left' ), $column( 44, array( 'logo' ), 'left' ), $column( 38, array( 'search', 'account', 'cart' ), 'right' ) ) ) ),
+			'grocery'          => array( $row( array( $column( 34, array( 'logo' ), 'left' ), $column( 50, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ) ),
+			'luxury'           => array( $row( array( $column( 25, array( 'menu' ), 'left' ), $column( 50, array( 'logo' ) ), $column( 25, array( 'search', 'cart' ), 'right' ) ) ) ),
+			'coffee'           => array( $row( array( $column( 70, array( 'logo' ), 'left' ), $column( 30, array( 'search', 'cart' ), 'right' ) ) ) ),
+			'multi_store'      => array( $row( array( $column( 18, array( 'menu' ), 'left' ), $column( 66, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ) ),
+			'jewelry'          => array( $row( array( $column( 30, array( 'search' ), 'left' ), $column( 40, array( 'logo' ) ), $column( 30, array( 'wishlist', 'cart' ), 'right' ) ) ) ),
+			'pet_care'         => array( $row( array( $column( 52, array( 'logo' ), 'left' ), $column( 48, array( 'search', 'account', 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ),
+			'family_pop'       => array( $row( array( $column( 50, array( 'logo' ), 'left' ), $column( 50, array( 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ),
+			'marketplace_plus' => array( $row( array( $column( 16, array( 'menu' ), 'left' ), $column( 68, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ), $row( array( $column( 65, array( 'logo' ), 'left' ), $column( 35, array( 'account', 'orders' ), 'right' ) ) ) ),
+			'studio_fashion'   => array( $row( array( $column( 50, array( 'logo' ), 'left' ), $column( 50, array( 'search', 'account', 'cart' ), 'right' ) ) ) ),
+			'editorial_runway' => array( $row( array( $column( 25, array( 'menu' ), 'left' ), $column( 50, array( 'logo' ) ), $column( 25, array( 'cart' ), 'right' ) ) ) ),
+		);
+		return array( 'rows' => $layouts[ $profile ] ?? $layouts['fashion'] );
+	}
+
 	/** @param array<string,mixed> $theme */
 	public static function asset_url( array $theme, string $role, int $index = 1 ): string {
 		$directory = sanitize_key( (string) ( $theme['asset_dir'] ?? '' ) );
@@ -932,6 +980,9 @@ final class Kidia_Mobile_Setup_Wizard {
 	private function build_home( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): array {
 		$blocks = array();
 		$slides = $this->catalog_slides( $theme );
+		$profile = (string) ( $theme['layout_profile'] ?? 'fashion' );
+		$signature = $this->signature_feature( $profile );
+		$signature_applied = false;
 		$home_design = wp_parse_args(
 			is_array( $theme['home_design'] ?? null ) ? $theme['home_design'] : array(),
 			array(
@@ -963,6 +1014,12 @@ final class Kidia_Mobile_Setup_Wizard {
 					'border_radius'   => $theme['radius'],
 				)
 			);
+			if ( ! $signature_applied && (string) $signature['type'] === (string) $type ) {
+				$settings = array_merge( $settings, (array) $signature['settings'] );
+				$settings['title'] = (string) $signature['title'];
+				$settings['signature_feature'] = $profile;
+				$signature_applied = true;
+			}
 			if ( 'app_header' === $type ) {
 				$settings['title']    = $app_name;
 				$settings['logo_url'] = $logo_url;
@@ -1055,6 +1112,13 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['show_wishlist']  = ! empty( $home_design['product_wishlist'] );
 				$settings['quick_add_enabled'] = ! empty( $home_design['product_quick_add'] );
 				$settings['enable_image_swipe'] = $home_design['product_swipe'];
+			}
+			if ( isset( $settings['signature_feature'] ) ) {
+				$settings = array_merge( $settings, (array) $signature['settings'] );
+				$settings['title'] = (string) $signature['title'];
+				if ( 'promo_strip' === $type ) {
+					$settings['text'] = (string) $signature['title'];
+				}
 			}
 			$block['settings'] = $settings;
 			$block['name']     = $this->block_name( (string) $type, (array) $theme['sample_copy'] );
@@ -1239,7 +1303,8 @@ final class Kidia_Mobile_Setup_Wizard {
 		$layout['settings']['page_background_color'] = $theme['surface'];
 		$layout['settings']['font_family'] = (string) ( $design['chrome']['font_family'] ?? 'system' );
 		$layout['settings']['content_horizontal_padding'] = (int) ( $design['chrome']['content_horizontal_padding'] ?? 20 );
-		$is_family_pop = 'family_pop' === (string) ( $theme['layout_profile'] ?? '' );
+		$profile = (string) ( $theme['layout_profile'] ?? 'fashion' );
+		$is_family_pop = 'family_pop' === $profile;
 		foreach ( array( 'header', 'footer' ) as $chrome ) {
 			if ( ! isset( $layout[ $chrome ]['settings'] ) || ! is_array( $layout[ $chrome ]['settings'] ) ) {
 				continue;
@@ -1265,6 +1330,9 @@ final class Kidia_Mobile_Setup_Wizard {
 						$layout[ $chrome ]['settings'][ $setting_key ] = $design['chrome'][ $setting_key ];
 					}
 				}
+				if ( 'home' === $page ) {
+					$layout[ $chrome ]['settings']['layout_json'] = wp_json_encode( $this->theme_header_layout( $profile ) );
+				}
 				if ( $is_family_pop ) {
 					$row = static fn ( array $columns ): array => array( 'columns' => $columns );
 					$column = static fn ( float $width, array $items, string $align = 'center' ): array => compact( 'width', 'align', 'items' );
@@ -1273,7 +1341,7 @@ final class Kidia_Mobile_Setup_Wizard {
 						'category' => array( 'rows' => array( $row( array( $column( 86, array( 'search_bar' ), 'left' ), $column( 14, array( 'cart' ), 'right' ) ) ) ) ),
 						'catalog' => array( 'rows' => array( $row( array( $column( 14, array( 'back' ), 'left' ), $column( 58, array( 'title' ) ), $column( 28, array( 'search', 'cart' ), 'right' ) ) ) ) ),
 					);
-					if ( isset( $family_headers[ $page ] ) ) {
+					if ( 'home' !== $page && isset( $family_headers[ $page ] ) ) {
 						$layout[ $chrome ]['settings']['layout_json'] = wp_json_encode( $family_headers[ $page ] );
 					}
 				}

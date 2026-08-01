@@ -150,20 +150,18 @@ defined( 'ABSPATH' ) || exit;
 		<section class="kidia-setup-step" data-step="<?php echo esc_attr( (string) $setup_step ); ?>">
 			<div class="kidia-setup-step-heading">
 				<span data-step-number><?php echo esc_html( str_pad( (string) $setup_step, 2, '0', STR_PAD_LEFT ) ); ?></span>
-				<div><h2><?php esc_html_e( 'Build your application', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Apply the selected setup and start building a real Android APK as the last step.', 'kidia-mobile-cms' ); ?></p></div>
+				<div><h2><?php esc_html_e( 'Finish setup', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Apply the selected storefront, then continue to Customize Your Pages.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
-			<div class="kidia-export-ready-card <?php echo ! empty( $push_export_config['enabled'] ) ? 'is-ready' : 'needs-push'; ?>">
-				<span class="kidia-review-icon"><span class="dashicons dashicons-smartphone"></span></span>
+			<div class="kidia-export-ready-card is-ready">
+				<span class="kidia-review-icon"><span class="dashicons dashicons-admin-customizer"></span></span>
 				<div>
-					<h3><?php esc_html_e( 'Installable Android APK', 'kidia-mobile-cms' ); ?></h3>
-					<p><?php esc_html_e( 'WooMobile will compile your store URL, application identity, selected pages and public Push bootstrap into one APK you can install on your phone.', 'kidia-mobile-cms' ); ?></p>
+					<h3><?php esc_html_e( 'Your storefront is ready to customize', 'kidia-mobile-cms' ); ?></h3>
+					<p><?php esc_html_e( 'WooMobile will apply the selected theme, identity and pages, then open the visual page customizer.', 'kidia-mobile-cms' ); ?></p>
 					<ul>
-						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'WooMobile manages Push credentials securely outside WordPress.', 'kidia-mobile-cms' ); ?></li>
-						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'The build continues in the background, so you can return to Overview later.', 'kidia-mobile-cms' ); ?></li>
-						<li><span class="dashicons <?php echo ! empty( $push_export_config['enabled'] ) ? 'dashicons-yes-alt' : 'dashicons-warning'; ?>"></span><?php echo ! empty( $push_export_config['enabled'] ) ? esc_html__( 'A private Push connection will be created automatically for this APK.', 'kidia-mobile-cms' ) : esc_html__( 'Activate the WooMobile license to include managed Push in this APK.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Every selected page receives the complete theme design.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'You can fine-tune every element from Customize Your Pages.', 'kidia-mobile-cms' ); ?></li>
+						<li><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Build and download remain available from Overview when you are ready.', 'kidia-mobile-cms' ); ?></li>
 					</ul>
-					<?php if ( empty( $push_export_config['enabled'] ) ) : ?><a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms' ) ); ?>"><?php esc_html_e( 'Activate WooMobile license', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
-					<?php if ( ! empty( $app_export_state['completed_at'] ) ) : ?><small><?php echo esc_html( sprintf( __( 'Last APK build: %s', 'kidia-mobile-cms' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $app_export_state['completed_at'] ) ) ) ); ?></small><?php endif; ?>
 				</div>
 			</div>
 		</section>
@@ -173,7 +171,7 @@ defined( 'ABSPATH' ) || exit;
 			<div></div>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms' ) ); ?>" class="button kidia-setup-skip"><?php esc_html_e( 'Exit setup', 'kidia-mobile-cms' ); ?></a>
 			<button type="button" class="button button-primary kidia-setup-next"><?php esc_html_e( 'Continue', 'kidia-mobile-cms' ); ?></button>
-			<button type="submit" name="build_after_apply" value="1" class="button button-primary kidia-setup-apply" hidden><span class="dashicons dashicons-smartphone" aria-hidden="true"></span><?php esc_html_e( 'Build APK', 'kidia-mobile-cms' ); ?></button>
+			<button type="submit" name="finish_setup" value="1" class="button button-primary kidia-setup-apply" hidden><span class="dashicons dashicons-yes-alt" aria-hidden="true"></span><?php esc_html_e( 'Finish', 'kidia-mobile-cms' ); ?></button>
 		</div>
 	</form>
 
@@ -182,6 +180,7 @@ defined( 'ABSPATH' ) || exit;
 		<div class="kidia-theme-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-modal-title">
 			<button type="button" class="kidia-theme-modal__close" data-theme-modal-close aria-label="<?php esc_attr_e( 'Close preview', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 			<div class="kidia-theme-modal__heading"><span><?php esc_html_e( 'Complete theme preview', 'kidia-mobile-cms' ); ?></span><h2 id="kidia-theme-modal-title" data-theme-modal-name></h2><p><?php esc_html_e( 'Browse every real Flutter page generated from this theme’s own settings and store imagery.', 'kidia-mobile-cms' ); ?></p></div>
+			<button type="button" class="button button-primary kidia-theme-modal__select"><?php esc_html_e( 'Use this complete theme', 'kidia-mobile-cms' ); ?></button>
 			<div class="kidia-theme-modal__workspace">
 				<nav class="kidia-theme-modal__pages" aria-label="<?php esc_attr_e( 'Theme preview pages', 'kidia-mobile-cms' ); ?>">
 					<?php foreach ( $setup_pages as $preview_page => $preview_page_data ) : ?>
@@ -201,7 +200,6 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 				</div>
 			</div>
-			<button type="button" class="button button-primary kidia-theme-modal__select"><?php esc_html_e( 'Use this complete theme', 'kidia-mobile-cms' ); ?></button>
 		</div>
 	</div>
 </div>
