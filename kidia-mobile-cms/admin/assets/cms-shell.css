@@ -15,6 +15,34 @@ body.kidia-cms-plugin-page{
 	height:100%;
 	overflow:hidden!important;
 }
+/* Dashicons and the preview icon fonts are glyphs, so browsers otherwise
+ * expose them like selectable text and can draw a Word-style caret through
+ * the artwork. Keep icons visually inert while leaving their button/link
+ * parents fully clickable and preserving the intentional card drag handles. */
+body.kidia-cms-plugin-page :is(
+	.dashicons,
+	.kidia-app-icon,
+	.kidia-category-preview-material-icon,
+	[aria-hidden="true"]
+),
+body.kidia-cms-plugin-page :is(
+	.dashicons,
+	.kidia-app-icon,
+	.kidia-category-preview-material-icon
+)::before{
+	-webkit-user-select:none!important;
+	user-select:none!important;
+	caret-color:transparent!important;
+}
+body.kidia-cms-plugin-page :is(
+	.dashicons,
+	.kidia-app-icon,
+	.kidia-category-preview-material-icon,
+	svg[aria-hidden="true"],
+	img[aria-hidden="true"]
+){
+	-webkit-user-drag:none;
+}
 /* Keep WordPress navigation usable without restoring document scrolling.
  * This rail belongs only to the black admin menu. Containing overscroll stops
  * a wheel/touch gesture at either end from leaking into the plugin workspace. */
