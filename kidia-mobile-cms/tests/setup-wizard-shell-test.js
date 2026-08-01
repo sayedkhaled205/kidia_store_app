@@ -209,7 +209,12 @@ assert.match(wizardTemplate, /if \( \$is_required \)[\s\S]*type="hidden"[\s\S]*d
 assert.match(wizardTemplate, /catalog_stats/, "Wizard must report real catalog content.");
 assert.doesNotMatch(wizardTemplate, /catalog_images/, "Theme cards must never use merchant catalog images.");
 assert.match(wizardTemplate, /asset_url\(\s*\$theme,\s*'category'[\s\S]*asset_url\(\s*\$theme,\s*'product'/, "Theme cards must use their bundled category and product artwork.");
-assert.match(wizardTemplate, /Build your application[\s\S]*name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must finish by starting a real APK build.");
+assert.match(wizardTemplate, /Finish setup[\s\S]*name="finish_setup"[\s\S]*Finish/, "Setup Wizard must finish by applying the theme before customization.");
+assert.doesNotMatch(wizardTemplate, /name="build_after_apply"[\s\S]*Build APK/, "Setup Wizard must not start an APK build from its final action.");
+assert.match(admin, /'page'\s*=>\s*'kidia-mobile-splash-screen'[\s\S]*'setup_done'\s*=>\s*'1'/, "Finish must open Customize Your Pages after applying the setup.");
+assert.match(service, /function theme_header_layout[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'editorial_runway'/, "All built-in themes must define intentional, distinct home header compositions.");
+assert.match(service, /function signature_feature[\s\S]*'Shop by skin concern'[\s\S]*'Tech deal drop'[\s\S]*'Shop the room'[\s\S]*'Fresh today'[\s\S]*'The private collection'[\s\S]*'The campaign story'/, "Every business theme must install a business-specific signature section.");
+assert.match(service, /signature_feature[\s\S]*theme_header_layout[\s\S]*signature_feature/, "Theme signatures and header layouts must be consumed by the generated application layout.");
 assert.match(dashboardTemplate, /kidia-customer-journey__build-step[\s\S]*data-kidia-app-build[\s\S]*kidia-app-build__card-form[\s\S]*data-build-form-action[\s\S]*kidia-app-build__card kidia-app-build__card-button[\s\S]*data-build-action/, "The complete fourth launch card must be the single stateful build/download button.");
 assert.match(shellTemplate, /data-build-persistent[\s\S]*data-kidia-background-job="app-build"[\s\S]*data-build-modal[\s\S]*role="dialog"[\s\S]*data-build-message[\s\S]*data-build-progress[\s\S]*data-build-cancel/, "The build progress card must live in the permanent CMS shell and keep its action across page changes.");
 assert.match(shellTemplate, /\$shell_build_active[\s\S]*Cancel Build[\s\S]*OK/, "The server-rendered build card must show Cancel only while active and OK after a terminal state.");
