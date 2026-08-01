@@ -94,6 +94,19 @@ hook.render(overlay, {
 assert.equal(value.textContent, "1%");
 assert.match(count.textContent, /^300\s*\/\s*29,080 records completed$/);
 
+hook.render(overlay, {
+  job_id: "job-1",
+  revision: 3,
+  processed: 29080,
+  total: 29080,
+  progress: 100,
+  stage: "Publishing recommendations",
+  done: true,
+  result_url: "https://example.com/wp-admin/admin.php?page=kidia-mobile-ai-insights&ai_ready=1",
+});
+assert.equal(overlay.dataset.aiComplete, "1");
+assert.match(overlay.querySelector("[data-ai-cancel-button]").textContent, /OK/);
+
 const pageContent = window.document.createElement("main");
 pageContent.appendChild(overlay);
 window.document.body.appendChild(pageContent);
@@ -101,8 +114,9 @@ const sameOverlay = overlay;
 assert.equal(
   hook.persistAcrossNavigation(overlay, "job-1"),
   true,
-  "An active analysis must be promoted to the persistent CMS layer before a page swap.",
+  "A running or completed analysis must be promoted before a page swap.",
 );
+assert.equal(overlay.dataset.kidiaBackgroundJob, "generate-offers");
 assert.equal(
   overlay,
   sameOverlay,
@@ -111,8 +125,8 @@ assert.equal(
 assert.equal(overlay.parentElement, window.document.body);
 assert.equal(overlay.classList.contains("is-docked"), true);
 assert.equal(overlay.classList.contains("is-global"), true);
-assert.equal(value.textContent, "1%");
-assert.match(count.textContent, /^300\s*\/\s*29,080 records completed$/);
+assert.equal(value.textContent, "100%");
+assert.match(count.textContent, /^29,080\s*\/\s*29,080 records completed$/);
 
 Object.defineProperties(overlay, {
   offsetWidth: { value: 380 },

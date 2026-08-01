@@ -663,9 +663,17 @@ assert.match(
 );
 assert.match(
   shellScript,
-  /Completed\. Loading your results…[\s\S]*view\.hidden = true[\s\S]*window\.location\.assign\(resultUrl\)/,
-  "AI Offer Studio must become Completed and open its generated results automatically without a View results step.",
+  /if \(payload\.done\)[\s\S]*stage\.textContent = 'Completed'[\s\S]*dashicons-yes-alt[\s\S]*>OK/,
+  "AI Offer Studio must remain Completed with OK until the owner acknowledges it.",
 );
+assert.doesNotMatch(shellScript, /window\.location\.assign\(resultUrl\)/, "Generate Offers completion must not navigate away or hide another job card.");
+assert.match(
+  shellScript,
+  /document\.addEventListener\('submit'[\s\S]*closest\('\[data-ai-generate-form\]'\)[\s\S]*button\.disabled = false/,
+  "Generate Offers must bind injected forms and become runnable again after success.",
+);
+assert.match(aiInsights, /data-ai-progress-overlay data-kidia-background-job="generate-offers"/, "The real Generate Offers card must have a persistent identity.");
+assert.match(storeData, /kidia-cart-import-state[^>]*data-kidia-background-job="abandoned-carts"/, "The real abandoned-cart import card must have an independent persistent identity.");
 assert.match(
   aiAnalysisJob,
   /date_preset[\s\S]*sanitize_date_preset[\s\S]*'all_time'[\s\S]*result_args[\s\S]*'custom' === \$date_preset/,

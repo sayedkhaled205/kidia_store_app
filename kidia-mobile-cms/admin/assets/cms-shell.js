@@ -199,6 +199,15 @@
 					node.matches('.kidia-ai-progress-overlay.is-global')
 				));
 		};
+		const promoteBackgroundJobCards = function (content) {
+			const seen = new Set();
+			Array.from(content.querySelectorAll('[data-kidia-background-job]')).forEach(function (card) {
+				const job = String(card.dataset.kidiaBackgroundJob || '');
+				if (!job || seen.has(job)) return;
+				seen.add(job);
+				if (card.parentNode !== content) content.appendChild(card);
+			});
+		};
 		const loadPage = async function (url, pushState) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
 			const shell = document.querySelector('[data-kidia-cms-shell]');
@@ -260,6 +269,7 @@
 				document.dispatchEvent(new CustomEvent('kidia:cms-before-page-change', {
 					detail: { url: cacheKey }
 				}));
+				promoteBackgroundJobCards(currentContent);
 				Array.from(currentContent.childNodes).forEach(function (node) {
 					if (!persistentShellNode(node, sidebar, shell)) node.remove();
 				});
@@ -458,12 +468,12 @@
 	document.addEventListener('kidia:cms-page-ready', function () {
 		initCustomDateFilters(document);
 	});
-	const aiGenerateForm = document.querySelector('[data-ai-generate-form]');
 	const aiBackgroundConfig = window.kidiaCMSBackground || {};
 	const aiDockPositionKey = 'kidia_ai_progress_position_v1';
 	const aiRequest = async function (action, values) {
-		const nonce = aiGenerateForm
-			? aiGenerateForm.dataset.aiAnalysisNonce || ''
+		const currentAiForm = document.querySelector('[data-ai-generate-form]');
+		const nonce = currentAiForm
+			? currentAiForm.dataset.aiAnalysisNonce || ''
 			: aiBackgroundConfig.aiNonce || '';
 		const body = new URLSearchParams(Object.assign({action: action, nonce: nonce}, values || {}));
 		const response = await window.fetch(aiBackgroundConfig.ajaxUrl || window.ajaxurl || '', {
@@ -570,9 +580,9 @@
 		if (
 			!overlay ||
 			!jobId ||
-			overlay.hidden ||
-			overlay.dataset.aiComplete === '1'
+			overlay.hidden
 		) return false;
+		overlay.dataset.kidiaBackgroundJob = 'generate-offers';
 		overlay.classList.add('is-docked', 'is-global');
 		document.body.appendChild(overlay);
 		restoreAiDockPosition(overlay);
@@ -625,18 +635,11 @@
 		}
 		if (payload.done) {
 			overlay.setAttribute('aria-busy', 'false');
-			if (stage) stage.textContent = 'Completed. Loading your results…';
+			if (stage) stage.textContent = 'Completed';
 			if (view) view.hidden = true;
 			if (background) background.hidden = true;
-			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Dismiss';
+			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>OK';
 			overlay.dataset.aiComplete = '1';
-			const resultUrl = payload.result_url || aiBackgroundConfig.aiUrl || '';
-			if (resultUrl && overlay.dataset.aiResultOpening !== '1') {
-				overlay.dataset.aiResultOpening = '1';
-				window.setTimeout(function () {
-					window.location.assign(resultUrl);
-				}, 250);
-			}
 		}
 	};
 	if (window.__KIDIA_AI_PROGRESS_TEST__) {
@@ -745,10 +748,10 @@
 			});
 		}
 	};
-	if (aiGenerateForm) {
-		let activeJobId = String(aiBackgroundConfig.activeAiJob || '');
-		let foreground = true;
-		const overlay = document.querySelector('[data-ai-progress-overlay]');
+	let activeJobId = String(aiBackgroundConfig.activeAiJob || '');
+	let foreground = true;
+	let overlay = document.querySelector('[data-ai-progress-overlay]');
+	if (overlay) {
 		bindAiOverlayActions(overlay, function () { return activeJobId; }, function (value) { foreground = value; });
 		document.addEventListener('kidia:cms-before-page-change', function () {
 			if (!persistAiProgressAcrossNavigation(overlay, activeJobId)) return;
@@ -767,8 +770,15 @@
 					}
 				});
 		});
-		aiGenerateForm.addEventListener('submit', async function (event) {
+	}
+	document.addEventListener('submit', async function (event) {
+		const aiGenerateForm = event.target.closest('[data-ai-generate-form]');
+		if (!aiGenerateForm) return;
 			event.preventDefault();
+			overlay = aiGenerateForm.nextElementSibling && aiGenerateForm.nextElementSibling.matches('[data-ai-progress-overlay]')
+				? aiGenerateForm.nextElementSibling
+				: document.querySelector('[data-ai-progress-overlay]:not(.is-global)');
+			bindAiOverlayActions(overlay, function () { return activeJobId; }, function (value) { foreground = value; });
 			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
 			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
 			const note = overlay && overlay.querySelector('[data-ai-progress-note]');
@@ -821,6 +831,9 @@
 				}
 				if (payload.cancelled || !foreground) return;
 				persistAiProgressAcrossNavigation(overlay, activeJobId);
+				button.disabled = false;
+				button.classList.remove('is-generating');
+				if (label) label.textContent = 'Refresh offers from store data';
 			} catch (error) {
 				if (!foreground) return;
 				if (stage) stage.textContent = error && error.message ? error.message : 'The analysis could not be completed.';
@@ -831,7 +844,6 @@
 				if (label) label.textContent = 'Retry offer generation';
 			}
 		});
-	}
 	const configuredJob = String(aiBackgroundConfig.activeAiJob || '');
 	const viewingAiResult = new URL(window.location.href).searchParams.get('ai_ready') === '1';
 	if (configuredJob && !viewingAiResult) {

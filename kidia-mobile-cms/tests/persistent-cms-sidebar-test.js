@@ -173,9 +173,10 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
       </nav>
     </div>
     <div data-kidia-app-build data-build-persistent data-kidia-background-job="app-build">Persistent build</div>
-    <div data-kidia-background-job="abandoned-carts">Persistent cart import</div>
-    <div class="kidia-ai-progress-overlay is-global" data-kidia-background-job="generate-offers">Persistent offers</div>
-    <section data-page-content>Overview content</section>
+    <section data-page-content>Overview content
+      <div><div data-kidia-background-job="abandoned-carts">Persistent cart import</div></div>
+      <div class="kidia-ai-progress-overlay" data-kidia-background-job="generate-offers">Persistent offers</div>
+    </section>
     </main>
   </div>
 </body></html>`;
