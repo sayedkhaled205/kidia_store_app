@@ -321,7 +321,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 				)
 			)
 		) {
-			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
+			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline" data-kidia-app-promo-placement="after_header"></div>';
 		}
 	}
 
@@ -336,7 +336,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 			&& ! empty( $settings['inline_banner']['enabled'] )
 			&& 'before_footer' === (string) $settings['inline_banner']['placement']
 		) {
-			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
+			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline" data-kidia-app-promo-placement="before_footer"></div>';
 		}
 		echo '<div class="kidia-app-promo-root" data-kidia-app-promo-root></div>';
 		echo '<script type="application/json" data-kidia-app-promo-config>';
@@ -348,7 +348,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 		if ( self::is_preview_request() || ! self::settings()['enabled'] ) {
 			return '';
 		}
-		return '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
+		return '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline" data-kidia-app-promo-placement="shortcode"></div>';
 	}
 
 	public function save(): void {

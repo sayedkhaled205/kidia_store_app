@@ -287,6 +287,21 @@ assert.match(
   /prefers-reduced-motion:reduce/,
   "Campaign motion must respect accessibility preferences.",
 );
+assert.match(
+  publicCss,
+  /\.kidia-app-promo\{[\s\S]*--kidia-app-promo-soft:color-mix/,
+  "Campaigns moved outside the root must keep an opaque themed surface.",
+);
+assert.match(
+  service,
+  /data-kidia-app-promo-placement="after_header"[\s\S]*data-kidia-app-promo-placement="before_footer"/,
+  "Automatic inline slots must declare their intended theme placement.",
+);
+assert.match(
+  publicScript,
+  /placeInlineSlot[\s\S]*after_header[\s\S]*header\.after\(slot\)[\s\S]*before_footer[\s\S]*footer\.before\(slot\)/,
+  "Automatic inline campaigns must be moved beside the real theme header or footer.",
+);
 assert.equal(
   fs.existsSync(path.join(root, "public", "assets", "vendor", "qrcode.min.js")),
   true,
@@ -412,7 +427,11 @@ assert.equal(
 
 const dom = new JSDOM(
   `<!doctype html><body>
-    <div data-kidia-app-promo-slot="inline"></div>
+    <header id="header">Store header</header>
+    <main>Store content</main>
+    <div data-kidia-app-promo-slot="inline" data-kidia-app-promo-placement="after_header"></div>
+    <div data-kidia-app-promo-slot="inline" data-kidia-app-promo-placement="before_footer"></div>
+    <footer id="footer">Store footer</footer>
     <div data-kidia-app-promo-root></div>
   </body>`,
   {
@@ -734,6 +753,20 @@ setTimeout(() => {
       '[data-kidia-app-promo-slot="inline"] .kidia-app-promo--inline_banner',
     ),
     "Shortcode and automatic inline slots must receive a real banner.",
+  );
+  assert.equal(
+    dom.window.document.querySelector("#header").nextElementSibling,
+    dom.window.document.querySelector(
+      '[data-kidia-app-promo-placement="after_header"]',
+    ),
+    "After-header campaigns must sit after the real theme header instead of above it.",
+  );
+  assert.equal(
+    dom.window.document.querySelector("#footer").previousElementSibling,
+    dom.window.document.querySelector(
+      '[data-kidia-app-promo-placement="before_footer"]',
+    ),
+    "Before-footer campaigns must sit before the real theme footer instead of below it.",
   );
   smartBanner.querySelector(".kidia-app-promo__dismiss").click();
   assert.ok(

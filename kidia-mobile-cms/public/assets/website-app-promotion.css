@@ -9,6 +9,7 @@
 .kidia-app-promo-root{position:relative;z-index:99990}
 .kidia-app-promo-root *,.kidia-app-promo-slot *{box-sizing:border-box}
 .kidia-app-promo{
+	--kidia-app-promo-soft:color-mix(in srgb,var(--kidia-app-promo-brand) 10%,var(--kidia-app-promo-surface));
 	position:relative;
 	display:flex;
 	align-items:center;
