@@ -115,6 +115,9 @@ assert.match(service, /array_fill_keys\(\s*array_keys\(\s*self::setup_pages\(\)\
 assert.match(service, /catalog_slides\(\s*\$theme\s*\)[\s\S]*setup_theme_hero_[\s\S]*asset_url/, "Theme installation must place multiple bundled images in the live Home hero.");
 assert.doesNotMatch(service.match(/private function catalog_slides[\s\S]*?return \$slides;\s*\}/)?.[0] || "", /wc_get_products|wp_get_attachment_image_url/, "Built-in theme slides must never read merchant products or media.");
 assert.match(service, /build_demo_catalog[\s\S]*theme_demo_labels[\s\S]*product-\d|asset_url\(\s*\$theme,\s*'product'/, "Every built-in theme must include its own demo products and artwork.");
+assert.match(service, /hydrate_theme_section_defaults[\s\S]*promo_strip[\s\S]*countdown[\s\S]*quick_links[\s\S]*brand_carousel[\s\S]*banner_grid[\s\S]*hero_slider[\s\S]*product_grid[\s\S]*category_grid/, "Every built-in theme section must receive visible starter content instead of rendering empty.");
+assert.match(service, /! \$this->is_complete\(\)[\s\S]*array_intersect_key\( \$defaults[\s\S]*app_name[\s\S]*logo_url[\s\S]*primary_color/, "The first Setup Wizard step must prefer current connected-site identity defaults.");
+assert.match(service, /get_option\( 'site_icon'[\s\S]*get_site_icon_url[\s\S]*woocommerce_email_header_image/, "Setup identity must discover a site icon or WooCommerce email logo when the theme has no custom logo.");
 assert.match(service, /preview_snapshot[\s\S]*build_home[\s\S]*build_page_layout[\s\S]*build_category_settings/, "Built-in preview and installation must share the same real theme builders.");
 assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'[\s\S]*'jewelry'[\s\S]*'pet_care'[\s\S]*'family_pop'[\s\S]*'marketplace_plus'[\s\S]*'studio_fashion'[\s\S]*'editorial_runway'/, "Every built-in theme must define a distinct multi-page layout profile.");
 for (const theme of Object.keys(newThemeConfiguredRatios)) {
@@ -131,14 +134,14 @@ const familyProfileEnd = service.indexOf("'marketplace_plus' => array(", familyP
 const familyProfile = service.slice(familyProfileStart, familyProfileEnd);
 assert.match(familyTheme, /'hero_ratio'\s*=>\s*1\.0[\s\S]*'hero_radius'\s*=>\s*12[\s\S]*'hero_padding'\s*=>\s*16/, "Family Pop Home must use the official square campaign geometry and spacing.");
 assert.match(familyTheme, /'category_columns'\s*=>\s*3[\s\S]*'category_size'\s*=>\s*64[\s\S]*'quick_columns'\s*=>\s*4[\s\S]*'quick_size'\s*=>\s*64/, "Family Pop Home discovery circles must match the official counts and 64px size.");
-assert.match(familyTheme, /'product_ratio'\s*=>\s*\.95[\s\S]*'product_radius'\s*=>\s*0/, "Family Pop Home product cards must use the compact PatPat image height.");
+assert.match(familyTheme, /'product_ratio'\s*=>\s*1\.1[\s\S]*'product_radius'\s*=>\s*0/, "Family Pop Home product cards must use the shorter PatPat image height.");
 assert.match(familyTheme, /'category_design'[\s\S]*'card_height'\s*=>\s*104[\s\S]*'image_size'\s*=>\s*64[\s\S]*'font_size'\s*=>\s*16/, "Family Pop primary categories must use the official list-row measurements.");
 assert.match(familyProfile, /'font_family'\s*=>\s*'poppins'/, "Family Pop chrome must carry its own deterministic application font.");
 assert.match(familyProfile, /'header_heights'\s*=>\s*array\(\s*'home'\s*=>\s*104[\s\S]*'catalog'\s*=>\s*56[\s\S]*'search_height'\s*=>\s*40[\s\S]*'search_icon_size'\s*=>\s*20/, "Family Pop must use the compact PatPat header, search and search-icon measurements.");
 assert.match(service, /\$is_family_pop[\s\S]*'category'\s*=>\s*array[\s\S]*86,\s*array\(\s*'search_bar'[\s\S]*'catalog'\s*=>\s*array[\s\S]*'back'[\s\S]*'search',\s*'cart'/, "Family Pop must install page-specific official header compositions.");
 assert.match(familyProfile, /'icon_size'\s*=>\s*22[\s\S]*'label_size'\s*=>\s*11[\s\S]*'icon_label_gap'\s*=>\s*3/, "Family Pop navigation must carry the compact PatPat icon and label measurements.");
-assert.match(familyProfile, /'filter_button_style'\s*=>\s*'flat'[\s\S]*'filter_color'\s*=>\s*true[\s\S]*'gap'\s*=>\s*6[\s\S]*'image_ratio'\s*=>\s*\.95/, "Family Pop catalog must use the four-part flat filter row and compact product grid.");
-assert.match(familyProfile, /'tabs_enabled'\s*=>\s*true[\s\S]*'gallery_ratio'\s*=>\s*\.88[\s\S]*'reviews_enabled'\s*=>\s*true[\s\S]*'related_ratio'\s*=>\s*\.95[\s\S]*'button_width'\s*=>\s*62[\s\S]*'show_button_icon'\s*=>\s*false/, "Family Pop product detail must retain tabs and reviews with compact gallery, related cards and the 62% text-only purchase button.");
+assert.match(familyProfile, /'filter_button_style'\s*=>\s*'flat'[\s\S]*'filter_color'\s*=>\s*true[\s\S]*'gap'\s*=>\s*6[\s\S]*'image_ratio'\s*=>\s*1\.1/, "Family Pop catalog must use the four-part flat filter row and short product grid.");
+assert.match(familyProfile, /'tabs_enabled'\s*=>\s*true[\s\S]*'gallery_ratio'\s*=>\s*\.88[\s\S]*'reviews_enabled'\s*=>\s*true[\s\S]*'related_ratio'\s*=>\s*1\.1[\s\S]*'button_width'\s*=>\s*62[\s\S]*'show_button_icon'\s*=>\s*false/, "Family Pop product detail must retain tabs and reviews with short related cards and the 62% text-only purchase button.");
 assert.match(familyProfile, /'access'\s*=>\s*'sign_in_required'/, "Family Pop Wishlist must route signed-out customers to the sign-in state.");
 assert.match(pageStore, /show_button_icon/, "Page Builder must expose the product purchase-button icon toggle.");
 assert.match(pageStore, /font_family[\s\S]*content_horizontal_padding/, "Page Builder must preserve the Family Pop font and page spacing settings.");
@@ -294,6 +297,10 @@ assert.match(admin, /function ai_insights_page[\s\S]*Kidia_Mobile_AI_Offer_Engin
 assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An optional reviewed AI offer push must prefill the editable offer composer.");
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /kidia-theme-modal__workspace[\s\S]*kidia-theme-modal__device[\s\S]*iframe/, "Full theme preview must host the real Flutter application surface.");
+assert.match(wizardTemplate, /kidia-theme-modal__controls[\s\S]*kidia-theme-modal__pages[\s\S]*kidia-theme-modal__select/, "Theme selection must sit directly below the page buttons.");
+assert.match(wizardCss, /kidia-theme-modal__dialog\{[^}]*height:min\(850px,calc\(100vh - 40px\)\)[^}]*overflow:hidden/, "Theme preview must fit the popup viewport without an outer scrollbar.");
+assert.match(wizardCss, /kidia-theme-modal__device\{[^}]*--kidia-theme-preview-scale:\.72[^}]*height:calc\(800px \* var\(--kidia-theme-preview-scale\) \+ 10px\)[^}]*overflow:hidden/, "The complete phone, including header and footer, must scale inside the popup.");
+assert.match(wizardCss, /kidia-setup-apply\{[^}]*flex-direction:row!important[^}]*white-space:nowrap\}[\s\S]*kidia-setup-apply \.dashicons\{[^}]*line-height:20px/, "Finish label and check icon must remain centered on one row.");
 assert.match(wizardCss, /kidia-setup-color-control\{display:flex!important;[^}]*align-items:stretch;[^}]*width:100%}/, "Color picker and HEX code must stay compact and side by side.");
 assert.match(wizardCss, /\.kidia-setup-actions \.button\[hidden\]\{display:none!important\}/, "Apply Theme must remain hidden until the final setup step.");
 assert.match(wizardCss, /--kidia-setup-theme-color:#2f806e/, "Setup actions must expose a theme-driven color.");
