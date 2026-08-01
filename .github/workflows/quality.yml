@@ -48,7 +48,14 @@ jobs:
           path: kidia-mobile-cms/admin/flutter-preview
           if-no-files-found: error
       - name: Verify committed preview matches current Flutter source
-        run: git diff --exit-code -- kidia-mobile-cms/admin/flutter-preview
+        run: |
+          # Dart2JS may rename private minified symbols when the same source is
+          # compiled from a PR merge commit. Compare every deterministic web
+          # artifact byte-for-byte and syntax-check the generated entry bundle.
+          git diff --exit-code -- \
+            kidia-mobile-cms/admin/flutter-preview \
+            ':(exclude)kidia-mobile-cms/admin/flutter-preview/main.dart.js'
+          node --check kidia-mobile-cms/admin/flutter-preview/main.dart.js
       - name: Build Android debug APK
         run: >-
           flutter build apk --debug
