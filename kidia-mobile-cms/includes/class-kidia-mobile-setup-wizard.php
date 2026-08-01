@@ -174,7 +174,7 @@ final class Kidia_Mobile_Setup_Wizard {
 						'hero_ratio' => 1.0, 'hero_radius' => 12, 'hero_padding' => 16, 'hero_indicators' => 'image_bottom',
 						'category_layout' => 'grid', 'category_columns' => 3, 'category_size' => 64, 'category_gap' => 12,
 						'quick_layout' => 'carousel', 'quick_columns' => 4, 'quick_size' => 64, 'quick_gap' => 12,
-						'product_columns' => 2, 'product_ratio' => .75, 'product_radius' => 0, 'product_style' => 'minimal',
+						'product_columns' => 2, 'product_ratio' => .95, 'product_radius' => 0, 'product_style' => 'minimal',
 						'product_rating' => false, 'product_badge' => true, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => true,
 						'banner_layout' => 'featured', 'banner_ratio' => 1.33, 'banner_gap' => 10, 'image_banner_ratio' => 1.33,
 					),
@@ -1260,7 +1260,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['search_radius'] = (int) $design['chrome']['search_radius'];
 				$layout[ $chrome ]['settings']['logo_text'] = $app_name;
 				$layout[ $chrome ]['settings']['logo_url'] = $logo_url;
-				foreach ( array( 'horizontal_padding', 'vertical_padding', 'search_height', 'search_border_width', 'show_voice_search', 'show_cart_badge', 'cart_icon_variant', 'logo_width', 'logo_height', 'icon_size', 'title_font_size' ) as $setting_key ) {
+				foreach ( array( 'horizontal_padding', 'vertical_padding', 'search_height', 'search_icon_size', 'search_border_width', 'show_voice_search', 'show_cart_badge', 'cart_icon_variant', 'logo_width', 'logo_height', 'icon_size', 'title_font_size' ) as $setting_key ) {
 					if ( array_key_exists( $setting_key, $design['chrome'] ) ) {
 						$layout[ $chrome ]['settings'][ $setting_key ] = $design['chrome'][ $setting_key ];
 					}
@@ -1303,6 +1303,13 @@ final class Kidia_Mobile_Setup_Wizard {
 			}
 			if ( array_key_exists( 'card_style', $element['settings'] ) ) {
 				$element['settings']['card_style'] = $theme['card_style'];
+			}
+			if ( $is_family_pop ) {
+				foreach ( array( 'button_color', 'button_border_color' ) as $button_color_key ) {
+					if ( array_key_exists( $button_color_key, $element['settings'] ) ) {
+						$element['settings'][ $button_color_key ] = $primary;
+					}
+				}
 			}
 			foreach ( array( 'card_radius', 'corner_radius', 'image_radius', 'button_radius', 'chip_radius' ) as $radius_key ) {
 				if ( array_key_exists( $radius_key, $element['settings'] ) ) {
@@ -1516,10 +1523,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				'account' => array( 'avatar_size' => 80, 'summary_style' => 'elevated' ),
 			),
 			'family_pop' => array(
-				'chrome' => array( 'header_height' => 64, 'header_heights' => array( 'home' => 120, 'category' => 64, 'catalog' => 64, 'product' => 64, 'wishlist' => 64, 'account' => 64, 'size_chart' => 64 ), 'header_shadow' => 'none', 'search_radius' => 22, 'footer_height' => 64, 'footer_shadow' => 'none', 'button_radius' => 28, 'button_shape' => 'pill', 'horizontal_padding' => 16, 'vertical_padding' => 4, 'search_height' => 44, 'search_border_width' => 1, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag', 'icon_size' => 24, 'title_font_size' => 17, 'active_color' => '#111111', 'inactive_color' => '#595959', 'label_size' => 11, 'icon_label_gap' => 3, 'border_width' => 1, 'button_color' => '#111111', 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'font_family' => 'poppins', 'content_horizontal_padding' => 16 ),
-				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 56, 'filter_radius' => 0, 'filter_button_style' => 'flat', 'filter_color' => true, 'filter_gap' => 0, 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => .75, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => true, 'quick_add_style' => 'outline', 'show_wishlist' => false, 'pagination' => 'automatic', 'per_page' => 16, 'outer_horizontal_padding' => 4, 'top_spacing' => 6, 'image_inset' => 0, 'image_radius' => 0, 'content_horizontal_padding' => 4, 'content_top_padding' => 7, 'content_bottom_padding' => 8, 'price_prefix' => 'From ', 'price_color' => '#111111', 'price_size' => 14, 'show_name' => false ),
-				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => false, 'tabs_height' => 56, 'tabs_active_color' => '#111111', 'tabs_inactive_color' => '#666666', 'gallery_ratio' => .75, 'gallery_fit' => 'cover', 'thumbnails' => false, 'indicators' => false, 'counter' => true, 'zoom' => false, 'show_rating' => true, 'show_badge' => false, 'price_size' => 21, 'name_size' => 16, 'variation_style' => 'chips', 'chip_radius' => 20, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 2, 'related_gap' => 6, 'related_ratio' => .75, 'button_width' => 62, 'button_height' => 56, 'button_color' => '#111111', 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'size_chart' => 'chips' ),
-				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'outline', 'button_radius' => 28, 'top_spacing' => 52, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => .75, 'show_name' => false ),
+				'chrome' => array( 'header_height' => 56, 'header_heights' => array( 'home' => 104, 'category' => 56, 'catalog' => 56, 'product' => 56, 'wishlist' => 56, 'account' => 56, 'size_chart' => 56 ), 'header_shadow' => 'none', 'search_radius' => 20, 'footer_height' => 64, 'footer_shadow' => 'none', 'button_radius' => 28, 'button_shape' => 'pill', 'horizontal_padding' => 16, 'vertical_padding' => 4, 'search_height' => 40, 'search_icon_size' => 20, 'search_border_width' => 1, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag', 'icon_size' => 22, 'title_font_size' => 17, 'inactive_color' => '#66736F', 'label_size' => 11, 'icon_label_gap' => 3, 'border_width' => 1, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'font_family' => 'poppins', 'content_horizontal_padding' => 16 ),
+				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 52, 'filter_radius' => 0, 'filter_button_style' => 'flat', 'filter_color' => true, 'filter_gap' => 0, 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => .95, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => true, 'quick_add_style' => 'outline', 'show_wishlist' => false, 'pagination' => 'automatic', 'per_page' => 16, 'outer_horizontal_padding' => 4, 'top_spacing' => 6, 'image_inset' => 0, 'image_radius' => 0, 'content_horizontal_padding' => 4, 'content_top_padding' => 6, 'content_bottom_padding' => 7, 'price_prefix' => 'From ', 'price_size' => 14, 'show_name' => false ),
+				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => false, 'tabs_height' => 52, 'tabs_inactive_color' => '#66736F', 'gallery_ratio' => .88, 'gallery_fit' => 'cover', 'thumbnails' => false, 'indicators' => false, 'counter' => true, 'zoom' => false, 'show_rating' => true, 'show_badge' => false, 'price_size' => 21, 'name_size' => 16, 'variation_style' => 'chips', 'chip_radius' => 20, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 2, 'related_gap' => 6, 'related_ratio' => .95, 'button_width' => 62, 'button_height' => 52, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'size_chart' => 'chips' ),
+				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'outline', 'button_radius' => 28, 'top_spacing' => 44, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => .95, 'show_name' => false ),
 				'account' => array( 'avatar_size' => 64, 'summary_style' => 'minimal', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
 			),
 			'marketplace_plus' => array(
