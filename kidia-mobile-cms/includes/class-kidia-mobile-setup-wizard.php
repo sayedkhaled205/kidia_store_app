@@ -356,10 +356,14 @@ final class Kidia_Mobile_Setup_Wizard {
 		$themes = self::themes();
 		$theme_key = $this->normalize_theme_key( $theme_key, $themes );
 		$theme = $themes[ $theme_key ];
-		$app_name = (string) $theme['name'];
+		$identity = $this->identity();
+		$app_name = (string) ( $identity['app_name'] ?? $theme['name'] );
+		$primary = sanitize_hex_color( (string) ( $identity['primary_color'] ?? '' ) ) ?: (string) $theme['primary'];
+		$secondary = sanitize_hex_color( (string) ( $identity['secondary_color'] ?? '' ) ) ?: (string) $theme['soft'];
+		$logo_url = esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) );
 		$pages = array();
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
-			$pages[ $page ] = $this->build_page_layout( $page, $theme, (string) $theme['primary'], (string) $theme['soft'], $app_name, '' );
+			$pages[ $page ] = $this->build_page_layout( $page, $theme, $primary, $secondary, $app_name, $logo_url );
 		}
 		$preview_category = array(
 			'enabled'    => true,
@@ -368,14 +372,15 @@ final class Kidia_Mobile_Setup_Wizard {
 		);
 		return array(
 			'theme' => $theme_key,
-			'home' => $this->build_home( $theme, (string) $theme['primary'], (string) $theme['soft'], $app_name, '' ),
+			'home' => $this->build_home( $theme, $primary, $secondary, $app_name, $logo_url ),
 			'pages' => $pages,
 			'category' => $this->build_category_settings( $theme, $preview_category ),
 			'demo_catalog' => $this->build_demo_catalog( $theme ),
 			'identity' => array(
 				'app_name' => $app_name,
-				'primary_color' => $theme['primary'],
-				'secondary_color' => $theme['soft'],
+				'primary_color' => $primary,
+				'secondary_color' => $secondary,
+				'logo_url' => $logo_url,
 				'theme' => $theme_key,
 			),
 		);
@@ -1470,6 +1475,9 @@ final class Kidia_Mobile_Setup_Wizard {
 						$layout[ $chrome ]['settings'][ $setting_key ] = $design['chrome'][ $setting_key ];
 					}
 				}
+				// Navigation accents always follow the store brand, never a hard-coded theme swatch.
+				$layout[ $chrome ]['settings']['active_color'] = $primary;
+				$layout[ $chrome ]['settings']['button_color'] = $primary;
 			}
 		}
 		foreach ( $layout['elements'] as &$element ) {
@@ -1600,8 +1608,8 @@ final class Kidia_Mobile_Setup_Wizard {
 			'show_name' => true, 'show_price' => true, 'show_rating' => true, 'show_badge' => false,
 			'price_color' => $ink, 'price_size' => 14,
 			'quick_add_enabled' => true, 'quick_add_icon_variant' => 'bag',
-			'quick_add_icon_style' => 'filled', 'quick_add_icon_color' => '#FFFFFF',
-			'quick_add_show_background' => true, 'quick_add_background_color' => $primary,
+			'quick_add_icon_style' => 'filled', 'quick_add_icon_color' => $primary,
+			'quick_add_show_background' => true, 'quick_add_background_color' => '#FFFFFF',
 			'quick_add_background_size' => 36, 'quick_add_radius' => 18,
 			'quick_add_position' => 'bottom_end', 'show_wishlist' => false,
 		);
