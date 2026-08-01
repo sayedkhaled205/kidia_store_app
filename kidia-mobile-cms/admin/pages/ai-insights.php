@@ -224,7 +224,7 @@ $action_result = static function ( array $row ): array {
 			<span class="spinner" data-ai-generate-spinner></span>
 		</button>
 	</form>
-	<div class="kidia-ai-progress-overlay" data-ai-progress-overlay hidden aria-live="polite" aria-busy="true">
+	<div class="kidia-ai-progress-overlay" data-ai-progress-overlay data-kidia-background-job="generate-offers" hidden aria-live="polite" aria-busy="true">
 		<div class="kidia-ai-progress-card">
 			<div class="kidia-ai-progress-ring" data-ai-progress-ring style="--kidia-ai-progress:0">
 				<strong data-ai-progress-value>0%</strong>
