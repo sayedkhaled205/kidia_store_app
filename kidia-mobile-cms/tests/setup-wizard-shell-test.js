@@ -29,6 +29,7 @@ const savedThemesTemplate = read("admin", "pages", "saved-themes.php");
 const savedThemesScript = read("admin", "assets", "saved-themes.js");
 const shellTemplate = read("admin", "pages", "cms-shell.php");
 const wizardCss = read("admin", "assets", "setup-wizard.css");
+const wizardJs = read("admin", "assets", "setup-wizard.js");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const shellScript = read("admin", "assets", "cms-shell.js");
 const codemagic = read("..", "codemagic.yaml");
@@ -166,6 +167,8 @@ assert.match(service, /compact_product_card_settings[\s\S]*'card_style'\s*=>\s*'
 assert.match(service, /compact_product_card_settings[\s\S]*'quick_add_icon_color'\s*=>\s*\$primary[\s\S]*'quick_add_background_color'\s*=>\s*'#FFFFFF'/, "The quick-add bag must use the brand color on a white circle.");
 assert.match(service, /preview_snapshot[\s\S]*identity\(\)[\s\S]*primary_color[\s\S]*build_page_layout\( \$page, \$theme, \$primary, \$secondary/, "Built-in previews must use the brand colors captured on the identity step.");
 assert.match(service, /Navigation accents always follow the store brand[\s\S]*active_color'\] = \$primary[\s\S]*button_color'\] = \$primary/, "Active navigation and footer actions must always use the brand primary color.");
+assert.match(service, /product_tabs'[\s\S]*'active_color'\s*=>\s*\$primary[\s\S]*footer'\]\['settings'\]\['button_color'\]\s*=\s*\$primary/, "Product tabs and product actions must use the brand primary color.");
+assert.match(wizardJs, /snapshotWithLiveBrand[\s\S]*setup\[primary_color\][\s\S]*setup\[secondary_color\][\s\S]*JSON\.parse\(JSON\.stringify[\s\S]*selectPreviewPage\(previewPage\)/, "Changing either identity color must rebuild the open Flutter preview from the live brand fields.");
 assert.match(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*transform:scale\(var\(--kidia-theme-preview-scale\)\);[^}]*transform-origin:top left/, "Theme preview must scale deterministically inside the shared phone frame.");
 assert.doesNotMatch(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*zoom:/, "Theme preview must not use browser-dependent iframe zoom that distorts the phone frame.");
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
