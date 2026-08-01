@@ -4,8 +4,14 @@
   const initializePromotion = () => {
   const config = window.KidiaAppPromotion || {};
   const settings = config.settings || {};
-  const root = document.querySelector("[data-kidia-app-promo-root]");
-  if (!root || !settings.enabled) return;
+  if (!settings.enabled) return;
+  let root = document.querySelector("[data-kidia-app-promo-root]");
+  if (!root) {
+    root = document.createElement("div");
+    root.className = "kidia-app-promo-root";
+    root.dataset.kidiaAppPromoRoot = "";
+    (document.body || document.documentElement).append(root);
+  }
 
   const ua = navigator.userAgent || "";
   const isIOS = /iPad|iPhone|iPod/i.test(ua);
