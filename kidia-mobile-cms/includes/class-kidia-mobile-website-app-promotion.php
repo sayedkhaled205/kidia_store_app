@@ -13,6 +13,17 @@ final class Kidia_Mobile_Website_App_Promotion {
 	private const METRICS_OPTION = 'kidia_mobile_website_app_promotion_metrics_v1';
 	private const PREVIEW_ACTION = 'kidia_mobile_website_app_promotion_preview';
 	private const PREVIEW_QUERY = 'kidia_app_promotion_preview';
+	private const TEST_ACTION = 'kidia_mobile_website_app_promotion_test';
+	private const TEST_QUERY = 'kidia_app_promotion_test';
+	private const TEST_NONCE_QUERY = 'kidia_app_promotion_test_nonce';
+	private const CAMPAIGNS = array(
+		'smart_banner',
+		'bottom_sheet',
+		'popup',
+		'desktop_qr',
+		'floating_button',
+		'inline_banner',
+	);
 
 	public function register(): void {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 40 );
@@ -100,7 +111,11 @@ final class Kidia_Mobile_Website_App_Promotion {
 	/** @return array<string,mixed> */
 	public static function settings(): array {
 		$saved = get_option( self::OPTION, array() );
-		return self::merge_settings( self::defaults(), is_array( $saved ) ? $saved : array() );
+		$settings = self::merge_settings( self::defaults(), is_array( $saved ) ? $saved : array() );
+		if ( '' === trim( (string) $settings['logo_url'] ) ) {
+			$settings['logo_url'] = self::site_logo_url();
+		}
+		return $settings;
 	}
 
 	/** @return array<string,int> */
@@ -124,6 +139,68 @@ final class Kidia_Mobile_Website_App_Promotion {
 		);
 	}
 
+	public static function test_url( string $campaign ): string {
+		if ( ! in_array( $campaign, self::CAMPAIGNS, true ) ) {
+			return home_url( '/' );
+		}
+		return add_query_arg(
+			array(
+				self::TEST_QUERY       => $campaign,
+				self::TEST_NONCE_QUERY => wp_create_nonce( self::TEST_ACTION . '|' . $campaign ),
+			),
+			home_url( '/' )
+		);
+	}
+
+	/** @param array<string,mixed>|null $settings */
+	public static function campaign_status( string $campaign, ?array $settings = null ): string {
+		$settings = is_array( $settings ) ? $settings : self::settings();
+		if (
+			! in_array( $campaign, self::CAMPAIGNS, true )
+			|| empty( $settings['enabled'] )
+			|| empty( $settings[ $campaign ]['enabled'] )
+		) {
+			return 'paused';
+		}
+		if ( in_array( $campaign, array( 'desktop_qr', 'floating_button' ), true ) && ! self::has_destination( $settings, $campaign ) ) {
+			return 'needs-link';
+		}
+		if (
+			'inline_banner' === $campaign
+			&& 'shortcode' === (string) ( $settings['inline_banner']['placement'] ?? '' )
+		) {
+			return 'needs-placement';
+		}
+		return self::has_destination( $settings, $campaign ) ? 'live' : 'announcement';
+	}
+
+	/** @param array<string,mixed> $settings */
+	private static function has_destination( array $settings, string $campaign = '' ): bool {
+		if ( 'desktop_qr' === $campaign && '' !== trim( (string) ( $settings['qr_url'] ?? '' ) ) ) {
+			return true;
+		}
+		foreach ( array( 'smart_url', 'android_url', 'ios_url', 'huawei_url', 'deep_link', 'qr_url' ) as $key ) {
+			if ( '' !== trim( (string) ( $settings[ $key ] ?? '' ) ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static function site_logo_url(): string {
+		$custom_logo_id = function_exists( 'get_theme_mod' )
+			? absint( get_theme_mod( 'custom_logo', 0 ) )
+			: 0;
+		if ( $custom_logo_id > 0 && function_exists( 'wp_get_attachment_image_url' ) ) {
+			$custom_logo = wp_get_attachment_image_url( $custom_logo_id, 'full' );
+			if ( is_string( $custom_logo ) && '' !== $custom_logo ) {
+				return esc_url_raw( $custom_logo );
+			}
+		}
+		$site_icon = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( 512 ) : '';
+		return is_string( $site_icon ) ? esc_url_raw( $site_icon ) : '';
+	}
+
 	private static function is_preview_request(): bool {
 		if ( is_admin() || ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
 			return false;
@@ -132,6 +209,26 @@ final class Kidia_Mobile_Website_App_Promotion {
 			? sanitize_text_field( wp_unslash( $_GET[ self::PREVIEW_QUERY ] ) )
 			: '';
 		return '' !== $nonce && (bool) wp_verify_nonce( $nonce, self::PREVIEW_ACTION );
+	}
+
+	private static function test_campaign(): string {
+		if ( is_admin() || ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
+			return '';
+		}
+		$campaign = isset( $_GET[ self::TEST_QUERY ] )
+			? sanitize_key( wp_unslash( $_GET[ self::TEST_QUERY ] ) )
+			: '';
+		$nonce = isset( $_GET[ self::TEST_NONCE_QUERY ] )
+			? sanitize_text_field( wp_unslash( $_GET[ self::TEST_NONCE_QUERY ] ) )
+			: '';
+		if (
+			! in_array( $campaign, self::CAMPAIGNS, true )
+			|| '' === $nonce
+			|| ! wp_verify_nonce( $nonce, self::TEST_ACTION . '|' . $campaign )
+		) {
+			return '';
+		}
+		return $campaign;
 	}
 
 	/** @param array<string,mixed> $defaults @param array<string,mixed> $saved */
@@ -148,7 +245,9 @@ final class Kidia_Mobile_Website_App_Promotion {
 	}
 
 	public function enqueue_assets(): void {
-		if ( is_admin() || self::is_preview_request() || ! self::settings()['enabled'] ) {
+		$settings      = self::settings();
+		$test_campaign = self::test_campaign();
+		if ( is_admin() || self::is_preview_request() || ( ! $settings['enabled'] && '' === $test_campaign ) ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -181,12 +280,18 @@ final class Kidia_Mobile_Website_App_Promotion {
 	/** @return array<string,mixed> */
 	private function frontend_config(): array {
 		return array(
-			'settings'  => self::settings(),
-			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-			'nonce'     => wp_create_nonce( 'kidia_mobile_app_promotion_event' ),
-			'page'      => $this->page_context(),
-			'loggedIn'  => is_user_logged_in(),
-			'shortcode' => '[woo_mobile_app_promo]',
+			'settings'     => self::settings(),
+			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+			'nonce'        => wp_create_nonce( 'kidia_mobile_app_promotion_event' ),
+			'page'         => $this->page_context(),
+			'loggedIn'     => is_user_logged_in(),
+			'shortcode'    => '[woo_mobile_app_promo]',
+			'testCampaign' => self::test_campaign(),
+			'labels'       => array(
+				'comingSoon'  => __( 'Coming soon', 'kidia-mobile-cms' ),
+				'needsLink'   => __( 'Add an app link to activate this action.', 'kidia-mobile-cms' ),
+				'testPreview' => __( 'Private live test', 'kidia-mobile-cms' ),
+			),
 		);
 	}
 
@@ -204,11 +309,17 @@ final class Kidia_Mobile_Website_App_Promotion {
 
 	public function render_after_header_slot(): void {
 		$settings = self::settings();
+		$test_campaign = self::test_campaign();
 		if (
 			! self::is_preview_request()
-			&& $settings['enabled']
-			&& ! empty( $settings['inline_banner']['enabled'] )
-			&& 'after_header' === (string) $settings['inline_banner']['placement']
+			&& (
+				'inline_banner' === $test_campaign
+				|| (
+					$settings['enabled']
+					&& ! empty( $settings['inline_banner']['enabled'] )
+					&& 'after_header' === (string) $settings['inline_banner']['placement']
+				)
+			)
 		) {
 			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
 		}
@@ -216,10 +327,15 @@ final class Kidia_Mobile_Website_App_Promotion {
 
 	public function render_footer(): void {
 		$settings = self::settings();
-		if ( self::is_preview_request() || ! $settings['enabled'] ) {
+		$test_campaign = self::test_campaign();
+		if ( self::is_preview_request() || ( ! $settings['enabled'] && '' === $test_campaign ) ) {
 			return;
 		}
-		if ( ! empty( $settings['inline_banner']['enabled'] ) && 'before_footer' === (string) $settings['inline_banner']['placement'] ) {
+		if (
+			'inline_banner' !== $test_campaign
+			&& ! empty( $settings['inline_banner']['enabled'] )
+			&& 'before_footer' === (string) $settings['inline_banner']['placement']
+		) {
 			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
 		}
 		echo '<div class="kidia-app-promo-root" data-kidia-app-promo-root></div>';

@@ -2628,9 +2628,15 @@ final class Kidia_Mobile_CMS_Admin {
 					if ( 'kidia-mobile-website-app-promotion' === $page ) {
 						wp_enqueue_media();
 						wp_enqueue_style(
+							'kidia-mobile-website-app-promotion-preview',
+							KIDIA_MOBILE_CMS_URL . 'public/assets/website-app-promotion.css',
+							array( 'kidia-mobile-cms-shell' ),
+							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'public/assets/website-app-promotion.css' )
+						);
+						wp_enqueue_style(
 							'kidia-mobile-website-app-promotion-admin',
 							KIDIA_MOBILE_CMS_URL . 'admin/assets/website-app-promotion.css',
-							array( 'kidia-mobile-cms-shell' ),
+							array( 'kidia-mobile-website-app-promotion-preview' ),
 							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/website-app-promotion.css' )
 						);
 						wp_enqueue_script(
