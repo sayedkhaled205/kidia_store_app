@@ -168,6 +168,7 @@ async function testCompletedCardSurvivesBrowserReopen() {
 
   assert.equal(root.dataset.status, "downloaded", "Closing and reopening the browser must restore Download Completed for the same build.");
   assert.equal(root.querySelector("[data-build-message]").textContent, "Download Completed");
+  assert.equal(root.querySelector("[data-build-stage]").hidden, true, "Completed builds must not repeat the terminal status beneath Download Completed.");
   assert.equal(root.querySelector("[data-build-action]").hidden, false);
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "The completed card must remain visible until it is acknowledged.");
   assert.equal(root.querySelector("[data-build-dismiss-label]").textContent, "OK", "A completed card must replace Cancel with OK.");
@@ -333,7 +334,7 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
     url: "https://store.test/wp-admin/admin.php"
   });
   const root = dom.window.document.querySelector("[data-kidia-app-build]");
-  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (4 * 24 * 60 * 60));
   let requests = 0;
 
   dom.window.kidiaAppBuilder = builderConfig();
@@ -348,7 +349,7 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   dom.window.eval(script);
 
   root.querySelector("[data-build-action]").click();
-  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 24 hours must present both choices.");
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 5 days must present both choices.");
   assert.equal(requests, 0, "Opening the recent-build choice must not start another build.");
 
   root.querySelector("[data-build-new-version]").click();
