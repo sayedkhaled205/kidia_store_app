@@ -326,6 +326,7 @@ const wizardScript = read("admin", "assets", "setup-wizard.js");
 assert.match(wizardScript, /setProperty\('--kidia-setup-theme-color', '#2f806e'\)/, "Setup actions must keep the WooMobile brand color.");
 assert.match(wizardScript, /normalizeHex[\s\S]*data-color-code[\s\S]*syncColorPair/, "Editable HEX color values must stay synchronized with their color pickers.");
 assert.match(wizardScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Built-in theme preview must render real Home, Category and page layouts in Flutter.");
+assert.match(wizardScript, /postPreviewJson\(url, body, attempt\)[\s\S]*setTimeout\(resolve, 250\)[\s\S]*return \[pageName, previewPageLayout\(snapshot, pageName\)\][\s\S]*return homeFallback[\s\S]*return categoryFallback/, "A temporary failure in one preview endpoint must retry and fall back without taking down the complete theme preview.");
 assert.match(wizardScript, /demo_catalog[\s\S]*searchParams\.set\('demo', '1'\)[\s\S]*searchParams\.set\('product', '9001'\)/, "Built-in previews must route every page through the theme-only demo catalog.");
 assert.match(previewMain, /catalogRepositoryProvider\.overrideWithValue[\s\S]*CmsPreviewCatalogRepository/, "Flutter theme previews must replace the live catalog repository.");
 assert.match(previewCatalog, /CmsPreviewLayoutBridge\.demoCatalog/, "The preview catalog must read only the selected theme payload.");
