@@ -160,6 +160,97 @@ final class Kidia_Mobile_Setup_Wizard {
 					'sample_copy' => array( __( 'Better days for every pet', 'kidia-mobile-cms' ), __( 'Shop by companion', 'kidia-mobile-cms' ), __( 'Pet parent favorites', 'kidia-mobile-cms' ) ),
 				)
 			),
+			'family_pop' => self::theme(
+				__( 'Family Pop', 'kidia-mobile-cms' ),
+				__( 'A bright family-fashion storefront with quick circular discovery, friendly promotions and clean product-first shopping.', 'kidia-mobile-cms' ),
+				array(
+					'primary' => '#F04F5F', 'soft' => '#E5F6F2', 'ink' => '#151515', 'surface' => '#FFFFFF',
+					'card_style' => 'no_shadow', 'asset_dir' => 'family_pop', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
+					'layout_profile' => 'family_pop',
+					'product_columns' => 2, 'radius' => 18, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 18,
+					'blocks' => array( 'quick_links', 'hero_slider', 'category_grid', 'promo_strip', 'product_carousel', 'banner_grid', 'product_grid' ),
+					'sample_copy' => array( __( 'Made for every family moment', 'kidia-mobile-cms' ), __( 'Shop by age', 'kidia-mobile-cms' ), __( 'Family favorites', 'kidia-mobile-cms' ) ),
+					'home_design' => array(
+						'hero_ratio' => 1.72, 'hero_radius' => 18, 'hero_padding' => 12, 'hero_indicators' => 'image_bottom',
+						'category_layout' => 'grid', 'category_columns' => 4, 'category_size' => 76, 'category_gap' => 10,
+						'quick_layout' => 'carousel', 'quick_columns' => 4, 'quick_size' => 70, 'quick_gap' => 10,
+						'product_columns' => 2, 'product_ratio' => 1.0, 'product_radius' => 10, 'product_style' => 'minimal',
+						'product_rating' => false, 'product_badge' => true, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => true,
+						'banner_layout' => 'featured', 'banner_ratio' => 1.33, 'banner_gap' => 10, 'image_banner_ratio' => 1.33,
+					),
+				)
+			),
+			'marketplace_plus' => self::theme(
+				__( 'Marketplace Plus', 'kidia-mobile-cms' ),
+				__( 'A dense all-departments marketplace with persistent search, deal-led grids, compact navigation and information-rich products.', 'kidia-mobile-cms' ),
+				array(
+					'primary' => '#F59B23', 'soft' => '#E7F3F5', 'ink' => '#132536', 'surface' => '#F5F6F6',
+					'card_style' => 'outlined', 'asset_dir' => 'marketplace_plus', 'category_layout' => 'compact_grid', 'category_shape' => 'rounded',
+					'layout_profile' => 'marketplace_plus',
+					'product_columns' => 3, 'radius' => 8, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 8,
+					'blocks' => array( 'quick_links', 'promo_strip', 'hero_slider', 'category_grid', 'countdown', 'product_grid', 'banner_grid', 'product_carousel', 'brand_carousel' ),
+					'sample_copy' => array( __( 'Everything you need, one place', 'kidia-mobile-cms' ), __( 'Browse departments', 'kidia-mobile-cms' ), __( 'Deals for you', 'kidia-mobile-cms' ) ),
+					'home_design' => array(
+						'hero_ratio' => 2.35, 'hero_radius' => 6, 'hero_padding' => 8, 'hero_indicators' => 'image_bottom',
+						'category_layout' => 'compact', 'category_columns' => 5, 'category_size' => 66, 'category_gap' => 7,
+						'quick_layout' => 'grid', 'quick_columns' => 5, 'quick_size' => 64, 'quick_gap' => 7,
+						'product_columns' => 3, 'product_ratio' => 0.88, 'product_radius' => 6, 'product_style' => 'outlined',
+						'product_rating' => true, 'product_badge' => true, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => false,
+						'banner_layout' => 'equal', 'banner_ratio' => 1.15, 'banner_gap' => 7, 'image_banner_ratio' => 1.15,
+					),
+				)
+			),
+			'studio_fashion' => self::theme(
+				__( 'Studio Fashion', 'kidia-mobile-cms' ),
+				__( 'A minimal editorial fashion shop with quiet navigation, full-width campaigns and clean garment-led product grids.', 'kidia-mobile-cms' ),
+				array(
+					'primary' => '#C4142B', 'soft' => '#F1F0EE', 'ink' => '#111111', 'surface' => '#FAF9F7',
+					'card_style' => 'no_shadow', 'asset_dir' => 'studio_fashion', 'category_layout' => 'default', 'category_shape' => 'rounded',
+					'layout_profile' => 'studio_fashion',
+					'product_columns' => 2, 'radius' => 0, 'header_style' => 'standard', 'search_style' => 'icon', 'overlay' => 10,
+					'blocks' => array( 'hero_slider', 'text_block', 'category_grid', 'banner_grid', 'product_grid', 'image_banner', 'product_carousel' ),
+					'sample_copy' => array( __( 'The new edit', 'kidia-mobile-cms' ), __( 'Shop by collection', 'kidia-mobile-cms' ), __( 'New arrivals', 'kidia-mobile-cms' ) ),
+					'home_design' => array(
+						'hero_ratio' => 1.18, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom', 'hero_show_indicators' => true,
+						'category_layout' => 'editorial_mosaic', 'category_columns' => 2, 'category_size' => 118, 'category_gap' => 2,
+						'quick_layout' => 'grid', 'quick_columns' => 4, 'quick_size' => 72, 'quick_gap' => 4,
+						'product_columns' => 2, 'product_ratio' => 1.35, 'product_radius' => 0, 'product_style' => 'minimal',
+						'product_rating' => false, 'product_badge' => false, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => true,
+						'banner_layout' => 'mosaic', 'banner_ratio' => 1.35, 'banner_gap' => 2, 'image_banner_ratio' => 1.35,
+						'text_alignment' => 'center', 'text_title_size' => 26, 'text_content_size' => 14, 'text_weight' => 'bold',
+					),
+					'category_design' => array(
+						'navigation_mode' => 'separate_page', 'card_gap' => 0, 'card_height' => 58, 'card_style' => 'no_shadow',
+						'image_size' => 32, 'image_text_gap' => 12, 'font_size' => 17, 'font_weight' => 500, 'show_arrow' => true,
+					),
+				)
+			),
+			'editorial_runway' => self::theme(
+				__( 'Editorial Runway', 'kidia-mobile-cms' ),
+				__( 'An immersive high-fashion gallery with full-bleed campaigns, near-invisible chrome and spacious monochrome commerce pages.', 'kidia-mobile-cms' ),
+				array(
+					'primary' => '#111111', 'soft' => '#EDEAE4', 'ink' => '#080808', 'surface' => '#FFFFFF',
+					'card_style' => 'no_shadow', 'asset_dir' => 'editorial_runway', 'category_layout' => 'visual_grid', 'category_shape' => 'square',
+					'layout_profile' => 'editorial_runway',
+					'product_columns' => 2, 'radius' => 0, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 4,
+					'blocks' => array( 'hero_slider', 'image_banner', 'category_grid', 'banner_grid', 'text_block', 'product_carousel' ),
+					'sample_copy' => array( __( 'The collection', 'kidia-mobile-cms' ), __( 'Stories', 'kidia-mobile-cms' ), __( 'Selected pieces', 'kidia-mobile-cms' ) ),
+					'home_design' => array(
+						'hero_ratio' => 0.78, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom', 'hero_show_indicators' => false,
+						'category_layout' => 'full_width_banners', 'category_columns' => 2, 'category_size' => 140, 'category_gap' => 0,
+						'quick_layout' => 'carousel', 'quick_columns' => 3, 'quick_size' => 96, 'quick_gap' => 0,
+						'product_columns' => 2, 'product_ratio' => 1.5, 'product_radius' => 0, 'product_style' => 'minimal',
+						'product_rating' => false, 'product_badge' => false, 'product_swipe' => true, 'product_quick_add' => false, 'product_wishlist' => true,
+						'banner_layout' => 'equal', 'banner_ratio' => 0.82, 'banner_gap' => 0, 'image_banner_ratio' => 0.82,
+						'text_alignment' => 'center', 'text_title_size' => 30, 'text_content_size' => 14, 'text_weight' => 'medium',
+					),
+					'category_design' => array(
+						'navigation_mode' => 'separate_page', 'grid_columns' => 2, 'card_gap' => 0, 'card_width_percent' => 100,
+						'card_style' => 'no_shadow', 'image_size' => 118, 'image_text_gap' => 8, 'font_size' => 14, 'font_weight' => 500,
+						'text_align' => 'center', 'show_arrow' => false,
+					),
+				)
+			),
 		);
 	}
 
@@ -636,21 +727,124 @@ final class Kidia_Mobile_Setup_Wizard {
 	/** @return array<string,mixed> */
 	public function identity(): array {
 		$saved = get_option( self::IDENTITY_OPTION, array() );
-		return wp_parse_args(
+		$defaults = $this->site_identity_defaults();
+		$identity = wp_parse_args(
 			is_array( $saved ) ? $saved : array(),
-			array(
-				'app_name'      => get_bloginfo( 'name' ),
-				'logo_id'       => 0,
-				'logo_url'      => '',
-				'language'      => is_rtl() ? 'ar' : 'en',
-				'direction'     => is_rtl() ? 'rtl' : 'ltr',
-				'primary_color' => '#2C2926',
-				'secondary_color' => '#F2E9DF',
+			array_merge(
+				$defaults,
+				array(
 				'theme'         => 'fashion',
 				'page_themes'   => array_fill_keys( array_keys( self::setup_pages() ), 'fashion' ),
 				'enabled_pages' => array_keys( self::setup_pages() ),
+				)
 			)
 		);
+
+		// Older installations may have saved an incomplete identity. Keep any
+		// intentional value, but hydrate missing branding from the live site.
+		if ( empty( $identity['logo_url'] ) ) {
+			$identity['logo_id']  = $defaults['logo_id'];
+			$identity['logo_url'] = $defaults['logo_url'];
+		}
+		if ( ! sanitize_hex_color( (string) ( $identity['primary_color'] ?? '' ) ) ) {
+			$identity['primary_color'] = $defaults['primary_color'];
+		}
+		if ( ! sanitize_hex_color( (string) ( $identity['secondary_color'] ?? '' ) ) ) {
+			$identity['secondary_color'] = $defaults['secondary_color'];
+		}
+		return $identity;
+	}
+
+	/**
+	 * Calculates first-run identity from the connected WordPress site.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function site_identity_defaults(): array {
+		$logo_id = absint( get_theme_mod( 'custom_logo', 0 ) );
+		if ( ! $logo_id ) {
+			$logo_id = absint( get_option( 'site_logo', 0 ) );
+		}
+		$logo_url = $logo_id ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+		if ( '' === $logo_url ) {
+			$email_logo = esc_url_raw( (string) get_option( 'woocommerce_email_header_image', '' ) );
+			$logo_url  = $email_logo;
+		}
+
+		$primary_candidates = array(
+			get_theme_mod( 'primary_color', '' ),
+			get_theme_mod( 'accent_color', '' ),
+			get_theme_mod( 'link_color', '' ),
+			get_theme_mod( 'button_color', '' ),
+			get_theme_mod( 'woocommerce_primary', '' ),
+		);
+		$secondary_candidates = array(
+			get_theme_mod( 'secondary_color', '' ),
+			get_theme_mod( 'woocommerce_secondary', '' ),
+			get_theme_mod( 'background_color', '' ),
+		);
+		if ( function_exists( 'wp_get_global_settings' ) ) {
+			$palette = wp_get_global_settings( array( 'color', 'palette', 'theme' ) );
+			if ( is_array( $palette ) ) {
+				foreach ( $palette as $entry ) {
+					if ( ! is_array( $entry ) || empty( $entry['color'] ) ) {
+						continue;
+					}
+					$primary_candidates[]   = $entry['color'];
+					$secondary_candidates[] = $entry['color'];
+				}
+			}
+		}
+
+		$primary   = $this->first_site_color( $primary_candidates, '#2F806E' );
+		$secondary = $this->first_site_color( $secondary_candidates, '', $primary );
+		if ( '' === $secondary ) {
+			$secondary = $this->tint_color( $primary, 0.88 );
+		}
+		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+		$language = 0 === strpos( strtolower( (string) $locale ), 'ar' ) ? 'ar' : 'en';
+
+		return array(
+			'app_name'        => get_bloginfo( 'name' ),
+			'logo_id'         => $logo_id,
+			'logo_url'        => $logo_url,
+			'language'        => $language,
+			'direction'       => is_rtl() ? 'rtl' : 'ltr',
+			'primary_color'   => $primary,
+			'secondary_color' => $secondary,
+		);
+	}
+
+	/** @param array<int,mixed> $candidates */
+	private function first_site_color( array $candidates, string $fallback, string $exclude = '' ): string {
+		foreach ( $candidates as $candidate ) {
+			$value = trim( (string) $candidate );
+			if ( in_array( strlen( $value ), array( 3, 6 ), true ) && '#' !== $value[0] ) {
+				$value = '#' . $value;
+			}
+			$value = sanitize_hex_color( $value ) ?: '';
+			if ( 4 === strlen( $value ) ) {
+				$value = '#' . $value[1] . $value[1] . $value[2] . $value[2] . $value[3] . $value[3];
+			}
+			if ( '' !== $value && 0 !== strcasecmp( $value, $exclude ) ) {
+				return strtoupper( $value );
+			}
+		}
+		return $fallback;
+	}
+
+	private function tint_color( string $hex, float $amount ): string {
+		$hex = ltrim( $hex, '#' );
+		if ( 6 !== strlen( $hex ) ) {
+			return '#EAF6F2';
+		}
+		$amount = max( 0, min( 1, $amount ) );
+		$channels = array();
+		foreach ( array( 0, 2, 4 ) as $offset ) {
+			$channel    = hexdec( substr( $hex, $offset, 2 ) );
+			$channels[] = (int) round( $channel + ( 255 - $channel ) * $amount );
+		}
+		return sprintf( '#%02X%02X%02X', $channels[0], $channels[1], $channels[2] );
 	}
 
 	/** @param array<string,mixed> $submitted */
@@ -732,6 +926,18 @@ final class Kidia_Mobile_Setup_Wizard {
 	private function build_home( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): array {
 		$blocks = array();
 		$slides = $this->catalog_slides( $theme );
+		$home_design = wp_parse_args(
+			is_array( $theme['home_design'] ?? null ) ? $theme['home_design'] : array(),
+			array(
+				'hero_ratio' => 2, 'hero_radius' => $theme['radius'], 'hero_padding' => 16, 'hero_indicators' => 'below', 'hero_show_indicators' => true,
+				'category_layout' => 'grid', 'category_columns' => 3 <= (int) $theme['product_columns'] ? 4 : 3, 'category_size' => 78, 'category_gap' => 12,
+				'quick_layout' => 'carousel', 'quick_columns' => 4, 'quick_size' => 76, 'quick_gap' => 12,
+				'product_columns' => $theme['product_columns'], 'product_ratio' => 1.0, 'product_radius' => $theme['radius'],
+				'product_style' => $this->home_card_style( (string) $theme['card_style'] ), 'product_rating' => true, 'product_badge' => true, 'product_swipe' => false, 'product_quick_add' => true, 'product_wishlist' => true,
+				'banner_layout' => 'featured', 'banner_ratio' => 1.333, 'banner_gap' => 10, 'image_banner_ratio' => 1.333,
+				'text_alignment' => 'center', 'text_title_size' => 24, 'text_content_size' => 15, 'text_weight' => 'medium',
+			)
+		);
 		foreach ( $theme['blocks'] as $index => $type ) {
 			$block = Kidia_Mobile_Block_Registry::create( (string) $type, $index + 1 );
 			if ( ! is_array( $block ) ) {
@@ -757,22 +963,33 @@ final class Kidia_Mobile_Setup_Wizard {
 			}
 			if ( 'hero_slider' === $type ) {
 				$settings['items']            = $slides;
-				$settings['aspect_ratio']     = 2;
+				$settings['aspect_ratio']     = $home_design['hero_ratio'];
 				$settings['image_fit']        = 'cover';
-				$settings['border_radius']    = $theme['radius'];
+				$settings['border_radius']    = $home_design['hero_radius'];
+				$settings['horizontal_padding'] = $home_design['hero_padding'];
 				$settings['overlay_strength'] = $theme['overlay'];
 				$settings['text_color']       = '#FFFFFF';
+				$settings['indicator_position'] = $home_design['hero_indicators'];
+				$settings['show_indicators'] = ! empty( $home_design['hero_show_indicators'] );
 			}
 			if ( 'category_grid' === $type ) {
 				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Shop by category', 'kidia-mobile-cms' );
-				$settings['columns']     = 3 <= (int) $theme['product_columns'] ? 4 : 3;
+				$settings['layout']      = $home_design['category_layout'];
+				$settings['columns']     = $home_design['category_columns'];
 				$settings['limit']       = 6;
 				$settings['image_shape'] = $theme['category_shape'];
+				$settings['image_size']  = $home_design['category_size'];
+				$settings['gap']         = $home_design['category_gap'];
+				$settings['row_gap']     = $home_design['category_gap'];
+				$settings['items_alignment'] = 'center';
 			}
 			if ( 'quick_links' === $type ) {
 				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Explore', 'kidia-mobile-cms' );
-				$settings['columns']     = 4;
+				$settings['layout']      = $home_design['quick_layout'];
+				$settings['columns']     = $home_design['quick_columns'];
 				$settings['image_shape'] = $theme['category_shape'];
+				$settings['item_size']   = $home_design['quick_size'];
+				$settings['gap']         = $home_design['quick_gap'];
 				$settings['items']       = $this->build_demo_quick_links( $theme );
 			}
 			if ( 'image_banner' === $type ) {
@@ -780,16 +997,25 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['title']           = $theme['sample_copy'][0] ?? '';
 				$settings['subtitle']        = $theme['description'];
 				$settings['button_label']    = __( 'Shop now', 'kidia-mobile-cms' );
-				$settings['aspect_ratio']    = 1.333;
+				$settings['aspect_ratio']    = $home_design['image_banner_ratio'];
 				$settings['image_fit']       = 'cover';
 				$settings['border_radius']   = $theme['radius'];
 				$settings['overlay_strength']= $theme['overlay'];
 			}
+			if ( 'text_block' === $type ) {
+				$settings['title']        = $theme['sample_copy'][0] ?? '';
+				$settings['content']      = $theme['description'];
+				$settings['alignment']    = $home_design['text_alignment'];
+				$settings['title_size']   = $home_design['text_title_size'];
+				$settings['content_size'] = $home_design['text_content_size'];
+				$settings['font_weight']  = $home_design['text_weight'];
+			}
 			if ( 'banner_grid' === $type ) {
 				$settings['title']         = $theme['sample_copy'][1] ?? '';
-				$settings['layout']        = 'featured';
+				$settings['layout']        = $home_design['banner_layout'];
 				$settings['columns']       = 2;
-				$settings['aspect_ratio']  = 1.333;
+				$settings['gap']           = $home_design['banner_gap'];
+				$settings['aspect_ratio']  = $home_design['banner_ratio'];
 				$settings['border_radius'] = $theme['radius'];
 				$settings['items']         = array();
 				foreach ( array_slice( $slides, 0, 3 ) as $slide_index => $slide ) {
@@ -813,17 +1039,32 @@ final class Kidia_Mobile_Setup_Wizard {
 			if ( in_array( $type, array( 'product_grid', 'product_carousel' ), true ) ) {
 				$settings['title']          = $theme['sample_copy'][2] ?? __( 'Products for you', 'kidia-mobile-cms' );
 				$settings['source']         = 'latest';
-				$settings['columns']        = $theme['product_columns'];
-				$settings['card_radius']    = $theme['radius'];
+				$settings['columns']        = $home_design['product_columns'];
+				$settings['image_ratio']    = $home_design['product_ratio'];
+				$settings['card_radius']    = $home_design['product_radius'];
+				$settings['card_style']     = $home_design['product_style'];
 				$settings['show_price']     = true;
-				$settings['show_wishlist']  = true;
-				$settings['quick_add_enabled'] = true;
+				$settings['show_rating']    = $home_design['product_rating'];
+				$settings['show_badge']     = $home_design['product_badge'];
+				$settings['show_wishlist']  = ! empty( $home_design['product_wishlist'] );
+				$settings['quick_add_enabled'] = ! empty( $home_design['product_quick_add'] );
+				$settings['enable_image_swipe'] = $home_design['product_swipe'];
 			}
 			$block['settings'] = $settings;
 			$block['name']     = $this->block_name( (string) $type, (array) $theme['sample_copy'] );
 			$blocks[]          = $block;
 		}
 		return $blocks;
+	}
+
+	private function home_card_style( string $style ): string {
+		if ( 'elevated' === $style ) {
+			return 'elevated';
+		}
+		if ( in_array( $style, array( 'minimal', 'no_shadow' ), true ) ) {
+			return 'minimal';
+		}
+		return 'outlined';
 	}
 
 	/** @param array<string,mixed> $theme */
@@ -917,6 +1158,10 @@ final class Kidia_Mobile_Setup_Wizard {
 			'multi_store'    => array( 'Top Deals', 'Electronics', 'Home', 'Personal Care', 'Office', 'Departments' ),
 			'jewelry'        => array( 'Fine Jewelry', 'Rings', 'Necklaces', 'Earrings', 'The Atelier', 'Gifting' ),
 			'pet_care'       => array( 'Dogs & Cats', 'Nutrition', 'Walk', 'Sleep', 'Grooming', 'Pet Store' ),
+			'family_pop'     => array( 'Newborn', 'Toddler Girls', 'Toddler Boys', 'Matching Family', 'Playtime', 'Accessories' ),
+			'marketplace_plus' => array( 'Today Deals', 'Electronics', 'Kitchen', 'Personal Care', 'Home Essentials', 'Travel' ),
+			'studio_fashion' => array( 'Women', 'Men', 'Divided', 'Denim', 'Accessories', 'Beauty' ),
+			'editorial_runway' => array( 'Women', 'Men', 'Evening', 'Tailoring', 'Accessories', 'Edition' ),
 		);
 		$key = sanitize_key( (string) ( $theme['asset_dir'] ?? 'fashion' ) );
 		return $labels[ $key ] ?? $labels['fashion'];
@@ -1006,6 +1251,11 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['search_radius'] = (int) $design['chrome']['search_radius'];
 				$layout[ $chrome ]['settings']['logo_text'] = $app_name;
 				$layout[ $chrome ]['settings']['logo_url'] = $logo_url;
+				foreach ( array( 'horizontal_padding', 'search_height', 'search_border_width', 'show_voice_search', 'show_cart_badge', 'cart_icon_variant', 'logo_width', 'logo_height' ) as $setting_key ) {
+					if ( array_key_exists( $setting_key, $design['chrome'] ) ) {
+						$layout[ $chrome ]['settings'][ $setting_key ] = $design['chrome'][ $setting_key ];
+					}
+				}
 			} else {
 				$layout[ $chrome ]['settings']['height'] = (int) $design['chrome']['footer_height'];
 				$layout[ $chrome ]['settings']['shadow'] = (string) $design['chrome']['footer_shadow'];
@@ -1222,6 +1472,34 @@ final class Kidia_Mobile_Setup_Wizard {
 				'wishlist' => array( 'button_style' => 'filled', 'button_radius' => 24, 'top_spacing' => 40, 'recommendation_layout' => 'grid', 'gap' => 12, 'card_style' => 'elevated', 'card_radius' => 18, 'image_ratio' => 1, 'show_name' => true ),
 				'account' => array( 'avatar_size' => 80, 'summary_style' => 'elevated' ),
 			),
+			'family_pop' => array(
+				'chrome' => array( 'header_height' => 76, 'header_shadow' => 'none', 'search_radius' => 20, 'footer_height' => 64, 'footer_shadow' => 'none', 'button_radius' => 28, 'button_shape' => 'pill', 'horizontal_padding' => 12, 'search_height' => 42, 'search_border_width' => 1, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag' ),
+				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 48, 'filter_radius' => 18, 'columns' => 2, 'gap' => 8, 'card_style' => 'no_shadow', 'card_radius' => 8, 'image_ratio' => 1, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => true, 'quick_add_style' => 'outline', 'pagination' => 'automatic', 'per_page' => 16 ),
+				'product' => array( 'tabs_enabled' => false, 'tabs_sticky' => false, 'gallery_ratio' => 1, 'gallery_fit' => 'contain', 'thumbnails' => false, 'indicators' => false, 'counter' => true, 'zoom' => false, 'show_rating' => false, 'show_badge' => true, 'price_size' => 21, 'name_size' => 16, 'variation_style' => 'chips', 'chip_radius' => 20, 'accordion' => true, 'reviews_enabled' => false, 'related_columns' => 2, 'related_gap' => 8, 'related_ratio' => 1, 'button_width' => 78, 'button_height' => 56, 'size_chart' => 'chips' ),
+				'wishlist' => array( 'access' => 'guest', 'button_style' => 'outline', 'button_radius' => 18, 'top_spacing' => 34, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 8, 'card_style' => 'no_shadow', 'card_radius' => 8, 'image_ratio' => 1, 'show_name' => true ),
+				'account' => array( 'avatar_size' => 72, 'summary_style' => 'minimal', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
+			),
+			'marketplace_plus' => array(
+				'chrome' => array( 'header_height' => 70, 'header_shadow' => 'subtle', 'search_radius' => 20, 'footer_height' => 58, 'footer_shadow' => 'subtle', 'button_radius' => 24, 'button_shape' => 'pill', 'horizontal_padding' => 8, 'search_height' => 48, 'search_border_width' => 0, 'show_voice_search' => true, 'show_cart_badge' => true, 'cart_icon_variant' => 'cart' ),
+				'catalog' => array( 'filter_sticky' => true, 'show_result_count' => true, 'filter_height' => 46, 'filter_radius' => 18, 'columns' => 3, 'gap' => 6, 'card_style' => 'outlined', 'card_radius' => 6, 'image_ratio' => .88, 'image_swipe' => true, 'show_rating' => true, 'show_badge' => true, 'quick_add_style' => 'filled', 'show_wishlist' => true, 'pagination' => 'automatic', 'per_page' => 24 ),
+				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => true, 'gallery_ratio' => .88, 'gallery_fit' => 'contain', 'thumbnails' => true, 'indicators' => false, 'counter' => true, 'zoom' => true, 'show_rating' => true, 'show_badge' => true, 'price_size' => 24, 'name_size' => 18, 'variation_style' => 'dropdown', 'chip_radius' => 8, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 3, 'related_gap' => 6, 'related_ratio' => .88, 'button_width' => 68, 'button_height' => 56, 'size_chart' => 'list' ),
+				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'filled', 'button_radius' => 20, 'top_spacing' => 26, 'recommendation_layout' => 'compact', 'columns' => 3, 'gap' => 6, 'card_style' => 'outlined', 'card_radius' => 6, 'image_ratio' => .88, 'show_name' => true ),
+				'account' => array( 'avatar_size' => 64, 'summary_style' => 'outlined', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
+			),
+			'studio_fashion' => array(
+				'chrome' => array( 'header_height' => 84, 'header_shadow' => 'none', 'search_radius' => 0, 'footer_height' => 66, 'footer_shadow' => 'none', 'button_radius' => 0, 'button_shape' => 'rectangle', 'horizontal_padding' => 18, 'search_height' => 40, 'search_border_width' => 0, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag' ),
+				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 46, 'filter_radius' => 0, 'columns' => 2, 'gap' => 2, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.35, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => false, 'quick_add_style' => 'outline', 'show_wishlist' => true, 'pagination' => 'automatic', 'per_page' => 18 ),
+				'product' => array( 'tabs_enabled' => false, 'tabs_sticky' => false, 'gallery_ratio' => 1.35, 'gallery_fit' => 'cover', 'thumbnails' => false, 'indicators' => true, 'counter' => false, 'zoom' => true, 'show_rating' => false, 'show_badge' => false, 'price_size' => 22, 'name_size' => 18, 'variation_style' => 'dropdown', 'chip_radius' => 0, 'accordion' => true, 'reviews_enabled' => false, 'related_columns' => 2, 'related_gap' => 2, 'related_ratio' => 1.35, 'button_width' => 100, 'button_height' => 52, 'size_chart' => 'list' ),
+				'wishlist' => array( 'access' => 'guest', 'button_style' => 'outline', 'button_radius' => 0, 'top_spacing' => 42, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 2, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.35, 'show_name' => true ),
+				'account' => array( 'avatar_size' => 58, 'summary_style' => 'minimal', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
+			),
+			'editorial_runway' => array(
+				'chrome' => array( 'header_height' => 94, 'header_shadow' => 'none', 'search_radius' => 0, 'footer_height' => 74, 'footer_shadow' => 'none', 'button_radius' => 0, 'button_shape' => 'rectangle', 'horizontal_padding' => 20, 'search_height' => 40, 'search_border_width' => 0, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag' ),
+				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 44, 'filter_radius' => 0, 'columns' => 2, 'gap' => 0, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.5, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => false, 'quick_add_style' => 'outline', 'show_wishlist' => true, 'pagination' => 'automatic', 'per_page' => 12 ),
+				'product' => array( 'tabs_enabled' => false, 'tabs_sticky' => false, 'gallery_ratio' => 1.5, 'gallery_fit' => 'cover', 'thumbnails' => false, 'indicators' => false, 'counter' => false, 'zoom' => true, 'show_rating' => false, 'show_badge' => false, 'price_size' => 20, 'name_size' => 19, 'variation_style' => 'dropdown', 'chip_radius' => 0, 'accordion' => false, 'reviews_enabled' => false, 'related_columns' => 2, 'related_gap' => 0, 'related_ratio' => 1.5, 'button_width' => 100, 'button_height' => 54, 'size_chart' => 'table' ),
+				'wishlist' => array( 'access' => 'guest', 'button_style' => 'outline', 'button_radius' => 0, 'top_spacing' => 76, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 0, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.5, 'show_name' => true ),
+				'account' => array( 'avatar_size' => 52, 'summary_style' => 'minimal', 'show_addresses' => true, 'show_support' => false, 'show_logout' => true ),
+			),
 		);
 		return array_replace_recursive( $base, $profiles[ $profile ] ?? $profiles['fashion'] );
 	}
@@ -1258,7 +1536,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				'image_radius'            => $theme['radius'],
 				'font_color'              => $theme['ink'],
 				'border_color'            => $theme['soft'],
-			)
+			),
+			is_array( $theme['category_design'] ?? null ) ? $theme['category_design'] : array()
 		);
 		return array( 'enabled' => true, 'general' => $general, 'categories' => $current['categories'] );
 	}

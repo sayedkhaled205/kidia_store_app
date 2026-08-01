@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 		<section class="kidia-setup-step is-active" data-step="1" data-step-kind="identity">
 			<div class="kidia-setup-step-heading">
 				<span data-step-number>01</span>
-				<div><h2><?php esc_html_e( 'Application identity', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Set the name, logo and language customers will see.', 'kidia-mobile-cms' ); ?></p></div>
+				<div><h2><?php esc_html_e( 'Application identity', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Name, logo, language and brand colors are detected from the connected site and remain editable.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
 			<div class="kidia-setup-identity-grid">
 				<label><span><?php esc_html_e( 'Application name', 'kidia-mobile-cms' ); ?></span><input type="text" name="setup[app_name]" value="<?php echo esc_attr( (string) $identity['app_name'] ); ?>" required></label>
