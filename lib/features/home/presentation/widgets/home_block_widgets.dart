@@ -1077,7 +1077,7 @@ class QuickLinksBlockWidget extends StatelessWidget {
               builder: (BuildContext context, BoxConstraints constraints) {
 				final int effectiveColumns = block.items.isEmpty
 					? block.columns
-					: block.items.length.clamp(1, block.columns) as int;
+					: block.items.length.clamp(1, block.columns);
                 final double availableItemWidth =
 					(constraints.maxWidth - ((effectiveColumns - 1) * gap)) /
 					effectiveColumns;
