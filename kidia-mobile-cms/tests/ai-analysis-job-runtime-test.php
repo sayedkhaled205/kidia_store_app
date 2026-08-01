@@ -12,6 +12,7 @@ $GLOBALS['kidia_ai_options']    = array();
 $GLOBALS['kidia_ai_user_meta']  = array();
 $GLOBALS['kidia_ai_uuid']       = 0;
 $GLOBALS['kidia_ai_cache_limit'] = 2048;
+$GLOBALS['kidia_ai_order_reloads'] = 0;
 
 $wpdb = new class() {
 	public string $prefix = 'wp_';
@@ -138,7 +139,11 @@ class WC_Order {
 }
 
 function wc_get_is_paid_statuses(): array { return array( 'processing', 'completed' ); }
-function wc_get_order( int $order_id ): WC_Order { return new WC_Order( $order_id ); }
+function wc_get_order( int $order_id ) {
+	unset( $order_id );
+	++$GLOBALS['kidia_ai_order_reloads'];
+	return null;
+}
 function wc_get_orders( array $args ) {
 	$GLOBALS['kidia_ai_order_queries'][] = $args;
 	if ( 1 === (int) ( $args['limit'] ?? 0 ) && 'ids' === ( $args['return'] ?? '' ) ) {
@@ -151,7 +156,7 @@ function wc_get_orders( array $args ) {
 	$first = ( $page - 1 ) * 2 + 1;
 	return (object) array(
 		'total'  => 4,
-		'orders' => array( $first, $first + 1 ),
+		'orders' => array( new WC_Order( $first ), new WC_Order( $first + 1 ) ),
 	);
 }
 
@@ -236,6 +241,7 @@ delete_option( $lock_key );
 
 $second = Kidia_Mobile_AI_Analysis_Job::status( $job_id, 7, true );
 kidia_ai_runtime_assert( 4 === $second['orders_processed'], 'The second batch must continue after the first one.' );
+kidia_ai_runtime_assert( 0 === $GLOBALS['kidia_ai_order_reloads'], 'Paginated order objects must be analysed directly without a second wc_get_order lookup.' );
 kidia_ai_runtime_assert( $second['processed'] > $first['processed'] && 2 === $second['revision'], 'Saved progress and revision must never move backwards.' );
 
 $completed = $second;

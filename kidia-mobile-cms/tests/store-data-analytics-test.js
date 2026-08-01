@@ -474,8 +474,8 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /'return'\s*=>\s*'ids'[\s\S]*wc_get_order[\s\S]*orders_processed[\s\S]*\$job\['phase'\]\s*=\s*'failed'/,
-  "Order batches must use stable ID pagination and refuse to publish an incomplete population.",
+  /'return'\s*=>\s*'objects'[\s\S]*foreach \( \$batch as \$order \)[\s\S]*orders_processed[\s\S]*\$job\['phase'\]\s*=\s*'failed'/,
+  "Order batches must process the paginated WooCommerce objects directly and refuse to publish an incomplete population.",
 );
 assert.match(
   aiAnalysisJob,
