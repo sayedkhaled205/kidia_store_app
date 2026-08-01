@@ -218,10 +218,10 @@ assert.doesNotMatch(dashboardTemplate, /Developer build files|Download configura
 assert.match(dashboardTemplate, /\.kidia-app-build__card-button\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*min-height:\s*120px;[^}]*background:\s*#2f806e;/, "The complete build card button must use the WooMobile color and fill the journey card without a blank strip.");
 assert.doesNotMatch(dashboardTemplate, /kidia-app-build__card-button[\s\S]{0,500}kidia-customer-journey__number[^}]*>4</, "The complete build card button must not show a fourth-step number.");
 assert.match(dashboardTemplate, /\.kidia-app-build__card-label\s*\{[^}]*font-size:\s*clamp\([^}]*font-weight:\s*700;[^}]*text-wrap:\s*balance;/, "The build action label must use balanced, polished typography.");
-assert.match(dashboardTemplate, /Build Your App[\s\S]*app-release\.aab — Google Play/, "The build card must use a bold Build Your App title with the upload-ready file beneath it.");
-assert.match(dashboardTemplate, /data-build-recent-choice[\s\S]*data-build-download-again[\s\S]*data-build-new-version/, "A build from the last 24 hours must offer download again or a new build.");
-assert.match(codemagic, /flutter build appbundle --release[\s\S]*app-release\.aab[\s\S]*woomobile-build-files\.zip/, "Codemagic must package the Google Play upload AAB.");
-assert.doesNotMatch(codemagic, /flutter build apk|app-release\.apk|flutter build ios|ios-app\.zip/, "The customer bundle must exclude install-only APKs and unsigned iOS app folders.");
+assert.match(dashboardTemplate, /Build Your App[\s\S]*Android &amp; iOS/, "The build card must show only the Android and iOS platform subtitle beneath Build Your App.");
+assert.match(dashboardTemplate, /last 5 days[\s\S]*data-build-download-again[\s\S]*data-build-new-version/, "A build from the last 5 days must offer download again or a new build.");
+assert.match(codemagic, /flutter build apk --release[\s\S]*flutter build appbundle --release[\s\S]*app-release\.apk[\s\S]*app-release\.aab[\s\S]*woomobile-build-files\.zip/, "Codemagic must package both the direct-install APK and Google Play AAB.");
+assert.doesNotMatch(codemagic, /flutter build ios|ios-app\.zip|\.ipa/, "The customer bundle must exclude unsigned iOS output until Apple Developer signing is configured.");
 assert.doesNotMatch(wizardTemplate, /kidia-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /kidia-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
