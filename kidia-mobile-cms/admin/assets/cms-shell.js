@@ -2,9 +2,143 @@
 	'use strict';
 	const shell = document.querySelector('.kidia-cms-shell');
 	const completedNoticeStorageKey = 'kidiaCompletedBackgroundJobNotices';
+	const backgroundJobStackPositionKey = 'kidiaBackgroundJobStackPositionV1';
+	const backgroundJobStackSafeInset = 8;
 
 	function backgroundJobStack() {
 		return document.querySelector('[data-kidia-background-job-stack]');
+	}
+
+	function backgroundJobStackBounds(stack) {
+		const rect = stack.getBoundingClientRect();
+		return {
+			left: Number.isFinite(Number(rect.left)) ? Number(rect.left) : backgroundJobStackSafeInset,
+			top: Number.isFinite(Number(rect.top)) ? Number(rect.top) : backgroundJobStackSafeInset,
+			width: Math.max(1, Number(rect.width) || stack.offsetWidth || 380),
+			height: Math.max(1, Number(rect.height) || stack.offsetHeight || 1)
+		};
+	}
+
+	function positionBackgroundJobStack(stack, left, top, remember) {
+		if (!stack) return;
+		const bounds = backgroundJobStackBounds(stack);
+		const viewportWidth = Math.max(
+			bounds.width + (backgroundJobStackSafeInset * 2),
+			Number(window.innerWidth) || document.documentElement.clientWidth || 0
+		);
+		const viewportHeight = Math.max(
+			bounds.height + (backgroundJobStackSafeInset * 2),
+			Number(window.innerHeight) || document.documentElement.clientHeight || 0
+		);
+		const maxLeft = Math.max(backgroundJobStackSafeInset, viewportWidth - bounds.width - backgroundJobStackSafeInset);
+		const maxTop = Math.max(backgroundJobStackSafeInset, viewportHeight - bounds.height - backgroundJobStackSafeInset);
+		const safeLeft = Math.max(backgroundJobStackSafeInset, Math.min(maxLeft, Number(left) || backgroundJobStackSafeInset));
+		const safeTop = Math.max(backgroundJobStackSafeInset, Math.min(maxTop, Number(top) || backgroundJobStackSafeInset));
+
+		stack.style.left = safeLeft + 'px';
+		stack.style.top = safeTop + 'px';
+		stack.style.right = 'auto';
+		stack.style.bottom = 'auto';
+		stack.dataset.kidiaStackPositioned = '1';
+
+		if (remember) {
+			try {
+				window.localStorage.setItem(backgroundJobStackPositionKey, JSON.stringify({
+					left: Math.round(safeLeft),
+					top: Math.round(safeTop)
+				}));
+			} catch (_error) {}
+		}
+	}
+
+	function restoreBackgroundJobStackPosition(stack) {
+		if (!stack || stack.dataset.kidiaStackPositioned === '1') return;
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(backgroundJobStackPositionKey) || 'null');
+			if (saved && Number.isFinite(Number(saved.left)) && Number.isFinite(Number(saved.top))) {
+				positionBackgroundJobStack(stack, saved.left, saved.top, false);
+			}
+		} catch (_error) {
+			try { window.localStorage.removeItem(backgroundJobStackPositionKey); } catch (_storageError) {}
+		}
+	}
+
+	function keepBackgroundJobStackOnScreen(stack) {
+		if (!stack || stack.dataset.kidiaStackPositioned !== '1') return;
+		const bounds = backgroundJobStackBounds(stack);
+		positionBackgroundJobStack(stack, bounds.left, bounds.top, false);
+	}
+
+	function bindBackgroundJobStackDrag(stack) {
+		if (!stack || stack.dataset.kidiaStackDragBound === '1') return;
+		stack.dataset.kidiaStackDragBound = '1';
+		restoreBackgroundJobStackPosition(stack);
+
+		stack.addEventListener('pointerdown', function (event) {
+			const eventTarget = event.target && typeof event.target.closest === 'function' ? event.target : null;
+			const card = eventTarget ? eventTarget.closest('[data-kidia-background-job]') : null;
+			if (
+				!card ||
+				!stack.contains(card) ||
+				stack.classList.contains('is-dragging') ||
+				(event.button !== undefined && event.button !== 0) ||
+				eventTarget.closest('button,a,input,select,textarea,label,[contenteditable="true"]')
+			) return;
+
+			const start = backgroundJobStackBounds(stack);
+			const startX = Number(event.clientX) || 0;
+			const startY = Number(event.clientY) || 0;
+			const offsetX = startX - start.left;
+			const offsetY = startY - start.top;
+			const pointerId = event.pointerId;
+			let moved = false;
+
+			const move = function (moveEvent) {
+				if (pointerId !== undefined && moveEvent.pointerId !== undefined && moveEvent.pointerId !== pointerId) return;
+				const nextX = Number(moveEvent.clientX) || 0;
+				const nextY = Number(moveEvent.clientY) || 0;
+				if (!moved && Math.hypot(nextX - startX, nextY - startY) < 4) return;
+				moved = true;
+				stack.classList.add('is-dragging');
+				moveEvent.preventDefault();
+				positionBackgroundJobStack(stack, nextX - offsetX, nextY - offsetY, false);
+			};
+
+			const stop = function (stopEvent) {
+				if (pointerId !== undefined && stopEvent.pointerId !== undefined && stopEvent.pointerId !== pointerId) return;
+				window.removeEventListener('pointermove', move);
+				window.removeEventListener('pointerup', stop);
+				window.removeEventListener('pointercancel', stop);
+				window.removeEventListener('blur', stop);
+				if (!moved) return;
+				stack.classList.remove('is-dragging');
+				const current = backgroundJobStackBounds(stack);
+				positionBackgroundJobStack(stack, current.left, current.top, true);
+				stack.dataset.kidiaSuppressDragClick = '1';
+				window.setTimeout(function () { delete stack.dataset.kidiaSuppressDragClick; }, 0);
+			};
+
+			window.addEventListener('pointermove', move, { passive: false });
+			window.addEventListener('pointerup', stop);
+			window.addEventListener('pointercancel', stop);
+			window.addEventListener('blur', stop);
+		});
+
+		stack.addEventListener('click', function (event) {
+			if (stack.dataset.kidiaSuppressDragClick !== '1') return;
+			const eventTarget = event.target && typeof event.target.closest === 'function' ? event.target : null;
+			if (!eventTarget || !eventTarget.closest('[data-kidia-background-job]')) return;
+			event.preventDefault();
+			event.stopPropagation();
+		}, true);
+
+		if (typeof window.ResizeObserver === 'function') {
+			const observer = new window.ResizeObserver(function () {
+				keepBackgroundJobStackOnScreen(stack);
+			});
+			observer.observe(stack);
+			stack.kidiaBackgroundJobResizeObserver = observer;
+		}
 	}
 
 	function appendBackgroundJobCard(card) {
@@ -14,6 +148,7 @@
 			document.body.appendChild(card);
 			return card;
 		}
+		bindBackgroundJobStackDrag(stack);
 		const job = String(card.dataset.kidiaBackgroundJob || '');
 		const existing = job
 			? Array.from(stack.querySelectorAll('[data-kidia-background-job]')).find(function (candidate) {
@@ -26,8 +161,14 @@
 		}
 		stack.appendChild(card);
 		initCompletedBackgroundJobNotices(card);
+		keepBackgroundJobStackOnScreen(stack);
 		return card;
 	}
+
+	bindBackgroundJobStackDrag(backgroundJobStack());
+	window.addEventListener('resize', function () {
+		keepBackgroundJobStackOnScreen(backgroundJobStack());
+	});
 
 	function completedNoticeKeys() {
 		try {

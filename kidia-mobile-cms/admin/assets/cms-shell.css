@@ -1323,9 +1323,9 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	padding:0;
 }
 .kidia-background-job-stack .kidia-ai-progress-overlay.is-docked .kidia-ai-progress-card{
-	cursor:default;
-	touch-action:auto;
-	user-select:text;
+	cursor:grab;
+	touch-action:none;
+	user-select:none;
 }
 .kidia-background-job-stack .kidia-background-job-card{
 	box-sizing:border-box;
@@ -1334,7 +1334,12 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 	margin:0;
 	box-shadow:0 18px 55px rgba(23,78,66,.22);
 	pointer-events:auto;
+	cursor:grab;
+	touch-action:none;
+	user-select:none;
 }
+.kidia-background-job-stack.is-dragging :is(.kidia-ai-progress-card,.kidia-background-job-card){cursor:grabbing}
+.kidia-background-job-stack :is(.kidia-ai-progress-card,.kidia-background-job-card) :is(button,a,input,select,textarea,label,[contenteditable="true"]){cursor:pointer;touch-action:auto;user-select:auto}
 @media(max-width:650px){
 	.kidia-background-job-stack{inset:auto 14px 14px auto;width:min(380px,calc(100vw - 28px));gap:8px}
 	.rtl .kidia-background-job-stack{right:auto;left:14px}
