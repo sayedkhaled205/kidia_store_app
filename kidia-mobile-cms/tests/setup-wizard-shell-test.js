@@ -159,7 +159,12 @@ for (const pageDesign of ["catalog", "product", "wishlist", "account"]) {
 }
 assert.match(service, /secondary_color/, "Setup identity must persist the secondary application color.");
 assert.match(service, /site_identity_defaults[\s\S]*custom_logo[\s\S]*site_logo[\s\S]*woocommerce_email_header_image/, "Setup identity must discover the connected site's logo without requiring a second upload.");
-assert.match(service, /wp_get_global_settings[\s\S]*primary_candidates[\s\S]*secondary_candidates[\s\S]*tint_color/, "Setup identity must derive editable brand colors from the connected site and calculate a safe tint fallback.");
+assert.match(service, /get_theme_mods[\s\S]*astra-settings[\s\S]*xts-woodmart-options[\s\S]*collect_site_colors/, "Setup identity must inspect semantic palette settings used by popular WordPress themes.");
+assert.match(service, /#0878e5[\s\S]*#e8f3ff[\s\S]*defaults\['primary_color'\][\s\S]*defaults\['secondary_color'\]/, "Legacy demo blues must migrate to the detected site palette without replacing user-selected colors.");
+assert.match(service, /wp_get_global_settings[\s\S]*'theme'[\s\S]*'custom'[\s\S]*'default'[\s\S]*tint_color/, "Setup identity must derive editable brand colors from every global palette and calculate a safe tint fallback.");
+assert.match(service, /compact_product_card_settings[\s\S]*'card_style'\s*=>\s*'outlined'[\s\S]*'image_ratio'\s*=>\s*\.88[\s\S]*'show_rating'\s*=>\s*true[\s\S]*'quick_add_icon_variant'\s*=>\s*'bag'[\s\S]*'quick_add_position'\s*=>\s*'bottom_end'/, "Setup themes must use the compact outlined product card with rating, price, and over-image bag action.");
+assert.match(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*transform:scale\(var\(--kidia-theme-preview-scale\)\);[^}]*transform-origin:top left/, "Theme preview must scale deterministically inside the shared phone frame.");
+assert.doesNotMatch(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*zoom:/, "Theme preview must not use browser-dependent iframe zoom that distorts the phone frame.");
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
 assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
