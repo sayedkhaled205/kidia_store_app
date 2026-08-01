@@ -172,6 +172,7 @@ async function testCompletedCardSurvivesBrowserReopen() {
   assert.equal(root.querySelector("[data-build-action]").hidden, false);
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "The completed card must remain visible until it is acknowledged.");
   assert.equal(root.querySelector("[data-build-dismiss-label]").textContent, "OK", "A completed card must replace Cancel with OK.");
+  assert.equal(root.querySelector("[data-build-cancel]").classList.contains("is-confirm"), true, "OK must use the Kidia confirmation color instead of the red cancel style.");
   assert.equal(root.querySelector("[data-build-background]"), null, "Continue in background must not exist.");
 }
 
@@ -217,6 +218,7 @@ async function testIdleControlStartsBuildAndShowsProgress() {
   assert.equal(root.querySelector("[data-build-progress]").hidden, false);
   assert.equal(root.querySelector("[data-build-modal]").hidden, false, "Clicking the full card must open the build progress dialog.");
   assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Cancel must appear while the build is active.");
+  assert.equal(root.querySelector("[data-build-cancel]").classList.contains("is-confirm"), false, "An active Cancel action must keep its destructive style.");
 }
 
 async function testFailedBuildReturnsTheSameControlToRetry() {

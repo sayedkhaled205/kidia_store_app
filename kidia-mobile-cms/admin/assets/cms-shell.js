@@ -1,6 +1,7 @@
 (function () {
 	'use strict';
 	const shell = document.querySelector('.kidia-cms-shell');
+	const completedNoticeStorageKey = 'kidiaCompletedBackgroundJobNotices';
 
 	function backgroundJobStack() {
 		return document.querySelector('[data-kidia-background-job-stack]');
@@ -24,8 +25,63 @@
 			return existing;
 		}
 		stack.appendChild(card);
+		initCompletedBackgroundJobNotices(card);
 		return card;
 	}
+
+	function completedNoticeKeys() {
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(completedNoticeStorageKey) || '[]');
+			return Array.isArray(saved) ? saved.filter(function (key) { return typeof key === 'string'; }) : [];
+		} catch (_error) {
+			return [];
+		}
+	}
+
+	function rememberCompletedNotice(key) {
+		if (!key) return;
+		try {
+			const saved = completedNoticeKeys().filter(function (candidate) { return candidate !== key; });
+			saved.push(key);
+			window.localStorage.setItem(completedNoticeStorageKey, JSON.stringify(saved.slice(-20)));
+		} catch (_error) {}
+	}
+
+	function completedNoticeKey(card) {
+		const job = String(card.dataset.kidiaBackgroundJob || 'background-job');
+		const completion = String(card.dataset.completionKey || '');
+		return completion ? job + ':' + completion : '';
+	}
+
+	function dismissCompletedNotice(card, key) {
+		if (!card || !card.isConnected || card.dataset.completeDismissed === '1') return;
+		card.dataset.completeDismissed = '1';
+		card.classList.add('is-leaving');
+		rememberCompletedNotice(key);
+		window.setTimeout(function () { card.remove(); }, 350);
+	}
+
+	function initCompletedBackgroundJobNotices(root) {
+		const cards = root && root.matches && root.matches('[data-complete-auto-dismiss]')
+			? [root]
+			: Array.from((root || document).querySelectorAll('[data-complete-auto-dismiss]'));
+		cards.forEach(function (card) {
+			if (card.dataset.completeDismissBound === '1') return;
+			card.dataset.completeDismissBound = '1';
+			const key = completedNoticeKey(card);
+			if (key && completedNoticeKeys().includes(key)) {
+				card.remove();
+				return;
+			}
+			const delay = Math.max(1000, Number(card.dataset.completeAutoDismiss || 5000));
+			window.setTimeout(function () { dismissCompletedNotice(card, key); }, delay);
+		});
+	}
+
+	initCompletedBackgroundJobNotices(document);
+	document.addEventListener('kidia:cms-page-ready', function () {
+		initCompletedBackgroundJobNotices(document);
+	});
 
 	function resetDocumentScroll() {
 		if ('scrollRestoration' in history) {
@@ -669,6 +725,7 @@
 		const view = overlay.querySelector('[data-ai-view-results]');
 		const cancel = overlay.querySelector('[data-ai-cancel-button]');
 		const background = overlay.querySelector('[data-ai-background-button]');
+		if (cancel) cancel.classList.toggle('is-confirm', Boolean(payload.done));
 		if (payload.cancelled) {
 			overlay.setAttribute('aria-busy', 'false');
 			overlay.hidden = true;
@@ -839,6 +896,12 @@
 				overlay.setAttribute('aria-busy', 'true');
 				overlay.classList.remove('is-docked');
 				delete overlay.dataset.aiComplete;
+				const cancelButton = overlay.querySelector('[data-ai-cancel-button]');
+				if (cancelButton) {
+					cancelButton.classList.remove('is-confirm');
+					cancelButton.disabled = false;
+					cancelButton.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Cancel analysis';
+				}
 				document.body.classList.add('kidia-ai-is-generating');
 			}
 			try {
