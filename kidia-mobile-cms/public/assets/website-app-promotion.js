@@ -518,6 +518,21 @@
         afterDelay(options.trigger === "immediate" ? 0 : options.delay, callback);
       }
     };
+    const placeInlineSlot = (slot) => {
+      const placement = slot.dataset.kidiaAppPromoPlacement || "";
+      if (placement === "after_header") {
+        const header = document.querySelector(
+          "#header,.site-header,header[role='banner'],body > header,header",
+        );
+        if (header && header.nextElementSibling !== slot) header.after(slot);
+      }
+      if (placement === "before_footer") {
+        const footer = document.querySelector(
+          "#footer,.site-footer,footer[role='contentinfo'],body > footer,footer",
+        );
+        if (footer && footer.previousElementSibling !== slot) footer.before(slot);
+      }
+    };
     const showInline = () => {
       let slots = [
         ...document.querySelectorAll('[data-kidia-app-promo-slot="inline"]'),
@@ -530,7 +545,10 @@
         host.prepend(slot);
         slots = [slot];
       }
-      slots.forEach((slot) => show("inline_banner", "inline_banner", slot));
+      slots.forEach((slot) => {
+        placeInlineSlot(slot);
+        show("inline_banner", "inline_banner", slot);
+      });
     };
 
     if (isTestMode) {
