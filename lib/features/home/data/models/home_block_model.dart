@@ -458,6 +458,13 @@ abstract final class HomeBlockModel {
         'quick_add_enabled',
         fallback: true,
       ),
+      contentBottomPadding: _boundedDouble(
+        data,
+        'content_bottom_padding',
+        fallback: 12,
+        minimum: 0,
+        maximum: 32,
+      ),
       imageSwipeEnabled: _optionalBool(
         data,
         'enable_image_swipe',
@@ -506,6 +513,13 @@ abstract final class HomeBlockModel {
         data,
         'quick_add_enabled',
         fallback: true,
+      ),
+      contentBottomPadding: _boundedDouble(
+        data,
+        'content_bottom_padding',
+        fallback: 12,
+        minimum: 0,
+        maximum: 32,
       ),
       imageSwipeEnabled: _optionalBool(
         data,

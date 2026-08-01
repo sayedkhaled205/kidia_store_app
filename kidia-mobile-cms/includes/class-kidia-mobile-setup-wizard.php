@@ -1156,8 +1156,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['border_radius'] = $theme['radius'];
 				if ( 'family_pop' === $profile ) {
 					$settings['overlay_strength'] = 0;
-					$settings['text_color'] = '#000000';
-					$settings['button_color'] = '#000000';
+					$settings['text_color'] = $primary;
+					$settings['button_color'] = $primary;
 					$settings['button_text_color'] = '#FFFFFF';
 				}
 				$settings['items']         = array();
@@ -1201,7 +1201,7 @@ final class Kidia_Mobile_Setup_Wizard {
 					$settings['image_radius'] = 10;
 					$settings['content_horizontal_padding'] = 7;
 					$settings['content_top_padding'] = 3;
-					$settings['content_bottom_padding'] = 2;
+					$settings['content_bottom_padding'] = 0;
 					$settings['quick_add_background_size'] = 30;
 					$settings['quick_add_radius'] = 15;
 				}

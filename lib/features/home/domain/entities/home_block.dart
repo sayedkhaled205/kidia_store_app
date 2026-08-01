@@ -452,6 +452,7 @@ class ProductCarouselBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.contentBottomPadding = 12,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
@@ -473,6 +474,7 @@ class ProductCarouselBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final double contentBottomPadding;
   final bool imageSwipeEnabled;
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
@@ -499,6 +501,7 @@ class ProductGridBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.contentBottomPadding = 12,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
@@ -520,6 +523,7 @@ class ProductGridBlock extends HomeBlock {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final double contentBottomPadding;
   final bool imageSwipeEnabled;
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
