@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const initializePromotion = () => {
   const config = window.KidiaAppPromotion || {};
   const settings = config.settings || {};
   const root = document.querySelector("[data-kidia-app-promo-root]");
@@ -373,4 +374,14 @@
     );
     visible?.querySelector(".kidia-app-promo__dismiss")?.click();
   });
+
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializePromotion, {
+      once: true,
+    });
+  } else {
+    initializePromotion();
+  }
 })();
