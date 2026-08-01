@@ -106,6 +106,7 @@ hook.render(overlay, {
 });
 assert.equal(overlay.dataset.aiComplete, "1");
 assert.match(overlay.querySelector("[data-ai-cancel-button]").textContent, /OK/);
+assert.equal(overlay.querySelector("[data-ai-cancel-button]").classList.contains("is-confirm"), true, "Completed AI actions must use the Kidia confirmation color.");
 
 const pageContent = window.document.createElement("main");
 pageContent.appendChild(overlay);

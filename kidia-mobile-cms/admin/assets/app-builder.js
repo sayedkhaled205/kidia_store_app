@@ -189,6 +189,7 @@
 		if (cancelButton) {
 			cancelButton.hidden = !stored;
 			cancelButton.disabled = false;
+			cancelButton.classList.toggle('is-confirm', stored && !building);
 			const actionIcon = cancelButton.querySelector('.dashicons');
 			if (actionIcon) actionIcon.className = 'dashicons ' + (building ? 'dashicons-no-alt' : 'dashicons-yes-alt');
 		}
