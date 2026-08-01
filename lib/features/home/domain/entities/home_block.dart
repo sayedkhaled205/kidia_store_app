@@ -346,6 +346,8 @@ class BannerGridBlock extends HomeBlock {
     required this.imageFit,
     required this.overlayStrength,
     required this.textColor,
+    required this.buttonColor,
+    required this.buttonTextColor,
     required this.items,
   }) : super(type: HomeBlockType.bannerGrid);
 
@@ -359,6 +361,8 @@ class BannerGridBlock extends HomeBlock {
   final String imageFit;
   final double overlayStrength;
   final String textColor;
+  final String buttonColor;
+  final String buttonTextColor;
   final List<BannerGridItem> items;
 }
 

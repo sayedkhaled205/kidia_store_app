@@ -1363,6 +1363,14 @@ class _BannerGridTile extends StatelessWidget {
       block.textColor,
       fallback: Colors.white,
     );
+    final Color buttonColor = _parseHexColor(
+      block.buttonColor,
+      fallback: Colors.white,
+    );
+    final Color buttonTextColor = _parseHexColor(
+      block.buttonTextColor,
+      fallback: Colors.black,
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(block.borderRadius),
       child: Material(
@@ -1425,7 +1433,7 @@ class _BannerGridTile extends StatelessWidget {
                             const SizedBox(height: 8),
                             DecoratedBox(
                               decoration: BoxDecoration(
-                                color: textColor,
+                                color: buttonColor,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Padding(
@@ -1436,7 +1444,7 @@ class _BannerGridTile extends StatelessWidget {
                                 child: Text(
                                   item.buttonLabel!,
                                   style: TextStyle(
-                                    color: Colors.black.withValues(alpha: 0.82),
+                                    color: buttonTextColor,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),

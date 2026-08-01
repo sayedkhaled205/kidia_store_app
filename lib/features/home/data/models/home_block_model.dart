@@ -408,6 +408,8 @@ abstract final class HomeBlockModel {
       imageFit: imageFit,
       overlayStrength: _boundedDouble(data, 'overlay_strength', fallback: 35, minimum: 0, maximum: 90),
       textColor: _hexColor(data, 'text_color', fallback: '#FFFFFF'),
+      buttonColor: _hexColor(data, 'button_color', fallback: '#FFFFFF'),
+      buttonTextColor: _hexColor(data, 'button_text_color', fallback: '#111111'),
       items: _requiredMapList(data, 'items').map(_parseBannerGridItem).toList(growable: false),
     );
   }

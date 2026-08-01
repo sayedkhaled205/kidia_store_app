@@ -174,15 +174,15 @@ final class Kidia_Mobile_Setup_Wizard {
 						'hero_ratio' => 1.0, 'hero_radius' => 12, 'hero_padding' => 16, 'hero_indicators' => 'image_bottom',
 						'category_layout' => 'grid', 'category_columns' => 3, 'category_size' => 64, 'category_gap' => 12,
 						'quick_layout' => 'carousel', 'quick_columns' => 4, 'quick_size' => 64, 'quick_gap' => 12,
-						'product_columns' => 2, 'product_ratio' => 1.1, 'product_radius' => 0, 'product_style' => 'minimal',
+						'product_columns' => 2, 'product_ratio' => 1.22, 'product_radius' => 12, 'product_style' => 'outlined',
 						'product_rating' => false, 'product_badge' => true, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => true,
 						'banner_layout' => 'featured', 'banner_ratio' => 1.33, 'banner_gap' => 10, 'image_banner_ratio' => 1.33,
 					),
 					'category_design' => array(
-						'navigation_mode' => 'separate_page', 'card_gap' => 12, 'card_height' => 84, 'card_style' => 'outlined',
+						'category_layout' => 'default', 'navigation_mode' => 'separate_page', 'card_gap' => 12, 'card_height' => 84, 'card_style' => 'outlined',
 						'card_radius' => 16, 'image_size' => 68, 'image_shape' => 'rounded', 'image_radius' => 14,
 						'image_text_gap' => 14, 'font_size' => 16, 'font_weight' => 600, 'line_height' => 125,
-						'text_align' => 'start', 'show_arrow' => true, 'arrow_size' => 20, 'horizontal_padding' => 14,
+						'text_align' => 'start', 'image_position' => 'right', 'show_arrow' => true, 'arrow_size' => 20, 'horizontal_padding' => 14,
 					),
 				)
 			),
@@ -1154,6 +1154,12 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['gap']           = $home_design['banner_gap'];
 				$settings['aspect_ratio']  = $home_design['banner_ratio'];
 				$settings['border_radius'] = $theme['radius'];
+				if ( 'family_pop' === $profile ) {
+					$settings['overlay_strength'] = 0;
+					$settings['text_color'] = '#000000';
+					$settings['button_color'] = '#000000';
+					$settings['button_text_color'] = '#FFFFFF';
+				}
 				$settings['items']         = array();
 				foreach ( array_slice( $slides, 0, 3 ) as $slide_index => $slide ) {
 					$settings['items'][] = array(
@@ -1187,6 +1193,18 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['quick_add_enabled'] = ! empty( $home_design['product_quick_add'] );
 				$settings['enable_image_swipe'] = $home_design['product_swipe'];
 				$settings = array_merge( $settings, $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) );
+				if ( 'family_pop' === $profile ) {
+					$settings['image_ratio'] = $home_design['product_ratio'];
+					$settings['card_radius'] = $home_design['product_radius'];
+					$settings['card_style'] = $home_design['product_style'];
+					$settings['image_inset'] = 3;
+					$settings['image_radius'] = 10;
+					$settings['content_horizontal_padding'] = 7;
+					$settings['content_top_padding'] = 3;
+					$settings['content_bottom_padding'] = 2;
+					$settings['quick_add_background_size'] = 30;
+					$settings['quick_add_radius'] = 15;
+				}
 			}
 			if ( isset( $settings['signature_feature'] ) ) {
 				$settings = array_merge( $settings, (array) $signature['settings'] );
@@ -1439,6 +1457,16 @@ final class Kidia_Mobile_Setup_Wizard {
 				// Setup themes use flat headers that blend into the page surface.
 				$layout[ $chrome ]['settings']['shadow'] = 'none';
 				$layout[ $chrome ]['settings']['compact_shadow'] = 'none';
+				$layout[ $chrome ]['settings']['border_color'] = $theme['surface'];
+				$layout[ $chrome ]['settings']['compact_border_color'] = $theme['surface'];
+				$layout[ $chrome ]['settings']['border_width'] = 0;
+				$layout[ $chrome ]['settings']['compact_border_width'] = 0;
+				$layout[ $chrome ]['settings']['corner_radius'] = 0;
+				$layout[ $chrome ]['settings']['compact_radius'] = 0;
+				$layout[ $chrome ]['settings']['margin_top'] = 0;
+				$layout[ $chrome ]['settings']['margin_bottom'] = 0;
+				$layout[ $chrome ]['settings']['space_up'] = 0;
+				$layout[ $chrome ]['settings']['space_down'] = 0;
 				$layout[ $chrome ]['settings']['search_style'] = $theme['search_style'];
 				$layout[ $chrome ]['settings']['search_background'] = $theme['surface'];
 				$layout[ $chrome ]['settings']['search_border_color'] = $secondary;
