@@ -1636,6 +1636,22 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 .kidia-coupon-actions form{display:flex;align-items:center;gap:5px}
 .kidia-coupon-actions form select{width:auto;min-width:142px;min-height:34px;border-color:#b9d4cd;border-radius:8px;font-size:11px}
 .kidia-coupon-actions form button{white-space:nowrap}
+.kidia-cms-js [data-kidia-instant-submit-fallback]{display:none!important}
+[data-kidia-instant-filter].is-kidia-loading,[data-kidia-instant-action].is-kidia-loading{cursor:progress}
+[data-kidia-instant-filter].is-kidia-loading::after,[data-kidia-instant-action].is-kidia-loading::after{
+	content:"";
+	box-sizing:border-box;
+	width:15px;
+	height:15px;
+	flex:0 0 15px;
+	border:2px solid #b9d9d1;
+	border-top-color:#2f806e;
+	border-radius:50%;
+	animation:kidia-data-instant-spin .65s linear infinite;
+}
+[data-kidia-instant-action].is-kidia-loading{opacity:.72}
+[data-kidia-instant-action].is-kidia-error{outline:2px solid #d63638;outline-offset:2px}
+@keyframes kidia-data-instant-spin{to{transform:rotate(360deg)}}
 @media(max-width:900px){
 	.kidia-ai-playbooks[open]{width:100%}
 	.kidia-ai-playbooks>div.kidia-ai-playbook-groups,.kidia-ai-action-grid,.kidia-ai-bundle-grid{grid-template-columns:1fr}
