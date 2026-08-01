@@ -144,6 +144,7 @@
 		const buttonLabel = root.querySelector('[data-build-action-label]');
 		const icon = root.querySelector('[data-build-action-icon]');
 		const cancelButton = root.querySelector('[data-build-cancel]');
+		const dismissLabel = root.querySelector('[data-build-dismiss-label]');
 		const modal = root.querySelector('[data-build-modal]');
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
@@ -176,7 +177,10 @@
 		if (cancelButton) {
 			cancelButton.hidden = !stored;
 			cancelButton.disabled = false;
+			const actionIcon = cancelButton.querySelector('.dashicons');
+			if (actionIcon) actionIcon.className = 'dashicons ' + (building ? 'dashicons-no-alt' : 'dashicons-yes-alt');
 		}
+		if (dismissLabel) dismissLabel.textContent = building ? label('cancelBuild', 'Cancel Build') : label('ok', 'OK');
 		if (icon) {
 			icon.className = 'dashicons ' + (
 				ready
