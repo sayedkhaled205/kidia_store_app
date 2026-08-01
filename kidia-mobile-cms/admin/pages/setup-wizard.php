@@ -180,16 +180,18 @@ defined( 'ABSPATH' ) || exit;
 		<div class="kidia-theme-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-modal-title">
 			<button type="button" class="kidia-theme-modal__close" data-theme-modal-close aria-label="<?php esc_attr_e( 'Close preview', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 			<div class="kidia-theme-modal__heading"><span><?php esc_html_e( 'Complete theme preview', 'kidia-mobile-cms' ); ?></span><h2 id="kidia-theme-modal-title" data-theme-modal-name></h2><p><?php esc_html_e( 'Browse every real Flutter page generated from this theme’s own settings and store imagery.', 'kidia-mobile-cms' ); ?></p></div>
-			<button type="button" class="button button-primary kidia-theme-modal__select"><?php esc_html_e( 'Use this complete theme', 'kidia-mobile-cms' ); ?></button>
 			<div class="kidia-theme-modal__workspace">
-				<nav class="kidia-theme-modal__pages" aria-label="<?php esc_attr_e( 'Theme preview pages', 'kidia-mobile-cms' ); ?>">
-					<?php foreach ( $setup_pages as $preview_page => $preview_page_data ) : ?>
-						<button type="button" data-theme-modal-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
-							<span class="dashicons <?php echo esc_attr( (string) $preview_page_data['icon'] ); ?>" aria-hidden="true"></span>
-							<?php echo esc_html( (string) $preview_page_data['name'] ); ?>
-						</button>
-					<?php endforeach; ?>
-				</nav>
+				<div class="kidia-theme-modal__controls">
+					<nav class="kidia-theme-modal__pages" aria-label="<?php esc_attr_e( 'Theme preview pages', 'kidia-mobile-cms' ); ?>">
+						<?php foreach ( $setup_pages as $preview_page => $preview_page_data ) : ?>
+							<button type="button" data-theme-modal-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
+								<span class="dashicons <?php echo esc_attr( (string) $preview_page_data['icon'] ); ?>" aria-hidden="true"></span>
+								<?php echo esc_html( (string) $preview_page_data['name'] ); ?>
+							</button>
+						<?php endforeach; ?>
+					</nav>
+					<button type="button" class="button button-primary kidia-theme-modal__select"><?php esc_html_e( 'Use this complete theme', 'kidia-mobile-cms' ); ?></button>
+				</div>
 				<div class="kidia-theme-modal__stage">
 					<div class="kidia-theme-modal__device">
 						<iframe data-theme-modal-frame title="<?php esc_attr_e( 'Real Flutter theme preview', 'kidia-mobile-cms' ); ?>" loading="eager" allow="clipboard-read; clipboard-write"></iframe>
