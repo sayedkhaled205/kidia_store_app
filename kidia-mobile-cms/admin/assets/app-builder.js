@@ -10,7 +10,7 @@
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
 	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
-	const recentBuildWindow = 24 * 60 * 60;
+	const recentBuildWindow = 5 * 24 * 60 * 60;
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -145,6 +145,7 @@
 		const icon = root.querySelector('[data-build-action-icon]');
 		const cancelButton = root.querySelector('[data-build-cancel]');
 		const dismissLabel = root.querySelector('[data-build-dismiss-label]');
+		const stage = root.querySelector('[data-build-stage]');
 		const modal = root.querySelector('[data-build-modal]');
 		const canBuild = root.dataset.canBuild === '1';
 		const ready = status === 'ready' && downloadReady;
@@ -181,6 +182,7 @@
 			if (actionIcon) actionIcon.className = 'dashicons ' + (building ? 'dashicons-no-alt' : 'dashicons-yes-alt');
 		}
 		if (dismissLabel) dismissLabel.textContent = building ? label('cancelBuild', 'Cancel Build') : label('ok', 'OK');
+		if (stage) stage.hidden = downloaded;
 		if (icon) {
 			icon.className = 'dashicons ' + (
 				ready
@@ -238,11 +240,16 @@
 			}
 			if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
 			if (progressLabel) progressLabel.textContent = progress + '%';
-			if (stage) stage.textContent = state.stage || state.message || (
-				status === 'queued'
-					? label('queued', 'Waiting for the build provider…')
-					: label(status, 'Preparing the Android application…')
-			);
+			if (stage) {
+				stage.hidden = status === 'downloaded';
+				if (!stage.hidden) {
+					stage.textContent = state.stage || state.message || (
+						status === 'queued'
+							? label('queued', 'Waiting for the build provider…')
+							: label(status, 'Preparing the Android application…')
+					);
+				}
+			}
 			if (title) title.textContent = status === 'downloaded'
 				? label('downloaded', 'Download Completed')
 				: label('buildTitle', 'Building your app');
