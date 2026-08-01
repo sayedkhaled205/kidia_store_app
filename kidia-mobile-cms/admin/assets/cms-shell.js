@@ -191,6 +191,14 @@
 				link.classList.toggle('is-active', link.dataset.kidiaPageView === (payload.view === 'pages' ? 'splash' : payload.view));
 			});
 		};
+		const persistentShellNode = function (node, sidebar, shell) {
+			return node === sidebar ||
+				node === shell ||
+				(node.nodeType === 1 && (
+					node.matches('[data-kidia-background-job]') ||
+					node.matches('.kidia-ai-progress-overlay.is-global')
+				));
+		};
 		const loadPage = async function (url, pushState) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
 			const shell = document.querySelector('[data-kidia-cms-shell]');
@@ -253,7 +261,7 @@
 					detail: { url: cacheKey }
 				}));
 				Array.from(currentContent.childNodes).forEach(function (node) {
-					if (node !== sidebar && node !== shell && !(node.nodeType === 1 && node.matches('.kidia-ai-progress-overlay.is-global'))) node.remove();
+					if (!persistentShellNode(node, sidebar, shell)) node.remove();
 				});
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
 				resetWorkspaceScroll();
@@ -275,7 +283,7 @@
 				message.setAttribute('role', 'alert');
 				message.textContent = 'The requested Woo Mobile CMS view could not be loaded. Please try again.';
 				Array.from(currentContent.childNodes).forEach(function (node) {
-					if (node !== sidebar && node !== shell && !(node.nodeType === 1 && node.matches('.kidia-ai-progress-overlay.is-global'))) node.remove();
+					if (!persistentShellNode(node, sidebar, shell)) node.remove();
 				});
 				currentContent.appendChild(message);
 			} finally {
@@ -476,6 +484,7 @@
 		const dock = document.createElement('div');
 		dock.className = 'kidia-ai-progress-overlay is-docked is-global';
 		dock.dataset.aiProgressOverlay = '';
+		dock.dataset.kidiaBackgroundJob = 'generate-offers';
 		dock.setAttribute('aria-live', 'polite');
 		dock.innerHTML =
 			'<div class="kidia-ai-progress-card">' +
@@ -616,18 +625,11 @@
 		}
 		if (payload.done) {
 			overlay.setAttribute('aria-busy', 'false');
-			if (stage) stage.textContent = 'Completed. Loading your results…';
+			if (stage) stage.textContent = 'Completed';
 			if (view) view.hidden = true;
 			if (background) background.hidden = true;
-			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Dismiss';
+			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>OK';
 			overlay.dataset.aiComplete = '1';
-			const resultUrl = payload.result_url || aiBackgroundConfig.aiUrl || '';
-			if (resultUrl && overlay.dataset.aiResultOpening !== '1') {
-				overlay.dataset.aiResultOpening = '1';
-				window.setTimeout(function () {
-					window.location.assign(resultUrl);
-				}, 250);
-			}
 		}
 	};
 	if (window.__KIDIA_AI_PROGRESS_TEST__) {
@@ -811,7 +813,7 @@
 					}
 				}
 				if (payload.cancelled || !foreground) return;
-				window.location.assign(payload.result_url || window.location.href);
+				persistAiProgressAcrossNavigation(overlay, activeJobId);
 			} catch (error) {
 				if (!foreground) return;
 				if (stage) stage.textContent = error && error.message ? error.message : 'The analysis could not be completed.';

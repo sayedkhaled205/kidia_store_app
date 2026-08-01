@@ -30,7 +30,7 @@ function markup(status, autoDownload = false) {
             <span data-build-action-label>Build Your App</span>
           </button>
         </form>
-        <button type="button" data-build-cancel ${["queued", "building"].includes(status) ? "" : "hidden"}>Cancel Build</button>
+        <button type="button" data-build-cancel ${status === "idle" || status === "cancelled" ? "hidden" : ""}><span class="dashicons"></span><span data-build-dismiss-label>Cancel Build</span></button>
       </div>
       <div data-build-recent-choice hidden>
         <button type="button" data-build-download-again>Download Again</button>
@@ -54,7 +54,9 @@ function builderConfig() {
 		downloaded: "Download Completed",
       cancelled: "Build cancelled.",
       cancelFailed: "The build could not be cancelled.",
-      timeout: "The APK build request took too long. Please try again."
+      timeout: "The APK build request took too long. Please try again.",
+      cancelBuild: "Cancel Build",
+      ok: "OK"
     }
   };
 }
@@ -167,7 +169,8 @@ async function testCompletedCardSurvivesBrowserReopen() {
   assert.equal(root.dataset.status, "downloaded", "Closing and reopening the browser must restore Download Completed for the same build.");
   assert.equal(root.querySelector("[data-build-message]").textContent, "Download Completed");
   assert.equal(root.querySelector("[data-build-action]").hidden, false);
-  assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "Only Cancel may dismiss the completed card.");
+  assert.equal(root.querySelector("[data-build-cancel]").hidden, false, "The completed card must remain visible until it is acknowledged.");
+  assert.equal(root.querySelector("[data-build-dismiss-label]").textContent, "OK", "A completed card must replace Cancel with OK.");
   assert.equal(root.querySelector("[data-build-background]"), null, "Continue in background must not exist.");
 }
 

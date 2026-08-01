@@ -172,6 +172,9 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
         <a data-kidia-page-view="setup" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </div>
+    <div data-kidia-app-build data-build-persistent data-kidia-background-job="app-build">Persistent build</div>
+    <div data-kidia-background-job="abandoned-carts">Persistent cart import</div>
+    <div class="kidia-ai-progress-overlay is-global" data-kidia-background-job="generate-offers">Persistent offers</div>
     <section data-page-content>Overview content</section>
     </main>
   </div>
@@ -212,6 +215,8 @@ dom.window.fetch = async (_url, options = {}) => {
 
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
 const originalShell = dom.window.document.querySelector("[data-kidia-cms-shell]");
+const originalBuildCard = dom.window.document.querySelector("[data-build-persistent]");
+const originalJobCards = Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]"));
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 const originalScrollWorkspace = dom.window.document.querySelector("#wpbody");
 originalScrollWorkspace.scrollTop = 320;
@@ -227,6 +232,16 @@ setTimeout(() => {
     dom.window.document.querySelector("[data-kidia-cms-shell]"),
     originalShell,
     "Navigation must retain the exact shared top frame DOM node."
+  );
+  assert.deepEqual(
+    Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]")),
+    originalJobCards,
+    "A new background card must remain beside every older card instead of replacing it."
+  );
+  assert.strictEqual(
+    dom.window.document.querySelector("[data-build-persistent]"),
+    originalBuildCard,
+    "Navigation must retain the exact background build card DOM node."
   );
   assert.strictEqual(
     dom.window.document.querySelector("#wpbody-content"),
@@ -253,6 +268,8 @@ setTimeout(() => {
     assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), false, "The document root must be released with the Builder body.");
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
+    assert.strictEqual(dom.window.document.querySelector("[data-build-persistent]"), originalBuildCard, "A second page change must still retain the running or completed build card.");
+    assert.deepEqual(Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]")), originalJobCards, "All three independent job cards must survive repeated navigation together.");
     assert.deepEqual(requestedVersions, ["1.45.60", "1.45.60"], "Every navigation request must carry the running asset version.");
 
     const staleDom = new JSDOM(`<!doctype html><html><head>
