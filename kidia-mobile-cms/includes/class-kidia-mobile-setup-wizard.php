@@ -1436,9 +1436,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['logo_text_color'] = $theme['ink'];
 				$layout[ $chrome ]['settings']['style'] = $theme['header_style'];
 				$layout[ $chrome ]['settings']['height'] = (int) ( $design['chrome']['header_heights'][ $page ] ?? $design['chrome']['header_height'] );
-				$layout[ $chrome ]['settings']['shadow'] = (string) $design['chrome']['header_shadow'];
+				// Setup themes use flat headers that blend into the page surface.
+				$layout[ $chrome ]['settings']['shadow'] = 'none';
 				$layout[ $chrome ]['settings']['search_style'] = $theme['search_style'];
-				$layout[ $chrome ]['settings']['search_background'] = $secondary;
+				$layout[ $chrome ]['settings']['search_background'] = $theme['surface'];
 				$layout[ $chrome ]['settings']['search_border_color'] = $secondary;
 				$layout[ $chrome ]['settings']['search_radius'] = (int) $design['chrome']['search_radius'];
 				$layout[ $chrome ]['settings']['logo_text'] = $app_name;
