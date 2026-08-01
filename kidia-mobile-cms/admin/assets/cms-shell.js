@@ -1,5 +1,6 @@
 (function () {
 	'use strict';
+	document.documentElement.classList.add('kidia-cms-js');
 	const shell = document.querySelector('.kidia-cms-shell');
 	const completedNoticeStorageKey = 'kidiaCompletedBackgroundJobNotices';
 	const backgroundJobStackPositionKey = 'kidiaBackgroundJobStackPositionV1';
@@ -440,20 +441,36 @@
 				appendBackgroundJobCard(card);
 			});
 		};
-		const loadPage = async function (url, pushState) {
+		const loadPage = async function (url, pushState, navigationOptions) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
 			const shell = document.querySelector('[data-kidia-cms-shell]');
 			const currentContent = document.querySelector('#wpbody-content');
 			if (!sidebar || !shell || !currentContent) {
 				return;
 			}
+			const options = navigationOptions || {};
 			const cacheKey = keyFor(url);
+			const targetUrl = new URL(cacheKey, window.location.href);
+			const isStoreDataView = targetUrl.searchParams.get('view') === 'store-data';
+			const canUseCache = !isStoreDataView && !options.fresh;
+			const workspace = document.querySelector('#wpbody');
+			const scrollState = options.preserveScroll && workspace
+				? { top: workspace.scrollTop, left: workspace.scrollLeft }
+				: null;
+			const activeElement = document.activeElement;
+			const focusState = options.preserveFocus && activeElement && currentContent.contains(activeElement) && activeElement.name
+				? {
+					name: activeElement.name,
+					start: typeof activeElement.selectionStart === 'number' ? activeElement.selectionStart : null,
+					end: typeof activeElement.selectionEnd === 'number' ? activeElement.selectionEnd : null
+				}
+				: null;
 			if (window.kidiaCmsNavigationController) window.kidiaCmsNavigationController.abort();
 			const controller = new AbortController();
 			window.kidiaCmsNavigationController = controller;
 			try {
 				let payload;
-				if (viewCache.has(cacheKey)) {
+				if (canUseCache && viewCache.has(cacheKey)) {
 					payload = viewCache.get(cacheKey);
 				} else {
 					const body = new URLSearchParams({
@@ -495,7 +512,7 @@
 					return;
 				}
 				const stylesReady = loadStyles(payload);
-				if (!viewCache.has(cacheKey)) viewCache.set(cacheKey, payload);
+				if (canUseCache && !viewCache.has(cacheKey)) viewCache.set(cacheKey, payload);
 				syncBuilderScreen(payload.builderScreen);
 				updateNavigation(payload);
 				document.dispatchEvent(new CustomEvent('kidia:cms-before-page-change', {
@@ -506,8 +523,31 @@
 					if (!persistentShellNode(node, sidebar, shell)) node.remove();
 				});
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
-				resetWorkspaceScroll();
-				if (pushState) history.pushState({ kidiaCmsPage: true }, '', cacheKey);
+				if (scrollState && workspace) {
+					resetDocumentScroll();
+					workspace.scrollTop = scrollState.top;
+					workspace.scrollLeft = scrollState.left;
+				} else {
+					resetWorkspaceScroll();
+				}
+				if (pushState) {
+					if (options.replaceState) {
+						history.replaceState({ kidiaCmsPage: true }, '', cacheKey);
+					} else {
+						history.pushState({ kidiaCmsPage: true }, '', cacheKey);
+					}
+				}
+				if (focusState) {
+					const matchingField = Array.from(currentContent.querySelectorAll('[name]')).find(function (field) {
+						return field.name === focusState.name;
+					});
+					if (matchingField) {
+						matchingField.focus({ preventScroll: true });
+						if (focusState.start !== null && typeof matchingField.setSelectionRange === 'function') {
+							matchingField.setSelectionRange(focusState.start, focusState.end);
+						}
+					}
+				}
 				/* Display the requested view before Media and Builder JavaScript finish.
 				 * Page scripts now execute against markup that already exists instead of
 				 * holding the old page on screen until every asset has downloaded. */
@@ -531,6 +571,10 @@
 			} finally {
 				currentContent.classList.remove('is-kidia-page-loading');
 			}
+		};
+		window.kidiaCmsNavigate = function (url, options) {
+			const navigationOptions = options || {};
+			return loadPage(url, navigationOptions.pushState !== false, navigationOptions);
 		};
 
 		document.addEventListener('click', function (event) {
@@ -699,6 +743,127 @@
 	initCustomDateFilters(document);
 	document.addEventListener('kidia:cms-page-ready', function () {
 		initCustomDateFilters(document);
+	});
+	const instantFilterTimers = new WeakMap();
+	const storeDataUrlFromForm = function (form) {
+		const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+		url.search = '';
+		new FormData(form).forEach(function (value, key) {
+			if (typeof value === 'string') url.searchParams.append(key, value);
+		});
+		return url.href;
+	};
+	const navigateFreshStoreData = function (url, options) {
+		if (typeof window.kidiaCmsNavigate === 'function') {
+			return window.kidiaCmsNavigate(url, Object.assign({
+				fresh: true,
+				replaceState: true,
+				preserveScroll: true
+			}, options || {}));
+		}
+		window.location.href = url;
+		return Promise.resolve();
+	};
+	const customDateRangeReady = function (form) {
+		const preset = form.querySelector('select[name="date_preset"]');
+		if (!preset || preset.value !== 'custom') return true;
+		const from = form.querySelector('input[name="date_from"]');
+		const to = form.querySelector('input[name="date_to"]');
+		return Boolean(from && to && from.value && to.value && from.value <= to.value);
+	};
+	const applyInstantFilter = function (form, trigger) {
+		const pending = instantFilterTimers.get(form);
+		if (pending) window.clearTimeout(pending);
+		instantFilterTimers.delete(form);
+		if (!customDateRangeReady(form)) return Promise.resolve();
+		form.classList.add('is-kidia-loading');
+		form.setAttribute('aria-busy', 'true');
+		const preserveFocus = Boolean(trigger && trigger.matches && trigger.matches('input[type="search"]'));
+		return Promise.resolve(navigateFreshStoreData(storeDataUrlFromForm(form), {
+			preserveFocus: preserveFocus
+		})).finally(function () {
+			if (!form.isConnected) return;
+			form.classList.remove('is-kidia-loading');
+			form.removeAttribute('aria-busy');
+		});
+	};
+	const scheduleInstantFilter = function (form, trigger, delay) {
+		const pending = instantFilterTimers.get(form);
+		if (pending) window.clearTimeout(pending);
+		const timer = window.setTimeout(function () {
+			instantFilterTimers.delete(form);
+			void applyInstantFilter(form, trigger);
+		}, delay);
+		instantFilterTimers.set(form, timer);
+	};
+	document.addEventListener('input', function (event) {
+		const search = event.target.closest('form[data-kidia-instant-filter] input[type="search"]');
+		if (!search) return;
+		scheduleInstantFilter(search.form, search, 350);
+	});
+	document.addEventListener('change', function (event) {
+		const field = event.target.closest('form[data-kidia-instant-filter] select, form[data-kidia-instant-filter] input[type="date"]');
+		if (!field) return;
+		scheduleInstantFilter(field.form, field, 0);
+	});
+	document.addEventListener('submit', function (event) {
+		const form = event.target.closest('form[data-kidia-instant-filter]');
+		if (!form) return;
+		event.preventDefault();
+		void applyInstantFilter(form, document.activeElement);
+	});
+	const setInstantActionBusy = function (form, busy) {
+		form.classList.toggle('is-kidia-loading', busy);
+		if (busy) {
+			form.setAttribute('aria-busy', 'true');
+		} else {
+			form.removeAttribute('aria-busy');
+		}
+		form.querySelectorAll('button,select').forEach(function (control) {
+			if (busy) {
+				control.dataset.kidiaWasDisabled = control.disabled ? '1' : '0';
+				control.disabled = true;
+			} else if (control.dataset.kidiaWasDisabled !== '1') {
+				control.disabled = false;
+			}
+			if (!busy) delete control.dataset.kidiaWasDisabled;
+		});
+	};
+	document.addEventListener('change', function (event) {
+		const channel = event.target.closest('form[data-kidia-instant-action="coupon-channel"] select[name="coupon_channel"]');
+		if (!channel || !channel.form || channel.form.getAttribute('aria-busy') === 'true') return;
+		if (typeof channel.form.requestSubmit === 'function') {
+			channel.form.requestSubmit();
+		} else {
+			channel.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+		}
+	});
+	document.addEventListener('submit', async function (event) {
+		const form = event.target.closest('form[data-kidia-instant-action]');
+		if (!form) return;
+		event.preventDefault();
+		if (form.getAttribute('aria-busy') === 'true') return;
+		const requestBody = new FormData(form);
+		const channel = form.querySelector('select[name="coupon_channel"]');
+		setInstantActionBusy(form, true);
+		try {
+			const response = await window.fetch(form.action, {
+				method: String(form.method || 'post').toUpperCase(),
+				credentials: 'same-origin',
+				cache: 'no-store',
+				body: requestBody
+			});
+			if (!response.ok) throw new Error('Store Data update failed');
+			await navigateFreshStoreData(window.location.href, { preserveFocus: false });
+		} catch (_error) {
+			if (channel && channel.dataset.kidiaSavedValue) {
+				channel.value = channel.dataset.kidiaSavedValue;
+			}
+			form.classList.add('is-kidia-error');
+			window.setTimeout(function () { form.classList.remove('is-kidia-error'); }, 1800);
+		} finally {
+			if (form.isConnected) setInstantActionBusy(form, false);
+		}
 	});
 	const aiBackgroundConfig = window.kidiaCMSBackground || {};
 	const aiDockPositionKey = 'kidia_ai_progress_position_v1';
@@ -1110,39 +1275,36 @@
 			positionAiDock(overlay, current.left, current.top, false);
 		});
 	});
-	const recoveryDelivery = document.querySelector('[data-recovery-delivery]');
-	const recoverySchedule = document.querySelector('[data-recovery-schedule]');
-	if (recoveryDelivery && recoverySchedule) {
-		const syncRecoveryDelivery = function () { recoverySchedule.hidden = recoveryDelivery.value !== 'scheduled'; };
-		recoveryDelivery.addEventListener('change', syncRecoveryDelivery);
-		syncRecoveryDelivery();
-	}
-	const recoveryActionStyle = document.querySelector('[data-recovery-action-style]');
-	const recoveryButtonLabel = document.querySelector('[data-recovery-button-label]');
-	if (recoveryActionStyle && recoveryButtonLabel) {
-		const syncRecoveryAction = function () {
-			recoveryButtonLabel.hidden = recoveryActionStyle.value !== 'button';
-		};
-		recoveryActionStyle.addEventListener('change', syncRecoveryAction);
-		syncRecoveryAction();
-	}
-	const selectAllCarts = document.querySelector('[data-select-all-carts]');
-	if (selectAllCarts) {
-		selectAllCarts.addEventListener('change', function () {
+	const syncRecoveryControls = function (root) {
+		const recoveryDelivery = (root || document).querySelector('[data-recovery-delivery]');
+		const recoverySchedule = (root || document).querySelector('[data-recovery-schedule]');
+		if (recoveryDelivery && recoverySchedule) recoverySchedule.hidden = recoveryDelivery.value !== 'scheduled';
+		const recoveryActionStyle = (root || document).querySelector('[data-recovery-action-style]');
+		const recoveryButtonLabel = (root || document).querySelector('[data-recovery-button-label]');
+		if (recoveryActionStyle && recoveryButtonLabel) recoveryButtonLabel.hidden = recoveryActionStyle.value !== 'button';
+	};
+	syncRecoveryControls(document);
+	document.addEventListener('kidia:cms-page-ready', function () { syncRecoveryControls(document); });
+	document.addEventListener('change', function (event) {
+		if (event.target.matches('[data-recovery-delivery],[data-recovery-action-style]')) {
+			syncRecoveryControls(document);
+			return;
+		}
+		const selectAllCarts = event.target.closest('[data-select-all-carts]');
+		if (selectAllCarts) {
 			document.querySelectorAll('input[name="cart_ids[]"]:not(:disabled)').forEach(function (input) {
 				input.checked = selectAllCarts.checked;
 			});
-		});
-	}
-	const cartPerPage = document.querySelector('[data-cart-per-page]');
-	if (cartPerPage) {
-		cartPerPage.addEventListener('change', function () {
+			return;
+		}
+		const cartPerPage = event.target.closest('[data-cart-per-page]');
+		if (cartPerPage) {
 			const url = new URL(window.location.href);
 			url.searchParams.set('cart_per_page', cartPerPage.value);
 			url.searchParams.set('cart_page', '1');
-			window.location.assign(url.toString());
-		});
-	}
+			void navigateFreshStoreData(url.toString(), { preserveFocus: false });
+		}
+	});
 	document.addEventListener('click', async function (event) {
 		const button = event.target.closest('[data-abandoned-cart-details]');
 		if (!button) return;
@@ -1228,15 +1390,26 @@
 			delete content.dataset.loading;
 		}
 	});
-	const liveStoreRegions = Array.from(document.querySelectorAll('[data-kidia-live-store-data]'));
-	if (liveStoreRegions.length) {
+	let liveStoreSession = null;
+	const stopLiveStoreData = function () {
+		if (!liveStoreSession) return;
+		liveStoreSession.stop();
+		liveStoreSession = null;
+	};
+	const initLiveStoreData = function (root) {
+		stopLiveStoreData();
+		const liveStoreRegions = Array.from((root || document).querySelectorAll('[data-kidia-live-store-data]'));
+		if (!liveStoreRegions.length) return;
 		let liveTimer = 0;
 		let liveRequest = null;
+		let stopped = false;
 		const scheduleLiveRefresh = function () {
+			if (stopped) return;
 			window.clearTimeout(liveTimer);
 			liveTimer = window.setTimeout(refreshLiveStoreData, 5000);
 		};
 		const refreshLiveStoreData = async function () {
+			if (stopped) return;
 			if (document.visibilityState !== 'visible' || !window.navigator.onLine) {
 				scheduleLiveRefresh();
 				return;
@@ -1250,8 +1423,9 @@
 				scheduleLiveRefresh();
 				return;
 			}
-			liveRequest = new AbortController();
-			const timeout = window.setTimeout(function () { liveRequest.abort(); }, 12000);
+			const controller = new AbortController();
+			liveRequest = controller;
+			const timeout = window.setTimeout(function () { controller.abort(); }, 12000);
 			try {
 				const url = new URL(window.location.href);
 				url.searchParams.set('kidia_live', String(Date.now()));
@@ -1259,7 +1433,7 @@
 					credentials: 'same-origin',
 					cache: 'no-store',
 					headers: {'X-Kidia-Live-Data': '1'},
-					signal: liveRequest.signal
+					signal: controller.signal
 				});
 				if (!response.ok) throw new Error('Live Store Data request failed');
 				const page = new DOMParser().parseFromString(await response.text(), 'text/html');
@@ -1310,22 +1484,35 @@
 				// Keep the last verified values and retry without blanking the report.
 			} finally {
 				window.clearTimeout(timeout);
-				liveRequest = null;
-				scheduleLiveRefresh();
+				if (liveRequest === controller) {
+					liveRequest = null;
+					scheduleLiveRefresh();
+				}
 			}
 		};
-		document.addEventListener('visibilitychange', function () {
-			if (document.visibilityState === 'visible') {
+		liveStoreSession = {
+			refresh: function () {
 				window.clearTimeout(liveTimer);
+				if (liveRequest) liveRequest.abort();
 				void refreshLiveStoreData();
+			},
+			stop: function () {
+				stopped = true;
+				window.clearTimeout(liveTimer);
+				if (liveRequest) liveRequest.abort();
 			}
-		});
-		window.addEventListener('online', function () {
-			window.clearTimeout(liveTimer);
-			void refreshLiveStoreData();
-		});
+		};
 		scheduleLiveRefresh();
-	}
+	};
+	document.addEventListener('kidia:cms-before-page-change', stopLiveStoreData);
+	document.addEventListener('kidia:cms-page-ready', function () { initLiveStoreData(document); });
+	document.addEventListener('visibilitychange', function () {
+		if (document.visibilityState === 'visible' && liveStoreSession) liveStoreSession.refresh();
+	});
+	window.addEventListener('online', function () {
+		if (liveStoreSession) liveStoreSession.refresh();
+	});
+	initLiveStoreData(document);
 	document.addEventListener('click', function (event) {
 		const button = event.target.closest('[data-copy-link],[data-copy-text]');
 		if (!button) return;
