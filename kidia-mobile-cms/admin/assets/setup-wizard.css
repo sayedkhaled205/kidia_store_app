@@ -74,8 +74,8 @@
 .kidia-setup-actions .button{border-color:#2f806e!important;color:#236b59!important}
 .kidia-setup-actions .button-primary,
 .kidia-theme-modal__select{border-color:#236b59!important;background:#2f806e!important;color:#fff!important}
-.kidia-setup-apply{flex-direction:row!important;white-space:nowrap}
-.kidia-setup-apply .dashicons{display:block;width:20px;height:20px;margin:0!important;font-size:20px;line-height:20px}
+.kidia-setup-actions .kidia-setup-apply{display:inline-flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:center!important;gap:8px!important;line-height:20px!important;white-space:nowrap}
+.kidia-setup-actions .kidia-setup-apply .dashicons{position:static!important;display:block;width:20px;height:20px;flex:0 0 20px;margin:0!important;font-size:20px;line-height:20px;transform:none!important;vertical-align:middle}
 .kidia-theme-preview-button{border-color:#2f806e!important;background:#fff!important;color:#236b59!important}
 
 /* Each complete theme stays compact while showing its own installed layout. */
