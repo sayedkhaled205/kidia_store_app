@@ -462,7 +462,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$saved_page_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
 		$default['settings']['font_family'] = in_array( (string) ( $saved_page_settings['font_family'] ?? '' ), array( 'system', 'poppins' ), true ) ? (string) $saved_page_settings['font_family'] : 'system';
-		$default['settings']['content_horizontal_padding'] = max( 0, min( 40, absint( $saved_page_settings['content_horizontal_padding'] ?? 20 ) ) );
+		$default['settings']['content_horizontal_padding'] = max( 0, min( 40, intval( $saved_page_settings['content_horizontal_padding'] ?? 20 ) ) );
 		if ( 'wishlist' === $page ) {
 			$default['settings']['wishlist_access_mode'] = in_array( (string) ( $saved_page_settings['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $saved_page_settings['wishlist_access_mode'] : 'sign_in_required';
 			$default['settings']['wishlist_preview_state'] = in_array( (string) ( $saved_page_settings['wishlist_preview_state'] ?? '' ), array( 'sign_in', 'empty', 'products' ), true ) ? (string) $saved_page_settings['wishlist_preview_state'] : 'products';
@@ -589,7 +589,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$page_settings = array(
 			'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF',
 			'font_family' => in_array( (string) ( $submitted['settings']['font_family'] ?? '' ), array( 'system', 'poppins' ), true ) ? (string) $submitted['settings']['font_family'] : 'system',
-			'content_horizontal_padding' => max( 0, min( 40, absint( $submitted['settings']['content_horizontal_padding'] ?? 20 ) ) ),
+			'content_horizontal_padding' => max( 0, min( 40, intval( $submitted['settings']['content_horizontal_padding'] ?? 20 ) ) ),
 		);
 		if ( 'wishlist' === $page ) {
 			$page_settings['wishlist_access_mode'] = in_array( (string) ( $submitted['settings']['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $submitted['settings']['wishlist_access_mode'] : 'sign_in_required';
