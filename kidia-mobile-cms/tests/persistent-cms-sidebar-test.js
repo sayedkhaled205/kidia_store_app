@@ -22,6 +22,9 @@ const settingsSectionsScript = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "settings-sections.js"),
   "utf8"
 );
+const iconInteractionGuard = styles.match(
+  /\/\* Dashicons and the preview icon fonts[\s\S]*?(?=\/\* Keep WordPress navigation usable)/
+)?.[0] || "";
 
 assert.match(
   styles,
@@ -37,6 +40,21 @@ assert.match(
   styles,
   /body\.kidia-cms-plugin-page\{[^}]*height:100%;[^}]*overflow:hidden!important;/,
   "The WordPress body must not become a second scroll owner on plugin pages."
+);
+assert.match(
+  iconInteractionGuard,
+  /body\.kidia-cms-plugin-page :is\([\s\S]*?\.dashicons,[\s\S]*?\.kidia-app-icon,[\s\S]*?\.kidia-category-preview-material-icon,[\s\S]*?\[aria-hidden="true"\][\s\S]*?\)[\s\S]*?user-select:none!important;[\s\S]*?caret-color:transparent!important;/,
+  "CMS icon glyphs must not expose text selection or a Word-style caret on any plugin page."
+);
+assert.match(
+  iconInteractionGuard,
+  /body\.kidia-cms-plugin-page :is\([\s\S]*?\.dashicons,[\s\S]*?svg\[aria-hidden="true"\],[\s\S]*?img\[aria-hidden="true"\][\s\S]*?\)\{[^}]*-webkit-user-drag:none;/,
+  "CMS icon artwork must not start the browser's native image or glyph drag behavior."
+);
+assert.doesNotMatch(
+  iconInteractionGuard,
+  /pointer-events\s*:\s*none/,
+  "The global icon guard must not disable clicks on icon buttons or intentional drag handles."
 );
 assert.match(
   styles,
