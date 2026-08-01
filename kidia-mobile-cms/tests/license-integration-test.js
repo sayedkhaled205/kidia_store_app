@@ -15,11 +15,14 @@ const shell = read("admin", "pages", "cms-shell.php");
 const shellCss = read("admin", "assets", "cms-shell.css");
 const plugin = read("kidia-mobile-cms.php");
 
-assert.match(plugin, /Version:\s+1\.45\.85/, "The plugin header must be version 1.45.85.");
-assert.match(
-  plugin,
-  /KIDIA_MOBILE_CMS_VERSION',\s*'1\.45\.85'/,
-  "The runtime plugin version must match the 1.45.85 plugin header."
+const headerVersion = plugin.match(/^ \* Version:\s+([0-9]+\.[0-9]+\.[0-9]+)\s*$/m);
+const runtimeVersion = plugin.match(/KIDIA_MOBILE_CMS_VERSION',\s*'([0-9]+\.[0-9]+\.[0-9]+)'/);
+assert.ok(headerVersion, "The plugin header must expose a semantic version.");
+assert.ok(runtimeVersion, "The runtime plugin version constant must expose a semantic version.");
+assert.equal(
+  runtimeVersion[1],
+  headerVersion[1],
+  "The runtime plugin version must match the plugin header after every release bump."
 );
 assert.match(
   plugin,

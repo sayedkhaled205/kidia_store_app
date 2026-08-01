@@ -396,7 +396,7 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /kidia-ai-progress-actions\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)[\s\S]*kidia-ai-progress-actions \[hidden\]\{display:none!important\}/,
+  /kidia-ai-progress-actions\{[^}]*display:flex;[^}]*justify-content:flex-end;[^}]*width:100%[\s\S]*kidia-ai-progress-actions \[hidden\]\{display:none!important\}/,
   "Progress actions must stay aligned and keep View results hidden until completion.",
 );
 assert.match(
