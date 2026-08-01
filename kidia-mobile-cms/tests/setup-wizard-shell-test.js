@@ -37,6 +37,12 @@ const pushTemplate = read("admin", "pages", "push-notifications.php");
 const previewMain = read("..", "lib", "cms_preview_main.dart");
 const previewCatalog = read("..", "lib", "features", "catalog", "data", "repositories", "cms_preview_catalog_repository.dart");
 const previewBridge = read("..", "lib", "features", "page_builder", "presentation", "providers", "cms_preview_layout_bridge_web.dart");
+const pageStore = read("includes", "class-kidia-mobile-page-layout-store.php");
+const catalogCard = read("..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart");
+const catalogScreen = read("..", "lib", "features", "catalog", "presentation", "pages", "catalog_product_list_screen.dart");
+const pageChrome = read("..", "lib", "features", "page_builder", "presentation", "widgets", "cms_page_chrome.dart");
+const productScreen = read("..", "lib", "features", "product", "presentation", "product_detail_screen.dart");
+const pubspec = read("..", "pubspec.yaml");
 
 const builtInThemes = ["fashion", "beauty", "electronics", "home_living", "kids_baby", "sports_fitness", "grocery", "luxury", "coffee", "multi_store", "jewelry", "pet_care", "family_pop", "marketplace_plus", "studio_fashion", "editorial_runway"];
 const idealThemeAssetSizes = {
@@ -116,6 +122,35 @@ for (const theme of Object.keys(newThemeConfiguredRatios)) {
 }
 assert.match(service, /'studio_fashion'[\s\S]{0,1200}'category_layout'\s*=>\s*'default'[\s\S]{0,5000}'category_design'/, "Studio Fashion must carry its own lightweight category-list design.");
 assert.match(service, /'editorial_runway'[\s\S]{0,5000}'hero_show_indicators'\s*=>\s*false[\s\S]{0,1000}'category_design'/, "Editorial Runway must keep its immersive hero and gallery category treatment.");
+const familyThemeStart = service.indexOf("'family_pop' => self::theme(");
+const familyThemeEnd = service.indexOf("'marketplace_plus' => self::theme(", familyThemeStart);
+const familyTheme = service.slice(familyThemeStart, familyThemeEnd);
+const profilesStart = service.indexOf("private function theme_page_design");
+const familyProfileStart = service.indexOf("'family_pop' => array(", profilesStart);
+const familyProfileEnd = service.indexOf("'marketplace_plus' => array(", familyProfileStart);
+const familyProfile = service.slice(familyProfileStart, familyProfileEnd);
+assert.match(familyTheme, /'hero_ratio'\s*=>\s*1\.0[\s\S]*'hero_radius'\s*=>\s*12[\s\S]*'hero_padding'\s*=>\s*16/, "Family Pop Home must use the official square campaign geometry and spacing.");
+assert.match(familyTheme, /'category_columns'\s*=>\s*3[\s\S]*'category_size'\s*=>\s*64[\s\S]*'quick_columns'\s*=>\s*4[\s\S]*'quick_size'\s*=>\s*64/, "Family Pop Home discovery circles must match the official counts and 64px size.");
+assert.match(familyTheme, /'product_ratio'\s*=>\s*\.75[\s\S]*'product_radius'\s*=>\s*0/, "Family Pop Home product cards must use borderless 3:4 imagery.");
+assert.match(familyTheme, /'category_design'[\s\S]*'card_height'\s*=>\s*104[\s\S]*'image_size'\s*=>\s*64[\s\S]*'font_size'\s*=>\s*16/, "Family Pop primary categories must use the official list-row measurements.");
+assert.match(familyProfile, /'font_family'\s*=>\s*'poppins'/, "Family Pop chrome must carry its own deterministic application font.");
+assert.match(familyProfile, /'header_heights'\s*=>\s*array\(\s*'home'\s*=>\s*120[\s\S]*'catalog'\s*=>\s*64/, "Family Pop must keep the two-row Home header while using compact inner-page headers.");
+assert.match(service, /\$is_family_pop[\s\S]*'category'\s*=>\s*array[\s\S]*86,\s*array\(\s*'search_bar'[\s\S]*'catalog'\s*=>\s*array[\s\S]*'back'[\s\S]*'search',\s*'cart'/, "Family Pop must install page-specific official header compositions.");
+assert.match(familyProfile, /'icon_size'\s*=>\s*24[\s\S]*'label_size'\s*=>\s*11[\s\S]*'icon_label_gap'\s*=>\s*3/, "Family Pop navigation must carry the exact official icon and label measurements.");
+assert.match(familyProfile, /'filter_button_style'\s*=>\s*'flat'[\s\S]*'filter_color'\s*=>\s*true[\s\S]*'gap'\s*=>\s*6[\s\S]*'image_ratio'\s*=>\s*\.75/, "Family Pop catalog must use the four-part flat filter row and portrait grid.");
+assert.match(familyProfile, /'tabs_enabled'\s*=>\s*true[\s\S]*'gallery_ratio'\s*=>\s*\.75[\s\S]*'reviews_enabled'\s*=>\s*true[\s\S]*'button_width'\s*=>\s*62[\s\S]*'show_button_icon'\s*=>\s*false/, "Family Pop product detail must retain tabs, reviews, portrait gallery and the 62% text-only purchase button.");
+assert.match(familyProfile, /'access'\s*=>\s*'sign_in_required'/, "Family Pop Wishlist must route signed-out customers to the sign-in state.");
+assert.match(pageStore, /show_button_icon/, "Page Builder must expose the product purchase-button icon toggle.");
+assert.match(pageStore, /font_family[\s\S]*content_horizontal_padding/, "Page Builder must preserve the Family Pop font and page spacing settings.");
+assert.match(pageStore, /outer_horizontal_padding[\s\S]*image_inset[\s\S]*price_prefix[\s\S]*price_color/, "Product grids must expose exact image, spacing and price controls.");
+assert.match(catalogCard, /imageInset[\s\S]*imageRadius[\s\S]*contentHorizontalPadding[\s\S]*pricePrefix[\s\S]*priceColor/, "Flutter product cards must consume every Family Pop grid token.");
+assert.match(catalogScreen, /button_style[\s\S]*_FlatToolbarButton[\s\S]*catalog-color-button/, "Flutter catalog must render the official flat Sort, Size, Color and Filter toolbar.");
+assert.match(pageChrome, /font_family[\s\S]*Poppins[\s\S]*textTheme\.apply/, "Flutter page chrome must apply the selected page font throughout the screen.");
+assert.match(productScreen, /show_button_icon[\s\S]*FilledButton\.icon[\s\S]*FilledButton\(/, "Product purchase bar must support the official text-only button.");
+assert.match(pubspec, /family:\s*Poppins[\s\S]*Poppins-Regular\.ttf[\s\S]*Poppins-Bold\.ttf/, "The licensed Poppins family must be bundled for deterministic visual parity.");
+for (const fontFile of ["Poppins-Regular.ttf", "Poppins-Medium.ttf", "Poppins-SemiBold.ttf", "Poppins-Bold.ttf", "OFL.txt"]) {
+  assert.ok(fs.statSync(path.join(root, "..", "assets", "fonts", fontFile)).size > 1000, `Font asset ${fontFile} must be bundled with its license.`);
+}
 for (const pageDesign of ["catalog", "product", "wishlist", "account"]) {
   assert.match(service, new RegExp(`'${pageDesign}'\\s*=>\\s*array`), `Complete themes must configure the ${pageDesign} page.`);
 }

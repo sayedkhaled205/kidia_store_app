@@ -366,6 +366,47 @@ class _CatalogToolbar extends ConsumerWidget {
     final Color borderColor = _cmsColor(settings.string('border_color', '#DDE3E8'), Theme.of(context).dividerColor);
     final Color backgroundColor = _cmsColor(settings.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
     final double buttonRadius = settings.number('button_radius', 12).clamp(0, 28).toDouble();
+	Future<void> openSort() async {
+	  final CatalogSort? selected = await CatalogSortSheet.show(context, selected: state.sort);
+	  if (selected != null) await controller.changeSort(selected);
+	}
+	Future<void> openSize() async {
+	  final CatalogSizeSelection? selection = await CatalogSizeSheet.show(context, options: state.availableSizes, selectedFilters: state.filters);
+	  if (selection != null) await controller.applySize(selection.option);
+	}
+	Future<void> openFilters() async {
+	  final int minorUnit = state.items.isEmpty ? 2 : state.items.first.prices.currencyMinorUnit;
+	  final CatalogProductFilters? filters = await CatalogProductFilterSheet.show(
+	    context,
+	    initialFilters: state.filters,
+	    currencyMinorUnit: minorUnit,
+	    minimumAvailableMinor: state.filterData?.minimumPriceMinor ?? '',
+	    maximumAvailableMinor: state.filterData?.maximumPriceMinor ?? '',
+	    brands: brands,
+	    showPrice: settings.boolean('filter_price', true),
+	    showSale: settings.boolean('filter_sale', true),
+	    showBrand: settings.boolean('filter_brand', true),
+	  );
+	  if (filters != null) await controller.applyFilters(filters);
+	}
+	if (settings.string('button_style', 'outlined') == 'flat') {
+	  final List<Widget> buttons = <Widget>[
+	    if (settings.boolean('show_sort', true)) _FlatToolbarButton(key: const Key('catalog-sort-button'), label: copy.sort, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, onPressed: openSort),
+	    if (settings.boolean('filter_size', true)) _FlatToolbarButton(key: const Key('catalog-size-button'), label: copy.size, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, selected: state.filters.hasSize, onPressed: openSize),
+	    if (settings.boolean('filter_color', false)) _FlatToolbarButton(key: const Key('catalog-color-button'), label: copy.color, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, onPressed: openFilters),
+	    if (settings.boolean('show_filter', true)) _FlatToolbarButton(key: const Key('catalog-filter-button'), label: copy.filter, trailing: Icons.tune_rounded, color: iconColor, selected: state.filters.generalActiveCount > 0, onPressed: openFilters),
+	  ];
+	  return ColoredBox(
+	    color: backgroundColor,
+	    child: SizedBox(
+	      height: settings.number('block_height', 56).clamp(48, 100).toDouble(),
+	      child: DecoratedBox(
+	        decoration: BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: borderColor.withValues(alpha: .55)))),
+	        child: Row(children: buttons.map((Widget button) => Expanded(child: button)).toList(growable: false)),
+	      ),
+	    ),
+	  );
+	}
     return ColoredBox(color: backgroundColor, child: FractionallySizedBox(
       widthFactor: widthFactor,
       child: Padding(
@@ -541,6 +582,32 @@ class _ToolbarButton extends StatelessWidget {
   }
 }
 
+class _FlatToolbarButton extends StatelessWidget {
+  const _FlatToolbarButton({required this.label, required this.trailing, required this.color, required this.onPressed, this.selected = false, super.key});
+
+  final String label;
+  final IconData trailing;
+  final Color color;
+  final VoidCallback onPressed;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+	return TextButton(
+	  onPressed: onPressed,
+	  style: TextButton.styleFrom(foregroundColor: color, padding: const EdgeInsets.symmetric(horizontal: 3), minimumSize: const Size.fromHeight(54), shape: const RoundedRectangleBorder()),
+	  child: FittedBox(
+		fit: BoxFit.scaleDown,
+		child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+		  Text(label, style: TextStyle(fontSize: 14, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+		  const SizedBox(width: 2),
+		  Icon(trailing, size: 18),
+		]),
+	  ),
+	);
+  }
+}
+
 class _CatalogProductGrid extends StatelessWidget {
   const _CatalogProductGrid({required this.items, required this.settings});
 
@@ -557,14 +624,15 @@ class _CatalogProductGrid extends StatelessWidget {
         : 2;
     final int columns = settings.number('columns', 2).round().clamp(1, responsiveColumns).toInt();
     final double gap = settings.number('gap', 12).clamp(0, 32).toDouble();
-    final double usableWidth = width - 32 - ((columns - 1) * gap);
+	final double outerHorizontalPadding = settings.number('outer_horizontal_padding', 16).clamp(0, 40).toDouble();
+	final double usableWidth = width - (outerHorizontalPadding * 2) - ((columns - 1) * gap);
     final double cardWidth = usableWidth / columns;
     final double imageRatio = settings.number('image_ratio', 1).clamp(0.6, 1.8).toDouble();
     final double baseExtent = (cardWidth / imageRatio + 103)
         .clamp(250, 336)
         .toDouble();
     final double extent = baseExtent * 0.98;
-    final double topSpacing = (width * 0.05).clamp(18, 24).toDouble();
+	final double topSpacing = settings.number('top_spacing', (width * 0.05).clamp(18, 24)).clamp(0, 48).toDouble();
 
     final double mergeUp = settings
         .number('margin_top', 0)
@@ -576,10 +644,10 @@ class _CatalogProductGrid extends StatelessWidget {
         .toDouble();
     const EdgeInsets outerSpacing = EdgeInsets.zero;
     final EdgeInsetsGeometry innerSpacing = EdgeInsetsDirectional.fromSTEB(
-      16 + settings.number('padding_horizontal', 0).clamp(0, 40),
+	  outerHorizontalPadding + settings.number('padding_horizontal', 0).clamp(0, 40),
       (topSpacing - mergeUp).clamp(0, topSpacing).toDouble() +
           settings.number('padding_vertical', 0).clamp(0, 40),
-      16 + settings.number('padding_horizontal', 0).clamp(0, 40),
+	  outerHorizontalPadding + settings.number('padding_horizontal', 0).clamp(0, 40),
       (20 - mergeDown).clamp(0, 20).toDouble() +
           settings.number('padding_vertical', 0).clamp(0, 40),
     );

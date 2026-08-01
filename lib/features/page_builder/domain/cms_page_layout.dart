@@ -20,6 +20,11 @@ class CmsPageLayout {
   String string(String key, String fallback) =>
       _string(settings[key], fallback: fallback);
 
+  double number(String key, double fallback) {
+    final dynamic value = settings[key];
+    return value is num ? value.toDouble() : double.tryParse('$value') ?? fallback;
+  }
+
   CmsPageComponent element(String id) {
     return elements.firstWhere(
       (CmsPageComponent element) => element.id == id,
@@ -194,6 +199,7 @@ class CmsPageLayout {
 		'button_radius': 28,
 		'button_border_color': '#1F2933',
 		'button_border_width': 0,
+		'show_button_icon': true,
 		'add_to_cart_label': page == 'product' ? 'Add to bag' : 'Add to cart',
 		'share_label': 'Share',
 		'like_label': 'Like',
@@ -202,6 +208,8 @@ class CmsPageLayout {
       page: page,
       settings: <String, dynamic>{
         'page_background_color': '#FFFFFF',
+		'font_family': 'system',
+		'content_horizontal_padding': 20,
         if (page == 'wishlist') ...<String, dynamic>{
           'wishlist_access_mode': 'sign_in_required',
           'wishlist_preview_state': 'products',

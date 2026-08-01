@@ -42,6 +42,14 @@ class CatalogProductCard extends StatelessWidget {
     final double imageRatio = settings == null
         ? 1
         : settings!.number('image_ratio', 1).clamp(0.6, 1.8).toDouble();
+	final double imageInset = settings?.number('image_inset', 5).clamp(0, 24).toDouble() ?? 5;
+	final double imageRadius = settings?.number('image_radius', 10).clamp(0, 40).toDouble() ?? 10;
+	final double contentHorizontalPadding = settings?.number('content_horizontal_padding', 9).clamp(0, 24).toDouble() ?? 9;
+	final double contentTopPadding = settings?.number('content_top_padding', 5).clamp(0, 24).toDouble() ?? 5;
+	final double contentBottomPadding = settings?.number('content_bottom_padding', 9).clamp(0, 24).toDouble() ?? 9;
+	final String pricePrefix = settings?.string('price_prefix', '') ?? '';
+	final Color priceColor = _quickAddColor(settings?.string('price_color', '#1F2933')) ?? colors.primary;
+	final double priceSize = settings?.number('price_size', 14).clamp(10, 28).toDouble() ?? 14;
     final bool showName = settings?.boolean('show_name', true) ?? true;
     final bool showPrice = settings?.boolean('show_price', true) ?? true;
     final bool showRegularPrice =
@@ -97,12 +105,11 @@ class CatalogProductCard extends StatelessWidget {
                             child: AppNetworkImageError(),
                           )
                         else
-                          Center(
-                            child: FractionallySizedBox(
-                              widthFactor: 0.95,
-                              heightFactor: 0.95,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
+						  Padding(
+							padding: EdgeInsets.all(imageInset),
+							child: SizedBox.expand(
+							  child: ClipRRect(
+								borderRadius: BorderRadius.circular(imageRadius),
                                 child: ProductImageSwiper(
                                   imageUrls: imageUrls.isEmpty
                                       ? <String>[imageUrl ?? '']
@@ -189,8 +196,8 @@ class CatalogProductCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(9, 5, 9, 9),
+			  Padding(
+				padding: EdgeInsetsDirectional.fromSTEB(contentHorizontalPadding, contentTopPadding, contentHorizontalPadding, contentBottomPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -237,12 +244,13 @@ class CatalogProductCard extends StatelessWidget {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              currentPrice.isEmpty ? '—' : currentPrice,
+							  currentPrice.isEmpty ? '—' : '$pricePrefix$currentPrice',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleSmall?.copyWith(
-                                color: colors.primary,
-                                fontWeight: FontWeight.w800,
+								color: priceColor,
+								fontWeight: FontWeight.w800,
+								fontSize: priceSize,
                               ),
                             ),
                           ),

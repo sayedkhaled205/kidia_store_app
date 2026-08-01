@@ -128,6 +128,12 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 						<div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Page Settings', 'kidia-mobile-cms' ); ?></strong></div>
 						<label class="kidia-page-card__header-color"><span><?php esc_html_e( 'Page background color', 'kidia-mobile-cms' ); ?></span><input type="color" name="layout[settings][page_background_color]" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $layout['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' ); ?>"></label>
 					</div>
+					<div class="kidia-page-card__body">
+						<div class="kidia-field-grid">
+							<label><span><?php esc_html_e( 'Application font', 'kidia-mobile-cms' ); ?></span><select name="layout[settings][font_family]"><option value="system" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'system' ); ?>><?php esc_html_e( 'System font', 'kidia-mobile-cms' ); ?></option><option value="poppins" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'poppins' ); ?>>Poppins</option></select></label>
+							<label><span><?php esc_html_e( 'Content side padding', 'kidia-mobile-cms' ); ?></span><input type="number" min="0" max="40" name="layout[settings][content_horizontal_padding]" value="<?php echo esc_attr( (string) absint( $layout['settings']['content_horizontal_padding'] ?? 20 ) ); ?>"></label>
+						</div>
+					</div>
 				</section>
 
 			<?php if ( 'wishlist' === $page ) : ?>

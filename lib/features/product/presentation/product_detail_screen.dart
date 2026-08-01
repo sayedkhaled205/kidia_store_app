@@ -419,8 +419,13 @@ class _ProductContent extends StatelessWidget {
               onSelected: openTab,
             ),
           ),
-        SliverPadding(
-          padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
+		SliverPadding(
+		  padding: EdgeInsetsDirectional.fromSTEB(
+			pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
+			20,
+			pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
+			12,
+		  ),
           sliver: SliverList.list(
             children: <Widget>[
               if (pageLayout.element('product_summary').enabled)
@@ -1938,6 +1943,24 @@ class _PurchaseBar extends StatelessWidget {
 	    : buttonBackground;
 	final bool purchaseFlowAvailable = product.hasVariations ||
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
+	final bool showButtonIcon = footer.boolean('show_button_icon', true);
+	final ButtonStyle purchaseButtonStyle = FilledButton.styleFrom(
+	  backgroundColor: purchaseButtonBackground,
+	  foregroundColor: buttonText,
+	  disabledBackgroundColor: purchaseButtonBackground.withValues(alpha: 0.42),
+	  disabledForegroundColor: buttonText.withValues(alpha: 0.62),
+	  textStyle: TextStyle(fontSize: footerLabelSize, fontWeight: FontWeight.w600),
+	  side: BorderSide(color: buttonBorderColor, width: buttonBorderWidth),
+	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(buttonRadius)),
+	);
+	final VoidCallback? purchaseOnPressed = purchaseFlowAvailable
+	    ? controller.isAdding ? () {} : onPressed
+	    : null;
+	final Widget purchaseLabel = Text(
+	  controller.isAdding
+	      ? 'جارٍ الإضافة…'
+	      : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
+	);
 	final List<(String, double, Widget)> footerItems =
 	    <(String, double, Widget)>[];
 	for (final (String item, double width) in effectivePlacements) {
@@ -1956,44 +1979,22 @@ class _PurchaseBar extends StatelessWidget {
 		      key: const Key('product-add-to-cart-size'),
 		      width: double.infinity,
 		      height: buttonHeight,
-		      child: FilledButton.icon(
-		      key: const Key('add-to-cart-button'),
-		      style: FilledButton.styleFrom(
-		        backgroundColor: purchaseButtonBackground,
-		        foregroundColor: buttonText,
-		        disabledBackgroundColor: purchaseButtonBackground.withValues(
-		          alpha: 0.42,
-		        ),
-		        disabledForegroundColor: buttonText.withValues(alpha: 0.62),
-		        textStyle: TextStyle(fontSize: footerLabelSize),
-		        side: BorderSide(
-		          color: buttonBorderColor,
-		          width: buttonBorderWidth,
-		        ),
-		        shape: RoundedRectangleBorder(
-		          borderRadius: BorderRadius.circular(buttonRadius),
-		        ),
-		      ),
-		      onPressed: purchaseFlowAvailable
-		          ? controller.isAdding
-		              ? () {}
-		              : onPressed
-		          : null,
-		      icon: controller.isAdding
-		          ? SizedBox.square(
-		              dimension: footerIconSize,
-		              child: const CircularProgressIndicator(strokeWidth: 2),
+		      child: showButtonIcon || controller.isAdding
+		          ? FilledButton.icon(
+		              key: const Key('add-to-cart-button'),
+		              style: purchaseButtonStyle,
+		              onPressed: purchaseOnPressed,
+		              icon: controller.isAdding
+		                  ? SizedBox.square(dimension: footerIconSize, child: const CircularProgressIndicator(strokeWidth: 2))
+		                  : Icon(Icons.shopping_bag_outlined, size: footerIconSize),
+		              label: purchaseLabel,
 		            )
-		          : Icon(Icons.shopping_bag_outlined, size: footerIconSize),
-		      label: Text(
-		        controller.isAdding
-		            ? 'جارٍ الإضافة…'
-		            : _arabicFooterLabel(
-		                footer.string('add_to_cart_label', ''),
-		                'أضف إلى السلة',
-		              ),
-		      ),
-		      ),
+		          : FilledButton(
+		              key: const Key('add-to-cart-button'),
+		              style: purchaseButtonStyle,
+		              onPressed: purchaseOnPressed,
+		              child: purchaseLabel,
+		            ),
 		    ),
 		  ),
 		);
