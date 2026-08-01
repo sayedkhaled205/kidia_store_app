@@ -1428,7 +1428,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				continue;
 			}
 			$layout[ $chrome ]['settings']['background_color'] = $theme['surface'];
-			$layout[ $chrome ]['settings']['border_color'] = $theme['soft'];
+			$layout[ $chrome ]['settings']['border_color'] = $secondary;
 			$layout[ $chrome ]['settings']['corner_radius'] = 'transparent' === $theme['header_style'] ? 0 : $theme['radius'];
 			if ( 'header' === $chrome ) {
 				$layout[ $chrome ]['settings']['icon_color'] = $theme['ink'];
@@ -1438,8 +1438,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['height'] = (int) ( $design['chrome']['header_heights'][ $page ] ?? $design['chrome']['header_height'] );
 				$layout[ $chrome ]['settings']['shadow'] = (string) $design['chrome']['header_shadow'];
 				$layout[ $chrome ]['settings']['search_style'] = $theme['search_style'];
-				$layout[ $chrome ]['settings']['search_background'] = $theme['soft'];
-				$layout[ $chrome ]['settings']['search_border_color'] = $theme['soft'];
+				$layout[ $chrome ]['settings']['search_background'] = $secondary;
+				$layout[ $chrome ]['settings']['search_border_color'] = $secondary;
 				$layout[ $chrome ]['settings']['search_radius'] = (int) $design['chrome']['search_radius'];
 				$layout[ $chrome ]['settings']['logo_text'] = $app_name;
 				$layout[ $chrome ]['settings']['logo_url'] = $logo_url;
@@ -1549,7 +1549,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			), $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) ) );
 		}
 		if ( 'product' === $page ) {
-			$this->configure_element( $layout, 'product_tabs', array( 'sticky' => $design['product']['tabs_sticky'], 'active_color' => $design['product']['tabs_active_color'] ?? $primary, 'inactive_color' => $design['product']['tabs_inactive_color'] ?? '#667085', 'height' => $design['product']['tabs_height'] ?? 56 ), $design['product']['tabs_enabled'] );
+			$this->configure_element( $layout, 'product_tabs', array( 'sticky' => $design['product']['tabs_sticky'], 'active_color' => $primary, 'inactive_color' => $design['product']['tabs_inactive_color'] ?? '#667085', 'height' => $design['product']['tabs_height'] ?? 56 ), $design['product']['tabs_enabled'] );
 			$this->configure_element( $layout, 'image_gallery', array(
 				'aspect_ratio' => $design['product']['gallery_ratio'],
 				'fit' => $design['product']['gallery_fit'],
@@ -1566,7 +1566,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			$this->configure_element( $layout, 'related_products', array_merge( array( 'columns' => $design['product']['related_columns'], 'gap' => $design['product']['related_gap'] ), $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) ) );
 			$layout['footer']['settings']['button_width_percent'] = $design['product']['button_width'];
 			$layout['footer']['settings']['button_height'] = $design['product']['button_height'];
-			$layout['footer']['settings']['button_color'] = $design['product']['button_color'] ?? $primary;
+			$layout['footer']['settings']['button_color'] = $primary;
 			$layout['footer']['settings']['button_text_color'] = $design['product']['button_text_color'] ?? '#FFFFFF';
 			$layout['footer']['settings']['show_button_icon'] = $design['product']['show_button_icon'] ?? true;
 		}
