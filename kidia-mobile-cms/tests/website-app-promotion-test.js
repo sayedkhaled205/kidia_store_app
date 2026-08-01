@@ -153,6 +153,16 @@ assert.match(
   "Preview mode must prevent the saved campaign from rendering behind the draft overlay.",
 );
 assert.match(
+  service,
+  /add_action\(\s*'wp_footer',\s*array\(\s*\$this,\s*'render_footer'\s*\),\s*5\s*\)/,
+  "The promotion root must be printed before WordPress footer scripts run at priority 20.",
+);
+assert.match(
+  publicScript,
+  /document\.readyState === "loading"[\s\S]*DOMContentLoaded[\s\S]*initializePromotion/,
+  "Website promotion rendering must wait until late footer markup is available.",
+);
+assert.match(
   template,
   /\[woo_mobile_app_promo\]/,
   "Inline promotions must expose a placement shortcode.",
@@ -450,6 +460,32 @@ qrDom.window.KidiaAppPromotion = {
 };
 qrDom.window.eval(publicScript);
 
+const lateRootDom = new JSDOM(
+  "<!doctype html><body><main>Home page</main></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+lateRootDom.window.matchMedia = () => ({ matches: false });
+lateRootDom.window.navigator.sendBeacon = () => true;
+lateRootDom.window.QRCode = function QRCode(holder) {
+  holder.append(lateRootDom.window.document.createElement("canvas"));
+};
+lateRootDom.window.QRCode.CorrectLevel = { M: 0 };
+lateRootDom.window.KidiaAppPromotion = JSON.parse(
+  JSON.stringify(qrDom.window.KidiaAppPromotion),
+);
+lateRootDom.window.KidiaAppPromotion.settings.page_target = "home";
+
+lateRootDom.window.eval(publicScript);
+const lateRoot = lateRootDom.window.document.createElement("div");
+lateRoot.dataset.kidiaAppPromoRoot = "";
+lateRootDom.window.document.body.append(lateRoot);
+lateRootDom.window.document.dispatchEvent(
+  new lateRootDom.window.Event("DOMContentLoaded"),
+);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -496,6 +532,12 @@ setTimeout(() => {
     desktopQr.querySelector(".kidia-app-promo__action").href,
     "https://download.example/kidia",
     "The Desktop QR Card action must use the same custom destination.",
+  );
+  assert.ok(
+    lateRootDom.window.document.querySelector(
+      ".kidia-app-promo--desktop_qr",
+    ),
+    "Home-only Desktop QR must render when its script loads before the footer root.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);

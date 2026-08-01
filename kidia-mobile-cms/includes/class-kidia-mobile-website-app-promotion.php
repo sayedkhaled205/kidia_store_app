@@ -18,7 +18,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 40 );
 		add_action( 'wp_head', array( $this, 'render_native_ios_banner' ), 2 );
 		add_action( 'wp_body_open', array( $this, 'render_after_header_slot' ), 30 );
-		add_action( 'wp_footer', array( $this, 'render_footer' ), 30 );
+		add_action( 'wp_footer', array( $this, 'render_footer' ), 5 );
 		add_shortcode( 'woo_mobile_app_promo', array( $this, 'shortcode' ) );
 		add_action( 'admin_post_kidia_mobile_save_website_app_promotion', array( $this, 'save' ) );
 		add_action( 'wp_ajax_kidia_mobile_app_promotion_event', array( $this, 'track_event' ) );
