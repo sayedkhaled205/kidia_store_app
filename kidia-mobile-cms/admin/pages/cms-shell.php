@@ -32,6 +32,7 @@ $shell_abandoned_phase = sanitize_key( (string) $shell_abandoned_import['phase']
 $shell_has_abandoned   = in_array( $shell_abandoned_phase, array( 'running', 'complete' ), true );
 $shell_abandoned_total = absint( $shell_abandoned_import['total'] );
 $shell_abandoned_done  = absint( $shell_abandoned_import['processed'] );
+$shell_abandoned_completed_at = absint( $shell_abandoned_import['completed_at'] ?? 0 );
 $shell_abandoned_progress = $shell_abandoned_total > 0
 	? min( 100, (int) floor( 100 * $shell_abandoned_done / $shell_abandoned_total ) )
 	: 100;
@@ -62,13 +63,13 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 					</div>
 					<small data-build-note><?php esc_html_e( 'This card stays available across every CMS page until you cancel the running job or press OK after completion.', 'kidia-mobile-cms' ); ?></small>
 					<div class="kidia-app-build__actions kidia-ai-progress-actions">
-						<button type="button" class="button kidia-app-build__cancel kidia-ai-cancel-button" data-build-cancel <?php echo $shell_has_build ? '' : 'hidden'; ?>><span class="dashicons <?php echo $shell_build_active ? 'dashicons-no-alt' : 'dashicons-yes-alt'; ?>"></span><span data-build-dismiss-label><?php echo esc_html( $shell_build_active ? __( 'Cancel Build', 'kidia-mobile-cms' ) : __( 'OK', 'kidia-mobile-cms' ) ); ?></span></button>
+						<button type="button" class="button kidia-app-build__cancel kidia-ai-cancel-button<?php echo $shell_build_active ? '' : ' is-confirm'; ?>" data-build-cancel <?php echo $shell_has_build ? '' : 'hidden'; ?>><span class="dashicons <?php echo $shell_build_active ? 'dashicons-no-alt' : 'dashicons-yes-alt'; ?>"></span><span data-build-dismiss-label><?php echo esc_html( $shell_build_active ? __( 'Cancel Build', 'kidia-mobile-cms' ) : __( 'OK', 'kidia-mobile-cms' ) ); ?></span></button>
 					</div>
 				</div>
 			</div>
 		</div>
 		<?php if ( $shell_has_abandoned ) : ?>
-			<section class="kidia-cart-import-state kidia-background-job-card<?php echo 'complete' === $shell_abandoned_phase ? ' is-complete' : ''; ?>" data-kidia-background-job="abandoned-carts" data-abandoned-import-phase="<?php echo esc_attr( $shell_abandoned_phase ); ?>">
+			<section class="kidia-cart-import-state kidia-background-job-card<?php echo 'complete' === $shell_abandoned_phase ? ' is-complete' : ''; ?>" data-kidia-background-job="abandoned-carts" data-abandoned-import-phase="<?php echo esc_attr( $shell_abandoned_phase ); ?>"<?php echo 'complete' === $shell_abandoned_phase ? ' data-complete-auto-dismiss="5000" data-completion-key="' . esc_attr( $shell_abandoned_completed_at > 0 ? (string) $shell_abandoned_completed_at : '' ) . '"' : ''; ?>>
 				<span class="dashicons <?php echo 'complete' === $shell_abandoned_phase ? 'dashicons-yes-alt' : 'dashicons-database-import'; ?>"></span>
 				<div>
 					<strong><?php echo esc_html( 'complete' === $shell_abandoned_phase ? __( 'Completed — WooCommerce cart history is synced', 'kidia-mobile-cms' ) : __( 'Importing all retained WooCommerce carts in the background', 'kidia-mobile-cms' ) ); ?></strong>

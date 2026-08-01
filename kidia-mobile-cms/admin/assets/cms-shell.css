@@ -762,7 +762,7 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-cart-details-error{color:#a43d3d}
 .kidia-status.is-abandoned{background:#fff0df;color:#9a5700}
 .kidia-status.is-recovered,.kidia-status.is-converted{background:#e2f7ef;color:#167558}
-.kidia-cart-import-state{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:14px 16px;border:1px solid #b9d9d1;border-radius:12px;background:#eef8f5}
+.kidia-cart-import-state{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:14px 16px;border:1px solid #b9d9d1;border-radius:12px;background:#eef8f5;transition:opacity .35s ease,transform .35s ease}
 .kidia-cart-import-state>.dashicons{display:grid;width:38px;height:38px;flex:0 0 38px;place-items:center;border-radius:10px;background:#2f806e;color:#fff;font-size:20px}
 .kidia-cart-import-state>div{display:grid;min-width:0;flex:1;gap:4px}
 .kidia-cart-import-state strong{color:#174e42}
@@ -771,6 +771,7 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-cart-import-state i b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#236b59,#74c3b1)}
 .kidia-cart-import-state.is-complete{border-color:#b8dfcf;background:#effaf5}
 .kidia-cart-import-state.is-complete>.dashicons{background:#24795f}
+.kidia-cart-import-state.is-leaving{opacity:0;transform:translateY(10px) scale(.98);pointer-events:none}
 @media(max-width:1100px){.kidia-cart-details-content{grid-template-columns:1fr}}
 
 @media(min-width:1101px){
@@ -1260,6 +1261,8 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-progress-actions .button>.dashicons{display:grid;width:18px;height:18px;flex:0 0 18px;place-items:center;margin:0;font-size:18px;line-height:1;vertical-align:middle}
 .kidia-ai-progress-actions [hidden]{display:none!important}
 .kidia-ai-cancel-button{border-color:#d9aaa5!important;background:#fff!important;color:#a33f36!important}
+.kidia-ai-cancel-button.is-confirm{border-color:#236b59!important;background:#2f806e!important;color:#fff!important;box-shadow:none!important}
+.kidia-ai-cancel-button.is-confirm:hover,.kidia-ai-cancel-button.is-confirm:focus{border-color:#174e42!important;background:#236b59!important;color:#fff!important}
 .kidia-ai-progress-overlay.is-docked{
 	inset:auto 22px 22px auto;
 	display:block;
