@@ -50,6 +50,7 @@ assert.notEqual(
   "The background progress card must not reuse the inline offer-generation card.",
 );
 assert.equal(independentDock.classList.contains("is-global"), true);
+assert.equal(independentDock.dataset.kidiaBackgroundJob, "generate-offers");
 assert.equal(
   window.document.querySelectorAll("[data-ai-progress-overlay]").length,
   2,
