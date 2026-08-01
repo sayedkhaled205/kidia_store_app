@@ -146,18 +146,16 @@ function wc_get_order( int $order_id ) {
 }
 function wc_get_orders( array $args ) {
 	$GLOBALS['kidia_ai_order_queries'][] = $args;
-	if ( 1 === (int) ( $args['limit'] ?? 0 ) && 'ids' === ( $args['return'] ?? '' ) ) {
-		return (object) array( 'total' => 4, 'orders' => array( 1 ) );
+	if ( ! empty( $args['paginate'] ) ) {
+		/* Reproduce an HPOS/CPT migration where the reported total is doubled. */
+		return (object) array( 'total' => 8, 'orders' => array( new WC_Order( 1 ) ) );
 	}
 	$page = max( 1, (int) ( $args['page'] ?? 1 ) );
 	if ( $page > 2 ) {
-		return (object) array( 'total' => 4, 'orders' => array() );
+		return array();
 	}
 	$first = ( $page - 1 ) * 2 + 1;
-	return (object) array(
-		'total'  => 4,
-		'orders' => array( new WC_Order( $first ), new WC_Order( $first + 1 ) ),
-	);
+	return array( new WC_Order( $first ), new WC_Order( $first + 1 ) );
 }
 
 function kidia_ai_runtime_assert( bool $condition, string $message ): void {
@@ -262,7 +260,7 @@ kidia_ai_runtime_assert(
 );
 kidia_ai_runtime_assert(
 	4 === ( $GLOBALS['kidia_ai_saved_snapshot']['orders_available'] ?? 0 ),
-	'A completed snapshot must report the same full paid-order population that its count query returned.'
+	'A completed snapshot must replace a duplicated HPOS/CPT estimate with the canonical order-object population.'
 );
 kidia_ai_runtime_assert(
 	array() === array_filter(

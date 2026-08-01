@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Kidia_Mobile_AI_Analysis_Job {
 
-	private const JOB_PREFIX = 'kidia_mobile_ai_job_v6_';
+	private const JOB_PREFIX = 'kidia_mobile_ai_job_v7_';
 
 	private const CANCEL_PREFIX = 'kidia_mobile_ai_cancel_v1_';
 
@@ -49,14 +49,15 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			}
 		}
 
-		/* Freeze the exact unique paid-order population before batching. */
-		$order_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) wc_get_orders(
-			self::order_args( $from, $to, $source, array(
-				'limit' => -1, 'paginate' => false, 'return' => 'ids',
-			) )
-		) ) ) ) );
-		sort( $order_ids, SORT_NUMERIC );
-		$order_total = count( $order_ids );
+		/*
+		 * WooCommerce installations migrating between CPT and HPOS can report a
+		 * duplicated paginate.total/ID population. Count and analyse the canonical
+		 * order objects returned by the active order data store instead.
+		 */
+		$count_result = wc_get_orders( self::order_args( $from, $to, $source, array(
+			'limit' => 1, 'page' => 1, 'paginate' => true, 'return' => 'objects',
+		) ) );
+		$order_total = max( 0, absint( is_object( $count_result ) ? ( $count_result->total ?? 0 ) : 0 ) );
 		$product_ids = self::in_stock_product_ids();
 		$job_id = wp_generate_uuid4();
 		$job    = array(
@@ -67,7 +68,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'date_preset'       => $date_preset,
 			'source'            => $source,
 			'phase'             => $order_total > 0 ? 'orders' : 'products',
-			'order_ids'         => $order_ids,
+			'order_page'        => 1,
 			'order_offset'      => 0,
 			'orders_processed'  => 0,
 			'order_total'       => $order_total,
@@ -289,17 +290,26 @@ final class Kidia_Mobile_AI_Analysis_Job {
 
 	/** Adds a real WooCommerce order batch to the analytical accumulator. */
 	private static function process_order_batch( array &$job ): void {
-		$offset = absint( $job['order_offset'] ?? 0 );
-		$ids = array_slice( (array) ( $job['order_ids'] ?? array() ), $offset, self::ORDER_BATCH );
-		if ( empty( $ids ) ) { $job['phase'] = 'products'; return; }
-		$result = wc_get_orders( array(
-			'include' => array_map( 'absint', $ids ),
-			'limit' => count( $ids ),
-			'return' => 'objects',
-			'orderby' => 'ID',
-			'order' => 'ASC',
+		$page = max( 1, absint( $job['order_page'] ?? 1 ) );
+		$result = wc_get_orders( self::order_args(
+			absint( $job['from'] ?? 0 ),
+			absint( $job['to'] ?? 0 ),
+			(string) ( $job['source'] ?? 'all' ),
+			array(
+				'limit'    => self::ORDER_BATCH,
+				'page'     => $page,
+				'paginate' => false,
+				'return'   => 'objects',
+				'orderby'  => 'ID',
+				'order'    => 'ASC',
+			)
 		) );
-		$batch = is_array( $result ) ? $result : array();
+		$batch = is_array( $result ) ? array_values( $result ) : array();
+		if ( empty( $batch ) ) {
+			$job['order_total'] = absint( $job['orders_processed'] ?? 0 );
+			$job['phase'] = 'products';
+			return;
+		}
 		$available      = array_fill_keys( array_map( 'absint', (array) $job['product_ids'] ), true );
 		$processed_rows = 0;
 		foreach ( $batch as $order ) {
@@ -358,14 +368,15 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			arsort( $job['pairs'] );
 			$job['pairs'] = array_slice( $job['pairs'], 0, self::MAX_PAIR_KEYS, true );
 		}
-		if ( $processed_rows !== count( $ids ) ) {
+		if ( $processed_rows !== count( $batch ) ) {
 			$job['phase'] = 'failed';
-			$job['error'] = __( 'WooCommerce did not return every frozen paid-order ID. No incomplete result was published.', 'kidia-mobile-cms' );
+			$job['error'] = __( 'WooCommerce returned an unreadable canonical order object. No incomplete result was published.', 'kidia-mobile-cms' );
 			return;
 		}
-		$job['order_offset'] = $offset + count( $ids );
-		$job['orders_processed'] = min( absint( $job['order_total'] ), absint( $job['order_offset'] ) );
-		if ( absint( $job['order_offset'] ) >= absint( $job['order_total'] ) ) { $job['phase'] = 'products'; }
+		$job['order_page'] = $page + 1;
+		$job['orders_processed'] = absint( $job['orders_processed'] ?? 0 ) + $processed_rows;
+		/* Keep progress monotonic when a duplicated HPOS/CPT total is too large. */
+		$job['order_total'] = max( absint( $job['order_total'] ?? 0 ), absint( $job['orders_processed'] ) );
 	}
 
 	/**
