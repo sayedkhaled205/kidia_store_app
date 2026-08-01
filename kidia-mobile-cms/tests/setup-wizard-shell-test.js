@@ -303,6 +303,7 @@ assert.match(admin, /ai_offer_id[\s\S]*selected_push_type\s*=\s*'offer'/, "An op
 assert.match(wizardCss, /kidia-theme-phone/, "Theme previews must have a detailed mobile mockup.");
 assert.match(wizardCss, /kidia-theme-modal__workspace[\s\S]*kidia-theme-modal__device[\s\S]*iframe/, "Full theme preview must host the real Flutter application surface.");
 assert.match(wizardTemplate, /kidia-theme-modal__controls[\s\S]*kidia-theme-modal__pages[\s\S]*kidia-theme-modal__select/, "Theme selection must sit directly below the page buttons.");
+assert.match(wizardCss, /\.kidia-theme-modal__select\{[^}]*margin-top:0!important;[^}]*border-color:#111!important;[^}]*background:#111!important/, "Theme selection must stay directly below the page buttons and retain its black action color.");
 assert.match(wizardCss, /kidia-theme-modal__dialog\{[^}]*height:min\(850px,calc\(100vh - 40px\)\)[^}]*overflow:hidden/, "Theme preview must fit the popup viewport without an outer scrollbar.");
 assert.match(wizardCss, /kidia-theme-modal__device\{[^}]*--kidia-theme-preview-scale:\.72[^}]*height:calc\(800px \* var\(--kidia-theme-preview-scale\) \+ 10px\)[^}]*overflow:hidden/, "The complete phone, including header and footer, must scale inside the popup.");
 assert.match(wizardCss, /kidia-setup-apply\{[^}]*flex-direction:row!important[^}]*white-space:nowrap\}[\s\S]*kidia-setup-apply \.dashicons\{[^}]*line-height:20px/, "Finish label and check icon must remain centered on one row.");
