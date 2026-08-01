@@ -271,6 +271,14 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
 
   @override
   Widget build(BuildContext context) {
+	final String configuredFont = widget.layout.string('font_family', 'system');
+	final String? fontFamily = configuredFont == 'poppins' ? 'Poppins' : null;
+	final ThemeData pageTheme = fontFamily == null
+	    ? Theme.of(context)
+	    : Theme.of(context).copyWith(
+	        textTheme: Theme.of(context).textTheme.apply(fontFamily: fontFamily),
+	        primaryTextTheme: Theme.of(context).primaryTextTheme.apply(fontFamily: fontFamily),
+	      );
     final bool collapsed =
         widget.layout.header.boolean('collapse_on_scroll', false) && _collapsed;
     final String transition = widget.layout.header.string(
@@ -298,7 +306,9 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
             'slow' => const Duration(milliseconds: 420),
             _ => const Duration(milliseconds: 260),
           };
-    return TweenAnimationBuilder<double>(
+	return Theme(
+	  data: pageTheme,
+	  child: TweenAnimationBuilder<double>(
       tween: Tween<double>(end: targetHeight),
       duration: transition == 'smooth_compact' ? Duration.zero : duration,
       curve: Curves.easeOutCubic,
@@ -321,7 +331,8 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
             ),
             bottomNavigationBar: widget.bottomNavigationBar,
           ),
-    );
+	  ),
+	);
   }
 }
 

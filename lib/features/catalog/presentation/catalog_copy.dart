@@ -36,6 +36,7 @@ class CatalogCopy {
   String get sort => isArabic ? 'الترتيب' : 'Sort';
   String get filter => isArabic ? 'تصفية' : 'Filter';
   String get size => isArabic ? 'المقاس' : 'Size';
+	String get color => isArabic ? 'اللون' : 'Color';
   String get chooseSize => isArabic ? 'اختاري المقاس' : 'Choose a size';
   String get allSizes => isArabic ? 'كل المقاسات' : 'All sizes';
   String get noSizes => isArabic

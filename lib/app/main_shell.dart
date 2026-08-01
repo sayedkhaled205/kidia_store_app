@@ -118,6 +118,7 @@ class _MainShellState extends ConsumerState<MainShell>
         .number('label_size', 11)
         .clamp(8, 20)
         .toDouble();
+	final String? footerFontFamily = pageLayout.string('font_family', 'system') == 'poppins' ? 'Poppins' : null;
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.where(
@@ -230,6 +231,7 @@ class _MainShellState extends ConsumerState<MainShell>
                                   style: TextStyle(
                                     color: color,
                                     fontSize: footerLabelSize,
+									fontFamily: footerFontFamily,
                                     height: 1,
                                     fontWeight: selected
                                         ? FontWeight.w700
