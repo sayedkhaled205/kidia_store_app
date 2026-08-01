@@ -95,11 +95,22 @@ class CmsPreviewLayoutBridge {
       final String page = '${message['page'] ?? ''}';
       final dynamic rawLayout = message['layout'];
       if (page.isEmpty || rawLayout is! Map) return;
-      _current[page] = Map<String, dynamic>.from(rawLayout);
-      if (page == 'home' && message['home'] is Map) {
+      final dynamic rawLayouts = message['layouts'];
+      if (rawLayouts is Map) {
+        for (final MapEntry<dynamic, dynamic> entry in rawLayouts.entries) {
+          if (entry.value is! Map) continue;
+          final String layoutPage = '${entry.key}'.trim();
+          if (layoutPage.isEmpty) continue;
+          _current[layoutPage] = Map<String, dynamic>.from(entry.value as Map);
+          _changes.add(layoutPage);
+        }
+      } else {
+        _current[page] = Map<String, dynamic>.from(rawLayout);
+      }
+      if (message['home'] is Map) {
         _home = Map<String, dynamic>.from(message['home'] as Map);
       }
-      if (page == 'category' && message['category'] is Map) {
+      if (message['category'] is Map) {
         _category = Map<String, dynamic>.from(message['category'] as Map);
       }
       if (message['demo_catalog'] is Map) {
@@ -109,7 +120,7 @@ class CmsPreviewLayoutBridge {
         final Completer<Map<String, dynamic>>? ready = _demoCatalogReady;
         if (ready != null && !ready.isCompleted) ready.complete(_demoCatalog!);
       }
-      _changes.add(page);
+      if (rawLayouts is! Map) _changes.add(page);
     });
     html.window.parent?.postMessage(
       jsonEncode(<String, String>{'type': 'kidia-flutter-preview-ready'}),

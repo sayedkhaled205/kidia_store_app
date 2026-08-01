@@ -212,34 +212,27 @@
 		const demoCatalog = snapshot && snapshot.demo_catalog && typeof snapshot.demo_catalog === 'object'
 			? snapshot.demo_catalog
 			: { products: [], categories: [] };
-		const layoutRequest = postPreviewJson(
-			String(previewConfig.layoutPreviewBase || '') + encodeURIComponent(page) + '/preview',
-			{ layout: previewPageLayout(snapshot, page) }
-		);
-		if (page === 'home') {
-			return Promise.all([
-				layoutRequest,
-				postPreviewJson(previewConfig.homePreviewEndpoint, {
-					blocks: Array.isArray(snapshot.home) ? snapshot.home : [],
-					demo_catalog: demoCatalog
-				})
-			]).then(function (payloads) {
-				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], home: payloads[1], demo_catalog: demoCatalog };
-			});
-		}
-		if (page === 'category') {
-			const category = snapshot.category && typeof snapshot.category === 'object' ? snapshot.category : {};
-			return Promise.all([
-				layoutRequest,
-				postPreviewJson(previewConfig.categoryPreviewEndpoint, {
-					general: category.general && typeof category.general === 'object' ? category.general : {}
-				})
-			]).then(function (payloads) {
-				return { type: 'kidia-preview-layout', page: page, layout: payloads[0], category: payloads[1], demo_catalog: demoCatalog };
-			});
-		}
-		return layoutRequest.then(function (layout) {
-			return { type: 'kidia-preview-layout', page: page, layout: layout, demo_catalog: demoCatalog };
+		const pages = snapshot && snapshot.pages && typeof snapshot.pages === 'object' ? snapshot.pages : {};
+		const layoutRequests = Object.keys(pages).map(function (pageName) {
+			return postPreviewJson(
+				String(previewConfig.layoutPreviewBase || '') + encodeURIComponent(pageName) + '/preview',
+				{ layout: previewPageLayout(snapshot, pageName) }
+			).then(function (layout) { return [pageName, layout]; });
+		});
+		const category = snapshot.category && typeof snapshot.category === 'object' ? snapshot.category : {};
+		return Promise.all([
+			Promise.all(layoutRequests),
+			postPreviewJson(previewConfig.homePreviewEndpoint, {
+				blocks: Array.isArray(snapshot.home) ? snapshot.home : [],
+				demo_catalog: demoCatalog
+			}),
+			postPreviewJson(previewConfig.categoryPreviewEndpoint, {
+				general: category.general && typeof category.general === 'object' ? category.general : {}
+			})
+		]).then(function (payloads) {
+			const layouts = {};
+			payloads[0].forEach(function (entry) { layouts[entry[0]] = entry[1]; });
+			return { type: 'kidia-preview-layout', page: page, layout: layouts[page] || {}, layouts: layouts, home: payloads[1], category: payloads[2], demo_catalog: demoCatalog };
 		});
 	}
 
