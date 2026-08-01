@@ -116,6 +116,8 @@
 		if (!wasActive) {
 			button.classList.add('is-active');
 			button.setAttribute('aria-pressed', 'true');
+			const picker = button.closest('.kidia-ai-playbooks');
+			if (picker) picker.removeAttribute('open');
 			const schemes = csv(button.dataset.aiPlaybookSchemes);
 			const currentPanel = page.querySelector('[data-ai-segment-panel="' + activeSegment(page) + '"]');
 			const currentHasMatch = currentPanel && list(currentPanel, '[data-ai-decision-scheme]').some(function (card) {
@@ -134,6 +136,13 @@
 			}
 		}
 		syncDecisionVisibility(page);
+	}
+
+	function keepOneIdeaGroupOpen(page, opened) {
+		if (!opened.open) return;
+		list(page, 'details[data-ai-idea-group]').forEach(function (group) {
+			if (group !== opened) group.removeAttribute('open');
+		});
 	}
 
 	function bindPage(page) {
@@ -158,6 +167,11 @@
 				togglePlaybook(page, playbook);
 			}
 		});
+
+		page.addEventListener('toggle', function (event) {
+			const group = event.target.closest && event.target.closest('details[data-ai-idea-group]');
+			if (group && page.contains(group)) keepOneIdeaGroupOpen(page, group);
+		}, true);
 
 		page.addEventListener('keydown', function (event) {
 			const current = event.target.closest('[data-ai-segment-tab]');
