@@ -368,11 +368,13 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			arsort( $job['pairs'] );
 			$job['pairs'] = array_slice( $job['pairs'], 0, self::MAX_PAIR_KEYS, true );
 		}
-		if ( $processed_rows !== count( $batch ) ) {
-			$job['phase'] = 'failed';
-			$job['error'] = __( 'WooCommerce returned an unreadable canonical order object. No incomplete result was published.', 'kidia-mobile-cms' );
-			return;
-		}
+		/*
+		 * Old CPT/HPOS migrations can leave non-order rows in a WooCommerce
+		 * result page. They are not analysable orders and must neither inflate
+		 * the report nor stop later canonical orders from being read.
+		 */
+		$job['invalid_order_rows'] = absint( $job['invalid_order_rows'] ?? 0 )
+			+ max( 0, count( $batch ) - $processed_rows );
 		$job['order_page'] = $page + 1;
 		$job['orders_processed'] = absint( $job['orders_processed'] ?? 0 ) + $processed_rows;
 		/* Keep progress monotonic when a duplicated HPOS/CPT total is too large. */
