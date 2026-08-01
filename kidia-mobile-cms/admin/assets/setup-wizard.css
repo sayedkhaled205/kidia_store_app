@@ -74,7 +74,8 @@
 .kidia-setup-actions .button{border-color:#2f806e!important;color:#236b59!important}
 .kidia-setup-actions .button-primary,
 .kidia-theme-modal__select{border-color:#236b59!important;background:#2f806e!important;color:#fff!important}
-.kidia-theme-modal__dialog>.kidia-theme-modal__select{margin:16px auto 20px!important}
+.kidia-setup-apply{flex-direction:row!important;white-space:nowrap}
+.kidia-setup-apply .dashicons{display:block;width:20px;height:20px;margin:0!important;font-size:20px;line-height:20px}
 .kidia-theme-preview-button{border-color:#2f806e!important;background:#fff!important;color:#236b59!important}
 
 /* Each complete theme stays compact while showing its own installed layout. */
@@ -87,24 +88,30 @@
 .kidia-setup-step[data-step-kind=theme] .kidia-theme-card-copy small{font-size:12px}
 
 /* Built-in themes preview the real Flutter application on all six pages. */
-.kidia-theme-modal__dialog{width:min(980px,calc(100vw - 40px));padding:24px}
-.kidia-theme-modal__workspace{display:grid;grid-template-columns:minmax(180px,230px) 1fr;align-items:start;gap:22px;margin:20px 0}
+.kidia-theme-modal__dialog{display:flex;width:min(980px,calc(100vw - 40px));height:min(850px,calc(100vh - 40px));max-height:calc(100vh - 40px);flex-direction:column;overflow:hidden;padding:20px 24px}
+.kidia-theme-modal__heading{flex:0 0 auto}
+.kidia-theme-modal__heading h2{margin-block:3px 5px}
+.kidia-theme-modal__workspace{display:grid;min-height:0;flex:1 1 auto;grid-template-columns:minmax(180px,230px) 1fr;align-items:stretch;gap:22px;margin:16px 0 0}
+.kidia-theme-modal__controls{display:flex;min-height:0;flex-direction:column;gap:12px}
 .kidia-theme-modal__pages{display:grid;gap:8px}
 .kidia-theme-modal__pages button{display:flex;min-height:44px;align-items:center;gap:8px;padding:8px 12px;border:1px solid #d7e5e1;border-radius:11px;background:#fff;color:#52635e;cursor:pointer;font-weight:750;text-align:start}
 .kidia-theme-modal__pages button:hover,
 .kidia-theme-modal__pages button.is-active{border-color:#2f806e;background:#e9f5f1;color:#1f6f61;box-shadow:0 5px 14px rgba(47,128,110,.1)}
-.kidia-theme-modal__stage{position:relative;display:grid;min-height:724px;place-items:center;border-radius:22px;background:linear-gradient(145deg,var(--theme-soft),var(--theme-surface))}
-.kidia-theme-modal__device{position:relative;width:322px;height:auto;padding:5px;overflow:visible;border:3px solid #2f806e;border-radius:29px;background:#2f806e;box-shadow:none;box-sizing:border-box}
+.kidia-theme-modal__select{width:100%;min-height:46px!important;margin-top:auto!important;justify-content:center!important}
+.kidia-theme-modal__stage{position:relative;display:grid;min-height:0;place-items:center;overflow:hidden;border-radius:22px;background:linear-gradient(145deg,var(--theme-soft),var(--theme-surface))}
+.kidia-theme-modal__device{--kidia-theme-preview-scale:.72;position:relative;width:calc(360px * var(--kidia-theme-preview-scale) + 10px);height:calc(800px * var(--kidia-theme-preview-scale) + 10px);padding:5px;overflow:hidden;border:3px solid #2f806e;border-radius:29px;background:#2f806e;box-shadow:none;box-sizing:border-box}
 .kidia-theme-modal__device:before{display:none;content:none}
-.kidia-theme-modal__device iframe{position:relative;display:block;width:360px;height:800px;border:0;border-radius:21px;background:#fff;zoom:.85}
+.kidia-theme-modal__device iframe{position:relative;display:block;width:360px;height:800px;border:0;border-radius:21px;background:#fff;zoom:var(--kidia-theme-preview-scale)}
 .kidia-theme-modal__loading{position:absolute;z-index:5;inset:14px;display:grid;place-content:center;justify-items:center;gap:12px;border-radius:18px;background:rgba(247,251,250,.9);color:#376258;text-align:center;backdrop-filter:blur(3px)}
 .kidia-theme-modal__loading[hidden]{display:none!important}
 .kidia-theme-modal__loading .spinner{float:none;margin:0}
 .kidia-theme-modal__loading.is-error{color:#a33c34}
 .kidia-theme-modal__loading.is-error .spinner{display:none}
 @media(max-width:1280px){.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:1000px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__workspace{grid-template-columns:1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-theme-modal__stage{min-height:724px}}
-@media(max-width:782px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid,.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{width:calc(100vw - 20px);padding:20px 12px}.kidia-theme-modal__device{width:278px}.kidia-theme-modal__device iframe{zoom:.728}.kidia-theme-modal__stage{min-height:615px}}
+@media(max-height:820px){.kidia-theme-modal__device{--kidia-theme-preview-scale:.62}}
+@media(max-height:700px){.kidia-theme-modal__dialog{padding-block:14px}.kidia-theme-modal__heading p{display:none}.kidia-theme-modal__workspace{margin-top:10px}.kidia-theme-modal__pages button{min-height:38px}.kidia-theme-modal__device{--kidia-theme-preview-scale:.53}}
+@media(max-width:1000px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{height:calc(100vh - 20px);max-height:calc(100vh - 20px)}.kidia-theme-modal__workspace{grid-template-columns:1fr}.kidia-theme-modal__controls{display:grid;grid-template-columns:1fr auto}.kidia-theme-modal__pages{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-theme-modal__select{width:auto;margin-top:0!important}.kidia-theme-modal__device{--kidia-theme-preview-scale:.58}}
+@media(max-width:782px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid,.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr}.kidia-theme-modal__controls{display:flex}.kidia-theme-modal__pages{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{width:calc(100vw - 20px);padding:14px 12px}.kidia-theme-modal__select{width:100%}.kidia-theme-modal__device{--kidia-theme-preview-scale:.52}}
 
 /* Saved Themes uses the exact clean Page Builder phone frame. */
 .kidia-saved-theme-dialog__stage{min-height:724px}
