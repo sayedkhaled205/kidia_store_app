@@ -468,8 +468,18 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /stock_status' => 'instock'[\s\S]*process_order_batch[\s\S]*process_product_batch[\s\S]*store_commerce_snapshot/,
-  "The job must analyze all paid orders in bounded batches and only currently in-stock products.",
+  /wc_product_meta_lookup[\s\S]*product_variation[\s\S]*process_product_batch[\s\S]*store_commerce_snapshot/,
+  "The job must analyze all paid orders and every in-stock product or variation SKU.",
+);
+assert.match(
+  aiAnalysisJob,
+  /'return'\s*=>\s*'ids'[\s\S]*wc_get_order[\s\S]*orders_processed[\s\S]*\$job\['phase'\]\s*=\s*'failed'/,
+  "Order batches must use stable ID pagination and refuse to publish an incomplete population.",
+);
+assert.match(
+  aiAnalysisJob,
+  /'orderby'\s*=>\s*'ID'[\s\S]*'order'\s*=>\s*'ASC'/,
+  "Equal order timestamps must not make records move between paginated batches.",
 );
 assert.match(
   aiAnalysisJob,
@@ -520,6 +530,11 @@ assert.match(
   analytics,
   /stock_status' => 'instock'[\s\S]*catalog_in_stock[\s\S]*product_sales/,
   "AI product decisions must expose all currently in-stock catalog products and their measured sales.",
+);
+assert.match(
+  analytics,
+  /read_durable_commerce_snapshot[\s\S]*gzuncompress[\s\S]*write_durable_commerce_snapshot[\s\S]*gzcompress/,
+  "A complete large-catalog snapshot must survive object-cache item limits in durable compressed storage.",
 );
 assert.match(
   analytics,
