@@ -754,9 +754,6 @@ final class Kidia_Mobile_CMS_Admin {
 				$cart_view
 			)
 			: array();
-		$abandoned_import = 'abandoned-carts' === $store_tab
-			? Kidia_Mobile_Analytics::website_session_import_status()
-			: array();
 		$recovery_stats = 'abandoned-carts' === $store_tab ? Kidia_Mobile_Recovery_Campaigns::stats() : array();
 		$recovery_campaigns = 'abandoned-carts' === $store_tab ? Kidia_Mobile_Recovery_Campaigns::recent( 50 ) : array();
 
@@ -1970,6 +1967,7 @@ final class Kidia_Mobile_CMS_Admin {
 			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'bundles', 'abandoned_carts', 'push', 'website_promotion' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		$app_build_state = Kidia_Mobile_App_Exporter::state();
+		$abandoned_import_state = Kidia_Mobile_Analytics::website_session_import_status();
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/cms-shell.php';
 	}
 

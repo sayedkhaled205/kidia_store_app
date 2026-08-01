@@ -46,6 +46,7 @@ const storeData = readPlugin("admin", "pages", "store-data.php");
 const push = readPlugin("admin", "pages", "push-notifications.php");
 const aiInsights = readPlugin("admin", "pages", "ai-insights.php");
 const splash = readPlugin("admin", "pages", "splash-screen.php");
+const shellTemplate = readPlugin("admin", "pages", "cms-shell.php");
 const shellCss = readPlugin("admin", "assets", "cms-shell.css");
 const shellScript = readPlugin("admin", "assets", "cms-shell.js");
 const splashScript = readPlugin("admin", "assets", "splash-screen.js");
@@ -411,7 +412,7 @@ assert.match(
 );
 assert.match(
   shellScript,
-  /kidia:cms-before-page-change[\s\S]*persistAiProgressAcrossNavigation[\s\S]*document\.body\.appendChild\(overlay\)[\s\S]*pollBackgroundJob/,
+  /kidia:cms-before-page-change[\s\S]*persistAiProgressAcrossNavigation[\s\S]*appendBackgroundJobCard\(overlay\)[\s\S]*pollBackgroundJob/,
   "An active analysis card must survive CMS view changes without a reload or a new job.",
 );
 assert.match(
@@ -622,10 +623,11 @@ assert.match(
   "Links into Abandoned Carts must preserve the Today default.",
 );
 assert.match(
-  storeData,
-  /Importing all retained WooCommerce carts in the background[\s\S]*Carts found[\s\S]*\$abandoned_summary/,
-  "The page must show historical import progress and complete cart totals.",
+  shellTemplate,
+  /data-kidia-background-job="abandoned-carts"[\s\S]*Importing all retained WooCommerce carts in the background/,
+  "The permanent shell must restore historical import progress on every CMS page.",
 );
+assert.match(storeData, /Carts found[\s\S]*\$abandoned_summary/, "The Abandoned Carts page must still show complete cart totals.");
 assert.match(
   storeData,
   /data-kidia-live-store-data="abandoned-carts-overview"[\s\S]*data-kidia-live-store-data="abandoned-carts-table"/,
@@ -672,9 +674,9 @@ assert.match(
   "Province must use the order country to convert WooCommerce state codes into readable governorate names.",
 );
 assert.match(
-  storeData,
-  /Completed — WooCommerce cart history is synced[\s\S]*Results are shown below automatically/,
-  "The abandoned-cart import card must become Completed and expose refreshed results automatically.",
+  shellTemplate,
+  /Completed — WooCommerce cart history is synced[\s\S]*Results are available on Abandoned Carts/,
+  "The permanent abandoned-cart import card must become Completed after a reload.",
 );
 assert.match(
   shellScript,
@@ -688,7 +690,13 @@ assert.match(
   "Generate Offers must bind injected forms and become runnable again after success.",
 );
 assert.match(aiInsights, /data-ai-progress-overlay data-kidia-background-job="generate-offers"/, "The real Generate Offers card must have a persistent identity.");
-assert.match(storeData, /kidia-cart-import-state[^>]*data-kidia-background-job="abandoned-carts"/, "The real abandoned-cart import card must have an independent persistent identity.");
+assert.match(shellTemplate, /kidia-cart-import-state[\s\S]{0,300}data-kidia-background-job="abandoned-carts"/, "The real abandoned-cart import card must have an independent identity in the permanent shell.");
+assert.doesNotMatch(storeData, /data-kidia-background-job="abandoned-carts"/, "The Abandoned Carts page must not render a duplicate of the permanent card.");
+assert.match(
+  shellCss,
+  /kidia-background-job-stack\{[\s\S]*position:fixed[\s\S]*flex-direction:column[\s\S]*gap:10px[\s\S]*kidia-background-job-stack \.kidia-ai-progress-overlay\.is-docked\{[\s\S]*position:relative!important/,
+  "Build, Generate Offer and Abandoned progress must occupy one non-overlapping fixed stack.",
+);
 assert.match(
   aiAnalysisJob,
   /date_preset[\s\S]*sanitize_date_preset[\s\S]*'all_time'[\s\S]*result_args[\s\S]*'custom' === \$date_preset/,

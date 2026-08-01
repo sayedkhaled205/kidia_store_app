@@ -83,6 +83,13 @@
 		if (!modal || modal.hidden) return;
 		modal.classList.add('is-docked');
 		document.body.classList.remove('kidia-ai-is-generating');
+		if (modal.closest('[data-kidia-background-job-stack]')) {
+			modal.style.removeProperty('left');
+			modal.style.removeProperty('top');
+			modal.style.removeProperty('right');
+			modal.style.removeProperty('bottom');
+			return;
+		}
 		const stored = window.localStorage.getItem('kidiaAppBuildDockPosition');
 		if (!stored) return;
 		try {
@@ -106,7 +113,11 @@
 		if (!modal || !card || card.dataset.buildDragBound === '1') return;
 		card.dataset.buildDragBound = '1';
 		card.addEventListener('pointerdown', function (event) {
-			if (!modal.classList.contains('is-docked') || event.target.closest('button, a, input')) return;
+			if (
+				!modal.classList.contains('is-docked') ||
+				modal.closest('[data-kidia-background-job-stack]') ||
+				event.target.closest('button, a, input')
+			) return;
 			event.preventDefault();
 			const bounds = modal.getBoundingClientRect();
 			const offsetX = event.clientX - bounds.left;

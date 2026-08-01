@@ -279,20 +279,7 @@ $category_image = static function ( WP_Term $category ): string {
 			</div>
 
 		<?php elseif ( 'abandoned-carts' === $store_tab ) : ?>
-			<?php
-			$import_total     = absint( $abandoned_import['total'] ?? 0 );
-			$import_processed = absint( $abandoned_import['processed'] ?? 0 );
-			$import_progress  = $import_total > 0 ? min( 100, (int) floor( 100 * $import_processed / $import_total ) ) : 100;
-			?>
 			<div data-kidia-live-store-data="abandoned-carts-overview" aria-live="polite">
-			<?php if ( 'running' === (string) ( $abandoned_import['phase'] ?? '' ) ) : ?>
-				<section class="kidia-cart-import-state" data-kidia-background-job="abandoned-carts">
-					<span class="dashicons dashicons-database-import"></span>
-					<div><strong><?php esc_html_e( 'Importing all retained WooCommerce carts in the background', 'kidia-mobile-cms' ); ?></strong><p><?php echo esc_html( sprintf( __( '%1$d of %2$d stored sessions checked · %3$d carts imported. You can leave this page and continue your work.', 'kidia-mobile-cms' ), $import_processed, $import_total, absint( $abandoned_import['imported'] ?? 0 ) ) ); ?></p><i><b style="width:<?php echo esc_attr( (string) $import_progress ); ?>%"></b></i></div>
-				</section>
-			<?php elseif ( 'complete' === (string) ( $abandoned_import['phase'] ?? '' ) ) : ?>
-				<section class="kidia-cart-import-state is-complete" data-kidia-background-job="abandoned-carts"><span class="dashicons dashicons-yes-alt"></span><div><strong><?php esc_html_e( 'Completed — WooCommerce cart history is synced', 'kidia-mobile-cms' ); ?></strong><p><?php echo esc_html( sprintf( __( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are shown below automatically.', 'kidia-mobile-cms' ), $import_processed, absint( $abandoned_import['imported'] ?? 0 ) ) ); ?></p></div></section>
-			<?php endif; ?>
 			<div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Carts found', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['carts'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $abandoned_summary['potential_value'] ?? 0 ) ) ); ?></b></div></div>
 			</div>
 			<nav class="kidia-cart-view-tabs" aria-label="<?php esc_attr_e( 'Cart status', 'kidia-mobile-cms' ); ?>">
