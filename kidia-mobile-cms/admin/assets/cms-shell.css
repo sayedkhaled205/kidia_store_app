@@ -1,8 +1,9 @@
 /*
  * Woo Mobile CMS owns scrolling while one of its admin screens is open.
  * Locking the WordPress document prevents the admin menu from making the
- * outer page taller than the viewport; #wpbody below is the only workspace
- * scroll owner. The frame is sized from #wpcontent so no viewport-width
+ * outer page taller than the viewport. The WordPress menu and the plugin
+ * workspace own separate scroll containers, so neither can move or resize
+ * the other. The frame is sized from #wpcontent so no viewport-width
  * calculation can reintroduce horizontal document overflow.
  */
 html{
@@ -13,6 +14,30 @@ html{
 body.kidia-cms-plugin-page{
 	height:100%;
 	overflow:hidden!important;
+}
+/* Keep WordPress navigation usable without restoring document scrolling.
+ * This rail belongs only to the black admin menu. Containing overscroll stops
+ * a wheel/touch gesture at either end from leaking into the plugin workspace. */
+@media(min-width:783px){
+	body.kidia-cms-plugin-page #adminmenuwrap{
+		position:fixed!important;
+		inset-block-start:32px!important;
+		inset-block-end:0!important;
+		inset-inline-start:0!important;
+		height:auto!important;
+		overflow-x:hidden!important;
+		overflow-y:scroll!important;
+		overscroll-behavior:contain;
+		scrollbar-gutter:stable;
+		scrollbar-width:thin;
+	}
+	body.kidia-cms-plugin-page #adminmenuwrap::-webkit-scrollbar{
+		width:8px;
+	}
+	body.kidia-cms-plugin-page #adminmenuwrap::-webkit-scrollbar-thumb{
+		border-radius:999px;
+		background:rgba(255,255,255,.28);
+	}
 }
 body[class*="kidia-mobile"],
 body[class*="kidia-mobile"] #wpwrap{

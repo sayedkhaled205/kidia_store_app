@@ -53,10 +53,10 @@ assert.match(
   /body\.kidia-cms-builder-screen #wpbody\{[^}]*height:100%!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
   "Customize must keep the same plugin-owned scrollbar rail beside the WordPress menu."
 );
-assert.doesNotMatch(
+assert.match(
   styles,
-  /#adminmenuwrap\{[^}]*overflow-y:(?:auto|scroll)!important;/,
-  "The black WordPress admin menu must stay fixed instead of owning another scrollbar."
+  /@media\(min-width:783px\)\{[\s\S]*body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*position:fixed!important;[^}]*inset-block-start:32px!important;[^}]*inset-block-end:0!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;/,
+  "The WordPress admin menu must own an isolated desktop scrollbar without restoring document scrolling."
 );
 assert.match(
   styles,
