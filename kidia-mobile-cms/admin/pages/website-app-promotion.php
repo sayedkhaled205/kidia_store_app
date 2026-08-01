@@ -48,6 +48,28 @@ $campaigns = array(
 		__( 'Mobile + desktop', 'kidia-mobile-cms' ),
 	),
 );
+$status_labels = array(
+	'live'            => __( 'Live', 'kidia-mobile-cms' ),
+	'announcement'    => __( 'Announcement live', 'kidia-mobile-cms' ),
+	'needs-link'      => __( 'Needs app link', 'kidia-mobile-cms' ),
+	'needs-placement' => __( 'Needs placement', 'kidia-mobile-cms' ),
+	'paused'          => __( 'Paused', 'kidia-mobile-cms' ),
+);
+$campaign_statuses = array();
+$live_count        = 0;
+foreach ( array_keys( $campaigns ) as $campaign_key ) {
+	$campaign_statuses[ $campaign_key ] = Kidia_Mobile_Website_App_Promotion::campaign_status( $campaign_key, $promotion_settings );
+	if ( in_array( $campaign_statuses[ $campaign_key ], array( 'live', 'announcement' ), true ) ) {
+		++$live_count;
+	}
+}
+$has_destination = false;
+foreach ( array( 'smart_url', 'android_url', 'ios_url', 'huawei_url', 'deep_link', 'qr_url' ) as $destination_key ) {
+	if ( '' !== trim( $value( $destination_key ) ) ) {
+		$has_destination = true;
+		break;
+	}
+}
 $click_rate = $promotion_metrics['views'] > 0
 	? round( ( $promotion_metrics['clicks'] / $promotion_metrics['views'] ) * 100, 1 )
 	: 0;
@@ -64,7 +86,7 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 			</div>
 		</div>
 		<span class="kidia-app-promotion-state <?php echo ! empty( $promotion_settings['enabled'] ) ? 'is-live' : ''; ?>">
-			<i></i><?php echo ! empty( $promotion_settings['enabled'] ) ? esc_html__( 'Campaigns live', 'kidia-mobile-cms' ) : esc_html__( 'Campaigns paused', 'kidia-mobile-cms' ); ?>
+			<i></i><span data-promotion-state-label><?php echo ! empty( $promotion_settings['enabled'] ) ? esc_html( sprintf( _n( '%d campaign live', '%d campaigns live', $live_count, 'kidia-mobile-cms' ), $live_count ) ) : esc_html__( 'Campaigns paused', 'kidia-mobile-cms' ); ?></span>
 		</span>
 	</header>
 
@@ -96,16 +118,16 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 				<b>1</b><div><h2><?php esc_html_e( 'Choose campaign types', 'kidia-mobile-cms' ); ?></h2><p><?php esc_html_e( 'Enable one or combine several formats. Click any card to edit and preview it.', 'kidia-mobile-cms' ); ?></p></div>
 			</div>
 			<div class="kidia-app-promotion-types">
-				<?php $first = true; foreach ( $campaigns as $key => $meta ) : $saved_campaign = $campaign( $key ); ?>
-					<article class="<?php echo $first ? 'is-selected' : ''; ?>" data-promotion-type="<?php echo esc_attr( $key ); ?>" tabindex="0">
+				<?php $first = true; foreach ( $campaigns as $key => $meta ) : $saved_campaign = $campaign( $key ); $campaign_status = $campaign_statuses[ $key ]; ?>
+					<article class="<?php echo esc_attr( trim( ( $first ? 'is-selected ' : '' ) . ( in_array( $campaign_status, array( 'live', 'announcement' ), true ) ? 'is-enabled' : '' ) ) ); ?>" data-promotion-type="<?php echo esc_attr( $key ); ?>" data-promotion-status="<?php echo esc_attr( $campaign_status ); ?>" tabindex="0">
 						<div class="kidia-app-promotion-type__top">
 							<span class="dashicons <?php echo esc_attr( $meta[1] ); ?>"></span>
 							<label class="kidia-promotion-switch"><input type="checkbox" name="promotion[<?php echo esc_attr( $key ); ?>][enabled]" value="1" <?php checked( ! empty( $saved_campaign['enabled'] ) ); ?>><span></span></label>
 						</div>
 						<strong><?php echo esc_html( $meta[0] ); ?></strong>
 						<p><?php echo esc_html( $meta[2] ); ?></p>
-						<small><?php echo esc_html( $meta[3] ); ?></small>
-						<button type="button" data-edit-campaign="<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Edit & preview', 'kidia-mobile-cms' ); ?></button>
+						<div class="kidia-app-promotion-type__meta"><small><?php echo esc_html( $meta[3] ); ?></small><span class="kidia-app-promotion-type__status is-<?php echo esc_attr( $campaign_status ); ?>" data-promotion-status><?php echo esc_html( $status_labels[ $campaign_status ] ); ?></span></div>
+						<div class="kidia-app-promotion-type__actions"><button type="button" data-edit-campaign="<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Edit & preview', 'kidia-mobile-cms' ); ?></button><a href="<?php echo esc_url( Kidia_Mobile_Website_App_Promotion::test_url( $key ) ); ?>" target="_blank" rel="noopener" data-test-campaign="<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Test on live site', 'kidia-mobile-cms' ); ?></a></div>
 					</article>
 				<?php $first = false; endforeach; ?>
 			</div>
@@ -130,6 +152,11 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 						<label><span><?php esc_html_e( 'Custom QR destination (optional)', 'kidia-mobile-cms' ); ?></span><input type="url" name="promotion[qr_url]" value="<?php echo esc_attr( $value( 'qr_url' ) ); ?>" placeholder="Defaults to the smart link"></label>
 					</div>
 					<div class="kidia-promotion-tip"><span class="dashicons dashicons-lightbulb"></span><p><strong><?php esc_html_e( 'Best setup:', 'kidia-mobile-cms' ); ?></strong> <?php esc_html_e( 'Use one smart link if available. Otherwise Android, iOS and Huawei visitors are routed to their matching store automatically.', 'kidia-mobile-cms' ); ?></p></div>
+					<?php if ( ! $has_destination ) : ?>
+						<div class="kidia-promotion-warning is-link-status"><span class="dashicons dashicons-info-outline"></span><p><strong><?php esc_html_e( 'Safe announcement mode is active.', 'kidia-mobile-cms' ); ?></strong> <?php esc_html_e( 'Message campaigns stay visible without a dead button. QR and floating formats can be privately tested now and become customer-facing automatically after one app link is added.', 'kidia-mobile-cms' ); ?></p></div>
+					<?php else : ?>
+						<div class="kidia-promotion-ready"><span class="dashicons dashicons-yes-alt"></span><p><?php esc_html_e( 'App destination connected. Every enabled format can open or download the app.', 'kidia-mobile-cms' ); ?></p></div>
+					<?php endif; ?>
 				</section>
 
 				<section class="kidia-app-promotion-panel">

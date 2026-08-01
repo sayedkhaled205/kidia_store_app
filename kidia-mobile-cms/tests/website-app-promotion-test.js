@@ -144,6 +144,21 @@ assert.match(
 );
 assert.match(
   service,
+  /test_url\([\s\S]*TEST_NONCE_QUERY[\s\S]*wp_create_nonce\(\s*self::TEST_ACTION/,
+  "Every campaign must expose a nonce-protected private live test URL.",
+);
+assert.match(
+  template,
+  /data-test-campaign=[\s\S]*Test on live site/,
+  "Each campaign card must provide a real website test action.",
+);
+assert.match(
+  service,
+  /site_logo_url\([\s\S]*custom_logo[\s\S]*get_site_icon_url/,
+  "Campaigns must fall back to the website brand mark instead of a text initial.",
+);
+assert.match(
+  service,
   /is_preview_request\(\)[\s\S]*current_user_can\(\s*'manage_options'\s*\)[\s\S]*wp_verify_nonce/,
   "Only an authenticated administrator may suppress saved campaigns in preview mode.",
 );
@@ -249,13 +264,23 @@ assert.match(
 );
 assert.match(
   publicScript,
-  /requiresDestination[\s\S]*desktop_qr[\s\S]*floating_button[\s\S]*!campaignDestination/,
+  /requiresDestination[\s\S]*desktop_qr[\s\S]*floating_button[\s\S]*!campaignDestination[\s\S]*!isTestMode/,
   "Message campaigns must not disappear just because no app-store destination has been published yet.",
 );
 assert.match(
   publicCss,
-  /@media\(max-width:767px\)[\s\S]*desktop_qr\{display:none!important\}/,
+  /@media\(max-width:767px\)[\s\S]*desktop_qr:not\(\.is-test\)\{display:none!important\}/,
   "Desktop QR cards must never crowd mobile screens.",
+);
+assert.match(
+  publicScript,
+  /settings\.popup\?\.enabled[\s\S]*!\(isMobile && settings\.bottom_sheet\?\.enabled\)/,
+  "Mobile visitors must never receive a duplicate popup over the enabled bottom sheet.",
+);
+assert.match(
+  admin,
+  /website-app-promotion-preview[\s\S]*public\/assets\/website-app-promotion\.css[\s\S]*website-app-promotion-admin/,
+  "Admin preview and live campaigns must share the same visual stylesheet.",
 );
 assert.match(
   publicCss,
@@ -354,6 +379,17 @@ assert.equal(
   adminDom.window.document.querySelector("[data-promotion-screen]").style.height,
   "394px",
   "Responsive scaling must preserve the laptop aspect ratio.",
+);
+assert.ok(
+  adminDom.window.document.querySelector(
+    "[data-preview-output] .kidia-app-promo--smart_banner",
+  ),
+  "The editor preview must render the same campaign component used by the live website.",
+);
+assert.equal(
+  adminDom.window.document.querySelector(".kidia-preview-promo"),
+  null,
+  "The retired approximate preview component must not be used.",
 );
 const campaignToggle = adminDom.window.document.querySelector(
   '[data-promotion-type="smart_banner"] input[type="checkbox"]',
@@ -611,6 +647,73 @@ messageOnlyDom.window.KidiaAppPromotion = {
 };
 messageOnlyDom.window.eval(publicScript);
 
+const privateQrTestDom = new JSDOM(
+  "<!doctype html><body><main>Private campaign test</main><div data-kidia-app-promo-root></div></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/?kidia_app_promotion_test=desktop_qr",
+  },
+);
+privateQrTestDom.window.matchMedia = () => ({ matches: false });
+privateQrTestDom.window.navigator.sendBeacon = () => true;
+privateQrTestDom.window.QRCode = function QRCode(holder) {
+  holder.append(privateQrTestDom.window.document.createElement("canvas"));
+};
+privateQrTestDom.window.QRCode.CorrectLevel = { M: 0 };
+privateQrTestDom.window.KidiaAppPromotion = JSON.parse(
+  JSON.stringify(messageOnlyDom.window.KidiaAppPromotion),
+);
+privateQrTestDom.window.KidiaAppPromotion.testCampaign = "desktop_qr";
+privateQrTestDom.window.KidiaAppPromotion.labels = {
+  comingSoon: "Coming soon",
+  needsLink: "Add an app link",
+  testPreview: "Private live test",
+};
+privateQrTestDom.window.eval(publicScript);
+
+const privateFloatingTestDom = new JSDOM(
+  "<!doctype html><body><main>Private floating test</main><div data-kidia-app-promo-root></div></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/?kidia_app_promotion_test=floating_button",
+  },
+);
+privateFloatingTestDom.window.matchMedia = () => ({ matches: false });
+privateFloatingTestDom.window.navigator.sendBeacon = () => true;
+privateFloatingTestDom.window.KidiaAppPromotion = JSON.parse(
+  JSON.stringify(privateQrTestDom.window.KidiaAppPromotion),
+);
+privateFloatingTestDom.window.KidiaAppPromotion.testCampaign =
+  "floating_button";
+privateFloatingTestDom.window.eval(publicScript);
+
+const mobileConflictDom = new JSDOM(
+  "<!doctype html><body><main>Mobile campaign orchestration</main><div data-kidia-app-promo-root></div></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+mobileConflictDom.window.matchMedia = () => ({ matches: true });
+mobileConflictDom.window.navigator.sendBeacon = () => true;
+mobileConflictDom.window.KidiaAppPromotion = JSON.parse(
+  JSON.stringify(messageOnlyDom.window.KidiaAppPromotion),
+);
+mobileConflictDom.window.KidiaAppPromotion.settings.smart_banner.enabled = false;
+mobileConflictDom.window.KidiaAppPromotion.settings.bottom_sheet = {
+  enabled: true,
+  trigger: "immediate",
+  delay: 0,
+  style: "compact",
+};
+mobileConflictDom.window.KidiaAppPromotion.settings.popup = {
+  enabled: true,
+  trigger: "delay",
+  delay: 0,
+  style: "split",
+};
+mobileConflictDom.window.eval(publicScript);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -714,6 +817,48 @@ setTimeout(() => {
     ),
     null,
     "A destinationless floating button must not create a dead control.",
+  );
+  const privateQrCard = privateQrTestDom.window.document.querySelector(
+    ".kidia-app-promo--desktop_qr.is-test",
+  );
+  assert.ok(
+    privateQrCard,
+    "Private live test mode must show the Desktop QR design before a store URL exists.",
+  );
+  assert.ok(
+    privateQrCard.querySelector(".kidia-app-promo__qr-placeholder"),
+    "A destinationless QR test must use an honest placeholder instead of a fake code.",
+  );
+  assert.equal(
+    privateQrCard.querySelector(".kidia-app-promo__action"),
+    null,
+    "Private QR tests must not expose a fake download action.",
+  );
+  const privateFloatingButton =
+    privateFloatingTestDom.window.document.querySelector(
+      ".kidia-app-promo--floating_button.is-test",
+    );
+  assert.ok(
+    privateFloatingButton,
+    "Private live test mode must show the floating button before a store URL exists.",
+  );
+  assert.equal(
+    privateFloatingButton.getAttribute("aria-disabled"),
+    "true",
+    "A test-only destinationless floating button must clearly expose its disabled state.",
+  );
+  assert.ok(
+    mobileConflictDom.window.document.querySelector(
+      '[data-kidia-app-promotion="bottom_sheet"]',
+    ),
+    "The enabled mobile bottom sheet must render.",
+  );
+  assert.equal(
+    mobileConflictDom.window.document.querySelector(
+      '[data-kidia-app-promotion="popup"]',
+    ),
+    null,
+    "The mobile popup must defer when the bottom sheet is enabled.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);
