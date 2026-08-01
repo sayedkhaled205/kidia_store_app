@@ -481,10 +481,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         elevation: elevation,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(
-            color: borderColor,
-            width: borderWidth,
-          ),
+          side: borderWidth <= 0
+              ? BorderSide.none
+              : BorderSide(color: borderColor, width: borderWidth),
         ),
         child: SafeArea(
           bottom: false,

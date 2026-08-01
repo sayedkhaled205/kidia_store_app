@@ -1363,6 +1363,14 @@ class _BannerGridTile extends StatelessWidget {
       block.textColor,
       fallback: Colors.white,
     );
+    final Color buttonColor = _parseHexColor(
+      block.buttonColor,
+      fallback: Colors.white,
+    );
+    final Color buttonTextColor = _parseHexColor(
+      block.buttonTextColor,
+      fallback: Colors.black,
+    );
     return ClipRRect(
       borderRadius: BorderRadius.circular(block.borderRadius),
       child: Material(
@@ -1425,7 +1433,7 @@ class _BannerGridTile extends StatelessWidget {
                             const SizedBox(height: 8),
                             DecoratedBox(
                               decoration: BoxDecoration(
-                                color: textColor,
+                                color: buttonColor,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Padding(
@@ -1436,7 +1444,7 @@ class _BannerGridTile extends StatelessWidget {
                                 child: Text(
                                   item.buttonLabel!,
                                   style: TextStyle(
-                                    color: Colors.black.withValues(alpha: 0.82),
+                                    color: buttonTextColor,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -1633,6 +1641,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     showBadge: block.showBadge,
                     showRating: block.showRating,
                     quickAddEnabled: block.quickAddEnabled,
+                    contentBottomPadding: block.contentBottomPadding,
                     imageSwipeEnabled: block.imageSwipeEnabled,
                     quickAddAppearance: block.quickAddAppearance,
                     wishlistAppearance: block.wishlistAppearance,
@@ -1724,6 +1733,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       showBadge: block.showBadge,
                       showRating: block.showRating,
                       quickAddEnabled: block.quickAddEnabled,
+                      contentBottomPadding: block.contentBottomPadding,
                       imageSwipeEnabled: block.imageSwipeEnabled,
                       quickAddAppearance: block.quickAddAppearance,
                       wishlistAppearance: block.wishlistAppearance,
@@ -3068,6 +3078,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     this.showBadge = true,
     this.showRating = false,
     this.quickAddEnabled = true,
+    this.contentBottomPadding = 12,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance,
     this.wishlistAppearance = const ProductWishlistAppearance(),
@@ -3085,6 +3096,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final bool showBadge;
   final bool showRating;
   final bool quickAddEnabled;
+  final double contentBottomPadding;
   final bool imageSwipeEnabled;
   final ProductQuickAddAppearance? quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
@@ -3118,6 +3130,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
       reviewCount: product.reviewCount,
       quickAddProductId: quickAddEnabled ? product.id : null,
       quickAddAppearance: quickAddAppearance,
+      contentBottomPadding: contentBottomPadding,
       wishlistProductId: product.id,
       wishlistAppearance: wishlistAppearance,
       onTap: action == null

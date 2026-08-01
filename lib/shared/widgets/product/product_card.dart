@@ -38,6 +38,7 @@ class ProductCard extends StatelessWidget {
     this.reviewCount = 0,
     this.quickAddProductId,
     this.quickAddAppearance,
+	this.contentBottomPadding,
 	this.wishlistProductId,
 	this.wishlistAppearance = const ProductWishlistAppearance(),
   });
@@ -73,6 +74,7 @@ class ProductCard extends StatelessWidget {
   final int reviewCount;
   final int? quickAddProductId;
   final ProductQuickAddAppearance? quickAddAppearance;
+  final double? contentBottomPadding;
   final int? wishlistProductId;
   final ProductWishlistAppearance wishlistAppearance;
 
@@ -129,6 +131,7 @@ class ProductCard extends StatelessWidget {
                 showRating: showRating,
                 rating: rating,
                 reviewCount: reviewCount,
+                contentBottomPadding: contentBottomPadding,
               ),
             ],
           ),
@@ -355,6 +358,7 @@ class _ProductInformation extends StatelessWidget {
     required this.showRating,
     required this.rating,
     required this.reviewCount,
+    required this.contentBottomPadding,
   });
 
   final String name;
@@ -369,6 +373,7 @@ class _ProductInformation extends StatelessWidget {
   final bool showRating;
   final double rating;
   final int reviewCount;
+  final double? contentBottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +389,7 @@ class _ProductInformation extends StatelessWidget {
         compact ? 10 : 12,
         compact ? 8 : 10,
         compact ? 10 : 12,
-        compact ? 10 : 12,
+        contentBottomPadding ?? (compact ? 10 : 12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
