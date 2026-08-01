@@ -13,6 +13,16 @@ $GLOBALS['kidia_ai_user_meta']  = array();
 $GLOBALS['kidia_ai_uuid']       = 0;
 $GLOBALS['kidia_ai_cache_limit'] = 2048;
 
+$wpdb = new class() {
+	public string $prefix = 'wp_';
+	public string $posts = 'wp_posts';
+	public string $wc_product_meta_lookup = 'wp_wc_product_meta_lookup';
+	public function get_col( string $query ): array {
+		$GLOBALS['kidia_ai_product_query'] = $query;
+		return range( 1, 600 );
+	}
+};
+
 function __( string $value, string $domain = '' ): string { unset( $domain ); return $value; }
 function absint( $value ): int { return abs( (int) $value ); }
 function sanitize_text_field( $value ): string { return trim( strip_tags( (string) $value ) ); }
@@ -87,9 +97,10 @@ final class Kidia_Mobile_Analytics {
 			'activity_hours' => array(),
 		);
 	}
-	public static function store_commerce_snapshot( int $from, int $to, string $source, array $snapshot ): void {
+	public static function store_commerce_snapshot( int $from, int $to, string $source, array $snapshot ): bool {
 		unset( $from, $to, $source );
 		$GLOBALS['kidia_ai_saved_snapshot'] = $snapshot;
+		return true;
 	}
 }
 
@@ -108,6 +119,7 @@ class WC_Product {}
 final class Kidia_Runtime_Order_Item {
 	public function __construct( private int $product_id, private string $name ) {}
 	public function get_product_id(): int { return $this->product_id; }
+	public function get_variation_id(): int { return 0; }
 	public function get_quantity(): int { return 1; }
 	public function get_total(): float { return 10.0; }
 	public function get_name(): string { return $this->name; }
@@ -126,7 +138,7 @@ class WC_Order {
 }
 
 function wc_get_is_paid_statuses(): array { return array( 'processing', 'completed' ); }
-function wc_get_products( array $args ): array { unset( $args ); return range( 1, 600 ); }
+function wc_get_order( int $order_id ): WC_Order { return new WC_Order( $order_id ); }
 function wc_get_orders( array $args ) {
 	$GLOBALS['kidia_ai_order_queries'][] = $args;
 	if ( 1 === (int) ( $args['limit'] ?? 0 ) && 'ids' === ( $args['return'] ?? '' ) ) {
@@ -139,7 +151,7 @@ function wc_get_orders( array $args ) {
 	$first = ( $page - 1 ) * 2 + 1;
 	return (object) array(
 		'total'  => 4,
-		'orders' => array( new WC_Order( $first ), new WC_Order( $first + 1 ) ),
+		'orders' => array( $first, $first + 1 ),
 	);
 }
 
@@ -170,6 +182,11 @@ kidia_ai_runtime_assert(
 	array( 'processing', 'completed', 'ready-for-shipping', 'delivered' )
 		=== ( $GLOBALS['kidia_ai_order_queries'][0]['status'] ?? array() ),
 	'The count query must include paid orders moved into registered custom workflow statuses.'
+);
+kidia_ai_runtime_assert(
+	false !== strpos( $GLOBALS['kidia_ai_product_query'], "product_variation" )
+		&& false !== strpos( $GLOBALS['kidia_ai_product_query'], "wc_product_meta_lookup" ),
+	'The inventory population must come from WooCommerce stock lookup rows and include variation SKUs.'
 );
 kidia_ai_runtime_assert(
 	false !== strpos( (string) $started['result_url'], 'date_preset=all_time' )

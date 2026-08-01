@@ -36,7 +36,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	public static function start( int $from, int $to, string $source, int $user_id, string $date_preset = 'custom' ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$date_preset = self::sanitize_date_preset( $date_preset );
-		if ( ! function_exists( 'wc_get_orders' ) || ! function_exists( 'wc_get_products' ) ) {
+		if ( ! function_exists( 'wc_get_orders' ) ) {
 			return array( 'error' => __( 'WooCommerce is required to analyse store data.', 'kidia-mobile-cms' ) );
 		}
 		$existing_job_id = self::active_job_id( $user_id );
@@ -65,23 +65,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$order_total = is_object( $count_query ) && isset( $count_query->total )
 			? absint( $count_query->total )
 			: count( (array) $count_query );
-		$product_ids = array_values(
-			array_filter(
-				array_map(
-					'absint',
-					(array) wc_get_products(
-						array(
-							'status'       => 'publish',
-							'stock_status' => 'instock',
-							'limit'        => -1,
-							'return'       => 'ids',
-							'orderby'      => 'ID',
-							'order'        => 'ASC',
-						)
-					)
-				)
-			)
-		);
+		$product_ids = self::in_stock_product_ids();
 		$job_id = wp_generate_uuid4();
 		$job    = array(
 			'id'                => $job_id,
@@ -130,7 +114,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			self::write_job( $job, HOUR_IN_SECONDS );
 			return self::payload( $job, true );
 		}
-		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
+		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'failed' ), true ) ) {
 			return self::payload( $job, true );
 		}
 
@@ -158,7 +142,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
 		}
-		if ( 'complete' === (string) ( $job['phase'] ?? '' ) ) {
+		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'failed' ), true ) ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
 		}
@@ -199,7 +183,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
-		$done = in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true );
+		$done = in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true );
 		if ( $advance && ! $done ) {
 			return self::step( $job_id, $user_id );
 		}
@@ -212,7 +196,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
-		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true ) ) {
+		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true ) ) {
 			return self::payload( $job, true );
 		}
 
@@ -234,7 +218,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
 		}
 		$job = $latest;
-		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled' ), true ) ) {
+		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true ) ) {
 			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
 		}
@@ -321,7 +305,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 					'limit'    => self::ORDER_BATCH,
 					'page'     => max( 1, absint( $job['order_page'] ) ),
 					'paginate' => true,
-					'return'   => 'objects',
+					'return'   => 'ids',
 				)
 			)
 		);
@@ -330,7 +314,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			: ( is_array( $result ) ? $result : array() );
 		$available      = array_fill_keys( array_map( 'absint', (array) $job['product_ids'] ), true );
 		$processed_rows = 0;
-		foreach ( $batch as $order ) {
+		foreach ( $batch as $order_id ) {
+			$order = function_exists( 'wc_get_order' ) ? wc_get_order( absint( $order_id ) ) : null;
 			if ( ! $order instanceof WC_Order ) {
 				continue;
 			}
@@ -343,7 +328,10 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			self::bitmap_add( $job['customer_bitmap'], $customer_key );
 			$order_product_ids = array();
 			foreach ( $order->get_items() as $item ) {
-				$product_id = absint( $item->get_product_id() );
+				$product_id = absint( $item->get_variation_id() );
+				if ( $product_id <= 0 ) {
+					$product_id = absint( $item->get_product_id() );
+				}
 				if ( $product_id <= 0 || ! isset( $available[ $product_id ] ) ) {
 					continue;
 				}
@@ -388,12 +376,36 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			absint( $job['orders_processed'] ) + $processed_rows
 		);
 		++$job['order_page'];
-		if (
-			empty( $batch )
-			|| absint( $job['orders_processed'] ) >= absint( $job['order_total'] )
-		) {
+		if ( absint( $job['orders_processed'] ) >= absint( $job['order_total'] ) ) {
 			$job['phase'] = 'products';
+		} elseif ( empty( $batch ) ) {
+			$job['phase'] = 'failed';
+			$job['error'] = __( 'WooCommerce ended order pagination before every paid order was returned. No incomplete result was published.', 'kidia-mobile-cms' );
 		}
+	}
+
+	/**
+	 * Returns the same in-stock product and variation population used by
+	 * WooCommerce inventory screens. Product variations are independent SKUs
+	 * and must not disappear behind their variable parent.
+	 *
+	 * @return int[]
+	 */
+	private static function in_stock_product_ids(): array {
+		global $wpdb;
+		$lookup_table = isset( $wpdb->wc_product_meta_lookup )
+			? (string) $wpdb->wc_product_meta_lookup
+			: $wpdb->prefix . 'wc_product_meta_lookup';
+		$ids = $wpdb->get_col(
+			"SELECT lookup.product_id
+			FROM {$lookup_table} AS lookup
+			INNER JOIN {$wpdb->posts} AS posts ON posts.ID = lookup.product_id
+			WHERE lookup.stock_status = 'instock'
+			AND posts.post_type IN ('product', 'product_variation')
+			AND posts.post_status = 'publish'
+			ORDER BY lookup.product_id ASC"
+		);
+		return array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
 	}
 
 	/** Reads the next in-stock catalog batch and records live product evidence. */
@@ -483,12 +495,17 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$snapshot['orders_scanned']   = absint( $job['orders_processed'] );
 		$snapshot['orders_available'] = absint( $job['order_total'] );
 		$snapshot['truncated']        = $snapshot['orders_scanned'] < $snapshot['orders_available'];
-		Kidia_Mobile_Analytics::store_commerce_snapshot(
+		$stored = Kidia_Mobile_Analytics::store_commerce_snapshot(
 			absint( $job['from'] ),
 			absint( $job['to'] ),
 			(string) $job['source'],
 			$snapshot
 		);
+		if ( ! $stored ) {
+			$job['phase'] = 'failed';
+			$job['error'] = __( 'The complete analysis was too large to save safely. No incomplete result was published.', 'kidia-mobile-cms' );
+			return;
+		}
 		Kidia_Mobile_AI_Offer_Engine::clear_cache( absint( $job['from'] ), absint( $job['to'] ), (string) $job['source'] );
 		Kidia_Mobile_AI_Offer_Engine::recommendations( absint( $job['from'] ), absint( $job['to'] ), (string) $job['source'] );
 		$job['snapshot'] = $snapshot;
@@ -508,8 +525,9 @@ final class Kidia_Mobile_AI_Analysis_Job {
 				 */
 				'status'       => Kidia_Mobile_Analytics::revenue_order_statuses(),
 				'date_created' => $from . '...' . $to,
-				'orderby'      => 'date',
-				'order'        => 'DESC',
+				/* A unique order prevents equal timestamps moving across pages. */
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
 			),
 			$override
 		);
@@ -546,6 +564,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$stage = __( 'Ranking data-backed offers and decisions', 'kidia-mobile-cms' );
 		} elseif ( 'cancelled' === $phase ) {
 			$stage = __( 'Analysis cancelled. No partial result was published.', 'kidia-mobile-cms' );
+		} elseif ( 'failed' === $phase ) {
+			$stage = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'kidia-mobile-cms' ) ) );
 		}
 		$date_preset = self::sanitize_date_preset(
 			(string) ( $job['date_preset'] ?? ( absint( $job['from'] ?? 0 ) <= 1 ? 'all_time' : 'custom' ) )
@@ -562,7 +582,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$result_args['date_from'] = wp_date( 'Y-m-d', absint( $job['from'] ?? 0 ) );
 			$result_args['date_to']   = wp_date( 'Y-m-d', absint( $job['to'] ?? 0 ) );
 		}
-		return array(
+		$payload = array(
 			'job_id'             => (string) $job['id'],
 			'done'               => $done,
 			'cancelled'          => $cancelled,
@@ -580,6 +600,10 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'products_total'     => $product_total,
 			'result_url'         => add_query_arg( $result_args, admin_url( 'admin.php' ) ),
 		);
+		if ( 'failed' === $phase ) {
+			$payload['error'] = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'kidia-mobile-cms' ) ) );
+		}
+		return $payload;
 	}
 
 	/** Keeps result URLs on the same analytics snapshot key used by the job. */
