@@ -1458,6 +1458,16 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-playbook-groups section>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .kidia-ai-playbook-groups button{width:100%;min-height:36px;padding:6px 9px;border:1px solid transparent;border-radius:8px;background:#edf7f4;color:#315f55;font-size:11px;font-weight:750;text-align:start;cursor:pointer}
 .kidia-ai-playbook-groups button:hover,.kidia-ai-playbook-groups button.is-active{border-color:#2f806e;background:#2f806e;color:#fff}
+.kidia-ai-idea-group{margin:10px 0;border:1px solid #dce9e5;border-radius:12px;background:#fff;overflow:hidden}
+.kidia-ai-idea-group>summary{display:flex;min-height:62px;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer;list-style:none}
+.kidia-ai-idea-group>summary::-webkit-details-marker{display:none}
+.kidia-ai-idea-group>summary h4{margin:0 0 3px;color:#174e42}
+.kidia-ai-idea-group>summary p{margin:0;color:#687873;font-size:11px}
+.kidia-ai-idea-group>summary>span{display:flex;align-items:center;gap:8px;color:#236b59;white-space:nowrap}
+.kidia-ai-idea-group>summary .dashicons{transition:transform .18s ease}
+.kidia-ai-idea-group[open]>summary{border-bottom:1px solid #dce9e5;background:#f3faf8}
+.kidia-ai-idea-group[open]>summary .dashicons{transform:rotate(180deg)}
+.kidia-ai-idea-group>.kidia-ai-recommendations{padding:12px}
 .kidia-ai-action-builder{margin-top:auto;border:1px solid #c8dfd9;border-radius:12px;background:#fff}
 .kidia-ai-action-builder>summary{width:100%;min-height:42px;border:0!important;border-radius:11px!important;cursor:pointer;list-style:none}
 .kidia-ai-action-builder>summary::-webkit-details-marker{display:none}

@@ -20,6 +20,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	private const BACKGROUND_HOOK = 'kidia_mobile_run_ai_analysis_job';
 
 	private const ORDER_BATCH = 200;
+	private const ORDER_EMPTY_RETRY_LIMIT = 3;
 
 	private const PRODUCT_BATCH = 120;
 
@@ -92,6 +93,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'source'            => $source,
 			'phase'             => $order_total > 0 ? 'orders' : 'products',
 			'order_page'        => 1,
+			'order_empty_retries'=> 0,
 			'orders_processed'  => 0,
 			'order_total'       => $order_total,
 			'product_ids'       => $product_ids,
@@ -166,6 +168,16 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$phase = (string) ( $job['phase'] ?? '' );
 		if ( 'orders' === $phase ) {
 			self::process_order_batch( $job );
+			if ( 'failed' === (string) ( $job['phase'] ?? '' ) ) {
+				$job['updated_at'] = time();
+				$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
+				self::write_job( $job, 2 * HOUR_IN_SECONDS );
+				self::release_step_lock( $job_id, $lock_token );
+				return array(
+					'error'  => (string) $job['error_message'],
+					'job_id' => (string) $job['id'],
+				);
+			}
 		} elseif ( 'products' === $phase ) {
 			self::process_product_batch( $job );
 		} elseif ( 'finalize' === $phase ) {
@@ -388,11 +400,19 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			absint( $job['orders_processed'] ) + $processed_rows
 		);
 		++$job['order_page'];
-		if (
-			empty( $batch )
-			|| absint( $job['orders_processed'] ) >= absint( $job['order_total'] )
-		) {
+		if ( absint( $job['orders_processed'] ) >= absint( $job['order_total'] ) ) {
 			$job['phase'] = 'products';
+			$job['order_empty_retries'] = 0;
+		} elseif ( empty( $batch ) ) {
+			/* Never publish a partial snapshot when a page query fails. */
+			--$job['order_page'];
+			$job['order_empty_retries'] = absint( $job['order_empty_retries'] ?? 0 ) + 1;
+			if ( $job['order_empty_retries'] >= self::ORDER_EMPTY_RETRY_LIMIT ) {
+				$job['phase'] = 'failed';
+				$job['error_message'] = __( 'A paid-order batch could not be read after repeated attempts. Saved progress was kept and no partial result was published.', 'kidia-mobile-cms' );
+			}
+		} else {
+			$job['order_empty_retries'] = 0;
 		}
 	}
 

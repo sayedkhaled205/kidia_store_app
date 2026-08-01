@@ -10,6 +10,21 @@ const shellScript = fs.readFileSync(
   path.join(pluginRoot, "admin", "assets", "cms-shell.js"),
   "utf8",
 );
+const analysisJob = fs.readFileSync(
+  path.join(pluginRoot, "includes", "class-kidia-mobile-ai-analysis-job.php"),
+  "utf8",
+);
+
+assert.match(
+  analysisJob,
+  /ORDER_EMPTY_RETRY_LIMIT[\s\S]*elseif \( empty\( \$batch \) \)[\s\S]*--\$job\['order_page'\][\s\S]*\$job\['phase'\] = 'failed'/,
+  "An empty order page before the measured total must retry the same page and fail safely instead of publishing a partial snapshot.",
+);
+assert.match(
+  analysisJob,
+  /if \( absint\( \$job\['orders_processed'\] \) >= absint\( \$job\['order_total'\] \) \) \{[\s\S]*\$job\['phase'\] = 'products'/,
+  "Product analysis may start only after every measured paid order was processed.",
+);
 
 const dom = new JSDOM(
   `<!doctype html><body>

@@ -406,11 +406,11 @@ $action_result = static function ( array $row ): array {
 									continue;
 								}
 								?>
-								<section class="kidia-ai-idea-group is-<?php echo esc_attr( $category_key ); ?>" data-ai-idea-group="<?php echo esc_attr( $category_key ); ?>">
-									<header>
+								<details class="kidia-ai-idea-group is-<?php echo esc_attr( $category_key ); ?>" data-ai-idea-group="<?php echo esc_attr( $category_key ); ?>">
+									<summary>
 										<div><h4><?php echo esc_html( (string) $category_meta['label'] ); ?></h4><p><?php echo esc_html( (string) $category_meta['description'] ); ?></p></div>
-										<b><?php echo esc_html( sprintf( _n( '%d idea', '%d ideas', count( $category_recommendations ), 'kidia-mobile-cms' ), count( $category_recommendations ) ) ); ?></b>
-									</header>
+										<span><b><?php echo esc_html( sprintf( _n( '%d idea', '%d ideas', count( $category_recommendations ), 'kidia-mobile-cms' ), count( $category_recommendations ) ) ); ?></b><i class="dashicons dashicons-arrow-down-alt2"></i></span>
+									</summary>
 									<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
 					<?php foreach ( $category_recommendations as $recommendation ) :
 						$kind = sanitize_key( (string) ( $recommendation['kind'] ?? 'campaign' ) );
@@ -478,7 +478,7 @@ $action_result = static function ( array $row ): array {
 						</article>
 					<?php endforeach; ?>
 									</div>
-								</section>
+								</details>
 							<?php endforeach; ?>
 							<div class="kidia-ai-playbook-empty" data-ai-playbook-empty hidden>
 								<strong><?php esc_html_e( 'No matching idea in this product group', 'kidia-mobile-cms' ); ?></strong>

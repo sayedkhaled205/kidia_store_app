@@ -79,25 +79,27 @@ const pageMarkup = (id) => `
       <button class="is-active" data-ai-segment-tab="fast"><span>Fast-moving products</span></button>
       <button data-ai-segment-tab="medium"><span>Medium-moving products</span></button>
     </nav>
-    <button data-ai-playbook-kind="campaign" data-ai-playbook-schemes="fast_offer">Quantity break</button>
-    <button data-ai-playbook-kind="merchandising" data-ai-playbook-schemes="fast_rotation">Best sellers</button>
+    <details class="kidia-ai-playbooks" open><summary>Supported playbooks</summary>
+      <button data-ai-playbook-kind="campaign" data-ai-playbook-schemes="fast_offer">Quantity break</button>
+      <button data-ai-playbook-kind="merchandising" data-ai-playbook-schemes="fast_rotation">Best sellers</button>
+    </details>
     <p data-ai-filter-status></p>
     <button class="is-active" data-ai-workspace-tab="decisions">Decisions</button>
     <button data-ai-workspace-tab="results">Results</button>
     <div data-ai-workspace-panel="decisions">
       <section data-ai-segment-panel="fast">
-        <section data-ai-idea-group="offers">
+        <details data-ai-idea-group="offers">
           <article data-ai-decision-kind="campaign" data-ai-decision-scheme="fast_offer"></article>
-        </section>
-        <section data-ai-idea-group="merchandising">
+        </details>
+        <details data-ai-idea-group="merchandising">
           <article data-ai-decision-kind="merchandising" data-ai-decision-scheme="fast_rotation"></article>
-        </section>
+        </details>
         <div data-ai-playbook-empty hidden></div>
       </section>
       <section data-ai-segment-panel="medium" hidden>
-        <section data-ai-idea-group="offers">
+        <details data-ai-idea-group="offers">
           <article data-ai-decision-kind="campaign" data-ai-decision-scheme="medium_rotation"></article>
-        </section>
+        </details>
         <div data-ai-playbook-empty hidden></div>
       </section>
     </div>
@@ -145,6 +147,20 @@ assert.equal(
   "true",
   "A clicked playbook must expose a real active state.",
 );
+assert.equal(
+  initial.querySelector(".kidia-ai-playbooks").open,
+  false,
+  "Choosing a playbook must close its dropdown so the filtered data is visible.",
+);
+
+const offerGroup = fastPanel.querySelector('[data-ai-idea-group="offers"]');
+const merchandisingGroup = fastPanel.querySelector('[data-ai-idea-group="merchandising"]');
+offerGroup.open = true;
+offerGroup.dispatchEvent(new dom.window.Event("toggle", { bubbles: true }));
+merchandisingGroup.open = true;
+merchandisingGroup.dispatchEvent(new dom.window.Event("toggle", { bubbles: true }));
+assert.equal(offerGroup.open, false, "Opening one recommendation section must close the previous section.");
+assert.equal(merchandisingGroup.open, true, "The chosen recommendation section must remain open.");
 assert.equal(
   fastPanel.querySelector('[data-ai-decision-scheme="fast_offer"]').hidden,
   false,
