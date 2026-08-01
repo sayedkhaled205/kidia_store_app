@@ -92,18 +92,18 @@
 .kidia-theme-modal__pages button{display:flex;min-height:44px;align-items:center;gap:8px;padding:8px 12px;border:1px solid #d7e5e1;border-radius:11px;background:#fff;color:#52635e;cursor:pointer;font-weight:750;text-align:start}
 .kidia-theme-modal__pages button:hover,
 .kidia-theme-modal__pages button.is-active{border-color:#2f806e;background:#e9f5f1;color:#1f6f61;box-shadow:0 5px 14px rgba(47,128,110,.1)}
-.kidia-theme-modal__stage{position:relative;display:grid;min-height:610px;place-items:center;border-radius:22px;background:linear-gradient(145deg,var(--theme-soft),var(--theme-surface))}
-.kidia-theme-modal__device{position:relative;width:276px;height:592px;overflow:hidden;border:8px solid var(--theme-ink);border-radius:38px;background:#fff;box-shadow:0 20px 45px rgba(23,78,66,.22)}
-.kidia-theme-modal__device:before{position:absolute;z-index:3;top:0;left:50%;width:84px;height:18px;border-radius:0 0 13px 13px;background:var(--theme-ink);content:"";transform:translateX(-50%);pointer-events:none}
-.kidia-theme-modal__device iframe{display:block;width:360px;height:800px;border:0;background:#fff;zoom:.7667}
+.kidia-theme-modal__stage{position:relative;display:grid;min-height:724px;place-items:center;border-radius:22px;background:linear-gradient(145deg,var(--theme-soft),var(--theme-surface))}
+.kidia-theme-modal__device{position:relative;width:322px;height:auto;padding:5px;overflow:visible;border:3px solid #2f806e;border-radius:29px;background:#2f806e;box-shadow:none;box-sizing:border-box}
+.kidia-theme-modal__device:before{display:none;content:none}
+.kidia-theme-modal__device iframe{position:relative;display:block;width:360px;height:800px;border:0;border-radius:21px;background:#fff;zoom:.85}
 .kidia-theme-modal__loading{position:absolute;z-index:5;inset:14px;display:grid;place-content:center;justify-items:center;gap:12px;border-radius:18px;background:rgba(247,251,250,.9);color:#376258;text-align:center;backdrop-filter:blur(3px)}
 .kidia-theme-modal__loading[hidden]{display:none!important}
 .kidia-theme-modal__loading .spinner{float:none;margin:0}
 .kidia-theme-modal__loading.is-error{color:#a33c34}
 .kidia-theme-modal__loading.is-error .spinner{display:none}
 @media(max-width:1280px){.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:1000px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__workspace{grid-template-columns:1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-theme-modal__stage{min-height:610px}}
-@media(max-width:782px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid,.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{width:calc(100vw - 20px);padding:20px 12px}.kidia-theme-modal__device{width:247px;height:533px}.kidia-theme-modal__device iframe{zoom:.686}}
+@media(max-width:1000px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__workspace{grid-template-columns:1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(3,minmax(0,1fr))}.kidia-theme-modal__stage{min-height:724px}}
+@media(max-width:782px){.kidia-setup-step[data-step-kind=identity] .kidia-setup-identity-grid,.kidia-setup-step[data-step-kind=theme] .kidia-theme-gallery{grid-template-columns:1fr}.kidia-setup-step[data-step-kind=theme] .kidia-theme-card{grid-template-columns:135px 1fr}.kidia-theme-modal__pages{grid-template-columns:repeat(2,minmax(0,1fr))}.kidia-theme-modal__dialog{width:calc(100vw - 20px);padding:20px 12px}.kidia-theme-modal__device{width:278px}.kidia-theme-modal__device iframe{zoom:.728}.kidia-theme-modal__stage{min-height:615px}}
 
 /* Saved Themes uses the exact clean Page Builder phone frame. */
 .kidia-saved-theme-dialog__stage{min-height:724px}
