@@ -1,16 +1,17 @@
 (function () {
 	"use strict";
 
-	document.addEventListener("DOMContentLoaded", function () {
+	function bootSplashBuilder() {
 		var form = document.querySelector(".kidia-splash-builder form");
 		var preview = document.getElementById("kidia-splash-preview");
 		var overlay = preview ? preview.querySelector("[data-splash-overlay]") : null;
 		var replay = document.querySelector("[data-splash-replay]");
 		var finishTimer;
 
-		if (!form || !preview || !overlay) {
+		if (!form || !preview || !overlay || form.dataset.kidiaSplashBooted === "1") {
 			return;
 		}
+		form.dataset.kidiaSplashBooted = "1";
 
 		function field(name) {
 			return form.querySelector('[name="splash[' + name + ']"]:not([type="hidden"])');
@@ -91,5 +92,11 @@
 		}
 
 		play();
-	});
+	}
+
+	document.addEventListener("DOMContentLoaded", bootSplashBuilder);
+	document.addEventListener("kidia:cms-page-ready", bootSplashBuilder);
+	if (document.readyState !== "loading") {
+		bootSplashBuilder();
+	}
 }());

@@ -128,42 +128,57 @@
 			}
 			window.location.href = url;
 		};
-		const loadAssets = async function (payload) {
+		const waitForAsset = function (node, parent) {
+			return new Promise(function (resolve) {
+				let timer = 0;
+				let settled = false;
+				const finish = function () {
+					if (settled) return;
+					settled = true;
+					if (timer) window.clearTimeout(timer);
+					resolve();
+				};
+				node.addEventListener('load', finish, { once: true });
+				node.addEventListener('error', finish, { once: true });
+				parent.appendChild(node);
+				/* A blocked optional asset must never leave navigation waiting forever. */
+				timer = window.setTimeout(finish, 8000);
+			});
+		};
+		const assetsCompatible = function (payload) {
+			return (payload.styles || []).every(function (asset) {
+				return !findLoadedAsset(asset, 'css').conflict;
+			}) && (payload.scripts || []).every(function (asset) {
+				return !findLoadedAsset(asset, 'js').conflict;
+			});
+		};
+		const loadStyles = async function (payload) {
+			const pending = [];
 			for (const asset of (payload.styles || [])) {
 				const loaded = findLoadedAsset(asset, 'css');
-				if (loaded.conflict) return false;
 				if (loaded.exact) continue;
 				const link = document.createElement('link');
 				link.id = asset.handle + '-css';
 				link.rel = 'stylesheet';
 				link.href = asset.src;
-				await new Promise(function (resolve) {
-					link.addEventListener('load', resolve, { once: true });
-					link.addEventListener('error', resolve, { once: true });
-					document.head.appendChild(link);
-				});
+				pending.push(waitForAsset(link, document.head));
 			}
+			await Promise.all(pending);
+		};
+		const loadScripts = async function (payload) {
 			let loadedNewScript = false;
 			for (const asset of (payload.scripts || [])) {
 				const loaded = findLoadedAsset(asset, 'js');
-				if (loaded.conflict) return false;
 				if (loaded.exact) continue;
 				(asset.before || []).forEach(appendInline);
 				const script = document.createElement('script');
 				script.id = asset.handle + '-js';
 				script.src = asset.src;
-				await new Promise(function (resolve) {
-					script.addEventListener('load', resolve, { once: true });
-					script.addEventListener('error', resolve, { once: true });
-					document.body.appendChild(script);
-				});
+				await waitForAsset(script, document.body);
 				(asset.after || []).forEach(appendInline);
 				loadedNewScript = true;
 			}
-			if (loadedNewScript) {
-				document.dispatchEvent(new Event('DOMContentLoaded'));
-			}
-			return true;
+			return loadedNewScript;
 		};
 		const updateNavigation = function (payload) {
 			const sidebar = document.querySelector('[data-kidia-cms-sidebar]');
@@ -221,12 +236,17 @@
 					const template = document.createElement('template');
 					template.innerHTML = payload.html;
 					payload.nodes = Array.from(template.content.childNodes);
-					if (!await loadAssets(payload)) {
+					if (!assetsCompatible(payload)) {
 						hardNavigate(cacheKey);
 						return;
 					}
-					viewCache.set(cacheKey, payload);
 				}
+				if (!assetsCompatible(payload)) {
+					hardNavigate(cacheKey);
+					return;
+				}
+				const stylesReady = loadStyles(payload);
+				if (!viewCache.has(cacheKey)) viewCache.set(cacheKey, payload);
 				syncBuilderScreen(payload.builderScreen);
 				updateNavigation(payload);
 				document.dispatchEvent(new CustomEvent('kidia:cms-before-page-change', {
@@ -238,6 +258,15 @@
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
 				resetWorkspaceScroll();
 				if (pushState) history.pushState({ kidiaCmsPage: true }, '', cacheKey);
+				/* Display the requested view before Media and Builder JavaScript finish.
+				 * Page scripts now execute against markup that already exists instead of
+				 * holding the old page on screen until every asset has downloaded. */
+				const assetResults = await Promise.all([loadScripts(payload), stylesReady]);
+				const loadedNewScript = assetResults[0];
+				if (controller.signal.aborted) return;
+				if (loadedNewScript) {
+					document.dispatchEvent(new Event('DOMContentLoaded'));
+				}
 				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
 			} catch (error) {
 				if (error.name === 'AbortError') return;

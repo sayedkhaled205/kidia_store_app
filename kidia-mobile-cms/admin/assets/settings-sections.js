@@ -365,8 +365,11 @@
 		});
 	}
 
-	document.addEventListener("DOMContentLoaded", function () {
+	var globalListenersInstalled = false;
+	function bootSettingsSections() {
 		sectionAll(document);
+		if (globalListenersInstalled) { return; }
+		globalListenersInstalled = true;
 		document.addEventListener("click", function (event) {
 			var button = event.target.closest && event.target.closest("[data-apply-product-settings]");
 			if (!button) { return; }
@@ -377,5 +380,11 @@
 		if (window.MutationObserver) {
 			new MutationObserver(function (records) { records.forEach(function (record) { record.addedNodes.forEach(function (node) { if (node.nodeType === 1) { sectionAll(node); } }); }); }).observe(document.body, { childList: true, subtree: true });
 		}
-	});
+	}
+
+	document.addEventListener("DOMContentLoaded", bootSettingsSections);
+	document.addEventListener("kidia:cms-page-ready", bootSettingsSections);
+	if (document.readyState !== "loading") {
+		bootSettingsSections();
+	}
 }());
