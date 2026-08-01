@@ -155,7 +155,7 @@ function wc_get_orders( array $args ) {
 		return array();
 	}
 	$first = ( $page - 1 ) * 2 + 1;
-	return array( new WC_Order( $first ), new WC_Order( $first + 1 ) );
+	return array( new WC_Order( $first ), (object) array( 'legacy_row' => true ), new WC_Order( $first + 1 ) );
 }
 
 function kidia_ai_runtime_assert( bool $condition, string $message ): void {
@@ -240,6 +240,10 @@ delete_option( $lock_key );
 $second = Kidia_Mobile_AI_Analysis_Job::status( $job_id, 7, true );
 kidia_ai_runtime_assert( 4 === $second['orders_processed'], 'The second batch must continue after the first one.' );
 kidia_ai_runtime_assert( 0 === $GLOBALS['kidia_ai_order_reloads'], 'Paginated order objects must be analysed directly without a second wc_get_order lookup.' );
+kidia_ai_runtime_assert(
+	2 === ( $GLOBALS['kidia_ai_options'][ $job_key ]['invalid_order_rows'] ?? 0 ),
+	'Unreadable legacy CPT/HPOS rows must be measured and skipped without inflating or stopping the canonical order scan.'
+);
 kidia_ai_runtime_assert( $second['processed'] > $first['processed'] && 2 === $second['revision'], 'Saved progress and revision must never move backwards.' );
 
 $completed = $second;
