@@ -324,8 +324,8 @@ assert.match(shellCss, /body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(1
 assert.match(shellCss, /@media\(min-width:783px\)\{[\s\S]*body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(100vh - 32px\)!important;[^}]*direction:ltr;/, "The desktop plugin scrollbar must fit below the WordPress toolbar.");
 assert.match(shellCss, /html\[dir="ltr"\][^}]*#wpbody\{[^}]*direction:rtl;/, "LTR WordPress must place the plugin scrollbar beside its left admin menu.");
 assert.match(shellCss, /html\[dir="rtl"\][^}]*#wpbody-content,[^}]*\.rtl body[^}]*#wpbody-content\{[^}]*direction:rtl;/, "Moving the plugin scrollbar to the physical right must not change RTL content direction.");
-assert.doesNotMatch(shellCss, /#adminmenuwrap\{[^}]*overflow-y:(?:auto|scroll)!important;/, "The black WordPress menu must not own the inner plugin scrollbar.");
-assert.doesNotMatch(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position:fixed!important;/, "Locking the document must not require replacing WordPress menu positioning.");
+assert.match(shellCss, /@media\(min-width:783px\)\{[\s\S]*body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*position:fixed!important;[^}]*inset-block-start:32px!important;[^}]*inset-block-end:0!important;[^}]*inset-inline-start:0!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;/, "The black WordPress menu must keep its own contained desktop scrollbar.");
+assert.match(shellCss, /#adminmenuwrap::-webkit-scrollbar\{[^}]*width:8px;/, "The isolated WordPress menu scrollbar must stay compact and must not consume plugin workspace width.");
 assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen\{[^}]*overflow:hidden!important;/, "Builder pages must keep the outer WordPress document locked.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpwrap\{[^}]*overflow:hidden!important;/, "The Builder wrapper must stay inside the locked WordPress viewport.");
