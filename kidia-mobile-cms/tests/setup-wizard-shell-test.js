@@ -38,11 +38,17 @@ const previewMain = read("..", "lib", "cms_preview_main.dart");
 const previewCatalog = read("..", "lib", "features", "catalog", "data", "repositories", "cms_preview_catalog_repository.dart");
 const previewBridge = read("..", "lib", "features", "page_builder", "presentation", "providers", "cms_preview_layout_bridge_web.dart");
 
-const builtInThemes = ["fashion", "beauty", "electronics", "home_living", "kids_baby", "sports_fitness", "grocery", "luxury", "coffee", "multi_store", "jewelry", "pet_care"];
+const builtInThemes = ["fashion", "beauty", "electronics", "home_living", "kids_baby", "sports_fitness", "grocery", "luxury", "coffee", "multi_store", "jewelry", "pet_care", "family_pop", "marketplace_plus", "studio_fashion", "editorial_runway"];
 const idealThemeAssetSizes = {
   hero: { width: 1200, height: 600 },
   banner: { width: 800, height: 600 },
   category: { width: 480, height: 480 }
+};
+const themeRoleAssetSizes = {
+  family_pop: { hero: { width: 1200, height: 698 } },
+  marketplace_plus: { hero: { width: 1410, height: 600 }, banner: { width: 690, height: 600 } },
+  studio_fashion: { hero: { width: 1180, height: 1000 }, banner: { width: 810, height: 600 } },
+  editorial_runway: { hero: { width: 780, height: 1000 }, banner: { width: 656, height: 800 } }
 };
 const themeProductAssetSizes = {
   fashion: { width: 810, height: 600 },
@@ -56,20 +62,36 @@ const themeProductAssetSizes = {
   coffee: { width: 648, height: 600 },
   multi_store: { width: 600, height: 667 },
   jewelry: { width: 720, height: 600 },
-  pet_care: { width: 600, height: 600 }
+  pet_care: { width: 600, height: 600 },
+  family_pop: { width: 600, height: 600 },
+  marketplace_plus: { width: 600, height: 682 },
+  studio_fashion: { width: 810, height: 600 },
+  editorial_runway: { width: 900, height: 600 }
+};
+const newThemeConfiguredRatios = {
+  family_pop: { hero: 1.72, banner: 1.33, product: 1 },
+  marketplace_plus: { hero: 2.35, banner: 1.15, product: 0.88 },
+  studio_fashion: { hero: 1.18, banner: 1.35, product: 1.35 },
+  editorial_runway: { hero: 0.78, banner: 0.82, product: 1.5 }
 };
 for (const theme of builtInThemes) {
   assert.match(service, new RegExp(`'${theme}'\\s*=>`), `Theme ${theme} must be registered.`);
 }
-assert.equal(builtInThemes.length, 12, "Quick Setup must provide exactly twelve complete themes.");
+assert.equal(builtInThemes.length, 16, "Quick Setup must provide exactly sixteen complete themes.");
 for (const theme of builtInThemes) {
   for (const role of ["hero", "banner", "category", "product"]) {
     for (let index = 1; index <= 6; index += 1) {
       const asset = path.join(root, "admin", "assets", "theme-previews", theme, `${role}-${index}.webp`);
       assert.equal(fs.existsSync(asset), true, `Theme asset ${theme}/${role}-${index}.webp must be bundled.`);
       assert.ok(fs.statSync(asset).size > 1000, `Theme asset ${theme}/${role}-${index}.webp must contain real artwork.`);
-      const idealSize = role === "product" ? themeProductAssetSizes[theme] : idealThemeAssetSizes[role];
+      const idealSize = role === "product"
+        ? themeProductAssetSizes[theme]
+        : themeRoleAssetSizes[theme]?.[role] || idealThemeAssetSizes[role];
       assert.deepEqual(webpDimensions(asset), idealSize, `Theme asset ${theme}/${role}-${index}.webp must match its ideal setting ratio.`);
+      if (newThemeConfiguredRatios[theme]?.[role]) {
+        const actualRatio = idealSize.width / idealSize.height;
+        assert.ok(Math.abs(actualRatio - newThemeConfiguredRatios[theme][role]) < 0.005, `Theme asset ${theme}/${role}-${index}.webp must physically match the configured ${role} ratio.`);
+      }
     }
   }
 }
@@ -88,11 +110,18 @@ assert.match(service, /catalog_slides\(\s*\$theme\s*\)[\s\S]*setup_theme_hero_[\
 assert.doesNotMatch(service.match(/private function catalog_slides[\s\S]*?return \$slides;\s*\}/)?.[0] || "", /wc_get_products|wp_get_attachment_image_url/, "Built-in theme slides must never read merchant products or media.");
 assert.match(service, /build_demo_catalog[\s\S]*theme_demo_labels[\s\S]*product-\d|asset_url\(\s*\$theme,\s*'product'/, "Every built-in theme must include its own demo products and artwork.");
 assert.match(service, /preview_snapshot[\s\S]*build_home[\s\S]*build_page_layout[\s\S]*build_category_settings/, "Built-in preview and installation must share the same real theme builders.");
-assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'[\s\S]*'jewelry'[\s\S]*'pet_care'/, "Every built-in theme must define a distinct multi-page layout profile.");
+assert.match(service, /theme_page_design[\s\S]*'fashion'[\s\S]*'beauty'[\s\S]*'electronics'[\s\S]*'home_living'[\s\S]*'kids_baby'[\s\S]*'sports_fitness'[\s\S]*'grocery'[\s\S]*'luxury'[\s\S]*'coffee'[\s\S]*'multi_store'[\s\S]*'jewelry'[\s\S]*'pet_care'[\s\S]*'family_pop'[\s\S]*'marketplace_plus'[\s\S]*'studio_fashion'[\s\S]*'editorial_runway'/, "Every built-in theme must define a distinct multi-page layout profile.");
+for (const theme of Object.keys(newThemeConfiguredRatios)) {
+  assert.match(service, new RegExp(`'${theme}'\\s*=>\\s*array\\([\\s\\S]{0,9000}'chrome'\\s*=>\\s*array[\\s\\S]*?'catalog'\\s*=>\\s*array[\\s\\S]*?'product'\\s*=>\\s*array[\\s\\S]*?'wishlist'\\s*=>\\s*array[\\s\\S]*?'account'\\s*=>\\s*array`), `Theme ${theme} must configure every application page instead of inheriting one generic card grid.`);
+}
+assert.match(service, /'studio_fashion'[\s\S]{0,1200}'category_layout'\s*=>\s*'default'[\s\S]{0,5000}'category_design'/, "Studio Fashion must carry its own lightweight category-list design.");
+assert.match(service, /'editorial_runway'[\s\S]{0,5000}'hero_show_indicators'\s*=>\s*false[\s\S]{0,1000}'category_design'/, "Editorial Runway must keep its immersive hero and gallery category treatment.");
 for (const pageDesign of ["catalog", "product", "wishlist", "account"]) {
   assert.match(service, new RegExp(`'${pageDesign}'\\s*=>\\s*array`), `Complete themes must configure the ${pageDesign} page.`);
 }
 assert.match(service, /secondary_color/, "Setup identity must persist the secondary application color.");
+assert.match(service, /site_identity_defaults[\s\S]*custom_logo[\s\S]*site_logo[\s\S]*woocommerce_email_header_image/, "Setup identity must discover the connected site's logo without requiring a second upload.");
+assert.match(service, /wp_get_global_settings[\s\S]*primary_candidates[\s\S]*secondary_candidates[\s\S]*tint_color/, "Setup identity must derive editable brand colors from the connected site and calculate a safe tint fallback.");
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
 assert.match(service, /layout\['enabled'\]\s*=\s*false/, "Unselected setup pages must be disabled without overwriting their layout.");
 assert.match(service, /SAVED_THEMES_OPTION/, "Saved themes must use a dedicated persistent store.");
@@ -137,6 +166,7 @@ assert.doesNotMatch(wizardTemplate, /setup\[page_themes\]/, "Setup must not mix 
 assert.match(wizardTemplate, /Preview full theme[\s\S]*data-theme-modal-page[\s\S]*data-theme-modal-frame/, "Every complete theme must have a real all-page Flutter preview.");
 assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, "The second setup step must select required and optional application pages.");
 assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
+assert.match(wizardTemplate, /detected from the connected site and remain editable/, "Application identity must explain that its defaults came from the connected site.");
 assert.match(wizardTemplate, /data-color-picker="primary"[\s\S]*data-color-code="primary"[\s\S]*data-color-picker="secondary"[\s\S]*data-color-code="secondary"/, "Both application colors must expose a picker and editable HEX code.");
 assert.match(wizardCss, /\.kidia-setup-color-control\{display:flex!important;[^}]*align-items:stretch;[^}]*width:100%}/, "Each color picker and HEX code must stay in one compact row.");
 assert.match(wizardCss, /\.kidia-setup-color-control input\[type=text\]\{[^}]*width:auto!important;[^}]*flex:1 1 auto;[^}]*direction:ltr;/, "HEX fields must share the color row without wrapping and keep the hash on the left.");
@@ -316,6 +346,8 @@ const primaryCode = wizardDom.window.document.querySelector('[data-color-code="p
 primaryCode.value = "#123ABC";
 primaryCode.dispatchEvent(new wizardDom.window.Event("input", { bubbles: true }));
 assert.equal(wizardDom.window.document.querySelector('[data-color-picker="primary"]').value, "#123abc", "Typing a HEX value must update the submitted color picker.");
+wizardDom.window.document.querySelector('input[name="setup[theme]"]').dispatchEvent(new wizardDom.window.Event("change", { bubbles: true }));
+assert.equal(wizardDom.window.document.querySelector('[data-color-picker="primary"]').value, "#123abc", "Choosing a layout theme must preserve the connected site's brand color.");
 wizardDom.window.document.querySelector(".kidia-theme-preview-button").click();
 assert.equal(wizardDom.window.document.querySelector(".kidia-theme-modal").hidden, false, "Theme preview must open without applying the theme.");
 assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=home/, "Built-in theme preview must open the real Flutter Home page.");

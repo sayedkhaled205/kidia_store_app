@@ -625,11 +625,18 @@
 		}
 		if (payload.done) {
 			overlay.setAttribute('aria-busy', 'false');
-			if (stage) stage.textContent = 'Completed';
+			if (stage) stage.textContent = 'Completed. Loading your results…';
 			if (view) view.hidden = true;
 			if (background) background.hidden = true;
-			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>OK';
+			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-no-alt"></span>Dismiss';
 			overlay.dataset.aiComplete = '1';
+			const resultUrl = payload.result_url || aiBackgroundConfig.aiUrl || '';
+			if (resultUrl && overlay.dataset.aiResultOpening !== '1') {
+				overlay.dataset.aiResultOpening = '1';
+				window.setTimeout(function () {
+					window.location.assign(resultUrl);
+				}, 250);
+			}
 		}
 	};
 	if (window.__KIDIA_AI_PROGRESS_TEST__) {

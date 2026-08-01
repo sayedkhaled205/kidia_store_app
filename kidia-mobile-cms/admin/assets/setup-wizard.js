@@ -121,16 +121,8 @@
 			show(current, false);
 		}
 		if (event.target.matches('input[name="setup[theme]"]')) {
-			const card = event.target.closest('.kidia-theme-card');
-			const primary = form.querySelector('[name="setup[primary_color]"]');
-			const secondary = form.querySelector('[name="setup[secondary_color]"]');
-			if (card && primary && secondary) {
-				const styles = window.getComputedStyle(card);
-				primary.value = styles.getPropertyValue('--theme-primary').trim() || primary.value;
-				secondary.value = styles.getPropertyValue('--theme-soft').trim() || secondary.value;
-				syncColorPair('primary', primary);
-				syncColorPair('secondary', secondary);
-			}
+			// Theme previews keep their reference palette, but selecting a layout
+			// must not overwrite branding calculated from the connected site.
 			updateThemeReview();
 		}
 		if (event.target.matches('[data-color-picker]')) {
