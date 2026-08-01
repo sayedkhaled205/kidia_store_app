@@ -256,7 +256,8 @@ assert.doesNotMatch(shellCss, /#adminmenuback,[^}]*#adminmenuwrap\{[^}]*position
 assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen\{[^}]*overflow-y:visible!important;/, "Builder pages must leave the outer WordPress document scroll available for its black menu.");
 assert.doesNotMatch(shellCss, /body\.kidia-cms-builder-screen #wpwrap\{[^}]*overflow:hidden/, "The Builder wrapper must not clip WordPress menu overflow away from the outer scrollbar.");
-assert.match(shellCss, /body\.kidia-cms-builder-screen #wpcontent,\s*body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow:hidden!important;/, "Builder documents must remain fixed while the internal card rail owns scrolling.");
+assert.match(shellCss, /body\.kidia-cms-builder-screen #wpcontent\{[^}]*overflow:hidden!important;/, "Builder content viewports must remain fixed while the internal card rail owns scrolling.");
+assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow-y:scroll!important;[^}]*scrollbar-gutter:stable;/, "Builder documents must retain the shared plugin scrollbar rail without moving the workspace.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*height:calc\(100% - 24px\)!important;[^}]*margin-bottom:6px;[^}]*overflow:visible!important;/, "The fixed Builder frame must contain the complete phone without clipping the shared sidebar gutter.");
 assert.match(shellScript, /kidia-cms-builder-screen[\s\S]*scrollRestoration[\s\S]*window\.scrollTo/, "Builders must ignore stale document scroll restoration.");
 assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Fragment navigation must restore or release the fixed Builder workspace for the destination.");

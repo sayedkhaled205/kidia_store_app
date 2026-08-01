@@ -14,6 +14,14 @@ const styles = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "cms-shell.css"),
   "utf8"
 );
+const splashScript = fs.readFileSync(
+  path.resolve(__dirname, "..", "admin", "assets", "splash-screen.js"),
+  "utf8"
+);
+const settingsSectionsScript = fs.readFileSync(
+  path.resolve(__dirname, "..", "admin", "assets", "settings-sections.js"),
+  "utf8"
+);
 
 assert.match(
   styles,
@@ -29,6 +37,11 @@ assert.match(
   styles,
   /body\.kidia-cms-plugin-page:not\(\.kidia-cms-builder-screen\) #wpbody\{[^}]*height:calc\(100vh - 32px\)!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
   "Non-Builder CMS views must own a separate inner scrollbar on the physical content-side edge."
+);
+assert.match(
+  styles,
+  /body\.kidia-cms-builder-screen #wpbody\{[^}]*height:100%!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
+  "Customize must keep the same plugin-owned scrollbar rail beside the WordPress menu."
 );
 assert.doesNotMatch(
   styles,
@@ -96,8 +109,13 @@ assert.match(admin, /Returns one CMS view without another WordPress document, si
 assert.match(admin, /'builderScreen'\s*=>\s*\$this->is_builder_screen/, "Every fragment must report whether its view owns the fixed Builder workspace.");
 assert.match(admin, /'version'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/, "The shell and every fragment must expose the active plugin version.");
 assert.match(script, /version:\s*currentVersion/, "Every fragment request must identify the version of the running shell.");
-assert.match(script, /pluginAsset\(asset\)[\s\S]*loaded\.conflict[\s\S]*hardNavigate\(cacheKey\)/, "Only conflicting plugin assets may force a clean document load.");
+assert.match(script, /assetsCompatible[\s\S]*findLoadedAsset\(asset, 'css'\)\.conflict[\s\S]*findLoadedAsset\(asset, 'js'\)\.conflict[\s\S]*if \(!assetsCompatible\(payload\)\)[\s\S]*hardNavigate\(cacheKey\)/, "Only conflicting plugin assets may force a clean document load.");
 assert.doesNotMatch(script, /classList\.add\('is-kidia-page-loading'\)/, "Fragment navigation must not dim the existing shell while the next view loads.");
+assert.match(
+  script,
+  /const stylesReady = loadStyles\(payload\)[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)[\s\S]*Promise\.all\(\[loadScripts\(payload\), stylesReady\]\)/,
+  "Customize markup must be displayed before its Media, style, and Builder assets finish loading."
+);
 assert.match(
   script,
   /function resetWorkspaceScroll\(\)[\s\S]*#wpbody[\s\S]*scrollTop = 0;[\s\S]*scrollLeft = 0;[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)/,
@@ -105,6 +123,37 @@ assert.match(
 );
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
+assert.match(splashScript, /kidia:cms-page-ready[\s\S]*bootSplashBuilder/, "Splash must initialize after fragment navigation, not only on the first document load.");
+assert.match(settingsSectionsScript, /kidia:cms-page-ready[\s\S]*bootSettingsSections/, "Customize settings must regroup after fragment navigation.");
+
+const splashDom = new JSDOM(`<!doctype html><html><body>
+  <div class="kidia-splash-builder"><form>
+    <input type="checkbox" name="splash[enabled]">
+    <input name="splash[duration_ms]" value="1800">
+    <input name="splash[background_color]" value="#ffffff">
+    <input name="splash[background_color_end]" value="#eeeeee">
+    <input name="splash[image_url]" value="">
+    <input name="splash[image_width]" value="120">
+    <input name="splash[image_height]" value="120">
+    <input name="splash[image_fit]" value="contain">
+    <input name="splash[image_shape]" value="rounded">
+    <input name="splash[store_name]" value="Kidia">
+    <input type="checkbox" name="splash[show_store_name]" checked>
+    <input name="splash[text_color]" value="#111111">
+    <input type="checkbox" name="splash[show_loader]" checked>
+    <input name="splash[loader_color]" value="#2f806e">
+    <div class="kidia-page-card"><button type="button" class="kidia-page-expand"></button><div class="kidia-page-card__body" hidden></div></div>
+  </form></div>
+  <div id="kidia-splash-preview"><div data-splash-overlay><img><strong></strong><span class="spinner"></span><span class="kidia-splash-progress"></span></div></div>
+</body></html>`, { runScripts: "outside-only" });
+splashDom.window.eval(splashScript);
+splashDom.window.document.dispatchEvent(new splashDom.window.CustomEvent("kidia:cms-page-ready"));
+splashDom.window.document.dispatchEvent(new splashDom.window.CustomEvent("kidia:cms-page-ready"));
+const splashForm = splashDom.window.document.querySelector(".kidia-splash-builder form");
+assert.equal(splashForm.dataset.kidiaSplashBooted, "1", "Splash fragment initialization must complete exactly once.");
+splashForm.querySelector(".kidia-page-expand").dispatchEvent(new splashDom.window.MouseEvent("click", { bubbles: true }));
+assert.equal(splashForm.querySelector(".kidia-page-card__body").hidden, false, "Repeated page-ready events must not duplicate Customize handlers.");
+
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
   <div id="wpbody">
@@ -319,29 +368,65 @@ setTimeout(() => {
               {
                 handle: "kidia-mobile-cms-shell",
                 src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/cms-shell.css?ver=1.45.60-current"
+              },
+              {
+                handle: "kidia-mobile-fixed-chrome",
+                src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/page-builder.css?ver=1.45.60"
               }
             ],
-            scripts: [{
-              handle: "jquery-core",
-              src: "https://store.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.2"
-            }]
+            scripts: [
+              {
+                handle: "jquery-core",
+                src: "https://store.test/wp-includes/js/jquery/jquery.min.js?ver=3.7.2"
+              },
+              {
+                handle: "kidia-mobile-splash-screen",
+                src: "https://store.test/wp-content/plugins/kidia-mobile-cms/admin/assets/splash-screen.js?ver=1.45.60"
+              }
+            ]
           }
         })
       });
       const builderSidebar = builderDom.window.document.querySelector("[data-kidia-cms-sidebar]");
       const builderShell = builderDom.window.document.querySelector("[data-kidia-cms-shell]");
+      let builderAssetSawPage = "";
+      const appendBuilderStyle = builderDom.window.document.head.appendChild.bind(builderDom.window.document.head);
+      builderDom.window.document.head.appendChild = (node) => {
+        const appended = appendBuilderStyle(node);
+        if (node.matches && node.matches('link[href*="page-builder.css"]')) {
+          setTimeout(() => node.dispatchEvent(new builderDom.window.Event("load")), 45);
+        }
+        return appended;
+      };
+      const appendBuilderAsset = builderDom.window.document.body.appendChild.bind(builderDom.window.document.body);
+      builderDom.window.document.body.appendChild = (node) => {
+        const appended = appendBuilderAsset(node);
+        if (node.matches && node.matches('script[src*="splash-screen.js"]')) {
+          builderAssetSawPage = builderDom.window.document.querySelector("[data-page-content]").textContent;
+          setTimeout(() => node.dispatchEvent(new builderDom.window.Event("load")), 40);
+        }
+        return appended;
+      };
       builderDom.window.eval(script);
       builderSidebar.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
         new builderDom.window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
       );
       setTimeout(() => {
+        assert.equal(
+          builderDom.window.document.querySelector("[data-page-content]").textContent,
+          "Home Builder content",
+          "The requested Customize view must appear while its optional scripts are still loading."
+        );
+      }, 5);
+      setTimeout(() => {
         assert.equal(builderForcedUrl, "", "WordPress and Media query-version differences must not reload the document.");
         assert.strictEqual(builderDom.window.document.querySelector("[data-kidia-cms-sidebar]"), builderSidebar, "Builder navigation must retain the sidebar DOM node.");
         assert.strictEqual(builderDom.window.document.querySelector("[data-kidia-cms-shell]"), builderShell, "Builder navigation must retain the shared frame DOM node.");
         assert.equal(builderDom.window.document.querySelector("[data-page-content]").textContent, "Home Builder content");
+        assert.equal(builderAssetSawPage, "Home Builder content", "Customize scripts must execute only after their new page markup exists.");
         assert.equal(builderDom.window.document.querySelector("#wpbody-content").classList.contains("is-kidia-page-loading"), false);
         console.log("Persistent CMS sidebar and asset version runtime tests passed.");
-      }, 25);
+      }, 70);
     }, 25);
   }, 25);
 }, 25);
