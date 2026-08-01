@@ -51,8 +51,8 @@ assert.match(
 );
 assert.match(
   shellCss,
-  /html\{[\s\S]*overflow-x:clip;[\s\S]*overflow-y:scroll;[\s\S]*scrollbar-gutter:stable;/,
-  "CMS pages must reserve the document scrollbar gutter and prevent page-level horizontal scrolling."
+  /html\{[^}]*height:100%;[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/,
+  "CMS pages must disable WordPress document scrolling and its outer scrollbar gutter."
 );
 assert.match(
   shellCss,
