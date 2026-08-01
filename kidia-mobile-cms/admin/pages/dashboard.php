@@ -179,12 +179,12 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								);
 								?>
 								</p>
-								<small class="kidia-app-build__files" data-build-files><?php esc_html_e( 'app-release.aab — Google Play', 'kidia-mobile-cms' ); ?></small>
+								<small class="kidia-app-build__files" data-build-files><?php esc_html_e( 'Android &amp; iOS', 'kidia-mobile-cms' ); ?></small>
 							</button>
 						</form>
 						<div class="kidia-app-build__recent-choice" data-build-recent-choice hidden>
 							<div class="kidia-app-build__recent-choice-card" role="dialog" aria-modal="true" aria-labelledby="kidia-recent-build-title">
-								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A build is available from the last 24 hours', 'kidia-mobile-cms' ); ?></h3>
+								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A build is available from the last 5 days', 'kidia-mobile-cms' ); ?></h3>
 								<p><?php esc_html_e( 'Download the latest version again or create a new build.', 'kidia-mobile-cms' ); ?></p>
 								<div class="kidia-app-build__recent-choice-actions">
 									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'kidia-mobile-cms' ); ?></button>
@@ -633,6 +633,19 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		border-color: #b45a5a;
 		background: #fff5f5;
 		color: #8c1f1f;
+	}
+
+	[data-kidia-app-build][data-status="downloaded"] .kidia-app-build__cancel {
+		border-color: #2f806e;
+		background: #2f806e;
+		color: #ffffff;
+	}
+
+	[data-kidia-app-build][data-status="downloaded"] .kidia-app-build__cancel:hover,
+	[data-kidia-app-build][data-status="downloaded"] .kidia-app-build__cancel:focus {
+		border-color: #287260;
+		background: #287260;
+		color: #ffffff;
 	}
 
 	.kidia-app-build__cancel:disabled {
