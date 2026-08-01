@@ -122,3 +122,6 @@
 .kidia-saved-theme-dialog__device iframe{position:absolute;top:0;left:0;display:block;width:360px;height:800px;min-height:0;border:0;border-radius:0;background:#fff;pointer-events:auto;touch-action:pan-y;zoom:.85}
 @media(max-width:850px){.kidia-saved-theme-dialog__stage{min-height:714px}}
 @media(max-width:560px){.kidia-saved-theme-dialog__device{width:278px}.kidia-saved-theme-dialog__screen{height:582px}.kidia-saved-theme-dialog__device iframe{zoom:.728}.kidia-saved-theme-dialog__stage{min-height:615px}}
+
+/* The modal belongs to Woo Mobile CMS, so its eyebrow keeps the plugin identity color. */
+.kidia-theme-modal__heading>span{color:#2f806e}

@@ -179,10 +179,10 @@ final class Kidia_Mobile_Setup_Wizard {
 						'banner_layout' => 'featured', 'banner_ratio' => 1.33, 'banner_gap' => 10, 'image_banner_ratio' => 1.33,
 					),
 					'category_design' => array(
-						'navigation_mode' => 'separate_page', 'card_gap' => 0, 'card_height' => 104, 'card_style' => 'no_shadow',
-						'card_radius' => 0, 'image_size' => 64, 'image_shape' => 'circle', 'image_radius' => 32,
-						'image_text_gap' => 16, 'font_size' => 16, 'font_weight' => 600, 'line_height' => 125,
-						'text_align' => 'start', 'show_arrow' => true, 'arrow_size' => 24, 'horizontal_padding' => 16,
+						'navigation_mode' => 'separate_page', 'card_gap' => 12, 'card_height' => 84, 'card_style' => 'outlined',
+						'card_radius' => 16, 'image_size' => 68, 'image_shape' => 'rounded', 'image_radius' => 14,
+						'image_text_gap' => 14, 'font_size' => 16, 'font_weight' => 600, 'line_height' => 125,
+						'text_align' => 'start', 'show_arrow' => true, 'arrow_size' => 20, 'horizontal_padding' => 14,
 					),
 				)
 			),
@@ -1438,6 +1438,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['height'] = (int) ( $design['chrome']['header_heights'][ $page ] ?? $design['chrome']['header_height'] );
 				// Setup themes use flat headers that blend into the page surface.
 				$layout[ $chrome ]['settings']['shadow'] = 'none';
+				$layout[ $chrome ]['settings']['compact_shadow'] = 'none';
 				$layout[ $chrome ]['settings']['search_style'] = $theme['search_style'];
 				$layout[ $chrome ]['settings']['search_background'] = $theme['surface'];
 				$layout[ $chrome ]['settings']['search_border_color'] = $secondary;
@@ -1457,7 +1458,7 @@ final class Kidia_Mobile_Setup_Wizard {
 					$column = static fn ( float $width, array $items, string $align = 'center' ): array => compact( 'width', 'align', 'items' );
 					$family_headers = array(
 						'home' => array( 'rows' => array( $row( array( $column( 50, array( 'logo' ), 'left' ), $column( 50, array( 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ) ),
-						'category' => array( 'rows' => array( $row( array( $column( 86, array( 'search_bar' ), 'left' ), $column( 14, array( 'cart' ), 'right' ) ) ) ) ),
+						'category' => array( 'rows' => array( $row( array( $column( 28, array( 'search', 'cart' ), 'left' ), $column( 72, array( 'title' ), 'right' ) ) ) ) ),
 						'catalog' => array( 'rows' => array( $row( array( $column( 14, array( 'back' ), 'left' ), $column( 58, array( 'title' ) ), $column( 28, array( 'search', 'cart' ), 'right' ) ) ) ) ),
 					);
 					if ( 'home' !== $page && isset( $family_headers[ $page ] ) ) {
@@ -1605,7 +1606,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		return array(
 			'card_style' => 'outlined', 'card_radius' => 14, 'image_ratio' => .88,
 			'image_inset' => 5, 'image_radius' => 11,
-			'content_horizontal_padding' => 9, 'content_top_padding' => 5, 'content_bottom_padding' => 8,
+			'content_horizontal_padding' => 9, 'content_top_padding' => 4, 'content_bottom_padding' => 3,
 			'show_name' => true, 'show_price' => true, 'show_rating' => true, 'show_badge' => false,
 			'price_color' => $ink, 'price_size' => 14,
 			'quick_add_enabled' => true, 'quick_add_icon_variant' => 'bag',
@@ -1729,7 +1730,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'account' => array( 'avatar_size' => 80, 'summary_style' => 'elevated' ),
 			),
 			'family_pop' => array(
-				'chrome' => array( 'header_height' => 56, 'header_heights' => array( 'home' => 104, 'category' => 56, 'catalog' => 56, 'product' => 56, 'wishlist' => 56, 'account' => 56, 'size_chart' => 56 ), 'header_shadow' => 'none', 'search_radius' => 20, 'footer_height' => 64, 'footer_shadow' => 'none', 'button_radius' => 28, 'button_shape' => 'pill', 'horizontal_padding' => 16, 'vertical_padding' => 4, 'search_height' => 40, 'search_icon_size' => 20, 'search_border_width' => 1, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag', 'icon_size' => 22, 'title_font_size' => 17, 'inactive_color' => '#66736F', 'label_size' => 11, 'icon_label_gap' => 3, 'border_width' => 1, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'font_family' => 'poppins', 'content_horizontal_padding' => 16 ),
+				'chrome' => array( 'header_height' => 64, 'header_heights' => array( 'home' => 120, 'category' => 64, 'catalog' => 64, 'product' => 64, 'wishlist' => 64, 'account' => 64, 'size_chart' => 64 ), 'header_shadow' => 'none', 'search_radius' => 20, 'footer_height' => 64, 'footer_shadow' => 'none', 'button_radius' => 28, 'button_shape' => 'pill', 'horizontal_padding' => 16, 'vertical_padding' => 6, 'search_height' => 44, 'search_icon_size' => 20, 'search_border_width' => 1, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag', 'icon_size' => 24, 'title_font_size' => 18, 'inactive_color' => '#66736F', 'label_size' => 11, 'icon_label_gap' => 3, 'border_width' => 1, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'font_family' => 'poppins', 'content_horizontal_padding' => 16 ),
 				'catalog' => array( 'filter_sticky' => false, 'show_result_count' => false, 'filter_height' => 52, 'filter_radius' => 0, 'filter_button_style' => 'flat', 'filter_color' => true, 'filter_gap' => 0, 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.1, 'image_swipe' => true, 'show_rating' => false, 'show_badge' => true, 'quick_add_style' => 'outline', 'show_wishlist' => false, 'pagination' => 'automatic', 'per_page' => 16, 'outer_horizontal_padding' => 4, 'top_spacing' => 6, 'image_inset' => 0, 'image_radius' => 0, 'content_horizontal_padding' => 4, 'content_top_padding' => 6, 'content_bottom_padding' => 7, 'price_prefix' => 'From ', 'price_size' => 14, 'show_name' => false ),
 				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => false, 'tabs_height' => 52, 'tabs_inactive_color' => '#66736F', 'gallery_ratio' => .88, 'gallery_fit' => 'cover', 'thumbnails' => false, 'indicators' => false, 'counter' => true, 'zoom' => false, 'show_rating' => true, 'show_badge' => false, 'price_size' => 21, 'name_size' => 16, 'variation_style' => 'chips', 'chip_radius' => 20, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 2, 'related_gap' => 6, 'related_ratio' => 1.1, 'button_width' => 62, 'button_height' => 52, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'size_chart' => 'chips' ),
 				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'outline', 'button_radius' => 28, 'top_spacing' => 44, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 6, 'card_style' => 'no_shadow', 'card_radius' => 0, 'image_ratio' => 1.1, 'show_name' => false ),

@@ -1157,19 +1157,15 @@ class _WishlistProductCard extends StatelessWidget {
                   PositionedDirectional(
                     top: 8,
                     end: 8,
-                    child: Material(
-                      color: colors.surface.withValues(alpha: 0.92),
-                      shape: const CircleBorder(),
-                      child: IconButton(
-                        key: instanceId == 'wishlist_grid'
-                            ? Key('wishlist-remove-${product.id}')
-                            : ValueKey<String>(
-                                'wishlist-remove-$instanceId-${product.id}',
-                              ),
-                        tooltip: copy.remove,
-                        onPressed: removeEnabled ? onRemove : null,
-                        icon: Icon(Icons.favorite_rounded, color: colors.error),
-                      ),
+                    child: IconButton(
+                      key: instanceId == 'wishlist_grid'
+                          ? Key('wishlist-remove-${product.id}')
+                          : ValueKey<String>(
+                              'wishlist-remove-$instanceId-${product.id}',
+                            ),
+                      tooltip: copy.remove,
+                      onPressed: removeEnabled ? onRemove : null,
+                      icon: Icon(Icons.favorite_rounded, color: colors.error),
                     ),
                   ),
                   if (product.isInStock &&
