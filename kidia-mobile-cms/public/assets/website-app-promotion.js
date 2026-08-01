@@ -248,6 +248,7 @@
 
   const build = (displayType, campaign) => {
     const options = settings[campaign] || {};
+    const target = campaignDestination(campaign);
     const node =
       displayType === "floating_button"
         ? create("button", `kidia-app-promo kidia-app-promo--${displayType}`)
@@ -260,12 +261,12 @@
     if (options.style) node.classList.add(`is-${options.style}`);
     node.append(icon(), copy(displayType));
 
-    if (displayType === "desktop_qr") {
+    if (displayType === "desktop_qr" && target) {
       const qrHolder = create("span", "kidia-app-promo__qr");
       node.append(qrHolder);
       if (window.QRCode) {
         new window.QRCode(qrHolder, {
-          text: campaignDestination(campaign),
+          text: target,
           width: 92,
           height: 92,
           colorDark: settings.text_color || "#15352d",
@@ -280,17 +281,19 @@
       return { node, backdrop: null };
     }
 
-    const action = create(
-      "a",
-      "kidia-app-promo__action",
-      settings.deep_link && isMobile
-        ? settings.open_label || "Open app"
-        : settings.button_label || "Download app",
-    );
-    action.href = campaignDestination(campaign) || "#";
-    action.rel = "noopener";
-    action.addEventListener("click", (event) => openDestination(event, campaign));
-    node.append(action);
+    if (target) {
+      const action = create(
+        "a",
+        "kidia-app-promo__action",
+        settings.deep_link && isMobile
+          ? settings.open_label || "Open app"
+          : settings.button_label || "Download app",
+      );
+      action.href = target;
+      action.rel = "noopener";
+      action.addEventListener("click", (event) => openDestination(event, campaign));
+      node.append(action);
+    }
 
     let backdrop = null;
     if (!["inline_banner"].includes(displayType)) {
@@ -310,7 +313,10 @@
   };
 
   const show = (displayType, campaign, slot = null) => {
-    if (!campaignDestination(campaign)) return;
+    const requiresDestination = ["desktop_qr", "floating_button"].includes(
+      displayType,
+    );
+    if (requiresDestination && !campaignDestination(campaign)) return;
     if (!canShow(campaign)) return;
     if (["popup", "bottom_sheet"].includes(displayType) && interruptionVisible) {
       return;

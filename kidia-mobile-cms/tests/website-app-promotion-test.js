@@ -248,6 +248,11 @@ assert.match(
   "Desktop cards must generate a real scannable QR code.",
 );
 assert.match(
+  publicScript,
+  /requiresDestination[\s\S]*desktop_qr[\s\S]*floating_button[\s\S]*!campaignDestination/,
+  "Message campaigns must not disappear just because no app-store destination has been published yet.",
+);
+assert.match(
   publicCss,
   /@media\(max-width:767px\)[\s\S]*desktop_qr\{display:none!important\}/,
   "Desktop QR cards must never crowd mobile screens.",
@@ -557,6 +562,55 @@ delayedConfigDom.window.document.dispatchEvent(
   new delayedConfigDom.window.Event("kidia:app-promotion-config-ready"),
 );
 
+const messageOnlyDom = new JSDOM(
+  "<!doctype html><body><main>Campaign without a published store URL</main><div data-kidia-app-promo-root></div></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+messageOnlyDom.window.matchMedia = () => ({ matches: false });
+messageOnlyDom.window.navigator.sendBeacon = () => true;
+messageOnlyDom.window.QRCode = function QRCode(holder) {
+  holder.append(messageOnlyDom.window.document.createElement("canvas"));
+};
+messageOnlyDom.window.QRCode.CorrectLevel = { M: 0 };
+messageOnlyDom.window.KidiaAppPromotion = {
+  ajaxUrl: "https://store.example/wp-admin/admin-ajax.php",
+  nonce: "nonce",
+  loggedIn: false,
+  page: { type: "home", path: "/" },
+  settings: {
+    enabled: true,
+    app_name: "Kidia",
+    tagline: "The app is coming soon",
+    primary_color: "#2f806e",
+    text_color: "#15352d",
+    surface_color: "#ffffff",
+    button_label: "Download app",
+    dismiss_label: "Not now",
+    android_url: "",
+    ios_url: "",
+    huawei_url: "",
+    smart_url: "",
+    deep_link: "",
+    qr_url: "",
+    audience_devices: "all",
+    audience_users: "all",
+    page_target: "all",
+    custom_paths: "",
+    excluded_paths: "",
+    frequency: "always",
+    smart_banner: { enabled: true, position: "top", delay: 0 },
+    bottom_sheet: { enabled: false },
+    popup: { enabled: false },
+    desktop_qr: { enabled: true, position: "bottom-right", delay: 0 },
+    floating_button: { enabled: true, position: "bottom-left" },
+    inline_banner: { enabled: false },
+  },
+};
+messageOnlyDom.window.eval(publicScript);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -634,6 +688,32 @@ setTimeout(() => {
     ).dataset.kidiaAppPromoStatus,
     "ready",
     "The real frontend root must expose a successful runtime state.",
+  );
+  const messageOnlyBanner = messageOnlyDom.window.document.querySelector(
+    ".kidia-app-promo--smart_banner",
+  );
+  assert.ok(
+    messageOnlyBanner,
+    "An enabled message campaign must render even before an app-store URL is available.",
+  );
+  assert.equal(
+    messageOnlyBanner.querySelector(".kidia-app-promo__action"),
+    null,
+    "A message-only campaign must not expose a fake # download action.",
+  );
+  assert.equal(
+    messageOnlyDom.window.document.querySelector(
+      ".kidia-app-promo--desktop_qr",
+    ),
+    null,
+    "A QR campaign must stay hidden until it has a destination to encode.",
+  );
+  assert.equal(
+    messageOnlyDom.window.document.querySelector(
+      ".kidia-app-promo--floating_button",
+    ),
+    null,
+    "A destinationless floating button must not create a dead control.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);
