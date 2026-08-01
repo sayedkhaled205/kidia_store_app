@@ -1075,9 +1075,12 @@ class QuickLinksBlockWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
+				final int effectiveColumns = block.items.isEmpty
+					? block.columns
+					: block.items.length.clamp(1, block.columns) as int;
                 final double availableItemWidth =
-                    (constraints.maxWidth - ((block.columns - 1) * gap)) /
-                    block.columns;
+					(constraints.maxWidth - ((effectiveColumns - 1) * gap)) /
+					effectiveColumns;
                 final double gridItemSize = availableItemWidth < 1
                     ? 1
                     : availableItemWidth < itemSize
@@ -1089,7 +1092,7 @@ class QuickLinksBlockWidget extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: block.items.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: block.columns,
+					crossAxisCount: effectiveColumns,
                     crossAxisSpacing: gap,
                     mainAxisSpacing: gap,
                     mainAxisExtent: gridItemSize + (block.showLabels ? 48 : 4),
