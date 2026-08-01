@@ -1118,6 +1118,10 @@ final class Kidia_Mobile_Analytics {
 			if ( is_array( $cached ) ) {
 				return array_merge( self::empty_commerce_snapshot(), $cached );
 			}
+			$durable = self::read_durable_commerce_snapshot( $cache_key );
+			if ( is_array( $durable ) ) {
+				return array_merge( self::empty_commerce_snapshot(), $durable );
+			}
 		}
 		if ( ! function_exists( 'wc_get_orders' ) ) {
 			return self::empty_commerce_snapshot();
@@ -1260,24 +1264,68 @@ final class Kidia_Mobile_Analytics {
 
 	/** Returns whether a completed incremental snapshot exists for this selection. */
 	public static function has_commerce_snapshot( int $from, int $to, string $source = 'all' ): bool {
-		return is_array( get_transient( self::commerce_cache_key( $from, $to, $source ) ) );
+		$key = self::commerce_cache_key( $from, $to, $source );
+		return is_array( get_transient( $key ) ) || is_array( self::read_durable_commerce_snapshot( $key ) );
 	}
 
 	/** Stores a complete incremental snapshot and invalidates its derived summary. */
-	public static function store_commerce_snapshot( int $from, int $to, string $source, array $snapshot ): void {
+	public static function store_commerce_snapshot( int $from, int $to, string $source, array $snapshot ): bool {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$key = self::commerce_cache_key( $from, $to, $source );
+		$stored = self::write_durable_commerce_snapshot( $key, array_merge( self::empty_commerce_snapshot(), $snapshot ) );
+		if ( ! $stored ) {
+			return false;
+		}
 		set_transient(
-			self::commerce_cache_key( $from, $to, $source ),
+			$key,
 			array_merge( self::empty_commerce_snapshot(), $snapshot ),
 			6 * HOUR_IN_SECONDS
 		);
 		delete_transient( self::summary_cache_key( $from, $to, $source ) );
+		return true;
 	}
 
 	/** Stable cache key shared by the incremental job and readers. */
 	public static function commerce_cache_key( int $from, int $to, string $source = 'all' ): string {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_commerce_snapshot_v6_' . md5( $from . '|' . $to . '|' . $source );
+		return 'kidia_commerce_snapshot_v7_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
+	/** Reads a compressed snapshot when an object cache rejects the large transient. */
+	private static function read_durable_commerce_snapshot( string $cache_key ) {
+		$stored = get_option( $cache_key . '_durable', false );
+		if ( ! is_array( $stored ) || absint( $stored['expires_at'] ?? 0 ) <= time() ) {
+			return false;
+		}
+		$encoded = base64_decode( (string) ( $stored['payload'] ?? '' ), true );
+		if ( false === $encoded ) {
+			return false;
+		}
+		$serialized = function_exists( 'gzuncompress' ) ? @gzuncompress( $encoded ) : $encoded;
+		if ( ! is_string( $serialized ) ) {
+			return false;
+		}
+		$value = @unserialize( $serialized, array( 'allowed_classes' => false ) );
+		return is_array( $value ) ? $value : false;
+	}
+
+	/** Persists large catalog evidence independently of transient cache limits. */
+	private static function write_durable_commerce_snapshot( string $cache_key, array $snapshot ): bool {
+		$serialized = serialize( $snapshot );
+		$compressed = function_exists( 'gzcompress' ) ? gzcompress( $serialized, 6 ) : $serialized;
+		if ( ! is_string( $compressed ) ) {
+			return false;
+		}
+		$key = $cache_key . '_durable';
+		$value = array(
+			'expires_at' => time() + 6 * HOUR_IN_SECONDS,
+			'payload'    => base64_encode( $compressed ),
+		);
+		$existing = get_option( $key, false );
+		if ( false === $existing && add_option( $key, $value, '', 'no' ) ) {
+			return true;
+		}
+		return update_option( $key, $value, false ) || get_option( $key, false ) === $value;
 	}
 
 	private static function summary_cache_key( int $from, int $to, string $source = 'all' ): string {
