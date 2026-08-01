@@ -187,6 +187,27 @@
 		return pages[page] && typeof pages[page] === 'object' ? pages[page] : {};
 	}
 
+	function snapshotWithLiveBrand(snapshot) {
+		const primaryInput = form.querySelector('[name="setup[primary_color]"]');
+		const secondaryInput = form.querySelector('[name="setup[secondary_color]"]');
+		const primary = primaryInput ? String(primaryInput.value || '').toLowerCase() : '';
+		const secondary = secondaryInput ? String(secondaryInput.value || '').toLowerCase() : '';
+		const originalPrimary = String(snapshot && snapshot.identity ? snapshot.identity.primary_color || '' : '').toLowerCase();
+		const originalSecondary = String(snapshot && snapshot.identity ? snapshot.identity.secondary_color || '' : '').toLowerCase();
+		const branded = JSON.parse(JSON.stringify(snapshot || {}), function (_key, value) {
+			if (typeof value !== 'string') return value;
+			const color = value.toLowerCase();
+			if (primary && originalPrimary && color === originalPrimary) return primary;
+			if (secondary && originalSecondary && color === originalSecondary) return secondary;
+			return value;
+		});
+		if (branded.identity) {
+			if (primary) branded.identity.primary_color = primary;
+			if (secondary) branded.identity.secondary_color = secondary;
+		}
+		return branded;
+	}
+
 	function buildPreviewPayload(snapshot, page) {
 		const demoCatalog = snapshot && snapshot.demo_catalog && typeof snapshot.demo_catalog === 'object'
 			? snapshot.demo_catalog
@@ -273,10 +294,11 @@
 	function openThemeModal(card) {
 		if (!modal || !card) return;
 		previewedCard = card;
-		previewSnapshot = previewConfig.themes && previewConfig.themes[card.dataset.themeKey]
+		const configuredSnapshot = previewConfig.themes && previewConfig.themes[card.dataset.themeKey]
 			? previewConfig.themes[card.dataset.themeKey]
 			: null;
-		if (!previewSnapshot) return;
+		if (!configuredSnapshot) return;
+		previewSnapshot = snapshotWithLiveBrand(configuredSnapshot);
 		modal.querySelector('[data-theme-modal-name]').textContent = card.dataset.themeName || '';
 		const styles = window.getComputedStyle(card);
 		for (const property of ['--theme-primary', '--theme-soft', '--theme-ink', '--theme-surface']) {
@@ -295,6 +317,15 @@
 		});
 	});
 	if (modal) {
+		form.querySelectorAll('[name="setup[primary_color]"], [name="setup[secondary_color]"]').forEach(function (input) {
+			input.addEventListener('input', function () {
+				if (modal.hidden || !previewedCard) return;
+				const configuredSnapshot = previewConfig.themes && previewConfig.themes[previewedCard.dataset.themeKey];
+				if (!configuredSnapshot) return;
+				previewSnapshot = snapshotWithLiveBrand(configuredSnapshot);
+				selectPreviewPage(previewPage);
+			});
+		});
 		previewPageButtons.forEach(function (button) {
 			button.addEventListener('click', function () {
 				selectPreviewPage(button.dataset.themeModalPage || 'home');
