@@ -1,10 +1,29 @@
 (() => {
   "use strict";
 
+  let initialized = false;
+  let bootAttempts = 0;
+
+  const readConfig = () => {
+    if (window.KidiaAppPromotion?.settings) {
+      return window.KidiaAppPromotion;
+    }
+    const embedded = document.querySelector("[data-kidia-app-promo-config]");
+    if (!embedded?.textContent) return null;
+    try {
+      return JSON.parse(embedded.textContent);
+    } catch (_error) {
+      return null;
+    }
+  };
+
   const initializePromotion = () => {
-  const config = window.KidiaAppPromotion || {};
+  if (initialized) return true;
+  const config = readConfig();
+  if (!config) return false;
   const settings = config.settings || {};
-  if (!settings.enabled) return;
+  if (!settings.enabled) return true;
+  initialized = true;
   let root = document.querySelector("[data-kidia-app-promo-root]");
   if (!root) {
     root = document.createElement("div");
@@ -70,6 +89,7 @@
       settings.android_url ||
       settings.ios_url ||
       settings.huawei_url ||
+      settings.qr_url ||
       ""
     );
   };
@@ -381,13 +401,21 @@
     visible?.querySelector(".kidia-app-promo__dismiss")?.click();
   });
 
+  root.dataset.kidiaAppPromoStatus = "ready";
+  return true;
+  };
+
+  const boot = () => {
+    if (initializePromotion()) return;
+    bootAttempts += 1;
+    if (bootAttempts < 40) window.setTimeout(boot, 250);
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializePromotion, {
-      once: true,
-    });
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
-    initializePromotion();
+    boot();
   }
+  window.addEventListener("load", boot, { once: true });
+  document.addEventListener("kidia:app-promotion-config-ready", boot);
 })();

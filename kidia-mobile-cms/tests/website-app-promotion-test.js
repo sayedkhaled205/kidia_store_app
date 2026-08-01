@@ -159,13 +159,28 @@ assert.match(
 );
 assert.match(
   publicScript,
-  /document\.readyState === "loading"[\s\S]*DOMContentLoaded[\s\S]*initializePromotion/,
+  /document\.readyState === "loading"[\s\S]*DOMContentLoaded[\s\S]*boot/,
   "Website promotion rendering must wait until late footer markup is available.",
 );
 assert.match(
   publicScript,
   /if \(!root\)[\s\S]*document\.createElement\("div"\)[\s\S]*kidiaAppPromoRoot[\s\S]*append\(root\)/,
   "The frontend must create its own promotion root when a theme omits the footer slot.",
+);
+assert.match(
+  service,
+  /data-kidia-app-promo-config[\s\S]*wp_json_encode\([\s\S]*frontend_config/,
+  "The footer must embed a cache-safe copy of the live promotion config.",
+);
+assert.match(
+  service,
+  /purge_frontend_cache\(\)[\s\S]*breeze_clear_all_cache[\s\S]*litespeed_purge_all/,
+  "Publishing campaigns must invalidate common WordPress and hosting page caches.",
+);
+assert.match(
+  publicScript,
+  /readConfig[\s\S]*data-kidia-app-promo-config[\s\S]*bootAttempts[\s\S]*setTimeout\(boot, 250\)/,
+  "The frontend must recover when optimization changes config and script order.",
 );
 assert.match(
   template,
@@ -513,6 +528,35 @@ missingRootDom.window.document.dispatchEvent(
   new missingRootDom.window.Event("DOMContentLoaded"),
 );
 
+const delayedConfigDom = new JSDOM(
+  "<!doctype html><body><main>Cached home markup</main></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+delayedConfigDom.window.matchMedia = () => ({ matches: false });
+delayedConfigDom.window.navigator.sendBeacon = () => true;
+delayedConfigDom.window.QRCode = function QRCode(holder) {
+  holder.append(delayedConfigDom.window.document.createElement("canvas"));
+};
+delayedConfigDom.window.QRCode.CorrectLevel = { M: 0 };
+const qrOnlyConfig = JSON.parse(JSON.stringify(qrDom.window.KidiaAppPromotion));
+qrOnlyConfig.settings.page_target = "home";
+qrOnlyConfig.settings.smart_banner = { enabled: true, position: "top", delay: 0 };
+delayedConfigDom.window.eval(publicScript);
+delayedConfigDom.window.document.dispatchEvent(
+  new delayedConfigDom.window.Event("DOMContentLoaded"),
+);
+const embeddedConfig = delayedConfigDom.window.document.createElement("script");
+embeddedConfig.type = "application/json";
+embeddedConfig.dataset.kidiaAppPromoConfig = "";
+embeddedConfig.textContent = JSON.stringify(qrOnlyConfig);
+delayedConfigDom.window.document.body.append(embeddedConfig);
+delayedConfigDom.window.document.dispatchEvent(
+  new delayedConfigDom.window.Event("kidia:app-promotion-config-ready"),
+);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -571,6 +615,25 @@ setTimeout(() => {
       "[data-kidia-app-promo-root] .kidia-app-promo--desktop_qr",
     ),
     "Home-only Desktop QR must render even when the active theme never prints a promotion root.",
+  );
+  assert.ok(
+    delayedConfigDom.window.document.querySelector(
+      ".kidia-app-promo--smart_banner",
+    ),
+    "A QR-only destination must still power the enabled Smart Banner on Home.",
+  );
+  assert.ok(
+    delayedConfigDom.window.document.querySelector(
+      ".kidia-app-promo--desktop_qr",
+    ),
+    "The Desktop QR card must recover when its embedded config arrives after the script.",
+  );
+  assert.equal(
+    delayedConfigDom.window.document.querySelector(
+      "[data-kidia-app-promo-root]",
+    ).dataset.kidiaAppPromoStatus,
+    "ready",
+    "The real frontend root must expose a successful runtime state.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);

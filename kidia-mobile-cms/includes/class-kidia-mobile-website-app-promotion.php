@@ -174,14 +174,19 @@ final class Kidia_Mobile_Website_App_Promotion {
 		wp_localize_script(
 			'kidia-mobile-website-app-promotion',
 			'KidiaAppPromotion',
-			array(
-				'settings'   => self::settings(),
-				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-				'nonce'      => wp_create_nonce( 'kidia_mobile_app_promotion_event' ),
-				'page'       => $this->page_context(),
-				'loggedIn'   => is_user_logged_in(),
-				'shortcode'  => '[woo_mobile_app_promo]',
-			)
+			$this->frontend_config()
+		);
+	}
+
+	/** @return array<string,mixed> */
+	private function frontend_config(): array {
+		return array(
+			'settings'  => self::settings(),
+			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+			'nonce'     => wp_create_nonce( 'kidia_mobile_app_promotion_event' ),
+			'page'      => $this->page_context(),
+			'loggedIn'  => is_user_logged_in(),
+			'shortcode' => '[woo_mobile_app_promo]',
 		);
 	}
 
@@ -218,6 +223,9 @@ final class Kidia_Mobile_Website_App_Promotion {
 			echo '<div class="kidia-app-promo-slot" data-kidia-app-promo-slot="inline"></div>';
 		}
 		echo '<div class="kidia-app-promo-root" data-kidia-app-promo-root></div>';
+		echo '<script type="application/json" data-kidia-app-promo-config>';
+		echo wp_json_encode( $this->frontend_config(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT );
+		echo '</script>';
 	}
 
 	public function shortcode(): string {
@@ -235,7 +243,9 @@ final class Kidia_Mobile_Website_App_Promotion {
 		$submitted = isset( $_POST['promotion'] ) && is_array( $_POST['promotion'] )
 			? wp_unslash( $_POST['promotion'] )
 			: array();
-		update_option( self::OPTION, self::sanitize( $submitted ), false );
+		$settings = self::sanitize( $submitted );
+		update_option( self::OPTION, $settings, false );
+		$this->purge_frontend_cache();
 		wp_safe_redirect(
 			add_query_arg(
 				array(
@@ -246,6 +256,25 @@ final class Kidia_Mobile_Website_App_Promotion {
 			)
 		);
 		exit;
+	}
+
+	private function purge_frontend_cache(): void {
+		$front_page_id = absint( get_option( 'page_on_front', 0 ) );
+		if ( $front_page_id > 0 ) {
+			clean_post_cache( $front_page_id );
+		}
+		wp_cache_flush();
+
+		// Promotion settings change the generated frontend HTML, so page caches
+		// must not keep serving a version without the campaign assets or config.
+		do_action( 'breeze_clear_all_cache' );
+		do_action( 'litespeed_purge_all' );
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			rocket_clean_domain();
+		}
+		if ( function_exists( 'w3tc_flush_all' ) ) {
+			w3tc_flush_all();
+		}
 	}
 
 	/** @param array<string,mixed> $submitted @return array<string,mixed> */
