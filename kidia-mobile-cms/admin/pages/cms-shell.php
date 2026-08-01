@@ -69,7 +69,7 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 			</div>
 		</div>
 		<?php if ( $shell_has_abandoned ) : ?>
-			<section class="kidia-cart-import-state kidia-background-job-card<?php echo 'complete' === $shell_abandoned_phase ? ' is-complete' : ''; ?>" data-kidia-background-job="abandoned-carts" data-abandoned-import-phase="<?php echo esc_attr( $shell_abandoned_phase ); ?>"<?php echo 'complete' === $shell_abandoned_phase ? ' data-complete-auto-dismiss="5000" data-completion-key="' . esc_attr( $shell_abandoned_completed_at > 0 ? (string) $shell_abandoned_completed_at : '' ) . '"' : ''; ?>>
+			<section class="kidia-cart-import-state kidia-background-job-card<?php echo 'complete' === $shell_abandoned_phase ? ' is-complete' : ''; ?>" data-kidia-background-job="abandoned-carts" data-abandoned-import-phase="<?php echo esc_attr( $shell_abandoned_phase ); ?>"<?php echo 'complete' === $shell_abandoned_phase ? ' data-complete-auto-dismiss="5000" data-completion-key="' . esc_attr( $shell_abandoned_completed_at > 0 ? (string) $shell_abandoned_completed_at : '' ) . '" hidden' : ''; ?>>
 				<span class="dashicons <?php echo 'complete' === $shell_abandoned_phase ? 'dashicons-yes-alt' : 'dashicons-database-import'; ?>"></span>
 				<div>
 					<strong><?php echo esc_html( 'complete' === $shell_abandoned_phase ? __( 'Completed — WooCommerce cart history is synced', 'kidia-mobile-cms' ) : __( 'Importing all retained WooCommerce carts in the background', 'kidia-mobile-cms' ) ); ?></strong>

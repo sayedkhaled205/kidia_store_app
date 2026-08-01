@@ -215,6 +215,7 @@
 				card.remove();
 				return;
 			}
+			card.hidden = false;
 			const delay = Math.max(1000, Number(card.dataset.completeAutoDismiss || 5000));
 			window.setTimeout(function () { dismissCompletedNotice(card, key); }, delay);
 		});
