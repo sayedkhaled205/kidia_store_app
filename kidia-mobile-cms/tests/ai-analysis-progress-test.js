@@ -10,6 +10,21 @@ const shellScript = fs.readFileSync(
   path.join(pluginRoot, "admin", "assets", "cms-shell.js"),
   "utf8",
 );
+const shellStyles = fs.readFileSync(
+  path.join(pluginRoot, "admin", "assets", "cms-shell.css"),
+  "utf8",
+);
+
+assert.match(
+  shellStyles,
+  /\.kidia-ai-progress-actions \.button-primary\{[^}]*background:#2f806e!important[^}]*color:#fff!important/,
+  "The AI background action must keep the Kidia color after the progress card leaves the AI page container.",
+);
+assert.match(
+  shellStyles,
+  /\.kidia-ai-progress-actions \.button-primary:hover,\.kidia-ai-progress-actions \.button-primary:focus\{[^}]*background:#236b59!important/,
+  "The AI background action hover and focus states must use the darker Kidia color.",
+);
 
 const dom = new JSDOM(
   `<!doctype html><body>
