@@ -166,7 +166,7 @@
 		if (previewLoadingLabel) previewLoadingLabel.textContent = message || previewLoadingDefault;
 	}
 
-	function postPreviewJson(url, body) {
+	function postPreviewJson(url, body, attempt) {
 		return window.fetch(String(url), {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -179,6 +179,13 @@
 		}).then(function (response) {
 			if (!response.ok) throw new Error('Theme preview request failed with HTTP ' + response.status + '.');
 			return response.json();
+		}).catch(function (error) {
+			if (!attempt) {
+				return new Promise(function (resolve) {
+					window.setTimeout(resolve, 250);
+				}).then(function () { return postPreviewJson(url, body, 1); });
+			}
+			throw error;
 		});
 	}
 
@@ -217,17 +224,30 @@
 			return postPreviewJson(
 				String(previewConfig.layoutPreviewBase || '') + encodeURIComponent(pageName) + '/preview',
 				{ layout: previewPageLayout(snapshot, pageName) }
-			).then(function (layout) { return [pageName, layout]; });
+			).then(function (layout) {
+				return [pageName, layout];
+			}).catch(function (error) {
+				if (window.console && window.console.warn) window.console.warn(error);
+				return [pageName, previewPageLayout(snapshot, pageName)];
+			});
 		});
 		const category = snapshot.category && typeof snapshot.category === 'object' ? snapshot.category : {};
+		const homeFallback = Array.isArray(snapshot.home) ? snapshot.home : [];
+		const categoryFallback = category.general && typeof category.general === 'object' ? category.general : {};
 		return Promise.all([
 			Promise.all(layoutRequests),
 			postPreviewJson(previewConfig.homePreviewEndpoint, {
 				blocks: Array.isArray(snapshot.home) ? snapshot.home : [],
 				demo_catalog: demoCatalog
+			}).catch(function (error) {
+				if (window.console && window.console.warn) window.console.warn(error);
+				return homeFallback;
 			}),
 			postPreviewJson(previewConfig.categoryPreviewEndpoint, {
 				general: category.general && typeof category.general === 'object' ? category.general : {}
+			}).catch(function (error) {
+				if (window.console && window.console.warn) window.console.warn(error);
+				return categoryFallback;
 			})
 		]).then(function (payloads) {
 			const layouts = {};
