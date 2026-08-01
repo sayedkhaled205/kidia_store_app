@@ -356,10 +356,14 @@ final class Kidia_Mobile_Setup_Wizard {
 		$themes = self::themes();
 		$theme_key = $this->normalize_theme_key( $theme_key, $themes );
 		$theme = $themes[ $theme_key ];
-		$app_name = (string) $theme['name'];
+		$identity = $this->identity();
+		$app_name = (string) ( $identity['app_name'] ?? $theme['name'] );
+		$primary = sanitize_hex_color( (string) ( $identity['primary_color'] ?? '' ) ) ?: (string) $theme['primary'];
+		$secondary = sanitize_hex_color( (string) ( $identity['secondary_color'] ?? '' ) ) ?: (string) $theme['soft'];
+		$logo_url = esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) );
 		$pages = array();
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
-			$pages[ $page ] = $this->build_page_layout( $page, $theme, (string) $theme['primary'], (string) $theme['soft'], $app_name, '' );
+			$pages[ $page ] = $this->build_page_layout( $page, $theme, $primary, $secondary, $app_name, $logo_url );
 		}
 		$preview_category = array(
 			'enabled'    => true,
@@ -368,14 +372,15 @@ final class Kidia_Mobile_Setup_Wizard {
 		);
 		return array(
 			'theme' => $theme_key,
-			'home' => $this->build_home( $theme, (string) $theme['primary'], (string) $theme['soft'], $app_name, '' ),
+			'home' => $this->build_home( $theme, $primary, $secondary, $app_name, $logo_url ),
 			'pages' => $pages,
 			'category' => $this->build_category_settings( $theme, $preview_category ),
 			'demo_catalog' => $this->build_demo_catalog( $theme ),
 			'identity' => array(
 				'app_name' => $app_name,
-				'primary_color' => $theme['primary'],
-				'secondary_color' => $theme['soft'],
+				'primary_color' => $primary,
+				'secondary_color' => $secondary,
+				'logo_url' => $logo_url,
 				'theme' => $theme_key,
 			),
 		);
@@ -815,6 +820,12 @@ final class Kidia_Mobile_Setup_Wizard {
 		if ( ! sanitize_hex_color( (string) ( $identity['secondary_color'] ?? '' ) ) ) {
 			$identity['secondary_color'] = $defaults['secondary_color'];
 		}
+		// Migrate only the exact demo-blue pair saved by 1.46.10. Intentional
+		// user palettes and previously detected site colors remain untouched.
+		if ( '#0878e5' === strtolower( (string) $identity['primary_color'] ) && '#e8f3ff' === strtolower( (string) $identity['secondary_color'] ) ) {
+			$identity['primary_color']   = $defaults['primary_color'];
+			$identity['secondary_color'] = $defaults['secondary_color'];
+		}
 		return $identity;
 	}
 
@@ -847,25 +858,42 @@ final class Kidia_Mobile_Setup_Wizard {
 
 		$primary_candidates = array(
 			get_theme_mod( 'primary_color', '' ),
+			get_theme_mod( 'color_primary', '' ),
+			get_theme_mod( 'theme_color', '' ),
 			get_theme_mod( 'accent_color', '' ),
+			get_theme_mod( 'color_accent', '' ),
 			get_theme_mod( 'link_color', '' ),
 			get_theme_mod( 'button_color', '' ),
 			get_theme_mod( 'woocommerce_primary', '' ),
 		);
 		$secondary_candidates = array(
 			get_theme_mod( 'secondary_color', '' ),
+			get_theme_mod( 'color_secondary', '' ),
 			get_theme_mod( 'woocommerce_secondary', '' ),
 			get_theme_mod( 'background_color', '' ),
 		);
+		// Popular classic themes keep their palette in differently named theme
+		// mods or a single option array. Read semantic color keys instead of
+		// falling back merely because a theme does not use WordPress' generic
+		// `primary_color` key.
+		$theme_sources = array( function_exists( 'get_theme_mods' ) ? get_theme_mods() : array() );
+		foreach ( array( 'astra-settings', 'xts-woodmart-options', 'et_divi', 'blocksy', 'kadence_global_palette' ) as $option_name ) {
+			$theme_sources[] = get_option( $option_name, array() );
+		}
+		foreach ( $theme_sources as $source ) {
+			$this->collect_site_colors( $source, $primary_candidates, $secondary_candidates );
+		}
 		if ( function_exists( 'wp_get_global_settings' ) ) {
-			$palette = wp_get_global_settings( array( 'color', 'palette', 'theme' ) );
-			if ( is_array( $palette ) ) {
-				foreach ( $palette as $entry ) {
-					if ( ! is_array( $entry ) || empty( $entry['color'] ) ) {
-						continue;
+			foreach ( array( 'theme', 'custom', 'default' ) as $palette_origin ) {
+				$palette = wp_get_global_settings( array( 'color', 'palette', $palette_origin ) );
+				if ( is_array( $palette ) ) {
+					foreach ( $palette as $entry ) {
+						if ( ! is_array( $entry ) || empty( $entry['color'] ) ) {
+							continue;
+						}
+						$primary_candidates[]   = $entry['color'];
+						$secondary_candidates[] = $entry['color'];
 					}
-					$primary_candidates[]   = $entry['color'];
-					$secondary_candidates[] = $entry['color'];
 				}
 			}
 		}
@@ -887,6 +915,32 @@ final class Kidia_Mobile_Setup_Wizard {
 			'primary_color'   => $primary,
 			'secondary_color' => $secondary,
 		);
+	}
+
+	/**
+	 * Recursively collects colors whose setting names describe their role.
+	 *
+	 * @param mixed            $value Theme settings node.
+	 * @param array<int,mixed> $primary Primary candidates.
+	 * @param array<int,mixed> $secondary Secondary candidates.
+	 */
+	private function collect_site_colors( $value, array &$primary, array &$secondary, string $path = '' ): void {
+		if ( ! is_array( $value ) ) {
+			if ( ! is_string( $value ) || ! preg_match( '/#[0-9a-f]{3}(?:[0-9a-f]{3})?\b/i', $value, $match ) ) {
+				return;
+			}
+			$key = strtolower( $path );
+			if ( preg_match( '/(?:primary|accent|brand|theme|main|button|link)/', $key ) ) {
+				$primary[] = $match[0];
+			}
+			if ( preg_match( '/(?:secondary|soft|light|background|surface)/', $key ) ) {
+				$secondary[] = $match[0];
+			}
+			return;
+		}
+		foreach ( $value as $key => $child ) {
+			$this->collect_site_colors( $child, $primary, $secondary, $path . '.' . sanitize_key( (string) $key ) );
+		}
 	}
 
 	/** @param array<int,mixed> $candidates */
@@ -1009,8 +1063,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				'hero_ratio' => 2, 'hero_radius' => $theme['radius'], 'hero_padding' => 16, 'hero_indicators' => 'below', 'hero_show_indicators' => true,
 				'category_layout' => 'grid', 'category_columns' => 3 <= (int) $theme['product_columns'] ? 4 : 3, 'category_size' => 78, 'category_gap' => 12,
 				'quick_layout' => 'carousel', 'quick_columns' => 4, 'quick_size' => 76, 'quick_gap' => 12,
-				'product_columns' => $theme['product_columns'], 'product_ratio' => 1.0, 'product_radius' => $theme['radius'],
-				'product_style' => $this->home_card_style( (string) $theme['card_style'] ), 'product_rating' => true, 'product_badge' => true, 'product_swipe' => false, 'product_quick_add' => true, 'product_wishlist' => true,
+				'product_columns' => $theme['product_columns'], 'product_ratio' => .88, 'product_radius' => 14,
+				'product_style' => 'outlined', 'product_rating' => true, 'product_badge' => false, 'product_swipe' => false, 'product_quick_add' => true, 'product_wishlist' => false,
 				'banner_layout' => 'featured', 'banner_ratio' => 1.333, 'banner_gap' => 10, 'image_banner_ratio' => 1.333,
 				'text_alignment' => 'center', 'text_title_size' => 24, 'text_content_size' => 15, 'text_weight' => 'medium',
 			)
@@ -1132,6 +1186,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['show_wishlist']  = ! empty( $home_design['product_wishlist'] );
 				$settings['quick_add_enabled'] = ! empty( $home_design['product_quick_add'] );
 				$settings['enable_image_swipe'] = $home_design['product_swipe'];
+				$settings = array_merge( $settings, $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) );
 			}
 			if ( isset( $settings['signature_feature'] ) ) {
 				$settings = array_merge( $settings, (array) $signature['settings'] );
@@ -1373,7 +1428,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				continue;
 			}
 			$layout[ $chrome ]['settings']['background_color'] = $theme['surface'];
-			$layout[ $chrome ]['settings']['border_color'] = $theme['soft'];
+			$layout[ $chrome ]['settings']['border_color'] = $secondary;
 			$layout[ $chrome ]['settings']['corner_radius'] = 'transparent' === $theme['header_style'] ? 0 : $theme['radius'];
 			if ( 'header' === $chrome ) {
 				$layout[ $chrome ]['settings']['icon_color'] = $theme['ink'];
@@ -1381,10 +1436,11 @@ final class Kidia_Mobile_Setup_Wizard {
 				$layout[ $chrome ]['settings']['logo_text_color'] = $theme['ink'];
 				$layout[ $chrome ]['settings']['style'] = $theme['header_style'];
 				$layout[ $chrome ]['settings']['height'] = (int) ( $design['chrome']['header_heights'][ $page ] ?? $design['chrome']['header_height'] );
-				$layout[ $chrome ]['settings']['shadow'] = (string) $design['chrome']['header_shadow'];
+				// Setup themes use flat headers that blend into the page surface.
+				$layout[ $chrome ]['settings']['shadow'] = 'none';
 				$layout[ $chrome ]['settings']['search_style'] = $theme['search_style'];
-				$layout[ $chrome ]['settings']['search_background'] = $theme['soft'];
-				$layout[ $chrome ]['settings']['search_border_color'] = $theme['soft'];
+				$layout[ $chrome ]['settings']['search_background'] = $theme['surface'];
+				$layout[ $chrome ]['settings']['search_border_color'] = $secondary;
 				$layout[ $chrome ]['settings']['search_radius'] = (int) $design['chrome']['search_radius'];
 				$layout[ $chrome ]['settings']['logo_text'] = $app_name;
 				$layout[ $chrome ]['settings']['logo_url'] = $logo_url;
@@ -1420,6 +1476,9 @@ final class Kidia_Mobile_Setup_Wizard {
 						$layout[ $chrome ]['settings'][ $setting_key ] = $design['chrome'][ $setting_key ];
 					}
 				}
+				// Navigation accents always follow the store brand, never a hard-coded theme swatch.
+				$layout[ $chrome ]['settings']['active_color'] = $primary;
+				$layout[ $chrome ]['settings']['button_color'] = $primary;
 			}
 		}
 		foreach ( $layout['elements'] as &$element ) {
@@ -1463,7 +1522,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'filter_color' => $design['catalog']['filter_color'] ?? false,
 				'button_gap' => $design['catalog']['filter_gap'] ?? 8,
 			) );
-			$this->configure_element( $layout, 'product_grid', array(
+			$this->configure_element( $layout, 'product_grid', array_merge( array(
 				'columns' => $design['catalog']['columns'],
 				'gap' => $design['catalog']['gap'],
 				'card_style' => $design['catalog']['card_style'],
@@ -1488,10 +1547,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				'price_color' => $design['catalog']['price_color'] ?? $theme['ink'],
 				'price_size' => $design['catalog']['price_size'] ?? 14,
 				'show_name' => $design['catalog']['show_name'] ?? true,
-			) );
+			), $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) ) );
 		}
 		if ( 'product' === $page ) {
-			$this->configure_element( $layout, 'product_tabs', array( 'sticky' => $design['product']['tabs_sticky'], 'active_color' => $design['product']['tabs_active_color'] ?? $primary, 'inactive_color' => $design['product']['tabs_inactive_color'] ?? '#667085', 'height' => $design['product']['tabs_height'] ?? 56 ), $design['product']['tabs_enabled'] );
+			$this->configure_element( $layout, 'product_tabs', array( 'sticky' => $design['product']['tabs_sticky'], 'active_color' => $primary, 'inactive_color' => $design['product']['tabs_inactive_color'] ?? '#667085', 'height' => $design['product']['tabs_height'] ?? 56 ), $design['product']['tabs_enabled'] );
 			$this->configure_element( $layout, 'image_gallery', array(
 				'aspect_ratio' => $design['product']['gallery_ratio'],
 				'fit' => $design['product']['gallery_fit'],
@@ -1505,10 +1564,10 @@ final class Kidia_Mobile_Setup_Wizard {
 			$this->configure_element( $layout, 'variations', array( 'style' => $design['product']['variation_style'], 'chip_radius' => $design['product']['chip_radius'] ) );
 			$this->configure_element( $layout, 'description', array( 'accordion' => $design['product']['accordion'] ) );
 			$this->configure_element( $layout, 'reviews', array(), $design['product']['reviews_enabled'] );
-			$this->configure_element( $layout, 'related_products', array( 'columns' => $design['product']['related_columns'], 'gap' => $design['product']['related_gap'], 'image_ratio' => $design['product']['related_ratio'] ) );
+			$this->configure_element( $layout, 'related_products', array_merge( array( 'columns' => $design['product']['related_columns'], 'gap' => $design['product']['related_gap'] ), $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) ) );
 			$layout['footer']['settings']['button_width_percent'] = $design['product']['button_width'];
 			$layout['footer']['settings']['button_height'] = $design['product']['button_height'];
-			$layout['footer']['settings']['button_color'] = $design['product']['button_color'] ?? $primary;
+			$layout['footer']['settings']['button_color'] = $primary;
 			$layout['footer']['settings']['button_text_color'] = $design['product']['button_text_color'] ?? '#FFFFFF';
 			$layout['footer']['settings']['show_button_icon'] = $design['product']['show_button_icon'] ?? true;
 		}
@@ -1520,7 +1579,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			foreach ( array( 'sign_in_recommendations', 'empty_recommendations', 'products_recommendations' ) as $recommendation_id ) {
 				$this->configure_element( $layout, $recommendation_id, array( 'layout_style' => $design['wishlist']['recommendation_layout'], 'columns' => $design['wishlist']['columns'], 'card_radius' => $design['wishlist']['card_radius'] ) );
 			}
-			$this->configure_element( $layout, 'wishlist_grid', array(
+			$this->configure_element( $layout, 'wishlist_grid', array_merge( array(
 				'columns' => $design['wishlist']['columns'],
 				'gap' => $design['wishlist']['gap'],
 				'card_style' => $design['wishlist']['card_style'],
@@ -1528,7 +1587,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'image_ratio' => $design['wishlist']['image_ratio'],
 				'show_name' => $design['wishlist']['show_name'],
 				'show_wishlist' => true,
-			) );
+			), $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) ) );
 		}
 		if ( 'account' === $page ) {
 			$this->configure_element( $layout, 'account_summary', array( 'avatar_size' => $design['account']['avatar_size'], 'card_style' => $design['account']['summary_style'], 'background_color' => $theme['surface'] ) );
@@ -1539,6 +1598,22 @@ final class Kidia_Mobile_Setup_Wizard {
 			$this->configure_element( $layout, 'size_chart_content', array( 'layout_style' => $design['product']['size_chart'], 'row_color' => $theme['soft'], 'text_color' => $theme['ink'], 'accent_color' => $primary ) );
 		}
 		return $layout;
+	}
+
+	/** @return array<string,mixed> */
+	private function compact_product_card_settings( string $primary, string $ink ): array {
+		return array(
+			'card_style' => 'outlined', 'card_radius' => 14, 'image_ratio' => .88,
+			'image_inset' => 5, 'image_radius' => 11,
+			'content_horizontal_padding' => 9, 'content_top_padding' => 5, 'content_bottom_padding' => 8,
+			'show_name' => true, 'show_price' => true, 'show_rating' => true, 'show_badge' => false,
+			'price_color' => $ink, 'price_size' => 14,
+			'quick_add_enabled' => true, 'quick_add_icon_variant' => 'bag',
+			'quick_add_icon_style' => 'filled', 'quick_add_icon_color' => $primary,
+			'quick_add_show_background' => true, 'quick_add_background_color' => '#FFFFFF',
+			'quick_add_background_size' => 36, 'quick_add_radius' => 18,
+			'quick_add_position' => 'bottom_end', 'show_wishlist' => false,
+		);
 	}
 
 	/**

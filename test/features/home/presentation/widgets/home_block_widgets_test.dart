@@ -473,4 +473,23 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+	testWidgets('quick links fill the row when item count is below configured columns', (WidgetTester tester) async {
+		const List<QuickLinkItem> links = <QuickLinkItem>[
+			QuickLinkItem(id: '1', imageUrl: 'https://example.com/1.jpg', label: 'One', subtitle: null, action: null),
+			QuickLinkItem(id: '2', imageUrl: 'https://example.com/2.jpg', label: 'Two', subtitle: null, action: null),
+			QuickLinkItem(id: '3', imageUrl: 'https://example.com/3.jpg', label: 'Three', subtitle: null, action: null),
+			QuickLinkItem(id: '4', imageUrl: 'https://example.com/4.jpg', label: 'Four', subtitle: null, action: null),
+		];
+		await pumpBlock(
+			tester,
+			QuickLinksBlockWidget(
+				block: const QuickLinksBlock(id: 'fill-row', enabled: true, title: null, subtitle: null, layout: 'grid', columns: 5, imageShape: 'circle', itemSize: 76, gap: 12, showLabels: true, labelColor: '#111111', labelSize: 13, items: links),
+				onAction: (_) {},
+			),
+		);
+		final GridView grid = tester.widget<GridView>(find.byType(GridView));
+		final SliverGridDelegateWithFixedCrossAxisCount delegate = grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+		expect(delegate.crossAxisCount, 4);
+	});
 }
