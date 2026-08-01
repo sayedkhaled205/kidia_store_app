@@ -163,6 +163,11 @@ assert.match(
   "Website promotion rendering must wait until late footer markup is available.",
 );
 assert.match(
+  publicScript,
+  /if \(!root\)[\s\S]*document\.createElement\("div"\)[\s\S]*kidiaAppPromoRoot[\s\S]*append\(root\)/,
+  "The frontend must create its own promotion root when a theme omits the footer slot.",
+);
+assert.match(
   template,
   /\[woo_mobile_app_promo\]/,
   "Inline promotions must expose a placement shortcode.",
@@ -486,6 +491,28 @@ lateRootDom.window.document.dispatchEvent(
   new lateRootDom.window.Event("DOMContentLoaded"),
 );
 
+const missingRootDom = new JSDOM(
+  "<!doctype html><body><main>Theme without a promotion footer root</main></body>",
+  {
+    runScripts: "outside-only",
+    url: "https://store.example/",
+  },
+);
+missingRootDom.window.matchMedia = () => ({ matches: false });
+missingRootDom.window.navigator.sendBeacon = () => true;
+missingRootDom.window.QRCode = function QRCode(holder) {
+  holder.append(missingRootDom.window.document.createElement("canvas"));
+};
+missingRootDom.window.QRCode.CorrectLevel = { M: 0 };
+missingRootDom.window.KidiaAppPromotion = JSON.parse(
+  JSON.stringify(qrDom.window.KidiaAppPromotion),
+);
+missingRootDom.window.KidiaAppPromotion.settings.page_target = "home";
+missingRootDom.window.eval(publicScript);
+missingRootDom.window.document.dispatchEvent(
+  new missingRootDom.window.Event("DOMContentLoaded"),
+);
+
 setTimeout(() => {
   const smartBanner = dom.window.document.querySelector(
     ".kidia-app-promo--smart_banner",
@@ -538,6 +565,12 @@ setTimeout(() => {
       ".kidia-app-promo--desktop_qr",
     ),
     "Home-only Desktop QR must render when its script loads before the footer root.",
+  );
+  assert.ok(
+    missingRootDom.window.document.querySelector(
+      "[data-kidia-app-promo-root] .kidia-app-promo--desktop_qr",
+    ),
+    "Home-only Desktop QR must render even when the active theme never prints a promotion root.",
   );
   console.log("Website app promotion tests passed.");
 }, 20);
