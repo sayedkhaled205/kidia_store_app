@@ -1284,6 +1284,8 @@ body.kidia-cms-plugin-page input[type="radio"]:checked{
 .kidia-ai-progress-card small{color:#75847f;line-height:1.45}
 .kidia-ai-progress-actions{display:flex;align-items:stretch;justify-content:flex-end;gap:8px;width:100%;margin-top:4px}
 .kidia-ai-progress-actions .button{display:inline-flex!important;width:100%;min-width:0;align-items:center!important;justify-content:center!important;gap:6px;padding-inline:12px!important;line-height:1.2!important;white-space:nowrap}
+.kidia-ai-progress-actions .button-primary{border-color:#236b59!important;background:#2f806e!important;color:#fff!important;box-shadow:none!important}
+.kidia-ai-progress-actions .button-primary:hover,.kidia-ai-progress-actions .button-primary:focus{border-color:#174e42!important;background:#236b59!important;color:#fff!important}
 .kidia-app-build__modal-card .button-primary{border-color:#236b59!important;background:#2f806e!important;color:#fff!important;box-shadow:none!important}
 .kidia-app-build__modal-card .button-primary:hover,.kidia-app-build__modal-card .button-primary:focus{border-color:#174e42!important;background:#236b59!important;color:#fff!important}
 .kidia-ai-progress-actions .button>.dashicons{display:grid;width:18px;height:18px;flex:0 0 18px;place-items:center;margin:0;font-size:18px;line-height:1;vertical-align:middle}
