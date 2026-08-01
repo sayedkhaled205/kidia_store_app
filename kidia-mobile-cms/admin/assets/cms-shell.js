@@ -2,6 +2,31 @@
 	'use strict';
 	const shell = document.querySelector('.kidia-cms-shell');
 
+	function backgroundJobStack() {
+		return document.querySelector('[data-kidia-background-job-stack]');
+	}
+
+	function appendBackgroundJobCard(card) {
+		const stack = backgroundJobStack();
+		if (!card) return card;
+		if (!stack) {
+			document.body.appendChild(card);
+			return card;
+		}
+		const job = String(card.dataset.kidiaBackgroundJob || '');
+		const existing = job
+			? Array.from(stack.querySelectorAll('[data-kidia-background-job]')).find(function (candidate) {
+				return candidate !== card && String(candidate.dataset.kidiaBackgroundJob || '') === job;
+			})
+			: null;
+		if (existing) {
+			card.remove();
+			return existing;
+		}
+		stack.appendChild(card);
+		return card;
+	}
+
 	function resetDocumentScroll() {
 		if ('scrollRestoration' in history) {
 			history.scrollRestoration = 'manual';
@@ -207,17 +232,15 @@
 			return node === sidebar ||
 				node === shell ||
 				(node.nodeType === 1 && (
+					node.matches('[data-kidia-background-job-stack]') ||
 					node.matches('[data-kidia-background-job]') ||
 					node.matches('.kidia-ai-progress-overlay.is-global')
 				));
 		};
 		const promoteBackgroundJobCards = function (content) {
-			const seen = new Set();
 			Array.from(content.querySelectorAll('[data-kidia-background-job]')).forEach(function (card) {
-				const job = String(card.dataset.kidiaBackgroundJob || '');
-				if (!job || seen.has(job)) return;
-				seen.add(job);
-				if (card.parentNode !== content) content.appendChild(card);
+				if (card.closest('[data-kidia-background-job-stack]')) return;
+				appendBackgroundJobCard(card);
 			});
 		};
 		const loadPage = async function (url, pushState) {
@@ -519,8 +542,7 @@
 			'<a class="button button-primary" data-ai-view-results hidden>View results</a>' +
 			'<button class="button kidia-ai-cancel-button" type="button" data-ai-cancel-button>Cancel analysis</button>' +
 			'</div></div>';
-		document.body.appendChild(dock);
-		return dock;
+		return appendBackgroundJobCard(dock);
 	};
 	const resetAiProgressVersion = function (overlay, jobId) {
 		if (!overlay) return;
@@ -530,6 +552,13 @@
 	};
 	const positionAiDock = function (overlay, left, top, remember) {
 		if (!overlay || !overlay.classList.contains('is-docked')) return;
+		if (overlay.closest('[data-kidia-background-job-stack]')) {
+			overlay.style.removeProperty('left');
+			overlay.style.removeProperty('top');
+			overlay.style.removeProperty('right');
+			overlay.style.removeProperty('bottom');
+			return;
+		}
 		const width = Math.max(1, overlay.offsetWidth || 380);
 		const height = Math.max(1, overlay.offsetHeight || 180);
 		const maxLeft = Math.max(8, window.innerWidth - width - 8);
@@ -563,6 +592,7 @@
 		card.addEventListener('pointerdown', function (event) {
 			if (
 				!overlay.classList.contains('is-docked') ||
+				overlay.closest('[data-kidia-background-job-stack]') ||
 				event.button !== 0 ||
 				event.target.closest('button,a,input,select,textarea')
 			) return;
@@ -596,7 +626,7 @@
 		) return false;
 		overlay.dataset.kidiaBackgroundJob = 'generate-offers';
 		overlay.classList.add('is-docked', 'is-global');
-		document.body.appendChild(overlay);
+		overlay = appendBackgroundJobCard(overlay);
 		restoreAiDockPosition(overlay);
 		bindAiDockDrag(overlay);
 		document.body.classList.remove('kidia-ai-is-generating');

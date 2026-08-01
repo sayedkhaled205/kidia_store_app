@@ -189,11 +189,12 @@ const initial = `<!doctype html><html><head><title>Overview</title></head>
         <a data-kidia-page-view="setup" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms&view=setup">Setup Wizard</a>
       </nav>
     </div>
-    <div data-kidia-app-build data-build-persistent data-kidia-background-job="app-build">Persistent build</div>
-    <section data-page-content>Overview content
-      <div><div data-kidia-background-job="abandoned-carts">Persistent cart import</div></div>
+    <div data-kidia-background-job-stack>
+      <div data-kidia-app-build data-build-persistent data-kidia-background-job="app-build">Persistent build</div>
+      <div data-kidia-background-job="abandoned-carts">Persistent cart import</div>
       <div class="kidia-ai-progress-overlay" data-kidia-background-job="generate-offers">Persistent offers</div>
-    </section>
+    </div>
+    <section data-page-content>Overview content</section>
     </main>
   </div>
 </body></html>`;
@@ -234,6 +235,7 @@ dom.window.fetch = async (_url, options = {}) => {
 const originalSidebar = dom.window.document.querySelector("[data-kidia-cms-sidebar]");
 const originalShell = dom.window.document.querySelector("[data-kidia-cms-shell]");
 const originalBuildCard = dom.window.document.querySelector("[data-build-persistent]");
+const originalJobStack = dom.window.document.querySelector("[data-kidia-background-job-stack]");
 const originalJobCards = Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]"));
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 const originalScrollWorkspace = dom.window.document.querySelector("#wpbody");
@@ -260,6 +262,11 @@ setTimeout(() => {
     dom.window.document.querySelector("[data-build-persistent]"),
     originalBuildCard,
     "Navigation must retain the exact background build card DOM node."
+  );
+  assert.strictEqual(
+    dom.window.document.querySelector("[data-kidia-background-job-stack]"),
+    originalJobStack,
+    "Navigation must retain the one shared background-job stack."
   );
   assert.strictEqual(
     dom.window.document.querySelector("#wpbody-content"),
