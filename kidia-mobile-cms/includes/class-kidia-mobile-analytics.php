@@ -814,45 +814,46 @@ final class Kidia_Mobile_Analytics {
 			return self::reporting_snapshot_from_orders( $from, $to, $source );
 		}
 
-		$paid_statuses = array();
-		foreach ( self::revenue_order_statuses() as $status ) {
-			$paid_statuses[] = $status;
-			$paid_statuses[] = 'wc-' . $status;
+		$excluded_statuses = array();
+		foreach ( self::reporting_excluded_statuses() as $status ) {
+			$excluded_statuses[] = $status;
+			$excluded_statuses[] = 'wc-' . $status;
 		}
-		$paid_statuses = array_values( array_unique( $paid_statuses ) );
-		$paid_placeholders = implode( ',', array_fill( 0, count( $paid_statuses ), '%s' ) );
+		$excluded_statuses = array_values( array_unique( $excluded_statuses ) );
+		$excluded_placeholders = implode( ',', array_fill( 0, count( $excluded_statuses ), '%s' ) );
 		$start = gmdate( 'Y-m-d H:i:s', $from );
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
-		$source_sql = self::reporting_source_sql( 'orders', $source );
+		$fact_source_sql = self::reporting_source_sql( 'facts', $source, true );
 
 		$summary_sql = "SELECT
-			COUNT(*) AS all_orders,
-			SUM(is_paid) AS paid_orders,
-			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, net_total) ELSE 0 END) AS paid_revenue,
-			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, num_items_sold) ELSE 0 END) AS units,
-			COUNT(DISTINCT CASE WHEN is_paid = 1 THEN COALESCE(NULLIF(customer_id, 0), -order_id) END) AS customers
+			SUM(CASE WHEN parent_id = 0 THEN 1 ELSE 0 END) AS all_orders,
+			SUM(CASE WHEN parent_id = 0 AND is_reportable = 1 THEN 1 ELSE 0 END) AS reportable_orders,
+			SUM(CASE WHEN is_reportable = 1 THEN net_total ELSE 0 END) AS net_revenue,
+			SUM(CASE WHEN is_reportable = 1 THEN num_items_sold ELSE 0 END) AS units,
+			SUM(CASE WHEN parent_id = 0 AND is_reportable = 1 THEN net_total ELSE 0 END) AS gross_order_net,
+			COUNT(DISTINCT CASE WHEN parent_id = 0 AND is_reportable = 1 THEN COALESCE(NULLIF(customer_id, 0), -order_id) END) AS customers
 			FROM (
-				SELECT orders.order_id, orders.customer_id, orders.net_total, orders.num_items_sold,
-					CASE WHEN orders.status IN ({$paid_placeholders}) THEN 1 ELSE 0 END AS is_paid
-				FROM {$stats_table} AS orders
-				WHERE orders.parent_id = 0
-					AND orders.date_created_gmt BETWEEN %s AND %s
-					AND orders.status NOT IN ('checkout-draft','wc-checkout-draft')
-					{$source_sql}
+				SELECT facts.order_id, facts.parent_id, facts.customer_id, facts.net_total, facts.num_items_sold,
+					CASE WHEN facts.status NOT IN ({$excluded_placeholders}) THEN 1 ELSE 0 END AS is_reportable
+				FROM {$stats_table} AS facts
+				WHERE facts.date_created_gmt BETWEEN %s AND %s
+					AND facts.status NOT IN ('checkout-draft','wc-checkout-draft')
+					{$fact_source_sql}
 			) AS reporting_orders";
-		$summary_args = array_merge( $paid_statuses, array( $start, $end ) );
+		$summary_args = array_merge( $excluded_statuses, array( $start, $end ) );
 		$row = $wpdb->get_row( $wpdb->prepare( $summary_sql, ...$summary_args ), ARRAY_A );
 		$snapshot['all_orders']          = absint( $row['all_orders'] ?? 0 );
-		$snapshot['orders']              = absint( $row['paid_orders'] ?? 0 );
+		$snapshot['orders']              = absint( $row['reportable_orders'] ?? 0 );
 		$snapshot['paid_orders']         = $snapshot['orders'];
-		$snapshot['revenue']             = max( 0, (float) ( $row['paid_revenue'] ?? 0 ) );
+		$snapshot['revenue']             = max( 0, (float) ( $row['net_revenue'] ?? 0 ) );
 		$snapshot['paid_revenue']        = $snapshot['revenue'];
-		$snapshot['units']               = absint( $row['units'] ?? 0 );
+		$snapshot['units']               = max( 0, (int) round( (float) ( $row['units'] ?? 0 ) ) );
 		$snapshot['customers']           = absint( $row['customers'] ?? 0 );
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
-			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
+			? round( (float) ( $row['gross_order_net'] ?? 0 ) / $snapshot['orders'], 2 )
 			: 0.0;
 
+		$source_sql = self::reporting_source_sql( 'orders', $source );
 		$status_sql = "SELECT orders.status, COUNT(*) AS status_count
 			FROM {$stats_table} AS orders
 			WHERE orders.parent_id = 0
@@ -869,22 +870,22 @@ final class Kidia_Mobile_Analytics {
 			}
 		}
 
+		$product_source_sql = self::reporting_source_sql( 'order_facts', $source, true );
 		$product_sql = "SELECT
 			CASE WHEN products.variation_id > 0 THEN products.variation_id ELSE products.product_id END AS product_id,
 			SUM(products.product_qty) AS units,
 			SUM(products.product_net_revenue) AS revenue,
-			COUNT(DISTINCT products.order_id) AS order_count
+			COUNT(DISTINCT CASE WHEN products.product_gross_revenue >= 0 THEN products.order_id END) AS order_count
 			FROM {$product_table} AS products
-			INNER JOIN {$stats_table} AS orders ON orders.order_id = products.order_id
-			WHERE orders.parent_id = 0
-				AND orders.date_created_gmt BETWEEN %s AND %s
-				AND orders.status IN ({$paid_placeholders})
-				{$source_sql}
+			INNER JOIN {$stats_table} AS order_facts ON order_facts.order_id = products.order_id
+			WHERE order_facts.date_created_gmt BETWEEN %s AND %s
+				AND order_facts.status NOT IN ({$excluded_placeholders})
+				{$product_source_sql}
 			GROUP BY product_id
 			HAVING units > 0
 			ORDER BY revenue DESC, units DESC
 			LIMIT 50";
-		$product_args = array_merge( array( $start, $end ), $paid_statuses );
+		$product_args = array_merge( array( $start, $end ), $excluded_statuses );
 		$product_rows = $wpdb->get_results( $wpdb->prepare( $product_sql, ...$product_args ), ARRAY_A );
 		foreach ( (array) $product_rows as $product_row ) {
 			$product_id = absint( $product_row['product_id'] ?? 0 );
@@ -915,7 +916,7 @@ final class Kidia_Mobile_Analytics {
 			self::empty_commerce_snapshot(),
 			array( 'all_orders' => 0, 'paid_orders' => 0, 'paid_revenue' => 0.0, 'status_counts' => array() )
 		);
-		$paid_statuses = self::revenue_order_statuses();
+		$reporting_statuses = self::reporting_order_statuses();
 		$customers = array();
 		$products  = array();
 		foreach ( self::orders_in_period( $from, $to, $source, self::countable_order_statuses() ) as $order ) {
@@ -925,12 +926,26 @@ final class Kidia_Mobile_Analytics {
 			++$snapshot['all_orders'];
 			$status = self::normalize_order_status( $order->get_status() );
 			$snapshot['status_counts'][ $status ] = absint( $snapshot['status_counts'][ $status ] ?? 0 ) + 1;
-			if ( ! in_array( $status, $paid_statuses, true ) ) {
+			if ( ! in_array( $status, $reporting_statuses, true ) ) {
 				continue;
 			}
 			++$snapshot['orders'];
-			$refunded = is_callable( array( $order, 'get_total_refunded' ) ) ? (float) $order->get_total_refunded() : 0.0;
-			$snapshot['revenue'] += max( 0, (float) $order->get_total() - $refunded );
+			$order_net = (float) $order->get_total()
+				- ( is_callable( array( $order, 'get_total_tax' ) ) ? (float) $order->get_total_tax() : 0.0 )
+				- ( is_callable( array( $order, 'get_shipping_total' ) ) ? (float) $order->get_shipping_total() : 0.0 );
+			$snapshot['average_order_value'] += $order_net;
+			$order_refund_net = 0.0;
+			if ( is_callable( array( $order, 'get_refunds' ) ) ) {
+				foreach ( (array) $order->get_refunds() as $refund ) {
+					if ( ! is_object( $refund ) || ! is_callable( array( $refund, 'get_total' ) ) ) {
+						continue;
+					}
+					$order_refund_net += (float) $refund->get_total()
+						- ( is_callable( array( $refund, 'get_total_tax' ) ) ? (float) $refund->get_total_tax() : 0.0 )
+						- ( is_callable( array( $refund, 'get_shipping_total' ) ) ? (float) $refund->get_shipping_total() : 0.0 );
+				}
+			}
+			$snapshot['revenue'] += max( 0, $order_net + $order_refund_net );
 			$customer_key = absint( $order->get_customer_id() ) > 0
 				? 'user:' . absint( $order->get_customer_id() )
 				: 'email:' . strtolower( sanitize_email( (string) $order->get_billing_email() ) );
@@ -966,7 +981,7 @@ final class Kidia_Mobile_Analytics {
 		$snapshot['paid_orders']         = $snapshot['orders'];
 		$snapshot['paid_revenue']        = $snapshot['revenue'];
 		$snapshot['customers']           = count( $customers );
-		$snapshot['average_order_value'] = $snapshot['orders'] > 0 ? round( $snapshot['revenue'] / $snapshot['orders'], 2 ) : 0.0;
+		$snapshot['average_order_value'] = $snapshot['orders'] > 0 ? round( $snapshot['average_order_value'] / $snapshot['orders'], 2 ) : 0.0;
 		uasort( $products, static fn( $left, $right ) => $right['revenue'] <=> $left['revenue'] );
 		$snapshot['products']            = array_slice( array_values( $products ), 0, 50 );
 		$snapshot['orders_scanned']      = $snapshot['all_orders'];
@@ -976,7 +991,7 @@ final class Kidia_Mobile_Analytics {
 	}
 
 	/** Returns the source predicate shared by every reporting aggregate. */
-	private static function reporting_source_sql( string $alias, string $source ): string {
+	private static function reporting_source_sql( string $alias, string $source, bool $refund_aware = false ): string {
 		if ( 'all' === $source ) {
 			return '';
 		}
@@ -989,9 +1004,12 @@ final class Kidia_Mobile_Analytics {
 			$queries[] = "SELECT order_id FROM {$hpos_meta} WHERE meta_key = '_kidia_order_source' AND meta_value = 'mobile'";
 		}
 		$mobile_orders = 'SELECT DISTINCT order_id FROM (' . implode( ' UNION ALL ', $queries ) . ') AS kidia_mobile_sources';
+		$order_id = $refund_aware
+			? "(CASE WHEN {$alias}.parent_id > 0 THEN {$alias}.parent_id ELSE {$alias}.order_id END)"
+			: "{$alias}.order_id";
 		return 'mobile' === $source
-			? " AND {$alias}.order_id IN ({$mobile_orders})"
-			: " AND {$alias}.order_id NOT IN ({$mobile_orders})";
+			? " AND {$order_id} IN ({$mobile_orders})"
+			: " AND {$order_id} NOT IN ({$mobile_orders})";
 	}
 
 	/** Checks optional WooCommerce reporting tables without assuming HPOS is enabled. */
@@ -1187,6 +1205,40 @@ final class Kidia_Mobile_Analytics {
 		}
 
 		return array_values( array_unique( array_filter( $paid ) ) );
+	}
+
+	/**
+	 * Returns the status exclusions configured for WooCommerce Analytics.
+	 *
+	 * Refund rows inherit the parent order status in wc_order_stats, so the
+	 * Refunded status must stay reportable for its negative facts to reduce net
+	 * sales and items sold. This mirrors WooCommerce's report setting and filter.
+	 *
+	 * @return string[]
+	 */
+	public static function reporting_excluded_statuses(): array {
+		$defaults = array( 'pending', 'failed', 'cancelled' );
+		if ( class_exists( 'WC_Admin_Settings' ) && is_callable( array( 'WC_Admin_Settings', 'get_option' ) ) ) {
+			$excluded = (array) WC_Admin_Settings::get_option( 'woocommerce_excluded_report_order_statuses', $defaults );
+		} elseif ( function_exists( 'get_option' ) ) {
+			$excluded = (array) get_option( 'woocommerce_excluded_report_order_statuses', $defaults );
+		} else {
+			$excluded = $defaults;
+		}
+		$excluded = array_merge( array( 'auto-draft', 'trash', 'checkout-draft' ), $excluded );
+		if ( function_exists( 'apply_filters' ) ) {
+			$excluded = (array) apply_filters( 'woocommerce_analytics_excluded_order_statuses', $excluded );
+		}
+		return array_values(
+			array_unique(
+				array_filter( array_map( array( self::class, 'normalize_order_status' ), $excluded ) )
+			)
+		);
+	}
+
+	/** @return string[] */
+	public static function reporting_order_statuses(): array {
+		return array_values( array_diff( self::countable_order_statuses(), self::reporting_excluded_statuses() ) );
 	}
 
 	/**

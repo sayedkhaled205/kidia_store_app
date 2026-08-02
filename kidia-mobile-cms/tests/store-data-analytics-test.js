@@ -277,8 +277,23 @@ assert.match(
 );
 assert.match(
   analytics,
-  /status NOT IN \('checkout-draft','wc-checkout-draft'\)[\s\S]*status IN \(\{\$paid_placeholders\}\)/,
-  "All-order status totals and paid-only revenue must remain separate.",
+  /reporting_excluded_statuses[\s\S]*woocommerce_excluded_report_order_statuses[\s\S]*woocommerce_analytics_excluded_order_statuses/,
+  "Store Data must follow the same status exclusions as WooCommerce Analytics.",
+);
+assert.match(
+  analytics,
+  /SUM\(CASE WHEN is_reportable = 1 THEN net_total ELSE 0 END\)[\s\S]*SUM\(CASE WHEN is_reportable = 1 THEN num_items_sold ELSE 0 END\)/,
+  "Store Data net sales and items must include WooCommerce refund facts.",
+);
+assert.match(
+  analytics,
+  /CASE WHEN \{\$alias\}\.parent_id > 0 THEN \{\$alias\}\.parent_id ELSE \{\$alias\}\.order_id END/,
+  "Refund facts must inherit the original order's Website or Mobile channel.",
+);
+assert.match(
+  storeData,
+  /Net sales[\s\S]*Average order value[\s\S]*Items sold/,
+  "Report labels must describe WooCommerce Analytics metrics accurately.",
 );
 assert.match(
   analytics,
@@ -337,8 +352,8 @@ assert.match(
 );
 assert.match(
   storeData,
-  /analytics\['commerce'\]\['orders'\][\s\S]*Paid orders[\s\S]*Paid revenue/,
-  "Analytics order KPIs must use WooCommerce paid orders and revenue as the source of truth.",
+  /analytics\['commerce'\]\['orders'\][\s\S]*analytics\['commerce'\]\['average_order_value'\][\s\S]*Orders[\s\S]*Net sales/,
+  "Analytics order KPIs must use WooCommerce reportable orders, net sales and average order value.",
 );
 assert.match(
   admin,
