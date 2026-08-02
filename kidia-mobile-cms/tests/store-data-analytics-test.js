@@ -267,13 +267,13 @@ assert.match(
 );
 assert.match(
   admin,
-  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
-  "Abandoned Carts, Analytics and Reports must default to Today.",
+  /'abandoned-carts' === \$store_tab[\s\S]*\? 'all_time'[\s\S]*array\( 'reports', 'analytics' \)[\s\S]*\? 'today'/,
+  "Abandoned Carts must default to All time while Analytics and Reports default to Today.",
 );
 assert.match(
   storeData,
-  /in_array\(\s*\$tab,\s*array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\),\s*true\s*\)[\s\S]*\?\s*'today'/,
-  "Navigation into Abandoned Carts, Analytics or Reports must keep Today as the default.",
+  /'abandoned-carts' === \$tab[\s\S]*\? 'all_time'[\s\S]*array\( 'reports', 'analytics' \)[\s\S]*\? 'today'/,
+  "Navigation must keep All time for Abandoned Carts and Today for Analytics or Reports.",
 );
 assert.match(
   analytics,
@@ -307,7 +307,7 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Generate Offers from Store Data[\s\S]*Ready to build data-backed offers/,
+  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*data-ai-generate-label[\s\S]*Generate[\s\S]*Ready to build data-backed offers/,
   "AI Studio must open in a lightweight ready state and expose an explicit generate action.",
 );
 assert.match(
@@ -489,7 +489,7 @@ assert.match(
 );
 assert.match(
   admin,
-  /wp_ajax_kidia_mobile_start_ai_analysis[\s\S]*wp_ajax_kidia_mobile_step_ai_analysis[\s\S]*ai_ready[\s\S]*has_commerce_snapshot/,
+  /wp_ajax_kidia_mobile_start_ai_analysis[\s\S]*wp_ajax_kidia_mobile_step_ai_analysis[\s\S]*\$ai_generated\s*=\s*Kidia_Mobile_Analytics::has_commerce_snapshot/,
   "AI results must render only after a completed server snapshot exists.",
 );
 assert.match(
@@ -554,8 +554,18 @@ assert.match(
 );
 assert.match(
   analytics,
-  /SELECT COUNT\(\*\) FROM \{\$sessions_table\}[\s\S]*WHERE session_id > %d[\s\S]*import_website_session_row/,
+  /SELECT COUNT\(\*\) FROM \{\$sessions_table\}[\s\S]*'session_cursor'\s*=>\s*0[\s\S]*WHERE session_id > %d[\s\S]*import_website_session_row/,
   "Historical cart import must inspect every retained WooCommerce session and decide after deserializing it whether it contains a cart.",
+);
+assert.doesNotMatch(
+  analytics,
+  /\$new_sessions|\$new_persistent/,
+  "Update must not treat a higher database id as proof that it is the only changed WooCommerce session.",
+);
+assert.match(
+  analytics,
+  /WooCommerce updates session_value in place[\s\S]*leaving the already stored results visible[\s\S]*'session_cursor'\s*=>\s*0/,
+  "Update must recheck existing session ids while preserving the previously displayed results.",
 );
 assert.doesNotMatch(
   analytics,
@@ -564,7 +574,7 @@ assert.doesNotMatch(
 );
 assert.match(
   analytics,
-  /ensure_website_session_import\( bool \$force_refresh = false \)[\s\S]*'complete' ===[\s\S]*! \$force_refresh[\s\S]*sync_website_sessions[\s\S]*ensure_website_session_import\(\)/,
+  /ensure_website_session_import\( bool \$force_refresh = false, bool \$full_regenerate = false \)[\s\S]*'complete' ===[\s\S]*! \$force_refresh[\s\S]*sync_website_sessions[\s\S]*ensure_website_session_import\(\)/,
   "Opening Abandoned Carts must preserve a completed import instead of restarting its counters.",
 );
 assert.doesNotMatch(
@@ -594,18 +604,18 @@ assert.match(
 );
 assert.match(
   analytics,
-  /abandoned_carts[\s\S]*status IN \('recovered','converted'\)[\s\S]*status = 'abandoned'[\s\S]*last_activity_at <= %s[\s\S]*LIMIT %d OFFSET %d/,
-  "Abandoned and recovered carts must be queried independently with real server-side pagination.",
+  /abandoned_carts[\s\S]*status IN \('recovered','converted'\)[\s\S]*'active' === \$view[\s\S]*last_activity_at > %s[\s\S]*status = 'abandoned'[\s\S]*last_activity_at <= %s[\s\S]*LIMIT %d OFFSET %d/,
+  "Active, abandoned and recovered carts must be queried independently with real server-side pagination.",
 );
 assert.match(
   analytics,
-  /abandoned_summary[\s\S]*COUNT\(\*\) AS carts[\s\S]*potential_value/,
-  "Abandoned-cart headline totals must cover the complete filtered dataset, not only the visible table rows.",
+  /abandoned_summary[\s\S]*COUNT\(\*\) AS carts[\s\S]*AS active[\s\S]*AS abandoned[\s\S]*AS recovered[\s\S]*potential_value/,
+  "Abandoned-cart headline totals must classify every filtered cart, including carts still active inside the inactivity window.",
 );
 assert.match(
   admin,
-  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
-  "Abandoned Carts must open on Today by default.",
+  /'abandoned-carts' === \$store_tab[\s\S]*\? 'all_time'[\s\S]*array\( 'reports', 'analytics' \)[\s\S]*\? 'today'/,
+  "Abandoned Carts must open on All time while Analytics and Reports keep Today.",
 );
 assert.match(
   admin,
@@ -614,13 +624,23 @@ assert.match(
 );
 assert.match(
   storeData,
-  /kidia-cart-view-tabs[\s\S]*Abandoned[\s\S]*Recovered[\s\S]*data-cart-per-page[\s\S]*paginate_links/,
-  "The cart workspace must expose Abandoned and Recovered tabs, a page-size control and numbered navigation.",
+  /kidia-cart-view-tabs[\s\S]*Active[\s\S]*Abandoned[\s\S]*Recovered[\s\S]*data-cart-per-page[\s\S]*paginate_links/,
+  "The cart workspace must expose Active, Abandoned and Recovered tabs, a page-size control and numbered navigation.",
 );
 assert.match(
   storeData,
-  /array\(\s*'abandoned-carts',\s*'reports',\s*'analytics'\s*\)[\s\S]*\?\s*'today'/,
-  "Links into Abandoned Carts must preserve the Today default.",
+  /'abandoned-carts' === \$tab[\s\S]*\? 'all_time'[\s\S]*array\( 'reports', 'analytics' \)[\s\S]*\? 'today'/,
+  "Links into Abandoned Carts must preserve the All time default.",
+);
+assert.match(
+  analytics,
+  /Unknown persistent-cart age must not outrank[\s\S]*\$last_active > 0 \? \$last_active : 1[\s\S]*items=IF\(VALUES\(last_activity_at\)>=last_activity_at,VALUES\(items\),items\)[\s\S]*WHEN VALUES\(last_activity_at\)<last_activity_at THEN status/,
+  "An older persistent cart must never overwrite newer session items or status for the same customer.",
+);
+assert.doesNotMatch(
+  analytics,
+  /wp_json_encode\( array_slice\( \$items, 0, 100 \) \)/,
+  "Trusted WooCommerce carts must retain every line item instead of silently dropping items after the first 100.",
 );
 assert.match(
   shellTemplate,
