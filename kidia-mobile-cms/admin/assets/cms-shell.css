@@ -670,7 +670,16 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
 .kidia-date-filter label>span{color:#52645f;font-size:11px;font-weight:750}
 .kidia-date-filter :is(select,input){min-width:150px;min-height:38px;border-color:#b9d4cd;border-radius:8px;background:#fff}
 .kidia-date-filter button{display:inline-flex!important;min-width:82px;align-items:center!important;justify-content:center!important;padding-block:0!important;line-height:1.2!important;text-align:center!important}
+.kidia-date-filter .kidia-store-generate{min-width:118px;border-color:#236b59!important;background:#2f806e!important;color:#fff!important;box-shadow:0 5px 12px rgba(35,107,89,.16)!important}
+.kidia-date-filter .kidia-store-generate:hover,.kidia-date-filter .kidia-store-generate:focus{border-color:#174e42!important;background:#236b59!important;color:#fff!important}
+.kidia-date-filter .kidia-store-generate .dashicons{width:16px;height:16px;font-size:16px}
+.kidia-date-filter.is-kidia-loading .kidia-store-generate{cursor:wait;opacity:.72}
+.kidia-reporting-error{width:100%;color:#b42318;font-size:12px;font-weight:700}
 .kidia-date-filter p{margin:0 0 9px auto;color:#64746f;font-weight:650}
+.kidia-reporting-ready{display:flex;min-height:230px;align-items:center;justify-content:center;gap:16px;padding:28px;border:1px dashed #9dc9bd;border-radius:14px;background:linear-gradient(135deg,#f1faf7,#fff);text-align:start}
+.kidia-reporting-ready>.dashicons{display:grid;width:54px;height:54px;flex:0 0 54px;place-items:center;border-radius:15px;background:#dff2ec;color:#2f806e;font-size:29px}
+.kidia-reporting-ready h3{margin:0 0 6px;color:#174e42;font-size:19px}
+.kidia-reporting-ready p{max-width:720px;margin:0;color:#61716c;line-height:1.6}
 .kidia-data-summary.is-four{grid-template-columns:repeat(4,minmax(0,1fr))}
 .kidia-data-summary.is-five{grid-template-columns:repeat(5,minmax(0,1fr))}
 .kidia-data-summary>div{box-sizing:border-box;min-height:92px;align-content:center}

@@ -18,6 +18,9 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	private const CAPABILITY = 'manage_options';
 
+	/** One explicit Generate unlocks the automatically maintained reporting index. */
+	private const REPORTING_READY_OPTION = 'kidia_mobile_store_reporting_ready_v1';
+
 	/** @var array<string,string> */
 	private const PAGE_BUILDER_SLUGS = array(
 		'kidia-mobile-catalog-builder'  => 'catalog',
@@ -152,6 +155,7 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'wp_ajax_kidia_mobile_cancel_ai_analysis', array( $this, 'cancel_ai_analysis' ) );
 		add_action( 'wp_ajax_kidia_mobile_ai_analysis_status', array( $this, 'ai_analysis_status' ) );
 		add_action( 'wp_ajax_kidia_mobile_dismiss_ai_analysis', array( $this, 'dismiss_ai_analysis' ) );
+		add_action( 'wp_ajax_kidia_mobile_generate_store_reporting', array( $this, 'generate_store_reporting' ) );
 		add_action( 'wp_ajax_kidia_mobile_abandoned_cart_details', array( $this, 'abandoned_cart_details' ) );
 		add_action( 'wp_ajax_kidia_mobile_cms_view', array( $this, 'cms_view_fragment' ) );
 		add_action( 'admin_notices', array( $this, 'render_cms_shell' ), 1 );
@@ -476,6 +480,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$date_preset = $date_range['preset'];
 		$previous_to = $date_from - 1;
 		$previous_from = $previous_to - ( $date_to - $date_from );
+		$store_reporting_ready = (bool) get_option( self::REPORTING_READY_OPTION, false );
 
 		$product_page     = max( 1, absint( $_GET['product_page'] ?? 1 ) );
 		$product_per_page = 20;
@@ -640,9 +645,7 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 
 		$orders = array();
-		if ( 'reports' === $store_tab ) {
-			$orders = Kidia_Mobile_Analytics::orders_in_period( $date_from, $date_to, $store_source );
-		} elseif ( 'orders' === $store_tab && function_exists( 'wc_get_orders' ) ) {
+		if ( 'orders' === $store_tab && function_exists( 'wc_get_orders' ) ) {
 			$order_args = array(
 				'limit'        => 60,
 				'orderby'      => 'date',
@@ -694,45 +697,34 @@ final class Kidia_Mobile_CMS_Admin {
 		$customer_total = $customer_query instanceof WP_User_Query ? absint( $customer_query->get_total() ) : 0;
 		$customer_pages = max( 1, (int) ceil( $customer_total / 24 ) );
 
-		$order_revenue = 0.0;
-		$order_units   = 0;
-		$paid_order_count = 0;
-		$order_statuses = array();
-		$product_performance = array();
-		$paid_statuses = Kidia_Mobile_Analytics::revenue_order_statuses();
-		foreach ( $orders as $order ) {
-			if ( ! is_object( $order ) || ! method_exists( $order, 'get_total' ) ) {
-				continue;
-			}
-			$status = (string) $order->get_status();
-			$order_statuses[ $status ] = ( $order_statuses[ $status ] ?? 0 ) + 1;
-			if ( ! in_array( $status, $paid_statuses, true ) ) {
-				continue;
-			}
-			++$paid_order_count;
-			$order_revenue += (float) $order->get_total();
-			foreach ( $order->get_items() as $item ) {
-				$product_id = absint( $item->get_product_id() );
-				if ( ! isset( $product_performance[ $product_id ] ) ) {
-					$product_performance[ $product_id ] = array(
-						'name'    => $item->get_name(),
-						'units'   => 0,
-						'revenue' => 0.0,
-					);
-				}
-				$product_performance[ $product_id ]['units'] += absint( $item->get_quantity() );
-				$product_performance[ $product_id ]['revenue'] += (float) $item->get_total();
-				$order_units += absint( $item->get_quantity() );
-			}
+		$reporting_snapshot = Kidia_Mobile_Analytics::empty_commerce_snapshot();
+		$reporting_snapshot['all_orders'] = 0;
+		$reporting_snapshot['status_counts'] = array();
+		if ( $store_reporting_ready && in_array( $store_tab, array( 'reports', 'analytics' ), true ) ) {
+			$reporting_snapshot = Kidia_Mobile_Analytics::reporting_snapshot( $date_from, $date_to, $store_source );
 		}
-		uasort( $product_performance, static fn( $left, $right ) => $right['revenue'] <=> $left['revenue'] );
-		$product_performance = array_slice( $product_performance, 0, 10, true );
+		$order_revenue   = (float) ( $reporting_snapshot['revenue'] ?? 0 );
+		$order_units     = absint( $reporting_snapshot['units'] ?? 0 );
+		$paid_order_count = absint( $reporting_snapshot['orders'] ?? 0 );
+		$order_statuses  = is_array( $reporting_snapshot['status_counts'] ?? null )
+			? $reporting_snapshot['status_counts']
+			: array();
+		$product_performance = array();
+		foreach ( array_slice( (array) ( $reporting_snapshot['products'] ?? array() ), 0, 10 ) as $product_row ) {
+			$product_id = absint( $product_row['object_id'] ?? 0 );
+			$product_performance[ $product_id ] = array(
+				'name'    => sanitize_text_field( (string) ( $product_row['event_label'] ?? '#' . $product_id ) ),
+				'units'   => absint( $product_row['event_count'] ?? 0 ),
+				'revenue' => max( 0, (float) ( $product_row['revenue'] ?? 0 ) ),
+			);
+		}
 
 		$analytics = Kidia_Mobile_Analytics::empty_summary();
 		$analytics_previous = Kidia_Mobile_Analytics::empty_summary();
-		if ( 'analytics' === $store_tab ) {
-			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source, true );
-			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
+		if ( 'analytics' === $store_tab && $store_reporting_ready ) {
+			$previous_reporting = Kidia_Mobile_Analytics::reporting_snapshot( $previous_from, $previous_to, $store_source );
+			$analytics = Kidia_Mobile_Analytics::summary( $date_from, $date_to, $store_source, true, $reporting_snapshot );
+			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source, true, $previous_reporting );
 		}
 		$cart_view = isset( $_GET['cart_view'] ) ? sanitize_key( wp_unslash( $_GET['cart_view'] ) ) : 'abandoned';
 		$cart_view = in_array( $cart_view, array( 'active', 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
@@ -1021,6 +1013,46 @@ final class Kidia_Mobile_CMS_Admin {
 			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
 		}
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Enables the indexed Store Data reports after an explicit owner action.
+	 *
+	 * The warm-up query validates the exact requested range before the ready
+	 * flag is saved. Later filters read WooCommerce's automatically maintained
+	 * lookup rows and therefore do not need another long-running generation.
+	 */
+	public function generate_store_reporting(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to generate store reports.', 'kidia-mobile-cms' ) ), 403 );
+		}
+		check_ajax_referer( 'kidia_mobile_store_reporting', 'nonce' );
+		$preset = sanitize_key( (string) wp_unslash( $_POST['date_preset'] ?? 'today' ) );
+		$range  = $this->store_data_date_range( $preset, $_POST );
+		$source = sanitize_key( (string) wp_unslash( $_POST['store_source'] ?? 'all' ) );
+		$source = in_array( $source, array( 'all', 'website', 'mobile' ), true ) ? $source : 'all';
+		$tab    = sanitize_key( (string) wp_unslash( $_POST['store_tab'] ?? 'reports' ) );
+		$tab    = in_array( $tab, array( 'reports', 'analytics' ), true ) ? $tab : 'reports';
+
+		Kidia_Mobile_Analytics::reporting_snapshot( absint( $range['from'] ), absint( $range['to'] ), $source );
+		update_option( self::REPORTING_READY_OPTION, time(), false );
+		$args = array(
+			'page'         => 'kidia-mobile-store-data',
+			'store_tab'    => $tab,
+			'store_source' => $source,
+			'date_preset'  => (string) $range['preset'],
+			'report_ready' => '1',
+		);
+		if ( 'custom' === (string) $range['preset'] ) {
+			$args['date_from'] = wp_date( 'Y-m-d', absint( $range['from'] ) );
+			$args['date_to']   = wp_date( 'Y-m-d', absint( $range['to'] ) );
+		}
+		wp_send_json_success(
+			array(
+				'url'          => add_query_arg( $args, admin_url( 'admin.php' ) ),
+				'generated_at' => time(),
+			)
+		);
 	}
 
 	/** Processes one real analysis batch and reports completed records. */
@@ -2595,6 +2627,7 @@ final class Kidia_Mobile_CMS_Admin {
 						array(
 							'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 							'aiNonce'     => wp_create_nonce( 'kidia_mobile_ai_analysis' ),
+							'storeNonce'  => wp_create_nonce( 'kidia_mobile_store_reporting' ),
 							'cartNonce'   => wp_create_nonce( 'kidia_mobile_abandoned_cart_details' ),
 							'activeAiJob' => Kidia_Mobile_AI_Analysis_Job::active_job_id( get_current_user_id() ),
 							'aiUrl'       => add_query_arg( array( 'page' => 'kidia-mobile-ai-insights' ), admin_url( 'admin.php' ) ),

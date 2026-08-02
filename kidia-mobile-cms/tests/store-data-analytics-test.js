@@ -132,8 +132,18 @@ assert.match(
 );
 assert.match(
   websiteAnalytics,
-  /kidia_website_analytics_queue_v1[\s\S]*event_id[\s\S]*site_visit[\s\S]*add_to_cart[\s\S]*remove_from_cart/,
-  "The website tracker must durably queue visits and commerce intent.",
+  /kidia_website_analytics_queue_v1[\s\S]*event_id[\s\S]*site_visit[\s\S]*context\.event[\s\S]*begin_checkout/,
+  "The website tracker must durably queue cache-safe visits and page intent.",
+);
+assert.doesNotMatch(
+  websiteAnalytics,
+  /send\("(?:add_to_cart|remove_from_cart)"/,
+  "Cart clicks must not duplicate the canonical successful WooCommerce cart hooks.",
+);
+assert.match(
+  analytics,
+  /woocommerce_add_to_cart[\s\S]*capture_website_add_to_cart[\s\S]*capture_website_remove_from_cart/,
+  "Successful website cart changes must remain the single analytics source.",
 );
 for (const event of [
   "site_visit",
@@ -208,6 +218,11 @@ assert.doesNotMatch(
 );
 assert.match(analytics, /source varchar\(12\)[\s\S]*source_event_time/);
 assert.match(analytics, /summary\( int \$from, int \$to, string \$source/);
+assert.match(
+  analytics,
+  /CONCAT\(source, ':', client_id\)[\s\S]*GROUP BY ["']?source, client_id/,
+  "All-channel visitors and funnels must not merge equal website and mobile client ids.",
+);
 assert.match(productVisibility, /MOBILE_META[\s\S]*WEBSITE_META/);
 assert.match(productVisibility, /woocommerce_store_api_product_query/);
 assert.match(productVisibility, /woocommerce_product_query_meta_query/);
@@ -242,18 +257,43 @@ assert.match(
 );
 assert.match(
   analytics,
-  /summary\( int \$from, int \$to, string \$source = 'all', bool \$fresh = false \)[\s\S]*if \( ! \$fresh \)[\s\S]*get_transient[\s\S]*commerce_snapshot\( \$from, \$to, \$source, \$fresh \)/,
+  /summary\( int \$from, int \$to, string \$source = 'all', bool \$fresh = false, \?array \$commerce_override = null \)[\s\S]*if \( ! \$fresh && null === \$commerce_override \)[\s\S]*get_transient[\s\S]*commerce_snapshot\( \$from, \$to, \$source, \$fresh \)/,
   "Store Data must be able to bypass stale summary and commerce caches.",
 );
 assert.match(
   admin,
-  /Kidia_Mobile_Analytics::summary\( \$date_from, \$date_to, \$store_source, true \)/,
-  "The Analytics page must always request a fresh source-of-truth summary.",
+  /Kidia_Mobile_Analytics::summary\( \$date_from, \$date_to, \$store_source, true, \$reporting_snapshot \)/,
+  "The Analytics page must combine fresh journey events with the indexed WooCommerce source of truth.",
 );
 assert.match(
   admin,
-  /'reports'\s*===\s*\$store_tab[\s\S]*Kidia_Mobile_Analytics::orders_in_period\(\s*\$date_from,\s*\$date_to,\s*\$store_source\s*\)/,
-  "Store Data reports must use the verified shared WooCommerce order source.",
+  /array\( 'reports', 'analytics' \)[\s\S]*Kidia_Mobile_Analytics::reporting_snapshot\( \$date_from, \$date_to, \$store_source \)/,
+  "Reports and Analytics must share the indexed WooCommerce reporting source.",
+);
+assert.match(
+  analytics,
+  /reporting_snapshot[\s\S]*wc_order_stats[\s\S]*wc_order_product_lookup[\s\S]*net_total[\s\S]*product_net_revenue/,
+  "Generated Store Data must use WooCommerce's automatically maintained order and product facts.",
+);
+assert.match(
+  analytics,
+  /status NOT IN \('checkout-draft','wc-checkout-draft'\)[\s\S]*status IN \(\{\$paid_placeholders\}\)/,
+  "All-order status totals and paid-only revenue must remain separate.",
+);
+assert.match(
+  analytics,
+  /reporting_source_sql[\s\S]*wc_orders_meta[\s\S]*_kidia_order_source[\s\S]*meta_value = 'mobile'/,
+  "Channel reporting must support CPT and HPOS order metadata.",
+);
+assert.match(
+  admin,
+  /generate_store_reporting[\s\S]*REPORTING_READY_OPTION[\s\S]*reporting_snapshot[\s\S]*update_option/,
+  "The first reporting calculation must start only after an explicit Generate action.",
+);
+assert.match(
+  storeData,
+  /data-kidia-reporting-ready[\s\S]*data-kidia-generate-store-reporting[\s\S]*Generate/,
+  "Reports and Analytics must expose the Kidia Generate control.",
 );
 assert.match(
   analytics,

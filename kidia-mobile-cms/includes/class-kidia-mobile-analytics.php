@@ -668,10 +668,10 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @return array<string,mixed>
 	 */
-	public static function summary( int $from, int $to, string $source = 'all', bool $fresh = false ): array {
+	public static function summary( int $from, int $to, string $source = 'all', bool $fresh = false, ?array $commerce_override = null ): array {
 		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$cache_key = self::summary_cache_key( $from, $to, $source );
-		if ( ! $fresh ) {
+		if ( ! $fresh && null === $commerce_override ) {
 			$cached = get_transient( $cache_key );
 			if ( is_array( $cached ) ) {
 				return array_merge( self::empty_summary(), $cached );
@@ -683,13 +683,14 @@ final class Kidia_Mobile_Analytics {
 		$start = gmdate( 'Y-m-d H:i:s', $from );
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$client_identity_sql = 'all' === $source ? "CONCAT(source, ':', client_id)" : 'client_id';
 		$event_args = array( $start, $end );
 		if ( 'all' !== $source ) {
 			$event_args[] = $source;
 		}
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT event_name, COUNT(*) AS event_count, COUNT(DISTINCT client_id) AS unique_clients,
+				"SELECT event_name, COUNT(*) AS event_count, COUNT(DISTINCT {$client_identity_sql}) AS unique_clients,
 					SUM(event_value) AS event_value
 				FROM {$table}
 				WHERE occurred_at BETWEEN %s AND %s {$source_sql}
@@ -716,7 +717,7 @@ final class Kidia_Mobile_Analytics {
 		}
 		$visitors = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT client_id)
+				"SELECT COUNT(DISTINCT {$client_identity_sql})
 				FROM {$table}
 				WHERE event_name IN ('app_open','site_visit')
 				AND occurred_at BETWEEN %s AND %s {$source_sql}",
@@ -732,10 +733,10 @@ final class Kidia_Mobile_Analytics {
 		$new      = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM (
-					SELECT client_id, MIN(occurred_at) AS first_seen
+					SELECT source, client_id, MIN(occurred_at) AS first_seen
 					FROM {$table}
 					WHERE event_name IN ('app_open','site_visit') {$source_sql}
-					GROUP BY client_id
+					GROUP BY " . ( 'all' === $source ? 'source, client_id' : 'client_id' ) . "
 					HAVING first_seen BETWEEN %s AND %s
 				) AS first_visits",
 				...$new_args
@@ -747,7 +748,9 @@ final class Kidia_Mobile_Analytics {
 		 * kept separate. Replacing tracked purchase events with order-history
 		 * totals makes an impossible funnel (purchases without tracked carts).
 		 */
-		$commerce = self::commerce_snapshot( $from, $to, $source, $fresh );
+		$commerce = is_array( $commerce_override )
+			? array_merge( self::empty_commerce_snapshot(), $commerce_override )
+			: self::commerce_snapshot( $from, $to, $source, $fresh );
 		$tracked_top_purchases = self::top_objects( $from, $to, 'purchase_item', $source );
 		$top_purchases         = $tracked_top_purchases;
 		if ( ! empty( $commerce['products'] ) ) {
@@ -773,10 +776,229 @@ final class Kidia_Mobile_Analytics {
 			'coverage'              => self::coverage_snapshot( $from, $to, $source, $commerce ),
 			'commerce'              => $commerce,
 		);
-		if ( ! $fresh ) {
+		if ( ! $fresh && null === $commerce_override ) {
 			set_transient( $cache_key, $summary, 10 * MINUTE_IN_SECONDS );
 		}
 		return $summary;
+	}
+
+	/**
+	 * Reads the same indexed order facts maintained by WooCommerce Analytics.
+	 *
+	 * Unlike orders_in_period(), this performs bounded aggregate queries, so a
+	 * year containing tens of thousands of orders is no slower to open than one
+	 * day. WooCommerce updates the lookup rows whenever an order or refund is
+	 * saved, which lets Store Data stay current after its first explicit Generate.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function reporting_snapshot( int $from, int $to, string $source = 'all' ): array {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$snapshot = array_merge(
+			self::empty_commerce_snapshot(),
+			array(
+				'all_orders'    => 0,
+				'paid_orders'   => 0,
+				'paid_revenue'  => 0.0,
+				'status_counts' => array(),
+			)
+		);
+		if ( $to < $from ) {
+			return $snapshot;
+		}
+
+		global $wpdb;
+		$stats_table   = isset( $wpdb->wc_order_stats ) ? (string) $wpdb->wc_order_stats : $wpdb->prefix . 'wc_order_stats';
+		$product_table = isset( $wpdb->wc_order_product_lookup ) ? (string) $wpdb->wc_order_product_lookup : $wpdb->prefix . 'wc_order_product_lookup';
+		if ( ! self::reporting_table_exists( $stats_table ) || ! self::reporting_table_exists( $product_table ) ) {
+			return self::reporting_snapshot_from_orders( $from, $to, $source );
+		}
+
+		$paid_statuses = array();
+		foreach ( self::revenue_order_statuses() as $status ) {
+			$paid_statuses[] = $status;
+			$paid_statuses[] = 'wc-' . $status;
+		}
+		$paid_statuses = array_values( array_unique( $paid_statuses ) );
+		$paid_placeholders = implode( ',', array_fill( 0, count( $paid_statuses ), '%s' ) );
+		$start = gmdate( 'Y-m-d H:i:s', $from );
+		$end   = gmdate( 'Y-m-d H:i:s', $to );
+		$source_sql = self::reporting_source_sql( 'orders', $source );
+
+		$summary_sql = "SELECT
+			COUNT(*) AS all_orders,
+			SUM(is_paid) AS paid_orders,
+			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, net_total) ELSE 0 END) AS paid_revenue,
+			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, num_items_sold) ELSE 0 END) AS units,
+			COUNT(DISTINCT CASE WHEN is_paid = 1 THEN COALESCE(NULLIF(customer_id, 0), -order_id) END) AS customers
+			FROM (
+				SELECT orders.order_id, orders.customer_id, orders.net_total, orders.num_items_sold,
+					CASE WHEN orders.status IN ({$paid_placeholders}) THEN 1 ELSE 0 END AS is_paid
+				FROM {$stats_table} AS orders
+				WHERE orders.parent_id = 0
+					AND orders.date_created_gmt BETWEEN %s AND %s
+					AND orders.status NOT IN ('checkout-draft','wc-checkout-draft')
+					{$source_sql}
+			) AS reporting_orders";
+		$summary_args = array_merge( $paid_statuses, array( $start, $end ) );
+		$row = $wpdb->get_row( $wpdb->prepare( $summary_sql, ...$summary_args ), ARRAY_A );
+		$snapshot['all_orders']          = absint( $row['all_orders'] ?? 0 );
+		$snapshot['orders']              = absint( $row['paid_orders'] ?? 0 );
+		$snapshot['paid_orders']         = $snapshot['orders'];
+		$snapshot['revenue']             = max( 0, (float) ( $row['paid_revenue'] ?? 0 ) );
+		$snapshot['paid_revenue']        = $snapshot['revenue'];
+		$snapshot['units']               = absint( $row['units'] ?? 0 );
+		$snapshot['customers']           = absint( $row['customers'] ?? 0 );
+		$snapshot['average_order_value'] = $snapshot['orders'] > 0
+			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
+			: 0.0;
+
+		$status_sql = "SELECT orders.status, COUNT(*) AS status_count
+			FROM {$stats_table} AS orders
+			WHERE orders.parent_id = 0
+				AND orders.date_created_gmt BETWEEN %s AND %s
+				AND orders.status NOT IN ('checkout-draft','wc-checkout-draft')
+				{$source_sql}
+			GROUP BY orders.status
+			ORDER BY status_count DESC";
+		$status_rows = $wpdb->get_results( $wpdb->prepare( $status_sql, $start, $end ), ARRAY_A );
+		foreach ( (array) $status_rows as $status_row ) {
+			$status = self::normalize_order_status( $status_row['status'] ?? '' );
+			if ( '' !== $status ) {
+				$snapshot['status_counts'][ $status ] = absint( $status_row['status_count'] ?? 0 );
+			}
+		}
+
+		$product_sql = "SELECT
+			CASE WHEN products.variation_id > 0 THEN products.variation_id ELSE products.product_id END AS product_id,
+			SUM(products.product_qty) AS units,
+			SUM(products.product_net_revenue) AS revenue,
+			COUNT(DISTINCT products.order_id) AS order_count
+			FROM {$product_table} AS products
+			INNER JOIN {$stats_table} AS orders ON orders.order_id = products.order_id
+			WHERE orders.parent_id = 0
+				AND orders.date_created_gmt BETWEEN %s AND %s
+				AND orders.status IN ({$paid_placeholders})
+				{$source_sql}
+			GROUP BY product_id
+			HAVING units > 0
+			ORDER BY revenue DESC, units DESC
+			LIMIT 50";
+		$product_args = array_merge( array( $start, $end ), $paid_statuses );
+		$product_rows = $wpdb->get_results( $wpdb->prepare( $product_sql, ...$product_args ), ARRAY_A );
+		foreach ( (array) $product_rows as $product_row ) {
+			$product_id = absint( $product_row['product_id'] ?? 0 );
+			if ( $product_id <= 0 ) {
+				continue;
+			}
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+			$units = max( 0, (int) round( (float) ( $product_row['units'] ?? 0 ) ) );
+			$snapshot['products'][] = array(
+				'object_id'      => $product_id,
+				'event_label'    => $product instanceof WC_Product ? $product->get_name() : '#' . $product_id,
+				'event_count'    => $units,
+				'unique_clients' => 0,
+				'order_count'    => absint( $product_row['order_count'] ?? 0 ),
+				'revenue'        => max( 0, (float) ( $product_row['revenue'] ?? 0 ) ),
+			);
+		}
+
+		$snapshot['orders_scanned']   = $snapshot['all_orders'];
+		$snapshot['orders_available'] = $snapshot['all_orders'];
+		$snapshot['updated_at']       = time();
+		return $snapshot;
+	}
+
+	/** Falls back to canonical order objects only when WooCommerce lookup tables are unavailable. */
+	private static function reporting_snapshot_from_orders( int $from, int $to, string $source ): array {
+		$snapshot = array_merge(
+			self::empty_commerce_snapshot(),
+			array( 'all_orders' => 0, 'paid_orders' => 0, 'paid_revenue' => 0.0, 'status_counts' => array() )
+		);
+		$paid_statuses = self::revenue_order_statuses();
+		$customers = array();
+		$products  = array();
+		foreach ( self::orders_in_period( $from, $to, $source, self::countable_order_statuses() ) as $order ) {
+			if ( ! $order instanceof WC_Order ) {
+				continue;
+			}
+			++$snapshot['all_orders'];
+			$status = self::normalize_order_status( $order->get_status() );
+			$snapshot['status_counts'][ $status ] = absint( $snapshot['status_counts'][ $status ] ?? 0 ) + 1;
+			if ( ! in_array( $status, $paid_statuses, true ) ) {
+				continue;
+			}
+			++$snapshot['orders'];
+			$refunded = is_callable( array( $order, 'get_total_refunded' ) ) ? (float) $order->get_total_refunded() : 0.0;
+			$snapshot['revenue'] += max( 0, (float) $order->get_total() - $refunded );
+			$customer_key = absint( $order->get_customer_id() ) > 0
+				? 'user:' . absint( $order->get_customer_id() )
+				: 'email:' . strtolower( sanitize_email( (string) $order->get_billing_email() ) );
+			if ( 'email:' === $customer_key ) {
+				$customer_key = 'order:' . absint( $order->get_id() );
+			}
+			$customers[ $customer_key ] = true;
+			foreach ( $order->get_items() as $item_id => $item ) {
+				$product_id = is_callable( array( $item, 'get_variation_id' ) ) ? absint( $item->get_variation_id() ) : 0;
+				$product_id = $product_id ?: absint( $item->get_product_id() );
+				if ( $product_id <= 0 ) {
+					continue;
+				}
+				$quantity = max( 0, (int) $item->get_quantity() );
+				if ( is_callable( array( $order, 'get_qty_refunded_for_item' ) ) ) {
+					$quantity = max( 0, $quantity - abs( (int) $order->get_qty_refunded_for_item( $item_id ) ) );
+				}
+				$line_refund = is_callable( array( $order, 'get_total_refunded_for_item' ) )
+					? (float) $order->get_total_refunded_for_item( $item_id )
+					: 0.0;
+				if ( ! isset( $products[ $product_id ] ) ) {
+					$products[ $product_id ] = array(
+						'object_id' => $product_id, 'event_label' => $item->get_name(), 'event_count' => 0,
+						'unique_clients' => 0, 'order_count' => 0, 'revenue' => 0.0,
+					);
+				}
+				$products[ $product_id ]['event_count'] += $quantity;
+				$products[ $product_id ]['order_count'] += 1;
+				$products[ $product_id ]['revenue'] += max( 0, (float) $item->get_total() - $line_refund );
+				$snapshot['units'] += $quantity;
+			}
+		}
+		$snapshot['paid_orders']         = $snapshot['orders'];
+		$snapshot['paid_revenue']        = $snapshot['revenue'];
+		$snapshot['customers']           = count( $customers );
+		$snapshot['average_order_value'] = $snapshot['orders'] > 0 ? round( $snapshot['revenue'] / $snapshot['orders'], 2 ) : 0.0;
+		uasort( $products, static fn( $left, $right ) => $right['revenue'] <=> $left['revenue'] );
+		$snapshot['products']            = array_slice( array_values( $products ), 0, 50 );
+		$snapshot['orders_scanned']      = $snapshot['all_orders'];
+		$snapshot['orders_available']    = $snapshot['all_orders'];
+		$snapshot['updated_at']          = time();
+		return $snapshot;
+	}
+
+	/** Returns the source predicate shared by every reporting aggregate. */
+	private static function reporting_source_sql( string $alias, string $source ): string {
+		if ( 'all' === $source ) {
+			return '';
+		}
+		global $wpdb;
+		$queries = array(
+			"SELECT post_id AS order_id FROM {$wpdb->postmeta} WHERE meta_key = '_kidia_order_source' AND meta_value = 'mobile'",
+		);
+		$hpos_meta = $wpdb->prefix . 'wc_orders_meta';
+		if ( self::reporting_table_exists( $hpos_meta ) ) {
+			$queries[] = "SELECT order_id FROM {$hpos_meta} WHERE meta_key = '_kidia_order_source' AND meta_value = 'mobile'";
+		}
+		$mobile_orders = 'SELECT DISTINCT order_id FROM (' . implode( ' UNION ALL ', $queries ) . ') AS kidia_mobile_sources';
+		return 'mobile' === $source
+			? " AND {$alias}.order_id IN ({$mobile_orders})"
+			: " AND {$alias}.order_id NOT IN ({$mobile_orders})";
+	}
+
+	/** Checks optional WooCommerce reporting tables without assuming HPOS is enabled. */
+	private static function reporting_table_exists( string $table ): bool {
+		global $wpdb;
+		$like = is_callable( array( $wpdb, 'esc_like' ) ) ? $wpdb->esc_like( $table ) : $table;
+		return (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) === $table;
 	}
 
 	/**
@@ -790,19 +1012,20 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$table      = self::events_table();
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$client_identity_sql = 'all' === $source ? "CONCAT(source, ':', client_id)" : 'client_id';
 		$args       = array( gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
 		if ( 'all' !== $source ) {
 			$args[] = $source;
 		}
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT client_id, event_name, MIN(occurred_at) AS first_at
+				"SELECT source, client_id, event_name, MIN(occurred_at) AS first_at
 				FROM {$table}
 				WHERE client_id <> ''
 					AND event_name IN ('site_visit','app_open','view_item','add_to_cart','begin_checkout','purchase')
 					AND occurred_at BETWEEN %s AND %s {$source_sql}
-				GROUP BY client_id, event_name
-				ORDER BY client_id ASC, first_at ASC",
+				GROUP BY source, client_id, event_name
+				ORDER BY source ASC, client_id ASC, first_at ASC",
 				...$args
 			),
 			ARRAY_A
@@ -810,18 +1033,21 @@ final class Kidia_Mobile_Analytics {
 		$clients = array();
 		foreach ( $rows as $row ) {
 			$client_id = sanitize_text_field( (string) ( $row['client_id'] ?? '' ) );
+			$client_key = 'all' === $source
+				? sanitize_key( (string) ( $row['source'] ?? '' ) ) . ':' . $client_id
+				: $client_id;
 			$event     = sanitize_key( (string) ( $row['event_name'] ?? '' ) );
 			$timestamp = strtotime( (string) ( $row['first_at'] ?? '' ) . ' UTC' );
 			if ( '' === $client_id || false === $timestamp ) {
 				continue;
 			}
 			if ( in_array( $event, array( 'site_visit', 'app_open' ), true ) ) {
-				$clients[ $client_id ]['visitor'] = isset( $clients[ $client_id ]['visitor'] )
-					? min( $clients[ $client_id ]['visitor'], $timestamp )
+				$clients[ $client_key ]['visitor'] = isset( $clients[ $client_key ]['visitor'] )
+					? min( $clients[ $client_key ]['visitor'], $timestamp )
 					: $timestamp;
 				continue;
 			}
-			$clients[ $client_id ][ $event ] = $timestamp;
+			$clients[ $client_key ][ $event ] = $timestamp;
 		}
 
 		$funnel = self::empty_funnel_snapshot();
@@ -856,7 +1082,7 @@ final class Kidia_Mobile_Analytics {
 		$raw_purchases = absint(
 			$wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(DISTINCT client_id)
+					"SELECT COUNT(DISTINCT {$client_identity_sql})
 					FROM {$table}
 					WHERE client_id <> '' AND event_name = 'purchase'
 						AND occurred_at BETWEEN %s AND %s {$source_sql}",
@@ -2177,6 +2403,7 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$table = self::events_table();
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$client_identity_sql = 'all' === $source ? "CONCAT(source, ':', client_id)" : 'client_id';
 		$args = array( $event, gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
 		if ( 'all' !== $source ) {
 			$args[] = $source;
@@ -2184,7 +2411,7 @@ final class Kidia_Mobile_Analytics {
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT object_id, MAX(event_label) AS event_label, COUNT(*) AS event_count,
-					COUNT(DISTINCT client_id) AS unique_clients
+					COUNT(DISTINCT {$client_identity_sql}) AS unique_clients
 				FROM {$table}
 				WHERE event_name = %s AND object_id > 0 AND occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY object_id
@@ -2224,13 +2451,14 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$table = self::events_table();
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
+		$client_identity_sql = 'all' === $source ? "CONCAT(source, ':', client_id)" : 'client_id';
 		$args = array( $event, gmdate( 'Y-m-d H:i:s', $from ), gmdate( 'Y-m-d H:i:s', $to ) );
 		if ( 'all' !== $source ) {
 			$args[] = $source;
 		}
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT event_label, COUNT(*) AS event_count, COUNT(DISTINCT client_id) AS unique_clients
+				"SELECT event_label, COUNT(*) AS event_count, COUNT(DISTINCT {$client_identity_sql}) AS unique_clients
 				FROM {$table}
 				WHERE event_name = %s AND event_label <> '' AND occurred_at BETWEEN %s AND %s {$source_sql}
 				GROUP BY event_label
@@ -2255,24 +2483,35 @@ final class Kidia_Mobile_Analytics {
 		}
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT HOUR(occurred_at) AS activity_hour, COUNT(*) AS event_count
+				"SELECT DATE(occurred_at) AS activity_date, HOUR(occurred_at) AS activity_hour, COUNT(*) AS event_count
 				FROM {$table}
 				WHERE occurred_at BETWEEN %s AND %s {$source_sql}
-				GROUP BY activity_hour
-				ORDER BY event_count DESC
-				LIMIT 6",
+				GROUP BY activity_date, activity_hour",
 				...$args
 			),
 			ARRAY_A
 		);
-		$offset = (int) round( wp_timezone()->getOffset( new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) ) / HOUR_IN_SECONDS );
-		return array_map(
-			static fn( $row ) => array(
-				'hour'        => ( absint( $row['activity_hour'] ) + $offset + 24 ) % 24,
-				'event_count' => absint( $row['event_count'] ),
-			),
-			$rows
-		);
+		$hours = array_fill( 0, 24, 0 );
+		$utc   = new DateTimeZone( 'UTC' );
+		$zone  = wp_timezone();
+		foreach ( $rows as $row ) {
+			$date = sanitize_text_field( (string) ( $row['activity_date'] ?? '' ) );
+			$hour = min( 23, absint( $row['activity_hour'] ?? 0 ) );
+			$moment = DateTimeImmutable::createFromFormat( '!Y-m-d G', $date . ' ' . $hour, $utc );
+			if ( false === $moment ) {
+				continue;
+			}
+			$local_hour = absint( $moment->setTimezone( $zone )->format( 'G' ) );
+			$hours[ $local_hour ] += absint( $row['event_count'] ?? 0 );
+		}
+		arsort( $hours );
+		$result = array();
+		foreach ( array_slice( $hours, 0, 6, true ) as $hour => $count ) {
+			if ( $count > 0 ) {
+				$result[] = array( 'hour' => absint( $hour ), 'event_count' => absint( $count ) );
+			}
+		}
+		return $result;
 	}
 
 	/**
