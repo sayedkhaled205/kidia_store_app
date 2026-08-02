@@ -29,7 +29,7 @@ final class Kidia_Mobile_CMS_Admin {
 
 	/** @var array<string,string> Public routes inside the single CMS screen. */
 	private const CMS_VIEWS = array(
-		'overview'=>'kidia-mobile-cms','setup'=>'kidia-mobile-setup','pages'=>'kidia-mobile-splash-screen','splash'=>'kidia-mobile-splash-screen','home'=>'kidia-mobile-home-builder','category'=>'kidia-mobile-category-builder','catalog'=>'kidia-mobile-catalog-builder','product'=>'kidia-mobile-product-builder','wishlist'=>'kidia-mobile-wishlist-builder','account'=>'kidia-mobile-account-builder','checkout'=>'kidia-mobile-checkout-suggestions','saved-themes'=>'kidia-mobile-saved-themes','store-data'=>'kidia-mobile-store-data','ai-insights'=>'kidia-mobile-ai-insights','bundles'=>'kidia-mobile-bundles','push'=>'kidia-mobile-push-notifications','website-promotion'=>'kidia-mobile-website-app-promotion',
+		'overview'=>'kidia-mobile-cms','setup'=>'kidia-mobile-setup','pages'=>'kidia-mobile-splash-screen','splash'=>'kidia-mobile-splash-screen','home'=>'kidia-mobile-home-builder','category'=>'kidia-mobile-category-builder','catalog'=>'kidia-mobile-catalog-builder','product'=>'kidia-mobile-product-builder','wishlist'=>'kidia-mobile-wishlist-builder','account'=>'kidia-mobile-account-builder','checkout'=>'kidia-mobile-checkout-suggestions','saved-themes'=>'kidia-mobile-saved-themes','store-data'=>'kidia-mobile-store-data','ai-insights'=>'kidia-mobile-ai-insights','push'=>'kidia-mobile-push-notifications','website-promotion'=>'kidia-mobile-website-app-promotion',
 	);
 
 	/**
@@ -927,8 +927,8 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You do not have permission to manage bundles.', 'kidia-mobile-cms' ) );
 		}
-		$bundle_recipes = Kidia_Mobile_Bundle_Recipes::all();
-		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/bundles.php';
+		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-cms', 'view' => 'ai-insights' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/** Renders the independent explainable growth and recommendation workspace. */
@@ -1932,7 +1932,7 @@ final class Kidia_Mobile_CMS_Admin {
 			'kidia-mobile-saved-themes'         => 'saved_themes',
 			'kidia-mobile-store-data'           => 'store_data',
 			'kidia-mobile-ai-insights'           => 'ai_insights',
-			'kidia-mobile-bundles'              => 'bundles',
+			'kidia-mobile-bundles'              => 'ai_insights',
 			'kidia-mobile-push-notifications'   => 'push',
 			'kidia-mobile-website-app-promotion' => 'website_promotion',
 		);
@@ -1953,7 +1953,6 @@ final class Kidia_Mobile_CMS_Admin {
 			'saved_themes' => $tab( __( 'Saved Themes', 'kidia-mobile-cms' ), 'kidia-mobile-saved-themes', 'dashicons-portfolio' ),
 			'store_data' => $tab( __( 'Store Data', 'kidia-mobile-cms' ), 'kidia-mobile-store-data', 'dashicons-database' ),
 			'ai_insights' => $tab( __( 'AI Offer Studio', 'kidia-mobile-cms' ), 'kidia-mobile-ai-insights', 'dashicons-lightbulb' ),
-			'bundles' => $tab( __( 'Bundles', 'kidia-mobile-cms' ), 'kidia-mobile-bundles', 'dashicons-products' ),
 			'abandoned_carts' => array(
 				'label' => __( 'Abandoned Carts', 'kidia-mobile-cms' ),
 				'icon'  => 'dashicons-cart',
@@ -1972,7 +1971,7 @@ final class Kidia_Mobile_CMS_Admin {
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
-			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'bundles', 'abandoned_carts', 'push', 'website_promotion' ), true ) ? $active_tab : 'overview' );
+			: ( in_array( $active_tab, array( 'setup', 'saved_themes', 'store_data', 'ai_insights', 'abandoned_carts', 'push', 'website_promotion' ), true ) ? $active_tab : 'overview' );
 		$license_status = ( new Kidia_Mobile_License_Manager() )->status();
 		$app_build_state = Kidia_Mobile_App_Exporter::state();
 		$abandoned_import_state = Kidia_Mobile_Analytics::website_session_import_status();
