@@ -568,7 +568,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			(string) ( $job['date_preset'] ?? ( absint( $job['from'] ?? 0 ) <= 1 ? 'all_time' : 'custom' ) )
 		);
 		$result_args = array(
-			'page'        => 'kidia-mobile-ai-insights',
+			'page'        => 'kidia-mobile-cms',
+			'view'        => 'ai-insights',
 			'ai_source'   => (string) ( $job['source'] ?? 'all' ),
 			'ai_kind'     => 'all',
 			'date_preset' => $date_preset,
