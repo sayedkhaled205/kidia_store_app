@@ -153,7 +153,7 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 					</div>
 					<div class="kidia-promotion-tip"><span class="dashicons dashicons-lightbulb"></span><p><strong><?php esc_html_e( 'Best setup:', 'kidia-mobile-cms' ); ?></strong> <?php esc_html_e( 'Use one smart link if available. Otherwise Android, iOS and Huawei visitors are routed to their matching store automatically.', 'kidia-mobile-cms' ); ?></p></div>
 					<?php if ( ! $has_destination ) : ?>
-						<div class="kidia-promotion-warning is-link-status"><span class="dashicons dashicons-info-outline"></span><p><strong><?php esc_html_e( 'Safe announcement mode is active.', 'kidia-mobile-cms' ); ?></strong> <?php esc_html_e( 'Message campaigns stay visible without a dead button. QR and floating formats can be privately tested now and become customer-facing automatically after one app link is added.', 'kidia-mobile-cms' ); ?></p></div>
+						<div class="kidia-promotion-warning is-link-status"><span class="dashicons dashicons-info-outline"></span><p><strong><?php esc_html_e( 'Safe announcement mode is active.', 'kidia-mobile-cms' ); ?></strong> <?php esc_html_e( 'Every enabled campaign stays customer-facing without a dead action. Until an app link is added, QR uses an honest placeholder and the floating shortcut remains visibly disabled.', 'kidia-mobile-cms' ); ?></p></div>
 					<?php else : ?>
 						<div class="kidia-promotion-ready"><span class="dashicons dashicons-yes-alt"></span><p><?php esc_html_e( 'App destination connected. Every enabled format can open or download the app.', 'kidia-mobile-cms' ); ?></p></div>
 					<?php endif; ?>
