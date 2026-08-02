@@ -57,7 +57,6 @@ final class Kidia_Mobile_Analytics {
 		add_action( 'woocommerce_order_status_processing', array( $this, 'capture_paid_order' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'capture_paid_order' ) );
 		add_action( self::WEBSITE_IMPORT_HOOK, array( $this, 'run_website_session_import' ) );
-		add_action( 'init', array( $this, 'ensure_website_session_import' ), 25 );
 	}
 
 	public function maybe_install(): void {
@@ -1351,6 +1350,7 @@ final class Kidia_Mobile_Analytics {
 			'activity_hours'      => array(),
 			'orders_available'    => 0,
 			'truncated'           => false,
+			'updated_at'          => 0,
 		);
 	}
 
@@ -1716,7 +1716,7 @@ final class Kidia_Mobile_Analytics {
 	 *
 	 * @return array<string,int|string>
 	 */
-	public function ensure_website_session_import( bool $force_refresh = false ): array {
+	public function ensure_website_session_import( bool $force_refresh = false, bool $full_regenerate = false ): array {
 		$state = self::website_session_import_status();
 		if ( 'running' === (string) ( $state['phase'] ?? '' ) ) {
 			self::schedule_website_session_import();
@@ -1754,6 +1754,22 @@ final class Kidia_Mobile_Analytics {
 				)
 			)
 		);
+		if ( $force_refresh && ! $full_regenerate && 'complete' === (string) ( $state['phase'] ?? '' ) ) {
+			$session_cursor = absint( $state['session_cursor'] ?? $state['cursor'] ?? 0 );
+			$persistent_cursor = absint( $state['persistent_cursor'] ?? 0 );
+			$new_sessions = absint( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$sessions_table} WHERE session_id > %d", $session_cursor ) ) );
+			$new_persistent = absint( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s AND umeta_id > %d", $persistent_key, $persistent_cursor ) ) );
+			$state['session_total'] = absint( $state['session_total'] ?? 0 ) + $new_sessions;
+			$state['persistent_total'] = absint( $state['persistent_total'] ?? 0 ) + $new_persistent;
+			$state['total'] = absint( $state['processed'] ?? 0 ) + $new_sessions + $new_persistent;
+			$state['phase'] = ( $new_sessions + $new_persistent ) > 0 ? 'running' : 'complete';
+			$state['started_at'] = time();
+			$state['completed_at'] = ( $new_sessions + $new_persistent ) > 0 ? 0 : time();
+			update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
+			if ( 'running' === $state['phase'] ) { self::schedule_website_session_import(); }
+			return $state;
+		}
+
 		$total        = $session_total + $persistent_total;
 		$state        = array(
 			'phase'             => $total > 0 ? 'running' : 'complete',

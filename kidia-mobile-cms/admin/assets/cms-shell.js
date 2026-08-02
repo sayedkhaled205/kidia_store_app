@@ -1185,7 +1185,8 @@
 				? aiGenerateForm.nextElementSibling
 				: document.querySelector('[data-ai-progress-overlay]:not(.is-global)');
 			bindAiOverlayActions(overlay, function () { return activeJobId; }, function (value) { foreground = value; });
-			const button = aiGenerateForm.querySelector('[data-ai-generate-button]');
+			const fullRegenerate = Boolean(event.submitter && event.submitter.matches('[data-ai-full-regenerate]'));
+			const button = event.submitter || aiGenerateForm.querySelector('[data-ai-generate-button]');
 			const label = aiGenerateForm.querySelector('[data-ai-generate-label]');
 			const note = overlay && overlay.querySelector('[data-ai-progress-note]');
 			const count = overlay && overlay.querySelector('[data-ai-progress-count]');
@@ -1220,7 +1221,8 @@
 					source: source ? source.value : 'all',
 					date_preset: preset ? preset.value : 'all_time',
 					date_from: from ? from.value : '',
-					date_to: to ? to.value : ''
+					date_to: to ? to.value : '',
+					full_regenerate: fullRegenerate ? '1' : ''
 				});
 				activeJobId = payload.job_id;
 				resetAiProgressVersion(overlay, activeJobId);

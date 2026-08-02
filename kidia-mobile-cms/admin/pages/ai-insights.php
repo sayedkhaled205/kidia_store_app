@@ -218,11 +218,12 @@ $action_result = static function ( array $row ): array {
 			<label><span><?php esc_html_e( 'Period', 'kidia-mobile-cms' ); ?></span><select name="date_preset"><?php foreach ( $date_labels as $key => $label ) : ?><option value="<?php echo esc_attr( $key ); ?>" <?php selected( $date_preset, $key ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></label>
 		<label><span><?php esc_html_e( 'From', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_from" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_from ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
 		<label><span><?php esc_html_e( 'To', 'kidia-mobile-cms' ); ?></span><input type="date" name="date_to" value="<?php echo esc_attr( wp_date( 'Y-m-d', $date_to ) ); ?>" <?php disabled( 'custom' !== $date_preset ); ?>></label>
-		<button class="button button-primary kidia-ai-generate-button" type="submit" data-ai-generate-button>
+		<button class="button button-primary kidia-ai-generate-button" type="submit" data-ai-generate-button value="0">
 			<span class="dashicons dashicons-update"></span>
-			<span data-ai-generate-label><?php echo esc_html( $ai_generated ? __( 'Refresh Offers from Store Data', 'kidia-mobile-cms' ) : __( 'Generate Offers from Store Data', 'kidia-mobile-cms' ) ); ?></span>
+			<span data-ai-generate-label><?php echo esc_html( $ai_generated ? __( 'Update', 'kidia-mobile-cms' ) : __( 'Generate', 'kidia-mobile-cms' ) ); ?></span>
 			<span class="spinner" data-ai-generate-spinner></span>
 		</button>
+		<?php if ( $ai_generated ) : ?><button class="button" type="submit" data-ai-full-regenerate value="1"><?php esc_html_e( 'Full Regenerate', 'kidia-mobile-cms' ); ?></button><?php endif; ?>
 	</form>
 	<div class="kidia-ai-progress-overlay" data-ai-progress-overlay data-kidia-background-job="generate-offers" hidden aria-live="polite" aria-busy="true">
 		<div class="kidia-ai-progress-card">
