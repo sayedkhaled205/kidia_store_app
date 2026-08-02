@@ -732,12 +732,21 @@ final class Kidia_Mobile_CMS_Admin {
 			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
 		}
 		$cart_view = isset( $_GET['cart_view'] ) ? sanitize_key( wp_unslash( $_GET['cart_view'] ) ) : 'abandoned';
+		if ( 'abandoned-carts' === $store_tab && isset( $_GET['cart_generate'] ) ) {
+			check_admin_referer( 'kidia_mobile_cart_generate' );
+			$cart_mode = sanitize_key( wp_unslash( $_GET['cart_generate'] ) );
+			( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true, 'full' === $cart_mode );
+			$abandoned_import_state = Kidia_Mobile_Analytics::website_session_import_status();
+		}
 		$cart_view = in_array( $cart_view, array( 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
 		$cart_per_page = absint( $_GET['cart_per_page'] ?? 20 );
 		$cart_per_page = in_array( $cart_per_page, array( 20, 50, 100 ), true ) ? $cart_per_page : 20;
 		$cart_page = max( 1, absint( $_GET['cart_page'] ?? 1 ) );
 		$abandoned_summary = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::abandoned_summary( $date_from, $date_to, $store_source )
+			: array();
+		$abandoned_import_state = 'abandoned-carts' === $store_tab
+			? Kidia_Mobile_Analytics::website_session_import_status()
 			: array();
 		$cart_total = 'recovered' === $cart_view
 			? absint( $abandoned_summary['recovered'] ?? 0 )
@@ -934,9 +943,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$date_preset = $date_range['preset'];
 		$ai_source   = isset( $_GET['ai_source'] ) ? sanitize_key( wp_unslash( $_GET['ai_source'] ) ) : 'all';
 		$ai_source   = in_array( $ai_source, array( 'all', 'website', 'mobile' ), true ) ? $ai_source : 'all';
-		$ai_generated = isset( $_GET['ai_ready'] )
-			&& '1' === sanitize_text_field( wp_unslash( $_GET['ai_ready'] ) )
-			&& Kidia_Mobile_Analytics::has_commerce_snapshot( $date_from, $date_to, $ai_source );
+		$ai_generated = Kidia_Mobile_Analytics::has_commerce_snapshot( $date_from, $date_to, $ai_source );
 		$ai_kind     = isset( $_GET['ai_kind'] ) ? sanitize_key( wp_unslash( $_GET['ai_kind'] ) ) : 'all';
 		$kind_keys   = array( 'all', 'campaign', 'merchandising', 'inventory', 'funnel', 'timing' );
 		$ai_kind     = in_array( $ai_kind, $kind_keys, true ) ? $ai_kind : 'all';
@@ -982,7 +989,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$to     = absint( $range['to'] );
 		$source = sanitize_key( (string) wp_unslash( $_POST['source'] ?? 'all' ) );
 		$source = in_array( $source, array( 'all', 'website', 'mobile' ), true ) ? $source : 'all';
-		$result = Kidia_Mobile_AI_Analysis_Job::start( $from, $to, $source, get_current_user_id(), (string) $range['preset'] );
+		$full_regenerate = ! empty( $_POST['full_regenerate'] );
+		$result = Kidia_Mobile_AI_Analysis_Job::start( $from, $to, $source, get_current_user_id(), (string) $range['preset'], $full_regenerate );
 		if ( isset( $result['error'] ) ) {
 			wp_send_json_error( array( 'message' => $result['error'] ), 400 );
 		}
