@@ -307,7 +307,7 @@ assert.match(
 );
 assert.match(
   aiInsights,
-  /data-ai-generate-form[\s\S]*ai_generate[\s\S]*Generate Offers from Store Data[\s\S]*Ready to build data-backed offers/,
+  /data-ai-generate-form[\s\S]*name="ai_generate" value="1"[\s\S]*data-ai-generate-button[\s\S]*data-ai-generate-label[\s\S]*__\( 'Generate'[\s\S]*Ready to build data-backed offers/,
   "AI Studio must open in a lightweight ready state and expose an explicit generate action.",
 );
 assert.match(
@@ -489,7 +489,7 @@ assert.match(
 );
 assert.match(
   admin,
-  /wp_ajax_kidia_mobile_start_ai_analysis[\s\S]*wp_ajax_kidia_mobile_step_ai_analysis[\s\S]*ai_ready[\s\S]*has_commerce_snapshot/,
+  /function ai_insights_page[\s\S]*\$ai_generated\s*=\s*Kidia_Mobile_Analytics::has_commerce_snapshot[\s\S]*if \( \$ai_generated \)[\s\S]*Kidia_Mobile_Analytics::summary/,
   "AI results must render only after a completed server snapshot exists.",
 );
 assert.match(
@@ -564,7 +564,7 @@ assert.doesNotMatch(
 );
 assert.match(
   analytics,
-  /ensure_website_session_import\( bool \$force_refresh = false \)[\s\S]*'complete' ===[\s\S]*! \$force_refresh[\s\S]*sync_website_sessions[\s\S]*ensure_website_session_import\(\)/,
+  /ensure_website_session_import\( bool \$force_refresh = false, bool \$full_regenerate = false \)[\s\S]*'complete' ===[\s\S]*! \$force_refresh[\s\S]*sync_website_sessions[\s\S]*ensure_website_session_import\(\)/,
   "Opening Abandoned Carts must preserve a completed import instead of restarting its counters.",
 );
 assert.doesNotMatch(
