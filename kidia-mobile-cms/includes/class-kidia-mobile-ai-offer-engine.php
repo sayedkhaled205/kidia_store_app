@@ -181,11 +181,25 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		}
 
 		$bundles = ! empty( $commerce['pairs'] ) ? array_slice( (array) $commerce['pairs'], 0, 8 ) : array();
+		$product_order_counts = array();
+		foreach ( (array) ( $commerce['products'] ?? array() ) as $product_row ) {
+			$product_order_counts[ absint( $product_row['object_id'] ?? $product_row['id'] ?? 0 ) ] = absint( $product_row['order_count'] ?? 0 );
+		}
 		foreach ( $bundles as $bundle ) {
 			$bundle_ids   = array_values( array_filter( array_map( 'absint', (array) ( $bundle['product_ids'] ?? array() ) ) ) );
 			$bundle_names = array_values( array_map( 'sanitize_text_field', (array) ( $bundle['names'] ?? array() ) ) );
 			$bundle_count = absint( $bundle['count'] ?? 0 );
 			if ( count( $bundle_ids ) < 2 || count( $bundle_names ) < 2 || $bundle_count < 2 ) {
+				continue;
+			}
+			$left_orders  = absint( $product_order_counts[ $bundle_ids[0] ] ?? 0 );
+			$right_orders = absint( $product_order_counts[ $bundle_ids[1] ] ?? 0 );
+			$support      = $historical_orders > 0 ? $bundle_count / $historical_orders : 0.0;
+			$confidence   = min( $left_orders, $right_orders ) > 0 ? $bundle_count / min( $left_orders, $right_orders ) : 0.0;
+			$lift         = $left_orders > 0 && $right_orders > 0 && $historical_orders > 0
+				? ( $bundle_count * $historical_orders ) / ( $left_orders * $right_orders )
+				: 0.0;
+			if ( $lift < 1.2 || $confidence < .08 ) {
 				continue;
 			}
 			$bundle_discount = self::discount_for_bundle( $bundle_count, $historical_orders, ! empty( $settings['protect_margin'] ) );
@@ -196,10 +210,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				sprintf( __( '%1$s and %2$s appeared together in %3$d paid orders.', 'kidia-mobile-cms' ), $bundle_names[0], $bundle_names[1], $bundle_count ),
 				array(
 					sprintf( __( '%d co-purchases', 'kidia-mobile-cms' ), $bundle_count ),
-					__( 'Bundle only the measured pair; do not discount unrelated products.', 'kidia-mobile-cms' ),
-					__( 'Recommended as a limited product-scoped coupon.', 'kidia-mobile-cms' ),
+					sprintf( __( 'Support: %1$s%% · Confidence: %2$s%% · Lift: %3$s×', 'kidia-mobile-cms' ), round( 100 * $support, 2 ), round( 100 * $confidence, 1 ), round( $lift, 2 ) ),
+					__( 'Lift above 1 means the relationship is stronger than random popularity; unrelated popular pairs are excluded.', 'kidia-mobile-cms' ),
 				),
-				min( 94, 58 + $bundle_count * 4 ),
+				min( 96, 58 + min( 20, $bundle_count * 2 ) + min( 18, (int) round( ( $lift - 1 ) * 10 ) ) ),
 				'low',
 				'percent',
 				$bundle_discount,
@@ -452,6 +466,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				static fn( $offer ) => absint( $offer['confidence'] ?? 0 ) >= absint( $settings['minimum_confidence'] )
 			)
 		);
+		foreach ( $offers as &$offer ) {
+			$offer = self::add_expected_outcomes( $offer, $commerce, $from, $to );
+		}
+		unset( $offer );
 		usort(
 			$offers,
 			static function ( array $left, array $right ): int {
@@ -463,6 +481,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 					<=> count( (array) ( $left['product_ids'] ?? array() ) );
 			}
 		);
+		$offers = self::remove_discount_conflicts( $offers );
 		$offers = apply_filters( 'kidia_mobile_ai_offer_recommendations', $offers, $summary, $source, $from, $to );
 		$offers = is_array( $offers )
 			? array_values( array_slice( $offers, 0, absint( $settings['maximum_recommendations'] ) ) )
@@ -1076,11 +1095,16 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
 				continue;
 			}
+			$cost = (float) get_post_meta( $product_id, '_wc_cog_cost', true );
+			if ( $cost <= 0 ) {
+				$cost = (float) get_post_meta( $product_id, '_cost', true );
+			}
 			$products[] = array(
 				'id'            => $product_id,
 				'name'          => $product->get_name(),
 				'price'         => max( 0, (float) $product->get_price() ),
 				'regular_price' => max( 0, (float) $product->get_regular_price() ),
+				'cost'          => max( 0, $cost ),
 				'stock'         => $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null,
 				'image_url'     => $product->get_image_id()
 					? (string) wp_get_attachment_image_url( $product->get_image_id(), 'woocommerce_thumbnail' )
@@ -1088,5 +1112,69 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			);
 		}
 		return $products;
+	}
+
+	/** Adds a transparent baseline/uplift forecast; profit requires real cost data. */
+	private static function add_expected_outcomes( array $offer, array $commerce, int $from, int $to ): array {
+		$product_ids = array_values( array_filter( array_map( 'absint', (array) ( $offer['product_ids'] ?? array() ) ) ) );
+		if ( empty( $product_ids ) || (float) ( $offer['discount_value'] ?? 0 ) <= 0 ) {
+			return $offer;
+		}
+		$sales = array();
+		foreach ( (array) ( $commerce['products'] ?? array() ) as $row ) {
+			$sales[ absint( $row['object_id'] ?? $row['id'] ?? 0 ) ] = absint( $row['event_count'] ?? 0 );
+		}
+		$days = max( 1, (int) ceil( max( DAY_IN_SECONDS, $to - $from ) / DAY_IN_SECONDS ) );
+		$duration_days = max( 1 / 24, absint( $offer['duration_hours'] ?? 24 ) / 24 );
+		$baseline_units = 0.0;
+		$revenue = 0.0;
+		$profit = 0.0;
+		$has_cost = true;
+		$discount = min( 100, max( 0, (float) ( $offer['discount_value'] ?? 0 ) ) ) / 100;
+		$uplift = min( .55, .05 + $discount * 1.6 + max( 0, absint( $offer['confidence'] ?? 0 ) - 55 ) / 400 );
+		foreach ( (array) ( $offer['products'] ?? array() ) as $product ) {
+			$id = absint( $product['id'] ?? 0 );
+			$units = (float) ( $sales[ $id ] ?? 0 ) * $duration_days / $days;
+			$incremental_units = $units * $uplift;
+			$price = max( 0, (float) ( $product['price'] ?? 0 ) ) * ( 1 - $discount );
+			$cost = max( 0, (float) ( $product['cost'] ?? 0 ) );
+			$baseline_units += $units;
+			$revenue += $incremental_units * $price;
+			if ( $cost > 0 ) {
+				$profit += $incremental_units * max( 0, $price - $cost );
+			} else {
+				$has_cost = false;
+			}
+		}
+		$offer['expected_baseline_units'] = round( $baseline_units, 2 );
+		$offer['expected_incremental_revenue'] = round( $revenue, 2 );
+		$offer['expected_incremental_profit'] = $has_cost ? round( $profit, 2 ) : null;
+		$offer['metrics'][] = array( 'label' => __( 'Expected incremental revenue', 'kidia-mobile-cms' ), 'value' => wp_strip_all_tags( wc_price( $revenue ) ) );
+		if ( $has_cost ) {
+			$offer['metrics'][] = array( 'label' => __( 'Expected incremental profit', 'kidia-mobile-cms' ), 'value' => wp_strip_all_tags( wc_price( $profit ) ) );
+		} else {
+			$offer['evidence'][] = __( 'Profit forecast is withheld because product cost is not recorded in WooCommerce.', 'kidia-mobile-cms' );
+		}
+		return $offer;
+	}
+
+	/** Keeps the strongest discount decision per product so concurrent offers do not compete. */
+	private static function remove_discount_conflicts( array $offers ): array {
+		$claimed = array();
+		$kept = array();
+		foreach ( $offers as $offer ) {
+			$ids = array_values( array_filter( array_map( 'absint', (array) ( $offer['product_ids'] ?? array() ) ) ) );
+			$is_discount = (float) ( $offer['discount_value'] ?? 0 ) > 0;
+			if ( $is_discount && array_intersect( $ids, array_keys( $claimed ) ) ) {
+				continue;
+			}
+			$kept[] = $offer;
+			if ( $is_discount ) {
+				foreach ( $ids as $id ) {
+					$claimed[ $id ] = true;
+				}
+			}
+		}
+		return $kept;
 	}
 }

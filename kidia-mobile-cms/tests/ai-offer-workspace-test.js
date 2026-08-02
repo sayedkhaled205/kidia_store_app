@@ -15,7 +15,6 @@ const workspaceScript = readPlugin(
   "ai-offer-workspace.js",
 );
 const aiInsights = readPlugin("admin", "pages", "ai-insights.php");
-const bundlesPage = readPlugin("admin", "pages", "bundles.php");
 const admin = readPlugin("admin", "class-kidia-mobile-cms-admin.php");
 const engine = readPlugin(
   "includes",
@@ -42,21 +41,20 @@ assert.doesNotMatch(
   /Optional manual bundle builder|kidia_mobile_save_bundle_recipe/,
   "The manual bundle builder must not remain inside AI Offer Studio.",
 );
-assert.match(
-  bundlesPage,
-  /Create a manual bundle[\s\S]*kidia_mobile_save_bundle_recipe[\s\S]*Saved bundles/,
-  "The dedicated Bundles page must expose a visible working form and its saved recipes.",
-);
-assert.match(
+assert.doesNotMatch(
   admin,
-  /'bundles'=>'kidia-mobile-bundles'[\s\S]*function bundles_page[\s\S]*admin\/pages\/bundles\.php/,
-  "Bundles must be a dedicated routable CMS workspace.",
+  /'bundles'\s*=>\s*\$tab/,
+  "Bundles must not remain a separate CMS sidebar page.",
 );
 assert.match(
   bundleRecipes,
-  /'page'\s*=>\s*'kidia-mobile-bundles'[\s\S]*'bundle_saved'\s*=>\s*'1'/,
-  "Saving a manual bundle must return to the dedicated Bundles page.",
+  /'page'\s*=>\s*'kidia-mobile-cms'[\s\S]*'view'\s*=>\s*'ai-insights'/,
+  "Bundle actions must return to AI Offer Studio.",
 );
+assert.match(admin, /function bundles_page[\s\S]*view'\s*=>\s*'ai-insights'/, "Legacy Bundle links must redirect into Offers.");
+assert.match(engine, /\$lift < 1\.2[\s\S]*Support:[\s\S]*Confidence:[\s\S]*Lift:/, "Bundle decisions must use association strength, not pair count alone.");
+assert.match(engine, /Expected incremental revenue[\s\S]*Expected incremental profit/, "Discount decisions must expose forecast revenue and profit when cost exists.");
+assert.match(engine, /remove_discount_conflicts/, "The engine must suppress simultaneous discount conflicts on one product.");
 assert.match(
   engine,
   /rotation-fast-offer-[\s\S]*'fast_offer'[\s\S]*3\.0[\s\S]*48/,
