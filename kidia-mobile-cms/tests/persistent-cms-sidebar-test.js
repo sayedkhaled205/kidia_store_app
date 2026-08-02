@@ -78,6 +78,16 @@ assert.match(
 );
 assert.match(
   styles,
+  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:ltr;/,
+  "The WordPress menu scroll container must place its scrollbar on the physical right."
+);
+assert.match(
+  styles,
+  /html\[dir="rtl"\] body\.kidia-cms-plugin-page #adminmenu,[^}]*\.rtl body\.kidia-cms-plugin-page #adminmenu\{[^}]*direction:rtl;/,
+  "Moving the WordPress menu scrollbar must preserve the RTL menu content layout."
+);
+assert.match(
+  styles,
   /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\)\{[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/,
   "Entering Customize must keep the WordPress document locked without an outer scrollbar gutter."
 );
