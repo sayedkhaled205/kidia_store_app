@@ -141,6 +141,7 @@ final class Kidia_Mobile_CMS_Admin {
 			add_action( 'admin_post_kidia_mobile_review_ai_result', array( $this, 'review_ai_result' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
 		add_action( 'admin_post_kidia_mobile_set_coupon_channel', array( $this, 'set_coupon_channel' ) );
+		add_action( 'admin_post_kidia_mobile_start_abandoned_cart_import', array( $this, 'start_abandoned_cart_import' ) );
 		add_action( 'kidia_mobile_dispatch_scheduled_push', array( $this, 'dispatch_scheduled_push' ) );
 		add_action( 'admin_post_kidia_mobile_activate_license', array( $this, 'activate_license' ) );
 		add_action( 'admin_post_kidia_mobile_verify_license', array( $this, 'verify_license' ) );
@@ -734,12 +735,6 @@ final class Kidia_Mobile_CMS_Admin {
 			$analytics_previous = Kidia_Mobile_Analytics::summary( $previous_from, $previous_to, $store_source );
 		}
 		$cart_view = isset( $_GET['cart_view'] ) ? sanitize_key( wp_unslash( $_GET['cart_view'] ) ) : 'abandoned';
-		if ( 'abandoned-carts' === $store_tab && isset( $_GET['cart_generate'] ) ) {
-			check_admin_referer( 'kidia_mobile_cart_generate' );
-			$cart_mode = sanitize_key( wp_unslash( $_GET['cart_generate'] ) );
-			( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true, 'full' === $cart_mode );
-			$abandoned_import_state = Kidia_Mobile_Analytics::website_session_import_status();
-		}
 		$cart_view = in_array( $cart_view, array( 'active', 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
 		$cart_per_page = absint( $_GET['cart_per_page'] ?? 20 );
 		$cart_per_page = in_array( $cart_per_page, array( 20, 50, 100 ), true ) ? $cart_per_page : 20;
@@ -781,6 +776,37 @@ final class Kidia_Mobile_CMS_Admin {
 			'abandoned-carts'  => Kidia_Mobile_Analytics::abandoned_count(),
 		);
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/store-data.php';
+	}
+
+	/** Starts Generate, Update or Full Regenerate outside fragment navigation. */
+	public function start_abandoned_cart_import(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to sync abandoned carts.', 'kidia-mobile-cms' ) );
+		}
+
+		check_admin_referer( 'kidia_mobile_start_abandoned_cart_import', 'kidia_mobile_cart_import_nonce' );
+		$mode = sanitize_key( (string) wp_unslash( $_POST['cart_import_mode'] ?? '' ) );
+		if ( ! in_array( $mode, array( 'generate', 'update', 'full' ), true ) ) {
+			wp_die( esc_html__( 'The abandoned-cart sync request is invalid.', 'kidia-mobile-cms' ) );
+		}
+
+		( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true, 'full' === $mode );
+
+		$fallback = add_query_arg(
+			array(
+				'page'         => 'kidia-mobile-cms',
+				'view'         => 'store-data',
+				'store_tab'    => 'abandoned-carts',
+				'store_source' => 'all',
+				'date_preset'  => 'all_time',
+			),
+			admin_url( 'admin.php' )
+		);
+		$redirect = isset( $_POST['redirect_to'] )
+			? esc_url_raw( wp_unslash( (string) $_POST['redirect_to'] ) )
+			: $fallback;
+		wp_safe_redirect( '' !== $redirect ? $redirect : $fallback );
+		exit;
 	}
 
 	/** Return one abandoned cart's cart, customer-history and alternative-order context. */

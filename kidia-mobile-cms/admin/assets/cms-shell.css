@@ -1655,6 +1655,37 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 [data-kidia-instant-action].is-kidia-loading{opacity:.72}
 [data-kidia-instant-action].is-kidia-error{outline:2px solid #d63638;outline-offset:2px}
 @keyframes kidia-data-instant-spin{to{transform:rotate(360deg)}}
+.kidia-cart-generate-actions form{display:flex;margin:0}
+.kidia-cart-generate-actions .button,
+.kidia-cart-generate-actions .button:visited{
+	border-color:#2f806e!important;
+	background:#fff!important;
+	color:#236b59!important;
+	box-shadow:none!important;
+	outline:0!important;
+}
+.kidia-cart-generate-actions .button:hover,
+.kidia-cart-generate-actions .button:focus,
+.kidia-cart-generate-actions .button:active{
+	border-color:#236b59!important;
+	background:#eaf6f2!important;
+	color:#174e42!important;
+	box-shadow:0 0 0 1px #8fbeb2!important;
+}
+.kidia-cart-generate-actions .button-primary,
+.kidia-cart-generate-actions .button-primary:visited{
+	border-color:#2f806e!important;
+	background:#2f806e!important;
+	color:#fff!important;
+}
+.kidia-cart-generate-actions .button-primary:hover,
+.kidia-cart-generate-actions .button-primary:focus,
+.kidia-cart-generate-actions .button-primary:active{
+	border-color:#236b59!important;
+	background:#236b59!important;
+	color:#fff!important;
+	box-shadow:0 0 0 1px #8fbeb2!important;
+}
 @media(max-width:900px){
 	.kidia-ai-playbooks[open]{width:100%}
 	.kidia-ai-playbooks>div.kidia-ai-playbook-groups,.kidia-ai-action-grid,.kidia-ai-bundle-grid{grid-template-columns:1fr}
