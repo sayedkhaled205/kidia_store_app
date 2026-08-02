@@ -210,7 +210,7 @@ $GLOBALS['wpdb'] = new Kidia_Reporting_WPDB();
 $reporting = Kidia_Mobile_Analytics::reporting_snapshot( $from, $to, 'all' );
 kidia_orders_assert( 8 === $reporting['all_orders'], 'Reports must count every non-draft order in the selected period.' );
 kidia_orders_assert( 5 === $reporting['orders'], 'Analytics commerce must count paid orders only.' );
-kidia_orders_assert( 1000.50 === $reporting['revenue'], 'Paid revenue must come from WooCommerce total sales.' );
+kidia_orders_assert( 1000.50 === $reporting['revenue'], 'Paid revenue must come from WooCommerce net sales after refunds.' );
 kidia_orders_assert( 12 === $reporting['units'], 'Units must come from WooCommerce refund-aware reporting facts.' );
 kidia_orders_assert( 4 === $reporting['customers'], 'Reporting customers must remain an exact distinct count.' );
 kidia_orders_assert( array( 'completed' => 5, 'cancelled' => 3 ) === $reporting['status_counts'], 'Status distribution must include paid and unpaid real orders.' );

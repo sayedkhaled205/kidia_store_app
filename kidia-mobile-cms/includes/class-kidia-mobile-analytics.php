@@ -828,11 +828,11 @@ final class Kidia_Mobile_Analytics {
 		$summary_sql = "SELECT
 			COUNT(*) AS all_orders,
 			SUM(is_paid) AS paid_orders,
-			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, total_sales) ELSE 0 END) AS paid_revenue,
+			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, net_total) ELSE 0 END) AS paid_revenue,
 			SUM(CASE WHEN is_paid = 1 THEN GREATEST(0, num_items_sold) ELSE 0 END) AS units,
 			COUNT(DISTINCT CASE WHEN is_paid = 1 THEN COALESCE(NULLIF(customer_id, 0), -order_id) END) AS customers
 			FROM (
-				SELECT orders.order_id, orders.customer_id, orders.total_sales, orders.num_items_sold,
+				SELECT orders.order_id, orders.customer_id, orders.net_total, orders.num_items_sold,
 					CASE WHEN orders.status IN ({$paid_placeholders}) THEN 1 ELSE 0 END AS is_paid
 				FROM {$stats_table} AS orders
 				WHERE orders.parent_id = 0

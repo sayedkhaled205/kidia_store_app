@@ -272,7 +272,7 @@ assert.match(
 );
 assert.match(
   analytics,
-  /reporting_snapshot[\s\S]*wc_order_stats[\s\S]*wc_order_product_lookup[\s\S]*total_sales[\s\S]*product_net_revenue/,
+  /reporting_snapshot[\s\S]*wc_order_stats[\s\S]*wc_order_product_lookup[\s\S]*net_total[\s\S]*product_net_revenue/,
   "Generated Store Data must use WooCommerce's automatically maintained order and product facts.",
 );
 assert.match(
