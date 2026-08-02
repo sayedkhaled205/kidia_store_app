@@ -372,6 +372,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		);
 		return array(
 			'theme' => $theme_key,
+			'splash' => $this->build_splash_settings( $theme, $primary, $secondary, $app_name, $logo_url ),
 			'home' => $this->build_home( $theme, $primary, $secondary, $app_name, $logo_url ),
 			'pages' => $pages,
 			'category' => $this->build_category_settings( $theme, $preview_category ),
@@ -1012,7 +1013,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		$this->apply_home( $theme, $primary, $secondary, $app_name, $logo_url );
 		$this->apply_pages( $theme, $enabled_pages, $primary, $secondary, $app_name, $logo_url );
 		$this->apply_category( $theme, in_array( 'category', $enabled_pages, true ) );
-		$this->apply_extras( $theme, $theme, $primary, $app_name, $logo_url );
+		$this->apply_extras( $theme, $theme, $primary, $secondary, $app_name, $logo_url );
 
 		update_option(
 			self::STATE_OPTION,
@@ -1894,32 +1895,62 @@ final class Kidia_Mobile_Setup_Wizard {
 	 * @param array<string,mixed> $home_theme Home/splash styling.
 	 * @param array<string,mixed> $product_theme Product recommendation styling.
 	 */
-	private function apply_extras( array $home_theme, array $product_theme, string $primary, string $app_name, string $logo_url ): void {
-		$splash_image = '' !== $logo_url ? $logo_url : self::asset_url( $home_theme, 'category', 6 );
+	private function apply_extras( array $home_theme, array $product_theme, string $primary, string $secondary, string $app_name, string $logo_url ): void {
 		update_option(
 			'kidia_mobile_splash_screen',
-			array(
-				'enabled'              => true,
-				'image_url'            => $splash_image,
-				'background_color'     => $primary,
-				'background_color_end' => $home_theme['ink'],
-				'duration_ms'          => 1800,
-				'image_width'          => 140,
-				'image_height'         => 140,
-				'image_fit'            => 'contain',
-				'image_shape'          => 'none',
-				'show_store_name'      => true,
-				'store_name'           => $app_name,
-				'text_color'           => '#FFFFFF',
-				'show_loader'          => true,
-				'loader_color'         => '#FFFFFF',
-			),
+			$this->build_splash_settings( $home_theme, $primary, $secondary, $app_name, $logo_url ),
 			false
 		);
 		$checkout_design = 'minimal' === $product_theme['card_style']
 			? 'compact'
 			: ( 'elevated' === $product_theme['card_style'] ? 'summary_first' : 'classic' );
 		( new Kidia_Mobile_Checkout_Fields_Store() )->save_design( $checkout_design );
+	}
+
+	/**
+	 * Builds the branded startup screen shared by every built-in theme preview
+	 * and the installed application.
+	 *
+	 * @param array<string,mixed> $theme
+	 * @return array<string,mixed>
+	 */
+	private function build_splash_settings( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): array {
+		$splash_image = '' !== $logo_url ? $logo_url : self::asset_url( $theme, 'category', 6 );
+		$foreground   = $this->readable_foreground( $primary, $secondary );
+		return array(
+			'enabled'              => true,
+			'image_url'            => $splash_image,
+			'background_color'     => $primary,
+			'background_color_end' => $secondary,
+			'duration_ms'          => 1800,
+			'image_width'          => 140,
+			'image_height'         => 140,
+			'image_fit'            => 'contain',
+			'image_shape'          => 'none',
+			'show_store_name'      => true,
+			'store_name'           => $app_name,
+			'text_color'           => $foreground,
+			'show_loader'          => true,
+			'loader_color'         => $foreground,
+		);
+	}
+
+	private function readable_foreground( string $primary, string $secondary ): string {
+		$luminance = static function ( string $hex ): float {
+			$hex = ltrim( $hex, '#' );
+			if ( 6 !== strlen( $hex ) ) {
+				return 0.0;
+			}
+			$channels = array_map(
+				static function ( int $offset ) use ( $hex ): float {
+					$value = hexdec( substr( $hex, $offset, 2 ) ) / 255;
+					return $value <= 0.03928 ? $value / 12.92 : pow( ( $value + 0.055 ) / 1.055, 2.4 );
+				},
+				array( 0, 2, 4 )
+			);
+			return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+		};
+		return ( $luminance( $primary ) + $luminance( $secondary ) ) / 2 > 0.42 ? '#111111' : '#FFFFFF';
 	}
 
 	private function block_name( string $type, array $copy ): string {
