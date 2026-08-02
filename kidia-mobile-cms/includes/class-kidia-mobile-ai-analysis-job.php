@@ -57,8 +57,8 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$base_snapshot = ! $full_regenerate && Kidia_Mobile_Analytics::has_commerce_snapshot( $from, $to, $source )
 			? Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source )
 			: array();
-		$update_from = ! empty( $base_snapshot['updated_at'] )
-			? max( $from, absint( $base_snapshot['updated_at'] ) + 1 )
+		$update_from = ! empty( $base_snapshot )
+			? max( $from, ! empty( $base_snapshot['updated_at'] ) ? absint( $base_snapshot['updated_at'] ) + 1 : time() )
 			: $from;
 		$base_pairs = self::snapshot_pairs( $base_snapshot );
 		$base_hours = self::snapshot_hours( $base_snapshot );
@@ -70,7 +70,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'limit' => 1, 'page' => 1, 'paginate' => true, 'return' => 'objects',
 		) ) );
 		$order_total = max( 0, absint( is_object( $count_result ) ? ( $count_result->total ?? 0 ) : 0 ) );
-		$product_ids = self::in_stock_product_ids();
+		$product_ids = self::product_ids_for_run( ! empty( $base_snapshot ) ? $update_from : 0 );
 		$job_id = wp_generate_uuid4();
 		$job    = array(
 			'id'                => $job_id,
@@ -403,18 +403,21 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	 *
 	 * @return int[]
 	 */
-	private static function in_stock_product_ids(): array {
+	private static function product_ids_for_run( int $modified_since = 0 ): array {
 		global $wpdb;
 		$lookup_table = isset( $wpdb->wc_product_meta_lookup )
 			? (string) $wpdb->wc_product_meta_lookup
 			: $wpdb->prefix . 'wc_product_meta_lookup';
+		$modified_sql = $modified_since > 0
+			? $wpdb->prepare( ' AND posts.post_modified_gmt >= %s', gmdate( 'Y-m-d H:i:s', $modified_since ) )
+			: " AND lookup.stock_status = 'instock'";
 		$ids = $wpdb->get_col(
 			"SELECT lookup.product_id
 			FROM {$lookup_table} AS lookup
 			INNER JOIN {$wpdb->posts} AS posts ON posts.ID = lookup.product_id
-			WHERE lookup.stock_status = 'instock'
-			AND posts.post_type IN ('product', 'product_variation')
+			WHERE posts.post_type IN ('product', 'product_variation')
 			AND posts.post_status = 'publish'
+			{$modified_sql}
 			ORDER BY lookup.product_id ASC"
 		);
 		return array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
@@ -427,6 +430,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		foreach ( $ids as $product_id ) {
 			$product = function_exists( 'wc_get_product' ) ? wc_get_product( absint( $product_id ) ) : null;
 			if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
+				unset( $job['products'][ absint( $product_id ) ] );
 				continue;
 			}
 			$created = $product->get_date_created();
