@@ -142,6 +142,13 @@ kidia_orders_assert( ! in_array( 'cancelled', $revenue_statuses, true ), 'Cancel
 kidia_orders_assert( ! in_array( 'refunded', $revenue_statuses, true ), 'Refunded core orders must not be counted as paid revenue.' );
 kidia_orders_assert( ! in_array( 'failed', $revenue_statuses, true ), 'Failed core orders must not be counted as paid revenue.' );
 
+$reporting_statuses = Kidia_Mobile_Analytics::reporting_order_statuses();
+kidia_orders_assert( in_array( 'refunded', $reporting_statuses, true ), 'WooCommerce reporting must include refunded rows so they reduce net sales.' );
+kidia_orders_assert( in_array( 'on-hold', $reporting_statuses, true ), 'WooCommerce reporting must follow the configured Analytics status exclusions.' );
+kidia_orders_assert( ! in_array( 'pending', $reporting_statuses, true ), 'Pending orders must follow the default WooCommerce Analytics exclusion.' );
+kidia_orders_assert( ! in_array( 'cancelled', $reporting_statuses, true ), 'Cancelled orders must follow the default WooCommerce Analytics exclusion.' );
+kidia_orders_assert( ! in_array( 'failed', $reporting_statuses, true ), 'Failed orders must follow the default WooCommerce Analytics exclusion.' );
+
 $countable_statuses = Kidia_Mobile_Analytics::countable_order_statuses();
 kidia_orders_assert( in_array( 'pending', $countable_statuses, true ), 'Pending orders must remain in the real order total.' );
 kidia_orders_assert( in_array( 'done-2', $countable_statuses, true ), 'Custom statuses must remain in the real order total.' );
@@ -181,11 +188,12 @@ final class Kidia_Reporting_WPDB {
 		unset( $output );
 		$this->queries[] = $sql;
 		return array(
-			'all_orders'   => 8,
-			'paid_orders'  => 5,
-			'paid_revenue' => 1000.50,
-			'units'        => 12,
-			'customers'    => 4,
+			'all_orders'        => 8,
+			'reportable_orders' => 5,
+			'net_revenue'       => 1000.50,
+			'units'             => 12,
+			'gross_order_net'   => 1250.0,
+			'customers'         => 4,
 		);
 	}
 
@@ -213,8 +221,14 @@ kidia_orders_assert( 5 === $reporting['orders'], 'Analytics commerce must count 
 kidia_orders_assert( 1000.50 === $reporting['revenue'], 'Paid revenue must come from WooCommerce net sales after refunds.' );
 kidia_orders_assert( 12 === $reporting['units'], 'Units must come from WooCommerce refund-aware reporting facts.' );
 kidia_orders_assert( 4 === $reporting['customers'], 'Reporting customers must remain an exact distinct count.' );
+kidia_orders_assert( 250.0 === $reporting['average_order_value'], 'Average order value must use parent-order net totals before refund rows.' );
 kidia_orders_assert( array( 'completed' => 5, 'cancelled' => 3 ) === $reporting['status_counts'], 'Status distribution must include paid and unpaid real orders.' );
 kidia_orders_assert( 71 === $reporting['products'][0]['object_id'], 'Best sellers must use WooCommerce product net revenue ordering.' );
+$reporting_sql = implode( "\n", $GLOBALS['wpdb']->queries );
+kidia_orders_assert( str_contains( $reporting_sql, 'SUM(CASE WHEN is_reportable = 1 THEN net_total ELSE 0 END)' ), 'Net sales must include negative WooCommerce refund rows.' );
+kidia_orders_assert( str_contains( $reporting_sql, 'SUM(CASE WHEN is_reportable = 1 THEN num_items_sold ELSE 0 END)' ), 'Items sold must include negative WooCommerce refund quantities.' );
+kidia_orders_assert( str_contains( $reporting_sql, 'products.product_gross_revenue >= 0' ), 'Product order counts must not count refund rows as new orders.' );
+kidia_orders_assert( ! str_contains( $reporting_sql, 'order_facts.parent_id = 0' ), 'Product totals must retain refund facts instead of filtering them out.' );
 
 $GLOBALS['wpdb']->queries = array();
 Kidia_Mobile_Analytics::reporting_snapshot( $from, $to, 'mobile' );
@@ -222,5 +236,6 @@ $mobile_sql = implode( "\n", $GLOBALS['wpdb']->queries );
 kidia_orders_assert( str_contains( $mobile_sql, 'wp_wc_orders_meta' ), 'Mobile filtering must read HPOS order metadata when available.' );
 kidia_orders_assert( str_contains( $mobile_sql, "meta_value = 'mobile'" ), 'Mobile filtering must require the explicit mobile order marker.' );
 kidia_orders_assert( str_contains( $mobile_sql, 'order_id IN' ), 'Mobile reports must include only marked mobile orders.' );
+kidia_orders_assert( str_contains( $mobile_sql, 'CASE WHEN facts.parent_id > 0 THEN facts.parent_id ELSE facts.order_id END' ), 'Refund facts must inherit their parent order channel.' );
 
 echo "Store Data order runtime tests passed.\n";

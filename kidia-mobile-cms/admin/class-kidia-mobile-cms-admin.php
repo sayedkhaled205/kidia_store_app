@@ -703,9 +703,9 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( $store_reporting_ready && in_array( $store_tab, array( 'reports', 'analytics' ), true ) ) {
 			$reporting_snapshot = Kidia_Mobile_Analytics::reporting_snapshot( $date_from, $date_to, $store_source );
 		}
-		$order_revenue   = (float) ( $reporting_snapshot['revenue'] ?? 0 );
-		$order_units     = absint( $reporting_snapshot['units'] ?? 0 );
-		$paid_order_count = absint( $reporting_snapshot['orders'] ?? 0 );
+		$order_revenue      = (float) ( $reporting_snapshot['revenue'] ?? 0 );
+		$order_units        = absint( $reporting_snapshot['units'] ?? 0 );
+		$order_average      = (float) ( $reporting_snapshot['average_order_value'] ?? 0 );
 		$order_statuses  = is_array( $reporting_snapshot['status_counts'] ?? null )
 			? $reporting_snapshot['status_counts']
 			: array();
