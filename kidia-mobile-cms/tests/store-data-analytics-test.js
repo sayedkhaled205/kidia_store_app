@@ -357,7 +357,7 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /JOB_PREFIX = 'kidia_mobile_ai_job_v6_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
+  /JOB_PREFIX = 'kidia_mobile_ai_job_v7_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
   "Large AI jobs must persist in non-autoloaded database options instead of size-limited transients.",
 );
 assert.match(
