@@ -406,6 +406,11 @@ assert.match(
   "AI Studio button icons must remain vertically centered with their labels.",
 );
 assert.match(
+  shellCss,
+  /kidia-ai-page \.button:not\(\.button-primary\)\{[^}]*border-color:#2f806e!important[^}]*color:#236b59!important[\s\S]*kidia-ai-page \.button:not\(\.button-primary\):hover,[^}]*focus-visible\{[^}]*background:#eaf6f2!important[^}]*box-shadow:0 0 0 1px rgba\(47,128,110,\.24\)!important/,
+  "AI Studio secondary actions must use Kidia green instead of WordPress blue, including hover and focus.",
+);
+assert.match(
   shellScript,
   /positionAiDock[\s\S]*localStorage\.setItem[\s\S]*bindAiDockDrag[\s\S]*pointerdown[\s\S]*pointermove/,
   "The parked analysis card must be freely draggable and remember its safe screen position.",
