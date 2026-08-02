@@ -107,6 +107,9 @@ assert.match(service, /Kidia_Mobile_Layout_Store/, "Themes must update the Home 
 assert.match(service, /Kidia_Mobile_Page_Layout_Store/, "Themes must update application page builders.");
 assert.match(service, /Kidia_Mobile_Category_Page_Store/, "Themes must update the Category builder.");
 assert.match(service, /kidia_mobile_splash_screen/, "Themes must configure the Splash screen.");
+assert.match(service, /preview_snapshot[\s\S]*'splash'\s*=>\s*\$this->build_splash_settings\(\s*\$theme,\s*\$primary,\s*\$secondary,\s*\$app_name,\s*\$logo_url\s*\)/, "Every built-in theme preview must include its branded Splash screen.");
+assert.match(service, /build_splash_settings[\s\S]*'background_color'\s*=>\s*\$primary[\s\S]*'background_color_end'\s*=>\s*\$secondary[\s\S]*'store_name'\s*=>\s*\$app_name/, "Splash must use the primary color, secondary color and application name selected on the identity step.");
+assert.match(service, /build_splash_settings[\s\S]*readable_foreground[\s\S]*'text_color'\s*=>\s*\$foreground[\s\S]*'loader_color'\s*=>\s*\$foreground/, "Splash text and loader must remain readable over the selected brand colors.");
 assert.match(service, /Kidia_Mobile_Checkout_Fields_Store::DESIGN_OPTION/, "Themes must preserve the selected checkout design.");
 assert.doesNotMatch(service, /kidia_mobile_checkout_suggestions/, "Themes must not restore removed Checkout Suggested Products.");
 for (const page of ["home", "category", "catalog", "product", "wishlist", "account"]) {
