@@ -58,6 +58,14 @@ body.kidia-cms-plugin-page :is(
 		overscroll-behavior:contain;
 		scrollbar-gutter:stable;
 		scrollbar-width:thin;
+		/* Scrollbar placement follows direction. Keep only the scroll box LTR
+		 * so its rail stays on the physical right, then restore RTL below for
+		 * the actual WordPress navigation content. */
+		direction:ltr;
+	}
+	html[dir="rtl"] body.kidia-cms-plugin-page #adminmenu,
+	.rtl body.kidia-cms-plugin-page #adminmenu{
+		direction:rtl;
 	}
 	body.kidia-cms-plugin-page #adminmenuwrap::-webkit-scrollbar{
 		width:8px;
