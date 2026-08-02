@@ -33,7 +33,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	}
 
 	/** Starts one user-owned analysis job without scanning the store. */
-	public static function start( int $from, int $to, string $source, int $user_id, string $date_preset = 'custom' ): array {
+	public static function start( int $from, int $to, string $source, int $user_id, string $date_preset = 'custom', bool $full_regenerate = false ): array {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$date_preset = self::sanitize_date_preset( $date_preset );
 		if ( ! function_exists( 'wc_get_orders' ) ) {
@@ -54,7 +54,19 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		 * duplicated paginate.total/ID population. Count and analyse the canonical
 		 * order objects returned by the active order data store instead.
 		 */
-		$count_result = wc_get_orders( self::order_args( $from, $to, $source, array(
+		$base_snapshot = ! $full_regenerate && Kidia_Mobile_Analytics::has_commerce_snapshot( $from, $to, $source )
+			? Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source )
+			: array();
+		$update_from = ! empty( $base_snapshot['updated_at'] )
+			? max( $from, absint( $base_snapshot['updated_at'] ) + 1 )
+			: $from;
+		$base_pairs = self::snapshot_pairs( $base_snapshot );
+		$base_hours = self::snapshot_hours( $base_snapshot );
+		if ( ! empty( $base_snapshot ) ) {
+			$base_snapshot['pairs'] = array();
+			$base_snapshot['activity_hours'] = array();
+		}
+		$count_result = wc_get_orders( self::order_args( $update_from, $to, $source, array(
 			'limit' => 1, 'page' => 1, 'paginate' => true, 'return' => 'objects',
 		) ) );
 		$order_total = max( 0, absint( is_object( $count_result ) ? ( $count_result->total ?? 0 ) : 0 ) );
@@ -64,6 +76,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'id'                => $job_id,
 			'user_id'           => $user_id,
 			'from'              => $from,
+			'query_from'        => $update_from,
 			'to'                => $to,
 			'date_preset'       => $date_preset,
 			'source'            => $source,
@@ -75,10 +88,12 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'product_ids'       => $product_ids,
 			'product_offset'    => 0,
 			'products_processed'=> 0,
-			'snapshot'          => Kidia_Mobile_Analytics::empty_commerce_snapshot(),
-			'products'          => array(),
-			'pairs'             => array(),
-			'hours'             => array(),
+			'snapshot'          => empty( $base_snapshot ) ? Kidia_Mobile_Analytics::empty_commerce_snapshot() : $base_snapshot,
+			'products'          => self::snapshot_products_by_id( $base_snapshot ),
+			'pairs'             => $base_pairs,
+			'hours'             => $base_hours,
+			'base_customers'    => absint( $base_snapshot['customers'] ?? 0 ),
+			'update_mode'       => ! empty( $base_snapshot ),
 			/*
 			 * Keep the bitmap database-safe. Raw binary eventually contains
 			 * invalid utf8mb4 bytes and makes update_option() fail on MySQL.
@@ -292,7 +307,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	private static function process_order_batch( array &$job ): void {
 		$page = max( 1, absint( $job['order_page'] ?? 1 ) );
 		$result = wc_get_orders( self::order_args(
-			absint( $job['from'] ?? 0 ),
+			absint( $job['query_from'] ?? $job['from'] ?? 0 ),
 			absint( $job['to'] ?? 0 ),
 			(string) ( $job['source'] ?? 'all' ),
 			array(
@@ -448,7 +463,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	/** Stores the complete snapshot, clears derived caches and generates decisions. */
 	private static function finalize( array &$job ): void {
 		$snapshot = $job['snapshot'];
-		$snapshot['customers'] = self::bitmap_estimate( (string) $job['customer_bitmap'] );
+		$snapshot['customers'] = absint( $job['base_customers'] ?? 0 ) + self::bitmap_estimate( (string) $job['customer_bitmap'] );
 		$snapshot['average_order_value'] = $snapshot['orders'] > 0
 			? round( $snapshot['revenue'] / $snapshot['orders'], 2 )
 			: 0.0;
@@ -489,9 +504,10 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$snapshot['catalog_products'] = function_exists( 'wp_count_posts' ) ? absint( wp_count_posts( 'product' )->publish ?? 0 ) : 0;
 		$snapshot['catalog_in_stock'] = count( $catalog_rows );
 		$snapshot['catalog_rows']     = $catalog_rows;
-		$snapshot['orders_scanned']   = absint( $job['orders_processed'] );
-		$snapshot['orders_available'] = absint( $job['order_total'] );
+		$snapshot['orders_scanned']   = absint( $snapshot['orders'] ?? 0 );
+		$snapshot['orders_available'] = absint( $snapshot['orders'] ?? 0 );
 		$snapshot['truncated']        = $snapshot['orders_scanned'] < $snapshot['orders_available'];
+		$snapshot['updated_at']       = time();
 		$stored = Kidia_Mobile_Analytics::store_commerce_snapshot(
 			absint( $job['from'] ),
 			absint( $job['to'] ),
@@ -507,6 +523,39 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		Kidia_Mobile_AI_Offer_Engine::recommendations( absint( $job['from'] ), absint( $job['to'] ), (string) $job['source'] );
 		$job['snapshot'] = $snapshot;
 		$job['phase']    = 'complete';
+	}
+
+	/** Restores saved product evidence so an Update only adds the new order delta. */
+	private static function snapshot_products_by_id( array $snapshot ): array {
+		$rows = is_array( $snapshot['catalog_rows'] ?? null ) ? $snapshot['catalog_rows'] : array();
+		$products = array();
+		foreach ( $rows as $row ) {
+			$id = absint( $row['id'] ?? $row['object_id'] ?? 0 );
+			if ( $id > 0 ) { $products[ $id ] = $row; }
+		}
+		return $products;
+	}
+
+	/** Restores saved hourly evidence for incremental ranking. */
+	private static function snapshot_hours( array $snapshot ): array {
+		$hours = array();
+		foreach ( (array) ( $snapshot['activity_hours'] ?? array() ) as $row ) {
+			$hours[ absint( $row['hour'] ?? 0 ) ] = absint( $row['event_count'] ?? 0 );
+		}
+		return $hours;
+	}
+
+	/** Restores pair counters from the previous completed snapshot. */
+	private static function snapshot_pairs( array $snapshot ): array {
+		$pairs = array();
+		foreach ( (array) ( $snapshot['pairs'] ?? array() ) as $row ) {
+			$ids = array_values( array_filter( array_map( 'absint', (array) ( $row['product_ids'] ?? array() ) ) ) );
+			if ( count( $ids ) === 2 ) {
+				sort( $ids );
+				$pairs[ $ids[0] . ':' . $ids[1] ] = absint( $row['count'] ?? 0 );
+			}
+		}
+		return $pairs;
 	}
 
 	/** Common WooCommerce order query. */
