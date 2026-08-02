@@ -150,14 +150,15 @@ $category_image = static function ( WP_Term $category ): string {
 					</nav>
 				<?php endif; ?>
 			</div>
-			<?php if ( ! $is_abandoned_page ) : ?><a class="button button-primary" href="<?php echo esc_url( $manage_urls[ $store_tab ] ); ?>"><span class="dashicons dashicons-edit"></span><?php esc_html_e( 'Manage', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
+			<?php if ( $is_abandoned_page ) : $cart_has_results = 'not_started' !== (string) ( $abandoned_import_state['phase'] ?? 'not_started' ); ?>
+				<div class="kidia-cart-generate-actions">
+					<a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', $cart_has_results ? 'update' : 'generate' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php echo esc_html( $cart_has_results ? __( 'Update', 'kidia-mobile-cms' ) : __( 'Generate', 'kidia-mobile-cms' ) ); ?></a>
+					<?php if ( $cart_has_results ) : ?><a class="button" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', 'full' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php esc_html_e( 'Full Regenerate', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
+				</div>
+			<?php else : ?>
+				<a class="button button-primary" href="<?php echo esc_url( $manage_urls[ $store_tab ] ); ?>"><span class="dashicons dashicons-edit"></span><?php esc_html_e( 'Manage', 'kidia-mobile-cms' ); ?></a>
+			<?php endif; ?>
 		</div>
-		<?php if ( $is_abandoned_page ) : $cart_has_results = 'not_started' !== (string) ( $abandoned_import_state['phase'] ?? 'not_started' ); ?>
-			<div class="kidia-cart-generate-actions">
-				<a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', $cart_has_results ? 'update' : 'generate' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php echo esc_html( $cart_has_results ? __( 'Update', 'kidia-mobile-cms' ) : __( 'Generate', 'kidia-mobile-cms' ) ); ?></a>
-				<?php if ( $cart_has_results ) : ?><a class="button" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', 'full' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php esc_html_e( 'Full Regenerate', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
-			</div>
-		<?php endif; ?>
 
 		<?php if ( in_array( $store_tab, $dated_tabs, true ) ) : ?>
 			<form class="kidia-date-filter" method="get" data-kidia-instant-filter="date">
