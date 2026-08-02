@@ -647,6 +647,26 @@ assert.match(
   /data-kidia-background-job="abandoned-carts"[\s\S]*Importing all retained WooCommerce carts in the background/,
   "The permanent shell must restore historical import progress on every CMS page.",
 );
+assert.match(
+  admin,
+  /admin_post_kidia_mobile_start_abandoned_cart_import[\s\S]*start_abandoned_cart_import[\s\S]*check_admin_referer\( 'kidia_mobile_start_abandoned_cart_import', 'kidia_mobile_cart_import_nonce' \)[\s\S]*ensure_website_session_import\( true, 'full' === \$mode \)[\s\S]*wp_safe_redirect/,
+  "Generate, Update and Full Regenerate must use one authenticated full-page action instead of fragment navigation.",
+);
+assert.match(
+  storeData,
+  /kidia-cart-generate-actions[\s\S]*admin-post\.php[\s\S]*kidia_mobile_start_abandoned_cart_import[\s\S]*cart_import_mode[\s\S]*kidia_mobile_cart_import_nonce[\s\S]*Full Regenerate/,
+  "The abandoned-cart buttons must submit real POST actions that cannot be intercepted as CMS links.",
+);
+assert.doesNotMatch(
+  storeData,
+  /wp_nonce_url\( add_query_arg\( 'cart_generate'/,
+  "Cart generation must not depend on a nonce hidden inside a fragment URL.",
+);
+assert.match(
+  shellCss,
+  /kidia-cart-generate-actions \.button[\s\S]*border-color:#2f806e!important[\s\S]*color:#236b59!important[\s\S]*kidia-cart-generate-actions \.button-primary[\s\S]*background:#2f806e!important[\s\S]*color:#fff!important/,
+  "Abandoned-cart secondary and primary actions must stay in Kidia green in every interaction state.",
+);
 assert.match(storeData, /Carts found[\s\S]*\$abandoned_summary/, "The Abandoned Carts page must still show complete cart totals.");
 assert.match(
   storeData,

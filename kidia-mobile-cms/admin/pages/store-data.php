@@ -100,6 +100,21 @@ $high_interest_products = array_values(
 	)
 );
 $is_abandoned_page = 'abandoned-carts' === $store_tab;
+$cart_import_return_url = add_query_arg(
+	array(
+		'page'          => 'kidia-mobile-cms',
+		'view'          => 'store-data',
+		'store_tab'     => 'abandoned-carts',
+		'store_source'  => $store_source,
+		'date_preset'   => $date_preset,
+		'date_from'     => 'custom' === $date_preset ? wp_date( 'Y-m-d', $date_from ) : false,
+		'date_to'       => 'custom' === $date_preset ? wp_date( 'Y-m-d', $date_to ) : false,
+		'cart_view'     => $cart_view,
+		'cart_per_page' => $cart_per_page,
+		'cart_page'     => $cart_page,
+	),
+	admin_url( 'admin.php' )
+);
 $cart_view_url = static function ( string $view, int $page_number = 1 ) use ( $store_source, $date_preset, $date_from, $date_to, $cart_per_page ): string {
 	return add_query_arg(
 		array(
@@ -154,8 +169,22 @@ $category_image = static function ( WP_Term $category ): string {
 			</div>
 			<?php if ( $is_abandoned_page ) : $cart_has_results = 'not_started' !== (string) ( $abandoned_import_state['phase'] ?? 'not_started' ); ?>
 				<div class="kidia-cart-generate-actions">
-					<a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', $cart_has_results ? 'update' : 'generate' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php echo esc_html( $cart_has_results ? __( 'Update', 'kidia-mobile-cms' ) : __( 'Generate', 'kidia-mobile-cms' ) ); ?></a>
-					<?php if ( $cart_has_results ) : ?><a class="button" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cart_generate', 'full' ), 'kidia_mobile_cart_generate' ) ); ?>"><?php esc_html_e( 'Full Regenerate', 'kidia-mobile-cms' ); ?></a><?php endif; ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="kidia_mobile_start_abandoned_cart_import">
+						<input type="hidden" name="cart_import_mode" value="<?php echo esc_attr( $cart_has_results ? 'update' : 'generate' ); ?>">
+						<input type="hidden" name="redirect_to" value="<?php echo esc_url( $cart_import_return_url ); ?>">
+						<?php wp_nonce_field( 'kidia_mobile_start_abandoned_cart_import', 'kidia_mobile_cart_import_nonce' ); ?>
+						<button class="button button-primary" type="submit"><?php echo esc_html( $cart_has_results ? __( 'Update', 'kidia-mobile-cms' ) : __( 'Generate', 'kidia-mobile-cms' ) ); ?></button>
+					</form>
+					<?php if ( $cart_has_results ) : ?>
+						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+							<input type="hidden" name="action" value="kidia_mobile_start_abandoned_cart_import">
+							<input type="hidden" name="cart_import_mode" value="full">
+							<input type="hidden" name="redirect_to" value="<?php echo esc_url( $cart_import_return_url ); ?>">
+							<?php wp_nonce_field( 'kidia_mobile_start_abandoned_cart_import', 'kidia_mobile_cart_import_nonce' ); ?>
+							<button class="button kidia-cart-full-regenerate" type="submit"><?php esc_html_e( 'Full Regenerate', 'kidia-mobile-cms' ); ?></button>
+						</form>
+					<?php endif; ?>
 				</div>
 			<?php else : ?>
 				<a class="button button-primary" href="<?php echo esc_url( $manage_urls[ $store_tab ] ); ?>"><span class="dashicons dashicons-edit"></span><?php esc_html_e( 'Manage', 'kidia-mobile-cms' ); ?></a>
