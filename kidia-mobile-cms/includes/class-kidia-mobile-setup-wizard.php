@@ -206,6 +206,33 @@ final class Kidia_Mobile_Setup_Wizard {
 					),
 				)
 			),
+			'amazon_marketplace' => self::theme(
+				__( 'Amazon Marketplace', 'kidia-mobile-cms' ),
+				__( 'An Amazon-inspired shopping application with persistent search, delivery context, dense deals, department discovery and information-rich commerce pages.', 'kidia-mobile-cms' ),
+				array(
+					// These swatches are preview fallbacks only. Applying the preset keeps
+					// the connected store logo and brand palette selected in Setup.
+					'primary' => '#2F806E', 'soft' => '#EAF6F2', 'ink' => '#172B34', 'surface' => '#FFFFFF',
+					'card_style' => 'outlined', 'asset_dir' => 'marketplace_plus', 'category_layout' => 'compact_grid', 'category_shape' => 'circle',
+					'layout_profile' => 'amazon_marketplace',
+					'product_columns' => 2, 'radius' => 8, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 8,
+					'blocks' => array( 'promo_strip', 'quick_links', 'hero_slider', 'category_grid', 'countdown', 'product_carousel', 'banner_grid', 'product_grid', 'brand_carousel' ),
+					'sample_copy' => array( __( 'Shop everything you need', 'kidia-mobile-cms' ), __( 'Shop by department', 'kidia-mobile-cms' ), __( 'Deals for you', 'kidia-mobile-cms' ) ),
+					'home_design' => array(
+						'hero_ratio' => 2.15, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom',
+						'category_layout' => 'carousel', 'category_columns' => 4, 'category_size' => 72, 'category_gap' => 8,
+						'quick_layout' => 'grid', 'quick_columns' => 4, 'quick_size' => 68, 'quick_gap' => 8,
+						'product_columns' => 2, 'product_ratio' => .92, 'product_radius' => 8, 'product_style' => 'outlined',
+						'product_rating' => true, 'product_badge' => true, 'product_swipe' => true, 'product_quick_add' => true, 'product_wishlist' => true,
+						'banner_layout' => 'equal', 'banner_ratio' => 1.15, 'banner_gap' => 8, 'image_banner_ratio' => 1.15,
+					),
+					'category_design' => array(
+						'navigation_mode' => 'separate_page', 'grid_columns' => 3, 'card_gap' => 8, 'card_style' => 'outlined',
+						'card_radius' => 8, 'image_size' => 72, 'image_shape' => 'circle', 'image_text_gap' => 8,
+						'font_size' => 14, 'font_weight' => 600, 'text_align' => 'center', 'show_arrow' => false,
+					),
+				)
+			),
 			'studio_fashion' => self::theme(
 				__( 'Studio Fashion', 'kidia-mobile-cms' ),
 				__( 'A minimal editorial fashion shop with quiet navigation, full-width campaigns and clean garment-led product grids.', 'kidia-mobile-cms' ),
@@ -299,6 +326,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			'pet_care'         => array( 'type' => 'quick_links', 'title' => __( 'Shop by companion', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 76 ) ),
 			'family_pop'       => array( 'type' => 'quick_links', 'title' => __( 'Shop every age', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 64 ) ),
 			'marketplace_plus' => array( 'type' => 'countdown', 'title' => __( 'Today’s marketplace deals', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
+			'amazon_marketplace' => array( 'type' => 'countdown', 'title' => __( 'Today’s Deals', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
 			'studio_fashion'   => array( 'type' => 'banner_grid', 'title' => __( 'The studio campaign', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 0 ) ),
 			'editorial_runway' => array( 'type' => 'image_banner', 'title' => __( 'The campaign story', 'kidia-mobile-cms' ), 'settings' => array( 'aspect_ratio' => .72, 'border_radius' => 0 ) ),
 		);
@@ -324,6 +352,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			'pet_care'         => array( $row( array( $column( 52, array( 'logo' ), 'left' ), $column( 48, array( 'search', 'account', 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ),
 			'family_pop'       => array( $row( array( $column( 50, array( 'logo' ), 'left' ), $column( 50, array( 'cart' ), 'right' ) ) ), $row( array( $column( 100, array( 'search_bar' ) ) ) ) ),
 			'marketplace_plus' => array( $row( array( $column( 16, array( 'menu' ), 'left' ), $column( 68, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ), $row( array( $column( 65, array( 'logo' ), 'left' ), $column( 35, array( 'account', 'orders' ), 'right' ) ) ) ),
+			'amazon_marketplace' => array( $row( array( $column( 16, array( 'menu' ), 'left' ), $column( 68, array( 'search_bar' ) ), $column( 16, array( 'cart' ), 'right' ) ) ), $row( array( $column( 55, array( 'logo' ), 'left' ), $column( 45, array( 'account', 'orders' ), 'right' ) ) ) ),
 			'studio_fashion'   => array( $row( array( $column( 50, array( 'logo' ), 'left' ), $column( 50, array( 'search', 'account', 'cart' ), 'right' ) ) ) ),
 			'editorial_runway' => array( $row( array( $column( 25, array( 'menu' ), 'left' ), $column( 50, array( 'logo' ) ), $column( 25, array( 'cart' ), 'right' ) ) ) ),
 		);
@@ -1110,6 +1139,14 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['indicator_position'] = $home_design['hero_indicators'];
 				$settings['show_indicators'] = ! empty( $home_design['hero_show_indicators'] );
 			}
+			if ( 'amazon_marketplace' === $profile && 'promo_strip' === $type ) {
+				$settings['title'] = __( 'Deliver to your saved address', 'kidia-mobile-cms' );
+				$settings['messages'] = array( __( 'Deliver to your saved address', 'kidia-mobile-cms' ) );
+				$settings['height'] = 38;
+				$settings['enable_transition'] = false;
+				$settings['action_type'] = 'account';
+				$settings['action_value'] = 'addresses';
+			}
 			if ( 'category_grid' === $type ) {
 				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Shop by category', 'kidia-mobile-cms' );
 				$settings['layout']      = $home_design['category_layout'];
@@ -1814,6 +1851,13 @@ final class Kidia_Mobile_Setup_Wizard {
 				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => true, 'gallery_ratio' => .88, 'gallery_fit' => 'contain', 'thumbnails' => true, 'indicators' => false, 'counter' => true, 'zoom' => true, 'show_rating' => true, 'show_badge' => true, 'price_size' => 24, 'name_size' => 18, 'variation_style' => 'dropdown', 'chip_radius' => 8, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 3, 'related_gap' => 6, 'related_ratio' => .88, 'button_width' => 68, 'button_height' => 56, 'size_chart' => 'list' ),
 				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'filled', 'button_radius' => 20, 'top_spacing' => 26, 'recommendation_layout' => 'compact', 'columns' => 3, 'gap' => 6, 'card_style' => 'outlined', 'card_radius' => 6, 'image_ratio' => .88, 'show_name' => true ),
 				'account' => array( 'avatar_size' => 64, 'summary_style' => 'outlined', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
+			),
+			'amazon_marketplace' => array(
+				'chrome' => array( 'header_height' => 116, 'header_heights' => array( 'home' => 116, 'category' => 70, 'catalog' => 70, 'product' => 64, 'wishlist' => 64, 'account' => 64, 'size_chart' => 64 ), 'header_shadow' => 'none', 'search_radius' => 22, 'footer_height' => 62, 'footer_shadow' => 'subtle', 'button_radius' => 22, 'button_shape' => 'pill', 'horizontal_padding' => 8, 'vertical_padding' => 6, 'search_height' => 46, 'search_icon_size' => 21, 'search_border_width' => 1, 'show_voice_search' => true, 'show_cart_badge' => true, 'cart_icon_variant' => 'cart', 'icon_size' => 24, 'label_size' => 11, 'icon_label_gap' => 3, 'content_horizontal_padding' => 8 ),
+				'catalog' => array( 'filter_sticky' => true, 'show_result_count' => true, 'filter_height' => 46, 'filter_radius' => 18, 'columns' => 2, 'gap' => 8, 'card_style' => 'outlined', 'card_radius' => 8, 'image_ratio' => .92, 'image_swipe' => true, 'show_rating' => true, 'show_badge' => true, 'quick_add_style' => 'filled', 'show_wishlist' => true, 'pagination' => 'automatic', 'per_page' => 20, 'outer_horizontal_padding' => 8, 'top_spacing' => 8, 'image_inset' => 4, 'image_radius' => 6, 'content_horizontal_padding' => 8, 'content_top_padding' => 5, 'content_bottom_padding' => 8, 'price_size' => 16, 'show_name' => true ),
+				'product' => array( 'tabs_enabled' => true, 'tabs_sticky' => true, 'gallery_ratio' => .95, 'gallery_fit' => 'contain', 'thumbnails' => false, 'indicators' => false, 'counter' => true, 'zoom' => true, 'show_rating' => true, 'show_badge' => true, 'price_size' => 26, 'name_size' => 17, 'variation_style' => 'chips', 'chip_radius' => 8, 'accordion' => true, 'reviews_enabled' => true, 'related_columns' => 2, 'related_gap' => 8, 'related_ratio' => .92, 'button_width' => 74, 'button_height' => 52, 'button_text_color' => '#FFFFFF', 'show_button_icon' => false, 'size_chart' => 'list' ),
+				'wishlist' => array( 'access' => 'sign_in_required', 'button_style' => 'filled', 'button_radius' => 22, 'top_spacing' => 24, 'recommendation_layout' => 'grid', 'columns' => 2, 'gap' => 8, 'card_style' => 'outlined', 'card_radius' => 8, 'image_ratio' => .92, 'show_name' => true ),
+				'account' => array( 'avatar_size' => 58, 'summary_style' => 'minimal', 'show_addresses' => true, 'show_support' => true, 'show_logout' => true ),
 			),
 			'studio_fashion' => array(
 				'chrome' => array( 'header_height' => 84, 'header_shadow' => 'none', 'search_radius' => 0, 'footer_height' => 66, 'footer_shadow' => 'none', 'button_radius' => 0, 'button_shape' => 'rectangle', 'horizontal_padding' => 18, 'search_height' => 40, 'search_border_width' => 0, 'show_voice_search' => false, 'show_cart_badge' => false, 'cart_icon_variant' => 'bag' ),
