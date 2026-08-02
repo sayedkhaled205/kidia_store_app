@@ -33,6 +33,7 @@ $shell_has_abandoned   = in_array( $shell_abandoned_phase, array( 'running', 'co
 $shell_abandoned_total = absint( $shell_abandoned_import['total'] );
 $shell_abandoned_done  = absint( $shell_abandoned_import['processed'] );
 $shell_abandoned_completed_at = absint( $shell_abandoned_import['completed_at'] ?? 0 );
+$shell_abandoned_mode = sanitize_key( (string) ( $shell_abandoned_import['mode'] ?? 'generate' ) );
 $shell_abandoned_progress = $shell_abandoned_total > 0
 	? min( 100, (int) floor( 100 * $shell_abandoned_done / $shell_abandoned_total ) )
 	: 100;
@@ -78,7 +79,9 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 						echo esc_html(
 							'complete' === $shell_abandoned_phase
 								? sprintf(
-									__( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are available on Abandoned Carts.', 'kidia-mobile-cms' ),
+									'update' === $shell_abandoned_mode
+										? __( '%1$d retained sessions were checked and %2$d new or changed carts were saved. Results are available on Abandoned Carts.', 'kidia-mobile-cms' )
+										: __( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are available on Abandoned Carts.', 'kidia-mobile-cms' ),
 									$shell_abandoned_done,
 									absint( $shell_abandoned_import['imported'] )
 								)

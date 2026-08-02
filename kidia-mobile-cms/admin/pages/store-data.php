@@ -25,9 +25,11 @@ $manage_urls = array(
 $tab_url = static function ( string $tab, ?string $source = null ) use ( $store_tab, $store_source, $date_preset, $date_from, $date_to ): string {
 	$target_preset = $tab === $store_tab
 		? $date_preset
-		: ( in_array( $tab, array( 'abandoned-carts', 'reports', 'analytics' ), true )
-			? 'today'
-			: ( 'customers' === $tab ? 'all_time' : 'last_30_days' ) );
+		: ( 'abandoned-carts' === $tab
+			? 'all_time'
+			: ( in_array( $tab, array( 'reports', 'analytics' ), true )
+				? 'today'
+				: ( 'customers' === $tab ? 'all_time' : 'last_30_days' ) ) );
 	return add_query_arg(
 		array(
 			'page'         => 'kidia-mobile-store-data',
@@ -287,9 +289,10 @@ $category_image = static function ( WP_Term $category ): string {
 
 		<?php elseif ( 'abandoned-carts' === $store_tab ) : ?>
 			<div data-kidia-live-store-data="abandoned-carts-overview" aria-live="polite">
-			<div class="kidia-data-summary is-four"><div><small><?php esc_html_e( 'Carts found', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['carts'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $abandoned_summary['potential_value'] ?? 0 ) ) ); ?></b></div></div>
+			<div class="kidia-data-summary is-five"><div><small><?php esc_html_e( 'Carts found', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['carts'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Active', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['active'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Recovered / converted', 'kidia-mobile-cms' ); ?></small><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></div><div><small><?php esc_html_e( 'Potential value', 'kidia-mobile-cms' ); ?></small><b><?php echo wp_kses_post( $money( (float) ( $abandoned_summary['potential_value'] ?? 0 ) ) ); ?></b></div></div>
 			</div>
 			<nav class="kidia-cart-view-tabs" aria-label="<?php esc_attr_e( 'Cart status', 'kidia-mobile-cms' ); ?>">
+				<a class="<?php echo 'active' === $cart_view ? 'is-active' : ''; ?>" href="<?php echo esc_url( $cart_view_url( 'active' ) ); ?>"><?php esc_html_e( 'Active', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) absint( $abandoned_summary['active'] ?? 0 ) ); ?></b></a>
 				<a class="<?php echo 'abandoned' === $cart_view ? 'is-active' : ''; ?>" href="<?php echo esc_url( $cart_view_url( 'abandoned' ) ); ?>"><?php esc_html_e( 'Abandoned', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) absint( $abandoned_summary['abandoned'] ?? 0 ) ); ?></b></a>
 				<a class="<?php echo 'recovered' === $cart_view ? 'is-active' : ''; ?>" href="<?php echo esc_url( $cart_view_url( 'recovered' ) ); ?>"><?php esc_html_e( 'Recovered', 'kidia-mobile-cms' ); ?><b><?php echo esc_html( (string) absint( $abandoned_summary['recovered'] ?? 0 ) ); ?></b></a>
 			</nav>
@@ -337,7 +340,7 @@ $category_image = static function ( WP_Term $category ): string {
 				</div>
 				<?php endif; ?>
 				<div class="kidia-cart-table-toolbar">
-					<strong><?php echo esc_html( 'recovered' === $cart_view ? __( 'Recovered orders', 'kidia-mobile-cms' ) : __( 'Abandoned orders', 'kidia-mobile-cms' ) ); ?></strong>
+					<strong><?php echo esc_html( 'active' === $cart_view ? __( 'Active carts', 'kidia-mobile-cms' ) : ( 'recovered' === $cart_view ? __( 'Recovered orders', 'kidia-mobile-cms' ) : __( 'Abandoned orders', 'kidia-mobile-cms' ) ) ); ?></strong>
 					<label><span><?php esc_html_e( 'Orders per page', 'kidia-mobile-cms' ); ?></span><select data-cart-per-page>
 						<?php foreach ( array( 20, 50, 100 ) as $size ) : ?><option value="<?php echo esc_attr( (string) $size ); ?>" <?php selected( $cart_per_page, $size ); ?>><?php echo esc_html( (string) $size ); ?></option><?php endforeach; ?>
 					</select></label>
