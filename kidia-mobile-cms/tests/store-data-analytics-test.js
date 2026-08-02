@@ -439,8 +439,8 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*paginate'\s*=>\s*true[\s\S]*isset\( \$result->orders \)/,
-  "Large stores must use a compact bounded job state and explicitly paginated WooCommerce order batches.",
+  /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*'paginate'\s*=>\s*true[\s\S]*'return'\s*=>\s*'objects'[\s\S]*\$count_result->total[\s\S]*ORDER_BATCH[\s\S]*'paginate'\s*=>\s*false[\s\S]*is_array\( \$result \)/,
+  "Large stores must count canonical WooCommerce orders and process object batches without duplicated pagination totals.",
 );
 assert.doesNotMatch(
   aiAnalysisJob,
