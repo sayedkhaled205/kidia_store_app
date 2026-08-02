@@ -192,7 +192,9 @@ kidia_ai_runtime_assert(
 	'The inventory population must come from WooCommerce stock lookup rows and include variation SKUs.'
 );
 kidia_ai_runtime_assert(
-	false !== strpos( (string) $started['result_url'], 'date_preset=all_time' )
+	false !== strpos( (string) $started['result_url'], 'page=kidia-mobile-cms' )
+		&& false !== strpos( (string) $started['result_url'], 'view=ai-insights' )
+		&& false !== strpos( (string) $started['result_url'], 'date_preset=all_time' )
 		&& false === strpos( (string) $started['result_url'], 'date_from=' ),
 	'An all-time job must reopen the exact all-time snapshot instead of a custom 1970 range.'
 );
