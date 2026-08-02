@@ -463,9 +463,11 @@ final class Kidia_Mobile_CMS_Admin {
 		$allowed      = array( 'products', 'categories', 'discounts', 'customers', 'orders', 'reports', 'analytics', 'abandoned-carts' );
 		$store_tab    = in_array( $store_tab, $allowed, true ) ? $store_tab : 'products';
 
-		$date_default = in_array( $store_tab, array( 'abandoned-carts', 'reports', 'analytics' ), true )
-			? 'today'
-			: ( 'customers' === $store_tab ? 'all_time' : 'last_30_days' );
+		$date_default = 'abandoned-carts' === $store_tab
+			? 'all_time'
+			: ( in_array( $store_tab, array( 'reports', 'analytics' ), true )
+				? 'today'
+				: ( 'customers' === $store_tab ? 'all_time' : 'last_30_days' ) );
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : $date_default;
 		$date_range  = $this->store_data_date_range( $date_preset );
 		$date_from   = $date_range['from'];
@@ -738,7 +740,7 @@ final class Kidia_Mobile_CMS_Admin {
 			( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true, 'full' === $cart_mode );
 			$abandoned_import_state = Kidia_Mobile_Analytics::website_session_import_status();
 		}
-		$cart_view = in_array( $cart_view, array( 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
+		$cart_view = in_array( $cart_view, array( 'active', 'abandoned', 'recovered' ), true ) ? $cart_view : 'abandoned';
 		$cart_per_page = absint( $_GET['cart_per_page'] ?? 20 );
 		$cart_per_page = in_array( $cart_per_page, array( 20, 50, 100 ), true ) ? $cart_per_page : 20;
 		$cart_page = max( 1, absint( $_GET['cart_page'] ?? 1 ) );
@@ -748,9 +750,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$abandoned_import_state = 'abandoned-carts' === $store_tab
 			? Kidia_Mobile_Analytics::website_session_import_status()
 			: array();
-		$cart_total = 'recovered' === $cart_view
-			? absint( $abandoned_summary['recovered'] ?? 0 )
-			: absint( $abandoned_summary['abandoned'] ?? 0 );
+		$cart_total = absint( $abandoned_summary[ $cart_view ] ?? 0 );
 		$cart_pages = max( 1, (int) ceil( $cart_total / $cart_per_page ) );
 		$cart_page  = min( $cart_page, $cart_pages );
 		$abandoned_carts = 'abandoned-carts' === $store_tab

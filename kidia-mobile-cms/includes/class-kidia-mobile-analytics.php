@@ -1377,6 +1377,9 @@ final class Kidia_Mobile_Analytics {
 		}
 		if ( 'recovered' === $view ) {
 			$where .= " AND status IN ('recovered','converted')";
+		} elseif ( 'active' === $view ) {
+			$where .= " AND status = 'active' AND last_activity_at > %s";
+			$args[] = $threshold;
 		} else {
 			$where .= " AND (status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s))";
 			$args[] = $threshold;
@@ -1659,7 +1662,7 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * Returns complete filtered totals independently from the limited table page.
 	 *
-	 * @return array{carts:int,abandoned:int,recovered:int,potential_value:float}
+	 * @return array{carts:int,active:int,abandoned:int,recovered:int,potential_value:float}
 	 */
 	public static function abandoned_summary( int $from, int $to, string $source = 'all' ): array {
 		global $wpdb;
@@ -1675,19 +1678,22 @@ final class Kidia_Mobile_Analytics {
 			$wpdb->prepare(
 				"SELECT
 					COUNT(*) AS carts,
+					SUM(CASE WHEN status = 'active' AND last_activity_at > %s THEN 1 ELSE 0 END) AS active,
 					SUM(CASE WHEN status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s) THEN 1 ELSE 0 END) AS abandoned,
 					SUM(CASE WHEN status IN ('recovered','converted') THEN 1 ELSE 0 END) AS recovered,
 					SUM(CASE WHEN status = 'abandoned' OR (status = 'active' AND last_activity_at <= %s) THEN cart_total ELSE 0 END) AS potential_value
-				FROM {$table}
-				WHERE {$where}",
-				$threshold,
-				$threshold,
-				...$args
+					FROM {$table}
+					WHERE {$where}",
+					$threshold,
+					$threshold,
+					$threshold,
+					...$args
 			),
 			ARRAY_A
 		);
 		return array(
 			'carts'           => absint( $row['carts'] ?? 0 ),
+			'active'          => absint( $row['active'] ?? 0 ),
 			'abandoned'       => absint( $row['abandoned'] ?? 0 ),
 			'recovered'       => absint( $row['recovered'] ?? 0 ),
 			'potential_value' => max( 0, (float) ( $row['potential_value'] ?? 0 ) ),
@@ -1754,23 +1760,17 @@ final class Kidia_Mobile_Analytics {
 				)
 			)
 		);
-		if ( $force_refresh && ! $full_regenerate && 'complete' === (string) ( $state['phase'] ?? '' ) ) {
-			$session_cursor = absint( $state['session_cursor'] ?? $state['cursor'] ?? 0 );
-			$persistent_cursor = absint( $state['persistent_cursor'] ?? 0 );
-			$new_sessions = absint( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$sessions_table} WHERE session_id > %d", $session_cursor ) ) );
-			$new_persistent = absint( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s AND umeta_id > %d", $persistent_key, $persistent_cursor ) ) );
-			$state['session_total'] = absint( $state['session_total'] ?? 0 ) + $new_sessions;
-			$state['persistent_total'] = absint( $state['persistent_total'] ?? 0 ) + $new_persistent;
-			$state['total'] = absint( $state['processed'] ?? 0 ) + $new_sessions + $new_persistent;
-			$state['phase'] = ( $new_sessions + $new_persistent ) > 0 ? 'running' : 'complete';
-			$state['started_at'] = time();
-			$state['completed_at'] = ( $new_sessions + $new_persistent ) > 0 ? 0 : time();
-			update_option( self::WEBSITE_IMPORT_OPTION, $state, false );
-			if ( 'running' === $state['phase'] ) { self::schedule_website_session_import(); }
-			return $state;
-		}
-
-		$total        = $session_total + $persistent_total;
+		/*
+		 * WooCommerce updates session_value in place, so a higher session_id is not
+		 * a reliable change cursor. Update therefore rechecks every retained source
+		 * row while leaving the already stored results visible. The conditional
+		 * upsert below changes only carts whose current source data is newer/different.
+		 */
+		$previous_phase = (string) ( $state['phase'] ?? 'not_started' );
+		$mode = $full_regenerate
+			? 'full'
+			: ( $force_refresh && ! in_array( $previous_phase, array( 'not_started', 'unavailable' ), true ) ? 'update' : 'generate' );
+		$total = $session_total + $persistent_total;
 		$state        = array(
 			'phase'             => $total > 0 ? 'running' : 'complete',
 			'processed'         => 0,
@@ -1781,6 +1781,7 @@ final class Kidia_Mobile_Analytics {
 			'persistent_cursor' => 0,
 			'session_total'     => $session_total,
 			'persistent_total'  => $persistent_total,
+			'mode'              => $mode,
 			'started_at'        => time(),
 		);
 		if ( 0 === $total ) {
@@ -1955,16 +1956,11 @@ final class Kidia_Mobile_Analytics {
 	/** Imports one serialized WooCommerce session when it still contains items. */
 	private static function import_website_session_row( array $row ): bool {
 		$session = self::decode_stored_array( $row['session_value'] ?? '' );
-		$cart    = self::decode_stored_array( $session['cart'] ?? array() );
-		if ( empty( $cart ) ) {
+		if ( ! array_key_exists( 'cart', $session ) ) {
 			return false;
 		}
+		$cart = self::decode_stored_array( $session['cart'] );
 		$customer = self::decode_stored_array( $session['customer'] ?? array() );
-		$normalized = self::normalize_imported_cart( $cart );
-		if ( empty( $normalized['items'] ) ) {
-			return false;
-		}
-
 		$session_key  = sanitize_text_field( (string) ( $row['session_key'] ?? '' ) );
 		if ( '' === $session_key ) {
 			return false;
@@ -1973,6 +1969,11 @@ final class Kidia_Mobile_Analytics {
 		$expiry        = absint( $row['session_expiry'] ?? 0 );
 		$expiration    = self::website_session_expiration( $user_id > 0 );
 		$last_activity = $expiry > 0 ? min( time(), max( 1, $expiry - $expiration ) ) : time();
+		$normalized    = self::normalize_imported_cart( $cart );
+		if ( empty( $normalized['items'] ) ) {
+			self::mark_imported_website_cart_empty( $session_key, $last_activity );
+			return false;
+		}
 		return self::upsert_imported_website_cart(
 			$session_key,
 			$user_id,
@@ -2005,16 +2006,19 @@ final class Kidia_Mobile_Analytics {
 	private static function import_persistent_cart_row( array $row ): bool {
 		$stored = self::decode_stored_array( $row['meta_value'] ?? '' );
 		$cart   = self::decode_stored_array( $stored['cart'] ?? $stored );
-		if ( empty( $cart ) ) {
-			return false;
-		}
 		$normalized = self::normalize_imported_cart( $cart );
 		$user_id    = absint( $row['user_id'] ?? 0 );
-		if ( $user_id <= 0 || empty( $normalized['items'] ) ) {
+		if ( $user_id <= 0 ) {
 			return false;
 		}
 		$user = get_userdata( $user_id );
 		$last_active = absint( get_user_meta( $user_id, 'wc_last_active', true ) );
+		/* Unknown persistent-cart age must not outrank a dated live session. */
+		$last_activity = $last_active > 0 ? $last_active : 1;
+		if ( empty( $normalized['items'] ) ) {
+			self::mark_imported_website_cart_empty( (string) $user_id, $last_activity );
+			return false;
+		}
 		$customer = array(
 			'first_name' => $user instanceof WP_User ? $user->first_name : '',
 			'last_name'  => $user instanceof WP_User ? $user->last_name : '',
@@ -2025,7 +2029,28 @@ final class Kidia_Mobile_Analytics {
 			$user_id,
 			$customer,
 			$normalized,
-			$last_active > 0 ? $last_active : time()
+			$last_activity
+		);
+	}
+
+	/** Marks a previously tracked source cart empty without creating empty rows. */
+	private static function mark_imported_website_cart_empty( string $session_key, int $last_activity ): void {
+		if ( '' === $session_key ) {
+			return;
+		}
+		global $wpdb;
+		$table       = self::carts_table();
+		$activity_at = gmdate( 'Y-m-d H:i:s', max( 1, $last_activity ) );
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table}
+				SET items = %s, item_count = 0, cart_total = 0, status = 'empty', last_activity_at = %s
+				WHERE cart_key = %s AND status <> 'converted' AND last_activity_at <= %s",
+				wp_json_encode( array() ),
+				$activity_at,
+				hash( 'sha256', 'website|' . $session_key ),
+				$activity_at
+			)
 		);
 	}
 
@@ -2086,7 +2111,7 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $session_key || empty( $items ) ) {
 			return false;
 		}
-		( new self() )->upsert_cart(
+		return ( new self() )->upsert_cart(
 			array(
 				'cart_key'         => hash( 'sha256', 'website|' . $session_key ),
 				'source'           => 'website',
@@ -2103,7 +2128,6 @@ final class Kidia_Mobile_Analytics {
 				'last_activity_at' => gmdate( 'Y-m-d H:i:s', $last_activity ),
 			)
 		);
-		return true;
 	}
 
 	/** Schedules the next import batch without requiring the admin page to stay open. */
@@ -2393,7 +2417,7 @@ final class Kidia_Mobile_Analytics {
 	/**
 	 * @param array<string,mixed> $cart
 	 */
-	private function upsert_cart( array $cart ): void {
+	private function upsert_cart( array $cart ): bool {
 		$this->maybe_install();
 		global $wpdb;
 		$table = self::carts_table();
@@ -2412,10 +2436,13 @@ final class Kidia_Mobile_Analytics {
 				user_id=IF(VALUES(user_id)>0,VALUES(user_id),user_id),
 				customer_name=IF(VALUES(customer_name)<>'',VALUES(customer_name),customer_name),
 				customer_email=IF(VALUES(customer_email)<>'',VALUES(customer_email),customer_email),
-				items=VALUES(items), item_count=VALUES(item_count), cart_total=VALUES(cart_total),
-				currency=VALUES(currency),
+				items=IF(VALUES(last_activity_at)>=last_activity_at,VALUES(items),items),
+				item_count=IF(VALUES(last_activity_at)>=last_activity_at,VALUES(item_count),item_count),
+				cart_total=IF(VALUES(last_activity_at)>=last_activity_at,VALUES(cart_total),cart_total),
+				currency=IF(VALUES(last_activity_at)>=last_activity_at,VALUES(currency),currency),
 				status=CASE
 					WHEN status='converted' THEN status
+					WHEN VALUES(last_activity_at)<last_activity_at THEN status
 					WHEN VALUES(status)='empty' THEN 'empty'
 					WHEN status='active' AND last_activity_at <= DATE_SUB(VALUES(last_activity_at), INTERVAL 30 MINUTE) THEN 'recovered'
 					WHEN status='recovered' THEN status
@@ -2429,7 +2456,7 @@ final class Kidia_Mobile_Analytics {
 			absint( $cart['user_id'] ),
 			sanitize_text_field( (string) $cart['customer_name'] ),
 			sanitize_email( (string) $cart['customer_email'] ),
-			wp_json_encode( array_slice( $items, 0, 100 ) ),
+			wp_json_encode( $items ),
 			absint( $cart['item_count'] ),
 			max( 0, (float) $cart['cart_total'] ),
 			mb_substr( strtoupper( sanitize_key( (string) $cart['currency'] ) ), 0, 12 ),
@@ -2437,7 +2464,8 @@ final class Kidia_Mobile_Analytics {
 			$started_at,
 			$last_activity_at
 		);
-		$wpdb->query( $sql );
+		$result = $wpdb->query( $sql );
+		return false !== $result && $result > 0;
 	}
 
 	private static function safe_mysql_time( $value, string $fallback ): string {
