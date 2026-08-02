@@ -89,6 +89,10 @@ final class Kidia_Mobile_Analytics {
 	public static function revenue_order_statuses(): array {
 		return array( 'processing', 'completed', 'ready-for-shipping', 'delivered' );
 	}
+	public static function has_commerce_snapshot( int $from, int $to, string $source ): bool {
+		unset( $from, $to, $source );
+		return false;
+	}
 	public static function empty_commerce_snapshot(): array {
 		return array(
 			'orders'         => 0,
