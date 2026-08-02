@@ -78,8 +78,13 @@ assert.match(
 );
 assert.match(
   styles,
-  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:ltr;/,
-  "The WordPress menu scroll container must place its scrollbar on the physical right."
+  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:rtl;/,
+  "The WordPress menu scroll container must place its scrollbar on the physical left."
+);
+assert.match(
+  styles,
+  /html\[dir="ltr"\] body\.kidia-cms-plugin-page #adminmenu\{[^}]*direction:ltr;/,
+  "Moving the WordPress menu scrollbar must preserve LTR menu content layout."
 );
 assert.match(
   styles,

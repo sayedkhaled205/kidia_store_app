@@ -58,9 +58,12 @@ body.kidia-cms-plugin-page :is(
 		overscroll-behavior:contain;
 		scrollbar-gutter:stable;
 		scrollbar-width:thin;
-		/* Scrollbar placement follows direction. Keep only the scroll box LTR
-		 * so its rail stays on the physical right, then restore RTL below for
-		 * the actual WordPress navigation content. */
+		/* Scrollbar placement follows direction. Keep only the scroll box RTL
+		 * so its rail stays on the physical left, then restore the actual
+		 * WordPress navigation direction below for each admin locale. */
+		direction:rtl;
+	}
+	html[dir="ltr"] body.kidia-cms-plugin-page #adminmenu{
 		direction:ltr;
 	}
 	html[dir="rtl"] body.kidia-cms-plugin-page #adminmenu,
