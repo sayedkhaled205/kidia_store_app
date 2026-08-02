@@ -58,9 +58,6 @@
       ) {
         return "paused";
       }
-      if (["desktop_qr", "floating_button"].includes(key) && !destination()) {
-        return "needs-link";
-      }
       if (
         key === "inline_banner" &&
         fieldValue("promotion[inline_banner][placement]") === "shortcode"

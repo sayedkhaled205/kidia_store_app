@@ -435,17 +435,8 @@
       return { node, backdrop };
     };
 
+    // Enabled campaigns stay visible as honest announcements until a destination exists.
     const show = (displayType, campaign, slot = null) => {
-      const requiresDestination = ["desktop_qr", "floating_button"].includes(
-        displayType,
-      );
-      if (
-        requiresDestination &&
-        !campaignDestination(campaign) &&
-        !isTestMode
-      ) {
-        return false;
-      }
       if (!canShow(campaign)) return false;
       if (
         ["popup", "bottom_sheet"].includes(displayType) &&
@@ -561,8 +552,7 @@
     } else {
       const desktopQrReady =
         settings.desktop_qr?.enabled &&
-        !isMobile &&
-        Boolean(campaignDestination("desktop_qr"));
+        !isMobile;
       root.classList.toggle("has-desktop-qr", desktopQrReady);
       root.classList.toggle(
         "has-qr-bottom-left",

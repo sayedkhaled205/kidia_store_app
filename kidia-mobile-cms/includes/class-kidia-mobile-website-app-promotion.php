@@ -162,9 +162,6 @@ final class Kidia_Mobile_Website_App_Promotion {
 		) {
 			return 'paused';
 		}
-		if ( in_array( $campaign, array( 'desktop_qr', 'floating_button' ), true ) && ! self::has_destination( $settings, $campaign ) ) {
-			return 'needs-link';
-		}
 		if (
 			'inline_banner' === $campaign
 			&& 'shortcode' === (string) ( $settings['inline_banner']['placement'] ?? '' )

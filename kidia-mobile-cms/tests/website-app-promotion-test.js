@@ -264,8 +264,8 @@ assert.match(
 );
 assert.match(
   publicScript,
-  /requiresDestination[\s\S]*desktop_qr[\s\S]*floating_button[\s\S]*!campaignDestination[\s\S]*!isTestMode/,
-  "Message campaigns must not disappear just because no app-store destination has been published yet.",
+  /desktopQrReady[\s\S]*settings\.desktop_qr\?\.enabled[\s\S]*!isMobile/,
+  "Enabled desktop announcement cards must remain visible before an app-store destination is published.",
 );
 assert.match(
   publicCss,
@@ -837,19 +837,28 @@ setTimeout(() => {
     null,
     "A message-only campaign must not expose a fake # download action.",
   );
-  assert.equal(
-    messageOnlyDom.window.document.querySelector(
-      ".kidia-app-promo--desktop_qr",
-    ),
-    null,
-    "A QR campaign must stay hidden until it has a destination to encode.",
+  const messageOnlyQr = messageOnlyDom.window.document.querySelector(
+    ".kidia-app-promo--desktop_qr",
+  );
+  assert.ok(
+    messageOnlyQr,
+    "An enabled Desktop QR announcement must stay visible before an app link is published.",
+  );
+  assert.ok(
+    messageOnlyQr.querySelector(".kidia-app-promo__qr-placeholder"),
+    "A destinationless Desktop QR announcement must use the honest placeholder state.",
+  );
+  const messageOnlyFloating = messageOnlyDom.window.document.querySelector(
+    ".kidia-app-promo--floating_button",
+  );
+  assert.ok(
+    messageOnlyFloating,
+    "An enabled Floating App Button announcement must stay visible before an app link is published.",
   );
   assert.equal(
-    messageOnlyDom.window.document.querySelector(
-      ".kidia-app-promo--floating_button",
-    ),
-    null,
-    "A destinationless floating button must not create a dead control.",
+    messageOnlyFloating.getAttribute("aria-disabled"),
+    "true",
+    "A destinationless Floating App Button must remain visibly disabled until its link is published.",
   );
   const privateQrCard = privateQrTestDom.window.document.querySelector(
     ".kidia-app-promo--desktop_qr.is-test",
