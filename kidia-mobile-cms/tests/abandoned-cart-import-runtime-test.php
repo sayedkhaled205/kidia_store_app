@@ -303,4 +303,40 @@ kidia_import_assert( 7 === $after_complete['processed'] && 7 === $after_complete
 kidia_import_assert( $started_at === $after_complete['started_at'], 'A completed import must retain its original run identity.' );
 kidia_import_assert( 7 === $wpdb->cart_writes, 'Refreshing the report after completion must not re-import carts.' );
 
+/* WooCommerce edits session_value in place without allocating a new session_id. */
+$changed_cart = array(
+	'changed-existing-session' => array(
+		'product_id' => 999,
+		'quantity'   => 3,
+		'line_total' => 75,
+	),
+);
+$wpdb->sessions[0]['session_value'] = serialize(
+	array(
+		'cart'     => serialize( $changed_cart ),
+		'customer' => serialize( array( 'email' => 'changed@example.com' ) ),
+	)
+);
+$update = ( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true );
+kidia_import_assert( 'running' === $update['phase'] && 'update' === $update['mode'], 'Update must start a distinct comparison scan.' );
+kidia_import_assert( 0 === $update['session_cursor'] && 0 === $update['persistent_cursor'], 'Update must recheck existing source ids instead of starting after the previous cursors.' );
+kidia_import_assert( 7 === $update['total'] && 0 === $update['processed'], 'Previously displayed carts must stay stored while every retained source row is scheduled for comparison.' );
+
+kidia_import_assert( 2 === Kidia_Mobile_Analytics::sync_website_sessions( 2 ), 'Update must revisit the first existing session-id batch.' );
+kidia_import_assert( 2 === Kidia_Mobile_Analytics::sync_website_sessions( 2 ), 'Update must continue across all existing session ids.' );
+kidia_import_assert( 2 === Kidia_Mobile_Analytics::sync_website_sessions( 2 ), 'Update must cross into persistent carts after rechecking sessions.' );
+kidia_import_assert( 1 === Kidia_Mobile_Analytics::sync_website_sessions( 2 ), 'Update must finish the full retained-source comparison.' );
+
+$updated = Kidia_Mobile_Analytics::website_session_import_status();
+kidia_import_assert( 'complete' === $updated['phase'] && 7 === $updated['processed'], 'Update must complete only after every retained source row was checked.' );
+kidia_import_assert( 14 === $wpdb->cart_writes, 'The comparison scan must revisit existing ids exactly once without duplicating a cursor range.' );
+kidia_import_assert(
+	array_reduce(
+		$wpdb->cart_queries,
+		static fn( bool $found, string $query ): bool => $found || str_contains( $query, '"product_id":999' ),
+		false
+	),
+	'An in-place WooCommerce session change must reach the stored abandoned-cart row during Update.'
+);
+
 echo "Abandoned cart import runtime batches passed.\n";
