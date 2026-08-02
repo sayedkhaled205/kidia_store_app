@@ -357,7 +357,7 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /JOB_PREFIX = 'kidia_mobile_ai_job_v6_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
+  /JOB_PREFIX = 'kidia_mobile_ai_job_v7_'[\s\S]*read_job[\s\S]*get_option[\s\S]*write_job[\s\S]*add_option[\s\S]*update_option/,
   "Large AI jobs must persist in non-autoloaded database options instead of size-limited transients.",
 );
 assert.match(
@@ -439,8 +439,8 @@ assert.match(
 );
 assert.match(
   aiAnalysisJob,
-  /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*paginate'\s*=>\s*true[\s\S]*isset\( \$result->orders \)/,
-  "Large stores must use a compact bounded job state and explicitly paginated WooCommerce order batches.",
+  /MAX_PAIR_KEYS[\s\S]*CUSTOMER_BITMAP_BYTES[\s\S]*'paginate'\s*=>\s*true[\s\S]*'return'\s*=>\s*'objects'[\s\S]*\$count_result->total[\s\S]*ORDER_BATCH[\s\S]*'paginate'\s*=>\s*false[\s\S]*is_array\( \$result \)/,
+  "Large stores must count canonical WooCommerce orders and process object batches without duplicated pagination totals.",
 );
 assert.doesNotMatch(
   aiAnalysisJob,

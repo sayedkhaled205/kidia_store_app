@@ -52,6 +52,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'label_size'  => 14,
 			'label_color' => '#1F2933',
 			'category_ids'=> '',
+			'starter_items'=> array(),
 		);
 	}
 
@@ -72,6 +73,17 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 		$items_alignment = sanitize_key( (string) ( $settings['items_alignment'] ?? 'right' ) );
 		$shape  = sanitize_key( (string) ( $settings['image_shape'] ?? 'rounded' ) );
 		$category_ids = array_values( array_unique( array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) ( $settings['category_ids'] ?? '' ) ) ) ) ) );
+		$starter_items = array();
+		foreach ( (array) ( $settings['starter_items'] ?? array() ) as $starter ) {
+			if ( ! is_array( $starter ) ) {
+				continue;
+			}
+			$name = sanitize_text_field( (string) ( $starter['name'] ?? '' ) );
+			$image_url = $this->sanitize_http_url( $starter['image_url'] ?? '' );
+			if ( '' !== $name && '' !== $image_url ) {
+				$starter_items[] = array( 'id' => absint( $starter['id'] ?? 0 ), 'name' => $name, 'image_url' => $image_url );
+			}
+		}
 		return array(
 			'title'      => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
 			'subtitle'   => sanitize_textarea_field( (string) ( $settings['subtitle'] ?? '' ) ),
@@ -89,6 +101,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 			'label_size'  => max( 10, min( 22, absint( $settings['label_size'] ?? 13 ) ) ),
 			'label_color' => sanitize_hex_color( $settings['label_color'] ?? '' ) ?: '#1F2933',
 			'category_ids'=> implode( ',', $category_ids ),
+			'starter_items'=> $starter_items,
 		);
 	}
 
@@ -165,6 +178,20 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 				'image_url' => $image_url,
 				'action'    => $this->build_action( 'category', (string) $term->term_id ),
 			);
+		}
+
+		if ( count( $items ) < $settings['limit'] ) {
+			foreach ( $settings['starter_items'] as $starter ) {
+				if ( count( $items ) >= $settings['limit'] ) {
+					break;
+				}
+				$items[] = array(
+					'id'        => 0 < (int) $starter['id'] ? (int) $starter['id'] : 99000 + count( $items ),
+					'name'      => $starter['name'],
+					'image_url' => $starter['image_url'],
+					'action'    => null,
+				);
+			}
 		}
 
 		return array(

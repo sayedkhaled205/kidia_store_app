@@ -347,7 +347,7 @@ abstract final class HomeBlockModel {
     final String layout = _optionalString(data, 'layout') ?? 'carousel';
     final String imageShape =
         _optionalString(data, 'image_shape') ?? 'circle';
-    if (!const <String>{'carousel', 'grid'}.contains(layout)) {
+    if (!const <String>{'carousel', 'grid', 'service'}.contains(layout)) {
       throw FormatException('Unsupported quick links layout: $layout');
     }
     if (!const <String>{'circle', 'rounded', 'square'}.contains(imageShape)) {
@@ -388,7 +388,7 @@ abstract final class HomeBlockModel {
   }) {
     final String layout = _optionalString(data, 'layout') ?? 'equal';
     final String imageFit = _optionalString(data, 'image_fit') ?? 'cover';
-    if (!const <String>{'equal', 'featured', 'mosaic'}.contains(layout)) {
+    if (!const <String>{'equal', 'featured', 'mosaic', 'carousel'}.contains(layout)) {
       throw FormatException('Unsupported banner grid layout: $layout');
     }
     if (!const <String>{'cover', 'contain'}.contains(imageFit)) {

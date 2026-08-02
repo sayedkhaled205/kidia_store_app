@@ -1070,7 +1070,9 @@ class QuickLinksBlockWidget extends StatelessWidget {
     final double responsive = HomeResponsiveScope.of(context);
     final double itemSize = block.itemSize * responsive;
     final double gap = block.gap * responsive;
-    final Widget content = block.layout == 'grid'
+    final Widget content = block.layout == 'service'
+        ? _ServiceLinks(block: block, onAction: onAction)
+        : block.layout == 'grid'
         ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: LayoutBuilder(
@@ -1232,6 +1234,51 @@ class _QuickLinkCard extends StatelessWidget {
   }
 }
 
+class _ServiceLinks extends StatelessWidget {
+  const _ServiceLinks({required this.block, required this.onAction});
+
+  final QuickLinksBlock block;
+  final ValueChanged<HomeAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    const List<IconData> icons = <IconData>[
+      Icons.chat_bubble_outline_rounded,
+      Icons.headset_mic_outlined,
+      Icons.help_outline_rounded,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List<Widget>.generate(block.items.length, (int index) {
+          final QuickLinkItem item = block.items[index];
+          return Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: item.action == null ? null : () => onAction(item.action!),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                child: Column(
+                  children: <Widget>[
+                    Icon(icons[index % icons.length], size: 30, color: const Color(0xFF303038)),
+                    const SizedBox(height: 7),
+                    Text(item.label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    if (item.subtitle != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(item.subtitle!, maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9.5, height: 1.2, color: Color(0xFF6C6C74))),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
 class BannerGridBlockWidget extends StatelessWidget {
   const BannerGridBlockWidget({
     required this.block,
@@ -1247,6 +1294,7 @@ class BannerGridBlockWidget extends StatelessWidget {
     final Widget content = switch (block.layout) {
       'featured' => _buildFeatured(),
       'mosaic' => _buildMosaic(),
+      'carousel' => _buildCarousel(),
       _ => _buildEqualGrid(),
     };
     return Padding(
@@ -1287,6 +1335,24 @@ class BannerGridBlockWidget extends StatelessWidget {
         childAspectRatio: block.aspectRatio,
       ),
       itemBuilder: (_, int index) => _tile(block.items[index]),
+    );
+  }
+
+  Widget _buildCarousel() {
+    return SizedBox(
+      height: 178,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: block.items.length,
+        separatorBuilder: (_, _) => SizedBox(width: block.gap),
+        itemBuilder: (_, int index) => SizedBox(
+          width: 224,
+          child: AspectRatio(
+            aspectRatio: block.aspectRatio,
+            child: _tile(block.items[index]),
+          ),
+        ),
+      ),
     );
   }
 

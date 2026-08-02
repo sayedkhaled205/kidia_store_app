@@ -168,7 +168,7 @@ final class Kidia_Mobile_Setup_Wizard {
 					'card_style' => 'no_shadow', 'asset_dir' => 'family_pop', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'family_pop',
 					'product_columns' => 2, 'radius' => 18, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 18,
-					'blocks' => array( 'quick_links', 'hero_slider', 'category_grid', 'promo_strip', 'product_carousel', 'banner_grid', 'product_grid' ),
+					'blocks' => array( 'category_grid', 'image_banner', 'quick_links', 'banner_grid', 'product_carousel', 'product_grid' ),
 					'sample_copy' => array( __( 'Made for every family moment', 'kidia-mobile-cms' ), __( 'Shop by age', 'kidia-mobile-cms' ), __( 'Family favorites', 'kidia-mobile-cms' ) ),
 					'home_design' => array(
 						'hero_ratio' => 1.0, 'hero_radius' => 12, 'hero_padding' => 16, 'hero_indicators' => 'image_bottom',
@@ -1113,12 +1113,22 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Shop by category', 'kidia-mobile-cms' );
 				$settings['layout']      = $home_design['category_layout'];
 				$settings['columns']     = $home_design['category_columns'];
-				$settings['limit']       = 6;
+				$settings['limit']       = 'family_pop' === $profile ? 9 : 6;
 				$settings['image_shape'] = $theme['category_shape'];
 				$settings['image_size']  = $home_design['category_size'];
 				$settings['gap']         = $home_design['category_gap'];
 				$settings['row_gap']     = $home_design['category_gap'];
 				$settings['items_alignment'] = 'center';
+				if ( 'family_pop' === $profile ) {
+					$settings['starter_items'] = array();
+					foreach ( $this->theme_demo_labels( $theme ) as $starter_index => $starter_label ) {
+						$settings['starter_items'][] = array(
+							'id' => 99001 + $starter_index,
+							'name' => $starter_label,
+							'image_url' => self::asset_url( $theme, 'category', ( $starter_index % 6 ) + 1 ),
+						);
+					}
+				}
 			}
 			if ( 'quick_links' === $type ) {
 				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Explore', 'kidia-mobile-cms' );
@@ -1128,6 +1138,19 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['item_size']   = $home_design['quick_size'];
 				$settings['gap']         = $home_design['quick_gap'];
 				$settings['items']       = $this->build_demo_quick_links( $theme );
+				if ( 'family_pop' === $profile ) {
+					$settings['title']       = __( 'Customer Service', 'kidia-mobile-cms' );
+					$settings['layout']      = 'service';
+					$settings['columns']     = 3;
+					$settings['item_size']   = 38;
+					$settings['gap']         = 8;
+					$settings['image_shape'] = 'circle';
+					$settings['items']       = array(
+						array( 'id' => 'family_service_chat', 'image_url' => self::asset_url( $theme, 'category', 1 ), 'label' => __( 'Chat', 'kidia-mobile-cms' ), 'subtitle' => __( 'Available 24/7', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'chat' ),
+						array( 'id' => 'family_service_call', 'image_url' => self::asset_url( $theme, 'category', 2 ), 'label' => __( 'Call Us', 'kidia-mobile-cms' ), 'subtitle' => __( '8:00 am - 9:00 pm', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'call' ),
+						array( 'id' => 'family_service_faq', 'image_url' => self::asset_url( $theme, 'category', 3 ), 'label' => __( 'FAQ', 'kidia-mobile-cms' ), 'subtitle' => __( 'View common questions', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'faq' ),
+					);
+				}
 			}
 			if ( 'image_banner' === $type ) {
 				$settings['image_url']       = self::asset_url( $theme, 'banner', 6 );
@@ -1138,6 +1161,16 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['image_fit']       = 'cover';
 				$settings['border_radius']   = $theme['radius'];
 				$settings['overlay_strength']= $theme['overlay'];
+				if ( 'family_pop' === $profile ) {
+					$settings['title']            = __( 'New User Benefits', 'kidia-mobile-cms' );
+					$settings['subtitle']         = __( 'Get $10 & 20% OFF', 'kidia-mobile-cms' );
+					$settings['button_label']     = __( 'Shop Now', 'kidia-mobile-cms' );
+					$settings['image_url']        = self::asset_url( $theme, 'hero', 4 );
+					$settings['aspect_ratio']     = 2.15;
+					$settings['border_radius']    = 12;
+					$settings['overlay_strength'] = 10;
+					$settings['text_color']       = '#FFFFFF';
+				}
 			}
 			if ( 'text_block' === $type ) {
 				$settings['title']        = $theme['sample_copy'][0] ?? '';
@@ -1155,6 +1188,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['aspect_ratio']  = $home_design['banner_ratio'];
 				$settings['border_radius'] = $theme['radius'];
 				if ( 'family_pop' === $profile ) {
+					$settings['title'] = __( 'Explore Trends', 'kidia-mobile-cms' );
+					$settings['layout'] = 'carousel';
+					$settings['aspect_ratio'] = 1.45;
+					$settings['border_radius'] = 12;
 					$settings['overlay_strength'] = 0;
 					$settings['text_color'] = $primary;
 					$settings['button_color'] = $primary;
@@ -1194,6 +1231,10 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['enable_image_swipe'] = $home_design['product_swipe'];
 				$settings = array_merge( $settings, $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) );
 				if ( 'family_pop' === $profile ) {
+					$settings['title'] = 'product_carousel' === $type ? __( 'Flash Sale', 'kidia-mobile-cms' ) : __( 'Just for you', 'kidia-mobile-cms' );
+					$settings['show_view_all'] = 'product_carousel' === $type;
+					$settings['view_all_label'] = 'product_carousel' === $type ? __( 'More', 'kidia-mobile-cms' ) : '';
+					$settings['item_width'] = 136;
 					$settings['image_ratio'] = $home_design['product_ratio'];
 					$settings['card_radius'] = $home_design['product_radius'];
 					$settings['card_style'] = $home_design['product_style'];
@@ -1206,7 +1247,7 @@ final class Kidia_Mobile_Setup_Wizard {
 					$settings['quick_add_radius'] = 15;
 				}
 			}
-			if ( isset( $settings['signature_feature'] ) ) {
+			if ( isset( $settings['signature_feature'] ) && ! ( 'family_pop' === $profile && 'quick_links' === $type ) ) {
 				$settings = array_merge( $settings, (array) $signature['settings'] );
 				$settings['title'] = (string) $signature['title'];
 				if ( 'promo_strip' === $type ) {
@@ -1316,7 +1357,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				'name'        => $label,
 				'slug'        => sanitize_title( $label ),
 				'count'       => 8 + $number,
-				'image_url'   => self::asset_url( $theme, 'category', $number ),
+				'image_url'   => self::asset_url( $theme, 'category', ( ( $number - 1 ) % 6 ) + 1 ),
 				'description' => sprintf( __( 'Explore the %s collection.', 'kidia-mobile-cms' ), $label ),
 			);
 			$price = 39 + ( $number * 18 );
@@ -1364,7 +1405,7 @@ final class Kidia_Mobile_Setup_Wizard {
 			'multi_store'    => array( 'Top Deals', 'Electronics', 'Home', 'Personal Care', 'Office', 'Departments' ),
 			'jewelry'        => array( 'Fine Jewelry', 'Rings', 'Necklaces', 'Earrings', 'The Atelier', 'Gifting' ),
 			'pet_care'       => array( 'Dogs & Cats', 'Nutrition', 'Walk', 'Sleep', 'Grooming', 'Pet Store' ),
-			'family_pop'     => array( 'Newborn', 'Toddler Girls', 'Toddler Boys', 'Matching Family', 'Playtime', 'Accessories' ),
+			'family_pop'     => array( 'Baby Shoes', 'Toys', 'Baby Gear', 'Kids Clothing', 'Newborn', 'Toddler Girls', 'Toddler Boys', 'Matching Family', 'Accessories' ),
 			'marketplace_plus' => array( 'Today Deals', 'Electronics', 'Kitchen', 'Personal Care', 'Home Essentials', 'Travel' ),
 			'studio_fashion' => array( 'Women', 'Men', 'Divided', 'Denim', 'Accessories', 'Beauty' ),
 			'editorial_runway' => array( 'Women', 'Men', 'Evening', 'Tailoring', 'Accessories', 'Edition' ),
