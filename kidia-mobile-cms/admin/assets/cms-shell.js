@@ -805,13 +805,59 @@
 	document.addEventListener('change', function (event) {
 		const field = event.target.closest('form[data-kidia-instant-filter] select, form[data-kidia-instant-filter] input[type="date"]');
 		if (!field) return;
+		if (field.form.matches('[data-kidia-reporting-filter]') && field.form.dataset.kidiaReportingReady !== '1') return;
 		scheduleInstantFilter(field.form, field, 0);
 	});
 	document.addEventListener('submit', function (event) {
 		const form = event.target.closest('form[data-kidia-instant-filter]');
 		if (!form) return;
 		event.preventDefault();
+		if (form.matches('[data-kidia-reporting-filter]') && form.dataset.kidiaReportingReady !== '1') return;
 		void applyInstantFilter(form, document.activeElement);
+	});
+	document.addEventListener('click', async function (event) {
+		const button = event.target.closest('[data-kidia-generate-store-reporting]');
+		if (!button || button.disabled) return;
+		const form = button.closest('form[data-kidia-reporting-filter]');
+		if (!form || !customDateRangeReady(form)) return;
+		const originalHtml = button.innerHTML;
+		button.disabled = true;
+		button.textContent = 'Generating…';
+		form.classList.add('is-kidia-loading');
+		form.setAttribute('aria-busy', 'true');
+		form.querySelectorAll('.kidia-reporting-error').forEach(function (notice) { notice.remove(); });
+		try {
+			const config = window.kidiaCMSBackground || {};
+			const data = new FormData(form);
+			data.set('action', 'kidia_mobile_generate_store_reporting');
+			data.set('nonce', String(config.storeNonce || ''));
+			const response = await window.fetch(config.ajaxUrl || window.ajaxurl || '', {
+				method: 'POST',
+				credentials: 'same-origin',
+				cache: 'no-store',
+				body: data
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload.success || !payload.data || !payload.data.url) {
+				throw new Error(payload && payload.data && payload.data.message ? payload.data.message : 'Store reports could not be generated.');
+			}
+			form.dataset.kidiaReportingReady = '1';
+			await navigateFreshStoreData(String(payload.data.url), { preserveFocus: false });
+		} catch (error) {
+			const notice = document.createElement('span');
+			notice.className = 'kidia-reporting-error';
+			notice.textContent = error && error.message ? error.message : 'Store reports could not be generated.';
+			form.appendChild(notice);
+		} finally {
+			if (button.isConnected) {
+				button.disabled = false;
+				button.innerHTML = originalHtml;
+			}
+			if (form.isConnected) {
+				form.classList.remove('is-kidia-loading');
+				form.removeAttribute('aria-busy');
+			}
+		}
 	});
 	const setInstantActionBusy = function (form, busy) {
 		form.classList.toggle('is-kidia-loading', busy);

@@ -130,29 +130,9 @@
     send("begin_checkout");
   }
 
-  document.addEventListener("click", (event) => {
-    const addButton = event.target.closest(
-      ".add_to_cart_button,[name=add-to-cart],[data-product_id]",
-    );
-    if (addButton) {
-      send("add_to_cart", {
-        objectId:
-          addButton.dataset.product_id ||
-          addButton.value ||
-          context.objectId ||
-          0,
-        label: addButton.getAttribute("aria-label") || "",
-      });
-      return;
-    }
-
-    const removeButton = event.target.closest(
-      ".remove_from_cart_button,.woocommerce-cart-form .remove",
-    );
-    if (removeButton) {
-      send("remove_from_cart", {
-        objectId: removeButton.dataset.product_id || 0,
-      });
-    }
-  });
+  /*
+   * Add/remove intent is recorded by the successful WooCommerce cart hooks.
+   * Counting the initial click here as well used a different label and escaped
+   * server deduplication, so one real cart change appeared twice in Analytics.
+   */
 })();

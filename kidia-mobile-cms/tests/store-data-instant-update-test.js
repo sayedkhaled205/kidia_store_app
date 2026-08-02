@@ -20,6 +20,7 @@ const storeDataPage = fs.readFileSync(
 );
 
 assert.match(storeDataPage, /data-kidia-instant-filter="date"/);
+assert.match(storeDataPage, /data-kidia-reporting-filter="1"[\s\S]*data-kidia-generate-store-reporting/);
 assert.match(storeDataPage, /data-kidia-instant-filter="products"/);
 assert.match(storeDataPage, /data-kidia-instant-filter="coupons"/);
 assert.match(storeDataPage, /data-kidia-instant-action="coupon-channel"/);
@@ -48,7 +49,7 @@ assert.match(
         </select>
         <button type="submit" data-kidia-instant-submit-fallback>Search</button>
       </form>
-      <form method="get" data-kidia-instant-filter="date">
+      <form method="get" data-kidia-instant-filter="date" data-kidia-reporting-filter="1" data-kidia-reporting-ready="0">
         <input type="hidden" name="page" value="kidia-mobile-store-data">
         <input type="hidden" name="store_tab" value="analytics">
         <select name="date_preset">
@@ -58,7 +59,7 @@ assert.match(
         </select>
         <input type="date" name="date_from" value="2026-07-01" disabled>
         <input type="date" name="date_to" value="2026-07-31" disabled>
-        <button type="submit" data-kidia-instant-submit-fallback>Apply</button>
+        <button type="button" data-kidia-generate-store-reporting>Generate</button>
       </form>
       <form method="post" action="https://store.test/wp-admin/admin-post.php" data-kidia-instant-action="coupon-channel">
         <input type="hidden" name="action" value="kidia_mobile_set_coupon_channel">
@@ -77,11 +78,20 @@ assert.match(
   );
 
   const { window } = dom;
-  window.kidiaCMSBackground = {};
+  window.kidiaCMSBackground = { ajaxUrl: "https://store.test/wp-admin/admin-ajax.php", storeNonce: "store-nonce" };
   window.scrollTo = () => {};
   const posts = [];
   window.fetch = async (url, options = {}) => {
     posts.push({ url: String(url), options });
+    if (options.body && options.body.get("action") === "kidia_mobile_generate_store_reporting") {
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { url: "https://store.test/wp-admin/admin.php?page=kidia-mobile-store-data&store_tab=analytics&date_preset=last_7_days&report_ready=1" },
+        }),
+      };
+    }
     return { ok: true };
   };
   window.eval(shellScript);
@@ -126,11 +136,29 @@ assert.match(
   datePreset.value = "last_7_days";
   datePreset.dispatchEvent(new window.Event("change", { bubbles: true }));
   await new Promise((resolve) => window.setTimeout(resolve, 20));
-  assert.equal(navigations.length, 1, "Selecting a reporting period must apply without an Apply button.");
+  assert.equal(navigations.length, 0, "A reporting period must wait for Generate before the reporting source is ready.");
+
+  const generate = window.document.querySelector("[data-kidia-generate-store-reporting]");
+  generate.click();
+  await new Promise((resolve) => window.setTimeout(resolve, 30));
+  assert.equal(posts.length, 1, "Generate must explicitly prepare Store Data.");
+  assert.equal(posts[0].options.body.get("action"), "kidia_mobile_generate_store_reporting");
+  assert.equal(posts[0].options.body.get("nonce"), "store-nonce");
+  assert.equal(posts[0].options.body.get("date_preset"), "last_7_days");
+  assert.equal(navigations.length, 1, "Generate must open the prepared report selection.");
   requested = new URL(navigations[0].url);
   assert.equal(requested.searchParams.get("date_preset"), "last_7_days");
   assert.equal(requested.searchParams.has("date_from"), false);
   assert.equal(requested.searchParams.has("date_to"), false);
+
+  navigations.length = 0;
+  posts.length = 0;
+  datePreset.value = "today";
+  datePreset.dispatchEvent(new window.Event("change", { bubbles: true }));
+  await new Promise((resolve) => window.setTimeout(resolve, 20));
+  assert.equal(navigations.length, 1, "After Generate, reporting periods must load immediately from the indexed source.");
+  requested = new URL(navigations[0].url);
+  assert.equal(requested.searchParams.get("date_preset"), "today");
 
   navigations.length = 0;
   const couponChannel = window.document.querySelector('[name="coupon_channel"]');
@@ -143,7 +171,7 @@ assert.match(
   assert.equal(navigations.length, 1, "A successful inline update must refresh Store Data in place.");
 
   dom.window.close();
-  console.log("Store Data filters and channel updates run instantly without manual load buttons.");
+  console.log("Store Data waits for explicit Generate, then filters and channel updates run instantly.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
