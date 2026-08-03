@@ -118,7 +118,14 @@ class _MainShellState extends ConsumerState<MainShell>
         .number('label_size', 11)
         .clamp(8, 20)
         .toDouble();
-	final String? footerFontFamily = pageLayout.string('font_family', 'system') == 'poppins' ? 'Poppins' : null;
+	final String? footerFontFamily = switch (pageLayout.string('font_family', 'system')) {
+	  'poppins' => 'Poppins',
+	  'roboto' => 'Roboto',
+	  'noto_sans_arabic' => 'Noto Sans Arabic',
+	  'serif' => 'serif',
+	  'monospace' => 'monospace',
+	  _ => null,
+	};
     final List<_FooterPlacement> placements = _footerPlacements(footer);
     final List<String> order = placements.map((placement) => placement.id).toList(growable: false);
     final List<MapEntry<int, _NavigationItem>> visibleItems = order.where(

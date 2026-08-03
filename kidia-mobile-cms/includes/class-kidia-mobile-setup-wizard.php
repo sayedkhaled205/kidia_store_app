@@ -831,7 +831,9 @@ final class Kidia_Mobile_Setup_Wizard {
 			array_merge(
 				$defaults,
 				array(
-				'theme'         => 'fashion',
+					'theme'         => 'fashion',
+					'app_icon_shape'=> 'rounded_square',
+					'font_family'   => 'system',
 				'page_themes'   => array_fill_keys( array_keys( self::setup_pages() ), 'fashion' ),
 				'enabled_pages' => array_keys( self::setup_pages() ),
 				)
@@ -942,6 +944,8 @@ final class Kidia_Mobile_Setup_Wizard {
 			'logo_url'        => $logo_url,
 			'language'        => $language,
 			'direction'       => is_rtl() ? 'rtl' : 'ltr',
+			'app_icon_shape'  => 'rounded_square',
+			'font_family'     => 'system',
 			'primary_color'   => $primary,
 			'secondary_color' => $secondary,
 		);
@@ -1019,6 +1023,8 @@ final class Kidia_Mobile_Setup_Wizard {
 		$logo_url  = $logo_id ? (string) wp_get_attachment_image_url( $logo_id, 'full' ) : esc_url_raw( (string) ( $submitted['logo_url'] ?? '' ) );
 		$language  = sanitize_key( (string) ( $submitted['language'] ?? ( is_rtl() ? 'ar' : 'en' ) ) );
 		$direction = 'rtl' === ( $submitted['direction'] ?? '' ) ? 'rtl' : 'ltr';
+		$app_icon_shape = in_array( (string) ( $submitted['app_icon_shape'] ?? '' ), array( 'rounded_square', 'circle', 'square' ), true ) ? (string) $submitted['app_icon_shape'] : 'rounded_square';
+		$font_family = in_array( (string) ( $submitted['font_family'] ?? '' ), array( 'system', 'poppins', 'roboto', 'noto_sans_arabic', 'serif', 'monospace' ), true ) ? (string) $submitted['font_family'] : 'system';
 		$enabled_pages = $this->sanitize_enabled_pages( $submitted['enabled_pages'] ?? null );
 
 		$this->create_backup();
@@ -1030,6 +1036,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				'logo_url'      => $logo_url,
 				'language'      => $language,
 				'direction'     => $direction,
+				'app_icon_shape'=> $app_icon_shape,
+				'font_family'   => $font_family,
 				'primary_color' => $primary,
 				'secondary_color' => $secondary,
 				'theme'         => $theme_key,
@@ -1040,7 +1048,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		);
 
 		$this->apply_home( $theme, $primary, $secondary, $app_name, $logo_url );
-		$this->apply_pages( $theme, $enabled_pages, $primary, $secondary, $app_name, $logo_url );
+		$this->apply_pages( $theme, $enabled_pages, $primary, $secondary, $app_name, $logo_url, $font_family );
 		$this->apply_category( $theme, in_array( 'category', $enabled_pages, true ) );
 		$this->apply_extras( $theme, $theme, $primary, $secondary, $app_name, $logo_url );
 
@@ -1489,7 +1497,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	 * @param array<string,mixed> $theme Complete theme definition.
 	 * @param array<int,string> $enabled_pages Pages selected during setup.
 	 */
-	private function apply_pages( array $theme, array $enabled_pages, string $primary, string $secondary, string $app_name, string $logo_url ): void {
+	private function apply_pages( array $theme, array $enabled_pages, string $primary, string $secondary, string $app_name, string $logo_url, string $font_family ): void {
 		$store = new Kidia_Mobile_Page_Layout_Store();
 		foreach ( array_keys( Kidia_Mobile_Page_Layout_Store::pages() ) as $page ) {
 			$setup_page = 'size_chart' === $page ? 'product' : $page;
@@ -1500,7 +1508,9 @@ final class Kidia_Mobile_Setup_Wizard {
 				$store->save_layout( $page, $layout );
 				continue;
 			}
-			$store->save_layout( $page, $this->build_page_layout( $page, $theme, $primary, $secondary, $app_name, $logo_url ) );
+			$layout = $this->build_page_layout( $page, $theme, $primary, $secondary, $app_name, $logo_url );
+			$layout['settings']['font_family'] = $font_family;
+			$store->save_layout( $page, $layout );
 		}
 	}
 
