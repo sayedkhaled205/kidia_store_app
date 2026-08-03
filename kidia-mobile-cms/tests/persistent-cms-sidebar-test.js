@@ -14,6 +14,7 @@ const styles = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "cms-shell.css"),
   "utf8"
 );
+const styleRules = styles.replace(/\/\*[\s\S]*?\*\//g, "");
 const splashScript = fs.readFileSync(
   path.resolve(__dirname, "..", "admin", "assets", "splash-screen.js"),
   "utf8"
@@ -27,7 +28,7 @@ const iconInteractionGuard = styles.match(
 )?.[0] || "";
 
 assert.match(
-  styles,
+  styleRules,
   /#wpbody-content\{\s*min-height:calc\(100vh - 68px\)!important;/,
   "Every desktop CMS workspace must reach at least the bottom of the shared sidebar."
 );
@@ -71,30 +72,15 @@ assert.match(
   /body\.kidia-cms-builder-screen #wpbody\{[^}]*height:100%!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;[^}]*direction:ltr;/,
   "Customize must keep the same plugin-owned scrollbar rail beside the WordPress menu."
 );
-assert.match(
-  styles,
-  /@media\(min-width:783px\)\{[\s\S]*body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*position:fixed!important;[^}]*inset-block-start:32px!important;[^}]*inset-block-end:0!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;/,
-  "The WordPress admin menu must own an isolated desktop scrollbar without restoring document scrolling."
+assert.doesNotMatch(
+  styleRules,
+  /#(?:adminmenuback|adminmenuwrap|adminmenu)(?=[\s:{.#\[])/,
+  "The CMS stylesheet must never position, size, scroll or restyle WordPress navigation."
 );
-assert.match(
-  styles,
-  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:ltr;/,
-  "The WordPress menu scroll container must place its scrollbar on the physical right without moving the menu."
-);
-assert.match(
-  styles,
-  /html\[dir="rtl"\] body\.kidia-cms-plugin-page #adminmenuwrap,[^}]*\.rtl body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*left:auto!important;[^}]*right:0!important;/,
-  "Moving the scrollbar must keep the RTL WordPress menu pinned to the physical right."
-);
-assert.match(
-  styles,
-  /html\[dir="ltr"\] body\.kidia-cms-plugin-page #adminmenu\{[^}]*direction:ltr;/,
-  "Moving the WordPress menu scrollbar must preserve LTR menu content layout."
-);
-assert.match(
-  styles,
-  /html\[dir="rtl"\] body\.kidia-cms-plugin-page #adminmenu,[^}]*\.rtl body\.kidia-cms-plugin-page #adminmenu\{[^}]*direction:rtl;/,
-  "Moving the WordPress menu scrollbar must preserve the RTL menu content layout."
+assert.doesNotMatch(
+  script,
+  /['"]#(?:adminmenuback|adminmenuwrap|adminmenu)(?=[\s.#\[:'"])/,
+  "CMS navigation JavaScript must never read, replace or reset WordPress navigation."
 );
 assert.match(
   styles,
@@ -211,6 +197,9 @@ assert.equal(splashForm.querySelector(".kidia-page-card__body").hidden, false, "
 
 const initial = `<!doctype html><html><head><title>Overview</title></head>
 <body class="wp-admin kidia-mobile-cms">
+  <div id="wpadminbar">WordPress toolbar</div>
+  <div id="adminmenuback"></div>
+  <nav id="adminmenuwrap"><ul id="adminmenu"><li>WordPress menu</li></ul></nav>
   <div id="wpbody">
     <main id="wpbody-content">
     <aside data-kidia-cms-sidebar>
@@ -277,6 +266,11 @@ const originalJobStack = dom.window.document.querySelector("[data-kidia-backgrou
 const originalJobCards = Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]"));
 const originalWorkspace = dom.window.document.querySelector("#wpbody-content");
 const originalScrollWorkspace = dom.window.document.querySelector("#wpbody");
+const originalWordPressToolbar = dom.window.document.querySelector("#wpadminbar");
+const originalWordPressMenuBack = dom.window.document.querySelector("#adminmenuback");
+const originalWordPressMenuWrap = dom.window.document.querySelector("#adminmenuwrap");
+const originalWordPressMenu = dom.window.document.querySelector("#adminmenu");
+originalWordPressMenuWrap.scrollTop = 410;
 originalScrollWorkspace.scrollTop = 320;
 dom.window.eval(script);
 originalSidebar.querySelector('[data-kidia-sidebar-view="pages"]').dispatchEvent(
@@ -311,6 +305,11 @@ setTimeout(() => {
     originalWorkspace,
     "Navigation must retain the exact shared CMS workspace frame."
   );
+  assert.strictEqual(dom.window.document.querySelector("#wpadminbar"), originalWordPressToolbar, "CMS navigation must retain the exact WordPress toolbar DOM node.");
+  assert.strictEqual(dom.window.document.querySelector("#adminmenuback"), originalWordPressMenuBack, "CMS navigation must retain the exact WordPress menu backdrop DOM node.");
+  assert.strictEqual(dom.window.document.querySelector("#adminmenuwrap"), originalWordPressMenuWrap, "CMS navigation must retain the exact WordPress menu scroll container DOM node.");
+  assert.strictEqual(dom.window.document.querySelector("#adminmenu"), originalWordPressMenu, "CMS navigation must retain the exact WordPress menu DOM node.");
+  assert.equal(originalWordPressMenuWrap.scrollTop, 410, "CMS navigation must not reset or move the WordPress menu scrollbar.");
   assert.equal(dom.window.document.querySelector("[data-page-content]").textContent, "Home content");
   assert.equal(originalScrollWorkspace.scrollTop, 0, "A new CMS view must reset the plugin-owned inner scrollbar.");
   assert.equal(currentSidebar.querySelector("a.is-active").textContent, "Design Your Pages");
@@ -331,6 +330,10 @@ setTimeout(() => {
     assert.equal(dom.window.document.documentElement.classList.contains("kidia-cms-builder-screen"), false, "The document root must be released with the Builder body.");
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-sidebar]").length, 1);
     assert.equal(dom.window.document.querySelectorAll("[data-kidia-cms-shell]").length, 1);
+    assert.strictEqual(dom.window.document.querySelector("#wpadminbar"), originalWordPressToolbar, "Repeated CMS navigation must not reload the WordPress toolbar.");
+    assert.strictEqual(dom.window.document.querySelector("#adminmenuwrap"), originalWordPressMenuWrap, "Repeated CMS navigation must not reload the WordPress menu.");
+    assert.strictEqual(dom.window.document.querySelector("#adminmenu"), originalWordPressMenu, "Repeated CMS navigation must preserve WordPress menu contents.");
+    assert.equal(originalWordPressMenuWrap.scrollTop, 410, "Repeated CMS navigation must preserve the WordPress menu scroll position.");
     assert.strictEqual(dom.window.document.querySelector("[data-build-persistent]"), originalBuildCard, "A second page change must still retain the running or completed build card.");
     assert.deepEqual(Array.from(dom.window.document.querySelectorAll("[data-kidia-background-job]")), originalJobCards, "All three independent job cards must survive repeated navigation together.");
     assert.deepEqual(requestedVersions, ["1.45.60", "1.45.60"], "Every navigation request must carry the running asset version.");
