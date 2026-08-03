@@ -33,7 +33,7 @@ workflows:
       - name: Install Flutter dependencies
         script: flutter pub get
       - name: Analyze Flutter project
-        script: flutter analyze
+        script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
       - name: Build Android APK
