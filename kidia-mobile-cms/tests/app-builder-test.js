@@ -459,8 +459,8 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
 }
 
 (async function () {
-	assert.match(dashboard, /\\.kidia-app-build__recent-choice-actions \\.button[\\s\\S]*border-color: #2f806e;[\\s\\S]*color: #2f806e;/, "Recent-build secondary actions must use the Kidia brand color instead of WordPress blue.");
-	assert.match(dashboard, /\\.kidia-app-build__recent-choice-actions \\.button-primary[\\s\\S]*background: #2f806e;[\\s\\S]*color: #fff;/, "Download Again must use the filled Kidia brand treatment.");
+	assert.match(dashboard, /\.kidia-app-build__recent-choice-actions \.button[\s\S]*border-color: #2f806e;[\s\S]*color: #2f806e;/, "Recent-build secondary actions must use the Kidia brand color instead of WordPress blue.");
+	assert.match(dashboard, /\.kidia-app-build__recent-choice-actions \.button-primary[\s\S]*background: #2f806e;[\s\S]*color: #fff;/, "Download Again must use the filled Kidia brand treatment.");
   await testReadyBuildDownloadsFromTheSameControl();
   await testRestoredBuildDownloadsWhenProviderReturnsFinished();
   await testCompletedCardSurvivesBrowserReopen();
