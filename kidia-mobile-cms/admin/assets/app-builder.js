@@ -268,6 +268,7 @@
 			root.dataset.status = status;
 			if (buildId) root.dataset.buildId = buildId;
 			if (state.completedAt) root.dataset.completedAt = String(state.completedAt);
+			else if (isBuilding(status) || ['idle', 'cancelled', 'failed'].includes(status)) delete root.dataset.completedAt;
 			root.dataset.stage = state.stage || state.message || '';
 			messages.forEach(function (message) {
 				message.textContent = state.message || label(status);
@@ -443,8 +444,9 @@
 
 	function hasRecentCompletedBuild(root) {
 		const completedAt = Number(root.dataset.completedAt || 0);
-		const successful = ['ready', 'downloaded'].includes(normalizedStatus(root.dataset.status || ''));
-		return successful && completedAt > 0 && Math.floor(Date.now() / 1000) - completedAt < recentBuildWindow;
+		const status = normalizedStatus(root.dataset.status || '');
+		const age = Math.floor(Date.now() / 1000) - completedAt;
+		return Boolean(root.dataset.buildId) && !isBuilding(status) && completedAt > 0 && age >= 0 && age < recentBuildWindow;
 	}
 
 	function showRecentChoice(root) {
