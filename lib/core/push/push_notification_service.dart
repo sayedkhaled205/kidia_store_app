@@ -26,9 +26,6 @@ final class PushNotificationService {
   final Dio _dio;
   Uri? _registrationUrl;
   Uri? _eventsUrl;
-  StreamSubscription<String>? _tokenSubscription;
-  StreamSubscription<RemoteMessage>? _foregroundSubscription;
-  StreamSubscription<RemoteMessage>? _openedSubscription;
   bool _started = false;
 
   Future<void> initialize() async {
@@ -83,13 +80,13 @@ final class PushNotificationService {
       if (token != null && token.isNotEmpty) {
         await _registerToken(token);
       }
-      _tokenSubscription = messaging.onTokenRefresh.listen(
+      messaging.onTokenRefresh.listen(
         (String refreshedToken) => unawaited(_registerToken(refreshedToken)),
       );
-      _foregroundSubscription = FirebaseMessaging.onMessage.listen(
+      FirebaseMessaging.onMessage.listen(
         (RemoteMessage message) => unawaited(_recordEvent(message, 'delivered')),
       );
-      _openedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(
+      FirebaseMessaging.onMessageOpenedApp.listen(
         (RemoteMessage message) => unawaited(_recordEvent(message, 'opened')),
       );
       final RemoteMessage? initialMessage = await messaging.getInitialMessage();
