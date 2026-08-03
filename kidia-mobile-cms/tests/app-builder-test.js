@@ -176,6 +176,42 @@ async function testCompletedCardSurvivesBrowserReopen() {
   assert.equal(root.querySelector("[data-build-background]"), null, "Continue in background must not exist.");
 }
 
+async function testCompletedOkDismissesWithoutDeletingRecentBuild() {
+  const dom = new JSDOM(markup("ready"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.dataset.buildId = "preserved-build-1";
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  dom.window.localStorage.setItem("kidiaAppBuildDownloadCompleted", "preserved-build-1");
+  let requests = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async () => {
+    requests += 1;
+    return {
+      ok: true,
+      json: async () => ({ success: true, data: { status: "idle" } })
+    };
+  };
+  dom.window.eval(script);
+
+  const modal = root.querySelector("[data-build-modal]");
+  assert.equal(modal.hidden, false, "A completed build must initially show its persistent card.");
+  root.querySelector("[data-build-cancel]").click();
+  await flush();
+
+  assert.equal(modal.hidden, true, "OK must dismiss the completed progress card.");
+  assert.equal(requests, 0, "OK must not call the destructive build-cancel endpoint.");
+  assert.equal(root.dataset.status, "downloaded", "OK must preserve the completed build state.");
+  assert.equal(dom.window.localStorage.getItem("kidiaAppBuildDownloadCompleted"), "preserved-build-1");
+
+  root.querySelector("[data-build-action]").click();
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "The preserved build must still offer Download Again or Build New Version.");
+  assert.equal(requests, 0, "Opening the recent-build choice must not start a new build.");
+}
+
 async function testIdleControlStartsBuildAndShowsProgress() {
   const dom = new JSDOM(markup("idle"), {
     runScripts: "outside-only",
@@ -386,6 +422,7 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
   await testReadyBuildDownloadsFromTheSameControl();
   await testRestoredBuildDownloadsWhenProviderReturnsFinished();
   await testCompletedCardSurvivesBrowserReopen();
+  await testCompletedOkDismissesWithoutDeletingRecentBuild();
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
