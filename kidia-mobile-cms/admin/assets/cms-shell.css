@@ -11,16 +11,54 @@ body.kidia-cms-plugin-page :is(
 	.dashicons,
 	.kidia-app-icon,
 	.kidia-category-preview-material-icon,
+	.kidia-material-icon-choice,
+	.kidia-preview-header__icon,
+	svg[aria-hidden="true"],
+	img[aria-hidden="true"],
 	[aria-hidden="true"]
 ),
 body.kidia-cms-plugin-page :is(
 	.dashicons,
 	.kidia-app-icon,
-	.kidia-category-preview-material-icon
+	.kidia-category-preview-material-icon,
+	.kidia-material-icon-choice,
+	.kidia-preview-header__icon
 )::before{
 	-webkit-user-select:none!important;
 	user-select:none!important;
 	caret-color:transparent!important;
+	cursor:default!important;
+}
+body.kidia-cms-plugin-page :is(button,a,label,summary,[role="button"],[role="link"]) :is(
+	.dashicons,
+	.kidia-app-icon,
+	.kidia-category-preview-material-icon,
+	.kidia-material-icon-choice,
+	.kidia-preview-header__icon,
+	svg[aria-hidden="true"],
+	img[aria-hidden="true"],
+	[aria-hidden="true"]
+),
+body.kidia-cms-plugin-page :is(button,a,label,summary,[role="button"],[role="link"]):is(
+	.dashicons,
+	.kidia-app-icon,
+	.kidia-category-preview-material-icon,
+	.kidia-material-icon-choice,
+	.kidia-preview-header__icon,
+	svg[aria-hidden="true"],
+	img[aria-hidden="true"],
+	[aria-hidden="true"]
+){
+	cursor:inherit!important;
+}
+body.kidia-cms-plugin-page :is(
+	.kidia-builder-drag,
+	.kidia-page-drag,
+	.kidia-category-handle,
+	.kidia-checkout-field-drag,
+	.kidia-chrome-item
+){
+	cursor:grab!important;
 }
 body.kidia-cms-plugin-page :is(
 	.dashicons,
