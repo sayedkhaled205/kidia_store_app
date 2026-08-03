@@ -78,8 +78,13 @@ assert.match(
 );
 assert.match(
   styles,
-  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:rtl;/,
-  "The WordPress menu scroll container must place its scrollbar on the physical left."
+  /body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*overflow-y:scroll!important;[^}]*direction:ltr;/,
+  "The WordPress menu scroll container must place its scrollbar on the physical right without moving the menu."
+);
+assert.match(
+  styles,
+  /html\[dir="rtl"\] body\.kidia-cms-plugin-page #adminmenuwrap,[^}]*\.rtl body\.kidia-cms-plugin-page #adminmenuwrap\{[^}]*left:auto!important;[^}]*right:0!important;/,
+  "Moving the scrollbar must keep the RTL WordPress menu pinned to the physical right."
 );
 assert.match(
   styles,
