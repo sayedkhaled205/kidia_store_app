@@ -457,6 +457,25 @@
 		if (choice) choice.hidden = true;
 	}
 
+	function bindDelegatedCancel() {
+		const marker = 'kidiaAppBuildCancelDelegated';
+		if (document.documentElement.dataset[marker] === '1') return;
+		document.documentElement.dataset[marker] = '1';
+		document.addEventListener('click', function (event) {
+			const cancelButton = event.target.closest('[data-build-cancel]');
+			if (!cancelButton) return;
+			const root = cancelButton.closest('[data-kidia-app-build]');
+			if (!root) return;
+			const status = normalizedStatus(root.dataset.status || '');
+			if (['ready', 'downloaded'].includes(status)) {
+				rememberProgressDismissed(root.dataset.buildId || '');
+				closeProgress(root);
+				return;
+			}
+			cancelBuild(root);
+		});
+	}
+
 	function bindRoots() {
 		roots().forEach(function (root) {
 			if (root.dataset.buildBound === '1') return;
@@ -496,20 +515,9 @@
 
 			bindDockDrag(root);
 
-			const cancelButton = root.querySelector('[data-build-cancel]');
-			if (cancelButton) {
-				cancelButton.addEventListener('click', function () {
-					const status = normalizedStatus(root.dataset.status || '');
-					if (['ready', 'downloaded'].includes(status)) {
-						rememberProgressDismissed(root.dataset.buildId || '');
-						closeProgress(root);
-						return;
-					}
-					cancelBuild(root);
-				});
-			}
 		});
 	}
+	bindDelegatedCancel();
 	bindRoots();
 	document.addEventListener('kidia:cms-page-ready', bindRoots);
 
