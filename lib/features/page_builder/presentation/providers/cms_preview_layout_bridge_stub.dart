@@ -21,4 +21,7 @@ class CmsPreviewLayoutBridge {
       Future<Map<String, dynamic>>.value(
         const <String, dynamic>{'products': <dynamic>[], 'categories': <dynamic>[]},
       );
+
+  static Future<Map<String, dynamic>> get splashConfig =>
+      Future<Map<String, dynamic>>.value(const <String, dynamic>{});
 }
