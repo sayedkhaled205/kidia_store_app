@@ -327,6 +327,56 @@ final class Kidia_Mobile_License_Manager {
 		return $data;
 	}
 
+	/**
+	 * Downloads one Firebase client configuration through the authenticated API.
+	 *
+	 * Firebase client configuration contains public application identifiers, not
+	 * the service-account credentials used by WooMobile to send messages.
+	 *
+	 * @param string $platform Either android or ios.
+	 * @return string|WP_Error
+	 */
+	public function firebase_config_file( string $platform ) {
+		$platform = sanitize_key( $platform );
+		if ( ! in_array( $platform, array( 'android', 'ios' ), true ) ) {
+			return new WP_Error( 'invalid_firebase_platform', __( 'The Firebase application platform is invalid.', 'kidia-mobile-cms' ) );
+		}
+
+		$state = $this->state();
+		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
+		if ( '' === $token || ! $this->is_active() ) {
+			return new WP_Error( 'license_not_activated', __( 'Activate the website license before using Push Notifications.', 'kidia-mobile-cms' ) );
+		}
+
+		$base_url = (string) apply_filters( 'kidia_mobile_firebase_api_base_url', self::FIREBASE_API_BASE_URL );
+		$response = wp_remote_get(
+			untrailingslashit( $base_url ) . '/project/' . $platform . '-config',
+			array(
+				'timeout' => 60,
+				'headers' => array(
+					'Accept'                   => '*/*',
+					'Authorization'            => 'Bearer ' . $token,
+					'X-WooMobile-Installation' => $this->installation_id(),
+				),
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'firebase_config_unavailable', __( 'Could not download the Firebase application configuration.', 'kidia-mobile-cms' ) );
+		}
+
+		$status = wp_remote_retrieve_response_code( $response );
+		$body   = wp_remote_retrieve_body( $response );
+		if ( $status < 200 || $status >= 300 || '' === trim( $body ) ) {
+			$data = json_decode( $body, true );
+			$message = is_array( $data ) && isset( $data['error']['message'] )
+				? sanitize_text_field( (string) $data['error']['message'] )
+				: __( 'The Firebase application configuration is not ready.', 'kidia-mobile-cms' );
+			return new WP_Error( 'firebase_config_not_ready', $message );
+		}
+
+		return $body;
+	}
+
 	public function scheduled_verify(): void {
 		$this->verify( true );
 	}

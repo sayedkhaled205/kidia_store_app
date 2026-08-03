@@ -71,7 +71,7 @@ final class Kidia_Mobile_App_Exporter {
 				'name'          => (string) ( $identity['app_name'] ?? get_bloginfo( 'name' ) ),
 				'slug'          => $slug,
 				'androidPackage' => 'app.woomobile.' . $package_key,
-				'iosBundleId'   => 'app.woomobile.' . str_replace( '_', '-', $package_key ),
+				'iosBundleId'   => 'app.woomobile.' . str_replace( '_', '', $package_key ),
 				'language'      => (string) ( $identity['language'] ?? 'en' ),
 				'direction'     => (string) ( $identity['direction'] ?? 'ltr' ),
 				'primaryColor'  => (string) ( $identity['primary_color'] ?? '#2F806E' ),
