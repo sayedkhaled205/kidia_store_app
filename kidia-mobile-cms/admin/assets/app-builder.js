@@ -462,6 +462,12 @@
 		if (document.documentElement.dataset[marker] === '1') return;
 		document.documentElement.dataset[marker] = '1';
 		document.addEventListener('click', function (event) {
+			const recentCancel = event.target.closest('[data-build-recent-cancel]');
+			if (recentCancel) {
+				const recentRoot = recentCancel.closest('[data-kidia-app-build]');
+				if (recentRoot) hideRecentChoice(recentRoot);
+				return;
+			}
 			const cancelButton = event.target.closest('[data-build-cancel]');
 			if (!cancelButton) return;
 			const root = cancelButton.closest('[data-kidia-app-build]');
