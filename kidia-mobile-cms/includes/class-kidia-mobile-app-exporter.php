@@ -361,6 +361,15 @@ final class Kidia_Mobile_App_Exporter {
 		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
 
 		$state = self::state();
+		if ( 'ready' === (string) $state['status'] ) {
+			wp_send_json_success(
+				array_merge(
+					$this->browser_state( $state ),
+					array( 'dismissed' => true )
+				)
+			);
+		}
+
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' !== $build_id ) {
 			$result = ( new Kidia_Mobile_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
