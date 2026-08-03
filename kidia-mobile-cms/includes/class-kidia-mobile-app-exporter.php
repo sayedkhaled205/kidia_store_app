@@ -227,12 +227,14 @@ final class Kidia_Mobile_App_Exporter {
 		}
 
 		$manifest = self::manifest();
+		$push_project = Kidia_Mobile_Push_Service::provision_project();
+		$provision_push = ! is_wp_error( $push_project );
 		$response = $license->build_service_request(
 			'',
 			'POST',
-			$this->build_request_payload( $manifest, true )
+			$this->build_request_payload( $manifest, $provision_push )
 		);
-		if ( is_wp_error( $response ) && $this->can_retry_without_push( $response ) ) {
+		if ( $provision_push && is_wp_error( $response ) && $this->can_retry_without_push( $response ) ) {
 			$response = $license->build_service_request(
 				'',
 				'POST',

@@ -140,6 +140,8 @@ final class Kidia_Mobile_CMS_Admin {
 		add_action( 'admin_post_kidia_mobile_apply_setup_wizard', array( $this, 'apply_setup_wizard' ) );
 		add_action( 'admin_post_kidia_mobile_manage_saved_theme', array( $this, 'manage_saved_theme' ) );
 			add_action( 'admin_post_kidia_mobile_send_push_notification', array( $this, 'send_push_notification' ) );
+			add_action( 'admin_post_kidia_mobile_provision_push', array( $this, 'provision_push' ) );
+			add_action( 'admin_post_kidia_mobile_test_push_connection', array( $this, 'test_push_connection' ) );
 			add_action( 'admin_post_kidia_mobile_build_ai_action', array( $this, 'build_ai_action' ) );
 			add_action( 'admin_post_kidia_mobile_review_ai_result', array( $this, 'review_ai_result' ) );
 		add_action( 'admin_post_kidia_mobile_toggle_product_channel', array( $this, 'toggle_product_channel' ) );
@@ -1526,6 +1528,42 @@ final class Kidia_Mobile_CMS_Admin {
 			}
 		}
 		require KIDIA_MOBILE_CMS_PATH . 'admin/pages/push-notifications.php';
+	}
+
+	/** Creates or resumes the installation's isolated Firebase project. */
+	public function provision_push(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to configure Push Notifications.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_provision_push', 'kidia_mobile_push_setup_nonce' );
+		$result = Kidia_Mobile_Push_Service::provision_project();
+		$args = array(
+			'page'       => 'kidia-mobile-push-notifications',
+			'push_setup' => is_wp_error( $result ) ? 'error' : 'ready',
+		);
+		if ( is_wp_error( $result ) ) {
+			$args['push_setup_message'] = $result->get_error_message();
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/** Validates FCM through WooMobile without delivering a real message. */
+	public function test_push_connection(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to test Push Notifications.', 'kidia-mobile-cms' ) );
+		}
+		check_admin_referer( 'kidia_mobile_test_push_connection', 'kidia_mobile_push_test_nonce' );
+		$result = Kidia_Mobile_Push_Service::validate_connection();
+		$args = array(
+			'page'      => 'kidia-mobile-push-notifications',
+			'push_test' => is_wp_error( $result ) ? 'error' : 'success',
+		);
+		if ( is_wp_error( $result ) ) {
+			$args['push_test_message'] = $result->get_error_message();
+		}
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/** Updates one coupon's website/mobile availability from Store Data. */

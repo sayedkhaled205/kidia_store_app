@@ -211,7 +211,7 @@ assert.match(exporter, /configuration_hash[\s\S]*plugin_version[\s\S]*provision_
 assert.match(exporter, /download-link[\s\S]*redirect_to_artifact[\s\S]*wp_redirect/, "The finished build must request a fresh link and redirect straight to Codemagic without proxying the file through WordPress.");
 assert.doesNotMatch(exporter, /wp_safe_remote_get[\s\S]*'stream'\s*=>\s*true/, "Large build files must not be downloaded into a WordPress temporary file.");
 assert.match(licenseManager, /BUILD_API_BASE_URL[\s\S]*build_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "The build service must reuse installation-bound license authorization without exposing it to the browser.");
-assert.match(licenseManager, /PUSH_API_BASE_URL[\s\S]*push_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "Managed Push delivery must reuse installation-bound license authorization.");
+assert.match(licenseManager, /FIREBASE_API_BASE_URL[\s\S]*firebase_service_request[\s\S]*Authorization[\s\S]*X-WooMobile-Installation/, "Managed Firebase must reuse installation-bound license authorization.");
 assert.match(exporter, /secondaryColor[\s\S]*enabledPages/, "Exported app identity must include colors and selected pages.");
 assert.match(exporter, /Kidia_Mobile_Push_Service::client_configuration/, "Every exported application must inherit the plugin's public Push bootstrap.");
 for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key", "webhook_secret"]) {
@@ -219,6 +219,8 @@ for (const secret of ["fcm_private_key", "fcm_client_email", "onesignal_api_key"
 }
 assert.match(pushService, /'\/push\/config'[\s\S]*public_configuration/, "Exported apps must be able to refresh public Push configuration from WordPress.");
 assert.match(pushService, /'mode'\s*=>\s*'managed'[\s\S]*'provisionOnBuild'\s*=>\s*true[\s\S]*'requiresNativeSetup'\s*=>\s*false/, "Application builds must provision managed Push without customer Firebase setup.");
+assert.match(pushService, /project_status[\s\S]*firebase_service_request\( 'project'[\s\S]*provision_project[\s\S]*'android_package'[\s\S]*'ios_bundle_id'/, "Push readiness must come from the isolated Firebase project rather than local build state.");
+assert.match(pushService, /validate_connection[\s\S]*'target_type'\s*=>\s*'topic'[\s\S]*'validate_only'\s*=>\s*true/, "The connection test must validate FCM without delivering a notification.");
 assert.doesNotMatch(pushService, /onesignal_api_key|fcm_private_key|fcm_client_email|webhook_secret/, "Provider credentials must not be stored by the WordPress plugin.");
 
 assert.match(admin, /admin_post_kidia_mobile_apply_setup_wizard/, "Wizard apply action must be registered.");

@@ -16,6 +16,7 @@ final class Kidia_Mobile_Push_Service {
 	private const DEVICES_OPTION  = 'kidia_mobile_push_devices_v1';
 	private const METRICS_OPTION  = 'kidia_mobile_push_metrics_v1';
 	private const AUTOMATION_LOG  = 'kidia_mobile_push_automation_log_v1';
+	private const PROJECT_CACHE   = 'kidia_mobile_firebase_project_status_v1';
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
@@ -51,27 +52,94 @@ final class Kidia_Mobile_Push_Service {
 		);
 	}
 
-	/** @return array{connected:bool,license_active:bool,mode:string,label:string,reason:string,devices:int} */
+	/** @return array<string,mixed> */
 	public static function connection_status(): array {
 		$license_active = class_exists( 'Kidia_Mobile_License_Manager' )
 			&& ( new Kidia_Mobile_License_Manager() )->is_active();
-		$build_state = class_exists( 'Kidia_Mobile_App_Exporter' )
-			? Kidia_Mobile_App_Exporter::state()
-			: array();
-		$connected = $license_active && 'ready' === (string) ( $build_state['status'] ?? 'idle' );
+		$project = $license_active ? self::project_status() : array();
+		$project_state = sanitize_key( (string) ( $project['status'] ?? 'not_started' ) );
+		$connected = $license_active && 'ready' === $project_state && ! empty( $project['messaging_ready'] );
 		return array(
 			'connected'      => $connected,
 			'license_active' => $license_active,
 			'mode'           => 'managed',
+			'project_status' => $project_state,
+			'project_id'     => sanitize_text_field( (string) ( $project['google_project_id'] ?? '' ) ),
+			'android_ready'  => ! empty( $project['android']['config_ready'] ),
+			'ios_ready'      => ! empty( $project['ios']['config_ready'] ),
+			'messaging_ready'=> ! empty( $project['messaging_ready'] ),
+			'error'          => is_array( $project['error'] ?? null ) ? $project['error'] : null,
 			'label'          => $connected
 				? __( 'Push ready', 'kidia-mobile-cms' )
-				: ( $license_active ? __( 'Build app to activate', 'kidia-mobile-cms' ) : __( 'License required', 'kidia-mobile-cms' ) ),
+				: ( ! $license_active
+					? __( 'License required', 'kidia-mobile-cms' )
+					: ( 'processing' === $project_state ? __( 'Firebase is being prepared', 'kidia-mobile-cms' ) : __( 'Firebase setup required', 'kidia-mobile-cms' ) ) ),
 			'reason'         => $connected
-				? __( 'WooMobile manages this application connection automatically.', 'kidia-mobile-cms' )
+				? __( 'Android, iOS and Cloud Messaging are connected to this application.', 'kidia-mobile-cms' )
 				: ( $license_active
-					? __( 'Your private Push connection is created automatically with the first application build.', 'kidia-mobile-cms' )
+					? __( 'Prepare the private Firebase project once. Later builds and messages reuse the same isolated project.', 'kidia-mobile-cms' )
 					: __( 'Activate the WooMobile license, then build the application to enable Push.', 'kidia-mobile-cms' ) ),
 			'devices'        => count( self::devices() ),
+		);
+	}
+
+	/** @return array<string,mixed> */
+	public static function project_status( bool $force = false ): array {
+		if ( ! $force ) {
+			$cached = get_transient( self::PROJECT_CACHE );
+			if ( is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+		$response = ( new Kidia_Mobile_License_Manager() )->firebase_service_request( 'project' );
+		if ( is_wp_error( $response ) ) {
+			$status = array(
+				'status' => 'firebase_project_not_found' === $response->get_error_code() ? 'not_started' : 'unavailable',
+				'error'  => array( 'code' => $response->get_error_code(), 'message' => $response->get_error_message() ),
+			);
+			set_transient( self::PROJECT_CACHE, $status, 30 );
+			return $status;
+		}
+		$status = is_array( $response['firebase_project'] ?? null ) ? $response['firebase_project'] : array();
+		set_transient( self::PROJECT_CACHE, $status, 60 );
+		return $status;
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	public static function provision_project() {
+		$identity = ( new Kidia_Mobile_Setup_Wizard() )->identity();
+		$slug = sanitize_title( (string) ( $identity['app_name'] ?? get_bloginfo( 'name' ) ) );
+		$slug = '' !== $slug ? $slug : 'store';
+		$package_key = preg_replace( '/[^a-z0-9_]/', '_', strtolower( $slug ) );
+		$package_key = trim( (string) $package_key, '_' );
+		$package_key = '' !== $package_key ? $package_key : 'store';
+		$package_key = preg_match( '/^[a-z]/', $package_key ) ? $package_key : 'store_' . $package_key;
+		$response = ( new Kidia_Mobile_License_Manager() )->firebase_service_request(
+			'project',
+			'POST',
+			array(
+				'app_name'        => sanitize_text_field( (string) ( $identity['app_name'] ?? get_bloginfo( 'name' ) ) ),
+				'android_package' => 'app.woomobile.' . $package_key,
+				'ios_bundle_id'   => 'app.woomobile.' . str_replace( '_', '-', $package_key ),
+			)
+		);
+		delete_transient( self::PROJECT_CACHE );
+		return $response;
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	public static function validate_connection() {
+		return ( new Kidia_Mobile_License_Manager() )->firebase_service_request(
+			'messages',
+			'POST',
+			array(
+				'target_type'  => 'topic',
+				'target'       => 'woomobile-connection-check',
+				'title'        => 'WooMobile Push test',
+				'body'         => 'Firebase connection validation',
+				'data'         => array( 'source' => 'woomobile', 'type' => 'connection_check' ),
+				'validate_only' => true,
+			)
 		);
 	}
 
@@ -344,58 +412,34 @@ final class Kidia_Mobile_Push_Service {
 
 	/** @return array<string,mixed> */
 	private static function dispatch_managed( array $payload, array $devices ): array {
-		$targets = array_map(
-			static function ( array $device ): array {
-				return array(
-					'token'    => (string) ( $device['token'] ?? '' ),
-					'platform' => (string) ( $device['platform'] ?? 'android' ),
-					'locale'   => (string) ( $device['locale'] ?? '' ),
-				);
-			},
-			array_slice( $devices, 0, 500 )
-		);
-		$request = array(
-			'applicationReference' => self::application_reference(),
-			'siteUrl'              => home_url( '/' ),
-			'notification'         => array(
-				'id'          => (string) ( $payload['id'] ?? wp_generate_uuid4() ),
-				'title'       => (string) ( $payload['title'] ?? '' ),
-				'message'     => (string) ( $payload['message'] ?? '' ),
-				'imageUrl'    => (string) ( $payload['image_url'] ?? '' ),
-				'priority'    => (string) ( $payload['priority'] ?? 'normal' ),
-				'sound'       => ! empty( $payload['sound'] ),
-				'badge'       => absint( $payload['badge'] ?? 0 ),
-				'expiryHours' => max( 1, min( 168, absint( $payload['expiry_hours'] ?? 24 ) ) ),
-				'data'        => self::action_data( $payload ),
-			),
-			'targets'              => $targets,
-		);
-		$response = ( new Kidia_Mobile_License_Manager() )->push_service_request( 'notifications', 'POST', $request );
-		if ( is_wp_error( $response ) ) {
-			return array(
-				'mode'   => 'managed',
-				'sent'   => 0,
-				'failed' => count( $targets ),
-				'errors' => array( $response->get_error_message() ),
+		$sent = 0;
+		$errors = array();
+		$targets = array_slice( $devices, 0, 500 );
+		foreach ( $targets as $device ) {
+			$response = ( new Kidia_Mobile_License_Manager() )->firebase_service_request(
+				'messages',
+				'POST',
+				array(
+					'target_type' => 'token',
+					'target'      => (string) ( $device['token'] ?? '' ),
+					'title'       => (string) ( $payload['title'] ?? '' ),
+					'body'        => (string) ( $payload['message'] ?? '' ),
+					'image_url'   => (string) ( $payload['image_url'] ?? '' ),
+					'data'        => array_map( 'strval', self::action_data( $payload ) ),
+				)
 			);
+			if ( is_wp_error( $response ) ) {
+				if ( count( $errors ) < 5 ) {
+					$errors[] = $response->get_error_message();
+				}
+			} else {
+				++$sent;
+			}
 		}
-
-		$raw = isset( $response['delivery'] ) && is_array( $response['delivery'] )
-			? $response['delivery']
-			: ( isset( $response['data']['delivery'] ) && is_array( $response['data']['delivery'] )
-				? $response['data']['delivery']
-				: ( isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response ) );
-		$accepted = ! empty( $raw['accepted'] );
-		$sent     = isset( $raw['sent'] ) ? absint( $raw['sent'] ) : ( $accepted ? count( $targets ) : 0 );
-		$failed   = isset( $raw['failed'] ) ? absint( $raw['failed'] ) : max( 0, count( $targets ) - $sent );
-		$errors   = isset( $raw['errors'] ) && is_array( $raw['errors'] )
-			? array_slice( array_map( 'sanitize_text_field', $raw['errors'] ), 0, 5 )
-			: array();
 		return array(
 			'mode'      => 'managed',
-			'requestId' => sanitize_text_field( (string) ( $raw['requestId'] ?? $raw['request_id'] ?? '' ) ),
-			'sent'      => min( count( $targets ), $sent ),
-			'failed'    => min( count( $targets ), $failed ),
+			'sent'      => $sent,
+			'failed'    => count( $targets ) - $sent,
 			'errors'    => $errors,
 		);
 	}
