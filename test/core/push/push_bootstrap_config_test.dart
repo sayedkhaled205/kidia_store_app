@@ -21,6 +21,7 @@ void main() {
 
     expect(config.canRegister, isTrue);
     expect(config.firebase?.projectId, 'wm-store-123');
+    expect(config.firebase?.storageBucket, 'wm-store-123.firebasestorage.app');
     expect(config.registrationUrl?.scheme, 'https');
   });
 
