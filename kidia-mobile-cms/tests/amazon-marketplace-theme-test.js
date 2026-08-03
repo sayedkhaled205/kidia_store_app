@@ -13,6 +13,6 @@ assert.match(source, /'amazon_marketplace'\s*=>\s*array\(\s*\$row[\s\S]*?'search
 assert.match(source, /'amazon_marketplace'\s*===\s*\$profile\s*&&\s*'promo_strip'\s*===\s*\$type[\s\S]*Deliver to your saved address[\s\S]*'addresses'/);
 assert.match(source, /'amazon_marketplace'\s*=>\s*array\([\s\S]{0,5000}'chrome'\s*=>\s*array[\s\S]*?'catalog'\s*=>\s*array[\s\S]*?'product'\s*=>\s*array[\s\S]*?'wishlist'\s*=>\s*array[\s\S]*?'account'\s*=>\s*array/);
 assert.match(source, /preview fallbacks only[\s\S]*connected store logo and brand palette/);
-assert.match(plugin, /Version:\s+1\.46\.50/);
+assert.match(plugin, /Version:\s+1\.46\.51/);
 
 console.log('Amazon marketplace preset contract passed.');

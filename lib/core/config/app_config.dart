@@ -66,6 +66,12 @@ abstract final class AppConfig {
     defaultValue: 'en',
   );
 
+  /// Public WordPress endpoint that returns the per-store Firebase bootstrap.
+  static const String pushConfigUrl = String.fromEnvironment(
+    'PUSH_CONFIG_URL',
+    defaultValue: '',
+  );
+
   /// Public Kidia customer-service contacts. Deployments can override either
   /// value without changing application code.
   static const String supportWhatsApp = String.fromEnvironment(

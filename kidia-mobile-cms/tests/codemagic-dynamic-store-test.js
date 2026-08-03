@@ -21,6 +21,11 @@ assert.match(
   /https:\/\/\*\)[\s\S]*STORE_URL must be a valid HTTPS store origin/,
   "Codemagic must reject non-HTTPS customer store origins."
 );
+assert.match(
+  workflow,
+  /ANDROID_APPLICATION_ID[\s\S]*ORG_GRADLE_PROJECT_APPLICATION_ID/,
+  "Codemagic must compile the isolated Firebase Android application ID."
+);
 
 for (const command of ["build apk", "build appbundle", "build ios"]) {
   const offset = workflow.indexOf(`flutter ${command}`);
