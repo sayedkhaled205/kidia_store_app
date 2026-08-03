@@ -11,13 +11,15 @@ import '../config/app_config.dart';
 import 'push_bootstrap_config.dart';
 
 final class PushNotificationService {
+  static const Duration _networkTimeout = Duration(seconds: 12);
+
   PushNotificationService._({Dio? dio})
       : _dio = dio ??
             Dio(
               BaseOptions(
-                connectTimeout: const Duration(seconds: 12),
-                receiveTimeout: const Duration(seconds: 12),
-                sendTimeout: const Duration(seconds: 12),
+                connectTimeout: _networkTimeout,
+                receiveTimeout: _networkTimeout,
+                sendTimeout: _networkTimeout,
               ),
             );
 
