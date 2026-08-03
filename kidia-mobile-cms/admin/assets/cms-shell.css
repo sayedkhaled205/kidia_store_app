@@ -1621,6 +1621,7 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 .kidia-push-managed strong{display:block;margin-bottom:3px}
 .kidia-push-managed p{margin:0;color:#62736e}
 .kidia-push-managed>b{padding:6px 10px;border-radius:99px;background:#dff2ec;color:#236b59;font-size:11px}
+.kidia-push-managed small{display:block;margin-top:5px;color:#526761}.kidia-push-managed code{font-size:11px}.kidia-push-managed__actions{display:flex;align-items:center;justify-content:flex-end}.kidia-push-managed__actions form{margin:0}.kidia-push-managed__actions .button{display:inline-flex;min-height:38px;align-items:center;gap:6px;border-radius:9px!important}.kidia-push-managed__actions .button-primary{border-color:#236b59!important;background:#2f806e!important;color:#fff!important}.kidia-push-readiness{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 16px}.kidia-push-readiness>div{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:1px 9px;padding:11px 13px;border:1px solid #dce7e3;border-radius:11px;background:#fff;color:#6b7975}.kidia-push-readiness .dashicons{grid-row:1/3;display:grid;width:34px;height:34px;place-items:center;border-radius:9px;background:#eef3f1}.kidia-push-readiness small{font-size:11px}.kidia-push-readiness>div.is-ready{border-color:#b9d9d1;background:#f2faf7;color:#236b59}.kidia-push-readiness>div.is-ready .dashicons{background:#dff2ec;color:#2f806e}
 .kidia-push-stats.is-four{grid-template-columns:repeat(4,minmax(0,1fr))}
 .kidia-push-form-stack{display:grid;gap:12px}
 .kidia-push-automation{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;border:1px solid #c8dfd9;border-radius:10px;background:#eef7f4}
@@ -1684,7 +1685,7 @@ body.kidia-cms-plugin-page :is(input[type=checkbox],input[type=radio]){accent-co
 	.kidia-push-automation,.kidia-push-stats.is-four{grid-template-columns:1fr}
 	.kidia-saved-bundles>div{grid-template-columns:1fr}
 	.kidia-push-managed{grid-template-columns:38px 1fr}
-	.kidia-push-managed>b{grid-column:2;width:max-content}
+	.kidia-push-managed__actions{grid-column:2;justify-content:flex-start}.kidia-push-readiness{grid-template-columns:1fr}
 }
 @media(max-width:650px){
 	.kidia-ai-decision-products{grid-template-columns:1fr}

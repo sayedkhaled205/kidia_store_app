@@ -908,7 +908,7 @@ for (const recoveryField of ["kidia_mobile_recovery_campaigns", "tracking_token"
 }
 assert.match(recovery, /set_usage_limit\( 1 \)[\s\S]*set_email_restrictions[\s\S]*set_date_expires/);
 assert.match(recovery, /attribute_order[\s\S]*get_coupon_codes[\s\S]*customer_email/);
-assert.match(pushService, /\/push\/devices[\s\S]*\/push\/events[\s\S]*dispatch_managed[\s\S]*push_service_request/);
+assert.match(pushService, /\/push\/devices[\s\S]*\/push\/events[\s\S]*dispatch_managed[\s\S]*firebase_service_request/);
 assert.doesNotMatch(pushService, /dispatch_onesignal|dispatch_fcm|dispatch_webhook|fcm_private_key|onesignal_api_key/);
 assert.match(pushService, /trigger_automation[\s\S]*cooldown_hours[\s\S]*stop_on_purchase/);
 assert.match(couponChannel, /_kidia_coupon_channel[\s\S]*Website only[\s\S]*Mobile App only/);

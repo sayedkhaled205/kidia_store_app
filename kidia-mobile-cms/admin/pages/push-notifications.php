@@ -36,15 +36,30 @@ $destination_labels = array(
 		<span class="kidia-push-status <?php echo $push_connected ? 'is-connected' : ''; ?>"><?php echo esc_html( (string) $push_status['label'] ); ?></span>
 	</header>
 
-	<?php if ( isset( $_GET['push_sent'] ) ) : ?><div class="kidia-toast is-visible"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Notification saved successfully.', 'kidia-mobile-cms' ); ?></div><?php elseif ( isset( $_GET['push_error'] ) ) : ?><div class="notice notice-error"><p><?php echo esc_html( 'delivery' === sanitize_key( wp_unslash( $_GET['push_error'] ) ) ? __( 'The notification could not be delivered. Build the application first, then try again.', 'kidia-mobile-cms' ) : __( 'Check the required fields and scheduled time.', 'kidia-mobile-cms' ) ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['push_sent'] ) ) : ?><div class="kidia-toast is-visible"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Notification saved successfully.', 'kidia-mobile-cms' ); ?></div><?php elseif ( isset( $_GET['push_error'] ) ) : ?><div class="notice notice-error"><p><?php echo esc_html( 'delivery' === sanitize_key( wp_unslash( $_GET['push_error'] ) ) ? __( 'The notification could not be delivered. Prepare Firebase and register a test device, then try again.', 'kidia-mobile-cms' ) : __( 'Check the required fields and scheduled time.', 'kidia-mobile-cms' ) ); ?></p></div><?php endif; ?>
+	<?php if ( 'ready' === sanitize_key( (string) ( $_GET['push_setup'] ?? '' ) ) ) : ?><div class="notice notice-success"><p><?php esc_html_e( 'Firebase setup completed. Android, iOS and Cloud Messaging are ready.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( 'error' === sanitize_key( (string) ( $_GET['push_setup'] ?? '' ) ) ) : ?><div class="notice notice-error"><p><?php echo esc_html( sanitize_text_field( wp_unslash( (string) ( $_GET['push_setup_message'] ?? __( 'Firebase setup could not be completed.', 'kidia-mobile-cms' ) ) ) ) ); ?></p></div><?php endif; ?>
+	<?php if ( 'success' === sanitize_key( (string) ( $_GET['push_test'] ?? '' ) ) ) : ?><div class="notice notice-success"><p><?php esc_html_e( 'Firebase connection test passed without sending a notification.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( 'error' === sanitize_key( (string) ( $_GET['push_test'] ?? '' ) ) ) : ?><div class="notice notice-error"><p><?php echo esc_html( sanitize_text_field( wp_unslash( (string) ( $_GET['push_test_message'] ?? __( 'Firebase connection test failed.', 'kidia-mobile-cms' ) ) ) ) ); ?></p></div><?php endif; ?>
 
 	<div class="kidia-push-managed">
 		<span class="dashicons dashicons-cloud-saved"></span>
 		<div>
 			<strong><?php esc_html_e( 'Push connection managed automatically', 'kidia-mobile-cms' ); ?></strong>
 			<p><?php echo esc_html( (string) $push_status['reason'] ); ?> <?php esc_html_e( 'Each application uses its own private connection; no provider selection or Firebase keys are required.', 'kidia-mobile-cms' ); ?></p>
+			<?php if ( ! empty( $push_status['project_id'] ) ) : ?><small><?php esc_html_e( 'Project:', 'kidia-mobile-cms' ); ?> <code><?php echo esc_html( (string) $push_status['project_id'] ); ?></code></small><?php endif; ?>
 		</div>
-		<b><?php esc_html_e( 'Included', 'kidia-mobile-cms' ); ?></b>
+		<div class="kidia-push-managed__actions">
+			<?php if ( $push_connected ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="kidia_mobile_test_push_connection"><?php wp_nonce_field( 'kidia_mobile_test_push_connection', 'kidia_mobile_push_test_nonce' ); ?><button class="button" type="submit"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Test connection', 'kidia-mobile-cms' ); ?></button></form>
+			<?php elseif ( ! empty( $push_status['license_active'] ) ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="kidia_mobile_provision_push"><?php wp_nonce_field( 'kidia_mobile_provision_push', 'kidia_mobile_push_setup_nonce' ); ?><button class="button button-primary" type="submit"><span class="dashicons dashicons-cloud-saved"></span><?php esc_html_e( 'Prepare Firebase', 'kidia-mobile-cms' ); ?></button></form>
+			<?php endif; ?>
+		</div>
+	</div>
+
+	<div class="kidia-push-readiness" aria-label="<?php esc_attr_e( 'Firebase readiness', 'kidia-mobile-cms' ); ?>">
+		<div class="<?php echo ! empty( $push_status['android_ready'] ) ? 'is-ready' : ''; ?>"><span class="dashicons dashicons-smartphone"></span><b>Android</b><small><?php echo ! empty( $push_status['android_ready'] ) ? esc_html__( 'Ready', 'kidia-mobile-cms' ) : esc_html__( 'Waiting', 'kidia-mobile-cms' ); ?></small></div>
+		<div class="<?php echo ! empty( $push_status['ios_ready'] ) ? 'is-ready' : ''; ?>"><span class="dashicons dashicons-smartphone"></span><b>iOS</b><small><?php echo ! empty( $push_status['ios_ready'] ) ? esc_html__( 'Ready', 'kidia-mobile-cms' ) : esc_html__( 'Waiting', 'kidia-mobile-cms' ); ?></small></div>
+		<div class="<?php echo ! empty( $push_status['messaging_ready'] ) ? 'is-ready' : ''; ?>"><span class="dashicons dashicons-megaphone"></span><b>Messaging</b><small><?php echo ! empty( $push_status['messaging_ready'] ) ? esc_html__( 'Ready', 'kidia-mobile-cms' ) : esc_html__( 'Waiting', 'kidia-mobile-cms' ); ?></small></div>
 	</div>
 
 	<div class="kidia-push-stats is-four">

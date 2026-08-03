@@ -123,6 +123,10 @@ final class Kidia_Mobile_Push_Service {
 	public static function client_configuration(): array {
 		return array( 'enabled' => true );
 	}
+
+	public static function provision_project(): array {
+		return array( 'ok' => true );
+	}
 }
 
 function __( string $message ): string {
