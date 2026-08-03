@@ -226,22 +226,7 @@
 		initCompletedBackgroundJobNotices(document);
 	});
 
-	function resetDocumentScroll() {
-		if ('scrollRestoration' in history) {
-			history.scrollRestoration = 'manual';
-		}
-		const documentScroll = document.scrollingElement || document.documentElement;
-		documentScroll.scrollTop = 0;
-		documentScroll.scrollLeft = 0;
-		document.body.scrollTop = 0;
-		document.body.scrollLeft = 0;
-		if (window.scrollX !== 0 || window.scrollY !== 0) {
-			window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-		}
-	}
-
 	function resetWorkspaceScroll() {
-		resetDocumentScroll();
 		const workspace = document.querySelector('#wpbody');
 		if (!workspace) return;
 		workspace.scrollTop = 0;
@@ -252,11 +237,9 @@
 		const active = Boolean(enabled);
 		document.body.classList.toggle('kidia-cms-builder-screen', active);
 		document.documentElement.classList.toggle('kidia-cms-builder-screen', active);
-		resetDocumentScroll();
 	}
 
 	syncBuilderScreen(document.body.classList.contains('kidia-cms-builder-screen'));
-	window.addEventListener('pageshow', resetDocumentScroll);
 
 	/* One permanent CMS shell; the server returns view fragments only. */
 	function installPersistentCmsNavigation() {
@@ -525,7 +508,6 @@
 				});
 				payload.nodes.forEach(function (node) { currentContent.appendChild(node); });
 				if (scrollState && workspace) {
-					resetDocumentScroll();
 					workspace.scrollTop = scrollState.top;
 					workspace.scrollLeft = scrollState.left;
 				} else {

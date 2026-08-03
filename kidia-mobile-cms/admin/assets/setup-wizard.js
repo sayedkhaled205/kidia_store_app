@@ -85,6 +85,18 @@
 		if (card && review) review.textContent = card.dataset.themeName || '';
 	}
 
+	function scrollWorkspaceTo(target, behavior) {
+		const workspace = document.querySelector('#wpbody');
+		if (!workspace || typeof workspace.scrollTo !== 'function') return;
+		const workspaceTop = workspace.getBoundingClientRect().top;
+		const targetTop = target.getBoundingClientRect().top;
+		workspace.scrollTo({
+			top: Math.max(0, workspace.scrollTop + targetTop - workspaceTop - 90),
+			left: 0,
+			behavior: behavior
+		});
+	}
+
 	function show(index, shouldScroll) {
 		syncPageSteps();
 		const visibleSteps = activeSteps();
@@ -103,7 +115,7 @@
 		if (shouldScroll !== false) {
 			const hero = document.querySelector('.kidia-setup-hero');
 			const target = hero || form;
-			window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + window.scrollY - 90), behavior: 'smooth' });
+			scrollWorkspaceTo(target, 'smooth');
 		}
 	}
 	next.addEventListener('click', function () {
@@ -387,7 +399,10 @@
 	if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 	show(0, false);
 	const resetScroll = function () {
-		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+		const workspace = document.querySelector('#wpbody');
+		if (workspace && typeof workspace.scrollTo === 'function') {
+			workspace.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+		}
 	};
 	if (window.requestAnimationFrame) {
 		window.requestAnimationFrame(resetScroll);

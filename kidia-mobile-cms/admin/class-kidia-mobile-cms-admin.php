@@ -2075,10 +2075,11 @@ final class Kidia_Mobile_CMS_Admin {
 	}
 
 	/**
-	 * Returns one CMS view without another WordPress document, sidebar or frame.
+	 * Returns one CMS view without another WordPress document.
 	 *
-	 * The browser owns the only shell. This endpoint renders only the selected
-	 * callback and describes assets that are not already present in that shell.
+	 * Existing CMS navigation requests receive only the selected callback. An
+	 * entry request from an ordinary WordPress screen may also request the CMS
+	 * shell, while retaining the existing WordPress toolbar and admin menu DOM.
 	 */
 	public function cms_view_fragment(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -2109,6 +2110,12 @@ final class Kidia_Mobile_CMS_Admin {
 		ob_start();
 		$this->render_effective_cms_view();
 		$html = (string) ob_get_clean();
+		$include_shell = ! empty( $_POST['include_shell'] );
+		if ( $include_shell ) {
+			ob_start();
+			$this->render_cms_shell();
+			$html = (string) ob_get_clean() . $html;
+		}
 
 		$active_sidebar = in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true )
 			? 'pages'
@@ -2124,6 +2131,7 @@ final class Kidia_Mobile_CMS_Admin {
 				'activeSidebar' => $active_sidebar,
 				'showPageTabs'  => in_array( $view, array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout', 'pages' ), true ),
 				'builderScreen' => $this->is_builder_screen( $this->effective_cms_page() ),
+				'bodyClasses'   => array_values( array_filter( preg_split( '/\s+/', trim( $this->admin_body_class( 'kidia-mobile-cms' ) ) ) ?: array() ) ),
 				'version'       => KIDIA_MOBILE_CMS_VERSION,
 				'styles'        => $this->cms_fragment_assets( wp_styles(), 'css' ),
 				'scripts'       => $this->cms_fragment_assets( wp_scripts(), 'js' ),
@@ -2640,12 +2648,31 @@ final class Kidia_Mobile_CMS_Admin {
             	 *
             	 * @return void
             	 */
-			public function enqueue_assets(
+		public function enqueue_assets(
 					string $hook_suffix
 				): void {
 					$page = $this->effective_cms_page();
 					$is_kidia_page = 0 === strpos( $page, 'kidia-mobile-' )
 						|| 'kidia-mobile-cms_page_kidia-mobile-home-builder' === $hook_suffix;
+
+					if ( current_user_can( self::CAPABILITY ) ) {
+						wp_enqueue_script(
+							'kidia-mobile-cms-entry',
+							KIDIA_MOBILE_CMS_URL . 'admin/assets/cms-entry.js',
+							array(),
+							KIDIA_MOBILE_CMS_VERSION . '-' . (string) filemtime( KIDIA_MOBILE_CMS_PATH . 'admin/assets/cms-entry.js' ),
+							true
+						);
+						wp_localize_script(
+							'kidia-mobile-cms-entry',
+							'kidiaCMSEntry',
+							array(
+								'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+								'nonce'   => wp_create_nonce( 'kidia_mobile_cms_view' ),
+								'version' => KIDIA_MOBILE_CMS_VERSION,
+							)
+						);
+					}
 
 					if ( ! $is_kidia_page ) {
 						return;

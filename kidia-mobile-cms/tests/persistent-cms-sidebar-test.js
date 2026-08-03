@@ -32,16 +32,8 @@ assert.match(
   /#wpbody-content\{\s*min-height:calc\(100vh - 68px\)!important;/,
   "Every desktop CMS workspace must reach at least the bottom of the shared sidebar."
 );
-assert.match(
-  styles,
-  /html\{[^}]*height:100%;[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/,
-  "The WordPress document must stay locked while the plugin workspace owns scrolling."
-);
-assert.match(
-  styles,
-  /body\.kidia-cms-plugin-page\{[^}]*height:100%;[^}]*overflow:hidden!important;/,
-  "The WordPress body must not become a second scroll owner on plugin pages."
-);
+assert.doesNotMatch(styleRules, /(?:^|\})\s*html(?:\.[^{]*)?\s*\{[^}]*overflow\s*:\s*hidden/i, "CMS styles must keep the native WordPress document scrollbar available.");
+assert.doesNotMatch(styleRules, /body\.kidia-cms-plugin-page\s*\{[^}]*overflow\s*:\s*hidden/i, "Opening Woo Mobile must not lock the WordPress body.");
 assert.match(
   iconInteractionGuard,
   /body\.kidia-cms-plugin-page :is\([\s\S]*?\.dashicons,[\s\S]*?\.kidia-app-icon,[\s\S]*?\.kidia-category-preview-material-icon,[\s\S]*?\[aria-hidden="true"\][\s\S]*?\)[\s\S]*?user-select:none!important;[\s\S]*?caret-color:transparent!important;/,
@@ -60,7 +52,7 @@ assert.doesNotMatch(
 assert.match(
   styles,
   /body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(100vh - 46px\)!important;[^}]*overflow-y:scroll!important;[^}]*overscroll-behavior:contain;[^}]*scrollbar-gutter:stable;/,
-  "Every CMS view must use the plugin workspace as its only vertical scroll box."
+  "Every CMS view must keep its own inner scroll box without replacing the WordPress scrollbar."
 );
 assert.match(
   styles,
@@ -82,26 +74,9 @@ assert.doesNotMatch(
   /['"]#(?:adminmenuback|adminmenuwrap|adminmenu)(?=[\s.#\[:'"])/,
   "CMS navigation JavaScript must never read, replace or reset WordPress navigation."
 );
-assert.match(
-  styles,
-  /html\.kidia-cms-builder-screen,\s*html:has\(body\.kidia-cms-builder-screen\)\{[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/,
-  "Entering Customize must keep the WordPress document locked without an outer scrollbar gutter."
-);
-assert.match(
-  styles,
-  /body\.kidia-cms-builder-screen\{[^}]*overflow:hidden!important;/,
-  "Customize must not release the WordPress body as a second scroll owner."
-);
-assert.match(
-  styles,
-  /body\.kidia-cms-builder-screen #wpwrap\{[^}]*height:calc\(100vh - 32px\);[^}]*overflow:hidden!important;/,
-  "Customize must clip the outer WordPress wrapper to the available viewport."
-);
-assert.doesNotMatch(
-  styles,
-  /html(?:\.kidia-cms-builder-screen)?[^\{]*\{[^}]*overflow-y:scroll!important;/,
-  "No CMS state may restore the outer WordPress scrollbar."
-);
+assert.doesNotMatch(styleRules, /html(?:\.kidia-cms-builder-screen|:has\([^)]*kidia-cms-builder-screen[^)]*\))?[^\{]*\{[^}]*overflow\s*:\s*hidden/i, "Customize must not disable the WordPress document scrollbar.");
+assert.doesNotMatch(styleRules, /body\.kidia-cms-builder-screen\s*\{[^}]*overflow\s*:\s*hidden/i, "Customize must not lock the WordPress body.");
+assert.doesNotMatch(styleRules, /body\.kidia-cms-builder-screen #wpwrap\s*\{[^}]*overflow\s*:\s*hidden/i, "Customize must not clip WordPress navigation through the outer wrapper.");
 assert.match(
   styles,
   /\.kidia-cms-sidebar\{[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;/,
@@ -139,7 +114,8 @@ assert.match(
 );
 assert.match(admin, /private const CMS_VIEWS = array[\s\S]*store-data/, "Navigation destinations must be views of one CMS screen.");
 assert.match(admin, /wp_ajax_kidia_mobile_cms_view[\s\S]*cms_view_fragment/, "CMS views must use the fragment endpoint.");
-assert.match(admin, /Returns one CMS view without another WordPress document, sidebar or frame/, "The endpoint must return view content only.");
+assert.match(admin, /Returns one CMS view without another WordPress document/, "The endpoint must never return or replace another WordPress document.");
+assert.match(admin, /include_shell[\s\S]*render_cms_shell/, "The first CMS entry may request the CMS shell inside the retained WordPress workspace.");
 assert.match(admin, /'builderScreen'\s*=>\s*\$this->is_builder_screen/, "Every fragment must report whether its view owns the fixed Builder workspace.");
 assert.match(admin, /'version'\s*=>\s*KIDIA_MOBILE_CMS_VERSION/, "The shell and every fragment must expose the active plugin version.");
 assert.match(script, /version:\s*currentVersion/, "Every fragment request must identify the version of the running shell.");
@@ -150,18 +126,13 @@ assert.match(
   /const stylesReady = loadStyles\(payload\)[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)[\s\S]*Promise\.all\(\[loadScripts\(payload\), stylesReady\]\)/,
   "Customize markup must be displayed before its Media, style, and Builder assets finish loading."
 );
+assert.doesNotMatch(script, /function resetDocumentScroll|documentScroll\.scrollTop|document\.body\.scrollTop|window\.scrollTo/, "CMS navigation must never move the WordPress document or menu scrollbar.");
 assert.match(
   script,
-  /function resetDocumentScroll\(\)[\s\S]*scrollRestoration = 'manual';[\s\S]*documentScroll\.scrollTop = 0;[\s\S]*document\.body\.scrollTop = 0;[\s\S]*window\.scrollTo/,
-  "The locked WordPress document must always be reset to its true viewport origin."
+  /function resetWorkspaceScroll\(\)[\s\S]*#wpbody[\s\S]*scrollTop = 0;[\s\S]*scrollLeft = 0;[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)/,
+  "Changing CMS views may reset only the independent plugin scrollbar."
 );
-assert.match(
-  script,
-  /function resetWorkspaceScroll\(\)[\s\S]*resetDocumentScroll\(\);[\s\S]*#wpbody[\s\S]*scrollTop = 0;[\s\S]*scrollLeft = 0;[\s\S]*payload\.nodes\.forEach[\s\S]*resetWorkspaceScroll\(\)/,
-  "Changing CMS views must reset both the locked WordPress document and the independent plugin scrollbar."
-);
-assert.doesNotMatch(script, /syncBuilderScreen\(enabled\)[\s\S]{0,260}if \(!active\) return;/, "Non-Builder CMS views must keep the same document scroll lock as Builders.");
-assert.match(script, /window\.addEventListener\('pageshow', resetDocumentScroll\)/, "Restored CMS pages must not revive a stale WordPress scroll offset.");
+assert.doesNotMatch(script, /pageshow[\s\S]*scroll/, "Restoring a CMS page must not reset the WordPress scrollbar.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /window\.location\.assign\(/, "Navigation must not destroy the shell.");
 assert.doesNotMatch(script.slice(0, script.indexOf("installPersistentCmsNavigation();")), /DOMParser|response\.text\(/, "Navigation must not fetch and parse another WordPress document.");
 assert.match(splashScript, /kidia:cms-page-ready[\s\S]*bootSplashBuilder/, "Splash must initialize after fragment navigation, not only on the first document load.");
