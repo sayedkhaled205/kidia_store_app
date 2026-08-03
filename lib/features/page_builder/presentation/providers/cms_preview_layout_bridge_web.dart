@@ -11,6 +11,8 @@ class CmsPreviewLayoutBridge {
       <String, Map<String, dynamic>>{};
   static Map<String, dynamic>? _home;
   static Map<String, dynamic>? _category;
+  static Map<String, dynamic>? _splash;
+  static Completer<Map<String, dynamic>>? _splashReady;
   static Map<String, dynamic>? _demoCatalog;
   static Completer<Map<String, dynamic>>? _demoCatalogReady;
   static final StreamController<String> _changes =
@@ -64,6 +66,14 @@ class CmsPreviewLayoutBridge {
     return _demoCatalogReady!.future;
   }
 
+  static Future<Map<String, dynamic>> get splashConfig {
+    _listen();
+    final Map<String, dynamic>? current = _splash;
+    if (current != null) return Future<Map<String, dynamic>>.value(current);
+    _splashReady ??= Completer<Map<String, dynamic>>();
+    return _splashReady!.future;
+  }
+
   static void _listen() {
     if (_listening) return;
     _listening = true;
@@ -92,6 +102,11 @@ class CmsPreviewLayoutBridge {
         return;
       }
       if (message['type'] != 'kidia-preview-layout') return;
+      if (message['splash'] is Map) {
+        _splash = Map<String, dynamic>.from(message['splash'] as Map);
+        final Completer<Map<String, dynamic>>? ready = _splashReady;
+        if (ready != null && !ready.isCompleted) ready.complete(_splash!);
+      }
       final String page = '${message['page'] ?? ''}';
       final dynamic rawLayout = message['layout'];
       if (page.isEmpty || rawLayout is! Map) return;

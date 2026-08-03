@@ -165,7 +165,7 @@
 	const previewPageButtons = modal ? Array.from(modal.querySelectorAll('[data-theme-modal-page]')) : [];
 	let previewedCard = null;
 	let previewSnapshot = null;
-	let previewPage = 'home';
+	let previewPage = 'splash';
 	let previewFrameReady = false;
 	let previewPayload = null;
 	let previewRequest = 0;
@@ -209,8 +209,12 @@
 	function snapshotWithLiveBrand(snapshot) {
 		const primaryInput = form.querySelector('[name="setup[primary_color]"]');
 		const secondaryInput = form.querySelector('[name="setup[secondary_color]"]');
+		const appNameInput = form.querySelector('[name="setup[app_name]"]');
+		const logoUrlInput = form.querySelector('[name="setup[logo_url]"]');
 		const primary = primaryInput ? String(primaryInput.value || '').toLowerCase() : '';
 		const secondary = secondaryInput ? String(secondaryInput.value || '').toLowerCase() : '';
+		const appName = appNameInput ? String(appNameInput.value || '').trim() : '';
+		const logoUrl = logoUrlInput ? String(logoUrlInput.value || '').trim() : '';
 		const originalPrimary = String(snapshot && snapshot.identity ? snapshot.identity.primary_color || '' : '').toLowerCase();
 		const originalSecondary = String(snapshot && snapshot.identity ? snapshot.identity.secondary_color || '' : '').toLowerCase();
 		const branded = JSON.parse(JSON.stringify(snapshot || {}), function (_key, value) {
@@ -223,6 +227,14 @@
 		if (branded.identity) {
 			if (primary) branded.identity.primary_color = primary;
 			if (secondary) branded.identity.secondary_color = secondary;
+			if (appName) branded.identity.app_name = appName;
+			branded.identity.logo_url = logoUrl;
+		}
+		if (branded.splash && typeof branded.splash === 'object') {
+			if (primary) branded.splash.background_color = primary;
+			if (secondary) branded.splash.background_color_end = secondary;
+			if (appName) branded.splash.store_name = appName;
+			branded.splash.image_url = logoUrl;
 		}
 		return branded;
 	}
@@ -264,7 +276,7 @@
 		]).then(function (payloads) {
 			const layouts = {};
 			payloads[0].forEach(function (entry) { layouts[entry[0]] = entry[1]; });
-			return { type: 'kidia-preview-layout', page: page, layout: layouts[page] || {}, layouts: layouts, home: payloads[1], category: payloads[2], demo_catalog: demoCatalog };
+			return { type: 'kidia-preview-layout', page: page, layout: layouts[page] || {}, layouts: layouts, home: payloads[1], category: payloads[2], splash: snapshot.splash || {}, demo_catalog: demoCatalog };
 		});
 	}
 
@@ -332,7 +344,7 @@
 		modal.hidden = false;
 		document.body.classList.add('kidia-theme-preview-open');
 		modal.querySelector('.kidia-theme-modal__close').focus();
-		selectPreviewPage('home');
+		selectPreviewPage('splash');
 	}
 	form.querySelectorAll('.kidia-theme-preview-button').forEach(function (button) {
 		button.addEventListener('click', function (event) {
@@ -342,7 +354,7 @@
 		});
 	});
 	if (modal) {
-		form.querySelectorAll('[name="setup[primary_color]"], [name="setup[secondary_color]"]').forEach(function (input) {
+		form.querySelectorAll('[name="setup[app_name]"], [name="setup[primary_color]"], [name="setup[secondary_color]"]').forEach(function (input) {
 			input.addEventListener('input', function () {
 				if (modal.hidden || !previewedCard) return;
 				const configuredSnapshot = previewConfig.themes && previewConfig.themes[previewedCard.dataset.themeKey];
@@ -392,6 +404,13 @@
 				form.querySelector('[name="setup[logo_id]"]').value = image.id || 0;
 				form.querySelector('[name="setup[logo_url]"]').value = image.url || '';
 				form.querySelector('.kidia-setup-logo-preview').innerHTML = image.url ? '<img src="' + image.url + '" alt="">' : '';
+				if (modal && !modal.hidden && previewedCard) {
+					const configuredSnapshot = previewConfig.themes && previewConfig.themes[previewedCard.dataset.themeKey];
+					if (configuredSnapshot) {
+						previewSnapshot = snapshotWithLiveBrand(configuredSnapshot);
+						selectPreviewPage(previewPage);
+					}
+				}
 			});
 			frame.open();
 		});

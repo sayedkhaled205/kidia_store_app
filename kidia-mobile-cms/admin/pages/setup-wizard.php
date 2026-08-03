@@ -183,8 +183,12 @@ defined( 'ABSPATH' ) || exit;
 			<div class="kidia-theme-modal__workspace">
 				<div class="kidia-theme-modal__controls">
 					<nav class="kidia-theme-modal__pages" aria-label="<?php esc_attr_e( 'Theme preview pages', 'kidia-mobile-cms' ); ?>">
+						<button type="button" data-theme-modal-page="splash" class="is-active" aria-current="page">
+							<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+							<?php esc_html_e( 'Splash', 'kidia-mobile-cms' ); ?>
+						</button>
 						<?php foreach ( $setup_pages as $preview_page => $preview_page_data ) : ?>
-							<button type="button" data-theme-modal-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
+							<button type="button" data-theme-modal-page="<?php echo esc_attr( (string) $preview_page ); ?>">
 								<span class="dashicons <?php echo esc_attr( (string) $preview_page_data['icon'] ); ?>" aria-hidden="true"></span>
 								<?php echo esc_html( (string) $preview_page_data['name'] ); ?>
 							</button>

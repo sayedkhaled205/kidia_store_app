@@ -9,7 +9,9 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String title = config.storeName.isEmpty ? AppConfig.storeName : config.storeName;
+    final String title = config.storeName.isEmpty
+        ? AppConfig.storeName
+        : config.storeName;
     return Scaffold(
       body: DecoratedBox(
         decoration: BoxDecoration(
@@ -23,7 +25,33 @@ class SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (config.imageUrl.isNotEmpty) ClipRRect(borderRadius: BorderRadius.circular(config.imageShape == 'circle' ? config.imageWidth / 2 : config.imageShape == 'rounded' ? 18 : 0), child: Image.network(config.imageUrl, width: config.imageWidth, height: config.imageHeight, fit: config.imageFit, errorBuilder: (_, _, _) => const Icon(Icons.storefront_outlined, color: Colors.white, size: 76))) else const Icon(Icons.storefront_outlined, color: Colors.white, size: 76),
+              if (config.imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(
+                    config.imageShape == 'circle'
+                        ? config.imageWidth / 2
+                        : config.imageShape == 'rounded'
+                        ? 18
+                        : 0,
+                  ),
+                  child: Image.network(
+                    config.imageUrl,
+                    width: config.imageWidth,
+                    height: config.imageHeight,
+                    fit: config.imageFit,
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.storefront_outlined,
+                      color: config.textColor,
+                      size: 76,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  Icons.storefront_outlined,
+                  color: config.textColor,
+                  size: 76,
+                ),
               const SizedBox(height: 18),
               if (config.showStoreName) Text(
                 title,
@@ -34,7 +62,8 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              if (config.showLoader) CircularProgressIndicator(color: config.loaderColor),
+              if (config.showLoader)
+                CircularProgressIndicator(color: config.loaderColor),
             ],
           ),
         ),
