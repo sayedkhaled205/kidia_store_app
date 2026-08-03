@@ -272,7 +272,14 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
   @override
   Widget build(BuildContext context) {
 	final String configuredFont = widget.layout.string('font_family', 'system');
-	final String? fontFamily = configuredFont == 'poppins' ? 'Poppins' : null;
+	final String? fontFamily = switch (configuredFont) {
+	  'poppins' => 'Poppins',
+	  'roboto' => 'Roboto',
+	  'noto_sans_arabic' => 'Noto Sans Arabic',
+	  'serif' => 'serif',
+	  'monospace' => 'monospace',
+	  _ => null,
+	};
 	final ThemeData pageTheme = fontFamily == null
 	    ? Theme.of(context)
 	    : Theme.of(context).copyWith(

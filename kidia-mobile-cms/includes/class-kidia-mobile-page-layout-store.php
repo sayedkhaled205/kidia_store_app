@@ -461,7 +461,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		$default['enabled'] = ! isset( $saved['enabled'] ) || ! empty( $saved['enabled'] );
 		$saved_page_settings = is_array( $saved['settings'] ?? null ) ? $saved['settings'] : array();
 		$default['settings']['page_background_color'] = sanitize_hex_color( (string) ( $saved_page_settings['page_background_color'] ?? '' ) ) ?: '#FFFFFF';
-		$default['settings']['font_family'] = in_array( (string) ( $saved_page_settings['font_family'] ?? '' ), array( 'system', 'poppins' ), true ) ? (string) $saved_page_settings['font_family'] : 'system';
+		$default['settings']['font_family'] = in_array( (string) ( $saved_page_settings['font_family'] ?? '' ), array( 'system', 'poppins', 'roboto', 'noto_sans_arabic', 'serif', 'monospace' ), true ) ? (string) $saved_page_settings['font_family'] : 'system';
 		$default['settings']['content_horizontal_padding'] = max( 0, min( 40, intval( $saved_page_settings['content_horizontal_padding'] ?? 20 ) ) );
 		if ( 'wishlist' === $page ) {
 			$default['settings']['wishlist_access_mode'] = in_array( (string) ( $saved_page_settings['wishlist_access_mode'] ?? '' ), array( 'guest', 'sign_in_required' ), true ) ? (string) $saved_page_settings['wishlist_access_mode'] : 'sign_in_required';
@@ -588,7 +588,7 @@ final class Kidia_Mobile_Page_Layout_Store {
 		}
 		$page_settings = array(
 			'page_background_color' => sanitize_hex_color( (string) ( $submitted['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF',
-			'font_family' => in_array( (string) ( $submitted['settings']['font_family'] ?? '' ), array( 'system', 'poppins' ), true ) ? (string) $submitted['settings']['font_family'] : 'system',
+			'font_family' => in_array( (string) ( $submitted['settings']['font_family'] ?? '' ), array( 'system', 'poppins', 'roboto', 'noto_sans_arabic', 'serif', 'monospace' ), true ) ? (string) $submitted['settings']['font_family'] : 'system',
 			'content_horizontal_padding' => max( 0, min( 40, intval( $submitted['settings']['content_horizontal_padding'] ?? 20 ) ) ),
 		);
 		if ( 'wishlist' === $page ) {
