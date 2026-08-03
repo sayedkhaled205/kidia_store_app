@@ -120,7 +120,7 @@ final class Kidia_Mobile_Push_Service {
 			array(
 				'app_name'        => sanitize_text_field( (string) ( $identity['app_name'] ?? get_bloginfo( 'name' ) ) ),
 				'android_package' => 'app.woomobile.' . $package_key,
-				'ios_bundle_id'   => 'app.woomobile.' . str_replace( '_', '-', $package_key ),
+				'ios_bundle_id'   => 'app.woomobile.' . str_replace( '_', '', $package_key ),
 			)
 		);
 		delete_transient( self::PROJECT_CACHE );
