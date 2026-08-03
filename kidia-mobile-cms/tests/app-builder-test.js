@@ -6,6 +6,7 @@ const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
 const script = fs.readFileSync(path.resolve(__dirname, "..", "admin", "assets", "app-builder.js"), "utf8");
+const dashboard = fs.readFileSync(path.resolve(__dirname, "..", "admin", "pages", "dashboard.php"), "utf8");
 
 function markup(status, autoDownload = false) {
   return `<!doctype html><body>
@@ -451,6 +452,8 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
 }
 
 (async function () {
+	assert.match(dashboard, /\\.kidia-app-build__recent-choice-actions \\.button[\\s\\S]*border-color: #2f806e;[\\s\\S]*color: #2f806e;/, "Recent-build secondary actions must use the Kidia brand color instead of WordPress blue.");
+	assert.match(dashboard, /\\.kidia-app-build__recent-choice-actions \\.button-primary[\\s\\S]*background: #2f806e;[\\s\\S]*color: #fff;/, "Download Again must use the filled Kidia brand treatment.");
   await testReadyBuildDownloadsFromTheSameControl();
   await testRestoredBuildDownloadsWhenProviderReturnsFinished();
   await testCompletedCardSurvivesBrowserReopen();
