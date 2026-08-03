@@ -10,6 +10,7 @@
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
 	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
+	const dismissedStorageKey = 'kidiaAppBuildProgressDismissed';
 	const recentBuildWindow = 10 * 24 * 60 * 60;
 	let timer = 0;
 	let pollFailures = 0;
@@ -50,6 +51,32 @@
 		try {
 			window.localStorage.removeItem(completedStorageKey);
 		} catch (_error) {}
+	}
+
+	function dismissedBuildId() {
+		try {
+			return window.localStorage.getItem(dismissedStorageKey) || '';
+		} catch (_error) {
+			return '';
+		}
+	}
+
+	function rememberProgressDismissed(buildId) {
+		if (!buildId) return;
+		try {
+			window.localStorage.setItem(dismissedStorageKey, buildId);
+		} catch (_error) {}
+	}
+
+	function forgetProgressDismissed() {
+		try {
+			window.localStorage.removeItem(dismissedStorageKey);
+		} catch (_error) {}
+	}
+
+	function progressWasDismissed(root) {
+		const buildId = root.dataset.buildId || '';
+		return Boolean(buildId && dismissedBuildId() === buildId);
 	}
 
 	function progressModal(root) {
@@ -276,7 +303,7 @@
 			}
 			setActionState(root, status, progress, downloadReady);
 			if (state.dismissed) closeProgress(root);
-			else if (root.hasAttribute('data-build-persistent') && hasStoredBuild(status)) {
+			else if (root.hasAttribute('data-build-persistent') && hasStoredBuild(status) && !progressWasDismissed(root)) {
 				openProgress(root);
 				dockProgress(root);
 			}
@@ -359,6 +386,7 @@
 		});
 
 		forgetDownloadCompleted();
+		forgetProgressDismissed();
 		autoDownload.add(root);
 		openProgress(root);
 		render({
@@ -401,6 +429,7 @@
 			const state = await request(body);
 			autoDownload.delete(root);
 			forgetDownloadCompleted();
+			forgetProgressDismissed();
 			render(state);
 			closeProgress(root);
 		} catch (error) {
@@ -470,6 +499,12 @@
 			const cancelButton = root.querySelector('[data-build-cancel]');
 			if (cancelButton) {
 				cancelButton.addEventListener('click', function () {
+					const status = normalizedStatus(root.dataset.status || '');
+					if (['ready', 'downloaded'].includes(status)) {
+						rememberProgressDismissed(root.dataset.buildId || '');
+						closeProgress(root);
+						return;
+					}
 					cancelBuild(root);
 				});
 			}
@@ -497,7 +532,7 @@
 		const initialMeter = root.querySelector('[data-build-progress-value]');
 		const initialProgress = Number(initialMeter ? initialMeter.getAttribute('aria-valuenow') : 0);
 		setActionState(root, initialStatus, initialProgress, initialStatus === 'ready');
-		if (hasStoredBuild(root.dataset.status)) {
+		if (hasStoredBuild(root.dataset.status) && !progressWasDismissed(root)) {
 			openProgress(root);
 			dockProgress(root);
 		}
