@@ -1,20 +1,8 @@
 /*
- * Woo Mobile CMS owns scrolling while one of its admin screens is open.
- * Locking the WordPress document keeps the plugin workspace inside the
- * viewport. WordPress continues to own and style its admin menu, toolbar and
- * menu scrollbar; this stylesheet controls only the CMS workspace. The frame
- * is sized from #wpcontent so no viewport-width calculation can reintroduce
- * horizontal document overflow.
+ * WordPress keeps ownership of the outer document, admin menu and its native
+ * scrollbar. Woo Mobile CMS scrolls only inside #wpbody, so opening a CMS view
+ * never removes, replaces or overlays the WordPress scrollbar rail.
  */
-html{
-	height:100%;
-	overflow:hidden!important;
-	scrollbar-gutter:auto!important;
-}
-body.kidia-cms-plugin-page{
-	height:100%;
-	overflow:hidden!important;
-}
 /* Dashicons and the preview icon fonts are glyphs, so browsers otherwise
  * expose them like selectable text and can draw a Word-style caret through
  * the artwork. Keep icons visually inert while leaving their button/link
@@ -478,20 +466,11 @@ body.kidia-cms-plugin-page .kidia-promotion-switch input:checked + span::after{
  * and phone never participate in document scrolling; only the card rail does.
  */
 @media(min-width:1101px){
-	html.kidia-cms-builder-screen,
-	html:has(body.kidia-cms-builder-screen){
-		overflow:hidden!important;
-		scrollbar-gutter:auto!important;
-	}
-	body.kidia-cms-builder-screen{
-		overflow:hidden!important;
-	}
 	body.kidia-cms-builder-screen #wpwrap{
-		height:calc(100vh - 32px);
-		overflow:hidden!important;
+		height:auto;
 	}
 	body.kidia-cms-builder-screen #wpcontent{
-		height:100%!important;
+		height:calc(100vh - 32px)!important;
 		overflow:hidden!important;
 	}
 	body.kidia-cms-builder-screen #wpbody{

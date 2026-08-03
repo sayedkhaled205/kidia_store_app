@@ -357,6 +357,8 @@ assert.match(wizardScript, /kidia-theme-modal__select/, "Full preview must allow
 assert.match(wizardScript, /document\.querySelector\('\.kidia-setup-hero'\)/, "Wizard navigation must keep the Setup & Themes hero visible.");
 assert.match(wizardScript, /history\.scrollRestoration = 'manual'/, "Wizard must ignore stale browser scroll restoration.");
 assert.match(wizardScript, /show\(0, false\)/, "Initial wizard rendering must not scroll past the top hero.");
+assert.match(wizardScript, /function scrollWorkspaceTo[\s\S]*document\.querySelector\('#wpbody'\)[\s\S]*workspace\.scrollTo/, "Wizard steps must scroll only the Woo Mobile workspace.");
+assert.doesNotMatch(wizardScript, /window\.scrollTo/, "Wizard navigation must never move the WordPress document scrollbar.");
 assert.match(shellCss, /position:sticky/, "Unified navigation must remain available while editing.");
 assert.match(shellCss, /box-shadow:inset 0 0 0 2px #2f806e/, "Header focus must use an inset Kidia-colored ring.");
 assert.match(shellCss, /\.kidia-cms-setup-link\{[^}]*background:#236b59;[^}]*color:#fff\}/, "Quick Setup & Themes must use the dark Kidia button color.");
@@ -366,20 +368,20 @@ assert.match(shellCss, /#wpbody-content\{[^}]*border:/, "The unified workspace m
 assert.match(shellCss, /#wpbody-content\{height:auto!important\}[\s\S]*#wpbody-content\{\s*min-height:calc\(100vh - 68px\)!important;/, "Short CMS pages must reach the shared sidebar bottom while longer pages remain content-sized.");
 assert.match(shellCss, /#wpbody-content\{padding-bottom:0!important\}/, "WordPress must not append footer padding below the CMS frame.");
 assert.match(shellCss, /#wpfooter\{display:none\}/, "The unused WordPress footer must not extend CMS pages.");
-assert.match(shellCss, /html\{[^}]*height:100%;[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/, "WordPress document scrolling must stay disabled throughout the CMS workspace.");
-assert.match(shellCss, /body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(100vh - 46px\)!important;[^}]*overflow-y:scroll!important;[^}]*scrollbar-gutter:stable;/, "The plugin workspace must own the only vertical scrollbar on every CMS screen.");
+assert.doesNotMatch(shellStyleRules, /(?:^|\})\s*html(?:\.[^{]*)?\s*\{[^}]*overflow\s*:\s*hidden/i, "Woo Mobile must leave the native WordPress document scrollbar enabled.");
+assert.match(shellCss, /body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(100vh - 46px\)!important;[^}]*overflow-y:scroll!important;[^}]*scrollbar-gutter:stable;/, "The plugin workspace must keep an independent inner scrollbar on every CMS screen.");
 assert.match(shellCss, /@media\(min-width:783px\)\{[\s\S]*body\.kidia-cms-plugin-page #wpbody\{[^}]*height:calc\(100vh - 32px\)!important;[^}]*direction:ltr;/, "The desktop plugin scrollbar must fit below the WordPress toolbar.");
 assert.match(shellCss, /html\[dir="ltr"\][^}]*#wpbody\{[^}]*direction:rtl;/, "LTR WordPress must place the plugin scrollbar beside its left admin menu.");
 assert.match(shellCss, /html\[dir="rtl"\][^}]*#wpbody-content,[^}]*\.rtl body[^}]*#wpbody-content\{[^}]*direction:rtl;/, "Moving the plugin scrollbar to the physical right must not change RTL content direction.");
 assert.doesNotMatch(shellStyleRules, /#(?:adminmenuback|adminmenuwrap|adminmenu)(?=[\s:{.#\[])/, "The CMS shell must leave the WordPress menu and its native scrollbar completely untouched.");
 assert.doesNotMatch(shellScript, /['"]#(?:adminmenuback|adminmenuwrap|adminmenu)(?=[\s.#\[:'"])/, "Fragment navigation must never inspect or mutate WordPress menu nodes.");
 assert.match(admin, /admin_body_class[\s\S]*kidia-cms-builder-screen/, "Builder pages must be marked for the fixed workspace before rendering.");
-assert.match(shellCss, /body\.kidia-cms-builder-screen\{[^}]*overflow:hidden!important;/, "Builder pages must keep the outer WordPress document locked.");
-assert.match(shellCss, /body\.kidia-cms-builder-screen #wpwrap\{[^}]*overflow:hidden!important;/, "The Builder wrapper must stay inside the locked WordPress viewport.");
+assert.doesNotMatch(shellStyleRules, /body\.kidia-cms-builder-screen\s*\{[^}]*overflow\s*:\s*hidden/i, "Builder pages must leave WordPress document scrolling untouched.");
+assert.doesNotMatch(shellStyleRules, /body\.kidia-cms-builder-screen #wpwrap\s*\{[^}]*overflow\s*:\s*hidden/i, "The Builder must not clip the outer WordPress wrapper.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpcontent\{[^}]*overflow:hidden!important;/, "Builder content viewports must remain fixed while the internal card rail owns scrolling.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody\{[^}]*overflow-y:scroll!important;[^}]*scrollbar-gutter:stable;/, "Builder documents must retain the shared plugin scrollbar rail without moving the workspace.");
 assert.match(shellCss, /body\.kidia-cms-builder-screen #wpbody-content\{[^}]*height:calc\(100% - 24px\)!important;[^}]*margin-bottom:6px;[^}]*overflow:visible!important;/, "The fixed Builder frame must contain the complete phone without clipping the shared sidebar gutter.");
-assert.match(shellScript, /function resetDocumentScroll\(\)[\s\S]*scrollRestoration[\s\S]*window\.scrollTo[\s\S]*syncBuilderScreen[\s\S]*resetDocumentScroll\(\)/, "Every CMS view must ignore stale WordPress document scroll restoration.");
+assert.doesNotMatch(shellScript, /resetDocumentScroll|window\.scrollTo/, "Every CMS view must preserve WordPress document scroll state.");
 assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Fragment navigation must restore or release the fixed Builder workspace for the destination.");
 
 const wizardDom = new JSDOM(`<!doctype html><body>

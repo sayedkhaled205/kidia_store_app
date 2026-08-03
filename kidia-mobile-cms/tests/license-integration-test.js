@@ -49,10 +49,10 @@ assert.match(
   /\.kidia-cms-sidebar\{[\s\S]*position:absolute;[\s\S]*inset-block-start:0;[\s\S]*inset-block-end:auto;[\s\S]*inset-inline-start:-16px;[\s\S]*width:236px;[\s\S]*height:calc\(100vh - 102px\);/,
   "Every desktop CMS page must keep the same Overview sidebar geometry inside the rounded workspace card."
 );
-assert.match(
-  shellCss,
-  /html\{[^}]*height:100%;[^}]*overflow:hidden!important;[^}]*scrollbar-gutter:auto!important;/,
-  "CMS pages must disable WordPress document scrolling and its outer scrollbar gutter."
+assert.doesNotMatch(
+  shellCss.replace(/\/\*[\s\S]*?\*\//g, ""),
+  /(?:^|\})\s*html(?:\.[^{]*)?\s*\{[^}]*overflow\s*:\s*hidden/i,
+  "CMS pages must preserve the native WordPress document scrollbar outside the admin menu width."
 );
 assert.match(
   shellCss,
