@@ -27,7 +27,7 @@ assert.match(
   "Codemagic must compile the isolated Firebase Android application ID."
 );
 
-for (const command of ["build apk", "build appbundle", "build ios"]) {
+for (const command of ["build apk", "build appbundle"]) {
   const offset = workflow.indexOf(`flutter ${command}`);
   assert.notEqual(offset, -1, `Codemagic must include flutter ${command}.`);
   const block = workflow.slice(offset, offset + 520);
@@ -37,6 +37,16 @@ for (const command of ["build apk", "build appbundle", "build ios"]) {
     `${command} must compile the customer-specific STORE_URL.`
   );
 }
+assert.doesNotMatch(
+  workflow,
+  /flutter build ios/,
+  "Codemagic must not attempt an unsigned iOS customer build before Apple signing is configured."
+);
+assert.match(
+  workflow,
+  /Analyze Flutter project[\s\S]*flutter analyze lib test/,
+  "Codemagic must analyze first-party Flutter sources without generated Apple SourcePackages."
+);
 
 assert.match(
   exporter,

@@ -27,5 +27,10 @@ assert.match(service, /postUri[\s\S]*'token'[\s\S]*'client_id'/);
 assert.match(manifest, /android\.permission\.POST_NOTIFICATIONS/);
 assert.match(gradle, /gradleProperty\("APPLICATION_ID"\)[\s\S]*applicationId = storeApplicationId\.get\(\)/);
 assert.match(codemagic, /ANDROID_APPLICATION_ID[\s\S]*ORG_GRADLE_PROJECT_APPLICATION_ID/);
+assert.match(
+  codemagic,
+  /Analyze Flutter project[\s\S]*flutter analyze lib test/,
+  "Codemagic must analyze first-party Flutter sources without generated Apple SourcePackages."
+);
 
 console.log("Firebase native client contract tests passed.");
