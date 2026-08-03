@@ -406,6 +406,7 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
     url: "https://store.test/wp-admin/admin.php"
   });
   const root = dom.window.document.querySelector("[data-kidia-app-build]");
+	root.dataset.buildId = "recent-downloaded-build";
   root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (9 * 24 * 60 * 60));
   let requests = 0;
 
@@ -434,6 +435,29 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   await flush();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true);
   assert.equal(requests, 1, "Build New Version must reuse the existing build start request.");
+	assert.equal(root.dataset.completedAt, undefined, "Starting a new build must clear the previous completion timestamp.");
+}
+
+async function testIdleCardStillOffersRecentSuccessfulBuild() {
+  const dom = new JSDOM(markup("idle"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.dataset.buildId = "recent-success-while-settings-changed";
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  let requests = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async () => {
+    requests += 1;
+    return { ok: true, json: async () => ({ success: true, data: { status: "building" } }) };
+  };
+  dom.window.eval(script);
+
+  root.querySelector("[data-build-action]").click();
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "Settings changes must not hide a successful build completed within 10 days.");
+  assert.equal(requests, 0, "Opening choices for an idle card must not silently start a new build.");
 }
 
 async function testReadyRecentBuildOffersChoiceBeforeDownload() {
@@ -442,6 +466,7 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
     url: "https://store.test/wp-admin/admin.php"
   });
   const root = dom.window.document.querySelector("[data-kidia-app-build]");
+	root.dataset.buildId = "recent-ready-build";
   root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (2 * 24 * 60 * 60));
   const form = root.querySelector("[data-build-form]");
   let submissions = 0;
@@ -471,6 +496,7 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
   await testHungStartRequestReturnsToRetry();
   await testActiveBuildCanBeCancelled();
   await testRecentBuildOffersDownloadOrNewVersion();
+	await testIdleCardStillOffersRecentSuccessfulBuild();
   await testReadyRecentBuildOffersChoiceBeforeDownload();
   console.log("APK single build-and-download control tests passed.");
 })();
