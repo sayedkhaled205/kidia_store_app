@@ -41,6 +41,26 @@ assert.match(
 );
 assert.match(
   iconInteractionGuard,
+  /body\.kidia-cms-plugin-page :is\([\s\S]*?\.dashicons,[\s\S]*?\.kidia-material-icon-choice,[\s\S]*?\.kidia-preview-header__icon,[\s\S]*?svg\[aria-hidden="true"\][\s\S]*?\)[\s\S]*?cursor:default!important;/,
+  "Standalone Dashicon, Material and SVG icon artwork must use the normal arrow instead of a text cursor."
+);
+assert.match(
+  iconInteractionGuard,
+  /:is\(button,a,label,summary,\[role="button"\],\[role="link"\]\)[\s\S]*?:is\([\s\S]*?\.dashicons,[\s\S]*?\.kidia-app-icon,[\s\S]*?\[aria-hidden="true"\][\s\S]*?\)[\s\S]*?cursor:inherit!important;/,
+  "Icons inside interactive controls must retain their parent control cursor."
+);
+assert.match(
+  iconInteractionGuard,
+  /:is\([\s\S]*?\.kidia-builder-drag,[\s\S]*?\.kidia-page-drag,[\s\S]*?\.kidia-category-handle,[\s\S]*?\.kidia-checkout-field-drag,[\s\S]*?\.kidia-chrome-item[\s\S]*?\)[\s\S]*?cursor:grab!important;/,
+  "Intentional card and list drag handles must keep their grab cursor."
+);
+assert.doesNotMatch(
+  iconInteractionGuard,
+  /:is\([^)]*(?:input|textarea|select|\[contenteditable)/,
+  "The global icon guard must never capture editable form controls."
+);
+assert.match(
+  iconInteractionGuard,
   /body\.kidia-cms-plugin-page :is\([\s\S]*?\.dashicons,[\s\S]*?svg\[aria-hidden="true"\],[\s\S]*?img\[aria-hidden="true"\][\s\S]*?\)\{[^}]*-webkit-user-drag:none;/,
   "CMS icon artwork must not start the browser's native image or glyph drag behavior."
 );
