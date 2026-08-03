@@ -424,12 +424,19 @@
 		if (cancelButton) cancelButton.disabled = true;
 		const body = new URLSearchParams({
 			action: 'kidia_mobile_app_build_cancel',
-			nonce: config.cancelNonce || ''
+			nonce: config.cancelNonce || '',
+			buildId: root.dataset.buildId || ''
 		});
 
 		try {
 			const state = await request(body);
 			autoDownload.delete(root);
+			if (normalizedStatus(state.status || '') === 'ready' && state.dismissed) {
+				rememberProgressDismissed(state.buildId || root.dataset.buildId || '');
+				render(state);
+				closeProgress(root);
+				return;
+			}
 			forgetDownloadCompleted();
 			forgetProgressDismissed();
 			render(state);
@@ -477,8 +484,7 @@
 			if (!root) return;
 			const status = normalizedStatus(root.dataset.status || '');
 			if (['ready', 'downloaded'].includes(status)) {
-				rememberProgressDismissed(root.dataset.buildId || '');
-				closeProgress(root);
+				cancelBuild(root);
 				return;
 			}
 			cancelBuild(root);
