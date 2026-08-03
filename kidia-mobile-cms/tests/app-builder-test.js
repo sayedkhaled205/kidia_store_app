@@ -36,6 +36,7 @@ function markup(status, autoDownload = false) {
       <div data-build-recent-choice hidden>
         <button type="button" data-build-download-again>Download Again</button>
         <button type="button" data-build-new-version>Build New Version</button>
+        <button type="button" data-build-recent-cancel>Cancel</button>
       </div>
     </div>
   </body>`;
@@ -422,6 +423,12 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   root.querySelector("[data-build-action]").click();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 10 days must present both choices.");
   assert.equal(requests, 0, "Opening the recent-build choice must not start another build.");
+
+	root.querySelector("[data-build-recent-cancel]").click();
+	assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true, "Cancel must close the recent-build choice without changing the build.");
+	assert.equal(root.dataset.status, "downloaded");
+	assert.equal(requests, 0, "Cancel must neither download nor start a new build.");
+	root.querySelector("[data-build-action]").click();
 
   root.querySelector("[data-build-new-version]").click();
   await flush();
