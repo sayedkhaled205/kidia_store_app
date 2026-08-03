@@ -32,5 +32,10 @@ assert.match(
   /Analyze Flutter project[\s\S]*flutter analyze lib test/,
   "Codemagic must analyze first-party Flutter sources without generated Apple SourcePackages."
 );
+assert.doesNotMatch(
+  codemagic,
+  /script:\s*flutter analyze\s*(?:\r?\n|$)/,
+  "Codemagic must never analyze generated build directories with the bare project command."
+);
 
 console.log("Firebase native client contract tests passed.");
