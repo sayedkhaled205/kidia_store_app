@@ -189,6 +189,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								<div class="kidia-app-build__recent-choice-actions">
 									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'kidia-mobile-cms' ); ?></button>
 									<button type="button" class="button" data-build-new-version><?php esc_html_e( 'Build New Version', 'kidia-mobile-cms' ); ?></button>
+									<button type="button" class="button" data-build-recent-cancel><?php esc_html_e( 'Cancel', 'kidia-mobile-cms' ); ?></button>
 								</div>
 							</div>
 						</div>
