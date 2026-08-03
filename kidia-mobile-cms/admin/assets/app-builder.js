@@ -11,6 +11,7 @@
 	const openedProgress = new WeakSet();
 	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
 	const dismissedStorageKey = 'kidiaAppBuildProgressDismissed';
+	// Keep successful artifacts available even when later settings changes return the build control to idle.
 	const recentBuildWindow = 10 * 24 * 60 * 60;
 	let timer = 0;
 	let pollFailures = 0;
