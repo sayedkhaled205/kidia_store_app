@@ -1,7 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/push/push_notification_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,4 +14,6 @@ void main() {
       child: KidiaApp(),
     ),
   );
+
+  unawaited(PushNotificationService.instance.initialize());
 }

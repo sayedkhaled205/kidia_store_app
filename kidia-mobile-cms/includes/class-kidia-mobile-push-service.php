@@ -17,6 +17,7 @@ final class Kidia_Mobile_Push_Service {
 	private const METRICS_OPTION  = 'kidia_mobile_push_metrics_v1';
 	private const AUTOMATION_LOG  = 'kidia_mobile_push_automation_log_v1';
 	private const PROJECT_CACHE   = 'kidia_mobile_firebase_project_status_v1';
+	private const CLIENT_CONFIG_CACHE = 'kidia_mobile_firebase_client_config_v1';
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
@@ -37,19 +38,55 @@ final class Kidia_Mobile_Push_Service {
 	/** @return array<string,mixed> Public settings embedded in every exported application. */
 	public static function client_configuration(): array {
 		$status = self::connection_status();
+		$firebase_options = ! empty( $status['connected'] ) ? self::firebase_client_options() : array();
 		return array(
 			'enabled'              => ! empty( $status['license_active'] ),
 			'mode'                 => 'managed',
 			'applicationReference' => self::application_reference(),
 			'provisionOnBuild'     => true,
 			'serverConnected'      => ! empty( $status['license_active'] ),
-			'clientReady'          => ! empty( $status['license_active'] ),
+			'clientReady'          => ! empty( $firebase_options ),
 			'requiresNativeSetup'  => false,
+			'firebaseOptions'      => $firebase_options,
 			'configUrl'            => rest_url( 'woo-mobile/v1/push/config' ),
 			'registrationUrl'      => rest_url( 'woo-mobile/v1/push/devices' ),
 			'eventsUrl'            => rest_url( 'woo-mobile/v1/push/events' ),
 			'openActionContract'   => 'destination + destination_id + action_url',
 		);
+	}
+
+	/** @return array<string,string> Public Firebase values required by the mobile SDK. */
+	private static function firebase_client_options(): array {
+		$cached = get_transient( self::CLIENT_CONFIG_CACHE );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$contents = ( new Kidia_Mobile_License_Manager() )->firebase_config_file( 'android' );
+		if ( is_wp_error( $contents ) ) {
+			return array();
+		}
+		$config = json_decode( $contents, true );
+		$project = is_array( $config['project_info'] ?? null ) ? $config['project_info'] : array();
+		$client = is_array( $config['client'][0] ?? null ) ? $config['client'][0] : array();
+		$client_info = is_array( $client['client_info'] ?? null ) ? $client['client_info'] : array();
+		$api_key = is_array( $client['api_key'][0] ?? null ) ? $client['api_key'][0] : array();
+		$options = array_filter(
+			array(
+				'apiKey'            => sanitize_text_field( (string) ( $api_key['current_key'] ?? '' ) ),
+				'appId'             => sanitize_text_field( (string) ( $client_info['mobilesdk_app_id'] ?? '' ) ),
+				'messagingSenderId' => sanitize_text_field( (string) ( $project['project_number'] ?? '' ) ),
+				'projectId'         => sanitize_text_field( (string) ( $project['project_id'] ?? '' ) ),
+				'storageBucket'     => sanitize_text_field( (string) ( $project['storage_bucket'] ?? '' ) ),
+			),
+			static fn ( string $value ): bool => '' !== $value
+		);
+		if ( count( $options ) < 4 ) {
+			return array();
+		}
+
+		set_transient( self::CLIENT_CONFIG_CACHE, $options, 10 * MINUTE_IN_SECONDS );
+		return $options;
 	}
 
 	/** @return array<string,mixed> */
@@ -124,6 +161,7 @@ final class Kidia_Mobile_Push_Service {
 			)
 		);
 		delete_transient( self::PROJECT_CACHE );
+		delete_transient( self::CLIENT_CONFIG_CACHE );
 		return $response;
 	}
 
