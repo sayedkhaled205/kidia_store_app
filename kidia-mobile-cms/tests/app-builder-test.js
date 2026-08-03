@@ -212,6 +212,38 @@ async function testCompletedOkDismissesWithoutDeletingRecentBuild() {
   assert.equal(requests, 0, "Opening the recent-build choice must not start a new build.");
 }
 
+async function testCompletedOkSurvivesCmsDomReplacement() {
+  const dom = new JSDOM(markup("ready"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.setAttribute("data-build-persistent", "");
+  root.dataset.buildId = "replaced-build-1";
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  dom.window.localStorage.setItem("kidiaAppBuildDownloadCompleted", "replaced-build-1");
+  let requests = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async () => {
+    requests += 1;
+    return { ok: true, json: async () => ({ success: true, data: { status: "idle" } }) };
+  };
+  dom.window.eval(script);
+
+  const replacement = root.cloneNode(true);
+  root.replaceWith(replacement);
+  replacement.querySelector("[data-build-modal]").hidden = false;
+  dom.window.document.dispatchEvent(new dom.window.CustomEvent("kidia:cms-page-ready"));
+  replacement.querySelector("[data-build-cancel]").click();
+  await flush();
+
+  assert.equal(replacement.querySelector("[data-build-modal]").hidden, true, "Delegated OK must still work after the CMS replaces a previously bound build card.");
+  assert.equal(replacement.dataset.status, "downloaded", "Dismissing a replaced completed card must preserve its successful state.");
+  assert.equal(replacement.dataset.buildId, "replaced-build-1");
+  assert.equal(requests, 0, "Dismissing a replaced completed card must never call build cancellation.");
+}
+
 async function testIdleControlStartsBuildAndShowsProgress() {
   const dom = new JSDOM(markup("idle"), {
     runScripts: "outside-only",
@@ -423,6 +455,7 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
   await testRestoredBuildDownloadsWhenProviderReturnsFinished();
   await testCompletedCardSurvivesBrowserReopen();
   await testCompletedOkDismissesWithoutDeletingRecentBuild();
+  await testCompletedOkSurvivesCmsDomReplacement();
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
