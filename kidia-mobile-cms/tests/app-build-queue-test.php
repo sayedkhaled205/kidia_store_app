@@ -213,6 +213,11 @@ function kidia_build_assert( bool $condition, string $message ): void {
 require_once dirname( __DIR__ ) . '/includes/class-kidia-mobile-app-exporter.php';
 
 $exporter = new Kidia_Mobile_App_Exporter();
+$exporter_source = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-kidia-mobile-app-exporter.php' );
+kidia_build_assert(
+	(bool) preg_match( "/handle_build_cancel[\\s\\S]*'ready' === \\(string\\) \\$state\\['status'\\][\\s\\S]*browser_state\\( \\$state \\)[\\s\\S]*dismissed/", $exporter_source ),
+	'A stale browser must not cancel or delete a successfully completed build when OK is pressed.'
+);
 $started = microtime( true );
 $queued = $exporter->queue_build();
 $elapsed = microtime( true ) - $started;
