@@ -6,6 +6,7 @@ const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
 const script = fs.readFileSync(path.resolve(__dirname, "..", "admin", "assets", "app-builder.js"), "utf8");
+const dashboard = fs.readFileSync(path.resolve(__dirname, "..", "admin", "pages", "dashboard.php"), "utf8");
 
 function markup(status, autoDownload = false) {
   return `<!doctype html><body>
@@ -35,6 +36,7 @@ function markup(status, autoDownload = false) {
       <div data-build-recent-choice hidden>
         <button type="button" data-build-download-again>Download Again</button>
         <button type="button" data-build-new-version>Build New Version</button>
+        <button type="button" data-build-recent-cancel>Cancel</button>
       </div>
     </div>
   </body>`;
@@ -210,6 +212,38 @@ async function testCompletedOkDismissesWithoutDeletingRecentBuild() {
   root.querySelector("[data-build-action]").click();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "The preserved build must still offer Download Again or Build New Version.");
   assert.equal(requests, 0, "Opening the recent-build choice must not start a new build.");
+}
+
+async function testCompletedOkSurvivesCmsDomReplacement() {
+  const dom = new JSDOM(markup("ready"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.setAttribute("data-build-persistent", "");
+  root.dataset.buildId = "replaced-build-1";
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - 60);
+  dom.window.localStorage.setItem("kidiaAppBuildDownloadCompleted", "replaced-build-1");
+  let requests = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  dom.window.fetch = async () => {
+    requests += 1;
+    return { ok: true, json: async () => ({ success: true, data: { status: "idle" } }) };
+  };
+  dom.window.eval(script);
+
+  const replacement = root.cloneNode(true);
+  root.replaceWith(replacement);
+  replacement.querySelector("[data-build-modal]").hidden = false;
+  dom.window.document.dispatchEvent(new dom.window.CustomEvent("kidia:cms-page-ready"));
+  replacement.querySelector("[data-build-cancel]").click();
+  await flush();
+
+  assert.equal(replacement.querySelector("[data-build-modal]").hidden, true, "Delegated OK must still work after the CMS replaces a previously bound build card.");
+  assert.equal(replacement.dataset.status, "downloaded", "Dismissing a replaced completed card must preserve its successful state.");
+  assert.equal(replacement.dataset.buildId, "replaced-build-1");
+  assert.equal(requests, 0, "Dismissing a replaced completed card must never call build cancellation.");
 }
 
 async function testIdleControlStartsBuildAndShowsProgress() {
@@ -390,6 +424,12 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 10 days must present both choices.");
   assert.equal(requests, 0, "Opening the recent-build choice must not start another build.");
 
+	root.querySelector("[data-build-recent-cancel]").click();
+	assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true, "Cancel must close the recent-build choice without changing the build.");
+	assert.equal(root.dataset.status, "downloaded");
+	assert.equal(requests, 0, "Cancel must neither download nor start a new build.");
+	root.querySelector("[data-build-action]").click();
+
   root.querySelector("[data-build-new-version]").click();
   await flush();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true);
@@ -419,10 +459,13 @@ async function testReadyRecentBuildOffersChoiceBeforeDownload() {
 }
 
 (async function () {
+	assert.match(dashboard, /\.kidia-app-build__recent-choice-actions \.button[\s\S]*border-color: #2f806e;[\s\S]*color: #2f806e;/, "Recent-build secondary actions must use the Kidia brand color instead of WordPress blue.");
+	assert.match(dashboard, /\.kidia-app-build__recent-choice-actions \.button-primary[\s\S]*background: #2f806e;[\s\S]*color: #fff;/, "Download Again must use the filled Kidia brand treatment.");
   await testReadyBuildDownloadsFromTheSameControl();
   await testRestoredBuildDownloadsWhenProviderReturnsFinished();
   await testCompletedCardSurvivesBrowserReopen();
   await testCompletedOkDismissesWithoutDeletingRecentBuild();
+  await testCompletedOkSurvivesCmsDomReplacement();
   await testIdleControlStartsBuildAndShowsProgress();
   await testFailedBuildReturnsTheSameControlToRetry();
   await testHungStartRequestReturnsToRetry();
