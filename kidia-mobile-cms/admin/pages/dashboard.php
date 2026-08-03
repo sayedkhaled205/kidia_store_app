@@ -534,6 +534,28 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	.kidia-app-build__recent-choice-card h3 { margin: 0 0 8px; }
 	.kidia-app-build__recent-choice-card p { margin: 0 0 18px; }
 	.kidia-app-build__recent-choice-actions { display: flex; justify-content: center; gap: 10px; }
+	.kidia-app-build__recent-choice-actions .button {
+		min-height: 44px;
+		padding: 7px 20px;
+		border-color: #2f806e;
+		border-radius: 10px;
+		background: #fff;
+		color: #2f806e;
+		font-weight: 700;
+	}
+	.kidia-app-build__recent-choice-actions .button:hover,
+	.kidia-app-build__recent-choice-actions .button:focus {
+		border-color: #246b5c;
+		background: #edf7f4;
+		color: #246b5c;
+	}
+	.kidia-app-build__recent-choice-actions .button-primary,
+	.kidia-app-build__recent-choice-actions .button-primary:hover,
+	.kidia-app-build__recent-choice-actions .button-primary:focus {
+		border-color: #2f806e;
+		background: #2f806e;
+		color: #fff;
+	}
 
 	.kidia-app-build__card-button .kidia-app-build__title {
 		color: #ffffff;
