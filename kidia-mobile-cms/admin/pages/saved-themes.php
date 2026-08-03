@@ -117,8 +117,12 @@ defined( 'ABSPATH' ) || exit;
 						<p><?php esc_html_e( 'Browse the real application pages using this theme’s saved settings and your WooCommerce catalog.', 'kidia-mobile-cms' ); ?></p>
 					</div>
 					<nav class="kidia-saved-theme-dialog__pages" aria-label="<?php esc_attr_e( 'Theme pages', 'kidia-mobile-cms' ); ?>">
+						<button type="button" data-saved-theme-page="splash" class="is-active" aria-current="page">
+							<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+							<?php esc_html_e( 'Splash', 'kidia-mobile-cms' ); ?>
+						</button>
 						<?php foreach ( Kidia_Mobile_Setup_Wizard::setup_pages() as $preview_page => $preview_page_data ) : ?>
-							<button type="button" data-saved-theme-page="<?php echo esc_attr( (string) $preview_page ); ?>"<?php echo 'home' === $preview_page ? ' class="is-active" aria-current="page"' : ''; ?>>
+							<button type="button" data-saved-theme-page="<?php echo esc_attr( (string) $preview_page ); ?>">
 								<span class="dashicons <?php echo esc_attr( (string) ( $preview_page_data['icon'] ?? 'dashicons-admin-page' ) ); ?>" aria-hidden="true"></span>
 								<?php echo esc_html( (string) ( $preview_page_data['name'] ?? $preview_page ) ); ?>
 							</button>

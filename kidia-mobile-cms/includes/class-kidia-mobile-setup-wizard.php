@@ -1959,7 +1959,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	 * @return array<string,mixed>
 	 */
 	private function build_splash_settings( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): array {
-		$splash_image = '' !== $logo_url ? $logo_url : self::asset_url( $theme, 'category', 6 );
+		$splash_image = $logo_url;
 		$foreground   = $this->readable_foreground( $primary, $secondary );
 		return array(
 			'enabled'              => true,

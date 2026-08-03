@@ -111,6 +111,7 @@ assert.match(service, /kidia_mobile_splash_screen/, "Themes must configure the S
 assert.match(service, /preview_snapshot[\s\S]*'splash'\s*=>\s*\$this->build_splash_settings\(\s*\$theme,\s*\$primary,\s*\$secondary,\s*\$app_name,\s*\$logo_url\s*\)/, "Every built-in theme preview must include its branded Splash screen.");
 assert.match(service, /build_splash_settings[\s\S]*'background_color'\s*=>\s*\$primary[\s\S]*'background_color_end'\s*=>\s*\$secondary[\s\S]*'store_name'\s*=>\s*\$app_name/, "Splash must use the primary color, secondary color and application name selected on the identity step.");
 assert.match(service, /build_splash_settings[\s\S]*readable_foreground[\s\S]*'text_color'\s*=>\s*\$foreground[\s\S]*'loader_color'\s*=>\s*\$foreground/, "Splash text and loader must remain readable over the selected brand colors.");
+assert.match(service, /build_splash_settings[\s\S]*\$splash_image\s*=\s*\$logo_url/, "Splash must use the selected application logo instead of unrelated theme artwork.");
 assert.match(service, /Kidia_Mobile_Checkout_Fields_Store::DESIGN_OPTION/, "Themes must preserve the selected checkout design.");
 assert.doesNotMatch(service, /kidia_mobile_checkout_suggestions/, "Themes must not restore removed Checkout Suggested Products.");
 for (const page of ["home", "category", "catalog", "product", "wishlist", "account"]) {
@@ -187,9 +188,9 @@ assert.match(service, /Navigation accents always follow the store brand[\s\S]*ac
 assert.match(service, /Setup themes use flat headers[\s\S]*\['shadow'\]\s*=\s*'none'[\s\S]*\['compact_shadow'\]\s*=\s*'none'/, "Every regular and collapsed setup-theme header must stay flat and blend into the page without a shadow.");
 assert.match(service, /search_background'\]\s*=\s*\$theme\['surface'\][\s\S]*search_border_color'\]\s*=\s*\$secondary/, "Header search fields must keep a neutral surface instead of a filled brand color.");
 assert.match(service, /product_tabs'[\s\S]*'active_color'\s*=>\s*\$primary[\s\S]*footer'\]\['settings'\]\['button_color'\]\s*=\s*\$primary/, "Product tabs and product actions must use the brand primary color.");
-assert.match(wizardJs, /snapshotWithLiveBrand[\s\S]*setup\[primary_color\][\s\S]*setup\[secondary_color\][\s\S]*JSON\.parse\(JSON\.stringify[\s\S]*selectPreviewPage\(previewPage\)/, "Changing either identity color must rebuild the open Flutter preview from the live brand fields.");
-assert.match(wizardJs, /Object\.keys\(pages\)[\s\S]*Promise\.all\(layoutRequests\)[\s\S]*layouts:\s*layouts[\s\S]*home:\s*payloads\[1\][\s\S]*category:\s*payloads\[2\]/, "Complete-theme previews must send every page layout and shared Home/Category settings so in-phone navigation matches the page buttons.");
-assert.match(previewBridge, /rawLayouts is Map[\s\S]*rawLayouts\.entries[\s\S]*_current\[layoutPage\][\s\S]*message\['home'\] is Map[\s\S]*message\['category'\] is Map/, "Flutter must retain every theme page plus Home and Category settings when the user navigates inside the phone.");
+assert.match(wizardJs, /snapshotWithLiveBrand[\s\S]*setup\[primary_color\][\s\S]*setup\[secondary_color\][\s\S]*setup\[app_name\][\s\S]*setup\[logo_url\][\s\S]*branded\.splash[\s\S]*selectPreviewPage\(previewPage\)/, "Changing identity text, colors or logo must rebuild the open Flutter preview and its Splash from the live brand fields.");
+assert.match(wizardJs, /Object\.keys\(pages\)[\s\S]*Promise\.all\(layoutRequests\)[\s\S]*layouts:\s*layouts[\s\S]*home:\s*payloads\[1\][\s\S]*category:\s*payloads\[2\][\s\S]*splash:\s*snapshot\.splash/, "Complete-theme previews must send every page layout plus Home, Category and Splash settings so in-phone navigation matches the page buttons.");
+assert.match(previewBridge, /message\['splash'\] is Map[\s\S]*_splashReady[\s\S]*rawLayouts is Map[\s\S]*rawLayouts\.entries[\s\S]*_current\[layoutPage\][\s\S]*message\['home'\] is Map[\s\S]*message\['category'\] is Map/, "Flutter must retain every theme page plus Splash, Home and Category settings when the user navigates inside the phone.");
 assert.match(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*transform:scale\(var\(--kidia-theme-preview-scale\)\);[^}]*transform-origin:top left/, "Theme preview must scale deterministically inside the shared phone frame.");
 assert.doesNotMatch(wizardCss, /\.kidia-theme-modal__device iframe\{[^}]*zoom:/, "Theme preview must not use browser-dependent iframe zoom that distorts the phone frame.");
 assert.match(service, /sanitize_enabled_pages/, "Setup must sanitize required and optional page selections.");
@@ -236,6 +237,7 @@ assert.match(wizardTemplate, /kidia-theme-gallery/, "Wizard must render a theme 
 assert.match(wizardTemplate, /Choose a complete store theme/, "Setup must select one complete store theme instead of one design per page.");
 assert.doesNotMatch(wizardTemplate, /setup\[page_themes\]/, "Setup must not mix unrelated designs across different pages.");
 assert.match(wizardTemplate, /Preview full theme[\s\S]*data-theme-modal-page[\s\S]*data-theme-modal-frame/, "Every complete theme must have a real all-page Flutter preview.");
+assert.match(wizardTemplate, /data-theme-modal-page="splash"[\s\S]*data-theme-modal-page="<\?php echo esc_attr/, "Every built-in theme preview must visibly expose Splash before the application pages.");
 assert.match(wizardTemplate, /Choose application pages[\s\S]*data-page-toggle/, "The second setup step must select required and optional application pages.");
 assert.match(wizardTemplate, /setup\[secondary_color\]/, "Application identity must expose a secondary color.");
 assert.match(wizardTemplate, /detected from the connected site and remain editable/, "Application identity must explain that its defaults came from the connected site.");
@@ -288,7 +290,8 @@ assert.match(savedThemesTemplate, /kidia-theme-file[\s\S]*button-primary/, "Them
 assert.match(savedThemesTemplate, /data-saved-theme-phone[\s\S]*theme_images[\s\S]*data-saved-theme-preview/, "Every saved theme card must show its own artwork and expose Preview.");
 assert.match(savedThemesTemplate, /data-saved-theme-dialog/, "Saved themes must provide a focused large preview dialog.");
 assert.match(savedThemesTemplate, /data-saved-theme-snapshot[\s\S]*Kidia_Mobile_Setup_Wizard::setup_pages\(\)[\s\S]*data-saved-theme-page[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must expose every application page in the real Flutter surface.");
-assert.match(savedThemesScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-preview-layout[\s\S]*kidia-flutter-preview-ready/, "Saved Theme Preview must send the stored page layouts to the real Flutter preview.");
+assert.match(savedThemesTemplate, /data-saved-theme-page="splash"[\s\S]*Kidia_Mobile_Setup_Wizard::setup_pages/, "Saved Theme Preview must visibly expose its stored Splash before the application pages.");
+assert.match(savedThemesScript, /page === 'splash'[\s\S]*splash:\s*snapshot\.splash[\s\S]*homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*kidia-flutter-preview-ready/, "Saved Theme Preview must send the stored Splash and page layouts to the real Flutter preview.");
 assert.match(savedThemesTemplate, /kidia-saved-theme-dialog__device[\s\S]*kidia-saved-theme-dialog__screen[\s\S]*data-saved-theme-dialog-frame/, "Saved Theme Preview must reuse the clean Page Builder phone and screen structure.");
 assert.match(wizardCss, /\.kidia-saved-theme-dialog__device:before\{display:none;content:none\}[\s\S]*\.kidia-saved-theme-dialog__screen\{[^}]*height:680px[\s\S]*zoom:\.85/, "Saved Theme Preview must remove the earpiece and show the full 800px Flutter surface at the Page Builder scale.");
 assert.match(savedThemesTemplate, /data-saved-theme-export[\s\S]*data-saved-theme-export-dialog[\s\S]*value="settings"[\s\S]*value="settings_and_images"/, "Export must ask whether to include settings only or settings and non-product images.");
@@ -350,6 +353,7 @@ assert.match(wizardScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s
 assert.match(wizardScript, /postPreviewJson\(url, body, attempt\)[\s\S]*setTimeout\(resolve, 250\)[\s\S]*return \[pageName, previewPageLayout\(snapshot, pageName\)\][\s\S]*return homeFallback[\s\S]*return categoryFallback/, "A temporary failure in one preview endpoint must retry and fall back without taking down the complete theme preview.");
 assert.match(wizardScript, /demo_catalog[\s\S]*searchParams\.set\('demo', '1'\)[\s\S]*searchParams\.set\('product', '9001'\)/, "Built-in previews must route every page through the theme-only demo catalog.");
 assert.match(previewMain, /catalogRepositoryProvider\.overrideWithValue[\s\S]*CmsPreviewCatalogRepository/, "Flutter theme previews must replace the live catalog repository.");
+assert.match(previewMain, /page == 'splash'[\s\S]*splashConfigProvider\.overrideWith[\s\S]*CmsPreviewLayoutBridge\.splashConfig[\s\S]*appStartupProvider\.overrideWith[\s\S]*_splashPreviewHold\.future/, "The embedded Flutter preview must render the selected theme Splash from its posted snapshot and keep it visible for review.");
 assert.match(previewCatalog, /CmsPreviewLayoutBridge\.demoCatalog/, "The preview catalog must read only the selected theme payload.");
 assert.doesNotMatch(previewCatalog, /Dio|StoreApi|apiBaseUrl|wc_/, "The preview catalog must never call the merchant store.");
 assert.match(previewBridge, /demo_catalog[\s\S]*_demoCatalogReady/, "The preview bridge must deliver the bundled demo catalog before product pages render.");
@@ -393,6 +397,9 @@ const wizardDom = new JSDOM(`<!doctype html><body>
     <section class="kidia-setup-step" data-step="4"><span data-step-number></span><h3 data-review-name></h3><strong data-review-theme></strong><span data-review-page="category"></span></section>
     <section class="kidia-setup-step" data-step="5"><span data-step-number></span></section>
     <input name="setup[app_name]" value="Store">
+	<input name="setup[logo_url]" value="https://example.test/logo.png">
+	<input name="setup[logo_id]" value="1">
+	<div class="kidia-setup-logo-preview"></div>
     <input type="color" name="setup[primary_color]" value="#2c2926" data-color-picker="primary"><input type="text" value="#2C2926" data-color-code="primary">
     <input type="color" name="setup[secondary_color]" value="#f2e9df" data-color-picker="secondary"><input type="text" value="#F2E9DF" data-color-code="secondary">
     <button type="button" class="kidia-setup-back"></button>
@@ -402,6 +409,7 @@ const wizardDom = new JSDOM(`<!doctype html><body>
   <div class="kidia-theme-modal" hidden>
     <button type="button" class="kidia-theme-modal__close" data-theme-modal-close></button>
     <h2 data-theme-modal-name></h2>
+	<button type="button" data-theme-modal-page="splash"></button>
     <button type="button" data-theme-modal-page="home"></button>
     <button type="button" data-theme-modal-page="account"></button>
     <iframe data-theme-modal-frame></iframe>
@@ -415,7 +423,7 @@ wizardDom.window.kidiaSetupThemePreview = {
   layoutPreviewBase: "https://example.test/wp-json/woo-mobile/v1/page-layout/",
   homePreviewEndpoint: "https://example.test/wp-json/woomobileapp/v1/home-layout/preview",
   categoryPreviewEndpoint: "https://example.test/wp-json/woo-mobile/v1/category-page/preview",
-  themes: { fashion: { home: [], pages: { home: {}, account: {} }, category: { general: {} } } },
+  themes: { fashion: { splash: { background_color: "#2c2926", background_color_end: "#f2e9df", store_name: "Store", image_url: "https://example.test/logo.png" }, identity: { app_name: "Store", primary_color: "#2c2926", secondary_color: "#f2e9df", logo_url: "https://example.test/logo.png" }, home: [], pages: { home: {}, account: {} }, category: { general: {} } } },
   restNonce: "nonce",
   version: "test"
 };
@@ -441,8 +449,10 @@ wizardDom.window.document.querySelector('input[name="setup[theme]"]').dispatchEv
 assert.equal(wizardDom.window.document.querySelector('[data-color-picker="primary"]').value, "#123abc", "Choosing a layout theme must preserve the connected site's brand color.");
 wizardDom.window.document.querySelector(".kidia-theme-preview-button").click();
 assert.equal(wizardDom.window.document.querySelector(".kidia-theme-modal").hidden, false, "Theme preview must open without applying the theme.");
-assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=home/, "Built-in theme preview must open the real Flutter Home page.");
+assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=splash/, "Built-in theme preview must open its branded Splash first.");
 assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /demo=1/, "Built-in theme preview must not load merchant data.");
+wizardDom.window.document.querySelector('[data-theme-modal-page="home"]').click();
+assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=home/, "Theme preview navigation must render Home after Splash.");
 wizardDom.window.document.querySelector('[data-theme-modal-page="account"]').click();
 assert.match(wizardDom.window.document.querySelector("[data-theme-modal-frame]").src, /page=account/, "Theme preview navigation must render every selected application page.");
 
@@ -453,7 +463,7 @@ assert.equal(shellDom.window.document.querySelector(".kidia-cms-more"), null, "M
 
 const savedThemeDom = new JSDOM(`<!doctype html><body>
   <article data-saved-theme-card>
-    <script type="application/json" data-saved-theme-snapshot>{"home":[],"pages":{"home":{"elements":[]}}}</script>
+    <script type="application/json" data-saved-theme-snapshot>{"splash":{"store_name":"Fashion Theme","background_color":"#112233","background_color_end":"#334455"},"home":[],"pages":{"home":{"elements":[]}}}</script>
     <div class="kidia-saved-theme-phone" data-saved-theme-phone><img src="theme-banner.jpg" alt=""></div>
     <button type="button" data-saved-theme-preview data-theme-name="Fashion Theme">Preview</button>
     <button type="button" data-saved-theme-export data-theme-id="theme-123" data-theme-name="Fashion Theme">Export</button>
@@ -461,6 +471,7 @@ const savedThemeDom = new JSDOM(`<!doctype html><body>
   <dialog data-saved-theme-dialog>
     <button type="button" data-saved-theme-dialog-close></button>
     <h2 data-saved-theme-dialog-title></h2>
+	<button type="button" data-saved-theme-page="splash"></button>
     <button type="button" data-saved-theme-page="home"></button>
     <button type="button" data-saved-theme-page="account"></button>
     <iframe data-saved-theme-dialog-frame></iframe>
@@ -489,7 +500,9 @@ savedThemeDom.window.eval(savedThemesScript);
 savedThemeDom.window.document.querySelector("[data-saved-theme-preview]").click();
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog]").hasAttribute("open"), true, "Preview must open without applying the theme.");
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-title]").textContent, "Fashion Theme", "Preview must show the selected theme name.");
-assert.match(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-frame]").src, /page=home/, "Preview must open the real Flutter Home page first.");
+assert.match(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-frame]").src, /page=splash/, "Saved Theme Preview must open its stored Splash first.");
+savedThemeDom.window.document.querySelector('[data-saved-theme-page="home"]').click();
+assert.match(savedThemeDom.window.document.querySelector("[data-saved-theme-dialog-frame]").src, /page=home/, "Saved Theme Preview must still navigate from Splash to Home.");
 savedThemeDom.window.document.querySelector("[data-saved-theme-export]").click();
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-export-dialog]").hasAttribute("open"), true, "Export must open the two-choice dialog.");
 assert.equal(savedThemeDom.window.document.querySelector("[data-saved-theme-export-id]").value, "theme-123", "Export must target the selected saved theme.");
