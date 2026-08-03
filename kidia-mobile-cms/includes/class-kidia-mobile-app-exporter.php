@@ -361,7 +361,14 @@ final class Kidia_Mobile_App_Exporter {
 		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
 
 		$state = self::state();
+		$requested_build_id = sanitize_text_field( (string) wp_unslash( $_POST['buildId'] ?? '' ) );
+		$current_build_id   = sanitize_text_field( (string) $state['build_id'] );
+		if ( '' !== $requested_build_id && $requested_build_id !== $current_build_id ) {
+			wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'kidia-mobile-cms' ) ), 409 );
+		}
 		if ( 'ready' === (string) $state['status'] ) {
+			$state['dismissed_build_id'] = $current_build_id;
+			update_option( self::STATE_OPTION, $state, false );
 			wp_send_json_success(
 				array_merge(
 					$this->browser_state( $state ),
@@ -686,6 +693,9 @@ final class Kidia_Mobile_App_Exporter {
 			'fileName'     => sanitize_file_name( (string) $state['apk_file_name'] ),
 			'current'      => self::is_current(),
 			'downloadReady'=> self::is_current(),
+			'dismissed'    => 'ready' === (string) $state['status']
+				&& '' !== (string) $state['build_id']
+				&& (string) $state['dismissed_build_id'] === (string) $state['build_id'],
 		);
 	}
 
@@ -706,6 +716,7 @@ final class Kidia_Mobile_App_Exporter {
 			'download_url'  => '',
 			'apk_file_name' => '',
 			'request_token' => '',
+			'dismissed_build_id' => '',
 		);
 	}
 }

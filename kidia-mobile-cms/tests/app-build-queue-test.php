@@ -221,9 +221,16 @@ $cancel_source = false !== $cancel_start && false !== $cancel_end
 	: '';
 kidia_build_assert(
 	str_contains( $cancel_source, "if ( 'ready' === (string) \$state['status'] )" )
+		&& str_contains( $cancel_source, "\$state['dismissed_build_id'] = \$current_build_id" )
+		&& str_contains( $cancel_source, 'update_option( self::STATE_OPTION, $state, false )' )
 		&& str_contains( $cancel_source, "\$this->browser_state( \$state )" )
 		&& strpos( $cancel_source, "if ( 'ready'" ) < strpos( $cancel_source, 'delete_option( self::STATE_OPTION )' ),
 	'A stale browser must not cancel or delete a successfully completed build when OK is pressed.'
+);
+kidia_build_assert(
+	str_contains( $exporter_source, "'dismissed'    => 'ready' === (string) \$state['status']" )
+		&& str_contains( $exporter_source, "'dismissed_build_id' => ''" ),
+	'Completed build acknowledgement must survive navigation and reset for a new build.'
 );
 $started = microtime( true );
 $queued = $exporter->queue_build();

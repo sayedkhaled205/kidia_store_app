@@ -190,11 +190,13 @@ async function testCompletedOkDismissesWithoutDeletingRecentBuild() {
   let requests = 0;
 
   dom.window.kidiaAppBuilder = builderConfig();
-  dom.window.fetch = async () => {
+  let requestBody = "";
+  dom.window.fetch = async (_url, options) => {
     requests += 1;
+		requestBody = options.body.toString();
     return {
       ok: true,
-      json: async () => ({ success: true, data: { status: "idle" } })
+			json: async () => ({ success: true, data: { status: "ready", buildId: "preserved-build-1", dismissed: true, downloadReady: true } })
     };
   };
   dom.window.eval(script);
@@ -205,13 +207,15 @@ async function testCompletedOkDismissesWithoutDeletingRecentBuild() {
   await flush();
 
   assert.equal(modal.hidden, true, "OK must dismiss the completed progress card.");
-  assert.equal(requests, 0, "OK must not call the destructive build-cancel endpoint.");
+  assert.equal(requests, 1, "OK must persist its acknowledgement on the server.");
+	assert.match(requestBody, /action=kidia_mobile_app_build_cancel/);
+	assert.match(requestBody, /buildId=preserved-build-1/);
   assert.equal(root.dataset.status, "downloaded", "OK must preserve the completed build state.");
   assert.equal(dom.window.localStorage.getItem("kidiaAppBuildDownloadCompleted"), "preserved-build-1");
 
   root.querySelector("[data-build-action]").click();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "The preserved build must still offer Download Again or Build New Version.");
-  assert.equal(requests, 0, "Opening the recent-build choice must not start a new build.");
+  assert.equal(requests, 1, "Opening the recent-build choice must not start a new build.");
 }
 
 async function testCompletedOkSurvivesCmsDomReplacement() {
@@ -229,7 +233,7 @@ async function testCompletedOkSurvivesCmsDomReplacement() {
   dom.window.kidiaAppBuilder = builderConfig();
   dom.window.fetch = async () => {
     requests += 1;
-    return { ok: true, json: async () => ({ success: true, data: { status: "idle" } }) };
+		return { ok: true, json: async () => ({ success: true, data: { status: "ready", buildId: "replaced-build-1", dismissed: true, downloadReady: true } }) };
   };
   dom.window.eval(script);
 
@@ -243,7 +247,7 @@ async function testCompletedOkSurvivesCmsDomReplacement() {
   assert.equal(replacement.querySelector("[data-build-modal]").hidden, true, "Delegated OK must still work after the CMS replaces a previously bound build card.");
   assert.equal(replacement.dataset.status, "downloaded", "Dismissing a replaced completed card must preserve its successful state.");
   assert.equal(replacement.dataset.buildId, "replaced-build-1");
-  assert.equal(requests, 0, "Dismissing a replaced completed card must never call build cancellation.");
+	assert.equal(requests, 1, "Dismissing a replaced completed card must persist across later CMS pages.");
 }
 
 async function testIdleControlStartsBuildAndShowsProgress() {

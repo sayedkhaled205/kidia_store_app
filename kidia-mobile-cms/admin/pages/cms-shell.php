@@ -22,7 +22,10 @@ $shell_build_state  = wp_parse_args(
 	array( 'status' => 'idle', 'progress' => 0, 'message' => '', 'stage' => '', 'build_id' => '', 'updated_at' => 0 )
 );
 $shell_build_status = sanitize_key( (string) $shell_build_state['status'] );
-$shell_has_build    = ! in_array( $shell_build_status, array( 'idle', 'cancelled' ), true );
+$shell_build_dismissed = 'ready' === $shell_build_status
+	&& '' !== (string) $shell_build_state['build_id']
+	&& (string) ( $shell_build_state['dismissed_build_id'] ?? '' ) === (string) $shell_build_state['build_id'];
+$shell_has_build    = ! $shell_build_dismissed && ! in_array( $shell_build_status, array( 'idle', 'cancelled' ), true );
 $shell_build_active = in_array( $shell_build_status, array( 'queued', 'building' ), true );
 $shell_abandoned_import = wp_parse_args(
 	is_array( $abandoned_import_state ?? null ) ? $abandoned_import_state : array(),
