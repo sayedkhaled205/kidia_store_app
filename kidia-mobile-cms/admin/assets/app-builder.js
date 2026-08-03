@@ -10,7 +10,7 @@
 	const autoDownload = new WeakSet();
 	const openedProgress = new WeakSet();
 	const completedStorageKey = 'kidiaAppBuildDownloadCompleted';
-	const recentBuildWindow = 5 * 24 * 60 * 60;
+	const recentBuildWindow = 10 * 24 * 60 * 60;
 	let timer = 0;
 	let pollFailures = 0;
 	const requestTimeout = Math.max(100, Number(config.requestTimeout || 25000));
@@ -414,7 +414,8 @@
 
 	function hasRecentCompletedBuild(root) {
 		const completedAt = Number(root.dataset.completedAt || 0);
-		return completedAt > 0 && Math.floor(Date.now() / 1000) - completedAt < recentBuildWindow;
+		const successful = ['ready', 'downloaded'].includes(normalizedStatus(root.dataset.status || ''));
+		return successful && completedAt > 0 && Math.floor(Date.now() / 1000) - completedAt < recentBuildWindow;
 	}
 
 	function showRecentChoice(root) {
@@ -434,19 +435,21 @@
 			const form = root.querySelector('[data-build-form]');
 			if (root.dataset.autoDownload === '1' || isBuilding(root.dataset.status)) autoDownload.add(root);
 			if (form) form.addEventListener('submit', function (event) {
-				if (root.dataset.status === 'ready') return;
-
-				event.preventDefault();
 				if (isBuilding(root.dataset.status)) {
+					event.preventDefault();
 					openProgress(root);
 					schedulePoll(0);
 					return;
 				}
 				if (root.dataset.canBuild !== '1') return;
 				if (hasRecentCompletedBuild(root)) {
+					event.preventDefault();
 					showRecentChoice(root);
 					return;
 				}
+				if (root.dataset.status === 'ready') return;
+
+				event.preventDefault();
 				startBuild(root);
 			});
 

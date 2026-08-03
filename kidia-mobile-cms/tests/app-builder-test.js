@@ -336,7 +336,7 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
     url: "https://store.test/wp-admin/admin.php"
   });
   const root = dom.window.document.querySelector("[data-kidia-app-build]");
-  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (4 * 24 * 60 * 60));
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (9 * 24 * 60 * 60));
   let requests = 0;
 
   dom.window.kidiaAppBuilder = builderConfig();
@@ -351,13 +351,35 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   dom.window.eval(script);
 
   root.querySelector("[data-build-action]").click();
-  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 5 days must present both choices.");
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A build completed within 10 days must present both choices.");
   assert.equal(requests, 0, "Opening the recent-build choice must not start another build.");
 
   root.querySelector("[data-build-new-version]").click();
   await flush();
   assert.equal(root.querySelector("[data-build-recent-choice]").hidden, true);
   assert.equal(requests, 1, "Build New Version must reuse the existing build start request.");
+}
+
+async function testReadyRecentBuildOffersChoiceBeforeDownload() {
+  const dom = new JSDOM(markup("ready"), {
+    runScripts: "outside-only",
+    url: "https://store.test/wp-admin/admin.php"
+  });
+  const root = dom.window.document.querySelector("[data-kidia-app-build]");
+  root.dataset.completedAt = String(Math.floor(Date.now() / 1000) - (2 * 24 * 60 * 60));
+  const form = root.querySelector("[data-build-form]");
+  let submissions = 0;
+
+  dom.window.kidiaAppBuilder = builderConfig();
+  form.addEventListener("submit", (event) => {
+    submissions += 1;
+    event.preventDefault();
+  });
+  dom.window.eval(script);
+
+  root.querySelector("[data-build-action]").click();
+  assert.equal(root.querySelector("[data-build-recent-choice]").hidden, false, "A ready build from the last 10 days must ask before downloading or rebuilding.");
+  assert.equal(submissions, 1, "The guarded submit event may fire, but must be prevented before downloading the old build.");
 }
 
 (async function () {
@@ -369,5 +391,6 @@ async function testRecentBuildOffersDownloadOrNewVersion() {
   await testHungStartRequestReturnsToRetry();
   await testActiveBuildCanBeCancelled();
   await testRecentBuildOffersDownloadOrNewVersion();
+  await testReadyRecentBuildOffersChoiceBeforeDownload();
   console.log("APK single build-and-download control tests passed.");
 })();
