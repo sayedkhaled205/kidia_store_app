@@ -184,7 +184,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 						</form>
 						<div class="kidia-app-build__recent-choice" data-build-recent-choice hidden>
 							<div class="kidia-app-build__recent-choice-card" role="dialog" aria-modal="true" aria-labelledby="kidia-recent-build-title">
-								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A build is available from the last 5 days', 'kidia-mobile-cms' ); ?></h3>
+								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A successful build is available from the last 10 days', 'kidia-mobile-cms' ); ?></h3>
 								<p><?php esc_html_e( 'Download the latest version again or create a new build.', 'kidia-mobile-cms' ); ?></p>
 								<div class="kidia-app-build__recent-choice-actions">
 									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'kidia-mobile-cms' ); ?></button>
