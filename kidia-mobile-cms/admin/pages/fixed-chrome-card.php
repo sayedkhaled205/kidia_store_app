@@ -1,4 +1,3 @@
-
 <?php
 /** Drag-and-drop application header/footer editor shared by every page builder. */
 defined( 'ABSPATH' ) || exit;
