@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.61
+Stable tag: 1.46.62
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Changelog ==
 
+= 1.46.62 =
+
+* Fixed the WordPress installation path by using `mobishop/mobishop.php` as the packaged plugin entry file.
+* Added strict ZIP-layout checks and clean activation validation before publishing the package.
+
 = 1.46.61 =
 
 * Aligned the translation text domain with the assigned WordPress.org slug.
@@ -78,6 +83,6 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Upgrade Notice ==
 
-= 1.46.61 =
+= 1.46.62 =
 
-Use this release for WordPress.org-compatible packaging and translations.
+Use this release to replace packages that installed under an incorrect nested plugin directory.
