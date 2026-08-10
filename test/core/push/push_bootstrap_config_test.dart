@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/core/push/push_bootstrap_config.dart';
+import 'package:mobishop_store_app/core/push/push_bootstrap_config.dart';
 
 void main() {
   test('accepts a complete managed Firebase bootstrap', () {

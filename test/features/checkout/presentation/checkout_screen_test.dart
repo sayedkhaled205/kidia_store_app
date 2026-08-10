@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_presentation.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
-import 'package:kidia_store_app/features/checkout/presentation/checkout_screen.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
+import 'package:mobishop_store_app/features/checkout/presentation/checkout_screen.dart';
 
 import '../support/checkout_test_data.dart';
 

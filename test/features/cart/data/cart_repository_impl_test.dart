@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_error_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
-import 'package:kidia_store_app/features/cart/data/repositories/cart_repository_impl.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/data/repositories/cart_repository_impl.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
 
 import 'cart_test_fixture.dart';
 

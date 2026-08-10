@@ -4,30 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/app/app.dart';
-import 'package:kidia_store_app/app/app_router.dart';
-import 'package:kidia_store_app/app/app_startup_provider.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
-import 'package:kidia_store_app/features/brands/presentation/brands_screen.dart';
-import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
-import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart' as cart_selection;
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/product/presentation/product_detail_screen.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/app/app.dart';
+import 'package:mobishop_store_app/app/app_router.dart';
+import 'package:mobishop_store_app/app/app_startup_provider.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
+import 'package:mobishop_store_app/features/brands/presentation/brands_screen.dart';
+import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart' as cart_selection;
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/product/presentation/product_detail_screen.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 import 'features/product/support/product_test_data.dart';
 
@@ -40,7 +40,7 @@ void main() {
         overrides: [
           appStartupProvider.overrideWith((ref) => startupCompleter.future),
         ],
-        child: const KidiaApp(),
+        child: const MobiShopApp(),
       ),
     );
 
@@ -351,7 +351,7 @@ Future<void> _pumpStartedApp(
             'wishlist',
           ).overrideWith((ref) async => wishlistLayout),
       ],
-      child: KidiaApp(router: router),
+      child: MobiShopApp(router: router),
     ),
   );
   for (int index = 0; index < 8; index++) {

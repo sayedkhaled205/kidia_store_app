@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
-import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
-import 'package:kidia_store_app/features/account/presentation/customer_profile_screen.dart';
-import 'package:kidia_store_app/features/account/presentation/customer_support_screen.dart';
-import 'package:kidia_store_app/features/account/presentation/providers/customer_account_providers.dart';
-import 'package:kidia_store_app/features/account/presentation/saved_addresses_screen.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_profile_screen.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_support_screen.dart';
+import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
+import 'package:mobishop_store_app/features/account/presentation/saved_addresses_screen.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 
 void main() {
   testWidgets('saved addresses use store fields without showing postcode', (
@@ -75,7 +75,7 @@ void main() {
     }
   });
 
-  testWidgets('customer service shows the two official Kidia contacts', (
+  testWidgets('customer service shows the two official MobiShop contacts', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_app(const CustomerSupportScreen()));
@@ -86,7 +86,7 @@ void main() {
     expect(find.byKey(const Key('support-action-phone')), findsNothing);
     expect(find.byKey(const Key('support-action-website')), findsNothing);
     expect(find.text('01208846445'), findsOneWidget);
-    expect(find.text('support@kidiastore.com'), findsOneWidget);
+    expect(find.text('support@mobishopstore.com'), findsOneWidget);
     expect(find.byType(Card), findsNWidgets(2));
   });
 }
@@ -112,16 +112,16 @@ final CustomerAccount _account = CustomerAccount(
   profile: const CustomerProfile(
     id: 7,
     email: 'customer@example.com',
-    firstName: 'Kidia',
+    firstName: 'MobiShop',
     lastName: 'Customer',
-    displayName: 'Kidia Customer',
+    displayName: 'MobiShop Customer',
     phone: '01000000000',
     alternatePhone: '01100000000',
   ),
   billing: CustomerAddress(
     type: CustomerAddressType.billing,
     values: <String, String>{
-      'billing_first_name': 'Kidia',
+      'billing_first_name': 'MobiShop',
       'billing_address_1': '1 Test Street',
       'billing_city': 'Cairo',
       'billing_phone': '+201000000000',

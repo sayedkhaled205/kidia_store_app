@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/auth/data/network/auth_api_transport.dart';
-import 'package:kidia_store_app/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:kidia_store_app/features/auth/data/storage/auth_session_store.dart';
-import 'package:kidia_store_app/features/auth/data/storage/social_auth_pending_store.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/data/network/auth_api_transport.dart';
+import 'package:mobishop_store_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:mobishop_store_app/features/auth/data/storage/auth_session_store.dart';
+import 'package:mobishop_store_app/features/auth/data/storage/social_auth_pending_store.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 void main() {
   group('AuthRepositoryImpl', () {

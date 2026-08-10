@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_category_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_money_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_product_model.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_money_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 
 void main() {
   group('CatalogProductModel', () {

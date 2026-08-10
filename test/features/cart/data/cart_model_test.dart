@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
 
 import 'cart_test_fixture.dart';
 
