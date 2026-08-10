@@ -1,13 +1,14 @@
 <?php
 /**
  * Plugin Name:       Woo Mobile CMS
- * Plugin URI:        https://wordpress.org/
+ * Plugin URI:        https://woomobile.app/
  * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
  * Version:           1.46.60
  * Requires at least: 6.4
  * Requires PHP:      8.0
+ * Requires Plugins:  woocommerce
  * Author:            Woo Mobile CMS
- * Author URI:        https://woocommerce.com/
+ * Author URI:        https://woomobile.app/
  * Text Domain:       kidia-mobile-cms
  * Domain Path:       /languages
  * License:           GPL-2.0-or-later
