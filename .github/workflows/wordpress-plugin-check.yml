@@ -1,0 +1,53 @@
+name: WordPress.org package check
+
+on:
+  pull_request:
+    paths:
+      - 'kidia-mobile-cms/**'
+      - 'tool/build_wordpress_org_package.sh'
+      - 'tool/bump_wordpress_plugin_version.sh'
+      - '.github/workflows/wordpress-plugin-check.yml'
+  push:
+    branches:
+      - main
+      - 'agent/**'
+    paths:
+      - 'kidia-mobile-cms/**'
+      - 'tool/build_wordpress_org_package.sh'
+      - 'tool/bump_wordpress_plugin_version.sh'
+      - '.github/workflows/wordpress-plugin-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build and validate directory package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package image tools
+        run: >-
+          command -v ffmpeg >/dev/null 2>&1 && command -v identify >/dev/null 2>&1
+          || { sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick; }
+      - name: Build WordPress.org package
+        run: bash tool/build_wordpress_org_package.sh
+      - name: Run official Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './build/wordpress-org/mobishop'
+          categories: plugin_repo
+          # Existing translated UI placeholders predate this release pipeline;
+          # keep the directory gate focused on blocking repository violations.
+          # The legacy text domain is kept for backward compatibility with existing installations.
+          ignore-codes: |-
+            WordPress.WP.I18n.MissingTranslatorsComment
+            WordPress.WP.I18n.TextDomainMismatch
+            textdomain_mismatch
+      - name: Upload installable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobishop-wordpress-org
+          path: build/wordpress-org/mobishop.zip
+          if-no-files-found: error

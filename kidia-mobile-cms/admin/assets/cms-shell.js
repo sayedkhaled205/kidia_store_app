@@ -546,7 +546,7 @@
 				const message = document.createElement('div');
 				message.className = 'notice notice-error kidia-cms-navigation-error';
 				message.setAttribute('role', 'alert');
-				message.textContent = 'The requested Woo Mobile CMS view could not be loaded. Please try again.';
+				message.textContent = 'The requested Woomobi CMS view could not be loaded. Please try again.';
 				Array.from(currentContent.childNodes).forEach(function (node) {
 					if (!persistentShellNode(node, sidebar, shell)) node.remove();
 				});

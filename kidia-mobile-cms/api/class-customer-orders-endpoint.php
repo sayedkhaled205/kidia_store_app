@@ -196,7 +196,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			$is_request ? $request_status : 'cancelled',
 			$is_request
 				? __( 'Cancellation requested by customer through the mobile app.', 'kidia-mobile-cms' )
-				: __( 'Order cancelled by customer.', 'woocommerce' ),
+				: __( 'Order cancelled by customer.', 'kidia-mobile-cms' ),
 			$is_request
 		);
 		$response = new WP_REST_Response(

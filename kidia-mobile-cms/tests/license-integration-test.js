@@ -74,7 +74,7 @@ assert.doesNotMatch(admin, /admin_post_kidia_mobile_deactivate_license/, "Custom
 assert.match(admin, /enforce_license_gate/, "All configuration writes must be locked until license activation.");
 assert.doesNotMatch(
   admin,
-  /license_error['"]?\s*=>\s*__\(\s*'Activate your website license before using Woo Mobile CMS/,
+  /license_error['"]?\s*=>\s*__\(\s*'Activate your website license before using Woomobi CMS/,
   "Inactive customers must be able to browse CMS screens."
 );
 assert.match(admin, /kidia-cms-license-preview/, "Inactive CMS screens must expose preview mode.");
@@ -122,7 +122,7 @@ assert.match(
 );
 assert.match(
   dashboard,
-  /Woo Mobile CMS is already installed\. Connect this website, activate its serial, then choose the wizard or manual setup\./,
+  /Woomobi CMS is already installed\. Connect this website, activate its serial, then choose the wizard or manual setup\./,
   "The plugin journey must start with the installed-plugin connection path."
 );
 

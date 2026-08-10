@@ -1,6 +1,6 @@
 /*
  * WordPress keeps ownership of the outer document, admin menu and its native
- * scrollbar. Woo Mobile CMS scrolls only inside #wpbody, so opening a CMS view
+ * scrollbar. Woomobi CMS scrolls only inside #wpbody, so opening a CMS view
  * never removes, replaces or overlays the WordPress scrollbar rail.
  */
 /* Dashicons and the preview icon fonts are glyphs, so browsers otherwise

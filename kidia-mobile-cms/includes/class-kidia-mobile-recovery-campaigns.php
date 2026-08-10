@@ -84,7 +84,8 @@ final class Kidia_Mobile_Recovery_Campaigns {
 		global $wpdb;
 		$updated = $wpdb->query(
 			$wpdb->prepare(
-				'UPDATE ' . self::table() . " SET opened_at=COALESCE(opened_at,%s), status=IF(status='converted',status,'opened') WHERE tracking_token=%s",
+				'UPDATE %i SET opened_at=COALESCE(opened_at,%s), status=IF(status=\'converted\',status,\'opened\') WHERE tracking_token=%s',
+				self::table(),
 				current_time( 'mysql', true ),
 				$token
 			)
@@ -151,7 +152,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 			$coupon->set_email_restrictions( array( $email ) );
 			$coupon->set_minimum_amount( $minimum );
 			$coupon->set_date_expires( time() + $hours * HOUR_IN_SECONDS );
-			$coupon->set_description( sprintf( __( 'Kidia abandoned-cart recovery for cart #%d', 'kidia-mobile-cms' ), absint( $cart['id'] ) ) );
+			$coupon->set_description( sprintf( __( 'Woomobi CMS abandoned-cart recovery for cart #%d', 'kidia-mobile-cms' ), absint( $cart['id'] ) ) );
 			if ( $restrict ) {
 				$product_ids = array_values( array_filter( array_map( static fn( $item ) => absint( $item['product_id'] ?? 0 ), (array) $cart['items'] ) ) );
 				$coupon->set_product_ids( $product_ids );
@@ -251,7 +252,10 @@ final class Kidia_Mobile_Recovery_Campaigns {
 		global $wpdb;
 		$placeholders = implode( ',', array_fill( 0, count( $codes ), '%s' ) );
 		$rows = $wpdb->get_results(
-			$wpdb->prepare( 'SELECT * FROM ' . self::table() . " WHERE LOWER(coupon_code) IN ({$placeholders})", ...$codes ),
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE LOWER(coupon_code) IN ({$placeholders})",
+				array_merge( array( self::table() ), $codes )
+			),
 			ARRAY_A
 		);
 		foreach ( $rows as $row ) {
@@ -282,12 +286,15 @@ final class Kidia_Mobile_Recovery_Campaigns {
 	public static function stats(): array {
 		global $wpdb;
 		$row = $wpdb->get_row(
-			'SELECT COUNT(*) total, SUM(sent_at IS NOT NULL) sent, SUM(opened_at IS NOT NULL) opened,
+			$wpdb->prepare(
+				'SELECT COUNT(*) total, SUM(sent_at IS NOT NULL) sent, SUM(opened_at IS NOT NULL) opened,
 				SUM(converted_at IS NOT NULL) converted, COALESCE(SUM(order_total),0) revenue,
 				COALESCE(SUM(discount_total),0) discount,
 				COALESCE(AVG(CASE WHEN converted_at IS NOT NULL AND sent_at IS NOT NULL
 					THEN TIMESTAMPDIFF(SECOND,sent_at,converted_at) END),0) time_to_convert
-			FROM ' . self::table(),
+				FROM %i',
+				self::table()
+			),
 			ARRAY_A
 		);
 		return array(
@@ -305,7 +312,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 	public static function recent( int $limit = 50 ): array {
 		global $wpdb;
 		return $wpdb->get_results(
-			$wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY id DESC LIMIT %d', max( 1, min( 100, $limit ) ) ),
+			$wpdb->prepare( 'SELECT * FROM %i ORDER BY id DESC LIMIT %d', self::table(), max( 1, min( 100, $limit ) ) ),
 			ARRAY_A
 		);
 	}

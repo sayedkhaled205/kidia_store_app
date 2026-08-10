@@ -199,14 +199,14 @@ final class Kidia_Mobile_CMS_Admin {
 			if ( wp_doing_ajax() ) {
 				wp_send_json_error(
 					array(
-						'message' => __( 'Activate your website license before changing Woo Mobile CMS settings.', 'kidia-mobile-cms' ),
+						'message' => __( 'Activate your website license before changing Woomobi CMS settings.', 'kidia-mobile-cms' ),
 					),
 					403
 				);
 			}
 
 			wp_die(
-				esc_html__( 'Activate your website license before changing Woo Mobile CMS settings.', 'kidia-mobile-cms' ),
+				esc_html__( 'Activate your website license before changing Woomobi CMS settings.', 'kidia-mobile-cms' ),
 				esc_html__( 'License required', 'kidia-mobile-cms' ),
 				array( 'response' => 403 )
 			);
@@ -350,8 +350,8 @@ final class Kidia_Mobile_CMS_Admin {
     	public function register_menu(): void {
 
     		add_menu_page(
-    			__( 'Woo Mobile CMS', 'kidia-mobile-cms' ),
-    			__( 'Woo Mobile CMS', 'kidia-mobile-cms' ),
+				__( 'Woomobi CMS', 'kidia-mobile-cms' ),
+				__( 'Woomobi CMS', 'kidia-mobile-cms' ),
     			self::CAPABILITY,
     			'kidia-mobile-cms',
     			array(
@@ -1732,7 +1732,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$coupon->set_date_expires( time() + $duration * HOUR_IN_SECONDS );
 		$coupon->set_description(
 			sprintf(
-				__( 'Kidia AI Offer Studio: %1$s (%2$d%% confidence)', 'kidia-mobile-cms' ),
+				__( 'Woomobi CMS AI Offer Studio: %1$s (%2$d%% confidence)', 'kidia-mobile-cms' ),
 				sanitize_text_field( (string) ( $offer['scheme'] ?? 'offer' ) ),
 				absint( $offer['confidence'] ?? 0 )
 			)

@@ -510,8 +510,9 @@ final class Kidia_Mobile_App_Exporter {
 				header( 'Content-Type: application/zip' );
 				header( 'Content-Disposition: attachment; filename="' . $file_name . '"' );
 				header( 'Content-Length: ' . (string) filesize( $temp_file ) );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- A validated temporary ZIP must be streamed without loading it into memory.
 				readfile( $temp_file );
-				unlink( $temp_file );
+				wp_delete_file( $temp_file );
 				exit;
 			}
 		}

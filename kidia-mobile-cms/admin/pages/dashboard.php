@@ -1,6 +1,6 @@
 <?php
 /**
- * Kidia Mobile CMS Dashboard.
+ * Woomobi CMS Dashboard.
  *
  * Available variables:
  *
@@ -128,7 +128,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 			<div>
 				<span class="kidia-customer-journey__eyebrow"><?php esc_html_e( 'Your launch journey', 'kidia-mobile-cms' ); ?></span>
 				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From website connection to ready mobile app', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Woo Mobile CMS is already installed. Connect this website, activate its serial, then choose the wizard or manual setup.', 'kidia-mobile-cms' ); ?></p>
+				<p><?php esc_html_e( 'Woomobi CMS is already installed. Connect this website, activate its serial, then choose the wizard or manual setup.', 'kidia-mobile-cms' ); ?></p>
 			</div>
 			<?php if ( ! $license_active ) : ?>
 				<a class="button button-primary button-hero" href="<?php echo esc_url( $website_connected ? '#kidia-license-key' : $connect_url ); ?>">
@@ -297,7 +297,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 		<div class="kidia-setup-choice" role="dialog" aria-modal="true" aria-labelledby="kidia-setup-choice-title">
 			<div class="kidia-setup-choice__panel">
 				<h2 id="kidia-setup-choice-title"><?php esc_html_e( 'Your license is active', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Would you like Woo Mobile CMS to guide you through setup, or configure everything manually?', 'kidia-mobile-cms' ); ?></p>
+				<p><?php esc_html_e( 'Would you like Woomobi CMS to guide you through setup, or configure everything manually?', 'kidia-mobile-cms' ); ?></p>
 				<div class="kidia-setup-choice__actions">
 					<a class="button button-primary button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>">
 						<?php esc_html_e( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?>

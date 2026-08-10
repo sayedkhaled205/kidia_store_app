@@ -1,0 +1,70 @@
+name: Publish plugin to WordPress.org
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Test and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Validate WordPress.org configuration
+        env:
+          WORDPRESS_PLUGIN_SLUG: ${{ vars.WORDPRESS_PLUGIN_SLUG }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          test -n "$WORDPRESS_PLUGIN_SLUG" || { echo 'Set the WORDPRESS_PLUGIN_SLUG repository variable after WordPress.org approval.' >&2; exit 1; }
+          test -n "$SVN_USERNAME" || { echo 'Set the SVN_USERNAME repository secret.' >&2; exit 1; }
+          test -n "$SVN_PASSWORD" || { echo 'Set the SVN_PASSWORD repository secret.' >&2; exit 1; }
+      - name: Install package image tools
+        run: >-
+          command -v ffmpeg >/dev/null 2>&1 && command -v identify >/dev/null 2>&1
+          || { sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick; }
+      - name: Build WordPress.org package
+        run: bash tool/build_wordpress_org_package.sh
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="${RELEASE_TAG#v}"
+          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' build/wordpress-org/mobishop/kidia-mobile-cms.php)"
+          stable_tag="$(sed -n 's/^Stable tag:[[:space:]]*//p' build/wordpress-org/mobishop/readme.txt)"
+          test "$version" = "$plugin_version" || { echo "Release tag $version does not match plugin version $plugin_version." >&2; exit 1; }
+          test "$version" = "$stable_tag" || { echo "Release tag $version does not match readme stable tag $stable_tag." >&2; exit 1; }
+      - name: Run PHP contract tests
+        run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
+      - name: Install browser test dependencies
+        run: npm ci
+      - name: Run Builder browser contract tests
+        run: npm run test:builders
+      - name: Run official Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './build/wordpress-org/mobishop'
+          categories: plugin_repo
+          # Existing translated UI placeholders predate this release pipeline;
+          # keep the directory gate focused on blocking repository violations.
+          ignore-codes: WordPress.WP.I18n.MissingTranslatorsComment
+      - name: Deploy tagged release to WordPress.org
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          generate-zip: false
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: ${{ vars.WORDPRESS_PLUGIN_SLUG }}
+          BUILD_DIR: build/wordpress-org/mobishop
+      - name: Attach installable ZIP to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" build/wordpress-org/mobishop.zip --clobber

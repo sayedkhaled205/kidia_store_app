@@ -553,6 +553,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	public function import_saved_theme( string $json ): string {
 		$payload = json_decode( $json, true );
 		if ( ! is_array( $payload ) || 'woomobileapp-saved-theme' !== ( $payload['schema'] ?? '' ) || ! is_array( $payload['theme']['snapshot'] ?? null ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are escaped by their eventual renderer.
 			throw new InvalidArgumentException( __( 'The selected file is not a valid WooMobile saved theme.', 'kidia-mobile-cms' ) );
 		}
 		$snapshot = $payload['theme']['snapshot'];
@@ -671,7 +672,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		if ( ! in_array( $mime, $allowed_mimes, true ) ) {
 			return null;
 		}
-		$path = (string) parse_url( $image_url, PHP_URL_PATH );
+		$path = (string) wp_parse_url( $image_url, PHP_URL_PATH );
 		$filename = sanitize_file_name( (string) wp_basename( rawurldecode( $path ) ) );
 		if ( '' === $filename ) {
 			$filename = 'theme-image.' . $this->image_extension_for_mime( $mime );
@@ -766,7 +767,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				sanitize_text_field( pathinfo( $filename, PATHINFO_FILENAME ) )
 			);
 			if ( is_wp_error( $attachment_id ) ) {
-				@unlink( $temp_file );
+				wp_delete_file( $temp_file );
 				continue;
 			}
 			$uploaded_url = wp_get_attachment_url( (int) $attachment_id );

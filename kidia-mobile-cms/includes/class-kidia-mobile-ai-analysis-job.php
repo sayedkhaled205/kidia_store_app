@@ -411,6 +411,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$modified_sql = $modified_since > 0
 			? $wpdb->prepare( ' AND posts.post_modified_gmt >= %s', gmdate( 'Y-m-d H:i:s', $modified_since ) )
 			: " AND lookup.stock_status = 'instock'";
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- Table names are core/plugin identifiers and the conditional clause is either a fixed literal or prepared above.
 		$ids = $wpdb->get_col(
 			"SELECT lookup.product_id
 			FROM {$lookup_table} AS lookup

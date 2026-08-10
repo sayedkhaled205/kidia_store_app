@@ -682,6 +682,7 @@ final class Kidia_Mobile_Analytics {
 		$table = self::events_table();
 		$start = gmdate( 'Y-m-d H:i:s', $from );
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- Identifiers and clauses in this block come only from plugin tables and allowlisted source values.
 		$source_sql = 'all' === $source ? '' : ' AND source = %s';
 		$client_identity_sql = 'all' === $source ? "CONCAT(source, ':', client_id)" : 'client_id';
 		$event_args = array( $start, $end );
@@ -742,6 +743,7 @@ final class Kidia_Mobile_Analytics {
 				...$new_args
 			)
 		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared
 
 		/*
 		 * Historical WooCommerce orders and live journey events are deliberately
@@ -825,6 +827,7 @@ final class Kidia_Mobile_Analytics {
 		$end   = gmdate( 'Y-m-d H:i:s', $to );
 		$fact_source_sql = self::reporting_source_sql( 'facts', $source, true );
 
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- Reporting identifiers and clauses come from WooCommerce core tables and allowlisted source values.
 		$summary_sql = "SELECT
 			SUM(CASE WHEN parent_id = 0 THEN 1 ELSE 0 END) AS all_orders,
 			SUM(CASE WHEN parent_id = 0 AND is_reportable = 1 THEN 1 ELSE 0 END) AS reportable_orders,
@@ -887,6 +890,7 @@ final class Kidia_Mobile_Analytics {
 			LIMIT 50";
 		$product_args = array_merge( array( $start, $end ), $excluded_statuses );
 		$product_rows = $wpdb->get_results( $wpdb->prepare( $product_sql, ...$product_args ), ARRAY_A );
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared
 		foreach ( (array) $product_rows as $product_row ) {
 			$product_id = absint( $product_row['product_id'] ?? 0 );
 			if ( $product_id <= 0 ) {
@@ -1035,6 +1039,7 @@ final class Kidia_Mobile_Analytics {
 		if ( 'all' !== $source ) {
 			$args[] = $source;
 		}
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- The client expression and source clause are selected from fixed literals above.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT source, client_id, event_name, MIN(occurred_at) AS first_at
@@ -1108,6 +1113,7 @@ final class Kidia_Mobile_Analytics {
 				)
 			)
 		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared
 		$funnel['unmatched_purchases'] = max( 0, $raw_purchases - $funnel['purchased'] );
 		$funnel['is_reliable'] = $funnel['visitors'] >= 20
 			&& 0 === $funnel['unmatched_purchases'];
@@ -1135,14 +1141,10 @@ final class Kidia_Mobile_Analytics {
 	 */
 	private static function coverage_snapshot( int $from, int $to, string $source, array $commerce ): array {
 		global $wpdb;
-		$table      = self::events_table();
-		$source_sql = 'all' === $source ? '' : ' WHERE source = %s';
-		$args       = 'all' === $source ? array() : array( $source );
-		$first      = $wpdb->get_var(
-			empty( $args )
-				? "SELECT MIN(occurred_at) FROM {$table}"
-				: $wpdb->prepare( "SELECT MIN(occurred_at) FROM {$table}{$source_sql}", ...$args )
-		);
+		$table = self::events_table();
+		$first = 'all' === $source
+			? $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(occurred_at) FROM %i', $table ) )
+			: $wpdb->get_var( $wpdb->prepare( 'SELECT MIN(occurred_at) FROM %i WHERE source = %s', $table, $source ) );
 		$first_at = is_string( $first ) && '' !== $first ? strtotime( $first . ' UTC' ) : false;
 		$requested_days = max( 1, (int) ceil( max( 1, $to - $from ) / DAY_IN_SECONDS ) );
 		$tracked_from   = false === $first_at ? 0 : max( $from, $first_at );
@@ -1759,7 +1761,8 @@ final class Kidia_Mobile_Analytics {
 		global $wpdb;
 		$cart = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT * FROM ' . self::carts_table() . ' WHERE id = %d LIMIT 1',
+				'SELECT * FROM %i WHERE id = %d LIMIT 1',
+				self::carts_table(),
 				$cart_id
 			),
 			ARRAY_A
@@ -2460,6 +2463,7 @@ final class Kidia_Mobile_Analytics {
 		if ( 'all' !== $source ) {
 			$args[] = $source;
 		}
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- The client expression and source clause are selected from fixed literals above.
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT object_id, MAX(event_label) AS event_label, COUNT(*) AS event_count,
@@ -2473,6 +2477,7 @@ final class Kidia_Mobile_Analytics {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared
 		$filtered = array();
 		foreach ( $rows as &$row ) {
 			if ( 'view_category' === $event && taxonomy_exists( 'product_cat' ) ) {
@@ -2508,6 +2513,7 @@ final class Kidia_Mobile_Analytics {
 		if ( 'all' !== $source ) {
 			$args[] = $source;
 		}
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- The client expression and source clause are selected from fixed literals above.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT event_label, COUNT(*) AS event_count, COUNT(DISTINCT {$client_identity_sql}) AS unique_clients
@@ -2520,6 +2526,7 @@ final class Kidia_Mobile_Analytics {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -2628,7 +2635,8 @@ final class Kidia_Mobile_Analytics {
 		if ( '' !== $event_id ) {
 			$exists = $wpdb->get_var(
 				$wpdb->prepare(
-					'SELECT id FROM ' . self::events_table() . ' WHERE event_id = %s LIMIT 1',
+					'SELECT id FROM %i WHERE event_id = %s LIMIT 1',
+					self::events_table(),
 					$event_id
 				)
 			);
@@ -2661,7 +2669,8 @@ final class Kidia_Mobile_Analytics {
 		if ( '' !== $event_id ) {
 			$exists = $wpdb->get_var(
 				$wpdb->prepare(
-					'SELECT id FROM ' . self::events_table() . ' WHERE event_id = %s LIMIT 1',
+					'SELECT id FROM %i WHERE event_id = %s LIMIT 1',
+					self::events_table(),
 					$event_id
 				)
 			);
@@ -2719,7 +2728,7 @@ final class Kidia_Mobile_Analytics {
 		$empty = empty( $items ) || empty( $cart['item_count'] );
 
 		$sql = $wpdb->prepare(
-			"INSERT INTO {$table}
+			"INSERT INTO %i
 				(cart_key, source, client_id, session_id, user_id, customer_name, customer_email, items, item_count, cart_total, currency, status, started_at, last_activity_at)
 			VALUES (%s,%s,%s,%s,%d,%s,%s,%s,%d,%f,%s,%s,%s,%s)
 			ON DUPLICATE KEY UPDATE
@@ -2740,6 +2749,7 @@ final class Kidia_Mobile_Analytics {
 					ELSE VALUES(status)
 				END,
 				last_activity_at=GREATEST(last_activity_at,VALUES(last_activity_at))",
+			$table,
 			(string) $cart['cart_key'],
 			(string) $cart['source'],
 			(string) $cart['client_id'],
@@ -2755,6 +2765,7 @@ final class Kidia_Mobile_Analytics {
 			$started_at,
 			$last_activity_at
 		);
+		// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.NotPrepared -- The query and every value are prepared immediately above.
 		$result = $wpdb->query( $sql );
 		return false !== $result && $result > 0;
 	}
