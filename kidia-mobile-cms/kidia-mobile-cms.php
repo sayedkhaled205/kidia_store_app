@@ -8,7 +8,6 @@
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
  * Author:            WooMobile
- * Author URI:        https://woomobile.app/
  * Text Domain:       kidia-mobile-cms
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
