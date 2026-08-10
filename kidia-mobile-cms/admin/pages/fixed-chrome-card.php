@@ -1,3 +1,4 @@
+
 <?php
 /** Drag-and-drop application header/footer editor shared by every page builder. */
 defined( 'ABSPATH' ) || exit;
@@ -76,6 +77,7 @@ $footer_icon_symbols = array(
 	<div class="kidia-page-card__header">
 		<div class="kidia-fixed-chrome-identity"><span class="dashicons dashicons-lock"></span><strong><?php echo esc_html( $chrome_title ); ?></strong></div>
 		<div class="kidia-card-actions">
+			<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 			<div class="kidia-chrome-transfer-actions" aria-label="<?php echo esc_attr( sprintf( __( '%s settings transfer', 'mobishop' ), $chrome_title ) ); ?>">
 				<button type="button" class="button kidia-chrome-copy kidia-card-action kidia-card-action--primary" data-chrome-copy><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><?php esc_html_e( 'Copy', 'mobishop' ); ?></button>
 				<button type="button" class="button kidia-chrome-paste kidia-card-action kidia-card-action--secondary" data-chrome-paste><span class="dashicons dashicons-clipboard" aria-hidden="true"></span><?php esc_html_e( 'Paste', 'mobishop' ); ?></button>
@@ -165,6 +167,7 @@ $footer_icon_symbols = array(
 			if ( ! $variant_field && ! $item_fields ) { continue; }
 			?>
 			<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?> class="kidia-chrome-item-setting kidia-chrome-item-setting--<?php echo esc_attr( $item ); ?> <?php echo 'header' === $chrome_part && 'cart' === $item ? 'kidia-chrome-item-setting--header-cart' : ''; ?>" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
+				<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 				<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>><?php echo esc_html( sprintf( __( '%s Settings', 'mobishop' ), $label ) ); ?></<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>>
 				<?php if ( $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
 					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'mobishop' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : $codepoint = preg_match( '/^[0-9a-f]+$/i', (string) ( $symbols[ $option ] ?? '' ) ) ? (string) $symbols[ $option ] : 'ef53'; ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="kidia-material-icon-choice" aria-hidden="true"><?php echo '&#x' . esc_html( $codepoint ) . ';'; ?></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
