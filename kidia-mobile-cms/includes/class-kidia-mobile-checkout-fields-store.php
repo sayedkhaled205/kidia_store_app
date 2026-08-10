@@ -14,9 +14,9 @@ final class Kidia_Mobile_Checkout_Fields_Store {
 	/** @return array<string,string> */
 	public static function designs(): array {
 		return array(
-			'classic'       => __( 'Classic', 'kidia-mobile-cms' ),
-			'summary_first' => __( 'Summary First', 'kidia-mobile-cms' ),
-			'compact'       => __( 'Compact', 'kidia-mobile-cms' ),
+			'classic'       => __( 'Classic', 'mobishop' ),
+			'summary_first' => __( 'Summary First', 'mobishop' ),
+			'compact'       => __( 'Compact', 'mobishop' ),
 		);
 	}
 

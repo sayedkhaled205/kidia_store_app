@@ -28,7 +28,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return __( 'Image Banner', 'kidia-mobile-cms' );
+		return __( 'Image Banner', 'mobishop' );
 	}
 
 	/**
@@ -48,7 +48,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 	public function get_description(): string {
 		return __(
 			'Clickable promotional image displayed anywhere on the home page.',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 
@@ -67,7 +67,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 			'action_value'   => '',
 			'title'          => '',
 			'subtitle'       => '',
-			'button_label'   => __( 'SHOP NOW', 'kidia-mobile-cms' ),
+			'button_label'   => __( 'SHOP NOW', 'mobishop' ),
 			'image_fit'      => 'cover',
 			'overlay_strength' => 0,
 			'text_color'     => '#FFFFFF',
@@ -210,7 +210,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-grid">
 			<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media">
 				<label>
-					<?php echo esc_html__( 'Banner Image', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Banner Image', 'mobishop' ); ?>
 				</label>
 
 				<div class="kidia-builder-media-field">
@@ -228,7 +228,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 						<?php
 						echo esc_html__(
 							'Select from Media Library',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</button>
@@ -247,7 +247,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					echo esc_html__(
 						'Accessibility Label',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -258,16 +258,16 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 					value="<?php echo esc_attr( (string) $settings['semantic_label'] ); ?>"
 				>
 			</div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Title', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( (string) $settings['subtitle'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Button Label', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][button_label]" value="<?php echo esc_attr( (string) $settings['button_label'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Fit', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_fit]"><option value="cover" <?php selected( 'cover', $settings['image_fit'] ); ?>><?php esc_html_e( 'Cover', 'kidia-mobile-cms' ); ?></option><option value="contain" <?php selected( 'contain', $settings['image_fit'] ); ?>><?php esc_html_e( 'Contain', 'kidia-mobile-cms' ); ?></option></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Strength %', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="95" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][overlay_strength]" value="<?php echo esc_attr( (string) $settings['overlay_strength'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Title', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Subtitle', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( (string) $settings['subtitle'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Button Label', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][button_label]" value="<?php echo esc_attr( (string) $settings['button_label'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Fit', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_fit]"><option value="cover" <?php selected( 'cover', $settings['image_fit'] ); ?>><?php esc_html_e( 'Cover', 'mobishop' ); ?></option><option value="contain" <?php selected( 'contain', $settings['image_fit'] ); ?>><?php esc_html_e( 'Contain', 'mobishop' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Overlay Strength %', 'mobishop' ); ?></label><input type="number" min="0" max="95" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][overlay_strength]" value="<?php echo esc_attr( (string) $settings['overlay_strength'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Text Color', 'mobishop' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][text_color]" value="<?php echo esc_attr( (string) $settings['text_color'] ); ?>"></div>
 
 			<div class="kidia-builder-field">
 				<label>
-					<?php echo esc_html__( 'Aspect Ratio', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Aspect Ratio', 'mobishop' ); ?>
 				</label>
 
 				<input
@@ -282,7 +282,7 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 
 			<div class="kidia-builder-field">
 				<label>
-					<?php echo esc_html__( 'Border Radius', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Border Radius', 'mobishop' ); ?>
 				</label>
 
 				<input
@@ -297,70 +297,70 @@ final class Kidia_Mobile_Image_Banner_Block extends Kidia_Mobile_Block {
 
 			<div class="kidia-builder-field">
 				<label>
-					<?php echo esc_html__( 'Action Type', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Action Type', 'mobishop' ); ?>
 				</label>
 
 				<select
 					name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_type]"
 				>
 					<option value="">
-						<?php echo esc_html__( 'No Action', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'No Action', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="product"
 						<?php selected( 'product', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'Product', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'Product', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="category"
 						<?php selected( 'category', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'Category', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'Category', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="collection"
 						<?php selected( 'collection', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'Collection', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'Collection', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="brand"
 						<?php selected( 'brand', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'Brand', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'Brand', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="brands"
 						<?php selected( 'brands', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'All Brands', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'All Brands', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="search"
 						<?php selected( 'search', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'Search', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'Search', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="external"
 						<?php selected( 'external', $settings['action_type'] ); ?>
 					>
-						<?php echo esc_html__( 'External URL', 'kidia-mobile-cms' ); ?>
+						<?php echo esc_html__( 'External URL', 'mobishop' ); ?>
 					</option>
 				</select>
 			</div>
 
 			<div class="kidia-builder-field kidia-builder-field--full">
 				<label>
-					<?php echo esc_html__( 'Action Value', 'kidia-mobile-cms' ); ?>
+					<?php echo esc_html__( 'Action Value', 'mobishop' ); ?>
 				</label>
 
 				<input

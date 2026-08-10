@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Video_Banner {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_video_banners',
-			__( 'Video Banners', 'kidia-mobile-cms' ),
+			__( 'Video Banners', 'mobishop' ),
 			'kidia-mobile-video-banners',
 			'video-banner',
 			'kidia_mobile_create_video_banner',

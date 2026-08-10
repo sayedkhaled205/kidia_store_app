@@ -17,159 +17,159 @@ final class Kidia_Mobile_Setup_Wizard {
 	public static function themes(): array {
 		return array(
 			'fashion' => self::theme(
-				__( 'Fashion Editorial', 'kidia-mobile-cms' ),
-				__( 'A premium fashion storefront with editorial banners, spacious collections and modern product cards.', 'kidia-mobile-cms' ),
+				__( 'Fashion Editorial', 'mobishop' ),
+				__( 'A premium fashion storefront with editorial banners, spacious collections and modern product cards.', 'mobishop' ),
 				array(
 					'primary' => '#2C2926', 'soft' => '#F2E9DF', 'ink' => '#211F1D', 'surface' => '#FCFAF7',
 					'card_style' => 'no_shadow', 'asset_dir' => 'fashion', 'category_layout' => 'visual_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'fashion',
 					'product_columns' => 2, 'radius' => 8, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 42,
 					'blocks' => array( 'hero_slider', 'category_grid', 'text_block', 'product_carousel', 'banner_grid', 'product_grid', 'brand_carousel' ),
-					'sample_copy' => array( __( 'The new edit', 'kidia-mobile-cms' ), __( 'Shop the collections', 'kidia-mobile-cms' ), __( 'Trending now', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'The new edit', 'mobishop' ), __( 'Shop the collections', 'mobishop' ), __( 'Trending now', 'mobishop' ) ),
 				)
 			),
 			'beauty' => self::theme(
-				__( 'Beauty & Wellness', 'kidia-mobile-cms' ),
-				__( 'A soft beauty store with calming color, rounded product cards and ingredient-led discovery.', 'kidia-mobile-cms' ),
+				__( 'Beauty & Wellness', 'mobishop' ),
+				__( 'A soft beauty store with calming color, rounded product cards and ingredient-led discovery.', 'mobishop' ),
 				array(
 					'primary' => '#A45E70', 'soft' => '#FBE9ED', 'ink' => '#3F2930', 'surface' => '#FFF9FA',
 					'card_style' => 'elevated', 'asset_dir' => 'beauty', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'beauty',
 					'product_columns' => 2, 'radius' => 20, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 32,
 					'blocks' => array( 'hero_slider', 'quick_links', 'category_grid', 'product_carousel', 'image_banner', 'product_grid', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Glow every day', 'kidia-mobile-cms' ), __( 'Shop by concern', 'kidia-mobile-cms' ), __( 'Self-care favorites', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Glow every day', 'mobishop' ), __( 'Shop by concern', 'mobishop' ), __( 'Self-care favorites', 'mobishop' ) ),
 				)
 			),
 			'electronics' => self::theme(
-				__( 'Electronics Pro', 'kidia-mobile-cms' ),
-				__( 'A sharp technology store with dark hero media, compact navigation and deal-focused sections.', 'kidia-mobile-cms' ),
+				__( 'Electronics Pro', 'mobishop' ),
+				__( 'A sharp technology store with dark hero media, compact navigation and deal-focused sections.', 'mobishop' ),
 				array(
 					'primary' => '#0878E5', 'soft' => '#E8F3FF', 'ink' => '#101A2A', 'surface' => '#F6F9FD',
 					'card_style' => 'outlined', 'asset_dir' => 'electronics', 'category_layout' => 'compact_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'electronics',
 					'product_columns' => 2, 'radius' => 12, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 28,
 					'blocks' => array( 'promo_strip', 'hero_slider', 'quick_links', 'category_grid', 'product_grid', 'countdown', 'product_carousel', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Upgrade your everyday', 'kidia-mobile-cms' ), __( 'Top tech categories', 'kidia-mobile-cms' ), __( 'Smart deals', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Upgrade your everyday', 'mobishop' ), __( 'Top tech categories', 'mobishop' ), __( 'Smart deals', 'mobishop' ) ),
 				)
 			),
 			'home_living' => self::theme(
-				__( 'Home & Living', 'kidia-mobile-cms' ),
-				__( 'A warm interior store with natural tones, editorial storytelling and curated room collections.', 'kidia-mobile-cms' ),
+				__( 'Home & Living', 'mobishop' ),
+				__( 'A warm interior store with natural tones, editorial storytelling and curated room collections.', 'mobishop' ),
 				array(
 					'primary' => '#786248', 'soft' => '#F3ECE2', 'ink' => '#342C23', 'surface' => '#FBF8F3',
 					'card_style' => 'no_shadow', 'asset_dir' => 'home_living', 'category_layout' => 'visual_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'home_living',
 					'product_columns' => 2, 'radius' => 6, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 24,
 					'blocks' => array( 'hero_slider', 'text_block', 'category_grid', 'banner_grid', 'product_carousel', 'image_banner', 'product_grid' ),
-					'sample_copy' => array( __( 'Make space feel yours', 'kidia-mobile-cms' ), __( 'Shop by room', 'kidia-mobile-cms' ), __( 'Curated for home', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Make space feel yours', 'mobishop' ), __( 'Shop by room', 'mobishop' ), __( 'Curated for home', 'mobishop' ) ),
 				)
 			),
 			'kids_baby' => self::theme(
-				__( 'Kids & Baby', 'kidia-mobile-cms' ),
-				__( 'A bright family store with playful color, friendly shapes and easy age-based browsing.', 'kidia-mobile-cms' ),
+				__( 'Kids & Baby', 'mobishop' ),
+				__( 'A bright family store with playful color, friendly shapes and easy age-based browsing.', 'mobishop' ),
 				array(
 					'primary' => '#2E8EC7', 'soft' => '#E8F7FC', 'ink' => '#253A46', 'surface' => '#FAFDFE',
 					'card_style' => 'elevated', 'asset_dir' => 'kids_baby', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'kids_baby',
 					'product_columns' => 2, 'radius' => 22, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 18,
 					'blocks' => array( 'hero_slider', 'quick_links', 'category_grid', 'promo_strip', 'product_carousel', 'banner_grid', 'product_grid' ),
-					'sample_copy' => array( __( 'Big joy for little ones', 'kidia-mobile-cms' ), __( 'Shop by age', 'kidia-mobile-cms' ), __( 'Loved by families', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Big joy for little ones', 'mobishop' ), __( 'Shop by age', 'mobishop' ), __( 'Loved by families', 'mobishop' ) ),
 				)
 			),
 			'sports_fitness' => self::theme(
-				__( 'Sports & Fitness', 'kidia-mobile-cms' ),
-				__( 'A high-energy performance store with bold contrast, quick departments and promotional drops.', 'kidia-mobile-cms' ),
+				__( 'Sports & Fitness', 'mobishop' ),
+				__( 'A high-energy performance store with bold contrast, quick departments and promotional drops.', 'mobishop' ),
 				array(
 					'primary' => '#F15A24', 'soft' => '#FFF0E8', 'ink' => '#17191B', 'surface' => '#F7F7F7',
 					'card_style' => 'outlined', 'asset_dir' => 'sports_fitness', 'category_layout' => 'compact_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'sports_fitness',
 					'product_columns' => 2, 'radius' => 10, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 38,
 					'blocks' => array( 'promo_strip', 'hero_slider', 'quick_links', 'category_grid', 'countdown', 'product_grid', 'product_carousel' ),
-					'sample_copy' => array( __( 'Built to move', 'kidia-mobile-cms' ), __( 'Train by category', 'kidia-mobile-cms' ), __( 'Performance picks', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Built to move', 'mobishop' ), __( 'Train by category', 'mobishop' ), __( 'Performance picks', 'mobishop' ) ),
 				)
 			),
 			'grocery' => self::theme(
-				__( 'Grocery Fresh', 'kidia-mobile-cms' ),
-				__( 'A practical grocery store with fast categories, offer strips and dense everyday product discovery.', 'kidia-mobile-cms' ),
+				__( 'Grocery Fresh', 'mobishop' ),
+				__( 'A practical grocery store with fast categories, offer strips and dense everyday product discovery.', 'mobishop' ),
 				array(
 					'primary' => '#238447', 'soft' => '#E9F7ED', 'ink' => '#21362A', 'surface' => '#FBFDFB',
 					'card_style' => 'elevated', 'asset_dir' => 'grocery', 'category_layout' => 'compact_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'grocery',
 					'product_columns' => 3, 'radius' => 14, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 16,
 					'blocks' => array( 'promo_strip', 'hero_slider', 'quick_links', 'category_grid', 'countdown', 'product_carousel', 'product_grid', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Fresh for today', 'kidia-mobile-cms' ), __( 'Shop essentials', 'kidia-mobile-cms' ), __( 'Weekly value', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Fresh for today', 'mobishop' ), __( 'Shop essentials', 'mobishop' ), __( 'Weekly value', 'mobishop' ) ),
 				)
 			),
 			'luxury' => self::theme(
-				__( 'Luxury Boutique', 'kidia-mobile-cms' ),
-				__( 'A refined dark boutique with dramatic imagery, minimal chrome and gallery-style products.', 'kidia-mobile-cms' ),
+				__( 'Luxury Boutique', 'mobishop' ),
+				__( 'A refined dark boutique with dramatic imagery, minimal chrome and gallery-style products.', 'mobishop' ),
 				array(
 					'primary' => '#B58A45', 'soft' => '#F3E9D6', 'ink' => '#17130E', 'surface' => '#FCFAF6',
 					'card_style' => 'no_shadow', 'asset_dir' => 'luxury', 'category_layout' => 'visual_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'luxury',
 					'product_columns' => 2, 'radius' => 2, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 50,
 					'blocks' => array( 'hero_slider', 'text_block', 'category_grid', 'image_banner', 'product_carousel', 'banner_grid', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Objects of distinction', 'kidia-mobile-cms' ), __( 'The collections', 'kidia-mobile-cms' ), __( 'Signature pieces', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Objects of distinction', 'mobishop' ), __( 'The collections', 'mobishop' ), __( 'Signature pieces', 'mobishop' ) ),
 				)
 			),
 			'coffee' => self::theme(
-				__( 'Coffee & Gourmet', 'kidia-mobile-cms' ),
-				__( 'A crafted food store with rich imagery, story sections and specialty product collections.', 'kidia-mobile-cms' ),
+				__( 'Coffee & Gourmet', 'mobishop' ),
+				__( 'A crafted food store with rich imagery, story sections and specialty product collections.', 'mobishop' ),
 				array(
 					'primary' => '#8A4B2A', 'soft' => '#F5E9DE', 'ink' => '#33231A', 'surface' => '#FCF8F3',
 					'card_style' => 'elevated', 'asset_dir' => 'coffee', 'category_layout' => 'visual_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'coffee',
 					'product_columns' => 2, 'radius' => 16, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 36,
 					'blocks' => array( 'hero_slider', 'text_block', 'category_grid', 'promo_strip', 'product_carousel', 'image_banner', 'product_grid' ),
-					'sample_copy' => array( __( 'Crafted for slow mornings', 'kidia-mobile-cms' ), __( 'Explore the roast', 'kidia-mobile-cms' ), __( 'Gourmet favorites', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Crafted for slow mornings', 'mobishop' ), __( 'Explore the roast', 'mobishop' ), __( 'Gourmet favorites', 'mobishop' ) ),
 				)
 			),
 			'multi_store' => self::theme(
-				__( 'Multi Store', 'kidia-mobile-cms' ),
-				__( 'A flexible marketplace for large mixed catalogs with fast navigation, offers and compact grids.', 'kidia-mobile-cms' ),
+				__( 'Multi Store', 'mobishop' ),
+				__( 'A flexible marketplace for large mixed catalogs with fast navigation, offers and compact grids.', 'mobishop' ),
 				array(
 					'primary' => '#195BC7', 'soft' => '#EAF1FF', 'ink' => '#16243A', 'surface' => '#F7F9FC',
 					'card_style' => 'outlined', 'asset_dir' => 'multi_store', 'category_layout' => 'compact_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'multi_store',
 					'product_columns' => 3, 'radius' => 12, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 12,
 					'blocks' => array( 'quick_links', 'hero_slider', 'promo_strip', 'category_grid', 'countdown', 'product_grid', 'product_carousel', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Everything in one place', 'kidia-mobile-cms' ), __( 'Browse departments', 'kidia-mobile-cms' ), __( 'Best value today', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Everything in one place', 'mobishop' ), __( 'Browse departments', 'mobishop' ), __( 'Best value today', 'mobishop' ) ),
 				)
 			),
 			'jewelry' => self::theme(
-				__( 'Jewelry Atelier', 'kidia-mobile-cms' ),
-				__( 'A luminous jewelry boutique with editorial collections, fine-detail product cards and elegant gifting.', 'kidia-mobile-cms' ),
+				__( 'Jewelry Atelier', 'mobishop' ),
+				__( 'A luminous jewelry boutique with editorial collections, fine-detail product cards and elegant gifting.', 'mobishop' ),
 				array(
 					'primary' => '#9A6A38', 'soft' => '#F5EBDD', 'ink' => '#2B2118', 'surface' => '#FFFDFC',
 					'card_style' => 'no_shadow', 'asset_dir' => 'jewelry', 'category_layout' => 'visual_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'jewelry',
 					'product_columns' => 2, 'radius' => 12, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 28,
 					'blocks' => array( 'hero_slider', 'quick_links', 'text_block', 'category_grid', 'product_carousel', 'banner_grid', 'product_grid' ),
-					'sample_copy' => array( __( 'Made to be remembered', 'kidia-mobile-cms' ), __( 'Shop fine collections', 'kidia-mobile-cms' ), __( 'New signatures', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Made to be remembered', 'mobishop' ), __( 'Shop fine collections', 'mobishop' ), __( 'New signatures', 'mobishop' ) ),
 				)
 			),
 			'pet_care' => self::theme(
-				__( 'Pet Care', 'kidia-mobile-cms' ),
-				__( 'A friendly pet store with playful navigation, practical product discovery and warm lifestyle imagery.', 'kidia-mobile-cms' ),
+				__( 'Pet Care', 'mobishop' ),
+				__( 'A friendly pet store with playful navigation, practical product discovery and warm lifestyle imagery.', 'mobishop' ),
 				array(
 					'primary' => '#168578', 'soft' => '#E6F6F2', 'ink' => '#203A36', 'surface' => '#FBFEFD',
 					'card_style' => 'elevated', 'asset_dir' => 'pet_care', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'pet_care',
 					'product_columns' => 2, 'radius' => 18, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 20,
 					'blocks' => array( 'hero_slider', 'quick_links', 'category_grid', 'promo_strip', 'product_carousel', 'image_banner', 'product_grid' ),
-					'sample_copy' => array( __( 'Better days for every pet', 'kidia-mobile-cms' ), __( 'Shop by companion', 'kidia-mobile-cms' ), __( 'Pet parent favorites', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Better days for every pet', 'mobishop' ), __( 'Shop by companion', 'mobishop' ), __( 'Pet parent favorites', 'mobishop' ) ),
 				)
 			),
 			'family_pop' => self::theme(
-				__( 'Family Pop', 'kidia-mobile-cms' ),
-				__( 'A bright family-fashion storefront with quick circular discovery, friendly promotions and clean product-first shopping.', 'kidia-mobile-cms' ),
+				__( 'Family Pop', 'mobishop' ),
+				__( 'A bright family-fashion storefront with quick circular discovery, friendly promotions and clean product-first shopping.', 'mobishop' ),
 				array(
 					'primary' => '#F04F5F', 'soft' => '#E5F6F2', 'ink' => '#151515', 'surface' => '#FFFFFF',
 					'card_style' => 'no_shadow', 'asset_dir' => 'family_pop', 'category_layout' => 'circular_grid', 'category_shape' => 'circle',
 					'layout_profile' => 'family_pop',
 					'product_columns' => 2, 'radius' => 18, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 18,
 					'blocks' => array( 'category_grid', 'image_banner', 'quick_links', 'banner_grid', 'product_carousel', 'product_grid' ),
-					'sample_copy' => array( __( 'Made for every family moment', 'kidia-mobile-cms' ), __( 'Shop by age', 'kidia-mobile-cms' ), __( 'Family favorites', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Made for every family moment', 'mobishop' ), __( 'Shop by age', 'mobishop' ), __( 'Family favorites', 'mobishop' ) ),
 					'home_design' => array(
 						'hero_ratio' => 1.0, 'hero_radius' => 12, 'hero_padding' => 16, 'hero_indicators' => 'image_bottom',
 						'category_layout' => 'grid', 'category_columns' => 3, 'category_size' => 64, 'category_gap' => 12,
@@ -187,15 +187,15 @@ final class Kidia_Mobile_Setup_Wizard {
 				)
 			),
 			'marketplace_plus' => self::theme(
-				__( 'Marketplace Plus', 'kidia-mobile-cms' ),
-				__( 'A dense all-departments marketplace with persistent search, deal-led grids, compact navigation and information-rich products.', 'kidia-mobile-cms' ),
+				__( 'Marketplace Plus', 'mobishop' ),
+				__( 'A dense all-departments marketplace with persistent search, deal-led grids, compact navigation and information-rich products.', 'mobishop' ),
 				array(
 					'primary' => '#F59B23', 'soft' => '#E7F3F5', 'ink' => '#132536', 'surface' => '#F5F6F6',
 					'card_style' => 'outlined', 'asset_dir' => 'marketplace_plus', 'category_layout' => 'compact_grid', 'category_shape' => 'rounded',
 					'layout_profile' => 'marketplace_plus',
 					'product_columns' => 3, 'radius' => 8, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 8,
 					'blocks' => array( 'quick_links', 'promo_strip', 'hero_slider', 'category_grid', 'countdown', 'product_grid', 'banner_grid', 'product_carousel', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Everything you need, one place', 'kidia-mobile-cms' ), __( 'Browse departments', 'kidia-mobile-cms' ), __( 'Deals for you', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Everything you need, one place', 'mobishop' ), __( 'Browse departments', 'mobishop' ), __( 'Deals for you', 'mobishop' ) ),
 					'home_design' => array(
 						'hero_ratio' => 2.35, 'hero_radius' => 6, 'hero_padding' => 8, 'hero_indicators' => 'image_bottom',
 						'category_layout' => 'compact', 'category_columns' => 5, 'category_size' => 66, 'category_gap' => 7,
@@ -207,8 +207,8 @@ final class Kidia_Mobile_Setup_Wizard {
 				)
 			),
 			'amazon_marketplace' => self::theme(
-				__( 'Amazon Marketplace', 'kidia-mobile-cms' ),
-				__( 'An Amazon-inspired shopping application with persistent search, delivery context, dense deals, department discovery and information-rich commerce pages.', 'kidia-mobile-cms' ),
+				__( 'Amazon Marketplace', 'mobishop' ),
+				__( 'An Amazon-inspired shopping application with persistent search, delivery context, dense deals, department discovery and information-rich commerce pages.', 'mobishop' ),
 				array(
 					// These swatches are preview fallbacks only. Applying the preset keeps
 					// the connected store logo and brand palette selected in Setup.
@@ -217,7 +217,7 @@ final class Kidia_Mobile_Setup_Wizard {
 					'layout_profile' => 'amazon_marketplace',
 					'product_columns' => 2, 'radius' => 8, 'header_style' => 'standard', 'search_style' => 'bar', 'overlay' => 8,
 					'blocks' => array( 'promo_strip', 'quick_links', 'hero_slider', 'category_grid', 'countdown', 'product_carousel', 'banner_grid', 'product_grid', 'brand_carousel' ),
-					'sample_copy' => array( __( 'Shop everything you need', 'kidia-mobile-cms' ), __( 'Shop by department', 'kidia-mobile-cms' ), __( 'Deals for you', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'Shop everything you need', 'mobishop' ), __( 'Shop by department', 'mobishop' ), __( 'Deals for you', 'mobishop' ) ),
 					'home_design' => array(
 						'hero_ratio' => 2.15, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom',
 						'category_layout' => 'carousel', 'category_columns' => 4, 'category_size' => 72, 'category_gap' => 8,
@@ -234,15 +234,15 @@ final class Kidia_Mobile_Setup_Wizard {
 				)
 			),
 			'studio_fashion' => self::theme(
-				__( 'Studio Fashion', 'kidia-mobile-cms' ),
-				__( 'A minimal editorial fashion shop with quiet navigation, full-width campaigns and clean garment-led product grids.', 'kidia-mobile-cms' ),
+				__( 'Studio Fashion', 'mobishop' ),
+				__( 'A minimal editorial fashion shop with quiet navigation, full-width campaigns and clean garment-led product grids.', 'mobishop' ),
 				array(
 					'primary' => '#C4142B', 'soft' => '#F1F0EE', 'ink' => '#111111', 'surface' => '#FAF9F7',
 					'card_style' => 'no_shadow', 'asset_dir' => 'studio_fashion', 'category_layout' => 'default', 'category_shape' => 'rounded',
 					'layout_profile' => 'studio_fashion',
 					'product_columns' => 2, 'radius' => 0, 'header_style' => 'standard', 'search_style' => 'icon', 'overlay' => 10,
 					'blocks' => array( 'hero_slider', 'text_block', 'category_grid', 'banner_grid', 'product_grid', 'image_banner', 'product_carousel' ),
-					'sample_copy' => array( __( 'The new edit', 'kidia-mobile-cms' ), __( 'Shop by collection', 'kidia-mobile-cms' ), __( 'New arrivals', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'The new edit', 'mobishop' ), __( 'Shop by collection', 'mobishop' ), __( 'New arrivals', 'mobishop' ) ),
 					'home_design' => array(
 						'hero_ratio' => 1.18, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom', 'hero_show_indicators' => true,
 						'category_layout' => 'editorial_mosaic', 'category_columns' => 2, 'category_size' => 118, 'category_gap' => 2,
@@ -259,15 +259,15 @@ final class Kidia_Mobile_Setup_Wizard {
 				)
 			),
 			'editorial_runway' => self::theme(
-				__( 'Editorial Runway', 'kidia-mobile-cms' ),
-				__( 'An immersive high-fashion gallery with full-bleed campaigns, near-invisible chrome and spacious monochrome commerce pages.', 'kidia-mobile-cms' ),
+				__( 'Editorial Runway', 'mobishop' ),
+				__( 'An immersive high-fashion gallery with full-bleed campaigns, near-invisible chrome and spacious monochrome commerce pages.', 'mobishop' ),
 				array(
 					'primary' => '#111111', 'soft' => '#EDEAE4', 'ink' => '#080808', 'surface' => '#FFFFFF',
 					'card_style' => 'no_shadow', 'asset_dir' => 'editorial_runway', 'category_layout' => 'visual_grid', 'category_shape' => 'square',
 					'layout_profile' => 'editorial_runway',
 					'product_columns' => 2, 'radius' => 0, 'header_style' => 'transparent', 'search_style' => 'icon', 'overlay' => 4,
 					'blocks' => array( 'hero_slider', 'image_banner', 'category_grid', 'banner_grid', 'text_block', 'product_carousel' ),
-					'sample_copy' => array( __( 'The collection', 'kidia-mobile-cms' ), __( 'Stories', 'kidia-mobile-cms' ), __( 'Selected pieces', 'kidia-mobile-cms' ) ),
+					'sample_copy' => array( __( 'The collection', 'mobishop' ), __( 'Stories', 'mobishop' ), __( 'Selected pieces', 'mobishop' ) ),
 					'home_design' => array(
 						'hero_ratio' => 0.78, 'hero_radius' => 0, 'hero_padding' => 0, 'hero_indicators' => 'image_bottom', 'hero_show_indicators' => false,
 						'category_layout' => 'full_width_banners', 'category_columns' => 2, 'category_size' => 140, 'category_gap' => 0,
@@ -312,23 +312,23 @@ final class Kidia_Mobile_Setup_Wizard {
 	/** Returns the business-specific hero of each built-in storefront. */
 	private function signature_feature( string $profile ): array {
 		$features = array(
-			'fashion'          => array( 'type' => 'banner_grid', 'title' => __( 'The runway edit', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 2 ) ),
-			'beauty'           => array( 'type' => 'quick_links', 'title' => __( 'Shop by skin concern', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'grid', 'columns' => 4, 'item_size' => 70 ) ),
-			'electronics'      => array( 'type' => 'countdown', 'title' => __( 'Tech deal drop', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'flip_clock', 'show_seconds' => true ) ),
-			'home_living'      => array( 'type' => 'text_block', 'title' => __( 'Shop the room', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'left', 'title_size' => 30 ) ),
-			'kids_baby'        => array( 'type' => 'quick_links', 'title' => __( 'Shop by age', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 5, 'item_size' => 72 ) ),
-			'sports_fitness'   => array( 'type' => 'countdown', 'title' => __( 'Next performance drop', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'minimal_inline', 'show_seconds' => true ) ),
-			'grocery'          => array( 'type' => 'promo_strip', 'title' => __( 'Fresh today', 'kidia-mobile-cms' ), 'settings' => array( 'enable_transition' => true, 'transition_effect' => 'slide_left', 'height' => 34 ) ),
-			'luxury'           => array( 'type' => 'image_banner', 'title' => __( 'The private collection', 'kidia-mobile-cms' ), 'settings' => array( 'aspect_ratio' => .82, 'border_radius' => 0 ) ),
-			'coffee'           => array( 'type' => 'text_block', 'title' => __( 'Meet the roast', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 28 ) ),
-			'multi_store'      => array( 'type' => 'quick_links', 'title' => __( 'Browse every department', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'grid', 'columns' => 5, 'item_size' => 62 ) ),
-			'jewelry'          => array( 'type' => 'text_block', 'title' => __( 'Find the perfect gift', 'kidia-mobile-cms' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 27 ) ),
-			'pet_care'         => array( 'type' => 'quick_links', 'title' => __( 'Shop by companion', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 76 ) ),
-			'family_pop'       => array( 'type' => 'quick_links', 'title' => __( 'Shop every age', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 64 ) ),
-			'marketplace_plus' => array( 'type' => 'countdown', 'title' => __( 'Today’s marketplace deals', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
-			'amazon_marketplace' => array( 'type' => 'countdown', 'title' => __( 'Today’s Deals', 'kidia-mobile-cms' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
-			'studio_fashion'   => array( 'type' => 'banner_grid', 'title' => __( 'The studio campaign', 'kidia-mobile-cms' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 0 ) ),
-			'editorial_runway' => array( 'type' => 'image_banner', 'title' => __( 'The campaign story', 'kidia-mobile-cms' ), 'settings' => array( 'aspect_ratio' => .72, 'border_radius' => 0 ) ),
+			'fashion'          => array( 'type' => 'banner_grid', 'title' => __( 'The runway edit', 'mobishop' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 2 ) ),
+			'beauty'           => array( 'type' => 'quick_links', 'title' => __( 'Shop by skin concern', 'mobishop' ), 'settings' => array( 'layout' => 'grid', 'columns' => 4, 'item_size' => 70 ) ),
+			'electronics'      => array( 'type' => 'countdown', 'title' => __( 'Tech deal drop', 'mobishop' ), 'settings' => array( 'layout_style' => 'flip_clock', 'show_seconds' => true ) ),
+			'home_living'      => array( 'type' => 'text_block', 'title' => __( 'Shop the room', 'mobishop' ), 'settings' => array( 'alignment' => 'left', 'title_size' => 30 ) ),
+			'kids_baby'        => array( 'type' => 'quick_links', 'title' => __( 'Shop by age', 'mobishop' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 5, 'item_size' => 72 ) ),
+			'sports_fitness'   => array( 'type' => 'countdown', 'title' => __( 'Next performance drop', 'mobishop' ), 'settings' => array( 'layout_style' => 'minimal_inline', 'show_seconds' => true ) ),
+			'grocery'          => array( 'type' => 'promo_strip', 'title' => __( 'Fresh today', 'mobishop' ), 'settings' => array( 'enable_transition' => true, 'transition_effect' => 'slide_left', 'height' => 34 ) ),
+			'luxury'           => array( 'type' => 'image_banner', 'title' => __( 'The private collection', 'mobishop' ), 'settings' => array( 'aspect_ratio' => .82, 'border_radius' => 0 ) ),
+			'coffee'           => array( 'type' => 'text_block', 'title' => __( 'Meet the roast', 'mobishop' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 28 ) ),
+			'multi_store'      => array( 'type' => 'quick_links', 'title' => __( 'Browse every department', 'mobishop' ), 'settings' => array( 'layout' => 'grid', 'columns' => 5, 'item_size' => 62 ) ),
+			'jewelry'          => array( 'type' => 'text_block', 'title' => __( 'Find the perfect gift', 'mobishop' ), 'settings' => array( 'alignment' => 'center', 'title_size' => 27 ) ),
+			'pet_care'         => array( 'type' => 'quick_links', 'title' => __( 'Shop by companion', 'mobishop' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 76 ) ),
+			'family_pop'       => array( 'type' => 'quick_links', 'title' => __( 'Shop every age', 'mobishop' ), 'settings' => array( 'layout' => 'carousel', 'columns' => 4, 'item_size' => 64 ) ),
+			'marketplace_plus' => array( 'type' => 'countdown', 'title' => __( 'Today’s marketplace deals', 'mobishop' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
+			'amazon_marketplace' => array( 'type' => 'countdown', 'title' => __( 'Today’s Deals', 'mobishop' ), 'settings' => array( 'layout_style' => 'cards', 'show_seconds' => true ) ),
+			'studio_fashion'   => array( 'type' => 'banner_grid', 'title' => __( 'The studio campaign', 'mobishop' ), 'settings' => array( 'layout' => 'mosaic', 'columns' => 2, 'gap' => 0 ) ),
+			'editorial_runway' => array( 'type' => 'image_banner', 'title' => __( 'The campaign story', 'mobishop' ), 'settings' => array( 'aspect_ratio' => .72, 'border_radius' => 0 ) ),
 		);
 		return $features[ $profile ] ?? $features['fashion'];
 	}
@@ -419,12 +419,12 @@ final class Kidia_Mobile_Setup_Wizard {
 	/** @return array<string,array<string,mixed>> */
 	public static function setup_pages(): array {
 		return array(
-			'home'     => array( 'name' => __( 'Storefront', 'kidia-mobile-cms' ), 'description' => __( 'Home page sections, promotions and product discovery.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-store', 'required' => true ),
-			'category' => array( 'name' => __( 'Categories', 'kidia-mobile-cms' ), 'description' => __( 'Category navigation, cards and subcategory presentation.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-category', 'required' => false ),
-			'catalog'  => array( 'name' => __( 'Catalog', 'kidia-mobile-cms' ), 'description' => __( 'Product browsing, filters, sorting and product cards.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-grid-view', 'required' => false ),
-			'product'  => array( 'name' => __( 'Product', 'kidia-mobile-cms' ), 'description' => __( 'Product information, gallery, actions, tabs and recommendations.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-products', 'required' => true ),
-			'wishlist' => array( 'name' => __( 'Wishlist', 'kidia-mobile-cms' ), 'description' => __( 'Sign-in, empty and saved-product wishlist states.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-heart', 'required' => false ),
-			'account'  => array( 'name' => __( 'Account', 'kidia-mobile-cms' ), 'description' => __( 'Customer profile, orders and account navigation.', 'kidia-mobile-cms' ), 'icon' => 'dashicons-admin-users', 'required' => false ),
+			'home'     => array( 'name' => __( 'Storefront', 'mobishop' ), 'description' => __( 'Home page sections, promotions and product discovery.', 'mobishop' ), 'icon' => 'dashicons-store', 'required' => true ),
+			'category' => array( 'name' => __( 'Categories', 'mobishop' ), 'description' => __( 'Category navigation, cards and subcategory presentation.', 'mobishop' ), 'icon' => 'dashicons-category', 'required' => false ),
+			'catalog'  => array( 'name' => __( 'Catalog', 'mobishop' ), 'description' => __( 'Product browsing, filters, sorting and product cards.', 'mobishop' ), 'icon' => 'dashicons-grid-view', 'required' => false ),
+			'product'  => array( 'name' => __( 'Product', 'mobishop' ), 'description' => __( 'Product information, gallery, actions, tabs and recommendations.', 'mobishop' ), 'icon' => 'dashicons-products', 'required' => true ),
+			'wishlist' => array( 'name' => __( 'Wishlist', 'mobishop' ), 'description' => __( 'Sign-in, empty and saved-product wishlist states.', 'mobishop' ), 'icon' => 'dashicons-heart', 'required' => false ),
+			'account'  => array( 'name' => __( 'Account', 'mobishop' ), 'description' => __( 'Customer profile, orders and account navigation.', 'mobishop' ), 'icon' => 'dashicons-admin-users', 'required' => false ),
 		);
 	}
 
@@ -485,7 +485,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		}
 
 		return array(
-			'app_name'  => sanitize_text_field( (string) ( $identity['app_name'] ?? $saved_theme['name'] ?? __( 'Saved theme', 'kidia-mobile-cms' ) ) ),
+			'app_name'  => sanitize_text_field( (string) ( $identity['app_name'] ?? $saved_theme['name'] ?? __( 'Saved theme', 'mobishop' ) ) ),
 			'primary'   => $primary,
 			'soft'      => $soft,
 			'ink'       => $ink,
@@ -499,7 +499,7 @@ final class Kidia_Mobile_Setup_Wizard {
 	public function save_current_theme( string $name ): string {
 		$name = sanitize_text_field( $name );
 		if ( '' === $name ) {
-			$name = __( 'Saved theme', 'kidia-mobile-cms' );
+			$name = __( 'Saved theme', 'mobishop' );
 		}
 		$id     = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : str_replace( '.', '-', uniqid( 'theme_', true ) );
 		$themes = $this->saved_themes();
@@ -554,7 +554,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		$payload = json_decode( $json, true );
 		if ( ! is_array( $payload ) || 'woomobileapp-saved-theme' !== ( $payload['schema'] ?? '' ) || ! is_array( $payload['theme']['snapshot'] ?? null ) ) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages are escaped by their eventual renderer.
-			throw new InvalidArgumentException( __( 'The selected file is not a valid WooMobile saved theme.', 'kidia-mobile-cms' ) );
+			throw new InvalidArgumentException( __( 'The selected file is not a valid WooMobile saved theme.', 'mobishop' ) );
 		}
 		$snapshot = $payload['theme']['snapshot'];
 		if ( ! empty( $payload['assets'] ) && is_array( $payload['assets'] ) ) {
@@ -565,7 +565,7 @@ final class Kidia_Mobile_Setup_Wizard {
 		$themes = $this->saved_themes();
 		$themes[ $id ] = array(
 			'id'         => $id,
-			'name'       => sanitize_text_field( (string) ( $payload['theme']['name'] ?? __( 'Imported theme', 'kidia-mobile-cms' ) ) ),
+			'name'       => sanitize_text_field( (string) ( $payload['theme']['name'] ?? __( 'Imported theme', 'mobishop' ) ) ),
 			'created_at' => time(),
 			'snapshot'   => $this->sanitize_snapshot( $snapshot ),
 		);
@@ -1149,15 +1149,15 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['show_indicators'] = ! empty( $home_design['hero_show_indicators'] );
 			}
 			if ( 'amazon_marketplace' === $profile && 'promo_strip' === $type ) {
-				$settings['title'] = __( 'Deliver to your saved address', 'kidia-mobile-cms' );
-				$settings['messages'] = array( __( 'Deliver to your saved address', 'kidia-mobile-cms' ) );
+				$settings['title'] = __( 'Deliver to your saved address', 'mobishop' );
+				$settings['messages'] = array( __( 'Deliver to your saved address', 'mobishop' ) );
 				$settings['height'] = 38;
 				$settings['enable_transition'] = false;
 				$settings['action_type'] = 'account';
 				$settings['action_value'] = 'addresses';
 			}
 			if ( 'category_grid' === $type ) {
-				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Shop by category', 'kidia-mobile-cms' );
+				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Shop by category', 'mobishop' );
 				$settings['layout']      = $home_design['category_layout'];
 				$settings['columns']     = $home_design['category_columns'];
 				$settings['limit']       = 'family_pop' === $profile ? 9 : 6;
@@ -1178,7 +1178,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				}
 			}
 			if ( 'quick_links' === $type ) {
-				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Explore', 'kidia-mobile-cms' );
+				$settings['title']       = $theme['sample_copy'][1] ?? __( 'Explore', 'mobishop' );
 				$settings['layout']      = $home_design['quick_layout'];
 				$settings['columns']     = $home_design['quick_columns'];
 				$settings['image_shape'] = $theme['category_shape'];
@@ -1186,16 +1186,16 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['gap']         = $home_design['quick_gap'];
 				$settings['items']       = $this->build_demo_quick_links( $theme );
 				if ( 'family_pop' === $profile ) {
-					$settings['title']       = __( 'Customer Service', 'kidia-mobile-cms' );
+					$settings['title']       = __( 'Customer Service', 'mobishop' );
 					$settings['layout']      = 'service';
 					$settings['columns']     = 3;
 					$settings['item_size']   = 38;
 					$settings['gap']         = 8;
 					$settings['image_shape'] = 'circle';
 					$settings['items']       = array(
-						array( 'id' => 'family_service_chat', 'image_url' => self::asset_url( $theme, 'category', 1 ), 'label' => __( 'Chat', 'kidia-mobile-cms' ), 'subtitle' => __( 'Available 24/7', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'chat' ),
-						array( 'id' => 'family_service_call', 'image_url' => self::asset_url( $theme, 'category', 2 ), 'label' => __( 'Call Us', 'kidia-mobile-cms' ), 'subtitle' => __( '8:00 am - 9:00 pm', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'call' ),
-						array( 'id' => 'family_service_faq', 'image_url' => self::asset_url( $theme, 'category', 3 ), 'label' => __( 'FAQ', 'kidia-mobile-cms' ), 'subtitle' => __( 'View common questions', 'kidia-mobile-cms' ), 'action_type' => 'customer_service', 'action_value' => 'faq' ),
+						array( 'id' => 'family_service_chat', 'image_url' => self::asset_url( $theme, 'category', 1 ), 'label' => __( 'Chat', 'mobishop' ), 'subtitle' => __( 'Available 24/7', 'mobishop' ), 'action_type' => 'customer_service', 'action_value' => 'chat' ),
+						array( 'id' => 'family_service_call', 'image_url' => self::asset_url( $theme, 'category', 2 ), 'label' => __( 'Call Us', 'mobishop' ), 'subtitle' => __( '8:00 am - 9:00 pm', 'mobishop' ), 'action_type' => 'customer_service', 'action_value' => 'call' ),
+						array( 'id' => 'family_service_faq', 'image_url' => self::asset_url( $theme, 'category', 3 ), 'label' => __( 'FAQ', 'mobishop' ), 'subtitle' => __( 'View common questions', 'mobishop' ), 'action_type' => 'customer_service', 'action_value' => 'faq' ),
 					);
 				}
 			}
@@ -1203,15 +1203,15 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['image_url']       = self::asset_url( $theme, 'banner', 6 );
 				$settings['title']           = $theme['sample_copy'][0] ?? '';
 				$settings['subtitle']        = $theme['description'];
-				$settings['button_label']    = __( 'Shop now', 'kidia-mobile-cms' );
+				$settings['button_label']    = __( 'Shop now', 'mobishop' );
 				$settings['aspect_ratio']    = $home_design['image_banner_ratio'];
 				$settings['image_fit']       = 'cover';
 				$settings['border_radius']   = $theme['radius'];
 				$settings['overlay_strength']= $theme['overlay'];
 				if ( 'family_pop' === $profile ) {
-					$settings['title']            = __( 'New User Benefits', 'kidia-mobile-cms' );
-					$settings['subtitle']         = __( 'Get $10 & 20% OFF', 'kidia-mobile-cms' );
-					$settings['button_label']     = __( 'Shop Now', 'kidia-mobile-cms' );
+					$settings['title']            = __( 'New User Benefits', 'mobishop' );
+					$settings['subtitle']         = __( 'Get $10 & 20% OFF', 'mobishop' );
+					$settings['button_label']     = __( 'Shop Now', 'mobishop' );
 					$settings['image_url']        = self::asset_url( $theme, 'hero', 4 );
 					$settings['aspect_ratio']     = 2.15;
 					$settings['border_radius']    = 12;
@@ -1235,7 +1235,7 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['aspect_ratio']  = $home_design['banner_ratio'];
 				$settings['border_radius'] = $theme['radius'];
 				if ( 'family_pop' === $profile ) {
-					$settings['title'] = __( 'Explore Trends', 'kidia-mobile-cms' );
+					$settings['title'] = __( 'Explore Trends', 'mobishop' );
 					$settings['layout'] = 'carousel';
 					$settings['aspect_ratio'] = 1.45;
 					$settings['border_radius'] = 12;
@@ -1252,19 +1252,19 @@ final class Kidia_Mobile_Setup_Wizard {
 						'image_url'    => self::asset_url( $theme, 'banner', $slide_index + 1 ),
 						'title'        => (string) ( $theme['sample_copy'][ $slide_index ] ?? $slide['title'] ?? '' ),
 						'subtitle'     => '',
-						'button_label' => __( 'Shop now', 'kidia-mobile-cms' ),
+						'button_label' => __( 'Shop now', 'mobishop' ),
 						'action_type'  => (string) ( $slide['action_type'] ?? '' ),
 						'action_value' => (string) ( $slide['action_value'] ?? '' ),
 					);
 				}
 			}
 			if ( 'brand_carousel' === $type ) {
-				$settings['title']       = __( 'Featured collections', 'kidia-mobile-cms' );
+				$settings['title']       = __( 'Featured collections', 'mobishop' );
 				$settings['image_shape'] = $theme['category_shape'];
 				$settings['items']       = $this->build_demo_brand_items( $theme );
 			}
 			if ( in_array( $type, array( 'product_grid', 'product_carousel' ), true ) ) {
-				$settings['title']          = $theme['sample_copy'][2] ?? __( 'Products for you', 'kidia-mobile-cms' );
+				$settings['title']          = $theme['sample_copy'][2] ?? __( 'Products for you', 'mobishop' );
 				$settings['source']         = 'latest';
 				$settings['columns']        = $home_design['product_columns'];
 				$settings['image_ratio']    = $home_design['product_ratio'];
@@ -1278,9 +1278,9 @@ final class Kidia_Mobile_Setup_Wizard {
 				$settings['enable_image_swipe'] = $home_design['product_swipe'];
 				$settings = array_merge( $settings, $this->compact_product_card_settings( $primary, (string) $theme['ink'] ) );
 				if ( 'family_pop' === $profile ) {
-					$settings['title'] = 'product_carousel' === $type ? __( 'Flash Sale', 'kidia-mobile-cms' ) : __( 'Just for you', 'kidia-mobile-cms' );
+					$settings['title'] = 'product_carousel' === $type ? __( 'Flash Sale', 'mobishop' ) : __( 'Just for you', 'mobishop' );
 					$settings['show_view_all'] = 'product_carousel' === $type;
-					$settings['view_all_label'] = 'product_carousel' === $type ? __( 'More', 'kidia-mobile-cms' ) : '';
+					$settings['view_all_label'] = 'product_carousel' === $type ? __( 'More', 'mobishop' ) : '';
 					$settings['item_width'] = 136;
 					$settings['image_ratio'] = $home_design['product_ratio'];
 					$settings['card_radius'] = $home_design['product_radius'];
@@ -1319,18 +1319,18 @@ final class Kidia_Mobile_Setup_Wizard {
 	 */
 	private function hydrate_theme_section_defaults( string $type, array $settings, array $theme, array $slides ): array {
 		$copy  = array_values( (array) ( $theme['sample_copy'] ?? array() ) );
-		$title = (string) ( $copy[2] ?? $copy[0] ?? __( 'Discover more', 'kidia-mobile-cms' ) );
+		$title = (string) ( $copy[2] ?? $copy[0] ?? __( 'Discover more', 'mobishop' ) );
 		if ( array_key_exists( 'title', $settings ) && '' === trim( (string) $settings['title'] ) ) {
 			$settings['title'] = $title;
 		}
 		if ( 'promo_strip' === $type ) {
-			$settings['text'] = trim( (string) ( $settings['text'] ?? '' ) ) ?: (string) ( $copy[0] ?? __( 'Discover today’s collection', 'kidia-mobile-cms' ) );
+			$settings['text'] = trim( (string) ( $settings['text'] ?? '' ) ) ?: (string) ( $copy[0] ?? __( 'Discover today’s collection', 'mobishop' ) );
 			$settings['messages'] = ! empty( $settings['messages'] ) ? $settings['messages'] : array_values( array_filter( array_slice( $copy, 0, 3 ) ) );
 		}
 		if ( 'countdown' === $type ) {
-			$settings['title'] = trim( (string) ( $settings['title'] ?? '' ) ) ?: __( 'Limited-time offer', 'kidia-mobile-cms' );
+			$settings['title'] = trim( (string) ( $settings['title'] ?? '' ) ) ?: __( 'Limited-time offer', 'mobishop' );
 			$settings['ends_at'] = trim( (string) ( $settings['ends_at'] ?? '' ) ) ?: gmdate( 'c', time() + WEEK_IN_SECONDS );
-			$settings['expired_text'] = trim( (string) ( $settings['expired_text'] ?? '' ) ) ?: __( 'A new offer is coming soon', 'kidia-mobile-cms' );
+			$settings['expired_text'] = trim( (string) ( $settings['expired_text'] ?? '' ) ) ?: __( 'A new offer is coming soon', 'mobishop' );
 		}
 		if ( 'quick_links' === $type && empty( $settings['items'] ) ) {
 			$settings['items'] = $this->build_demo_quick_links( $theme );
@@ -1345,8 +1345,8 @@ final class Kidia_Mobile_Setup_Wizard {
 			$settings['items'] = $slides;
 		}
 		if ( in_array( $type, array( 'product_grid', 'product_carousel', 'category_grid' ), true ) ) {
-			$settings['empty_title'] = (string) ( $settings['empty_title'] ?? __( 'Your collection is ready', 'kidia-mobile-cms' ) );
-			$settings['empty_message'] = (string) ( $settings['empty_message'] ?? __( 'Add store items to replace the theme’s starter content.', 'kidia-mobile-cms' ) );
+			$settings['empty_title'] = (string) ( $settings['empty_title'] ?? __( 'Your collection is ready', 'mobishop' ) );
+			$settings['empty_message'] = (string) ( $settings['empty_message'] ?? __( 'Add store items to replace the theme’s starter content.', 'mobishop' ) );
 		}
 		return $settings;
 	}
@@ -1375,9 +1375,9 @@ final class Kidia_Mobile_Setup_Wizard {
 				'id'           => 'setup_theme_hero_' . $index,
 				'enabled'      => true,
 				'image_url'    => self::asset_url( $theme, 'hero', $index ),
-				'title'        => $copy[ ( $index - 1 ) % max( 1, count( $copy ) ) ] ?? __( 'Discover the collection', 'kidia-mobile-cms' ),
+				'title'        => $copy[ ( $index - 1 ) % max( 1, count( $copy ) ) ] ?? __( 'Discover the collection', 'mobishop' ),
 				'subtitle'     => $theme['description'] ?? '',
-				'button_label' => __( 'Shop now', 'kidia-mobile-cms' ),
+				'button_label' => __( 'Shop now', 'mobishop' ),
 				'action_type'  => '',
 				'action_value' => '',
 			);
@@ -1405,12 +1405,12 @@ final class Kidia_Mobile_Setup_Wizard {
 				'slug'        => sanitize_title( $label ),
 				'count'       => 8 + $number,
 				'image_url'   => self::asset_url( $theme, 'category', ( ( $number - 1 ) % 6 ) + 1 ),
-				'description' => sprintf( __( 'Explore the %s collection.', 'kidia-mobile-cms' ), $label ),
+				'description' => sprintf( __( 'Explore the %s collection.', 'mobishop' ), $label ),
 			);
 			$price = 39 + ( $number * 18 );
 			$products[] = array(
 				'id'              => 9000 + $number,
-				'name'            => sprintf( __( '%s favorite', 'kidia-mobile-cms' ), $label ),
+				'name'            => sprintf( __( '%s favorite', 'mobishop' ), $label ),
 				'slug'            => sanitize_title( $label . '-favorite' ),
 				'type'            => 1 === $number ? 'variable' : 'simple',
 				'image_url'       => self::asset_url( $theme, 'product', $number ),
@@ -1426,12 +1426,12 @@ final class Kidia_Mobile_Setup_Wizard {
 				'currency_symbol' => '$',
 				'in_stock'        => true,
 				'is_on_sale'      => 2 === $number || 5 === $number,
-				'badge'           => 2 === $number || 5 === $number ? __( 'Sale', 'kidia-mobile-cms' ) : null,
+				'badge'           => 2 === $number || 5 === $number ? __( 'Sale', 'mobishop' ) : null,
 				'rating'          => 4.2 + ( $number / 10 ),
 				'review_count'    => 12 * $number,
 				'category_id'     => 9100 + $number,
-				'summary'         => sprintf( __( 'A curated %s pick created for this theme preview.', 'kidia-mobile-cms' ), strtolower( $label ) ),
-				'description'     => sprintf( __( 'Premium quality and thoughtful detail from the %s collection.', 'kidia-mobile-cms' ), $label ),
+				'summary'         => sprintf( __( 'A curated %s pick created for this theme preview.', 'mobishop' ), strtolower( $label ) ),
+				'description'     => sprintf( __( 'Premium quality and thoughtful detail from the %s collection.', 'mobishop' ), $label ),
 			);
 		}
 		return array( 'products' => $products, 'categories' => $categories );
@@ -2010,17 +2010,17 @@ final class Kidia_Mobile_Setup_Wizard {
 
 	private function block_name( string $type, array $copy ): string {
 		$names = array(
-			'hero_slider'     => $copy[0] ?? __( 'Featured collection', 'kidia-mobile-cms' ),
-			'category_grid'   => $copy[1] ?? __( 'Shop by category', 'kidia-mobile-cms' ),
-			'product_grid'    => $copy[2] ?? __( 'Products for you', 'kidia-mobile-cms' ),
-			'product_carousel'=> $copy[2] ?? __( 'Popular products', 'kidia-mobile-cms' ),
-			'promo_strip'     => __( 'Store benefits', 'kidia-mobile-cms' ),
-			'quick_links'     => __( 'Quick links', 'kidia-mobile-cms' ),
-			'brand_carousel'  => __( 'Featured brands', 'kidia-mobile-cms' ),
-			'countdown'       => __( 'Flash sale', 'kidia-mobile-cms' ),
-			'image_banner'    => __( 'Collection story', 'kidia-mobile-cms' ),
-			'banner_grid'     => __( 'Seasonal collections', 'kidia-mobile-cms' ),
-			'text_block'      => __( 'Brand story', 'kidia-mobile-cms' ),
+			'hero_slider'     => $copy[0] ?? __( 'Featured collection', 'mobishop' ),
+			'category_grid'   => $copy[1] ?? __( 'Shop by category', 'mobishop' ),
+			'product_grid'    => $copy[2] ?? __( 'Products for you', 'mobishop' ),
+			'product_carousel'=> $copy[2] ?? __( 'Popular products', 'mobishop' ),
+			'promo_strip'     => __( 'Store benefits', 'mobishop' ),
+			'quick_links'     => __( 'Quick links', 'mobishop' ),
+			'brand_carousel'  => __( 'Featured brands', 'mobishop' ),
+			'countdown'       => __( 'Flash sale', 'mobishop' ),
+			'image_banner'    => __( 'Collection story', 'mobishop' ),
+			'banner_grid'     => __( 'Seasonal collections', 'mobishop' ),
+			'text_block'      => __( 'Brand story', 'mobishop' ),
 		);
 		return $names[ $type ] ?? ucwords( str_replace( '_', ' ', $type ) );
 	}

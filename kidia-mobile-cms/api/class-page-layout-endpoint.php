@@ -40,7 +40,7 @@ final class Kidia_Mobile_CMS_Page_Layout_Endpoint {
 	public function preview_layout( WP_REST_Request $request ) {
 		$page = sanitize_key( (string) $request->get_param( 'page' ) );
 		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
-			return new WP_Error( 'woo_mobile_unknown_page', __( 'Unknown application page.', 'kidia-mobile-cms' ), array( 'status' => 404 ) );
+			return new WP_Error( 'woo_mobile_unknown_page', __( 'Unknown application page.', 'mobishop' ), array( 'status' => 404 ) );
 		}
 		$submitted = $request->get_param( 'layout' );
 		$layout = ( new Kidia_Mobile_Page_Layout_Store() )->preview_layout( $page, is_array( $submitted ) ? $submitted : array() );
@@ -52,7 +52,7 @@ final class Kidia_Mobile_CMS_Page_Layout_Endpoint {
 	public function get_layout( WP_REST_Request $request ) {
 		$page = sanitize_key( (string) $request->get_param( 'page' ) );
 		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
-			return new WP_Error( 'woo_mobile_unknown_page', __( 'Unknown application page.', 'kidia-mobile-cms' ), array( 'status' => 404 ) );
+			return new WP_Error( 'woo_mobile_unknown_page', __( 'Unknown application page.', 'mobishop' ), array( 'status' => 404 ) );
 		}
 		$layout = ( new Kidia_Mobile_Page_Layout_Store() )->get_layout( $page );
 		$layout['locale'] = sanitize_key( (string) $request->get_param( 'locale' ) );

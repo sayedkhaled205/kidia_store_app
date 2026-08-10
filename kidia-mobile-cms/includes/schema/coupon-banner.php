@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Coupon Banner',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a promotional coupon banner.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-tickets-alt',
@@ -39,7 +39,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -47,7 +47,7 @@ return array(
 			'id' => 'media',
 			'label' => __(
 				'Media',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -59,7 +59,7 @@ return array(
 			'key' => 'title',
 			'label' => __(
 				'Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -72,7 +72,7 @@ return array(
 			'key' => 'description',
 			'label' => __(
 				'Description',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'textarea',
 			'tab' => 'general',
@@ -85,7 +85,7 @@ return array(
 			'key' => 'coupon_code',
 			'label' => __(
 				'Coupon Code',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -96,7 +96,7 @@ return array(
 			'key' => 'image_url',
 			'label' => __(
 				'Banner Image',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'image',
 			'tab' => 'media',

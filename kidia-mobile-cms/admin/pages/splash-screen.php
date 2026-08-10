@@ -1,6 +1,6 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <div class="wrap kidia-page-builder kidia-splash-builder">
-	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Splash Screen saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Splash Screen saved successfully.', 'mobishop' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
 			<div class="kidia-page-phone">
@@ -19,33 +19,33 @@
 					</div>
 				</div>
 			</div>
-			<p><?php esc_html_e( 'Live mobile preview', 'kidia-mobile-cms' ); ?></p>
+			<p><?php esc_html_e( 'Live mobile preview', 'mobishop' ); ?></p>
 		</aside>
 		<form class="kidia-page-editor" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="kidia_mobile_save_splash_screen"><?php wp_nonce_field( 'kidia_mobile_save_splash_screen', 'kidia_mobile_splash_nonce' ); ?>
 			<div class="kidia-page-toolbar">
-				<strong><?php esc_html_e( 'Splash Screen', 'kidia-mobile-cms' ); ?></strong>
+				<strong><?php esc_html_e( 'Splash Screen', 'mobishop' ); ?></strong>
 				<div class="kidia-splash-toolbar-actions">
-					<button type="button" class="button kidia-splash-replay" data-splash-replay><span class="dashicons dashicons-controls-repeat"></span><?php esc_html_e( 'Replay preview', 'kidia-mobile-cms' ); ?></button>
-					<?php submit_button( __( 'Save Splash Screen', 'kidia-mobile-cms' ), 'primary', 'submit', false ); ?>
+					<button type="button" class="button kidia-splash-replay" data-splash-replay><span class="dashicons dashicons-controls-repeat"></span><?php esc_html_e( 'Replay preview', 'mobishop' ); ?></button>
+					<?php submit_button( __( 'Save Splash Screen', 'mobishop' ), 'primary', 'submit', false ); ?>
 				</div>
 			</div>
 			<div class="kidia-builder-cards-scroll">
-			<section class="kidia-page-card is-open"><div class="kidia-page-card__header"><div><span class="dashicons dashicons-format-image"></span><strong><?php esc_html_e( 'Startup Screen', 'kidia-mobile-cms' ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="splash[enabled]" value="0"><input type="checkbox" name="splash[enabled]" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></span></label><button type="button" class="button kidia-page-expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
+			<section class="kidia-page-card is-open"><div class="kidia-page-card__header"><div><span class="dashicons dashicons-format-image"></span><strong><?php esc_html_e( 'Startup Screen', 'mobishop' ); ?></strong></div><label class="kidia-page-master-toggle"><input type="hidden" name="splash[enabled]" value="0"><input type="checkbox" name="splash[enabled]" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?>><span><?php esc_html_e( 'Show', 'mobishop' ); ?></span></label><button type="button" class="button kidia-page-expand" aria-expanded="true"><span class="dashicons dashicons-arrow-down-alt2"></span></button></div>
 				<div class="kidia-page-card__body"><div class="kidia-page-fields">
-					<div class="kidia-settings-section-title kidia-settings-section-title--splash-branding"><?php esc_html_e( 'Branding & Image', 'kidia-mobile-cms' ); ?></div>
-					<div class="kidia-page-field kidia-page-field--image"><label><?php esc_html_e( 'Logo / image', 'kidia-mobile-cms' ); ?></label><div class="kidia-page-media"><input class="kidia-page-media-url" type="url" name="splash[image_url]" value="<?php echo esc_attr( $settings['image_url'] ); ?>"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button></div></div>
+					<div class="kidia-settings-section-title kidia-settings-section-title--splash-branding"><?php esc_html_e( 'Branding & Image', 'mobishop' ); ?></div>
+					<div class="kidia-page-field kidia-page-field--image"><label><?php esc_html_e( 'Logo / image', 'mobishop' ); ?></label><div class="kidia-page-media"><input class="kidia-page-media-url" type="url" name="splash[image_url]" value="<?php echo esc_attr( $settings['image_url'] ); ?>"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'mobishop' ); ?></button></div></div>
 					<?php foreach ( array( 'image_width' => 'Image width', 'image_height' => 'Image height' ) as $key => $label ) : ?><div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="number" min="40" max="320" name="splash[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>"></div><?php endforeach; ?>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Image fit', 'kidia-mobile-cms' ); ?></label><select name="splash[image_fit]"><?php foreach ( array( 'contain' => 'Contain', 'cover' => 'Cover', 'fill' => 'Fill' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['image_fit'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Image shape', 'kidia-mobile-cms' ); ?></label><select name="splash[image_shape]"><?php foreach ( array( 'none' => 'Original', 'rounded' => 'Rounded', 'circle' => 'Circle' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['image_shape'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Store name', 'kidia-mobile-cms' ); ?></label><input type="text" name="splash[store_name]" value="<?php echo esc_attr( $settings['store_name'] ); ?>"></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Show store name', 'kidia-mobile-cms' ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="splash[show_store_name]" value="0"><input type="checkbox" name="splash[show_store_name]" value="1" <?php checked( ! empty( $settings['show_store_name'] ) ); ?>><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Text color', 'kidia-mobile-cms' ); ?></label><input type="color" name="splash[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></div>
-					<div class="kidia-settings-section-title kidia-settings-section-title--splash-background"><?php esc_html_e( 'Background, Timing & Loader', 'kidia-mobile-cms' ); ?></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Image fit', 'mobishop' ); ?></label><select name="splash[image_fit]"><?php foreach ( array( 'contain' => 'Contain', 'cover' => 'Cover', 'fill' => 'Fill' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['image_fit'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Image shape', 'mobishop' ); ?></label><select name="splash[image_shape]"><?php foreach ( array( 'none' => 'Original', 'rounded' => 'Rounded', 'circle' => 'Circle' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $settings['image_shape'], $value ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Store name', 'mobishop' ); ?></label><input type="text" name="splash[store_name]" value="<?php echo esc_attr( $settings['store_name'] ); ?>"></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Show store name', 'mobishop' ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="splash[show_store_name]" value="0"><input type="checkbox" name="splash[show_store_name]" value="1" <?php checked( ! empty( $settings['show_store_name'] ) ); ?>><b><?php esc_html_e( 'Show', 'mobishop' ); ?></b></label></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Text color', 'mobishop' ); ?></label><input type="color" name="splash[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></div>
+					<div class="kidia-settings-section-title kidia-settings-section-title--splash-background"><?php esc_html_e( 'Background, Timing & Loader', 'mobishop' ); ?></div>
 					<?php foreach ( array( 'background_color' => 'Background color', 'background_color_end' => 'Gradient color' ) as $key => $label ) : ?><div class="kidia-page-field"><label><?php echo esc_html( $label ); ?></label><input type="color" name="splash[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $settings[ $key ] ); ?>"></div><?php endforeach; ?>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Duration (milliseconds)', 'kidia-mobile-cms' ); ?></label><input type="number" min="500" max="10000" step="100" name="splash[duration_ms]" value="<?php echo esc_attr( (string) $settings['duration_ms'] ); ?>"></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Show loader', 'kidia-mobile-cms' ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="splash[show_loader]" value="0"><input type="checkbox" name="splash[show_loader]" value="1" <?php checked( ! empty( $settings['show_loader'] ) ); ?>><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label></div>
-					<div class="kidia-page-field"><label><?php esc_html_e( 'Loader color', 'kidia-mobile-cms' ); ?></label><input type="color" name="splash[loader_color]" value="<?php echo esc_attr( $settings['loader_color'] ); ?>"></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Duration (milliseconds)', 'mobishop' ); ?></label><input type="number" min="500" max="10000" step="100" name="splash[duration_ms]" value="<?php echo esc_attr( (string) $settings['duration_ms'] ); ?>"></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Show loader', 'mobishop' ); ?></label><label class="kidia-page-toggle"><input type="hidden" name="splash[show_loader]" value="0"><input type="checkbox" name="splash[show_loader]" value="1" <?php checked( ! empty( $settings['show_loader'] ) ); ?>><b><?php esc_html_e( 'Show', 'mobishop' ); ?></b></label></div>
+					<div class="kidia-page-field"><label><?php esc_html_e( 'Loader color', 'mobishop' ); ?></label><input type="color" name="splash[loader_color]" value="<?php echo esc_attr( $settings['loader_color'] ); ?>"></div>
 				</div></div>
 			</section>
 			</div>

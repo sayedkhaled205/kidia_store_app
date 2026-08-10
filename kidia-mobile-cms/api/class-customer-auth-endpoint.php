@@ -187,7 +187,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( is_wp_error( $user ) || ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_invalid_credentials',
-				__( 'The email address or password is incorrect.', 'kidia-mobile-cms' ),
+				__( 'The email address or password is incorrect.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -212,21 +212,21 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( email_exists( $email ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_account_exists',
-				__( 'An account already exists for this email address.', 'kidia-mobile-cms' ),
+				__( 'An account already exists for this email address.', 'mobishop' ),
 				array( 'status' => 409 )
 			);
 		}
 		if ( strlen( $password ) < 8 || strlen( $password ) > 4096 ) {
 			return new WP_Error(
 				'woo_mobile_auth_weak_password',
-				__( 'Use a password containing at least 8 characters.', 'kidia-mobile-cms' ),
+				__( 'Use a password containing at least 8 characters.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
 		if ( ! function_exists( 'wc_create_new_customer' ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_woocommerce_unavailable',
-				__( 'WooCommerce customer registration is unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce customer registration is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -245,7 +245,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_registration_failed',
-				__( 'The customer account could not be loaded.', 'kidia-mobile-cms' ),
+				__( 'The customer account could not be loaded.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -275,7 +275,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( '' === $request_id ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_start_failed',
-				__( 'A secure social sign-in request could not be created.', 'kidia-mobile-cms' ),
+				__( 'A secure social sign-in request could not be created.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -376,7 +376,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( ! $this->is_social_secret( $code ) || ! $this->is_social_secret( $state ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_not_completed',
-				__( 'Social sign-in was not completed or has expired.', 'kidia-mobile-cms' ),
+				__( 'Social sign-in was not completed or has expired.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -417,7 +417,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 			! hash_equals( (string) ( $handoff['verifier_hash'] ?? '' ), $this->social_secret_hash( $verifier ) ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_invalid_handoff',
-				__( 'The social sign-in request is invalid or expired.', 'kidia-mobile-cms' ),
+				__( 'The social sign-in request is invalid or expired.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -500,7 +500,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		} catch ( Throwable $error ) {
 			return new WP_Error(
 				'woo_mobile_auth_session_failed',
-				__( 'A secure customer session could not be created.', 'kidia-mobile-cms' ),
+				__( 'A secure customer session could not be created.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -651,7 +651,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( $count >= $limit ) {
 			return new WP_Error(
 				'woo_mobile_auth_rate_limited',
-				__( 'Too many attempts. Please wait and try again.', 'kidia-mobile-cms' ),
+				__( 'Too many attempts. Please wait and try again.', 'mobishop' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -720,7 +720,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( ! in_array( $provider, array( 'google', 'facebook' ), true ) || ! shortcode_exists( 'nextend_social_login' ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_unavailable',
-				__( 'Google or Facebook sign-in is not available on this store.', 'kidia-mobile-cms' ),
+				__( 'Google or Facebook sign-in is not available on this store.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -735,7 +735,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( ! preg_match( '/<a\b[^>]*\bhref=(["\'])(.*?)\1/i', $html, $matches ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_unavailable',
-				__( 'The selected social sign-in provider is not enabled.', 'kidia-mobile-cms' ),
+				__( 'The selected social sign-in provider is not enabled.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -749,7 +749,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( ! is_array( $target ) || ! is_array( $home ) || ! $this->same_origin_parts( $target, $home ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_invalid_url',
-				__( 'The social sign-in provider returned an unsafe URL.', 'kidia-mobile-cms' ),
+				__( 'The social sign-in provider returned an unsafe URL.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -759,7 +759,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		if ( $provider !== sanitize_key( (string) ( $query['loginSocial'] ?? '' ) ) ) {
 			return new WP_Error(
 				'woo_mobile_auth_social_invalid_url',
-				__( 'The social sign-in provider returned an invalid URL.', 'kidia-mobile-cms' ),
+				__( 'The social sign-in provider returned an invalid URL.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -848,7 +848,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 		}
 		return new WP_Error(
 			'woo_mobile_auth_https_required',
-			__( 'Customer authentication requires HTTPS.', 'kidia-mobile-cms' ),
+			__( 'Customer authentication requires HTTPS.', 'mobishop' ),
 			array( 'status' => 503 )
 		);
 	}
@@ -856,7 +856,7 @@ final class Kidia_Mobile_CMS_Customer_Auth_Endpoint {
 	private function unauthorized_error(): WP_Error {
 		return new WP_Error(
 			'woo_mobile_auth_unauthorized',
-			__( 'The customer session is missing or expired.', 'kidia-mobile-cms' ),
+			__( 'The customer session is missing or expired.', 'mobishop' ),
 			array( 'status' => 401 )
 		);
 	}

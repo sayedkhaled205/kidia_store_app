@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 				esc_html_e(
 					'Create, search and manage reusable elements.',
-					'kidia-mobile-cms'
+					'mobishop'
 				);
 				?>
 			</p>
@@ -49,7 +49,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php
 				esc_html_e(
 					'Add New',
-					'kidia-mobile-cms'
+					'mobishop'
 				);
 				?>
 		</button>
@@ -70,7 +70,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Item saved successfully.',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</p>
@@ -90,7 +90,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Item deleted successfully.',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</p>
@@ -109,7 +109,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Search items',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</label>
@@ -121,7 +121,7 @@ defined( 'ABSPATH' ) || exit;
 				placeholder="<?php
 					echo esc_attr__(
 						'Search by name...',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -137,7 +137,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php
 				esc_html_e(
 					'items',
-					'kidia-mobile-cms'
+					'mobishop'
 				);
 				?>
 
@@ -160,7 +160,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php
 						esc_html_e(
 							'No items yet',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</h2>
@@ -169,7 +169,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php
 						esc_html_e(
 							'Create your first item to start building the application home page.',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</p>
@@ -182,7 +182,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php
 						esc_html_e(
 							'Create First Item',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</button>
@@ -200,7 +200,7 @@ defined( 'ABSPATH' ) || exit;
 
 				$item_name = isset( $item['name'] )
 					? (string) $item['name']
-					: __( 'Untitled Item', 'kidia-mobile-cms' );
+					: __( 'Untitled Item', 'mobishop' );
 
 				$item_status = isset( $item['status'] )
 					? sanitize_key( (string) $item['status'] )
@@ -271,8 +271,8 @@ defined( 'ABSPATH' ) || exit;
 									<?php
 										echo esc_html(
 											'published' === $item_status
-												? __( 'Published', 'kidia-mobile-cms' )
-												: __( 'Draft', 'kidia-mobile-cms' )
+												? __( 'Published', 'mobishop' )
+												: __( 'Draft', 'mobishop' )
 										);
 									?>
 								</span>
@@ -287,8 +287,8 @@ defined( 'ABSPATH' ) || exit;
 									<?php
 										echo esc_html(
 											$is_enabled
-												? __( 'Enabled', 'kidia-mobile-cms' )
-												: __( 'Disabled', 'kidia-mobile-cms' )
+												? __( 'Enabled', 'mobishop' )
+												: __( 'Disabled', 'mobishop' )
 										);
 									?>
 								</span>
@@ -302,7 +302,7 @@ defined( 'ABSPATH' ) || exit;
 													/* translators: %s: item update date. */
 													__(
 														'Updated: %s',
-														'kidia-mobile-cms'
+														'mobishop'
 													),
 													$updated_at
 												)
@@ -333,8 +333,8 @@ defined( 'ABSPATH' ) || exit;
 							<?php
 							echo esc_html(
 								'published' === $item_status
-									? __( 'Draft', 'kidia-mobile-cms' )
-									: __( 'Publish', 'kidia-mobile-cms' )
+									? __( 'Draft', 'mobishop' )
+									: __( 'Publish', 'mobishop' )
 							);
 							?>
 						</button>
@@ -356,7 +356,7 @@ defined( 'ABSPATH' ) || exit;
 							<?php
 								esc_html_e(
 									'Edit',
-									'kidia-mobile-cms'
+									'mobishop'
 								);
 								?>
 						</a>
@@ -370,7 +370,7 @@ defined( 'ABSPATH' ) || exit;
 							<?php
 								esc_html_e(
 									'Duplicate',
-									'kidia-mobile-cms'
+									'mobishop'
 								);
 								?>
 						</button>
@@ -385,7 +385,7 @@ defined( 'ABSPATH' ) || exit;
 							<?php
 								esc_html_e(
 									'Delete',
-									'kidia-mobile-cms'
+									'mobishop'
 								);
 								?>
 						</button>
@@ -405,7 +405,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php
 						esc_html_e(
 							'No matching items',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</h2>
@@ -438,7 +438,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 				esc_html_e(
 					'Create New Item',
-					'kidia-mobile-cms'
+					'mobishop'
 				);
 				?>
 			</h2>
@@ -450,7 +450,7 @@ defined( 'ABSPATH' ) || exit;
 				aria-label="<?php
 					echo esc_attr__(
 						'Close',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -466,7 +466,7 @@ defined( 'ABSPATH' ) || exit;
 					<?php
 						esc_html_e(
 							'Name',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</strong>
@@ -480,7 +480,7 @@ defined( 'ABSPATH' ) || exit;
 				placeholder="<?php
 					echo esc_attr__(
 						'Enter item name',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -493,7 +493,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Please enter a name.',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</p>
@@ -510,7 +510,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Cancel',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</button>
@@ -524,7 +524,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Create',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</button>
@@ -556,7 +556,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Delete Item',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</h2>
@@ -568,7 +568,7 @@ defined( 'ABSPATH' ) || exit;
 				aria-label="<?php
 					echo esc_attr__(
 						'Close',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -583,7 +583,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Are you sure you want to delete this item?',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</p>
@@ -604,7 +604,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Cancel',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</button>
@@ -617,7 +617,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 					esc_html_e(
 						'Delete',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</button>

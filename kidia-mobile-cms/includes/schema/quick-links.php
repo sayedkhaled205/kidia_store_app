@@ -3,8 +3,8 @@
 defined( 'ABSPATH' ) || exit;
 
 return array(
-	'title'       => __( 'Quick Links', 'kidia-mobile-cms' ),
-	'description' => __( 'Flexible image shortcuts in a row or grid.', 'kidia-mobile-cms' ),
+	'title'       => __( 'Quick Links', 'mobishop' ),
+	'description' => __( 'Flexible image shortcuts in a row or grid.', 'mobishop' ),
 	'icon'        => 'dashicons-admin-links',
 	'defaults'    => array(
 		'title' => '', 'subtitle' => '', 'layout' => 'carousel', 'columns' => 4,

@@ -80,7 +80,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			? true
 			: new WP_Error(
 				'woo_mobile_auth_unauthorized',
-				__( 'The customer session is missing or expired.', 'kidia-mobile-cms' ),
+				__( 'The customer session is missing or expired.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 	}
@@ -115,7 +115,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			if ( ! is_email( $email ) ) {
 				return new WP_Error(
 					'woo_mobile_account_invalid_email',
-					__( 'Enter a valid email address.', 'kidia-mobile-cms' ),
+					__( 'Enter a valid email address.', 'mobishop' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -123,7 +123,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			if ( $existing && (int) $existing !== (int) $customer->get_id() ) {
 				return new WP_Error(
 					'woo_mobile_account_email_exists',
-					__( 'This email address is already used by another account.', 'kidia-mobile-cms' ),
+					__( 'This email address is already used by another account.', 'mobishop' ),
 					array( 'status' => 409 )
 				);
 			}
@@ -135,7 +135,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		if ( is_wp_error( $updated ) ) {
 			return new WP_Error(
 				'woo_mobile_account_update_failed',
-				__( 'The customer profile could not be updated.', 'kidia-mobile-cms' ),
+				__( 'The customer profile could not be updated.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -165,7 +165,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		if ( ! in_array( $type, array( 'billing', 'shipping' ), true ) ) {
 			return new WP_Error(
 				'woo_mobile_account_invalid_address',
-				__( 'The saved address type is invalid.', 'kidia-mobile-cms' ),
+				__( 'The saved address type is invalid.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -216,14 +216,14 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 		if ( $customer_id <= 0 ) {
 			return new WP_Error(
 				'woo_mobile_auth_unauthorized',
-				__( 'The customer session is missing or expired.', 'kidia-mobile-cms' ),
+				__( 'The customer session is missing or expired.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 		}
 		if ( ! class_exists( 'WC_Customer' ) ) {
 			return new WP_Error(
 				'woo_mobile_account_woocommerce_unavailable',
-				__( 'WooCommerce customer accounts are unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce customer accounts are unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -318,7 +318,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 			if ( '' !== $email && ! is_email( $email ) ) {
 				return new WP_Error(
 					'woo_mobile_account_invalid_email',
-					__( 'Enter a valid email address.', 'kidia-mobile-cms' ),
+					__( 'Enter a valid email address.', 'mobishop' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -376,7 +376,7 @@ final class Kidia_Mobile_CMS_Customer_Account_Endpoint {
 	private function persistence_error(): WP_Error {
 		return new WP_Error(
 			'woo_mobile_account_persistence_failed',
-			__( 'WooCommerce did not persist the customer changes.', 'kidia-mobile-cms' ),
+			__( 'WooCommerce did not persist the customer changes.', 'mobishop' ),
 			array( 'status' => 500 )
 		);
 	}

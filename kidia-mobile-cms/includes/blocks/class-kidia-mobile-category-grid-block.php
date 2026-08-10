@@ -18,7 +18,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Category Grid', 'kidia-mobile-cms' );
+		return __( 'Category Grid', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'WooCommerce categories in a mobile grid.', 'kidia-mobile-cms' );
+		return __( 'WooCommerce categories in a mobile grid.', 'mobishop' );
 	}
 
 	/**
@@ -226,36 +226,36 @@ final class Kidia_Mobile_Category_Grid_Block extends Kidia_Mobile_Block {
 		?>
 		<div class="kidia-builder-grid">
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--title">
-				<label><?php esc_html_e( 'Section Title', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Section Title', 'mobishop' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( $settings['title'] ); ?>">
 			</div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--subtitle">
-				<label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Subtitle', 'mobishop' ); ?></label>
 				<input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( $settings['subtitle'] ); ?>">
 			</div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--category-ids"><label><?php esc_html_e( 'Manual Category IDs (optional)', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][category_ids]" value="<?php echo esc_attr( (string) $settings['category_ids'] ); ?>" placeholder="12, 34, 56"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--layout"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Classic grid', 'kidia-mobile-cms' ); ?></option><option value="compact" <?php selected( 'compact', $settings['layout'] ); ?>><?php esc_html_e( 'Compact grid', 'kidia-mobile-cms' ); ?></option><option value="cards" <?php selected( 'cards', $settings['layout'] ); ?>><?php esc_html_e( 'Rounded cards', 'kidia-mobile-cms' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'kidia-mobile-cms' ); ?></option><option value="editorial_mosaic" <?php selected( 'editorial_mosaic', $settings['layout'] ); ?>><?php esc_html_e( 'Editorial Mosaic', 'kidia-mobile-cms' ); ?></option><option value="full_width_banners" <?php selected( 'full_width_banners', $settings['layout'] ); ?>><?php esc_html_e( 'Full-width Banners', 'kidia-mobile-cms' ); ?></option></select></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--items-alignment"><label><?php esc_html_e( 'Items Alignment', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items_alignment]"><option value="right" <?php selected( 'right', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Right', 'kidia-mobile-cms' ); ?></option><option value="center" <?php selected( 'center', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Center', 'kidia-mobile-cms' ); ?></option><option value="left" <?php selected( 'left', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Left', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--category-ids"><label><?php esc_html_e( 'Manual Category IDs (optional)', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][category_ids]" value="<?php echo esc_attr( (string) $settings['category_ids'] ); ?>" placeholder="12, 34, 56"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--layout"><label><?php esc_html_e( 'Layout', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Classic grid', 'mobishop' ); ?></option><option value="compact" <?php selected( 'compact', $settings['layout'] ); ?>><?php esc_html_e( 'Compact grid', 'mobishop' ); ?></option><option value="cards" <?php selected( 'cards', $settings['layout'] ); ?>><?php esc_html_e( 'Rounded cards', 'mobishop' ); ?></option><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'mobishop' ); ?></option><option value="editorial_mosaic" <?php selected( 'editorial_mosaic', $settings['layout'] ); ?>><?php esc_html_e( 'Editorial Mosaic', 'mobishop' ); ?></option><option value="full_width_banners" <?php selected( 'full_width_banners', $settings['layout'] ); ?>><?php esc_html_e( 'Full-width Banners', 'mobishop' ); ?></option></select></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--items-alignment"><label><?php esc_html_e( 'Items Alignment', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][items_alignment]"><option value="right" <?php selected( 'right', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Right', 'mobishop' ); ?></option><option value="center" <?php selected( 'center', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Center', 'mobishop' ); ?></option><option value="left" <?php selected( 'left', $settings['items_alignment'] ); ?>><?php esc_html_e( 'Left', 'mobishop' ); ?></option></select></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--limit">
-				<label><?php esc_html_e( 'Categories Limit', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Categories Limit', 'mobishop' ); ?></label>
 				<input type="number" min="1" max="50" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>">
 			</div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--columns">
-				<label><?php esc_html_e( 'Columns', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Columns', 'mobishop' ); ?></label>
 				<input type="number" min="2" max="6" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>">
 			</div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--gap"><label><?php esc_html_e( 'Column Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--row-gap"><label><?php esc_html_e( 'Row Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][row_gap]" value="<?php echo esc_attr( (string) $settings['row_gap'] ); ?>"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-size"><label><?php esc_html_e( 'Image Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_size]" value="<?php echo esc_attr( (string) $settings['image_size'] ); ?>"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-shape"><label><?php esc_html_e( 'Image Shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option></select></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--label-color"><label><?php esc_html_e( 'Label Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>
-			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--label-size"><label><?php esc_html_e( 'Label Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--gap"><label><?php esc_html_e( 'Column Gap', 'mobishop' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--row-gap"><label><?php esc_html_e( 'Row Gap', 'mobishop' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][row_gap]" value="<?php echo esc_attr( (string) $settings['row_gap'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-size"><label><?php esc_html_e( 'Image Size', 'mobishop' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_size]" value="<?php echo esc_attr( (string) $settings['image_size'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--image-shape"><label><?php esc_html_e( 'Image Shape', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'mobishop' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'mobishop' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'mobishop' ); ?></option></select></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--label-color"><label><?php esc_html_e( 'Label Color', 'mobishop' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>
+			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--label-size"><label><?php esc_html_e( 'Label Size', 'mobishop' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--hide-empty">
-				<label><?php esc_html_e( 'Hide Empty Categories', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Hide Empty Categories', 'mobishop' ); ?></label>
 				<label class="kidia-page-master-toggle"><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][hide_empty]" value="1" <?php checked( true, $settings['hide_empty'] ); ?>><span class="kidia-toggle-state"></span></label>
 			</div>
 			<div class="kidia-builder-field kidia-category-grid-image-setting kidia-category-grid-image-setting--show-names">
-				<label><?php esc_html_e( 'Show Category Names', 'kidia-mobile-cms' ); ?></label>
+				<label><?php esc_html_e( 'Show Category Names', 'mobishop' ); ?></label>
 				<label class="kidia-page-master-toggle"><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_names]" value="1" <?php checked( true, $settings['show_names'] ); ?>><span class="kidia-toggle-state"></span></label>
 			</div>
 		</div>

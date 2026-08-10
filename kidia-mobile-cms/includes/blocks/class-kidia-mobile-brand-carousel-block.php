@@ -18,7 +18,7 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Brand Carousel', 'kidia-mobile-cms' );
+		return __( 'Brand Carousel', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -28,7 +28,7 @@ final class Kidia_Mobile_Brand_Carousel_Block extends Kidia_Mobile_Block {
 	public function get_description(): string {
 		return __(
 			'WooCommerce Brands Carousel.',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 

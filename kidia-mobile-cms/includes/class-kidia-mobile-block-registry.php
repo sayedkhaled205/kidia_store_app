@@ -513,7 +513,7 @@ final class Kidia_Mobile_Block_Registry {
 			$schema['tabs']   = is_array( $schema['tabs'] ?? null ) ? $schema['tabs'] : array();
 			$schema['tabs'][] = array(
 				'id'    => 'responsive',
-				'label' => __( 'Responsive layout', 'kidia-mobile-cms' ),
+				'label' => __( 'Responsive layout', 'mobishop' ),
 			);
 			$schema['fields'] = array_merge(
 				is_array( $schema['fields'] ?? null ) ? $schema['fields'] : array(),
@@ -543,13 +543,13 @@ final class Kidia_Mobile_Block_Registry {
 			};
 
 			return array(
-				$number( 'margin_horizontal', __( 'Outer side space', 'kidia-mobile-cms' ), 40 ),
-				$number( 'padding_vertical', __( 'Inner vertical space', 'kidia-mobile-cms' ), 40 ),
-				$number( 'padding_horizontal', __( 'Inner side space', 'kidia-mobile-cms' ), 40 ),
-				$number( 'block_radius', __( 'Block corner radius', 'kidia-mobile-cms' ), 50 ),
+				$number( 'margin_horizontal', __( 'Outer side space', 'mobishop' ), 40 ),
+				$number( 'padding_vertical', __( 'Inner vertical space', 'mobishop' ), 40 ),
+				$number( 'padding_horizontal', __( 'Inner side space', 'mobishop' ), 40 ),
+				$number( 'block_radius', __( 'Block corner radius', 'mobishop' ), 50 ),
 				array(
 					'key'     => 'content_scale',
-					'label'   => __( 'Responsive content scale (%)', 'kidia-mobile-cms' ),
+					'label'   => __( 'Responsive content scale (%)', 'mobishop' ),
 					'type'    => 'number',
 					'tab'     => 'responsive',
 					'min'     => 80,

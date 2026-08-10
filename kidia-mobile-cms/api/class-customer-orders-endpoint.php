@@ -71,7 +71,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			? true
 			: new WP_Error(
 				'woo_mobile_auth_unauthorized',
-				__( 'The customer session is missing or expired.', 'kidia-mobile-cms' ),
+				__( 'The customer session is missing or expired.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 	}
@@ -85,7 +85,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		if ( ! function_exists( 'wc_get_orders' ) || ! function_exists( 'wc_price' ) ) {
 			return new WP_Error(
 				'woo_mobile_orders_woocommerce_unavailable',
-				__( 'WooCommerce order history is unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce order history is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -110,7 +110,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		if ( ! is_object( $result ) || ! isset( $result->orders, $result->total, $result->max_num_pages ) || ! is_array( $result->orders ) ) {
 			return new WP_Error(
 				'woo_mobile_orders_invalid_result',
-				__( 'WooCommerce returned invalid order history data.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce returned invalid order history data.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -152,7 +152,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		if ( ! function_exists( 'wc_get_order' ) ) {
 			return new WP_Error(
 				'woo_mobile_orders_woocommerce_unavailable',
-				__( 'WooCommerce order history is unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce order history is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -163,7 +163,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 			(int) $order->get_customer_id() !== $customer_id ) {
 			return new WP_Error(
 				'woo_mobile_order_not_found',
-				__( 'The requested order was not found.', 'kidia-mobile-cms' ),
+				__( 'The requested order was not found.', 'mobishop' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -171,14 +171,14 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		if ( '' === $cancellation_type ) {
 			return new WP_Error(
 				'woo_mobile_order_cannot_cancel',
-				__( 'This order can no longer be cancelled.', 'kidia-mobile-cms' ),
+				__( 'This order can no longer be cancelled.', 'mobishop' ),
 				array( 'status' => 409 )
 			);
 		}
 		if ( ! is_callable( array( $order, 'update_status' ) ) ) {
 			return new WP_Error(
 				'woo_mobile_order_cancel_unavailable',
-				__( 'This order cannot be cancelled right now.', 'kidia-mobile-cms' ),
+				__( 'This order cannot be cancelled right now.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -188,15 +188,15 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 		if ( $is_request && '' === $request_status ) {
 			return new WP_Error(
 				'woo_mobile_order_cancel_unavailable',
-				__( 'The store cancellation-request status is unavailable.', 'kidia-mobile-cms' ),
+				__( 'The store cancellation-request status is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
 		$order->update_status(
 			$is_request ? $request_status : 'cancelled',
 			$is_request
-				? __( 'Cancellation requested by customer through the mobile app.', 'kidia-mobile-cms' )
-				: __( 'Order cancelled by customer.', 'kidia-mobile-cms' ),
+				? __( 'Cancellation requested by customer through the mobile app.', 'mobishop' )
+				: __( 'Order cancelled by customer.', 'mobishop' ),
 			$is_request
 		);
 		$response = new WP_REST_Response(
@@ -348,7 +348,7 @@ final class Kidia_Mobile_CMS_Customer_Orders_Endpoint {
 	private function unauthorized_error(): WP_Error {
 		return new WP_Error(
 			'woo_mobile_auth_unauthorized',
-			__( 'The customer session is missing or expired.', 'kidia-mobile-cms' ),
+			__( 'The customer session is missing or expired.', 'mobishop' ),
 			array( 'status' => 401 )
 		);
 	}

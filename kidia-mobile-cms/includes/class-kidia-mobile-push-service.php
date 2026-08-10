@@ -107,15 +107,15 @@ final class Kidia_Mobile_Push_Service {
 			'messaging_ready'=> ! empty( $project['messaging_ready'] ),
 			'error'          => is_array( $project['error'] ?? null ) ? $project['error'] : null,
 			'label'          => $connected
-				? __( 'Push ready', 'kidia-mobile-cms' )
+				? __( 'Push ready', 'mobishop' )
 				: ( ! $license_active
-					? __( 'License required', 'kidia-mobile-cms' )
-					: ( 'processing' === $project_state ? __( 'Firebase is being prepared', 'kidia-mobile-cms' ) : __( 'Firebase setup required', 'kidia-mobile-cms' ) ) ),
+					? __( 'License required', 'mobishop' )
+					: ( 'processing' === $project_state ? __( 'Firebase is being prepared', 'mobishop' ) : __( 'Firebase setup required', 'mobishop' ) ) ),
 			'reason'         => $connected
-				? __( 'Android, iOS and Cloud Messaging are connected to this application.', 'kidia-mobile-cms' )
+				? __( 'Android, iOS and Cloud Messaging are connected to this application.', 'mobishop' )
 				: ( $license_active
-					? __( 'Prepare the private Firebase project once. Later builds and messages reuse the same isolated project.', 'kidia-mobile-cms' )
-					: __( 'Activate the WooMobile license, then build the application to enable Push.', 'kidia-mobile-cms' ) ),
+					? __( 'Prepare the private Firebase project once. Later builds and messages reuse the same isolated project.', 'mobishop' )
+					: __( 'Activate the WooMobile license, then build the application to enable Push.', 'mobishop' ) ),
 			'devices'        => count( self::devices() ),
 		);
 	}
@@ -225,7 +225,7 @@ final class Kidia_Mobile_Push_Service {
 	public function register_device( WP_REST_Request $request ) {
 		$token = trim( sanitize_text_field( (string) $request->get_param( 'token' ) ) );
 		if ( strlen( $token ) < 16 || strlen( $token ) > 4096 ) {
-			return new WP_Error( 'kidia_push_token_invalid', __( 'A valid device token is required.', 'kidia-mobile-cms' ), array( 'status' => 400 ) );
+			return new WP_Error( 'kidia_push_token_invalid', __( 'A valid device token is required.', 'mobishop' ), array( 'status' => 400 ) );
 		}
 		$platform = sanitize_key( (string) $request->get_param( 'platform' ) );
 		$platform = in_array( $platform, array( 'android', 'ios', 'web' ), true ) ? $platform : 'android';
@@ -250,7 +250,7 @@ final class Kidia_Mobile_Push_Service {
 		$notification_id = sanitize_text_field( (string) $request->get_param( 'notification_id' ) );
 		$event = sanitize_key( (string) $request->get_param( 'event' ) );
 		if ( '' === $notification_id || ! in_array( $event, array( 'delivered', 'opened', 'converted' ), true ) ) {
-			return new WP_Error( 'kidia_push_event_invalid', __( 'A valid notification event is required.', 'kidia-mobile-cms' ), array( 'status' => 400 ) );
+			return new WP_Error( 'kidia_push_event_invalid', __( 'A valid notification event is required.', 'mobishop' ), array( 'status' => 400 ) );
 		}
 		$metrics = get_option( self::METRICS_OPTION, array() );
 		$metrics = is_array( $metrics ) ? $metrics : array();

@@ -36,10 +36,10 @@ $api_message = isset( $api['message'] )
 $license_active = ! empty( $license['active'] );
 $license_plan   = '' !== (string) ( $license['plan'] ?? '' )
 	? ucfirst( (string) $license['plan'] )
-	: __( 'No active plan', 'kidia-mobile-cms' );
+	: __( 'No active plan', 'mobishop' );
 $license_expiry = ! empty( $license['expires_at'] )
 	? wp_date( get_option( 'date_format' ), (int) $license['expires_at'] )
-	: __( 'No expiry', 'kidia-mobile-cms' );
+	: __( 'No expiry', 'mobishop' );
 $show_setup_choice = $license_active
 	&& ! $setup_complete
 	&& isset( $_GET['license_updated'] )
@@ -60,7 +60,7 @@ $build_state              = wp_parse_args(
 $build_status             = sanitize_key( (string) $build_state['status'] );
 if ( 'ready' === $build_status && ! $app_export_current ) {
 	$build_status          = 'idle';
-	$build_state['message'] = __( 'Application settings changed. Build a new APK to include the latest setup.', 'kidia-mobile-cms' );
+	$build_state['message'] = __( 'Application settings changed. Build a new APK to include the latest setup.', 'mobishop' );
 }
 $build_in_progress = in_array( $build_status, array( 'queued', 'building' ), true );
 $build_auto_download = isset( $_GET['build_notice'] )
@@ -69,30 +69,30 @@ $build_action = $build_step_complete
 	? 'kidia_mobile_download_apk'
 	: 'kidia_mobile_build_app';
 $build_button_label = $build_step_complete
-	? __( 'Download APK', 'kidia-mobile-cms' )
+	? __( 'Download APK', 'mobishop' )
 	: ( $build_in_progress
-			? __( 'Building APK…', 'kidia-mobile-cms' )
-			: __( 'Build Your App', 'kidia-mobile-cms' )
+			? __( 'Building APK…', 'mobishop' )
+			: __( 'Build Your App', 'mobishop' )
 	);
 $journey_steps = array(
 	array(
-		'title'       => __( 'Purchase and connect', 'kidia-mobile-cms' ),
-		'description' => __( 'Open WooMobile to purchase a plan and connect this already-installed WordPress plugin.', 'kidia-mobile-cms' ),
+		'title'       => __( 'Purchase and connect', 'mobishop' ),
+		'description' => __( 'Open WooMobile to purchase a plan and connect this already-installed WordPress plugin.', 'mobishop' ),
 		'complete'    => $connection_step_complete,
 	),
 	array(
-		'title'       => __( 'Activate your license', 'kidia-mobile-cms' ),
-		'description' => __( 'Enter the license issued for this website below to unlock the plugin.', 'kidia-mobile-cms' ),
+		'title'       => __( 'Activate your license', 'mobishop' ),
+		'description' => __( 'Enter the license issued for this website below to unlock the plugin.', 'mobishop' ),
 		'complete'    => $license_step_complete,
 	),
 	array(
-		'title'       => __( 'Set up your app', 'kidia-mobile-cms' ),
-		'description' => __( 'Use the Setup Wizard or continue with manual configuration.', 'kidia-mobile-cms' ),
+		'title'       => __( 'Set up your app', 'mobishop' ),
+		'description' => __( 'Use the Setup Wizard or continue with manual configuration.', 'mobishop' ),
 		'complete'    => $setup_step_complete,
 	),
 	array(
-		'title'       => __( 'Build your app', 'kidia-mobile-cms' ),
-		'description' => __( 'Build a real Android APK, then download it directly to install on your phone.', 'kidia-mobile-cms' ),
+		'title'       => __( 'Build your app', 'mobishop' ),
+		'description' => __( 'Build a real Android APK, then download it directly to install on your phone.', 'mobishop' ),
 		'complete'    => $build_step_complete,
 	),
 );
@@ -110,7 +110,7 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 <div class="wrap kidia-dashboard">
 
 	<?php if ( isset( $_GET['license_updated'] ) ) : ?>
-		<div class="notice notice-success inline"><p><?php esc_html_e( 'License updated successfully.', 'kidia-mobile-cms' ); ?></p></div>
+		<div class="notice notice-success inline"><p><?php esc_html_e( 'License updated successfully.', 'mobishop' ); ?></p></div>
 	<?php endif; ?>
 
 	<?php if ( isset( $_GET['license_error'] ) ) : ?>
@@ -118,21 +118,21 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	<?php endif; ?>
 
 	<?php if ( isset( $_GET['build_notice'] ) && 'started' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
-		<div class="notice notice-success inline"><p><?php esc_html_e( 'Your APK build has started. You can leave this page and return later.', 'kidia-mobile-cms' ); ?></p></div>
+		<div class="notice notice-success inline"><p><?php esc_html_e( 'Your APK build has started. You can leave this page and return later.', 'mobishop' ); ?></p></div>
 	<?php elseif ( isset( $_GET['build_notice'] ) && 'error' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
-		<div class="notice notice-error inline"><p><?php echo esc_html( isset( $_GET['build_message'] ) ? sanitize_text_field( wp_unslash( $_GET['build_message'] ) ) : __( 'The APK build could not be started.', 'kidia-mobile-cms' ) ); ?></p></div>
+		<div class="notice notice-error inline"><p><?php echo esc_html( isset( $_GET['build_message'] ) ? sanitize_text_field( wp_unslash( $_GET['build_message'] ) ) : __( 'The APK build could not be started.', 'mobishop' ) ); ?></p></div>
 	<?php endif; ?>
 
 	<section class="kidia-customer-journey" aria-labelledby="kidia-customer-journey-title">
 		<div class="kidia-customer-journey__header">
 			<div>
-				<span class="kidia-customer-journey__eyebrow"><?php esc_html_e( 'Your launch journey', 'kidia-mobile-cms' ); ?></span>
-				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From website connection to ready mobile app', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Woomobi CMS is already installed. Connect this website, activate its serial, then choose the wizard or manual setup.', 'kidia-mobile-cms' ); ?></p>
+				<span class="kidia-customer-journey__eyebrow"><?php esc_html_e( 'Your launch journey', 'mobishop' ); ?></span>
+				<h2 id="kidia-customer-journey-title"><?php esc_html_e( 'From website connection to ready mobile app', 'mobishop' ); ?></h2>
+				<p><?php esc_html_e( 'Woomobi CMS is already installed. Connect this website, activate its serial, then choose the wizard or manual setup.', 'mobishop' ); ?></p>
 			</div>
 			<?php if ( ! $license_active ) : ?>
 				<a class="button button-primary button-hero" href="<?php echo esc_url( $website_connected ? '#kidia-license-key' : $connect_url ); ?>">
-					<?php echo $website_connected ? esc_html__( 'Enter your serial', 'kidia-mobile-cms' ) : esc_html__( 'Connect website', 'kidia-mobile-cms' ); ?>
+					<?php echo $website_connected ? esc_html__( 'Enter your serial', 'mobishop' ) : esc_html__( 'Connect website', 'mobishop' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>
@@ -173,23 +173,23 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								echo esc_html(
 									(string) $build_state['message'] ?: (
 										$build_step_complete
-											? __( 'Your APK is ready to install.', 'kidia-mobile-cms' )
-											: __( 'Build an APK after completing the application setup.', 'kidia-mobile-cms' )
+											? __( 'Your APK is ready to install.', 'mobishop' )
+											: __( 'Build an APK after completing the application setup.', 'mobishop' )
 									)
 								);
 								?>
 								</p>
-								<small class="kidia-app-build__files" data-build-files><?php esc_html_e( 'Android &amp; iOS', 'kidia-mobile-cms' ); ?></small>
+								<small class="kidia-app-build__files" data-build-files><?php esc_html_e( 'Android &amp; iOS', 'mobishop' ); ?></small>
 							</button>
 						</form>
 						<div class="kidia-app-build__recent-choice" data-build-recent-choice hidden>
 							<div class="kidia-app-build__recent-choice-card" role="dialog" aria-modal="true" aria-labelledby="kidia-recent-build-title">
-								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A successful build is available from the last 10 days', 'kidia-mobile-cms' ); ?></h3>
-								<p><?php esc_html_e( 'Download the latest version again or create a new build.', 'kidia-mobile-cms' ); ?></p>
+								<h3 id="kidia-recent-build-title"><?php esc_html_e( 'A successful build is available from the last 10 days', 'mobishop' ); ?></h3>
+								<p><?php esc_html_e( 'Download the latest version again or create a new build.', 'mobishop' ); ?></p>
 								<div class="kidia-app-build__recent-choice-actions">
-									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'kidia-mobile-cms' ); ?></button>
-									<button type="button" class="button" data-build-new-version><?php esc_html_e( 'Build New Version', 'kidia-mobile-cms' ); ?></button>
-									<button type="button" class="button" data-build-recent-cancel><?php esc_html_e( 'Cancel', 'kidia-mobile-cms' ); ?></button>
+									<button type="button" class="button button-primary" data-build-download-again><?php esc_html_e( 'Download Again', 'mobishop' ); ?></button>
+									<button type="button" class="button" data-build-new-version><?php esc_html_e( 'Build New Version', 'mobishop' ); ?></button>
+									<button type="button" class="button" data-build-recent-cancel><?php esc_html_e( 'Cancel', 'mobishop' ); ?></button>
 								</div>
 							</div>
 						</div>
@@ -203,9 +203,9 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 							<h3><?php echo esc_html( (string) $journey_step['title'] ); ?></h3>
 							<p><?php echo esc_html( (string) $journey_step['description'] ); ?></p>
 							<?php if ( $step_current ) : ?>
-								<strong><?php esc_html_e( 'Current step', 'kidia-mobile-cms' ); ?></strong>
+								<strong><?php esc_html_e( 'Current step', 'mobishop' ); ?></strong>
 							<?php elseif ( $step_complete ) : ?>
-								<strong><?php esc_html_e( 'Complete', 'kidia-mobile-cms' ); ?></strong>
+								<strong><?php esc_html_e( 'Complete', 'mobishop' ); ?></strong>
 							<?php endif; ?>
 						</div>
 					</li>
@@ -220,53 +220,53 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 			<div class="kidia-dashboard__card-header">
 				<span class="kidia-dashboard__card-icon dashicons dashicons-shield-alt" aria-hidden="true"></span>
 				<div>
-					<span class="kidia-dashboard__card-eyebrow"><?php esc_html_e( 'Website access', 'kidia-mobile-cms' ); ?></span>
-					<h2><?php esc_html_e( 'License', 'kidia-mobile-cms' ); ?></h2>
-					<p><?php esc_html_e( 'Connect this website and activate its serial to unlock every builder tool.', 'kidia-mobile-cms' ); ?></p>
+					<span class="kidia-dashboard__card-eyebrow"><?php esc_html_e( 'Website access', 'mobishop' ); ?></span>
+					<h2><?php esc_html_e( 'License', 'mobishop' ); ?></h2>
+					<p><?php esc_html_e( 'Connect this website and activate its serial to unlock every builder tool.', 'mobishop' ); ?></p>
 				</div>
 			</div>
 
 			<table class="widefat striped kidia-license-summary">
 				<tbody>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Status', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Status', 'mobishop' ); ?></th>
 						<td>
 							<span class="kidia-status <?php echo $license_active ? 'kidia-status--online' : 'kidia-status--offline'; ?>">
-								<?php echo $license_active ? esc_html__( 'Active', 'kidia-mobile-cms' ) : esc_html__( 'Inactive', 'kidia-mobile-cms' ); ?>
+								<?php echo $license_active ? esc_html__( 'Active', 'mobishop' ) : esc_html__( 'Inactive', 'mobishop' ); ?>
 							</span>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Plan', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Plan', 'mobishop' ); ?></th>
 						<td><?php echo esc_html( $license_plan ); ?></td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Expires', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Expires', 'mobishop' ); ?></th>
 						<td><?php echo esc_html( $license_expiry ); ?></td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Website', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Website', 'mobishop' ); ?></th>
 						<td>
 							<span class="kidia-status <?php echo $website_connected ? 'kidia-status--online' : 'kidia-status--offline'; ?>">
-								<?php echo $website_connected ? esc_html__( 'Connected', 'kidia-mobile-cms' ) : esc_html__( 'Not connected', 'kidia-mobile-cms' ); ?>
+								<?php echo $website_connected ? esc_html__( 'Connected', 'mobishop' ) : esc_html__( 'Not connected', 'mobishop' ); ?>
 							</span>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'API', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'API', 'mobishop' ); ?></th>
 						<td>
 							<span class="kidia-status <?php echo $api_online ? 'kidia-status--online' : 'kidia-status--offline'; ?>">
-								<?php echo $api_online ? esc_html__( 'Online', 'kidia-mobile-cms' ) : esc_html__( 'Offline', 'kidia-mobile-cms' ); ?>
+								<?php echo $api_online ? esc_html__( 'Online', 'mobishop' ) : esc_html__( 'Offline', 'mobishop' ); ?>
 							</span>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Plugin version', 'kidia-mobile-cms' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Plugin version', 'mobishop' ); ?></th>
 						<td><?php echo esc_html( defined( 'KIDIA_MOBILE_CMS_VERSION' ) ? KIDIA_MOBILE_CMS_VERSION : '' ); ?></td>
 					</tr>
 					<?php if ( ! empty( $license['last_verified_at'] ) ) : ?>
 						<tr>
-							<th scope="row"><?php esc_html_e( 'Last verified', 'kidia-mobile-cms' ); ?></th>
+							<th scope="row"><?php esc_html_e( 'Last verified', 'mobishop' ); ?></th>
 							<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $license['last_verified_at'] ) ); ?></td>
 						</tr>
 					<?php endif; ?>
@@ -276,16 +276,16 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 			<?php if ( $license_active ) : ?>
 				<?php if ( empty( $license['signature_configured'] ) ) : ?>
 					<div class="notice notice-warning inline">
-						<p><?php esc_html_e( 'License transport is active. Add the production signing public key before release to enable local Ed25519 proof verification.', 'kidia-mobile-cms' ); ?></p>
+						<p><?php esc_html_e( 'License transport is active. Add the production signing public key before release to enable local Ed25519 proof verification.', 'mobishop' ); ?></p>
 					</div>
 				<?php endif; ?>
 			<?php else : ?>
 				<form class="kidia-license-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="kidia_mobile_activate_license">
 					<?php wp_nonce_field( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' ); ?>
-					<label for="kidia-license-key"><?php esc_html_e( 'License key', 'kidia-mobile-cms' ); ?></label>
+					<label for="kidia-license-key"><?php esc_html_e( 'License key', 'mobishop' ); ?></label>
 					<input id="kidia-license-key" name="license_key" type="password" autocomplete="off" required>
-					<button class="button button-primary" type="submit"><?php esc_html_e( 'Activate license', 'kidia-mobile-cms' ); ?></button>
+					<button class="button button-primary" type="submit"><?php esc_html_e( 'Activate license', 'mobishop' ); ?></button>
 				</form>
 			<?php endif; ?>
 
@@ -296,14 +296,14 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	<?php if ( $show_setup_choice ) : ?>
 		<div class="kidia-setup-choice" role="dialog" aria-modal="true" aria-labelledby="kidia-setup-choice-title">
 			<div class="kidia-setup-choice__panel">
-				<h2 id="kidia-setup-choice-title"><?php esc_html_e( 'Your license is active', 'kidia-mobile-cms' ); ?></h2>
-				<p><?php esc_html_e( 'Would you like Woomobi CMS to guide you through setup, or configure everything manually?', 'kidia-mobile-cms' ); ?></p>
+				<h2 id="kidia-setup-choice-title"><?php esc_html_e( 'Your license is active', 'mobishop' ); ?></h2>
+				<p><?php esc_html_e( 'Would you like Woomobi CMS to guide you through setup, or configure everything manually?', 'mobishop' ); ?></p>
 				<div class="kidia-setup-choice__actions">
 					<a class="button button-primary button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-setup' ) ); ?>">
-						<?php esc_html_e( 'Start Setup Wizard', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Start Setup Wizard', 'mobishop' ); ?>
 					</a>
 					<a class="button button-hero" href="<?php echo esc_url( admin_url( 'admin.php?page=kidia-mobile-cms&setup_choice=manual' ) ); ?>">
-						<?php esc_html_e( 'Continue Manually', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Continue Manually', 'mobishop' ); ?>
 					</a>
 				</div>
 			</div>

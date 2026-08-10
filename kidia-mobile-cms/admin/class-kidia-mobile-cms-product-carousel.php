@@ -21,7 +21,7 @@ final class Kidia_Mobile_CMS_Product_Carousel {
 	public function __construct() {
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_product_carousels',
-			__( 'Product Carousels', 'kidia-mobile-cms' ),
+			__( 'Product Carousels', 'mobishop' ),
 			'kidia-mobile-product-carousels',
 			'product-carousel',
 			'kidia_mobile_create_product_carousel',

@@ -30,7 +30,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 	public function get_label(): string {
 		return __(
 			'Text Block',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 
@@ -51,7 +51,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 	public function get_description(): string {
 		return __(
 			'Display a custom text block.',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 
@@ -203,7 +203,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Title',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -222,7 +222,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Content',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -240,7 +240,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Text Alignment',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -255,7 +255,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 						<?php
 						esc_html_e(
 							'Left',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</option>
@@ -267,7 +267,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 						<?php
 						esc_html_e(
 							'Center',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</option>
@@ -279,16 +279,16 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 						<?php
 						esc_html_e(
 							'Right',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</option>
 				</select>
 
 			</div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="12" max="48" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title_size]" value="<?php echo esc_attr( (string) $settings['title_size'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Content Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][content_size]" value="<?php echo esc_attr( (string) $settings['content_size'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Font Weight', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][font_weight]"><option value="normal" <?php selected( 'normal', $settings['font_weight'] ); ?>><?php esc_html_e( 'Normal', 'kidia-mobile-cms' ); ?></option><option value="medium" <?php selected( 'medium', $settings['font_weight'] ); ?>><?php esc_html_e( 'Medium', 'kidia-mobile-cms' ); ?></option><option value="bold" <?php selected( 'bold', $settings['font_weight'] ); ?>><?php esc_html_e( 'Bold', 'kidia-mobile-cms' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title Size', 'mobishop' ); ?></label><input type="number" min="12" max="48" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title_size]" value="<?php echo esc_attr( (string) $settings['title_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Content Size', 'mobishop' ); ?></label><input type="number" min="10" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][content_size]" value="<?php echo esc_attr( (string) $settings['content_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Font Weight', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][font_weight]"><option value="normal" <?php selected( 'normal', $settings['font_weight'] ); ?>><?php esc_html_e( 'Normal', 'mobishop' ); ?></option><option value="medium" <?php selected( 'medium', $settings['font_weight'] ); ?>><?php esc_html_e( 'Medium', 'mobishop' ); ?></option><option value="bold" <?php selected( 'bold', $settings['font_weight'] ); ?>><?php esc_html_e( 'Bold', 'mobishop' ); ?></option></select></div>
 
 			<div class="kidia-builder-field">
 
@@ -296,7 +296,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Background Color',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -317,7 +317,7 @@ final class Kidia_Mobile_Text_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Text Color',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>

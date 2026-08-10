@@ -44,13 +44,13 @@ $tabs = isset( $schema['tabs'] )
 		: array(
 			array(
 				'id'    => 'general',
-				'label' => __( 'General', 'kidia-mobile-cms' ),
+				'label' => __( 'General', 'mobishop' ),
 			),
 		);
 
 $editor_title = isset( $schema['title'] )
 	? (string) $schema['title']
-	: __( 'Element Editor', 'kidia-mobile-cms' );
+	: __( 'Element Editor', 'mobishop' );
 
 $editor_description = isset( $schema['description'] )
 	? (string) $schema['description']
@@ -83,7 +83,7 @@ $page_slug = isset( $_GET['page'] )
 				←
 				<?php esc_html_e(
 					'Back to Library',
-					'kidia-mobile-cms'
+					'mobishop'
 				); ?>
 			</a>
 
@@ -114,7 +114,7 @@ $page_slug = isset( $_GET['page'] )
 			<p>
 				<?php esc_html_e(
 					'Item saved successfully.',
-					'kidia-mobile-cms'
+					'mobishop'
 				); ?>
 			</p>
 		</div>
@@ -155,7 +155,7 @@ $page_slug = isset( $_GET['page'] )
 						<h2>
 							<?php esc_html_e(
 								'Element Details',
-								'kidia-mobile-cms'
+								'mobishop'
 							); ?>
 						</h2>
 
@@ -168,7 +168,7 @@ $page_slug = isset( $_GET['page'] )
 							<label for="kidia-editor-name">
 								<?php esc_html_e(
 									'Name',
-									'kidia-mobile-cms'
+									'mobishop'
 								); ?>
 							</label>
 
@@ -257,7 +257,7 @@ $page_slug = isset( $_GET['page'] )
                     											<p class="description">
                     												<?php esc_html_e(
                     													'No settings available in this section.',
-                    													'kidia-mobile-cms'
+                    													'mobishop'
                     												); ?>
                     											</p>
 
@@ -409,7 +409,7 @@ $page_slug = isset( $_GET['page'] )
                     																	>
                     																		<?php esc_html_e(
                     																			'Select Media',
-                    																			'kidia-mobile-cms'
+                    																			'mobishop'
                     																		); ?>
                     																	</button>
 
@@ -420,7 +420,7 @@ $page_slug = isset( $_GET['page'] )
                     																	>
                     																		<?php esc_html_e(
                     																			'Remove',
-                    																			'kidia-mobile-cms'
+                    																			'mobishop'
                     																		); ?>
                     																	</button>
 
@@ -512,7 +512,7 @@ $page_slug = isset( $_GET['page'] )
                                 							<?php
                                 							esc_html_e(
                                 								'Publishing',
-                                								'kidia-mobile-cms'
+                                								'mobishop'
                                 							);
                                 							?>
                                 						</h2>
@@ -527,7 +527,7 @@ $page_slug = isset( $_GET['page'] )
                                 								<?php
                                 								esc_html_e(
                                 									'Status',
-                                									'kidia-mobile-cms'
+                                									'mobishop'
                                 								);
                                 								?>
                                 							</label>
@@ -549,7 +549,7 @@ $page_slug = isset( $_GET['page'] )
                                 									<?php
                                 									esc_html_e(
                                 										'Draft',
-                                										'kidia-mobile-cms'
+                                										'mobishop'
                                 									);
                                 									?>
                                 								</option>
@@ -566,7 +566,7 @@ $page_slug = isset( $_GET['page'] )
                                 									<?php
                                 									esc_html_e(
                                 										'Published',
-                                										'kidia-mobile-cms'
+                                										'mobishop'
                                 									);
                                 									?>
                                 								</option>
@@ -599,7 +599,7 @@ $page_slug = isset( $_GET['page'] )
                                 								<?php
                                 								esc_html_e(
                                 									'Enabled',
-                                									'kidia-mobile-cms'
+                                									'mobishop'
                                 								);
                                 								?>
                                 							</span>
@@ -612,7 +612,7 @@ $page_slug = isset( $_GET['page'] )
                                 							submit_button(
                                 								__(
                                 									'Save',
-                                									'kidia-mobile-cms'
+                                									'mobishop'
                                 								),
                                 								'primary',
                                 								'submit',
@@ -638,7 +638,7 @@ $page_slug = isset( $_GET['page'] )
                                 								<?php
                                 								esc_html_e(
                                 									'Back',
-                                									'kidia-mobile-cms'
+                                									'mobishop'
                                 								);
                                 								?>
                                 							</a>

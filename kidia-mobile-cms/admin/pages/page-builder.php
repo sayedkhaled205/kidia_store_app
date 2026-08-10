@@ -32,7 +32,7 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 		<div class="kidia-page-field<?php echo 'image' === $field['type'] ? ' kidia-page-field--image' : ''; ?><?php echo 'Section Layout Settings' === $section ? ' kidia-section-layout-field' : ''; ?>">
 			<label><?php echo esc_html( $field['label'] ); ?></label>
 			<?php if ( 'checkbox' === $field['type'] ) : ?>
-				<label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><span></span><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label>
+				<label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><span></span><b><?php esc_html_e( 'Show', 'mobishop' ); ?></b></label>
 			<?php elseif ( 'product_position' === $field['type'] ) : ?>
 				<div class="kidia-product-position" role="radiogroup" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
 					<div class="kidia-product-position__image" aria-hidden="true"></div>
@@ -47,17 +47,17 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 			<?php elseif ( 'number' === $field['type'] ) : ?>
 				<input type="number" name="<?php echo esc_attr( $name ); ?>" min="<?php echo esc_attr( (string) $field['min'] ); ?>" max="<?php echo esc_attr( (string) $field['max'] ); ?>" step="<?php echo esc_attr( (string) $field['step'] ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
 			<?php elseif ( 'image' === $field['type'] ) : ?>
-				<div class="kidia-page-media"><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button></div>
+				<div class="kidia-page-media"><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'mobishop' ); ?></button></div>
 				<img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>>
 			<?php elseif ( 'tabs' === $field['type'] ) :
 				$tabs = json_decode( (string) $value, true );
 				$tabs = is_array( $tabs ) ? $tabs : array();
 				$tab_targets = array(
-					'overview' => __( 'Overview / product information', 'kidia-mobile-cms' ),
-					'variations' => __( 'Variations', 'kidia-mobile-cms' ),
-					'description' => __( 'Description', 'kidia-mobile-cms' ),
-					'reviews' => __( 'Reviews', 'kidia-mobile-cms' ),
-					'recommend' => __( 'Related products', 'kidia-mobile-cms' ),
+					'overview' => __( 'Overview / product information', 'mobishop' ),
+					'variations' => __( 'Variations', 'mobishop' ),
+					'description' => __( 'Description', 'mobishop' ),
+					'reviews' => __( 'Reviews', 'mobishop' ),
+					'recommend' => __( 'Related products', 'mobishop' ),
 				);
 				?>
 				<div class="kidia-product-tabs-editor">
@@ -65,14 +65,14 @@ $render_fields = static function ( string $name_prefix, array $fields, array $se
 					<div class="kidia-product-tabs-rows">
 						<?php foreach ( array_slice( $tabs, 0, 10 ) as $tab ) : ?>
 							<div class="kidia-product-tab-row">
-								<input type="text" class="kidia-product-tab-label" value="<?php echo esc_attr( (string) ( $tab['label'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'Tab label', 'kidia-mobile-cms' ); ?>">
+								<input type="text" class="kidia-product-tab-label" value="<?php echo esc_attr( (string) ( $tab['label'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'Tab label', 'mobishop' ); ?>">
 								<select class="kidia-product-tab-target"><?php foreach ( $tab_targets as $target => $target_label ) : ?><option value="<?php echo esc_attr( $target ); ?>" <?php selected( (string) ( $tab['target'] ?? 'overview' ), $target ); ?>><?php echo esc_html( $target_label ); ?></option><?php endforeach; ?></select>
-								<label class="kidia-product-tab-enabled"><input type="checkbox" <?php checked( ! empty( $tab['enabled'] ) ); ?>><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></label>
-								<button type="button" class="button kidia-product-tab-remove" aria-label="<?php esc_attr_e( 'Remove tab', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-trash"></span></button>
+								<label class="kidia-product-tab-enabled"><input type="checkbox" <?php checked( ! empty( $tab['enabled'] ) ); ?>><?php esc_html_e( 'Show', 'mobishop' ); ?></label>
+								<button type="button" class="button kidia-product-tab-remove" aria-label="<?php esc_attr_e( 'Remove tab', 'mobishop' ); ?>"><span class="dashicons dashicons-trash"></span></button>
 							</div>
 						<?php endforeach; ?>
 					</div>
-					<button type="button" class="button kidia-product-tab-add"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add tab', 'kidia-mobile-cms' ); ?></button>
+					<button type="button" class="button kidia-product-tab-add"><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'Add tab', 'mobishop' ); ?></button>
 				</div>
 			<?php else : ?>
 				<input type="text" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
@@ -98,12 +98,12 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 }
 ?>
 <div class="wrap kidia-page-builder" data-page="<?php echo esc_attr( $page ); ?>">
-	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page settings restored to defaults.', 'kidia-mobile-cms' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'kidia-mobile-cms' ); ?></p></div><?php endif; ?>
+	<?php if ( isset( $_GET['restored'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page settings restored to defaults.', 'mobishop' ); ?></p></div><?php elseif ( isset( $_GET['updated'] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Page layout saved successfully.', 'mobishop' ); ?></p></div><?php endif; ?>
 	<div class="kidia-page-workspace">
 		<aside class="kidia-page-preview">
 			<div class="kidia-page-phone"><div class="kidia-page-phone__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
-					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => $page, 'product' => $flutter_preview_product_id, 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
+					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'mobishop' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => $page, 'product' => $flutter_preview_product_id, 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
 					<div id="kidia-page-live-preview" class="kidia-legacy-preview-fallback" hidden></div>
 				<?php else : ?>
 					<div id="kidia-page-live-preview"></div>
@@ -115,7 +115,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<?php wp_nonce_field( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' ); ?>
 			<?php
 			$kidia_toolbar_title = $page_label;
-			$kidia_toolbar_save_label = __( 'Save Page Layout', 'kidia-mobile-cms' );
+			$kidia_toolbar_save_label = __( 'Save Page Layout', 'mobishop' );
 			$kidia_toolbar_show_add = 'wishlist' === $page;
 			$kidia_toolbar_show_restore = true;
 			$kidia_toolbar_page_toggle = true;
@@ -125,33 +125,33 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<div class="kidia-builder-cards-scroll" data-kidia-builder-cards-scroll>
 				<section class="kidia-page-card kidia-page-settings-card">
 					<div class="kidia-page-card__header">
-						<div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Page Settings', 'kidia-mobile-cms' ); ?></strong></div>
-						<label class="kidia-page-card__header-color"><span><?php esc_html_e( 'Page background color', 'kidia-mobile-cms' ); ?></span><input type="color" name="layout[settings][page_background_color]" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $layout['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' ); ?>"></label>
+						<div class="kidia-page-card__identity"><span class="dashicons dashicons-admin-appearance"></span><strong><?php esc_html_e( 'Page Settings', 'mobishop' ); ?></strong></div>
+						<label class="kidia-page-card__header-color"><span><?php esc_html_e( 'Page background color', 'mobishop' ); ?></span><input type="color" name="layout[settings][page_background_color]" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $layout['settings']['page_background_color'] ?? '' ) ) ?: '#FFFFFF' ); ?>"></label>
 					</div>
 					<div class="kidia-page-card__body">
 						<div class="kidia-field-grid">
-							<label><span><?php esc_html_e( 'Application font', 'kidia-mobile-cms' ); ?></span><select name="layout[settings][font_family]"><option value="system" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'system' ); ?>><?php esc_html_e( 'System font', 'kidia-mobile-cms' ); ?></option><option value="poppins" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'poppins' ); ?>>Poppins</option><option value="roboto" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'roboto' ); ?>>Roboto</option><option value="noto_sans_arabic" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'noto_sans_arabic' ); ?>>Noto Sans Arabic</option><option value="serif" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'serif' ); ?>>Serif</option><option value="monospace" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'monospace' ); ?>>Monospace</option></select></label>
-							<label><span><?php esc_html_e( 'Content side padding', 'kidia-mobile-cms' ); ?></span><input type="number" min="0" max="40" name="layout[settings][content_horizontal_padding]" value="<?php echo esc_attr( (string) absint( $layout['settings']['content_horizontal_padding'] ?? 20 ) ); ?>"></label>
+							<label><span><?php esc_html_e( 'Application font', 'mobishop' ); ?></span><select name="layout[settings][font_family]"><option value="system" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'system' ); ?>><?php esc_html_e( 'System font', 'mobishop' ); ?></option><option value="poppins" <?php selected( (string) ( $layout['settings']['font_family'] ?? 'system' ), 'poppins' ); ?>>Poppins</option><option value="roboto" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'roboto' ); ?>>Roboto</option><option value="noto_sans_arabic" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'noto_sans_arabic' ); ?>>Noto Sans Arabic</option><option value="serif" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'serif' ); ?>>Serif</option><option value="monospace" <?php selected( (string) ( $layout['settings']['font_family'] ?? '' ), 'monospace' ); ?>>Monospace</option></select></label>
+							<label><span><?php esc_html_e( 'Content side padding', 'mobishop' ); ?></span><input type="number" min="0" max="40" name="layout[settings][content_horizontal_padding]" value="<?php echo esc_attr( (string) absint( $layout['settings']['content_horizontal_padding'] ?? 20 ) ); ?>"></label>
 						</div>
 					</div>
 				</section>
 
 			<?php if ( 'wishlist' === $page ) : ?>
 				<section class="kidia-page-card is-open kidia-wishlist-access-mode">
-					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-heart"></span><strong><?php esc_html_e( 'Wishlist access mode', 'kidia-mobile-cms' ); ?></strong></div></div>
+					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-heart"></span><strong><?php esc_html_e( 'Wishlist access mode', 'mobishop' ); ?></strong></div></div>
 					<div class="kidia-page-card__body">
 						<div class="kidia-category-navigation-modes kidia-wishlist-access-options">
-							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="guest"><input type="radio" name="layout[settings][wishlist_access_mode]" value="guest" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'guest' ); ?>><span><b><?php esc_html_e( 'Guest wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Allow adding products without signing in.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-unlock"></i></span></label>
-							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="sign_in_required"><input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'sign_in_required' ); ?>><span><b><?php esc_html_e( 'Sign in required', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Show the sign-in wishlist page for signed-out customers.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
+							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="guest"><input type="radio" name="layout[settings][wishlist_access_mode]" value="guest" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'guest' ); ?>><span><b><?php esc_html_e( 'Guest wishlist', 'mobishop' ); ?></b><small><?php esc_html_e( 'Allow adding products without signing in.', 'mobishop' ); ?></small><i class="dashicons dashicons-unlock"></i></span></label>
+							<label class="kidia-wishlist-access-option" data-wishlist-access-mode="sign_in_required"><input type="radio" name="layout[settings][wishlist_access_mode]" value="sign_in_required" <?php checked( (string) ( $layout['settings']['wishlist_access_mode'] ?? 'sign_in_required' ), 'sign_in_required' ); ?>><span><b><?php esc_html_e( 'Sign in required', 'mobishop' ); ?></b><small><?php esc_html_e( 'Show the sign-in wishlist page for signed-out customers.', 'mobishop' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
 						</div>
 						<div class="kidia-wishlist-preview-heading">
-							<strong><?php esc_html_e( 'Preview and edit a wishlist state', 'kidia-mobile-cms' ); ?></strong>
-							<small><?php esc_html_e( 'Each state keeps its own settings. Choose one to show its element directly below.', 'kidia-mobile-cms' ); ?></small>
+							<strong><?php esc_html_e( 'Preview and edit a wishlist state', 'mobishop' ); ?></strong>
+							<small><?php esc_html_e( 'Each state keeps its own settings. Choose one to show its element directly below.', 'mobishop' ); ?></small>
 						</div>
 						<div class="kidia-category-navigation-modes kidia-wishlist-preview-modes">
-							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="sign_in"><input type="radio" name="layout[settings][wishlist_preview_state]" value="sign_in" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'sign_in' ); ?>><span><b><?php esc_html_e( 'Sign-in Wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Edit the page shown to signed-out customers.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
-							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="empty"><input type="radio" name="layout[settings][wishlist_preview_state]" value="empty" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'empty' ); ?>><span><b><?php esc_html_e( 'Empty Wishlist Settings', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Edit and preview the screen shown before products are saved.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-heart"></i></span></label>
-							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="products"><input type="radio" name="layout[settings][wishlist_preview_state]" value="products" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'products' ); ?>><span><b><?php esc_html_e( 'Product Wishlist', 'kidia-mobile-cms' ); ?></b><small><?php esc_html_e( 'Edit and preview the wishlist when saved products exist.', 'kidia-mobile-cms' ); ?></small><i class="dashicons dashicons-grid-view"></i></span></label>
+							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="sign_in"><input type="radio" name="layout[settings][wishlist_preview_state]" value="sign_in" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'sign_in' ); ?>><span><b><?php esc_html_e( 'Sign-in Wishlist', 'mobishop' ); ?></b><small><?php esc_html_e( 'Edit the page shown to signed-out customers.', 'mobishop' ); ?></small><i class="dashicons dashicons-lock"></i></span></label>
+							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="empty"><input type="radio" name="layout[settings][wishlist_preview_state]" value="empty" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'empty' ); ?>><span><b><?php esc_html_e( 'Empty Wishlist Settings', 'mobishop' ); ?></b><small><?php esc_html_e( 'Edit and preview the screen shown before products are saved.', 'mobishop' ); ?></small><i class="dashicons dashicons-heart"></i></span></label>
+							<label class="kidia-wishlist-preview-option" data-wishlist-preview-state="products"><input type="radio" name="layout[settings][wishlist_preview_state]" value="products" <?php checked( (string) ( $layout['settings']['wishlist_preview_state'] ?? 'products' ), 'products' ); ?>><span><b><?php esc_html_e( 'Product Wishlist', 'mobishop' ); ?></b><small><?php esc_html_e( 'Edit and preview the wishlist when saved products exist.', 'mobishop' ); ?></small><i class="dashicons dashicons-grid-view"></i></span></label>
 						</div>
 					</div>
 				</section>
@@ -181,7 +181,7 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 				<section class="kidia-page-card" data-element="<?php echo esc_attr( $element_type ); ?>" data-instance-id="<?php echo esc_attr( $element_id ); ?>"<?php if ( 'wishlist' === $page && isset( $wishlist_state_map[ $element_type ] ) ) : ?> data-wishlist-state="<?php echo esc_attr( $wishlist_state_map[ $element_type ] ); ?>"<?php endif; ?> draggable="false">
 					<input class="kidia-page-element-id" type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $element_id ); ?>">
 					<input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][type]" value="<?php echo esc_attr( $element_type ); ?>">
-					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><div class="kidia-card-actions"><?php if ( 'wishlist' === $page && str_ends_with( $element_type, '_recommendations' ) ) : ?><button type="button" class="button kidia-recommendation-copy kidia-card-action kidia-card-action--primary"><span class="dashicons dashicons-admin-page"></span><?php esc_html_e( 'Copy', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-recommendation-paste kidia-card-action kidia-card-action--secondary"><span class="dashicons dashicons-clipboard"></span><?php esc_html_e( 'Paste', 'kidia-mobile-cms' ); ?></button><?php elseif ( 'wishlist' === $page ) : ?><button type="button" class="button kidia-page-duplicate kidia-card-action kidia-card-action--primary"><span class="dashicons dashicons-admin-page"></span><?php esc_html_e( 'Duplicate', 'kidia-mobile-cms' ); ?></button><button type="button" class="button kidia-page-remove kidia-card-action kidia-card-action--secondary" <?php echo $element_id === $element_type ? 'hidden' : ''; ?>><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button><?php else : ?><span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span><span class="kidia-card-action-placeholder kidia-card-action--secondary" aria-hidden="true"></span><?php endif; ?><button type="button" class="button kidia-page-expand kidia-card-action kidia-card-action--expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button><label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span class="kidia-builder-switch__track"></span><span class="kidia-builder-switch__state"></span></label></div></div>
+					<div class="kidia-page-card__header"><div class="kidia-page-card__identity"><span class="dashicons dashicons-move kidia-page-drag"></span><span class="dashicons <?php echo esc_attr( $definition['icon'] ); ?>"></span><strong><?php echo esc_html( $definition['label'] ); ?></strong></div><div class="kidia-card-actions"><?php if ( 'wishlist' === $page && str_ends_with( $element_type, '_recommendations' ) ) : ?><button type="button" class="button kidia-recommendation-copy kidia-card-action kidia-card-action--primary"><span class="dashicons dashicons-admin-page"></span><?php esc_html_e( 'Copy', 'mobishop' ); ?></button><button type="button" class="button kidia-recommendation-paste kidia-card-action kidia-card-action--secondary"><span class="dashicons dashicons-clipboard"></span><?php esc_html_e( 'Paste', 'mobishop' ); ?></button><?php elseif ( 'wishlist' === $page ) : ?><button type="button" class="button kidia-page-duplicate kidia-card-action kidia-card-action--primary"><span class="dashicons dashicons-admin-page"></span><?php esc_html_e( 'Duplicate', 'mobishop' ); ?></button><button type="button" class="button kidia-page-remove kidia-card-action kidia-card-action--secondary" <?php echo $element_id === $element_type ? 'hidden' : ''; ?>><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Remove', 'mobishop' ); ?></button><?php else : ?><span class="kidia-card-action-placeholder kidia-card-action--primary" aria-hidden="true"></span><span class="kidia-card-action-placeholder kidia-card-action--secondary" aria-hidden="true"></span><?php endif; ?><button type="button" class="button kidia-page-expand kidia-card-action kidia-card-action--expand"><span class="dashicons dashicons-arrow-down-alt2"></span></button><label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle"><input type="hidden" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0"><input type="checkbox" name="layout[elements][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( ! empty( $element['enabled'] ) ); ?>><span class="kidia-builder-switch__track"></span><span class="kidia-builder-switch__state"></span></label></div></div>
 					<div class="kidia-page-card__body" hidden><div class="kidia-page-fields"><?php
 						$render_fields( 'layout[elements][' . $index . ']', $definition['fields'], $element['settings'] );
 					?></div></div>
@@ -199,10 +199,10 @@ if ( 'product' === $page && function_exists( 'wc_get_products' ) ) {
 			<div class="kidia-wishlist-element-picker__panel" role="dialog" aria-modal="true" aria-labelledby="kidia-wishlist-element-picker-title">
 				<header class="kidia-wishlist-element-picker__header">
 					<div>
-						<h2 id="kidia-wishlist-element-picker-title"><?php esc_html_e( 'Add Element', 'kidia-mobile-cms' ); ?></h2>
-						<p><?php esc_html_e( 'Choose an element to add below the currently selected wishlist state.', 'kidia-mobile-cms' ); ?></p>
+						<h2 id="kidia-wishlist-element-picker-title"><?php esc_html_e( 'Add Element', 'mobishop' ); ?></h2>
+						<p><?php esc_html_e( 'Choose an element to add below the currently selected wishlist state.', 'mobishop' ); ?></p>
 					</div>
-					<button type="button" class="button-link kidia-wishlist-element-picker__close" data-kidia-close-wishlist-picker aria-label="<?php esc_attr_e( 'Close', 'kidia-mobile-cms' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
+					<button type="button" class="button-link kidia-wishlist-element-picker__close" data-kidia-close-wishlist-picker aria-label="<?php esc_attr_e( 'Close', 'mobishop' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 				</header>
 				<div class="kidia-wishlist-element-picker__grid">
 					<?php foreach ( $element_definitions as $wishlist_definition ) : ?>

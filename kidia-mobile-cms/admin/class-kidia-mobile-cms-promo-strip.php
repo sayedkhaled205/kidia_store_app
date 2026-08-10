@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Promo_Strip {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_promo_strips',
-			__( 'Promo Strips', 'kidia-mobile-cms' ),
+			__( 'Promo Strips', 'mobishop' ),
 			'kidia-mobile-promo-strips',
 			'promo-strip',
 			'kidia_mobile_create_promo_strip',

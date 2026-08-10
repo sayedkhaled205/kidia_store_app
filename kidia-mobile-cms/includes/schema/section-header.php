@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Section Header',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a reusable section title and action.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-heading',
@@ -41,7 +41,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -49,7 +49,7 @@ return array(
 			'id' => 'action',
 			'label' => __(
 				'Action',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -61,7 +61,7 @@ return array(
 			'key' => 'title',
 			'label' => __(
 				'Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -74,7 +74,7 @@ return array(
 			'key' => 'subtitle',
 			'label' => __(
 				'Subtitle',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'textarea',
 			'tab' => 'general',
@@ -87,7 +87,7 @@ return array(
 			'key' => 'action_label',
 			'label' => __(
 				'Action Label',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'action',
@@ -98,18 +98,18 @@ return array(
 			'key' => 'action_type',
 			'label' => __(
 				'Action Type',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'select',
 			'tab' => 'action',
 			'default' => '',
 			'options' => array(
-				'' => __( 'No Action', 'kidia-mobile-cms' ),
-				'collection' => __( 'Collection', 'kidia-mobile-cms' ),
-				'category' => __( 'Category', 'kidia-mobile-cms' ),
-				'product' => __( 'Product', 'kidia-mobile-cms' ),
-				'search' => __( 'Search', 'kidia-mobile-cms' ),
-				'external' => __( 'External URL', 'kidia-mobile-cms' ),
+				'' => __( 'No Action', 'mobishop' ),
+				'collection' => __( 'Collection', 'mobishop' ),
+				'category' => __( 'Category', 'mobishop' ),
+				'product' => __( 'Product', 'mobishop' ),
+				'search' => __( 'Search', 'mobishop' ),
+				'external' => __( 'External URL', 'mobishop' ),
 			),
 		),
 
@@ -117,7 +117,7 @@ return array(
 			'key' => 'action_value',
 			'label' => __(
 				'Action Value',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'action',

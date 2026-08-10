@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Divider',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a horizontal divider.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-minus',
@@ -37,7 +37,7 @@ return array(
 			'id' => 'style',
 			'label' => __(
 				'Style',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -49,7 +49,7 @@ return array(
 			'key' => 'color',
 			'label' => __(
 				'Divider Color',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'color',
 			'tab' => 'style',
@@ -60,7 +60,7 @@ return array(
 			'key' => 'thickness',
 			'label' => __(
 				'Thickness',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'style',
@@ -74,7 +74,7 @@ return array(
 			'key' => 'margin',
 			'label' => __(
 				'Vertical Margin',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'style',

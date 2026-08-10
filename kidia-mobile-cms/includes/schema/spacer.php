@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Spacer',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Add vertical spacing between elements.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-editor-expand',
@@ -33,7 +33,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -45,7 +45,7 @@ return array(
 			'key' => 'height',
 			'label' => __(
 				'Height',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'general',

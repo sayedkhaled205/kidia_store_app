@@ -29,7 +29,7 @@ final class Kidia_Mobile_CMS_Image_Banner {
 	public function __construct() {
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_image_banners',
-			__( 'Image Banners', 'kidia-mobile-cms' ),
+			__( 'Image Banners', 'mobishop' ),
 			'kidia-mobile-image-banners',
 			'image-banner',
 			'kidia_mobile_create_image_banner',

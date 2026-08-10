@@ -10,11 +10,11 @@ defined( 'ABSPATH' ) || exit;
 return array(
 	'title'       => __(
 		'Image Banner',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 	'description' => __(
 		'Create and configure a promotional image banner.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 	'icon'        => 'dashicons-format-image',
 
@@ -33,21 +33,21 @@ return array(
 			'id'    => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 		array(
 			'id'    => 'action',
 			'label' => __(
 				'Action',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 		array(
 			'id'    => 'style',
 			'label' => __(
 				'Style',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 	),
@@ -57,11 +57,11 @@ return array(
 			'key'         => 'image_url',
 			'label'       => __(
 				'Banner Image',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'description' => __(
 				'Select the image displayed in the banner.',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'        => 'image',
 			'tab'         => 'general',
@@ -74,11 +74,11 @@ return array(
 			'key'         => 'semantic_label',
 			'label'       => __(
 				'Accessibility Label',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'description' => __(
 				'Text used by screen readers.',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'        => 'text',
 			'tab'         => 'general',
@@ -90,7 +90,7 @@ return array(
 			'key'     => 'aspect_ratio',
 			'label'   => __(
 				'Aspect Ratio',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'    => 'number',
 			'tab'     => 'style',
@@ -104,7 +104,7 @@ return array(
 			'key'     => 'border_radius',
 			'label'   => __(
 				'Border Radius',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'    => 'number',
 			'tab'     => 'style',
@@ -118,7 +118,7 @@ return array(
 			'key'     => 'action_type',
 			'label'   => __(
 				'Action Type',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'    => 'select',
 			'tab'     => 'action',
@@ -126,27 +126,27 @@ return array(
 			'options' => array(
 				''           => __(
 					'No Action',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 				'product'    => __(
 					'Product',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 				'category'   => __(
 					'Category',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 				'collection' => __(
 					'Collection',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 				'search'     => __(
 					'Search',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 				'external'   => __(
 					'External URL',
-					'kidia-mobile-cms'
+					'mobishop'
 				),
 			),
 		),
@@ -155,11 +155,11 @@ return array(
 			'key'         => 'action_value',
 			'label'       => __(
 				'Action Value',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'description' => __(
 				'Enter the product ID, category ID, collection name, search text or URL.',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type'        => 'text',
 			'tab'         => 'action',

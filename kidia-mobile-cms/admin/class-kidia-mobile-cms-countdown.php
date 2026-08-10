@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Countdown {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_countdowns',
-			__( 'Countdowns', 'kidia-mobile-cms' ),
+			__( 'Countdowns', 'mobishop' ),
 			'kidia-mobile-countdowns',
 			'countdown',
 			'kidia_mobile_create_countdown',

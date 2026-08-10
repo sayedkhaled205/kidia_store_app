@@ -7,7 +7,7 @@ final class Kidia_Mobile_CMS_App_Header {
 	private Kidia_Mobile_Library $library;
 	public function __construct() {
 		$this->library = new Kidia_Mobile_Library(
-			'kidia_mobile_app_headers', __( 'App Headers', 'kidia-mobile-cms' ),
+			'kidia_mobile_app_headers', __( 'App Headers', 'mobishop' ),
 			'kidia-mobile-app-headers', 'app_header', 'kidia_mobile_create_app_header',
 			'kidia_mobile_save_app_header', 'kidia_mobile_duplicate_app_header',
 			'kidia_mobile_delete_app_header'

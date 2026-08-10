@@ -79,7 +79,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 					'locale' => array(
 						'description'       => __(
 							'Application locale.',
-							'kidia-mobile-cms'
+							'mobishop'
 						),
 
 						'type'              => 'string',

@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Coupon_Banner {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_coupon_banners',
-			__( 'Coupon Banners', 'kidia-mobile-cms' ),
+			__( 'Coupon Banners', 'mobishop' ),
 			'kidia-mobile-coupon-banners',
 			'coupon-banner',
 			'kidia_mobile_create_coupon_banner',

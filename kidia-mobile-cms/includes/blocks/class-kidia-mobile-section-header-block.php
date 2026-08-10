@@ -18,7 +18,7 @@ final class Kidia_Mobile_Section_Header_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Section Header', 'kidia-mobile-cms' );
+		return __( 'Section Header', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -28,7 +28,7 @@ final class Kidia_Mobile_Section_Header_Block extends Kidia_Mobile_Block {
 	public function get_description(): string {
 		return __(
 			'Displays a section title with optional subtitle and action.',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 

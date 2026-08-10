@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Promo Strip',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a promotional announcement strip.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-megaphone',
@@ -48,7 +48,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -56,7 +56,7 @@ return array(
 			'id' => 'style',
 			'label' => __(
 				'Style',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -64,25 +64,25 @@ return array(
 			'id' => 'action',
 			'label' => __(
 				'Action',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
 	),
 
 	'fields' => array(
-		array( 'key' => 'width', 'label' => __( 'Width (%)', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 10, 'max' => 100 ),
-		array( 'key' => 'height', 'label' => __( 'Height', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 20, 'max' => 240 ),
-		array( 'key' => 'enable_transition', 'label' => __( 'Rotating Messages', 'kidia-mobile-cms' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
-		array( 'key' => 'transition_effect', 'label' => __( 'Transition Effect', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'general', 'default' => 'fade', 'options' => array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) ),
-		array( 'key' => 'change_every', 'label' => __( 'Change Every', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 4, 'min' => 1, 'max' => 60 ),
-		array( 'key' => 'transition_duration', 'label' => __( 'Transition Duration', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'general', 'default' => 500, 'min' => 100, 'max' => 5000 ),
+		array( 'key' => 'width', 'label' => __( 'Width (%)', 'mobishop' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 10, 'max' => 100 ),
+		array( 'key' => 'height', 'label' => __( 'Height', 'mobishop' ), 'type' => 'number', 'tab' => 'style', 'default' => '', 'min' => 20, 'max' => 240 ),
+		array( 'key' => 'enable_transition', 'label' => __( 'Rotating Messages', 'mobishop' ), 'type' => 'checkbox', 'tab' => 'general', 'default' => false ),
+		array( 'key' => 'transition_effect', 'label' => __( 'Transition Effect', 'mobishop' ), 'type' => 'select', 'tab' => 'general', 'default' => 'fade', 'options' => array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) ),
+		array( 'key' => 'change_every', 'label' => __( 'Change Every', 'mobishop' ), 'type' => 'number', 'tab' => 'general', 'default' => 4, 'min' => 1, 'max' => 60 ),
+		array( 'key' => 'transition_duration', 'label' => __( 'Transition Duration', 'mobishop' ), 'type' => 'number', 'tab' => 'general', 'default' => 500, 'min' => 100, 'max' => 5000 ),
 
 		array(
 			'key' => 'text',
 			'label' => __(
 				'Text',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'textarea',
 			'tab' => 'general',
@@ -96,7 +96,7 @@ return array(
 			'key' => 'background_color',
 			'label' => __(
 				'Background Color',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'color',
 			'tab' => 'style',
@@ -107,7 +107,7 @@ return array(
 			'key' => 'text_color',
 			'label' => __(
 				'Text Color',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'color',
 			'tab' => 'style',
@@ -118,18 +118,18 @@ return array(
 			'key' => 'action_type',
 			'label' => __(
 				'Action Type',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'select',
 			'tab' => 'action',
 			'default' => '',
 			'options' => array(
-				'' => __( 'No Action', 'kidia-mobile-cms' ),
-				'collection' => __( 'Collection', 'kidia-mobile-cms' ),
-				'category' => __( 'Category', 'kidia-mobile-cms' ),
-				'product' => __( 'Product', 'kidia-mobile-cms' ),
-				'search' => __( 'Search', 'kidia-mobile-cms' ),
-				'external' => __( 'External URL', 'kidia-mobile-cms' ),
+				'' => __( 'No Action', 'mobishop' ),
+				'collection' => __( 'Collection', 'mobishop' ),
+				'category' => __( 'Category', 'mobishop' ),
+				'product' => __( 'Product', 'mobishop' ),
+				'search' => __( 'Search', 'mobishop' ),
+				'external' => __( 'External URL', 'mobishop' ),
 			),
 		),
 
@@ -137,7 +137,7 @@ return array(
 			'key' => 'action_value',
 			'label' => __(
 				'Action Value',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'action',

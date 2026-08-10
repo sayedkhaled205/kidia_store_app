@@ -37,7 +37,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
 		$date_preset = self::sanitize_date_preset( $date_preset );
 		if ( ! function_exists( 'wc_get_orders' ) ) {
-			return array( 'error' => __( 'WooCommerce is required to analyse store data.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'WooCommerce is required to analyse store data.', 'mobishop' ) );
 		}
 		$existing_job_id = self::active_job_id( $user_id );
 		if ( '' !== $existing_job_id ) {
@@ -105,7 +105,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'updated_at'        => time(),
 		);
 		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
-			return array( 'error' => __( 'The analysis could not be started because its durable state could not be saved.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis could not be started because its durable state could not be saved.', 'mobishop' ) );
 		}
 		update_user_meta( $user_id, self::ACTIVE_JOB_META, $job_id );
 
@@ -116,7 +116,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	public static function step( string $job_id, int $user_id ): array {
 		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		if ( self::is_cancelled( $job_id ) || 'cancelled' === (string) ( $job['phase'] ?? '' ) ) {
 			$job['phase'] = 'cancelled';
@@ -142,7 +142,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$latest = self::read_job( $job_id );
 		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
 			self::release_step_lock( $job_id, $lock_token );
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		$job = $latest;
 		if ( self::is_cancelled( $job_id ) || 'cancelled' === (string) ( $job['phase'] ?? '' ) ) {
@@ -167,7 +167,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
 			if ( ! self::write_job( $job, 6 * HOUR_IN_SECONDS ) ) {
 				self::release_step_lock( $job_id, $lock_token );
-				return array( 'error' => __( 'The completed analysis could not be saved. No partial result was published.', 'kidia-mobile-cms' ) );
+				return array( 'error' => __( 'The completed analysis could not be saved. No partial result was published.', 'mobishop' ) );
 			}
 			self::release_step_lock( $job_id, $lock_token );
 			return self::payload( $job, true );
@@ -180,7 +180,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$job['revision'] = absint( $job['revision'] ?? 0 ) + 1;
 		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
 			self::release_step_lock( $job_id, $lock_token );
-			return array( 'error' => __( 'This analysis batch could not be saved. Completed records were not reset.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'This analysis batch could not be saved. Completed records were not reset.', 'mobishop' ) );
 		}
 		self::release_step_lock( $job_id, $lock_token );
 		return self::payload( $job, 'cancelled' === (string) $job['phase'] );
@@ -190,7 +190,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	public static function status( string $job_id, int $user_id, bool $advance = false ): array {
 		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		$done = in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true );
 		if ( $advance && ! $done ) {
@@ -203,7 +203,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	public static function continue_in_background( string $job_id, int $user_id ): array {
 		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true ) ) {
 			return self::payload( $job, true );
@@ -224,7 +224,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$latest = self::read_job( $job_id );
 		if ( ! is_array( $latest ) || absint( $latest['user_id'] ?? 0 ) !== $user_id ) {
 			self::release_step_lock( $job_id, $lock_token );
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		$job = $latest;
 		if ( in_array( (string) ( $job['phase'] ?? '' ), array( 'complete', 'cancelled', 'failed' ), true ) ) {
@@ -234,7 +234,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		$job['background'] = true;
 		if ( ! self::write_job( $job, 2 * HOUR_IN_SECONDS ) ) {
 			self::release_step_lock( $job_id, $lock_token );
-			return array( 'error' => __( 'The analysis could not be moved to the background without losing progress.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis could not be moved to the background without losing progress.', 'mobishop' ) );
 		}
 		self::release_step_lock( $job_id, $lock_token );
 		self::schedule_background( $job_id );
@@ -245,7 +245,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 	public static function cancel( string $job_id, int $user_id ): array {
 		$job = self::read_job( $job_id );
 		if ( ! is_array( $job ) || absint( $job['user_id'] ?? 0 ) !== $user_id ) {
-			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'kidia-mobile-cms' ) );
+			return array( 'error' => __( 'The analysis job expired. Start the analysis again.', 'mobishop' ) );
 		}
 		set_transient( self::cancel_key( $job_id ), 1, HOUR_IN_SECONDS );
 		$job['phase']        = 'cancelled';
@@ -521,7 +521,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 		);
 		if ( ! $stored ) {
 			$job['phase'] = 'failed';
-			$job['error'] = __( 'The complete analysis was too large to save safely. No incomplete result was published.', 'kidia-mobile-cms' );
+			$job['error'] = __( 'The complete analysis was too large to save safely. No incomplete result was published.', 'mobishop' );
 			return;
 		}
 		Kidia_Mobile_AI_Offer_Engine::clear_cache( absint( $job['from'] ), absint( $job['to'] ), (string) $job['source'] );
@@ -608,15 +608,15 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			? 100
 			: min( 99.9, round( 10 * ( 100 * $processed / $total ) ) / 10 );
 		$phase    = (string) ( $job['phase'] ?? 'orders' );
-		$stage    = __( 'Reading paid WooCommerce orders', 'kidia-mobile-cms' );
+		$stage    = __( 'Reading paid WooCommerce orders', 'mobishop' );
 		if ( 'products' === $phase ) {
-			$stage = __( 'Checking every currently in-stock product', 'kidia-mobile-cms' );
+			$stage = __( 'Checking every currently in-stock product', 'mobishop' );
 		} elseif ( in_array( $phase, array( 'finalize', 'complete' ), true ) ) {
-			$stage = __( 'Ranking data-backed offers and decisions', 'kidia-mobile-cms' );
+			$stage = __( 'Ranking data-backed offers and decisions', 'mobishop' );
 		} elseif ( 'cancelled' === $phase ) {
-			$stage = __( 'Analysis cancelled. No partial result was published.', 'kidia-mobile-cms' );
+			$stage = __( 'Analysis cancelled. No partial result was published.', 'mobishop' );
 		} elseif ( 'failed' === $phase ) {
-			$stage = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'kidia-mobile-cms' ) ) );
+			$stage = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'mobishop' ) ) );
 		}
 		$date_preset = self::sanitize_date_preset(
 			(string) ( $job['date_preset'] ?? ( absint( $job['from'] ?? 0 ) <= 1 ? 'all_time' : 'custom' ) )
@@ -653,7 +653,7 @@ final class Kidia_Mobile_AI_Analysis_Job {
 			'result_url'         => add_query_arg( $result_args, admin_url( 'admin.php' ) ),
 		);
 		if ( 'failed' === $phase ) {
-			$payload['error'] = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'kidia-mobile-cms' ) ) );
+			$payload['error'] = sanitize_text_field( (string) ( $job['error'] ?? __( 'Analysis stopped before all records were read.', 'mobishop' ) ) );
 		}
 		return $payload;
 	}

@@ -18,7 +18,7 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Coupon Banner', 'kidia-mobile-cms' );
+		return __( 'Coupon Banner', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Coupon promotion banner.', 'kidia-mobile-cms' );
+		return __( 'Coupon promotion banner.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {
@@ -152,7 +152,7 @@ final class Kidia_Mobile_Coupon_Banner_Block extends Kidia_Mobile_Block {
 			>
 
 			<button type="button" class="button kidia-select-media">
-				<?php esc_html_e( 'Select Image', 'kidia-mobile-cms' ); ?>
+				<?php esc_html_e( 'Select Image', 'mobishop' ); ?>
 			</button>
 
 		</div>

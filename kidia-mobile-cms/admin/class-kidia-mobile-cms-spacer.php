@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Spacer {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_spacers',
-			__( 'Spacers', 'kidia-mobile-cms' ),
+			__( 'Spacers', 'mobishop' ),
 			'kidia-mobile-spacers',
 			'spacer',
 			'kidia_mobile_create_spacer',

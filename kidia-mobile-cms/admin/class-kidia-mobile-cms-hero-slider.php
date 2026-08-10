@@ -29,7 +29,7 @@ final class Kidia_Mobile_CMS_Hero_Slider {
 	public function __construct() {
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_hero_sliders',
-			__( 'Hero Sliders', 'kidia-mobile-cms' ),
+			__( 'Hero Sliders', 'mobishop' ),
 			'kidia-mobile-hero-sliders',
 			'hero-slider',
 			'kidia_mobile_create_hero_slider',

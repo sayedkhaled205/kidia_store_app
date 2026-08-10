@@ -226,7 +226,7 @@ final class Kidia_Mobile_Analytics {
 		if ( ! in_array( $event, $allowed, true ) ) {
 			return new WP_Error(
 				'kidia_website_analytics_event_invalid',
-				__( 'Unknown website analytics event.', 'kidia-mobile-cms' ),
+				__( 'Unknown website analytics event.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -235,14 +235,14 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $client_id ) {
 			return new WP_Error(
 				'kidia_website_analytics_client_missing',
-				__( 'A valid analytics client id is required.', 'kidia-mobile-cms' ),
+				__( 'A valid analytics client id is required.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
 		if ( ! $this->allow_request( 'web-' . $client_id, 240 ) || ! $this->allow_request( 'web-ip-' . $this->request_ip(), 900 ) ) {
 			return new WP_Error(
 				'kidia_website_analytics_rate_limited',
-				__( 'Too many analytics events were received.', 'kidia-mobile-cms' ),
+				__( 'Too many analytics events were received.', 'mobishop' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -285,7 +285,7 @@ final class Kidia_Mobile_Analytics {
 		if ( 'failed' === $result ) {
 			return new WP_Error(
 				'kidia_website_analytics_write_failed',
-				__( 'The analytics event could not be stored.', 'kidia-mobile-cms' ),
+				__( 'The analytics event could not be stored.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -307,7 +307,7 @@ final class Kidia_Mobile_Analytics {
 		if ( ! in_array( $event, self::EVENTS, true ) ) {
 			return new WP_Error(
 				'kidia_mobile_analytics_event_invalid',
-				__( 'Unknown mobile analytics event.', 'kidia-mobile-cms' ),
+				__( 'Unknown mobile analytics event.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -316,14 +316,14 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $client_id ) {
 			return new WP_Error(
 				'kidia_mobile_analytics_client_missing',
-				__( 'A valid analytics client id is required.', 'kidia-mobile-cms' ),
+				__( 'A valid analytics client id is required.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
 		if ( ! $this->allow_request( $client_id ) || ! $this->allow_request( 'ip-' . $this->request_ip(), 600 ) ) {
 			return new WP_Error(
 				'kidia_mobile_analytics_rate_limited',
-				__( 'Too many analytics events were received.', 'kidia-mobile-cms' ),
+				__( 'Too many analytics events were received.', 'mobishop' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -354,7 +354,7 @@ final class Kidia_Mobile_Analytics {
 		if ( 'failed' === $result ) {
 			return new WP_Error(
 				'kidia_mobile_analytics_write_failed',
-				__( 'The analytics event could not be stored.', 'kidia-mobile-cms' ),
+				__( 'The analytics event could not be stored.', 'mobishop' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -384,14 +384,14 @@ final class Kidia_Mobile_Analytics {
 		if ( '' === $client_id ) {
 			return new WP_Error(
 				'kidia_mobile_cart_client_missing',
-				__( 'A valid cart client id is required.', 'kidia-mobile-cms' ),
+				__( 'A valid cart client id is required.', 'mobishop' ),
 				array( 'status' => 400 )
 			);
 		}
 		if ( ! $this->allow_request( 'cart-' . $client_id, 90 ) || ! $this->allow_request( 'cart-ip-' . $this->request_ip(), 300 ) ) {
 			return new WP_Error(
 				'kidia_mobile_cart_rate_limited',
-				__( 'Too many cart updates were received.', 'kidia-mobile-cms' ),
+				__( 'Too many cart updates were received.', 'mobishop' ),
 				array( 'status' => 429 )
 			);
 		}

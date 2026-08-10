@@ -117,7 +117,7 @@ final class Kidia_Mobile_Product_Channel_Visibility {
 		}
 		return new WP_Error(
 			'kidia_product_hidden_for_channel',
-			__( 'This product is not available in this sales channel.', 'kidia-mobile-cms' ),
+			__( 'This product is not available in this sales channel.', 'mobishop' ),
 			array( 'status' => 404 )
 		);
 	}

@@ -79,7 +79,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 	public function record_open( WP_REST_Request $request ) {
 		$token = sanitize_text_field( (string) $request->get_param( 'token' ) );
 		if ( ! preg_match( '/^[a-f0-9-]{36}$/i', $token ) ) {
-			return new WP_Error( 'kidia_recovery_token_invalid', __( 'Invalid recovery tracking token.', 'kidia-mobile-cms' ), array( 'status' => 400 ) );
+			return new WP_Error( 'kidia_recovery_token_invalid', __( 'Invalid recovery tracking token.', 'mobishop' ), array( 'status' => 400 ) );
 		}
 		global $wpdb;
 		$updated = $wpdb->query(
@@ -96,7 +96,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 	/** Creates one customer-restricted coupon and delivery record per selected cart. */
 	public function create_campaign(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to create recovery campaigns.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to create recovery campaigns.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_create_recovery_campaign', 'kidia_mobile_recovery_nonce' );
 		$ids = array_values( array_filter( array_map( 'absint', (array) ( $_POST['cart_ids'] ?? array() ) ) ) );
@@ -124,14 +124,14 @@ final class Kidia_Mobile_Recovery_Campaigns {
 				$this->redirect( 'schedule' );
 			}
 		}
-		$title    = sanitize_text_field( wp_unslash( $_POST['recovery_title'] ?? __( 'Your cart is waiting', 'kidia-mobile-cms' ) ) );
-		$message  = sanitize_textarea_field( wp_unslash( $_POST['recovery_message'] ?? __( 'Complete your order before your personal offer expires.', 'kidia-mobile-cms' ) ) );
+		$title    = sanitize_text_field( wp_unslash( $_POST['recovery_title'] ?? __( 'Your cart is waiting', 'mobishop' ) ) );
+		$message  = sanitize_textarea_field( wp_unslash( $_POST['recovery_message'] ?? __( 'Complete your order before your personal offer expires.', 'mobishop' ) ) );
 		$default_url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/' );
 		$base_url    = esc_url_raw( wp_unslash( $_POST['recovery_action_url'] ?? $default_url ) );
 		$action_style = sanitize_key( wp_unslash( $_POST['recovery_action_style'] ?? 'link' ) );
 		$action_style = in_array( $action_style, array( 'link', 'button' ), true ) ? $action_style : 'link';
 		$cta_label = 'button' === $action_style
-			? mb_substr( sanitize_text_field( wp_unslash( $_POST['recovery_cta_label'] ?? __( 'Complete purchase', 'kidia-mobile-cms' ) ) ), 0, 30 )
+			? mb_substr( sanitize_text_field( wp_unslash( $_POST['recovery_cta_label'] ?? __( 'Complete purchase', 'mobishop' ) ) ), 0, 30 )
 			: '';
 		$group_id = wp_generate_uuid4();
 		$created  = 0;
@@ -152,7 +152,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 			$coupon->set_email_restrictions( array( $email ) );
 			$coupon->set_minimum_amount( $minimum );
 			$coupon->set_date_expires( time() + $hours * HOUR_IN_SECONDS );
-			$coupon->set_description( sprintf( __( 'Woomobi CMS abandoned-cart recovery for cart #%d', 'kidia-mobile-cms' ), absint( $cart['id'] ) ) );
+			$coupon->set_description( sprintf( __( 'Woomobi CMS abandoned-cart recovery for cart #%d', 'mobishop' ), absint( $cart['id'] ) ) );
 			if ( $restrict ) {
 				$product_ids = array_values( array_filter( array_map( static fn( $item ) => absint( $item['product_id'] ?? 0 ), (array) $cart['items'] ) ) );
 				$coupon->set_product_ids( $product_ids );

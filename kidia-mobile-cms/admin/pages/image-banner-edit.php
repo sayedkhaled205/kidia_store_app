@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php esc_html_e(
 			'Edit Image Banner',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 
 	</h1>
@@ -55,7 +55,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Name',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -81,7 +81,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Status',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -128,7 +128,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Image',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -155,7 +155,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<?php esc_html_e(
 								'Select Image',
-								'kidia-mobile-cms'
+								'mobishop'
 							); ?>
 
 						</button>
@@ -186,7 +186,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Accessibility Label',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -212,7 +212,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Aspect Ratio',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -240,7 +240,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Border Radius',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -267,7 +267,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Action Type',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -317,7 +317,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Action Value',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -343,7 +343,7 @@ defined( 'ABSPATH' ) || exit;
 
             					<?php esc_html_e(
             						'Enabled',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					); ?>
 
             				</th>
@@ -378,7 +378,7 @@ defined( 'ABSPATH' ) || exit;
             		submit_button(
             			__(
             				'Save Banner',
-            				'kidia-mobile-cms'
+            				'mobishop'
             			)
             		);
             		?>

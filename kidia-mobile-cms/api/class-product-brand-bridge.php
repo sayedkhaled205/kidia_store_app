@@ -101,7 +101,7 @@ final class Kidia_Mobile_CMS_Product_Brand_Bridge {
 		if ( '' === $taxonomy ) {
 			return new WP_Error(
 				'woo_mobile_brands_unavailable',
-				__( 'No supported product brand taxonomy is registered.', 'kidia-mobile-cms' ),
+				__( 'No supported product brand taxonomy is registered.', 'mobishop' ),
 				array( 'status' => 501 )
 			);
 		}
@@ -215,7 +215,7 @@ final class Kidia_Mobile_CMS_Product_Brand_Bridge {
 	public function get_product_brand_schema(): array {
 		return array(
 			'brands' => array(
-				'description' => __( 'Normalized product brands.', 'kidia-mobile-cms' ),
+				'description' => __( 'Normalized product brands.', 'mobishop' ),
 				'type'        => 'array',
 				'readonly'    => true,
 				'items'       => array(

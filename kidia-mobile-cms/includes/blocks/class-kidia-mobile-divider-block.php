@@ -18,7 +18,7 @@ final class Kidia_Mobile_Divider_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Divider', 'kidia-mobile-cms' );
+		return __( 'Divider', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Divider_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Visual divider.', 'kidia-mobile-cms' );
+		return __( 'Visual divider.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {

@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Product_Grid {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_product_grids',
-			__( 'Product Grids', 'kidia-mobile-cms' ),
+			__( 'Product Grids', 'mobishop' ),
 			'kidia-mobile-product-grids',
 			'product-grid',
 			'kidia_mobile_create_product_grid',

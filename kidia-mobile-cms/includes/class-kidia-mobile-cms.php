@@ -273,7 +273,7 @@ final class Kidia_Mobile_CMS {
 				),
 				esc_html__(
 					'Dashboard',
-					'kidia-mobile-cms'
+					'mobishop'
 				)
 			)
 		);

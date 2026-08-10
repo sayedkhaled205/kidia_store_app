@@ -63,19 +63,19 @@ $layout_counts = array();
  */
 $element_categories = array(
 	'visual' => array(
-		'label' => __( 'Visual', 'kidia-mobile-cms' ),
+		'label' => __( 'Visual', 'mobishop' ),
 		'types' => array( 'app_header', 'hero_slider', 'image_banner', 'banner_grid', 'video_banner' ),
 	),
 	'products' => array(
-		'label' => __( 'Products', 'kidia-mobile-cms' ),
+		'label' => __( 'Products', 'mobishop' ),
 		'types' => array( 'category_grid', 'product_carousel', 'product_grid', 'brand_carousel', 'bundle_collection' ),
 	),
 	'content' => array(
-		'label' => __( 'Content', 'kidia-mobile-cms' ),
+		'label' => __( 'Content', 'mobishop' ),
 		'types' => array( 'section_header', 'text_block', 'quick_links' ),
 	),
 	'marketing-layout' => array(
-		'label' => __( 'Marketing & Layout', 'kidia-mobile-cms' ),
+		'label' => __( 'Marketing & Layout', 'mobishop' ),
 		'types' => array( 'promo_strip', 'coupon_banner', 'countdown', 'divider', 'spacer' ),
 	),
 );
@@ -117,7 +117,7 @@ foreach ( $library_options as $type => $option_name ) {
 <div class="wrap kidia-builder-wrap">
 
 	<?php if ( isset( $_GET['restored'] ) ) : ?>
-		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Home page restored to defaults.', 'kidia-mobile-cms' ); ?></p></div>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Home page restored to defaults.', 'mobishop' ); ?></p></div>
 	<?php elseif (
 		isset( $_GET['updated'] )
 		&& '1' === sanitize_key(
@@ -131,7 +131,7 @@ foreach ( $library_options as $type => $option_name ) {
 				<?php
 					esc_html_e(
 						'Home Layout saved successfully.',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</p>
@@ -141,11 +141,11 @@ foreach ( $library_options as $type => $option_name ) {
 	<?php endif; ?>
 
 	<div class="kidia-builder-workspace">
-		<aside class="kidia-mobile-preview" aria-label="<?php echo esc_attr__( 'Live mobile preview', 'kidia-mobile-cms' ); ?>">
+		<aside class="kidia-mobile-preview" aria-label="<?php echo esc_attr__( 'Live mobile preview', 'mobishop' ); ?>">
 			<div class="kidia-mobile-preview__device">
 			<div class="kidia-mobile-preview__screen">
 				<?php if ( file_exists( KIDIA_MOBILE_CMS_PATH . 'admin/flutter-preview/index.html' ) ) : ?>
-					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'kidia-mobile-cms' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home', 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
+					<iframe id="kidia-flutter-preview" class="kidia-flutter-preview" title="<?php echo esc_attr__( 'Flutter mobile preview', 'mobishop' ); ?>" src="<?php echo esc_url( add_query_arg( array( 'page' => 'home', 'v' => KIDIA_MOBILE_CMS_VERSION ), KIDIA_MOBILE_CMS_URL . 'admin/flutter-preview/index.html' ) ); ?>"></iframe>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content kidia-legacy-preview-fallback" hidden></div>
 				<?php else : ?>
 					<div id="kidia-mobile-preview-content" class="kidia-mobile-preview__content"></div>
@@ -203,8 +203,8 @@ foreach ( $library_options as $type => $option_name ) {
 		?>
 
 		<?php
-		$kidia_toolbar_title = __( 'Home Page', 'kidia-mobile-cms' );
-		$kidia_toolbar_save_label = __( 'Save Home Layout', 'kidia-mobile-cms' );
+		$kidia_toolbar_title = __( 'Home Page', 'mobishop' );
+		$kidia_toolbar_save_label = __( 'Save Home Layout', 'mobishop' );
 		$kidia_toolbar_show_add = true;
 		$kidia_toolbar_show_restore = true;
 		$kidia_toolbar_page_toggle = false;
@@ -230,7 +230,7 @@ foreach ( $library_options as $type => $option_name ) {
 						<?php
 							esc_html_e(
 								'No elements on the Home Page',
-								'kidia-mobile-cms'
+								'mobishop'
 							);
 							?>
 					</h2>
@@ -239,7 +239,7 @@ foreach ( $library_options as $type => $option_name ) {
 						<?php
 							esc_html_e(
 								'Add an element to start building the application Home Page.',
-								'kidia-mobile-cms'
+								'mobishop'
 							);
 							?>
 					</p>
@@ -252,7 +252,7 @@ foreach ( $library_options as $type => $option_name ) {
 						<?php
 							esc_html_e(
 								'Add First Element',
-								'kidia-mobile-cms'
+								'mobishop'
 							);
 							?>
 					</button>
@@ -312,7 +312,7 @@ foreach ( $library_options as $type => $option_name ) {
 				$definition = $block->get_definition();
 				$category = $element_category_by_type[ $type ] ?? array(
 					'key'   => 'content',
-					'label' => __( 'Content', 'kidia-mobile-cms' ),
+					'label' => __( 'Content', 'mobishop' ),
 				);
 				$block_data['element_icon'] = sanitize_html_class(
 					(string) ( $definition['icon'] ?? 'dashicons-screenoptions' )
@@ -355,9 +355,9 @@ foreach ( $library_options as $type => $option_name ) {
 		aria-modal="true"
 		aria-labelledby="kidia-element-picker-title"
 	>
-		<nav class="kidia-element-category-filter" aria-label="<?php echo esc_attr__( 'Filter elements by category', 'kidia-mobile-cms' ); ?>">
+		<nav class="kidia-element-category-filter" aria-label="<?php echo esc_attr__( 'Filter elements by category', 'mobishop' ); ?>">
 			<button type="button" class="button is-active" data-kidia-element-category="all" aria-pressed="true">
-				<?php esc_html_e( 'All', 'kidia-mobile-cms' ); ?>
+				<?php esc_html_e( 'All', 'mobishop' ); ?>
 			</button>
 			<?php foreach ( $element_categories as $category_key => $category ) : ?>
 				<button type="button" class="button" data-kidia-element-category="<?php echo esc_attr( $category_key ); ?>" aria-pressed="false">
@@ -374,7 +374,7 @@ foreach ( $library_options as $type => $option_name ) {
 					<?php
 						esc_html_e(
 							'Add Element',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</h2>
@@ -383,7 +383,7 @@ foreach ( $library_options as $type => $option_name ) {
 					<?php
 						esc_html_e(
 							'Choose an element type. Expand it only when you need a saved item.',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 				</p>
@@ -397,7 +397,7 @@ foreach ( $library_options as $type => $option_name ) {
 				aria-label="<?php
 					echo esc_attr__(
 						'Close',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -415,7 +415,7 @@ foreach ( $library_options as $type => $option_name ) {
 				placeholder="<?php
 					echo esc_attr__(
 						'Search elements...',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 				?>"
 			>
@@ -460,7 +460,7 @@ foreach ( $library_options as $type => $option_name ) {
 				$type_items = array();
 				$picker_category = $element_category_by_type[ $type ] ?? array(
 					'key'   => 'content',
-					'label' => __( 'Content', 'kidia-mobile-cms' ),
+					'label' => __( 'Content', 'mobishop' ),
 				);
 				?>
 
@@ -493,7 +493,7 @@ foreach ( $library_options as $type => $option_name ) {
 				<?php
 					esc_html_e(
 						'No matching elements found.',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</div>
@@ -510,7 +510,7 @@ foreach ( $library_options as $type => $option_name ) {
 				<?php
 					esc_html_e(
 						'Cancel',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 			</button>

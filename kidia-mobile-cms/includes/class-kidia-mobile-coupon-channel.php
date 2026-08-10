@@ -25,8 +25,8 @@ final class Kidia_Mobile_Coupon_Channel {
 		woocommerce_wp_select(
 			array(
 				'id'          => self::META_KEY,
-				'label'       => __( 'Sales channels', 'kidia-mobile-cms' ),
-				'description' => __( 'Choose where this coupon can be redeemed. All channels is the default.', 'kidia-mobile-cms' ),
+				'label'       => __( 'Sales channels', 'mobishop' ),
+				'description' => __( 'Choose where this coupon can be redeemed. All channels is the default.', 'mobishop' ),
 				'desc_tip'    => true,
 				'value'       => self::get( $coupon_id ),
 				'options'     => self::labels(),
@@ -52,8 +52,8 @@ final class Kidia_Mobile_Coupon_Channel {
 		$scope = self::get( $coupon->get_id() );
 		if ( 'all' !== $scope && self::current_channel() !== $scope ) {
 			return 'mobile' === $scope
-				? __( 'This coupon is available in the mobile app only.', 'kidia-mobile-cms' )
-				: __( 'This coupon is available on the website only.', 'kidia-mobile-cms' );
+				? __( 'This coupon is available in the mobile app only.', 'mobishop' )
+				: __( 'This coupon is available on the website only.', 'mobishop' );
 		}
 		return $message;
 	}
@@ -71,9 +71,9 @@ final class Kidia_Mobile_Coupon_Channel {
 	/** @return array<string,string> */
 	public static function labels(): array {
 		return array(
-			'all'     => __( 'Website + Mobile App', 'kidia-mobile-cms' ),
-			'website' => __( 'Website only', 'kidia-mobile-cms' ),
-			'mobile'  => __( 'Mobile App only', 'kidia-mobile-cms' ),
+			'all'     => __( 'Website + Mobile App', 'mobishop' ),
+			'website' => __( 'Website only', 'mobishop' ),
+			'mobile'  => __( 'Mobile App only', 'mobishop' ),
 		);
 	}
 

@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php esc_html_e(
 			'Hero Sliders',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 
 	</h1>
@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 	>
 		<?php esc_html_e(
 			'New Hero',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 	</button>
 
@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
 			class="regular-text"
 			placeholder="<?php esc_attr_e(
 				'Search...',
-				'kidia-mobile-cms'
+				'mobishop'
 			); ?>"
 			style="width:100%;"
 		>
@@ -60,21 +60,21 @@ defined( 'ABSPATH' ) || exit;
 				<th>
 					<?php esc_html_e(
 						'Name',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 				</th>
 
 				<th width="120">
 					<?php esc_html_e(
 						'Status',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 				</th>
 
 				<th width="280">
 					<?php esc_html_e(
 						'Actions',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 				</th>
 
@@ -92,7 +92,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'No Hero Sliders yet.',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</td>
@@ -142,7 +142,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<?php esc_html_e(
 								'Edit',
-								'kidia-mobile-cms'
+								'mobishop'
 							); ?>
 
 						</a>
@@ -162,7 +162,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<?php esc_html_e(
 								'Duplicate',
-								'kidia-mobile-cms'
+								'mobishop'
 							); ?>
 
 						</a>
@@ -183,7 +183,7 @@ defined( 'ABSPATH' ) || exit;
 
 							<?php esc_html_e(
 								'Delete',
-								'kidia-mobile-cms'
+								'mobishop'
 							); ?>
 
 						</a>
@@ -207,7 +207,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Aspect Ratio',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -235,7 +235,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Autoplay',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -258,7 +258,7 @@ defined( 'ABSPATH' ) || exit;
 
 						<?php esc_html_e(
 							'Enable autoplay',
-							'kidia-mobile-cms'
+							'mobishop'
 						); ?>
 
 					</label>
@@ -273,7 +273,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Interval',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -301,7 +301,7 @@ defined( 'ABSPATH' ) || exit;
 		submit_button(
 			__(
 				'Save Hero Slider',
-				'kidia-mobile-cms'
+				'mobishop'
 			)
 		);
 		?>

@@ -144,7 +144,7 @@ final class Kidia_Mobile_Editor {
     			return (string) $this->schema['title'];
     		}
 
-    		return __( 'Editor', 'kidia-mobile-cms' );
+    		return __( 'Editor', 'mobishop' );
     	}
 
     	/**
@@ -261,7 +261,7 @@ final class Kidia_Mobile_Editor {
         					'id' => 'general',
         					'label' => __(
         						'General',
-        						'kidia-mobile-cms'
+        						'mobishop'
         					),
         				),
         			);
