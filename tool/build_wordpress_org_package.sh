@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="$ROOT/kidia-mobile-cms"
 BUILD_ROOT="${1:-$ROOT/build/wordpress-org}"
-PACKAGE_SLUG="woomobi-cms"
+PACKAGE_SLUG="mobishop"
 PACKAGE_DIR="$BUILD_ROOT/$PACKAGE_SLUG"
 PACKAGE_ZIP="$BUILD_ROOT/$PACKAGE_SLUG.zip"
 
@@ -78,7 +78,7 @@ else
   echo 'PHP is unavailable locally; CI will run the required PHP syntax check.' >&2
 fi
 
-temporary_dir="$(mktemp -d "$BUILD_ROOT/.woomobi-cms.XXXXXXXX")"
+temporary_dir="$(mktemp -d "$BUILD_ROOT/.mobishop.XXXXXXXX")"
 temporary_zip="$temporary_dir/$PACKAGE_SLUG.zip"
 (
   cd "$BUILD_ROOT"
