@@ -3,8 +3,8 @@
 defined( 'ABSPATH' ) || exit;
 
 return array(
-	'title'       => __( 'Banner Grid', 'kidia-mobile-cms' ),
-	'description' => __( 'Equal, featured, or mosaic promotional banner groups.', 'kidia-mobile-cms' ),
+	'title'       => __( 'Banner Grid', 'mobishop' ),
+	'description' => __( 'Equal, featured, or mosaic promotional banner groups.', 'mobishop' ),
 	'icon'        => 'dashicons-layout',
 	'defaults'    => array(
 		'title' => '', 'subtitle' => '', 'layout' => 'equal', 'columns' => 2,

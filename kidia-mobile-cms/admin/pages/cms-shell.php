@@ -5,9 +5,9 @@ defined( 'ABSPATH' ) || exit;
 <aside class="kidia-cms-sidebar" data-kidia-cms-sidebar>
 	<div class="kidia-cms-shell__brand">
 		<span class="dashicons dashicons-smartphone"></span>
-		<div><strong><?php esc_html_e( 'Woomobi CMS', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'kidia-mobile-cms' ); ?></small></div>
+		<div><strong><?php esc_html_e( 'Woomobi CMS', 'mobishop' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'mobishop' ); ?></small></div>
 	</div>
-	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woomobi CMS sections', 'kidia-mobile-cms' ); ?>">
+	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woomobi CMS sections', 'mobishop' ); ?>">
 		<?php foreach ( $sidebar_items as $key => $item ) : ?>
 			<a href="<?php echo esc_url( $item['url'] ); ?>" data-kidia-sidebar-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
 				<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
@@ -56,7 +56,7 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 					<div class="kidia-ai-progress-ring" data-build-progress-ring style="--kidia-ai-progress:<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>">
 						<strong data-build-progress-label><?php echo esc_html( absint( $shell_build_state['progress'] ) . '%' ); ?></strong>
 					</div>
-					<h2 id="kidia-persistent-build-title" data-build-title><?php esc_html_e( 'Building your app', 'kidia-mobile-cms' ); ?></h2>
+					<h2 id="kidia-persistent-build-title" data-build-title><?php esc_html_e( 'Building your app', 'mobishop' ); ?></h2>
 					<p class="kidia-app-build__message" data-build-message><?php echo esc_html( (string) $shell_build_state['message'] ); ?></p>
 					<strong class="kidia-ai-progress-count" data-build-stage><?php echo esc_html( (string) ( $shell_build_state['stage'] ?: $shell_build_state['message'] ) ); ?></strong>
 					<small class="kidia-app-build__meta" data-build-meta>
@@ -65,9 +65,9 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 					<div class="kidia-app-build__progress kidia-ai-progress-track" data-build-progress>
 						<span data-build-progress-value role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>" style="width:<?php echo esc_attr( (string) absint( $shell_build_state['progress'] ) ); ?>%"></span>
 					</div>
-					<small data-build-note><?php esc_html_e( 'This card stays available across every CMS page until you cancel the running job or press OK after completion.', 'kidia-mobile-cms' ); ?></small>
+					<small data-build-note><?php esc_html_e( 'This card stays available across every CMS page until you cancel the running job or press OK after completion.', 'mobishop' ); ?></small>
 					<div class="kidia-app-build__actions kidia-ai-progress-actions">
-						<button type="button" class="button kidia-app-build__cancel kidia-ai-cancel-button<?php echo $shell_build_active ? '' : ' is-confirm'; ?>" data-build-cancel <?php echo $shell_has_build ? '' : 'hidden'; ?>><span class="dashicons <?php echo $shell_build_active ? 'dashicons-no-alt' : 'dashicons-yes-alt'; ?>"></span><span data-build-dismiss-label><?php echo esc_html( $shell_build_active ? __( 'Cancel Build', 'kidia-mobile-cms' ) : __( 'OK', 'kidia-mobile-cms' ) ); ?></span></button>
+						<button type="button" class="button kidia-app-build__cancel kidia-ai-cancel-button<?php echo $shell_build_active ? '' : ' is-confirm'; ?>" data-build-cancel <?php echo $shell_has_build ? '' : 'hidden'; ?>><span class="dashicons <?php echo $shell_build_active ? 'dashicons-no-alt' : 'dashicons-yes-alt'; ?>"></span><span data-build-dismiss-label><?php echo esc_html( $shell_build_active ? __( 'Cancel Build', 'mobishop' ) : __( 'OK', 'mobishop' ) ); ?></span></button>
 					</div>
 				</div>
 			</div>
@@ -76,20 +76,20 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 			<section class="kidia-cart-import-state kidia-background-job-card<?php echo 'complete' === $shell_abandoned_phase ? ' is-complete' : ''; ?>" data-kidia-background-job="abandoned-carts" data-abandoned-import-phase="<?php echo esc_attr( $shell_abandoned_phase ); ?>"<?php echo 'complete' === $shell_abandoned_phase ? ' data-complete-auto-dismiss="5000" data-completion-key="' . esc_attr( $shell_abandoned_completed_at > 0 ? (string) $shell_abandoned_completed_at : '' ) . '" hidden' : ''; ?>>
 				<span class="dashicons <?php echo 'complete' === $shell_abandoned_phase ? 'dashicons-yes-alt' : 'dashicons-database-import'; ?>"></span>
 				<div>
-					<strong><?php echo esc_html( 'complete' === $shell_abandoned_phase ? __( 'Completed — WooCommerce cart history is synced', 'kidia-mobile-cms' ) : __( 'Importing all retained WooCommerce carts in the background', 'kidia-mobile-cms' ) ); ?></strong>
+					<strong><?php echo esc_html( 'complete' === $shell_abandoned_phase ? __( 'Completed — WooCommerce cart history is synced', 'mobishop' ) : __( 'Importing all retained WooCommerce carts in the background', 'mobishop' ) ); ?></strong>
 					<p>
 						<?php
 						echo esc_html(
 							'complete' === $shell_abandoned_phase
 								? sprintf(
 									'update' === $shell_abandoned_mode
-										? __( '%1$d retained sessions were checked and %2$d new or changed carts were saved. Results are available on Abandoned Carts.', 'kidia-mobile-cms' )
-										: __( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are available on Abandoned Carts.', 'kidia-mobile-cms' ),
+										? __( '%1$d retained sessions were checked and %2$d new or changed carts were saved. Results are available on Abandoned Carts.', 'mobishop' )
+										: __( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are available on Abandoned Carts.', 'mobishop' ),
 									$shell_abandoned_done,
 									absint( $shell_abandoned_import['imported'] )
 								)
 								: sprintf(
-									__( '%1$d of %2$d stored sessions checked · %3$d carts imported. You can continue using every CMS page.', 'kidia-mobile-cms' ),
+									__( '%1$d of %2$d stored sessions checked · %3$d carts imported. You can continue using every CMS page.', 'mobishop' ),
 									$shell_abandoned_done,
 									$shell_abandoned_total,
 									absint( $shell_abandoned_import['imported'] )
@@ -103,7 +103,7 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 		<?php endif; ?>
 	</div>
 	<div class="kidia-cms-shell" data-kidia-cms-shell<?php echo $show_page_tabs ? '' : ' hidden'; ?>>
-		<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application pages', 'kidia-mobile-cms' ); ?>">
+		<nav class="kidia-cms-tabs" aria-label="<?php esc_attr_e( 'Application pages', 'mobishop' ); ?>">
 			<?php foreach ( $tabs as $key => $tab ) : ?>
 				<?php if ( 'overview' === $key ) { continue; } ?>
 				<a href="<?php echo esc_url( $tab['url'] ); ?>" data-kidia-page-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_tab ? 'is-active' : ''; ?>">
@@ -117,30 +117,30 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 			<input type="hidden" name="theme_operation" value="save">
 			<input type="hidden" name="theme_name" value="">
 			<?php wp_nonce_field( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' ); ?>
-			<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button>
+			<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Theme', 'mobishop' ); ?></button>
 		</form>
 	</div>
 <div class="kidia-theme-name-modal" data-kidia-theme-modal hidden>
 	<div class="kidia-theme-name-modal__backdrop" data-kidia-theme-cancel></div>
 	<div class="kidia-theme-name-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kidia-theme-name-title">
 		<span class="kidia-theme-name-modal__icon dashicons dashicons-saved"></span>
-		<h2 id="kidia-theme-name-title"><?php esc_html_e( 'Save your theme', 'kidia-mobile-cms' ); ?></h2>
-		<p><?php esc_html_e( 'Enter a clear name so you can find and apply this design later.', 'kidia-mobile-cms' ); ?></p>
-		<input type="text" maxlength="80" data-kidia-theme-name placeholder="<?php esc_attr_e( 'Theme name', 'kidia-mobile-cms' ); ?>">
-		<small data-kidia-theme-error hidden><?php esc_html_e( 'Please enter a theme name.', 'kidia-mobile-cms' ); ?></small>
-		<div><button type="button" class="button" data-kidia-theme-cancel><?php esc_html_e( 'Cancel', 'kidia-mobile-cms' ); ?></button><button type="button" class="button button-primary" data-kidia-theme-confirm><?php esc_html_e( 'Save Theme', 'kidia-mobile-cms' ); ?></button></div>
+		<h2 id="kidia-theme-name-title"><?php esc_html_e( 'Save your theme', 'mobishop' ); ?></h2>
+		<p><?php esc_html_e( 'Enter a clear name so you can find and apply this design later.', 'mobishop' ); ?></p>
+		<input type="text" maxlength="80" data-kidia-theme-name placeholder="<?php esc_attr_e( 'Theme name', 'mobishop' ); ?>">
+		<small data-kidia-theme-error hidden><?php esc_html_e( 'Please enter a theme name.', 'mobishop' ); ?></small>
+		<div><button type="button" class="button" data-kidia-theme-cancel><?php esc_html_e( 'Cancel', 'mobishop' ); ?></button><button type="button" class="button button-primary" data-kidia-theme-confirm><?php esc_html_e( 'Save Theme', 'mobishop' ); ?></button></div>
 	</div>
 </div>
 <?php if ( 'past_due' === (string) ( $license_status['payment_status'] ?? '' ) ) : ?>
 	<div class="kidia-cms-billing-warning" role="alert">
 		<span class="dashicons dashicons-warning" aria-hidden="true"></span>
 		<div>
-			<strong><?php esc_html_e( 'Your subscription payment is overdue.', 'kidia-mobile-cms' ); ?></strong>
+			<strong><?php esc_html_e( 'Your subscription payment is overdue.', 'mobishop' ); ?></strong>
 			<span>
 				<?php
 				printf(
 					/* translators: 1: remaining grace days, 2: grace end date. */
-					esc_html__( 'Woomobi CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'kidia-mobile-cms' ),
+					esc_html__( 'Woomobi CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'mobishop' ),
 					(int) ( $license_status['grace_days_remaining'] ?? 0 ),
 					esc_html( wp_date( get_option( 'date_format' ), (int) ( $license_status['grace_ends_at'] ?? time() ) ) )
 				);

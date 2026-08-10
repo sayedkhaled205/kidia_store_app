@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php esc_html_e(
 			'Edit Hero Slider',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 
 	</h1>
@@ -55,7 +55,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Name',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>
@@ -81,7 +81,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php esc_html_e(
 						'Status',
-						'kidia-mobile-cms'
+						'mobishop'
 					); ?>
 
 				</th>

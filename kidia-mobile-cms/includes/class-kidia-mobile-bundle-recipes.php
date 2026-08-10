@@ -73,7 +73,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 			|| ! self::is_active( $recipe )
 			|| ! in_array( (string) ( $recipe['channel'] ?? 'all' ), array( 'all', $channel ), true )
 		) {
-			return new WP_Error( 'kidia_bundle_not_found', __( 'Bundle not found.', 'kidia-mobile-cms' ), array( 'status' => 404 ) );
+			return new WP_Error( 'kidia_bundle_not_found', __( 'Bundle not found.', 'mobishop' ), array( 'status' => 404 ) );
 		}
 		return rest_ensure_response( $recipe );
 	}
@@ -83,12 +83,12 @@ final class Kidia_Mobile_Bundle_Recipes {
 		$rows = self::all();
 		$recipe = is_array( $rows[ $id ] ?? null ) ? $rows[ $id ] : null;
 		if ( ! is_array( $recipe ) || 'published' !== ( $recipe['status'] ?? 'draft' ) || ! self::is_active( $recipe ) ) {
-			return new WP_Error( 'kidia_bundle_unavailable', __( 'Bundle is not currently available.', 'kidia-mobile-cms' ), array( 'status' => 404 ) );
+			return new WP_Error( 'kidia_bundle_unavailable', __( 'Bundle is not currently available.', 'mobishop' ), array( 'status' => 404 ) );
 		}
 		$channel = sanitize_key( (string) $request->get_param( 'channel' ) );
 		$channel = in_array( $channel, array( 'website', 'mobile' ), true ) ? $channel : 'mobile';
 		if ( ! in_array( (string) ( $recipe['channel'] ?? 'all' ), array( 'all', $channel ), true ) ) {
-			return new WP_Error( 'kidia_bundle_channel', __( 'Bundle is not available on this sales channel.', 'kidia-mobile-cms' ), array( 'status' => 403 ) );
+			return new WP_Error( 'kidia_bundle_channel', __( 'Bundle is not available on this sales channel.', 'mobishop' ), array( 'status' => 403 ) );
 		}
 		$coupon_code = $this->ensure_bundle_coupon( $recipe );
 		if ( is_wp_error( $coupon_code ) ) {
@@ -106,7 +106,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 
 	public function save_recipe(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to manage bundles.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to manage bundles.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_bundle_recipe', 'kidia_mobile_bundle_nonce' );
 		$raw = isset( $_POST['bundle'] ) && is_array( $_POST['bundle'] ) ? wp_unslash( $_POST['bundle'] ) : array();
@@ -189,7 +189,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 			'id'              => $id,
 			'product_id'      => absint( $raw['product_id'] ?? 0 ),
 			'coupon_id'       => absint( $raw['coupon_id'] ?? 0 ),
-			'name'            => sanitize_text_field( (string) ( $raw['name'] ?? __( 'New bundle', 'kidia-mobile-cms' ) ) ),
+			'name'            => sanitize_text_field( (string) ( $raw['name'] ?? __( 'New bundle', 'mobishop' ) ) ),
 			'description'     => sanitize_textarea_field( (string) ( $raw['description'] ?? '' ) ),
 			'type'            => $type,
 			'channel'         => $channel,
@@ -211,7 +211,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 			'starts_at'       => sanitize_text_field( (string) ( $raw['starts_at'] ?? '' ) ),
 			'ends_at'         => sanitize_text_field( (string) ( $raw['ends_at'] ?? '' ) ),
 			'customer_limit'  => max( 0, absint( $raw['customer_limit'] ?? 0 ) ),
-			'cta_label'       => sanitize_text_field( (string) ( $raw['cta_label'] ?? __( 'Customize bundle', 'kidia-mobile-cms' ) ) ),
+			'cta_label'       => sanitize_text_field( (string) ( $raw['cta_label'] ?? __( 'Customize bundle', 'mobishop' ) ) ),
 			'image_url'       => esc_url_raw( (string) ( $raw['image_url'] ?? '' ) ),
 			'ai_source'       => in_array( sanitize_key( (string) ( $raw['ai_source'] ?? 'manual' ) ), array( 'manual', 'co_purchase', 'complementary', 'behavior', 'inventory' ), true )
 				? sanitize_key( (string) $raw['ai_source'] )
@@ -287,7 +287,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 
 	private function ensure_bundle_coupon( array $recipe ) {
 		if ( ! class_exists( 'WC_Coupon' ) ) {
-			return new WP_Error( 'kidia_bundle_coupon_unavailable', __( 'WooCommerce coupons are unavailable.', 'kidia-mobile-cms' ), array( 'status' => 503 ) );
+			return new WP_Error( 'kidia_bundle_coupon_unavailable', __( 'WooCommerce coupons are unavailable.', 'mobishop' ), array( 'status' => 503 ) );
 		}
 		if ( 'none' === ( $recipe['pricing'] ?? 'none' ) || (float) ( $recipe['discount_value'] ?? 0 ) <= 0 ) {
 			return '';
@@ -296,7 +296,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 		$coupon = $existing_id ? new WC_Coupon( $existing_id ) : new WC_Coupon();
 		$code = 'KIDIA-BUNDLE-' . strtoupper( substr( hash( 'sha256', (string) $recipe['id'] ), 0, 10 ) );
 		$coupon->set_code( $code );
-		$coupon->set_description( sprintf( __( 'Bundle recipe: %s', 'kidia-mobile-cms' ), (string) $recipe['name'] ) );
+		$coupon->set_description( sprintf( __( 'Bundle recipe: %s', 'mobishop' ), (string) $recipe['name'] ) );
 		$coupon->set_discount_type( 'percentage' === ( $recipe['pricing'] ?? '' ) ? 'percent' : 'fixed_cart' );
 		$coupon->set_amount( max( 0, (float) ( $recipe['discount_value'] ?? 0 ) ) );
 		$coupon->set_individual_use( ! empty( $recipe['coupon_stacking'] ) ? false : true );
@@ -308,7 +308,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 		}
 		$coupon_id = $coupon->save();
 		if ( $coupon_id <= 0 ) {
-			return new WP_Error( 'kidia_bundle_coupon_failed', __( 'Bundle discount could not be created.', 'kidia-mobile-cms' ), array( 'status' => 500 ) );
+			return new WP_Error( 'kidia_bundle_coupon_failed', __( 'Bundle discount could not be created.', 'mobishop' ), array( 'status' => 500 ) );
 		}
 		update_post_meta( $coupon_id, '_kidia_bundle_recipe_id', (string) $recipe['id'] );
 		if ( class_exists( 'Kidia_Mobile_Coupon_Channel' ) ) {

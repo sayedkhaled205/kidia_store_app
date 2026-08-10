@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Category Grid',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display WooCommerce categories in a grid.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-grid-view',
@@ -50,7 +50,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -58,7 +58,7 @@ return array(
 			'id' => 'display',
 			'label' => __(
 				'Display',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -67,22 +67,22 @@ return array(
 	'fields' => array(
 
 		array(
-			'key' => 'layout', 'label' => __( 'Layout', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'display', 'default' => 'grid',
-			'options' => array( 'grid' => __( 'Classic grid', 'kidia-mobile-cms' ), 'compact' => __( 'Compact grid', 'kidia-mobile-cms' ), 'cards' => __( 'Rounded cards', 'kidia-mobile-cms' ), 'carousel' => __( 'Horizontal row', 'kidia-mobile-cms' ), 'editorial_mosaic' => __( 'Editorial Mosaic', 'kidia-mobile-cms' ), 'full_width_banners' => __( 'Full-width Banners', 'kidia-mobile-cms' ) ),
+			'key' => 'layout', 'label' => __( 'Layout', 'mobishop' ), 'type' => 'select', 'tab' => 'display', 'default' => 'grid',
+			'options' => array( 'grid' => __( 'Classic grid', 'mobishop' ), 'compact' => __( 'Compact grid', 'mobishop' ), 'cards' => __( 'Rounded cards', 'mobishop' ), 'carousel' => __( 'Horizontal row', 'mobishop' ), 'editorial_mosaic' => __( 'Editorial Mosaic', 'mobishop' ), 'full_width_banners' => __( 'Full-width Banners', 'mobishop' ) ),
 		),
 		array(
-			'key' => 'items_alignment', 'label' => __( 'Items Alignment', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'display', 'default' => 'right',
-			'options' => array( 'right' => __( 'Right', 'kidia-mobile-cms' ), 'center' => __( 'Center', 'kidia-mobile-cms' ), 'left' => __( 'Left', 'kidia-mobile-cms' ) ),
+			'key' => 'items_alignment', 'label' => __( 'Items Alignment', 'mobishop' ), 'type' => 'select', 'tab' => 'display', 'default' => 'right',
+			'options' => array( 'right' => __( 'Right', 'mobishop' ), 'center' => __( 'Center', 'mobishop' ), 'left' => __( 'Left', 'mobishop' ) ),
 		),
 		array(
-			'key' => 'row_gap', 'label' => __( 'Row Gap', 'kidia-mobile-cms' ), 'type' => 'number', 'tab' => 'display', 'default' => 12, 'min' => 0, 'max' => 80,
+			'key' => 'row_gap', 'label' => __( 'Row Gap', 'mobishop' ), 'type' => 'number', 'tab' => 'display', 'default' => 12, 'min' => 0, 'max' => 80,
 		),
 
 		array(
 			'key' => 'title',
 			'label' => __(
 				'Section Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -94,7 +94,7 @@ return array(
 			'key' => 'subtitle',
 			'label' => __(
 				'Subtitle',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -106,7 +106,7 @@ return array(
 			'key' => 'columns',
 			'label' => __(
 				'Columns',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'display',
@@ -120,7 +120,7 @@ return array(
 			'key' => 'limit',
 			'label' => __(
 				'Categories Limit',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'display',
@@ -134,7 +134,7 @@ return array(
 			'key' => 'parent_id',
 			'label' => __(
 				'Parent Category ID',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'display',
@@ -147,7 +147,7 @@ return array(
 			'key' => 'show_names',
 			'label' => __(
 				'Show Category Names',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'checkbox',
 			'tab' => 'display',
@@ -158,7 +158,7 @@ return array(
 			'key' => 'hide_empty',
 			'label' => __(
 				'Hide Empty Categories',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'checkbox',
 			'tab' => 'display',

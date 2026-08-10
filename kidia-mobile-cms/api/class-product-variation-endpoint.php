@@ -43,7 +43,7 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return new WP_Error(
 				'woo_mobile_woocommerce_unavailable',
-				__( 'WooCommerce is not available.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce is not available.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -52,7 +52,7 @@ final class Kidia_Mobile_CMS_Product_Variation_Endpoint {
 		if ( ! $product instanceof WC_Product_Variable ) {
 			return new WP_Error(
 				'woo_mobile_product_not_variable',
-				__( 'The requested product has no variations.', 'kidia-mobile-cms' ),
+				__( 'The requested product has no variations.', 'mobishop' ),
 				array( 'status' => 404 )
 			);
 		}

@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php esc_html_e(
 			'Image Banners',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 
 	</h1>
@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<?php esc_html_e(
 			'New Banner',
-			'kidia-mobile-cms'
+			'mobishop'
 		); ?>
 
 	</button>
@@ -43,7 +43,7 @@ defined( 'ABSPATH' ) || exit;
 			class="regular-text kidia-hero-search"
 			placeholder="<?php esc_attr_e(
 				'Search...',
-				'kidia-mobile-cms'
+				'mobishop'
 			); ?>"
 		>
 
@@ -57,7 +57,7 @@ defined( 'ABSPATH' ) || exit;
 
 				<?php esc_html_e(
 					'No Image Banners',
-					'kidia-mobile-cms'
+					'mobishop'
 				); ?>
 
 			</h2>

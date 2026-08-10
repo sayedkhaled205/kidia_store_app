@@ -225,7 +225,7 @@ final class Kidia_Mobile_Library {
     				wp_die(
     					esc_html__(
     						'Item not found.',
-    						'kidia-mobile-cms'
+    						'mobishop'
     					)
     				);
     			}
@@ -303,11 +303,11 @@ final class Kidia_Mobile_Library {
     				'labels' => array(
     					'create' => __(
     						'Enter item name',
-    						'kidia-mobile-cms'
+    						'mobishop'
     					),
     					'delete' => __(
     						'Delete this item?',
-    						'kidia-mobile-cms'
+    						'mobishop'
     					),
     				),
     			)
@@ -356,7 +356,7 @@ final class Kidia_Mobile_Library {
         		if ( '' === $name ) {
         			$name = __(
         				'Untitled Item',
-        				'kidia-mobile-cms'
+        				'mobishop'
         			);
         		}
 
@@ -417,7 +417,7 @@ final class Kidia_Mobile_Library {
         			wp_die(
         				esc_html__(
         					'Invalid item ID.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -433,7 +433,7 @@ final class Kidia_Mobile_Library {
         		if ( '' === $name ) {
         			$name = __(
         				'Untitled Item',
-        				'kidia-mobile-cms'
+        				'mobishop'
         			);
         		}
 
@@ -505,7 +505,7 @@ final class Kidia_Mobile_Library {
         			wp_die(
         				esc_html__(
         					'Item not found.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -553,7 +553,7 @@ final class Kidia_Mobile_Library {
         			wp_die(
         				esc_html__(
         					'Item not found.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -564,7 +564,7 @@ final class Kidia_Mobile_Library {
         			/* translators: %s: original item name. */
         			__(
         				'%s Copy',
-        				'kidia-mobile-cms'
+        				'mobishop'
         			),
         			(string) $source['name']
         		);
@@ -644,7 +644,7 @@ final class Kidia_Mobile_Library {
         			wp_die(
         				esc_html__(
         					'Item not found.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -874,7 +874,7 @@ final class Kidia_Mobile_Library {
                 			wp_die(
                 				esc_html__(
                 					'You do not have permission to perform this action.',
-                					'kidia-mobile-cms'
+                					'mobishop'
                 				)
                 			);
                 		}

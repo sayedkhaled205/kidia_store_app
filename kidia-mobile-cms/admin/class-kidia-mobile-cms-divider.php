@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Divider {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_dividers',
-			__( 'Dividers', 'kidia-mobile-cms' ),
+			__( 'Dividers', 'mobishop' ),
 			'kidia-mobile-dividers',
 			'divider',
 			'kidia_mobile_create_divider',

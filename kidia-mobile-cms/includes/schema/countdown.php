@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Countdown',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a countdown timer.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-clock',
@@ -40,7 +40,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -48,21 +48,21 @@ return array(
 			'id' => 'timer',
 			'label' => __(
 				'Timer',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
 	),
 
 	'fields' => array(
-		array( 'key' => 'layout_style', 'label' => __( 'Layout Style', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'cards', 'options' => array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) ),
-		array( 'key' => 'visible_units', 'label' => __( 'Visible time units', 'kidia-mobile-cms' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'days_hours_minutes_seconds', 'options' => array( 'days' => __( 'Days only', 'kidia-mobile-cms' ), 'days_hours' => __( 'Days + Hours', 'kidia-mobile-cms' ), 'days_hours_minutes' => __( 'Days + Hours + Minutes', 'kidia-mobile-cms' ), 'days_hours_minutes_seconds' => __( 'Days + Hours + Minutes + Seconds', 'kidia-mobile-cms' ) ) ),
+		array( 'key' => 'layout_style', 'label' => __( 'Layout Style', 'mobishop' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'cards', 'options' => array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) ),
+		array( 'key' => 'visible_units', 'label' => __( 'Visible time units', 'mobishop' ), 'type' => 'select', 'tab' => 'timer', 'default' => 'days_hours_minutes_seconds', 'options' => array( 'days' => __( 'Days only', 'mobishop' ), 'days_hours' => __( 'Days + Hours', 'mobishop' ), 'days_hours_minutes' => __( 'Days + Hours + Minutes', 'mobishop' ), 'days_hours_minutes_seconds' => __( 'Days + Hours + Minutes + Seconds', 'mobishop' ) ) ),
 
 		array(
 			'key' => 'title',
 			'label' => __(
 				'Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -74,7 +74,7 @@ return array(
 			'key' => 'ends_at',
 			'label' => __(
 				'End Date',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'timer',
@@ -86,7 +86,7 @@ return array(
 			'key' => 'expired_text',
 			'label' => __(
 				'Expired Text',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'timer',

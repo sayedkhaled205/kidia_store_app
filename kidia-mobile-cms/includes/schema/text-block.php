@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Text Block',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display custom formatted text.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-text',
@@ -39,7 +39,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -47,7 +47,7 @@ return array(
 			'id' => 'style',
 			'label' => __(
 				'Style',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -59,7 +59,7 @@ return array(
 			'key' => 'title',
 			'label' => __(
 				'Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -71,7 +71,7 @@ return array(
 			'key' => 'content',
 			'label' => __(
 				'Content',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'textarea',
 			'tab' => 'general',
@@ -85,15 +85,15 @@ return array(
 			'key' => 'alignment',
 			'label' => __(
 				'Text Alignment',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'select',
 			'tab' => 'style',
 			'default' => 'right',
 			'options' => array(
-				'left' => __( 'Left', 'kidia-mobile-cms' ),
-				'center' => __( 'Center', 'kidia-mobile-cms' ),
-				'right' => __( 'Right', 'kidia-mobile-cms' ),
+				'left' => __( 'Left', 'mobishop' ),
+				'center' => __( 'Center', 'mobishop' ),
+				'right' => __( 'Right', 'mobishop' ),
 			),
 		),
 
@@ -101,7 +101,7 @@ return array(
 			'key' => 'background',
 			'label' => __(
 				'Background Color',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'color',
 			'tab' => 'style',

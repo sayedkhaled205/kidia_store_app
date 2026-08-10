@@ -30,7 +30,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 	public function get_label(): string {
 		return __(
 			'Video Banner',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 
@@ -51,7 +51,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 	public function get_description(): string {
 		return __(
 			'Display a promotional video banner.',
-			'kidia-mobile-cms'
+			'mobishop'
 		);
 	}
 
@@ -212,7 +212,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Video URL',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -232,7 +232,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Poster Image URL',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -253,7 +253,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 						<?php
 						esc_html_e(
 							'Select Image',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</button>
@@ -275,7 +275,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Aspect Ratio',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -310,7 +310,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Autoplay',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</span>
@@ -336,7 +336,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Muted',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</span>
@@ -362,7 +362,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Loop',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</span>
@@ -375,7 +375,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Action Type',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>
@@ -387,7 +387,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 						<?php
 						esc_html_e(
 							'No Action',
-							'kidia-mobile-cms'
+							'mobishop'
 						);
 						?>
 					</option>
@@ -396,35 +396,35 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 						value="product"
 						<?php selected( 'product', $settings['action_type'] ); ?>
 					>
-						<?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Product', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="category"
 						<?php selected( 'category', $settings['action_type'] ); ?>
 					>
-						<?php esc_html_e( 'Category', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Category', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="collection"
 						<?php selected( 'collection', $settings['action_type'] ); ?>
 					>
-						<?php esc_html_e( 'Collection', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Collection', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="search"
 						<?php selected( 'search', $settings['action_type'] ); ?>
 					>
-						<?php esc_html_e( 'Search', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'Search', 'mobishop' ); ?>
 					</option>
 
 					<option
 						value="external"
 						<?php selected( 'external', $settings['action_type'] ); ?>
 					>
-						<?php esc_html_e( 'External URL', 'kidia-mobile-cms' ); ?>
+						<?php esc_html_e( 'External URL', 'mobishop' ); ?>
 					</option>
 				</select>
 
@@ -436,7 +436,7 @@ final class Kidia_Mobile_Video_Banner_Block extends Kidia_Mobile_Block {
 					<?php
 					esc_html_e(
 						'Action Value',
-						'kidia-mobile-cms'
+						'mobishop'
 					);
 					?>
 				</label>

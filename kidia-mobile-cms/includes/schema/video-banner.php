@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Video Banner',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display a promotional video banner.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-video-alt3',
@@ -41,7 +41,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -49,7 +49,7 @@ return array(
 			'id' => 'playback',
 			'label' => __(
 				'Playback',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -61,7 +61,7 @@ return array(
 			'key' => 'video_url',
 			'label' => __(
 				'Video URL',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'url',
 			'tab' => 'general',
@@ -74,7 +74,7 @@ return array(
 			'key' => 'poster_url',
 			'label' => __(
 				'Poster Image',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'image',
 			'tab' => 'general',
@@ -86,7 +86,7 @@ return array(
 			'key' => 'aspect_ratio',
 			'label' => __(
 				'Aspect Ratio',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'playback',
@@ -100,7 +100,7 @@ return array(
 			'key' => 'auto_play',
 			'label' => __(
 				'Autoplay',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'checkbox',
 			'tab' => 'playback',
@@ -111,7 +111,7 @@ return array(
 			'key' => 'muted',
 			'label' => __(
 				'Muted',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'checkbox',
 			'tab' => 'playback',

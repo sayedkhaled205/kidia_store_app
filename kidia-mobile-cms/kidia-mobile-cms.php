@@ -8,7 +8,7 @@
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
  * Author:            WooMobile
- * Text Domain:       kidia-mobile-cms
+ * Text Domain:       mobishop
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  */

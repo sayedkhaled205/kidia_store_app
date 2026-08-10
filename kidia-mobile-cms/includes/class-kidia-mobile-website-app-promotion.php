@@ -45,15 +45,15 @@ final class Kidia_Mobile_Website_App_Promotion {
 		return array(
 			'enabled'             => false,
 			'app_name'            => sanitize_text_field( (string) ( $identity['app_name'] ?? get_bloginfo( 'name' ) ) ),
-			'tagline'             => __( 'Shop faster and get app-only offers.', 'kidia-mobile-cms' ),
-			'description'         => __( 'Download our app for a smoother shopping experience.', 'kidia-mobile-cms' ),
+			'tagline'             => __( 'Shop faster and get app-only offers.', 'mobishop' ),
+			'description'         => __( 'Download our app for a smoother shopping experience.', 'mobishop' ),
 			'logo_url'            => esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) ),
 			'primary_color'       => sanitize_hex_color( (string) ( $identity['primary_color'] ?? '' ) ) ?: '#2F806E',
 			'text_color'          => '#15352D',
 			'surface_color'       => '#FFFFFF',
-			'button_label'        => __( 'Download app', 'kidia-mobile-cms' ),
-			'open_label'          => __( 'Open app', 'kidia-mobile-cms' ),
-			'dismiss_label'       => __( 'Not now', 'kidia-mobile-cms' ),
+			'button_label'        => __( 'Download app', 'mobishop' ),
+			'open_label'          => __( 'Open app', 'mobishop' ),
+			'dismiss_label'       => __( 'Not now', 'mobishop' ),
 			'offer_text'          => '',
 			'coupon_code'         => '',
 			'android_url'         => '',
@@ -98,7 +98,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 			'floating_button'    => array(
 				'enabled'  => false,
 				'position' => 'bottom-left',
-				'label'    => __( 'Get the app', 'kidia-mobile-cms' ),
+				'label'    => __( 'Get the app', 'mobishop' ),
 			),
 			'inline_banner'      => array(
 				'enabled'   => false,
@@ -285,9 +285,9 @@ final class Kidia_Mobile_Website_App_Promotion {
 			'shortcode'    => '[woo_mobile_app_promo]',
 			'testCampaign' => self::test_campaign(),
 			'labels'       => array(
-				'comingSoon'  => __( 'Coming soon', 'kidia-mobile-cms' ),
-				'needsLink'   => __( 'Add an app link to activate this action.', 'kidia-mobile-cms' ),
-				'testPreview' => __( 'Private live test', 'kidia-mobile-cms' ),
+				'comingSoon'  => __( 'Coming soon', 'mobishop' ),
+				'needsLink'   => __( 'Add an app link to activate this action.', 'mobishop' ),
+				'testPreview' => __( 'Private live test', 'mobishop' ),
 			),
 		);
 	}
@@ -350,7 +350,7 @@ final class Kidia_Mobile_Website_App_Promotion {
 
 	public function save(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to change these settings.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to change these settings.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_website_app_promotion', 'kidia_mobile_promotion_nonce' );
 		$submitted = isset( $_POST['promotion'] ) && is_array( $_POST['promotion'] )

@@ -199,15 +199,15 @@ final class Kidia_Mobile_CMS_Admin {
 			if ( wp_doing_ajax() ) {
 				wp_send_json_error(
 					array(
-						'message' => __( 'Activate your website license before changing Woomobi CMS settings.', 'kidia-mobile-cms' ),
+						'message' => __( 'Activate your website license before changing Woomobi CMS settings.', 'mobishop' ),
 					),
 					403
 				);
 			}
 
 			wp_die(
-				esc_html__( 'Activate your website license before changing Woomobi CMS settings.', 'kidia-mobile-cms' ),
-				esc_html__( 'License required', 'kidia-mobile-cms' ),
+				esc_html__( 'Activate your website license before changing Woomobi CMS settings.', 'mobishop' ),
+				esc_html__( 'License required', 'mobishop' ),
 				array( 'response' => 403 )
 			);
 		}
@@ -277,12 +277,12 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	public function apply_product_icon_settings(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_apply_product_icon_settings', 'nonce' );
 		$scope = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : '';
 		if ( ! in_array( $scope, array( 'quick_add', 'wishlist' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unknown settings group.', 'kidia-mobile-cms' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Unknown settings group.', 'mobishop' ) ), 400 );
 		}
 		$raw = isset( $_POST['settings'] ) ? json_decode( wp_unslash( $_POST['settings'] ), true ) : array();
 		$raw = is_array( $raw ) ? $raw : array();
@@ -306,7 +306,7 @@ final class Kidia_Mobile_CMS_Admin {
 			}
 		}
 		if ( count( $profile ) !== count( $keys ) ) {
-			wp_send_json_error( array( 'message' => __( 'Some settings are missing.', 'kidia-mobile-cms' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Some settings are missing.', 'mobishop' ) ), 400 );
 		}
 
 		$changed = 0;
@@ -337,7 +337,7 @@ final class Kidia_Mobile_CMS_Admin {
 		update_option( 'kidia_mobile_global_' . $scope . '_profile', $profile, false );
 		wp_send_json_success(
 			array(
-				'message' => sprintf( __( 'Applied to %d saved product elements.', 'kidia-mobile-cms' ), $changed ),
+				'message' => sprintf( __( 'Applied to %d saved product elements.', 'mobishop' ), $changed ),
 				'count'   => $changed,
 			)
 		);
@@ -350,8 +350,8 @@ final class Kidia_Mobile_CMS_Admin {
     	public function register_menu(): void {
 
     		add_menu_page(
-				__( 'Woomobi CMS', 'kidia-mobile-cms' ),
-				__( 'Woomobi CMS', 'kidia-mobile-cms' ),
+				__( 'Woomobi CMS', 'mobishop' ),
+				__( 'Woomobi CMS', 'mobishop' ),
     			self::CAPABILITY,
     			'kidia-mobile-cms',
     			array(
@@ -364,8 +364,8 @@ final class Kidia_Mobile_CMS_Admin {
 
 		add_submenu_page(
 			null,
-				__( 'Home Page', 'kidia-mobile-cms' ),
-				__( 'Home Page', 'kidia-mobile-cms' ),
+				__( 'Home Page', 'mobishop' ),
+				__( 'Home Page', 'mobishop' ),
     			self::CAPABILITY,
     			'kidia-mobile-home-builder',
     			array(
@@ -376,8 +376,8 @@ final class Kidia_Mobile_CMS_Admin {
 
 		add_submenu_page(
 			null,
-			__( 'Category Page', 'kidia-mobile-cms' ),
-			__( 'Category Page', 'kidia-mobile-cms' ),
+			__( 'Category Page', 'mobishop' ),
+			__( 'Category Page', 'mobishop' ),
 			self::CAPABILITY,
 			'kidia-mobile-category-builder',
 			array( $this, 'category_builder_page' )
@@ -388,7 +388,7 @@ final class Kidia_Mobile_CMS_Admin {
 			$label = $labels[ $page ];
 			add_submenu_page(
 				null,
-				$label . ' ' . __( 'Builder', 'kidia-mobile-cms' ),
+				$label . ' ' . __( 'Builder', 'mobishop' ),
 				$label,
 				self::CAPABILITY,
 				$slug,
@@ -396,23 +396,23 @@ final class Kidia_Mobile_CMS_Admin {
 			);
 		}
 
-		add_submenu_page( null, __( 'Splash Screen', 'kidia-mobile-cms' ), __( 'Splash Screen', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-splash-screen', array( $this, 'splash_screen_page' ) );
-		add_submenu_page( null, __( 'Similar Products', 'kidia-mobile-cms' ), __( 'Similar Products', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-similar-products', array( $this, 'similar_products_page' ) );
-		add_submenu_page( null, __( 'Checkout Suggestions', 'kidia-mobile-cms' ), __( 'Checkout Suggestions', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-checkout-suggestions', array( $this, 'checkout_suggestions_page' ) );
-		add_submenu_page( null, __( 'Setup & Themes', 'kidia-mobile-cms' ), __( 'Setup & Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-setup', array( $this, 'setup_wizard_page' ) );
-		add_submenu_page( null, __( 'Saved Themes', 'kidia-mobile-cms' ), __( 'Saved Themes', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-saved-themes', array( $this, 'saved_themes_page' ) );
-		add_submenu_page( null, __( 'Store Data', 'kidia-mobile-cms' ), __( 'Store Data', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-store-data', array( $this, 'store_data_page' ) );
-		add_submenu_page( null, __( 'AI Offer Studio', 'kidia-mobile-cms' ), __( 'AI Offer Studio', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-ai-insights', array( $this, 'ai_insights_page' ) );
-		add_submenu_page( null, __( 'Bundles', 'kidia-mobile-cms' ), __( 'Bundles', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-bundles', array( $this, 'bundles_page' ) );
-		add_submenu_page( null, __( 'Push Notifications', 'kidia-mobile-cms' ), __( 'Push Notifications', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-push-notifications', array( $this, 'push_notifications_page' ) );
-		add_submenu_page( null, __( 'Website App Promotion', 'kidia-mobile-cms' ), __( 'Website App Promotion', 'kidia-mobile-cms' ), self::CAPABILITY, 'kidia-mobile-website-app-promotion', array( $this, 'website_app_promotion_page' ) );
+		add_submenu_page( null, __( 'Splash Screen', 'mobishop' ), __( 'Splash Screen', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-splash-screen', array( $this, 'splash_screen_page' ) );
+		add_submenu_page( null, __( 'Similar Products', 'mobishop' ), __( 'Similar Products', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-similar-products', array( $this, 'similar_products_page' ) );
+		add_submenu_page( null, __( 'Checkout Suggestions', 'mobishop' ), __( 'Checkout Suggestions', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-checkout-suggestions', array( $this, 'checkout_suggestions_page' ) );
+		add_submenu_page( null, __( 'Setup & Themes', 'mobishop' ), __( 'Setup & Themes', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-setup', array( $this, 'setup_wizard_page' ) );
+		add_submenu_page( null, __( 'Saved Themes', 'mobishop' ), __( 'Saved Themes', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-saved-themes', array( $this, 'saved_themes_page' ) );
+		add_submenu_page( null, __( 'Store Data', 'mobishop' ), __( 'Store Data', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-store-data', array( $this, 'store_data_page' ) );
+		add_submenu_page( null, __( 'AI Offer Studio', 'mobishop' ), __( 'AI Offer Studio', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-ai-insights', array( $this, 'ai_insights_page' ) );
+		add_submenu_page( null, __( 'Bundles', 'mobishop' ), __( 'Bundles', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-bundles', array( $this, 'bundles_page' ) );
+		add_submenu_page( null, __( 'Push Notifications', 'mobishop' ), __( 'Push Notifications', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-push-notifications', array( $this, 'push_notifications_page' ) );
+		add_submenu_page( null, __( 'Website App Promotion', 'mobishop' ), __( 'Website App Promotion', 'mobishop' ), self::CAPABILITY, 'kidia-mobile-website-app-promotion', array( $this, 'website_app_promotion_page' ) );
 
 	}
 
 	/** Renders website-to-app promotion campaigns and settings. */
 	public function website_app_promotion_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$promotion_settings = Kidia_Mobile_Website_App_Promotion::settings();
 		$promotion_metrics  = Kidia_Mobile_Website_App_Promotion::metrics();
@@ -422,7 +422,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders the guided first-run setup and reusable theme gallery. */
 	public function setup_wizard_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$wizard       = new Kidia_Mobile_Setup_Wizard();
 		$identity     = $wizard->identity();
@@ -452,7 +452,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders the reusable saved-theme library. */
 	public function saved_themes_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$wizard       = new Kidia_Mobile_Setup_Wizard();
 		$saved_themes = $wizard->saved_themes();
@@ -462,7 +462,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Central WooCommerce data workspace backed by the current site. */
 	public function store_data_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$store_tab    = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
 		$store_source = isset( $_GET['store_source'] ) ? sanitize_key( wp_unslash( $_GET['store_source'] ) ) : 'all';
@@ -775,13 +775,13 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Starts Generate, Update or Full Regenerate outside fragment navigation. */
 	public function start_abandoned_cart_import(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to sync abandoned carts.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to sync abandoned carts.', 'mobishop' ) );
 		}
 
 		check_admin_referer( 'kidia_mobile_start_abandoned_cart_import', 'kidia_mobile_cart_import_nonce' );
 		$mode = sanitize_key( (string) wp_unslash( $_POST['cart_import_mode'] ?? '' ) );
 		if ( ! in_array( $mode, array( 'generate', 'update', 'full' ), true ) ) {
-			wp_die( esc_html__( 'The abandoned-cart sync request is invalid.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'The abandoned-cart sync request is invalid.', 'mobishop' ) );
 		}
 
 		( new Kidia_Mobile_Analytics() )->ensure_website_session_import( true, 'full' === $mode );
@@ -807,13 +807,13 @@ final class Kidia_Mobile_CMS_Admin {
 	public function abandoned_cart_details(): void {
 		check_ajax_referer( 'kidia_mobile_abandoned_cart_details', 'nonce' );
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to view these order details.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to view these order details.', 'mobishop' ) ), 403 );
 		}
 
 		$cart_id = absint( $_POST['cart_id'] ?? 0 );
 		$insight = $cart_id ? Kidia_Mobile_Analytics::abandoned_cart_order_insight( $cart_id ) : array();
 		if ( empty( $insight ) ) {
-			wp_send_json_error( array( 'message' => __( 'This abandoned cart could not be found.', 'kidia-mobile-cms' ) ), 404 );
+			wp_send_json_error( array( 'message' => __( 'This abandoned cart could not be found.', 'mobishop' ) ), 404 );
 		}
 		wp_send_json_success( $insight );
 	}
@@ -821,7 +821,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Toggle a product's visibility on the website or mobile app. */
 	public function toggle_product_channel(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to change product visibility.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to change product visibility.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_toggle_product_channel' );
 
@@ -829,7 +829,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$channel    = isset( $_POST['channel'] ) ? sanitize_key( wp_unslash( $_POST['channel'] ) ) : '';
 		$hidden     = isset( $_POST['hidden'] ) && '1' === (string) wp_unslash( $_POST['hidden'] );
 		if ( $product_id <= 0 || ! in_array( $channel, array( 'website', 'mobile' ), true ) || 'product' !== get_post_type( $product_id ) ) {
-			wp_die( esc_html__( 'The product visibility request is invalid.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'The product visibility request is invalid.', 'mobishop' ) );
 		}
 
 		$meta_key = 'mobile' === $channel
@@ -945,7 +945,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders the dedicated manual bundle workspace. */
 	public function bundles_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to manage bundles.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to manage bundles.', 'mobishop' ) );
 		}
 		wp_safe_redirect( add_query_arg( array( 'page' => 'kidia-mobile-cms', 'view' => 'ai-insights' ), admin_url( 'admin.php' ) ) );
 		exit;
@@ -954,7 +954,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders the independent explainable growth and recommendation workspace. */
 	public function ai_insights_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$date_preset = isset( $_GET['date_preset'] ) ? sanitize_key( wp_unslash( $_GET['date_preset'] ) ) : 'all_time';
 		$date_range  = $this->store_data_date_range( $date_preset );
@@ -1000,7 +1000,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Starts a bounded, measurable AI Studio analysis job. */
 	public function start_ai_analysis(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$preset = sanitize_key( (string) wp_unslash( $_POST['date_preset'] ?? 'all_time' ) );
@@ -1026,7 +1026,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	public function generate_store_reporting(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to generate store reports.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to generate store reports.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_store_reporting', 'nonce' );
 		$preset = sanitize_key( (string) wp_unslash( $_POST['date_preset'] ?? 'today' ) );
@@ -1060,7 +1060,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Processes one real analysis batch and reports completed records. */
 	public function step_ai_analysis(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
@@ -1074,7 +1074,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Moves an active analysis from browser-driven batches to the server queue. */
 	public function background_ai_analysis(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
@@ -1088,7 +1088,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Cancels an active analysis without storing its partial accumulator. */
 	public function cancel_ai_analysis(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
@@ -1102,7 +1102,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Reads progress and optionally advances one self-healing browser batch. */
 	public function ai_analysis_status(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
@@ -1117,7 +1117,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Hides a finished background-analysis notice for the current user. */
 	public function dismiss_ai_analysis(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to analyse this store.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_ai_analysis', 'nonce' );
 		$job_id = sanitize_text_field( (string) wp_unslash( $_POST['job_id'] ?? '' ) );
@@ -1128,7 +1128,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Turns one reviewed AI recommendation into an owner-approved draft or live action. */
 	public function build_ai_action(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to build AI actions.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to build AI actions.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_build_ai_action', 'kidia_mobile_ai_action_nonce' );
 		$id     = sanitize_text_field( (string) wp_unslash( $_POST['ai_offer_id'] ?? '' ) );
@@ -1190,7 +1190,7 @@ final class Kidia_Mobile_CMS_Admin {
 				$coupon->set_individual_use( true );
 				$coupon->set_usage_limit_per_user( 1 );
 				$coupon->set_date_expires( time() + max( 1, min( 720, absint( $_POST['ai_duration_hours'] ?? 48 ) ) ) * HOUR_IN_SECONDS );
-				$coupon->set_description( sprintf( __( 'AI Studio action: %s', 'kidia-mobile-cms' ), (string) $recommendation['title'] ) );
+				$coupon->set_description( sprintf( __( 'AI Studio action: %s', 'mobishop' ), (string) $recommendation['title'] ) );
 				$coupon->set_product_ids( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) );
 				$coupon->set_status( 'publish' === $status ? 'publish' : 'draft' );
 				$coupon_id = $coupon->save();
@@ -1294,7 +1294,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Applies an owner-approved continue or stop decision from Actions & Results. */
 	public function review_ai_result(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to review AI actions.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to review AI actions.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_review_ai_result', 'kidia_mobile_ai_result_nonce' );
 		$history_id = sanitize_text_field( (string) wp_unslash( $_POST['history_id'] ?? '' ) );
@@ -1427,14 +1427,14 @@ final class Kidia_Mobile_CMS_Admin {
 		if ( ! is_array( $block ) ) {
 			return $result;
 		}
-		$block['name']    = sanitize_text_field( 'AI: ' . (string) ( $recommendation['title'] ?? __( 'Approved offer', 'kidia-mobile-cms' ) ) );
+		$block['name']    = sanitize_text_field( 'AI: ' . (string) ( $recommendation['title'] ?? __( 'Approved offer', 'mobishop' ) ) );
 		$block['enabled'] = true;
 		$block['status']  = 'published';
 		if ( 'bundle' === $type ) {
 			$block['settings'] = array_merge(
 				(array) $block['settings'],
 				array(
-					'title'      => (string) ( $recommendation['title'] ?? __( 'Selected bundle', 'kidia-mobile-cms' ) ),
+					'title'      => (string) ( $recommendation['title'] ?? __( 'Selected bundle', 'mobishop' ) ),
 					'subtitle'   => (string) ( $recommendation['summary'] ?? '' ),
 					'source'     => 'manual',
 					'bundle_ids' => $reference,
@@ -1447,7 +1447,7 @@ final class Kidia_Mobile_CMS_Admin {
 			$block['settings'] = array_merge(
 				(array) $block['settings'],
 				array(
-					'title'               => (string) ( $recommendation['title'] ?? __( 'Limited offer', 'kidia-mobile-cms' ) ),
+					'title'               => (string) ( $recommendation['title'] ?? __( 'Limited offer', 'mobishop' ) ),
 					'description'         => (string) ( $recommendation['summary'] ?? '' ),
 					'coupon_code'         => $coupon->get_code(),
 					'action_type'         => 1 === count( $product_ids ) ? 'product' : '',
@@ -1461,7 +1461,7 @@ final class Kidia_Mobile_CMS_Admin {
 			$block['settings'] = array_merge(
 				(array) $block['settings'],
 				array(
-					'title'               => (string) ( $recommendation['title'] ?? __( 'Recommended products', 'kidia-mobile-cms' ) ),
+					'title'               => (string) ( $recommendation['title'] ?? __( 'Recommended products', 'mobishop' ) ),
 					'subtitle'            => (string) ( $recommendation['summary'] ?? '' ),
 					'source'              => 'manual',
 					'product_ids'         => implode( ',', $product_ids ),
@@ -1498,7 +1498,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Push composer, provider status and delivery history. */
 	public function push_notifications_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$history = get_option( 'kidia_mobile_push_history', array() );
 		$history = is_array( $history ) ? array_slice( $history, 0, 30 ) : array();
@@ -1533,7 +1533,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Creates or resumes the installation's isolated Firebase project. */
 	public function provision_push(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to configure Push Notifications.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to configure Push Notifications.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_provision_push', 'kidia_mobile_push_setup_nonce' );
 		$result = Kidia_Mobile_Push_Service::provision_project();
@@ -1551,7 +1551,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Validates FCM through WooMobile without delivering a real message. */
 	public function test_push_connection(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to test Push Notifications.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to test Push Notifications.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_test_push_connection', 'kidia_mobile_push_test_nonce' );
 		$result = Kidia_Mobile_Push_Service::validate_connection();
@@ -1569,7 +1569,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Updates one coupon's website/mobile availability from Store Data. */
 	public function set_coupon_channel(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to update coupons.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to update coupons.', 'mobishop' ) );
 		}
 		$coupon_id = absint( $_POST['coupon_id'] ?? 0 );
 		check_admin_referer( 'kidia_mobile_set_coupon_channel_' . $coupon_id, 'kidia_mobile_coupon_channel_nonce' );
@@ -1587,7 +1587,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Validates, records and dispatches one notification through the configured provider hook. */
 	public function send_push_notification(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_send_push_notification', 'kidia_mobile_push_nonce' );
 		$title   = sanitize_text_field( (string) wp_unslash( $_POST['push_title'] ?? '' ) );
@@ -1732,7 +1732,7 @@ final class Kidia_Mobile_CMS_Admin {
 		$coupon->set_date_expires( time() + $duration * HOUR_IN_SECONDS );
 		$coupon->set_description(
 			sprintf(
-				__( 'Woomobi CMS AI Offer Studio: %1$s (%2$d%% confidence)', 'kidia-mobile-cms' ),
+				__( 'Woomobi CMS AI Offer Studio: %1$s (%2$d%% confidence)', 'mobishop' ),
 				sanitize_text_field( (string) ( $offer['scheme'] ?? 'offer' ) ),
 				absint( $offer['confidence'] ?? 0 )
 			)
@@ -1751,7 +1751,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Applies a complete application preset. */
 	public function apply_setup_wizard(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_apply_setup_wizard', 'kidia_mobile_setup_nonce' );
 		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
@@ -1798,7 +1798,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Saves, restores, imports and exports reusable application themes. */
 	public function manage_saved_theme(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_manage_saved_theme', 'kidia_mobile_theme_nonce' );
 		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
@@ -1854,7 +1854,7 @@ final class Kidia_Mobile_CMS_Admin {
 
 	public function splash_screen_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$defaults = array( 'enabled' => true, 'image_url' => '', 'background_color' => '#2F806E', 'background_color_end' => '#236B59', 'duration_ms' => 2000, 'image_width' => 140, 'image_height' => 140, 'image_fit' => 'contain', 'image_shape' => 'none', 'show_store_name' => true, 'store_name' => get_bloginfo( 'name' ), 'text_color' => '#FFFFFF', 'show_loader' => true, 'loader_color' => '#FFFFFF' );
 		$saved = get_option( 'kidia_mobile_splash_screen', array() );
@@ -1863,7 +1863,7 @@ final class Kidia_Mobile_CMS_Admin {
 	}
 
 	public function save_splash_screen(): void {
-		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) ); }
+		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) ); }
 		check_admin_referer( 'kidia_mobile_save_splash_screen', 'kidia_mobile_splash_nonce' );
 		$row = isset( $_POST['splash'] ) && is_array( $_POST['splash'] ) ? wp_unslash( $_POST['splash'] ) : array();
 		$clean = array(
@@ -1885,7 +1885,7 @@ final class Kidia_Mobile_CMS_Admin {
 	}
 
 	public function similar_products_page(): void {
-		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) ); }
+		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) ); }
 		$store = new Kidia_Mobile_Page_Layout_Store(); $layout = $store->get_layout( 'product' );
 		$definition = null; foreach ( Kidia_Mobile_Page_Layout_Store::element_definitions( 'product' ) as $item ) { if ( 'related_products' === $item['id'] ) { $definition = $item; break; } }
 		$element = null; foreach ( $layout['elements'] as $item ) { if ( 'related_products' === $item['id'] ) { $element = $item; break; } }
@@ -1893,7 +1893,7 @@ final class Kidia_Mobile_CMS_Admin {
 	}
 
 	public function save_similar_products(): void {
-		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) ); }
+		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) ); }
 		check_admin_referer( 'kidia_mobile_save_similar_products', 'kidia_mobile_similar_nonce' );
 		$store = new Kidia_Mobile_Page_Layout_Store(); $layout = $store->get_layout( 'product' ); $submitted = isset( $_POST['related'] ) && is_array( $_POST['related'] ) ? wp_unslash( $_POST['related'] ) : array();
 		foreach ( $layout['elements'] as &$element ) { if ( 'related_products' === $element['id'] ) { $element['enabled'] = ! empty( $submitted['enabled'] ); $element['settings'] = is_array( $submitted['settings'] ?? null ) ? $submitted['settings'] : array(); } } unset( $element );
@@ -1903,7 +1903,7 @@ final class Kidia_Mobile_CMS_Admin {
 	}
 
 	public function checkout_suggestions_page(): void {
-		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) ); }
+		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) ); }
 		$checkout_store  = new Kidia_Mobile_Checkout_Fields_Store();
 		$checkout_fields = $checkout_store->get();
 		$checkout_design = $checkout_store->design();
@@ -1912,7 +1912,7 @@ final class Kidia_Mobile_CMS_Admin {
 
 	public function save_checkout_suggestions(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_checkout_suggestions', 'kidia_mobile_checkout_suggestions_nonce' );
 		$field_store = new Kidia_Mobile_Checkout_Fields_Store();
@@ -1936,12 +1936,12 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders one of the shared application page builders. */
 	public function page_builder_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 		$slug = $this->effective_cms_page();
 		$page = self::PAGE_BUILDER_SLUGS[ $slug ] ?? '';
 		if ( '' === $page ) {
-			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'Unknown application page.', 'mobishop' ) );
 		}
 		$store = new Kidia_Mobile_Page_Layout_Store();
 		$layout = $store->get_layout( $page );
@@ -1956,12 +1956,12 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Saves a shared application page layout. */
 	public function save_page_builder(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_page_builder', 'kidia_mobile_page_builder_nonce' );
 		$page = isset( $_POST['builder_page'] ) ? sanitize_key( wp_unslash( $_POST['builder_page'] ) ) : '';
 		if ( ! Kidia_Mobile_Page_Layout_Store::is_page( $page ) ) {
-			wp_die( esc_html__( 'Unknown application page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'Unknown application page.', 'mobishop' ) );
 		}
 		if ( isset( $_POST['restore_defaults'] ) || ( 'product' === $page && isset( $_POST['restore_product_defaults'] ) ) ) {
 			( new Kidia_Mobile_Page_Layout_Store() )->reset_layout( $page );
@@ -2002,15 +2002,15 @@ final class Kidia_Mobile_CMS_Admin {
 			return array( 'label' => $label, 'icon' => $icon, 'url' => add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		};
 		$tabs = array(
-			'overview'   => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
-			'splash'     => $tab( __( 'Splash', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
-			'home'       => $tab( __( 'Home', 'kidia-mobile-cms' ), 'kidia-mobile-home-builder', 'dashicons-admin-home' ),
-			'category'   => $tab( __( 'Categories', 'kidia-mobile-cms' ), 'kidia-mobile-category-builder', 'dashicons-category' ),
-			'catalog'    => $tab( __( 'Catalog', 'kidia-mobile-cms' ), 'kidia-mobile-catalog-builder', 'dashicons-grid-view' ),
-			'product'    => $tab( __( 'Product', 'kidia-mobile-cms' ), 'kidia-mobile-product-builder', 'dashicons-products' ),
-			'wishlist'   => $tab( __( 'Wishlist', 'kidia-mobile-cms' ), 'kidia-mobile-wishlist-builder', 'dashicons-heart' ),
-			'account'    => $tab( __( 'Account', 'kidia-mobile-cms' ), 'kidia-mobile-account-builder', 'dashicons-admin-users' ),
-			'checkout'   => $tab( __( 'Checkout', 'kidia-mobile-cms' ), 'kidia-mobile-checkout-suggestions', 'dashicons-cart' ),
+			'overview'   => $tab( __( 'Overview', 'mobishop' ), 'mobishop', 'dashicons-chart-area' ),
+			'splash'     => $tab( __( 'Splash', 'mobishop' ), 'kidia-mobile-splash-screen', 'dashicons-format-image' ),
+			'home'       => $tab( __( 'Home', 'mobishop' ), 'kidia-mobile-home-builder', 'dashicons-admin-home' ),
+			'category'   => $tab( __( 'Categories', 'mobishop' ), 'kidia-mobile-category-builder', 'dashicons-category' ),
+			'catalog'    => $tab( __( 'Catalog', 'mobishop' ), 'kidia-mobile-catalog-builder', 'dashicons-grid-view' ),
+			'product'    => $tab( __( 'Product', 'mobishop' ), 'kidia-mobile-product-builder', 'dashicons-products' ),
+			'wishlist'   => $tab( __( 'Wishlist', 'mobishop' ), 'kidia-mobile-wishlist-builder', 'dashicons-heart' ),
+			'account'    => $tab( __( 'Account', 'mobishop' ), 'kidia-mobile-account-builder', 'dashicons-admin-users' ),
+			'checkout'   => $tab( __( 'Checkout', 'mobishop' ), 'kidia-mobile-checkout-suggestions', 'dashicons-cart' ),
 		);
 		$active_map = array(
 			'kidia-mobile-cms'                  => 'overview',
@@ -2043,14 +2043,14 @@ final class Kidia_Mobile_CMS_Admin {
 		$builder_tabs = array( 'splash', 'home', 'category', 'catalog', 'product', 'wishlist', 'account', 'checkout' );
 		$show_page_tabs = in_array( $active_tab, $builder_tabs, true );
 		$sidebar_items = array(
-			'overview' => $tab( __( 'Overview', 'kidia-mobile-cms' ), 'kidia-mobile-cms', 'dashicons-chart-area' ),
-			'setup'    => $tab( __( 'Setup Wizard', 'kidia-mobile-cms' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
-			'pages'    => $tab( __( 'Customize Your Pages', 'kidia-mobile-cms' ), 'kidia-mobile-splash-screen', 'dashicons-admin-appearance' ),
-			'saved_themes' => $tab( __( 'Saved Themes', 'kidia-mobile-cms' ), 'kidia-mobile-saved-themes', 'dashicons-portfolio' ),
-			'store_data' => $tab( __( 'Store Data', 'kidia-mobile-cms' ), 'kidia-mobile-store-data', 'dashicons-database' ),
-			'ai_insights' => $tab( __( 'AI Offer Studio', 'kidia-mobile-cms' ), 'kidia-mobile-ai-insights', 'dashicons-lightbulb' ),
+			'overview' => $tab( __( 'Overview', 'mobishop' ), 'mobishop', 'dashicons-chart-area' ),
+			'setup'    => $tab( __( 'Setup Wizard', 'mobishop' ), 'kidia-mobile-setup', 'dashicons-admin-customizer' ),
+			'pages'    => $tab( __( 'Customize Your Pages', 'mobishop' ), 'kidia-mobile-splash-screen', 'dashicons-admin-appearance' ),
+			'saved_themes' => $tab( __( 'Saved Themes', 'mobishop' ), 'kidia-mobile-saved-themes', 'dashicons-portfolio' ),
+			'store_data' => $tab( __( 'Store Data', 'mobishop' ), 'kidia-mobile-store-data', 'dashicons-database' ),
+			'ai_insights' => $tab( __( 'AI Offer Studio', 'mobishop' ), 'kidia-mobile-ai-insights', 'dashicons-lightbulb' ),
 			'abandoned_carts' => array(
-				'label' => __( 'Abandoned Carts', 'kidia-mobile-cms' ),
+				'label' => __( 'Abandoned Carts', 'mobishop' ),
 				'icon'  => 'dashicons-cart',
 				'url'   => add_query_arg(
 					array(
@@ -2062,8 +2062,8 @@ final class Kidia_Mobile_CMS_Admin {
 					admin_url( 'admin.php' )
 				),
 			),
-			'push' => $tab( __( 'Push Notifications', 'kidia-mobile-cms' ), 'kidia-mobile-push-notifications', 'dashicons-megaphone' ),
-			'website_promotion' => $tab( __( 'Promote App on Website', 'kidia-mobile-cms' ), 'kidia-mobile-website-app-promotion', 'dashicons-smartphone' ),
+			'push' => $tab( __( 'Push Notifications', 'mobishop' ), 'kidia-mobile-push-notifications', 'dashicons-megaphone' ),
+			'website_promotion' => $tab( __( 'Promote App on Website', 'mobishop' ), 'kidia-mobile-website-app-promotion', 'dashicons-smartphone' ),
 		);
 		$active_sidebar = $show_page_tabs
 			? 'pages'
@@ -2083,7 +2083,7 @@ final class Kidia_Mobile_CMS_Admin {
 	 */
 	public function cms_view_fragment(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to access this page.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_cms_view', 'nonce' );
 
@@ -2095,7 +2095,7 @@ final class Kidia_Mobile_CMS_Admin {
 		}
 		$view = isset( $args['view'] ) ? sanitize_key( (string) $args['view'] ) : 'overview';
 		if ( ! isset( self::CMS_VIEWS[ $view ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unknown CMS view.', 'kidia-mobile-cms' ) ), 404 );
+			wp_send_json_error( array( 'message' => __( 'Unknown CMS view.', 'mobishop' ) ), 404 );
 		}
 
 		foreach ( $args as $key => $value ) {
@@ -2247,7 +2247,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Renders the WooCommerce category hierarchy editor. */
 	public function category_builder_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
 		}
 
 		$terms = taxonomy_exists( 'product_cat' )
@@ -2271,7 +2271,7 @@ final class Kidia_Mobile_CMS_Admin {
 	/** Saves the Category element plus app-only term order, visibility, name and image overrides. */
 	public function save_category_builder(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_save_category_builder', 'kidia_mobile_category_builder_nonce' );
 		if ( isset( $_POST['restore_defaults'] ) ) {
@@ -2333,7 +2333,7 @@ final class Kidia_Mobile_CMS_Admin {
     			wp_die(
     				esc_html__(
     					'You do not have permission to access this page.',
-    					'kidia-mobile-cms'
+    					'mobishop'
     				)
     			);
     		}
@@ -2418,7 +2418,7 @@ final class Kidia_Mobile_CMS_Admin {
 
 	private function assert_license_action(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to perform this action.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_license_action', 'kidia_mobile_license_nonce' );
 	}
@@ -2451,7 +2451,7 @@ final class Kidia_Mobile_CMS_Admin {
         			wp_die(
         				esc_html__(
         					'You do not have permission to access this page.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -2487,7 +2487,7 @@ final class Kidia_Mobile_CMS_Admin {
         			wp_die(
         				esc_html__(
         					'You do not have permission to perform this action.',
-        					'kidia-mobile-cms'
+        					'mobishop'
         				)
         			);
         		}
@@ -2740,16 +2740,16 @@ final class Kidia_Mobile_CMS_Admin {
 									'kidia_mobile_download_nonce'
 								),
 								'labels'      => array(
-									'queued'        => __( 'APK build queued…', 'kidia-mobile-cms' ),
-									'building'      => __( 'Building your APK…', 'kidia-mobile-cms' ),
-									'ready'         => __( 'Your APK is ready to install.', 'kidia-mobile-cms' ),
-									'failed'        => __( 'The APK build failed.', 'kidia-mobile-cms' ),
-									'timeout'       => __( 'The APK build request took too long. Please try again.', 'kidia-mobile-cms' ),
-									'starting'      => __( 'Starting APK build…', 'kidia-mobile-cms' ),
-									'buildDownload' => __( 'Build Your App', 'kidia-mobile-cms' ),
-									'download'      => __( 'Download APK', 'kidia-mobile-cms' ),
-									'cancelled'     => __( 'Build cancelled.', 'kidia-mobile-cms' ),
-									'cancelFailed'  => __( 'The build could not be cancelled.', 'kidia-mobile-cms' ),
+									'queued'        => __( 'APK build queued…', 'mobishop' ),
+									'building'      => __( 'Building your APK…', 'mobishop' ),
+									'ready'         => __( 'Your APK is ready to install.', 'mobishop' ),
+									'failed'        => __( 'The APK build failed.', 'mobishop' ),
+									'timeout'       => __( 'The APK build request took too long. Please try again.', 'mobishop' ),
+									'starting'      => __( 'Starting APK build…', 'mobishop' ),
+									'buildDownload' => __( 'Build Your App', 'mobishop' ),
+									'download'      => __( 'Download APK', 'mobishop' ),
+									'cancelled'     => __( 'Build cancelled.', 'mobishop' ),
+									'cancelFailed'  => __( 'The build could not be cancelled.', 'mobishop' ),
 								),
 							)
 						);
@@ -2794,9 +2794,9 @@ final class Kidia_Mobile_CMS_Admin {
 							'kidia-mobile-license-preview',
 							'kidiaLicensePreview',
 							array(
-								'title'       => __( 'Preview mode', 'kidia-mobile-cms' ),
-								'message'     => __( 'The default theme remains available to browse. Activate your website license to edit or save any setting.', 'kidia-mobile-cms' ),
-								'actionLabel' => __( 'Connect or activate', 'kidia-mobile-cms' ),
+								'title'       => __( 'Preview mode', 'mobishop' ),
+								'message'     => __( 'The default theme remains available to browse. Activate your website license to edit or save any setting.', 'mobishop' ),
+								'actionLabel' => __( 'Connect or activate', 'mobishop' ),
 								'actionUrl'   => admin_url( 'admin.php?page=kidia-mobile-cms#kidia-license-key' ),
 							)
 						);
@@ -2824,7 +2824,7 @@ final class Kidia_Mobile_CMS_Admin {
 									'restNonce'               => wp_create_nonce( 'wp_rest' ),
 									'productId'               => $preview_product_id,
 									'version'                 => KIDIA_MOBILE_CMS_VERSION,
-									'errorLabel'              => __( 'The real preview could not be loaded. Try opening it again.', 'kidia-mobile-cms' ),
+									'errorLabel'              => __( 'The real preview could not be loaded. Try opening it again.', 'mobishop' ),
 								)
 							);
 						} else {
@@ -2846,7 +2846,7 @@ final class Kidia_Mobile_CMS_Admin {
 									'productId' => 9001,
 									'version' => KIDIA_MOBILE_CMS_VERSION,
 									'themes' => $setup_theme_snapshots,
-									'errorLabel' => __( 'The real theme preview could not be loaded. Try opening it again.', 'kidia-mobile-cms' ),
+									'errorLabel' => __( 'The real theme preview could not be loaded. Try opening it again.', 'mobishop' ),
 								)
 							);
 						}
@@ -2880,9 +2880,9 @@ final class Kidia_Mobile_CMS_Admin {
 							'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 							'nonce'   => wp_create_nonce( 'kidia_mobile_apply_product_icon_settings' ),
 							'labels'  => array(
-								'apply'   => __( 'Apply to all', 'kidia-mobile-cms' ),
-								'working' => __( 'Applying…', 'kidia-mobile-cms' ),
-								'error'   => __( 'Could not apply these settings.', 'kidia-mobile-cms' ),
+								'apply'   => __( 'Apply to all', 'mobishop' ),
+								'working' => __( 'Applying…', 'mobishop' ),
+								'error'   => __( 'Could not apply these settings.', 'mobishop' ),
 							),
 						)
 					);
@@ -2912,11 +2912,11 @@ final class Kidia_Mobile_CMS_Admin {
 							'kidiaUnsavedChanges',
 							array(
 								'labels' => array(
-									'title'   => __( 'Unsaved changes', 'kidia-mobile-cms' ),
-									'message' => __( 'You have changes that have not been saved. What would you like to do?', 'kidia-mobile-cms' ),
-									'save'    => __( 'Save Changes', 'kidia-mobile-cms' ),
-									'discard' => __( 'Discard Changes', 'kidia-mobile-cms' ),
-									'cancel'  => __( 'Cancel', 'kidia-mobile-cms' ),
+									'title'   => __( 'Unsaved changes', 'mobishop' ),
+									'message' => __( 'You have changes that have not been saved. What would you like to do?', 'mobishop' ),
+									'save'    => __( 'Save Changes', 'mobishop' ),
+									'discard' => __( 'Discard Changes', 'mobishop' ),
+									'cancel'  => __( 'Cancel', 'mobishop' ),
 								),
 							)
 						);
@@ -2987,7 +2987,7 @@ final class Kidia_Mobile_CMS_Admin {
 							array(
 								'page' => self::PAGE_BUILDER_SLUGS[ $page ],
 								'products' => $preview_products,
-								'labels' => array( 'hidden' => __( 'Hidden', 'kidia-mobile-cms' ), 'visible' => __( 'Visible', 'kidia-mobile-cms' ) ),
+								'labels' => array( 'hidden' => __( 'Hidden', 'mobishop' ), 'visible' => __( 'Visible', 'mobishop' ) ),
 							)
 						);
 						return;
@@ -3025,29 +3025,29 @@ final class Kidia_Mobile_CMS_Admin {
 						'labels' => array(
             					'deleteConfirm' => __(
 									'Remove this element from the Home page?',
-            						'kidia-mobile-cms'
+            						'mobishop'
             					),
 							'untitled'      => __(
 								'Untitled Element',
-								'kidia-mobile-cms'
+								'mobishop'
 							),
-							'createPrefix'   => __( 'Create', 'kidia-mobile-cms' ),
-							'draft'          => __( 'Draft', 'kidia-mobile-cms' ),
-							'published'      => __( 'Published', 'kidia-mobile-cms' ),
-							'copySuffix'     => __( ' Copy', 'kidia-mobile-cms' ),
-							'noElements'     => __( 'No elements on the Home Page', 'kidia-mobile-cms' ),
+							'createPrefix'   => __( 'Create', 'mobishop' ),
+							'draft'          => __( 'Draft', 'mobishop' ),
+							'published'      => __( 'Published', 'mobishop' ),
+							'copySuffix'     => __( ' Copy', 'mobishop' ),
+							'noElements'     => __( 'No elements on the Home Page', 'mobishop' ),
 							'noElementsDescription' => __(
 								'Add an element to start building the application Home Page.',
-								'kidia-mobile-cms'
+								'mobishop'
 							),
-							'addFirst'       => __( 'Add First Element', 'kidia-mobile-cms' ),
-							'chooseDestination' => __( 'Choose destination', 'kidia-mobile-cms' ),
-							'currentDestination' => __( 'Current value', 'kidia-mobile-cms' ),
-							'externalUrl' => __( 'External URL', 'kidia-mobile-cms' ),
-							'searchTerm' => __( 'Search term', 'kidia-mobile-cms' ),
-							'productId' => __( 'Product ID', 'kidia-mobile-cms' ),
-							'actionValue' => __( 'Action Value', 'kidia-mobile-cms' ),
-							'onSaleProducts' => __( 'Products on sale', 'kidia-mobile-cms' ),
+							'addFirst'       => __( 'Add First Element', 'mobishop' ),
+							'chooseDestination' => __( 'Choose destination', 'mobishop' ),
+							'currentDestination' => __( 'Current value', 'mobishop' ),
+							'externalUrl' => __( 'External URL', 'mobishop' ),
+							'searchTerm' => __( 'Search term', 'mobishop' ),
+							'productId' => __( 'Product ID', 'mobishop' ),
+							'actionValue' => __( 'Action Value', 'mobishop' ),
+							'onSaleProducts' => __( 'Products on sale', 'mobishop' ),
 						),
 						'editorPages'     => self::EDITOR_PAGES,
 						'actionChoices'    => $this->get_action_choices(),
@@ -3073,11 +3073,11 @@ final class Kidia_Mobile_CMS_Admin {
 	private function get_action_choices(): array {
 		$choices = array(
 			'collection' => array(
-				array( 'value' => 'latest', 'label' => __( 'Latest products', 'kidia-mobile-cms' ) ),
-				array( 'value' => 'featured', 'label' => __( 'Featured products', 'kidia-mobile-cms' ) ),
-				array( 'value' => 'on_sale', 'label' => __( 'Products on sale', 'kidia-mobile-cms' ) ),
-				array( 'value' => 'best_selling', 'label' => __( 'Best selling', 'kidia-mobile-cms' ) ),
-				array( 'value' => 'top_rated', 'label' => __( 'Top rated', 'kidia-mobile-cms' ) ),
+				array( 'value' => 'latest', 'label' => __( 'Latest products', 'mobishop' ) ),
+				array( 'value' => 'featured', 'label' => __( 'Featured products', 'mobishop' ) ),
+				array( 'value' => 'on_sale', 'label' => __( 'Products on sale', 'mobishop' ) ),
+				array( 'value' => 'best_selling', 'label' => __( 'Best selling', 'mobishop' ) ),
+				array( 'value' => 'top_rated', 'label' => __( 'Top rated', 'mobishop' ) ),
 			),
 			'product'    => array(),
 			'category'   => array(),

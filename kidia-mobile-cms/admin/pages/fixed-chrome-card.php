@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 $chrome_component = is_array( $chrome_layout[ $chrome_part ] ?? null ) ? $chrome_layout[ $chrome_part ] : array();
 $chrome_settings  = is_array( $chrome_component['settings'] ?? null ) ? $chrome_component['settings'] : array();
 $chrome_fields    = 'header' === $chrome_part ? $header_fields : $footer_fields;
-$chrome_title     = 'header' === $chrome_part ? __( 'Fixed Header', 'kidia-mobile-cms' ) : __( 'Fixed Footer', 'kidia-mobile-cms' );
+$chrome_title     = 'header' === $chrome_part ? __( 'Fixed Header', 'mobishop' ) : __( 'Fixed Footer', 'mobishop' );
 $chrome_prefix    = isset( $chrome_name_prefix ) ? (string) $chrome_name_prefix : 'layout[' . $chrome_part . ']';
 $chrome_page_name = isset( $chrome_page ) ? (string) $chrome_page : ( isset( $page ) ? (string) $page : '' );
 $chrome_items     = array( 'logo' => 'Logo', 'title' => 'Title', 'search' => 'Search icon', 'search_bar' => 'Search bar', 'back' => 'Back', 'cart' => 'Cart', 'wishlist' => 'Wishlist', 'account' => 'Account', 'orders' => 'Orders', 'support' => 'Customer support', 'menu' => 'Menu' );
@@ -49,11 +49,11 @@ $is_redundant_ui_field = static function ( string $part, string $key ): bool {
 };
 $render_chrome_field = static function ( array $field, $value, string $name ): void {
 	?><div class="kidia-page-field<?php echo 'image' === $field['type'] ? ' kidia-page-field--image' : ''; ?>" data-setting="<?php echo esc_attr( $field['key'] ); ?>"><label><?php echo esc_html( $field['label'] ); ?></label><?php
-	if ( 'checkbox' === $field['type'] ) { ?><label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><b><?php esc_html_e( 'Show', 'kidia-mobile-cms' ); ?></b></label><?php }
+	if ( 'checkbox' === $field['type'] ) { ?><label class="kidia-page-toggle"><input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="0"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( ! empty( $value ) ); ?>><b><?php esc_html_e( 'Show', 'mobishop' ); ?></b></label><?php }
 	elseif ( 'select' === $field['type'] ) { ?><select name="<?php echo esc_attr( $name ); ?>"><?php foreach ( $field['options'] as $option => $label ) { ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( (string) $value, (string) $option ); ?>><?php echo esc_html( $label ); ?></option><?php } ?></select><?php }
 	elseif ( 'color' === $field['type'] ) { ?><input type="color" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( sanitize_hex_color( (string) $value ) ?: (string) $field['default'] ); ?>"><?php }
 	elseif ( 'number' === $field['type'] ) { ?><input type="number" name="<?php echo esc_attr( $name ); ?>" min="<?php echo esc_attr( (string) $field['min'] ); ?>" max="<?php echo esc_attr( (string) $field['max'] ); ?>" step="<?php echo esc_attr( (string) $field['step'] ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"><?php }
-	elseif ( 'image' === $field['type'] ) { ?><div class="kidia-page-media"><div class="kidia-page-media-actions"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'kidia-mobile-cms' ); ?></button></div><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"></div><img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>><?php }
+	elseif ( 'image' === $field['type'] ) { ?><div class="kidia-page-media"><div class="kidia-page-media-actions"><button type="button" class="button kidia-page-media-choose"><?php esc_html_e( 'Choose image', 'mobishop' ); ?></button></div><input class="kidia-page-media-url" type="url" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"></div><img class="kidia-page-media-preview" src="<?php echo esc_url( (string) $value ); ?>" alt="" <?php echo empty( $value ) ? 'hidden' : ''; ?>><?php }
 	else { ?><div class="kidia-page-text-control"><input type="text" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>"></div><?php }
 	?></div><?php
 };
@@ -76,9 +76,9 @@ $footer_icon_symbols = array(
 	<div class="kidia-page-card__header">
 		<div class="kidia-fixed-chrome-identity"><span class="dashicons dashicons-lock"></span><strong><?php echo esc_html( $chrome_title ); ?></strong></div>
 		<div class="kidia-card-actions">
-			<div class="kidia-chrome-transfer-actions" aria-label="<?php echo esc_attr( sprintf( __( '%s settings transfer', 'kidia-mobile-cms' ), $chrome_title ) ); ?>">
-				<button type="button" class="button kidia-chrome-copy kidia-card-action kidia-card-action--primary" data-chrome-copy><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><?php esc_html_e( 'Copy', 'kidia-mobile-cms' ); ?></button>
-				<button type="button" class="button kidia-chrome-paste kidia-card-action kidia-card-action--secondary" data-chrome-paste><span class="dashicons dashicons-clipboard" aria-hidden="true"></span><?php esc_html_e( 'Paste', 'kidia-mobile-cms' ); ?></button>
+			<div class="kidia-chrome-transfer-actions" aria-label="<?php echo esc_attr( sprintf( __( '%s settings transfer', 'mobishop' ), $chrome_title ) ); ?>">
+				<button type="button" class="button kidia-chrome-copy kidia-card-action kidia-card-action--primary" data-chrome-copy><span class="dashicons dashicons-admin-page" aria-hidden="true"></span><?php esc_html_e( 'Copy', 'mobishop' ); ?></button>
+				<button type="button" class="button kidia-chrome-paste kidia-card-action kidia-card-action--secondary" data-chrome-paste><span class="dashicons dashicons-clipboard" aria-hidden="true"></span><?php esc_html_e( 'Paste', 'mobishop' ); ?></button>
 				<span class="kidia-chrome-transfer-status" role="status" aria-live="polite"></span>
 			</div>
 			<button type="button" class="button kidia-fixed-chrome-expand kidia-page-expand kidia-card-action kidia-card-action--expand" aria-expanded="false"><span class="dashicons dashicons-arrow-down-alt2"></span></button>
@@ -87,12 +87,12 @@ $footer_icon_symbols = array(
 	</div>
 	<div class="kidia-page-card__body" hidden>
 		<div class="kidia-chrome-composer" data-part="<?php echo esc_attr( $chrome_part ); ?>" data-page="<?php echo esc_attr( $chrome_page_name ); ?>">
-			<?php if ( 'header' === $chrome_part ) : ?><div class="kidia-chrome-composer__heading"><h3><?php esc_html_e( 'Regular header', 'kidia-mobile-cms' ); ?></h3></div><?php endif; ?>
+			<?php if ( 'header' === $chrome_part ) : ?><div class="kidia-chrome-composer__heading"><h3><?php esc_html_e( 'Regular header', 'mobishop' ); ?></h3></div><?php endif; ?>
 			<?php if ( 'header' === $chrome_part ) : ?>
 			<section class="kidia-header-presets" aria-labelledby="kidia-header-presets-title">
 				<div class="kidia-header-presets__heading">
-					<strong id="kidia-header-presets-title"><?php esc_html_e( 'Quick header presets', 'kidia-mobile-cms' ); ?></strong>
-					<span><?php esc_html_e( 'Choose a popular layout, then customize it below.', 'kidia-mobile-cms' ); ?></span>
+					<strong id="kidia-header-presets-title"><?php esc_html_e( 'Quick header presets', 'mobishop' ); ?></strong>
+					<span><?php esc_html_e( 'Choose a popular layout, then customize it below.', 'mobishop' ); ?></span>
 				</div>
 				<div class="kidia-header-presets__grid">
 					<?php
@@ -126,19 +126,19 @@ $footer_icon_symbols = array(
 			<?php endif; ?>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['layout_json'] ?? '' ) ); ?>">
 			<div class="kidia-chrome-layout" aria-label="<?php echo esc_attr( $chrome_title ); ?>"></div>
-			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
-			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'kidia-mobile-cms' ); ?></button>
+			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'mobishop' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
+			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore page default', 'mobishop' ); ?></button>
 		</div>
 		<?php if ( 'header' === $chrome_part ) : ?>
 		<div class="kidia-chrome-composer kidia-chrome-composer--collapsed" data-part="header" data-page="<?php echo esc_attr( $chrome_page_name ); ?>" data-variant="collapsed">
 			<div class="kidia-chrome-composer__heading">
-				<div><h3><?php esc_html_e( 'Collapsed header shown on scroll', 'kidia-mobile-cms' ); ?></h3><p><?php esc_html_e( 'Add, remove and arrange rows and items independently from the fixed header.', 'kidia-mobile-cms' ); ?></p></div>
-				<label class="kidia-page-master-toggle kidia-collapsed-header-toggle" aria-label="<?php esc_attr_e( 'Turn collapsed header on or off', 'kidia-mobile-cms' ); ?>"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="0"><input type="checkbox" class="kidia-collapsed-header-enabled" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="1" <?php checked( ! empty( $chrome_settings['collapse_on_scroll'] ) ); ?>><span class="kidia-toggle-state"></span></label>
+				<div><h3><?php esc_html_e( 'Collapsed header shown on scroll', 'mobishop' ); ?></h3><p><?php esc_html_e( 'Add, remove and arrange rows and items independently from the fixed header.', 'mobishop' ); ?></p></div>
+				<label class="kidia-page-master-toggle kidia-collapsed-header-toggle" aria-label="<?php esc_attr_e( 'Turn collapsed header on or off', 'mobishop' ); ?>"><input type="hidden" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="0"><input type="checkbox" class="kidia-collapsed-header-enabled" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][collapse_on_scroll]" value="1" <?php checked( ! empty( $chrome_settings['collapse_on_scroll'] ) ); ?>><span class="kidia-toggle-state"></span></label>
 			</div>
 			<input type="hidden" class="kidia-chrome-layout-json" name="<?php echo esc_attr( $chrome_prefix ); ?>[settings][compact_layout_json]" value="<?php echo esc_attr( (string) ( $chrome_settings['compact_layout_json'] ?? '' ) ); ?>">
-			<div class="kidia-chrome-layout" aria-label="<?php esc_attr_e( 'Collapsed header layout', 'kidia-mobile-cms' ); ?>"></div>
-			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
-			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore collapsed default', 'kidia-mobile-cms' ); ?></button>
+			<div class="kidia-chrome-layout" aria-label="<?php esc_attr_e( 'Collapsed header layout', 'mobishop' ); ?>"></div>
+			<div class="kidia-chrome-palette"><strong><?php esc_html_e( 'Available items — drop here to remove', 'mobishop' ); ?></strong><div class="kidia-chrome-palette__items"><?php foreach ( $chrome_items as $item => $label ) : ?><button type="button" draggable="true" class="kidia-chrome-item" data-item="<?php echo esc_attr( $item ); ?>"><span class="dashicons dashicons-move"></span><?php echo esc_html( $label ); ?></button><?php endforeach; ?></div></div>
+			<button type="button" class="button kidia-chrome-reset"><?php esc_html_e( 'Restore collapsed default', 'mobishop' ); ?></button>
 		</div>
 		<section class="kidia-chrome-setting kidia-collapsed-header-settings">
 			<div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { if ( ! in_array( $field['key'], array( 'collapse_on_scroll', 'compact_search_width_percent' ), true ) && in_array( $field['key'], $collapsed_header_keys, true ) ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); } } ?></div>
@@ -146,7 +146,7 @@ $footer_icon_symbols = array(
 		<?php endif; ?>
 		<div class="kidia-chrome-settings">
 		<?php $footer_icon_group_open = 'footer' === $chrome_part; ?>
-		<?php if ( $footer_icon_group_open ) : ?><section class="kidia-chrome-setting kidia-footer-icons-setting"><h3><?php esc_html_e( 'Footer Icons', 'kidia-mobile-cms' ); ?></h3><div class="kidia-footer-icons-setting__items"><?php endif; ?>
+		<?php if ( $footer_icon_group_open ) : ?><section class="kidia-chrome-setting kidia-footer-icons-setting"><h3><?php esc_html_e( 'Footer Icons', 'mobishop' ); ?></h3><div class="kidia-footer-icons-setting__items"><?php endif; ?>
 		<?php foreach ( $chrome_items as $item => $label ) :
 			if ( $footer_icon_group_open && 'add_to_cart' === $item ) {
 				echo '</div></section>';
@@ -165,16 +165,16 @@ $footer_icon_symbols = array(
 			if ( ! $variant_field && ! $item_fields ) { continue; }
 			?>
 			<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?> class="kidia-chrome-item-setting kidia-chrome-item-setting--<?php echo esc_attr( $item ); ?> <?php echo 'header' === $chrome_part && 'cart' === $item ? 'kidia-chrome-item-setting--header-cart' : ''; ?>" data-item-section="<?php echo esc_attr( $item ); ?>" hidden>
-				<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>><?php echo esc_html( sprintf( __( '%s Settings', 'kidia-mobile-cms' ), $label ) ); ?></<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>>
+				<<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>><?php echo esc_html( sprintf( __( '%s Settings', 'mobishop' ), $label ) ); ?></<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'h4' : 'h3'; ?>>
 				<?php if ( $variant_field ) : $selected_variant = (string) ( $chrome_settings[ $variant_key ] ?? $variant_field['default'] ); $symbols = $footer_icon_symbols[ $item ] ?? array(); ?>
-					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'kidia-mobile-cms' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : $codepoint = preg_match( '/^[0-9a-f]+$/i', (string) ( $symbols[ $option ] ?? '' ) ) ? (string) $symbols[ $option ] : 'ef53'; ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="kidia-material-icon-choice" aria-hidden="true"><?php echo '&#x' . esc_html( $codepoint ) . ';'; ?></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
+					<div class="kidia-chrome-icon-choice"><strong><?php esc_html_e( 'Icon shape', 'mobishop' ); ?></strong><div class="kidia-chrome-icon-options" role="radiogroup" aria-label="<?php echo esc_attr( $label ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : $codepoint = preg_match( '/^[0-9a-f]+$/i', (string) ( $symbols[ $option ] ?? '' ) ) ? (string) $symbols[ $option ] : 'ef53'; ?><button type="button" class="kidia-chrome-icon-option <?php echo $selected_variant === (string) $option ? 'is-selected' : ''; ?>" data-icon-value="<?php echo esc_attr( $option ); ?>" title="<?php echo esc_attr( $option_label ); ?>" aria-pressed="<?php echo $selected_variant === (string) $option ? 'true' : 'false'; ?>"><span class="kidia-material-icon-choice" aria-hidden="true"><?php echo '&#x' . esc_html( $codepoint ) . ';'; ?></span></button><?php endforeach; ?></div><select class="kidia-chrome-icon-select screen-reader-text" name="<?php echo esc_attr( $chrome_prefix . '[settings][' . $variant_key . ']' ); ?>"><?php foreach ( $variant_field['options'] as $option => $option_label ) : ?><option value="<?php echo esc_attr( $option ); ?>" <?php selected( $selected_variant, (string) $option ); ?>><?php echo esc_html( $option_label ); ?></option><?php endforeach; ?></select></div>
 				<?php endif; ?>
-				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); if ( 'header' === $chrome_part && 'logo' === $item && 'logo_url' === $field['key'] ) : ?><div class="kidia-page-field kidia-page-field--logo-source" data-setting="logo_source"><label><?php esc_html_e( 'Logo source', 'kidia-mobile-cms' ); ?></label><div class="kidia-page-text-control"><button type="button" class="button kidia-page-media-clear"><?php esc_html_e( 'Use logo text', 'kidia-mobile-cms' ); ?></button></div></div><?php endif; } ?></div>
+				<div class="kidia-page-fields"><?php foreach ( $item_fields as $field ) { $render_chrome_field( $field, $chrome_settings[ $field['key'] ] ?? $field['default'], $chrome_prefix . '[settings][' . $field['key'] . ']' ); if ( 'header' === $chrome_part && 'logo' === $item && 'logo_url' === $field['key'] ) : ?><div class="kidia-page-field kidia-page-field--logo-source" data-setting="logo_source"><label><?php esc_html_e( 'Logo source', 'mobishop' ); ?></label><div class="kidia-page-text-control"><button type="button" class="button kidia-page-media-clear"><?php esc_html_e( 'Use logo text', 'mobishop' ); ?></button></div></div><?php endif; } ?></div>
 			</<?php echo 'footer' === $chrome_part && 'add_to_cart' !== $item ? 'div' : 'section'; ?>>
 		<?php endforeach; ?>
 		<?php if ( $footer_icon_group_open ) : ?></div></section><?php endif; ?>
-		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'kidia-mobile-cms' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys, $section_layout_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
-		<section class="kidia-chrome-setting kidia-chrome-setting--section-layout kidia-section-layout-panel"><div class="kidia-settings-section-title kidia-settings-section-title--section_layout"><?php esc_html_e( 'Section Layout Settings', 'kidia-mobile-cms' ); ?></div><div class="kidia-section-layout-grid">
+		<section class="kidia-chrome-setting kidia-chrome-setting--general <?php echo 'footer' === $chrome_part ? 'kidia-chrome-footer-general' : ''; ?>"><h3><?php esc_html_e( 'General Settings', 'mobishop' ); ?></h3><div class="kidia-page-fields"><?php foreach ( $chrome_fields as $field ) { $key = $field['key']; if ( ! in_array( $key, array_merge( array( 'layout_json', 'compact_layout_json' ), $collapsed_header_keys, $section_layout_keys ), true ) && ! $is_placement_toggle( $chrome_part, $key ) && ! $is_redundant_ui_field( $chrome_part, $key ) && 'general' === $item_field( $chrome_part, $key ) ) { $render_chrome_field( $field, $chrome_settings[ $key ] ?? $field['default'], $chrome_prefix . '[settings][' . $key . ']' ); } } ?></div></section>
+		<section class="kidia-chrome-setting kidia-chrome-setting--section-layout kidia-section-layout-panel"><div class="kidia-settings-section-title kidia-settings-section-title--section_layout"><?php esc_html_e( 'Section Layout Settings', 'mobishop' ); ?></div><div class="kidia-section-layout-grid">
 			<?php foreach ( $section_layout_groups as $group_index => $group_keys ) : ?><div class="kidia-section-layout-column kidia-section-layout-column--<?php echo esc_attr( array( 'merge', 'space', 'background' )[ $group_index ] ); ?>">
 				<?php foreach ( $group_keys as $layout_key ) { foreach ( $chrome_fields as $field ) { if ( $field['key'] === $layout_key ) { $render_chrome_field( $field, $chrome_settings[ $layout_key ] ?? $field['default'], $chrome_prefix . '[settings][' . $layout_key . ']' ); break; } } } ?>
 			</div><?php endforeach; ?>

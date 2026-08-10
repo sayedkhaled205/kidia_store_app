@@ -9,11 +9,11 @@ defined( 'ABSPATH' ) || exit;
 
 return array(
 
-	'title'       => __( 'Hero Slider', 'kidia-mobile-cms' ),
+	'title'       => __( 'Hero Slider', 'mobishop' ),
 
 	'description' => __(
 		'Manage Hero Slider settings.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-images-alt2',
@@ -34,12 +34,12 @@ return array(
 
 		array(
 			'id'    => 'general',
-			'label' => __( 'General', 'kidia-mobile-cms' ),
+			'label' => __( 'General', 'mobishop' ),
 		),
 
 		array(
 			'id'    => 'slides',
-			'label' => __( 'Slides', 'kidia-mobile-cms' ),
+			'label' => __( 'Slides', 'mobishop' ),
 		),
 
 	),
@@ -48,7 +48,7 @@ return array(
 
 		array(
 			'key' => 'aspect_ratio',
-			'label' => __( 'Aspect Ratio', 'kidia-mobile-cms' ),
+			'label' => __( 'Aspect Ratio', 'mobishop' ),
 			'type' => 'number',
 			'tab' => 'general',
 			'min' => 1,
@@ -59,7 +59,7 @@ return array(
 
 		array(
 			'key' => 'auto_play',
-			'label' => __( 'Autoplay', 'kidia-mobile-cms' ),
+			'label' => __( 'Autoplay', 'mobishop' ),
 			'type' => 'checkbox',
 			'tab' => 'general',
 			'default' => true,
@@ -67,7 +67,7 @@ return array(
 
 		array(
 			'key' => 'interval_ms',
-			'label' => __( 'Interval (ms)', 'kidia-mobile-cms' ),
+			'label' => __( 'Interval (ms)', 'mobishop' ),
 			'type' => 'number',
 			'tab' => 'general',
 			'min' => 2000,
@@ -78,7 +78,7 @@ return array(
 
 		array(
 			'key' => 'slides',
-			'label' => __( 'Slides', 'kidia-mobile-cms' ),
+			'label' => __( 'Slides', 'mobishop' ),
 			'type' => 'repeater',
 			'tab' => 'slides',
 			'default' => array(),

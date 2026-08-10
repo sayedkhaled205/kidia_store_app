@@ -18,7 +18,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Promo Strip', 'kidia-mobile-cms' );
+		return __( 'Promo Strip', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Small promotional strip.', 'kidia-mobile-cms' );
+		return __( 'Small promotional strip.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {
@@ -146,18 +146,18 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     		>
 
 	</div>
-	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--width"><label><?php esc_html_e( 'Width (%)', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][width]" value="<?php echo esc_attr( (string) $settings['width'] ); ?>" placeholder="100"></div>
-	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--height"><label><?php esc_html_e( 'Height', 'kidia-mobile-cms' ); ?></label><input type="number" min="20" max="240" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][height]" value="<?php echo esc_attr( (string) $settings['height'] ); ?>" placeholder="Auto"></div>
-	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--enable-transition"><label><?php esc_html_e( 'Rotating Messages', 'kidia-mobile-cms' ); ?></label><label class="kidia-page-master-toggle"><input class="kidia-promo-transition-toggle" type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][enable_transition]" value="1" <?php checked( true, $settings['enable_transition'] ); ?>><span class="kidia-toggle-state"></span></label></div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--width"><label><?php esc_html_e( 'Width (%)', 'mobishop' ); ?></label><input type="number" min="10" max="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][width]" value="<?php echo esc_attr( (string) $settings['width'] ); ?>" placeholder="100"></div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--height"><label><?php esc_html_e( 'Height', 'mobishop' ); ?></label><input type="number" min="20" max="240" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][height]" value="<?php echo esc_attr( (string) $settings['height'] ); ?>" placeholder="Auto"></div>
+	<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--enable-transition"><label><?php esc_html_e( 'Rotating Messages', 'mobishop' ); ?></label><label class="kidia-page-master-toggle"><input class="kidia-promo-transition-toggle" type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][enable_transition]" value="1" <?php checked( true, $settings['enable_transition'] ); ?>><span class="kidia-toggle-state"></span></label></div>
 	<div class="kidia-promo-transition-fields" <?php echo $settings['enable_transition'] ? '' : 'hidden'; ?>>
 		<div class="kidia-promo-messages" data-next-index="<?php echo esc_attr( (string) count( $settings['messages'] ) ); ?>">
-			<?php foreach ( $settings['messages'] as $message_index => $message ) : ?><div class="kidia-promo-message-row"><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][messages][<?php echo esc_attr( (string) $message_index ); ?>]" value="<?php echo esc_attr( $message ); ?>"><button type="button" class="button kidia-remove-promo-message"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button></div><?php endforeach; ?>
+			<?php foreach ( $settings['messages'] as $message_index => $message ) : ?><div class="kidia-promo-message-row"><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][messages][<?php echo esc_attr( (string) $message_index ); ?>]" value="<?php echo esc_attr( $message ); ?>"><button type="button" class="button kidia-remove-promo-message"><?php esc_html_e( 'Remove', 'mobishop' ); ?></button></div><?php endforeach; ?>
 		</div>
-		<button type="button" class="button kidia-add-promo-message"><?php esc_html_e( 'Add Message', 'kidia-mobile-cms' ); ?></button>
+		<button type="button" class="button kidia-add-promo-message"><?php esc_html_e( 'Add Message', 'mobishop' ); ?></button>
 		<div class="kidia-builder-grid">
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Effect', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_effect]"><?php foreach ( array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['transition_effect'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Change Every (seconds)', 'kidia-mobile-cms' ); ?></label><input type="number" min="1" max="60" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][change_every]" value="<?php echo esc_attr( (string) $settings['change_every'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Duration (ms)', 'kidia-mobile-cms' ); ?></label><input type="number" min="100" max="5000" step="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_duration]" value="<?php echo esc_attr( (string) $settings['transition_duration'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Effect', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_effect]"><?php foreach ( array( 'fade' => 'Fade', 'slide_up' => 'Slide Up', 'slide_left' => 'Slide Left', 'scale' => 'Scale' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['transition_effect'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Change Every (seconds)', 'mobishop' ); ?></label><input type="number" min="1" max="60" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][change_every]" value="<?php echo esc_attr( (string) $settings['change_every'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Transition Duration (ms)', 'mobishop' ); ?></label><input type="number" min="100" max="5000" step="100" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][transition_duration]" value="<?php echo esc_attr( (string) $settings['transition_duration'] ); ?>"></div>
 		</div>
 	</div>
 
@@ -186,19 +186,19 @@ final class Kidia_Mobile_Promo_Strip_Block extends Kidia_Mobile_Block {
     	</div>
 
 		<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--action-type">
-			<label><?php esc_html_e( 'Action Type', 'kidia-mobile-cms' ); ?></label>
+			<label><?php esc_html_e( 'Action Type', 'mobishop' ); ?></label>
 			<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_type]">
-				<option value="" <?php selected( '', $settings['action_type'] ); ?>><?php esc_html_e( 'No Action', 'kidia-mobile-cms' ); ?></option>
-				<option value="product" <?php selected( 'product', $settings['action_type'] ); ?>><?php esc_html_e( 'Product', 'kidia-mobile-cms' ); ?></option>
-				<option value="category" <?php selected( 'category', $settings['action_type'] ); ?>><?php esc_html_e( 'Category', 'kidia-mobile-cms' ); ?></option>
-				<option value="collection" <?php selected( 'collection', $settings['action_type'] ); ?>><?php esc_html_e( 'Collection', 'kidia-mobile-cms' ); ?></option>
-				<option value="search" <?php selected( 'search', $settings['action_type'] ); ?>><?php esc_html_e( 'Search', 'kidia-mobile-cms' ); ?></option>
-				<option value="external" <?php selected( 'external', $settings['action_type'] ); ?>><?php esc_html_e( 'External URL', 'kidia-mobile-cms' ); ?></option>
+				<option value="" <?php selected( '', $settings['action_type'] ); ?>><?php esc_html_e( 'No Action', 'mobishop' ); ?></option>
+				<option value="product" <?php selected( 'product', $settings['action_type'] ); ?>><?php esc_html_e( 'Product', 'mobishop' ); ?></option>
+				<option value="category" <?php selected( 'category', $settings['action_type'] ); ?>><?php esc_html_e( 'Category', 'mobishop' ); ?></option>
+				<option value="collection" <?php selected( 'collection', $settings['action_type'] ); ?>><?php esc_html_e( 'Collection', 'mobishop' ); ?></option>
+				<option value="search" <?php selected( 'search', $settings['action_type'] ); ?>><?php esc_html_e( 'Search', 'mobishop' ); ?></option>
+				<option value="external" <?php selected( 'external', $settings['action_type'] ); ?>><?php esc_html_e( 'External URL', 'mobishop' ); ?></option>
 			</select>
 		</div>
 
 		<div class="kidia-builder-field kidia-promo-action-setting kidia-promo-action-setting--action-value">
-			<label><?php esc_html_e( 'Action Value', 'kidia-mobile-cms' ); ?></label>
+			<label><?php esc_html_e( 'Action Value', 'mobishop' ); ?></label>
 			<input
 				type="text"
 				name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][action_value]"

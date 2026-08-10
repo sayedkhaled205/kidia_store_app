@@ -11,12 +11,12 @@ return array(
 
 	'title' => __(
 		'Brand Carousel',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'description' => __(
 		'Display brands in a horizontal carousel.',
-		'kidia-mobile-cms'
+		'mobishop'
 	),
 
 	'icon' => 'dashicons-store',
@@ -37,7 +37,7 @@ return array(
 			'id' => 'general',
 			'label' => __(
 				'General',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -45,7 +45,7 @@ return array(
 			'id' => 'brands',
 			'label' => __(
 				'Brands',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 		),
 
@@ -57,7 +57,7 @@ return array(
 			'key' => 'title',
 			'label' => __(
 				'Section Title',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'text',
 			'tab' => 'general',
@@ -69,7 +69,7 @@ return array(
 			'key' => 'item_width',
 			'label' => __(
 				'Brand Width',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'number',
 			'tab' => 'general',
@@ -83,7 +83,7 @@ return array(
 			'key' => 'brands',
 			'label' => __(
 				'Brands',
-				'kidia-mobile-cms'
+				'mobishop'
 			),
 			'type' => 'repeater',
 			'tab' => 'brands',

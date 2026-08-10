@@ -101,18 +101,18 @@ final class Kidia_Mobile_App_Exporter {
 
 	public function handle_export(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export this application.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to export this application.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_export_app', 'kidia_mobile_export_nonce' );
 		if ( ! ( new Kidia_Mobile_License_Manager() )->is_active() ) {
-			wp_die( esc_html__( 'Activate the website license before exporting the application.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'Activate the website license before exporting the application.', 'mobishop' ) );
 		}
 		$this->download();
 	}
 
 	public function handle_build(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to build this application.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to build this application.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_build_app', 'kidia_mobile_build_nonce' );
 
@@ -149,11 +149,11 @@ final class Kidia_Mobile_App_Exporter {
 	public function queue_build() {
 		$license = new Kidia_Mobile_License_Manager();
 		if ( ! $license->is_active() ) {
-			return new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'mobishop' ) );
 		}
 		$existing = self::state();
 		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
-			return new WP_Error( 'build_already_active', __( 'A build is already running. Cancel it before starting another build.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'build_already_active', __( 'A build is already running. Cancel it before starting another build.', 'mobishop' ) );
 		}
 
 		$request_token = wp_generate_uuid4();
@@ -163,7 +163,7 @@ final class Kidia_Mobile_App_Exporter {
 				'hash'          => self::configuration_hash(),
 				'status'        => 'queued',
 				'progress'      => 1,
-				'message'       => __( 'Preparing your APK build…', 'kidia-mobile-cms' ),
+				'message'       => __( 'Preparing your APK build…', 'mobishop' ),
 				'started_at'    => time(),
 				'request_token' => $request_token,
 			)
@@ -190,7 +190,7 @@ final class Kidia_Mobile_App_Exporter {
 		}
 
 		if ( ! $scheduled ) {
-			$error = new WP_Error( 'build_queue_failed', __( 'The APK build could not be queued. Please try again.', 'kidia-mobile-cms' ) );
+			$error = new WP_Error( 'build_queue_failed', __( 'The APK build could not be queued. Please try again.', 'mobishop' ) );
 			$this->save_build_error( $error->get_error_message() );
 			return $error;
 		}
@@ -223,7 +223,7 @@ final class Kidia_Mobile_App_Exporter {
 	private function dispatch_build( string $request_token ) {
 		$license = new Kidia_Mobile_License_Manager();
 		if ( ! $license->is_active() ) {
-			$error = new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+			$error = new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'mobishop' ) );
 			$this->save_build_error( $error->get_error_message() );
 			return $error;
 		}
@@ -250,12 +250,12 @@ final class Kidia_Mobile_App_Exporter {
 
 		$state = self::state();
 		if ( ! hash_equals( (string) $state['request_token'], $request_token ) ) {
-			return new WP_Error( 'build_replaced', __( 'A newer APK build has already started.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'build_replaced', __( 'A newer APK build has already started.', 'mobishop' ) );
 		}
 
 		$build = $this->normalize_build_response( $response, (string) $state['hash'], $state );
 		if ( '' === (string) $build['build_id'] ) {
-			$error = new WP_Error( 'invalid_build_response', __( 'The build service did not return a build ID.', 'kidia-mobile-cms' ) );
+			$error = new WP_Error( 'invalid_build_response', __( 'The build service did not return a build ID.', 'mobishop' ) );
 			$this->save_build_error( $error->get_error_message() );
 			return $error;
 		}
@@ -278,7 +278,7 @@ final class Kidia_Mobile_App_Exporter {
 				&& absint( $state['started_at'] ) > 0
 				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
 			) {
-				$this->save_build_error( __( 'The APK build service did not start in time. Please try again.', 'kidia-mobile-cms' ) );
+				$this->save_build_error( __( 'The APK build service did not start in time. Please try again.', 'mobishop' ) );
 				return self::state();
 			}
 			return $state;
@@ -305,7 +305,7 @@ final class Kidia_Mobile_App_Exporter {
 
 	public function handle_build_status(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to view this build.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to view this build.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_app_build_status', 'nonce' );
 		$result = $this->refresh_build();
@@ -317,13 +317,13 @@ final class Kidia_Mobile_App_Exporter {
 
 	public function handle_build_start(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to build this application.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to build this application.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_build_app', 'nonce' );
 
 		$license = new Kidia_Mobile_License_Manager();
 		if ( ! $license->is_active() ) {
-			wp_send_json_error( array( 'message' => __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Activate the website license before building the application.', 'mobishop' ) ), 403 );
 		}
 		$existing = self::state();
 		if ( in_array( (string) $existing['status'], array( 'queued', 'building' ), true ) ) {
@@ -337,7 +337,7 @@ final class Kidia_Mobile_App_Exporter {
 				'hash'          => self::configuration_hash(),
 				'status'        => 'building',
 				'progress'      => 2,
-				'message'       => __( 'Connecting to the APK build service…', 'kidia-mobile-cms' ),
+				'message'       => __( 'Connecting to the APK build service…', 'mobishop' ),
 				'started_at'    => time(),
 				'request_token' => $request_token,
 			)
@@ -358,7 +358,7 @@ final class Kidia_Mobile_App_Exporter {
 
 	public function handle_build_cancel(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to cancel this build.', 'kidia-mobile-cms' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to cancel this build.', 'mobishop' ) ), 403 );
 		}
 		check_ajax_referer( 'kidia_mobile_app_build_cancel', 'nonce' );
 
@@ -366,7 +366,7 @@ final class Kidia_Mobile_App_Exporter {
 		$requested_build_id = sanitize_text_field( (string) wp_unslash( $_POST['buildId'] ?? '' ) );
 		$current_build_id   = sanitize_text_field( (string) $state['build_id'] );
 		if ( '' !== $requested_build_id && $requested_build_id !== $current_build_id ) {
-			wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'kidia-mobile-cms' ) ), 409 );
+			wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'mobishop' ) ), 409 );
 		}
 		if ( 'ready' === (string) $state['status'] ) {
 			$state['dismissed_build_id'] = $current_build_id;
@@ -398,7 +398,7 @@ final class Kidia_Mobile_App_Exporter {
 
 	public function handle_download_apk(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to download this application.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'You do not have permission to download this application.', 'mobishop' ) );
 		}
 		check_admin_referer( 'kidia_mobile_download_apk', 'kidia_mobile_download_nonce' );
 
@@ -407,18 +407,18 @@ final class Kidia_Mobile_App_Exporter {
 			wp_die( esc_html( $result->get_error_message() ) );
 		}
 		if ( ! self::is_current() ) {
-			wp_die( esc_html__( 'This APK is not ready or its application settings have changed. Start a new build.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'This APK is not ready or its application settings have changed. Start a new build.', 'mobishop' ) );
 		}
 
 		$url    = esc_url_raw( (string) $result['download_url'] );
 		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
 		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
 		if ( 'https' !== $scheme || '' === $host ) {
-			wp_die( esc_html__( 'The APK download link returned by the build service is invalid.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'The APK download link returned by the build service is invalid.', 'mobishop' ) );
 		}
 
 		if ( ! $this->redirect_to_artifact( $url ) ) {
-			wp_die( esc_html__( 'The application download could not be started. Please try again.', 'kidia-mobile-cms' ) );
+			wp_die( esc_html__( 'The application download could not be started. Please try again.', 'mobishop' ) );
 		}
 		exit;
 	}
@@ -648,7 +648,7 @@ final class Kidia_Mobile_App_Exporter {
 		$state['build_id']      = sanitize_text_field( (string) ( $raw['id'] ?? $raw['_id'] ?? $raw['buildId'] ?? $raw['build_id'] ?? $raw['codemagicBuildId'] ?? $raw['codemagic_build_id'] ?? $state['build_id'] ) );
 		$state['status']        = $status;
 		$state['progress']      = $progress;
-		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'kidia-mobile-cms' ) : '' ) ) );
+		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'mobishop' ) : '' ) ) );
 		$state['stage']         = sanitize_text_field( (string) ( $raw['stage'] ?? $raw['currentStep'] ?? $raw['current_step'] ?? $state['message'] ) );
 		$state['started_at']    = absint( $state['started_at'] ) ?: time();
 		$state['completed_at']  = in_array( $status, array( 'ready', 'failed', 'cancelled' ), true ) ? time() : 0;
@@ -662,7 +662,7 @@ final class Kidia_Mobile_App_Exporter {
 
 		if ( 'ready' === $status && '' === $state['download_url'] ) {
 			$state['status']  = 'failed';
-			$state['message'] = __( 'The build finished without an APK download link.', 'kidia-mobile-cms' );
+			$state['message'] = __( 'The build finished without an APK download link.', 'mobishop' );
 		}
 		return $state;
 	}

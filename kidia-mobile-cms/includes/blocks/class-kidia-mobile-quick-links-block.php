@@ -19,7 +19,7 @@ final class Kidia_Mobile_Quick_Links_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Quick Links', 'kidia-mobile-cms' );
+		return __( 'Quick Links', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -27,7 +27,7 @@ final class Kidia_Mobile_Quick_Links_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Image or icon shortcuts for categories, collections, searches, products, brands, or URLs.', 'kidia-mobile-cms' );
+		return __( 'Image or icon shortcuts for categories, collections, searches, products, brands, or URLs.', 'mobishop' );
 	}
 
 	/** @return array<string,mixed> */
@@ -147,21 +147,21 @@ final class Kidia_Mobile_Quick_Links_Block extends Kidia_Mobile_Block {
 		}
 		?>
 		<div class="kidia-builder-grid">
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( (string) $settings['subtitle'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'kidia-mobile-cms' ); ?></option><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Grid', 'kidia-mobile-cms' ); ?></option><option value="service" <?php selected( 'service', $settings['layout'] ); ?>><?php esc_html_e( 'Service actions', 'kidia-mobile-cms' ); ?></option></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Columns', 'kidia-mobile-cms' ); ?></label><input type="number" min="2" max="6" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Shape', 'kidia-mobile-cms' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'kidia-mobile-cms' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'kidia-mobile-cms' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'kidia-mobile-cms' ); ?></option></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_size]" value="<?php echo esc_attr( (string) $settings['item_size'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Gap', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Size', 'kidia-mobile-cms' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Color', 'kidia-mobile-cms' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_labels]" value="1" <?php checked( true, ! empty( $settings['show_labels'] ) ); ?>> <?php esc_html_e( 'Show Labels', 'kidia-mobile-cms' ); ?></label></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Title', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][title]" value="<?php echo esc_attr( (string) $settings['title'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][subtitle]" value="<?php echo esc_attr( (string) $settings['subtitle'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][layout]"><option value="carousel" <?php selected( 'carousel', $settings['layout'] ); ?>><?php esc_html_e( 'Horizontal row', 'mobishop' ); ?></option><option value="grid" <?php selected( 'grid', $settings['layout'] ); ?>><?php esc_html_e( 'Grid', 'mobishop' ); ?></option><option value="service" <?php selected( 'service', $settings['layout'] ); ?>><?php esc_html_e( 'Service actions', 'mobishop' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Columns', 'mobishop' ); ?></label><input type="number" min="2" max="6" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Shape', 'mobishop' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'mobishop' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'mobishop' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'mobishop' ); ?></option></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Image Size', 'mobishop' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_size]" value="<?php echo esc_attr( (string) $settings['item_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Gap', 'mobishop' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Size', 'mobishop' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Label Color', 'mobishop' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][show_labels]" value="1" <?php checked( true, ! empty( $settings['show_labels'] ) ); ?>> <?php esc_html_e( 'Show Labels', 'mobishop' ); ?></label></div>
 		</div>
 		<div class="kidia-repeatable-items kidia-quick-link-items">
 			<?php foreach ( $items as $item_index => $item ) : $this->render_item( $index, $item_index, $item ); endforeach; ?>
 		</div>
-		<p><button type="button" class="button kidia-add-repeatable-item"><?php esc_html_e( 'Add Quick Link', 'kidia-mobile-cms' ); ?></button></p>
+		<p><button type="button" class="button kidia-add-repeatable-item"><?php esc_html_e( 'Add Quick Link', 'mobishop' ); ?></button></p>
 		<script type="text/html" class="tmpl-kidia-repeatable-item"><?php $this->render_item( $index, '__ITEM_INDEX__', $this->empty_item() ); ?></script>
 		<?php
 	}
@@ -176,21 +176,21 @@ final class Kidia_Mobile_Quick_Links_Block extends Kidia_Mobile_Block {
 		$item = wp_parse_args( $item, $this->empty_item() );
 		?>
 		<div class="kidia-repeatable-item">
-			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Quick Link', 'kidia-mobile-cms' ); ?></strong><button type="button" class="button-link-delete kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?></button></div>
+			<div class="kidia-hero-block-item__header"><strong><?php esc_html_e( 'Quick Link', 'mobishop' ); ?></strong><button type="button" class="button-link-delete kidia-remove-repeatable-item"><?php esc_html_e( 'Remove', 'mobishop' ); ?></button></div>
 			<input type="hidden" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][id]" value="<?php echo esc_attr( (string) $item['id'] ); ?>">
 			<div class="kidia-builder-grid">
-				<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media"><label><?php esc_html_e( 'Image', 'kidia-mobile-cms' ); ?></label><div class="kidia-builder-media-field"><input type="url" class="kidia-media-url" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>"><button type="button" class="button kidia-select-media"><?php esc_html_e( 'Select Image', 'kidia-mobile-cms' ); ?></button></div><img class="kidia-media-preview" src="<?php echo esc_url( (string) $item['image_url'] ); ?>" alt="" <?php echo empty( $item['image_url'] ) ? 'hidden' : ''; ?>></div>
-				<div class="kidia-builder-field"><label><?php esc_html_e( 'Label', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][label]" value="<?php echo esc_attr( (string) $item['label'] ); ?>"></div>
-				<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][subtitle]" value="<?php echo esc_attr( (string) $item['subtitle'] ); ?>"></div>
-				<div class="kidia-builder-field"><label><?php esc_html_e( 'Action Type', 'kidia-mobile-cms' ); ?></label><?php $this->render_action_select( $block_index, $item_index, (string) $item['action_type'] ); ?></div>
-				<div class="kidia-builder-field"><label><?php esc_html_e( 'Action Value', 'kidia-mobile-cms' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]" value="<?php echo esc_attr( (string) $item['action_value'] ); ?>"></div>
+				<div class="kidia-builder-field kidia-builder-field--full kidia-builder-field--media"><label><?php esc_html_e( 'Image', 'mobishop' ); ?></label><div class="kidia-builder-media-field"><input type="url" class="kidia-media-url" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][image_url]" value="<?php echo esc_attr( (string) $item['image_url'] ); ?>"><button type="button" class="button kidia-select-media"><?php esc_html_e( 'Select Image', 'mobishop' ); ?></button></div><img class="kidia-media-preview" src="<?php echo esc_url( (string) $item['image_url'] ); ?>" alt="" <?php echo empty( $item['image_url'] ) ? 'hidden' : ''; ?>></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Label', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][label]" value="<?php echo esc_attr( (string) $item['label'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][subtitle]" value="<?php echo esc_attr( (string) $item['subtitle'] ); ?>"></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Action Type', 'mobishop' ); ?></label><?php $this->render_action_select( $block_index, $item_index, (string) $item['action_type'] ); ?></div>
+				<div class="kidia-builder-field"><label><?php esc_html_e( 'Action Value', 'mobishop' ); ?></label><input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]" value="<?php echo esc_attr( (string) $item['action_value'] ); ?>"></div>
 			</div>
 		</div>
 		<?php
 	}
 
 	private function render_action_select( int $block_index, $item_index, string $selected ): void {
-		$actions = array( '' => __( 'No Action', 'kidia-mobile-cms' ), 'category' => __( 'Category', 'kidia-mobile-cms' ), 'collection' => __( 'Collection', 'kidia-mobile-cms' ), 'product' => __( 'Product', 'kidia-mobile-cms' ), 'brand' => __( 'Brand', 'kidia-mobile-cms' ), 'brands' => __( 'All Brands', 'kidia-mobile-cms' ), 'search' => __( 'Search', 'kidia-mobile-cms' ), 'external' => __( 'External URL', 'kidia-mobile-cms' ) );
+		$actions = array( '' => __( 'No Action', 'mobishop' ), 'category' => __( 'Category', 'mobishop' ), 'collection' => __( 'Collection', 'mobishop' ), 'product' => __( 'Product', 'mobishop' ), 'brand' => __( 'Brand', 'mobishop' ), 'brands' => __( 'All Brands', 'mobishop' ), 'search' => __( 'Search', 'mobishop' ), 'external' => __( 'External URL', 'mobishop' ) );
 		?><select name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_type]"><?php foreach ( $actions as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $selected ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><?php
 	}
 }

@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Category_Grid {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_category_grids',
-			__( 'Category Grids', 'kidia-mobile-cms' ),
+			__( 'Category Grids', 'mobishop' ),
 			'kidia-mobile-category-grids',
 			'category-grid',
 			'kidia_mobile_create_category_grid',

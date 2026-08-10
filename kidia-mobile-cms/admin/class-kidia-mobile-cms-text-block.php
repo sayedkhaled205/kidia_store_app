@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Text_Block {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_text_blocks',
-			__( 'Text Blocks', 'kidia-mobile-cms' ),
+			__( 'Text Blocks', 'mobishop' ),
 			'kidia-mobile-text-blocks',
 			'text-block',
 			'kidia_mobile_create_text_block',

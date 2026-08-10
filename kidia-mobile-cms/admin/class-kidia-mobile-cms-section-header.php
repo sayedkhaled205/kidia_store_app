@@ -22,7 +22,7 @@ final class Kidia_Mobile_CMS_Section_Header {
 
 		$this->library = new Kidia_Mobile_Library(
 			'kidia_mobile_section_headers',
-			__( 'Section Headers', 'kidia-mobile-cms' ),
+			__( 'Section Headers', 'mobishop' ),
 			'kidia-mobile-section-headers',
 			'section-header',
 			'kidia_mobile_create_section_header',

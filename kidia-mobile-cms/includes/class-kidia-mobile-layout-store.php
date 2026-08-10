@@ -227,7 +227,7 @@ final class Kidia_Mobile_Layout_Store {
 					if ( empty( $block['settings']['title'] ) ) { $block['settings']['title'] = 'Kidia'; }
 					break;
 				case 'image_banner':
-					$block['settings']['aspect_ratio'] = 1; $block['settings']['border_radius'] = 18; $block['settings']['button_label'] = __( 'SHOP NOW', 'kidia-mobile-cms' );
+					$block['settings']['aspect_ratio'] = 1; $block['settings']['border_radius'] = 18; $block['settings']['button_label'] = __( 'SHOP NOW', 'mobishop' );
 					if ( empty( $block['settings']['image_url'] ) && ! empty( $pool['hero_slider'][0]['settings']['items'][0]['image_url'] ) ) { $block['settings']['image_url'] = $pool['hero_slider'][0]['settings']['items'][0]['image_url']; }
 					break;
 				case 'quick_links':
@@ -237,23 +237,23 @@ final class Kidia_Mobile_Layout_Store {
 					$block['settings']['title'] = ''; $block['settings']['columns'] = 3; $block['settings']['limit'] = 5; $block['settings']['show_names'] = true; $block['settings']['layout'] = 'grid'; $block['settings']['items_alignment'] = 'right'; $block['settings']['image_shape'] = 'circle'; $block['settings']['image_size'] = 86; $block['settings']['gap'] = 16; $block['settings']['label_size'] = 14; $block['settings']['block_background'] = '#FFFFFF';
 					break;
 				case 'promo_strip':
-					$block['settings']['text'] = __( 'New Kidia offers every day', 'kidia-mobile-cms' ); $block['settings']['background_color'] = '#EAF6F2'; $block['settings']['text_color'] = '#1F6F61';
+					$block['settings']['text'] = __( 'New Kidia offers every day', 'mobishop' ); $block['settings']['background_color'] = '#EAF6F2'; $block['settings']['text_color'] = '#1F6F61';
 					break;
 				case 'countdown':
-					$block['settings']['title'] = __( 'Flash sale', 'kidia-mobile-cms' ); $block['settings']['ends_at'] = gmdate( 'Y-m-d\TH:i', time() + ( 3 * ( defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400 ) ) );
+					$block['settings']['title'] = __( 'Flash sale', 'mobishop' ); $block['settings']['ends_at'] = gmdate( 'Y-m-d\TH:i', time() + ( 3 * ( defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400 ) ) );
 					break;
 				case 'banner_grid':
-					$block['settings']['title'] = __( 'Seasonal collections', 'kidia-mobile-cms' ); $block['settings']['columns'] = 2; $block['settings']['gap'] = 10; $block['settings']['border_radius'] = 16; $block['settings']['image_fit'] = 'cover';
+					$block['settings']['title'] = __( 'Seasonal collections', 'mobishop' ); $block['settings']['columns'] = 2; $block['settings']['gap'] = 10; $block['settings']['border_radius'] = 16; $block['settings']['image_fit'] = 'cover';
 					break;
 				case 'brand_carousel':
-					$block['settings']['title'] = __( 'Our brands', 'kidia-mobile-cms' ); $block['settings']['item_width'] = 82;
+					$block['settings']['title'] = __( 'Our brands', 'mobishop' ); $block['settings']['item_width'] = 82;
 					break;
 			}
 			if ( in_array( $type, array( 'product_carousel', 'product_grid' ), true ) ) {
 				$block['settings']['source'] = 'on_sale';
 				if ( 4 === $index ) { $block['settings']['source'] = 'latest'; }
 				if ( 6 === $index ) { $block['settings']['source'] = 'featured'; }
-				$block['settings']['title'] = 4 === $index ? __( 'New arrivals', 'kidia-mobile-cms' ) : ( 6 === $index ? __( 'Best sellers', 'kidia-mobile-cms' ) : __( 'More for kids', 'kidia-mobile-cms' ) );
+				$block['settings']['title'] = 4 === $index ? __( 'New arrivals', 'mobishop' ) : ( 6 === $index ? __( 'Best sellers', 'mobishop' ) : __( 'More for kids', 'mobishop' ) );
 				$block['settings']['columns'] = 2; $block['settings']['limit'] = 10; $block['settings']['card_style'] = 'minimal'; $block['settings']['image_ratio'] = 0.82; $block['settings']['card_radius'] = 14; $block['settings']['show_wishlist'] = true; $block['settings']['show_rating'] = true; $block['settings']['show_view_all'] = true;
 			}
 			$layout[] = $block;
@@ -291,7 +291,7 @@ final class Kidia_Mobile_Layout_Store {
 			if ( 'quick_links' === $type ) {
 				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'layout' => 'grid', 'columns' => 4, 'image_shape' => 'circle', 'item_size' => 76, 'gap' => 14, 'label_size' => 13 ) );
 			} elseif ( 'image_banner' === $type ) {
-				$block['settings'] = array_merge( $block['settings'], array( 'aspect_ratio' => 1, 'border_radius' => 18, 'button_label' => __( 'SHOP NOW', 'kidia-mobile-cms' ) ) );
+				$block['settings'] = array_merge( $block['settings'], array( 'aspect_ratio' => 1, 'border_radius' => 18, 'button_label' => __( 'SHOP NOW', 'mobishop' ) ) );
 			} elseif ( 'category_grid' === $type ) {
 				$block['settings'] = array_merge( $block['settings'], array( 'title' => '', 'columns' => 3, 'limit' => 5, 'layout' => 'grid', 'items_alignment' => 'right', 'image_shape' => 'circle', 'image_size' => 86, 'gap' => 16, 'label_size' => 14, 'block_background' => '#FFFFFF' ) );
 			}

@@ -3,11 +3,11 @@
 defined( 'ABSPATH' ) || exit;
 
 return array(
-	'title'       => __( 'Bundles & Recommendations', 'kidia-mobile-cms' ),
-	'description' => __( 'Show configurable and AI-recommended bundles.', 'kidia-mobile-cms' ),
+	'title'       => __( 'Bundles & Recommendations', 'mobishop' ),
+	'description' => __( 'Show configurable and AI-recommended bundles.', 'mobishop' ),
 	'icon'        => 'dashicons-products',
 	'defaults'    => array(
-		'title'            => __( 'Bundles selected for you', 'kidia-mobile-cms' ),
+		'title'            => __( 'Bundles selected for you', 'mobishop' ),
 		'subtitle'         => '',
 		'source'           => 'published',
 		'bundle_ids'       => '',

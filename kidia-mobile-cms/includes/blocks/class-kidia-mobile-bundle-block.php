@@ -16,7 +16,7 @@ final class Kidia_Mobile_Bundle_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Bundles & Recommendations', 'kidia-mobile-cms' );
+		return __( 'Bundles & Recommendations', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -24,12 +24,12 @@ final class Kidia_Mobile_Bundle_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Show manual, automatic or AI-selected bundles on the Home Page.', 'kidia-mobile-cms' );
+		return __( 'Show manual, automatic or AI-selected bundles on the Home Page.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {
 		return array(
-			'title'            => __( 'Bundles selected for you', 'kidia-mobile-cms' ),
+			'title'            => __( 'Bundles selected for you', 'mobishop' ),
 			'subtitle'         => '',
 			'source'           => 'published',
 			'bundle_ids'       => '',
@@ -125,19 +125,19 @@ final class Kidia_Mobile_Bundle_Block extends Kidia_Mobile_Block {
 		$name = static fn( string $key ): string => 'blocks[' . $index . '][settings][' . $key . ']';
 		?>
 		<div class="kidia-builder-fields">
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Section title', 'kidia-mobile-cms' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'title' ) ); ?>" value="<?php echo esc_attr( $settings['title'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'kidia-mobile-cms' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'subtitle' ) ); ?>" value="<?php echo esc_attr( $settings['subtitle'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Bundle source', 'kidia-mobile-cms' ); ?></label><select name="<?php echo esc_attr( $name( 'source' ) ); ?>"><?php foreach ( array( 'published' => 'Published bundles', 'manual' => 'Manual selection', 'ai' => 'AI recommendations', 'frequently_bought' => 'Frequently bought together', 'trending' => 'Trending bundles' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['source'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Bundle IDs', 'kidia-mobile-cms' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'bundle_ids' ) ); ?>" value="<?php echo esc_attr( $settings['bundle_ids'] ); ?>" placeholder="bundle-one, bundle-two"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'kidia-mobile-cms' ); ?></label><select name="<?php echo esc_attr( $name( 'layout' ) ); ?>"><?php foreach ( array( 'carousel' => 'Carousel', 'grid' => 'Grid', 'banner' => 'Banner' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['layout'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Sales channel', 'kidia-mobile-cms' ); ?></label><select name="<?php echo esc_attr( $name( 'channel' ) ); ?>"><?php foreach ( array( 'all' => 'Website + Mobile App', 'website' => 'Website only', 'mobile' => 'Mobile App only' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['channel'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Maximum bundles', 'kidia-mobile-cms' ); ?></label><input type="number" min="1" max="20" name="<?php echo esc_attr( $name( 'limit' ) ); ?>" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Columns', 'kidia-mobile-cms' ); ?></label><input type="number" min="1" max="3" name="<?php echo esc_attr( $name( 'columns' ) ); ?>" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
-			<div class="kidia-builder-field"><label><?php esc_html_e( 'Primary action', 'kidia-mobile-cms' ); ?></label><select name="<?php echo esc_attr( $name( 'cta_mode' ) ); ?>"><option value="auto" <?php selected( 'auto', $settings['cta_mode'] ); ?>>Automatic by bundle type</option><option value="add" <?php selected( 'add', $settings['cta_mode'] ); ?>>Add bundle</option><option value="customize" <?php selected( 'customize', $settings['cta_mode'] ); ?>>Customize bundle</option></select></div>
-			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_image' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_image'] ) ); ?>> <?php esc_html_e( 'Show image', 'kidia-mobile-cms' ); ?></label></div>
-			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_price' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_price'] ) ); ?>> <?php esc_html_e( 'Show price', 'kidia-mobile-cms' ); ?></label></div>
-			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_discount' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_discount'] ) ); ?>> <?php esc_html_e( 'Show discount', 'kidia-mobile-cms' ); ?></label></div>
-			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'hide_unavailable' ) ); ?>" value="1" <?php checked( ! empty( $settings['hide_unavailable'] ) ); ?>> <?php esc_html_e( 'Hide unavailable bundles', 'kidia-mobile-cms' ); ?></label></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Section title', 'mobishop' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'title' ) ); ?>" value="<?php echo esc_attr( $settings['title'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Subtitle', 'mobishop' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'subtitle' ) ); ?>" value="<?php echo esc_attr( $settings['subtitle'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Bundle source', 'mobishop' ); ?></label><select name="<?php echo esc_attr( $name( 'source' ) ); ?>"><?php foreach ( array( 'published' => 'Published bundles', 'manual' => 'Manual selection', 'ai' => 'AI recommendations', 'frequently_bought' => 'Frequently bought together', 'trending' => 'Trending bundles' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['source'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Bundle IDs', 'mobishop' ); ?></label><input type="text" name="<?php echo esc_attr( $name( 'bundle_ids' ) ); ?>" value="<?php echo esc_attr( $settings['bundle_ids'] ); ?>" placeholder="bundle-one, bundle-two"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Layout', 'mobishop' ); ?></label><select name="<?php echo esc_attr( $name( 'layout' ) ); ?>"><?php foreach ( array( 'carousel' => 'Carousel', 'grid' => 'Grid', 'banner' => 'Banner' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['layout'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Sales channel', 'mobishop' ); ?></label><select name="<?php echo esc_attr( $name( 'channel' ) ); ?>"><?php foreach ( array( 'all' => 'Website + Mobile App', 'website' => 'Website only', 'mobile' => 'Mobile App only' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['channel'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Maximum bundles', 'mobishop' ); ?></label><input type="number" min="1" max="20" name="<?php echo esc_attr( $name( 'limit' ) ); ?>" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Columns', 'mobishop' ); ?></label><input type="number" min="1" max="3" name="<?php echo esc_attr( $name( 'columns' ) ); ?>" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
+			<div class="kidia-builder-field"><label><?php esc_html_e( 'Primary action', 'mobishop' ); ?></label><select name="<?php echo esc_attr( $name( 'cta_mode' ) ); ?>"><option value="auto" <?php selected( 'auto', $settings['cta_mode'] ); ?>>Automatic by bundle type</option><option value="add" <?php selected( 'add', $settings['cta_mode'] ); ?>>Add bundle</option><option value="customize" <?php selected( 'customize', $settings['cta_mode'] ); ?>>Customize bundle</option></select></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_image' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_image'] ) ); ?>> <?php esc_html_e( 'Show image', 'mobishop' ); ?></label></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_price' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_price'] ) ); ?>> <?php esc_html_e( 'Show price', 'mobishop' ); ?></label></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'show_discount' ) ); ?>" value="1" <?php checked( ! empty( $settings['show_discount'] ) ); ?>> <?php esc_html_e( 'Show discount', 'mobishop' ); ?></label></div>
+			<div class="kidia-builder-field"><label><input type="checkbox" name="<?php echo esc_attr( $name( 'hide_unavailable' ) ); ?>" value="1" <?php checked( ! empty( $settings['hide_unavailable'] ) ); ?>> <?php esc_html_e( 'Hide unavailable bundles', 'mobishop' ); ?></label></div>
 		</div>
 		<?php
 	}

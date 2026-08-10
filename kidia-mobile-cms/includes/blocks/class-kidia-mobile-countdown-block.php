@@ -18,7 +18,7 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Countdown', 'kidia-mobile-cms' );
+		return __( 'Countdown', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Offer countdown timer.', 'kidia-mobile-cms' );
+		return __( 'Offer countdown timer.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {
@@ -163,15 +163,15 @@ final class Kidia_Mobile_Countdown_Block extends Kidia_Mobile_Block {
 		<div class="kidia-builder-field"><label>Background Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][background_color]" value="<?php echo esc_attr( $settings['background_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Text Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></div>
 		<div class="kidia-builder-field"><label>Timer Box Color</label><input type="color" name="blocks[<?php echo esc_attr( $index ); ?>][settings][box_color]" value="<?php echo esc_attr( $settings['box_color'] ); ?>"></div>
-		<div class="kidia-builder-field kidia-countdown-setting kidia-countdown-setting--layout"><label><?php esc_html_e( 'Layout Style', 'kidia-mobile-cms' ); ?></label><select class="kidia-countdown-layout" name="blocks[<?php echo esc_attr( $index ); ?>][settings][layout_style]"><?php foreach ( array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['layout_style'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><span class="kidia-countdown-layout-preview is-<?php echo esc_attr( $settings['layout_style'] ); ?>" aria-hidden="true"><i data-countdown-unit="days">08<small>D</small></i><i data-countdown-unit="hours" <?php echo $settings['show_hours'] ? '' : 'hidden'; ?>>12<small>H</small></i><i data-countdown-unit="minutes" <?php echo $settings['show_minutes'] ? '' : 'hidden'; ?>>24<small>M</small></i><i data-countdown-unit="seconds" <?php echo $settings['show_seconds'] ? '' : 'hidden'; ?>>36<small>S</small></i></span></div>
+		<div class="kidia-builder-field kidia-countdown-setting kidia-countdown-setting--layout"><label><?php esc_html_e( 'Layout Style', 'mobishop' ); ?></label><select class="kidia-countdown-layout" name="blocks[<?php echo esc_attr( $index ); ?>][settings][layout_style]"><?php foreach ( array( 'cards' => 'Cards', 'circles' => 'Circles', 'flip_clock' => 'Flip Clock', 'minimal_inline' => 'Minimal Inline', 'split_labels' => 'Split Labels' ) as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['layout_style'] ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?></select><span class="kidia-countdown-layout-preview is-<?php echo esc_attr( $settings['layout_style'] ); ?>" aria-hidden="true"><i data-countdown-unit="days">08<small>D</small></i><i data-countdown-unit="hours" <?php echo $settings['show_hours'] ? '' : 'hidden'; ?>>12<small>H</small></i><i data-countdown-unit="minutes" <?php echo $settings['show_minutes'] ? '' : 'hidden'; ?>>24<small>M</small></i><i data-countdown-unit="seconds" <?php echo $settings['show_seconds'] ? '' : 'hidden'; ?>>36<small>S</small></i></span></div>
 		<div class="kidia-builder-field kidia-countdown-setting kidia-countdown-setting--visible-units">
-			<label><?php esc_html_e( 'Visible time units', 'kidia-mobile-cms' ); ?></label>
+			<label><?php esc_html_e( 'Visible time units', 'mobishop' ); ?></label>
 			<select class="kidia-countdown-visible-units" name="blocks[<?php echo esc_attr( $index ); ?>][settings][visible_units]">
 				<?php foreach ( array(
-					'days' => __( 'Days only', 'kidia-mobile-cms' ),
-					'days_hours' => __( 'Days + Hours', 'kidia-mobile-cms' ),
-					'days_hours_minutes' => __( 'Days + Hours + Minutes', 'kidia-mobile-cms' ),
-					'days_hours_minutes_seconds' => __( 'Days + Hours + Minutes + Seconds', 'kidia-mobile-cms' ),
+					'days' => __( 'Days only', 'mobishop' ),
+					'days_hours' => __( 'Days + Hours', 'mobishop' ),
+					'days_hours_minutes' => __( 'Days + Hours + Minutes', 'mobishop' ),
+					'days_hours_minutes_seconds' => __( 'Days + Hours + Minutes + Seconds', 'mobishop' ),
 				) as $value => $label ) : ?>
 					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $settings['visible_units'] ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>

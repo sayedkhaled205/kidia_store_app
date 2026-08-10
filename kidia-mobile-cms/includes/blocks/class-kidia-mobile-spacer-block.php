@@ -18,7 +18,7 @@ final class Kidia_Mobile_Spacer_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_label(): string {
-		return __( 'Spacer', 'kidia-mobile-cms' );
+		return __( 'Spacer', 'mobishop' );
 	}
 
 	public function get_icon(): string {
@@ -26,7 +26,7 @@ final class Kidia_Mobile_Spacer_Block extends Kidia_Mobile_Block {
 	}
 
 	public function get_description(): string {
-		return __( 'Vertical spacing between blocks.', 'kidia-mobile-cms' );
+		return __( 'Vertical spacing between blocks.', 'mobishop' );
 	}
 
 	public function get_default_settings(): array {

@@ -29,7 +29,7 @@ $status = 'published' === ( $block_data['status'] ?? 'draft' )
 $settings = isset( $block_data['settings'] ) && is_array( $block_data['settings'] ) ? $block_data['settings'] : $block->get_default_settings();
 $element_icon = isset( $block_data['element_icon'] ) ? (string) $block_data['element_icon'] : 'dashicons-screenoptions';
 $element_category_key = isset( $block_data['element_category_key'] ) ? (string) $block_data['element_category_key'] : 'content';
-$element_category_label = isset( $block_data['element_category_label'] ) ? (string) $block_data['element_category_label'] : __( 'Content', 'kidia-mobile-cms' );
+$element_category_label = isset( $block_data['element_category_label'] ) ? (string) $block_data['element_category_label'] : __( 'Content', 'mobishop' );
 ?>
 
 <div
@@ -44,7 +44,7 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 
 		<div class="kidia-builder-block__left">
 
-			<span class="dashicons dashicons-move kidia-builder-drag" title="<?php esc_attr_e( 'Drag to reorder', 'kidia-mobile-cms' ); ?>"></span>
+			<span class="dashicons dashicons-move kidia-builder-drag" title="<?php esc_attr_e( 'Drag to reorder', 'mobishop' ); ?>"></span>
 
 			<span class="kidia-builder-block__icon" aria-hidden="true">
 				<span class="dashicons <?php echo esc_attr( $element_icon ); ?>"></span>
@@ -69,29 +69,29 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 				<span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
 				<?php esc_html_e(
 					'Duplicate',
-					'kidia-mobile-cms'
+					'mobishop'
 				); ?>
 			</button>
 
 			<button
 				type="button"
 				class="button kidia-delete-block kidia-card-action kidia-card-action--secondary"
-				aria-label="<?php esc_attr_e( 'Remove this element', 'kidia-mobile-cms' ); ?>"
+				aria-label="<?php esc_attr_e( 'Remove this element', 'mobishop' ); ?>"
 			>
 				<span class="dashicons dashicons-trash" aria-hidden="true"></span>
-				<?php esc_html_e( 'Remove', 'kidia-mobile-cms' ); ?>
+				<?php esc_html_e( 'Remove', 'mobishop' ); ?>
 			</button>
 
 			<button
 				type="button"
 				class="button kidia-toggle-block-settings kidia-card-action kidia-card-action--expand"
-				aria-label="<?php esc_attr_e( 'Open element settings', 'kidia-mobile-cms' ); ?>"
+				aria-label="<?php esc_attr_e( 'Open element settings', 'mobishop' ); ?>"
 				aria-expanded="false"
 			>
 				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
 			</button>
 
-			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle" title="<?php esc_attr_e( 'Show or hide this element', 'kidia-mobile-cms' ); ?>">
+			<label class="kidia-builder-switch kidia-builder-switch--card kidia-card-action kidia-card-action--toggle" title="<?php esc_attr_e( 'Show or hide this element', 'mobishop' ); ?>">
 				<input type="checkbox" name="blocks[<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( true, ! empty( $block_data['enabled'] ) ); ?>>
 				<span class="kidia-builder-switch__track"></span>
 				<span class="kidia-builder-switch__state"></span>
@@ -159,7 +159,7 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 				<?php
 				esc_html_e(
 					'Element Name',
-					'kidia-mobile-cms'
+					'mobishop'
 				);
 				?>
 
@@ -176,11 +176,11 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 
 			<div class="kidia-builder-field kidia-builder-field--visibility">
 				<label for="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
-					<?php esc_html_e( 'Visibility', 'kidia-mobile-cms' ); ?>
+					<?php esc_html_e( 'Visibility', 'mobishop' ); ?>
 				</label>
 				<select class="kidia-block-status-select" id="kidia-status-<?php echo esc_attr( (string) $index ); ?>">
-					<option value="published" <?php selected( 'published', $status ); ?>><?php esc_html_e( 'Published', 'kidia-mobile-cms' ); ?></option>
-					<option value="draft" <?php selected( 'draft', $status ); ?>><?php esc_html_e( 'Draft', 'kidia-mobile-cms' ); ?></option>
+					<option value="published" <?php selected( 'published', $status ); ?>><?php esc_html_e( 'Published', 'mobishop' ); ?></option>
+					<option value="draft" <?php selected( 'draft', $status ); ?>><?php esc_html_e( 'Draft', 'mobishop' ); ?></option>
 				</select>
 			</div>
 
@@ -189,15 +189,15 @@ $element_category_label = isset( $block_data['element_category_label'] ) ? (stri
 		<div class="kidia-builder-inline-settings">
 			<div class="kidia-builder-settings-heading">
 				<span class="dashicons dashicons-admin-generic" aria-hidden="true"></span>
-				<strong><?php esc_html_e( 'Element Settings', 'kidia-mobile-cms' ); ?></strong>
+				<strong><?php esc_html_e( 'Element Settings', 'mobishop' ); ?></strong>
 			</div>
 
 			<div class="kidia-builder-settings-content">
-				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Merge up', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_top]" value="<?php echo esc_attr( (string) ( $settings['margin_top'] ?? 0 ) ); ?>"></div>
-				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Merge down', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_bottom]" value="<?php echo esc_attr( (string) ( $settings['margin_bottom'] ?? 0 ) ); ?>"></div>
-				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Space up', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][space_up]" value="<?php echo esc_attr( (string) ( $settings['space_up'] ?? $settings['padding_vertical'] ?? 0 ) ); ?>"></div>
-				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Space down', 'kidia-mobile-cms' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][space_down]" value="<?php echo esc_attr( (string) ( $settings['space_down'] ?? $settings['padding_vertical'] ?? 0 ) ); ?>"></div>
-				<div class="kidia-builder-field kidia-builder-field--background kidia-section-layout-field"><label><?php esc_html_e( 'Background color', 'kidia-mobile-cms' ); ?></label><div class="kidia-builder-background-control"><input type="color" class="kidia-block-background-picker" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $settings['block_background'] ?? '' ) ) ?: '#FFFFFF' ); ?>"><input type="text" class="kidia-block-background-value" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][block_background]" value="<?php echo esc_attr( (string) ( $settings['block_background'] ?? '' ) ); ?>" placeholder="transparent"></div></div>
+				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Merge up', 'mobishop' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_top]" value="<?php echo esc_attr( (string) ( $settings['margin_top'] ?? 0 ) ); ?>"></div>
+				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Merge down', 'mobishop' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][margin_bottom]" value="<?php echo esc_attr( (string) ( $settings['margin_bottom'] ?? 0 ) ); ?>"></div>
+				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Space up', 'mobishop' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][space_up]" value="<?php echo esc_attr( (string) ( $settings['space_up'] ?? $settings['padding_vertical'] ?? 0 ) ); ?>"></div>
+				<div class="kidia-builder-field kidia-section-layout-field"><label><?php esc_html_e( 'Space down', 'mobishop' ); ?></label><input type="number" min="0" max="80" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][space_down]" value="<?php echo esc_attr( (string) ( $settings['space_down'] ?? $settings['padding_vertical'] ?? 0 ) ); ?>"></div>
+				<div class="kidia-builder-field kidia-builder-field--background kidia-section-layout-field"><label><?php esc_html_e( 'Background color', 'mobishop' ); ?></label><div class="kidia-builder-background-control"><input type="color" class="kidia-block-background-picker" value="<?php echo esc_attr( sanitize_hex_color( (string) ( $settings['block_background'] ?? '' ) ) ?: '#FFFFFF' ); ?>"><input type="text" class="kidia-block-background-value" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][block_background]" value="<?php echo esc_attr( (string) ( $settings['block_background'] ?? '' ) ); ?>" placeholder="transparent"></div></div>
 				<?php
 				$block->render_settings( (int) $index, $settings );
 				?>

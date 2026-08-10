@@ -43,7 +43,7 @@ final class Kidia_Mobile_License_Manager {
 	public function activate( string $license_key ) {
 		$license_key = strtoupper( trim( $license_key ) );
 		if ( '' === $license_key ) {
-			return new WP_Error( 'license_key_required', __( 'Enter a license key.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_key_required', __( 'Enter a license key.', 'mobishop' ) );
 		}
 
 		$nonce    = wp_generate_uuid4();
@@ -63,7 +63,7 @@ final class Kidia_Mobile_License_Manager {
 		}
 
 		if ( empty( $response['activation_token'] ) || empty( $response['license_proof'] ) ) {
-			return new WP_Error( 'invalid_license_response', __( 'The license server returned an incomplete response.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_license_response', __( 'The license server returned an incomplete response.', 'mobishop' ) );
 		}
 
 		$proof = $this->validate_proof( $response['license_proof'], $nonce );
@@ -93,7 +93,7 @@ final class Kidia_Mobile_License_Manager {
 		$state = $this->state();
 		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
 		if ( '' === $token ) {
-			return new WP_Error( 'license_not_activated', __( 'No license is activated.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_not_activated', __( 'No license is activated.', 'mobishop' ) );
 		}
 
 		$last_verified = absint( $state['last_verified_at'] ?? 0 );
@@ -203,17 +203,17 @@ final class Kidia_Mobile_License_Manager {
 		$state = $this->state();
 		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
 		if ( '' === $token || ! $this->is_active() ) {
-			return new WP_Error( 'license_not_activated', __( 'Activate the website license before building the application.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_not_activated', __( 'Activate the website license before building the application.', 'mobishop' ) );
 		}
 
 		$path = '/' . ltrim( $path, '/' );
 		if ( '/' !== $path && ! preg_match( '#^/[a-zA-Z0-9/_-]+$#', $path ) ) {
-			return new WP_Error( 'invalid_build_path', __( 'The application build path is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_build_path', __( 'The application build path is invalid.', 'mobishop' ) );
 		}
 
 		$method = strtoupper( $method );
 		if ( ! in_array( $method, array( 'GET', 'POST' ), true ) ) {
-			return new WP_Error( 'invalid_build_method', __( 'The application build request is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_build_method', __( 'The application build request is invalid.', 'mobishop' ) );
 		}
 
 		$base_url = (string) apply_filters( 'kidia_mobile_build_api_base_url', self::BUILD_API_BASE_URL );
@@ -233,7 +233,7 @@ final class Kidia_Mobile_License_Manager {
 
 		$response = wp_remote_request( untrailingslashit( $base_url ) . ( '/' === $path ? '' : $path ), $args );
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'build_service_unavailable', __( 'Could not contact the WooMobile build service. Please try again.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'build_service_unavailable', __( 'Could not contact the WooMobile build service. Please try again.', 'mobishop' ) );
 		}
 
 		$status = wp_remote_retrieve_response_code( $response );
@@ -241,7 +241,7 @@ final class Kidia_Mobile_License_Manager {
 		if ( $status < 200 || $status >= 300 || ! is_array( $data ) || ( isset( $data['ok'] ) && empty( $data['ok'] ) ) ) {
 			$message = $this->remote_error_message(
 				$data,
-				__( 'The WooMobile build service rejected the request.', 'kidia-mobile-cms' )
+				__( 'The WooMobile build service rejected the request.', 'mobishop' )
 			);
 			$code = is_array( $data ) && isset( $data['error']['code'] )
 				? sanitize_key( (string) $data['error']['code'] )
@@ -279,17 +279,17 @@ final class Kidia_Mobile_License_Manager {
 		$state = $this->state();
 		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
 		if ( '' === $token || ! $this->is_active() ) {
-			return new WP_Error( 'license_not_activated', __( 'Activate the website license before using Push Notifications.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_not_activated', __( 'Activate the website license before using Push Notifications.', 'mobishop' ) );
 		}
 
 		$path = '/' . ltrim( $path, '/' );
 		if ( '/' !== $path && ! preg_match( '#^/[a-zA-Z0-9/_-]+$#', $path ) ) {
-			return new WP_Error( 'invalid_push_path', __( 'The Push Notifications request path is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_push_path', __( 'The Push Notifications request path is invalid.', 'mobishop' ) );
 		}
 
 		$method = strtoupper( $method );
 		if ( ! in_array( $method, array( 'GET', 'POST' ), true ) ) {
-			return new WP_Error( 'invalid_push_method', __( 'The Push Notifications request is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_push_method', __( 'The Push Notifications request is invalid.', 'mobishop' ) );
 		}
 
 		$base_url = (string) apply_filters( 'kidia_mobile_firebase_api_base_url', self::FIREBASE_API_BASE_URL );
@@ -309,7 +309,7 @@ final class Kidia_Mobile_License_Manager {
 
 		$response = wp_remote_request( untrailingslashit( $base_url ) . ( '/' === $path ? '' : $path ), $args );
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'push_service_unavailable', __( 'Could not contact the WooMobile Firebase service. Please try again.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'push_service_unavailable', __( 'Could not contact the WooMobile Firebase service. Please try again.', 'mobishop' ) );
 		}
 
 		$status = wp_remote_retrieve_response_code( $response );
@@ -317,7 +317,7 @@ final class Kidia_Mobile_License_Manager {
 		if ( $status < 200 || $status >= 300 || ! is_array( $data ) || ( isset( $data['ok'] ) && empty( $data['ok'] ) ) ) {
 			$message = is_array( $data ) && isset( $data['error']['message'] )
 				? sanitize_text_field( (string) $data['error']['message'] )
-				: __( 'The WooMobile Firebase service rejected the request.', 'kidia-mobile-cms' );
+				: __( 'The WooMobile Firebase service rejected the request.', 'mobishop' );
 			$code = is_array( $data ) && isset( $data['error']['code'] )
 				? sanitize_key( (string) $data['error']['code'] )
 				: 'push_request_failed';
@@ -339,13 +339,13 @@ final class Kidia_Mobile_License_Manager {
 	public function firebase_config_file( string $platform ) {
 		$platform = sanitize_key( $platform );
 		if ( ! in_array( $platform, array( 'android', 'ios' ), true ) ) {
-			return new WP_Error( 'invalid_firebase_platform', __( 'The Firebase application platform is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_firebase_platform', __( 'The Firebase application platform is invalid.', 'mobishop' ) );
 		}
 
 		$state = $this->state();
 		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
 		if ( '' === $token || ! $this->is_active() ) {
-			return new WP_Error( 'license_not_activated', __( 'Activate the website license before using Push Notifications.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_not_activated', __( 'Activate the website license before using Push Notifications.', 'mobishop' ) );
 		}
 
 		$base_url = (string) apply_filters( 'kidia_mobile_firebase_api_base_url', self::FIREBASE_API_BASE_URL );
@@ -361,7 +361,7 @@ final class Kidia_Mobile_License_Manager {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'firebase_config_unavailable', __( 'Could not download the Firebase application configuration.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'firebase_config_unavailable', __( 'Could not download the Firebase application configuration.', 'mobishop' ) );
 		}
 
 		$status = wp_remote_retrieve_response_code( $response );
@@ -370,7 +370,7 @@ final class Kidia_Mobile_License_Manager {
 			$data = json_decode( $body, true );
 			$message = is_array( $data ) && isset( $data['error']['message'] )
 				? sanitize_text_field( (string) $data['error']['message'] )
-				: __( 'The Firebase application configuration is not ready.', 'kidia-mobile-cms' );
+				: __( 'The Firebase application configuration is not ready.', 'mobishop' );
 			return new WP_Error( 'firebase_config_not_ready', $message );
 		}
 
@@ -468,7 +468,7 @@ final class Kidia_Mobile_License_Manager {
 			)
 		);
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'license_connection_failed', __( 'Could not contact the license server. Your last verified state remains available during the grace period.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'license_connection_failed', __( 'Could not contact the license server. Your last verified state remains available during the grace period.', 'mobishop' ) );
 		}
 
 		$status = wp_remote_retrieve_response_code( $response );
@@ -476,7 +476,7 @@ final class Kidia_Mobile_License_Manager {
 		if ( $status < 200 || $status >= 300 || ! is_array( $data ) || empty( $data['ok'] ) ) {
 			$message = is_array( $data ) && isset( $data['error']['message'] )
 				? sanitize_text_field( (string) $data['error']['message'] )
-				: __( 'The license request was rejected.', 'kidia-mobile-cms' );
+				: __( 'The license request was rejected.', 'mobishop' );
 			$code = is_array( $data ) && isset( $data['error']['code'] )
 				? sanitize_key( (string) $data['error']['code'] )
 				: 'license_request_failed';
@@ -497,19 +497,19 @@ final class Kidia_Mobile_License_Manager {
 	 */
 	private function validate_proof( $proof, string $nonce ) {
 		if ( ! is_array( $proof ) || 'Ed25519' !== ( $proof['algorithm'] ?? '' ) ) {
-			return new WP_Error( 'invalid_license_proof', __( 'The license proof is invalid.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_license_proof', __( 'The license proof is invalid.', 'mobishop' ) );
 		}
 
 		$payload_encoded = (string) ( $proof['payload'] ?? '' );
 		$payload_json    = $this->base64_url_decode( $payload_encoded );
 		$payload         = false === $payload_json ? null : json_decode( $payload_json, true );
 		if ( ! is_array( $payload ) || ! hash_equals( $nonce, (string) ( $payload['nonce'] ?? '' ) ) ) {
-			return new WP_Error( 'invalid_license_nonce', __( 'The license proof did not match this request.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_license_nonce', __( 'The license proof did not match this request.', 'mobishop' ) );
 		}
 
 		$activation = is_array( $payload['activation'] ?? null ) ? $payload['activation'] : array();
 		if ( ! hash_equals( $this->installation_id(), (string) ( $activation['installation_id'] ?? '' ) ) ) {
-			return new WP_Error( 'invalid_license_installation', __( 'The license proof belongs to another installation.', 'kidia-mobile-cms' ) );
+			return new WP_Error( 'invalid_license_installation', __( 'The license proof belongs to another installation.', 'mobishop' ) );
 		}
 
 		$public_key = defined( 'KIDIA_MOBILE_LICENSE_PUBLIC_KEY' )
@@ -517,12 +517,12 @@ final class Kidia_Mobile_License_Manager {
 			: '';
 		if ( '' !== $public_key ) {
 			if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ) {
-				return new WP_Error( 'sodium_required', __( 'The Sodium PHP extension is required to verify the license signature.', 'kidia-mobile-cms' ) );
+				return new WP_Error( 'sodium_required', __( 'The Sodium PHP extension is required to verify the license signature.', 'mobishop' ) );
 			}
 			$signature = $this->base64_url_decode( (string) ( $proof['signature'] ?? '' ) );
 			$key       = base64_decode( $public_key, true );
 			if ( false === $signature || false === $key || ! sodium_crypto_sign_verify_detached( $signature, $payload_encoded, $key ) ) {
-				return new WP_Error( 'invalid_license_signature', __( 'The license signature could not be verified.', 'kidia-mobile-cms' ) );
+				return new WP_Error( 'invalid_license_signature', __( 'The license signature could not be verified.', 'mobishop' ) );
 			}
 		}
 

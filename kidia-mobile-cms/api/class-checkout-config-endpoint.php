@@ -50,7 +50,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 		if ( ! function_exists( 'WC' ) || ! WC() || ! method_exists( WC(), 'checkout' ) ) {
 			return new WP_Error(
 				'woo_mobile_checkout_unavailable',
-				__( 'WooCommerce checkout is unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce checkout is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -59,7 +59,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 		if ( ! $checkout instanceof WC_Checkout ) {
 			return new WP_Error(
 				'woo_mobile_checkout_unavailable',
-				__( 'WooCommerce checkout is unavailable.', 'kidia-mobile-cms' ),
+				__( 'WooCommerce checkout is unavailable.', 'mobishop' ),
 				array( 'status' => 503 )
 			);
 		}
@@ -110,7 +110,7 @@ final class Kidia_Mobile_CMS_Checkout_Config_Endpoint {
 	public function get_checkout_extension_schema(): array {
 		return array(
 			'checkout_fields' => array(
-				'description'          => __( 'Filtered WooCommerce checkout plugin fields.', 'kidia-mobile-cms' ),
+				'description'          => __( 'Filtered WooCommerce checkout plugin fields.', 'mobishop' ),
 				'type'                 => 'object',
 				'context'              => array( 'view', 'edit' ),
 				'additionalProperties' => true,
