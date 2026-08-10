@@ -296,6 +296,7 @@ final class Kidia_Mobile_Bundle_Recipes {
 		$coupon = $existing_id ? new WC_Coupon( $existing_id ) : new WC_Coupon();
 		$code = 'KIDIA-BUNDLE-' . strtoupper( substr( hash( 'sha256', (string) $recipe['id'] ), 0, 10 ) );
 		$coupon->set_code( $code );
+		/* translators: Placeholder values are supplied at runtime. */
 		$coupon->set_description( sprintf( __( 'Bundle recipe: %s', 'mobishop' ), (string) $recipe['name'] ) );
 		$coupon->set_discount_type( 'percentage' === ( $recipe['pricing'] ?? '' ) ? 'percent' : 'fixed_cart' );
 		$coupon->set_amount( max( 0, (float) ( $recipe['discount_value'] ?? 0 ) ) );

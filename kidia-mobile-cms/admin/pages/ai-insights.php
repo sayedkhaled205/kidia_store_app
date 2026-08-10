@@ -245,6 +245,7 @@ $action_result = static function ( array $row ): array {
 
 	<?php if ( $ai_generated ) : ?>
 	<section class="kidia-ai-overview">
+		<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 		<article><span class="dashicons dashicons-cart"></span><div><small><?php esc_html_e( 'Paid WooCommerce orders analysed', 'mobishop' ); ?></small><strong><?php echo esc_html( (string) $orders_scanned ); ?></strong><?php if ( $orders_available > $orders_scanned ) : ?><em><?php echo esc_html( sprintf( __( '%d paid orders found', 'mobishop' ), $orders_available ) ); ?></em><?php endif; ?></div></article>
 		<article><span class="dashicons dashicons-products"></span><div><small><?php esc_html_e( 'Units analysed', 'mobishop' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['units'] ?? 0 ) ); ?></strong></div></article>
 		<article><span class="dashicons dashicons-store"></span><div><small><?php esc_html_e( 'In-stock products analysed', 'mobishop' ); ?></small><strong><?php echo esc_html( (string) absint( $commerce['catalog_in_stock'] ?? 0 ) ); ?></strong></div></article>
@@ -275,6 +276,7 @@ $action_result = static function ( array $row ): array {
 				<small class="kidia-ai-coverage-warning"><?php esc_html_e( 'The previous stored result was incomplete. Generate again to process every paid order with the corrected batched analyser.', 'mobishop' ); ?></small>
 			<?php endif; ?>
 			<?php if ( ! empty( $tracked_funnel['unmatched_purchases'] ) ) : ?>
+				<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 				<small><?php echo esc_html( sprintf( __( '%d purchase events were excluded from the funnel because their earlier journey steps were not tracked.', 'mobishop' ), absint( $tracked_funnel['unmatched_purchases'] ) ) ); ?></small>
 			<?php endif; ?>
 		</div>
@@ -334,6 +336,7 @@ $action_result = static function ( array $row ): array {
 			</div>
 			<details class="kidia-ai-playbooks">
 				<summary>
+					<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 					<span><?php echo esc_html( sprintf( __( '%d supported playbooks', 'mobishop' ), $playbook_count ) ); ?></span>
 					<span class="dashicons dashicons-arrow-down-alt2"></span>
 				</summary>
@@ -384,7 +387,9 @@ $action_result = static function ( array $row ): array {
 								<?php
 								echo esc_html(
 									$is_product_rotation
+										/* translators: Placeholder values are supplied at runtime. */
 										? sprintf( _n( '%d product', '%d products', $catalog_count, 'mobishop' ), $catalog_count )
+										/* translators: Placeholder values are supplied at runtime. */
 										: sprintf( _n( '%d decision', '%d decisions', $catalog_count, 'mobishop' ), $catalog_count )
 								);
 								?>
@@ -410,6 +415,7 @@ $action_result = static function ( array $row ): array {
 								<section class="kidia-ai-idea-group is-<?php echo esc_attr( $category_key ); ?>" data-ai-idea-group="<?php echo esc_attr( $category_key ); ?>">
 									<header>
 										<div><h4><?php echo esc_html( (string) $category_meta['label'] ); ?></h4><p><?php echo esc_html( (string) $category_meta['description'] ); ?></p></div>
+										<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 										<b><?php echo esc_html( sprintf( _n( '%d idea', '%d ideas', count( $category_recommendations ), 'mobishop' ), count( $category_recommendations ) ) ); ?></b>
 									</header>
 									<div class="kidia-ai-recommendations kidia-ai-recommendations--workspace">
@@ -424,6 +430,7 @@ $action_result = static function ( array $row ): array {
 							data-ai-decision-kind="<?php echo esc_attr( $kind ); ?>"
 							data-ai-decision-scheme="<?php echo esc_attr( sanitize_key( (string) ( $recommendation['scheme'] ?? '' ) ) ); ?>"
 							data-ai-decision-category="<?php echo esc_attr( $recommendation_category ); ?>">
+						<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 						<header><span class="dashicons <?php echo esc_attr( $kind_icons[ $kind ] ?? 'dashicons-lightbulb' ); ?>"></span><div><small><?php echo esc_html( $kind_labels[ $kind ] ?? ucfirst( $kind ) ); ?></small><h3><?php echo esc_html( (string) $recommendation['title'] ); ?></h3></div><b class="is-<?php echo esc_attr( (string) $recommendation['risk'] ); ?>"><?php echo esc_html( sprintf( __( '%d%% confidence', 'mobishop' ), absint( $recommendation['confidence'] ) ) ); ?></b></header>
 						<section class="kidia-ai-decision">
 							<small><?php esc_html_e( 'Recommended decision', 'mobishop' ); ?></small>
@@ -434,6 +441,7 @@ $action_result = static function ( array $row ): array {
 								<?php foreach ( (array) $recommendation['products'] as $product ) : ?>
 									<article>
 										<?php if ( ! empty( $product['image_url'] ) ) : ?><img src="<?php echo esc_url( (string) $product['image_url'] ); ?>" alt=""><?php else : ?><span class="dashicons dashicons-products"></span><?php endif; ?>
+										<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 										<div><strong><?php echo esc_html( (string) ( $product['name'] ?? '' ) ); ?></strong><small><?php echo esc_html( wp_strip_all_tags( wc_price( (float) ( $product['price'] ?? 0 ) ) ) ); ?><?php if ( null !== ( $product['stock'] ?? null ) ) : ?> · <?php echo esc_html( sprintf( __( '%d in stock', 'mobishop' ), absint( $product['stock'] ) ) ); ?><?php endif; ?></small></div>
 									</article>
 								<?php endforeach; ?>
@@ -475,6 +483,7 @@ $action_result = static function ( array $row ): array {
 								<footer><p><?php esc_html_e( 'AI never publishes an action or sends a notification unless you choose it here.', 'mobishop' ); ?></p><button class="button button-primary" type="submit"><?php esc_html_e( 'Save reviewed action', 'mobishop' ); ?></button></footer>
 							</form>
 						</details>
+						<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 						<footer><span><?php echo esc_html( sprintf( __( 'Profit risk: %s', 'mobishop' ), ucfirst( (string) $recommendation['risk'] ) ) ); ?></span><?php if ( $product_ids && get_edit_post_link( $product_ids[0] ) ) : ?><a class="button" href="<?php echo esc_url( get_edit_post_link( $product_ids[0] ) ); ?>"><?php esc_html_e( 'Review product', 'mobishop' ); ?></a><?php endif; ?></footer>
 						</article>
 					<?php endforeach; ?>

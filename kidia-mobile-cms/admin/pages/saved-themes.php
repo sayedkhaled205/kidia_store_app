@@ -58,6 +58,7 @@ defined( 'ABSPATH' ) || exit;
 							</div>
 							<div class="kidia-saved-theme-phone__hero">
 								<?php if ( isset( $theme_images[0] ) ) : ?>
+									<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 									<img src="<?php echo esc_url( (string) $theme_images[0] ); ?>" alt="<?php echo esc_attr( sprintf( __( '%s theme preview', 'mobishop' ), $theme_name ) ); ?>" loading="lazy">
 								<?php endif; ?>
 							</div>

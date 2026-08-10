@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 <div class="wrap kidia-setup-wrap">
 	<div class="kidia-setup-hero">
 		<div>
-			<span class="kidia-setup-eyebrow"><?php esc_html_e( 'Woomobi CMS', 'mobishop' ); ?></span>
+			<span class="kidia-setup-eyebrow"><?php esc_html_e( 'MobiShop', 'mobishop' ); ?></span>
 			<h1><?php echo $wizard->is_complete() ? esc_html__( 'Setup & Themes', 'mobishop' ) : esc_html__( 'Build your application', 'mobishop' ); ?></h1>
 			<p><?php esc_html_e( 'Choose a complete storefront, connect it to your WooCommerce catalog, then review the application before applying it.', 'mobishop' ); ?></p>
 		</div>

@@ -49,6 +49,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 					<div class="kidia-category-name">
 						<label for="kidia-category-name-<?php echo esc_attr( (string) $id ); ?>"><?php esc_html_e( 'App display name', 'mobishop' ); ?></label>
 						<input id="kidia-category-name-<?php echo esc_attr( (string) $id ); ?>" class="kidia-category-name-input" type="text" name="categories[<?php echo esc_attr( (string) $id ); ?>][name]" value="<?php echo esc_attr( $app_name ); ?>" placeholder="<?php echo esc_attr( $term->name ); ?>">
+						<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 						<small><?php echo esc_html( sprintf( __( 'WooCommerce: %1$s · %2$d products · ID %3$d', 'mobishop' ), $term->name, (int) $term->count, $id ) ); ?></small>
 					</div>
 					<input class="kidia-category-order" type="hidden" name="categories[<?php echo esc_attr( (string) $id ); ?>][order]" value="<?php echo esc_attr( (string) $index ); ?>">
@@ -94,6 +95,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 				<input type="hidden" name="action" value="kidia_mobile_save_category_builder">
 				<?php wp_nonce_field( 'kidia_mobile_save_category_builder', 'kidia_mobile_category_builder_nonce' ); ?>
 				<?php
+				/* translators: Placeholder values are supplied at runtime. */
 				$kidia_toolbar_title = sprintf( __( '%d WooCommerce categories', 'mobishop' ), count( $terms ) );
 				$kidia_toolbar_save_label = __( 'Save Category Page', 'mobishop' );
 				$kidia_toolbar_show_add = false;

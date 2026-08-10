@@ -1405,11 +1405,13 @@ final class Kidia_Mobile_Setup_Wizard {
 				'slug'        => sanitize_title( $label ),
 				'count'       => 8 + $number,
 				'image_url'   => self::asset_url( $theme, 'category', ( ( $number - 1 ) % 6 ) + 1 ),
+				/* translators: Placeholder values are supplied at runtime. */
 				'description' => sprintf( __( 'Explore the %s collection.', 'mobishop' ), $label ),
 			);
 			$price = 39 + ( $number * 18 );
 			$products[] = array(
 				'id'              => 9000 + $number,
+				/* translators: Placeholder values are supplied at runtime. */
 				'name'            => sprintf( __( '%s favorite', 'mobishop' ), $label ),
 				'slug'            => sanitize_title( $label . '-favorite' ),
 				'type'            => 1 === $number ? 'variable' : 'simple',
@@ -1430,7 +1432,9 @@ final class Kidia_Mobile_Setup_Wizard {
 				'rating'          => 4.2 + ( $number / 10 ),
 				'review_count'    => 12 * $number,
 				'category_id'     => 9100 + $number,
+				/* translators: Placeholder values are supplied at runtime. */
 				'summary'         => sprintf( __( 'A curated %s pick created for this theme preview.', 'mobishop' ), strtolower( $label ) ),
+				/* translators: Placeholder values are supplied at runtime. */
 				'description'     => sprintf( __( 'Premium quality and thoughtful detail from the %s collection.', 'mobishop' ), $label ),
 			);
 		}

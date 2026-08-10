@@ -43,7 +43,7 @@ jobs:
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/kidia-mobile-cms.php$'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
-          grep -q '^ \* Version:           1.46.62$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Version:           1.46.63$' build/wordpress-org/mobishop/mobishop.php
           grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
       - name: Run PHP contract tests
         run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
@@ -52,8 +52,6 @@ jobs:
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
-          ignore-codes: |-
-            WordPress.WP.I18n.MissingTranslatorsComment
       - name: Upload tested installable package
         uses: actions/upload-artifact@v4
         with:

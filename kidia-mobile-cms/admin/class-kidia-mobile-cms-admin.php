@@ -199,14 +199,14 @@ final class Kidia_Mobile_CMS_Admin {
 			if ( wp_doing_ajax() ) {
 				wp_send_json_error(
 					array(
-						'message' => __( 'Activate your website license before changing Woomobi CMS settings.', 'mobishop' ),
+						'message' => __( 'Activate your website license before changing MobiShop settings.', 'mobishop' ),
 					),
 					403
 				);
 			}
 
 			wp_die(
-				esc_html__( 'Activate your website license before changing Woomobi CMS settings.', 'mobishop' ),
+				esc_html__( 'Activate your website license before changing MobiShop settings.', 'mobishop' ),
 				esc_html__( 'License required', 'mobishop' ),
 				array( 'response' => 403 )
 			);
@@ -337,6 +337,7 @@ final class Kidia_Mobile_CMS_Admin {
 		update_option( 'kidia_mobile_global_' . $scope . '_profile', $profile, false );
 		wp_send_json_success(
 			array(
+				/* translators: Placeholder values are supplied at runtime. */
 				'message' => sprintf( __( 'Applied to %d saved product elements.', 'mobishop' ), $changed ),
 				'count'   => $changed,
 			)
@@ -350,8 +351,8 @@ final class Kidia_Mobile_CMS_Admin {
     	public function register_menu(): void {
 
     		add_menu_page(
-				__( 'Woomobi CMS', 'mobishop' ),
-				__( 'Woomobi CMS', 'mobishop' ),
+				__( 'MobiShop', 'mobishop' ),
+				__( 'MobiShop', 'mobishop' ),
     			self::CAPABILITY,
     			'kidia-mobile-cms',
     			array(
@@ -1190,6 +1191,7 @@ final class Kidia_Mobile_CMS_Admin {
 				$coupon->set_individual_use( true );
 				$coupon->set_usage_limit_per_user( 1 );
 				$coupon->set_date_expires( time() + max( 1, min( 720, absint( $_POST['ai_duration_hours'] ?? 48 ) ) ) * HOUR_IN_SECONDS );
+				/* translators: Placeholder values are supplied at runtime. */
 				$coupon->set_description( sprintf( __( 'AI Studio action: %s', 'mobishop' ), (string) $recommendation['title'] ) );
 				$coupon->set_product_ids( array_map( 'absint', (array) ( $recommendation['product_ids'] ?? array() ) ) );
 				$coupon->set_status( 'publish' === $status ? 'publish' : 'draft' );
@@ -1732,7 +1734,8 @@ final class Kidia_Mobile_CMS_Admin {
 		$coupon->set_date_expires( time() + $duration * HOUR_IN_SECONDS );
 		$coupon->set_description(
 			sprintf(
-				__( 'Woomobi CMS AI Offer Studio: %1$s (%2$d%% confidence)', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
+				__( 'MobiShop AI Offer Studio: %1$s (%2$d%% confidence)', 'mobishop' ),
 				sanitize_text_field( (string) ( $offer['scheme'] ?? 'offer' ) ),
 				absint( $offer['confidence'] ?? 0 )
 			)

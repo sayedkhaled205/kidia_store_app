@@ -5,9 +5,9 @@ defined( 'ABSPATH' ) || exit;
 <aside class="kidia-cms-sidebar" data-kidia-cms-sidebar>
 	<div class="kidia-cms-shell__brand">
 		<span class="dashicons dashicons-smartphone"></span>
-		<div><strong><?php esc_html_e( 'Woomobi CMS', 'mobishop' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'mobishop' ); ?></small></div>
+		<div><strong><?php esc_html_e( 'MobiShop', 'mobishop' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'mobishop' ); ?></small></div>
 	</div>
-	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woomobi CMS sections', 'mobishop' ); ?>">
+	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'MobiShop sections', 'mobishop' ); ?>">
 		<?php foreach ( $sidebar_items as $key => $item ) : ?>
 			<a href="<?php echo esc_url( $item['url'] ); ?>" data-kidia-sidebar-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
 				<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
@@ -83,12 +83,15 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 							'complete' === $shell_abandoned_phase
 								? sprintf(
 									'update' === $shell_abandoned_mode
+										/* translators: Placeholder values are supplied at runtime. */
 										? __( '%1$d retained sessions were checked and %2$d new or changed carts were saved. Results are available on Abandoned Carts.', 'mobishop' )
+										/* translators: Placeholder values are supplied at runtime. */
 										: __( '%1$d retained sessions were checked and %2$d carts with products were imported. Results are available on Abandoned Carts.', 'mobishop' ),
 									$shell_abandoned_done,
 									absint( $shell_abandoned_import['imported'] )
 								)
 								: sprintf(
+									/* translators: Placeholder values are supplied at runtime. */
 									__( '%1$d of %2$d stored sessions checked · %3$d carts imported. You can continue using every CMS page.', 'mobishop' ),
 									$shell_abandoned_done,
 									$shell_abandoned_total,
@@ -140,7 +143,7 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 				<?php
 				printf(
 					/* translators: 1: remaining grace days, 2: grace end date. */
-					esc_html__( 'Woomobi CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'mobishop' ),
+					esc_html__( 'MobiShop remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'mobishop' ),
 					(int) ( $license_status['grace_days_remaining'] ?? 0 ),
 					esc_html( wp_date( get_option( 'date_format' ), (int) ( $license_status['grace_ends_at'] ?? time() ) ) )
 				);
