@@ -1,4 +1,3 @@
-
 <?php
 /** Setup wizard screen. */
 defined( 'ABSPATH' ) || exit;
