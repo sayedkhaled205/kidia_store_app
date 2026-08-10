@@ -1,4 +1,3 @@
-
 === MobiShop ===
 Contributors: woomobile
 Tags: mobile app, app builder, ecommerce, store app, woocommerce
@@ -88,6 +87,10 @@ Yes. Application language, direction, typography, and other visual settings can 
 * Updated the packaged plugin and embedded mobile preview.
 
 == Upgrade Notice ==
+
+= 1.46.63 =
+
+Use this release for a zero-error WordPress.org Plugin Check result.
 
 = 1.46.62 =
 
