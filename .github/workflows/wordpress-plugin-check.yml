@@ -40,9 +40,9 @@ jobs:
           categories: plugin_repo
           # Existing translated UI placeholders predate this release pipeline;
           # keep the directory gate focused on blocking repository violations.
+          # The legacy text domain is kept for backward compatibility with existing installations.
           ignore-codes: |-
             WordPress.WP.I18n.MissingTranslatorsComment
-            # Kept intentionally for backward compatibility with existing installations.
             textdomain_mismatch
       - name: Upload installable package
         uses: actions/upload-artifact@v4
