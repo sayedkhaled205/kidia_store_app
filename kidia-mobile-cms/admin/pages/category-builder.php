@@ -1,4 +1,3 @@
-
 <?php
 /** Category Page Builder admin page. */
 defined( 'ABSPATH' ) || exit;
