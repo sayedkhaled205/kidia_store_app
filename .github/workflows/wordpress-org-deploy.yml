@@ -50,6 +50,7 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './build/wordpress-org/kidia-mobile-cms'
+          categories: plugin_repo
       - name: Deploy tagged release to WordPress.org
         uses: 10up/action-wordpress-plugin-deploy@stable
         with:
