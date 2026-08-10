@@ -1,4 +1,4 @@
-=== Woomobi CMS ===
+=== MobiShop ===
 Contributors: woomobile
 Tags: mobile app, app builder, ecommerce, store app, woocommerce
 Requires at least: 6.4
@@ -13,7 +13,7 @@ Connect a WooCommerce store to the WooMobile app builder, manage the mobile stor
 
 == Description ==
 
-Woomobi CMS connects a WooCommerce store to the WooMobile service and provides the WordPress-side tools used by its mobile applications.
+MobiShop connects a WooCommerce store to the WooMobile service and provides the WordPress-side tools used by its mobile applications.
 
 The plugin includes:
 
@@ -40,8 +40,8 @@ The service is provided by WooMobile and is required for subscription validation
 == Installation ==
 
 1. Install and activate WooCommerce.
-2. Install and activate Woomobi CMS.
-3. Open **Woomobi CMS** in WordPress administration.
+2. Install and activate MobiShop.
+3. Open **MobiShop** in WordPress administration.
 4. Connect the website to your WooMobile account.
 5. Activate the license assigned to this website.
 6. Configure the application and request a build when ready.
