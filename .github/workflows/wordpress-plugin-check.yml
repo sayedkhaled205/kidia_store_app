@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   package:
-    name: Build and validate directory package
+    name: Build, install, and validate directory package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,16 +33,28 @@ jobs:
           || { sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick; }
       - name: Build WordPress.org package
         run: bash tool/build_wordpress_org_package.sh
-      - name: Run official Plugin Check
+      - name: Validate installable ZIP layout
+        run: |
+          test -f build/wordpress-org/mobishop/mobishop.php
+          test ! -e build/wordpress-org/mobishop/kidia-mobile-cms.php
+          test ! -d build/wordpress-org/mobishop/mobishop
+          unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/mobishop.php'
+          unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/readme.txt'
+          ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
+          ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/kidia-mobile-cms.php$'
+          ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
+          grep -q '^ \* Version:           1.46.62$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
+      - name: Run PHP contract tests
+        run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
+      - name: Run official Plugin Check and activation
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
-          # Existing translated UI placeholders predate this release pipeline;
-          # keep the directory gate focused on blocking repository violations.
           ignore-codes: |-
             WordPress.WP.I18n.MissingTranslatorsComment
-      - name: Upload installable package
+      - name: Upload tested installable package
         uses: actions/upload-artifact@v4
         with:
           name: mobishop-wordpress-org
