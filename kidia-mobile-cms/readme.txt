@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.60
+Stable tag: 1.46.61
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Changelog ==
 
+= 1.46.61 =
+
+* Aligned the translation text domain with the assigned WordPress.org slug.
+* Fixed the plugin and author URI validation for WordPress.org submission.
+
 = 1.46.60 =
 
 * Added global application settings and an expanded font collection.
@@ -73,6 +78,6 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Upgrade Notice ==
 
-= 1.46.60 =
+= 1.46.61 =
 
-Use this release for the current WooMobile connection, licensing, and app-builder workflow.
+Use this release for WordPress.org-compatible packaging and translations.
