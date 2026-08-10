@@ -1,6 +1,6 @@
 {
-    "name": "mobishop_store_app",
-    "short_name": "mobishop_store_app",
+    "name": "kidia_store_app",
+    "short_name": "kidia_store_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

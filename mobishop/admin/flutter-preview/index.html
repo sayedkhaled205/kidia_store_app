@@ -24,13 +24,13 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mobishop_store_app">
+  <meta name="apple-mobile-web-app-title" content="kidia_store_app">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>mobishop_store_app</title>
+  <title>kidia_store_app</title>
   <link rel="manifest" href="manifest.json">
   <style>
     html, body {
@@ -44,7 +44,7 @@
       width: 100%;
       height: 100%;
     }
-    #mobishop-flutter-loading {
+    #kidia-flutter-loading {
       position: absolute;
       inset: 0;
       z-index: 10;
@@ -56,7 +56,7 @@
       font: 700 15px/1.4 Arial, sans-serif;
       text-align: center;
     }
-    #mobishop-flutter-loading::before {
+    #kidia-flutter-loading::before {
       width: 30px;
       height: 30px;
       margin: 0 auto;
@@ -64,10 +64,10 @@
       border-top-color: #2f806e;
       border-radius: 50%;
       content: "";
-      animation: mobishop-preview-spin .8s linear infinite;
+      animation: kidia-preview-spin .8s linear infinite;
     }
-    #mobishop-flutter-loading.is-error::before { display: none; }
-    #mobishop-flutter-retry {
+    #kidia-flutter-loading.is-error::before { display: none; }
+    #kidia-flutter-retry {
       margin: 2px auto 0;
       padding: 8px 14px;
       border: 1px solid #2f806e;
@@ -77,11 +77,11 @@
       font: inherit;
       cursor: pointer;
     }
-    @keyframes mobishop-preview-spin { to { transform: rotate(360deg); } }
+    @keyframes kidia-preview-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div id="mobishop-flutter-loading" role="status" aria-live="polite">Loading exact Flutter preview…</div>
+  <div id="kidia-flutter-loading" role="status" aria-live="polite">Loading exact Flutter preview…</div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -98,7 +98,7 @@
       document.addEventListener('wheel', (event) => {
         if (!event.deltaY) return;
         window.postMessage(JSON.stringify({
-          type: 'mobishop-preview-scroll',
+          type: 'kidia-preview-scroll',
           page: 'home',
           deltaY: Math.max(-180, Math.min(180, Number(event.deltaY))),
         }), window.location.origin);
@@ -113,7 +113,7 @@
         };
         if (!Object.prototype.hasOwnProperty.call(deltas, event.key)) return;
         window.postMessage(JSON.stringify({
-          type: 'mobishop-preview-scroll',
+          type: 'kidia-preview-scroll',
           page: 'home',
           deltaY: deltas[event.key],
         }), window.location.origin);
@@ -123,7 +123,7 @@
 
     // This build is embedded in the versioned WordPress plugin. Never let an
     // older preview worker or cached Dart bundle survive a plugin update.
-    (async function startMobiShopPreview() {
+    (async function startKidiaPreview() {
       // Some managed WordPress stacks return .wasm with a generic MIME type.
       // CanvasKit normally uses compileStreaming(), which rejects that valid
       // response before Flutter can mount. Fall back to compiling its bytes.
@@ -159,11 +159,11 @@
         if (!renderedView) return false;
         flutterRendered = true;
         if (startupTimer) window.clearTimeout(startupTimer);
-        const loading = document.getElementById('mobishop-flutter-loading');
+        const loading = document.getElementById('kidia-flutter-loading');
         if (loading) loading.remove();
         requestAnimationFrame(() => requestAnimationFrame(() => {
           window.parent.postMessage(JSON.stringify({
-            type: 'mobishop-flutter-preview-ready'
+            type: 'kidia-flutter-preview-ready'
           }), '*');
         }));
         return true;
@@ -193,7 +193,7 @@
       const version = previewUrl.searchParams.get('v') || '';
       const retryToken = previewUrl.searchParams.get('preview_retry') || '';
       const cacheKey = [version, retryToken].filter(Boolean).join('-');
-      window.__mobishopPreviewVersion = cacheKey;
+      window.__kidiaPreviewVersion = cacheKey;
 
       const retryOrFail = () => {
         if (flutterRendered) return;
@@ -207,20 +207,20 @@
           window.location.replace(previewUrl.toString());
           return;
         }
-        const loading = document.getElementById('mobishop-flutter-loading');
+        const loading = document.getElementById('kidia-flutter-loading');
         if (!loading) return;
         loading.classList.add('is-error');
         loading.innerHTML =
           '<span>Flutter preview could not load.</span>' +
-          '<button type="button" id="mobishop-flutter-retry">Retry preview</button>';
-        document.getElementById('mobishop-flutter-retry')
+          '<button type="button" id="kidia-flutter-retry">Retry preview</button>';
+        document.getElementById('kidia-flutter-retry')
           ?.addEventListener('click', () => {
             previewUrl.searchParams.set('preview_attempt', '0');
             previewUrl.searchParams.set('preview_retry', String(Date.now()));
             window.location.replace(previewUrl.toString());
           });
       };
-      window.addEventListener('mobishop-flutter-preview-error', (event) => {
+      window.addEventListener('kidia-flutter-preview-error', (event) => {
         console.error('Flutter preview startup failed.', event.detail || event);
         retryOrFail();
       });
