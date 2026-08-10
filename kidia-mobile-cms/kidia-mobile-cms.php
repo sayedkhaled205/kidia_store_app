@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Woomobi CMS
+ * Plugin Name:       MobiShop
  * Plugin URI:        https://woomobile.app/
  * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
  * Version:           1.46.60
