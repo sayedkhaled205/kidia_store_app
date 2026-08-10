@@ -96,7 +96,7 @@ final class PushNotificationService {
         await _recordEvent(initialMessage, 'opened');
       }
     } catch (error, stackTrace) {
-      debugPrint('WooMobile Push initialization skipped: $error');
+      debugPrint('MobiShop Push initialization skipped: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
@@ -107,11 +107,11 @@ final class PushNotificationService {
       return;
     }
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    String clientId = preferences.getString('woomobile_push_client_id') ?? '';
+    String clientId = preferences.getString('mobishop_push_client_id') ?? '';
     if (clientId.isEmpty) {
       final int random = Random.secure().nextInt(1 << 32);
       clientId = 'device_${DateTime.now().microsecondsSinceEpoch}_$random';
-      await preferences.setString('woomobile_push_client_id', clientId);
+      await preferences.setString('mobishop_push_client_id', clientId);
     }
     await _dio.postUri<dynamic>(
       url,

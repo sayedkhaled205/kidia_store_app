@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT="$ROOT/kidia-mobile-cms/admin/flutter-preview"
+OUTPUT="$ROOT/mobishop/admin/flutter-preview"
 
 cd "$ROOT"
 flutter pub get
@@ -22,7 +22,7 @@ sed -i \
   -e 's#_flutter.loader.load();#_flutter.loader.load({config:{canvasKitBaseUrl:"canvaskit/"}});#' \
   "$OUTPUT/flutter_bootstrap.js"
 sed -i '/_flutter.loader.load(/i\
-if (window.__kidiaPreviewVersion) { _flutter.buildConfig.builds.forEach(function (build) { if (build.mainJsPath) { build.mainJsPath += "?v=" + encodeURIComponent(window.__kidiaPreviewVersion); } }); }\
+if (window.__mobishopPreviewVersion) { _flutter.buildConfig.builds.forEach(function (build) { if (build.mainJsPath) { build.mainJsPath += "?v=" + encodeURIComponent(window.__mobishopPreviewVersion); } }); }\
 ' "$OUTPUT/flutter_bootstrap.js"
 node "$ROOT/tool/patch_cms_flutter_bootstrap.mjs" \
   "$OUTPUT/flutter_bootstrap.js"

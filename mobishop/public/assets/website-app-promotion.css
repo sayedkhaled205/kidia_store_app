@@ -1,0 +1,245 @@
+.mobishop-app-promo-root,.mobishop-app-promo-slot{
+	--mobishop-app-promo-brand:#2f806e;
+	--mobishop-app-promo-ink:#15352d;
+	--mobishop-app-promo-surface:#fff;
+	--mobishop-app-promo-soft:color-mix(in srgb,var(--mobishop-app-promo-brand) 10%,var(--mobishop-app-promo-surface));
+	font-family:inherit;
+	direction:inherit;
+}
+.mobishop-app-promo-root{position:relative;z-index:99990}
+.mobishop-app-promo-root *,.mobishop-app-promo-slot *{box-sizing:border-box}
+.mobishop-app-promo{
+	--mobishop-app-promo-soft:color-mix(in srgb,var(--mobishop-app-promo-brand) 10%,var(--mobishop-app-promo-surface));
+	position:relative;
+	display:flex;
+	align-items:center;
+	gap:13px;
+	margin:0;
+	border:1px solid color-mix(in srgb,var(--mobishop-app-promo-brand) 20%,#d7e0dd);
+	background:linear-gradient(135deg,var(--mobishop-app-promo-surface),var(--mobishop-app-promo-soft));
+	color:var(--mobishop-app-promo-ink);
+	font-family:inherit;
+	line-height:1.4;
+	text-align:start;
+	box-shadow:0 14px 40px rgba(15,54,44,.16);
+	isolation:isolate;
+}
+.mobishop-app-promo__icon{
+	display:grid;
+	width:52px;
+	height:52px;
+	place-items:center;
+	flex:0 0 52px;
+	padding:5px;
+	border:1px solid color-mix(in srgb,var(--mobishop-app-promo-brand) 18%,#e2e9e7);
+	border-radius:14px;
+	background:#fff;
+	color:var(--mobishop-app-promo-brand);
+	overflow:hidden;
+	box-shadow:0 4px 14px rgba(18,62,51,.08);
+}
+.mobishop-app-promo__icon img{display:block;width:100%;height:100%;object-fit:contain}
+.mobishop-app-promo__icon.is-fallback{background:var(--mobishop-app-promo-brand);color:#fff}
+.mobishop-app-promo__phone-icon{position:relative;width:19px;height:29px;border:2px solid currentColor;border-radius:5px}
+.mobishop-app-promo__phone-icon::after{position:absolute;right:5px;bottom:3px;left:5px;height:2px;border-radius:9px;background:currentColor;content:""}
+.mobishop-app-promo__copy{min-width:0;flex:1}
+.mobishop-app-promo__copy strong,.mobishop-app-promo__copy span,.mobishop-app-promo__copy small{display:block}
+.mobishop-app-promo__copy strong{font-size:16px;font-weight:800;line-height:1.25}
+.mobishop-app-promo__tagline{margin-top:3px;font-size:12px;line-height:1.45;opacity:.78}
+.mobishop-app-promo__description{margin-top:7px!important;font-size:13px!important;line-height:1.55!important;opacity:.68!important}
+.mobishop-app-promo__offer,.mobishop-app-promo__status{
+	display:inline-flex!important;
+	width:max-content;
+	max-width:100%;
+	align-items:center;
+	margin-top:8px!important;
+	padding:4px 8px;
+	border-radius:999px;
+	background:color-mix(in srgb,var(--mobishop-app-promo-brand) 11%,transparent);
+	color:var(--mobishop-app-promo-brand);
+	font-size:11px!important;
+	font-weight:800;
+	opacity:1!important;
+}
+.mobishop-app-promo__coupon{display:inline-flex!important;margin-inline-start:6px;padding:1px 6px;border:1px dashed currentColor;border-radius:5px;letter-spacing:.04em}
+.mobishop-app-promo__action,.mobishop-app-promo__later{
+	display:inline-flex;
+	min-height:40px;
+	align-items:center;
+	justify-content:center;
+	padding:0 16px;
+	border-radius:11px;
+	font-family:inherit;
+	font-size:13px;
+	font-weight:800;
+	line-height:1;
+	text-decoration:none!important;
+	white-space:nowrap;
+	cursor:pointer;
+}
+.mobishop-app-promo__action{border:1px solid var(--mobishop-app-promo-brand);background:var(--mobishop-app-promo-brand);color:#fff!important;box-shadow:0 6px 16px color-mix(in srgb,var(--mobishop-app-promo-brand) 24%,transparent)}
+.mobishop-app-promo__action:hover,.mobishop-app-promo__action:focus{filter:brightness(.94);color:#fff!important;outline:2px solid color-mix(in srgb,var(--mobishop-app-promo-brand) 34%,transparent);outline-offset:2px}
+.mobishop-app-promo__later{border:1px solid color-mix(in srgb,var(--mobishop-app-promo-brand) 22%,#d8e0de);background:transparent;color:var(--mobishop-app-promo-ink)}
+.mobishop-app-promo__later:hover,.mobishop-app-promo__later:focus{background:color-mix(in srgb,var(--mobishop-app-promo-brand) 7%,transparent);outline:0}
+.mobishop-app-promo__dismiss{
+	display:grid;
+	width:32px;
+	height:32px;
+	place-items:center;
+	flex:0 0 32px;
+	padding:0;
+	border:0;
+	border-radius:50%;
+	background:transparent;
+	color:var(--mobishop-app-promo-ink);
+	font-family:Arial,sans-serif;
+	font-size:22px;
+	font-weight:400;
+	line-height:1;
+	opacity:.5;
+	cursor:pointer;
+}
+.mobishop-app-promo__dismiss:hover,.mobishop-app-promo__dismiss:focus{background:rgba(0,0,0,.06);opacity:1;outline:0}
+.mobishop-app-promo__test-badge{position:absolute;inset-block-start:7px;inset-inline-start:8px;z-index:3;padding:3px 7px;border-radius:999px;background:#1d2939;color:#fff;font-size:9px;font-weight:800;line-height:1.2;box-shadow:0 3px 10px rgba(0,0,0,.14)}
+.mobishop-app-promo-backdrop{position:fixed;inset:0;z-index:99995;background:rgba(7,22,18,.52);backdrop-filter:blur(3px);animation:mobishop-promo-fade .2s ease both}
+
+.mobishop-app-promo--smart_banner{
+	right:0;
+	left:0;
+	z-index:99994;
+	min-height:66px;
+	padding:8px max(16px,calc((100vw - 1180px)/2));
+	border-width:0 0 1px;
+	border-radius:0;
+	background:linear-gradient(100deg,var(--mobishop-app-promo-surface),var(--mobishop-app-promo-soft));
+	box-shadow:0 5px 18px rgba(14,45,37,.09);
+}
+.mobishop-app-promo--smart_banner.is-top{position:sticky;top:var(--wp-admin--admin-bar--height,0);z-index:99994}
+.mobishop-app-promo--smart_banner.is-bottom{position:fixed;bottom:0;border-width:1px 0 0}
+.mobishop-app-promo--smart_banner .mobishop-app-promo__icon{width:46px;height:46px;flex-basis:46px;border-radius:12px}
+.mobishop-app-promo--smart_banner .mobishop-app-promo__copy strong{font-size:15px}
+.mobishop-app-promo--smart_banner .mobishop-app-promo__tagline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobishop-app-promo--smart_banner .mobishop-app-promo__offer,.mobishop-app-promo--smart_banner .mobishop-app-promo__status{display:none!important}
+
+.mobishop-app-promo--bottom_sheet{
+	position:fixed;
+	inset-inline:12px;
+	bottom:max(12px,env(safe-area-inset-bottom));
+	z-index:99993;
+	display:grid;
+	grid-template-columns:auto minmax(0,1fr);
+	max-width:440px;
+	margin:auto;
+	padding:20px;
+	border-radius:24px;
+	animation:mobishop-promo-rise .28s ease both;
+}
+.mobishop-app-promo--bottom_sheet .mobishop-app-promo__icon{width:64px;height:64px;flex-basis:64px;border-radius:17px}
+.mobishop-app-promo--bottom_sheet .mobishop-app-promo__copy{padding-inline-end:24px}
+.mobishop-app-promo--bottom_sheet .mobishop-app-promo__action{grid-column:1/-1;width:100%;margin-top:4px}
+.mobishop-app-promo--bottom_sheet .mobishop-app-promo__later{grid-column:1/-1;width:100%}
+.mobishop-app-promo--bottom_sheet .mobishop-app-promo__dismiss{position:absolute;inset-block-start:8px;inset-inline-end:8px}
+.mobishop-app-promo--bottom_sheet.is-coupon .mobishop-app-promo__offer{padding:7px 10px;border-radius:9px}
+.mobishop-app-promo--bottom_sheet.is-image .mobishop-app-promo__icon{width:78px;height:78px;flex-basis:78px;border-radius:19px}
+
+.mobishop-app-promo--popup{
+	position:fixed;
+	top:50%;
+	left:50%;
+	z-index:99996;
+	display:grid;
+	width:min(470px,calc(100vw - 28px));
+	grid-template-columns:86px minmax(0,1fr);
+	padding:28px;
+	border-radius:24px;
+	transform:translate(-50%,-50%);
+	animation:mobishop-promo-pop .24s ease both;
+}
+.mobishop-app-promo--popup .mobishop-app-promo__icon{width:82px;height:82px;flex-basis:82px;border-radius:20px}
+.mobishop-app-promo--popup .mobishop-app-promo__copy{padding-inline-end:18px}
+.mobishop-app-promo--popup .mobishop-app-promo__copy strong{font-size:21px}
+.mobishop-app-promo--popup .mobishop-app-promo__tagline{font-size:14px}
+.mobishop-app-promo--popup .mobishop-app-promo__action{grid-column:1/-1;width:100%;margin-top:6px}
+.mobishop-app-promo--popup .mobishop-app-promo__later{grid-column:1/-1;width:100%}
+.mobishop-app-promo--popup .mobishop-app-promo__dismiss{position:absolute;inset-block-start:10px;inset-inline-end:10px}
+.mobishop-app-promo--popup.is-centered{display:flex;flex-direction:column;text-align:center}
+.mobishop-app-promo--popup.is-centered .mobishop-app-promo__copy{padding:0}
+.mobishop-app-promo--popup.is-coupon{background:linear-gradient(145deg,var(--mobishop-app-promo-surface),color-mix(in srgb,var(--mobishop-app-promo-brand) 14%,var(--mobishop-app-promo-surface)))}
+
+.mobishop-app-promo--desktop_qr{
+	position:fixed;
+	bottom:18px;
+	z-index:99992;
+	display:grid;
+	width:310px;
+	grid-template-columns:46px minmax(0,1fr);
+	padding:17px;
+	border-radius:20px;
+	animation:mobishop-promo-rise .25s ease both;
+}
+.mobishop-app-promo--desktop_qr.is-bottom-right{right:18px}.mobishop-app-promo--desktop_qr.is-bottom-left{left:18px}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__icon{width:44px;height:44px;flex-basis:44px;border-radius:12px}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__copy{padding-inline-end:20px}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__qr{display:grid;width:112px;height:112px;place-items:center;grid-column:1/2;padding:7px;border:1px solid #d8e2df;border-radius:12px;background:#fff}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__qr :is(canvas,img){display:block!important;width:96px!important;height:96px!important}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__action{grid-column:2/3;width:100%;align-self:end}
+.mobishop-app-promo--desktop_qr .mobishop-app-promo__dismiss{position:absolute;inset-block-start:7px;inset-inline-end:7px}
+.mobishop-app-promo--desktop_qr.is-unlinked .mobishop-app-promo__qr{grid-column:1/-1;justify-self:center}
+.mobishop-app-promo__qr.is-placeholder{background:color-mix(in srgb,var(--mobishop-app-promo-brand) 6%,#fff)}
+.mobishop-app-promo__qr-placeholder{display:grid;width:82px;height:82px;grid-template-columns:repeat(5,1fr);gap:3px;padding:5px;border-radius:8px;background:#fff;opacity:.72}
+.mobishop-app-promo__qr-placeholder i{border-radius:1px;background:var(--mobishop-app-promo-ink)}
+.mobishop-app-promo__qr-placeholder i:nth-child(3n),.mobishop-app-promo__qr-placeholder i:nth-child(7n){opacity:.08}
+
+.mobishop-app-promo--floating_button{
+	position:fixed;
+	bottom:18px;
+	z-index:99990;
+	padding:7px 15px 7px 7px;
+	border:0;
+	border-radius:999px;
+	background:var(--mobishop-app-promo-brand);
+	color:#fff;
+	box-shadow:0 8px 24px color-mix(in srgb,var(--mobishop-app-promo-brand) 34%,transparent);
+	cursor:pointer;
+	animation:mobishop-promo-rise .25s ease both;
+}
+[dir=rtl] .mobishop-app-promo--floating_button{padding:7px 7px 7px 15px}
+.mobishop-app-promo--floating_button.is-bottom-left{left:18px}.mobishop-app-promo--floating_button.is-bottom-right{right:18px}
+.mobishop-app-promo--floating_button .mobishop-app-promo__icon{width:36px;height:36px;flex-basis:36px;padding:4px;border-color:rgba(255,255,255,.18);background:#fff}
+.mobishop-app-promo--floating_button .mobishop-app-promo__copy{color:#fff}.mobishop-app-promo--floating_button .mobishop-app-promo__copy strong{font-size:13px}
+.mobishop-app-promo--floating_button[aria-disabled=true]{cursor:default;filter:saturate(.7)}
+.mobishop-app-promo-root.has-qr-bottom-left .mobishop-app-promo--floating_button.is-bottom-left,.mobishop-app-promo-root.has-qr-bottom-right .mobishop-app-promo--floating_button.is-bottom-right{bottom:220px}
+.mobishop-app-promo-has-bottom-banner .mobishop-app-promo--floating_button{bottom:86px}
+
+.mobishop-app-promo-slot{width:100%;margin:22px auto}
+.mobishop-app-promo--inline_banner{
+	position:relative;
+	width:min(1180px,calc(100% - 28px));
+	min-height:112px;
+	margin:auto;
+	padding:19px 24px;
+	border-radius:20px;
+	background:linear-gradient(110deg,var(--mobishop-app-promo-surface),var(--mobishop-app-promo-soft));
+	box-shadow:none;
+}
+.mobishop-app-promo--inline_banner::before{position:absolute;inset-block:14px;inset-inline-start:0;width:4px;border-radius:0 6px 6px 0;background:var(--mobishop-app-promo-brand);content:""}
+[dir=rtl] .mobishop-app-promo--inline_banner::before{border-radius:6px 0 0 6px}
+.mobishop-app-promo--inline_banner .mobishop-app-promo__icon{width:68px;height:68px;flex-basis:68px;border-radius:17px}
+.mobishop-app-promo--inline_banner .mobishop-app-promo__copy strong{font-size:19px}
+.mobishop-app-promo--inline_banner.is-card{max-width:680px}
+.mobishop-app-promo--inline_banner.is-coupon .mobishop-app-promo__offer{font-size:13px!important}
+
+.mobishop-app-promo.is-hiding,.mobishop-app-promo-backdrop.is-hiding{opacity:0;transform:translateY(12px);transition:opacity .18s,transform .18s}
+@keyframes mobishop-promo-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mobishop-promo-fade{from{opacity:0}to{opacity:1}}
+@keyframes mobishop-promo-pop{from{opacity:0;transform:translate(-50%,-48%) scale(.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+@media(max-width:767px){
+	.mobishop-app-promo--smart_banner{min-height:60px;gap:8px;padding:7px 8px}.mobishop-app-promo--smart_banner .mobishop-app-promo__icon{width:42px;height:42px;flex-basis:42px;padding:4px}.mobishop-app-promo--smart_banner .mobishop-app-promo__copy strong{font-size:13px}.mobishop-app-promo--smart_banner .mobishop-app-promo__tagline{font-size:10px}.mobishop-app-promo--smart_banner .mobishop-app-promo__action{min-height:34px;padding:0 9px;font-size:10px}.mobishop-app-promo--smart_banner .mobishop-app-promo__dismiss{width:27px;height:27px;flex-basis:27px;font-size:19px}
+	.mobishop-app-promo--bottom_sheet{padding:18px}.mobishop-app-promo--bottom_sheet .mobishop-app-promo__copy strong{font-size:17px}
+	.mobishop-app-promo--popup{display:flex;width:min(410px,calc(100vw - 24px));flex-direction:column;padding:24px;text-align:center}.mobishop-app-promo--popup .mobishop-app-promo__icon{width:68px;height:68px;flex-basis:68px}.mobishop-app-promo--popup .mobishop-app-promo__copy{padding:0}.mobishop-app-promo--popup .mobishop-app-promo__copy strong{font-size:19px}.mobishop-app-promo--popup .mobishop-app-promo__action,.mobishop-app-promo--popup .mobishop-app-promo__later{width:100%}
+	.mobishop-app-promo--desktop_qr:not(.is-test){display:none!important}
+	.mobishop-app-promo--inline_banner{align-items:flex-start;flex-wrap:wrap;min-height:0;padding:16px}.mobishop-app-promo--inline_banner .mobishop-app-promo__icon{width:54px;height:54px;flex-basis:54px}.mobishop-app-promo--inline_banner .mobishop-app-promo__copy strong{font-size:16px}.mobishop-app-promo--inline_banner .mobishop-app-promo__action{width:100%}
+}
+@media(min-width:768px){.mobishop-app-promo--bottom_sheet:not(.is-test){display:none!important}}
+@media(prefers-reduced-motion:reduce){.mobishop-app-promo,.mobishop-app-promo-backdrop{animation:none!important;transition:none!important}}

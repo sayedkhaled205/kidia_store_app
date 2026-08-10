@@ -12,10 +12,10 @@ class CmsPageLayoutRemoteDataSource {
     required String locale,
   }) async {
     final Response<dynamic> response = await _dio.get<dynamic>(
-      '/wp-json/woo-mobile/v1/page-layout/$page',
+      '/wp-json/mobishop/v1/page-layout/$page',
       queryParameters: <String, dynamic>{
         'locale': locale,
-        '_kidia_refresh': DateTime.now().millisecondsSinceEpoch,
+        '_mobishop_refresh': DateTime.now().millisecondsSinceEpoch,
       },
       options: Options(
         responseType: ResponseType.json,

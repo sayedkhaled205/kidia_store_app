@@ -2,12 +2,12 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 enum ProductDetailStatus { initial, loading, success, empty, failure }
 

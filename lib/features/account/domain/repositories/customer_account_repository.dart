@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
 
 abstract interface class CustomerAccountRepository {
   Future<CustomerAccount> getAccount();

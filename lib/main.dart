@@ -11,7 +11,7 @@ void main() {
 
   runApp(
     const ProviderScope(
-      child: KidiaApp(),
+      child: MobiShopApp(),
     ),
   );
 

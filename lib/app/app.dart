@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
-import '../core/theme/kidia_theme.dart';
+import '../core/theme/mobishop_theme.dart';
 import 'app_router.dart';
 
-class KidiaApp extends ConsumerWidget {
-  const KidiaApp({super.key, this.router});
+class MobiShopApp extends ConsumerWidget {
+  const MobiShopApp({super.key, this.router});
 
   /// Allows widget tests and embedders to provide an isolated router without
   /// mutating the application-wide router provider.
@@ -36,8 +36,8 @@ class KidiaApp extends ConsumerWidget {
       // an Android application preview, so make it use the same platform
       // defaults as the installed app without changing native builds.
       theme: AppConfig.isCmsPreview
-          ? KidiaTheme.light.copyWith(platform: TargetPlatform.android)
-          : KidiaTheme.light,
+          ? MobiShopTheme.light.copyWith(platform: TargetPlatform.android)
+          : MobiShopTheme.light,
       builder: (context, child) {
         final Widget app = Directionality(
           textDirection: AppConfig.isRightToLeft

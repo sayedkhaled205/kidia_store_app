@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 
 abstract final class CatalogSortSheet {
   static const List<CatalogSort> options = <CatalogSort>[

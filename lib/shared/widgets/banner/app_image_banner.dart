@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 class AppImageBanner extends StatelessWidget {
   const AppImageBanner({

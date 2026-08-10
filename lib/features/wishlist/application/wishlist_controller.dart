@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 
 enum WishlistStatus { initial, loading, ready, empty, failure }
 

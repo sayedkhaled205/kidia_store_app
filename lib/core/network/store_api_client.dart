@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 
 class StoreApiResponse {
   const StoreApiResponse({
@@ -30,7 +30,7 @@ abstract interface class StoreApiClient {
 }
 
 /// Read-only client for WooCommerce's public Store API and the companion
-/// Woo Mobile CMS bridge.
+/// MobiShop bridge.
 ///
 /// Only relative, same-origin public API paths are accepted. This keeps the
 /// catalog layer tied to the configured store and prevents a response or a
@@ -75,7 +75,7 @@ class DioStoreApiClient implements StoreApiClient {
           followRedirects: false,
           headers: const <String, dynamic>{
             'Accept': 'application/json',
-            'X-Kidia-Channel': 'mobile',
+            'X-MobiShop-Channel': 'mobile',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
           },
@@ -146,7 +146,7 @@ class DioStoreApiClient implements StoreApiClient {
 
     final bool isWooStoreApi = relativePath.startsWith('wp-json/wc/store/');
     final bool isMobileCmsApi = relativePath.startsWith(
-      'wp-json/woo-mobile/v1/',
+      'wp-json/mobishop/v1/',
     );
     if (!isWooStoreApi && !isMobileCmsApi) {
       throw const StoreApiException(

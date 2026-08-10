@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/auth/application/auth_controller.dart';
-import 'package:kidia_store_app/features/auth/data/network/auth_api_transport.dart';
-import 'package:kidia_store_app/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:kidia_store_app/features/auth/data/storage/auth_session_store.dart';
-import 'package:kidia_store_app/features/auth/data/storage/social_auth_pending_store.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
+import 'package:mobishop_store_app/features/auth/data/network/auth_api_transport.dart';
+import 'package:mobishop_store_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:mobishop_store_app/features/auth/data/storage/auth_session_store.dart';
+import 'package:mobishop_store_app/features/auth/data/storage/social_auth_pending_store.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 final authDioProvider = Provider<Dio>((Ref ref) {
   final Dio dio = Dio(

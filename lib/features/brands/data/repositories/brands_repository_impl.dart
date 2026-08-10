@@ -1,7 +1,7 @@
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/brands/data/datasources/brands_remote_data_source.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/brands/data/datasources/brands_remote_data_source.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
 
 class BrandsRepositoryImpl implements BrandsRepository {
   const BrandsRepositoryImpl(this._remoteDataSource);

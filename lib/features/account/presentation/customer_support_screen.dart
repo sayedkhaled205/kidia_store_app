@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_radius.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/account/presentation/customer_phone_format.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_phone_format.dart';
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomerSupportScreen extends StatelessWidget {
@@ -51,28 +51,28 @@ class _SupportContent extends StatelessWidget {
           scheme: 'mailto',
           path: AppConfig.supportEmail,
           queryParameters: <String, String>{
-            'subject': isArabic ? 'خدمة عملاء Kidia' : 'Kidia customer service',
+            'subject': isArabic ? 'خدمة عملاء MobiShop' : 'MobiShop customer service',
           },
         ),
       ),
     ];
     return ListView(
-      padding: const EdgeInsets.all(KidiaSpacing.md),
+      padding: const EdgeInsets.all(MobiShopSpacing.md),
       children: <Widget>[
         Container(
-          padding: const EdgeInsets.all(KidiaSpacing.lg),
+          padding: const EdgeInsets.all(MobiShopSpacing.lg),
           decoration: BoxDecoration(
-            color: KidiaColors.primaryLight,
-            borderRadius: BorderRadius.circular(KidiaRadius.lg),
+            color: MobiShopColors.primaryLight,
+            borderRadius: BorderRadius.circular(MobiShopRadius.lg),
           ),
           child: Column(
             children: <Widget>[
               const Icon(
                 Icons.support_agent_rounded,
                 size: 64,
-                color: KidiaColors.primaryDark,
+                color: MobiShopColors.primaryDark,
               ),
-              const SizedBox(height: KidiaSpacing.sm),
+              const SizedBox(height: MobiShopSpacing.sm),
               Text(
                 isArabic ? 'إحنا هنا علشان نساعدك' : 'We are here to help',
                 textAlign: TextAlign.center,
@@ -80,40 +80,40 @@ class _SupportContent extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: KidiaSpacing.xs),
+              const SizedBox(height: MobiShopSpacing.xs),
               Text(
                 isArabic
                     ? 'اختار طريقة التواصل المناسبة، وسيتم فتحها في التطبيق المخصص.'
                     : 'Choose a contact method and it will open in its dedicated app.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: KidiaColors.textSecondary,
+                  color: MobiShopColors.textSecondary,
                   height: 1.5,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: KidiaSpacing.lg),
+        const SizedBox(height: MobiShopSpacing.lg),
         for (int index = 0; index < actions.length; index++) ...<Widget>[
           Card(
             key: Key('support-action-${actions[index].id}'),
             clipBehavior: Clip.antiAlias,
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: KidiaSpacing.md,
-                vertical: KidiaSpacing.sm,
+                horizontal: MobiShopSpacing.md,
+                vertical: MobiShopSpacing.sm,
               ),
               leading: Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: KidiaColors.primaryLight,
-                  borderRadius: BorderRadius.circular(KidiaRadius.sm),
+                  color: MobiShopColors.primaryLight,
+                  borderRadius: BorderRadius.circular(MobiShopRadius.sm),
                 ),
                 child: Icon(
                   actions[index].icon,
-                  color: KidiaColors.primaryDark,
+                  color: MobiShopColors.primaryDark,
                 ),
               ),
               title: Text(
@@ -132,7 +132,7 @@ class _SupportContent extends StatelessWidget {
             ),
           ),
           if (index < actions.length - 1)
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
         ],
       ],
     );

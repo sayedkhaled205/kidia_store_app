@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 
 class CheckoutApiResponse {
   const CheckoutApiResponse({required this.data, this.statusCode});
@@ -300,7 +300,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/woo-mobile/v1/checkout-config',
+      path: '$installPath/wp-json/mobishop/v1/checkout-config',
       query: null,
       fragment: null,
     );
@@ -316,7 +316,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     }
     return <String, String>{
       ...base,
-      if (token.isNotEmpty) 'X-Kidia-Session': token,
+      if (token.isNotEmpty) 'X-MobiShop-Session': token,
     };
   }
 

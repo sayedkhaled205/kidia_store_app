@@ -1,10 +1,10 @@
-import 'package:kidia_store_app/features/cart/data/models/cart_address_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_coupon_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_error_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_item_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_totals_model.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_address_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_coupon_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_item_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_totals_model.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 
 class CartModel {
   CartModel({

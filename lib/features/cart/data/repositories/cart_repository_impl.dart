@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
 
 class CartRepositoryImpl implements CartRepository {
   CartRepositoryImpl(this._remoteDataSource);

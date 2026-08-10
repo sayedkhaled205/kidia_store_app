@@ -1,0 +1,191 @@
+<?php
+/** Saved theme library screen. */
+defined( 'ABSPATH' ) || exit;
+?>
+<div class="wrap mobishop-setup-wrap mobishop-saved-themes-page">
+	<div class="mobishop-setup-hero">
+		<div>
+			<span class="mobishop-setup-eyebrow"><?php esc_html_e( 'Reusable designs', 'mobishop' ); ?></span>
+			<h1><?php esc_html_e( 'Saved Themes', 'mobishop' ); ?></h1>
+			<p><?php esc_html_e( 'Apply, export or remove complete application designs saved from your page builders.', 'mobishop' ); ?></p>
+		</div>
+	</div>
+
+	<?php if ( isset( $_GET['theme_notice'] ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Saved theme action completed successfully.', 'mobishop' ); ?></p></div>
+	<?php elseif ( isset( $_GET['theme_error'] ) ) : ?>
+		<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'The saved theme action could not be completed. Check the file and try again.', 'mobishop' ); ?></p></div>
+	<?php endif; ?>
+
+	<section class="mobishop-saved-themes">
+		<?php if ( $saved_themes ) : ?>
+			<div class="mobishop-saved-themes__heading">
+				<div>
+					<h2><?php esc_html_e( 'Your saved themes', 'mobishop' ); ?></h2>
+					<p><?php esc_html_e( 'Applying a theme replaces the current design and creates a new build.', 'mobishop' ); ?></p>
+				</div>
+				<form class="mobishop-saved-themes__import-inline" method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="mobishop_manage_saved_theme">
+					<input type="hidden" name="theme_operation" value="import">
+					<?php wp_nonce_field( 'mobishop_manage_saved_theme', 'mobishop_theme_nonce' ); ?>
+					<label class="mobishop-theme-file"><input type="file" name="theme_file" accept="application/json,.json" required><span class="button"><?php esc_html_e( 'Choose theme file', 'mobishop' ); ?></span><b data-theme-file-name><?php esc_html_e( 'No file selected', 'mobishop' ); ?></b></label>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Import Theme', 'mobishop' ); ?></button>
+				</form>
+			</div>
+			<div class="mobishop-saved-themes__grid">
+				<?php foreach ( $saved_themes as $saved_theme_id => $saved_theme ) : ?>
+					<?php
+					$theme_preview = $wizard->saved_theme_preview( is_array( $saved_theme ) ? $saved_theme : array() );
+					$theme_images  = is_array( $theme_preview['images'] ?? null ) ? $theme_preview['images'] : array();
+					$theme_name    = (string) ( $saved_theme['name'] ?? __( 'Saved theme', 'mobishop' ) );
+					?>
+					<article data-saved-theme-card>
+						<script type="application/json" data-saved-theme-snapshot><?php echo wp_json_encode( is_array( $saved_theme['snapshot'] ?? null ) ? $saved_theme['snapshot'] : array(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></script>
+						<div
+							class="mobishop-saved-theme-phone<?php echo $theme_images ? ' has-theme-artwork' : ''; ?>"
+							data-saved-theme-phone
+							dir="<?php echo esc_attr( (string) $theme_preview['direction'] ); ?>"
+							style="--theme-color:<?php echo esc_attr( (string) $theme_preview['primary'] ); ?>;--theme-soft:<?php echo esc_attr( (string) $theme_preview['soft'] ); ?>;--theme-ink:<?php echo esc_attr( (string) $theme_preview['ink'] ); ?>"
+						>
+							<div class="mobishop-saved-theme-phone__bar"><i></i><i></i><i></i></div>
+							<div class="mobishop-saved-theme-phone__brand">
+								<?php if ( ! empty( $theme_preview['logo_url'] ) ) : ?>
+									<img src="<?php echo esc_url( (string) $theme_preview['logo_url'] ); ?>" alt="">
+								<?php else : ?>
+									<b><?php echo esc_html( (string) $theme_preview['app_name'] ); ?></b>
+								<?php endif; ?>
+								<i></i>
+							</div>
+							<div class="mobishop-saved-theme-phone__hero">
+								<?php if ( isset( $theme_images[0] ) ) : ?>
+									<?php /* translators: Placeholder values are supplied at runtime. */ ?>
+									<img src="<?php echo esc_url( (string) $theme_images[0] ); ?>" alt="<?php echo esc_attr( sprintf( __( '%s theme preview', 'mobishop' ), $theme_name ) ); ?>" loading="lazy">
+								<?php endif; ?>
+							</div>
+							<div class="mobishop-saved-theme-phone__dots"><i></i><i></i><i></i></div>
+							<div class="mobishop-saved-theme-phone__grid">
+								<?php for ( $preview_tile = 1; $preview_tile <= 4; ++$preview_tile ) : ?>
+									<i>
+										<?php if ( isset( $theme_images[ $preview_tile ] ) ) : ?>
+											<img src="<?php echo esc_url( (string) $theme_images[ $preview_tile ] ); ?>" alt="" loading="lazy">
+										<?php endif; ?>
+									</i>
+								<?php endfor; ?>
+							</div>
+						</div>
+						<div class="mobishop-saved-theme-meta">
+							<h3><?php echo esc_html( $theme_name ); ?></h3>
+							<p><?php echo ! empty( $saved_theme['created_at'] ) ? esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), absint( $saved_theme['created_at'] ) ) ) : ''; ?></p>
+						</div>
+						<div class="mobishop-saved-themes__actions">
+							<button
+								type="button"
+								class="button mobishop-theme-action--preview"
+								data-saved-theme-preview
+								data-theme-name="<?php echo esc_attr( $theme_name ); ?>"
+							><?php esc_html_e( 'Preview', 'mobishop' ); ?></button>
+							<?php foreach ( array( 'apply' => __( 'Apply', 'mobishop' ), 'export' => __( 'Export', 'mobishop' ), 'delete' => __( 'Delete', 'mobishop' ) ) as $theme_operation => $theme_label ) : ?>
+								<?php if ( 'export' === $theme_operation ) : ?>
+									<button
+										type="button"
+										class="button mobishop-theme-action--export"
+										data-saved-theme-export
+										data-theme-id="<?php echo esc_attr( (string) $saved_theme_id ); ?>"
+										data-theme-name="<?php echo esc_attr( $theme_name ); ?>"
+									><?php echo esc_html( $theme_label ); ?></button>
+									<?php continue; ?>
+								<?php endif; ?>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" <?php if ( in_array( $theme_operation, array( 'apply', 'delete' ), true ) ) : ?>onsubmit="return window.confirm('<?php echo esc_js( 'apply' === $theme_operation ? __( 'Applying this theme replaces your current changes and creates a new build. Continue?', 'mobishop' ) : __( 'Delete this saved theme?', 'mobishop' ) ); ?>');"<?php endif; ?>>
+									<input type="hidden" name="action" value="mobishop_manage_saved_theme">
+									<input type="hidden" name="theme_operation" value="<?php echo esc_attr( $theme_operation ); ?>">
+									<input type="hidden" name="theme_id" value="<?php echo esc_attr( (string) $saved_theme_id ); ?>">
+									<?php wp_nonce_field( 'mobishop_manage_saved_theme', 'mobishop_theme_nonce' ); ?>
+									<button type="submit" class="button mobishop-theme-action--<?php echo esc_attr( $theme_operation ); ?><?php echo 'apply' === $theme_operation ? ' button-primary' : ''; ?>"><?php echo esc_html( $theme_label ); ?></button>
+								</form>
+							<?php endforeach; ?>
+						</div>
+					</article>
+				<?php endforeach; ?>
+			</div>
+			<dialog class="mobishop-saved-theme-dialog" data-saved-theme-dialog aria-labelledby="mobishop-saved-theme-dialog-title">
+				<button type="button" class="mobishop-saved-theme-dialog__close" data-saved-theme-dialog-close aria-label="<?php esc_attr_e( 'Close preview', 'mobishop' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
+				<div class="mobishop-saved-theme-dialog__content">
+					<div class="mobishop-saved-theme-dialog__intro">
+						<span class="mobishop-setup-eyebrow"><?php esc_html_e( 'Theme preview', 'mobishop' ); ?></span>
+						<h2 id="mobishop-saved-theme-dialog-title" data-saved-theme-dialog-title></h2>
+						<p><?php esc_html_e( 'Browse the real application pages using this theme’s saved settings and your WooCommerce catalog.', 'mobishop' ); ?></p>
+					</div>
+					<nav class="mobishop-saved-theme-dialog__pages" aria-label="<?php esc_attr_e( 'Theme pages', 'mobishop' ); ?>">
+						<button type="button" data-saved-theme-page="splash" class="is-active" aria-current="page">
+							<span class="dashicons dashicons-format-image" aria-hidden="true"></span>
+							<?php esc_html_e( 'Splash', 'mobishop' ); ?>
+						</button>
+						<?php foreach ( MobiShop_Setup_Wizard::setup_pages() as $preview_page => $preview_page_data ) : ?>
+							<button type="button" data-saved-theme-page="<?php echo esc_attr( (string) $preview_page ); ?>">
+								<span class="dashicons <?php echo esc_attr( (string) ( $preview_page_data['icon'] ?? 'dashicons-admin-page' ) ); ?>" aria-hidden="true"></span>
+								<?php echo esc_html( (string) ( $preview_page_data['name'] ?? $preview_page ) ); ?>
+							</button>
+						<?php endforeach; ?>
+					</nav>
+					<div class="mobishop-saved-theme-dialog__stage">
+						<div class="mobishop-saved-theme-dialog__device">
+							<div class="mobishop-saved-theme-dialog__screen">
+								<iframe
+									data-saved-theme-dialog-frame
+									title="<?php echo esc_attr__( 'Real Flutter theme preview', 'mobishop' ); ?>"
+									loading="eager"
+									allow="clipboard-read; clipboard-write"
+								></iframe>
+							</div>
+						</div>
+						<div class="mobishop-saved-theme-dialog__loading" data-saved-theme-loading role="status">
+							<span class="spinner is-active" aria-hidden="true"></span>
+							<b><?php esc_html_e( 'Loading real app preview…', 'mobishop' ); ?></b>
+						</div>
+					</div>
+				</div>
+			</dialog>
+			<dialog class="mobishop-saved-theme-export-dialog" data-saved-theme-export-dialog aria-labelledby="mobishop-saved-theme-export-title">
+				<button type="button" class="mobishop-saved-theme-export-dialog__close" data-saved-theme-export-close aria-label="<?php esc_attr_e( 'Close export options', 'mobishop' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-saved-theme-export-form>
+					<input type="hidden" name="action" value="mobishop_manage_saved_theme">
+					<input type="hidden" name="theme_operation" value="export">
+					<input type="hidden" name="theme_id" value="" data-saved-theme-export-id>
+					<?php wp_nonce_field( 'mobishop_manage_saved_theme', 'mobishop_theme_nonce' ); ?>
+					<span class="mobishop-setup-eyebrow"><?php esc_html_e( 'Export theme', 'mobishop' ); ?></span>
+					<h2 id="mobishop-saved-theme-export-title"><?php esc_html_e( 'What do you want to export?', 'mobishop' ); ?></h2>
+					<p data-saved-theme-export-name></p>
+					<div class="mobishop-saved-theme-export-dialog__choices">
+						<button type="submit" name="export_mode" value="settings" class="mobishop-saved-theme-export-choice">
+							<span class="dashicons dashicons-admin-settings" aria-hidden="true"></span>
+							<strong><?php esc_html_e( 'Settings only', 'mobishop' ); ?></strong>
+							<small><?php esc_html_e( 'Export the complete theme settings and keep image URLs only.', 'mobishop' ); ?></small>
+						</button>
+						<button type="submit" name="export_mode" value="settings_and_images" class="mobishop-saved-theme-export-choice is-primary">
+							<span class="dashicons dashicons-format-gallery" aria-hidden="true"></span>
+							<strong><?php esc_html_e( 'Settings and images', 'mobishop' ); ?></strong>
+							<small><?php esc_html_e( 'Embed every theme image except WooCommerce product images.', 'mobishop' ); ?></small>
+						</button>
+					</div>
+				</form>
+			</dialog>
+		<?php else : ?>
+			<div class="mobishop-saved-themes__empty">
+				<span class="dashicons dashicons-upload" aria-hidden="true"></span>
+				<h2><?php esc_html_e( 'Import Theme', 'mobishop' ); ?></h2>
+				<p><?php esc_html_e( 'You do not have saved themes yet. Import a MobiShop theme file to start.', 'mobishop' ); ?></p>
+				<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="mobishop_manage_saved_theme">
+					<input type="hidden" name="theme_operation" value="import">
+					<?php wp_nonce_field( 'mobishop_manage_saved_theme', 'mobishop_theme_nonce' ); ?>
+					<label class="mobishop-theme-file"><input type="file" name="theme_file" accept="application/json,.json" required><span class="button"><?php esc_html_e( 'Choose theme file', 'mobishop' ); ?></span><b data-theme-file-name><?php esc_html_e( 'No file selected', 'mobishop' ); ?></b></label>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Import Theme', 'mobishop' ); ?></button>
+				</form>
+			</div>
+		<?php endif; ?>
+	</section>
+</div>

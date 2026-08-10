@@ -1,14 +1,14 @@
-import 'package:kidia_store_app/features/catalog/data/models/catalog_attribute_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_category_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_image_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_json.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_money_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_variation_model.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_attribute_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_image_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_money_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_variation_model.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 
 class CatalogProductModel extends CatalogProduct {
   const CatalogProductModel({
@@ -93,7 +93,7 @@ class CatalogProductModel extends CatalogProduct {
       json['extensions'],
     );
     final Map<String, dynamic>? bridge = CatalogJson.object(
-      extensions?['woo_mobile_cms'],
+      extensions?['mobishop_cms'],
     );
     return bridge?['brands'];
   }

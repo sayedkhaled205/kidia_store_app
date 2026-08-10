@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 typedef WishlistPreferencesLoader = Future<SharedPreferences> Function();
@@ -22,7 +22,7 @@ class SharedPreferencesWishlistRepository implements WishlistRepository {
     );
   }
 
-  static const String _keyPrefix = 'woo_mobile.wishlist.v1';
+  static const String _keyPrefix = 'mobishop.wishlist.v1';
 
   final String _storageKey;
   final WishlistPreferencesLoader _preferencesLoader;

@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_card.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_frame.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_card.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 import 'package:video_player/video_player.dart';
 
 class AppHeaderBlockWidget extends StatelessWidget {

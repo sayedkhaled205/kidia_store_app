@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_radius.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -73,10 +73,10 @@ class AccountScreen extends ConsumerWidget {
         top: false,
         child: ListView(
           padding: const EdgeInsetsDirectional.fromSTEB(
-            KidiaSpacing.md,
-            KidiaSpacing.md,
-            KidiaSpacing.md,
-            KidiaSpacing.xl,
+            MobiShopSpacing.md,
+            MobiShopSpacing.md,
+            MobiShopSpacing.md,
+            MobiShopSpacing.xl,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
@@ -94,14 +94,14 @@ class AccountScreen extends ConsumerWidget {
               cardStyle: summarySettings.string('card_style', 'elevated'),
             )),
             if (authState.hasError) ...<Widget>[
-              const SizedBox(height: KidiaSpacing.sm),
+              const SizedBox(height: MobiShopSpacing.sm),
               _SessionNotice(
                 message: isArabic
                     ? 'تعذر قراءة جلسة الحساب. يمكنك تسجيل الدخول من جديد.'
                     : 'Could not restore the account session. You can sign in again.',
               ),
             ],
-            if (menuSettings.enabled) const SizedBox(height: KidiaSpacing.lg),
+            if (menuSettings.enabled) const SizedBox(height: MobiShopSpacing.lg),
             if (menuSettings.enabled)
               CmsElementFrame(component: menuSettings, child: Card(
               clipBehavior: Clip.antiAlias,
@@ -123,7 +123,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             )),
             if (session != null && pageLayout.element('logout_button').enabled) ...<Widget>[
-              const SizedBox(height: KidiaSpacing.lg),
+              const SizedBox(height: MobiShopSpacing.lg),
               CmsElementFrame(component: pageLayout.element('logout_button'), child: OutlinedButton.icon(
                 key: const Key('account-sign-out'),
                 onPressed: () => _signOut(context, ref, isArabic),
@@ -217,20 +217,20 @@ class _AccountHeader extends StatelessWidget {
     return Card(
       elevation: elevated ? null : 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(KidiaRadius.md),
+        borderRadius: BorderRadius.circular(MobiShopRadius.md),
         side: outlined
             ? BorderSide(color: Theme.of(context).colorScheme.outlineVariant)
             : BorderSide.none,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(KidiaSpacing.md),
+        padding: const EdgeInsets.all(MobiShopSpacing.md),
         child: Row(
           children: <Widget>[
             Container(
               width: avatarSize,
               height: avatarSize,
               decoration: const BoxDecoration(
-                color: KidiaColors.primaryLight,
+                color: MobiShopColors.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -238,10 +238,10 @@ class _AccountHeader extends StatelessWidget {
                     ? Icons.person_outline_rounded
                     : Icons.person_rounded,
                 size: avatarSize * 0.58,
-                color: KidiaColors.primaryDark,
+                color: MobiShopColors.primaryDark,
               ),
             ),
-            const SizedBox(width: KidiaSpacing.md),
+            const SizedBox(width: MobiShopSpacing.md),
             Expanded(
               child: loading
                   ? const LinearProgressIndicator(
@@ -251,7 +251,7 @@ class _AccountHeader extends StatelessWidget {
                   : current == null
                   ? InkWell(
                       key: const Key('account-sign-in'),
-                      borderRadius: BorderRadius.circular(KidiaRadius.md),
+                      borderRadius: BorderRadius.circular(MobiShopRadius.md),
                       onTap: onSignIn,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -277,7 +277,7 @@ class _AccountHeader extends StatelessWidget {
                                         .textTheme
                                         .bodySmall
                                         ?.copyWith(
-                                          color: KidiaColors.textSecondary,
+                                          color: MobiShopColors.textSecondary,
                                         ),
                                   ),
                                 ],
@@ -307,7 +307,7 @@ class _AccountHeader extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: KidiaColors.textSecondary),
+                                  ?.copyWith(color: MobiShopColors.textSecondary),
                             ),
                           ),
                         ],
@@ -337,17 +337,17 @@ class _AccountActionTile extends StatelessWidget {
     return ListTile(
       key: Key('account-action-${action.id}'),
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: KidiaSpacing.md,
-        vertical: KidiaSpacing.xs,
+        horizontal: MobiShopSpacing.md,
+        vertical: MobiShopSpacing.xs,
       ),
       leading: Container(
         width: 42,
         height: 42,
         decoration: BoxDecoration(
-          color: KidiaColors.primaryLight,
-          borderRadius: BorderRadius.circular(KidiaRadius.sm),
+          color: MobiShopColors.primaryLight,
+          borderRadius: BorderRadius.circular(MobiShopRadius.sm),
         ),
-        child: Icon(action.icon, color: KidiaColors.primaryDark),
+        child: Icon(action.icon, color: MobiShopColors.primaryDark),
       ),
       title: Text(
         action.label(isArabic),
@@ -369,10 +369,10 @@ class _SessionNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(KidiaSpacing.sm),
+      padding: const EdgeInsets.all(MobiShopSpacing.sm),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(KidiaRadius.md),
+        borderRadius: BorderRadius.circular(MobiShopRadius.md),
       ),
       child: Text(
         message,

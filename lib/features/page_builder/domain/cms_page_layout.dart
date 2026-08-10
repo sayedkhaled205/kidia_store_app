@@ -138,7 +138,7 @@ class CmsPageLayout {
 		'title_offset_x': 0,
 		'title_offset_y': 0,
 		'title_transform': 'none',
-		'logo_text': 'Kidia',
+		'logo_text': 'MobiShop',
 		'logo_text_color': '#1F2933',
 		'logo_width': page == 'home' ? 132 : 118,
 		'logo_height': page == 'home' ? 42 : 38,

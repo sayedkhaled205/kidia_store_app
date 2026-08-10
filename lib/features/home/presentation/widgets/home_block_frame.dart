@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 
 class HomeBlockFrame extends StatelessWidget {
   const HomeBlockFrame({

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_radius.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:kidia_store_app/features/auth/presentation/auth_copy.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/auth_copy.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum _AuthStep { email, password, createPassword }
@@ -51,7 +51,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     ref.watch(authControllerProvider);
     final AuthCopy copy = AuthCopy.of(context);
     return Scaffold(
-      backgroundColor: KidiaColors.surface,
+      backgroundColor: MobiShopColors.surface,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: IconButton(
@@ -66,10 +66,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsetsDirectional.fromSTEB(
-              KidiaSpacing.lg,
-              KidiaSpacing.sm,
-              KidiaSpacing.lg,
-              KidiaSpacing.xl,
+              MobiShopSpacing.lg,
+              MobiShopSpacing.sm,
+              MobiShopSpacing.lg,
+              MobiShopSpacing.xl,
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
@@ -79,16 +79,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     _StoreMark(storeName: AppConfig.storeName),
-                    const SizedBox(height: KidiaSpacing.xl),
+                    const SizedBox(height: MobiShopSpacing.xl),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
                       child: _stepContent(copy),
                     ),
                     if (_error != null) ...<Widget>[
-                      const SizedBox(height: KidiaSpacing.md),
+                      const SizedBox(height: MobiShopSpacing.md),
                       _AuthError(message: _error!),
                     ],
-                    const SizedBox(height: KidiaSpacing.lg),
+                    const SizedBox(height: MobiShopSpacing.lg),
                     FilledButton(
                       key: Key(_buttonKey),
                       onPressed: _busy ? null : () => _submit(copy),
@@ -103,7 +103,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           : Text(_buttonLabel(copy)),
                     ),
                     if (_step != _AuthStep.email) ...<Widget>[
-                      const SizedBox(height: KidiaSpacing.sm),
+                      const SizedBox(height: MobiShopSpacing.sm),
                       TextButton.icon(
                         key: const Key('auth-change-email'),
                         onPressed: _busy ? null : _changeEmail,
@@ -118,9 +118,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         child: Text(copy.forgotPassword),
                       ),
                     if (_step == _AuthStep.email) ...<Widget>[
-                      const SizedBox(height: KidiaSpacing.xl),
+                      const SizedBox(height: MobiShopSpacing.xl),
                       _SocialAuthDivider(label: copy.or),
-                      const SizedBox(height: KidiaSpacing.md),
+                      const SizedBox(height: MobiShopSpacing.md),
                       _SocialAuthButtons(
                         copy: copy,
                         enabled: !_busy,
@@ -128,27 +128,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             _beginSocialSignIn(provider, copy),
                       ),
                     ],
-                    const SizedBox(height: KidiaSpacing.xl),
+                    const SizedBox(height: MobiShopSpacing.xl),
                     _PrivacyNotice(
                       text: copy.privacyPrefix,
                       onTap: _openPrivacyPolicy,
                     ),
-                    const SizedBox(height: KidiaSpacing.sm),
+                    const SizedBox(height: MobiShopSpacing.sm),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const Icon(
                           Icons.lock_outline_rounded,
                           size: 16,
-                          color: KidiaColors.textSecondary,
+                          color: MobiShopColors.textSecondary,
                         ),
-                        const SizedBox(width: KidiaSpacing.xs),
+                        const SizedBox(width: MobiShopSpacing.xs),
                         Flexible(
                           child: Text(
                             copy.secureNotice,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: KidiaColors.textSecondary),
+                                ?.copyWith(color: MobiShopColors.textSecondary),
                           ),
                         ),
                       ],
@@ -393,16 +393,16 @@ class _StoreMark extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: KidiaColors.primaryLight,
-              borderRadius: BorderRadius.circular(KidiaRadius.full),
+              color: MobiShopColors.primaryLight,
+              borderRadius: BorderRadius.circular(MobiShopRadius.full),
             ),
             child: const Icon(
               Icons.shopping_bag_rounded,
-              color: KidiaColors.primaryDark,
+              color: MobiShopColors.primaryDark,
               size: 30,
             ),
           ),
-          const SizedBox(width: KidiaSpacing.sm),
+          const SizedBox(width: MobiShopSpacing.sm),
           Flexible(
             child: Text(
               storeName,
@@ -410,7 +410,7 @@ class _StoreMark extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: KidiaColors.textPrimary,
+                color: MobiShopColors.textPrimary,
               ),
             ),
           ),
@@ -442,15 +442,15 @@ class _EmailStep extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.xs),
+        const SizedBox(height: MobiShopSpacing.xs),
         Text(
           copy.intro,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: KidiaColors.textSecondary,
+            color: MobiShopColors.textSecondary,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.xl),
+        const SizedBox(height: MobiShopSpacing.xl),
         Directionality(
           textDirection: TextDirection.ltr,
           child: TextFormField(
@@ -515,17 +515,17 @@ class _PasswordStep extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.xs),
+        const SizedBox(height: MobiShopSpacing.xs),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: KidiaColors.textSecondary,
+            color: MobiShopColors.textSecondary,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.md),
+        const SizedBox(height: MobiShopSpacing.md),
         _SelectedEmail(email: email),
-        const SizedBox(height: KidiaSpacing.lg),
+        const SizedBox(height: MobiShopSpacing.lg),
         Directionality(
           textDirection: TextDirection.ltr,
           child: TextFormField(
@@ -590,17 +590,17 @@ class _CreatePasswordStep extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.xs),
+        const SizedBox(height: MobiShopSpacing.xs),
         Text(
           copy.createSubtitle,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: KidiaColors.textSecondary,
+            color: MobiShopColors.textSecondary,
           ),
         ),
-        const SizedBox(height: KidiaSpacing.md),
+        const SizedBox(height: MobiShopSpacing.md),
         _SelectedEmail(email: email),
-        const SizedBox(height: KidiaSpacing.lg),
+        const SizedBox(height: MobiShopSpacing.lg),
         Directionality(
           textDirection: TextDirection.ltr,
           child: Column(
@@ -630,7 +630,7 @@ class _CreatePasswordStep extends StatelessWidget {
                   return null;
                 },
               ),
-              const SizedBox(height: KidiaSpacing.md),
+              const SizedBox(height: MobiShopSpacing.md),
               TextFormField(
                 key: const Key('auth-confirm-password'),
                 controller: confirmationController,
@@ -670,12 +670,12 @@ class _SelectedEmail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: KidiaSpacing.md,
-        vertical: KidiaSpacing.sm,
+        horizontal: MobiShopSpacing.md,
+        vertical: MobiShopSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: KidiaColors.primaryLight,
-        borderRadius: BorderRadius.circular(KidiaRadius.md),
+        color: MobiShopColors.primaryLight,
+        borderRadius: BorderRadius.circular(MobiShopRadius.md),
       ),
       child: Directionality(
         textDirection: TextDirection.ltr,
@@ -685,15 +685,15 @@ class _SelectedEmail extends StatelessWidget {
             const Icon(
               Icons.alternate_email_rounded,
               size: 18,
-              color: KidiaColors.primaryDark,
+              color: MobiShopColors.primaryDark,
             ),
-            const SizedBox(width: KidiaSpacing.xs),
+            const SizedBox(width: MobiShopSpacing.xs),
             Flexible(
               child: Text(
                 email,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: KidiaColors.primaryDark,
+                  color: MobiShopColors.primaryDark,
                 ),
               ),
             ),
@@ -718,7 +718,7 @@ class _SocialAuthDivider extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: KidiaColors.textSecondary,
+            color: MobiShopColors.textSecondary,
           ),
         ),
         const Expanded(child: Divider(indent: 16, endIndent: 72)),
@@ -753,7 +753,7 @@ class _SocialAuthButtons extends StatelessWidget {
           borderColor: const Color(0xFFE4E7EC),
           child: const _GoogleMark(),
         ),
-        const SizedBox(width: KidiaSpacing.lg),
+        const SizedBox(width: MobiShopSpacing.lg),
         _SocialCircleButton(
           key: const Key('auth-facebook'),
           label: copy.continueWithFacebook,
@@ -892,10 +892,10 @@ class _AuthError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const Key('auth-error'),
-      padding: const EdgeInsets.all(KidiaSpacing.sm),
+      padding: const EdgeInsets.all(MobiShopSpacing.sm),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(KidiaRadius.md),
+        borderRadius: BorderRadius.circular(MobiShopRadius.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,7 +904,7 @@ class _AuthError extends StatelessWidget {
             Icons.error_outline_rounded,
             color: Theme.of(context).colorScheme.onErrorContainer,
           ),
-          const SizedBox(width: KidiaSpacing.xs),
+          const SizedBox(width: MobiShopSpacing.xs),
           Expanded(
             child: Text(
               message,
@@ -934,7 +934,7 @@ class _PrivacyNotice extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: KidiaColors.textSecondary,
+          color: MobiShopColors.textSecondary,
           decoration: TextDecoration.underline,
         ),
       ),

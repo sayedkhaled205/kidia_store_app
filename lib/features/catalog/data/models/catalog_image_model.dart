@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/features/catalog/data/models/catalog_json.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 
 class CatalogImageModel extends CatalogImage {
   const CatalogImageModel({

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
 
 abstract interface class SocialAuthPendingStore {
   Future<SocialAuthPending?> read();
@@ -82,7 +82,7 @@ class SecureSocialAuthPendingStore implements SocialAuthPendingStore {
       '=',
       '',
     );
-    return 'kidia_social_auth_pending_$encoded';
+    return 'mobishop_social_auth_pending_$encoded';
   }
 }
 

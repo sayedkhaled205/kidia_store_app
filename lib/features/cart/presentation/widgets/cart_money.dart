@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
 
 String formatCartMoney(String minorValue, CartCurrency currency) {
   final BigInt? parsed = BigInt.tryParse(minorValue.trim());

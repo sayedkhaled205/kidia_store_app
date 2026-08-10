@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 
 abstract interface class BrandsRepository {
   Future<StoreBrandPage> getBrands({

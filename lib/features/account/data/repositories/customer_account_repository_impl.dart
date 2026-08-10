@@ -1,6 +1,6 @@
-import 'package:kidia_store_app/features/account/data/network/customer_account_api_transport.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
-import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:mobishop_store_app/features/account/data/network/customer_account_api_transport.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
 
 class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
   const CustomerAccountRepositoryImpl(this.transport);

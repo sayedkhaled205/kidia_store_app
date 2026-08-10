@@ -4,17 +4,17 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
-import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_renderer.dart';
-import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/home/data/repositories/home_repository_impl.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/presentation/providers/home_providers.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_renderer.dart';
+import 'package:mobishop_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -96,7 +96,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return CmsPageScaffold(
       layout: chrome,
-      defaultTitle: 'Kidia',
+      defaultTitle: 'MobiShop',
       scrollController: _scrollController,
       actions: <CmsPageHeaderAction>[
           CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),

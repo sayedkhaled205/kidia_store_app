@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 
 enum HomeBlockType {
   appHeader('app_header'),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_factory.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_factory.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_frame.dart';
 
 class HomeBlockRenderer extends StatelessWidget {
   const HomeBlockRenderer({

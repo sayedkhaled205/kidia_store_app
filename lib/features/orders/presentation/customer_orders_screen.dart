@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_radius.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
-import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
-import 'package:kidia_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
-import 'package:kidia_store_app/features/orders/presentation/controllers/customer_orders_controller.dart';
-import 'package:kidia_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
+import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
+import 'package:mobishop_store_app/features/orders/presentation/controllers/customer_orders_controller.dart';
+import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 class CustomerOrdersScreen extends ConsumerStatefulWidget {
   const CustomerOrdersScreen({super.key});
@@ -179,10 +179,10 @@ class _OrdersContent extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(
-                  KidiaSpacing.md,
-                  KidiaSpacing.md,
-                  KidiaSpacing.md,
-                  KidiaSpacing.sm,
+                  MobiShopSpacing.md,
+                  MobiShopSpacing.md,
+                  MobiShopSpacing.md,
+                  MobiShopSpacing.sm,
                 ),
                 child: Text(
                   copy.orderCount(state.totalItems),
@@ -195,15 +195,15 @@ class _OrdersContent extends StatelessWidget {
             ),
             SliverPadding(
               padding: const EdgeInsetsDirectional.fromSTEB(
-                KidiaSpacing.md,
+                MobiShopSpacing.md,
                 0,
-                KidiaSpacing.md,
-                KidiaSpacing.sm,
+                MobiShopSpacing.md,
+                MobiShopSpacing.sm,
               ),
               sliver: SliverList.separated(
                 itemCount: state.items.length,
                 separatorBuilder: (BuildContext context, int index) =>
-                    const SizedBox(height: KidiaSpacing.sm),
+                    const SizedBox(height: MobiShopSpacing.sm),
                 itemBuilder: (BuildContext context, int index) {
                   final CustomerOrder order = state.items[index];
                   return _OrderCard(
@@ -257,7 +257,7 @@ class _OrderCard extends StatelessWidget {
         key: Key('open-customer-order-${order.id}'),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(KidiaSpacing.md),
+          padding: const EdgeInsets.all(MobiShopSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -286,16 +286,16 @@ class _OrderCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: KidiaSpacing.sm),
+                  const SizedBox(width: MobiShopSpacing.sm),
                   _OrderStatusChip(
                     status: order.status,
                     label: copy.status(order),
                   ),
                 ],
               ),
-              const SizedBox(height: KidiaSpacing.sm),
+              const SizedBox(height: MobiShopSpacing.sm),
               Divider(color: colors.outlineVariant),
-              const SizedBox(height: KidiaSpacing.xs),
+              const SizedBox(height: MobiShopSpacing.xs),
               if (visibleItems.isEmpty)
                 Text(
                   copy.items(order.itemCount),
@@ -314,7 +314,7 @@ class _OrderCard extends StatelessWidget {
                           size: 18,
                           color: colors.onSurfaceVariant,
                         ),
-                        const SizedBox(width: KidiaSpacing.xs),
+                        const SizedBox(width: MobiShopSpacing.xs),
                         Expanded(
                           child: Text(
                             item.name,
@@ -325,7 +325,7 @@ class _OrderCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: KidiaSpacing.sm),
+                        const SizedBox(width: MobiShopSpacing.sm),
                         Text(
                           '× ${item.quantity}',
                           textDirection: TextDirection.ltr,
@@ -345,7 +345,7 @@ class _OrderCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              const SizedBox(height: KidiaSpacing.sm),
+              const SizedBox(height: MobiShopSpacing.sm),
               Row(
                 children: <Widget>[
                   Text(
@@ -369,7 +369,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: KidiaSpacing.xs),
+              const SizedBox(height: MobiShopSpacing.xs),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: Text(
@@ -423,12 +423,12 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
           ),
           body: ListView(
             key: Key('customer-order-details-${order.id}'),
-            padding: const EdgeInsets.all(KidiaSpacing.md),
+            padding: const EdgeInsets.all(MobiShopSpacing.md),
             children: <Widget>[
               Card(
                 margin: EdgeInsets.zero,
                 child: Padding(
-                  padding: const EdgeInsets.all(KidiaSpacing.md),
+                  padding: const EdgeInsets.all(MobiShopSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
@@ -449,13 +449,13 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                         ],
                       ),
                       if (order.dateCreated != null) ...<Widget>[
-                        const SizedBox(height: KidiaSpacing.sm),
+                        const SizedBox(height: MobiShopSpacing.sm),
                         _OrderDetailsRow(
                           label: copy.orderDate,
                           value: copy.date(order.dateCreated!),
                         ),
                       ],
-                      const SizedBox(height: KidiaSpacing.xs),
+                      const SizedBox(height: MobiShopSpacing.xs),
                       _OrderDetailsRow(
                         label: copy.orderStatus,
                         value: copy.status(order),
@@ -465,13 +465,13 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                 ),
               ),
               if (order.status == 'cancel-request') ...<Widget>[
-                const SizedBox(height: KidiaSpacing.md),
+                const SizedBox(height: MobiShopSpacing.md),
                 Container(
                   key: const Key('order-cancellation-requested-notice'),
-                  padding: const EdgeInsets.all(KidiaSpacing.md),
+                  padding: const EdgeInsets.all(MobiShopSpacing.md),
                   decoration: BoxDecoration(
                     color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(KidiaRadius.md),
+                    borderRadius: BorderRadius.circular(MobiShopRadius.md),
                   ),
                   child: Row(
                     children: <Widget>[
@@ -479,7 +479,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                         Icons.schedule_send_outlined,
                         color: colors.onPrimaryContainer,
                       ),
-                      const SizedBox(width: KidiaSpacing.sm),
+                      const SizedBox(width: MobiShopSpacing.sm),
                       Expanded(
                         child: Text(
                           copy.cancelRequestPending,
@@ -493,11 +493,11 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: KidiaSpacing.md),
+              const SizedBox(height: MobiShopSpacing.md),
               Card(
                 margin: EdgeInsets.zero,
                 child: Padding(
-                  padding: const EdgeInsets.all(KidiaSpacing.md),
+                  padding: const EdgeInsets.all(MobiShopSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
@@ -507,7 +507,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: KidiaSpacing.sm),
+                      const SizedBox(height: MobiShopSpacing.sm),
                       if (order.items.isEmpty)
                         Text(copy.items(order.itemCount))
                       else
@@ -516,7 +516,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                             padding: EdgeInsets.only(
                               bottom: index == order.items.length - 1
                                   ? 0
-                                  : KidiaSpacing.sm,
+                                  : MobiShopSpacing.sm,
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,7 +526,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                                   size: 20,
                                   color: colors.onSurfaceVariant,
                                 ),
-                                const SizedBox(width: KidiaSpacing.sm),
+                                const SizedBox(width: MobiShopSpacing.sm),
                                 Expanded(
                                   child: Text(
                                     order.items[index].name,
@@ -535,7 +535,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: KidiaSpacing.sm),
+                                const SizedBox(width: MobiShopSpacing.sm),
                                 Text(
                                   '× ${order.items[index].quantity}',
                                   textDirection: TextDirection.ltr,
@@ -550,11 +550,11 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: KidiaSpacing.md),
+              const SizedBox(height: MobiShopSpacing.md),
               Card(
                 margin: EdgeInsets.zero,
                 child: Padding(
-                  padding: const EdgeInsets.all(KidiaSpacing.md),
+                  padding: const EdgeInsets.all(MobiShopSpacing.md),
                   child: Row(
                     children: <Widget>[
                       Text(
@@ -580,7 +580,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                 ),
               ),
               if (order.canCancel) ...<Widget>[
-                const SizedBox(height: KidiaSpacing.md),
+                const SizedBox(height: MobiShopSpacing.md),
                 Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: OutlinedButton.icon(
@@ -610,7 +610,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: KidiaSpacing.lg),
+              const SizedBox(height: MobiShopSpacing.lg),
             ],
           ),
         );
@@ -651,18 +651,18 @@ class _OrderStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color foreground = switch (status) {
-      'completed' => KidiaColors.success,
-      'processing' => KidiaColors.primaryDark,
+      'completed' => MobiShopColors.success,
+      'processing' => MobiShopColors.primaryDark,
       'pending' || 'on-hold' => const Color(0xFF9A6700),
       'cancel-request' => const Color(0xFF9A6700),
-      'cancelled' || 'failed' || 'refunded' => KidiaColors.error,
+      'cancelled' || 'failed' || 'refunded' => MobiShopColors.error,
       _ => Theme.of(context).colorScheme.onSurfaceVariant,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: foreground.withValues(alpha: 0.11),
-        borderRadius: BorderRadius.circular(KidiaRadius.full),
+        borderRadius: BorderRadius.circular(MobiShopRadius.full),
       ),
       child: Text(
         label,
@@ -684,16 +684,16 @@ class _OrdersLoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color color = Theme.of(context).colorScheme.surfaceContainer;
     return SliverPadding(
-      padding: const EdgeInsets.all(KidiaSpacing.md),
+      padding: const EdgeInsets.all(MobiShopSpacing.md),
       sliver: SliverList.separated(
         itemCount: 4,
         separatorBuilder: (BuildContext context, int index) =>
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
         itemBuilder: (BuildContext context, int index) => Container(
           height: 190,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(KidiaRadius.lg),
+            borderRadius: BorderRadius.circular(MobiShopRadius.lg),
           ),
         ),
       ),
@@ -724,7 +724,7 @@ class _OrdersStatus extends StatelessWidget {
       hasScrollBody: false,
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(KidiaSpacing.lg),
+          padding: const EdgeInsets.all(MobiShopSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -736,7 +736,7 @@ class _OrdersStatus extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 44, color: colors.onPrimaryContainer),
               ),
-              const SizedBox(height: KidiaSpacing.md),
+              const SizedBox(height: MobiShopSpacing.md),
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -744,7 +744,7 @@ class _OrdersStatus extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: KidiaSpacing.xs),
+              const SizedBox(height: MobiShopSpacing.xs),
               Text(
                 description,
                 textAlign: TextAlign.center,
@@ -754,7 +754,7 @@ class _OrdersStatus extends StatelessWidget {
                 ),
               ),
               if (actionLabel != null && onAction != null) ...<Widget>[
-                const SizedBox(height: KidiaSpacing.md),
+                const SizedBox(height: MobiShopSpacing.md),
                 FilledButton.tonalIcon(
                   onPressed: onAction,
                   icon: const Icon(Icons.refresh_rounded),
@@ -784,13 +784,13 @@ class _OrdersFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.isLoadingMore) {
       return const Padding(
-        padding: EdgeInsets.all(KidiaSpacing.lg),
+        padding: EdgeInsets.all(MobiShopSpacing.lg),
         child: Center(child: CircularProgressIndicator()),
       );
     }
     if (state.loadMoreError != null) {
       return Padding(
-        padding: const EdgeInsets.all(KidiaSpacing.md),
+        padding: const EdgeInsets.all(MobiShopSpacing.md),
         child: Center(
           child: TextButton.icon(
             onPressed: onRetry,
@@ -800,7 +800,7 @@ class _OrdersFooter extends StatelessWidget {
         ),
       );
     }
-    return const SizedBox(height: KidiaSpacing.lg);
+    return const SizedBox(height: MobiShopSpacing.lg);
   }
 }
 

@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 
 class CatalogCategoryNode {
   const CatalogCategoryNode({

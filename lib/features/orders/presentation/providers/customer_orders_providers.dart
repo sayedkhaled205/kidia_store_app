@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/orders/data/network/customer_orders_api_transport.dart';
-import 'package:kidia_store_app/features/orders/data/repositories/customer_orders_repository_impl.dart';
-import 'package:kidia_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
-import 'package:kidia_store_app/features/orders/presentation/controllers/customer_orders_controller.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/orders/data/network/customer_orders_api_transport.dart';
+import 'package:mobishop_store_app/features/orders/data/repositories/customer_orders_repository_impl.dart';
+import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
+import 'package:mobishop_store_app/features/orders/presentation/controllers/customer_orders_controller.dart';
 
 final customerOrdersApiTransportProvider = Provider<CustomerOrdersApiTransport>(
   (Ref ref) {

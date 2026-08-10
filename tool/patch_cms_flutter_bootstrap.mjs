@@ -7,7 +7,7 @@ if (!bootstrapPath) {
 
 let source = fs.readFileSync(bootstrapPath, "utf8");
 const cacheSuffix =
-  '(window.__kidiaPreviewVersion?"?v="+encodeURIComponent(window.__kidiaPreviewVersion):"")';
+  '(window.__mobishopPreviewVersion?"?v="+encodeURIComponent(window.__mobishopPreviewVersion):"")';
 
 for (const asset of ["canvaskit.js", "canvaskit.wasm"]) {
   const original = `c(s,"${asset}")`;
@@ -26,7 +26,7 @@ if (!source.includes(loaderCall)) {
 
 source = source.replace(
   loaderCall,
-  `window.__kidiaStartFlutterPreview=function(){
+  `window.__mobishopStartFlutterPreview=function(){
 return _flutter.loader.load({
 config:{canvasKitBaseUrl:"canvaskit/"},
 onEntrypointLoaded:async function(engineInitializer){
@@ -34,14 +34,14 @@ try{
 var appRunner=await engineInitializer.initializeEngine({canvasKitBaseUrl:"canvaskit/"});
 await appRunner.runApp();
 }catch(error){
-window.dispatchEvent(new CustomEvent("kidia-flutter-preview-error",{detail:String(error)}));
+window.dispatchEvent(new CustomEvent("mobishop-flutter-preview-error",{detail:String(error)}));
 }
 }
 }).catch(function(error){
-window.dispatchEvent(new CustomEvent("kidia-flutter-preview-error",{detail:String(error)}));
+window.dispatchEvent(new CustomEvent("mobishop-flutter-preview-error",{detail:String(error)}));
 });
 };
-window.__kidiaStartFlutterPreview();`,
+window.__mobishopStartFlutterPreview();`,
 );
 
 fs.writeFileSync(bootstrapPath, source);

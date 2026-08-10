@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
 
 class BrandsState {
   const BrandsState({

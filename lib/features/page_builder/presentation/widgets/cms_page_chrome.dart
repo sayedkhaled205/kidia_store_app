@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 List<Map<String, dynamic>> _configuredHeaderRows(
   CmsPageComponent header, {
@@ -1208,7 +1208,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         color,
       );
       final Widget textLogo = Text(
-        _header.string('logo_text', 'Kidia'),
+        _header.string('logo_text', 'MobiShop'),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(

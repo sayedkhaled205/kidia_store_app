@@ -2,17 +2,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
-import 'package:kidia_store_app/features/checkout/application/checkout_controller.dart';
-import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_presentation.dart';
-import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
+import 'package:mobishop_store_app/features/checkout/application/checkout_controller.dart';
+import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({

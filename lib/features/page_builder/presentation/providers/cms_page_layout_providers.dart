@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/home/presentation/providers/home_providers.dart';
-import 'package:kidia_store_app/features/page_builder/data/cms_page_layout_remote_data_source.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/home/presentation/providers/home_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/data/cms_page_layout_remote_data_source.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 
 final cmsPreviewLayoutJsonProvider =
     StreamProvider.family<Map<String, dynamic>?, String>(

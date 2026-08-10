@@ -1,9 +1,9 @@
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
 
 abstract interface class CheckoutRepository {
   Future<CheckoutState> loadCheckout();

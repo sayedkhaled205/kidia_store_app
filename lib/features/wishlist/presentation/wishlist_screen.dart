@@ -2,25 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/wishlist/application/wishlist_controller.dart';
-import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
-import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/wishlist/application/wishlist_controller.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_image_swiper.dart';
 
 const List<CatalogProduct> _previewWishlistProducts = <CatalogProduct>[
   CatalogProduct(
     id: 900001,
-    name: 'Kidia everyday set',
-    slug: 'kidia-everyday-set',
+    name: 'MobiShop everyday set',
+    slug: 'mobishop-everyday-set',
     type: 'simple',
     isPurchasable: true,
     isInStock: true,
@@ -36,8 +36,8 @@ const List<CatalogProduct> _previewWishlistProducts = <CatalogProduct>[
   ),
   CatalogProduct(
     id: 900002,
-    name: 'Kidia summer outfit',
-    slug: 'kidia-summer-outfit',
+    name: 'MobiShop summer outfit',
+    slug: 'mobishop-summer-outfit',
     type: 'simple',
     isPurchasable: true,
     isInStock: true,

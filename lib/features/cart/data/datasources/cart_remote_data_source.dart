@@ -1,12 +1,12 @@
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_error_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_api_transport.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_api_transport.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
 
 abstract interface class CartRemoteDataSource {
   Future<CartModel> fetchCart();

@@ -1,15 +1,15 @@
-# Woo Mobile Store
+# MobiShop Store
 
 A reusable Flutter storefront and WordPress plugin for WooCommerce stores.
 The app reads public catalog data from the official WooCommerce Store API and
-reads its CMS home layout from the bundled **Woo Mobile CMS** plugin.
+reads its CMS home layout from the bundled **MobiShop** plugin.
 
 ## Local setup
 
 1. Install Flutter and Android Studio (including an Android SDK).
 2. Copy `config/store.example.json` to `config/store.local.json`.
 3. Set `STORE_URL` to the HTTPS origin of the WooCommerce store.
-4. Install `kidia-mobile-cms.zip` in WordPress and activate it.
+4. Install `mobishop.zip` in WordPress and activate it.
 5. Run:
 
 ```bash
@@ -55,9 +55,9 @@ does not store or transmit raw card details.
 
 ## WordPress package
 
-`kidia-mobile-cms.zip` is the installable plugin archive. Replace the installed
+`mobishop.zip` is the installable plugin archive. Replace the installed
 plugin only after backing up the site, then verify Library, Home Builder,
-Editor, and `/wp-json/kidia-mobile/v1/home-layout` on a staging site. App
+Editor, and `/wp-json/mobishop/v1/home-layout` on a staging site. App
 authentication, customer orders, saved addresses, profile editing, and
 customer service require plugin version 1.12.0 or newer and an HTTPS store.
 

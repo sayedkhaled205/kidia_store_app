@@ -1,6 +1,6 @@
-import 'package:kidia_store_app/features/orders/data/network/customer_orders_api_transport.dart';
-import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
-import 'package:kidia_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
+import 'package:mobishop_store_app/features/orders/data/network/customer_orders_api_transport.dart';
+import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
+import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
 
 class CustomerOrdersRepositoryImpl
     implements CustomerOrdersRepository, CustomerOrderCancellationRepository {

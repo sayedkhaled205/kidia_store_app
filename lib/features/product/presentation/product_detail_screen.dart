@@ -4,24 +4,24 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
-import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
+import 'package:mobishop_store_app/features/product/application/product_detail_controller.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -40,8 +40,8 @@ Color _productHexColor(String value, Color fallback) {
 const List<CatalogProduct> _previewRelatedProducts = <CatalogProduct>[
   CatalogProduct(
     id: 910001,
-    name: 'Kidia everyday set',
-    slug: 'kidia-everyday-set',
+    name: 'MobiShop everyday set',
+    slug: 'mobishop-everyday-set',
     type: 'simple',
     isPurchasable: true,
     isInStock: true,
@@ -57,8 +57,8 @@ const List<CatalogProduct> _previewRelatedProducts = <CatalogProduct>[
   ),
   CatalogProduct(
     id: 910002,
-    name: 'Kidia summer outfit',
-    slug: 'kidia-summer-outfit',
+    name: 'MobiShop summer outfit',
+    slug: 'mobishop-summer-outfit',
     type: 'simple',
     isPurchasable: true,
     isInStock: true,

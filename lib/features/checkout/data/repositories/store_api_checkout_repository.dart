@@ -1,21 +1,21 @@
 import 'dart:async';
 
-import 'package:kidia_store_app/features/cart/data/models/cart_error_model.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
-import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
-import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
-import 'package:kidia_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
-import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
+import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:mobishop_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
 class StoreApiCheckoutRepository implements CheckoutRepository {
   StoreApiCheckoutRepository({
@@ -421,7 +421,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       // The extension namespace also marks this order as originating from the
       // mobile app, even when this store has no custom checkout fields.
       'extensions': <String, dynamic>{
-        'woo_mobile_cms': <String, dynamic>{
+        'mobishop_cms': <String, dynamic>{
           'checkout_fields': submission.customFields,
         },
       },
