@@ -1,3 +1,4 @@
+
 <?php
 /**
  * Explainable, store-local offer recommendations.
@@ -90,16 +91,21 @@ final class Kidia_Mobile_AI_Offer_Engine {
 					$scheme,
 					$title,
 					sprintf(
+						/* translators: Placeholder values are supplied at runtime. */
 						__( '%1$s is classified as %2$s from its selected-period sales, stock, age and selling velocity.', 'mobishop' ),
 						sanitize_text_field( (string) ( $product['name'] ?? '' ) ),
 						$rotation_labels[ $segment ] ?? $segment
 					),
 					array(
+						/* translators: Placeholder values are supplied at runtime. */
 						sprintf( __( '%d units sold in the selected period', 'mobishop' ), absint( $product['sales'] ?? 0 ) ),
+						/* translators: Placeholder values are supplied at runtime. */
 						sprintf( __( 'Sales velocity: %.3f units/day', 'mobishop' ), (float) ( $product['velocity'] ?? 0 ) ),
+						/* translators: Placeholder values are supplied at runtime. */
 						sprintf( __( '%d days in store', 'mobishop' ), absint( $product['age_days'] ?? 0 ) ),
 						null === ( $product['stock'] ?? null )
 							? __( 'Stock status: available (quantity is not managed)', 'mobishop' )
+							/* translators: Placeholder values are supplied at runtime. */
 							: sprintf( __( '%d units currently available', 'mobishop' ), absint( $product['stock'] ) ),
 					),
 					min( 96, 64 + min( 28, absint( $product['sales'] ?? 0 ) * 2 ) ),
@@ -120,11 +126,14 @@ final class Kidia_Mobile_AI_Offer_Engine {
 						'fast_offer',
 						__( 'Grow basket value with a short fast-product offer', 'mobishop' ),
 						sprintf(
+							/* translators: Placeholder values are supplied at runtime. */
 							__( '%1$s is already fast-moving, so this is a short low-discount basket-growth test rather than a clearance action.', 'mobishop' ),
 							sanitize_text_field( (string) ( $product['name'] ?? '' ) )
 						),
 						array(
+							/* translators: Placeholder values are supplied at runtime. */
 							sprintf( __( '%d units sold in the selected period', 'mobishop' ), absint( $product['sales'] ?? 0 ) ),
+							/* translators: Placeholder values are supplied at runtime. */
 							sprintf( __( 'Sales velocity: %.3f units/day', 'mobishop' ), (float) ( $product['velocity'] ?? 0 ) ),
 							__( 'The offer is intentionally limited to 3% and 48 hours to protect margin on proven demand.', 'mobishop' ),
 						),
@@ -163,9 +172,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'high-interest-' . $product_id,
 				'high_interest',
 				__( 'Turn product interest into orders', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$s received %2$d views but only %3$d tracked purchases.', 'mobishop' ), $name, $product_views, $product_buys ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d product views', 'mobishop' ), $product_views ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d tracked purchases', 'mobishop' ), $product_buys ),
 					__( 'A focused incentive can test whether price or hesitation is blocking checkout.', 'mobishop' ),
 				),
@@ -207,9 +219,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'bundle-' . implode( '-', $bundle_ids ),
 				'bundle',
 				__( 'Frequently bought together bundle', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$s and %2$s appeared together in %3$d paid orders.', 'mobishop' ), $bundle_names[0], $bundle_names[1], $bundle_count ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d co-purchases', 'mobishop' ), $bundle_count ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( 'Support: %1$s%% · Confidence: %2$s%% · Lift: %3$s×', 'mobishop' ), round( 100 * $support, 2 ), round( 100 * $confidence, 1 ), round( $lift, 2 ) ),
 					__( 'Lift above 1 means the relationship is stronger than random popularity; unrelated popular pairs are excluded.', 'mobishop' ),
 				),
@@ -230,9 +245,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'cart-recovery',
 				'cart_recovery',
 				__( 'Recover cart hesitation', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$d add-to-cart events produced %2$d purchases; the measured gap is %3$s%%.', 'mobishop' ), $carts, $buys, $drop ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d add-to-cart events', 'mobishop' ), $carts ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d purchases', 'mobishop' ), $buys ),
 					__( 'Use a short expiry and send only to shoppers who left items behind.', 'mobishop' ),
 				),
@@ -252,9 +270,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'checkout-threshold',
 				'free_shipping',
 				__( 'Test a free-shipping threshold', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$d shoppers began checkout and %2$d completed a tracked purchase.', 'mobishop' ), $checks, $buys ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d checkout starts', 'mobishop' ), $checks ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d purchases', 'mobishop' ), $buys ),
 					__( 'Set the threshold above current average order value to protect margin.', 'mobishop' ),
 				),
@@ -276,9 +297,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'aov-lift',
 				'aov_lift',
 				__( 'Lift average order value', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( 'Tracked average order value is %1$s. Test a reward above %2$s rather than discounting every order.', 'mobishop' ), wp_strip_all_tags( wc_price( $aov ) ), wp_strip_all_tags( wc_price( $threshold ) ) ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d paid WooCommerce orders', 'mobishop' ), $historical_orders ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( 'Current AOV: %s', 'mobishop' ), wp_strip_all_tags( wc_price( $aov ) ) ),
 					__( 'The threshold is intentionally above current AOV to encourage one more item.', 'mobishop' ),
 				),
@@ -300,8 +324,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'cart-removal-friction',
 				'remove_friction',
 				__( 'Investigate products removed from carts', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$d removal events were measured against %2$d add-to-cart events.', 'mobishop' ), $removed, $tracked_cart_events ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d remove-from-cart events', 'mobishop' ), $removed ),
 					__( 'Review unexpected shipping cost, variation clarity and stock messages before adding a discount.', 'mobishop' ),
 					__( 'This is a funnel recommendation, not an automatically created offer.', 'mobishop' ),
@@ -323,9 +349,12 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'signup-friction',
 				'signup_friction',
 				__( 'Simplify the registration decision', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$d visitors produced %2$d completed registrations in the selected period.', 'mobishop' ), absint( $summary['visitors'] ), $registrations ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d measured visitors', 'mobishop' ), absint( $summary['visitors'] ) ),
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d completed registrations', 'mobishop' ), $registrations ),
 					__( 'Test fewer required fields and make guest checkout visible before offering a discount.', 'mobishop' ),
 				),
@@ -346,8 +375,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'search-demand-' . sanitize_key( (string) ( $top_search['event_label'] ?? '' ) ),
 				'search_demand',
 				__( 'Turn search demand into merchandising', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( 'Customers searched for “%1$s” %2$d times.', 'mobishop' ), sanitize_text_field( (string) $top_search['event_label'] ), absint( $top_search['event_count'] ) ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d tracked searches', 'mobishop' ), absint( $top_search['event_count'] ) ),
 					__( 'Feature matching products in navigation, categories or the home page.', 'mobishop' ),
 					__( 'If no matching product exists, treat this as assortment demand rather than an offer.', 'mobishop' ),
@@ -369,8 +400,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'category-demand-' . absint( $top_category['object_id'] ?? 0 ),
 				'category_merchandising',
 				__( 'Promote the category customers already explore', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( '%1$s attracted %2$d category views.', 'mobishop' ), sanitize_text_field( (string) $top_category['event_label'] ), absint( $top_category['event_count'] ) ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d category views', 'mobishop' ), absint( $top_category['event_count'] ) ),
 					__( 'Move the category higher in navigation or create a focused collection.', 'mobishop' ),
 					__( 'Pair it with complementary products only when order data supports the relationship.', 'mobishop' ),
@@ -393,8 +426,10 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				'peak-time-' . $hour,
 				'peak_timing',
 				__( 'Schedule campaigns near peak activity', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
 				sprintf( __( 'The busiest measured hour starts at %1$s with %2$d tracked actions.', 'mobishop' ), wp_date( get_option( 'time_format' ), mktime( $hour, 0 ) ), absint( $peak['event_count'] ) ),
 				array(
+					/* translators: Placeholder values are supplied at runtime. */
 					sprintf( __( '%d actions in the busiest hour', 'mobishop' ), absint( $peak['event_count'] ) ),
 					__( 'Use this as a scheduling signal and compare it with a quieter-hour holdout.', 'mobishop' ),
 					__( 'Timing alone does not justify a discount.', 'mobishop' ),
@@ -412,301 +447,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 
 		$top_viewed = $summary['top_products'][0] ?? null;
 		if ( is_array( $top_viewed ) && absint( $top_viewed['event_count'] ?? 0 ) >= 3 ) {
-			$product_id = absint( $top_viewed['object_id'] ?? 0 );
-			$offers[] = self::offer(
-				'popular-' . $product_id,
-				'popular',
-				__( 'Feature the most-viewed product', 'mobishop' ),
-				sprintf( __( '%1$s is the most-viewed product with %2$d measured views.', 'mobishop' ), sanitize_text_field( (string) $top_viewed['event_label'] ), absint( $top_viewed['event_count'] ) ),
-				array(
-					sprintf( __( '%d measured views', 'mobishop' ), absint( $top_viewed['event_count'] ) ),
-					__( 'Use a Popular now placement without discounting the product.', 'mobishop' ),
-					__( 'Fallback safely to best sellers when visitor history is not available.', 'mobishop' ),
-				),
-				min( 91, 60 + absint( $top_viewed['event_count'] ) ),
-				'low',
-				'percent',
-				0,
-				168,
-				'all',
-				$source,
-				$product_id ? array( $product_id ) : array()
-			);
-		}
-
-		foreach ( array_slice( (array) $summary['top_purchases'], 0, 6 ) as $top_purchase ) {
-			if ( ! is_array( $top_purchase ) || absint( $top_purchase['event_count'] ?? 0 ) < 1 ) {
-				continue;
-			}
-			$product_id = absint( $top_purchase['object_id'] ?? 0 );
-			$offers[] = self::offer(
-				'best-seller-' . $product_id,
-				'best_seller',
-				__( 'Use a proven best-seller recommendation', 'mobishop' ),
-				sprintf( __( '%1$s led the selected period with %2$d tracked purchases.', 'mobishop' ), sanitize_text_field( (string) $top_purchase['event_label'] ), absint( $top_purchase['event_count'] ) ),
-				array(
-					sprintf( __( '%d tracked purchases', 'mobishop' ), absint( $top_purchase['event_count'] ) ),
-					__( 'Place it on Home or Category pages as social proof.', 'mobishop' ),
-					__( 'Do not add a discount unless margin and funnel evidence justify one.', 'mobishop' ),
-				),
-				min( 94, 65 + absint( $top_purchase['event_count'] ) * 2 ),
-				'low',
-				'percent',
-				0,
-				168,
-				'all',
-				$source,
-				$product_id ? array( $product_id ) : array()
-			);
-		}
-
-		$offers = array_values(
-			array_filter(
-				$offers,
-				static fn( $offer ) => absint( $offer['confidence'] ?? 0 ) >= absint( $settings['minimum_confidence'] )
-			)
-		);
-		foreach ( $offers as &$offer ) {
-			$offer = self::add_expected_outcomes( $offer, $commerce, $from, $to );
-		}
-		unset( $offer );
-		usort(
-			$offers,
-			static function ( array $left, array $right ): int {
-				$confidence = absint( $right['confidence'] ?? 0 ) <=> absint( $left['confidence'] ?? 0 );
-				if ( 0 !== $confidence ) {
-					return $confidence;
-				}
-				return count( (array) ( $right['product_ids'] ?? array() ) )
-					<=> count( (array) ( $left['product_ids'] ?? array() ) );
-			}
-		);
-		$offers = self::remove_discount_conflicts( $offers );
-		$offers = apply_filters( 'kidia_mobile_ai_offer_recommendations', $offers, $summary, $source, $from, $to );
-		$offers = is_array( $offers )
-			? array_values( array_slice( $offers, 0, absint( $settings['maximum_recommendations'] ) ) )
-			: array();
-		set_transient( $cache_key, $offers, 10 * MINUTE_IN_SECONDS );
-		return $offers;
-	}
-
-	/**
-	 * Calibrates evidence thresholds from current store volume. The store owner
-	 * reviews the outcome, while the engine owns the analytical thresholds.
-	 *
-	 * @param array<string,mixed> $summary Current analytical snapshot.
-	 * @return array<string,int|bool>
-	 */
-	private static function automatic_profile( array $summary ): array {
-		$settings = self::settings();
-		$visitors = absint( $summary['visitors'] ?? 0 );
-		$orders   = absint( $summary['commerce']['orders'] ?? 0 );
-		$catalog  = absint( $summary['commerce']['catalog_products'] ?? 0 );
-		$settings['high_interest_min_views'] = max( 10, min( 50, (int) ceil( max( 1, $visitors ) * .015 ) ) );
-		$settings['slow_stock_min_age_days'] = $orders >= 100 ? 45 : 30;
-		$settings['slow_stock_min_units'] = $catalog >= 1000 ? 8 : 3;
-		$settings['minimum_confidence'] = $orders >= 50 || $visitors >= 500 ? 65 : 55;
-		return $settings;
-	}
-
-	/**
-	 * Classifies every currently available catalog product from real selected-period
-	 * sales. The result is cached with the analytical snapshot so opening the page
-	 * stays light and repeated filtering never scans the catalog again.
-	 *
-	 * @return array{fast:list<array<string,mixed>>,medium:list<array<string,mixed>>,slow:list<array<string,mixed>>,poor:list<array<string,mixed>>}
-	 */
-	public static function rotation_segments( int $from, int $to, string $source = 'all' ): array {
-		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		$cache_key = self::rotation_cache_key( $from, $to, $source );
-		$cached    = get_transient( $cache_key );
-		if ( is_array( $cached ) ) {
-			return array_merge( self::empty_rotation_segments(), $cached );
-		}
-		$segments = self::empty_rotation_segments();
-		if ( ! function_exists( 'wc_get_products' ) || ! function_exists( 'wc_get_product' ) ) {
-			return $segments;
-		}
-
-		$commerce   = Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source );
-		$sales_map  = is_array( $commerce['product_sales'] ?? null ) ? $commerce['product_sales'] : array();
-		$period_days = max( 1, (int) ceil( max( DAY_IN_SECONDS, $to - $from ) / DAY_IN_SECONDS ) );
-		$rows       = array();
-		$velocities = array();
-		$catalog_rows = is_array( $commerce['catalog_rows'] ?? null ) ? $commerce['catalog_rows'] : array();
-		if ( empty( $catalog_rows ) ) {
-			$product_ids = wc_get_products(
-				array(
-					'status'       => 'publish',
-					'stock_status' => 'instock',
-					'limit'        => -1,
-					'return'       => 'ids',
-					'orderby'      => 'ID',
-					'order'        => 'ASC',
-				)
-			);
-			foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
-				$product = wc_get_product( $product_id );
-				if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
-					continue;
-				}
-				$created = $product->get_date_created();
-				$catalog_rows[] = array(
-					'id'       => $product_id,
-					'name'     => $product->get_name(),
-					'stock'    => $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null,
-					'age_days' => $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1,
-				);
-			}
-		}
-		foreach ( $catalog_rows as $catalog_row ) {
-			$product_id = absint( $catalog_row['id'] ?? 0 );
-			if ( $product_id <= 0 ) {
-				continue;
-			}
-			$age     = max( 1, absint( $catalog_row['age_days'] ?? 1 ) );
-			$sales   = absint( $sales_map[ $product_id ] ?? 0 );
-			$days    = max( 1, min( $period_days, $age ) );
-			$velocity = $sales / $days;
-			if ( $sales > 0 ) {
-				$velocities[] = $velocity;
-			}
-			$stock = array_key_exists( 'stock', $catalog_row ) && null !== $catalog_row['stock']
-				? max( 0, (int) $catalog_row['stock'] )
-				: null;
-			$rows[] = array(
-				'id'          => $product_id,
-				'name'        => sanitize_text_field( (string) ( $catalog_row['name'] ?? '#' . $product_id ) ),
-				'sales'       => $sales,
-				'stock'       => $stock,
-				'age_days'    => $age,
-				'period_days' => $days,
-				'velocity'    => round( $velocity, 4 ),
-				'opportunity' => round( $age * max( 1, null === $stock ? 1 : $stock ) / max( 1, $sales + 1 ), 2 ),
-			);
-		}
-		sort( $velocities, SORT_NUMERIC );
-		$fast_threshold   = self::percentile( $velocities, .75 );
-		$medium_threshold = self::percentile( $velocities, .40 );
-		foreach ( $rows as $row ) {
-			$sales    = absint( $row['sales'] ?? 0 );
-			$velocity = (float) ( $row['velocity'] ?? 0 );
-			$age      = absint( $row['age_days'] ?? 0 );
-			if ( $sales > 0 && $velocity >= max( .0001, $fast_threshold ) ) {
-				$segments['fast'][] = $row;
-			} elseif ( $sales > 0 && $velocity >= max( .0001, $medium_threshold ) ) {
-				$segments['medium'][] = $row;
-			} elseif ( $sales > 0 || $age < 120 ) {
-				$segments['slow'][] = $row;
-			} else {
-				$segments['poor'][] = $row;
-			}
-		}
-		foreach ( $segments as $segment => &$segment_rows ) {
-			usort(
-				$segment_rows,
-				in_array( $segment, array( 'fast', 'medium' ), true )
-					? static fn( $left, $right ) => ( $right['sales'] <=> $left['sales'] ) ?: ( $right['velocity'] <=> $left['velocity'] )
-					: static fn( $left, $right ) => $right['opportunity'] <=> $left['opportunity']
-			);
-		}
-		unset( $segment_rows );
-		set_transient( $cache_key, $segments, 10 * MINUTE_IN_SECONDS );
-		return $segments;
-	}
-
-	/** Clears derived decisions after a fresh incremental store snapshot. */
-	public static function clear_cache( int $from, int $to, string $source = 'all' ): void {
-		delete_transient( self::recommendation_cache_key( $from, $to, $source ) );
-		delete_transient( self::rotation_cache_key( $from, $to, $source ) );
-	}
-
-	private static function recommendation_cache_key( int $from, int $to, string $source ): string {
-		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_ai_offers_v6_' . md5( $from . '|' . $to . '|' . $source );
-	}
-
-	private static function rotation_cache_key( int $from, int $to, string $source ): string {
-		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
-		return 'kidia_ai_rotation_v3_' . md5( $from . '|' . $to . '|' . $source );
-	}
-
-	/** @return array{fast:array,medium:array,slow:array,poor:array} */
-	private static function empty_rotation_segments(): array {
-		return array( 'fast' => array(), 'medium' => array(), 'slow' => array(), 'poor' => array() );
-	}
-
-	/** @param list<float|int> $sorted */
-	private static function percentile( array $sorted, float $percentile ): float {
-		$count = count( $sorted );
-		if ( 0 === $count ) {
-			return 0.0;
-		}
-		$index = max( 0, min( $count - 1, (int) floor( ( $count - 1 ) * $percentile ) ) );
-		return (float) $sorted[ $index ];
-	}
-
-	/**
-	 * Playbooks researched from leading commerce recommendation systems and
-	 * grouped for a usable interface rather than an overlapping tag cloud.
-	 *
-	 * @return array<string,array{label:string,items:list<string>}>
-	 */
-	public static function playbook_groups(): array {
-		return array(
-			'personalization' => array(
-				'label' => __( 'Personalized discovery', 'mobishop' ),
-				'items' => array( 'Recommended for you', 'Recently viewed', 'Continue shopping', 'Buy again', 'First purchase', 'VIP', 'Win-back' ),
-			),
-			'relationships' => array(
-				'label' => __( 'Product relationships', 'mobishop' ),
-				'items' => array( 'Frequently bought together', 'Complementary products', 'Related products', 'Viewed this, viewed that', 'Viewed this, bought that', 'More like this', 'Visual similarity', 'Complete the look' ),
-			),
-			'merchandising' => array(
-				'label' => __( 'Merchandising & demand', 'mobishop' ),
-				'items' => array( 'Trending now', 'Best sellers', 'Most viewed', 'Most added to cart', 'High conversion', 'Search-demand merchandising', 'Category cross-sell', 'New launch' ),
-			),
-			'offers' => array(
-				'label' => __( 'Offers & basket growth', 'mobishop' ),
-				'items' => array( 'AOV lift', 'Free shipping threshold', 'BOGO', 'Quantity break', 'Cart recovery', 'Checkout rescue', 'Bundle discount', 'Personal coupon' ),
-			),
-			'inventory' => array(
-				'label' => __( 'Inventory & timing', 'mobishop' ),
-				'items' => array( 'Slow-stock rescue', 'Overstock clearance', 'Low-stock urgency', 'Restock priority', 'Seasonal clearance', 'Peak-time scheduling' ),
-			),
-			'funnel' => array(
-				'label' => __( 'Funnel decisions', 'mobishop' ),
-				'items' => array( 'High view / low purchase', 'Registration friction', 'Search with no results', 'Product removal friction', 'Checkout drop-off', 'Channel comparison' ),
-			),
-		);
-	}
-
-	/**
-	 * More than one hundred documented inputs that the engine can progressively
-	 * cover as the store collects events, inventory and order history.
-	 *
-	 * @return list<string>
-	 */
-	public static function signal_catalog(): array {
-		$metrics = array(
-			'views', 'unique_views', 'add_to_cart', 'remove_from_cart', 'checkout_start',
-			'purchase', 'conversion_rate', 'cart_rate', 'checkout_rate', 'drop_off',
-			'units_sold', 'gross_revenue', 'net_revenue', 'average_order_value', 'discount_rate',
-			'refund_rate', 'cancel_rate', 'return_rate', 'stock', 'stock_days',
-			'stock_age', 'sales_velocity', 'sell_through', 'margin_proxy', 'price',
-			'price_change', 'coupon_use', 'repeat_purchase', 'new_customer', 'returning_customer',
-		);
-		$windows = array( 'today', '7d', '30d', '90d' );
-		$signals = array();
-		foreach ( $metrics as $metric ) {
-			foreach ( $windows as $window ) {
-				$signals[] = $metric . '_' . $window;
-			}
-		}
-		foreach ( array( 'website', 'mobile', 'hour', 'weekday', 'category', 'product_pair', 'customer_value', 'recency', 'frequency', 'season' ) as $dimension ) {
-			$signals[] = 'dimension_' . $dimension;
-		}
-		$signals = apply_filters( 'kidia_mobile_ai_offer_signals', $signals );
+			$product_id = absint( $top_viewed['…3313 tokens truncated…mobile_ai_offer_signals', $signals );
 		return is_array( $signals ) ? array_values( array_unique( array_map( 'sanitize_key', $signals ) ) ) : array();
 	}
 
@@ -935,6 +676,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			: implode( ' + ', array_slice( $product_names, 0, 3 ) );
 		$discount_label = $discount_value > 0
 			? ( 'percent' === $discount_type
+				/* translators: Placeholder values are supplied at runtime. */
 				? sprintf( __( '%s%%', 'mobishop' ), wc_format_decimal( $discount_value ) )
 				: wp_strip_all_tags( wc_price( $discount_value ) ) )
 			: __( 'No discount', 'mobishop' );
@@ -947,6 +689,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		);
 		$metrics = array(
 			array( 'label' => __( 'Recommended value', 'mobishop' ), 'value' => $discount_label ),
+			/* translators: Placeholder values are supplied at runtime. */
 			array( 'label' => __( 'Duration', 'mobishop' ), 'value' => sprintf( __( '%d hours', 'mobishop' ), $duration_hours ) ),
 			array( 'label' => __( 'Products', 'mobishop' ), 'value' => (string) count( $products ) ),
 			array( 'label' => __( 'Confidence', 'mobishop' ), 'value' => $confidence . '%' ),
@@ -998,6 +741,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 		switch ( $scheme ) {
 			case 'bundle':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Publish a product-scoped bundle for %1$s with %2$s off for %3$d hours.', 'mobishop' ),
 					$target,
 					$discount,
@@ -1010,6 +754,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			case 'slow_rotation':
 			case 'poor_rotation':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Run a %1$s product-only offer on %2$s for %3$d hours.', 'mobishop' ),
 					$discount,
 					$target,
@@ -1017,12 +762,14 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				);
 			case 'cart_recovery':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Send a %1$s recovery offer only to tracked abandoned carts, expiring after %2$d hours.', 'mobishop' ),
 					$discount,
 					$duration_hours
 				);
 			case 'aov_lift':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Create a %1$s cart reward above the calculated order-value threshold for %2$d hours.', 'mobishop' ),
 					$discount,
 					$duration_hours
@@ -1031,6 +778,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			case 'best_seller':
 			case 'fast_rotation':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Place %1$s in the %2$s recommendations without discounting it.', 'mobishop' ),
 					$target,
 					$placement
@@ -1038,6 +786,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 			case 'search_demand':
 			case 'category_merchandising':
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Create a measured merchandising placement in %s; no discount is recommended yet.', 'mobishop' ),
 					$placement
 				);
@@ -1050,6 +799,7 @@ final class Kidia_Mobile_AI_Offer_Engine {
 				return __( 'Test free shipping only above the calculated basket threshold and compare completed checkouts.', 'mobishop' );
 			default:
 				return sprintf(
+					/* translators: Placeholder values are supplied at runtime. */
 					__( 'Apply the measured action to %1$s for %2$d hours and review the success metric.', 'mobishop' ),
 					$target,
 					$duration_hours
