@@ -1,4 +1,3 @@
-
 <?php
 /** Website-to-app promotion campaign builder. */
 defined( 'ABSPATH' ) || exit;
