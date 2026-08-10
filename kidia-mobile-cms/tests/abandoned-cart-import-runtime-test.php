@@ -50,7 +50,7 @@ final class Kidia_Import_Test_WPDB {
 	public function prepare( string $query, ...$args ): string {
 		$index = 0;
 		return (string) preg_replace_callback(
-			'/%[dfs]/',
+			'/%[dfis]/',
 			static function ( array $match ) use ( &$index, $args ): string {
 				$value = $args[ $index++ ] ?? '';
 				if ( '%d' === $match[0] ) {
@@ -58,6 +58,9 @@ final class Kidia_Import_Test_WPDB {
 				}
 				if ( '%f' === $match[0] ) {
 					return (string) (float) $value;
+				}
+				if ( '%i' === $match[0] ) {
+					return '`' . str_replace( '`', '``', (string) $value ) . '`';
 				}
 				return "'" . str_replace( "'", "''", (string) $value ) . "'";
 			},
@@ -115,7 +118,7 @@ final class Kidia_Import_Test_WPDB {
 	}
 
 	public function query( string $query ): int {
-		if ( str_contains( $query, 'INSERT INTO wp_kidia_mobile_carts' ) ) {
+		if ( str_contains( $query, 'INSERT INTO `wp_kidia_mobile_carts`' ) || str_contains( $query, 'INSERT INTO wp_kidia_mobile_carts' ) ) {
 			++$this->cart_writes;
 			$this->cart_queries[] = $query;
 		}

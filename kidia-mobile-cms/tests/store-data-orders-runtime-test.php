@@ -169,8 +169,17 @@ final class Kidia_Reporting_WPDB {
 
 	public function prepare( string $sql, ...$args ): string {
 		foreach ( $args as $arg ) {
-			$replacement = is_numeric( $arg ) ? (string) $arg : "'" . addslashes( (string) $arg ) . "'";
-			$sql = preg_replace( '/%[sd]/', $replacement, $sql, 1 ) ?? $sql;
+			$sql = preg_replace_callback(
+				'/%[dis]/',
+				static function ( array $match ) use ( $arg ): string {
+					if ( '%i' === $match[0] ) {
+						return '`' . str_replace( '`', '``', (string) $arg ) . '`';
+					}
+					return is_numeric( $arg ) ? (string) $arg : "'" . addslashes( (string) $arg ) . "'";
+				},
+				$sql,
+				1
+			) ?? $sql;
 		}
 		return $sql;
 	}
