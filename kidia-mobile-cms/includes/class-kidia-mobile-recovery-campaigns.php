@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Abandoned-cart recovery coupons, push delivery and revenue attribution.
