@@ -133,7 +133,7 @@ final class Kidia_Mobile_CMS_Product_Brand_Bridge {
 		if ( '' !== $search ) {
 			$count_args['search'] = $search;
 		}
-		$total = wp_count_terms( $taxonomy, $count_args );
+		$total = wp_count_terms( array_merge( array( 'taxonomy' => $taxonomy ), $count_args ) );
 		$total = is_wp_error( $total ) ? count( $terms ) : absint( $total );
 
 		$response = rest_ensure_response(
