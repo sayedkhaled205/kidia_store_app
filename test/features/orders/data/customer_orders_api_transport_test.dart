@@ -37,7 +37,7 @@ void main() {
 
     expect(
       captured?.uri.path,
-      '/store/wp-json/woo-mobile/v1/customer/orders',
+      '/store/wp-json/mobishop/v1/customer/orders',
     );
     expect(captured?.uri.queryParameters, <String, String>{
       'page': '1',
@@ -105,7 +105,7 @@ void main() {
 
     expect(
       captured?.uri.path,
-      '/store/wp-json/woo-mobile/v1/customer/orders/101/cancel',
+      '/store/wp-json/mobishop/v1/customer/orders/101/cancel',
     );
     expect(captured?.uri.hasQuery, isFalse);
     expect(captured?.headers['X-MobiShop-Session'], 'safe-session-token');

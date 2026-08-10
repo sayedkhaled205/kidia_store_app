@@ -35,7 +35,7 @@ void main() {
     expect(identity.isRegistered, isTrue);
     expect(
       requests.single.uri.path,
-      '/store/wp-json/woo-mobile/v1/auth/identify',
+      '/store/wp-json/mobishop/v1/auth/identify',
     );
     expect(requests.single.method, 'POST');
     expect(requests.single.data, <String, dynamic>{
@@ -110,7 +110,7 @@ void main() {
     );
 
     expect(uri.host, 'shop.example.com');
-    expect(captured?.uri.path, '/wp-json/woo-mobile/v1/auth/social/start');
+    expect(captured?.uri.path, '/wp-json/mobishop/v1/auth/social/start');
     expect(captured?.data, containsPair('provider', 'google'));
   });
 

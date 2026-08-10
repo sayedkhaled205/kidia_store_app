@@ -374,7 +374,7 @@ void main() {
       final Map<String, dynamic> body = transport.bodies.single;
       expect(body, isNot(contains('additional_fields')));
       expect(
-        ((body['extensions'] as Map<String, dynamic>)['woo_mobile_cms']
+        ((body['extensions'] as Map<String, dynamic>)['mobishop_cms']
             as Map<String, dynamic>)['checkout_fields'],
         <String, String>{'billing_vat_number': 'EG-123'},
       );
@@ -761,7 +761,7 @@ void main() {
       expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
       expect(
         captured?.uri.path,
-        '/wp-json/woo-mobile/v1/checkout-config',
+        '/wp-json/mobishop/v1/checkout-config',
       );
     },
   );

@@ -75,7 +75,7 @@ void main() {
       );
     });
 
-    test('allows the same-origin Woo Mobile CMS bridge', () async {
+    test('allows the same-origin MobiShop bridge', () async {
       RequestOptions? capturedRequest;
       final Dio dio = Dio();
       dio.interceptors.add(
@@ -97,11 +97,11 @@ void main() {
         dio: dio,
       );
 
-      await client.get('/wp-json/woo-mobile/v1/products/12/variations');
+      await client.get('/wp-json/mobishop/v1/products/12/variations');
 
       expect(
         capturedRequest?.uri.path,
-        '/store/wp-json/woo-mobile/v1/products/12/variations',
+        '/store/wp-json/mobishop/v1/products/12/variations',
       );
     });
 

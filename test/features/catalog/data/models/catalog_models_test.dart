@@ -115,7 +115,7 @@ void main() {
           'prices': <String, dynamic>{'price': '100'},
           'brands': <dynamic>[],
           'extensions': <String, dynamic>{
-            'woo_mobile_cms': <String, dynamic>{
+            'mobishop_cms': <String, dynamic>{
               'brands': <dynamic>[
                 <String, dynamic>{'id': 7, 'name': 'Shose', 'slug': 'shose'},
               ],
