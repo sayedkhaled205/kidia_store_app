@@ -36,7 +36,7 @@ jobs:
       - name: Run official Plugin Check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: './build/wordpress-org/woomobi-cms'
+          build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
           # Existing translated UI placeholders predate this release pipeline;
           # keep the directory gate focused on blocking repository violations.
@@ -44,6 +44,6 @@ jobs:
       - name: Upload installable package
         uses: actions/upload-artifact@v4
         with:
-          name: woomobi-cms-wordpress-org
-          path: build/wordpress-org/woomobi-cms.zip
+          name: mobishop-wordpress-org
+          path: build/wordpress-org/mobishop.zip
           if-no-files-found: error
