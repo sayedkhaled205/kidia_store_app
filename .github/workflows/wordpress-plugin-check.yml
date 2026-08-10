@@ -52,8 +52,6 @@ jobs:
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
-          ignore-codes: |-
-            WordPress.WP.I18n.MissingTranslatorsComment
       - name: Upload tested installable package
         uses: actions/upload-artifact@v4
         with:
