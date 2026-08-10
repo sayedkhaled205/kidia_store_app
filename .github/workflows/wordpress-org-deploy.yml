@@ -36,7 +36,7 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           version="${RELEASE_TAG#v}"
-          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' build/wordpress-org/mobishop/kidia-mobile-cms.php)"
+          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' build/wordpress-org/mobishop/mobishop.php)"
           stable_tag="$(sed -n 's/^Stable tag:[[:space:]]*//p' build/wordpress-org/mobishop/readme.txt)"
           test "$version" = "$plugin_version" || { echo "Release tag $version does not match plugin version $plugin_version." >&2; exit 1; }
           test "$version" = "$stable_tag" || { echo "Release tag $version does not match readme stable tag $stable_tag." >&2; exit 1; }
