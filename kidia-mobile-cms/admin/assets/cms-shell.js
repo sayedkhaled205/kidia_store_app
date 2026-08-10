@@ -1,4 +1,3 @@
-
 (function () {
 	'use strict';
 	document.documentElement.classList.add('kidia-cms-js');
@@ -522,7 +521,620 @@
 					}
 				}
 				if (focusState) {
-					const matching…6817 tokens truncated…onst note = overlay.querySelector('[data-ai-progress-note]');
+					const matchingField = Array.from(currentContent.querySelectorAll('[name]')).find(function (field) {
+						return field.name === focusState.name;
+					});
+					if (matchingField) {
+						matchingField.focus({ preventScroll: true });
+						if (focusState.start !== null && typeof matchingField.setSelectionRange === 'function') {
+							matchingField.setSelectionRange(focusState.start, focusState.end);
+						}
+					}
+				}
+				/* Display the requested view before Media and Builder JavaScript finish.
+				 * Page scripts now execute against markup that already exists instead of
+				 * holding the old page on screen until every asset has downloaded. */
+				const assetResults = await Promise.all([loadScripts(payload), stylesReady]);
+				const loadedNewScript = assetResults[0];
+				if (controller.signal.aborted) return;
+				if (loadedNewScript) {
+					document.dispatchEvent(new Event('DOMContentLoaded'));
+				}
+				document.dispatchEvent(new CustomEvent('kidia:cms-page-ready', { detail: { url: window.location.href } }));
+			} catch (error) {
+				if (error.name === 'AbortError') return;
+				const message = document.createElement('div');
+				message.className = 'notice notice-error kidia-cms-navigation-error';
+				message.setAttribute('role', 'alert');
+				message.textContent = 'The requested MobiShop view could not be loaded. Please try again.';
+				Array.from(currentContent.childNodes).forEach(function (node) {
+					if (!persistentShellNode(node, sidebar, shell)) node.remove();
+				});
+				currentContent.appendChild(message);
+			} finally {
+				currentContent.classList.remove('is-kidia-page-loading');
+			}
+		};
+		window.kidiaCmsNavigate = function (url, options) {
+			const navigationOptions = options || {};
+			return loadPage(url, navigationOptions.pushState !== false, navigationOptions);
+		};
+
+		document.addEventListener('click', function (event) {
+			const link = event.target.closest('#wpbody-content a');
+			if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			if (!pluginPage(link.href)) return;
+			event.preventDefault();
+			void loadPage(link.href, true);
+		});
+		window.addEventListener('popstate', function () {
+			if (pluginPage(window.location.href)) void loadPage(window.location.href, false);
+		});
+	}
+
+	installPersistentCmsNavigation();
+
+	function initThemeModal() {
+		const saveForm = document.querySelector('[data-kidia-save-theme]');
+		const modal = document.querySelector('[data-kidia-theme-modal]');
+		if (!saveForm || !modal) return;
+		const input = modal.querySelector('[data-kidia-theme-name]');
+		const error = modal.querySelector('[data-kidia-theme-error]');
+		const close = function () { modal.hidden = true; document.body.classList.remove('kidia-modal-open'); };
+		saveForm.addEventListener('submit', function (event) {
+			if (saveForm.dataset.confirmed === '1') return;
+			event.preventDefault();
+			modal.hidden = false;
+			document.body.classList.add('kidia-modal-open');
+			input.value = '';
+			error.hidden = true;
+			window.setTimeout(function () { input.focus(); }, 30);
+		});
+		modal.querySelectorAll('[data-kidia-theme-cancel]').forEach(function (button) { button.addEventListener('click', close); });
+		modal.querySelector('[data-kidia-theme-confirm]').addEventListener('click', function () {
+			const name = input.value.trim();
+			if (!name) { error.hidden = false; input.focus(); return; }
+			const editorAction = document.querySelector('input[name="action"][value^="kidia_mobile_save_"]');
+			const editorForm = editorAction ? editorAction.form : null;
+			if (editorForm && editorForm !== saveForm) {
+				const field = document.createElement('input');
+				field.type = 'hidden'; field.name = 'kidia_save_theme_name'; field.value = name;
+				editorForm.appendChild(field);
+				close();
+				if (typeof editorForm.requestSubmit === 'function') editorForm.requestSubmit(); else editorForm.submit();
+				return;
+			}
+			saveForm.elements.theme_name.value = name;
+			saveForm.dataset.confirmed = '1';
+			close();
+			if (typeof saveForm.requestSubmit === 'function') saveForm.requestSubmit(); else saveForm.submit();
+		});
+		input.addEventListener('keydown', function (event) {
+			if (event.key === 'Enter') { event.preventDefault(); modal.querySelector('[data-kidia-theme-confirm]').click(); }
+		});
+	}
+
+	function syncPreviewOffset() {
+		if (!shell) return;
+		const style = window.getComputedStyle(shell);
+		const stickyTop = parseFloat(style.top) || 0;
+		const shellHeight = Math.ceil(shell.getBoundingClientRect().height);
+		document.documentElement.style.setProperty(
+			'--kidia-preview-sticky-top',
+			Math.ceil(stickyTop + shellHeight + 14) + 'px'
+		);
+	}
+
+	syncPreviewOffset();
+	window.addEventListener('resize', syncPreviewOffset);
+	if (shell && typeof window.ResizeObserver === 'function') {
+		new window.ResizeObserver(syncPreviewOffset).observe(shell);
+	}
+	initThemeModal();
+	document.querySelectorAll('.kidia-theme-file input[type="file"]').forEach(function (input) {
+		input.addEventListener('change', function () {
+			const name = input.closest('.kidia-theme-file').querySelector('[data-theme-file-name]');
+			if (name) name.textContent = input.files && input.files[0] ? input.files[0].name : 'No file selected';
+		});
+	});
+	const pushTitle = document.querySelector('[data-push-title]');
+	const pushMessage = document.querySelector('[data-push-message]');
+	const previewTitle = document.querySelector('[data-push-preview-title]');
+	const previewMessage = document.querySelector('[data-push-preview-message]');
+	const syncPushPreview = function () {
+		if (pushTitle && previewTitle) previewTitle.textContent = pushTitle.value.trim() || 'Your notification title';
+		if (pushMessage && previewMessage) previewMessage.textContent = pushMessage.value.trim() || 'Your message will appear here.';
+	};
+	if (pushTitle) pushTitle.addEventListener('input', syncPushPreview);
+	if (pushMessage) pushMessage.addEventListener('input', syncPushPreview);
+	syncPushPreview();
+	const pushTypeInputs = document.querySelectorAll('[data-push-type]');
+	const pushDestination = document.querySelector('[data-push-destination]');
+	const recommendedDestinations = {
+		broadcast: 'home',
+		offer: 'offers',
+		order: 'order',
+		restock: 'product',
+		abandoned_cart: 'cart',
+		welcome: 'home',
+		custom: 'home'
+	};
+	const syncPushType = function () {
+		const checked = document.querySelector('[data-push-type]:checked');
+		const type = checked ? checked.value : 'broadcast';
+		document.querySelectorAll('[data-push-field]').forEach(function (field) {
+			field.hidden = !field.dataset.pushField.split(/\s+/).includes(type);
+		});
+		if (pushDestination && pushDestination.dataset.userChanged !== '1') {
+			pushDestination.value = recommendedDestinations[type] || 'home';
+		}
+	};
+	pushTypeInputs.forEach(function (input) { input.addEventListener('change', syncPushType); });
+	if (pushDestination) {
+		pushDestination.addEventListener('change', function () {
+			pushDestination.dataset.userChanged = '1';
+		});
+	}
+	syncPushType();
+	const pushAudience = document.querySelector('[data-push-audience]');
+	const pushSegment = document.querySelector('[data-push-segment]');
+	if (pushAudience && pushSegment) {
+		const syncAudience = function () { pushSegment.hidden = pushAudience.value !== 'segment'; };
+		pushAudience.addEventListener('change', syncAudience); syncAudience();
+	}
+	const pushDelivery = document.querySelector('[data-push-delivery]');
+	const pushSchedule = document.querySelector('[data-push-schedule]');
+	const pushAutomation = document.querySelector('[data-push-automation]');
+	const pushSubmitLabel = document.querySelector('[data-push-submit-label]');
+	if (pushDelivery) {
+		const syncDelivery = function () {
+			if (pushSchedule) pushSchedule.hidden = pushDelivery.value !== 'scheduled';
+			if (pushAutomation) pushAutomation.hidden = pushDelivery.value !== 'automation';
+			if (pushSubmitLabel) {
+				pushSubmitLabel.textContent = pushDelivery.value === 'scheduled'
+					? 'Schedule notification'
+					: (pushDelivery.value === 'automation' ? 'Save automation' : 'Send notification');
+			}
+		};
+		pushDelivery.addEventListener('change', syncDelivery); syncDelivery();
+	}
+	const pushActionStyle = document.querySelector('[data-push-action-style]');
+	const pushButtonLabel = document.querySelector('[data-push-button-label]');
+	if (pushActionStyle && pushButtonLabel) {
+		const syncPushActionStyle = function () {
+			pushButtonLabel.hidden = pushActionStyle.value !== 'button';
+		};
+		pushActionStyle.addEventListener('change', syncPushActionStyle);
+		syncPushActionStyle();
+	}
+	const initCustomDateFilters = function (root) {
+		(root || document).querySelectorAll('.kidia-date-filter').forEach(function (filter) {
+			const datePreset = filter.querySelector('select[name="date_preset"]');
+			if (!datePreset) return;
+			const customDates = filter.querySelectorAll('input[type="date"]');
+			const syncCustomDates = function () {
+				const enabled = datePreset.value === 'custom';
+				customDates.forEach(function (input) { input.disabled = !enabled; });
+			};
+			if (datePreset.dataset.kidiaCustomDatesBound !== '1') {
+				datePreset.dataset.kidiaCustomDatesBound = '1';
+				datePreset.addEventListener('change', syncCustomDates);
+			}
+			syncCustomDates();
+		});
+	};
+	initCustomDateFilters(document);
+	document.addEventListener('kidia:cms-page-ready', function () {
+		initCustomDateFilters(document);
+	});
+	const instantFilterTimers = new WeakMap();
+	const storeDataUrlFromForm = function (form) {
+		const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+		url.search = '';
+		new FormData(form).forEach(function (value, key) {
+			if (typeof value === 'string') url.searchParams.append(key, value);
+		});
+		return url.href;
+	};
+	const navigateFreshStoreData = function (url, options) {
+		if (typeof window.kidiaCmsNavigate === 'function') {
+			return window.kidiaCmsNavigate(url, Object.assign({
+				fresh: true,
+				replaceState: true,
+				preserveScroll: true
+			}, options || {}));
+		}
+		window.location.href = url;
+		return Promise.resolve();
+	};
+	const customDateRangeReady = function (form) {
+		const preset = form.querySelector('select[name="date_preset"]');
+		if (!preset || preset.value !== 'custom') return true;
+		const from = form.querySelector('input[name="date_from"]');
+		const to = form.querySelector('input[name="date_to"]');
+		return Boolean(from && to && from.value && to.value && from.value <= to.value);
+	};
+	const applyInstantFilter = function (form, trigger) {
+		const pending = instantFilterTimers.get(form);
+		if (pending) window.clearTimeout(pending);
+		instantFilterTimers.delete(form);
+		if (!customDateRangeReady(form)) return Promise.resolve();
+		form.classList.add('is-kidia-loading');
+		form.setAttribute('aria-busy', 'true');
+		const preserveFocus = Boolean(trigger && trigger.matches && trigger.matches('input[type="search"]'));
+		return Promise.resolve(navigateFreshStoreData(storeDataUrlFromForm(form), {
+			preserveFocus: preserveFocus
+		})).finally(function () {
+			if (!form.isConnected) return;
+			form.classList.remove('is-kidia-loading');
+			form.removeAttribute('aria-busy');
+		});
+	};
+	const scheduleInstantFilter = function (form, trigger, delay) {
+		const pending = instantFilterTimers.get(form);
+		if (pending) window.clearTimeout(pending);
+		const timer = window.setTimeout(function () {
+			instantFilterTimers.delete(form);
+			void applyInstantFilter(form, trigger);
+		}, delay);
+		instantFilterTimers.set(form, timer);
+	};
+	document.addEventListener('input', function (event) {
+		const search = event.target.closest('form[data-kidia-instant-filter] input[type="search"]');
+		if (!search) return;
+		scheduleInstantFilter(search.form, search, 350);
+	});
+	document.addEventListener('change', function (event) {
+		const field = event.target.closest('form[data-kidia-instant-filter] select, form[data-kidia-instant-filter] input[type="date"]');
+		if (!field) return;
+		if (field.form.matches('[data-kidia-reporting-filter]') && field.form.dataset.kidiaReportingReady !== '1') return;
+		scheduleInstantFilter(field.form, field, 0);
+	});
+	document.addEventListener('submit', function (event) {
+		const form = event.target.closest('form[data-kidia-instant-filter]');
+		if (!form) return;
+		event.preventDefault();
+		if (form.matches('[data-kidia-reporting-filter]') && form.dataset.kidiaReportingReady !== '1') return;
+		void applyInstantFilter(form, document.activeElement);
+	});
+	document.addEventListener('click', async function (event) {
+		const button = event.target.closest('[data-kidia-generate-store-reporting]');
+		if (!button || button.disabled) return;
+		const form = button.closest('form[data-kidia-reporting-filter]');
+		if (!form || !customDateRangeReady(form)) return;
+		const originalHtml = button.innerHTML;
+		button.disabled = true;
+		button.textContent = 'Generating…';
+		form.classList.add('is-kidia-loading');
+		form.setAttribute('aria-busy', 'true');
+		form.querySelectorAll('.kidia-reporting-error').forEach(function (notice) { notice.remove(); });
+		try {
+			const config = window.kidiaCMSBackground || {};
+			const data = new FormData(form);
+			data.set('action', 'kidia_mobile_generate_store_reporting');
+			data.set('nonce', String(config.storeNonce || ''));
+			const response = await window.fetch(config.ajaxUrl || window.ajaxurl || '', {
+				method: 'POST',
+				credentials: 'same-origin',
+				cache: 'no-store',
+				body: data
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload.success || !payload.data || !payload.data.url) {
+				throw new Error(payload && payload.data && payload.data.message ? payload.data.message : 'Store reports could not be generated.');
+			}
+			form.dataset.kidiaReportingReady = '1';
+			await navigateFreshStoreData(String(payload.data.url), { preserveFocus: false });
+		} catch (error) {
+			const notice = document.createElement('span');
+			notice.className = 'kidia-reporting-error';
+			notice.textContent = error && error.message ? error.message : 'Store reports could not be generated.';
+			form.appendChild(notice);
+		} finally {
+			if (button.isConnected) {
+				button.disabled = false;
+				button.innerHTML = originalHtml;
+			}
+			if (form.isConnected) {
+				form.classList.remove('is-kidia-loading');
+				form.removeAttribute('aria-busy');
+			}
+		}
+	});
+	const setInstantActionBusy = function (form, busy) {
+		form.classList.toggle('is-kidia-loading', busy);
+		if (busy) {
+			form.setAttribute('aria-busy', 'true');
+		} else {
+			form.removeAttribute('aria-busy');
+		}
+		form.querySelectorAll('button,select').forEach(function (control) {
+			if (busy) {
+				control.dataset.kidiaWasDisabled = control.disabled ? '1' : '0';
+				control.disabled = true;
+			} else if (control.dataset.kidiaWasDisabled !== '1') {
+				control.disabled = false;
+			}
+			if (!busy) delete control.dataset.kidiaWasDisabled;
+		});
+	};
+	document.addEventListener('change', function (event) {
+		const channel = event.target.closest('form[data-kidia-instant-action="coupon-channel"] select[name="coupon_channel"]');
+		if (!channel || !channel.form || channel.form.getAttribute('aria-busy') === 'true') return;
+		if (typeof channel.form.requestSubmit === 'function') {
+			channel.form.requestSubmit();
+		} else {
+			channel.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+		}
+	});
+	document.addEventListener('submit', async function (event) {
+		const form = event.target.closest('form[data-kidia-instant-action]');
+		if (!form) return;
+		event.preventDefault();
+		if (form.getAttribute('aria-busy') === 'true') return;
+		const requestBody = new FormData(form);
+		const channel = form.querySelector('select[name="coupon_channel"]');
+		setInstantActionBusy(form, true);
+		try {
+			const response = await window.fetch(form.action, {
+				method: String(form.method || 'post').toUpperCase(),
+				credentials: 'same-origin',
+				cache: 'no-store',
+				body: requestBody
+			});
+			if (!response.ok) throw new Error('Store Data update failed');
+			await navigateFreshStoreData(window.location.href, { preserveFocus: false });
+		} catch (_error) {
+			if (channel && channel.dataset.kidiaSavedValue) {
+				channel.value = channel.dataset.kidiaSavedValue;
+			}
+			form.classList.add('is-kidia-error');
+			window.setTimeout(function () { form.classList.remove('is-kidia-error'); }, 1800);
+		} finally {
+			if (form.isConnected) setInstantActionBusy(form, false);
+		}
+	});
+	const aiBackgroundConfig = window.kidiaCMSBackground || {};
+	const aiDockPositionKey = 'kidia_ai_progress_position_v1';
+	const aiRequest = async function (action, values) {
+		const currentAiForm = document.querySelector('[data-ai-generate-form]');
+		const nonce = currentAiForm
+			? currentAiForm.dataset.aiAnalysisNonce || ''
+			: aiBackgroundConfig.aiNonce || '';
+		const body = new URLSearchParams(Object.assign({action: action, nonce: nonce}, values || {}));
+		const response = await window.fetch(aiBackgroundConfig.ajaxUrl || window.ajaxurl || '', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+			body: body.toString()
+		});
+		const json = await response.json();
+		if (!response.ok || !json.success) {
+			throw new Error((json.data && json.data.message) || 'The analysis could not be completed.');
+		}
+		return json.data;
+	};
+	const createAiDock = function () {
+		const current = document.querySelector('[data-ai-progress-overlay].is-global');
+		if (current) return current;
+		const dock = document.createElement('div');
+		dock.className = 'kidia-ai-progress-overlay is-docked is-global';
+		dock.dataset.aiProgressOverlay = '';
+		dock.dataset.kidiaBackgroundJob = 'generate-offers';
+		dock.setAttribute('aria-live', 'polite');
+		dock.innerHTML =
+			'<div class="kidia-ai-progress-card">' +
+			'<div class="kidia-ai-progress-ring" data-ai-progress-ring style="--kidia-ai-progress:0"><strong data-ai-progress-value>0%</strong></div>' +
+			'<h2>Store analysis</h2><p data-ai-progress-stage>Reading store data in the background…</p>' +
+			'<strong class="kidia-ai-progress-count" data-ai-progress-count>Checking progress…</strong>' +
+			'<div class="kidia-ai-progress-track"><i data-ai-progress-bar></i></div>' +
+			'<small data-ai-progress-note>You can continue using every CMS page while this runs.</small>' +
+			'<div class="kidia-ai-progress-actions">' +
+			'<a class="button button-primary" data-ai-view-results hidden>View results</a>' +
+			'<button class="button kidia-ai-cancel-button" type="button" data-ai-cancel-button>Cancel analysis</button>' +
+			'</div></div>';
+		return appendBackgroundJobCard(dock);
+	};
+	const resetAiProgressVersion = function (overlay, jobId) {
+		if (!overlay) return;
+		overlay.dataset.aiProgressJob = String(jobId || '');
+		overlay.dataset.aiProgressRevision = '-1';
+		overlay.dataset.aiProgressProcessed = '-1';
+	};
+	const positionAiDock = function (overlay, left, top, remember) {
+		if (!overlay || !overlay.classList.contains('is-docked')) return;
+		if (overlay.closest('[data-kidia-background-job-stack]')) {
+			overlay.style.removeProperty('left');
+			overlay.style.removeProperty('top');
+			overlay.style.removeProperty('right');
+			overlay.style.removeProperty('bottom');
+			return;
+		}
+		const width = Math.max(1, overlay.offsetWidth || 380);
+		const height = Math.max(1, overlay.offsetHeight || 180);
+		const maxLeft = Math.max(8, window.innerWidth - width - 8);
+		const maxTop = Math.max(8, window.innerHeight - height - 8);
+		const safeLeft = Math.max(8, Math.min(maxLeft, Number(left) || 8));
+		const safeTop = Math.max(8, Math.min(maxTop, Number(top) || 8));
+		overlay.style.left = safeLeft + 'px';
+		overlay.style.top = safeTop + 'px';
+		overlay.style.right = 'auto';
+		overlay.style.bottom = 'auto';
+		if (remember) {
+			try {
+				window.localStorage.setItem(aiDockPositionKey, JSON.stringify({left: safeLeft, top: safeTop}));
+			} catch (error) {}
+		}
+	};
+	const restoreAiDockPosition = function (overlay) {
+		if (!overlay || !overlay.classList.contains('is-docked')) return;
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(aiDockPositionKey) || 'null');
+			if (saved && Number.isFinite(Number(saved.left)) && Number.isFinite(Number(saved.top))) {
+				positionAiDock(overlay, saved.left, saved.top, false);
+			}
+		} catch (error) {}
+	};
+	const bindAiDockDrag = function (overlay) {
+		if (!overlay || overlay.dataset.aiDragBound === '1') return;
+		const card = overlay.querySelector('.kidia-ai-progress-card');
+		if (!card) return;
+		overlay.dataset.aiDragBound = '1';
+		card.addEventListener('pointerdown', function (event) {
+			if (
+				!overlay.classList.contains('is-docked') ||
+				overlay.closest('[data-kidia-background-job-stack]') ||
+				event.button !== 0 ||
+				event.target.closest('button,a,input,select,textarea')
+			) return;
+			event.preventDefault();
+			const start = overlay.getBoundingClientRect();
+			const offsetX = event.clientX - start.left;
+			const offsetY = event.clientY - start.top;
+			overlay.classList.add('is-dragging');
+			if (typeof card.setPointerCapture === 'function') card.setPointerCapture(event.pointerId);
+			const move = function (moveEvent) {
+				positionAiDock(overlay, moveEvent.clientX - offsetX, moveEvent.clientY - offsetY, false);
+			};
+			const stop = function () {
+				overlay.classList.remove('is-dragging');
+				const current = overlay.getBoundingClientRect();
+				positionAiDock(overlay, current.left, current.top, true);
+				card.removeEventListener('pointermove', move);
+				card.removeEventListener('pointerup', stop);
+				card.removeEventListener('pointercancel', stop);
+			};
+			card.addEventListener('pointermove', move);
+			card.addEventListener('pointerup', stop);
+			card.addEventListener('pointercancel', stop);
+		});
+	};
+	const persistAiProgressAcrossNavigation = function (overlay, jobId) {
+		if (
+			!overlay ||
+			!jobId ||
+			overlay.hidden
+		) return false;
+		overlay.dataset.kidiaBackgroundJob = 'generate-offers';
+		overlay.classList.add('is-docked', 'is-global');
+		overlay = appendBackgroundJobCard(overlay);
+		restoreAiDockPosition(overlay);
+		bindAiDockDrag(overlay);
+		document.body.classList.remove('kidia-ai-is-generating');
+		return true;
+	};
+	const renderAiProgress = function (overlay, payload) {
+		if (!overlay) return;
+		const payloadJob = String(payload.job_id || '');
+		const currentJob = String(overlay.dataset.aiProgressJob || '');
+		if (currentJob && payloadJob && currentJob !== payloadJob) return;
+		if (!currentJob && payloadJob) overlay.dataset.aiProgressJob = payloadJob;
+		const revision = Number(payload.revision || 0);
+		const processed = Number(payload.processed || 0);
+		const currentRevision = Number(overlay.dataset.aiProgressRevision || -1);
+		const currentProcessed = Number(overlay.dataset.aiProgressProcessed || -1);
+		if (
+			!payload.done &&
+			!payload.cancelled &&
+			(payload.busy || revision < currentRevision || (revision === currentRevision && processed < currentProcessed))
+		) return;
+		overlay.dataset.aiProgressRevision = String(revision);
+		overlay.dataset.aiProgressProcessed = String(processed);
+		const progress = Math.max(0, Math.min(100, Number(payload.progress || 0)));
+		const progressLabel = Number.isInteger(progress) ? progress.toFixed(0) : progress.toFixed(1);
+		const value = overlay.querySelector('[data-ai-progress-value]');
+		const ring = overlay.querySelector('[data-ai-progress-ring]');
+		const bar = overlay.querySelector('[data-ai-progress-bar]');
+		const stage = overlay.querySelector('[data-ai-progress-stage]');
+		const count = overlay.querySelector('[data-ai-progress-count]');
+		if (value) value.textContent = progressLabel + '%';
+		if (ring) ring.style.setProperty('--kidia-ai-progress', progress);
+		if (bar) bar.style.width = progress + '%';
+		if (stage && payload.stage) stage.textContent = payload.stage;
+		if (count) {
+			count.setAttribute('dir', 'ltr');
+			count.textContent =
+				Number(payload.processed || 0).toLocaleString() + ' / ' +
+				Number(payload.total || 0).toLocaleString() + ' records completed';
+		}
+		const view = overlay.querySelector('[data-ai-view-results]');
+		const cancel = overlay.querySelector('[data-ai-cancel-button]');
+		const background = overlay.querySelector('[data-ai-background-button]');
+		if (cancel) cancel.classList.toggle('is-confirm', Boolean(payload.done));
+		if (payload.cancelled) {
+			overlay.setAttribute('aria-busy', 'false');
+			overlay.hidden = true;
+			document.body.classList.remove('kidia-ai-is-generating');
+			return;
+		}
+		if (payload.done) {
+			overlay.setAttribute('aria-busy', 'false');
+			if (stage) stage.textContent = 'Completed';
+			if (view) view.hidden = true;
+			if (background) background.hidden = true;
+			if (cancel) cancel.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>OK';
+			overlay.dataset.aiComplete = '1';
+		}
+	};
+	if (window.__KIDIA_AI_PROGRESS_TEST__) {
+		window.KidiaAiProgressTest = {
+			createDock: createAiDock,
+			render: renderAiProgress,
+			reset: resetAiProgressVersion,
+			position: positionAiDock,
+			bindDrag: bindAiDockDrag,
+			persistAcrossNavigation: persistAiProgressAcrossNavigation
+		};
+	}
+	const pollBackgroundJob = async function (jobId, overlay) {
+		let active = true;
+		let failures = 0;
+		overlay.dataset.aiPollingJob = jobId;
+		while (active && document.body.contains(overlay) && overlay.dataset.aiPollingJob === jobId) {
+			try {
+				const payload = await aiRequest('kidia_mobile_ai_analysis_status', {job_id: jobId, advance: '1'});
+				if (overlay.dataset.aiPollingJob !== jobId) return;
+				renderAiProgress(overlay, payload);
+				active = !payload.done && !payload.cancelled;
+				failures = 0;
+				if (active) {
+					await new Promise(function (resolve) { window.setTimeout(resolve, 1200); });
+				}
+			} catch (error) {
+				const note = overlay.querySelector('[data-ai-progress-note]');
+				failures += 1;
+				if (note) note.textContent = failures < 4
+					? 'The server paused this batch. Retrying without losing completed records…'
+					: (error && error.message ? error.message : 'Background status is unavailable.');
+				active = failures < 4;
+				if (active) {
+					await new Promise(function (resolve) { window.setTimeout(resolve, 1800); });
+				}
+			}
+		}
+	};
+	const bindAiOverlayActions = function (overlay, getJobId, setForeground) {
+		if (!overlay || overlay.dataset.aiActionsBound === '1') return;
+		overlay.dataset.aiActionsBound = '1';
+		const background = overlay.querySelector('[data-ai-background-button]');
+		const cancel = overlay.querySelector('[data-ai-cancel-button]');
+		if (background) {
+			background.addEventListener('click', async function () {
+				const jobId = getJobId();
+				if (!jobId) return;
+				background.disabled = true;
+				try {
+					const payload = await aiRequest('kidia_mobile_background_ai_analysis', {job_id: jobId});
+					setForeground(false);
+					overlay.classList.add('is-docked');
+					restoreAiDockPosition(overlay);
+					document.body.classList.remove('kidia-ai-is-generating');
+					background.innerHTML = '<span class="dashicons dashicons-yes-alt"></span>Running in background';
+					renderAiProgress(overlay, payload);
+					pollBackgroundJob(jobId, overlay);
+				} catch (error) {
+					background.disabled = false;
+					const note = overlay.querySelector('[data-ai-progress-note]');
 					if (note) note.textContent = error && error.message ? error.message : 'Could not move the analysis to the background.';
 				}
 			});
