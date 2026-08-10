@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Explainable, store-local offer recommendations.
@@ -447,7 +446,305 @@ final class Kidia_Mobile_AI_Offer_Engine {
 
 		$top_viewed = $summary['top_products'][0] ?? null;
 		if ( is_array( $top_viewed ) && absint( $top_viewed['event_count'] ?? 0 ) >= 3 ) {
-			$product_id = absint( $top_viewed['…3313 tokens truncated…mobile_ai_offer_signals', $signals );
+			$product_id = absint( $top_viewed['object_id'] ?? 0 );
+			$offers[] = self::offer(
+				'popular-' . $product_id,
+				'popular',
+				__( 'Feature the most-viewed product', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
+				sprintf( __( '%1$s is the most-viewed product with %2$d measured views.', 'mobishop' ), sanitize_text_field( (string) $top_viewed['event_label'] ), absint( $top_viewed['event_count'] ) ),
+				array(
+					/* translators: Placeholder values are supplied at runtime. */
+					sprintf( __( '%d measured views', 'mobishop' ), absint( $top_viewed['event_count'] ) ),
+					__( 'Use a Popular now placement without discounting the product.', 'mobishop' ),
+					__( 'Fallback safely to best sellers when visitor history is not available.', 'mobishop' ),
+				),
+				min( 91, 60 + absint( $top_viewed['event_count'] ) ),
+				'low',
+				'percent',
+				0,
+				168,
+				'all',
+				$source,
+				$product_id ? array( $product_id ) : array()
+			);
+		}
+
+		foreach ( array_slice( (array) $summary['top_purchases'], 0, 6 ) as $top_purchase ) {
+			if ( ! is_array( $top_purchase ) || absint( $top_purchase['event_count'] ?? 0 ) < 1 ) {
+				continue;
+			}
+			$product_id = absint( $top_purchase['object_id'] ?? 0 );
+			$offers[] = self::offer(
+				'best-seller-' . $product_id,
+				'best_seller',
+				__( 'Use a proven best-seller recommendation', 'mobishop' ),
+				/* translators: Placeholder values are supplied at runtime. */
+				sprintf( __( '%1$s led the selected period with %2$d tracked purchases.', 'mobishop' ), sanitize_text_field( (string) $top_purchase['event_label'] ), absint( $top_purchase['event_count'] ) ),
+				array(
+					/* translators: Placeholder values are supplied at runtime. */
+					sprintf( __( '%d tracked purchases', 'mobishop' ), absint( $top_purchase['event_count'] ) ),
+					__( 'Place it on Home or Category pages as social proof.', 'mobishop' ),
+					__( 'Do not add a discount unless margin and funnel evidence justify one.', 'mobishop' ),
+				),
+				min( 94, 65 + absint( $top_purchase['event_count'] ) * 2 ),
+				'low',
+				'percent',
+				0,
+				168,
+				'all',
+				$source,
+				$product_id ? array( $product_id ) : array()
+			);
+		}
+
+		$offers = array_values(
+			array_filter(
+				$offers,
+				static fn( $offer ) => absint( $offer['confidence'] ?? 0 ) >= absint( $settings['minimum_confidence'] )
+			)
+		);
+		foreach ( $offers as &$offer ) {
+			$offer = self::add_expected_outcomes( $offer, $commerce, $from, $to );
+		}
+		unset( $offer );
+		usort(
+			$offers,
+			static function ( array $left, array $right ): int {
+				$confidence = absint( $right['confidence'] ?? 0 ) <=> absint( $left['confidence'] ?? 0 );
+				if ( 0 !== $confidence ) {
+					return $confidence;
+				}
+				return count( (array) ( $right['product_ids'] ?? array() ) )
+					<=> count( (array) ( $left['product_ids'] ?? array() ) );
+			}
+		);
+		$offers = self::remove_discount_conflicts( $offers );
+		$offers = apply_filters( 'kidia_mobile_ai_offer_recommendations', $offers, $summary, $source, $from, $to );
+		$offers = is_array( $offers )
+			? array_values( array_slice( $offers, 0, absint( $settings['maximum_recommendations'] ) ) )
+			: array();
+		set_transient( $cache_key, $offers, 10 * MINUTE_IN_SECONDS );
+		return $offers;
+	}
+
+	/**
+	 * Calibrates evidence thresholds from current store volume. The store owner
+	 * reviews the outcome, while the engine owns the analytical thresholds.
+	 *
+	 * @param array<string,mixed> $summary Current analytical snapshot.
+	 * @return array<string,int|bool>
+	 */
+	private static function automatic_profile( array $summary ): array {
+		$settings = self::settings();
+		$visitors = absint( $summary['visitors'] ?? 0 );
+		$orders   = absint( $summary['commerce']['orders'] ?? 0 );
+		$catalog  = absint( $summary['commerce']['catalog_products'] ?? 0 );
+		$settings['high_interest_min_views'] = max( 10, min( 50, (int) ceil( max( 1, $visitors ) * .015 ) ) );
+		$settings['slow_stock_min_age_days'] = $orders >= 100 ? 45 : 30;
+		$settings['slow_stock_min_units'] = $catalog >= 1000 ? 8 : 3;
+		$settings['minimum_confidence'] = $orders >= 50 || $visitors >= 500 ? 65 : 55;
+		return $settings;
+	}
+
+	/**
+	 * Classifies every currently available catalog product from real selected-period
+	 * sales. The result is cached with the analytical snapshot so opening the page
+	 * stays light and repeated filtering never scans the catalog again.
+	 *
+	 * @return array{fast:list<array<string,mixed>>,medium:list<array<string,mixed>>,slow:list<array<string,mixed>>,poor:list<array<string,mixed>>}
+	 */
+	public static function rotation_segments( int $from, int $to, string $source = 'all' ): array {
+		$source    = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		$cache_key = self::rotation_cache_key( $from, $to, $source );
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return array_merge( self::empty_rotation_segments(), $cached );
+		}
+		$segments = self::empty_rotation_segments();
+		if ( ! function_exists( 'wc_get_products' ) || ! function_exists( 'wc_get_product' ) ) {
+			return $segments;
+		}
+
+		$commerce   = Kidia_Mobile_Analytics::commerce_snapshot( $from, $to, $source );
+		$sales_map  = is_array( $commerce['product_sales'] ?? null ) ? $commerce['product_sales'] : array();
+		$period_days = max( 1, (int) ceil( max( DAY_IN_SECONDS, $to - $from ) / DAY_IN_SECONDS ) );
+		$rows       = array();
+		$velocities = array();
+		$catalog_rows = is_array( $commerce['catalog_rows'] ?? null ) ? $commerce['catalog_rows'] : array();
+		if ( empty( $catalog_rows ) ) {
+			$product_ids = wc_get_products(
+				array(
+					'status'       => 'publish',
+					'stock_status' => 'instock',
+					'limit'        => -1,
+					'return'       => 'ids',
+					'orderby'      => 'ID',
+					'order'        => 'ASC',
+				)
+			);
+			foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
+				$product = wc_get_product( $product_id );
+				if ( ! $product instanceof WC_Product || ! $product->is_in_stock() ) {
+					continue;
+				}
+				$created = $product->get_date_created();
+				$catalog_rows[] = array(
+					'id'       => $product_id,
+					'name'     => $product->get_name(),
+					'stock'    => $product->managing_stock() ? max( 0, (int) $product->get_stock_quantity() ) : null,
+					'age_days' => $created ? max( 1, (int) floor( ( time() - $created->getTimestamp() ) / DAY_IN_SECONDS ) ) : 1,
+				);
+			}
+		}
+		foreach ( $catalog_rows as $catalog_row ) {
+			$product_id = absint( $catalog_row['id'] ?? 0 );
+			if ( $product_id <= 0 ) {
+				continue;
+			}
+			$age     = max( 1, absint( $catalog_row['age_days'] ?? 1 ) );
+			$sales   = absint( $sales_map[ $product_id ] ?? 0 );
+			$days    = max( 1, min( $period_days, $age ) );
+			$velocity = $sales / $days;
+			if ( $sales > 0 ) {
+				$velocities[] = $velocity;
+			}
+			$stock = array_key_exists( 'stock', $catalog_row ) && null !== $catalog_row['stock']
+				? max( 0, (int) $catalog_row['stock'] )
+				: null;
+			$rows[] = array(
+				'id'          => $product_id,
+				'name'        => sanitize_text_field( (string) ( $catalog_row['name'] ?? '#' . $product_id ) ),
+				'sales'       => $sales,
+				'stock'       => $stock,
+				'age_days'    => $age,
+				'period_days' => $days,
+				'velocity'    => round( $velocity, 4 ),
+				'opportunity' => round( $age * max( 1, null === $stock ? 1 : $stock ) / max( 1, $sales + 1 ), 2 ),
+			);
+		}
+		sort( $velocities, SORT_NUMERIC );
+		$fast_threshold   = self::percentile( $velocities, .75 );
+		$medium_threshold = self::percentile( $velocities, .40 );
+		foreach ( $rows as $row ) {
+			$sales    = absint( $row['sales'] ?? 0 );
+			$velocity = (float) ( $row['velocity'] ?? 0 );
+			$age      = absint( $row['age_days'] ?? 0 );
+			if ( $sales > 0 && $velocity >= max( .0001, $fast_threshold ) ) {
+				$segments['fast'][] = $row;
+			} elseif ( $sales > 0 && $velocity >= max( .0001, $medium_threshold ) ) {
+				$segments['medium'][] = $row;
+			} elseif ( $sales > 0 || $age < 120 ) {
+				$segments['slow'][] = $row;
+			} else {
+				$segments['poor'][] = $row;
+			}
+		}
+		foreach ( $segments as $segment => &$segment_rows ) {
+			usort(
+				$segment_rows,
+				in_array( $segment, array( 'fast', 'medium' ), true )
+					? static fn( $left, $right ) => ( $right['sales'] <=> $left['sales'] ) ?: ( $right['velocity'] <=> $left['velocity'] )
+					: static fn( $left, $right ) => $right['opportunity'] <=> $left['opportunity']
+			);
+		}
+		unset( $segment_rows );
+		set_transient( $cache_key, $segments, 10 * MINUTE_IN_SECONDS );
+		return $segments;
+	}
+
+	/** Clears derived decisions after a fresh incremental store snapshot. */
+	public static function clear_cache( int $from, int $to, string $source = 'all' ): void {
+		delete_transient( self::recommendation_cache_key( $from, $to, $source ) );
+		delete_transient( self::rotation_cache_key( $from, $to, $source ) );
+	}
+
+	private static function recommendation_cache_key( int $from, int $to, string $source ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_ai_offers_v6_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
+	private static function rotation_cache_key( int $from, int $to, string $source ): string {
+		$source = in_array( $source, array( 'website', 'mobile' ), true ) ? $source : 'all';
+		return 'kidia_ai_rotation_v3_' . md5( $from . '|' . $to . '|' . $source );
+	}
+
+	/** @return array{fast:array,medium:array,slow:array,poor:array} */
+	private static function empty_rotation_segments(): array {
+		return array( 'fast' => array(), 'medium' => array(), 'slow' => array(), 'poor' => array() );
+	}
+
+	/** @param list<float|int> $sorted */
+	private static function percentile( array $sorted, float $percentile ): float {
+		$count = count( $sorted );
+		if ( 0 === $count ) {
+			return 0.0;
+		}
+		$index = max( 0, min( $count - 1, (int) floor( ( $count - 1 ) * $percentile ) ) );
+		return (float) $sorted[ $index ];
+	}
+
+	/**
+	 * Playbooks researched from leading commerce recommendation systems and
+	 * grouped for a usable interface rather than an overlapping tag cloud.
+	 *
+	 * @return array<string,array{label:string,items:list<string>}>
+	 */
+	public static function playbook_groups(): array {
+		return array(
+			'personalization' => array(
+				'label' => __( 'Personalized discovery', 'mobishop' ),
+				'items' => array( 'Recommended for you', 'Recently viewed', 'Continue shopping', 'Buy again', 'First purchase', 'VIP', 'Win-back' ),
+			),
+			'relationships' => array(
+				'label' => __( 'Product relationships', 'mobishop' ),
+				'items' => array( 'Frequently bought together', 'Complementary products', 'Related products', 'Viewed this, viewed that', 'Viewed this, bought that', 'More like this', 'Visual similarity', 'Complete the look' ),
+			),
+			'merchandising' => array(
+				'label' => __( 'Merchandising & demand', 'mobishop' ),
+				'items' => array( 'Trending now', 'Best sellers', 'Most viewed', 'Most added to cart', 'High conversion', 'Search-demand merchandising', 'Category cross-sell', 'New launch' ),
+			),
+			'offers' => array(
+				'label' => __( 'Offers & basket growth', 'mobishop' ),
+				'items' => array( 'AOV lift', 'Free shipping threshold', 'BOGO', 'Quantity break', 'Cart recovery', 'Checkout rescue', 'Bundle discount', 'Personal coupon' ),
+			),
+			'inventory' => array(
+				'label' => __( 'Inventory & timing', 'mobishop' ),
+				'items' => array( 'Slow-stock rescue', 'Overstock clearance', 'Low-stock urgency', 'Restock priority', 'Seasonal clearance', 'Peak-time scheduling' ),
+			),
+			'funnel' => array(
+				'label' => __( 'Funnel decisions', 'mobishop' ),
+				'items' => array( 'High view / low purchase', 'Registration friction', 'Search with no results', 'Product removal friction', 'Checkout drop-off', 'Channel comparison' ),
+			),
+		);
+	}
+
+	/**
+	 * More than one hundred documented inputs that the engine can progressively
+	 * cover as the store collects events, inventory and order history.
+	 *
+	 * @return list<string>
+	 */
+	public static function signal_catalog(): array {
+		$metrics = array(
+			'views', 'unique_views', 'add_to_cart', 'remove_from_cart', 'checkout_start',
+			'purchase', 'conversion_rate', 'cart_rate', 'checkout_rate', 'drop_off',
+			'units_sold', 'gross_revenue', 'net_revenue', 'average_order_value', 'discount_rate',
+			'refund_rate', 'cancel_rate', 'return_rate', 'stock', 'stock_days',
+			'stock_age', 'sales_velocity', 'sell_through', 'margin_proxy', 'price',
+			'price_change', 'coupon_use', 'repeat_purchase', 'new_customer', 'returning_customer',
+		);
+		$windows = array( 'today', '7d', '30d', '90d' );
+		$signals = array();
+		foreach ( $metrics as $metric ) {
+			foreach ( $windows as $window ) {
+				$signals[] = $metric . '_' . $window;
+			}
+		}
+		foreach ( array( 'website', 'mobile', 'hour', 'weekday', 'category', 'product_pair', 'customer_value', 'recency', 'frequency', 'season' ) as $dimension ) {
+			$signals[] = 'dimension_' . $dimension;
+		}
+		$signals = apply_filters( 'kidia_mobile_ai_offer_signals', $signals );
 		return is_array( $signals ) ? array_values( array_unique( array_map( 'sanitize_key', $signals ) ) ) : array();
 	}
 
