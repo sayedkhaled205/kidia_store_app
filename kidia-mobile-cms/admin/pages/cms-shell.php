@@ -1,4 +1,3 @@
-
 <?php
 /** Unified CMS navigation shell. */
 defined( 'ABSPATH' ) || exit;
