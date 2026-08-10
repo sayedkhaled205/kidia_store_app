@@ -1,3 +1,4 @@
+
 <?php
 /** Website-to-app promotion campaign builder. */
 defined( 'ABSPATH' ) || exit;
@@ -86,6 +87,7 @@ $preview_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 			</div>
 		</div>
 		<span class="kidia-app-promotion-state <?php echo ! empty( $promotion_settings['enabled'] ) ? 'is-live' : ''; ?>">
+			<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 			<i></i><span data-promotion-state-label><?php echo ! empty( $promotion_settings['enabled'] ) ? esc_html( sprintf( _n( '%d campaign live', '%d campaigns live', $live_count, 'mobishop' ), $live_count ) ) : esc_html__( 'Campaigns paused', 'mobishop' ); ?></span>
 		</span>
 	</header>
