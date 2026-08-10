@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Universal bundle recipes shared by AI Studio, Home Builder and the app.
