@@ -4,8 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="$ROOT/kidia-mobile-cms"
 BUILD_ROOT="${1:-$ROOT/build/wordpress-org}"
-PACKAGE_DIR="$BUILD_ROOT/kidia-mobile-cms"
-PACKAGE_ZIP="$BUILD_ROOT/kidia-mobile-cms.zip"
+PACKAGE_SLUG="woomobi-cms"
+PACKAGE_DIR="$BUILD_ROOT/$PACKAGE_SLUG"
+PACKAGE_ZIP="$BUILD_ROOT/$PACKAGE_SLUG.zip"
 
 mkdir -p "$PACKAGE_DIR"
 find "$PACKAGE_DIR" -mindepth 1 -depth -delete
@@ -77,11 +78,11 @@ else
   echo 'PHP is unavailable locally; CI will run the required PHP syntax check.' >&2
 fi
 
-temporary_dir="$(mktemp -d "$BUILD_ROOT/.kidia-mobile-cms.XXXXXXXX")"
-temporary_zip="$temporary_dir/kidia-mobile-cms.zip"
+temporary_dir="$(mktemp -d "$BUILD_ROOT/.woomobi-cms.XXXXXXXX")"
+temporary_zip="$temporary_dir/$PACKAGE_SLUG.zip"
 (
   cd "$BUILD_ROOT"
-  zip -9qr "$temporary_zip" kidia-mobile-cms
+  zip -9qr "$temporary_zip" "$PACKAGE_SLUG"
 )
 mv -f "$temporary_zip" "$PACKAGE_ZIP"
 rmdir "$temporary_dir"

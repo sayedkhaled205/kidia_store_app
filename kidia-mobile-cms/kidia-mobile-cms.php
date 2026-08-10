@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Kidia Mobile CMS for WooCommerce
+ * Plugin Name:       Woomobi CMS
  * Plugin URI:        https://woomobile.app/
  * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
  * Version:           1.46.60

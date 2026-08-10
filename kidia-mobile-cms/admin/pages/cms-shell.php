@@ -5,9 +5,9 @@ defined( 'ABSPATH' ) || exit;
 <aside class="kidia-cms-sidebar" data-kidia-cms-sidebar>
 	<div class="kidia-cms-shell__brand">
 		<span class="dashicons dashicons-smartphone"></span>
-		<div><strong><?php esc_html_e( 'Woo Mobile CMS', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'kidia-mobile-cms' ); ?></small></div>
+		<div><strong><?php esc_html_e( 'Woomobi CMS', 'kidia-mobile-cms' ); ?></strong><small><?php esc_html_e( 'Application workspace', 'kidia-mobile-cms' ); ?></small></div>
 	</div>
-	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woo Mobile CMS sections', 'kidia-mobile-cms' ); ?>">
+	<nav class="kidia-cms-sidebar__nav" aria-label="<?php esc_attr_e( 'Woomobi CMS sections', 'kidia-mobile-cms' ); ?>">
 		<?php foreach ( $sidebar_items as $key => $item ) : ?>
 			<a href="<?php echo esc_url( $item['url'] ); ?>" data-kidia-sidebar-view="<?php echo esc_attr( $key ); ?>" class="<?php echo $key === $active_sidebar ? 'is-active' : ''; ?>">
 				<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
@@ -140,7 +140,7 @@ $shell_abandoned_progress = $shell_abandoned_total > 0
 				<?php
 				printf(
 					/* translators: 1: remaining grace days, 2: grace end date. */
-					esc_html__( 'Woo Mobile CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'kidia-mobile-cms' ),
+					esc_html__( 'Woomobi CMS remains active for %1$d more day(s), until %2$s. Payment automatically restores normal service.', 'kidia-mobile-cms' ),
 					(int) ( $license_status['grace_days_remaining'] ?? 0 ),
 					esc_html( wp_date( get_option( 'date_format' ), (int) ( $license_status['grace_ends_at'] ?? time() ) ) )
 				);

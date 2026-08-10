@@ -318,7 +318,7 @@ final class Kidia_Mobile_CMS_Home_Layout_Endpoint_V4 {
 			} catch ( Throwable $error ) {
 				error_log(
 					sprintf(
-						'Woo Mobile CMS skipped invalid Home element %s (%s): %s',
+						'Woomobi CMS skipped invalid Home element %s (%s): %s',
 						(string) ( $instance['type'] ?? 'unknown' ),
 						(string) ( $instance['id'] ?? 'unknown' ),
 						$error->getMessage()

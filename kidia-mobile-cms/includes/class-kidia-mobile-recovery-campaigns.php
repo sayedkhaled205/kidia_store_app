@@ -152,7 +152,7 @@ final class Kidia_Mobile_Recovery_Campaigns {
 			$coupon->set_email_restrictions( array( $email ) );
 			$coupon->set_minimum_amount( $minimum );
 			$coupon->set_date_expires( time() + $hours * HOUR_IN_SECONDS );
-			$coupon->set_description( sprintf( __( 'Kidia abandoned-cart recovery for cart #%d', 'kidia-mobile-cms' ), absint( $cart['id'] ) ) );
+			$coupon->set_description( sprintf( __( 'Woomobi CMS abandoned-cart recovery for cart #%d', 'kidia-mobile-cms' ), absint( $cart['id'] ) ) );
 			if ( $restrict ) {
 				$product_ids = array_values( array_filter( array_map( static fn( $item ) => absint( $item['product_id'] ?? 0 ), (array) $cart['items'] ) ) );
 				$coupon->set_product_ids( $product_ids );
