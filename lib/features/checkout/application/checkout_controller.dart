@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/checkout/data/models/checkout_country_data.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
-import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
 enum CheckoutStatus { initial, loading, ready, submitting, success, failure }
 

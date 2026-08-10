@@ -41,7 +41,7 @@ jobs:
           test "$version" = "$plugin_version" || { echo "Release tag $version does not match plugin version $plugin_version." >&2; exit 1; }
           test "$version" = "$stable_tag" || { echo "Release tag $version does not match readme stable tag $stable_tag." >&2; exit 1; }
       - name: Run PHP contract tests
-        run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
+        run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
       - name: Install browser test dependencies
         run: npm ci
       - name: Run Builder browser contract tests
@@ -51,9 +51,6 @@ jobs:
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
-          # Existing translated UI placeholders predate this release pipeline;
-          # keep the directory gate focused on blocking repository violations.
-          ignore-codes: WordPress.WP.I18n.MissingTranslatorsComment
       - name: Deploy tagged release to WordPress.org
         uses: 10up/action-wordpress-plugin-deploy@stable
         with:

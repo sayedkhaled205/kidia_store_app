@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
-import 'package:kidia_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 class ProductWishlistButton extends ConsumerStatefulWidget {
   const ProductWishlistButton({

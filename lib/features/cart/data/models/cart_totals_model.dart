@@ -1,7 +1,7 @@
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_coupon.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_coupon.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
 
 class CartCurrencyModel {
   const CartCurrencyModel({

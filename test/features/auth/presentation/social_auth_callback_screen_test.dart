@@ -3,13 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/auth/presentation/social_auth_callback_screen.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/social_auth_callback_screen.dart';
 
 void main() {
   testWidgets('exchanges the browser handoff and returns to its saved screen', (

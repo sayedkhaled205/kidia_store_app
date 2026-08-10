@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/theme/kidia_colors.dart';
+import '../core/theme/mobishop_colors.dart';
 import '../core/config/app_config.dart';
 import '../core/analytics/mobile_analytics.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
@@ -140,15 +140,15 @@ class _MainShellState extends ConsumerState<MainShell>
     );
     final Color activeColor = _cmsColor(
       footer.string('active_color', '#1F6F61'),
-      KidiaColors.primaryDark,
+      MobiShopColors.primaryDark,
     );
     final Color inactiveColor = _cmsColor(
       footer.string('inactive_color', '#6B7280'),
-      KidiaColors.textSecondary,
+      MobiShopColors.textSecondary,
     );
     final Color backgroundColor = _cmsColor(
       footer.string('background_color', '#FFFFFF'),
-      KidiaColors.surface,
+      MobiShopColors.surface,
     );
     return Scaffold(
       body: NotificationListener<ScrollUpdateNotification>(
@@ -175,7 +175,7 @@ class _MainShellState extends ConsumerState<MainShell>
           child: Container(
           decoration: BoxDecoration(
             color: backgroundColor,
-			border: Border(top: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), KidiaColors.divider), width: footer.number('border_width', 1))),
+			border: Border(top: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), MobiShopColors.divider), width: footer.number('border_width', 1))),
 			borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))),
 			boxShadow: footer.string('shadow', 'subtle') == 'none' ? null : <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: footer.string('shadow', 'subtle') == 'strong' ? .18 : .08), blurRadius: footer.string('shadow', 'subtle') == 'strong' ? 16 : 6)],
           ),

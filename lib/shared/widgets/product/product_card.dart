@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_badge.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_price.dart';
-import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_button.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_image_swiper.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_price.dart';
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_button.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({

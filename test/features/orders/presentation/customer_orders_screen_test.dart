@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
-import 'package:kidia_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
-import 'package:kidia_store_app/features/orders/presentation/customer_orders_screen.dart';
-import 'package:kidia_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
+import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
+import 'package:mobishop_store_app/features/orders/presentation/customer_orders_screen.dart';
+import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 void main() {
   testWidgets('shows the signed-in customer previous orders', (

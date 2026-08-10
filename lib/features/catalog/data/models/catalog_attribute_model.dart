@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/features/catalog/data/models/catalog_json.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 
 abstract final class CatalogAttributeModel {
   const CatalogAttributeModel._();

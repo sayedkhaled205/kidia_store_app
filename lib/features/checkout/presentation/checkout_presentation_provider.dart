@@ -11,7 +11,7 @@ final checkoutPresentationProvider = FutureProvider<CheckoutPresentation>((
 ) async {
   try {
     final response = await ref.watch(cartDioProvider).get<dynamic>(
-      '/wp-json/woo-mobile/v1/checkout-config',
+      '/wp-json/mobishop/v1/checkout-config',
       options: Options(
         headers: const <String, String>{'Cache-Control': 'no-cache'},
       ),

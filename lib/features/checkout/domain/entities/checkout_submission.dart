@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
 
 class CheckoutSubmission {
   const CheckoutSubmission({

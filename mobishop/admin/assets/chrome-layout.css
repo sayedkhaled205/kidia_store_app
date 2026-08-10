@@ -1,0 +1,361 @@
+/* Shared header/footer composer and instant phone-preview refinements. */
+.mobishop-fixed-chrome-card {
+	--mobishop-chrome-accent: var(--mobishop-accent, #2f806e);
+}
+.mobishop-fixed-chrome-card[data-chrome-part="header"] {
+	direction: rtl;
+	text-align: right;
+}
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-settings,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-setting,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-fields,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-section-layout-grid {
+	direction: rtl;
+}
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-fields {
+	grid-auto-flow: row;
+}
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-field {
+	align-items: flex-start;
+	direction: rtl;
+	text-align: right;
+}
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-field > input,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-field > select,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-field > .mobishop-page-text-control,
+.mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-page-field > .mobishop-page-toggle {
+	justify-self: start;
+}
+.mobishop-app-layout-row { display:grid; width:100%; min-width:0; align-items:center; }
+.mobishop-app-header-slot,.mobishop-app-footer-column { min-width:0; }
+.mobishop-app-header-slot .mobishop-app-search { box-sizing:border-box; max-width:100%; }
+.mobishop-app-footer-row { display:grid; width:100%; height:100%; align-items:stretch; }
+.mobishop-app-footer-column { display:flex; align-items:stretch; justify-content:center; }
+.mobishop-app-header-item { box-sizing:border-box; min-width:calc(var(--item-icon-size,var(--icon-size)) + 10px); min-height:calc(var(--item-icon-size,var(--icon-size)) + 10px); padding:5px; }
+.mobishop-app-header-item .mobishop-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
+.mobishop-app-header-item .mobishop-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
+.mobishop-app-footer--composed {
+	display:flex;
+	flex-direction:column;
+	justify-content:center;
+	gap: 0 !important;
+}
+.mobishop-app-footer--composed .mobishop-app-footer-item {
+	flex: 1;
+	gap: var(--label-gap);
+}
+.mobishop-app-footer-item .mobishop-app-icon { width:var(--item-icon-size,var(--icon-size))!important; height:var(--item-icon-size,var(--icon-size))!important; }
+.mobishop-app-footer-item .mobishop-app-icon:before { font-size:var(--item-icon-size,var(--icon-size))!important; }
+.mobishop-app-footer-icon-shell { display:grid; width:clamp(32px,calc(var(--item-icon-size,var(--icon-size)) + 8px),48px); height:clamp(32px,calc(var(--item-icon-size,var(--icon-size)) + 8px),48px); place-items:center; font-style:normal; }
+.mobishop-app-footer-item b { min-height:1.25em; line-height:1; white-space:nowrap; }
+.mobishop-app-footer-item.is-active .mobishop-app-footer-icon-shell { transform:none; }
+
+.mobishop-chrome-item-setting[hidden] { display:none!important; }
+.mobishop-chrome-composer--collapsed[hidden],
+.mobishop-collapsed-header-settings[hidden] { display:none!important; }
+.mobishop-fixed-chrome-card > .mobishop-page-card__header { justify-content:space-between; gap:12px; direction:rtl; }
+.mobishop-fixed-chrome-card > .mobishop-page-card__header .mobishop-fixed-chrome-identity { margin:0; direction:rtl; }
+.mobishop-chrome-transfer-status { max-width:160px; color:#236b59; font-size:11px; font-weight:700; }
+.mobishop-chrome-transfer-status.is-error { color:#b42318; }
+.mobishop-chrome-item-setting { margin-top:12px; padding:14px; border:1px solid #c9dfd9; border-radius:10px; background:#fff; }
+.mobishop-chrome-item-setting h3 { margin:0 0 12px; padding:0 0 9px; border-bottom:1px solid #d7e7e2; }
+.mobishop-chrome-item-setting .mobishop-chrome-icon-choice { margin-bottom:12px; }
+.mobishop-chrome-icon-choice {
+	display: grid;
+	grid-template-columns: minmax(110px, .55fr) minmax(180px, 2fr);
+	align-items: center;
+	gap: 14px;
+	padding: 4px 0 12px;
+	border-bottom: 1px solid #e2ece9;
+}
+.mobishop-chrome-icon-options { display:flex; gap:8px; }
+.mobishop-chrome-icon-option {
+	display: grid;
+	width: 48px;
+	height: 48px;
+	place-items: center;
+	padding: 0;
+	border: 1px solid #9fc8be;
+	border-radius: 10px;
+	background: #fff;
+	color: #236b59;
+	cursor: pointer;
+}
+.mobishop-chrome-icon-option .dashicons { width:26px; height:26px; font-size:26px; }
+.mobishop-chrome-icon-option .mobishop-material-icon-choice { display:grid; width:26px; height:26px; place-items:center; font-family:"MobiShop Material Icons"; font-size:26px; font-style:normal; font-weight:400; line-height:1; -webkit-font-smoothing:antialiased; }
+.mobishop-chrome-icon-option:hover { background:#f1faf7; }
+.mobishop-chrome-icon-option.is-selected { border:2px solid #2f806e; background:#dff3ed; box-shadow:0 0 0 2px #fff,0 0 0 4px #8cc6b7; }
+.mobishop-compact-search-transition {
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:16px;
+	margin-top:12px;
+	padding:12px 14px;
+	border:1px solid #d7e7e2;
+	border-radius:10px;
+	background:#f6fbf9;
+}
+.mobishop-compact-search-transition[hidden] { display:none!important; }
+.mobishop-compact-search-transition.is-disabled { opacity:.55; pointer-events:none; }
+.mobishop-compact-search-transition__identity {
+	display:flex;
+	align-items:center;
+	gap:9px;
+	color:#173f36;
+	font-weight:700;
+}
+.mobishop-compact-search-transition__identity .dashicons {
+	display:grid;
+	width:30px;
+	height:30px;
+	place-items:center;
+	border-radius:8px;
+	background:#e4f3ef;
+	color:#2f806e;
+}
+.mobishop-compact-search-transition__control {
+	display:flex;
+	align-items:center;
+	gap:8px;
+	margin-inline-start:auto;
+	font-weight:600;
+}
+.mobishop-compact-search-transition__control input { width:76px; }
+.mobishop-compact-search-transition__note {
+	margin:0;
+	color:#60706c;
+	font-size:12px;
+}
+.mobishop-chrome-item-setting--header-cart {
+	display:grid;
+	grid-template-columns:repeat(3,minmax(0,1fr));
+	column-gap:18px;
+	row-gap:14px;
+}
+.mobishop-chrome-item-setting--header-cart[hidden] { display:none!important; }
+.mobishop-chrome-item-setting--header-cart::before { content:""; grid-column:2; grid-row:2; align-self:stretch; border-bottom:2px solid #d7e7e2; }
+.mobishop-chrome-item-setting--header-cart > h3 { grid-column:1/-1; grid-row:1; text-align:right; }
+.mobishop-chrome-item-setting--header-cart > .mobishop-chrome-icon-choice {
+	dis:flex;
+	grid-column:1;
+	grid-row:2;
+	flex-direction:column;
+	align-items:flex-end;
+	justify-content:flex-start;
+	gap:10px;
+	margin:0;
+	padding:0 0 18px;
+	border-bottom:2px solid #d7e7e2;
+}
+.mobishop-chrome-item-setting--header-cart > .mobishop-page-fields { display:contents; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field { align-self:end; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="show_cart_badge"] { grid-column:3; grid-row:2; align-items:center; justify-self:stretch; padding-bottom:18px; border-bottom:2px solid #d7e7e2; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_badge_background"] { grid-column:3; grid-row:3; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_badge_shape"] { grid-column:2; grid-row:3; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_style"] { grid-column:1; grid-row:3; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_badge_text_color"] { grid-column:3; grid-row:4; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_badge_size"] { grid-column:2; grid-row:4; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_size"] { grid-column:1; grid-row:4; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_background"] { grid-column:3; grid-row:5; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_color"] { grid-column:2; grid-row:5; }
+.mobishop-chrome-item-setting--header-cart .mobishop-page-field[data-setting="cart_radius"] { grid-column:1; grid-row:5; }
+.mobishop-chrome-item-setting--logo .mobishop-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:11px; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_url"] { grid-column:1; grid-row:1; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_source"] { grid-column:2; grid-row:1; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="subtitle"] { grid-column:3; grid-row:1; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_text"] { grid-column:1; grid-row:2; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_width"] { grid-column:2; grid-row:2; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_height"] { grid-column:3; grid-row:2; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_text_color"] { grid-column:1; grid-row:3; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_offset_x"] { grid-column:2; grid-row:3; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_offset_y"] { grid-column:3; grid-row:3; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field input,
+.mobishop-chrome-item-setting--logo .mobishop-page-field select,
+.mobishop-chrome-item-setting--logo .mobishop-page-text-control {
+	width:min(100%,var(--mobishop-settings-control-width));
+	max-width:var(--mobishop-settings-control-width);
+	align-self:start;
+}
+.mobishop-chrome-item-setting--logo .mobishop-page-text-control { display:flex; align-items:center; gap:8px; }
+.mobishop-chrome-item-setting--logo .mobishop-page-text-control input { min-width:0; flex:1; }
+.mobishop-chrome-item-setting--logo .mobishop-page-text-control .button { flex:0 0 auto; height:34px; min-height:34px; }
+.mobishop-chrome-item-setting--logo .mobishop-page-media {
+	display:block;
+	width:min(100%,var(--mobishop-settings-control-width));
+	max-width:var(--mobishop-settings-control-width);
+	align-self:start;
+}
+.mobishop-chrome-item-setting--logo .mobishop-page-media-actions { display:grid; grid-template-columns:1fr; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_url"] .mobishop-page-media-url { display:none; }
+.mobishop-chrome-item-setting--logo .mobishop-page-media .button { width:100%; height:34px; min-height:34px; padding-inline:6px; white-space:normal; line-height:1.15; }
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_source"] .mobishop-page-text-control,
+.mobishop-chrome-item-setting--logo .mobishop-page-field[data-setting="logo_source"] .button { width:min(100%,var(--mobishop-settings-control-width)); max-width:var(--mobishop-settings-control-width); }
+.mobishop-chrome-item-setting--search_bar .mobishop-page-field[data-setting="search_placeholder"] .mobishop-page-text-control,
+.mobishop-chrome-item-setting--search_bar .mobishop-page-field[data-setting="search_placeholder"] input {
+	width:min(100%,var(--mobishop-settings-control-width));
+	max-width:var(--mobishop-settings-control-width);
+}
+.mobishop-chrome-item-setting--logo .mobishop-page-media-preview { display:block; width:min(100%,360px); height:100px; margin-top:8px; }
+.mobishop-chrome-item-setting--logo .mobishop-page-media-preview[hidden] { display:none; }
+@media (max-width:1100px) {
+	.mobishop-chrome-item-setting--logo .mobishop-page-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+	.mobishop-chrome-item-setting--logo .mobishop-page-field { grid-column:auto!important; grid-row:auto!important; }
+}
+@media (max-width:782px) {
+	.mobishop-chrome-item-setting--logo .mobishop-page-fields { grid-template-columns:1fr; }
+	.mobishop-chrome-item-setting--header-cart { grid-template-columns:1fr; }
+	.mobishop-chrome-item-setting--header-cart::before { display:none; }
+	.mobishop-chrome-item-setting--header-cart > h3,
+	.mobishop-chrome-item-setting--header-cart > .mobishop-chrome-icon-choice,
+	.mobishop-chrome-item-setting--header-cart .mobishop-page-field { grid-column:1!important; grid-row:auto!important; }
+}
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="item_gap"] {
+	display: none;
+}
+.mobishop-chrome-footer-general .mobishop-page-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="horizontal_padding"] { grid-column:3; grid-row:1; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="style"] { grid-column:2; grid-row:1; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="height"] { grid-column:1; grid-row:1; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="label_size"] { grid-column:3; grid-row:2; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="shadow"] { grid-column:2; grid-row:2; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="top_radius"] { grid-column:1; grid-row:2; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="border_width"] { grid-column:3; grid-row:3; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="side_spacing_percent"] { grid-column:2; grid-row:3; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="icon_size"] { grid-column:1; grid-row:3; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="inactive_color"] { grid-column:3; grid-row:4; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="icon_label_gap"] { grid-column:2; grid-row:4; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="border_color"] { grid-column:1; grid-row:4; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="active_color"] { grid-column:1; grid-row:5; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="show_labels"] { grid-column:3; grid-row:6; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="safe_area"] { grid-column:2; grid-row:6; }
+.mobishop-chrome-footer-general .mobishop-page-field[data-setting="hide_on_scroll"] { grid-column:1; grid-row:6; }
+.mobishop-chrome-row { display:block!important; min-height:0!important; }
+.mobishop-chrome-row-toolbar { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+.mobishop-chrome-row-toolbar .mobishop-chrome-add-row { min-height:32px; margin:0 0 0 auto!important; border-color:#236b59!important; background:#236b59!important; color:#fff!important; font-weight:700; }
+.mobishop-chrome-row-toolbar .mobishop-chrome-add-row:hover,.mobishop-chrome-row-toolbar .mobishop-chrome-add-row:focus { border-color:#174f42!important; background:#174f42!important; color:#fff!important; }
+.mobishop-chrome-row-toolbar label { display:inline-flex; align-items:center; gap:6px; }
+.mobishop-chrome-row-total { margin-inline-start:0; font-weight:700; color:#236b59; }
+.mobishop-chrome-row.is-invalid { border-color:#b42318!important; }
+.mobishop-chrome-row.is-invalid .mobishop-chrome-row-total { color:#b42318; }
+.mobishop-chrome-row-grid { display:grid; gap:7px; width:100%; min-width:0; overflow:hidden; }
+.mobishop-chrome-column { display:flex; min-width:0; flex-direction:column; gap:5px; }
+.mobishop-page-phone__screen { scrollbar-width:none; }
+.mobishop-page-phone__screen::-webkit-scrollbar { display:none; width:0; height:0; }
+.mobishop-footer-icons-setting__items { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.mobishop-footer-icons-setting__items .mobishop-chrome-item-setting { margin:0; padding:12px; border:1px solid #cfe1dc; border-radius:10px; background:#fff; }
+.mobishop-footer-icons-setting__items .mobishop-chrome-item-setting h4 { margin:0 0 10px; color:#236b59; font-size:15px; }
+@media(max-width:782px){.mobishop-footer-icons-setting__items{grid-template-columns:1fr}}
+@media(max-width:782px){
+	.mobishop-chrome-footer-general .mobishop-page-fields{grid-template-columns:1fr}
+	.mobishop-chrome-footer-general .mobishop-page-field[data-setting]{grid-column:1;grid-row:auto}
+}
+.mobishop-chrome-column>label { display:flex; align-items:center; justify-content:center; gap:5px; color:#50665f; font-size:10px; }
+.mobishop-chrome-column>label input { width:72px; min-height:28px; padding:2px 5px; }
+.mobishop-chrome-zone { box-sizing:border-box; width:100%; min-width:0; min-height:52px; overflow:hidden; }
+.mobishop-chrome-zone .mobishop-chrome-item { max-width:100%; }
+.mobishop-chrome-remove { display:inline-grid; width:22px; height:22px; margin-inline-start:5px; place-items:center; border-radius:50%; background:#fff0ee; color:#b42318; font-size:20px; font-weight:800; line-height:1; cursor:pointer; }
+.mobishop-chrome-palette { transition:background-color .15s ease,box-shadow .15s ease; }
+.mobishop-chrome-palette:has(.mobishop-chrome-item:active) { background:#edf8f4; box-shadow:0 0 0 2px #8fc8ba; }
+.mobishop-app-header-brand { display:flex; min-width:0; flex-direction:column; align-items:inherit; justify-content:center; }
+.mobishop-chrome-setting--general { margin-top:14px!important; padding:14px; border:1px solid #c9dfd9!important; border-radius:10px; background:#fff; }
+.mobishop-chrome-composer--collapsed { margin-top:12px; }
+.mobishop-chrome-composer--collapsed.is-disabled { border-color:#d6d9dc; background:#f1f2f3; box-shadow:none; }
+.mobishop-chrome-composer--collapsed.is-disabled .mobishop-chrome-composer__heading :is(h3,p) { color:#7a7f84; }
+.mobishop-chrome-composer--collapsed.is-disabled :is(.mobishop-chrome-layout,.mobishop-chrome-palette,.mobishop-chrome-reset) { opacity:.46; pointer-events:none; }
+.mobishop-page-text-control { display:flex; align-items:center; gap:10px; }
+.mobishop-page-text-control input { flex:1 1 auto; min-width:0; }
+.mobishop-chrome-composer--collapsed.is-preset-locked .mobishop-chrome-layout,
+.mobishop-chrome-composer--collapsed.is-preset-locked .mobishop-chrome-palette,
+.mobishop-chrome-composer--collapsed.is-preset-locked .mobishop-chrome-reset { opacity:.46; pointer-events:none; }
+.mobishop-chrome-composer__heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; direction:rtl; text-align:right; }
+.mobishop-chrome-composer__heading h3 { margin:0; color:#236b59; }
+.mobishop-chrome-composer__heading p { margin:4px 0 0; color:#646970; }
+.mobishop-header-presets { box-sizing:border-box; width:100%; max-width:100%; margin:0 0 14px; padding:12px; overflow:hidden; border:1px solid #c9dfd9; border-radius:10px; background:#f7fbfa; }
+.mobishop-header-presets__heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.mobishop-header-presets__heading strong { color:#236b59; font-size:14px; }
+.mobishop-header-presets__heading span { color:#64746f; font-size:11px; }
+.mobishop-header-presets__grid { display:grid; width:100%; max-width:100%; grid-template-columns:repeat(auto-fit,minmax(min(142px,100%),1fr)); gap:8px; }
+.mobishop-header-preset { box-sizing:border-box; display:flex; width:100%; max-width:100%; min-width:0; min-height:104px; padding:8px; overflow:hidden; flex-direction:column; align-items:stretch; gap:4px; border:1px solid #cbdcd7; border-radius:9px; background:#fff; color:#263d37; text-align:left; cursor:pointer; transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease; }
+.mobishop-header-preset:hover,.mobishop-header-preset:focus-visible { border-color:#2f806e; box-shadow:0 0 0 2px rgba(47,128,110,.14); outline:0; transform:translateY(-1px); }
+.mobishop-header-preset.is-selected { border-color:#236b59; background:#edf8f4; box-shadow:0 0 0 2px rgba(35,107,89,.16); }
+.mobishop-header-preset strong { overflow:hidden; font-size:12px; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+.mobishop-header-preset small { color:#6a7975; font-size:9px; line-height:1.2; }
+.mobishop-header-preset__preview { box-sizing:border-box; display:flex; height:39px; padding:5px; flex-direction:column; justify-content:center; gap:4px; overflow:hidden; border:1px solid #d7e6e2; border-radius:6px; background:#eef5f3; }
+.mobishop-header-preset__row { display:flex; min-width:0; flex:1 1 0; align-items:center; gap:3px; }
+.mobishop-header-preset__column { display:flex; min-width:0; height:100%; flex:1 1 0; align-items:center; justify-content:center; gap:2px; }
+.mobishop-header-preset__item { box-sizing:border-box; display:block; position:relative; width:8px; height:8px; flex:0 0 auto; border:1.5px solid #4f887a; border-radius:50%; }
+.mobishop-header-preset__item--logo { width:22px; height:7px; border:0; border-radius:2px; background:#4f887a; }
+.mobishop-header-preset__item--title { width:30px; height:5px; border:0; border-radius:2px; background:#4f887a; }
+.mobishop-header-preset__item--search_bar { width:100%; height:10px; border:1px solid #7ba79c; border-radius:6px; background:#fff; }
+.mobishop-header-preset__item--search_bar::after { content:""; position:absolute; top:2px; right:3px; width:3px; height:3px; border:1px solid #4f887a; border-radius:50%; }
+.mobishop-header-preset__item--menu { width:10px; height:7px; border:0; border-top:1.5px solid #4f887a; border-bottom:1.5px solid #4f887a; border-radius:0; }
+.mobishop-header-preset__item--menu::after { content:""; position:absolute; top:2px; left:0; width:10px; border-top:1.5px solid #4f887a; }
+.mobishop-header-preset__item--back { border:0; border-left:1.5px solid #4f887a; border-bottom:1.5px solid #4f887a; border-radius:0; transform:rotate(45deg) scale(.72); }
+.mobishop-header-preset__item--cart { border-radius:2px 2px 4px 4px; }
+.mobishop-header-preset__item--wishlist { border-radius:50% 50% 45% 45%; transform:scale(.8) rotate(45deg); }
+.mobishop-header-preset__item--account { box-shadow:inset 0 -3px 0 rgba(79,136,122,.22); }
+.mobishop-header-preset__item--search::after { content:""; position:absolute; right:-3px; bottom:-2px; width:4px; border-top:1.5px solid #4f887a; transform:rotate(45deg); }
+@media(max-width:782px){.mobishop-header-presets__heading{align-items:flex-start;flex-direction:column}.mobishop-header-presets__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.mobishop-header-presets__grid{grid-template-columns:1fr}}
+.mobishop-collapsed-header-toggle { flex:0 0 auto; margin-inline-start:auto; }
+.mobishop-app-header.is-transition-fade { animation:mobishop-header-fade var(--collapse-duration,260ms) ease both; }
+.mobishop-app-header.is-transition-slide { animation:mobishop-header-slide var(--collapse-duration,260ms) ease both; }
+.mobishop-app-header.is-transition-fade_slide { animation:mobishop-header-fade-slide var(--collapse-duration,260ms) ease both; }
+.mobishop-app-header.is-transition-smooth_compact { animation:none; }
+.mobishop-app-header.is-transition-scale { transform-origin:top center; animation:mobishop-header-scale var(--collapse-duration,260ms) ease both; }
+.mobishop-app-header-transition-layer { display:flex; position:absolute; inset:0; flex-direction:column; justify-content:center; gap:var(--row-gap); padding:5px 9px; pointer-events:none; transition:none; }
+.mobishop-app-header.is-transition-smooth_compact .mobishop-app-header-transition-layer,
+.mobishop-app-header.is-transition-smooth_compact .mobishop-app-header-brand,
+.mobishop-app-header.is-transition-smooth_compact .mobishop-app-header-title,
+.mobishop-app-header.is-transition-smooth_compact .mobishop-app-header-item,
+.mobishop-app-header.is-transition-smooth_compact .mobishop-app-search {
+	transition:opacity var(--collapse-duration,260ms) linear,transform var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1);
+	will-change:opacity,transform;
+}
+.mobishop-app-header-transition-layer[style*="opacity:1"] { pointer-events:auto; }
+.mobishop-app-header-morphing-search {
+	position:absolute;
+	inset-inline-start:0;
+	z-index:2;
+	transition:top var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1),width var(--collapse-duration,260ms) cubic-bezier(.22,.61,.36,1);
+	will-change:top,width;
+}
+.mobishop-app-header-morphing-search .mobishop-app-search { width:100%!important; }
+.mobishop-app-header-fixed-actions {
+	position:absolute;
+	inset-block-start:0;
+	inset-inline-end:0;
+	z-index:3;
+	display:flex;
+	height:var(--search-height,44px);
+	align-items:center;
+	pointer-events:auto;
+}
+@keyframes mobishop-header-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes mobishop-header-slide { from { transform:translateY(-12px); } to { transform:translateY(0); } }
+@keyframes mobishop-header-fade-slide { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes mobishop-header-smooth-compact { from { height:var(--regular-height); opacity:.88; transform:translateY(-4px); } to { height:var(--compact-height); opacity:1; transform:translateY(0); } }
+@keyframes mobishop-header-scale { from { opacity:0; transform:scale(.94); } to { opacity:1; transform:scale(1); } }
+.mobishop-chrome-layout-error { display:none; margin:8px 0 0; color:#b42318; font-weight:700; }
+.mobishop-chrome-composer.has-invalid-layout .mobishop-chrome-layout-error { display:block; }
+.mobishop-chrome-composer.has-invalid-layout::after { display:block; margin-top:8px; color:#b42318; font-weight:700; content:"Each row must total exactly 100%."; }
+.mobishop-preview-focus-target { transition:box-shadow .16s ease,background-color .16s ease; }
+.mobishop-preview-focus-target.is-editor-focused,
+.mobishop-page-preview-element.is-editor-focused,
+.mobishop-page-preview-header.is-editor-focused,
+.mobishop-page-preview-footer.is-editor-focused,
+.mobishop-app-header.is-editor-focused,
+.mobishop-app-footer.is-editor-focused { position:relative; z-index:2; box-shadow:0 0 0 2px #2f806e,0 0 0 5px rgba(47,128,110,.16)!important; }
+
+/* The phone preview uses the same fixed chrome behavior as Flutter. */
+.mobishop-page-phone__screen .mobishop-app-header,
+.mobishop-category-phone__screen .mobishop-app-header,
+.mobishop-preview__screen .mobishop-app-header { position:sticky; top:0; z-index:20; }
+.mobishop-page-phone__screen .mobishop-app-footer,
+.mobishop-category-phone__screen .mobishop-app-footer,
+.mobishop-preview__screen .mobishop-app-footer { position:sticky; bottom:0; z-index:20; }
+@media (max-width: 900px) {
+	.mobishop-chrome-icon-choice { grid-template-columns:1fr; }
+}

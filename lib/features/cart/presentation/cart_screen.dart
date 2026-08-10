@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_coupon.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
-import 'package:kidia_store_app/features/cart/presentation/cart_copy.dart';
-import 'package:kidia_store_app/features/cart/presentation/controllers/cart_controller.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_money.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_coupon.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
+import 'package:mobishop_store_app/features/cart/presentation/cart_copy.dart';
+import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_controller.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_money.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 typedef CartCheckoutCallback =
     FutureOr<void> Function(BuildContext context, Cart cart);

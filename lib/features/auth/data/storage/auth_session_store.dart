@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 
 abstract interface class AuthSessionStore {
   Future<AuthSession?> read();
@@ -75,7 +75,7 @@ class SecureAuthSessionStore implements AuthSessionStore {
       '=',
       '',
     );
-    return 'kidia_auth_session_$encoded';
+    return 'mobishop_auth_session_$encoded';
   }
 }
 

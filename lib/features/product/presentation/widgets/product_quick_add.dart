@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart'
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart'
     as cart_selection;
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
-import 'package:kidia_store_app/features/product/application/product_detail_controller.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_quick_add_appearance.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
+import 'package:mobishop_store_app/features/product/application/product_detail_controller.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_quick_add_appearance.dart';
 
 class ProductQuickAddButton extends StatelessWidget {
   const ProductQuickAddButton({

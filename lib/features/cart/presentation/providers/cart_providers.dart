@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_api_transport.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
-import 'package:kidia_store_app/features/cart/data/repositories/cart_repository_impl.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_api_transport.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
+import 'package:mobishop_store_app/features/cart/data/repositories/cart_repository_impl.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
 
 /// One configured Dio client is shared by the Store API bootstrap request and
 /// token-authenticated cart requests for the lifetime of the provider scope.

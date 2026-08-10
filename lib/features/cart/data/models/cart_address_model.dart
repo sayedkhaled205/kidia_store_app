@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_address.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_address.dart';
 
 class CartAddressModel {
   const CartAddressModel({

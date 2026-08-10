@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 
 class AuthController extends AsyncNotifier<AuthSession?> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);

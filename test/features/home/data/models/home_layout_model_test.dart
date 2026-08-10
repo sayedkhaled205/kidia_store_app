@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/home/data/models/home_block_model.dart';
-import 'package:kidia_store_app/features/home/data/models/home_layout_model.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_layout_model.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 
 void main() {
   group('HomeLayoutModel', () {
@@ -34,7 +34,7 @@ void main() {
                 'enabled': true,
                 'data': <String, dynamic>{
                   'logo_url': 'https://example.com/logo.png',
-                  'title': 'Kidia',
+                  'title': 'MobiShop',
                   'subtitle': 'Kids fashion',
                   'layout': 'center',
                   'height': 72,
@@ -63,7 +63,7 @@ void main() {
               })
               as AppHeaderBlock;
 
-      expect(header.title, 'Kidia');
+      expect(header.title, 'MobiShop');
       expect(header.logoHeight, 42);
       expect(header.showAccount, isTrue);
       expect(header.backgroundColor, '#fefefe');

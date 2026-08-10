@@ -1,0 +1,573 @@
+(function () {
+	"use strict";
+
+	if (!window.jQuery) {
+		return;
+	}
+
+	var $ = window.jQuery;
+	var builder = $(".mobishop-category-builder").first();
+	var preview = $("#mobishop-category-live-preview");
+	var form = builder.find(".mobishop-category-editor form").first();
+	var general = builder.find(".mobishop-category-general").first();
+	var categoryElement = builder.find(".mobishop-category-element").first();
+	var phoneScreen = builder.find(".mobishop-category-phone__screen").get(0);
+	var expandedTerms = {};
+	var activePreviewParentId = "";
+	var previewCollapseProgress = 0;
+
+	if (!builder.length || !preview.length || !form.length || !general.length) {
+		return;
+	}
+
+	window.mobishopCategoryBuilderBooted = true;
+
+	function markDirty() {
+		form.get(0).dispatchEvent(new window.CustomEvent("mobishop:dirty", { bubbles: true }));
+	}
+
+	function field(scope, suffix) {
+		var fields = scope.find('[name$="[' + suffix + ']"]');
+		return fields.length ? fields.last() : $();
+	}
+
+	function setting(suffix) {
+		var input = field(general, suffix);
+		if (!input.length) {
+			return "";
+		}
+		if (String(input.attr("type") || "").toLowerCase() === "checkbox") {
+			return input.prop("checked") ? String(input.val() || "1") : "0";
+		}
+		return input.val();
+	}
+
+	function numberInRange(value, fallback, minimum, maximum) {
+		var parsed = Number(value);
+		if (!isFinite(parsed)) {
+			parsed = fallback;
+		}
+		return Math.max(minimum, Math.min(maximum, parsed));
+	}
+
+	function imagePosition(value) {
+		return {
+			center: "center",
+			top: "center top",
+			bottom: "center bottom",
+			left: "left center",
+			right: "right center"
+		}[value] || "center";
+	}
+
+	function textAlignment(value) {
+		if (value === "center") {
+			return "center";
+		}
+		return value === "end" ? "left" : "right";
+	}
+
+	function colorWithAlpha(value, alpha, fallback) {
+		var hex = String(value || fallback || "#000000").replace("#", "");
+		var parsed = parseInt(hex, 16);
+		if (hex.length !== 6 || !isFinite(parsed)) {
+			parsed = 0;
+		}
+		return "rgba(" + ((parsed >> 16) & 255) + "," + ((parsed >> 8) & 255) + "," + (parsed & 255) + "," + alpha + ")";
+	}
+
+	function updateOrders(list) {
+		$(list).children(".mobishop-category-row").each(function (index) {
+			$(this).children(".mobishop-category-card").find(".mobishop-category-order").val(index);
+		});
+	}
+
+	function categoryKey(row) {
+		return String(row.attr("data-term-id") || "");
+	}
+
+	function isRowExpanded(row) {
+		var key = categoryKey(row);
+		if (key && Object.prototype.hasOwnProperty.call(expandedTerms, key)) {
+			return expandedTerms[key];
+		}
+		return row.children(".mobishop-category-card").find(".mobishop-category-expand").first().attr("aria-expanded") === "true";
+	}
+
+	function setRowExpanded(row, expanded) {
+		var key = categoryKey(row);
+		var button = row.children(".mobishop-category-card").find(".mobishop-category-expand").first();
+		var children = row.children(".mobishop-category-children");
+		var nextState = Boolean(expanded);
+		if (key) {
+			expandedTerms[key] = nextState;
+		}
+		button.attr("aria-expanded", nextState ? "true" : "false");
+		children.prop("hidden", !nextState);
+		row.toggleClass("is-expanded", nextState);
+	}
+
+	function elementEnabled() {
+		return categoryElement.find(".mobishop-category-element-enabled").prop("checked");
+	}
+
+	function categoryLayout() {
+		var layout = String(setting("category_layout") || "default");
+		return ["default", "visual_grid", "circular_grid", "compact_grid", "sidebar"].indexOf(layout) >= 0 ? layout : "default";
+	}
+
+	function syncEditorLayout() {
+		var layout = categoryLayout();
+		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
+		var cardGap = numberInRange(setting("card_gap"), 10, 0, 24);
+		var editorColumns = layout === "visual_grid" ? 2
+			: layout === "circular_grid" || layout === "compact_grid" ? columns
+			: layout === "sidebar" ? 1
+			: columns;
+		categoryElement.find(".mobishop-category-items").first()
+			.attr("data-category-layout", layout)
+			.css({
+				"--category-editor-columns": editorColumns,
+				"--category-editor-gap": cardGap + "px"
+			});
+	}
+
+	function navigationMode() {
+		var selected = general.find('[name="category_general[navigation_mode]"]:checked').val();
+		if (!selected) { selected = setting("navigation_mode"); }
+		return String(selected) === "separate_page" ? "separate_page" : "expand_inline";
+	}
+
+	function applyArtworkStyles(box, image, maximumSize) {
+		var size = numberInRange(setting("image_size"), 68, 32, maximumSize);
+		var shape = setting("image_shape") || "rounded";
+		var radius = numberInRange(setting("image_radius"), 18, 0, 50);
+		var effect = setting("image_effect") || "none";
+
+		box.css({
+			width: size + "px",
+			height: size + "px",
+			borderRadius: shape === "circle" ? "50%" : shape === "rounded" ? radius + "%" : "0",
+			border: numberInRange(setting("border_width"), 0, 0, 8) + "px solid " + (setting("border_color") || "#DDE5E2"),
+			backgroundColor: setting("background_color") || "#FFFFFF",
+			boxShadow: effect === "shadow" ? "0 4px 10px rgba(0,0,0,.2)" : "none"
+		});
+
+		image.css({
+			objectFit: setting("image_fit") || "contain",
+			objectPosition: imagePosition(setting("image_position")),
+			transform: "scale(" + numberInRange(setting("image_scale"), 100, 80, 150) / 100 + ")",
+			filter: effect === "grayscale" ? "grayscale(1)" : "none"
+		});
+	}
+
+	function applyNameStyles(name, isChild) {
+		var requestedSize = numberInRange(setting("font_size"), 16, 10, 30);
+		name.css({
+			fontSize: (isChild ? Math.min(requestedSize, 14) : Math.min(requestedSize, 18)) + "px",
+			color: setting("font_color") || "#1F2933",
+			fontWeight: setting("font_weight") || "800",
+			textAlign: textAlignment(setting("text_align")),
+			lineHeight: numberInRange(setting("line_height"), 125, 100, 200) / 100,
+			display: "-webkit-box",
+			WebkitBoxOrient: "vertical",
+			WebkitLineClamp: String(numberInRange(setting("text_max_lines"), 2, 1, 3)),
+			overflow: "hidden"
+		});
+	}
+
+	function applyCardStyles(card) {
+		var style = setting("card_style") || "outlined";
+		var strength = numberInRange(setting("card_shadow_strength"), 10, 0, 40) / 100;
+		var width = numberInRange(setting("card_width_percent"), 100, 40, 100);
+		card.css({
+			width: width + "%",
+			justifySelf: "center",
+			backgroundColor: setting("card_background_color") || "#FFFFFF",
+			borderColor: style === "outlined" ? "#DDE5E2" : "transparent",
+			borderRadius: numberInRange(setting("card_radius"), 17, 0, 32) + "px",
+			boxShadow: style === "elevated"
+				? "0 " + numberInRange(setting("card_shadow_offset_y"), 4, -20, 20) + "px " + numberInRange(setting("card_shadow_blur"), 12, 0, 40) + "px " + colorWithAlpha(setting("card_shadow_color"), strength, "#000000")
+				: "none"
+		});
+	}
+
+	function updateEditorArtwork(card) {
+		var artwork = card.find(".mobishop-category-image").first();
+		applyArtworkStyles(artwork, artwork.find("img"), 52);
+	}
+
+	function buildArtwork(card, maximumSize) {
+		var source = card.find(".mobishop-category-image img").attr("src") || "";
+		var box = $('<div class="mobishop-category-preview-image"></div>');
+		var image;
+		if (source) {
+			image = $('<img alt="">').attr("src", source);
+			box.append(image);
+		} else {
+			image = $("<span></span>");
+			box.append('<span class="dashicons dashicons-category mobishop-category-preview-placeholder"></span>');
+		}
+		applyArtworkStyles(box, image, maximumSize);
+		return box;
+	}
+
+	function buildCategoryName(row, card, isChild) {
+		var name = $('<div class="mobishop-category-preview-name"></div>');
+		var input = card.find(".mobishop-category-name-input").first();
+		name.text(String(input.val() || row.attr("data-default-name") || ""));
+		applyNameStyles(name, isChild);
+		return name;
+	}
+
+	function isHidden(card) {
+		return !card.find('.mobishop-category-visibility input[type="checkbox"]').is(":checked");
+	}
+
+	function buildChildCard(row) {
+		var card = row.children(".mobishop-category-card");
+		var mobileCard = $('<div class="mobishop-category-preview-child"></div>');
+		if (isHidden(card)) {
+			return null;
+		}
+		mobileCard.append(buildArtwork(card, 60));
+		mobileCard.append(buildCategoryName(row, card, true).css("margin-top", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
+		applyCardStyles(mobileCard);
+		if (numberInRange(setting("card_height"), 0, 0, 320) > 0) {
+			mobileCard.css("height", numberInRange(setting("card_height"), 0, 0, 320) + "px");
+		}
+		return mobileCard;
+	}
+
+	function buildRootBranch(row) {
+		var card = row.children(".mobishop-category-card");
+		var editorChildren = row.children(".mobishop-category-children");
+		var branch;
+		var tile;
+		var childrenContainer;
+		var visibleChildren = 0;
+
+		if (isHidden(card)) {
+			return null;
+		}
+
+		branch = $('<section class="mobishop-category-preview-branch"></section>').attr("data-term-id", row.attr("data-term-id") || "");
+		applyCardStyles(branch);
+		tile = $('<div class="mobishop-category-preview-root"></div>');
+		if (numberInRange(setting("card_height"), 0, 0, 320) > 0) {
+			tile.css({height: numberInRange(setting("card_height"), 0, 0, 320) + "px", minHeight: 0});
+		}
+		tile.append(buildArtwork(card, 78));
+		tile.append(buildCategoryName(row, card, false).css("margin-right", numberInRange(setting("image_text_gap"), 10, 0, 40) + "px"));
+		if (String(setting("show_arrow")) !== "0") {
+			tile.append(editorChildren.length ? '<button type="button" class="mobishop-category-preview-expand" aria-label="Toggle subcategories"><span class="mobishop-category-preview-material-icon">&#xF82B;</span></button>' : '<span class="mobishop-category-preview-chevron mobishop-category-preview-material-icon">&#xF63B;</span>');
+		}
+		branch.append(tile);
+
+		if (navigationMode() === "expand_inline" && editorChildren.length && isRowExpanded(row)) {
+			childrenContainer = $('<div class="mobishop-category-preview-children"></div>');
+			editorChildren.children(".mobishop-category-list").first().children(".mobishop-category-row").each(function () {
+				var child = buildChildCard($(this));
+				if (child) {
+					childrenContainer.append(child);
+					visibleChildren += 1;
+				}
+			});
+			if (visibleChildren) {
+				branch.addClass("is-expanded").append(childrenContainer);
+			}
+		}
+		return branch;
+	}
+
+	function appendVisibleChildren(row, container) {
+		var visibleChildren = 0;
+		row.children(".mobishop-category-children").children(".mobishop-category-list").first().children(".mobishop-category-row").each(function () {
+			var child = buildChildCard($(this));
+			if (child) {
+				container.append(child);
+				visibleChildren += 1;
+			}
+		});
+		return visibleChildren;
+	}
+
+	function renderSidebarPreview(content, rootList, showInlineDetail) {
+		var rows = [];
+		rootList.children(".mobishop-category-row").each(function () {
+			var row = $(this);
+			if (!isHidden(row.children(".mobishop-category-card"))) {
+				rows.push(row);
+			}
+		});
+		if (!rows.length) {
+			return 0;
+		}
+
+		var selectedId = String(activePreviewParentId || "");
+		var selectedRow = rows[0];
+		rows.forEach(function (row) {
+			if (categoryKey(row) === selectedId) {
+				selectedRow = row;
+			}
+		});
+		if (showInlineDetail) {
+			activePreviewParentId = categoryKey(selectedRow);
+		}
+
+		var sidebar = $('<div class="mobishop-category-preview-sidebar"></div>');
+		rows.forEach(function (row) {
+			var card = row.children(".mobishop-category-card");
+			var button = $('<button type="button" class="mobishop-category-preview-sidebar-root"></button>')
+				.attr("data-term-id", categoryKey(row))
+				.toggleClass("is-active", categoryKey(row) === categoryKey(selectedRow));
+			button.append(buildArtwork(card, 40));
+			button.append(buildCategoryName(row, card, false));
+			sidebar.append(button);
+		});
+
+		var detail = $('<div class="mobishop-category-preview-sidebar-detail"></div>');
+		if (showInlineDetail) {
+			var selectedCard = selectedRow.children(".mobishop-category-card");
+			var heading = $('<div class="mobishop-category-preview-sidebar-heading"></div>')
+				.append(buildArtwork(selectedCard, 54))
+				.append(buildCategoryName(selectedRow, selectedCard, false));
+			detail.append(heading);
+			if (!appendVisibleChildren(selectedRow, detail)) {
+				detail.append('<div class="mobishop-category-preview-sidebar-empty">No subcategories.</div>');
+			}
+		} else {
+			detail.append('<div class="mobishop-category-preview-sidebar-empty">Choose a category.</div>');
+		}
+
+		content.addClass("is-root-stage").append(sidebar).append(detail);
+		return rows.length;
+	}
+
+	function renderChrome(part) {
+		var card = builder.find('[data-chrome-part="' + part + '"]').first();
+		if (window.MobiShopChromePreview) {
+			return part === "header"
+				? window.MobiShopChromePreview.renderHeader(card.get(0), "الأقسام", { collapseProgress: previewCollapseProgress, page: "category" })
+				: window.MobiShopChromePreview.renderFooter(card.get(0), { page: "category" });
+		}
+		return "";
+	}
+
+	function renderMobilePreview() {
+		var rootList = categoryElement.find(".mobishop-category-items > .mobishop-category-list").first();
+		var layout = categoryLayout();
+		var columns = numberInRange(setting("grid_columns"), 2, 2, 4);
+		var cardGap = numberInRange(setting("card_gap"), 10, 0, 24);
+		syncEditorLayout();
+		var pageBackground = setting("page_background_color") || "#F7F8FA";
+		var openingMode = navigationMode();
+		var content = $('<div class="mobishop-category-preview-content"></div>').addClass("is-layout-" + layout).addClass("is-opening-" + openingMode).attr("data-opening-mode", openingMode).css({"--category-columns": columns, "--category-card-gap": cardGap + "px", "--category-card-radius": numberInRange(setting("card_radius"), 17, 0, 32) + "px", "transform": "translateY(" + (numberInRange(setting("margin_bottom"), 0, 0, 80) - numberInRange(setting("margin_top"), 0, 0, 80)) + "px)", "padding-top": ((layout === "sidebar" ? cardGap : 14) + numberInRange(setting("space_up"), 0, 0, 80)) + "px", "padding-bottom": ((layout === "sidebar" ? cardGap : 24) + numberInRange(setting("space_down"), 0, 0, 80)) + "px", "background-color": setting("element_background_color") || "#FFFFFF"});
+		var visible = 0;
+		preview.empty().css("background-color", pageBackground).append(renderChrome("header"));
+
+		if (elementEnabled()) {
+			if (layout === "sidebar" && navigationMode() === "expand_inline") {
+				visible = renderSidebarPreview(content, rootList, true);
+			} else if (activePreviewParentId) {
+				var activeRow = rootList.children('.mobishop-category-row[data-term-id="' + activePreviewParentId + '"]').first();
+				var children = activeRow.children(".mobishop-category-children").find("> .mobishop-category-list > .mobishop-category-row");
+				content.addClass("is-showing-children").append('<button type="button" class="mobishop-category-preview-back">‹ <span>Categories</span></button>');
+				var childContainer = layout === "sidebar" ? $('<div class="mobishop-category-preview-sidebar-detail"></div>') : content;
+				children.each(function () { var child = buildChildCard($(this)); if (child) { childContainer.append(child); visible += 1; } });
+				if (childContainer.get(0) !== content.get(0)) { content.append(childContainer); }
+			} else if (layout === "sidebar") {
+				visible = renderSidebarPreview(content, rootList, false);
+			} else rootList.children(".mobishop-category-row").each(function () {
+				var branch = buildRootBranch($(this));
+				if (branch) {
+					if (navigationMode() !== "expand_inline") { branch.removeClass("is-expanded").find(".mobishop-category-preview-children").remove(); }
+					content.append(branch);
+					visible += 1;
+				}
+			});
+		}
+
+		if (!visible) {
+			content.append('<div class="mobishop-category-preview-empty">' + (elementEnabled() ? "No visible categories." : "Category element is hidden.") + "</div>");
+		}
+		preview.append(content).append(renderChrome("footer"));
+		categoryElement.toggleClass("is-enabled", elementEnabled());
+	}
+
+	function updateRangeLabel(input) {
+		var name = input.name || "";
+		var display = input.value + "px";
+		if (name.indexOf("image_scale") !== -1 || name.indexOf("image_radius") !== -1 || name.indexOf("card_width_percent") !== -1) {
+			display = input.value + "%";
+		} else if (name.indexOf("line_height") !== -1) {
+			display = (Number(input.value) / 100).toFixed(2);
+		}
+		$(input).siblings(".mobishop-range-value").text(display);
+	}
+
+	builder.on("click", ".mobishop-category-element-expand", function () {
+		var button = $(this);
+		var card = button.closest(".mobishop-page-card");
+		var body = card.children(".mobishop-page-card__body").first();
+		var opening = body.prop("hidden");
+		body.prop("hidden", !opening);
+		button.attr("aria-expanded", opening ? "true" : "false");
+		card.toggleClass("is-open", opening);
+	});
+
+	builder.on("click", "#mobishop-collapse-all, #mobishop-expand-all", function () {
+		var opening = this.id === "mobishop-expand-all";
+		builder.find(".mobishop-category-element").each(function () {
+			var card = $(this);
+			var body = card.children(".mobishop-page-card__body").first();
+			var toggle = card.find(".mobishop-category-element-expand").first();
+			body.prop("hidden", !opening);
+			card.toggleClass("is-open", opening);
+			toggle.attr("aria-expanded", opening ? "true" : "false");
+		});
+	});
+
+	if ($.fn && typeof $.fn.sortable === "function") {
+		builder.find(".mobishop-category-list").each(function () {
+			$(this).sortable({
+				items: "> .mobishop-category-row",
+				handle: ".mobishop-category-handle",
+				axis: false,
+				tolerance: "pointer",
+				distance: 4,
+				scroll: true,
+				scrollSensitivity: 80,
+				scrollSpeed: 14,
+				forcePlaceholderSize: true,
+				placeholder: "mobishop-category-sort-placeholder",
+				cancel: "input,select,textarea,button,label",
+				helper: function (_event, item) {
+					var helper = item.clone();
+					helper.children(".mobishop-category-children").prop("hidden", true);
+					helper.width(item.outerWidth());
+					return helper;
+				},
+				start: function (_event, ui) {
+					builder.addClass("is-sorting-categories");
+					ui.placeholder.height(ui.item.outerHeight());
+				},
+				stop: function () {
+					builder.removeClass("is-sorting-categories");
+				},
+				update: function () {
+					updateOrders(this);
+					markDirty();
+					renderMobilePreview();
+				}
+			});
+		});
+	}
+
+	builder.on("click", ".mobishop-category-expand", function () {
+		var row = $(this).closest(".mobishop-category-row");
+		setRowExpanded(row, !isRowExpanded(row));
+		renderMobilePreview();
+	});
+
+	builder.on("click", ".mobishop-category-preview-expand", function () {
+		var termId = $(this).closest(".mobishop-category-preview-branch").attr("data-term-id");
+		var row = builder.find('.mobishop-category-row[data-term-id="' + termId + '"]').first();
+		if (!row.length) { return; }
+		if (navigationMode() === "expand_inline") { setRowExpanded(row, !isRowExpanded(row)); }
+		else if (row.children(".mobishop-category-children").length) { activePreviewParentId = termId; }
+		renderMobilePreview();
+	});
+
+	builder.on("click", ".mobishop-category-preview-back", function () { activePreviewParentId = ""; renderMobilePreview(); });
+	builder.on("click", ".mobishop-category-preview-sidebar-root", function () {
+		activePreviewParentId = String($(this).attr("data-term-id") || "");
+		renderMobilePreview();
+	});
+
+	builder.on("input change", ".mobishop-category-general input, .mobishop-category-general select", function () {
+		if (String(this.type).toLowerCase() === "range") {
+			updateRangeLabel(this);
+		}
+		builder.find(".mobishop-category-card").each(function () { updateEditorArtwork($(this)); });
+		if (String(this.name || "").indexOf("navigation_mode") !== -1) {
+			activePreviewParentId = "";
+			builder.find(".mobishop-category-items").attr("data-navigation-mode", navigationMode());
+			builder.find(".mobishop-category-items > .mobishop-category-list > .mobishop-category-row").each(function (index) {
+				var row = $(this);
+				if (!row.children(".mobishop-category-children").length) { return; }
+				setRowExpanded(row, navigationMode() === "expand_inline" && index === 0);
+			});
+		}
+		if (String(this.name || "").indexOf("category_layout") !== -1) {
+			activePreviewParentId = "";
+			syncEditorLayout();
+			document.dispatchEvent(new window.CustomEvent("mobishop:category-layout-changed", {
+				detail: { layout: categoryLayout() }
+			}));
+		}
+		renderMobilePreview();
+	});
+
+	builder.on("input change", ".mobishop-category-name-input, .mobishop-category-visibility input, .mobishop-category-element-enabled", renderMobilePreview);
+	builder.on("input change", ".mobishop-fixed-chrome-card input, .mobishop-fixed-chrome-card select", renderMobilePreview);
+
+	builder.on("click", ".mobishop-category-image-button", function () {
+		var card = $(this).closest(".mobishop-category-card");
+		var frame;
+		if (!window.wp || !window.wp.media) {
+			return;
+		}
+		frame = window.wp.media({ title: "Choose category image", button: { text: "Use image" }, multiple: false });
+		frame.on("select", function () {
+			var selected = frame.state().get("selection").first();
+			var image = selected ? selected.toJSON() : null;
+			var source;
+			if (!image || !image.url) {
+				return;
+			}
+			source = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
+			card.find(".mobishop-category-image-id").val(image.id || 0);
+			card.find(".mobishop-category-image").empty().append($("<img>", { src: source, alt: "" }));
+			card.find(".mobishop-category-image-button").addClass("is-active").attr("aria-pressed", "true");
+			card.find(".mobishop-category-image-clear").removeClass("is-active").attr("aria-pressed", "false");
+			updateEditorArtwork(card);
+			markDirty();
+			renderMobilePreview();
+		});
+		frame.open();
+	});
+
+	builder.on("click", ".mobishop-category-image-clear", function () {
+		var button = $(this);
+		var card = button.closest(".mobishop-category-card");
+		var fallback = card.closest(".mobishop-category-row").attr("data-default-image") || "";
+		card.find(".mobishop-category-image-id").val("0");
+		card.find(".mobishop-category-image").empty().append(fallback ? $("<img>", { src: fallback, alt: "" }) : '<span class="dashicons dashicons-format-image"></span>');
+		button.addClass("is-active").attr("aria-pressed", "true");
+		card.find(".mobishop-category-image-button").removeClass("is-active").attr("aria-pressed", "false");
+		updateEditorArtwork(card);
+		markDirty();
+		renderMobilePreview();
+	});
+
+	if (phoneScreen) {
+		phoneScreen.addEventListener("scroll", function () {
+			previewCollapseProgress = Math.max(0, Math.min(1, phoneScreen.scrollTop / 64));
+			if (window.MobiShopChromePreview) {
+				window.MobiShopChromePreview.updateHeaderProgress(preview.get(0).querySelector(".mobishop-app-header"), previewCollapseProgress);
+			}
+		}, { passive: true });
+	}
+
+	builder.find(".mobishop-category-row").each(function () {
+		var row = $(this);
+		var button = row.children(".mobishop-category-card").find(".mobishop-category-expand").first();
+		if (button.length) {
+			setRowExpanded(row, button.attr("aria-expanded") === "true");
+		}
+	});
+	builder.find(".mobishop-category-card").each(function () { updateEditorArtwork($(this)); });
+	syncEditorLayout();
+	renderMobilePreview();
+}());

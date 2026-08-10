@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 
 void main() {
   test('parses fixed chrome, ordered page elements and typed settings', () {

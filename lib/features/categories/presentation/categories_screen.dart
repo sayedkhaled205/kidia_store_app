@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_category_model.dart';
-import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
-import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
-import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
-import 'package:kidia_store_app/features/search/presentation/catalog_search_launcher.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_category_providers.dart';
+import 'package:mobishop_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 final cmsPreviewCategorySettingsProvider =
     StreamProvider<Map<String, dynamic>?>(

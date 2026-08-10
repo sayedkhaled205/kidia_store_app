@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 
 enum CartApiMethod { get, post }
 
@@ -101,7 +101,7 @@ class StoreApiCartTransport implements CartApiTransport {
       'Accept': 'application/json',
       if (method == CartApiMethod.post) 'Content-Type': 'application/json',
       ...?headers,
-      if (authToken.isNotEmpty) 'X-Kidia-Session': authToken,
+      if (authToken.isNotEmpty) 'X-MobiShop-Session': authToken,
     };
 
     try {

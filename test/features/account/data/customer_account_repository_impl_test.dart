@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/account/data/network/customer_account_api_transport.dart';
-import 'package:kidia_store_app/features/account/data/repositories/customer_account_repository_impl.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
-import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:mobishop_store_app/features/account/data/network/customer_account_api_transport.dart';
+import 'package:mobishop_store_app/features/account/data/repositories/customer_account_repository_impl.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
 
 void main() {
   test('parses profile, addresses, support and hides postcode', () async {
@@ -130,9 +130,9 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
       'profile': <String, dynamic>{
         'id': 7,
         'email': 'customer@example.com',
-        'first_name': 'Kidia',
+        'first_name': 'MobiShop',
         'last_name': 'Customer',
-        'display_name': 'Kidia Customer',
+        'display_name': 'MobiShop Customer',
         'phone': '01000000000',
         'alternate_phone': '01100000000',
       },

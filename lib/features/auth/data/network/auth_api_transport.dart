@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_user.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 abstract interface class AuthApiTransport {
   Future<AuthIdentity> identify(String email);
@@ -60,7 +60,7 @@ class AuthApiException implements Exception {
 
 /// Same-origin transport for the companion plugin's customer auth contract.
 ///
-/// It accepts only fixed Woo Mobile endpoints and never logs credentials or
+/// It accepts only fixed MobiShop endpoints and never logs credentials or
 /// follows redirects, so a store response cannot forward a password or bearer
 /// session to another origin.
 class DioAuthApiTransport implements AuthApiTransport {
@@ -234,7 +234,7 @@ class DioAuthApiTransport implements AuthApiTransport {
           headers: <String, String>{
             'Accept': 'application/json',
             if (method != 'GET') 'Content-Type': 'application/json',
-            if (sessionToken.isNotEmpty) 'X-Kidia-Session': sessionToken,
+            if (sessionToken.isNotEmpty) 'X-MobiShop-Session': sessionToken,
           },
         ),
       );
@@ -299,7 +299,7 @@ class DioAuthApiTransport implements AuthApiTransport {
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/woo-mobile/v1/auth/$endpoint',
+      path: '$installPath/wp-json/mobishop/v1/auth/$endpoint',
       query: null,
       fragment: null,
     );

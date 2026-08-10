@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
-import 'package:kidia_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 
 class CatalogProductFilterSheet extends StatefulWidget {
   const CatalogProductFilterSheet({

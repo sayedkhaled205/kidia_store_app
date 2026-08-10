@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
-import 'package:kidia_store_app/features/catalog/data/repositories/catalog_repository_impl.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
+import 'package:mobishop_store_app/features/catalog/data/repositories/catalog_repository_impl.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 /// The catalog's transport boundary.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 
 /// A cart action that stays in sync with the authoritative WooCommerce cart.
 class CartIconButton extends StatelessWidget {

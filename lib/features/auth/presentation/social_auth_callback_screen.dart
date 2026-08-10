@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:kidia_store_app/features/auth/presentation/auth_copy.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/auth_copy.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 
 class SocialAuthCallbackScreen extends ConsumerStatefulWidget {
   const SocialAuthCallbackScreen({
@@ -39,13 +39,13 @@ class _SocialAuthCallbackScreenState
     final AuthCopy copy = AuthCopy.of(context);
     final bool isArabic = copy.isArabic;
     return Scaffold(
-      backgroundColor: KidiaColors.surface,
+      backgroundColor: MobiShopColors.surface,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
             child: Padding(
-              padding: const EdgeInsets.all(KidiaSpacing.xl),
+              padding: const EdgeInsets.all(MobiShopSpacing.xl),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -59,7 +59,7 @@ class _SocialAuthCallbackScreenState
                       size: 52,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                  const SizedBox(height: KidiaSpacing.lg),
+                  const SizedBox(height: MobiShopSpacing.lg),
                   Text(
                     _busy
                         ? (isArabic
@@ -74,16 +74,16 @@ class _SocialAuthCallbackScreenState
                     ),
                   ),
                   if (_error != null) ...<Widget>[
-                    const SizedBox(height: KidiaSpacing.sm),
+                    const SizedBox(height: MobiShopSpacing.sm),
                     Text(
                       _error!,
                       key: const Key('social-auth-callback-error'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: KidiaColors.textSecondary,
+                        color: MobiShopColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: KidiaSpacing.lg),
+                    const SizedBox(height: MobiShopSpacing.lg),
                     FilledButton(
                       key: const Key('social-auth-callback-retry'),
                       onPressed: _complete,

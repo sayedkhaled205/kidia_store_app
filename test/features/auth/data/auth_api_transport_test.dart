@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/auth/data/network/auth_api_transport.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/data/network/auth_api_transport.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 void main() {
   test('keeps credentials on fixed same-origin mobile auth endpoints', () async {
@@ -35,7 +35,7 @@ void main() {
     expect(identity.isRegistered, isTrue);
     expect(
       requests.single.uri.path,
-      '/store/wp-json/woo-mobile/v1/auth/identify',
+      '/store/wp-json/mobishop/v1/auth/identify',
     );
     expect(requests.single.method, 'POST');
     expect(requests.single.data, <String, dynamic>{
@@ -75,7 +75,7 @@ void main() {
     await transport.currentUser(token);
 
     expect(captured?.method, 'GET');
-    expect(captured?.headers['X-Kidia-Session'], token);
+    expect(captured?.headers['X-MobiShop-Session'], token);
   });
 
   test('starts social login only with a same-origin website URL', () async {
@@ -110,7 +110,7 @@ void main() {
     );
 
     expect(uri.host, 'shop.example.com');
-    expect(captured?.uri.path, '/wp-json/woo-mobile/v1/auth/social/start');
+    expect(captured?.uri.path, '/wp-json/mobishop/v1/auth/social/start');
     expect(captured?.data, containsPair('provider', 'google'));
   });
 

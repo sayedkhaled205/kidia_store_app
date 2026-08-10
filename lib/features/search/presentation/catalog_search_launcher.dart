@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 
 Future<void> showCatalogSearch(
   BuildContext context, {

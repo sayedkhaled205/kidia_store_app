@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
+import 'package:mobishop_store_app/features/wishlist/data/shared_preferences_wishlist_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

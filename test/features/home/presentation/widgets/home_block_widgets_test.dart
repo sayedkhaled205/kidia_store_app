@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_widgets.dart';
-import 'package:kidia_store_app/features/home/presentation/widgets/home_block_frame.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_widgets.dart';
+import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_frame.dart';
 
 void main() {
   Future<void> pumpBlock(WidgetTester tester, Widget block) {
@@ -107,7 +107,7 @@ void main() {
           id: 'header-1',
           enabled: true,
           logoUrl: null,
-          title: 'Kidia',
+          title: 'MobiShop',
           subtitle: 'Kids fashion',
           layout: 'center',
           height: 72,
@@ -122,7 +122,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Kidia'), findsOneWidget);
+    expect(find.text('MobiShop'), findsOneWidget);
     expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
     expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);

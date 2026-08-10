@@ -1,0 +1,260 @@
+.mobishop-library{
+	max-width:1280px;
+	margin-top:20px;
+}
+
+.mobishop-library__header{
+	display:flex;
+	align-items:flex-start;
+	justify-content:space-between;
+	gap:24px;
+	margin-bottom:24px;
+}
+
+.mobishop-library__header h1{
+	margin:0 0 6px;
+	font-size:28px;
+	font-weight:700;
+}
+
+.mobishop-library-toolbar{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:20px;
+	margin:24px 0;
+}
+
+.mobishop-library-toolbar__search{
+	flex:1;
+	max-width:420px;
+}
+
+.mobishop-library-toolbar__search input{
+	width:100%;
+}
+
+.mobishop-library-toolbar__count{
+	font-size:14px;
+	color:#646970;
+}
+
+.mobishop-library-list{
+	display:grid;
+	grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+	gap:20px;
+}
+
+.mobishop-library-card{
+	background:#fff;
+	border:1px solid #dcdcde;
+	border-radius:14px;
+	padding:22px;
+	display:flex;
+	flex-direction:column;
+	gap:20px;
+	transition:.25s;
+}
+
+.mobishop-library-card:hover{
+	border-color:#2271b1;
+	box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+.mobishop-library-card__main{
+	display:flex;
+	gap:18px;
+}
+
+.mobishop-library-card__icon{
+	width:54px;
+	height:54px;
+	border-radius:12px;
+	background:#f6f7f7;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	font-size:24px;
+	color:#2271b1;
+	flex:none;
+}
+
+.mobishop-library-card__content{
+	flex:1;
+}
+
+.mobishop-library-card__title{
+	margin:0;
+	font-size:18px;
+	font-weight:700;
+}
+
+.mobishop-library-card__title a{
+	text-decoration:none;
+}
+
+.mobishop-library-card__meta{
+	display:flex;
+	flex-wrap:wrap;
+	gap:8px;
+	margin-top:10px;
+}
+
+.mobishop-library-status,
+.mobishop-library-enabled{
+	display:inline-flex;
+	align-items:center;
+	padding:4px 10px;
+	border-radius:999px;
+	font-size:12px;
+	font-weight:600;
+	background:#f0f0f1;
+}
+
+.mobishop-library-status--published{
+	background:#dff6dd;
+	color:#146c2e;
+}
+
+.mobishop-library-status--draft{
+	background:#fff4d6;
+	color:#8a5300;
+}
+
+.mobishop-library-enabled.is-enabled{
+	background:#dff6dd;
+	color:#146c2e;
+}
+
+.mobishop-library-enabled.is-disabled{
+	background:#fde2e1;
+	color:#b32d2e;
+}
+.mobishop-library-card__actions{
+	display:flex;
+	flex-wrap:wrap;
+	gap:10px;
+}
+
+.mobishop-library-empty{
+	padding:70px 20px;
+	text-align:center;
+	border:2px dashed #dcdcde;
+	border-radius:14px;
+	background:#fff;
+}
+
+.mobishop-library-empty .dashicons{
+	font-size:52px;
+	width:52px;
+	height:52px;
+	color:#a7aaad;
+	margin-bottom:16px;
+}
+
+.mobishop-library-empty h2{
+	margin:0 0 10px;
+	font-size:22px;
+}
+
+.mobishop-library-empty p{
+	margin:0 0 24px;
+	color:#646970;
+}
+
+.mobishop-library-modal[hidden]{
+	display:none !important;
+}
+
+.mobishop-library-modal{
+	position:fixed;
+	inset:0;
+	z-index:999999;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+}
+
+.mobishop-library-modal__overlay{
+	position:absolute;
+	inset:0;
+	background:rgba(0,0,0,.45);
+}
+
+.mobishop-library-modal__panel{
+	position:relative;
+	width:100%;
+	max-width:560px;
+	background:#fff;
+	border-radius:14px;
+	box-shadow:0 20px 50px rgba(0,0,0,.18);
+	overflow:hidden;
+}
+
+.mobishop-library-modal__header{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	padding:18px 22px;
+	border-bottom:1px solid #dcdcde;
+}
+
+.mobishop-library-modal__body{
+	padding:22px;
+}
+
+.mobishop-library-modal__body input{
+	width:100%;
+}
+
+.mobishop-library-modal__footer{
+	display:flex;
+	justify-content:flex-end;
+	gap:10px;
+	padding:18px 22px;
+	border-top:1px solid #dcdcde;
+	background:#f6f7f7;
+}
+
+.mobishop-library-modal__close{
+	padding:0;
+	border:0;
+	background:none;
+	cursor:pointer;
+}
+
+.mobishop-library-modal__error{
+	color:#b32d2e;
+	font-weight:600;
+	margin-top:12px;
+}
+
+body.mobishop-modal-open{
+	overflow:hidden;
+}
+
+@media (max-width:782px){
+
+	.mobishop-library__header{
+		flex-direction:column;
+	}
+
+	.mobishop-library-toolbar{
+		flex-direction:column;
+		align-items:stretch;
+	}
+
+	.mobishop-library-list{
+		grid-template-columns:1fr;
+	}
+
+	.mobishop-library-card{
+		padding:18px;
+	}
+
+	.mobishop-library-modal__panel{
+		margin:20px;
+		max-width:none;
+	}
+
+}

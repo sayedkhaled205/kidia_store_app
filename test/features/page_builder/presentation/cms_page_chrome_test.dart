@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 void main() {
   testWidgets(
@@ -113,7 +113,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_appBar(tester).preferredSize.height, 120);
-    expect(find.text('Kidia'), findsOneWidget);
+    expect(find.text('MobiShop'), findsOneWidget);
     expect(find.text('Search products'), findsOneWidget);
   });
 

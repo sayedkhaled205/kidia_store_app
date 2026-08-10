@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
-import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
-import 'package:kidia_store_app/features/account/presentation/customer_phone_format.dart';
-import 'package:kidia_store_app/features/account/presentation/providers/customer_account_providers.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_phone_format.dart';
+import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 
 class CustomerProfileScreen extends ConsumerWidget {
   const CustomerProfileScreen({super.key});
@@ -101,7 +101,7 @@ class _ProfileFormState extends State<_ProfileForm> {
   Widget build(BuildContext context) {
     final bool isArabic = _isArabic(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(KidiaSpacing.md),
+      padding: const EdgeInsets.all(MobiShopSpacing.md),
       child: Form(
         key: _formKey,
         child: Column(
@@ -109,11 +109,11 @@ class _ProfileFormState extends State<_ProfileForm> {
           children: <Widget>[
             const CircleAvatar(
               radius: 42,
-              backgroundColor: KidiaColors.primaryLight,
-              foregroundColor: KidiaColors.primaryDark,
+              backgroundColor: MobiShopColors.primaryLight,
+              foregroundColor: MobiShopColors.primaryDark,
               child: Icon(Icons.person_rounded, size: 48),
             ),
-            const SizedBox(height: KidiaSpacing.lg),
+            const SizedBox(height: MobiShopSpacing.lg),
             TextFormField(
               key: const Key('profile-first-name'),
               controller: _firstName,
@@ -124,7 +124,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                 prefixIcon: const Icon(Icons.person_outline_rounded),
               ),
             ),
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
             TextFormField(
               key: const Key('profile-last-name'),
               controller: _lastName,
@@ -135,7 +135,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                 prefixIcon: const Icon(Icons.person_outline_rounded),
               ),
             ),
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
             TextFormField(
               key: const Key('profile-display-name'),
               controller: _displayName,
@@ -154,7 +154,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
             ),
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
             TextFormField(
               key: const Key('profile-phone'),
               controller: _phone,
@@ -170,7 +170,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
             ),
-            const SizedBox(height: KidiaSpacing.sm),
+            const SizedBox(height: MobiShopSpacing.sm),
             TextFormField(
               key: const Key('profile-email'),
               controller: _email,
@@ -193,7 +193,7 @@ class _ProfileFormState extends State<_ProfileForm> {
               ),
             ),
             if (_error != null) ...<Widget>[
-              const SizedBox(height: KidiaSpacing.md),
+              const SizedBox(height: MobiShopSpacing.md),
               Text(
                 _error!,
                 key: const Key('profile-save-error'),
@@ -201,7 +201,7 @@ class _ProfileFormState extends State<_ProfileForm> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
-            const SizedBox(height: KidiaSpacing.lg),
+            const SizedBox(height: MobiShopSpacing.lg),
             FilledButton.icon(
               key: const Key('save-customer-profile'),
               onPressed: _saving ? null : _save,
@@ -295,19 +295,19 @@ class _ProfileLoadError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(KidiaSpacing.lg),
+        padding: const EdgeInsets.all(MobiShopSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             const Icon(Icons.cloud_off_outlined, size: 52),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             Text(
               isArabic
                   ? 'تعذر تحميل بيانات الحساب.'
                   : 'Could not load account details.',
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             FilledButton.tonalIcon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),

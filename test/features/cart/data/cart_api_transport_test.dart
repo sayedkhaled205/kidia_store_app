@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_api_transport.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_api_transport.dart';
 
 import 'cart_test_fixture.dart';
 
@@ -43,7 +43,7 @@ void main() {
       expect(captured?.uri.path, '/store/wp-json/wc/store/v1/cart/add-item');
       expect(captured?.method, 'POST');
       expect(captured?.headers['Cart-Token'], 'session-token');
-      expect(captured?.headers['X-Kidia-Session'], 'customer-session');
+      expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
       expect(captured?.data, <String, dynamic>{'id': 42, 'quantity': 1});
       expect(response.header('cart-token'), 'rotated-token');
     });

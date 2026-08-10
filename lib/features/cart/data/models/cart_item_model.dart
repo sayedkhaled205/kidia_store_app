@@ -1,6 +1,6 @@
-import 'package:kidia_store_app/features/cart/data/models/cart_json.dart';
-import 'package:kidia_store_app/features/cart/data/models/cart_totals_model.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_totals_model.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
 
 class CartItemQuantityLimitsModel {
   const CartItemQuantityLimitsModel({

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:kidia_store_app/features/home/data/repositories/home_repository_impl.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
-import 'package:kidia_store_app/features/home/domain/repositories/home_repository.dart';
-import 'package:kidia_store_app/features/home/data/models/home_layout_model.dart';
-import 'package:kidia_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:mobishop_store_app/features/home/data/repositories/home_repository_impl.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/domain/repositories/home_repository.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_layout_model.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 
 final cmsPreviewHomeLayoutJsonProvider = StreamProvider<Map<String, dynamic>?>(
   (Ref ref) => CmsPreviewLayoutBridge.homeLayouts,

@@ -1,9 +1,9 @@
-import 'package:kidia_store_app/features/catalog/data/models/catalog_attribute_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_image_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_json.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_money_model.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_attribute_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_image_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_money_model.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 
 class CatalogVariationModel extends CatalogVariation {
   const CatalogVariationModel({

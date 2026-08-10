@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
 
 /// Store-agnostic selection produced by a product-details experience.
 ///

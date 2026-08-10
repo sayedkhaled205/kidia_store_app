@@ -3,7 +3,7 @@ name: WordPress.org package check
 on:
   pull_request:
     paths:
-      - 'kidia-mobile-cms/**'
+      - 'mobishop/**'
       - 'tool/build_wordpress_org_package.sh'
       - 'tool/bump_wordpress_plugin_version.sh'
       - '.github/workflows/wordpress-plugin-check.yml'
@@ -12,7 +12,7 @@ on:
       - main
       - 'agent/**'
     paths:
-      - 'kidia-mobile-cms/**'
+      - 'mobishop/**'
       - 'tool/build_wordpress_org_package.sh'
       - 'tool/bump_wordpress_plugin_version.sh'
       - '.github/workflows/wordpress-plugin-check.yml'
@@ -36,17 +36,15 @@ jobs:
       - name: Validate installable ZIP layout
         run: |
           test -f build/wordpress-org/mobishop/mobishop.php
-          test ! -e build/wordpress-org/mobishop/kidia-mobile-cms.php
           test ! -d build/wordpress-org/mobishop/mobishop
           unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/mobishop.php'
           unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/readme.txt'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
-          ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/kidia-mobile-cms.php$'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
-          grep -q '^ \* Version:           1.46.63$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Version:           1.46.64$' build/wordpress-org/mobishop/mobishop.php
           grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
       - name: Run PHP contract tests
-        run: find kidia-mobile-cms/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
+        run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
       - name: Run official Plugin Check and activation
         uses: wordpress/plugin-check-action@v1
         with:

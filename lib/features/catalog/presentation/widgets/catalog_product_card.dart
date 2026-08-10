@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/presentation/catalog_copy.dart';
-import 'package:kidia_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_image_swiper.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_appearance.dart';
-import 'package:kidia_store_app/shared/widgets/product/product_wishlist_button.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_image_swiper.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_button.dart';
 
 class CatalogProductCard extends StatelessWidget {
   const CatalogProductCard({

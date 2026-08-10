@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
+import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 
 abstract interface class CustomerOrdersRepository {
   Future<CustomerOrderPage> getOrders({

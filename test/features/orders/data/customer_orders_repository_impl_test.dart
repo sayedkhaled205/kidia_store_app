@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/orders/data/network/customer_orders_api_transport.dart';
-import 'package:kidia_store_app/features/orders/data/repositories/customer_orders_repository_impl.dart';
-import 'package:kidia_store_app/features/orders/domain/entities/customer_order.dart';
+import 'package:mobishop_store_app/features/orders/data/network/customer_orders_api_transport.dart';
+import 'package:mobishop_store_app/features/orders/data/repositories/customer_orders_repository_impl.dart';
+import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 
 void main() {
   test(

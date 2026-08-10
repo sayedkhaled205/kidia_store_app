@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/app/app.dart';
-import 'package:kidia_store_app/app/app_router.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_identity.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/auth_session.dart';
-import 'package:kidia_store_app/features/auth/domain/entities/social_auth.dart';
-import 'package:kidia_store_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:kidia_store_app/features/auth/presentation/auth_screen.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/app/app.dart';
+import 'package:mobishop_store_app/app/app_router.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 
 void main() {
   testWidgets('checkout shows the same auth screen for a signed-out customer', (
@@ -23,7 +23,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
         ],
-        child: KidiaApp(router: router),
+        child: MobiShopApp(router: router),
       ),
     );
     await tester.pumpAndSettle();

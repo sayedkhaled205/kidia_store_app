@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 
 void main() {
   group('StoreApiCatalogRemoteDataSource', () {
@@ -63,7 +63,7 @@ void main() {
       final page = await source.fetchCategories(CatalogCategoryQuery());
 
       expect(page.items.single.slug, 'accessories');
-      expect(client.lastPath, '/wp-json/woo-mobile/v1/category-page');
+      expect(client.lastPath, '/wp-json/mobishop/v1/category-page');
       expect(client.lastQuery?['per_page'], 100);
     });
 
@@ -76,7 +76,7 @@ void main() {
 
       expect(page.items.single.id, 8);
       expect(client.paths, <String>[
-        '/wp-json/woo-mobile/v1/category-page',
+        '/wp-json/mobishop/v1/category-page',
         '/wp-json/wc/store/v1/products/categories',
       ]);
     });
@@ -163,7 +163,7 @@ void main() {
         expect(variations.single.isInStock, isFalse);
         expect(
           client.paths.single,
-          '/wp-json/woo-mobile/v1/products/50/variations',
+          '/wp-json/mobishop/v1/products/50/variations',
         );
       },
     );
@@ -221,7 +221,7 @@ class _FallbackCategoryClient implements StoreApiClient {
     Map<String, dynamic>? queryParameters,
   }) async {
     paths.add(path);
-    if (path == '/wp-json/woo-mobile/v1/category-page') {
+    if (path == '/wp-json/mobishop/v1/category-page') {
       throw StateError('Plugin endpoint is unavailable.');
     }
     return const StoreApiResponse(

@@ -1,6 +1,6 @@
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/features/brands/data/models/store_brand_model.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/features/brands/data/models/store_brand_model.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 
 abstract interface class BrandsRemoteDataSource {
   Future<StoreBrandPage> fetchBrands({
@@ -13,7 +13,7 @@ abstract interface class BrandsRemoteDataSource {
 class StoreApiBrandsRemoteDataSource implements BrandsRemoteDataSource {
   const StoreApiBrandsRemoteDataSource(this._client);
 
-  static const String endpoint = '/wp-json/woo-mobile/v1/brands';
+  static const String endpoint = '/wp-json/mobishop/v1/brands';
 
   final StoreApiClient _client;
 

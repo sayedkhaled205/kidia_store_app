@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
-import 'package:kidia_store_app/features/cart/presentation/controllers/cart_controller.dart';
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
+import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_controller.dart';
 
 final cartControllerProvider =
     AsyncNotifierProvider<CartController, CartViewState>(

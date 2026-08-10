@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kidia_store_app/core/theme/kidia_colors.dart';
-import 'package:kidia_store_app/core/theme/kidia_radius.dart';
-import 'package:kidia_store_app/core/theme/kidia_spacing.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
-import 'package:kidia_store_app/features/account/domain/repositories/customer_account_repository.dart';
-import 'package:kidia_store_app/features/account/presentation/customer_phone_format.dart';
-import 'package:kidia_store_app/features/account/presentation/providers/customer_account_providers.dart';
-import 'package:kidia_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
+import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_phone_format.dart';
+import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 
 class SavedAddressesScreen extends ConsumerWidget {
   const SavedAddressesScreen({super.key});
@@ -45,7 +45,7 @@ class SavedAddressesScreen extends ConsumerWidget {
           },
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(KidiaSpacing.md),
+            padding: const EdgeInsets.all(MobiShopSpacing.md),
             children: <Widget>[
               _AddressCard(
                 key: const Key('shipping-address-card'),
@@ -137,7 +137,7 @@ class _AddressCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(KidiaSpacing.md),
+        padding: const EdgeInsets.all(MobiShopSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -147,12 +147,12 @@ class _AddressCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: KidiaColors.primaryLight,
-                    borderRadius: BorderRadius.circular(KidiaRadius.sm),
+                    color: MobiShopColors.primaryLight,
+                    borderRadius: BorderRadius.circular(MobiShopRadius.sm),
                   ),
-                  child: Icon(icon, color: KidiaColors.primaryDark),
+                  child: Icon(icon, color: MobiShopColors.primaryDark),
                 ),
-                const SizedBox(width: KidiaSpacing.sm),
+                const SizedBox(width: MobiShopSpacing.sm),
                 Expanded(
                   child: Text(
                     title,
@@ -163,12 +163,12 @@ class _AddressCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             if (lines.isEmpty)
               Text(
                 emptyText,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: KidiaColors.textSecondary,
+                  color: MobiShopColors.textSecondary,
                 ),
               )
             else
@@ -177,7 +177,7 @@ class _AddressCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(line),
                 ),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             OutlinedButton.icon(
               onPressed: onEdit,
               icon: const Icon(Icons.edit_outlined),
@@ -267,10 +267,10 @@ class _AddressEditorState extends State<_AddressEditor> {
         child: ListView(
           controller: controller,
           padding: EdgeInsets.fromLTRB(
-            KidiaSpacing.md,
-            KidiaSpacing.md,
-            KidiaSpacing.md,
-            MediaQuery.viewInsetsOf(context).bottom + KidiaSpacing.lg,
+            MobiShopSpacing.md,
+            MobiShopSpacing.md,
+            MobiShopSpacing.md,
+            MediaQuery.viewInsetsOf(context).bottom + MobiShopSpacing.lg,
           ),
           children: <Widget>[
             Row(
@@ -290,7 +290,7 @@ class _AddressEditorState extends State<_AddressEditor> {
                 ),
               ],
             ),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             for (final CustomerAddressField field in widget.fields)
               if (field.isVisible) ...<Widget>[
                 _AddressField(
@@ -299,7 +299,7 @@ class _AddressEditorState extends State<_AddressEditor> {
                   enabled: !_saving,
                   onChanged: (String value) => _values[field.key] = value,
                 ),
-                const SizedBox(height: KidiaSpacing.sm),
+                const SizedBox(height: MobiShopSpacing.sm),
               ],
             if (_error != null) ...<Widget>[
               Text(
@@ -307,7 +307,7 @@ class _AddressEditorState extends State<_AddressEditor> {
                 key: const Key('address-save-error'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-              const SizedBox(height: KidiaSpacing.sm),
+              const SizedBox(height: MobiShopSpacing.sm),
             ],
             FilledButton.icon(
               key: const Key('save-customer-address'),
@@ -460,14 +460,14 @@ class _AccountPageError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(KidiaSpacing.lg),
+        padding: const EdgeInsets.all(MobiShopSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             const Icon(Icons.cloud_off_outlined, size: 52),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: KidiaSpacing.md),
+            const SizedBox(height: MobiShopSpacing.md),
             FilledButton.tonalIcon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE="$ROOT/kidia-mobile-cms"
+SOURCE="$ROOT/mobishop"
 BUILD_ROOT="${1:-$ROOT/build/wordpress-org}"
 PACKAGE_SLUG="mobishop"
 PACKAGE_DIR="$BUILD_ROOT/$PACKAGE_SLUG"
@@ -21,11 +21,6 @@ rsync -a --delete \
   --exclude '*.map' \
   --exclude '.DS_Store' \
   "$SOURCE/" "$PACKAGE_DIR/"
-
-# The public plugin entry file must match the assigned WordPress.org slug.
-# Keep the source filename and internal identifiers stable for compatibility,
-# but expose a canonical mobishop/mobishop.php install path in the ZIP.
-mv "$PACKAGE_DIR/kidia-mobile-cms.php" "$PACKAGE_DIR/mobishop.php"
 
 mkdir -p "$PACKAGE_DIR/admin/flutter-preview/assets/fonts"
 cp \
@@ -77,8 +72,8 @@ if [[ ! -f "$PACKAGE_DIR/readme.txt" || ! -f "$PACKAGE_DIR/mobishop.php" ]]; the
   exit 1
 fi
 
-if [[ -e "$PACKAGE_DIR/kidia-mobile-cms.php" || -d "$PACKAGE_DIR/mobishop" ]]; then
-  echo 'Distribution contains a stale entry file or an invalid nested plugin directory.' >&2
+if [[ -d "$PACKAGE_DIR/mobishop" ]]; then
+  echo 'Distribution contains an invalid nested plugin directory.' >&2
   exit 1
 fi
 
@@ -101,7 +96,6 @@ archive_entries="$(unzip -Z1 "$PACKAGE_ZIP")"
 if ! grep -qx 'mobishop/mobishop.php' <<<"$archive_entries" \
   || ! grep -qx 'mobishop/readme.txt' <<<"$archive_entries" \
   || grep -q '^mobishop/mobishop/' <<<"$archive_entries" \
-  || grep -q '^mobishop/kidia-mobile-cms.php$' <<<"$archive_entries" \
   || grep -Ev '^mobishop(/|$)' <<<"$archive_entries" | grep -q .; then
   echo 'Distribution ZIP layout is invalid.' >&2
   exit 1

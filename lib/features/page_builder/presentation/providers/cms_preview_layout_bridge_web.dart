@@ -87,21 +87,21 @@ class CmsPreviewLayoutBridge {
         }
       }
       if (message is! Map) return;
-      if (message['type'] == 'kidia-preview-scroll') {
+      if (message['type'] == 'mobishop-preview-scroll') {
         if ('${message['page'] ?? ''}' == 'home') {
           final double? delta = double.tryParse('${message['deltaY'] ?? ''}');
           if (delta != null && delta != 0) _homeScrollDeltas.add(delta);
         }
         return;
       }
-      if (message['type'] == 'kidia-preview-focus') {
+      if (message['type'] == 'mobishop-preview-focus') {
         if ('${message['page'] ?? ''}' == 'home') {
           final String target = '${message['target'] ?? ''}'.trim();
           if (target.isNotEmpty) _focusTargets.add(target);
         }
         return;
       }
-      if (message['type'] != 'kidia-preview-layout') return;
+      if (message['type'] != 'mobishop-preview-layout') return;
       if (message['splash'] is Map) {
         _splash = Map<String, dynamic>.from(message['splash'] as Map);
         final Completer<Map<String, dynamic>>? ready = _splashReady;
@@ -138,7 +138,7 @@ class CmsPreviewLayoutBridge {
       if (rawLayouts is! Map) _changes.add(page);
     });
     html.window.parent?.postMessage(
-      jsonEncode(<String, String>{'type': 'kidia-flutter-preview-ready'}),
+      jsonEncode(<String, String>{'type': 'mobishop-flutter-preview-ready'}),
       '*',
     );
   }

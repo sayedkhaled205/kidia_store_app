@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/core/push/push_bootstrap_config.dart';
+import 'package:mobishop_store_app/core/push/push_bootstrap_config.dart';
 
 void main() {
   test('accepts a complete managed Firebase bootstrap', () {
@@ -7,8 +7,8 @@ void main() {
       <String, dynamic>{
         'enabled': true,
         'clientReady': true,
-        'registrationUrl': 'https://store.example/wp-json/woo-mobile/v1/push/devices',
-        'eventsUrl': 'https://store.example/wp-json/woo-mobile/v1/push/events',
+        'registrationUrl': 'https://store.example/wp-json/mobishop/v1/push/devices',
+        'eventsUrl': 'https://store.example/wp-json/mobishop/v1/push/events',
         'firebaseOptions': <String, dynamic>{
           'apiKey': 'public-api-key',
           'appId': '1:123:android:abc',

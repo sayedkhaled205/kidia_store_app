@@ -1,8 +1,8 @@
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_image.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 
 enum CatalogStockStatus { inStock, outOfStock, onBackorder, unknown }
 

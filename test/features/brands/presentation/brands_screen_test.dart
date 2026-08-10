@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/presentation/brands_screen.dart';
-import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/presentation/brands_screen.dart';
+import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
 
 void main() {
   testWidgets('renders real response data and emits onBrandTap', (

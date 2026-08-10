@@ -51,7 +51,7 @@ void main() {
             await _splashPreviewHold.future;
           }),
       ],
-      child: KidiaApp(
+      child: MobiShopApp(
         router: createAppRouter(initialLocation: initialLocation),
       ),
     ),

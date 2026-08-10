@@ -12,7 +12,7 @@ final bundleDetailProvider =
     FutureProvider.autoDispose.family<_BundleDetail, String>((ref, id) async {
       final response = await ref
           .watch(homeDioProvider)
-          .get<dynamic>('/wp-json/woo-mobile/v1/bundles/$id');
+          .get<dynamic>('/wp-json/mobishop/v1/bundles/$id');
       if (response.data is! Map) {
         throw const FormatException('Invalid bundle response.');
       }
@@ -181,7 +181,7 @@ class _BundleBuilderScreenState extends ConsumerState<BundleBuilderScreen> {
     if (bundle.productId <= 0 && bundle.discountValue > 0) {
       try {
         final response = await ref.read(homeDioProvider).post<dynamic>(
-          '/wp-json/woo-mobile/v1/bundles/${Uri.encodeComponent(bundle.id)}/claim',
+          '/wp-json/mobishop/v1/bundles/${Uri.encodeComponent(bundle.id)}/claim',
           queryParameters: const <String, dynamic>{'channel': 'mobile'},
         );
         final Map<String, dynamic> data = response.data is Map

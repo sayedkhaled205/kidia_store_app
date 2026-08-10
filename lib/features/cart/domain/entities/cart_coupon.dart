@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/cart/domain/entities/cart_totals.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
 
 class CartCouponTotals {
   const CartCouponTotals({

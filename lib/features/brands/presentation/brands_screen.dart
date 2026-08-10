@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
-import 'package:kidia_store_app/features/brands/presentation/brands_copy.dart';
-import 'package:kidia_store_app/features/brands/presentation/controllers/brands_controller.dart';
-import 'package:kidia_store_app/features/brands/presentation/providers/brands_providers.dart';
-import 'package:kidia_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
+import 'package:mobishop_store_app/features/brands/presentation/brands_copy.dart';
+import 'package:mobishop_store_app/features/brands/presentation/controllers/brands_controller.dart';
+import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 class BrandsScreen extends ConsumerStatefulWidget {
   const BrandsScreen({required this.onBrandTap, super.key});

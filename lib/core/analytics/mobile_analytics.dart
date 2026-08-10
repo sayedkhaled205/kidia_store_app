@@ -32,8 +32,8 @@ class MobileAnalytics {
       // ignore: prefer_initializing_formals
       _preferences = preferences;
 
-  static const String _clientKey = 'kidia_mobile_analytics_client_v1';
-  static const String _queueKey = 'kidia_mobile_analytics_queue_v1';
+  static const String _clientKey = 'mobishop_mobile_analytics_client_v1';
+  static const String _queueKey = 'mobishop_mobile_analytics_queue_v1';
   static final String _sessionId = _randomIdentifier();
 
   final Dio _dio;
@@ -85,7 +85,7 @@ class MobileAnalytics {
     if (!_enabled) return;
     try {
       await _dio.post<void>(
-        _endpoint('/wp-json/woo-mobile/v1/analytics/cart'),
+        _endpoint('/wp-json/mobishop/v1/analytics/cart'),
         data: <String, Object?>{
           'client_id': await _clientId(),
           'session_id': _sessionId,
@@ -105,7 +105,7 @@ class MobileAnalytics {
         options: Options(
           headers: authToken.trim().isEmpty
               ? null
-              : <String, String>{'X-Kidia-Session': authToken.trim()},
+              : <String, String>{'X-MobiShop-Session': authToken.trim()},
         ),
       );
     } catch (_) {
@@ -197,12 +197,12 @@ class MobileAnalytics {
         }
         try {
           await _dio.post<void>(
-            _endpoint('/wp-json/woo-mobile/v1/analytics/event'),
+            _endpoint('/wp-json/mobishop/v1/analytics/event'),
             data: payload,
             options: Options(
               headers: authToken.trim().isEmpty
                   ? null
-                  : <String, String>{'X-Kidia-Session': authToken.trim()},
+                  : <String, String>{'X-MobiShop-Session': authToken.trim()},
             ),
           );
         } on Object {

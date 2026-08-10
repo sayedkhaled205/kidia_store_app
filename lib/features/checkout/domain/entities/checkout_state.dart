@@ -1,5 +1,5 @@
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 
 class CheckoutState {
   CheckoutState({

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
-import 'package:kidia_store_app/features/catalog/presentation/providers/catalog_providers.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
 
 final catalogCategoryTreeProvider =
     FutureProvider.autoDispose<CatalogCategoryTree>((Ref ref) async {

@@ -1,11 +1,11 @@
-import 'package:kidia_store_app/core/network/store_api_exception.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 
 abstract interface class CatalogRepository {
   Future<CatalogPage<CatalogProduct>> getProducts(CatalogProductQuery query);

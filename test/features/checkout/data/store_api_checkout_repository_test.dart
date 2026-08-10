@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/cart/data/network/cart_token_store.dart';
-import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
-import 'package:kidia_store_app/features/checkout/data/repositories/store_api_checkout_repository.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
-import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
+import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:mobishop_store_app/features/checkout/data/repositories/store_api_checkout_repository.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
 import '../support/checkout_test_data.dart';
 
@@ -374,7 +374,7 @@ void main() {
       final Map<String, dynamic> body = transport.bodies.single;
       expect(body, isNot(contains('additional_fields')));
       expect(
-        ((body['extensions'] as Map<String, dynamic>)['woo_mobile_cms']
+        ((body['extensions'] as Map<String, dynamic>)['mobishop_cms']
             as Map<String, dynamic>)['checkout_fields'],
         <String, String>{'billing_vat_number': 'EG-123'},
       );
@@ -758,10 +758,10 @@ void main() {
 
       await transport.loadConfiguration();
 
-      expect(captured?.headers['X-Kidia-Session'], 'customer-session');
+      expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
       expect(
         captured?.uri.path,
-        '/wp-json/woo-mobile/v1/checkout-config',
+        '/wp-json/mobishop/v1/checkout-config',
       );
     },
   );

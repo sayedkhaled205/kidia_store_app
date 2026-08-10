@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/product/presentation/widgets/product_quick_add.dart';
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
 
 void main() {
   testWidgets('quick add is visible by default on a product card', (

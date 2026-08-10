@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/orders/data/network/customer_orders_api_transport.dart';
+import 'package:mobishop_store_app/features/orders/data/network/customer_orders_api_transport.dart';
 
 void main() {
   test('loads only the fixed order route with the customer session', () async {
@@ -37,13 +37,13 @@ void main() {
 
     expect(
       captured?.uri.path,
-      '/store/wp-json/woo-mobile/v1/customer/orders',
+      '/store/wp-json/mobishop/v1/customer/orders',
     );
     expect(captured?.uri.queryParameters, <String, String>{
       'page': '1',
       'per_page': '20',
     });
-    expect(captured?.headers['X-Kidia-Session'], 'safe-session-token');
+    expect(captured?.headers['X-MobiShop-Session'], 'safe-session-token');
     expect(captured?.method, 'GET');
   });
 
@@ -105,10 +105,10 @@ void main() {
 
     expect(
       captured?.uri.path,
-      '/store/wp-json/woo-mobile/v1/customer/orders/101/cancel',
+      '/store/wp-json/mobishop/v1/customer/orders/101/cancel',
     );
     expect(captured?.uri.hasQuery, isFalse);
-    expect(captured?.headers['X-Kidia-Session'], 'safe-session-token');
+    expect(captured?.headers['X-MobiShop-Session'], 'safe-session-token');
     expect(captured?.method, 'POST');
   });
 }

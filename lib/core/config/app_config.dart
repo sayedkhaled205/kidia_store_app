@@ -48,12 +48,12 @@ abstract final class AppConfig {
 
   static const String homeLayoutEndpoint = String.fromEnvironment(
     'HOME_LAYOUT_ENDPOINT',
-    defaultValue: '/wp-json/woomobileapp/v1/home-layout',
+    defaultValue: '/wp-json/mobishop/v1/home-layout',
   );
 
   static const String storeName = String.fromEnvironment(
     'STORE_NAME',
-    defaultValue: 'Woo Mobile Store',
+    defaultValue: 'MobiShop Store',
   );
 
   static const String storeTagline = String.fromEnvironment(
@@ -72,7 +72,7 @@ abstract final class AppConfig {
     defaultValue: '',
   );
 
-  /// Public Kidia customer-service contacts. Deployments can override either
+  /// Public MobiShop customer-service contacts. Deployments can override either
   /// value without changing application code.
   static const String supportWhatsApp = String.fromEnvironment(
     'STORE_SUPPORT_WHATSAPP',
@@ -81,7 +81,7 @@ abstract final class AppConfig {
 
   static const String supportEmail = String.fromEnvironment(
     'STORE_SUPPORT_EMAIL',
-    defaultValue: 'support@kidiastore.com',
+    defaultValue: 'support@mobishopstore.com',
   );
 
   static bool get isRightToLeft {

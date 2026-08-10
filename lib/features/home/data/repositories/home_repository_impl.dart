@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:kidia_store_app/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:kidia_store_app/features/home/data/models/home_layout_model.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
-import 'package:kidia_store_app/features/home/domain/repositories/home_repository.dart';
+import 'package:mobishop_store_app/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_layout_model.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/domain/repositories/home_repository.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   const HomeRepositoryImpl({

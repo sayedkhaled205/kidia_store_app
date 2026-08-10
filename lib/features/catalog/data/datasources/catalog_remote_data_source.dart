@@ -1,12 +1,12 @@
-import 'package:kidia_store_app/core/network/store_api_client.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_category_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_filter_data_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_json.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_product_model.dart';
-import 'package:kidia_store_app/features/catalog/data/models/catalog_variation_model.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_filter_data_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_variation_model.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 
 abstract interface class CatalogRemoteDataSource {
   Future<CatalogPage<CatalogProductModel>> fetchProducts(
@@ -34,10 +34,10 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
   static const String _categoriesPath =
       '/wp-json/wc/store/v1/products/categories';
   static const String _categoryPagePath =
-      '/wp-json/woo-mobile/v1/category-page';
+      '/wp-json/mobishop/v1/category-page';
   static const String _collectionDataPath =
       '/wp-json/wc/store/v1/products/collection-data';
-  static const String _variationBridgePath = '/wp-json/woo-mobile/v1/products';
+  static const String _variationBridgePath = '/wp-json/mobishop/v1/products';
 
   final StoreApiClient _client;
 

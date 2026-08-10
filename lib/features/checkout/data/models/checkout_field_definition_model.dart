@@ -1,4 +1,4 @@
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 
 abstract final class CheckoutFieldDefinitionModel {
   const CheckoutFieldDefinitionModel._();

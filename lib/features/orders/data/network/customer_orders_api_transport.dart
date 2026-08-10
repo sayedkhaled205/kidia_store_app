@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 
 class CustomerOrdersApiResponse {
   const CustomerOrdersApiResponse({required this.data, this.statusCode});
@@ -143,7 +143,7 @@ class DioCustomerOrdersApiTransport
           headers: <String, String>{
             'Accept': 'application/json',
             if (method != 'GET') 'Content-Type': 'application/json',
-            'X-Kidia-Session': token,
+            'X-MobiShop-Session': token,
           },
         ),
       );
@@ -192,7 +192,7 @@ class DioCustomerOrdersApiTransport
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/woo-mobile/v1/customer/orders',
+      path: '$installPath/wp-json/mobishop/v1/customer/orders',
       queryParameters: <String, String>{
         'page': '$page',
         'per_page': '$perPage',
@@ -207,7 +207,7 @@ class DioCustomerOrdersApiTransport
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
       path:
-          '$installPath/wp-json/woo-mobile/v1/customer/orders/$orderId/cancel',
+          '$installPath/wp-json/mobishop/v1/customer/orders/$orderId/cancel',
       query: null,
       fragment: null,
     );

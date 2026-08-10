@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_attribute.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_category.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_money.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_page.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:kidia_store_app/features/catalog/domain/entities/catalog_variation.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_category_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/queries/catalog_product_query.dart';
-import 'package:kidia_store_app/features/catalog/domain/repositories/catalog_repository.dart';
-import 'package:kidia_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 
 void main() {
   group('CatalogProductListController', () {

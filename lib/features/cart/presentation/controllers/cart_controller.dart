@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kidia_store_app/core/analytics/mobile_analytics.dart';
-import 'package:kidia_store_app/features/auth/presentation/providers/auth_providers.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_error.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
-import 'package:kidia_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
-import 'package:kidia_store_app/features/cart/presentation/providers/cart_providers.dart';
+import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_providers.dart';
 
 class CartViewState {
   CartViewState({

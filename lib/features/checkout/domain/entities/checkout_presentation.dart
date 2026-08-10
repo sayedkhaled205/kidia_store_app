@@ -1,4 +1,4 @@
-/// Checkout layout choices persisted by the Woo Mobile CMS builder.
+/// Checkout layout choices persisted by the MobiShop builder.
 enum CheckoutDesign {
   classic('classic'),
   summaryFirst('summary_first'),

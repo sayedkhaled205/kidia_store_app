@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:kidia_store_app/features/cart/data/models/cart_model.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart.dart';
-import 'package:kidia_store_app/features/cart/domain/entities/cart_item.dart';
-import 'package:kidia_store_app/features/cart/domain/repositories/cart_repository.dart';
-import 'package:kidia_store_app/features/checkout/data/network/checkout_api_transport.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_address.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_order_result.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_state.dart';
-import 'package:kidia_store_app/features/checkout/domain/entities/checkout_submission.dart';
-import 'package:kidia_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
+import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
+import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 
 typedef CheckoutLoadCallback = Future<CheckoutState> Function();
 typedef CheckoutSubmitCallback =

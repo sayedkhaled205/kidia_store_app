@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:kidia_store_app/features/home/data/datasources/mock_home_layout_json.dart';
+import 'package:mobishop_store_app/features/home/data/datasources/mock_home_layout_json.dart';
 
 abstract interface class HomeRemoteDataSource {
   Future<Map<String, dynamic>> fetchHomeLayout({
@@ -64,9 +64,9 @@ class DioHomeRemoteDataSource implements HomeRemoteDataSource {
 
   List<String> _compatibleEndpoints() {
     const List<String> paths = <String>[
-      '/wp-json/woomobileapp/v1/home-layout',
-      '/wp-json/woo-mobile/v1/home-layout',
-      '/wp-json/kidia/v1/home-layout',
+      '/wp-json/mobishop/v1/home-layout',
+      '/wp-json/mobishop/v1/home-layout',
+      '/wp-json/mobishop/v1/home-layout',
     ];
     String? matchedPath;
     for (final String path in paths) {

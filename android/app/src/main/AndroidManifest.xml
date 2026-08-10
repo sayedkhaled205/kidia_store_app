@@ -33,7 +33,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
-                    android:scheme="kidia-store-app"
+                    android:scheme="mobishop-store-app"
                     android:host="auth"
                     android:pathPrefix="/social-callback"/>
             </intent-filter>

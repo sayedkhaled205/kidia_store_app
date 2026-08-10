@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kidia_store_app/features/brands/domain/entities/store_brand.dart';
-import 'package:kidia_store_app/features/brands/domain/repositories/brands_repository.dart';
-import 'package:kidia_store_app/features/brands/presentation/controllers/brands_controller.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
+import 'package:mobishop_store_app/features/brands/presentation/controllers/brands_controller.dart';
 
 void main() {
   test('loads, searches and appends unique brands', () async {

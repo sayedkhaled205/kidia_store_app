@@ -5,12 +5,12 @@ plugins {
 }
 
 val storeAppName = providers.gradleProperty("APP_NAME")
-    .orElse("Woo Mobile Store")
+    .orElse("MobiShop Store")
 val storeApplicationId = providers.gradleProperty("APPLICATION_ID")
-    .orElse("com.woomobile.kidia_store_app")
+    .orElse("com.mobishop.mobishop_store_app")
 
 android {
-    namespace = "com.woomobile.kidia_store_app"
+    namespace = "com.mobishop.mobishop_store_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

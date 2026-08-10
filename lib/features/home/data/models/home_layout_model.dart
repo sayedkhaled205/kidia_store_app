@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
 
-import 'package:kidia_store_app/features/home/data/models/home_block_model.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_block.dart';
-import 'package:kidia_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
 
 abstract final class HomeLayoutModel {
   const HomeLayoutModel._();
@@ -42,7 +42,7 @@ abstract final class HomeLayoutModel {
       if (rawBlock is! Map) {
         developer.log(
           'Skipped invalid home block at index $index.',
-          name: 'kidia.home_layout',
+          name: 'mobishop.home_layout',
         );
         continue;
       }
@@ -62,7 +62,7 @@ abstract final class HomeLayoutModel {
       } on FormatException catch (error, stackTrace) {
         developer.log(
           'Skipped malformed ${rawType ?? 'unknown'} block at index $index: $error',
-          name: 'kidia.home_layout',
+          name: 'mobishop.home_layout',
           error: error,
           stackTrace: stackTrace,
         );

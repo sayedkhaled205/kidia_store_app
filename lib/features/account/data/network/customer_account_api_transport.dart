@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kidia_store_app/core/config/app_config.dart';
-import 'package:kidia_store_app/features/account/domain/entities/customer_account.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
 
 typedef CustomerAccountAuthTokenReader = String? Function();
 
@@ -154,7 +154,7 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
           headers: <String, String>{
             'Accept': 'application/json',
             if (method != 'GET') 'Content-Type': 'application/json',
-            if (token.isNotEmpty) 'X-Kidia-Session': token,
+            if (token.isNotEmpty) 'X-MobiShop-Session': token,
           },
         ),
       );
@@ -200,7 +200,7 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/woo-mobile/v1/$endpoint',
+      path: '$installPath/wp-json/mobishop/v1/$endpoint',
       query: null,
       fragment: null,
     );
