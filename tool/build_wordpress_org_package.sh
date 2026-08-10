@@ -22,6 +22,11 @@ rsync -a --delete \
   --exclude '.DS_Store' \
   "$SOURCE/" "$PACKAGE_DIR/"
 
+# The public plugin entry file must match the assigned WordPress.org slug.
+# Keep the source filename and internal identifiers stable for compatibility,
+# but expose a canonical mobishop/mobishop.php install path in the ZIP.
+mv "$PACKAGE_DIR/kidia-mobile-cms.php" "$PACKAGE_DIR/mobishop.php"
+
 mkdir -p "$PACKAGE_DIR/admin/flutter-preview/assets/fonts"
 cp \
   "$SOURCE/admin/flutter-preview/assets/fonts/MaterialIcons-Regular.otf" \
@@ -67,8 +72,13 @@ if find "$PACKAGE_DIR" -type f \( -name '*.zip' -o -name '*.tar' -o -name '*.tar
   exit 1
 fi
 
-if [[ ! -f "$PACKAGE_DIR/readme.txt" || ! -f "$PACKAGE_DIR/kidia-mobile-cms.php" ]]; then
-  echo 'Distribution is missing its readme or main plugin file.' >&2
+if [[ ! -f "$PACKAGE_DIR/readme.txt" || ! -f "$PACKAGE_DIR/mobishop.php" ]]; then
+  echo 'Distribution is missing its readme or canonical main plugin file.' >&2
+  exit 1
+fi
+
+if [[ -e "$PACKAGE_DIR/kidia-mobile-cms.php" || -d "$PACKAGE_DIR/mobishop" ]]; then
+  echo 'Distribution contains a stale entry file or an invalid nested plugin directory.' >&2
   exit 1
 fi
 
@@ -86,6 +96,16 @@ temporary_zip="$temporary_dir/$PACKAGE_SLUG.zip"
 )
 mv -f "$temporary_zip" "$PACKAGE_ZIP"
 rmdir "$temporary_dir"
+
+archive_entries="$(unzip -Z1 "$PACKAGE_ZIP")"
+if ! grep -qx 'mobishop/mobishop.php' <<<"$archive_entries" \
+  || ! grep -qx 'mobishop/readme.txt' <<<"$archive_entries" \
+  || grep -q '^mobishop/mobishop/' <<<"$archive_entries" \
+  || grep -q '^mobishop/kidia-mobile-cms.php$' <<<"$archive_entries" \
+  || grep -Ev '^mobishop(/|$)' <<<"$archive_entries" | grep -q .; then
+  echo 'Distribution ZIP layout is invalid.' >&2
+  exit 1
+fi
 
 maximum_size=$((10 * 1024 * 1024))
 archive_size="$(wc -c < "$PACKAGE_ZIP")"
