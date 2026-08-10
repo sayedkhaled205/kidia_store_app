@@ -36,8 +36,8 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           version="${RELEASE_TAG#v}"
-          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' build/wordpress-org/woomobi-cms/kidia-mobile-cms.php)"
-          stable_tag="$(sed -n 's/^Stable tag:[[:space:]]*//p' build/wordpress-org/woomobi-cms/readme.txt)"
+          plugin_version="$(sed -n 's/^ \* Version:[[:space:]]*//p' build/wordpress-org/mobishop/kidia-mobile-cms.php)"
+          stable_tag="$(sed -n 's/^Stable tag:[[:space:]]*//p' build/wordpress-org/mobishop/readme.txt)"
           test "$version" = "$plugin_version" || { echo "Release tag $version does not match plugin version $plugin_version." >&2; exit 1; }
           test "$version" = "$stable_tag" || { echo "Release tag $version does not match readme stable tag $stable_tag." >&2; exit 1; }
       - name: Run PHP contract tests
@@ -49,7 +49,7 @@ jobs:
       - name: Run official Plugin Check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: './build/wordpress-org/woomobi-cms'
+          build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
           # Existing translated UI placeholders predate this release pipeline;
           # keep the directory gate focused on blocking repository violations.
@@ -62,9 +62,9 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SLUG: ${{ vars.WORDPRESS_PLUGIN_SLUG }}
-          BUILD_DIR: build/wordpress-org/woomobi-cms
+          BUILD_DIR: build/wordpress-org/mobishop
       - name: Attach installable ZIP to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" build/wordpress-org/woomobi-cms.zip --clobber
+        run: gh release upload "$RELEASE_TAG" build/wordpress-org/mobishop.zip --clobber
