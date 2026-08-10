@@ -15,7 +15,7 @@ const setupWizardScript = fs.readFileSync(path.join(pluginRoot, "admin", "assets
 assert.doesNotMatch(
   styleRules,
   /(?:^|\})\s*html(?:\.[^{]*)?\s*\{[^}]*overflow\s*:\s*hidden/i,
-  "Woomobi CMS must not disable the native WordPress document scrollbar."
+  "MobiShop must not disable the native WordPress document scrollbar."
 );
 assert.doesNotMatch(
   setupWizardScript,
@@ -50,7 +50,7 @@ const dom = new JSDOM(`<!doctype html><html dir="rtl"><head><title>WordPress Pro
   <nav id="adminmenuwrap">
     <ul id="adminmenu">
       <li><a id="products-link" href="#products">Products</a></li>
-      <li><a id="cms-link" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">Woomobi CMS</a></li>
+      <li><a id="cms-link" href="https://store.test/wp-admin/admin.php?page=kidia-mobile-cms">MobiShop</a></li>
     </ul>
   </nav>
   <div id="wpbody"><main id="wpbody-content"><section id="wordpress-page">Products page</section></main></div>
