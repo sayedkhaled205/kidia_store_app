@@ -2655,7 +2655,8 @@ final class MobiShop_Admin {
 					string $hook_suffix
 				): void {
 					$page = $this->effective_cms_page();
-					$is_mobishop_page = 0 === strpos( $page, 'mobishop-' )
+					$is_mobishop_page = 'mobishop' === $page
+						|| 0 === strpos( $page, 'mobishop-' )
 						|| 'mobishop_page_mobishop-home-builder' === $hook_suffix;
 
 					if ( current_user_can( self::CAPABILITY ) ) {
