@@ -4,7 +4,7 @@ Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.64
+Stable tag: 1.46.65
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Changelog ==
 
+= 1.46.65 =
+
+* Restored the styled sidebar on the main MobiShop administration page.
+* Restored the green MobiShop styling for the website connection button.
+
 = 1.46.64 =
 
 * Completed the full MobiShop rebrand across public labels, service attribution, code identifiers, REST namespaces, option keys, hooks, classes, files, and package paths.
@@ -86,6 +91,10 @@ Yes. Application language, direction, typography, and other visual settings can 
 * Updated the packaged plugin and embedded mobile preview.
 
 == Upgrade Notice ==
+
+= 1.46.65 =
+
+Use this release to restore the main MobiShop administration layout.
 
 = 1.46.64 =
 

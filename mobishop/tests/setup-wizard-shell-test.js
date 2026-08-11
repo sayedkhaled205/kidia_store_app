@@ -227,6 +227,7 @@ assert.doesNotMatch(pushService, /onesignal_api_key|fcm_private_key|fcm_client_e
 assert.match(admin, /admin_post_mobishop_apply_setup_wizard/, "Wizard apply action must be registered.");
 assert.match(admin, /admin_post_mobishop_manage_saved_theme/, "Saved theme actions must be registered.");
 assert.match(admin, /render_cms_shell/, "Unified shell must render on CMS screens.");
+assert.match(admin, /\$is_mobishop_page\s*=\s*'mobishop'\s*===\s*\$page[\s\S]*strpos\(\s*\$page,\s*'mobishop-'\s*\)/, "The main MobiShop page must load the shared sidebar styles and scripts.");
 assert.match(admin, /current_screen[^]*suppress_external_admin_notices/, "CMS pages must suppress notices emitted by WordPress and unrelated plugins.");
 assert.match(admin, /remove_all_actions\( 'admin_notices' \)/, "Third-party admin notices must be removed inside the CMS workspace.");
 assert.match(admin, /remove_submenu_page\(\s*'mobishop'/, "Legacy sidebar submenu pages must be hidden.");

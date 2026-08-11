@@ -41,7 +41,7 @@ jobs:
           unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/readme.txt'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
-          grep -q '^ \* Version:           1.46.64$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Version:           1.46.65$' build/wordpress-org/mobishop/mobishop.php
           grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
