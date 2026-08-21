@@ -133,6 +133,65 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 				},
 			)
 		);
+
+		register_rest_route(
+			'mobishop/v1',
+			'/builder/home',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_builder_home' ),
+					'permission_callback' => array( $this, 'can_manage_builder' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'save_builder_home' ),
+					'permission_callback' => array( $this, 'can_manage_builder' ),
+				),
+			)
+		);
+	}
+
+	/** Whether the current user may use the shared Builder runtime. */
+	public function can_manage_builder(): bool {
+		return current_user_can( 'manage_woocommerce' ) || current_user_can( 'manage_options' );
+	}
+
+	/** Returns the exact Builder contract consumed by every platform adapter. */
+	public function get_builder_home(): WP_REST_Response {
+		$license = class_exists( 'MobiShop_License_Manager' )
+			? ( new MobiShop_License_Manager() )->status()
+			: array( 'active' => false );
+
+		return new WP_REST_Response(
+			array(
+				'platform'    => 'wordpress',
+				'blocks'      => $this->layout_store->get_layout(),
+				'blockSchema' => array( 'version' => 1, 'blocks' => MobiShop_Block_Registry::schemas() ),
+				'chrome'      => array(),
+				'previewUrl'  => rest_url( 'mobishop/v1/home-layout' ),
+				'license'     => $license,
+			),
+			200
+		);
+	}
+
+	/** Persists a Home screen submitted by the platform-neutral runtime. */
+	public function save_builder_home( WP_REST_Request $request ) {
+		$license = class_exists( 'MobiShop_License_Manager' )
+			? new MobiShop_License_Manager()
+			: null;
+		if ( ! $license || ! $license->is_active() ) {
+			return new WP_Error( 'mobishop_license_required', __( 'Activate your MobiShop license before saving changes.', 'mobishop' ), array( 'status' => 403 ) );
+		}
+
+		$blocks = $request->get_param( 'blocks' );
+		if ( ! is_array( $blocks ) ) {
+			return new WP_Error( 'mobishop_invalid_builder_payload', __( 'A valid blocks list is required.', 'mobishop' ), array( 'status' => 400 ) );
+		}
+
+		$saved = $this->layout_store->save_layout( $blocks );
+		return new WP_REST_Response( array( 'ok' => (bool) $saved, 'blocks' => count( $blocks ) ), $saved ? 200 : 500 );
 	}
 
 	/** Builds the real runtime payload from unsaved Builder values without persisting them. */
@@ -512,3 +571,4 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 		return $sanitized;
 	}
 }
+
