@@ -11,6 +11,7 @@
 		const adapter = global.MobiShopPlatformAdapter.assert(config.adapter);
 		const renderers = config.renderers || {};
 		let state = null;
+		let screenRoot = root;
 
 		if (!(root instanceof Element)) {
 			throw new TypeError('MobiShop runtime requires a root element.');
@@ -22,7 +23,7 @@
 			if (typeof renderer !== 'function') {
 				throw new Error('MobiShop has no shared renderer for ' + screen + '.');
 			}
-			await renderer(root, payload, api);
+			await renderer(screenRoot, payload, api);
 			root.dataset.mobishopScreen = screen;
 			root.dispatchEvent(event('screen-opened', { screen: screen, platform: adapter.platform }));
 			return payload;
@@ -50,6 +51,10 @@
 				state = await adapter.bootstrap();
 				root.classList.add('mobishop-shared-runtime');
 				root.dataset.mobishopPlatform = adapter.platform;
+				if (typeof config.shell === 'function') {
+					screenRoot = await config.shell(root, state, api);
+					if (!(screenRoot instanceof Element)) throw new TypeError('MobiShop shell must return its screen root element.');
+				}
 				root.dispatchEvent(event('mounted', { platform: adapter.platform, state: state }));
 				return open(config.initialScreen || state.initialScreen || 'dashboard');
 			}
