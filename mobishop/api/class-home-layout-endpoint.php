@@ -17,6 +17,12 @@ if (
 }
 
 final class MobiShop_Home_Layout_Endpoint_V4 {
+	private const SHARED_BUILDER_SCREENS = array(
+		'dashboard', 'setup', 'category-builder', 'catalog-builder', 'product-builder',
+		'wishlist-builder', 'account-builder', 'checkout-builder', 'saved-themes',
+		'store-data', 'ai-insights', 'push-notifications', 'website-app-promotion',
+		'build-and-publish',
+	);
 
 	/**
 	 * Layout store.
@@ -150,6 +156,23 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 				),
 			)
 		);
+
+		register_rest_route(
+			'mobishop/v1',
+			'/builder/screen/(?P<screen>[a-z-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_builder_screen' ),
+					'permission_callback' => array( $this, 'can_manage_builder' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'save_builder_screen' ),
+					'permission_callback' => array( $this, 'can_manage_builder' ),
+				),
+			)
+		);
 	}
 
 	/** Whether the current user may use the shared Builder runtime. */
@@ -192,6 +215,54 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 
 		$saved = $this->layout_store->save_layout( $blocks );
 		return new WP_REST_Response( array( 'ok' => (bool) $saved, 'blocks' => count( $blocks ) ), $saved ? 200 : 500 );
+	}
+
+	/** Returns one normalized non-Home screen used by the shared runtime. */
+	public function get_builder_screen( WP_REST_Request $request ) {
+		$screen = sanitize_key( (string) $request->get_param( 'screen' ) );
+		if ( ! in_array( $screen, self::SHARED_BUILDER_SCREENS, true ) ) {
+			return new WP_Error( 'mobishop_invalid_builder_screen', __( 'Unknown MobiShop Builder screen.', 'mobishop' ), array( 'status' => 404 ) );
+		}
+
+		$settings = get_option( 'mobishop_shared_builder_' . str_replace( '-', '_', $screen ), array() );
+		return new WP_REST_Response(
+			array(
+				'ok'       => true,
+				'screen'   => $screen,
+				'settings' => is_array( $settings ) ? $settings : array(),
+			),
+			200
+		);
+	}
+
+	/** Persists one normalized non-Home screen without changing legacy Builder options. */
+	public function save_builder_screen( WP_REST_Request $request ) {
+		$screen = sanitize_key( (string) $request->get_param( 'screen' ) );
+		if ( ! in_array( $screen, self::SHARED_BUILDER_SCREENS, true ) ) {
+			return new WP_Error( 'mobishop_invalid_builder_screen', __( 'Unknown MobiShop Builder screen.', 'mobishop' ), array( 'status' => 404 ) );
+		}
+
+		$license = class_exists( 'MobiShop_License_Manager' ) ? new MobiShop_License_Manager() : null;
+		if ( ! $license || ! $license->is_active() ) {
+			return new WP_Error( 'mobishop_license_required', __( 'Activate your MobiShop license before saving changes.', 'mobishop' ), array( 'status' => 403 ) );
+		}
+
+		$settings = $request->get_param( 'settings' );
+		if ( ! is_array( $settings ) ) {
+			return new WP_Error( 'mobishop_invalid_builder_payload', __( 'A valid settings object is required.', 'mobishop' ), array( 'status' => 400 ) );
+		}
+
+		$sanitized = array();
+		foreach ( $settings as $key => $value ) {
+			$key = sanitize_key( (string) $key );
+			if ( is_bool( $value ) ) {
+				$sanitized[ $key ] = $value;
+			} elseif ( is_scalar( $value ) ) {
+				$sanitized[ $key ] = sanitize_textarea_field( (string) $value );
+			}
+		}
+		update_option( 'mobishop_shared_builder_' . str_replace( '-', '_', $screen ), $sanitized, false );
+		return new WP_REST_Response( array( 'ok' => true, 'screen' => $screen ), 200 );
 	}
 
 	/** Builds the real runtime payload from unsaved Builder values without persisting them. */
