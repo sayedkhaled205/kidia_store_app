@@ -160,6 +160,30 @@ final class MobiShop_Block_Registry {
 
 		return $definitions;
 	}
+
+	/**
+	 * Returns the canonical, platform-neutral Builder schemas.
+	 *
+	 * Unlike all(), this includes the field definitions required by the shared
+	 * browser runtime. WordPress, Odoo and Shopify adapters consume this exact
+	 * contract instead of maintaining separate element libraries.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function schemas(): array {
+		$schemas = array();
+
+		foreach ( array_keys( self::SCHEMA_FILES ) as $type ) {
+			$schema = self::load_schema( $type );
+			if ( empty( $schema ) ) {
+				continue;
+			}
+			$schema['type'] = $type;
+			$schemas[ $type ] = $schema;
+		}
+
+		return $schemas;
+	}
 		/**
     	 * Returns one block definition.
     	 *
@@ -620,3 +644,4 @@ final class MobiShop_Block_Registry {
         		);
         	}
         }
+
