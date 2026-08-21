@@ -189,6 +189,7 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 		return new WP_REST_Response(
 			array(
 				'platform'    => 'wordpress',
+				'store'       => $this->builder_store_stats(),
 				'blocks'      => $this->layout_store->get_layout(),
 				'blockSchema' => array( 'version' => 1, 'blocks' => MobiShop_Block_Registry::schemas() ),
 				'chrome'      => array(),
@@ -197,6 +198,23 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 			),
 			200
 		);
+	}
+
+	/** Live store totals shared by the Overview screen on every platform. */
+	private function builder_store_stats(): array {
+		$product_counts = wp_count_posts( 'product' );
+		$products       = is_object( $product_counts ) ? absint( $product_counts->publish ?? 0 ) : 0;
+		$categories     = function_exists( 'wp_count_terms' ) ? absint( wp_count_terms( 'product_cat', array( 'hide_empty' => false ) ) ) : 0;
+		$orders         = 0;
+		if ( function_exists( 'wc_get_order_statuses' ) && function_exists( 'wc_orders_count' ) ) {
+			foreach ( array_keys( wc_get_order_statuses() ) as $status ) {
+				$orders += absint( wc_orders_count( str_replace( 'wc-', '', $status ) ) );
+			}
+		}
+		$user_counts = function_exists( 'count_users' ) ? count_users() : array();
+		$customers   = absint( $user_counts['avail_roles']['customer'] ?? 0 );
+
+		return compact( 'products', 'categories', 'orders', 'customers' );
 	}
 
 	/** Persists a Home screen submitted by the platform-neutral runtime. */
