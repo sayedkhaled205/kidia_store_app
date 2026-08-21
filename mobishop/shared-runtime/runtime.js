@@ -18,15 +18,22 @@
 		}
 
 		async function open(screen, params) {
-			const payload = await adapter.loadScreen(screen, params || {});
-			const renderer = renderers[screen];
-			if (typeof renderer !== 'function') {
-				throw new Error('MobiShop has no shared renderer for ' + screen + '.');
+			try {
+				const payload = await adapter.loadScreen(screen, params || {});
+				const renderer = renderers[screen];
+				if (typeof renderer !== 'function') {
+					throw new Error('This MobiShop section is still being connected to the shared builder.');
+				}
+				await renderer(screenRoot, payload, api);
+				root.dataset.mobishopScreen = screen;
+				root.dispatchEvent(event('screen-opened', { screen: screen, platform: adapter.platform }));
+				return payload;
+			} catch (error) {
+				const message = error && error.message ? error.message : 'MobiShop could not open this section.';
+				root.dispatchEvent(event('screen-error', { screen: screen, message: message }));
+				if (typeof config.onError === 'function') config.onError(message, error);
+				return { ok: false, error: message };
 			}
-			await renderer(screenRoot, payload, api);
-			root.dataset.mobishopScreen = screen;
-			root.dispatchEvent(event('screen-opened', { screen: screen, platform: adapter.platform }));
-			return payload;
 		}
 
 		async function save(screen, payload) {
