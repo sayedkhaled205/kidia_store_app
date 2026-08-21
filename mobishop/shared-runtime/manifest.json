@@ -1,0 +1,41 @@
+{
+  "name": "@mobishop/builder-runtime",
+  "version": 1,
+  "screens": [
+    "dashboard",
+    "home-builder",
+    "category-builder",
+    "page-builder",
+    "store-data",
+    "push-notifications",
+    "splash-screen",
+    "saved-themes",
+    "bundles",
+    "ai-insights",
+    "website-app-promotion",
+    "build-and-publish"
+  ],
+  "canonicalAssets": [
+    "admin/assets/admin-theme.css",
+    "admin/assets/cms-shell.css",
+    "admin/assets/cms-shell.js",
+    "admin/assets/home-builder.css",
+    "admin/assets/home-builder.js",
+    "admin/assets/category-builder.css",
+    "admin/assets/category-builder.js",
+    "admin/assets/page-builder.css",
+    "admin/assets/page-builder.js",
+    "admin/assets/chrome-layout.css",
+    "admin/assets/chrome-layout.js",
+    "admin/flutter-preview"
+  ],
+  "adapterContract": [
+    "bootstrap",
+    "loadScreen",
+    "saveScreen",
+    "navigate",
+    "uploadMedia",
+    "startBuild"
+  ]
+}
+
