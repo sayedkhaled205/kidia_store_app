@@ -36,6 +36,13 @@
     "navigate",
     "uploadMedia",
     "startBuild"
+  ],
+  "runtimeAssets": [
+    "shared-runtime/platform-adapter.js",
+    "shared-runtime/runtime.js",
+    "shared-runtime/renderers/cms-shell.js",
+    "shared-runtime/renderers/home-builder.js",
+    "shared-runtime/block-schema.json"
   ]
 }
 
