@@ -4,11 +4,12 @@
 	function createWordPressAdapter(config) {
 		const options = config || {};
 		const endpoint = options.endpoint || '/wp-json/mobishop/v1/builder/home';
+		const screenEndpoint = options.screenEndpoint || '/wp-json/mobishop/v1/builder/screen/';
 		const headers = { 'Content-Type': 'application/json', 'X-WP-Nonce': options.nonce || '' };
 		let home = null;
 
-		async function request(method, body) {
-			const response = await fetch(endpoint, {
+		async function request(method, body, url) {
+			const response = await fetch(url || endpoint, {
 				method,
 				headers,
 				credentials: 'same-origin',
@@ -26,11 +27,14 @@
 				return { ...home, initialScreen: 'home-builder' };
 			},
 			async loadScreen(screen) {
-				if (screen !== 'home-builder') throw new Error('Unsupported shared screen: ' + screen);
+				if (screen !== 'home-builder') {
+					const payload = await request('GET', undefined, screenEndpoint + encodeURIComponent(screen));
+					return { settings: payload.settings || {}, store: home && home.store || {}, license: home && home.license || { active: false } };
+				}
 				return home || request('GET');
 			},
 			async saveScreen(screen, payload) {
-				if (screen !== 'home-builder') throw new Error('Unsupported shared screen: ' + screen);
+				if (screen !== 'home-builder') return request('POST', { settings: payload || {} }, screenEndpoint + encodeURIComponent(screen));
 				const result = await request('POST', payload);
 				home = { ...home, ...payload };
 				return result;
