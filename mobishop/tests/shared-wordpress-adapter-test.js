@@ -14,6 +14,8 @@ assert.match(endpoint, /get_builder_screen/);
 assert.match(endpoint, /save_builder_screen/);
 assert.match(endpoint, /SHARED_BUILDER_SCREENS/);
 assert.match(endpoint, /MobiShop_Block_Registry::schemas\(\)/);
+assert.match(endpoint, /builder_store_stats/);
+assert.match(endpoint, /wc_orders_count/);
 assert.match(endpoint, /is_active\(\)/);
 assert.match(registry, /public static function schemas\(\): array/);
 
