@@ -1,0 +1,1915 @@
+{
+  "version": 1,
+  "blocks": {
+    "app_header": {
+      "type": "app_header",
+      "title": "App Header",
+      "description": "PatPat-style home header with logo, store name and customer actions.",
+      "icon": "dashicons-align-wide",
+      "defaults": {
+        "logo_url": "",
+        "title": "",
+        "subtitle": "",
+        "layout": "center",
+        "height": 64,
+        "logo_height": 38,
+        "show_search": true,
+        "show_cart": true,
+        "show_account": false,
+        "title_color": "#1F2933",
+        "icon_color": "#1F2933",
+        "background_color": "#FFFFFF",
+        "search_style": "icon",
+        "search_placeholder": "Search products",
+        "search_background": "#F1F3F4",
+        "search_text_color": "#5F6368",
+        "sticky": true,
+        "shadow": "subtle",
+        "border_radius": 0,
+        "horizontal_padding": 12,
+        "icon_size": 24,
+        "icon_gap": 4,
+        "show_wishlist": false,
+        "search_height": 40,
+        "search_radius": 14,
+        "account_style": "icon",
+        "show_account_label": false,
+        "account_label": "Account"
+      },
+      "tabs": [
+        {
+          "id": "content",
+          "label": "Content"
+        },
+        {
+          "id": "layout",
+          "label": "Layout"
+        }
+      ],
+      "fields": [
+        {
+          "key": "logo_url",
+          "label": "Logo",
+          "type": "image",
+          "tab": "content",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "title",
+          "label": "Store name",
+          "type": "text",
+          "tab": "content",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "subtitle",
+          "label": "Subtitle",
+          "type": "text",
+          "tab": "content",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "layout",
+          "label": "Header layout",
+          "type": "select",
+          "tab": "layout",
+          "default": "center",
+          "options": {
+            "center": "Centered logo",
+            "start": "Logo at start"
+          }
+        },
+        {
+          "key": "height",
+          "label": "Header height",
+          "type": "number",
+          "tab": "layout",
+          "min": 48,
+          "max": 120,
+          "step": 1,
+          "default": 64
+        },
+        {
+          "key": "logo_height",
+          "label": "Logo height",
+          "type": "number",
+          "tab": "layout",
+          "min": 20,
+          "max": 80,
+          "step": 1,
+          "default": 38
+        },
+        {
+          "key": "show_search",
+          "label": "Show search",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": true
+        },
+        {
+          "key": "show_cart",
+          "label": "Show cart",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": true
+        },
+        {
+          "key": "show_account",
+          "label": "Show account",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": false
+        },
+        {
+          "key": "title_color",
+          "label": "Title color",
+          "type": "color",
+          "tab": "layout",
+          "default": "#1F2933"
+        },
+        {
+          "key": "icon_color",
+          "label": "Icon color",
+          "type": "color",
+          "tab": "layout",
+          "default": "#1F2933"
+        },
+        {
+          "key": "background_color",
+          "label": "Background",
+          "type": "color",
+          "tab": "layout",
+          "default": "#FFFFFF"
+        },
+        {
+          "key": "sticky",
+          "label": "Sticky header",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": true
+        },
+        {
+          "key": "shadow",
+          "label": "Shadow",
+          "type": "select",
+          "tab": "layout",
+          "default": "subtle",
+          "options": {
+            "none": "None",
+            "subtle": "Subtle",
+            "strong": "Strong"
+          }
+        },
+        {
+          "key": "icon_size",
+          "label": "Icon size",
+          "type": "number",
+          "tab": "layout",
+          "min": 16,
+          "max": 40,
+          "default": 24
+        },
+        {
+          "key": "icon_gap",
+          "label": "Icon spacing",
+          "type": "number",
+          "tab": "layout",
+          "min": 0,
+          "max": 24,
+          "default": 4
+        },
+        {
+          "key": "show_wishlist",
+          "label": "Show wishlist",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": false
+        },
+        {
+          "key": "search_style",
+          "label": "Search style",
+          "type": "select",
+          "tab": "layout",
+          "default": "icon",
+          "options": {
+            "icon": "Icon",
+            "bar": "Search bar"
+          }
+        },
+        {
+          "key": "search_placeholder",
+          "label": "Search placeholder",
+          "type": "text",
+          "tab": "layout",
+          "default": "Search products"
+        },
+        {
+          "key": "search_height",
+          "label": "Search height",
+          "type": "number",
+          "tab": "layout",
+          "min": 32,
+          "max": 64,
+          "default": 40
+        },
+        {
+          "key": "search_radius",
+          "label": "Search radius",
+          "type": "number",
+          "tab": "layout",
+          "min": 0,
+          "max": 32,
+          "default": 14
+        },
+        {
+          "key": "account_style",
+          "label": "Account style",
+          "type": "select",
+          "tab": "layout",
+          "default": "icon",
+          "options": {
+            "icon": "Outline icon",
+            "filled": "Filled icon",
+            "avatar": "Avatar"
+          }
+        },
+        {
+          "key": "account_label",
+          "label": "Account label",
+          "type": "text",
+          "tab": "layout",
+          "default": "Account"
+        },
+        {
+          "key": "show_account_label",
+          "label": "Show account label",
+          "type": "checkbox",
+          "tab": "layout",
+          "default": false
+        }
+      ]
+    },
+    "banner_grid": {
+      "type": "banner_grid",
+      "title": "Banner Grid",
+      "description": "Equal, featured, or mosaic promotional banner groups.",
+      "icon": "dashicons-layout",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "layout": "equal",
+        "columns": 2,
+        "gap": 10,
+        "aspect_ratio": 1,
+        "border_radius": 16,
+        "image_fit": "cover",
+        "overlay_strength": 35,
+        "text_color": "#FFFFFF",
+        "items": []
+      },
+      "fields": [
+        {
+          "key": "layout",
+          "type": "select",
+          "default": "equal"
+        },
+        {
+          "key": "items",
+          "type": "repeater",
+          "default": []
+        }
+      ]
+    },
+    "brand_carousel": {
+      "type": "brand_carousel",
+      "title": "Brand Carousel",
+      "description": "Display brands in a horizontal carousel.",
+      "icon": "dashicons-store",
+      "defaults": {
+        "title": "",
+        "item_width": 90,
+        "brands": []
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "brands",
+          "label": "Brands"
+        }
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "label": "Section Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "item_width",
+          "label": "Brand Width",
+          "type": "number",
+          "tab": "general",
+          "default": 90,
+          "min": 60,
+          "max": 200,
+          "step": 1
+        },
+        {
+          "key": "brands",
+          "label": "Brands",
+          "type": "repeater",
+          "tab": "brands",
+          "default": []
+        }
+      ]
+    },
+    "bundle_collection": {
+      "type": "bundle_collection",
+      "title": "Bundles & Recommendations",
+      "description": "Show configurable and AI-recommended bundles.",
+      "icon": "dashicons-products",
+      "defaults": {
+        "title": "Bundles selected for you",
+        "subtitle": "",
+        "source": "published",
+        "bundle_ids": "",
+        "layout": "carousel",
+        "limit": 6,
+        "columns": 2,
+        "channel": "all",
+        "show_image": true,
+        "show_price": true,
+        "show_discount": true,
+        "hide_unavailable": true,
+        "cta_mode": "auto",
+        "card_radius": 16
+      },
+      "tabs": [],
+      "fields": []
+    },
+    "category_grid": {
+      "type": "category_grid",
+      "title": "Category Grid",
+      "description": "Display WooCommerce categories in a grid.",
+      "icon": "dashicons-grid-view",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "columns": 3,
+        "limit": 5,
+        "layout": "grid",
+        "items_alignment": "right",
+        "row_gap": 12,
+        "parent_id": 0,
+        "show_names": true,
+        "hide_empty": true
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "display",
+          "label": "Display"
+        }
+      ],
+      "fields": [
+        {
+          "key": "layout",
+          "label": "Layout",
+          "type": "select",
+          "tab": "display",
+          "default": "grid",
+          "options": {
+            "grid": "Classic grid",
+            "compact": "Compact grid",
+            "cards": "Rounded cards",
+            "carousel": "Horizontal row",
+            "editorial_mosaic": "Editorial Mosaic",
+            "full_width_banners": "Full-width Banners"
+          }
+        },
+        {
+          "key": "items_alignment",
+          "label": "Items Alignment",
+          "type": "select",
+          "tab": "display",
+          "default": "right",
+          "options": {
+            "right": "Right",
+            "center": "Center",
+            "left": "Left"
+          }
+        },
+        {
+          "key": "row_gap",
+          "label": "Row Gap",
+          "type": "number",
+          "tab": "display",
+          "default": 12,
+          "min": 0,
+          "max": 80
+        },
+        {
+          "key": "title",
+          "label": "Section Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "subtitle",
+          "label": "Subtitle",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "columns",
+          "label": "Columns",
+          "type": "number",
+          "tab": "display",
+          "default": 4,
+          "min": 2,
+          "max": 6,
+          "step": 1
+        },
+        {
+          "key": "limit",
+          "label": "Categories Limit",
+          "type": "number",
+          "tab": "display",
+          "default": 8,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "key": "parent_id",
+          "label": "Parent Category ID",
+          "type": "number",
+          "tab": "display",
+          "default": 0,
+          "min": 0,
+          "step": 1
+        },
+        {
+          "key": "show_names",
+          "label": "Show Category Names",
+          "type": "checkbox",
+          "tab": "display",
+          "default": true
+        },
+        {
+          "key": "hide_empty",
+          "label": "Hide Empty Categories",
+          "type": "checkbox",
+          "tab": "display",
+          "default": true
+        }
+      ]
+    },
+    "countdown": {
+      "type": "countdown",
+      "title": "Countdown",
+      "description": "Display a countdown timer.",
+      "icon": "dashicons-clock",
+      "defaults": {
+        "title": "",
+        "ends_at": "",
+        "expired_text": "انتهى العرض",
+        "visible_units": "days_hours_minutes_seconds",
+        "layout_style": "cards"
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "timer",
+          "label": "Timer"
+        }
+      ],
+      "fields": [
+        {
+          "key": "layout_style",
+          "label": "Layout Style",
+          "type": "select",
+          "tab": "timer",
+          "default": "cards",
+          "options": {
+            "cards": "Cards",
+            "circles": "Circles",
+            "flip_clock": "Flip Clock",
+            "minimal_inline": "Minimal Inline",
+            "split_labels": "Split Labels"
+          }
+        },
+        {
+          "key": "visible_units",
+          "label": "Visible time units",
+          "type": "select",
+          "tab": "timer",
+          "default": "days_hours_minutes_seconds",
+          "options": {
+            "days": "Days only",
+            "days_hours": "Days + Hours",
+            "days_hours_minutes": "Days + Hours + Minutes",
+            "days_hours_minutes_seconds": "Days + Hours + Minutes + Seconds"
+          }
+        },
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "ends_at",
+          "label": "End Date",
+          "type": "text",
+          "tab": "timer",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "expired_text",
+          "label": "Expired Text",
+          "type": "text",
+          "tab": "timer",
+          "default": "انتهى العرض",
+          "full_width": true
+        }
+      ]
+    },
+    "coupon_banner": {
+      "type": "coupon_banner",
+      "title": "Coupon Banner",
+      "description": "Display a promotional coupon banner.",
+      "icon": "dashicons-tickets-alt",
+      "defaults": {
+        "title": "",
+        "description": "",
+        "coupon_code": "",
+        "image_url": ""
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "media",
+          "label": "Media"
+        }
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "required": true,
+          "full_width": true
+        },
+        {
+          "key": "description",
+          "label": "Description",
+          "type": "textarea",
+          "tab": "general",
+          "default": "",
+          "rows": 4,
+          "full_width": true
+        },
+        {
+          "key": "coupon_code",
+          "label": "Coupon Code",
+          "type": "text",
+          "tab": "general",
+          "default": ""
+        },
+        {
+          "key": "image_url",
+          "label": "Banner Image",
+          "type": "image",
+          "tab": "media",
+          "default": "",
+          "full_width": true
+        }
+      ]
+    },
+    "divider": {
+      "type": "divider",
+      "title": "Divider",
+      "description": "Display a horizontal divider.",
+      "icon": "dashicons-minus",
+      "defaults": {
+        "color": "#e5e7eb",
+        "thickness": 1,
+        "margin": 16
+      },
+      "tabs": [
+        {
+          "id": "style",
+          "label": "Style"
+        }
+      ],
+      "fields": [
+        {
+          "key": "color",
+          "label": "Divider Color",
+          "type": "color",
+          "tab": "style",
+          "default": "#e5e7eb"
+        },
+        {
+          "key": "thickness",
+          "label": "Thickness",
+          "type": "number",
+          "tab": "style",
+          "default": 1,
+          "min": 1,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "key": "margin",
+          "label": "Vertical Margin",
+          "type": "number",
+          "tab": "style",
+          "default": 16,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ]
+    },
+    "hero_slider": {
+      "type": "hero_slider",
+      "title": "Hero Slider",
+      "description": "Manage Hero Slider settings.",
+      "icon": "dashicons-images-alt2",
+      "defaults": {
+        "aspect_ratio": 1.8,
+        "auto_play": true,
+        "interval_ms": 4500,
+        "slides": []
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "slides",
+          "label": "Slides"
+        }
+      ],
+      "fields": [
+        {
+          "key": "aspect_ratio",
+          "label": "Aspect Ratio",
+          "type": "number",
+          "tab": "general",
+          "min": 1,
+          "max": 4,
+          "step": 0.1,
+          "default": 1.8
+        },
+        {
+          "key": "auto_play",
+          "label": "Autoplay",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "interval_ms",
+          "label": "Interval (ms)",
+          "type": "number",
+          "tab": "general",
+          "min": 2000,
+          "max": 15000,
+          "step": 500,
+          "default": 4500
+        },
+        {
+          "key": "slides",
+          "label": "Slides",
+          "type": "repeater",
+          "tab": "slides",
+          "default": []
+        }
+      ]
+    },
+    "image_banner": {
+      "type": "image_banner",
+      "title": "Image Banner",
+      "description": "Create and configure a promotional image banner.",
+      "icon": "dashicons-format-image",
+      "defaults": {
+        "image_url": "",
+        "semantic_label": "",
+        "aspect_ratio": 1,
+        "border_radius": 18,
+        "button_label": "SHOP NOW",
+        "action_type": "",
+        "action_value": ""
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "action",
+          "label": "Action"
+        },
+        {
+          "id": "style",
+          "label": "Style"
+        }
+      ],
+      "fields": [
+        {
+          "key": "image_url",
+          "label": "Banner Image",
+          "description": "Select the image displayed in the banner.",
+          "type": "image",
+          "tab": "general",
+          "default": "",
+          "required": true,
+          "full_width": true
+        },
+        {
+          "key": "semantic_label",
+          "label": "Accessibility Label",
+          "description": "Text used by screen readers.",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "aspect_ratio",
+          "label": "Aspect Ratio",
+          "type": "number",
+          "tab": "style",
+          "default": 2.4,
+          "min": 1,
+          "max": 5,
+          "step": 0.1
+        },
+        {
+          "key": "border_radius",
+          "label": "Border Radius",
+          "type": "number",
+          "tab": "style",
+          "default": 20,
+          "min": 0,
+          "max": 48,
+          "step": 1
+        },
+        {
+          "key": "action_type",
+          "label": "Action Type",
+          "type": "select",
+          "tab": "action",
+          "default": "",
+          "options": {
+            "": "No Action",
+            "product": "Product",
+            "category": "Category",
+            "collection": "Collection",
+            "search": "Search",
+            "external": "External URL"
+          }
+        },
+        {
+          "key": "action_value",
+          "label": "Action Value",
+          "description": "Enter the product ID, category ID, collection name, search text or URL.",
+          "type": "text",
+          "tab": "action",
+          "default": "",
+          "full_width": true
+        }
+      ]
+    },
+    "product_carousel": {
+      "type": "product_carousel",
+      "title": "Product Carousel",
+      "description": "Display WooCommerce products in a horizontal carousel.",
+      "icon": "dashicons-products",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "source": "latest",
+        "limit": 10,
+        "show_view_all": true,
+        "category_id": 0,
+        "product_ids": "",
+        "view_all_label": "",
+        "card_style": "outlined",
+        "item_width": 168,
+        "image_ratio": 1,
+        "enable_image_swipe": false,
+        "card_radius": 20,
+        "show_name": true,
+        "show_price": true,
+        "show_regular_price": true,
+        "show_badge": true,
+        "show_rating": false,
+        "quick_add_enabled": true,
+        "quick_add_icon_variant": "bag",
+        "quick_add_icon_style": "outline",
+        "quick_add_icon_size": 22,
+        "quick_add_icon_color": "#1F2933",
+        "quick_add_show_background": true,
+        "quick_add_background_color": "#FFFFFF",
+        "quick_add_background_size": 40,
+        "quick_add_radius": 24,
+        "quick_add_position": "bottom_end",
+        "show_wishlist": false,
+        "product_wishlist_icon_variant": "heart",
+        "product_wishlist_icon_style": "outline",
+        "product_wishlist_icon_size": 20,
+        "product_wishlist_icon_color": "#1F2933",
+        "product_wishlist_show_background": true,
+        "product_wishlist_background_color": "#FFFFFF",
+        "product_wishlist_background_size": 40,
+        "product_wishlist_radius": 24,
+        "product_wishlist_position": "top_end"
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "source",
+          "label": "Source"
+        }
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "label": "Section Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "show_view_all",
+          "label": "Show View All",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "source",
+          "label": "Products Source",
+          "type": "select",
+          "tab": "source",
+          "default": "latest",
+          "options": {
+            "latest": "Latest Products",
+            "featured": "Featured Products",
+            "on_sale": "On Sale",
+            "category": "Specific Category",
+            "manual": "Manual Selection"
+          }
+        },
+        {
+          "key": "category_id",
+          "label": "Category ID",
+          "type": "number",
+          "tab": "source",
+          "default": 0,
+          "min": 0,
+          "step": 1
+        },
+        {
+          "key": "limit",
+          "label": "Products Limit",
+          "type": "number",
+          "tab": "source",
+          "default": 10,
+          "min": 1,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "key": "card_style",
+          "label": "Card style",
+          "type": "select",
+          "tab": "general",
+          "default": "outlined",
+          "options": {
+            "minimal": "Minimal",
+            "no_shadow": "No shadow",
+            "outlined": "Outlined",
+            "elevated": "Elevated"
+          }
+        },
+        {
+          "key": "item_width",
+          "label": "Card width",
+          "type": "number",
+          "tab": "general",
+          "default": 168,
+          "min": 120,
+          "max": 260,
+          "step": 4
+        },
+        {
+          "key": "image_ratio",
+          "label": "Image ratio",
+          "type": "number",
+          "tab": "general",
+          "default": 1,
+          "min": 0.6,
+          "max": 1.8,
+          "step": 0.05
+        },
+        {
+          "key": "enable_image_swipe",
+          "label": "Swipe product images on the card",
+          "type": "checkbox",
+          "tab": "general",
+          "default": false
+        },
+        {
+          "key": "card_radius",
+          "label": "Card radius",
+          "type": "number",
+          "tab": "general",
+          "default": 20,
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "key": "show_name",
+          "label": "Show product name",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "show_price",
+          "label": "Show price",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "show_regular_price",
+          "label": "Show regular price",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "show_badge",
+          "label": "Show sale badge",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "show_rating",
+          "label": "Show rating",
+          "type": "checkbox",
+          "tab": "general",
+          "default": false
+        },
+        {
+          "key": "quick_add_enabled",
+          "label": "Quick add to cart",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "quick_add_icon_variant",
+          "label": "Quick add icon shape",
+          "type": "select",
+          "tab": "general",
+          "default": "bag",
+          "options": {
+            "bag": "Shopping bag",
+            "cart": "Shopping cart",
+            "basket": "Shopping basket"
+          }
+        },
+        {
+          "key": "quick_add_icon_style",
+          "label": "Quick add icon style",
+          "type": "select",
+          "tab": "general",
+          "default": "outline",
+          "options": {
+            "outline": "Outline",
+            "filled": "Filled",
+            "rounded": "Rounded"
+          }
+        },
+        {
+          "key": "quick_add_icon_size",
+          "label": "Quick add icon size",
+          "type": "number",
+          "tab": "general",
+          "default": 22,
+          "min": 10,
+          "max": 36
+        },
+        {
+          "key": "quick_add_icon_color",
+          "label": "Quick add icon color",
+          "type": "color",
+          "tab": "general",
+          "default": "#1F2933"
+        },
+        {
+          "key": "quick_add_show_background",
+          "label": "White background behind icon",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "quick_add_background_color",
+          "label": "Quick add background color",
+          "type": "color",
+          "tab": "general",
+          "default": "#FFFFFF"
+        },
+        {
+          "key": "quick_add_background_size",
+          "label": "Quick add background size",
+          "type": "number",
+          "tab": "general",
+          "default": 40,
+          "min": 10,
+          "max": 64
+        },
+        {
+          "key": "quick_add_radius",
+          "label": "Quick add background radius",
+          "type": "number",
+          "tab": "general",
+          "default": 24,
+          "min": 0,
+          "max": 40
+        },
+        {
+          "key": "quick_add_position",
+          "label": "Quick add position",
+          "type": "select",
+          "tab": "general",
+          "default": "bottom_end",
+          "options": {
+            "top_start": "Top start",
+            "top_end": "Top end",
+            "bottom_start": "Bottom start",
+            "bottom_end": "Bottom end"
+          }
+        },
+        {
+          "key": "show_wishlist",
+          "label": "Product wishlist icon",
+          "type": "checkbox",
+          "tab": "general",
+          "default": false
+        },
+        {
+          "key": "product_wishlist_icon_variant",
+          "label": "Product wishlist icon shape",
+          "type": "select",
+          "tab": "general",
+          "default": "heart",
+          "options": {
+            "heart": "Heart",
+            "rounded": "Rounded heart",
+            "bookmark": "Bookmark"
+          }
+        },
+        {
+          "key": "product_wishlist_icon_style",
+          "label": "Product wishlist icon style",
+          "type": "select",
+          "tab": "general",
+          "default": "outline",
+          "options": {
+            "outline": "Outline",
+            "filled": "Filled"
+          }
+        },
+        {
+          "key": "product_wishlist_icon_size",
+          "label": "Product wishlist icon size",
+          "type": "number",
+          "tab": "general",
+          "default": 20,
+          "min": 10,
+          "max": 36
+        },
+        {
+          "key": "product_wishlist_icon_color",
+          "label": "Product wishlist icon color",
+          "type": "color",
+          "tab": "general",
+          "default": "#1F2933"
+        },
+        {
+          "key": "product_wishlist_show_background",
+          "label": "Product wishlist background",
+          "type": "checkbox",
+          "tab": "general",
+          "default": true
+        },
+        {
+          "key": "product_wishlist_background_color",
+          "label": "Product wishlist background color",
+          "type": "color",
+          "tab": "general",
+          "default": "#FFFFFF"
+        },
+        {
+          "key": "product_wishlist_background_size",
+          "label": "Product wishlist background size",
+          "type": "number",
+          "tab": "general",
+          "default": 40,
+          "min": 20,
+          "max": 64
+        },
+        {
+          "key": "product_wishlist_radius",
+          "label": "Product wishlist background radius",
+          "type": "number",
+          "tab": "general",
+          "default": 24,
+          "min": 0,
+          "max": 40
+        },
+        {
+          "key": "product_wishlist_position",
+          "label": "Product wishlist position",
+          "type": "select",
+          "tab": "general",
+          "default": "top_end",
+          "options": {
+            "top_start": "Top start",
+            "top_end": "Top end",
+            "bottom_start": "Bottom start",
+            "bottom_end": "Bottom end"
+          }
+        }
+      ]
+    },
+    "product_grid": {
+      "type": "product_grid",
+      "title": "Product Grid",
+      "description": "Display WooCommerce products in a responsive mobile grid.",
+      "icon": "dashicons-grid-view",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "source": "latest",
+        "limit": 8,
+        "columns": 2,
+        "category_id": 0,
+        "product_ids": "",
+        "show_view_all": true,
+        "view_all_label": "",
+        "action_type": "",
+        "action_value": "",
+        "card_style": "outlined",
+        "image_ratio": 1,
+        "card_radius": 20,
+        "enable_image_swipe": false,
+        "show_name": true,
+        "show_price": true,
+        "show_regular_price": true,
+        "show_badge": true,
+        "show_rating": false,
+        "quick_add_enabled": true,
+        "quick_add_icon_variant": "bag",
+        "quick_add_icon_style": "outline",
+        "quick_add_icon_size": 22,
+        "quick_add_icon_color": "#1F2933",
+        "quick_add_show_background": true,
+        "quick_add_background_color": "#FFFFFF",
+        "quick_add_background_size": 40,
+        "quick_add_radius": 24,
+        "quick_add_position": "bottom_end",
+        "show_wishlist": false,
+        "product_wishlist_icon_variant": "heart",
+        "product_wishlist_icon_style": "outline",
+        "product_wishlist_icon_size": 20,
+        "product_wishlist_icon_color": "#1F2933",
+        "product_wishlist_show_background": true,
+        "product_wishlist_background_color": "#FFFFFF",
+        "product_wishlist_background_size": 40,
+        "product_wishlist_radius": 24,
+        "product_wishlist_position": "top_end"
+      },
+      "fields": [
+        {
+          "key": "title",
+          "label": "Section title",
+          "type": "text",
+          "default": ""
+        },
+        {
+          "key": "subtitle",
+          "label": "Subtitle",
+          "type": "text",
+          "default": ""
+        },
+        {
+          "key": "source",
+          "type": "select",
+          "default": "latest"
+        },
+        {
+          "key": "columns",
+          "type": "number",
+          "default": 2,
+          "min": 1,
+          "max": 4
+        },
+        {
+          "key": "limit",
+          "type": "number",
+          "default": 8,
+          "min": 1,
+          "max": 50
+        },
+        {
+          "key": "category_id",
+          "label": "Category ID",
+          "type": "number",
+          "default": 0,
+          "min": 0
+        },
+        {
+          "key": "product_ids",
+          "label": "Manual product IDs",
+          "type": "text",
+          "default": ""
+        },
+        {
+          "key": "card_style",
+          "label": "Card style",
+          "type": "select",
+          "default": "outlined",
+          "options": {
+            "minimal": "Minimal",
+            "no_shadow": "No shadow",
+            "outlined": "Outlined",
+            "elevated": "Elevated"
+          }
+        },
+        {
+          "key": "image_ratio",
+          "label": "Image ratio",
+          "type": "number",
+          "default": 1,
+          "min": 0.6,
+          "max": 1.8,
+          "step": 0.05
+        },
+        {
+          "key": "enable_image_swipe",
+          "label": "Swipe product images on the card",
+          "type": "checkbox",
+          "default": false
+        },
+        {
+          "key": "card_radius",
+          "label": "Card radius",
+          "type": "number",
+          "default": 20,
+          "min": 0,
+          "max": 40
+        },
+        {
+          "key": "show_view_all",
+          "label": "Show view all",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "show_name",
+          "label": "Show product name",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "show_price",
+          "label": "Show price",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "show_regular_price",
+          "label": "Show regular price",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "show_badge",
+          "label": "Show sale badge",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "show_rating",
+          "label": "Show rating",
+          "type": "checkbox",
+          "default": false
+        },
+        {
+          "key": "quick_add_enabled",
+          "label": "Quick add to cart",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "quick_add_icon_variant",
+          "label": "Quick add icon shape",
+          "type": "select",
+          "default": "bag",
+          "options": {
+            "bag": "Shopping bag",
+            "cart": "Shopping cart",
+            "basket": "Shopping basket"
+          }
+        },
+        {
+          "key": "quick_add_icon_style",
+          "label": "Quick add icon style",
+          "type": "select",
+          "default": "outline",
+          "options": {
+            "outline": "Outline",
+            "filled": "Filled",
+            "rounded": "Rounded"
+          }
+        },
+        {
+          "key": "quick_add_icon_size",
+          "label": "Quick add icon size",
+          "type": "number",
+          "default": 22,
+          "min": 10,
+          "max": 36
+        },
+        {
+          "key": "quick_add_icon_color",
+          "label": "Quick add icon color",
+          "type": "color",
+          "default": "#1F2933"
+        },
+        {
+          "key": "quick_add_show_background",
+          "label": "White background behind icon",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "quick_add_background_color",
+          "label": "Quick add background color",
+          "type": "color",
+          "default": "#FFFFFF"
+        },
+        {
+          "key": "quick_add_background_size",
+          "label": "Quick add background size",
+          "type": "number",
+          "default": 40,
+          "min": 10,
+          "max": 64
+        },
+        {
+          "key": "quick_add_radius",
+          "label": "Quick add background radius",
+          "type": "number",
+          "default": 24,
+          "min": 0,
+          "max": 40
+        },
+        {
+          "key": "quick_add_position",
+          "label": "Quick add position",
+          "type": "select",
+          "default": "bottom_end",
+          "options": {
+            "top_start": "Top start",
+            "top_end": "Top end",
+            "bottom_start": "Bottom start",
+            "bottom_end": "Bottom end"
+          }
+        },
+        {
+          "key": "show_wishlist",
+          "label": "Product wishlist icon",
+          "type": "checkbox",
+          "default": false
+        },
+        {
+          "key": "product_wishlist_icon_variant",
+          "label": "Product wishlist icon shape",
+          "type": "select",
+          "default": "heart",
+          "options": {
+            "heart": "Heart",
+            "rounded": "Rounded heart",
+            "bookmark": "Bookmark"
+          }
+        },
+        {
+          "key": "product_wishlist_icon_style",
+          "label": "Product wishlist icon style",
+          "type": "select",
+          "default": "outline",
+          "options": {
+            "outline": "Outline",
+            "filled": "Filled"
+          }
+        },
+        {
+          "key": "product_wishlist_icon_size",
+          "label": "Product wishlist icon size",
+          "type": "number",
+          "default": 20,
+          "min": 10,
+          "max": 36
+        },
+        {
+          "key": "product_wishlist_icon_color",
+          "label": "Product wishlist icon color",
+          "type": "color",
+          "default": "#1F2933"
+        },
+        {
+          "key": "product_wishlist_show_background",
+          "label": "Product wishlist background",
+          "type": "checkbox",
+          "default": true
+        },
+        {
+          "key": "product_wishlist_background_color",
+          "label": "Product wishlist background color",
+          "type": "color",
+          "default": "#FFFFFF"
+        },
+        {
+          "key": "product_wishlist_background_size",
+          "label": "Product wishlist background size",
+          "type": "number",
+          "default": 40,
+          "min": 20,
+          "max": 64
+        },
+        {
+          "key": "product_wishlist_radius",
+          "label": "Product wishlist background radius",
+          "type": "number",
+          "default": 24,
+          "min": 0,
+          "max": 40
+        },
+        {
+          "key": "product_wishlist_position",
+          "label": "Product wishlist position",
+          "type": "select",
+          "default": "top_end",
+          "options": {
+            "top_start": "Top start",
+            "top_end": "Top end",
+            "bottom_start": "Bottom start",
+            "bottom_end": "Bottom end"
+          }
+        }
+      ]
+    },
+    "promo_strip": {
+      "type": "promo_strip",
+      "title": "Promo Strip",
+      "description": "Display a promotional announcement strip.",
+      "icon": "dashicons-megaphone",
+      "defaults": {
+        "text": "",
+        "width": "",
+        "height": "",
+        "enable_transition": false,
+        "messages": [],
+        "transition_effect": "fade",
+        "change_every": 4,
+        "transition_duration": 500,
+        "background_color": "#4f9f8f",
+        "text_color": "#ffffff",
+        "action_type": "",
+        "action_value": ""
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "style",
+          "label": "Style"
+        },
+        {
+          "id": "action",
+          "label": "Action"
+        }
+      ],
+      "fields": [
+        {
+          "key": "width",
+          "label": "Width (%)",
+          "type": "number",
+          "tab": "style",
+          "default": "",
+          "min": 10,
+          "max": 100
+        },
+        {
+          "key": "height",
+          "label": "Height",
+          "type": "number",
+          "tab": "style",
+          "default": "",
+          "min": 20,
+          "max": 240
+        },
+        {
+          "key": "enable_transition",
+          "label": "Rotating Messages",
+          "type": "checkbox",
+          "tab": "general",
+          "default": false
+        },
+        {
+          "key": "transition_effect",
+          "label": "Transition Effect",
+          "type": "select",
+          "tab": "general",
+          "default": "fade",
+          "options": {
+            "fade": "Fade",
+            "slide_up": "Slide Up",
+            "slide_left": "Slide Left",
+            "scale": "Scale"
+          }
+        },
+        {
+          "key": "change_every",
+          "label": "Change Every",
+          "type": "number",
+          "tab": "general",
+          "default": 4,
+          "min": 1,
+          "max": 60
+        },
+        {
+          "key": "transition_duration",
+          "label": "Transition Duration",
+          "type": "number",
+          "tab": "general",
+          "default": 500,
+          "min": 100,
+          "max": 5000
+        },
+        {
+          "key": "text",
+          "label": "Text",
+          "type": "textarea",
+          "tab": "general",
+          "default": "",
+          "rows": 3,
+          "full_width": true,
+          "required": true
+        },
+        {
+          "key": "background_color",
+          "label": "Background Color",
+          "type": "color",
+          "tab": "style",
+          "default": "#4f9f8f"
+        },
+        {
+          "key": "text_color",
+          "label": "Text Color",
+          "type": "color",
+          "tab": "style",
+          "default": "#ffffff"
+        },
+        {
+          "key": "action_type",
+          "label": "Action Type",
+          "type": "select",
+          "tab": "action",
+          "default": "",
+          "options": {
+            "": "No Action",
+            "collection": "Collection",
+            "category": "Category",
+            "product": "Product",
+            "search": "Search",
+            "external": "External URL"
+          }
+        },
+        {
+          "key": "action_value",
+          "label": "Action Value",
+          "type": "text",
+          "tab": "action",
+          "default": "",
+          "full_width": true
+        }
+      ]
+    },
+    "quick_links": {
+      "type": "quick_links",
+      "title": "Quick Links",
+      "description": "Flexible image shortcuts in a row or grid.",
+      "icon": "dashicons-admin-links",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "layout": "carousel",
+        "columns": 4,
+        "image_shape": "circle",
+        "item_size": 76,
+        "gap": 12,
+        "show_labels": true,
+        "label_color": "#1F2933",
+        "label_size": 13,
+        "items": []
+      },
+      "fields": [
+        {
+          "key": "layout",
+          "type": "select",
+          "default": "carousel"
+        },
+        {
+          "key": "items",
+          "type": "repeater",
+          "default": []
+        }
+      ]
+    },
+    "section_header": {
+      "type": "section_header",
+      "title": "Section Header",
+      "description": "Display a reusable section title and action.",
+      "icon": "dashicons-heading",
+      "defaults": {
+        "title": "",
+        "subtitle": "",
+        "action_label": "",
+        "action_type": "",
+        "action_value": ""
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "action",
+          "label": "Action"
+        }
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "required": true,
+          "full_width": true
+        },
+        {
+          "key": "subtitle",
+          "label": "Subtitle",
+          "type": "textarea",
+          "tab": "general",
+          "default": "",
+          "rows": 3,
+          "full_width": true
+        },
+        {
+          "key": "action_label",
+          "label": "Action Label",
+          "type": "text",
+          "tab": "action",
+          "default": ""
+        },
+        {
+          "key": "action_type",
+          "label": "Action Type",
+          "type": "select",
+          "tab": "action",
+          "default": "",
+          "options": {
+            "": "No Action",
+            "collection": "Collection",
+            "category": "Category",
+            "product": "Product",
+            "search": "Search",
+            "external": "External URL"
+          }
+        },
+        {
+          "key": "action_value",
+          "label": "Action Value",
+          "type": "text",
+          "tab": "action",
+          "default": "",
+          "full_width": true
+        }
+      ]
+    },
+    "spacer": {
+      "type": "spacer",
+      "title": "Spacer",
+      "description": "Add vertical spacing between elements.",
+      "icon": "dashicons-editor-expand",
+      "defaults": {
+        "height": 24
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        }
+      ],
+      "fields": [
+        {
+          "key": "height",
+          "label": "Height",
+          "type": "number",
+          "tab": "general",
+          "default": 24,
+          "min": 0,
+          "max": 300,
+          "step": 1
+        }
+      ]
+    },
+    "text_block": {
+      "type": "text_block",
+      "title": "Text Block",
+      "description": "Display custom formatted text.",
+      "icon": "dashicons-text",
+      "defaults": {
+        "title": "",
+        "content": "",
+        "alignment": "right",
+        "background": ""
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "style",
+          "label": "Style"
+        }
+      ],
+      "fields": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "content",
+          "label": "Content",
+          "type": "textarea",
+          "tab": "general",
+          "default": "",
+          "rows": 8,
+          "full_width": true,
+          "required": true
+        },
+        {
+          "key": "alignment",
+          "label": "Text Alignment",
+          "type": "select",
+          "tab": "style",
+          "default": "right",
+          "options": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          }
+        },
+        {
+          "key": "background",
+          "label": "Background Color",
+          "type": "color",
+          "tab": "style",
+          "default": ""
+        }
+      ]
+    },
+    "video_banner": {
+      "type": "video_banner",
+      "title": "Video Banner",
+      "description": "Display a promotional video banner.",
+      "icon": "dashicons-video-alt3",
+      "defaults": {
+        "video_url": "",
+        "poster_url": "",
+        "aspect_ratio": 1.8,
+        "auto_play": false,
+        "muted": true
+      },
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General"
+        },
+        {
+          "id": "playback",
+          "label": "Playback"
+        }
+      ],
+      "fields": [
+        {
+          "key": "video_url",
+          "label": "Video URL",
+          "type": "url",
+          "tab": "general",
+          "default": "",
+          "full_width": true,
+          "required": true
+        },
+        {
+          "key": "poster_url",
+          "label": "Poster Image",
+          "type": "image",
+          "tab": "general",
+          "default": "",
+          "full_width": true
+        },
+        {
+          "key": "aspect_ratio",
+          "label": "Aspect Ratio",
+          "type": "number",
+          "tab": "playback",
+          "default": 1.8,
+          "min": 1,
+          "max": 4,
+          "step": 0.1
+        },
+        {
+          "key": "auto_play",
+          "label": "Autoplay",
+          "type": "checkbox",
+          "tab": "playback",
+          "default": false
+        },
+        {
+          "key": "muted",
+          "label": "Muted",
+          "type": "checkbox",
+          "tab": "playback",
+          "default": true
+        }
+      ]
+    }
+  }
+}
+
