@@ -30,9 +30,16 @@
 		}
 
 		async function save(screen, payload) {
-			const result = await adapter.saveScreen(screen, payload);
-			root.dispatchEvent(event('screen-saved', { screen: screen, result: result }));
-			return result;
+			try {
+				const result = await adapter.saveScreen(screen, payload);
+				root.dispatchEvent(event('screen-saved', { screen: screen, result: result }));
+				return result;
+			} catch (error) {
+				const message = error && error.message ? error.message : 'MobiShop could not save this screen.';
+				root.dispatchEvent(event('screen-error', { screen: screen, message: message }));
+				if (typeof config.onError === 'function') config.onError(message, error);
+				return { ok: false, error: message };
+			}
 		}
 
 		const api = Object.freeze({
