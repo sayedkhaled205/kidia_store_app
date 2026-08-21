@@ -3,9 +3,14 @@
   "version": 1,
   "screens": [
     "dashboard",
+    "setup",
     "home-builder",
     "category-builder",
-    "page-builder",
+    "catalog-builder",
+    "product-builder",
+    "wishlist-builder",
+    "account-builder",
+    "checkout-builder",
     "store-data",
     "push-notifications",
     "splash-screen",
@@ -42,6 +47,8 @@
     "shared-runtime/runtime.js",
     "shared-runtime/renderers/cms-shell.js",
     "shared-runtime/renderers/home-builder.js",
+    "shared-runtime/renderers/workspace-screens.js",
+    "shared-runtime/css/workspace-screens.css",
     "shared-runtime/block-schema.json"
   ]
 }

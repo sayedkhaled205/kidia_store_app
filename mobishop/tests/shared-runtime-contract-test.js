@@ -7,7 +7,7 @@ const pluginRoot = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'shared-runtime', 'manifest.json'), 'utf8'));
 const blockSchema = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'shared-runtime', 'block-schema.json'), 'utf8'));
 const dom = new JSDOM('<!doctype html><div id="app"></div>', { runScripts: 'outside-only' });
-const scripts = ['platform-adapter.js', 'runtime.js', path.join('renderers', 'cms-shell.js'), path.join('renderers', 'home-builder.js')];
+const scripts = ['platform-adapter.js', 'runtime.js', path.join('renderers', 'cms-shell.js'), path.join('renderers', 'home-builder.js'), path.join('renderers', 'workspace-screens.js')];
 scripts.forEach((file) => dom.window.eval(fs.readFileSync(path.join(pluginRoot, 'shared-runtime', file), 'utf8')));
 
 assert.deepEqual(Array.from(dom.window.MobiShopPlatformAdapter.requiredMethods), manifest.adapterContract);
@@ -68,6 +68,9 @@ const runtime = dom.window.MobiShopBuilderRuntime.create({
 	assert.equal(root.querySelectorAll('[data-block-type]').length, 18);
 	assert.ok(root.querySelector('.mobishop-fixed-chrome-card[data-chrome-part="header"]'));
 	assert.ok(root.querySelector('.mobishop-fixed-chrome-card[data-chrome-part="footer"]'));
+	await homeRuntime.api.open('dashboard');
+	assert.ok(root.querySelector('.mobishop-workspace-page'));
+	assert.equal(root.querySelector('.mobishop-workspace-header h1').textContent, 'Overview');
 	console.log('Shared MobiShop runtime and platform adapter contract passed.');
 })().catch((error) => {
 	console.error(error);
