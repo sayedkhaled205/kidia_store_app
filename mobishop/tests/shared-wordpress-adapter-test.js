@@ -1,0 +1,34 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { JSDOM } = require('jsdom');
+
+const pluginRoot = path.resolve(__dirname, '..');
+const endpoint = fs.readFileSync(path.join(pluginRoot, 'api', 'class-home-layout-endpoint.php'), 'utf8');
+const registry = fs.readFileSync(path.join(pluginRoot, 'includes', 'class-mobishop-block-registry.php'), 'utf8');
+assert.match(endpoint, /\/builder\/home/);
+assert.match(endpoint, /get_builder_home/);
+assert.match(endpoint, /save_builder_home/);
+assert.match(endpoint, /MobiShop_Block_Registry::schemas\(\)/);
+assert.match(endpoint, /is_active\(\)/);
+assert.match(registry, /public static function schemas\(\): array/);
+
+const dom = new JSDOM('<!doctype html><div id="app"></div>', { runScripts: 'outside-only', url: 'https://store.example/wp-admin/' });
+const calls = [];
+dom.window.fetch = async (url, options = {}) => {
+	calls.push({ url, options });
+	return { ok: true, json: async () => options.method === 'POST' ? { ok: true } : { blocks: [], blockSchema: { blocks: {} } } };
+};
+['shared-runtime/platform-adapter.js', 'shared-runtime/adapters/wordpress.js'].forEach((file) => dom.window.eval(fs.readFileSync(path.join(pluginRoot, file), 'utf8')));
+
+(async () => {
+	const adapter = dom.window.MobiShopWordPressAdapter.create({ nonce: 'test-nonce', buildEndpoint: '/build' });
+	const state = await adapter.bootstrap();
+	assert.equal(adapter.platform, 'wordpress');
+	assert.equal(state.initialScreen, 'home-builder');
+	await adapter.saveScreen('home-builder', { blocks: [] });
+	assert.equal(calls[0].options.headers['X-WP-Nonce'], 'test-nonce');
+	assert.equal(calls[1].options.method, 'POST');
+	console.log('Shared WordPress adapter and Builder REST contract passed.');
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+
