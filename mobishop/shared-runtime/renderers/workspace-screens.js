@@ -33,15 +33,56 @@
 			['Reviews', 'Rating and size-and-fit summary.', [['Reviews title', 'text', 'Reviews'], ['Show rating summary', 'checkbox', true], ['Show size and fit summary', 'checkbox', true], ['Small (%)', 'number', '1'], ['True to size (%)', 'number', '99'], ['Large (%)', 'number', '0']]],
 			['Related Products', 'Recommendation grid.', [['Section title', 'text', 'You may also like'], ['Columns', 'number', '2'], ['Gap', 'number', '2'], ['Image ratio', 'number', '0.75'], ['Show price', 'checkbox', true], ['Show quick add', 'checkbox', true]]]
 		]],
-		'wishlist-builder': ['Wishlist', 'Configure saved-product behavior', [], [['Wishlist header', 'Title, sharing and item count.'], ['Saved item cards', 'Price changes, stock state and cart action.'], ['Empty state', 'Message and continue-shopping action.']]],
-		'account-builder': ['Account', 'Configure the customer account area', [], [['Profile', 'Customer details and preferences.'], ['Orders and returns', 'History, tracking, invoices and returns.'], ['Addresses and security', 'Saved addresses, password and sign-out.']]],
-		'checkout-builder': ['Checkout', 'Configure conversion and checkout fields', [], [['Customer details', 'Contact, address and custom checkout fields.'], ['Delivery and payment', 'Shipping methods, payment methods and validation.'], ['Order review', 'Items, discounts, totals and place-order action.']]],
-		'saved-themes': ['Saved Themes', 'Reuse and manage complete visual systems', [], [['Theme library', 'Saved themes and reusable presets.'], ['Current theme', 'Capture the current application appearance.'], ['Import and export', 'Move a theme between installations.']]],
-		'store-data': ['Store Data', 'Inspect commerce data exposed to the application', [['Products', 'products'], ['Categories', 'categories'], ['Orders', 'orders'], ['Customers', 'customers']], [['Products and inventory', 'Published products, prices and availability.'], ['Orders and customers', 'Application orders and customer records.'], ['Discounts', 'Coupons and application promotions.']]],
-		'ai-insights': ['AI Insights', 'Operational recommendations and offer planning', [], [['Opportunity feed', 'Prioritized merchandising and retention opportunities.'], ['Offer workspace', 'Create offers from live store signals.'], ['Measurement', 'Track accepted actions and results.']]],
-		'push-notifications': ['Push Notifications', 'Create, schedule and measure customer messages', [], [['Campaign composer', 'Audience, title, message, image and deep link.'], ['Schedule', 'Send now or select a customer timezone.'], ['Performance', 'Delivery, opens and conversions.']]],
-		'website-app-promotion': ['Website Promotion', 'Promote the mobile application on the storefront', [], [['Smart banner', 'Mobile website banner and install action.'], ['QR and download links', 'Store badges, QR code and device routing.'], ['Display rules', 'Pages, timing, frequency and dismissal.']]],
-		'build-and-publish': ['Build & Publish', 'Validate, build and release the mobile application', [], [['Readiness', 'Connection, branding, store data and content checks.'], ['Build', 'Generate Android and iOS application packages.'], ['Publishing', 'Version, release notes and store submission status.']]],
+		'wishlist-builder': ['Wishlist', 'Edit every signed-out, empty and saved-product state from the original page builder', [], [
+			['Wishlist Access', 'Choose whether guests can save products.', [['Access mode', 'select', 'sign_in_required', ['Guest wishlist', 'Sign in required']], ['Preview state', 'select', 'products', ['Sign-in Wishlist', 'Empty Wishlist Settings', 'Product Wishlist']]]],
+			['Sign-in Wishlist', 'Screen shown to signed-out customers.', [['Title', 'text', 'Sign in to view your wishlist'], ['Description', 'textarea', ''], ['Button label', 'text', 'Sign In'], ['Button action', 'select', 'sign_in', ['Sign in', 'Shopping']]]],
+			['Sign-in Recommendations', 'Products suggested below the sign-in state.', [['Section title', 'text', 'Recommended for you'], ['Columns', 'number', '2'], ['Show price', 'checkbox', true], ['Show quick add', 'checkbox', true]]],
+			['Empty Wishlist', 'Screen shown before products are saved.', [['Title', 'text', 'Your wishlist is empty'], ['Description', 'textarea', 'Add items here by clicking the little heart!'], ['Button label', 'text', 'Go Shopping'], ['Button action', 'select', 'shopping', ['Shopping', 'Sign in']]]],
+			['Empty Wishlist Recommendations', 'Products suggested in the empty state.', [['Section title', 'text', 'You may also like'], ['Columns', 'number', '2'], ['Show price', 'checkbox', true], ['Show quick add', 'checkbox', true]]],
+			['Wishlist Products', 'Grid of products saved by the customer.', [['Columns', 'number', '2'], ['Gap', 'number', '8'], ['Card style', 'select', 'minimal', ['Minimal', 'No shadow', 'Outlined', 'Elevated']], ['Image ratio', 'number', '0.82'], ['Show price', 'checkbox', true], ['Show wishlist', 'checkbox', true], ['Show quick add', 'checkbox', true]]],
+			['Wishlist Product Recommendations', 'Recommendations shown after saved products.', [['Section title', 'text', 'Recommended for you'], ['Columns', 'number', '2'], ['Show price', 'checkbox', true], ['Show quick add', 'checkbox', true]]]
+		]],
+		'account-builder': ['Account', 'Configure the original customer account page elements', [], [
+			['Account Summary', 'Avatar, identity and guest presentation.', [['Avatar size', 'number', '66'], ['Show email', 'checkbox', true], ['Guest title', 'text', 'Sign in / Create account'], ['Card style', 'select', 'elevated', ['Minimal', 'No shadow', 'Outlined', 'Elevated']]]],
+			['Account Menu', 'Choose which account destinations are visible.', [['Show orders', 'checkbox', true], ['Show addresses', 'checkbox', true], ['Show profile', 'checkbox', true], ['Show support', 'checkbox', true]]],
+			['Logout Button', 'Customer sign-out action.', [['Button label', 'text', 'Log out'], ['Background color', 'color', '#FFFFFF']]]
+		]],
+		'checkout-builder': ['Checkout', 'Use the same checkout design and live field schema as the WordPress builder', [], [
+			['Checkout Design', 'Choose the real mobile checkout layout.', [['Layout', 'select', 'classic', ['Classic', 'Summary First', 'Compact']], ['Show progress', 'checkbox', true], ['Card radius', 'number', '12'], ['Page background', 'color', '#F5F7FB']]],
+			['Checkout Fields', 'Drag-compatible billing, shipping and order fields.', [['Field label', 'text', 'Email address'], ['Field key', 'text', 'billing_email'], ['Group', 'select', 'billing', ['Billing', 'Shipping', 'Order']], ['Field type', 'select', 'email', ['Text', 'Email', 'Phone', 'Select', 'Textarea', 'Checkbox', 'Hidden', 'Country', 'State']], ['Placeholder', 'text', ''], ['Autocomplete', 'text', 'email'], ['Default value', 'text', ''], ['Required', 'checkbox', true]]],
+			['Order Review', 'Items, discounts, shipping, totals and place-order action.', [['Show product images', 'checkbox', true], ['Show coupon', 'checkbox', true], ['Show shipping methods', 'checkbox', true], ['Place order label', 'text', 'Place order']]]
+		]],
+		'saved-themes': ['Saved Themes', 'Preview, apply, import and export the same complete theme snapshots', [], [
+			['Your Saved Themes', 'Preview and apply reusable app appearance snapshots.', [['Theme name', 'text', 'My application theme'], ['Preview page', 'select', 'splash', ['Splash', 'Home', 'Category', 'Catalog', 'Product', 'Wishlist', 'Account']]]],
+			['Save Current Theme', 'Capture the current application appearance.', [['Theme name', 'text', 'New theme'], ['Include page layouts', 'checkbox', true], ['Include application chrome', 'checkbox', true]]],
+			['Import & Export', 'Move one theme or the complete library between installations.', [['Import JSON', 'textarea', ''], ['Export scope', 'select', 'theme', ['Selected theme', 'All themes']]]]
+		]],
+		'store-data': ['Store Data', 'Live commerce data, reports, analytics and recovery tools from the original product', [['Products', 'products'], ['Categories', 'categories'], ['Orders', 'orders'], ['Customers', 'customers']], [
+			['Products & Inventory', 'Published products, prices, stock and availability.', [['Source', 'select', 'all', ['All', 'Website', 'Application']], ['Stock state', 'select', 'all', ['All', 'In stock', 'Low stock', 'Out of stock']], ['Rows per page', 'select', '20', ['20', '50', '100']]]],
+			['Orders & Reports', 'Orders, net sales, average order value and best sellers.', [['Period', 'select', '30_days', ['Today', '7 days', '30 days', 'Custom']], ['Channel', 'select', 'all', ['All', 'Website', 'Application']], ['Generate indexed reports', 'checkbox', true]]],
+			['Analytics', 'Sales funnel, registration, searches and category demand.', [['Period', 'select', '30_days', ['Today', '7 days', '30 days', 'Custom']], ['Channel', 'select', 'all', ['All', 'Website', 'Application']], ['Include unique visitors', 'checkbox', true]]],
+			['Abandoned Carts & Recovery', 'Create personal coupons and send recovery messages.', [['Discount type', 'select', 'percent', ['Percentage', 'Fixed cart amount']], ['Discount value', 'number', '10'], ['Expires after (hours)', 'number', '48'], ['Minimum spend', 'number', '0'], ['Notification title', 'text', 'Your cart is waiting'], ['Message', 'textarea', 'Complete your order with code {coupon} before your personal offer expires.'], ['Delivery', 'select', 'now', ['Send now', 'Schedule']]]]
+		]],
+		'ai-insights': ['AI Insights', 'Operational recommendations and offer planning', [], [
+			['Opportunity Feed', 'Prioritized merchandising and retention opportunities.', [['Channel', 'select', 'all', ['All', 'Website', 'Application']], ['Period', 'select', '30_days', ['7 days', '30 days', '90 days']], ['Minimum confidence', 'number', '70']]],
+			['Offer Workspace', 'Create an offer from live store signals.', [['Offer name', 'text', ''], ['Audience', 'select', 'all', ['All customers', 'Abandoned carts', 'Returning customers']], ['Discount type', 'select', 'percent', ['Percentage', 'Fixed amount']], ['Discount value', 'number', '10']]],
+			['Measurement', 'Track accepted recommendations and commercial results.', [['Show revenue impact', 'checkbox', true], ['Show conversion impact', 'checkbox', true], ['Comparison period', 'select', 'previous', ['Previous period', 'Previous year']]]]
+		]],
+		'push-notifications': ['Push Notifications', 'Create, schedule and measure customer messages', [], [
+			['Campaign Composer', 'Audience, message, media and app destination.', [['Audience', 'select', 'all', ['All customers', 'Registered customers', 'Selected segment']], ['Notification title', 'text', ''], ['Message', 'textarea', ''], ['Image URL', 'url', ''], ['Destination URL', 'url', '']]],
+			['Delivery', 'Send immediately or choose a future time.', [['Delivery', 'select', 'now', ['Send now', 'Schedule']], ['Send date and time', 'text', ''], ['Use customer timezone', 'checkbox', true]]],
+			['Performance', 'Delivery, opens and conversions.', [['Track opens', 'checkbox', true], ['Track destination visits', 'checkbox', true], ['Track conversions', 'checkbox', true]]]
+		]],
+		'website-app-promotion': ['Website Promotion', 'Promote the mobile application on the storefront', [], [
+			['Smart Banner', 'Mobile website banner with native install routing.', [['Enabled', 'checkbox', true], ['Headline', 'text', 'Shop faster in our app'], ['Description', 'textarea', 'Download the app for the best shopping experience.'], ['Button label', 'text', 'Get the app'], ['Logo URL', 'url', '']]],
+			['Store Links & QR', 'Device-aware App Store and Google Play destinations.', [['Apple App Store URL', 'url', ''], ['Google Play URL', 'url', ''], ['Show QR code', 'checkbox', true], ['Show store badges', 'checkbox', true]]],
+			['Display Rules', 'Pages, timing, frequency and dismissal behavior.', [['Show on mobile only', 'checkbox', true], ['Delay (seconds)', 'number', '2'], ['Dismiss for (days)', 'number', '7'], ['Position', 'select', 'bottom', ['Top', 'Bottom']]]]
+		]],
+		'build-and-publish': ['Build & Publish', 'Validate, build and release the mobile application', [], [
+			['Readiness', 'Connection, license, branding, store data and content checks.', [['Connection ready', 'checkbox', true], ['License active', 'checkbox', false], ['Branding complete', 'checkbox', false], ['Store data ready', 'checkbox', true], ['Required pages ready', 'checkbox', false]]],
+			['Build', 'Generate Android and iOS application packages.', [['Platform', 'select', 'both', ['Android & iOS', 'Android', 'iOS']], ['Build channel', 'select', 'production', ['Production', 'Testing']], ['Version', 'text', '1.0.0']]],
+			['Publishing', 'Release notes, store submission and latest status.', [['Release notes', 'textarea', ''], ['Submit to stores', 'checkbox', false], ['Notify when complete', 'checkbox', true]]]
+		]],
 	};
 
 	function el(tag, cls, text) {
