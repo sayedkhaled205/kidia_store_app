@@ -2,7 +2,7 @@
   "name": "mobishop-store-builder-tests",
   "private": true,
   "scripts": {
-    "test:builders": "node mobishop/tests/builder-assets-test.js && node mobishop/tests/shared-builder-controls-test.js && node mobishop/tests/banner-chrome-header-test.js && node mobishop/tests/setup-wizard-shell-test.js && node mobishop/tests/persistent-cms-sidebar-test.js && node mobishop/tests/cms-entry-navigation-test.js && node mobishop/tests/app-builder-test.js && node mobishop/tests/license-integration-test.js && node mobishop/tests/firebase-provisioning-integration-test.js && node mobishop/tests/firebase-native-client-test.js && node mobishop/tests/store-data-analytics-test.js && node mobishop/tests/store-data-instant-update-test.js && node mobishop/tests/ai-offer-workspace-test.js && node mobishop/tests/ai-analysis-progress-test.js && node mobishop/tests/background-job-stack-drag-test.js && node mobishop/tests/completed-job-notice-test.js && node mobishop/tests/custom-date-filter-test.js && node mobishop/tests/website-app-promotion-test.js",
+    "test:builders": "node mobishop/tests/shared-runtime-contract-test.js && node mobishop/tests/builder-assets-test.js && node mobishop/tests/shared-builder-controls-test.js && node mobishop/tests/banner-chrome-header-test.js && node mobishop/tests/setup-wizard-shell-test.js && node mobishop/tests/persistent-cms-sidebar-test.js && node mobishop/tests/cms-entry-navigation-test.js && node mobishop/tests/app-builder-test.js && node mobishop/tests/license-integration-test.js && node mobishop/tests/firebase-provisioning-integration-test.js && node mobishop/tests/firebase-native-client-test.js && node mobishop/tests/store-data-analytics-test.js && node mobishop/tests/store-data-instant-update-test.js && node mobishop/tests/ai-offer-workspace-test.js && node mobishop/tests/ai-analysis-progress-test.js && node mobishop/tests/background-job-stack-drag-test.js && node mobishop/tests/completed-job-notice-test.js && node mobishop/tests/custom-date-filter-test.js && node mobishop/tests/website-app-promotion-test.js",
     "test:app-promotion": "node mobishop/tests/website-app-promotion-test.js"
   },
   "devDependencies": {
@@ -10,3 +10,4 @@
     "jsdom": "26.1.0"
   }
 }
+
