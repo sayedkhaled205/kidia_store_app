@@ -73,6 +73,7 @@
 		const def = definitions[screen];
 		const settings = payload.settings || {};
 		root.replaceChildren();
+		const layout = el('div', 'mobishop-workspace-layout');
 		const page = el('section', 'mobishop-workspace-page');
 		const header = el('header', 'mobishop-workspace-header');
 		const titleBox = el('div');
@@ -119,7 +120,38 @@
 			grid.append(card);
 		});
 		page.append(grid);
-		root.append(page);
+		const preview = el('aside', 'mobishop-workspace-preview');
+		preview.setAttribute('aria-label', 'Live mobile preview');
+		preview.append(el('strong', 'mobishop-workspace-preview__label', 'Live Preview'));
+		const phone = el('div', 'mobishop-workspace-phone');
+		const phoneBar = el('div', 'mobishop-workspace-phone__bar');
+		phoneBar.append(el('span', '', '9:41'), el('b', '', '●  Wi‑Fi  ▰'));
+		const phoneHeader = el('div', 'mobishop-workspace-phone__header', def[0]);
+		const phoneBody = el('div', 'mobishop-workspace-phone__body');
+		def[3].forEach(function (item, index) {
+			const block = el('article', 'mobishop-workspace-phone__block');
+			block.dataset.previewIndex = String(index);
+			block.append(el('strong', '', item[0]), el('small', '', item[1]));
+			phoneBody.append(block);
+		});
+		phone.append(phoneBar, phoneHeader, phoneBody);
+		preview.append(phone);
+		layout.append(page, preview);
+		root.append(layout);
+
+		grid.addEventListener('input', function (event) {
+			const card = event.target.closest('.mobishop-workspace-card');
+			if (!card) return;
+			const index = Array.from(grid.children).indexOf(card);
+			const block = phoneBody.querySelector('[data-preview-index="' + index + '"]');
+			if (!block) return;
+			const title = card.querySelector('input[name$="__title"]');
+			const description = card.querySelector('textarea[name$="__description"]');
+			const enabledControl = card.querySelector('input[name$="__enabled"]');
+			if (title) block.querySelector('strong').textContent = title.value;
+			if (description) block.querySelector('small').textContent = description.value;
+			if (enabledControl) block.hidden = !enabledControl.checked;
+		});
 
 		save.addEventListener('click', async function () {
 			const next = {};
