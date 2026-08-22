@@ -243,14 +243,15 @@ final class MobiShop_Home_Layout_Endpoint_V4 {
 		}
 
 		$settings = get_option( 'mobishop_shared_builder_' . str_replace( '-', '_', $screen ), array() );
-		return new WP_REST_Response(
-			array(
+		$payload = array(
 				'ok'       => true,
 				'screen'   => $screen,
 				'settings' => is_array( $settings ) ? $settings : array(),
-			),
-			200
-		);
+			);
+		if ( 'build-and-publish' === $screen && class_exists( 'MobiShop_App_Exporter' ) ) {
+			$payload['build'] = MobiShop_App_Exporter::state();
+		}
+		return new WP_REST_Response( $payload, 200 );
 	}
 
 	/** Persists one normalized non-Home screen without changing legacy Builder options. */
