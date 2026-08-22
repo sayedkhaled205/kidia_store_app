@@ -141,7 +141,11 @@
 			const build = el('button', 'button', 'Start build');
 			build.type = 'button';
 			build.addEventListener('click', async function () {
-				try { await api.startBuild({ platform: api.platform }); } catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { bubbles: true, detail: { screen, message: error.message } })); }
+				const request = {};
+				grid.querySelectorAll('input, textarea, select').forEach(function (input) {
+					request[input.name] = input.type === 'checkbox' ? input.checked : input.value;
+				});
+				try { await api.startBuild(request); } catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { bubbles: true, detail: { screen, message: error.message } })); }
 			});
 			actions.prepend(build);
 		}
