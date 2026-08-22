@@ -29,7 +29,7 @@
 			async loadScreen(screen) {
 				if (screen !== 'home-builder') {
 					const payload = await request('GET', undefined, screenEndpoint + encodeURIComponent(screen));
-					return { settings: payload.settings || {}, store: home && home.store || {}, license: home && home.license || { active: false } };
+					return { settings: payload.settings || {}, build: payload.build || {}, store: home && home.store || {}, license: home && home.license || { active: false } };
 				}
 				return home || request('GET');
 			},
@@ -41,8 +41,20 @@
 			},
 			navigate(target) { global.location.assign(target); },
 			uploadMedia() { throw new Error('Use the WordPress media library.'); },
-			startBuild(requestPayload) {
-				return fetch(options.buildEndpoint, { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify(requestPayload) }).then((response) => response.json());
+			async startBuild(requestPayload) {
+				if (options.buildEndpoint) return request('POST', requestPayload || {}, options.buildEndpoint);
+				const body = new URLSearchParams();
+				body.set('action', 'mobishop_app_build_start');
+				body.set('nonce', options.buildNonce || '');
+				body.set('settings', JSON.stringify(requestPayload || {}));
+				const response = await fetch(options.ajaxUrl || '/wp-admin/admin-ajax.php', {
+					method: 'POST', credentials: 'same-origin',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+					body: body.toString()
+				});
+				const payload = await response.json();
+				if (!response.ok || !payload.success) throw new Error(payload.data && payload.data.message || 'The MobiShop build could not be started.');
+				return { ok: true, build: payload.data || {} };
 			}
 		});
 	}
