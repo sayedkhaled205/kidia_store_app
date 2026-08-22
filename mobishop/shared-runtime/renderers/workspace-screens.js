@@ -145,12 +145,34 @@
 				grid.querySelectorAll('input, textarea, select').forEach(function (input) {
 					request[input.name] = input.type === 'checkbox' ? input.checked : input.value;
 				});
-				try { await api.startBuild(request); } catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { bubbles: true, detail: { screen, message: error.message } })); }
+				try {
+					const result = await api.startBuild(request);
+					const state = result.build || result.data || result;
+					if (buildStatus && state) {
+						buildStatus.dataset.status = state.status || 'queued';
+						buildStatus.querySelector('.mobishop-workspace-build-status__state').textContent = state.status || 'queued';
+						buildStatus.querySelector('.mobishop-workspace-build-status__message').textContent = state.message || 'Your MobiShop build is queued.';
+						buildStatus.querySelector('.mobishop-workspace-build-status__meta').textContent = state.build_id ? 'Build ID: ' + state.build_id : '';
+					}
+				} catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { bubbles: true, detail: { screen, message: error.message } })); }
 			});
 			actions.prepend(build);
 		}
 		header.append(titleBox, actions);
 		page.append(header);
+		let buildStatus = null;
+		if (screen === 'build-and-publish') {
+			buildStatus = el('section', 'mobishop-workspace-build-status');
+			const state = payload.build || {};
+			buildStatus.dataset.status = state.status || 'idle';
+			buildStatus.append(
+				el('span', 'mobishop-workspace-build-status__label', 'Latest build'),
+				el('strong', 'mobishop-workspace-build-status__state', state.status || 'Not started'),
+				el('p', 'mobishop-workspace-build-status__message', state.message || 'Start a build when the application is ready.'),
+				el('small', 'mobishop-workspace-build-status__meta', state.build_id ? 'Build ID: ' + state.build_id : '')
+			);
+			page.append(buildStatus);
+		}
 
 		if (def[2].length) {
 			const stats = el('div', 'mobishop-workspace-stats');
