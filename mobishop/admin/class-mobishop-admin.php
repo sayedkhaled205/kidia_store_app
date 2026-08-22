@@ -407,7 +407,16 @@ final class MobiShop_Admin {
 		add_submenu_page( null, __( 'Bundles', 'mobishop' ), __( 'Bundles', 'mobishop' ), self::CAPABILITY, 'mobishop-bundles', array( $this, 'bundles_page' ) );
 		add_submenu_page( null, __( 'Push Notifications', 'mobishop' ), __( 'Push Notifications', 'mobishop' ), self::CAPABILITY, 'mobishop-push-notifications', array( $this, 'push_notifications_page' ) );
 		add_submenu_page( null, __( 'Website App Promotion', 'mobishop' ), __( 'Website App Promotion', 'mobishop' ), self::CAPABILITY, 'mobishop-website-app-promotion', array( $this, 'website_app_promotion_page' ) );
+		add_submenu_page( null, __( 'Shared Application Builder', 'mobishop' ), __( 'Shared Application Builder', 'mobishop' ), self::CAPABILITY, 'mobishop-shared-builder', array( $this, 'shared_builder_page' ) );
 
+	}
+
+	/** Renders the platform-neutral Builder used by WordPress and Odoo. */
+	public function shared_builder_page(): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
+		}
+		require MOBISHOP_PATH . 'admin/pages/shared-builder.php';
 	}
 
 	/** Renders website-to-app promotion campaigns and settings. */
@@ -2682,6 +2691,40 @@ final class MobiShop_Admin {
 						return;
 					}
 
+					if ( 'mobishop-shared-builder' === $page ) {
+						$shared_styles = array(
+							'mobishop-shared-shell' => 'shared-runtime/css/cms-shell.css',
+							'mobishop-shared-home' => 'shared-runtime/css/home-builder.css',
+							'mobishop-shared-workspace' => 'shared-runtime/css/workspace-screens.css',
+						);
+						foreach ( $shared_styles as $handle => $asset ) {
+							wp_enqueue_style( $handle, MOBISHOP_URL . $asset, array(), MOBISHOP_VERSION . '-' . (string) filemtime( MOBISHOP_PATH . $asset ) );
+						}
+						$shared_scripts = array(
+							'mobishop-shared-adapter-contract' => array( 'shared-runtime/platform-adapter.js', array() ),
+							'mobishop-shared-runtime' => array( 'shared-runtime/runtime.js', array( 'mobishop-shared-adapter-contract' ) ),
+							'mobishop-shared-shell-renderer' => array( 'shared-runtime/renderers/cms-shell.js', array( 'mobishop-shared-runtime' ) ),
+							'mobishop-shared-home-renderer' => array( 'shared-runtime/renderers/home-builder.js', array( 'mobishop-shared-runtime' ) ),
+							'mobishop-shared-workspace-renderer' => array( 'shared-runtime/renderers/workspace-screens.js', array( 'mobishop-shared-runtime' ) ),
+							'mobishop-shared-wordpress-adapter' => array( 'shared-runtime/adapters/wordpress.js', array( 'mobishop-shared-adapter-contract' ) ),
+							'mobishop-shared-wordpress-host' => array( 'admin/assets/shared-builder-host.js', array( 'mobishop-shared-shell-renderer', 'mobishop-shared-home-renderer', 'mobishop-shared-workspace-renderer', 'mobishop-shared-wordpress-adapter' ) ),
+						);
+						foreach ( $shared_scripts as $handle => $asset ) {
+							wp_enqueue_script( $handle, MOBISHOP_URL . $asset[0], $asset[1], MOBISHOP_VERSION . '-' . (string) filemtime( MOBISHOP_PATH . $asset[0] ), true );
+						}
+						wp_localize_script(
+							'mobishop-shared-wordpress-host',
+							'mobishopSharedBuilder',
+							array(
+								'nonce' => wp_create_nonce( 'wp_rest' ),
+								'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+								'buildNonce' => wp_create_nonce( 'mobishop_build_app' ),
+								'connectionUrl' => add_query_arg( array( 'page' => 'mobishop' ), admin_url( 'admin.php' ) ) . '#mobishop-license-key',
+							)
+						);
+						return;
+					}
+
 					wp_enqueue_style(
 						'mobishop-admin-theme',
 						MOBISHOP_URL . 'admin/assets/admin-theme.css',
@@ -3138,3 +3181,4 @@ final class MobiShop_Admin {
 		return $choices;
 	}
             }
+
