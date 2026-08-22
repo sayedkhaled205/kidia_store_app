@@ -39,7 +39,7 @@
 				home = { ...home, ...payload };
 				return result;
 			},
-			navigate(target) { global.location.assign(target); },
+			navigate(target) { global.location.assign(target === 'connection' && options.connectionUrl ? options.connectionUrl : target); },
 			uploadMedia() { throw new Error('Use the WordPress media library.'); },
 			async startBuild(requestPayload) {
 				if (options.buildEndpoint) return request('POST', requestPayload || {}, options.buildEndpoint);
