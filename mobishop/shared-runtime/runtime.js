@@ -5,6 +5,15 @@
 		return new CustomEvent('mobishop:' + name, { detail: detail || {} });
 	}
 
+	function resetScrollPosition(element) {
+		let current = element;
+		while (current && current !== document.body) {
+			if (current.scrollHeight > current.clientHeight) current.scrollTop = 0;
+			current = current.parentElement;
+		}
+		if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+	}
+
 	function createRuntime(options) {
 		const config = options || {};
 		const root = config.root;
@@ -25,6 +34,7 @@
 					throw new Error('This MobiShop section is still being connected to the shared builder.');
 				}
 				await renderer(screenRoot, payload, api);
+				resetScrollPosition(screenRoot);
 				root.dataset.mobishopScreen = screen;
 				root.dispatchEvent(event('screen-opened', { screen: screen, platform: adapter.platform }));
 				return payload;
