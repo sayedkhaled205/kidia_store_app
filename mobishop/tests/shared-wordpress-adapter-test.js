@@ -17,12 +17,14 @@ assert.match(endpoint, /MobiShop_Block_Registry::schemas\(\)/);
 assert.match(endpoint, /builder_store_stats/);
 assert.match(endpoint, /wc_orders_count/);
 assert.match(endpoint, /is_active\(\)/);
+assert.match(endpoint, /MobiShop_App_Exporter::state\(\)/);
 assert.match(registry, /public static function schemas\(\): array/);
 
 const dom = new JSDOM('<!doctype html><div id="app"></div>', { runScripts: 'outside-only', url: 'https://store.example/wp-admin/' });
 const calls = [];
 dom.window.fetch = async (url, options = {}) => {
 	calls.push({ url, options });
+	if (String(url).includes('admin-ajax.php')) return { ok: true, json: async () => ({ success: true, data: { status: 'queued', build_id: 'build-1' } }) };
 	return { ok: true, json: async () => options.method === 'POST' ? { ok: true } : String(url).includes('/builder/screen/') ? { settings: { ready: true } } : { blocks: [], blockSchema: { blocks: {} } } };
 };
 ['shared-runtime/platform-adapter.js', 'shared-runtime/adapters/wordpress.js'].forEach((file) => dom.window.eval(fs.readFileSync(path.join(pluginRoot, file), 'utf8')));
@@ -41,6 +43,12 @@ dom.window.fetch = async (url, options = {}) => {
 	assert.equal(calls[2].url, '/wp-json/mobishop/v1/builder/screen/product-builder');
 	assert.equal(calls[3].options.method, 'POST');
 	assert.deepEqual(JSON.parse(calls[3].options.body), { settings: { product_tabs__enabled: true } });
+	const liveAdapter = dom.window.MobiShopWordPressAdapter.create({ nonce: 'test-nonce', ajaxUrl: '/wp-admin/admin-ajax.php', buildNonce: 'build-nonce' });
+	const build = await liveAdapter.startBuild({ build__platform: 'android' });
+	assert.equal(build.build.status, 'queued');
+	assert.match(calls[4].options.body, /action=mobishop_app_build_start/);
+	assert.match(calls[4].options.body, /nonce=build-nonce/);
+	assert.match(calls[4].options.body, /build__platform/);
 	console.log('Shared WordPress adapter and Builder REST contract passed.');
 })().catch((error) => { console.error(error); process.exitCode = 1; });
 
