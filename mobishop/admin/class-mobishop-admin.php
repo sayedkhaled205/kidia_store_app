@@ -2693,8 +2693,11 @@ final class MobiShop_Admin {
 
 					if ( 'mobishop-shared-builder' === $page ) {
 						$shared_styles = array(
-							'mobishop-shared-shell' => 'shared-runtime/css/cms-shell.css',
-							'mobishop-shared-home' => 'shared-runtime/css/home-builder.css',
+							'mobishop-shared-admin-theme' => 'admin/assets/admin-theme.css',
+							'mobishop-shared-shell' => 'admin/assets/cms-shell.css',
+							'mobishop-shared-page-builder' => 'admin/assets/page-builder.css',
+							'mobishop-shared-chrome' => 'admin/assets/chrome-layout.css',
+							'mobishop-shared-home' => 'admin/assets/home-builder.css',
 							'mobishop-shared-workspace' => 'shared-runtime/css/workspace-screens.css',
 						);
 						foreach ( $shared_styles as $handle => $asset ) {
