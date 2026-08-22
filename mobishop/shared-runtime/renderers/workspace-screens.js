@@ -141,7 +141,7 @@
 			const build = el('button', 'button', 'Start build');
 			build.type = 'button';
 			build.addEventListener('click', async function () {
-				try { await api.startBuild({ platform: api.platform }); } catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { detail: { screen, message: error.message } })); }
+				try { await api.startBuild({ platform: api.platform }); } catch (error) { root.dispatchEvent(new CustomEvent('mobishop:screen-error', { bubbles: true, detail: { screen, message: error.message } })); }
 			});
 			actions.prepend(build);
 		}
@@ -175,6 +175,8 @@
 			grid.append(card);
 		});
 		page.append(grid);
+		const hasPhonePreview = !['dashboard', 'store-data', 'ai-insights', 'build-and-publish'].includes(screen);
+		if (!hasPhonePreview) layout.classList.add('mobishop-workspace-layout--wide');
 		const preview = el('aside', 'mobishop-workspace-preview');
 		preview.setAttribute('aria-label', 'Live mobile preview');
 		preview.append(el('strong', 'mobishop-workspace-preview__label', 'Live Preview'));
@@ -183,18 +185,34 @@
 		phoneBar.append(el('span', '', '9:41'), el('b', '', '●  Wi‑Fi  ▰'));
 		const phoneHeader = el('div', 'mobishop-workspace-phone__header', def[0]);
 		const phoneBody = el('div', 'mobishop-workspace-phone__body');
-		def[3].forEach(function (item, index) {
-			const block = el('article', 'mobishop-workspace-phone__block');
-			block.dataset.previewIndex = String(index);
-			block.append(el('strong', '', item[0]), el('small', '', item[1]));
-			phoneBody.append(block);
-		});
+		if (screen === 'push-notifications') {
+			const notification = el('article', 'mobishop-workspace-phone__block mobishop-workspace-phone__notification');
+			notification.append(el('span', 'mobishop-workspace-phone__app', 'M'));
+			const copy = el('div');
+			copy.append(el('strong', '', settings.message_action__notification_title || 'Your notification title'), el('small', '', settings.message_action__message || 'Your message will appear here.'));
+			notification.append(copy, el('em', '', 'now'));
+			phoneBody.append(notification);
+		} else {
+			def[3].forEach(function (item, index) {
+				const block = el('article', 'mobishop-workspace-phone__block');
+				block.dataset.previewIndex = String(index);
+				block.append(el('strong', '', item[0]), el('small', '', item[1]));
+				phoneBody.append(block);
+			});
+		}
 		phone.append(phoneBar, phoneHeader, phoneBody);
 		preview.append(phone);
-		layout.append(page, preview);
+		layout.append(page);
+		if (hasPhonePreview) layout.append(preview);
 		root.append(layout);
 
 		grid.addEventListener('input', function (event) {
+			if (screen === 'push-notifications') {
+				const notification = phoneBody.querySelector('.mobishop-workspace-phone__notification');
+				if (event.target.name === 'message_action__notification_title') notification.querySelector('strong').textContent = event.target.value || 'Your notification title';
+				if (event.target.name === 'message_action__message') notification.querySelector('small').textContent = event.target.value || 'Your message will appear here.';
+				return;
+			}
 			const card = event.target.closest('.mobishop-workspace-card');
 			if (!card) return;
 			const index = Array.from(grid.children).indexOf(card);
