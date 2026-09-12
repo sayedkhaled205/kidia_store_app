@@ -137495,7 +137495,7 @@ A.bgw.prototype={
 $0(){var s,r=$.bAX(),q=$.bxT(),p=new A.aAn(),o=$.XE()
 o.m(0,p,q)
 A.DF(p,q,!0)
-$.bFh.m(0,"flutter-fire-fcm","16.5.0")
+$.bFh.m(0,"flutter-fire-fcm","16.6.0")
 A.bFi("messaging")
 q=$.bxS()
 p=new A.aAq()
