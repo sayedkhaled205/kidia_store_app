@@ -9,9 +9,9 @@ defined( 'ABSPATH' ) || exit;
 
 final class MobiShop_License_Manager {
 
-	private const API_BASE_URL       = 'https://api.woomobile.app/api/v1/licenses';
-	private const BUILD_API_BASE_URL = 'https://api.woomobile.app/api/v1/builds';
-	private const FIREBASE_API_BASE_URL = 'https://api.woomobile.app/api/v1/firebase';
+	private const API_BASE_URL       = 'https://api.woomobile.app/v1/licenses';
+	private const BUILD_API_BASE_URL = 'https://api.woomobile.app/v1/builds';
+	private const FIREBASE_API_BASE_URL = 'https://api.woomobile.app/v1/firebase';
 	private const STATE_OPTION       = 'mobishop_license_state';
 	private const INSTALLATION_OPTION = 'mobishop_installation_id';
 	private const CRON_HOOK          = 'mobishop_verify_license';
@@ -225,6 +225,7 @@ final class MobiShop_License_Manager {
 				'Content-Type'             => 'application/json',
 				'Authorization'            => 'Bearer ' . $token,
 				'X-MobiShop-Installation' => $this->installation_id(),
+				'X-WooMobile-Installation' => $this->installation_id(),
 			),
 		);
 		if ( 'POST' === $method ) {
@@ -301,6 +302,7 @@ final class MobiShop_License_Manager {
 				'Content-Type'             => 'application/json',
 				'Authorization'            => 'Bearer ' . $token,
 				'X-MobiShop-Installation' => $this->installation_id(),
+				'X-WooMobile-Installation' => $this->installation_id(),
 			),
 		);
 		if ( 'POST' === $method ) {
@@ -357,6 +359,7 @@ final class MobiShop_License_Manager {
 					'Accept'                   => '*/*',
 					'Authorization'            => 'Bearer ' . $token,
 					'X-MobiShop-Installation' => $this->installation_id(),
+					'X-WooMobile-Installation' => $this->installation_id(),
 				),
 			)
 		);
@@ -457,6 +460,7 @@ final class MobiShop_License_Manager {
 		if ( '' !== $token ) {
 			$headers['Authorization']             = 'Bearer ' . $token;
 			$headers['X-MobiShop-Installation'] = $this->installation_id();
+			$headers['X-WooMobile-Installation'] = $this->installation_id();
 		}
 
 		$response = wp_remote_post(
