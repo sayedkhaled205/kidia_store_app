@@ -4,7 +4,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.68
+Stable tag: 1.46.69
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.69 =
+* Forward the selected store language and Firebase bootstrap URL to native builds.
+* Include the selected store logo for Android and iOS app icon generation.
 
 = 1.46.68 =
 * Select platform-specific Firebase configuration and enable native iOS push registration after APNs becomes available.

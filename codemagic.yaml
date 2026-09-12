@@ -32,6 +32,12 @@ workflows:
           fi
       - name: Install Flutter dependencies
         script: flutter pub get
+      - name: Generate selected store app icons
+        script: |
+          set -euo pipefail
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
       - name: Analyze Flutter project
         script: flutter analyze lib test
       - name: Run Flutter tests

@@ -65,6 +65,7 @@ final class MobiShop_App_Exporter {
 		return array(
 			'schema'       => 'mobishop-app-build-package',
 			'builder_project' => 'wordpress-plugin',
+			'app_icon_url' => esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) ),
 			'schemaVersion' => 1,
 			'generatedAt'  => gmdate( 'c' ),
 			'configurationHash' => self::configuration_hash(),
@@ -449,6 +450,8 @@ final class MobiShop_App_Exporter {
 		return array(
 			'store_url'          => esc_url_raw( (string) ( $store['url'] ?? home_url( '/' ) ) ),
 			'app_name'           => sanitize_text_field( (string) ( $application['name'] ?? get_bloginfo( 'name' ) ) ),
+			'store_locale'       => sanitize_text_field( (string) ( $application['language'] ?? 'en' ) ),
+			'push_config_url'    => esc_url_raw( (string) ( $manifest['push']['configUrl'] ?? rest_url( 'mobishop/v1/push/config' ) ) ),
 			'package_name'       => sanitize_text_field( (string) ( $application['androidPackage'] ?? '' ) ),
 			'version_name'       => sanitize_text_field( $version ),
 			'version_code'       => time(),
