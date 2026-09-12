@@ -3,7 +3,7 @@
  * Plugin Name:       MobiShop
  * Plugin URI:        https://woomobile.app/
  * Description:       Server-driven mobile content management and REST API platform for WooCommerce stores.
- * Version:           1.46.66
+ * Version:           1.46.67
  * Requires at least: 6.4
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'MOBISHOP_VERSION',
-	'1.46.66'
+	'1.46.67'
 );
 
 if ( ! defined( 'MOBISHOP_LICENSE_PUBLIC_KEY' ) ) {

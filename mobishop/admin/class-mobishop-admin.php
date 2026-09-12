@@ -2388,7 +2388,7 @@ final class MobiShop_Admin {
 						'site_url'         => home_url( '/' ),
 						'return_url'       => $connect_return_url,
 					),
-					'https://woomobile.app/connect'
+					'https://api.woomobile.app/connect'
 				)
 			);
 			$app_export_state   = MobiShop_App_Exporter::state();

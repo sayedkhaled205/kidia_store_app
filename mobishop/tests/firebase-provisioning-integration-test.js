@@ -13,7 +13,7 @@ const exporter = read("includes", "class-mobishop-app-exporter.php");
 const admin = read("admin", "class-mobishop-admin.php");
 const page = read("admin", "pages", "push-notifications.php");
 
-assert.match(manager, /https:\/\/api\.woomobile\.app\/api\/v1\/firebase/);
+assert.match(manager, /https:\/\/api\.woomobile\.app\/v1\/firebase/);
 assert.match(manager, /firebase_service_request[\s\S]*Authorization[\s\S]*X-MobiShop-Installation/);
 assert.match(manager, /firebase_config_file[\s\S]*'android', 'ios'[\s\S]*'\/project\/'[\s\S]*'-config'[\s\S]*Authorization/);
 assert.match(pushService, /firebase_service_request\(\s*'project'/);

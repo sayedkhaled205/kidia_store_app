@@ -31,7 +31,7 @@ assert.match(
 );
 assert.match(bootstrap, /class-mobishop-license-manager\.php/, "The license manager must load during bootstrap.");
 assert.match(manager, /mobishop_installation_id/, "Installation identity must persist independently of plugin updates.");
-assert.match(manager, /https:\/\/api\.woomobile\.app\/api\/v1\/licenses/, "The live cPanel MobiShop licensing API must be used.");
+assert.match(manager, /https:\/\/api\.woomobile\.app\/v1\/licenses/, "The live cPanel MobiShop licensing API must be used.");
 for (const endpoint of ["/activate", "/verify"]) {
   assert.match(manager, new RegExp(`'${endpoint}'`), `The ${endpoint} endpoint must be integrated.`);
 }
@@ -79,7 +79,7 @@ assert.doesNotMatch(
 );
 assert.match(admin, /mobishop-cms-license-preview/, "Inactive CMS screens must expose preview mode.");
 assert.match(admin, /plugin_installed[\s\S]*=> '1'/, "Plugin-originated connections must tell the website that WordPress is already installed.");
-assert.match(admin, /https:\/\/woomobile\.app\/connect/, "The plugin connection journey must start on MobiShop.");
+assert.match(admin, /https:\/\/api\.woomobile\.app\/connect/, "The plugin connection journey must start on the account portal.");
 assert.match(admin, /MobiShop_License_Manager\(\) \)->is_active/, "Premium setup application must be license-gated.");
 assert.match(dashboard, /Activate license/, "Overview must expose license activation.");
 assert.doesNotMatch(
