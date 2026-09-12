@@ -17,7 +17,7 @@ final class MobiShop_Push_Service {
 	private const METRICS_OPTION  = 'mobishop_push_metrics_v1';
 	private const AUTOMATION_LOG  = 'mobishop_push_automation_log_v1';
 	private const PROJECT_CACHE   = 'mobishop_firebase_project_status_v1';
-	private const CLIENT_CONFIG_CACHE = 'mobishop_firebase_client_config_v1';
+	private const CLIENT_CONFIG_CACHE = 'mobishop_firebase_client_config_v2_';
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
@@ -36,9 +36,9 @@ final class MobiShop_Push_Service {
 	}
 
 	/** @return array<string,mixed> Public settings embedded in every exported application. */
-	public static function client_configuration(): array {
+	public static function client_configuration( string $platform = 'android' ): array {
 		$status = self::connection_status();
-		$firebase_options = ! empty( $status['connected'] ) ? self::firebase_client_options() : array();
+		$firebase_options = ! empty( $status['connected'] ) ? self::firebase_client_options( $platform ) : array();
 		return array(
 			'enabled'              => ! empty( $status['license_active'] ),
 			'mode'                 => 'managed',
@@ -56,37 +56,81 @@ final class MobiShop_Push_Service {
 	}
 
 	/** @return array<string,string> Public Firebase values required by the mobile SDK. */
-	private static function firebase_client_options(): array {
-		$cached = get_transient( self::CLIENT_CONFIG_CACHE );
+	private static function firebase_client_options( string $platform = 'android' ): array {
+		if ( ! in_array( $platform, array( 'android', 'ios' ), true ) ) {
+			return array();
+		}
+		$cache_key = self::CLIENT_CONFIG_CACHE . $platform;
+		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
 		}
 
-		$contents = ( new MobiShop_License_Manager() )->firebase_config_file( 'android' );
+		$contents = ( new MobiShop_License_Manager() )->firebase_config_file( $platform );
 		if ( is_wp_error( $contents ) ) {
 			return array();
 		}
-		$config = json_decode( $contents, true );
-		$project = is_array( $config['project_info'] ?? null ) ? $config['project_info'] : array();
-		$client = is_array( $config['client'][0] ?? null ) ? $config['client'][0] : array();
-		$client_info = is_array( $client['client_info'] ?? null ) ? $client['client_info'] : array();
-		$api_key = is_array( $client['api_key'][0] ?? null ) ? $client['api_key'][0] : array();
-		$options = array_filter(
-			array(
-				'apiKey'            => sanitize_text_field( (string) ( $api_key['current_key'] ?? '' ) ),
-				'appId'             => sanitize_text_field( (string) ( $client_info['mobilesdk_app_id'] ?? '' ) ),
-				'messagingSenderId' => sanitize_text_field( (string) ( $project['project_number'] ?? '' ) ),
-				'projectId'         => sanitize_text_field( (string) ( $project['project_id'] ?? '' ) ),
-				'storageBucket'     => sanitize_text_field( (string) ( $project['storage_bucket'] ?? '' ) ),
-			),
-			static fn ( string $value ): bool => '' !== $value
-		);
-		if ( count( $options ) < 4 ) {
+		if ( 'ios' === $platform ) {
+			$options = self::ios_firebase_options( $contents );
+		} else {
+			$config = json_decode( $contents, true );
+			$project = is_array( $config['project_info'] ?? null ) ? $config['project_info'] : array();
+			$client = is_array( $config['client'][0] ?? null ) ? $config['client'][0] : array();
+			$client_info = is_array( $client['client_info'] ?? null ) ? $client['client_info'] : array();
+			$api_key = is_array( $client['api_key'][0] ?? null ) ? $client['api_key'][0] : array();
+			$options = array_filter(
+				array(
+					'apiKey'            => sanitize_text_field( (string) ( $api_key['current_key'] ?? '' ) ),
+					'appId'             => sanitize_text_field( (string) ( $client_info['mobilesdk_app_id'] ?? '' ) ),
+					'messagingSenderId' => sanitize_text_field( (string) ( $project['project_number'] ?? '' ) ),
+					'projectId'         => sanitize_text_field( (string) ( $project['project_id'] ?? '' ) ),
+					'storageBucket'     => sanitize_text_field( (string) ( $project['storage_bucket'] ?? '' ) ),
+				),
+				static fn ( string $value ): bool => '' !== $value
+			);
+		}
+		foreach ( array( 'apiKey', 'appId', 'messagingSenderId', 'projectId' ) as $required ) {
+			if ( empty( $options[ $required ] ) ) {
+				return array();
+			}
+		}
+		if ( false === strpos( $options['appId'], ':' . $platform . ':' ) ) {
 			return array();
 		}
 
-		set_transient( self::CLIENT_CONFIG_CACHE, $options, 10 * MINUTE_IN_SECONDS );
+		set_transient( $cache_key, $options, 10 * MINUTE_IN_SECONDS );
 		return $options;
+	}
+
+	/** Parse only public SDK values; never load a plist's external DTD or entities. */
+	private static function ios_firebase_options( string $contents ): array {
+		if ( ! function_exists( 'simplexml_load_string' ) || false !== stripos( $contents, '<!ENTITY' ) ) {
+			return array();
+		}
+		$previous = libxml_use_internal_errors( true );
+		try {
+			$plist = simplexml_load_string( $contents, 'SimpleXMLElement', LIBXML_NONET );
+			if ( false === $plist || 'plist' !== $plist->getName() || ! isset( $plist->dict ) ) {
+				return array();
+			}
+			$names = array( 'API_KEY' => 'apiKey', 'GOOGLE_APP_ID' => 'appId', 'GCM_SENDER_ID' => 'messagingSenderId', 'PROJECT_ID' => 'projectId', 'STORAGE_BUCKET' => 'storageBucket', 'BUNDLE_ID' => 'iosBundleId' );
+			$options = array();
+			$key = '';
+			foreach ( $plist->dict->children() as $node ) {
+				if ( 'key' === $node->getName() ) {
+					$key = (string) $node;
+					continue;
+				}
+				if ( 'string' === $node->getName() && isset( $names[ $key ] ) ) {
+					$options[ $names[ $key ] ] = sanitize_text_field( (string) $node );
+				}
+				$key = '';
+			}
+			return array_filter( $options );
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous );
+		}
 	}
 
 	/** @return array<string,mixed> */
@@ -161,7 +205,8 @@ final class MobiShop_Push_Service {
 			)
 		);
 		delete_transient( self::PROJECT_CACHE );
-		delete_transient( self::CLIENT_CONFIG_CACHE );
+		delete_transient( self::CLIENT_CONFIG_CACHE . 'android' );
+		delete_transient( self::CLIENT_CONFIG_CACHE . 'ios' );
 		return $response;
 	}
 
@@ -195,6 +240,7 @@ final class MobiShop_Push_Service {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'public_configuration' ),
+				'args'                => array( 'platform' => array( 'type' => 'string', 'enum' => array( 'android', 'ios' ), 'default' => 'android' ) ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -218,8 +264,8 @@ final class MobiShop_Push_Service {
 		);
 	}
 
-	public function public_configuration(): WP_REST_Response {
-		return rest_ensure_response( self::client_configuration() );
+	public function public_configuration( WP_REST_Request $request ): WP_REST_Response {
+		return rest_ensure_response( self::client_configuration( (string) ( $request->get_param( 'platform' ) ?? 'android' ) ) );
 	}
 
 	public function register_device( WP_REST_Request $request ) {
