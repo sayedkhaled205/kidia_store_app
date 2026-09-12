@@ -64,6 +64,7 @@ final class MobiShop_App_Exporter {
 
 		return array(
 			'schema'       => 'mobishop-app-build-package',
+			'builder_project' => 'wordpress-plugin',
 			'schemaVersion' => 1,
 			'generatedAt'  => gmdate( 'c' ),
 			'configurationHash' => self::configuration_hash(),

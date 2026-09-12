@@ -67,6 +67,7 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 = 1.46.68 =
 * Select platform-specific Firebase configuration and enable native iOS push registration after APNs becomes available.
+* Identify WordPress plugin build requests separately from the central builder project.
 
 = 1.46.67 =
 * Restore compatibility with the deployed license and build API and its installation authentication headers.

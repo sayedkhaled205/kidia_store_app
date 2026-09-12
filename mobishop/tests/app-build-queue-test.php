@@ -250,6 +250,7 @@ mobishop_build_assert( 1 === MobiShop_License_Manager::$requests, 'The backgroun
 mobishop_build_assert( 'build-123' === $remote['build_id'], 'The background action must persist the remote build ID.' );
 mobishop_build_assert( 'queued' === $remote['status'], 'Remote queued status must remain pollable.' );
 $request_body = MobiShop_License_Manager::$bodies[0];
+mobishop_build_assert( 'wordpress-plugin' === $request_body['settings_snapshot']['builder_project'], 'WordPress requests must select the plugin project rather than the central builder branch.' );
 mobishop_build_assert( isset( $request_body['configuration_hash'] ), 'The build service requires the canonical configuration_hash field.' );
 mobishop_build_assert( isset( $request_body['plugin_version'] ), 'The build service requires the canonical plugin_version field.' );
 mobishop_build_assert( true === $request_body['provision_push'], 'The first build attempt should provision managed Push.' );
