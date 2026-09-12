@@ -1,6 +1,6 @@
 workflows:
   mobishop-release:
-    name: MobiShop Android and iOS
+    name: MobiShop Android
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
@@ -38,6 +38,7 @@ workflows:
         script: flutter test
       - name: Build Android APK
         script: |
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
@@ -45,12 +46,13 @@ workflows:
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android App Bundle
         script: |
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
-      - name: Package upload-ready application file
+      - name: Package application build files
         script: |
           set -euo pipefail
 
