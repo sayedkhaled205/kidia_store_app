@@ -1,10 +1,10 @@
 === MobiShop ===
 Tags: mobile app, app builder, ecommerce, store app, woocommerce
 Requires at least: 6.4
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.65
+Stable tag: 1.46.66
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.66 =
+
+* Fixed switch thumb placement in left-to-right and right-to-left builders.
+* Fixed checkout status control and toolbar icon alignment, preserving keyboard focus and form values.
 
 = 1.46.65 =
 

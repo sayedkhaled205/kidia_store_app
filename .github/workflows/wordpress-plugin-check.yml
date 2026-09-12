@@ -41,7 +41,7 @@ jobs:
           unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/readme.txt'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
-          grep -q '^ \* Version:           1.46.65$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Version:           1.46.66$' build/wordpress-org/mobishop/mobishop.php
           grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
@@ -50,6 +50,11 @@ jobs:
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
+      - name: Verify tested WordPress version and active plugin
+        run: |
+          wp-env run cli wp eval 'global $wp_version; if ( version_compare( $wp_version, "7.1", "<" ) ) { throw new RuntimeException( "WordPress 7.1 or newer is required for this validation." ); }'
+          wp-env run cli wp plugin is-active woocommerce
+          wp-env run cli wp plugin is-active mobishop
       - name: Upload tested installable package
         uses: actions/upload-artifact@v4
         with:
