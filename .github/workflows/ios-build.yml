@@ -1,0 +1,43 @@
+name: iOS build check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ios-build.yml'
+      - 'ios/**'
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: Compile unsigned iOS app
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Compile iOS release without Apple credentials
+        run: >-
+          flutter build ios --release --no-codesign
+          --dart-define=STORE_URL=https://example.com
+          --dart-define=STORE_NAME=MobiShop
+          --dart-define=STORE_LOCALE=ar
+      - name: Preserve the unsigned build for inspection
+        run: ditto -c -k --keepParent build/ios/iphoneos/Runner.app build/ios/ios-unsigned-check.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-build-check
+          path: build/ios/ios-unsigned-check.zip
+          if-no-files-found: error
+          retention-days: 7
