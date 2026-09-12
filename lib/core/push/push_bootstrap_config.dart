@@ -31,7 +31,9 @@ final class PushBootstrapConfig {
 
   static Uri? _httpsUrl(Object? value) {
     final Uri? uri = Uri.tryParse(value is String ? value.trim() : '');
-    return uri != null && uri.scheme == 'https' && uri.hasAuthority ? uri : null;
+    return uri != null && uri.scheme == 'https' && uri.hasAuthority
+        ? uri
+        : null;
   }
 }
 
@@ -42,6 +44,7 @@ final class FirebaseClientOptions {
     required this.messagingSenderId,
     required this.projectId,
     this.storageBucket,
+    this.iosBundleId,
   });
 
   factory FirebaseClientOptions.fromJson(Map<String, dynamic> json) {
@@ -51,22 +54,28 @@ final class FirebaseClientOptions {
       messagingSenderId: _text(json['messagingSenderId']),
       projectId: _text(json['projectId']),
       storageBucket: _nullableText(json['storageBucket']),
+      iosBundleId: _nullableText(json['iosBundleId']),
     );
     return options.isComplete ? options : const FirebaseClientOptions.empty();
   }
 
   const FirebaseClientOptions.empty()
-      : apiKey = '',
-        appId = '',
-        messagingSenderId = '',
-        projectId = '',
-        storageBucket = null;
+    : apiKey = '',
+      appId = '',
+      messagingSenderId = '',
+      projectId = '',
+      storageBucket = null,
+      iosBundleId = null;
 
   final String apiKey;
   final String appId;
   final String messagingSenderId;
   final String projectId;
   final String? storageBucket;
+  final String? iosBundleId;
+
+  bool supportsPlatform(String platform) =>
+      isComplete && appId.contains(':$platform:');
 
   bool get isComplete =>
       apiKey.isNotEmpty &&

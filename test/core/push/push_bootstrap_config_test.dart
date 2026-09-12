@@ -2,12 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/push/push_bootstrap_config.dart';
 
 void main() {
+  test('keeps iOS identity and rejects another platform configuration', () {
+    final FirebaseClientOptions options =
+        FirebaseClientOptions.fromJson(<String, dynamic>{
+          'apiKey': 'public-key',
+          'appId': '1:123:ios:abc',
+          'messagingSenderId': '123',
+          'projectId': 'fixture',
+          'iosBundleId': 'app.example.store',
+        });
+    expect(options.iosBundleId, 'app.example.store');
+    expect(options.supportsPlatform('ios'), isTrue);
+    expect(options.supportsPlatform('android'), isFalse);
+    expect(
+      const FirebaseClientOptions.empty().supportsPlatform('ios'),
+      isFalse,
+    );
+  });
   test('accepts a complete managed Firebase bootstrap', () {
     final PushBootstrapConfig config = PushBootstrapConfig.fromJson(
       <String, dynamic>{
         'enabled': true,
         'clientReady': true,
-        'registrationUrl': 'https://store.example/wp-json/mobishop/v1/push/devices',
+        'registrationUrl':
+            'https://store.example/wp-json/mobishop/v1/push/devices',
         'eventsUrl': 'https://store.example/wp-json/mobishop/v1/push/events',
         'firebaseOptions': <String, dynamic>{
           'apiKey': 'public-api-key',

@@ -14,14 +14,15 @@ final class PushNotificationService {
   static const Duration _networkTimeout = Duration(seconds: 12);
 
   PushNotificationService._({Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                connectTimeout: _networkTimeout,
-                receiveTimeout: _networkTimeout,
-                sendTimeout: _networkTimeout,
-              ),
-            );
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              connectTimeout: _networkTimeout,
+              receiveTimeout: _networkTimeout,
+              sendTimeout: _networkTimeout,
+            ),
+          );
 
   static final PushNotificationService instance = PushNotificationService._();
 
@@ -29,28 +30,42 @@ final class PushNotificationService {
   Uri? _registrationUrl;
   Uri? _eventsUrl;
   bool _started = false;
+  bool _listening = false;
+  String _platform = 'android';
 
   Future<void> initialize() async {
     if (_started || kIsWeb || AppConfig.isCmsPreview) {
       return;
     }
-    _started = true;
-
     final String configUrl = AppConfig.pushConfigUrl.trim();
     final TargetPlatform platform = defaultTargetPlatform;
-    if (configUrl.isEmpty || platform != TargetPlatform.android) {
+    if (configUrl.isEmpty ||
+        (platform != TargetPlatform.android &&
+            platform != TargetPlatform.iOS)) {
       return;
     }
+    _started = true;
+    _platform = platform == TargetPlatform.iOS ? 'ios' : 'android';
 
     try {
-      final Response<dynamic> response = await _dio.get<dynamic>(configUrl);
+      final Uri uri = Uri.parse(configUrl);
+      final Response<dynamic> response = await _dio.getUri<dynamic>(
+        uri.replace(
+          queryParameters: <String, String>{
+            ...uri.queryParameters,
+            'platform': _platform,
+          },
+        ),
+      );
       final Object? raw = response.data;
       if (raw is! Map<String, dynamic>) {
         return;
       }
       final PushBootstrapConfig config = PushBootstrapConfig.fromJson(raw);
       final FirebaseClientOptions? options = config.firebase;
-      if (!config.canRegister || options == null || !options.isComplete) {
+      if (!config.canRegister ||
+          options == null ||
+          !options.supportsPlatform(_platform)) {
         return;
       }
 
@@ -64,6 +79,7 @@ final class PushNotificationService {
             messagingSenderId: options.messagingSenderId,
             projectId: options.projectId,
             storageBucket: options.storageBucket,
+            iosBundleId: options.iosBundleId,
           ),
         );
       }
@@ -78,6 +94,21 @@ final class PushNotificationService {
         return;
       }
 
+      // Apple must issue an APNs token before Firebase can request an FCM token.
+      if (platform == TargetPlatform.iOS) {
+        String? apnsToken;
+        for (int attempt = 0; attempt < 30; attempt++) {
+          apnsToken = await messaging.getAPNSToken();
+          if (apnsToken != null && apnsToken.isNotEmpty) {
+            break;
+          }
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+        if (apnsToken == null || apnsToken.isEmpty) {
+          return;
+        }
+      }
+
       final String? token = await messaging.getToken();
       if (token != null && token.isNotEmpty) {
         await _registerToken(token);
@@ -86,11 +117,13 @@ final class PushNotificationService {
         (String refreshedToken) => unawaited(_registerToken(refreshedToken)),
       );
       FirebaseMessaging.onMessage.listen(
-        (RemoteMessage message) => unawaited(_recordEvent(message, 'delivered')),
+        (RemoteMessage message) =>
+            unawaited(_recordEvent(message, 'delivered')),
       );
       FirebaseMessaging.onMessageOpenedApp.listen(
         (RemoteMessage message) => unawaited(_recordEvent(message, 'opened')),
       );
+      _listening = true;
       final RemoteMessage? initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
         await _recordEvent(initialMessage, 'opened');
@@ -98,6 +131,8 @@ final class PushNotificationService {
     } catch (error, stackTrace) {
       debugPrint('MobiShop Push initialization skipped: $error');
       debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      _started = _listening;
     }
   }
 
@@ -117,7 +152,7 @@ final class PushNotificationService {
       url,
       data: <String, dynamic>{
         'token': token,
-        'platform': 'android',
+        'platform': _platform,
         'client_id': clientId,
         'locale': AppConfig.storeLocale,
         'test': false,
