@@ -37,6 +37,9 @@ migrate_working_dir/
 # Per-store local configuration must never be committed.
 /config/store.local.json
 /ios/Flutter/Store.local.xcconfig
+/android/key.properties
+*.jks
+*.keystore
 
 # Symbolication related
 app.*.symbols

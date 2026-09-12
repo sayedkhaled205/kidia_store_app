@@ -8,6 +8,15 @@ val storeAppName = providers.gradleProperty("APP_NAME")
     .orElse("MobiShop Store")
 val storeApplicationId = providers.gradleProperty("APPLICATION_ID")
     .orElse("com.mobishop.mobishop_store_app")
+val releaseKeyNames = listOf("CM_KEYSTORE_PATH", "CM_KEYSTORE_PASSWORD", "CM_KEY_ALIAS", "CM_KEY_PASSWORD")
+val releaseKeyValues = releaseKeyNames.associateWith { System.getenv(it).orEmpty() }
+val hasReleaseKey = releaseKeyValues.values.all { it.isNotEmpty() }
+require(hasReleaseKey || releaseKeyValues.values.all { it.isEmpty() }) {
+    "Android signing configuration is incomplete. Supply all four CM_KEYSTORE variables."
+}
+require(System.getenv("MOBISHOP_REQUIRE_RELEASE_SIGNING") != "true" || hasReleaseKey) {
+    "A release keystore is required for a store submission build."
+}
 
 android {
     namespace = "com.mobishop.mobishop_store_app"
@@ -38,11 +47,22 @@ android {
         resValue("string", "app_name", storeAppName.get())
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("storeRelease") {
+                storeFile = file(releaseKeyValues.getValue("CM_KEYSTORE_PATH"))
+                storePassword = releaseKeyValues.getValue("CM_KEYSTORE_PASSWORD")
+                keyAlias = releaseKeyValues.getValue("CM_KEY_ALIAS")
+                keyPassword = releaseKeyValues.getValue("CM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Existing staging builds remain installable without store credentials.
+            // Submission pipelines must set MOBISHOP_REQUIRE_RELEASE_SIGNING=true.
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "storeRelease" else "debug")
         }
     }
 }
