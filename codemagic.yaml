@@ -38,16 +38,22 @@ workflows:
         script: flutter test
       - name: Build Android APK
         script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android App Bundle
         script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \

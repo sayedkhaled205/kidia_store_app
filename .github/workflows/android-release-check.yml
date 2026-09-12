@@ -7,6 +7,8 @@ on:
       - '.github/workflows/android-release-check.yml'
       - 'android/**'
       - 'codemagic.yaml'
+      - 'tool/android_build_version.sh'
+      - 'tool/test_android_build_version.sh'
 
 permissions:
   contents: read
@@ -23,6 +25,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Check version request boundaries
+        run: bash tool/test_android_build_version.sh
       - name: Create disposable signing fixture
         run: |
           keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/ci-test.jks" \
@@ -37,11 +41,14 @@ jobs:
           MOBISHOP_REQUIRE_RELEASE_SIGNING: 'true'
           ORG_GRADLE_PROJECT_APP_NAME: 'كيديا اختبار'
           ORG_GRADLE_PROJECT_APPLICATION_ID: com.mobishop.releasecheck
-        run: >-
-          flutter build apk --release --build-name=1.2.3 --build-number=123
-          --dart-define=STORE_URL=https://example.com
-          --dart-define=STORE_NAME=MobiShop
-          --dart-define=STORE_LOCALE=ar
+          BUILD_VERSION_NAME: '1.2.3'
+          BUILD_VERSION_CODE: '123'
+        run: |
+          source tool/android_build_version.sh
+          flutter build apk --release "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define=STORE_URL=https://example.com \
+            --dart-define=STORE_NAME=MobiShop \
+            --dart-define=STORE_LOCALE=ar
       - name: Check actual APK identity and certificate
         run: |
           set -euo pipefail
