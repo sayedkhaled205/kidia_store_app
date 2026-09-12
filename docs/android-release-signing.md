@@ -13,8 +13,11 @@ keystore and passwords outside Git. This repository contains no production key.
 
 `STORE_NAME` is passed to both Flutter and the Android launcher label;
 `ANDROID_APPLICATION_ID` remains the Android package identity. The build service
-must also select the approved version name and increasing version code before a
-store release; current defaults alone do not guarantee valid update numbering.
+supplies `BUILD_VERSION_NAME` (three numeric components) and `BUILD_VERSION_CODE`
+(1 through 2100000000) from the build request. Both APK and AAB use those values.
+Missing both retains Flutter's pubspec defaults; a partial or invalid request
+fails instead of silently producing a different version. Before a store release,
+the requested code must exceed the last uploaded code for that same package.
 
 The Android release check generates an ephemeral CI-only key, compiles an APK,
 and checks the resulting signature, package, and Arabic launcher label. It does
