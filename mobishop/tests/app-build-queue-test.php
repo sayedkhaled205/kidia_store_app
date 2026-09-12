@@ -106,8 +106,9 @@ final class MobiShop_Setup_Wizard {
 	public function identity(): array {
 		return array(
 			'app_name' => 'Queue Test',
-			'language' => 'en',
-			'direction' => 'ltr',
+			'language' => 'ar',
+			'direction' => 'rtl',
+			'logo_url' => 'https://store.example.test/wp-content/uploads/icon.png',
 			'primary_color' => '#2F806E',
 			'secondary_color' => '#EAF6F2',
 			'enabled_pages' => array( 'home' ),
@@ -251,6 +252,10 @@ mobishop_build_assert( 'build-123' === $remote['build_id'], 'The background acti
 mobishop_build_assert( 'queued' === $remote['status'], 'Remote queued status must remain pollable.' );
 $request_body = MobiShop_License_Manager::$bodies[0];
 mobishop_build_assert( 'wordpress-plugin' === $request_body['settings_snapshot']['builder_project'], 'WordPress requests must select the plugin project rather than the central builder branch.' );
+mobishop_build_assert( MobiShop_App_Exporter::manifest()['application']['language'] === $request_body['store_locale'], 'The build must retain the selected store language.' );
+mobishop_build_assert( 'ar' === $request_body['store_locale'], 'Arabic must not silently fall back to English.' );
+mobishop_build_assert( 'https://store.example.test/wp-content/uploads/icon.png' === $request_body['settings_snapshot']['app_icon_url'], 'The selected logo must reach native icon generation.' );
+mobishop_build_assert( 'https://store.example.test/wp-json/mobishop/v1/push/config' === $request_body['push_config_url'], 'The build must receive its HTTPS Firebase bootstrap endpoint.' );
 mobishop_build_assert( isset( $request_body['configuration_hash'] ), 'The build service requires the canonical configuration_hash field.' );
 mobishop_build_assert( isset( $request_body['plugin_version'] ), 'The build service requires the canonical plugin_version field.' );
 mobishop_build_assert( true === $request_body['provision_push'], 'The first build attempt should provision managed Push.' );
