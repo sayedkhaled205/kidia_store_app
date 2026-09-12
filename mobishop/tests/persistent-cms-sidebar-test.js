@@ -124,13 +124,18 @@ assert.doesNotMatch(
 );
 assert.match(
   styles,
-  /:is\(\.mobishop-page-master-toggle,\.mobishop-page-toggle\) input\[type="checkbox"\]:checked::before\{[\s\S]*inset-inline-start:23px!important;[\s\S]*transform:none!important;/,
-  "Standard page switches must position their thumb logically in both RTL and LTR."
+  /:is\(\.mobishop-page-master-toggle,\.mobishop-page-toggle\) input\[type="checkbox"\]:checked::before\{[\s\S]*right:auto!important;[\s\S]*left:23px!important;[\s\S]*transform:none!important;/,
+  "Standard page switches must keep Off on the physical left and On on the physical right in both RTL and LTR."
 );
 assert.match(
   styles,
-  /\.mobishop-builder-switch input:checked \+ \.mobishop-builder-switch__track::after\{[\s\S]*inset-inline-start:21px!important;[\s\S]*transform:none!important;/,
-  "Card switches must use the same reliable logical thumb positioning."
+  /\.mobishop-builder-switch input:checked \+ \.mobishop-builder-switch__track::after\{[\s\S]*right:auto!important;[\s\S]*left:21px!important;[\s\S]*transform:none!important;/,
+  "Card switches must use the same reliable physical thumb positioning."
+);
+assert.doesNotMatch(
+  styles,
+  /\.mobishop-builder-switch__track::after,[\s\S]*inset-inline-start:[^;]+!important;[\s\S]*left:auto!important;/,
+  "Card switch thumbs must not combine a logical inset with left:auto, which pushes the thumb outside LTR tracks."
 );
 assert.match(admin, /private const CMS_VIEWS = array[\s\S]*store-data/, "Navigation destinations must be views of one CMS screen.");
 assert.match(admin, /wp_ajax_mobishop_view[\s\S]*cms_view_fragment/, "CMS views must use the fragment endpoint.");

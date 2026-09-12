@@ -111,6 +111,7 @@ $render_checkout_field = static function ( array $field, string $index ) use ( $
 					<label class="mobishop-page-status-control">
 						<input type="hidden" name="checkout[enabled]" value="0">
 						<input type="checkbox" name="checkout[enabled]" value="1" <?php checked( ! empty( $checkout_fields['enabled'] ) ); ?>>
+						<span class="mobishop-page-status-control__track" aria-hidden="true"></span>
 						<span><b><?php esc_html_e( 'Checkout fields status', 'mobishop' ); ?></b><small data-page-status-copy></small></span>
 					</label>
 				</div>
