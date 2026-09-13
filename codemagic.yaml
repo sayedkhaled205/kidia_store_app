@@ -1,4 +1,74 @@
 workflows:
+  kidia-ios-testflight:
+    name: Kidia iOS staging TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: Kidia TestFlight Build
+    environment:
+      flutter: 3.44.8
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        provisioning_profiles:
+          - kidia_app_store_profile
+        certificates:
+          - kidia_app_store_distribution
+      vars:
+        IOS_BUNDLE_ID: app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
+        APPLE_TEAM_ID: AC7BML9GL6
+        STORE_URL: https://staging.kidiastore.com
+        STORE_NAME: كيديا ستور
+        STORE_LOCALE: ar
+        PUSH_CONFIG_URL: https://staging.kidiastore.com/wp-json/mobishop/v1/push/config
+        APP_ICON_URL: https://staging.kidiastore.com/wp-content/uploads/2025/05/cropped-cropped-2-6-1.png
+    scripts:
+      - name: Configure and test iOS store identity
+        script: |
+          set -euo pipefail
+          python3 tool/test_configure_ios_store.py
+          python3 tool/configure_ios_store.py
+          flutter pub get
+      - name: Generate Kidia native icons
+        script: |
+          set -euo pipefail
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Verify Flutter app
+        script: |
+          set -euo pipefail
+          flutter analyze lib test
+          flutter test
+      - name: Apply existing distribution profile
+        script: xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Build signed Kidia IPA
+        script: |
+          set -euo pipefail
+          flutter build ipa --release \
+            --build-name=1.46.69 --build-number="$(( ${PROJECT_BUILD_NUMBER:?} + 100 ))" \
+            --export-options-plist="$HOME/export_options.plist" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=$STORE_LOCALE" \
+            --dart-define="PUSH_CONFIG_URL=$PUSH_CONFIG_URL"
+      - name: Verify signed application identity
+        script: |
+          set -euo pipefail
+          APP="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          codesign --verify --deep --strict "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")" = "$IOS_BUNDLE_ID"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleDisplayName' "$APP/Info.plist")" = "$STORE_NAME"
+          codesign -d --entitlements :- "$APP" > /tmp/kidia-signed-entitlements.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print aps-environment' /tmp/kidia-signed-entitlements.plist)" = production
+          test "$(/usr/libexec/PlistBuddy -c 'Print application-identifier' /tmp/kidia-signed-entitlements.plist)" = "$APPLE_TEAM_ID.$IOS_BUNDLE_ID"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
   mobishop-release:
     name: MobiShop Android
     instance_type: mac_mini_m2
