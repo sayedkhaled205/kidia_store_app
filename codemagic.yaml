@@ -41,7 +41,8 @@ workflows:
           flutter analyze lib test
           flutter test
       - name: Apply existing distribution profile
-        script: xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+        script: |
+          xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Build signed Kidia IPA
         script: |
           set -euo pipefail
