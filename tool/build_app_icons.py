@@ -87,6 +87,10 @@ def render_icons(data, root):
         if width != height:
             raise ValueError('App icon slots must be square.')
         save(ios / name, round(width * float(slot['scale'].removesuffix('x'))))
+    launch = root / 'ios/Runner/Assets.xcassets/LaunchImage.imageset'
+    if launch.exists():
+        for suffix, size in [('', 168), ('@2x', 336), ('@3x', 504)]:
+            save(launch / ('LaunchImage' + suffix + '.png'), size)
     print('Generated Android and iOS icons from the selected store logo.')
 
 

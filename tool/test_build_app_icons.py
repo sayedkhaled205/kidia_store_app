@@ -23,9 +23,13 @@ class IconTests(unittest.TestCase):
             relative = Path('ios/Runner/Assets.xcassets/AppIcon.appiconset')
             (root / relative).mkdir(parents=True)
             shutil.copy(Path(__file__).resolve().parents[1] / relative / 'Contents.json', root / relative)
+            launch = root / 'ios/Runner/Assets.xcassets/LaunchImage.imageset'
+            launch.mkdir(parents=True)
             render_icons(fixture(), root)
             icons = list(root.rglob('*.png'))
-            self.assertEqual(len(icons), 20)
+            self.assertEqual(len(icons), 23)
+            with Image.open(launch / 'LaunchImage@3x.png') as image:
+                self.assertEqual(image.size, (504, 504))
             for path in icons:
                 with Image.open(path) as icon:
                     self.assertEqual(icon.mode, 'RGB')

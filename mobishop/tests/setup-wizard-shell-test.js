@@ -268,7 +268,9 @@ assert.match(dashboardTemplate, /\.mobishop-app-build__card-label\s*\{[^}]*font-
 assert.match(dashboardTemplate, /Build Your App[\s\S]*Android &amp; iOS/, "The build card must show only the Android and iOS platform subtitle beneath Build Your App.");
 assert.match(dashboardTemplate, /last 10 days[\s\S]*data-build-download-again[\s\S]*data-build-new-version/, "A successful build from the last 10 days must offer download again or a new build.");
 assert.match(codemagic, /flutter build apk --release[\s\S]*flutter build appbundle --release[\s\S]*app-release\.apk[\s\S]*app-release\.aab[\s\S]*mobishop-build-files\.zip/, "Codemagic must package both the direct-install APK and Google Play AAB.");
-assert.doesNotMatch(codemagic, /flutter build ios|ios-app\.zip|\.ipa/, "The customer bundle must exclude unsigned iOS output until Apple Developer signing is configured.");
+const androidWorkflow = codemagic.split(/^  mobishop-release:\s*$/m)[1];
+assert.ok(androidWorkflow, "The existing Android customer workflow must remain available.");
+assert.doesNotMatch(androidWorkflow, /flutter build ios|ios-app\.zip|\.ipa/, "The Android customer bundle must not include iOS output from the separate signed workflow.");
 assert.doesNotMatch(wizardTemplate, /mobishop-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
 assert.match(savedThemesTemplate, /mobishop-saved-themes__empty/, "Saved Themes must provide a dedicated empty state.");
 assert.match(savedThemesTemplate, /Import Theme/, "The empty Saved Themes page must center an Import Theme action.");
