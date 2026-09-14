@@ -60,7 +60,7 @@ $build_state              = wp_parse_args(
 $build_status             = sanitize_key( (string) $build_state['status'] );
 if ( 'ready' === $build_status && ! $app_export_current ) {
 	$build_status          = 'idle';
-	$build_state['message'] = __( 'Application settings changed. Build a new APK to include the latest setup.', 'mobishop' );
+	$build_state['message'] = __( 'Application settings changed. Build Android and iOS again to include the latest setup.', 'mobishop' );
 }
 $build_in_progress = in_array( $build_status, array( 'queued', 'building' ), true );
 $build_auto_download = isset( $_GET['build_notice'] )
@@ -69,9 +69,9 @@ $build_action = $build_step_complete
 	? 'mobishop_download_apk'
 	: 'mobishop_build_app';
 $build_button_label = $build_step_complete
-	? __( 'Download APK', 'mobishop' )
+	? __( 'Download Android and iOS', 'mobishop' )
 	: ( $build_in_progress
-			? __( 'Building APK…', 'mobishop' )
+			? __( 'Building Android and iOS…', 'mobishop' )
 			: __( 'Build Your App', 'mobishop' )
 	);
 $journey_steps = array(
@@ -92,7 +92,7 @@ $journey_steps = array(
 	),
 	array(
 		'title'       => __( 'Build your app', 'mobishop' ),
-		'description' => __( 'Build a real Android APK, then download it directly to install on your phone.', 'mobishop' ),
+		'description' => __( 'Build Android APK and AAB plus a signed iOS IPA together, then download the build files.', 'mobishop' ),
 		'complete'    => $build_step_complete,
 	),
 );
@@ -118,9 +118,9 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 	<?php endif; ?>
 
 	<?php if ( isset( $_GET['build_notice'] ) && 'started' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
-		<div class="notice notice-success inline"><p><?php esc_html_e( 'Your APK build has started. You can leave this page and return later.', 'mobishop' ); ?></p></div>
+		<div class="notice notice-success inline"><p><?php esc_html_e( 'Your Android and iOS build has started. You can leave this page and return later.', 'mobishop' ); ?></p></div>
 	<?php elseif ( isset( $_GET['build_notice'] ) && 'error' === sanitize_key( wp_unslash( $_GET['build_notice'] ) ) ) : ?>
-		<div class="notice notice-error inline"><p><?php echo esc_html( isset( $_GET['build_message'] ) ? sanitize_text_field( wp_unslash( $_GET['build_message'] ) ) : __( 'The APK build could not be started.', 'mobishop' ) ); ?></p></div>
+		<div class="notice notice-error inline"><p><?php echo esc_html( isset( $_GET['build_message'] ) ? sanitize_text_field( wp_unslash( $_GET['build_message'] ) ) : __( 'The Android and iOS build could not be started.', 'mobishop' ) ); ?></p></div>
 	<?php endif; ?>
 
 	<section class="mobishop-customer-journey" aria-labelledby="mobishop-customer-journey-title">
@@ -173,8 +173,8 @@ foreach ( $journey_steps as $journey_index => $journey_step ) {
 								echo esc_html(
 									(string) $build_state['message'] ?: (
 										$build_step_complete
-											? __( 'Your APK is ready to install.', 'mobishop' )
-											: __( 'Build an APK after completing the application setup.', 'mobishop' )
+											? __( 'Android and iOS build files are ready.', 'mobishop' )
+											: __( 'Build Android and iOS after completing the application setup.', 'mobishop' )
 									)
 								);
 								?>

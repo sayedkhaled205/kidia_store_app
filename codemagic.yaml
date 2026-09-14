@@ -70,6 +70,179 @@ workflows:
         auth: integration
         submit_to_testflight: false
         submit_to_app_store: false
+  mobishop-dual-release:
+    name: MobiShop Android and iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: 3.44.8
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        provisioning_profiles:
+          - kidia_app_store_profile
+        certificates:
+          - kidia_app_store_distribution
+      vars:
+        APPLE_TEAM_ID: AC7BML9GL6
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.gradle/caches
+    scripts:
+      - name: Validate customer build configuration
+        script: |
+          if [ -z "${STORE_URL:-}" ]; then
+            echo "STORE_URL is required and must be supplied by the MobiShop build request."
+            exit 1
+          fi
+          case "$STORE_URL" in
+            https://*) ;;
+            *)
+              echo "STORE_URL must be a valid HTTPS store origin."
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "${ANDROID_APPLICATION_ID:-}" | grep -Eq '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'; then
+            echo "ANDROID_APPLICATION_ID must be a valid lowercase Android application ID."
+            exit 1
+          fi
+      - name: Validate registered iOS identity
+        script: |
+          set -euo pipefail
+          test "${IOS_BUNDLE_ID:?}" = app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
+          test -n "${BUILD_VERSION_NAME:?}"
+          python3 tool/test_configure_ios_store.py
+          python3 tool/configure_ios_store.py
+      - name: Install Flutter dependencies
+        script: flutter pub get
+      - name: Generate selected store app icons
+        script: |
+          set -euo pipefail
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Analyze Flutter project
+        script: flutter analyze lib test
+      - name: Run Flutter tests
+        script: flutter test
+      - name: Build Android APK
+        script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
+          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Build Android App Bundle
+        script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
+          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Apply existing iOS distribution profile
+        script: |
+          xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Build signed iOS IPA
+        script: |
+          set -euo pipefail
+          flutter build ipa --release \
+            --build-name="$BUILD_VERSION_NAME" --build-number="$(( ${PROJECT_BUILD_NUMBER:?} + 100 ))" \
+            --export-options-plist="$HOME/export_options.plist" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Verify signed iOS identity
+        script: |
+          set -euo pipefail
+          APP="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          codesign --verify --deep --strict "$APP"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")" = "$IOS_BUNDLE_ID"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleDisplayName' "$APP/Info.plist")" = "$STORE_NAME"
+          codesign -d --entitlements :- "$APP" > /tmp/mobishop-signed-entitlements.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print aps-environment' /tmp/mobishop-signed-entitlements.plist)" = production
+          test "$(/usr/libexec/PlistBuddy -c 'Print application-identifier' /tmp/mobishop-signed-entitlements.plist)" = "$APPLE_TEAM_ID.$IOS_BUNDLE_ID"
+      - name: Package application build files
+        script: |
+          set -euo pipefail
+
+          APK_PATH=$(find build/app/outputs/flutter-apk \
+            -type f -name "*.apk" | head -n 1)
+          AAB_PATH=$(find build/app/outputs/bundle \
+            -type f -name "*.aab" | head -n 1)
+
+          PACKAGE_DIR="$CM_BUILD_DIR/build/mobishop-package"
+          OUTPUT_DIR="$CM_BUILD_DIR/build/mobishop-artifacts"
+          rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
+          mkdir -p "$PACKAGE_DIR" "$OUTPUT_DIR"
+
+          cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
+          cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          IPA_PATH=$(find build/ios/ipa -type f -name '*.ipa' | head -n 1)
+          test -s "$APK_PATH"
+          test -s "$AAB_PATH"
+          test -s "$IPA_PATH"
+          cp "$IPA_PATH" "$PACKAGE_DIR/app-release.ipa"
+          ditto -c -k --sequesterRsrc \
+            "$PACKAGE_DIR" "$OUTPUT_DIR/mobishop-build-files.zip"
+      - name: Mark build successful
+        script: touch "$CM_BUILD_DIR/.mobishop-build-success"
+    artifacts:
+      - build/mobishop-artifacts/mobishop-build-files.zip
+    publishing:
+      scripts:
+        - name: Send build result to MobiShop API
+          script: |
+            set -u
+
+            if [ -z "${MOBISHOP_CALLBACK_URL:-}" ] || \
+               [ -z "${MOBISHOP_CALLBACK_TOKEN:-}" ] || \
+               [ -z "${MOBISHOP_REQUEST_ID:-}" ] || \
+               [ -z "${CM_BUILD_ID:-}" ]; then
+              echo "MobiShop callback configuration is missing."
+              exit 1
+            fi
+
+            if [ -f "$CM_BUILD_DIR/.mobishop-build-success" ]; then
+              CALLBACK_STATUS="completed"
+              CALLBACK_PROGRESS="100"
+              CALLBACK_ERROR=""
+            else
+              CALLBACK_STATUS="failed"
+              CALLBACK_PROGRESS="0"
+              CALLBACK_ERROR="Codemagic build failed. Review the Codemagic build log."
+            fi
+
+            CURL_ARGS=(
+              --silent
+              --show-error
+              --fail-with-body
+              --retry 3
+              --retry-delay 2
+              --request POST
+              --header "Authorization: Bearer ${MOBISHOP_CALLBACK_TOKEN}"
+              --form-string "request_id=${MOBISHOP_REQUEST_ID}"
+              --form-string "codemagic_build_id=${CM_BUILD_ID}"
+              --form-string "status=${CALLBACK_STATUS}"
+              --form-string "progress=${CALLBACK_PROGRESS}"
+            )
+
+            if [ -n "$CALLBACK_ERROR" ]; then
+              CURL_ARGS+=(--form-string "error=${CALLBACK_ERROR}")
+            fi
+
+            curl "${CURL_ARGS[@]}" "$MOBISHOP_CALLBACK_URL"
+
   mobishop-release:
     name: MobiShop Android
     instance_type: mac_mini_m2

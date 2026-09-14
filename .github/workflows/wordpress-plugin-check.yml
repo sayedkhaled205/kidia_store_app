@@ -41,12 +41,16 @@ jobs:
           unzip -Z1 build/wordpress-org/mobishop.zip | grep -qx 'mobishop/readme.txt'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -q '^mobishop/mobishop/'
           ! unzip -Z1 build/wordpress-org/mobishop.zip | grep -Ev '^mobishop(/|$)' | grep -q .
-          grep -q '^ \* Version:           1.46.69$' build/wordpress-org/mobishop/mobishop.php
+          grep -q '^ \* Version:           1.46.70$' build/wordpress-org/mobishop/mobishop.php
           grep -q '^ \* Text Domain:       mobishop$' build/wordpress-org/mobishop/mobishop.php
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
       - name: Run official Plugin Check and activation
         uses: wordpress/plugin-check-action@v1
+        env:
+          # The 2026-09-14 Playground release references unpublished node-5-2@3.1.54.
+          # Keep the official checks intact while resolving the last complete npm tree.
+          npm_config_before: '2026-09-13T23:59:59Z'
         with:
           build-dir: './build/wordpress-org/mobishop'
           categories: plugin_repo
