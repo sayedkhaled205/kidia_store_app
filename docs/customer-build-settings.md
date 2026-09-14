@@ -24,3 +24,26 @@ logo before archiving. Generating icon files is not iOS signing or TestFlight.
 Validation includes every native icon size, aspect-ratio preservation, opaque
 output, malformed images/URLs and the icon embedded in a compiled Android APK.
 Image processing uses [Pillow](https://pillow.readthedocs.io/en/stable/reference/ImageOps.html).
+
+## Unified WordPress build contract
+
+The plugin requests `platform=both`, `artifact=zip`, and snapshot
+`build_targets=[android,ios]`. The service must explicitly validate these fields
+and route this request to `mobishop-dual-release`. Do not deploy the plugin change
+before the service supports this contract. Preserve the existing Android workflow
+for legacy requests and the central builder.
+
+The service must provide the registered `IOS_BUNDLE_ID`, in addition to the
+existing store, Android package, icon, version and authenticated callback values.
+The workflow currently uses Kidia's existing Apple distribution profile and rejects
+other iOS bundle IDs; other stores need their own signing configuration.
+
+One provider job compiles APK, AAB and signed internal-testing IPA. It verifies
+the signed iOS identity and requires all three nonempty artifacts before packaging
+`mobishop-build-files.zip` and reporting completion. Cancel that provider job to
+stop the combined build. Do not acknowledge cancellation merely by deleting the
+WordPress display state; the service must confirm the provider cancellation.
+
+This workflow builds downloadable files without publishing to App Store Connect.
+Publishing and export compliance remain separate release steps. France remains
+excluded from Kidia's current distribution declaration.

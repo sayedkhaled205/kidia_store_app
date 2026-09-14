@@ -251,6 +251,9 @@ mobishop_build_assert( 1 === MobiShop_License_Manager::$requests, 'The backgroun
 mobishop_build_assert( 'build-123' === $remote['build_id'], 'The background action must persist the remote build ID.' );
 mobishop_build_assert( 'queued' === $remote['status'], 'Remote queued status must remain pollable.' );
 $request_body = MobiShop_License_Manager::$bodies[0];
+mobishop_build_assert( 'both' === $request_body['platform'], 'One request must target both mobile platforms.' );
+mobishop_build_assert( 'zip' === $request_body['artifact'], 'The download must contain the combined build files.' );
+mobishop_build_assert( array( 'android', 'ios' ) === $request_body['settings_snapshot']['build_targets'], 'The validated snapshot must preserve both build targets.' );
 mobishop_build_assert( 'wordpress-plugin' === $request_body['settings_snapshot']['builder_project'], 'WordPress requests must select the plugin project rather than the central builder branch.' );
 mobishop_build_assert( MobiShop_App_Exporter::manifest()['application']['language'] === $request_body['store_locale'], 'The build must retain the selected store language.' );
 mobishop_build_assert( 'ar' === $request_body['store_locale'], 'Arabic must not silently fall back to English.' );

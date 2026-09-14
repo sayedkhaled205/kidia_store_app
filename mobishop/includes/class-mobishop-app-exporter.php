@@ -65,6 +65,7 @@ final class MobiShop_App_Exporter {
 		return array(
 			'schema'       => 'mobishop-app-build-package',
 			'builder_project' => 'wordpress-plugin',
+			'build_targets' => array( 'android', 'ios' ),
 			'app_icon_url' => esc_url_raw( (string) ( $identity['logo_url'] ?? '' ) ),
 			'schemaVersion' => 1,
 			'generatedAt'  => gmdate( 'c' ),
@@ -165,7 +166,7 @@ final class MobiShop_App_Exporter {
 				'hash'          => self::configuration_hash(),
 				'status'        => 'queued',
 				'progress'      => 1,
-				'message'       => __( 'Preparing your APK build…', 'mobishop' ),
+				'message'       => __( 'Preparing Android and iOS build…', 'mobishop' ),
 				'started_at'    => time(),
 				'request_token' => $request_token,
 			)
@@ -192,7 +193,7 @@ final class MobiShop_App_Exporter {
 		}
 
 		if ( ! $scheduled ) {
-			$error = new WP_Error( 'build_queue_failed', __( 'The APK build could not be queued. Please try again.', 'mobishop' ) );
+			$error = new WP_Error( 'build_queue_failed', __( 'The Android and iOS build could not be queued. Please try again.', 'mobishop' ) );
 			$this->save_build_error( $error->get_error_message() );
 			return $error;
 		}
@@ -252,7 +253,7 @@ final class MobiShop_App_Exporter {
 
 		$state = self::state();
 		if ( ! hash_equals( (string) $state['request_token'], $request_token ) ) {
-			return new WP_Error( 'build_replaced', __( 'A newer APK build has already started.', 'mobishop' ) );
+			return new WP_Error( 'build_replaced', __( 'A newer application build has already started.', 'mobishop' ) );
 		}
 
 		$build = $this->normalize_build_response( $response, (string) $state['hash'], $state );
@@ -280,7 +281,7 @@ final class MobiShop_App_Exporter {
 				&& absint( $state['started_at'] ) > 0
 				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
 			) {
-				$this->save_build_error( __( 'The APK build service did not start in time. Please try again.', 'mobishop' ) );
+				$this->save_build_error( __( 'The Android and iOS build service did not start in time. Please try again.', 'mobishop' ) );
 				return self::state();
 			}
 			return $state;
@@ -339,7 +340,7 @@ final class MobiShop_App_Exporter {
 				'hash'          => self::configuration_hash(),
 				'status'        => 'building',
 				'progress'      => 2,
-				'message'       => __( 'Connecting to the APK build service…', 'mobishop' ),
+				'message'       => __( 'Connecting to the Android and iOS build service…', 'mobishop' ),
 				'started_at'    => time(),
 				'request_token' => $request_token,
 			)
@@ -382,6 +383,9 @@ final class MobiShop_App_Exporter {
 		}
 
 		$build_id = sanitize_text_field( (string) $state['build_id'] );
+		if ( '' === $build_id && 'building' === (string) $state['status'] ) {
+			wp_send_json_error( array( 'message' => __( 'The build service is still accepting this request. Try cancelling again once the build starts.', 'mobishop' ) ), 409 );
+		}
 		if ( '' !== $build_id ) {
 			$result = ( new MobiShop_License_Manager() )->build_service_request( rawurlencode( $build_id ) . '/cancel', 'POST' );
 			if ( is_wp_error( $result ) ) {
@@ -409,14 +413,14 @@ final class MobiShop_App_Exporter {
 			wp_die( esc_html( $result->get_error_message() ) );
 		}
 		if ( ! self::is_current() ) {
-			wp_die( esc_html__( 'This APK is not ready or its application settings have changed. Start a new build.', 'mobishop' ) );
+			wp_die( esc_html__( 'These build files are not ready or its application settings have changed. Start a new build.', 'mobishop' ) );
 		}
 
 		$url    = esc_url_raw( (string) $result['download_url'] );
 		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
 		$host   = (string) wp_parse_url( $url, PHP_URL_HOST );
 		if ( 'https' !== $scheme || '' === $host ) {
-			wp_die( esc_html__( 'The APK download link returned by the build service is invalid.', 'mobishop' ) );
+			wp_die( esc_html__( 'The build download link returned by the build service is invalid.', 'mobishop' ) );
 		}
 
 		if ( ! $this->redirect_to_artifact( $url ) ) {
@@ -456,8 +460,8 @@ final class MobiShop_App_Exporter {
 			'version_name'       => sanitize_text_field( $version ),
 			'version_code'       => time(),
 			'settings_snapshot'  => $snapshot,
-			'platform'           => 'android',
-			'artifact'           => 'apk',
+			'platform'           => 'both',
+			'artifact'           => 'zip',
 			'configuration_hash' => self::configuration_hash(),
 			'plugin_version'     => $version,
 			'provision_push'     => $provision_push,
@@ -652,7 +656,7 @@ final class MobiShop_App_Exporter {
 		$state['build_id']      = sanitize_text_field( (string) ( $raw['id'] ?? $raw['_id'] ?? $raw['buildId'] ?? $raw['build_id'] ?? $raw['codemagicBuildId'] ?? $raw['codemagic_build_id'] ?? $state['build_id'] ) );
 		$state['status']        = $status;
 		$state['progress']      = $progress;
-		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your APK build is queued.', 'mobishop' ) : '' ) ) );
+		$state['message']       = sanitize_text_field( (string) ( $raw['message'] ?? ( 'queued' === $status ? __( 'Your Android and iOS build is queued.', 'mobishop' ) : '' ) ) );
 		$state['stage']         = sanitize_text_field( (string) ( $raw['stage'] ?? $raw['currentStep'] ?? $raw['current_step'] ?? $state['message'] ) );
 		$state['started_at']    = absint( $state['started_at'] ) ?: time();
 		$state['completed_at']  = in_array( $status, array( 'ready', 'failed', 'cancelled' ), true ) ? time() : 0;
@@ -666,7 +670,7 @@ final class MobiShop_App_Exporter {
 
 		if ( 'ready' === $status && '' === $state['download_url'] ) {
 			$state['status']  = 'failed';
-			$state['message'] = __( 'The build finished without an APK download link.', 'mobishop' );
+			$state['message'] = __( 'The build finished without a build download link.', 'mobishop' );
 		}
 		return $state;
 	}

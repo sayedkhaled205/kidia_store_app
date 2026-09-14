@@ -205,9 +205,9 @@
 			if (downloaded) {
 				buttonLabel.textContent = label('buildDownload', 'Build Your App');
 			} else if (ready) {
-				buttonLabel.textContent = label('download', 'Download APK');
+				buttonLabel.textContent = label('download', 'Download Android and iOS');
 			} else if (building) {
-				const currentStage = root.dataset.stage || label('building', 'Building your APK…');
+				const currentStage = root.dataset.stage || label('building', 'Building Android and iOS…');
 				const percentage = progress > 0 ? ' ' + progress + '%' : '';
 				buttonLabel.textContent = currentStage + percentage;
 			} else {
@@ -341,7 +341,7 @@
 			return payload.data || {};
 		} catch (error) {
 			if (error && error.name === 'AbortError') {
-				throw new Error(label('timeout', 'The APK build request took too long. Please try again.'));
+				throw new Error(label('timeout', 'The Android and iOS build request took too long. Please try again.'));
 			}
 			throw error;
 		} finally {
@@ -394,7 +394,7 @@
 		render({
 			status: 'building',
 			progress: 2,
-			message: label('starting', 'Starting APK build…'),
+			message: label('starting', 'Starting Android and iOS build…'),
 			downloadReady: false
 		});
 
