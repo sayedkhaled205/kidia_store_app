@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_coupon.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
@@ -13,6 +16,8 @@ import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_c
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_money.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/compact_family_provider.dart';
 
 typedef CartCheckoutCallback =
     FutureOr<void> Function(BuildContext context, Cart cart);
@@ -33,6 +38,22 @@ class CartScreen extends ConsumerStatefulWidget {
 
 class _CartScreenState extends ConsumerState<CartScreen> {
   final TextEditingController _couponController = TextEditingController();
+  bool _compactFamily = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // The retained account CMS graph can be stale when this route first opens.
+    // Subscribe outside build so flushing it cannot schedule the ancestor
+    // ProviderScope during CartScreen.build. Riverpod closes this on disposal.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.listenManual(compactFamilyProvider, (previous, next) {
+        if (!mounted || _compactFamily == next) return;
+        setState(() => _compactFamily = next);
+      }, fireImmediately: true);
+    });
+  }
 
   @override
   void dispose() {
@@ -43,6 +64,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final CartCopy copy = CartCopy.of(context);
+    final bool flat = _compactFamily;
     final AsyncValue<CartViewState> cartState = ref.watch(
       cartControllerProvider,
     );
@@ -56,15 +78,24 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         }
       },
       child: Scaffold(
+        backgroundColor: flat ? Colors.white : null,
         appBar: AppBar(
+          centerTitle: flat ? true : null,
+          elevation: flat ? 0 : null,
+          backgroundColor: flat ? Colors.white : null,
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             onPressed: _goBack,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
-          title: Text(copy.title),
+          title: Text(flat ? '${copy.isArabic ? 'السلة' : 'Bag'}${current == null || current.cart.isEmpty ? '' : ' (${current.cart.itemsCount})'}' : copy.title),
           actions: <Widget>[
-            IconButton(
+            if (flat) IconButton(
+              tooltip: copy.isArabic ? 'المفضلة' : 'Wishlist',
+              onPressed: () => context.push('/wishlist'),
+              icon: const Icon(Icons.favorite_border_rounded),
+            ),
+            if (!flat) IconButton(
               key: const Key('cart-refresh-button'),
               tooltip: copy.refresh,
               onPressed:
@@ -90,6 +121,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             onRetry: ref.read(cartControllerProvider.notifier).retry,
           ),
           data: (CartViewState state) => _CartLoadedBody(
+            flat: flat,
             state: state,
             copy: copy,
             couponController: _couponController,
@@ -106,6 +138,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         bottomNavigationBar: current == null || current.cart.isEmpty
             ? null
             : _CartCheckoutBar(
+                flat: flat,
                 cart: current.cart,
                 copy: copy,
                 enabled: !current.hasPendingMutation,
@@ -207,6 +240,25 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   Future<void> _checkout(Cart cart) async {
     final CartCopy copy = CartCopy.of(context);
     try {
+      if (AppConfig.commercePlatform == CommercePlatform.shopify) {
+        final Uri? checkout = cart.checkoutUrl;
+        if (checkout == null ||
+            checkout.scheme != 'https' ||
+            checkout.host != AppConfig.commerceConnection.storeOrigin.host ||
+            checkout.userInfo.isNotEmpty ||
+            (checkout.hasPort && checkout.port != 443)) {
+          _showMessage(copy.checkoutUnavailable);
+          return;
+        }
+        // Only this explicit buyer tap hands off to Shopify's hosted checkout.
+        // No background redirect, checkout completion, order or payment call.
+        if (!await launchUrl(checkout, mode: LaunchMode.externalApplication) &&
+            mounted) {
+          _showMessage(copy.checkoutUnavailable);
+        }
+        return;
+      }
+      AppConfig.requireWooCommerceCustomerTransport('checkout');
       if (widget.onCheckout != null) {
         await widget.onCheckout!(context, cart);
         return;
@@ -243,6 +295,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
 class _CartLoadedBody extends StatelessWidget {
   const _CartLoadedBody({
+    this.flat = false,
     required this.state,
     required this.copy,
     required this.couponController,
@@ -255,6 +308,7 @@ class _CartLoadedBody extends StatelessWidget {
   });
 
   final CartViewState state;
+  final bool flat;
   final CartCopy copy;
   final TextEditingController couponController;
   final Future<void> Function() onRefresh;
@@ -275,7 +329,7 @@ class _CartLoadedBody extends StatelessWidget {
           slivers: <Widget>[
             SliverFillRemaining(
               hasScrollBody: false,
-              child: _CartEmpty(copy: copy),
+              child: _CartEmpty(copy: copy, flat: flat),
             ),
           ],
         ),
@@ -297,7 +351,7 @@ class _CartLoadedBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Row(
+                      if (!flat || state.isRefreshing) Row(
                         children: <Widget>[
                           Text(
                             copy.itemCount(cart.itemsCount),
@@ -349,6 +403,7 @@ class _CartLoadedBody extends StatelessWidget {
                       12,
                     ),
                     child: _CartItemCard(
+                      flat: flat,
                       item: item,
                       copy: copy,
                       pending: state.pendingItemKeys.contains(item.key),
@@ -368,7 +423,9 @@ class _CartLoadedBody extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 920),
                 child: Padding(
                   padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 12),
-                  child: _CouponCard(
+                  child: _OptionalCartDetails(
+                    compact: flat, title: copy.isArabic ? 'كود الخصم' : 'Promo code',
+                    child: _CouponCard(
                     coupons: cart.coupons,
                     controller: couponController,
                     copy: copy,
@@ -376,7 +433,7 @@ class _CartLoadedBody extends StatelessWidget {
                     enabled: !state.hasPendingMutation,
                     onApply: onApplyCoupon,
                     onRemove: onRemoveCoupon,
-                  ),
+                  )),
                 ),
               ),
             ),
@@ -387,7 +444,7 @@ class _CartLoadedBody extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 920),
                 child: Padding(
                   padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 28),
-                  child: _OrderSummary(cart: cart, copy: copy),
+                  child: _OptionalCartDetails(compact: flat, title: copy.isArabic ? 'تفاصيل الإجمالي' : 'Order details', child: _OrderSummary(cart: cart, copy: copy)),
                 ),
               ),
             ),
@@ -400,6 +457,7 @@ class _CartLoadedBody extends StatelessWidget {
 
 class _CartItemCard extends StatelessWidget {
   const _CartItemCard({
+    this.flat = false,
     required this.item,
     required this.copy,
     required this.pending,
@@ -409,6 +467,7 @@ class _CartItemCard extends StatelessWidget {
   });
 
   final CartItem item;
+  final bool flat;
   final CartCopy copy;
   final bool pending;
   final bool mutationsEnabled;
@@ -435,19 +494,23 @@ class _CartItemCard extends StatelessWidget {
 
     return Card(
       key: ValueKey<String>('cart-item-${item.key}'),
+      elevation: flat ? 0 : null,
+      shape: flat ? const RoundedRectangleBorder() : null,
+      margin: flat ? EdgeInsets.zero : null,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 8, 12),
+        padding: flat ? const EdgeInsets.symmetric(vertical: 12) : const EdgeInsetsDirectional.fromSTEB(12, 12, 8, 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: SizedBox.square(
-                dimension: 96,
+              borderRadius: BorderRadius.circular(flat ? 8 : 14),
+              child: SizedBox(
+                width: flat ? 92 : 96, height: flat ? 124 : 96,
                 child: image == null
                     ? const AppNetworkImageError()
                     : AppNetworkImage(
+                        fit: BoxFit.cover,
                         imageUrl: image.thumbnailUrl.isNotEmpty
                             ? image.thumbnailUrl
                             : image.sourceUrl,
@@ -468,10 +531,10 @@ class _CartItemCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.name,
-                          maxLines: 2,
+                          maxLines: flat ? 1 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: flat ? FontWeight.w400 : FontWeight.w800,
                             height: 1.25,
                           ),
                         ),
@@ -738,7 +801,9 @@ class _OrderSummary extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _SummaryRow(
-              label: copy.subtotal,
+              label: totals.subtotalEstimated
+                  ? copy.estimatedSubtotal
+                  : copy.subtotal,
               value: formatCartMoney(totals.itemsMinor, totals.currency),
             ),
             if (cartMinorIsPositive(totals.discountMinor))
@@ -767,10 +832,17 @@ class _OrderSummary extends StatelessWidget {
               ),
             const Divider(height: 24),
             _SummaryRow(
-              label: copy.total,
+              label: totals.totalEstimated ? copy.estimatedTotal : copy.total,
               value: formatCartMoney(totals.priceMinor, totals.currency),
               isTotal: true,
             ),
+            if (cart.checkoutUrl != null) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                copy.shopifyFinalPrice,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
       ),
@@ -832,6 +904,7 @@ class _SummaryRow extends StatelessWidget {
 
 class _CartCheckoutBar extends StatelessWidget {
   const _CartCheckoutBar({
+    this.flat = false,
     required this.cart,
     required this.copy,
     required this.enabled,
@@ -839,6 +912,7 @@ class _CartCheckoutBar extends StatelessWidget {
   });
 
   final Cart cart;
+  final bool flat;
   final CartCopy copy;
   final bool enabled;
   final VoidCallback onCheckout;
@@ -848,7 +922,7 @@ class _CartCheckoutBar extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     return Material(
-      elevation: 12,
+      elevation: flat ? 0 : 12,
       color: colors.surface,
       surfaceTintColor: colors.surfaceTint,
       child: SafeArea(
@@ -859,7 +933,20 @@ class _CartCheckoutBar extends StatelessWidget {
           heightFactor: 1,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 920),
-            child: Row(
+            child: flat ? Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SummaryRow(label: cart.totals.totalEstimated ? copy.estimatedTotal : copy.total, value: formatCartMoney(cart.totals.priceMinor, cart.totals.currency), isTotal: true),
+                const SizedBox(height: 18),
+                FilledButton(
+                  key: const Key('checkout-button'),
+                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50), shape: const StadiumBorder()),
+                  onPressed: enabled ? onCheckout : null,
+                  child: Text(copy.checkout),
+                ),
+              ],
+            ) : Row(
               children: <Widget>[
                 Expanded(
                   child: Column(
@@ -972,14 +1059,35 @@ class _CartLoadError extends StatelessWidget {
 }
 
 class _CartEmpty extends StatelessWidget {
-  const _CartEmpty({required this.copy});
+  const _CartEmpty({required this.copy, this.flat = false});
 
   final CartCopy copy;
+  final bool flat;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
+    if (flat) {
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 72, 24, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.shopping_bag_outlined, size: 100, color: Color(0xFFE8E8E8)),
+            const SizedBox(height: 30),
+            Text(copy.emptyTitle, style: theme.textTheme.bodyLarge?.copyWith(color: const Color(0xFF666666))),
+            const SizedBox(height: 18),
+            OutlinedButton(
+              key: const Key('cart-go-shopping'),
+              style: OutlinedButton.styleFrom(shape: const StadiumBorder(), minimumSize: const Size(132, 48)),
+              onPressed: () => context.go('/'),
+              child: Text(copy.isArabic ? 'ابدأ التسوق' : 'Go Shopping'),
+            ),
+          ]),
+        ),
+      );
+    }
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -1057,4 +1165,17 @@ class _CartInlineError extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OptionalCartDetails extends StatelessWidget {
+  const _OptionalCartDetails({required this.compact, required this.title, required this.child});
+  final bool compact;
+  final String title;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => compact ? ExpansionTile(
+    title: Text(title, style: const TextStyle(fontSize: 14)),
+    tilePadding: EdgeInsets.zero,
+    children: [child],
+  ) : child;
 }

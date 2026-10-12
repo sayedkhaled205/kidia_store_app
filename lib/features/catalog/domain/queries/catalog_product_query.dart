@@ -106,6 +106,7 @@ class CatalogProductQuery {
         'stock_status[]': stock.map(_stockValue).toList(growable: false),
       if (minimumPriceMinor.isNotEmpty) 'min_price': minimumPriceMinor,
       if (maximumPriceMinor.isNotEmpty) 'max_price': maximumPriceMinor,
+      if (attributes.length > 1) 'attribute_relation': 'and',
       if (onSale != null) 'on_sale': onSale,
       if (featured != null) 'featured': featured,
       if (productType != null) 'type': productType!.name,

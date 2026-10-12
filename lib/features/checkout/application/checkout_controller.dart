@@ -1,19 +1,28 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
+import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
 import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_safety.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_recovery_repository.dart';
 
 enum CheckoutStatus { initial, loading, ready, submitting, success, failure }
 
 class CheckoutController extends ChangeNotifier {
+  static const String _unresolvedOrderMessage =
+      'The store may have received this order, but its result could not be confirmed. '
+      'Check your order history or contact the store before placing another order. '
+      'Retrying is disabled here to avoid a duplicate.';
+
   CheckoutController({
     required this.repository,
     this.initialEmail = '',
@@ -37,6 +46,7 @@ class CheckoutController extends ChangeNotifier {
   String? _submitError;
   CheckoutOrderResult? _orderResult;
   Future<CheckoutOrderResult?>? _activeSubmission;
+  Future<CheckoutOrderResult?>? _activeRecovery;
   Future<void>? _activeCustomerUpdate;
   Timer? _customerUpdateDebounce;
   String? _pendingIdempotencyKey;
@@ -46,6 +56,8 @@ class CheckoutController extends ChangeNotifier {
   int _customerUpdateSerial = 0;
   bool _customerUpdateDirty = false;
   bool _isUpdatingCustomer = false;
+  bool _isRecoveringOrder = false;
+  bool _hasUnresolvedSubmission = false;
   bool _isDisposed = false;
 
   CheckoutStatus get status => _status;
@@ -66,11 +78,26 @@ class CheckoutController extends ChangeNotifier {
   CheckoutOrderResult? get orderResult => _orderResult;
   bool get isSubmitting => _status == CheckoutStatus.submitting;
   bool get isUpdatingCustomer => _isUpdatingCustomer;
+  bool get isRecoveringOrder => _isRecoveringOrder;
+  bool get canRecoverOrder =>
+      !_isDisposed &&
+      _hasUnresolvedSubmission &&
+      !_isRecoveringOrder &&
+      repository is CheckoutRecoveryRepository;
+
+  /// A cart reload is not proof that an uncertain order was rejected.
+  /// This controller cannot safely retry without a server recovery contract.
+  bool get hasUnresolvedSubmission => _hasUnresolvedSubmission;
   bool get needsPayment => _checkout?.needsPayment ?? false;
   bool get needsShipping => _checkout?.needsShipping ?? false;
   bool get hasDynamicFields => _checkout?.hasDynamicFields ?? false;
   bool get canSubmit =>
-      _status == CheckoutStatus.ready && cart?.isEmpty == false;
+      !_hasUnresolvedSubmission &&
+      !_isRecoveringOrder &&
+      (_checkout?.serverSafetyRequired != true ||
+          _checkout?.serverSafetyEnforced == true) &&
+      _status == CheckoutStatus.ready &&
+      cart?.isEmpty == false;
 
   String? errorFor(String field) => _fieldErrors[field];
 
@@ -88,6 +115,20 @@ class CheckoutController extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    if (_isDisposed ||
+        _activeSubmission != null ||
+        _activeRecovery != null ||
+        _status == CheckoutStatus.submitting ||
+        _status == CheckoutStatus.success) {
+      return;
+    }
+    if (_hasUnresolvedSubmission) {
+      // Neither a refreshed nor an empty cart proves whether the dispatched
+      // order was created. Keep the original attempt and visible warning.
+      _submitError = _unresolvedOrderMessage;
+      _notify();
+      return;
+    }
     final int serial = ++_requestSerial;
     _status = CheckoutStatus.loading;
     _loadError = null;
@@ -112,6 +153,7 @@ class CheckoutController extends ChangeNotifier {
       _shippingAddress = CheckoutAddress.fromCartAddress(
         loaded.cart.shippingAddress,
       );
+      _applyDefaultAddresses(loaded.fieldDefinitions);
       _applyDefaultCountries(loaded.fieldDefinitions);
       _shipToDifferentAddress =
           loaded.needsShipping &&
@@ -120,7 +162,12 @@ class CheckoutController extends ChangeNotifier {
       _paymentMethodId = loaded.paymentMethodIds.length == 1
           ? loaded.paymentMethodIds.single
           : '';
-      _customerNote = '';
+      _customerNote =
+          loaded.fieldDefinitions
+              .where((field) => field.key == 'order_comments')
+              .map((field) => field.defaultValue)
+              .firstOrNull ??
+          '';
       _customFieldValues = <String, String>{
         for (final CheckoutFieldDefinition field in loaded.fieldDefinitions)
           if (!_isCoreCheckoutField(field.key) && field.defaultValue.isNotEmpty)
@@ -131,8 +178,16 @@ class CheckoutController extends ChangeNotifier {
       _customerUpdateDirty = false;
       _orderResult = null;
       _status = CheckoutStatus.ready;
+      if (loaded.hasUnresolvedSubmission) {
+        _retainUnresolvedSubmission();
+        return;
+      }
       _notify();
     } on CheckoutRepositoryException catch (error) {
+      if (error.requiresOutcomeRecovery && _canCommit(serial)) {
+        _retainUnresolvedSubmission();
+        return;
+      }
       _commitLoadFailure(serial, error.message);
     } catch (_) {
       _commitLoadFailure(serial, 'Unable to load checkout. Please try again.');
@@ -140,18 +195,21 @@ class CheckoutController extends ChangeNotifier {
   }
 
   void updateBillingAddress(CheckoutAddress address) {
+    if (!_canEditForm) return;
     _billingAddress = address;
     _onFormChanged('billing.');
     _scheduleCustomerUpdate();
   }
 
   void updateShippingAddress(CheckoutAddress address) {
+    if (!_canEditForm) return;
     _shippingAddress = address;
     _onFormChanged('shipping.');
     _scheduleCustomerUpdate();
   }
 
   void setShipToDifferentAddress(bool value) {
+    if (!_canEditForm) return;
     if (_shipToDifferentAddress == value) {
       return;
     }
@@ -161,6 +219,7 @@ class CheckoutController extends ChangeNotifier {
   }
 
   void setCustomerNote(String value) {
+    if (!_canEditForm) return;
     if (_customerNote == value) {
       return;
     }
@@ -169,6 +228,7 @@ class CheckoutController extends ChangeNotifier {
   }
 
   void setPaymentMethod(String value) {
+    if (!_canEditForm) return;
     final String method = value.trim();
     if (_paymentMethodId == method) {
       return;
@@ -178,6 +238,7 @@ class CheckoutController extends ChangeNotifier {
   }
 
   void setFieldValue(String key, String value) {
+    if (!_canEditForm) return;
     final String fieldKey = key.trim();
     if (fieldKey.isEmpty) {
       return;
@@ -242,6 +303,11 @@ class CheckoutController extends ChangeNotifier {
   }
 
   bool validate() {
+    if (_hasUnresolvedSubmission) {
+      _submitError = _unresolvedOrderMessage;
+      _notify();
+      return false;
+    }
     final Map<String, String> errors = <String, String>{};
     final Cart? currentCart = cart;
     if (currentCart == null || currentCart.isEmpty) {
@@ -305,9 +371,19 @@ class CheckoutController extends ChangeNotifier {
   }
 
   Future<CheckoutOrderResult?> _prepareAndSubmit() async {
-    if (_status != CheckoutStatus.ready) {
+    if (_isDisposed ||
+        _hasUnresolvedSubmission ||
+        _status != CheckoutStatus.ready) {
       return null;
     }
+    if (_checkout?.serverSafetyRequired == true &&
+        _checkout?.serverSafetyEnforced != true) {
+      _submitError =
+          'The platform has not confirmed protected checkout. No order was sent.';
+      _notify();
+      return null;
+    }
+    final CartTotals? confirmedTotals = cart?.totals;
     _customerUpdateDebounce?.cancel();
     // Validate the complete local contract before asking WooCommerce to
     // recalculate shipping. Sending a partially entered address makes Store
@@ -316,20 +392,74 @@ class CheckoutController extends ChangeNotifier {
       return null;
     }
     await _syncCustomerNow();
-    if (_status != CheckoutStatus.ready ||
+    if (_isDisposed ||
+        _status != CheckoutStatus.ready ||
         _addressUpdateError != null ||
         _fieldErrors.isNotEmpty) {
       return null;
     }
-    return _performSubmit();
+    // Address synchronization can recalculate shipping, tax, discounts, or
+    // currency after the buyer has pressed Place order. Never silently submit
+    // an amount different from the one that was visible at that confirmation.
+    if (!_sameConfirmedTotals(confirmedTotals, cart?.totals)) {
+      _submitError =
+          'Order totals or currency changed. Review the updated amount and confirm the order again.';
+      _notify();
+      return null;
+    }
+    if (!validate()) {
+      return null;
+    }
+    return _performSubmit(confirmedTotals!);
   }
 
-  Future<CheckoutOrderResult?> _performSubmit() async {
+  bool _sameConfirmedTotals(CartTotals? confirmed, CartTotals? updated) {
+    if (confirmed == null || updated == null) {
+      return false;
+    }
+    return confirmed.priceMinor == updated.priceMinor &&
+        confirmed.itemsMinor == updated.itemsMinor &&
+        confirmed.itemsTaxMinor == updated.itemsTaxMinor &&
+        confirmed.feesMinor == updated.feesMinor &&
+        confirmed.feesTaxMinor == updated.feesTaxMinor &&
+        confirmed.discountMinor == updated.discountMinor &&
+        confirmed.discountTaxMinor == updated.discountTaxMinor &&
+        confirmed.shippingMinor == updated.shippingMinor &&
+        confirmed.shippingTaxMinor == updated.shippingTaxMinor &&
+        confirmed.taxMinor == updated.taxMinor &&
+        confirmed.currency.code == updated.currency.code &&
+        confirmed.currency.minorUnit == updated.currency.minorUnit;
+  }
+
+  Future<CheckoutOrderResult?> _performSubmit(
+    CartTotals confirmedTotals,
+  ) async {
+    CheckoutConfirmedTotal? confirmed;
+    try {
+      confirmed = CheckoutConfirmedTotal.fromCartTotals(confirmedTotals);
+    } on FormatException {
+      if (_checkout?.serverSafetyRequired == true) {
+        _submitError = 'Review a valid exact order total before confirming.';
+        _notify();
+        return null;
+      }
+      // Older isolated host fixtures retain legacy validation behavior. The
+      // configured Native path never sends an estimated or invalid amount.
+    }
     _requestSerial++;
     _status = CheckoutStatus.submitting;
     _submitError = null;
     _notify();
-    final String requestKey = _pendingIdempotencyKey ??= _newIdempotencyKey();
+    final String requestKey;
+    try {
+      requestKey = _pendingIdempotencyKey ??= _newIdempotencyKey();
+    } catch (_) {
+      _status = CheckoutStatus.ready;
+      _submitError =
+          'Unable to create a safe checkout attempt. No order was sent.';
+      _notify();
+      return null;
+    }
     try {
       final CheckoutOrderResult result = await repository.placeOrder(
         CheckoutSubmission(
@@ -338,6 +468,7 @@ class CheckoutController extends ChangeNotifier {
           customerNote: _customerNote.trim(),
           paymentMethodId: needsPayment ? _paymentMethodId : '',
           idempotencyKey: requestKey,
+          confirmedTotal: confirmed,
           customFields: Map<String, String>.unmodifiable(<String, String>{
             for (final MapEntry<String, String> entry
                 in _customFieldValues.entries)
@@ -358,6 +489,49 @@ class CheckoutController extends ChangeNotifier {
       if (_isDisposed) {
         return null;
       }
+      if (!_isKnownOrderRejection(error)) {
+        _retainUnresolvedSubmission();
+        return null;
+      }
+      // Only a known local/pre-dispatch validation rejection can start a new
+      // attempt. A timeout, server error or unreadable response cannot.
+      _pendingIdempotencyKey = null;
+      if (error.confirmedPrePaymentRejection) {
+        try {
+          final CheckoutState current = await repository.loadCheckout();
+          if (_isDisposed) return null;
+          _checkout = current;
+          if (current.hasUnresolvedSubmission) {
+            _retainUnresolvedSubmission();
+            return null;
+          }
+          // Preserve the buyer's current address draft, but calculate it on
+          // the next explicit confirmation rather than posting while handling
+          // this rejection. The new amount must then be confirmed again.
+          _customerUpdateDirty = true;
+          if (!paymentMethodIds.contains(_paymentMethodId)) {
+            _paymentMethodId = paymentMethodIds.length == 1
+                ? paymentMethodIds.single
+                : '';
+          }
+        } on CheckoutRepositoryException catch (reloadError) {
+          if (_isDisposed) return null;
+          if (reloadError.requiresOutcomeRecovery) {
+            _retainUnresolvedSubmission();
+          } else {
+            _commitLoadFailure(_requestSerial, reloadError.message);
+          }
+          return null;
+        } catch (_) {
+          if (!_isDisposed) {
+            _commitLoadFailure(
+              _requestSerial,
+              'Unable to reload current checkout totals.',
+            );
+          }
+          return null;
+        }
+      }
       if (error.authoritativeCart != null) {
         _applyAuthoritativeCart(error.authoritativeCart!);
       }
@@ -376,15 +550,126 @@ class CheckoutController extends ChangeNotifier {
       if (_isDisposed) {
         return null;
       }
-      _submitError = 'Unable to place this order. Please try again.';
-      _status = CheckoutStatus.ready;
-      _notify();
+      _retainUnresolvedSubmission();
       return null;
     }
   }
 
+  bool _isKnownOrderRejection(CheckoutRepositoryException error) {
+    if (error.requiresOutcomeRecovery) return false;
+    if (error.confirmedPrePaymentRejection) return true;
+    if (error.statusCode == null &&
+        (error.kind == CheckoutFailureKind.invalidInput ||
+            error.kind == CheckoutFailureKind.configuration)) {
+      return true;
+    }
+    if (error.kind == CheckoutFailureKind.invalidInput &&
+        (error.statusCode == 400 || error.statusCode == 422) &&
+        error.fieldErrors.isNotEmpty) {
+      return true;
+    }
+    return error.kind == CheckoutFailureKind.conflict &&
+        error.statusCode == 409 &&
+        error.authoritativeCart != null;
+  }
+
+  void _retainUnresolvedSubmission() {
+    _hasUnresolvedSubmission = true;
+    _customerUpdateDebounce?.cancel();
+    _customerUpdateDirty = false;
+    _submitError = _unresolvedOrderMessage;
+    _status = CheckoutStatus.ready;
+    _notify();
+  }
+
+  /// One explicit read-only recovery request. It can never replay a POST,
+  /// dismiss a timeout, or use an order-history guess to unlock this customer.
+  Future<CheckoutOrderResult?> recoverPendingOrder() {
+    final Future<CheckoutOrderResult?>? active = _activeRecovery;
+    if (active != null) return active;
+    if (!canRecoverOrder || _activeSubmission != null) {
+      return Future<CheckoutOrderResult?>.value();
+    }
+    final Future<CheckoutOrderResult?> operation = _recoverPendingOrder();
+    _activeRecovery = operation;
+    operation.whenComplete(() {
+      if (identical(_activeRecovery, operation)) _activeRecovery = null;
+    });
+    return operation;
+  }
+
+  Future<CheckoutOrderResult?> _recoverPendingOrder() async {
+    final int serial = ++_requestSerial;
+    _isRecoveringOrder = true;
+    _customerUpdateDebounce?.cancel();
+    _customerUpdateDirty = false;
+    _notify();
+    try {
+      final CheckoutAttemptRecovery recovery =
+          await (repository as CheckoutRecoveryRepository)
+              .recoverPendingOrder();
+      if (!_canCommit(serial)) return null;
+      if (!recovery.isResolved) {
+        _retainUnresolvedSubmission();
+        return null;
+      }
+      if (recovery.state == CheckoutRecoveryState.orderCreated) {
+        _hasUnresolvedSubmission = false;
+        _pendingIdempotencyKey = null;
+        _submitError = null;
+        _orderResult = recovery.orderResult;
+        _status = CheckoutStatus.success;
+        _notify();
+        return recovery.orderResult;
+      }
+      // Exact server rejection before payment/stock allows a NEW explicit
+      // confirmation, after rereading current totals. Keep the user's draft.
+      _hasUnresolvedSubmission = false;
+      _pendingIdempotencyKey = null;
+      _status = CheckoutStatus.loading;
+      _notify();
+      final CheckoutState loaded = await repository.loadCheckout();
+      if (!_canCommit(serial)) return null;
+      _checkout = loaded;
+      _hasUnresolvedSubmission = loaded.hasUnresolvedSubmission;
+      _customerUpdateDirty = !_hasUnresolvedSubmission;
+      if (!paymentMethodIds.contains(_paymentMethodId)) {
+        _paymentMethodId = paymentMethodIds.length == 1
+            ? paymentMethodIds.single
+            : '';
+      }
+      _status = CheckoutStatus.ready;
+      _submitError = _hasUnresolvedSubmission
+          ? _unresolvedOrderMessage
+          : 'The store confirmed that the previous attempt was rejected before payment. Review current totals and confirm again.';
+      _notify();
+    } on CheckoutRepositoryException catch (error) {
+      if (!_canCommit(serial)) return null;
+      if (_hasUnresolvedSubmission || error.requiresOutcomeRecovery) {
+        _retainUnresolvedSubmission();
+      } else {
+        _commitLoadFailure(serial, error.message);
+      }
+    } catch (_) {
+      if (!_canCommit(serial)) return null;
+      if (_hasUnresolvedSubmission) {
+        _retainUnresolvedSubmission();
+      } else {
+        _commitLoadFailure(serial, 'Unable to reload current checkout totals.');
+      }
+    } finally {
+      if (!_isDisposed) {
+        _isRecoveringOrder = false;
+        _notify();
+      }
+    }
+    return null;
+  }
+
   void _scheduleCustomerUpdate() {
-    if (_status != CheckoutStatus.ready || cart?.isEmpty != false) {
+    if (_hasUnresolvedSubmission ||
+        _status != CheckoutStatus.ready ||
+        cart?.isEmpty != false) {
       return;
     }
     _customerUpdateDirty = true;
@@ -397,6 +682,7 @@ class CheckoutController extends ChangeNotifier {
   }
 
   Future<void> _syncCustomerNow() async {
+    if (_hasUnresolvedSubmission) return;
     _customerUpdateDebounce?.cancel();
     final Future<void>? active = _activeCustomerUpdate;
     if (active != null) {
@@ -449,6 +735,10 @@ class CheckoutController extends ChangeNotifier {
       _applyAuthoritativeCart(updatedCart);
     } on CheckoutRepositoryException catch (error) {
       if (_isDisposed || serial != _customerUpdateSerial) {
+        return;
+      }
+      if (error.requiresOutcomeRecovery) {
+        _retainUnresolvedSubmission();
         return;
       }
       if (error.authoritativeCart != null) {
@@ -512,6 +802,9 @@ class CheckoutController extends ChangeNotifier {
   void _applyAuthoritativeCart(Cart authoritativeCart) {
     _checkout = CheckoutState(
       cart: authoritativeCart,
+      hasUnresolvedSubmission: _hasUnresolvedSubmission,
+      serverSafetyRequired: _checkout?.serverSafetyRequired ?? false,
+      serverSafetyEnforced: _checkout?.serverSafetyEnforced ?? false,
       fieldDefinitions:
           _checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[],
     );
@@ -544,6 +837,33 @@ class CheckoutController extends ChangeNotifier {
               : billingCountry);
     _billingAddress = _billingAddress.copyWith(country: billingCountry);
     _shippingAddress = _shippingAddress.copyWith(country: shippingCountry);
+  }
+
+  void _applyDefaultAddresses(List<CheckoutFieldDefinition> fields) {
+    final defaults = {
+      for (final field in fields) field.key: field.defaultValue,
+    };
+    CheckoutAddress fill(CheckoutAddress address, String prefix) {
+      String value(String key, String current) => current.trim().isNotEmpty
+          ? current
+          : defaults['${prefix}_$key'] ?? current;
+      return address.copyWith(
+        firstName: value('first_name', address.firstName),
+        lastName: value('last_name', address.lastName),
+        company: value('company', address.company),
+        address1: value('address_1', address.address1),
+        address2: value('address_2', address.address2),
+        city: value('city', address.city),
+        state: value('state', address.state),
+        postcode: value('postcode', address.postcode),
+        country: value('country', address.country),
+        email: value('email', address.email),
+        phone: value('phone', address.phone),
+      );
+    }
+
+    _billingAddress = fill(_billingAddress, 'billing');
+    _shippingAddress = fill(_shippingAddress, 'shipping');
   }
 
   void _validateAddress(
@@ -612,10 +932,7 @@ class CheckoutController extends ChangeNotifier {
           continue;
         }
         errorKey = billingKey;
-        value = _valueForKey(
-          billingKey,
-          fallback: field.defaultValue,
-        ).trim();
+        value = _valueForKey(billingKey, fallback: field.defaultValue).trim();
       }
       if (field.required &&
           (value.isEmpty ||
@@ -731,8 +1048,8 @@ class CheckoutController extends ChangeNotifier {
           key = entry.key;
         }
       } else {
-        final String effectiveKey = !_shipToDifferentAddress &&
-                entry.key.startsWith('shipping_')
+        final String effectiveKey =
+            !_shipToDifferentAddress && entry.key.startsWith('shipping_')
             ? 'billing_${entry.key.substring('shipping_'.length)}'
             : entry.key;
         key = _builtInFieldKey(effectiveKey);
@@ -778,8 +1095,10 @@ class CheckoutController extends ChangeNotifier {
   }
 
   void _onFormChanged(String fieldPrefix) {
-    _pendingIdempotencyKey = null;
-    _submitError = null;
+    if (!_hasUnresolvedSubmission) {
+      _pendingIdempotencyKey = null;
+      _submitError = null;
+    }
     _orderResult = null;
     if (_fieldErrors.isNotEmpty) {
       _fieldErrors = Map<String, String>.unmodifiable(<String, String>{
@@ -793,8 +1112,25 @@ class CheckoutController extends ChangeNotifier {
     _notify();
   }
 
+  bool get _canEditForm =>
+      !_isDisposed &&
+      !_isRecoveringOrder &&
+      _status != CheckoutStatus.submitting &&
+      _status != CheckoutStatus.success;
+
   String _newIdempotencyKey() {
     _submissionSequence++;
+    if (_checkout?.serverSafetyRequired == true) {
+      // Independent devices/processes can have identical clocks and local
+      // counters. Protect a new explicit confirmation with fresh 128-bit
+      // entropy rather than accidentally colliding with another buyer attempt.
+      final Random random = Random.secure();
+      final String entropy = List<String>.generate(
+        16,
+        (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+      ).join();
+      return 'checkout-${_clock().microsecondsSinceEpoch}-$_submissionSequence-$entropy';
+    }
     return 'checkout-${_clock().microsecondsSinceEpoch}-$_submissionSequence';
   }
 

@@ -21,14 +21,18 @@ class CheckoutScreen extends ConsumerStatefulWidget {
     this.customerEmail = '',
     this.onOrderSuccess,
     this.onBackToCart,
+    this.onReviewOrders,
     this.design = CheckoutDesign.classic,
+    this.isPreview = false,
   });
 
   final CheckoutRepository repository;
   final String customerEmail;
   final ValueChanged<CheckoutOrderResult>? onOrderSuccess;
   final VoidCallback? onBackToCart;
+  final VoidCallback? onReviewOrders;
   final CheckoutDesign design;
+  final bool isPreview;
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -60,8 +64,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     _controller = CheckoutController(
       repository: widget.repository,
       initialEmail: widget.customerEmail,
-    )
-      ..addListener(_onControllerChanged);
+    )..addListener(_onControllerChanged);
     _controller.load();
   }
 
@@ -70,7 +73,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
     final Cart? cart = _controller.cart;
-    if (!_checkoutTracked &&
+    if (!widget.isPreview &&
+        !_checkoutTracked &&
         cart != null &&
         !cart.isEmpty &&
         (_controller.status == CheckoutStatus.ready ||
@@ -119,7 +123,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       case CheckoutStatus.submitting:
         final Cart? cart = _controller.cart;
         if (cart == null || cart.isEmpty) {
-          return _EmptyCheckout(copy: copy, onBack: widget.onBackToCart);
+          return _EmptyCheckout(
+            copy: copy,
+            onBack: widget.onBackToCart,
+            unresolved: _controller.hasUnresolvedSubmission,
+            onReviewOrders: widget.onReviewOrders,
+            onRecover: _controller.canRecoverOrder ? _recoverOrder : null,
+            recovering: _controller.isRecoveringOrder,
+          );
         }
         return _CheckoutReady(
           formKey: _formKey,
@@ -127,11 +138,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           copy: copy,
           onSubmit: _submit,
           design: widget.design,
+          onReviewOrders: widget.onReviewOrders,
+          onRecover: _recoverOrder,
         );
     }
   }
 
   Future<void> _submit() async {
+    if (widget.isPreview) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_CheckoutCopy.of(context).previewOnly)),
+      );
+      return;
+    }
     final bool controllerValid = _controller.validate();
     final bool formValid = _formKey.currentState?.validate() ?? false;
     if (!controllerValid || !formValid) {
@@ -168,6 +187,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     widget.onOrderSuccess?.call(result);
   }
 
+  Future<void> _recoverOrder() async {
+    final result = await _controller.recoverPendingOrder();
+    if (!mounted || result == null) return;
+    // This is an existing exact receipt, not a new checkout or purchase event.
+    // Do not repeat purchase analytics or replay any order POST.
+    widget.onOrderSuccess?.call(result);
+  }
+
   ProviderContainer? get _providerContainer {
     try {
       return ProviderScope.containerOf(context, listen: false);
@@ -196,6 +223,8 @@ class _CheckoutReady extends StatelessWidget {
     required this.copy,
     required this.onSubmit,
     required this.design,
+    this.onReviewOrders,
+    required this.onRecover,
   });
 
   final GlobalKey<FormState> formKey;
@@ -203,6 +232,8 @@ class _CheckoutReady extends StatelessWidget {
   final _CheckoutCopy copy;
   final VoidCallback onSubmit;
   final CheckoutDesign design;
+  final VoidCallback? onReviewOrders;
+  final VoidCallback onRecover;
 
   @override
   Widget build(BuildContext context) {
@@ -219,61 +250,63 @@ class _CheckoutReady extends StatelessWidget {
             controller: controller,
             copy: copy,
             onSubmit: onSubmit,
+            onReviewOrders: onReviewOrders,
+            onRecover: onRecover,
           );
 
           if (wide) {
             final List<Widget> columns = design == CheckoutDesign.summaryFirst
                 ? <Widget>[
-                  SizedBox(
-                    width: 390,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        24,
-                        24,
-                        16,
-                        40,
+                    SizedBox(
+                      width: 390,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          24,
+                          24,
+                          16,
+                          40,
+                        ),
+                        child: summary,
                       ),
-                      child: summary,
                     ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      key: const Key('checkout-form-scroll'),
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        16,
-                        24,
-                        24,
-                        40,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        key: const Key('checkout-form-scroll'),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          16,
+                          24,
+                          24,
+                          40,
+                        ),
+                        child: form,
                       ),
-                      child: form,
                     ),
-                  ),
-                ]
-              : <Widget>[
-                  Expanded(
-                    child: SingleChildScrollView(
-                      key: const Key('checkout-form-scroll'),
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        24,
-                        24,
-                        16,
-                        40,
+                  ]
+                : <Widget>[
+                    Expanded(
+                      child: SingleChildScrollView(
+                        key: const Key('checkout-form-scroll'),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          24,
+                          24,
+                          16,
+                          40,
+                        ),
+                        child: form,
                       ),
-                      child: form,
                     ),
-                  ),
-                  SizedBox(
-                    width: 390,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        16,
-                        24,
-                        24,
-                        40,
+                    SizedBox(
+                      width: 390,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          16,
+                          24,
+                          24,
+                          40,
+                        ),
+                        child: summary,
                       ),
-                      child: summary,
                     ),
-                  ),
                   ];
             return Row(
               key: Key('checkout-design-${design.apiValue}'),
@@ -887,11 +920,15 @@ class _OrderSummary extends StatelessWidget {
     required this.controller,
     required this.copy,
     required this.onSubmit,
+    this.onReviewOrders,
+    required this.onRecover,
   });
 
   final CheckoutController controller;
   final _CheckoutCopy copy;
   final VoidCallback onSubmit;
+  final VoidCallback? onReviewOrders;
+  final VoidCallback onRecover;
 
   @override
   Widget build(BuildContext context) {
@@ -946,7 +983,37 @@ class _OrderSummary extends StatelessWidget {
             const SizedBox(height: 10),
             _InlineError(
               key: const Key('checkout-submit-error'),
-              message: controller.submitError!,
+              message: controller.hasUnresolvedSubmission
+                  ? copy.unresolvedOrder
+                  : copy.orderSubmissionError(controller.submitError!),
+            ),
+          ],
+          if (controller.checkout?.serverSafetyRequired == true &&
+              controller.checkout?.serverSafetyEnforced != true) ...<Widget>[
+            const SizedBox(height: 10),
+            _InlineError(
+              key: const Key('checkout-safety-unavailable'),
+              message: copy.safetyUnavailable,
+            ),
+          ],
+          if (controller.hasUnresolvedSubmission &&
+              (controller.canRecoverOrder ||
+                  controller.isRecoveringOrder)) ...<Widget>[
+            const SizedBox(height: 10),
+            _RecoverOrderButton(
+              copy: copy,
+              onRecover: controller.canRecoverOrder ? onRecover : null,
+              recovering: controller.isRecoveringOrder,
+            ),
+          ],
+          if (controller.hasUnresolvedSubmission &&
+              onReviewOrders != null) ...<Widget>[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              key: const Key('checkout-review-orders'),
+              onPressed: onReviewOrders,
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: Text(copy.reviewOrders),
             ),
           ],
           const SizedBox(height: 18),
@@ -1006,10 +1073,7 @@ class _SummaryLine extends StatelessWidget {
 }
 
 class _CheckoutDesignScope extends InheritedWidget {
-  const _CheckoutDesignScope({
-    required this.design,
-    required super.child,
-  });
+  const _CheckoutDesignScope({required this.design, required super.child});
 
   final CheckoutDesign design;
 
@@ -1049,10 +1113,7 @@ class _CheckoutSection extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(
-                icon,
-                size: design == CheckoutDesign.compact ? 19 : null,
-              ),
+              Icon(icon, size: design == CheckoutDesign.compact ? 19 : null),
               const SizedBox(width: 9),
               Expanded(
                 child: Text(
@@ -1189,22 +1250,58 @@ class _CheckoutFailure extends StatelessWidget {
 }
 
 class _EmptyCheckout extends StatelessWidget {
-  const _EmptyCheckout({required this.copy, this.onBack});
+  const _EmptyCheckout({
+    required this.copy,
+    this.onBack,
+    this.unresolved = false,
+    this.onReviewOrders,
+    this.onRecover,
+    this.recovering = false,
+  });
 
   final _CheckoutCopy copy;
   final VoidCallback? onBack;
+  final bool unresolved;
+  final VoidCallback? onReviewOrders;
+  final VoidCallback? onRecover;
+  final bool recovering;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.remove_shopping_cart_outlined, size: 64),
+            Icon(
+              unresolved
+                  ? Icons.help_outline
+                  : Icons.remove_shopping_cart_outlined,
+              size: 64,
+            ),
             const SizedBox(height: 16),
-            Text(copy.emptyCart, textAlign: TextAlign.center),
+            if (unresolved) ...<Widget>[
+              _InlineError(
+                key: const Key('checkout-submit-error'),
+                message: copy.unresolvedOrder,
+              ),
+              const SizedBox(height: 12),
+              if (onRecover != null || recovering)
+                _RecoverOrderButton(
+                  copy: copy,
+                  onRecover: onRecover,
+                  recovering: recovering,
+                ),
+              if (onReviewOrders != null)
+                TextButton.icon(
+                  key: const Key('checkout-review-orders'),
+                  onPressed: onReviewOrders,
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  label: Text(copy.reviewOrders),
+                ),
+            ],
+            if (!unresolved) Text(copy.emptyCart, textAlign: TextAlign.center),
             if (onBack != null) ...<Widget>[
               const SizedBox(height: 18),
               FilledButton.tonal(
@@ -1218,6 +1315,29 @@ class _EmptyCheckout extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RecoverOrderButton extends StatelessWidget {
+  const _RecoverOrderButton({
+    required this.copy,
+    required this.onRecover,
+    required this.recovering,
+  });
+  final _CheckoutCopy copy;
+  final VoidCallback? onRecover;
+  final bool recovering;
+  @override
+  Widget build(BuildContext context) => FilledButton.tonalIcon(
+    key: const Key('checkout-recover-order'),
+    onPressed: recovering ? null : onRecover,
+    icon: recovering
+        ? const SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(Icons.manage_search_outlined),
+    label: Text(recovering ? copy.recoveringOrder : copy.recoverOrder),
+  );
 }
 
 class _CheckoutSuccess extends StatelessWidget {
@@ -1345,6 +1465,28 @@ class _CheckoutCopy {
   }
 
   String get title => arabic ? 'إتمام الطلب' : 'Checkout';
+  String get unresolvedOrder => arabic
+      ? 'ممكن يكون المتجر استلم طلبك، لكن لم نتأكد من النتيجة. راجع طلباتك أو تواصل مع المتجر قبل إنشاء طلب آخر. إعادة الإرسال متوقفة لتجنب تكرار الطلب.'
+      : 'The store may have received this order, but its result could not be confirmed. '
+            'Check your order history or contact the store before placing another order. '
+            'Retrying is disabled here to avoid a duplicate.';
+  String get reviewOrders => arabic ? 'راجع طلباتي' : 'Review my orders';
+  String orderSubmissionError(String message) =>
+      arabic &&
+          message ==
+              'The store confirmed that the previous attempt was rejected before payment. Review current totals and confirm again.'
+      ? 'المتجر أكد إن المحاولة السابقة اترفضت قبل الدفع. راجع الإجمالي الحالي وأكّد الطلب من جديد.'
+      : message;
+  String get recoverOrder =>
+      arabic ? 'تحقق من نتيجة الطلب' : 'Check this order result';
+  String get recoveringOrder =>
+      arabic ? 'جارٍ التحقق من نتيجة الطلب…' : 'Checking this order result…';
+  String get safetyUnavailable => arabic
+      ? 'تأكيد الطلب متوقف مؤقتًا لأن حماية الشراء على المتجر لم يتم التحقق منها. يمكنك مراجعة السلة، ولن نرسل طلبًا بدون التحقق.'
+      : 'Order confirmation is temporarily unavailable because the store checkout safety contract is unverified. You can review the cart; no order will be sent without verification.';
+  String get previewOnly => arabic
+      ? 'معاينة فقط — لم يتم إنشاء طلب.'
+      : 'Preview only — no order was created.';
   String get loading => arabic ? 'جارٍ تحميل الطلب…' : 'Loading checkout…';
   String get loadFailure => arabic
       ? 'تعذر تحميل صفحة الدفع. حاول مرة أخرى.'

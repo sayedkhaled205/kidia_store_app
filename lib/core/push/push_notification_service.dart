@@ -27,6 +27,27 @@ final class PushNotificationService {
   static final PushNotificationService instance = PushNotificationService._();
 
   final Dio _dio;
+  final _storeChangeHints = StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get storeChangeHints => _storeChangeHints.stream;
+  final _openedActions = StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get openedActions => _openedActions.stream;
+  Map<String, dynamic>? _pendingOpenedAction;
+  Map<String, dynamic>? takePendingOpenedAction() {
+    final action = _pendingOpenedAction;
+    _pendingOpenedAction = null;
+    return action;
+  }
+
+  void _publishOpenedAction(RemoteMessage message) {
+    if (message.data['type'] == 'mobishop_store_change') return;
+    final action = Map<String, dynamic>.unmodifiable(message.data);
+    if (_openedActions.hasListener) {
+      _openedActions.add(action);
+    } else {
+      _pendingOpenedAction = action;
+    }
+  }
+
   Uri? _registrationUrl;
   Uri? _eventsUrl;
   bool _started = false;
@@ -116,16 +137,20 @@ final class PushNotificationService {
       messaging.onTokenRefresh.listen(
         (String refreshedToken) => unawaited(_registerToken(refreshedToken)),
       );
-      FirebaseMessaging.onMessage.listen(
-        (RemoteMessage message) =>
-            unawaited(_recordEvent(message, 'delivered')),
-      );
-      FirebaseMessaging.onMessageOpenedApp.listen(
-        (RemoteMessage message) => unawaited(_recordEvent(message, 'opened')),
-      );
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _publishStoreChangeHint(message);
+        unawaited(_recordEvent(message, 'delivered'));
+      });
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _publishStoreChangeHint(message);
+        _publishOpenedAction(message);
+        unawaited(_recordEvent(message, 'opened'));
+      });
       _listening = true;
       final RemoteMessage? initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
+        _publishStoreChangeHint(initialMessage);
+        _publishOpenedAction(initialMessage);
         await _recordEvent(initialMessage, 'opened');
       }
     } catch (error, stackTrace) {
@@ -133,6 +158,12 @@ final class PushNotificationService {
       debugPrintStack(stackTrace: stackTrace);
     } finally {
       _started = _listening;
+    }
+  }
+
+  void _publishStoreChangeHint(RemoteMessage message) {
+    if (message.data['type'] == 'mobishop_store_change') {
+      _storeChangeHints.add(Map<String, dynamic>.unmodifiable(message.data));
     }
   }
 

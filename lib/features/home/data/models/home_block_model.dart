@@ -299,6 +299,7 @@ abstract final class HomeBlockModel {
       gap: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32),
       rowGap: _boundedDouble(data, 'row_gap', fallback: _boundedDouble(data, 'gap', fallback: 12, minimum: 0, maximum: 32), minimum: 0, maximum: 80),
       labelSize: _boundedDouble(data, 'label_size', fallback: 13, minimum: 10, maximum: 22),
+      labelWeight: _boundedInt(data, 'label_weight', fallback: 700, minimum: 400, maximum: 700),
       labelColor: _hexColor(data, 'label_color', fallback: '#1F2933'),
     );
   }
@@ -367,6 +368,7 @@ abstract final class HomeBlockModel {
       showLabels: _optionalBool(data, 'show_labels', fallback: true),
       labelColor: _hexColor(data, 'label_color', fallback: '#1F2933'),
       labelSize: _boundedDouble(data, 'label_size', fallback: 13, minimum: 10, maximum: 22),
+      labelWeight: _boundedInt(data, 'label_weight', fallback: 700, minimum: 400, maximum: 700),
       items: _requiredMapList(data, 'items').map(_parseQuickLinkItem).toList(growable: false),
     );
   }

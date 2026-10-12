@@ -248,6 +248,7 @@ class CategoryGridBlock extends HomeBlock {
     required this.gap,
     required this.rowGap,
     required this.labelSize,
+    this.labelWeight = 700,
     required this.labelColor,
   }) : super(type: HomeBlockType.categoryGrid);
 
@@ -263,6 +264,7 @@ class CategoryGridBlock extends HomeBlock {
   final double gap;
   final double rowGap;
   final double labelSize;
+  final int labelWeight;
   final String labelColor;
 }
 
@@ -297,6 +299,7 @@ class QuickLinksBlock extends HomeBlock {
     required this.showLabels,
     required this.labelColor,
     required this.labelSize,
+    this.labelWeight = 700,
     required this.items,
   }) : super(type: HomeBlockType.quickLinks);
 
@@ -310,6 +313,7 @@ class QuickLinksBlock extends HomeBlock {
   final bool showLabels;
   final String labelColor;
   final double labelSize;
+  final int labelWeight;
   final List<QuickLinkItem> items;
 }
 

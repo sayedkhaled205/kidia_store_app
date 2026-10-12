@@ -5,6 +5,36 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_categ
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 
 void main() {
+  test(
+    'selector83 explicit roots and manual IDs bypass the query-blind CMS endpoint',
+    () async {
+      final client = _FakeStoreApiClient(
+        response: const StoreApiResponse(data: []),
+      );
+      final source = StoreApiCatalogRemoteDataSource(client);
+      await source.fetchCategories(
+        CatalogCategoryQuery(
+          parentId: 0,
+          hideEmpty: false,
+          sort: CatalogCategorySort.name,
+        ),
+      );
+      expect(client.lastPath, '/wp-json/wc/store/v1/products/categories');
+      expect(client.lastQuery!['parent'], 0);
+      expect(client.lastQuery!['hide_empty'], false);
+      await source.fetchCategories(
+        CatalogCategoryQuery(
+          includeIds: [9, 8],
+          perPage: 2,
+          hideEmpty: false,
+          sort: CatalogCategorySort.include,
+        ),
+      );
+      expect(client.lastPath, '/wp-json/wc/store/v1/products/categories');
+      expect(client.lastQuery!['include'], '9,8');
+      expect(client.lastQuery!['orderby'], 'include');
+    },
+  );
   group('StoreApiCatalogRemoteDataSource', () {
     test(
       'parses product pagination headers and discards only invalid records',

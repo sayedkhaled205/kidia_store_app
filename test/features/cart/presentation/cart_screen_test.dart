@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/compact_family_provider.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,24 @@ import 'package:mobishop_store_app/features/cart/presentation/providers/cart_pro
 import '../data/cart_test_fixture.dart';
 
 void main() {
+  testWidgets('compact family cart preserves quantities and checkout at phone width', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = _WidgetCartRepository();
+    var checkoutCalls = 0;
+    await _pumpCart(tester, repository, compact: true, onCheckout: (_, cart) { checkoutCalls++; });
+    await tester.pumpAndSettle();
+    expect(find.text('Bag (1)'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('increase-cart-key-1')));
+    await tester.pumpAndSettle();
+    expect(repository.updatedQuantities, [2]);
+    await tester.tap(find.byKey(const Key('checkout-button')));
+    await tester.pump();
+    expect(checkoutCalls, 1);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('renders loading then the localized empty RTL state', (
     WidgetTester tester,
   ) async {
@@ -117,10 +136,11 @@ Future<void> _pumpCart(
   CartRepository repository, {
   Locale locale = const Locale('en'),
   CartCheckoutCallback? onCheckout,
+  bool compact = false,
 }) {
   return tester.pumpWidget(
     ProviderScope(
-      overrides: [cartRepositoryProvider.overrideWithValue(repository)],
+      overrides: [cartRepositoryProvider.overrideWithValue(repository), compactFamilyProvider.overrideWithValue(compact)],
       child: MaterialApp(
         locale: locale,
         supportedLocales: const <Locale>[Locale('en'), Locale('ar')],

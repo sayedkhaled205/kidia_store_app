@@ -1,3 +1,6 @@
+import 'package:flutter/gestures.dart';
+import 'product_size_chart.dart';
+import 'product_gallery_ratio.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -6,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
@@ -17,8 +19,8 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:mobishop_store_app/features/product/application/product_detail_controller.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
@@ -36,41 +38,6 @@ Color _productHexColor(String value, Color fallback) {
       ? fallback
       : Color(0xFF000000 | parsed);
 }
-
-const List<CatalogProduct> _previewRelatedProducts = <CatalogProduct>[
-  CatalogProduct(
-    id: 910001,
-    name: 'MobiShop everyday set',
-    slug: 'mobishop-everyday-set',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '45000',
-      regularPriceMinor: '52000',
-      salePriceMinor: '45000',
-    ),
-  ),
-  CatalogProduct(
-    id: 910002,
-    name: 'MobiShop summer outfit',
-    slug: 'mobishop-summer-outfit',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '39000',
-    ),
-  ),
-];
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({
@@ -182,6 +149,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 		),
         bottomNavigationBar:
             layout.element('purchase_bar').enabled &&
+                layout.footer.string('style', 'product_action') == 'product_action' &&
 				!(_footerHidden && layout.footer.boolean('hide_on_scroll', false)) &&
                 _controller.status == ProductDetailStatus.success &&
                 _controller.product != null
@@ -203,7 +171,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   List<CmsPageHeaderAction> _buildCmsActions(BuildContext context, _ProductCopy copy) {
     final CatalogProduct? product = _controller.product;
     return <CmsPageHeaderAction>[
-	  CmsPageHeaderAction(type: 'support', icon: Icons.headset_mic_outlined, tooltip: 'خدمة العملاء', onPressed: () => context.push('/support')),
+	  CmsPageHeaderAction(type: 'support', icon: Icons.headset_mic_outlined, tooltip: copy.arabic ? 'خدمة العملاء' : 'Customer service', onPressed: () => context.push('/support')),
       if (product != null)
         CmsPageHeaderAction(
           type: 'share',
@@ -224,7 +192,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         key: const Key('product-cart-button'),
         type: 'cart',
         icon: Icons.shopping_bag_outlined,
-        tooltip: 'Cart',
+        tooltip: copy.arabic ? 'السلة' : 'Cart',
         onPressed: () => context.push('/cart'),
       ),
     ];
@@ -344,7 +312,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 }
 
-class _ProductContent extends StatelessWidget {
+class _ProductContent extends StatefulWidget {
   const _ProductContent({
     required this.controller,
     required this.repository,
@@ -364,12 +332,25 @@ class _ProductContent extends StatelessWidget {
   final ValueChanged<CatalogProduct>? onRelatedProductsRequested;
 
   @override
+  State<_ProductContent> createState() => _ProductContentState();
+}
+
+class _ProductContentState extends State<_ProductContent> {
+  final GlobalKey overviewKey = GlobalKey();
+  final GlobalKey variationsKey = GlobalKey();
+  final GlobalKey descriptionKey = GlobalKey();
+  final GlobalKey reviewsKey = GlobalKey();
+  final GlobalKey recommendKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
-    final GlobalKey overviewKey = GlobalKey();
-    final GlobalKey variationsKey = GlobalKey();
-    final GlobalKey descriptionKey = GlobalKey();
-    final GlobalKey reviewsKey = GlobalKey();
-    final GlobalKey recommendKey = GlobalKey();
+    final controller = widget.controller;
+    final repository = widget.repository;
+    final product = widget.product;
+    final copy = widget.copy;
+    final pageLayout = widget.pageLayout;
+    final onReviewsRequested = widget.onReviewsRequested;
+    final onRelatedProductsRequested = widget.onRelatedProductsRequested;
     final CatalogVariation? variation = controller.selectedVariation;
     final List<CatalogImage> images = _displayImages(
       product.images,
@@ -379,6 +360,16 @@ class _ProductContent extends StatelessWidget {
     final bool inStock = variation?.isInStock ?? product.isInStock;
     final CmsPageComponent tabsSettings = pageLayout.element('product_tabs');
     final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings);
+    final bool summaryBeforeTabs = tabsSettings.boolean('after_summary', false);
+    Widget summary() => CmsElementFrame(
+      key: overviewKey,
+      component: pageLayout.element('product_summary'),
+      child: _PatPatProductSummary(
+        product: product, variation: variation, money: money, inStock: inStock,
+        selectedAttributes: controller.selectedAttributeLabels,
+        settings: pageLayout.element('product_summary'), copy: copy,
+      ),
+    );
 
     void openTab(String target) {
       final GlobalKey key = switch (target) {
@@ -410,6 +401,14 @@ class _ProductContent extends StatelessWidget {
               settings: pageLayout.element('image_gallery'),
             ),
           ),
+        if (summaryBeforeTabs && pageLayout.element('product_summary').enabled)
+          SliverToBoxAdapter(child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
+              vertical: 16,
+            ),
+            child: summary(),
+          )),
         if (tabsSettings.enabled && tabs.isNotEmpty)
           SliverPersistentHeader(
             pinned: tabsSettings.boolean('sticky', true),
@@ -426,9 +425,13 @@ class _ProductContent extends StatelessWidget {
 			pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
 			12,
 		  ),
-          sliver: SliverList.list(
+          // These are a bounded set of product sections, not a catalog list.
+          // Mount their anchors up front so tabs can reach an off-screen section
+          // on the first tap, even after a long product description.
+          sliver: SliverToBoxAdapter(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              if (pageLayout.element('product_summary').enabled)
+              if (!summaryBeforeTabs && pageLayout.element('product_summary').enabled)
                 CmsElementFrame(
                   key: overviewKey,
                   component: pageLayout.element('product_summary'),
@@ -437,7 +440,7 @@ class _ProductContent extends StatelessWidget {
                     variation: variation,
                     money: money,
                     inStock: inStock,
-                    selectedAttributes: controller.selectedAttributes,
+                    selectedAttributes: controller.selectedAttributeLabels,
                     settings: pageLayout.element('product_summary'),
                     copy: copy,
                   ),
@@ -505,7 +508,7 @@ class _ProductContent extends StatelessWidget {
                     settings: pageLayout.element('reviews'),
                     onPressed: onReviewsRequested == null
                         ? null
-                        : () => onReviewsRequested!(product),
+                        : () => onReviewsRequested(product),
                   ),
                 ),
               if (pageLayout.element('reviews').enabled)
@@ -520,12 +523,12 @@ class _ProductContent extends StatelessWidget {
                     settings: pageLayout.element('related_products'),
                     onMore: onRelatedProductsRequested == null
                         ? null
-                        : () => onRelatedProductsRequested!(product),
+                        : () => onRelatedProductsRequested(product),
                   ),
                 ),
               const SizedBox(height: 32),
             ],
-          ),
+          )),
         ),
       ],
     );
@@ -630,7 +633,7 @@ List<_ProductTabConfig> _productTabConfigs(CmsPageComponent settings) {
         .whereType<_ProductTabConfig>()
         .take(10)
         .toList(growable: false);
-    if (tabs.isNotEmpty) return tabs;
+    return tabs;
   }
   return <_ProductTabConfig>[
     _ProductTabConfig(
@@ -701,7 +704,7 @@ class _ProductTabsBarState extends State<_ProductTabsBar> {
           final _ProductTabConfig tab = widget.tabs[index];
           final bool selected = tab.target == _selectedTarget;
           return SizedBox(
-            width: minimumWidth.clamp(108, 180).toDouble(),
+            width: minimumWidth.clamp(88, 180).toDouble(),
             child: InkWell(
               key: Key('product-tab-${tab.target}-$index'),
               onTap: () {
@@ -916,9 +919,9 @@ class _FitSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
         children: <Widget>[
-          _fitRow('Small', settings.number('fit_small_percent', 1).clamp(0, 100) / 100),
-          _fitRow('True to size', settings.number('fit_true_percent', 99).clamp(0, 100) / 100),
-          _fitRow('Large', settings.number('fit_large_percent', 0).clamp(0, 100) / 100),
+          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'صغير' : 'Small', settings.number('fit_small_percent', 1).clamp(0, 100) / 100),
+          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'المقاس مناسب' : 'True to size', settings.number('fit_true_percent', 99).clamp(0, 100) / 100),
+          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'كبير' : 'Large', settings.number('fit_large_percent', 0).clamp(0, 100) / 100),
         ],
       );
 
@@ -970,10 +973,6 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
   }
 
   Future<List<CatalogProduct>> _load() async {
-    if (AppConfig.isCmsPreview &&
-        !CmsPreviewLayoutBridge.useDemoCatalog) {
-      return _previewRelatedProducts;
-    }
     final page = await widget.repository
         .getProducts(
           CatalogProductQuery(
@@ -1029,21 +1028,18 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                   ),
                 )
               else if (products.isNotEmpty)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  itemCount: products.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: widget.settings.number('columns', 2).clamp(1, 3).round(),
-                    crossAxisSpacing: widget.settings.number('gap', 2).clamp(0, 24),
-                    mainAxisSpacing: widget.settings.number('gap', 2).clamp(0, 24),
-                    childAspectRatio: 0.62,
-                  ),
-                  itemBuilder: (BuildContext context, int index) {
-                    final CatalogProduct product = products[index];
-                    return CatalogProductCard(
+                LayoutBuilder(builder: (context, constraints) {
+                  final columns = widget.settings.number('columns', 2).clamp(1, 3).round();
+                  final gap = widget.settings.number('gap', 2).clamp(0, 24).toDouble();
+                  final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: products.map((product) => SizedBox(
+                      width: width,
+                      child: CatalogProductCard(
                       product: product,
+                      fitImageRatio: true,
                       settings: CmsPageComponent(
                         id: widget.settings.id,
                         type: widget.settings.type,
@@ -1059,9 +1055,10 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                         },
                       ),
                       onTap: () => context.push('/product/${product.id}'),
-                    );
-                  },
-                ),
+                    ),
+                    )).toList(growable: false),
+                  );
+                }),
             ],
           );
         },
@@ -1188,26 +1185,27 @@ class _ProductGalleryState extends State<_ProductGallery> {
       return AspectRatio(
         aspectRatio: widget.settings.number('aspect_ratio', 1).clamp(0.6, 1.8),
         child: AppNetworkImageError(
-          backgroundColor: Colors.white,
+          backgroundColor: _cmsColor(widget.settings.string('background_color', '#FFFFFF'), Colors.white),
           iconSize: 54,
         ),
       );
     }
 
-    final double aspectRatio = _naturalAspectRatio ?? widget.settings
-        .number('aspect_ratio', 1)
-        .clamp(0.6, 1.8);
+    final double aspectRatio = productGalleryAspectRatio(widget.settings, _naturalAspectRatio);
     final BoxFit fit = widget.settings.string('fit', 'contain') == 'cover'
         ? BoxFit.cover
         : BoxFit.contain;
     final bool enableZoom = widget.settings.boolean('enable_zoom', true);
-    const Color galleryBackground = Colors.white;
+    final Color galleryBackground = _cmsColor(widget.settings.string('background_color', '#FFFFFF'), Colors.white);
     final Widget pager = AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       child: AspectRatio(
           aspectRatio: aspectRatio,
           child: PageView.builder(
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
+          ),
             key: ValueKey<String>(widget.images.first.source.toString()),
             controller: _pageController,
             itemCount: widget.images.length == 1 ? 1 : null,
@@ -1398,7 +1396,7 @@ class _ProductOptionPicker extends ConsumerWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  selected == null ? group.label : '${group.label}   $selected',
+                  selected == null ? group.label : '${group.label}   ${controller.selectedAttributeLabels[group.key] ?? selected}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -1409,40 +1407,17 @@ class _ProductOptionPicker extends ConsumerWidget {
                   onPressed: () => showModalBottomSheet<void>(
                     context: context,
                     useSafeArea: true,
-                    builder: (BuildContext context) => Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Text(
-                            sizeChart.string('title', settings?.string('size_chart_label', 'Size chart') ?? 'Size chart'),
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-                          ),
-                          if (sizeChart.boolean('show_description', true)) ...<Widget>[
-                            const SizedBox(height: 8),
-                            Text(sizeChart.string('description', 'Choose the size that fits you best.')),
-                          ],
-                          const SizedBox(height: 18),
-                          for (final ProductOptionValue option in group.values)
-                            Container(
-                              constraints: BoxConstraints(minHeight: sizeChart.number('row_height', 52).clamp(36, 80).toDouble()),
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: _productHexColor(sizeChart.string('row_color', '#F6F8F7'), const Color(0xFFF6F8F7)),
-                                borderRadius: BorderRadius.circular(12),
-                                border: selected == option.value ? Border.all(color: _productHexColor(sizeChart.string('accent_color', '#2F806E'), const Color(0xFF2F806E)), width: 2) : null,
-                              ),
-                              child: ListTile(
-                              title: Text(option.label),
-                              trailing: selected == option.value ? const Icon(Icons.check_rounded) : null,
-                              onTap: () {
-                                controller.selectOption(group.key, option.value);
-                                Navigator.of(context).pop();
-                              },
-                              ),
-                            ),
-                        ],
+                    isScrollControlled: true,
+                    builder: (BuildContext context) => ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .85),
+                      child: ProductSizeChart(
+                        settings: sizeChart,
+                        group: group,
+                        selected: selected,
+                        onSelected: (value) {
+                          controller.selectOption(group.key, value);
+                          Navigator.of(context).pop();
+                        },
                       ),
                     ),
                   ),
@@ -1849,72 +1824,56 @@ class _PurchaseBar extends StatelessWidget {
     final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
     final double footerLabelSize = footer.number('label_size', 11).clamp(8, 20).toDouble();
     final double footerIconLabelGap = footer.number('icon_label_gap', 3).clamp(0, 12).toDouble();
-	final Map<String, dynamic> footerLayout = footer.json('layout_json');
-	final dynamic rawRows = footerLayout['rows'];
-	final List<(String, double)> placements = <(String, double)>[];
-	if (rawRows is List) {
-	  for (final dynamic rawRow in rawRows.take(3)) {
-		if (rawRow is! Map || rawRow['columns'] is! List) continue;
-		final List<dynamic> columns = rawRow['columns'] as List<dynamic>;
-		for (final dynamic rawColumn in columns.take(6)) {
-		  if (rawColumn is! Map || rawColumn['items'] is! List) continue;
-		  final List<dynamic> columnItems = rawColumn['items'] as List<dynamic>;
-		  final double width = (rawColumn['width'] as num?)?.toDouble() ?? 100 / columns.length;
-		  final double itemWidth = columnItems.isEmpty ? width : width / columnItems.length;
-		  placements.addAll(columnItems.map((item) => ('$item', itemWidth)));
-		}
-	  }
-	}
-	final dynamic legacyItems = footerLayout['items'];
-	if (placements.isEmpty) {
-	  final List<String> items = legacyItems is List ? legacyItems.map((item) => '$item').toList() : <String>['share', 'like', 'add_to_cart'];
-	  placements.addAll(items.map((item) => (item, 100 / items.length)));
-	}
-	final double configuredButtonWidth = footer
-	    .number('button_width_percent', 58)
-	    .clamp(20, 95);
-	final double composerButtonWidth = placements
-	    .where(((String, double) placement) => placement.$1 == 'add_to_cart')
-	    .fold<double>(0, (double widest, (String, double) placement) =>
-	        placement.$2 > widest ? placement.$2 : widest);
-	final double addToCartColumnWidth = composerButtonWidth > configuredButtonWidth
-	    ? composerButtonWidth
-	    : configuredButtonWidth;
-	final double otherColumnsWidth = placements
-	    .where(((String, double) placement) => placement.$1 != 'add_to_cart')
-	    .fold<double>(0, (double total, (String, double) placement) =>
-	        total + placement.$2);
-	final double remainingColumnsWidth = (100 - addToCartColumnWidth).clamp(
-	  0,
-	  100,
-	);
-	final double otherColumnsScale = otherColumnsWidth <= 0
-	    ? 1
-	    : remainingColumnsWidth / otherColumnsWidth;
-	final List<(String, double)> effectivePlacements = placements
-	    .map(
-	      ((String, double) placement) => (
-	        placement.$1,
-	        placement.$1 == 'add_to_cart'
-	            ? addToCartColumnWidth
-	            : placement.$2 * otherColumnsScale,
-	      ),
-	    )
-	    .toList(growable: false);
-	final double buttonWidthFactor = addToCartColumnWidth <= 0
-	    ? 1
-	    : (configuredButtonWidth / addToCartColumnWidth)
-	          .clamp(0, 1)
-	          .toDouble();
+    final footerLayout = footer.json('layout_json');
+    final rawRows = footerLayout['rows'];
+    final placements = <(String, double, int)>[];
+    final seen = <String>{};
+    if (rawRows is List) {
+      for (final indexed in rawRows.take(3).indexed) {
+        final row = indexed.$2;
+        if (row is! Map || row['columns'] is! List) continue;
+        final columns = row['columns'] as List;
+        for (final column in columns.take(6)) {
+          if (column is! Map) continue;
+          final parsed = double.tryParse('${column['width']}');
+          final width = parsed != null && parsed.isFinite && parsed > 0 ? parsed : 100 / columns.length;
+          final items = column['items'] is List ? (column['items'] as List)
+              .map((item) => '$item').where((id) => ['share','like','add_to_cart'].contains(id) && seen.add(id)).toList() : <String>[];
+          if (items.isEmpty) {
+            placements.add(('',width,indexed.$1));
+          } else {
+            placements.addAll(items.map((id) => (id,width/items.length,indexed.$1)));
+          }
+        }
+      }
+    }
+    if (placements.isEmpty) {
+      final legacy = footerLayout['items'];
+      final items = legacy is List ? legacy.map((item) => '$item').toSet().toList() : ['share','like','add_to_cart'];
+      placements.addAll(items.map((id) => (id,100/items.length,0)));
+    }
+    final configuredButtonWidth = footer.number('button_width_percent',58).clamp(20,95).toDouble();
+    final addPlacement = placements.where((p) => p.$1 == 'add_to_cart').firstOrNull;
+    final composerButtonWidth = addPlacement?.$2 ?? configuredButtonWidth;
+    final addToCartColumnWidth = composerButtonWidth > configuredButtonWidth ? composerButtonWidth : configuredButtonWidth;
+    final otherColumnsWidth = placements.where((p) => p.$3 == addPlacement?.$3 && p.$1 != 'add_to_cart')
+        .fold<double>(0,(total,p) => total+p.$2);
+    final otherColumnsScale = otherColumnsWidth <= 0 ? 1 : (100-addToCartColumnWidth).clamp(0,100)/otherColumnsWidth;
+    final effectivePlacements = placements.map((p) => (p.$1,
+      p.$1 == 'add_to_cart' ? addToCartColumnWidth : p.$3 == addPlacement?.$3 ? p.$2*otherColumnsScale : p.$2,
+      p.$3)).toList();
+    final buttonWidthFactor = (configuredButtonWidth/addToCartColumnWidth).clamp(0,1).toDouble();
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
 	    .number('button_height', 52)
 	    .clamp(36, 80);
 	// A configured product action must never be silently squeezed back to the
 	// category footer height. Grow the product footer when the button is taller.
-	final double footerHeight = configuredButtonHeight > configuredFooterHeight
-	    ? configuredButtonHeight
-	    : configuredFooterHeight;
+    final rowIds = placements.map((p) => p.$3).toSet();
+    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + footerLabelSize * 1.25 : 0) + 8;
+    final minimumRowHeight = configuredButtonHeight > iconHeight ? configuredButtonHeight : iconHeight;
+    final minimumFooterHeight = minimumRowHeight * rowIds.length;
+    final footerHeight = configuredFooterHeight > minimumFooterHeight ? configuredFooterHeight : minimumFooterHeight;
 	final double buttonHeight = configuredButtonHeight;
 	final String buttonShape = footer.string('button_shape', 'custom');
 	final double buttonRadius = switch (buttonShape) {
@@ -1936,10 +1895,8 @@ class _PurchaseBar extends StatelessWidget {
 	};
 	final bool awaitingProductOptions =
 	    product.hasVariations && !controller.canAddToCart;
-	final Color purchaseButtonBackground = product.hasVariations
-	    ? awaitingProductOptions
-	        ? buttonColor.withValues(alpha: 0.48)
-	        : buttonColor
+	final Color purchaseButtonBackground = awaitingProductOptions
+	    ? buttonBackground.withValues(alpha: buttonBackground.a * 0.48)
 	    : buttonBackground;
 	final bool purchaseFlowAvailable = product.hasVariations ||
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
@@ -1961,9 +1918,8 @@ class _PurchaseBar extends StatelessWidget {
 	      ? 'جارٍ الإضافة…'
 	      : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
 	);
-	final List<(String, double, Widget)> footerItems =
-	    <(String, double, Widget)>[];
-	for (final (String item, double width) in effectivePlacements) {
+	final footerItems = <(String, double, Widget, int)>[];
+	for (final (String item, double width, int row) in effectivePlacements) {
 	  final double effectiveWidth = width;
 	  Widget? child;
 	  if (item == 'share') {
@@ -1999,15 +1955,10 @@ class _PurchaseBar extends StatelessWidget {
 		  ),
 		);
 	  }
-	  if (child != null && effectiveWidth > 0) {
-	    footerItems.add((item, effectiveWidth, child));
+	  if (effectiveWidth > 0) {
+	    footerItems.add((item, effectiveWidth, child ?? const SizedBox.shrink(), row));
 	  }
 	}
-	final double footerWidthTotal = footerItems.fold<double>(
-	  0,
-	  (double total, (String, double, Widget) placement) =>
-	      total + placement.$2,
-	);
     return Material(
       elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
       color: background,
@@ -2053,23 +2004,38 @@ class _PurchaseBar extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
+            if (footer.boolean('show_price', false))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  (controller.displayedPrice ?? product.prices).displayAmount(
+                    (controller.displayedPrice ?? product.prices).priceMinor,
+                  ),
+                  key: const Key('product-footer-price'),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            if (footer.boolean('show_quantity', false))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: _QuantitySelector(controller: controller, copy: copy),
+              ),
 			SizedBox(
 			  key: const Key('product-footer-size'),
 			  height: footerHeight,
 			  child: LayoutBuilder(
 			    builder: (BuildContext context, BoxConstraints constraints) {
 			      final double availableWidth = constraints.maxWidth;
-			      return Row(
-			        children: footerItems.map(
-			          ((String, double, Widget) placement) => SizedBox(
-			            key: Key('product-footer-column-${placement.$1}'),
-			            width: footerWidthTotal <= 0
-			                ? 0
-			                : availableWidth * placement.$2 / footerWidthTotal,
-			            child: placement.$3,
-			          ),
-			        ).toList(growable: false),
-			      );
+              return Column(children: [for (final row in rowIds)
+                Expanded(child: Row(key: Key('product-footer-row-$row'),children: [
+                  for (final placement in footerItems.where((p) => p.$4 == row))
+                    SizedBox(
+                      key: placement.$1.isEmpty ? null : Key('product-footer-column-${placement.$1}'),
+                      width: availableWidth * placement.$2 / footerItems.where((p) => p.$4 == row).fold<double>(0,(sum,p) => sum+p.$2),
+                      child: placement.$3,
+                    ),
+                ])),
+              ]);
 			    },
 			  ),
 			),
@@ -2612,8 +2578,11 @@ String _arabicFooterLabel(
   String configured,
   String arabicFallback,
 ) {
-  if (RegExp(r'[\u0600-\u06FF]').hasMatch(configured)) {
-    return configured;
-  }
-  return arabicFallback;
+  final defaults = switch (arabicFallback) {
+    'أضف إلى السلة' => <String>['Add to bag', 'Add to cart'],
+    'مشاركة' => <String>['Share'],
+    'المفضلة' => <String>['Like', 'Wishlist'],
+    _ => <String>[],
+  };
+  return cmsFooterLabel(configured, arabicFallback, defaults);
 }

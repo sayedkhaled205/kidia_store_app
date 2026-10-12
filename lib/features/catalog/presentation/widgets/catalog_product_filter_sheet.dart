@@ -35,7 +35,45 @@ class CatalogProductFilterSheet extends StatefulWidget {
     bool showPrice = true,
     bool showSale = true,
     bool showBrand = true,
+    bool sidePanel = false,
   }) {
+    if (sidePanel) {
+      return showGeneralDialog<CatalogProductFilters>(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierColor: Colors.black45,
+        pageBuilder: (context, animation, secondaryAnimation) => Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: MediaQuery.sizeOf(context).width * .75,
+            height: double.infinity,
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              clipBehavior: Clip.antiAlias,
+              child: SafeArea(child: Column(children: [
+                Align(alignment: Alignment.topRight, child: IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                )),
+                Expanded(child: CatalogProductFilterSheet(
+                  initialFilters: initialFilters,
+                  currencyMinorUnit: currencyMinorUnit,
+                  minimumAvailableMinor: minimumAvailableMinor,
+                  maximumAvailableMinor: maximumAvailableMinor,
+                  brands: brands,
+                  showPrice: showPrice,
+                  showSale: showSale,
+                  showBrand: showBrand,
+                )),
+              ])),
+            ),
+          ),
+        ),
+      );
+    }
     return showModalBottomSheet<CatalogProductFilters>(
       context: context,
       isScrollControlled: true,
@@ -231,6 +269,9 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                     sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
                     sizeTerm: widget.initialFilters.sizeTerm,
                     sizeLabel: widget.initialFilters.sizeLabel,
+                    colorTaxonomy: widget.initialFilters.colorTaxonomy,
+                    colorTerm: widget.initialFilters.colorTerm,
+                    colorLabel: widget.initialFilters.colorLabel,
                   ),
                 ),
                 child: Text(copy.reset),
@@ -294,6 +335,9 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
         sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
         sizeTerm: widget.initialFilters.sizeTerm,
         sizeLabel: widget.initialFilters.sizeLabel,
+        colorTaxonomy: widget.initialFilters.colorTaxonomy,
+        colorTerm: widget.initialFilters.colorTerm,
+        colorLabel: widget.initialFilters.colorLabel,
       ),
     );
   }

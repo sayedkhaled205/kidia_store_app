@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
@@ -8,11 +10,15 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_vari
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 
-class CatalogRepositoryImpl implements CatalogRepository {
-  const CatalogRepositoryImpl(this._remoteDataSource);
+class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
+  const CatalogRepositoryImpl(this._remoteDataSource, {this.changes});
 
   final CatalogRemoteDataSource _remoteDataSource;
+  final Stream<int>? changes;
+  @override
+  Stream<int> get catalogChanges => changes ?? const Stream<int>.empty();
 
   @override
   Future<CatalogPage<CatalogProduct>> getProducts(CatalogProductQuery query) {

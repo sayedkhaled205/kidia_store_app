@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
@@ -58,6 +59,9 @@ class _ProductImageSwiperState extends State<ProductImageSwiper> {
       fit: StackFit.expand,
       children: <Widget>[
         PageView.builder(
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
+          ),
           key: ValueKey<String>(
             'product-image-swiper-${images.join('|').hashCode}',
           ),

@@ -9,6 +9,7 @@ import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.da
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 class AccountScreen extends ConsumerWidget {
@@ -43,6 +44,10 @@ class AccountScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final previewIdentity = AppConfig.isCmsPreview
+        ? ref.watch(previewIdentityProvider).asData?.value
+        : null;
+    final storeName = previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     final bool isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     final AsyncValue<AuthSession?> authState = ref.watch(
@@ -57,42 +62,49 @@ class AccountScreen extends ConsumerWidget {
     );
     final CmsPageComponent menuSettings = pageLayout.element('account_menu');
     final List<_AccountAction> visibleActions = _visibleActions(menuSettings);
+    final bool flat = menuSettings.boolean('compact_family', false);
 
     return CmsPageScaffold(
       layout: pageLayout,
       defaultTitle: isArabic ? 'حسابي' : 'Account',
       actions: <CmsPageHeaderAction>[
-          CmsPageHeaderAction(
-            type: 'cart',
-            icon: Icons.shopping_bag_outlined,
-            tooltip: 'Cart',
-            onPressed: () => context.push('/cart'),
-          ),
+        CmsPageHeaderAction(
+          type: 'cart',
+          icon: Icons.shopping_bag_outlined,
+          tooltip: isArabic ? 'السلة' : 'Cart',
+          onPressed: () => context.push('/cart'),
+        ),
       ],
       body: SafeArea(
         top: false,
         child: ListView(
-          padding: const EdgeInsetsDirectional.fromSTEB(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            cmsContentHorizontalPadding(pageLayout),
             MobiShopSpacing.md,
-            MobiShopSpacing.md,
-            MobiShopSpacing.md,
+            cmsContentHorizontalPadding(pageLayout),
             MobiShopSpacing.xl,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
-              CmsElementFrame(component: summarySettings, child: _AccountHeader(
-              session: session,
-              loading: authState.isLoading,
-              isArabic: isArabic,
-              onSignIn: () => context.push('/auth'),
-              avatarSize: summarySettings.number('avatar_size', 66),
-              guestTitle: summarySettings.string(
-                'guest_title',
-                isArabic ? 'تسجيل الدخول / إنشاء حساب' : 'Sign in / Register',
+              CmsElementFrame(
+                component: summarySettings,
+                child: _AccountHeader(
+                  storeName: storeName,
+                  session: session,
+                  loading: authState.isLoading,
+                  isArabic: isArabic,
+                  onSignIn: () => context.push('/auth'),
+                  avatarSize: summarySettings.number('avatar_size', 66),
+                  guestTitle: summarySettings.string(
+                    'guest_title',
+                    isArabic
+                        ? 'تسجيل الدخول / إنشاء حساب'
+                        : 'Sign in / Register',
+                  ),
+                  showEmail: summarySettings.boolean('show_email', true),
+                  cardStyle: summarySettings.string('card_style', 'elevated'),
+                ),
               ),
-              showEmail: summarySettings.boolean('show_email', true),
-              cardStyle: summarySettings.string('card_style', 'elevated'),
-            )),
             if (authState.hasError) ...<Widget>[
               const SizedBox(height: MobiShopSpacing.sm),
               _SessionNotice(
@@ -101,35 +113,51 @@ class AccountScreen extends ConsumerWidget {
                     : 'Could not restore the account session. You can sign in again.',
               ),
             ],
-            if (menuSettings.enabled) const SizedBox(height: MobiShopSpacing.lg),
             if (menuSettings.enabled)
-              CmsElementFrame(component: menuSettings, child: Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: <Widget>[
-                  for (int index = 0; index < visibleActions.length; index++) ...<Widget>[
-                    _AccountActionTile(
-                      action: visibleActions[index],
-                      isArabic: isArabic,
-                      onTap: () => _openAction(
-                        context,
-                        session: session,
-                        action: visibleActions[index],
-                      ),
-                    ),
-                    if (index < visibleActions.length - 1) const Divider(),
-                  ],
-                ],
-              ),
-            )),
-            if (session != null && pageLayout.element('logout_button').enabled) ...<Widget>[
               const SizedBox(height: MobiShopSpacing.lg),
-              CmsElementFrame(component: pageLayout.element('logout_button'), child: OutlinedButton.icon(
-                key: const Key('account-sign-out'),
-                onPressed: () => _signOut(context, ref, isArabic),
-                icon: const Icon(Icons.logout_rounded),
-                label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
-              )),
+            if (menuSettings.enabled)
+              CmsElementFrame(
+                component: menuSettings,
+                child: Card(
+                  elevation: flat ? 0 : null,
+                  margin: flat ? const EdgeInsets.symmetric(horizontal: 16) : null,
+                  shape: flat ? const RoundedRectangleBorder() : null,
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: <Widget>[
+                      for (
+                        int index = 0;
+                        index < visibleActions.length;
+                        index++
+                      ) ...<Widget>[
+                        _AccountActionTile(
+                          action: visibleActions[index],
+                          flat: flat,
+                          isArabic: isArabic,
+                          onTap: () => _openAction(
+                            context,
+                            session: session,
+                            action: visibleActions[index],
+                          ),
+                        ),
+                        if (!flat && index < visibleActions.length - 1) const Divider(),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            if (session != null &&
+                pageLayout.element('logout_button').enabled) ...<Widget>[
+              const SizedBox(height: MobiShopSpacing.lg),
+              CmsElementFrame(
+                component: pageLayout.element('logout_button'),
+                child: OutlinedButton.icon(
+                  key: const Key('account-sign-out'),
+                  onPressed: () => _signOut(context, ref, isArabic),
+                  icon: const Icon(Icons.logout_rounded),
+                  label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
+                ),
+              ),
             ],
           ],
         ),
@@ -138,9 +166,11 @@ class AccountScreen extends ConsumerWidget {
   }
 
   List<_AccountAction> _visibleActions(CmsPageComponent settings) {
-    return _actions.where((_AccountAction action) {
-      return settings.boolean('show_${action.id}', true);
-    }).toList(growable: false);
+    return _actions
+        .where((_AccountAction action) {
+          return settings.boolean('show_${action.id}', true);
+        })
+        .toList(growable: false);
   }
 
   Future<void> _openAction(
@@ -190,6 +220,7 @@ class AccountScreen extends ConsumerWidget {
 
 class _AccountHeader extends StatelessWidget {
   const _AccountHeader({
+    required this.storeName,
     required this.session,
     required this.loading,
     required this.isArabic,
@@ -201,6 +232,7 @@ class _AccountHeader extends StatelessWidget {
   });
 
   final AuthSession? session;
+  final String storeName;
   final bool loading;
   final bool isArabic;
   final VoidCallback onSignIn;
@@ -271,11 +303,9 @@ class _AccountHeader extends StatelessWidget {
                                   const SizedBox(height: 3),
                                   Text(
                                     isArabic
-                                        ? 'تابع طلباتك وبياناتك على ${AppConfig.storeName}'
-                                        : 'Manage your ${AppConfig.storeName} orders and details',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                        ? 'تابع طلباتك وبياناتك على $storeName'
+                                        : 'Manage your $storeName orders and details',
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: MobiShopColors.textSecondary,
                                         ),
@@ -307,7 +337,9 @@ class _AccountHeader extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: MobiShopColors.textSecondary),
+                                  ?.copyWith(
+                                    color: MobiShopColors.textSecondary,
+                                  ),
                             ),
                           ),
                         ],
@@ -324,11 +356,13 @@ class _AccountHeader extends StatelessWidget {
 class _AccountActionTile extends StatelessWidget {
   const _AccountActionTile({
     required this.action,
+    this.flat = false,
     required this.isArabic,
     required this.onTap,
   });
 
   final _AccountAction action;
+  final bool flat;
   final bool isArabic;
   final VoidCallback onTap;
 
@@ -340,7 +374,8 @@ class _AccountActionTile extends StatelessWidget {
         horizontal: MobiShopSpacing.md,
         vertical: MobiShopSpacing.xs,
       ),
-      leading: Container(
+      minTileHeight: flat ? 64 : null,
+      leading: flat ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary) : Container(
         width: 42,
         height: 42,
         decoration: BoxDecoration(
@@ -353,7 +388,7 @@ class _AccountActionTile extends StatelessWidget {
         action.label(isArabic),
         style: Theme.of(
           context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        ).textTheme.titleMedium?.copyWith(fontWeight: flat ? FontWeight.w400 : FontWeight.w800, fontSize: flat ? 16 : null),
       ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,

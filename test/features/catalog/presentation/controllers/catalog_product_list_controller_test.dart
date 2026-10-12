@@ -13,6 +13,18 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
+    test('notification offers destination requests only sale products', () async {
+      final repository = _FakeCatalogRepository(
+        products: (query) async => _page(query, items: [_product(1)], totalItems: 1, totalPages: 1),
+      );
+      final controller = CatalogProductListController(repository,
+        request: const CatalogProductListRequest(collection: 'sale'));
+      await controller.loadInitial();
+      expect(repository.productQueries.single.onSale, isTrue);
+      expect(controller.state.items.single.id, 1);
+      controller.dispose();
+    });
+
     test(
       'loads the first page then appends a deduplicated next page',
       () async {
@@ -132,6 +144,31 @@ void main() {
       controller.dispose();
     });
 
+    test('color combines with size and preserves other filters when cleared', () async {
+      final repository = _FakeCatalogRepository(products: (query) async => _page(query, items: [_product(1, withSizes: true)], totalItems: 1, totalPages: 1));
+      final controller = CatalogProductListController(repository, request: const CatalogProductListRequest());
+      await controller.loadInitial();
+      expect(controller.state.availableColors.single.term, 'blue');
+      await controller.applyFilters(const CatalogProductFilters(onSaleOnly: true, minimumPriceMinor: '1000', maximumPriceMinor: '9000', brandId: 18));
+      await controller.applyColor(controller.state.availableColors.single);
+      await controller.applySize(controller.state.availableSizes.last);
+      var query = repository.productQueries.last;
+      expect(query.attributes.map((a) => a.taxonomy), ['pa_size', 'pa_color']);
+      expect(query.attributes.last.terms, ['blue']);
+      expect(query.brandIds, [18]);
+      expect(query.onSale, true);
+      expect(query.minimumPriceMinor, '1000');
+      expect(query.maximumPriceMinor, '9000');
+      expect(controller.state.filters.hasColor, true);
+      await controller.applyColor(null);
+      query = repository.productQueries.last;
+      expect(query.attributes.single.taxonomy, 'pa_size');
+      expect(controller.state.filters.hasColor, false);
+      expect(query.brandIds, [18]);
+      expect(query.onSale, true);
+      controller.dispose();
+    });
+
     test(
       'discovers sizes and sends the selected size to WooCommerce',
       () async {
@@ -200,6 +237,7 @@ CatalogProduct _product(int id, {bool withSizes = false}) {
     isInStock: true,
     attributes: withSizes
         ? const <CatalogProductAttribute>[
+            CatalogProductAttribute(id: 2, name: 'Color', taxonomy: 'pa_color', hasVariations: true, terms: [CatalogAttributeTerm(id: 3, name: 'Blue', slug: 'blue')]),
             CatalogProductAttribute(
               id: 1,
               name: 'Size',

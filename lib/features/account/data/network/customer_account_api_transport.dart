@@ -72,6 +72,7 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
     required CustomerAccountAuthTokenReader authTokenReader,
     Dio? dio,
   }) {
+    AppConfig.requireWooCommerceCustomerTransport('account');
     AppConfig.validateStoreConnection();
     return DioCustomerAccountApiTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
@@ -126,9 +127,7 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
     required bool authenticated,
     Map<String, String>? body,
   }) async {
-    final String token = authenticated
-        ? authTokenReader()?.trim() ?? ''
-        : '';
+    final String token = authenticated ? authTokenReader()?.trim() ?? '' : '';
     if (authenticated && token.isEmpty) {
       throw const CustomerAccountTransportException(
         kind: CustomerAccountTransportFailureKind.unauthorized,
@@ -158,11 +157,13 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
           },
         ),
       );
+      _assertCurrentSession(authenticated: authenticated, requestToken: token);
       _assertSameOrigin(response.realUri);
       return _jsonObject(response.data);
     } on CustomerAccountTransportException {
       rethrow;
     } on DioException catch (error, stackTrace) {
+      _assertCurrentSession(authenticated: authenticated, requestToken: token);
       final Response<dynamic>? response = error.response;
       if (response != null) {
         _assertSameOrigin(response.realUri);
@@ -191,6 +192,21 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
           cause: error,
         ),
         stackTrace,
+      );
+    }
+  }
+
+  void _assertCurrentSession({
+    required bool authenticated,
+    required String requestToken,
+  }) {
+    if (authenticated && authTokenReader()?.trim() != requestToken) {
+      // A response belongs to the immutable session that sent the request.
+      // Do not expose its body or error cause after logout or customer switch.
+      throw const CustomerAccountTransportException(
+        kind: CustomerAccountTransportFailureKind.unauthorized,
+        message: 'The customer session changed during the account request.',
+        statusCode: 401,
       );
     }
   }
@@ -266,12 +282,12 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
         statusCode: error.response?.statusCode,
         cause: error,
       ),
-      DioExceptionType.cancel || DioExceptionType.unknown =>
-        CustomerAccountTransportException(
-          kind: CustomerAccountTransportFailureKind.unknown,
-          message: 'The customer account request failed unexpectedly.',
-          cause: error,
-        ),
+      DioExceptionType.cancel ||
+      DioExceptionType.unknown => CustomerAccountTransportException(
+        kind: CustomerAccountTransportFailureKind.unknown,
+        message: 'The customer account request failed unexpectedly.',
+        cause: error,
+      ),
     };
   }
 
@@ -297,6 +313,7 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
   }
 
   static Uri _normalizeStoreUri(Uri uri) {
+    AppConfig.requireWooCommerceCustomerTransport('account');
     final bool isHttps = uri.scheme.toLowerCase() == 'https';
     final bool isLocalDebugHttp =
         kDebugMode &&

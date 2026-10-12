@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppNetworkImage extends StatelessWidget {
@@ -32,7 +33,35 @@ class AppNetworkImage extends StatelessWidget {
     final Widget image = Semantics(
       image: true,
       label: semanticLabel,
-      child: CachedNetworkImage(
+      // A live product/category without imagery remains a real record. Show
+      // its finite placeholder immediately, without requesting an empty URL.
+      child: imageUrl.trim().isEmpty
+          ? errorWidget ?? AppNetworkImageError(
+              width: width,
+              height: height,
+              backgroundColor: backgroundColor,
+            )
+          : kIsWeb ? Image.network(
+        imageUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        alignment: alignment,
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : (placeholder ?? AppNetworkImageLoading(
+                width: width,
+                height: height,
+                backgroundColor: backgroundColor,
+              )),
+        errorBuilder: (context, error, stackTrace) =>
+            errorWidget ?? AppNetworkImageError(
+              width: width,
+              height: height,
+              backgroundColor: backgroundColor,
+            ),
+      ) : CachedNetworkImage(
         imageUrl: imageUrl,
         width: width,
         height: height,

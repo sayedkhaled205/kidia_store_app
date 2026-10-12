@@ -10,7 +10,12 @@ import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dar
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_copy.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/compact_family_provider.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 enum _AuthStep { email, password, createPassword }
 
@@ -50,9 +55,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     // Start secure-session restoration before the customer submits a form.
     ref.watch(authControllerProvider);
     final AuthCopy copy = AuthCopy.of(context);
+    final bool flat = ref.watch(compactFamilyProvider);
+    final logo = ref.watch(cmsPageLayoutProvider('account')).value?.header.string('logo_url', '') ?? '';
+    final previewIdentity = AppConfig.isCmsPreview
+        ? ref.watch(previewIdentityProvider).asData?.value
+        : null;
+    final storeName =
+        previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     return Scaffold(
       backgroundColor: MobiShopColors.surface,
       appBar: AppBar(
+        centerTitle: flat ? true : null,
+        title: flat ? _StoreMark(storeName: storeName, logoUrl: logo, compact: true) : null,
         automaticallyImplyLeading: false,
         leading: IconButton(
           key: const Key('auth-close'),
@@ -63,7 +77,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: Center(
+        child: Align(
+          alignment: flat ? Alignment.topCenter : Alignment.center,
           child: SingleChildScrollView(
             padding: const EdgeInsetsDirectional.fromSTEB(
               MobiShopSpacing.lg,
@@ -78,11 +93,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    _StoreMark(storeName: AppConfig.storeName),
-                    const SizedBox(height: MobiShopSpacing.xl),
+                    if (!flat) _StoreMark(storeName: storeName),
+                    SizedBox(height: flat ? 62 : MobiShopSpacing.xl),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
-                      child: _stepContent(copy),
+                      child: _stepContent(copy, compact: flat),
                     ),
                     if (_error != null) ...<Widget>[
                       const SizedBox(height: MobiShopSpacing.md),
@@ -91,6 +106,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     const SizedBox(height: MobiShopSpacing.lg),
                     FilledButton(
                       key: Key(_buttonKey),
+                      style: flat ? FilledButton.styleFrom(minimumSize: const Size.fromHeight(50), shape: const StadiumBorder()) : null,
                       onPressed: _busy ? null : () => _submit(copy),
                       child: _busy
                           ? const SizedBox.square(
@@ -118,7 +134,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         child: Text(copy.forgotPassword),
                       ),
                     if (_step == _AuthStep.email) ...<Widget>[
-                      const SizedBox(height: MobiShopSpacing.xl),
+                      SizedBox(height: flat ? 68 : MobiShopSpacing.xl),
                       _SocialAuthDivider(label: copy.or),
                       const SizedBox(height: MobiShopSpacing.md),
                       _SocialAuthButtons(
@@ -134,7 +150,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       onTap: _openPrivacyPolicy,
                     ),
                     const SizedBox(height: MobiShopSpacing.sm),
-                    Row(
+                    if (!flat) Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const Icon(
@@ -163,10 +179,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  Widget _stepContent(AuthCopy copy) {
+  Widget _stepContent(AuthCopy copy, {bool compact = false}) {
     return switch (_step) {
       _AuthStep.email => _EmailStep(
         key: const ValueKey<String>('email-step'),
+        compact: compact,
         copy: copy,
         controller: _emailController,
       ),
@@ -378,20 +395,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 }
 
 class _StoreMark extends StatelessWidget {
-  const _StoreMark({required this.storeName});
+  const _StoreMark({required this.storeName, this.logoUrl = '', this.compact = false});
 
   final String storeName;
+  final String logoUrl;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       header: true,
-      child: Row(
+      child: logoUrl.isNotEmpty ? SizedBox(width: compact ? 100 : 130, height: compact ? 54 : 36, child: AppNetworkImage(imageUrl: logoUrl, fit: compact ? BoxFit.cover : BoxFit.contain, semanticLabel: storeName)) : Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Container(
-            width: 58,
-            height: 58,
+            width: compact ? 32 : 58,
+            height: compact ? 32 : 58,
             decoration: BoxDecoration(
               color: MobiShopColors.primaryLight,
               borderRadius: BorderRadius.circular(MobiShopRadius.full),
@@ -421,14 +440,11 @@ class _StoreMark extends StatelessWidget {
 }
 
 class _EmailStep extends StatelessWidget {
-  const _EmailStep({
-    required this.copy,
-    required this.controller,
-    super.key,
-  });
+  const _EmailStep({required this.copy, required this.controller, this.compact = false, super.key});
 
   final AuthCopy copy;
   final TextEditingController controller;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -438,19 +454,19 @@ class _EmailStep extends StatelessWidget {
         Text(
           copy.title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: compact ? 22 : null),
         ),
-        const SizedBox(height: MobiShopSpacing.xs),
-        Text(
+        if (!compact) const SizedBox(height: MobiShopSpacing.xs),
+        if (!compact) Text(
           copy.intro,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: MobiShopColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: MobiShopColors.textSecondary),
         ),
-        const SizedBox(height: MobiShopSpacing.xl),
+        SizedBox(height: compact ? 44 : MobiShopSpacing.xl),
         Directionality(
           textDirection: TextDirection.ltr,
           child: TextFormField(
@@ -462,9 +478,11 @@ class _EmailStep extends StatelessWidget {
             autocorrect: false,
             enableSuggestions: false,
             decoration: InputDecoration(
-              labelText: copy.email,
-              hintText: copy.emailHint,
-              prefixIcon: const Icon(Icons.email_outlined),
+              labelText: compact ? null : copy.email,
+              hintText: compact ? copy.email : copy.emailHint,
+              filled: compact ? false : null,
+              contentPadding: compact ? const EdgeInsets.symmetric(horizontal: 16, vertical: 20) : null,
+              prefixIcon: compact ? null : const Icon(Icons.email_outlined),
             ),
             validator: (String? value) {
               final String email = value?.trim() ?? '';
@@ -511,17 +529,17 @@ class _PasswordStep extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: MobiShopSpacing.xs),
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: MobiShopColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: MobiShopColors.textSecondary),
         ),
         const SizedBox(height: MobiShopSpacing.md),
         _SelectedEmail(email: email),
@@ -546,9 +564,8 @@ class _PasswordStep extends StatelessWidget {
                 ),
               ),
             ),
-            validator: (String? value) => value?.isNotEmpty == true
-                ? null
-                : passwordError,
+            validator: (String? value) =>
+                value?.isNotEmpty == true ? null : passwordError,
           ),
         ),
       ],
@@ -586,17 +603,17 @@ class _CreatePasswordStep extends StatelessWidget {
         Text(
           copy.createTitle,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: MobiShopSpacing.xs),
         Text(
           copy.createSubtitle,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: MobiShopColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: MobiShopColors.textSecondary),
         ),
         const SizedBox(height: MobiShopSpacing.md),
         _SelectedEmail(email: email),
@@ -717,9 +734,9 @@ class _SocialAuthDivider extends StatelessWidget {
         const Expanded(child: Divider(indent: 72, endIndent: 16)),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: MobiShopColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: MobiShopColors.textSecondary),
         ),
         const Expanded(child: Divider(indent: 16, endIndent: 72)),
       ],
@@ -795,11 +812,9 @@ class _GoogleMarkPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Rect ring = Offset(_strokeWidth / 2, _strokeWidth / 2) &
-        Size(
-          size.width - _strokeWidth,
-          size.height - _strokeWidth,
-        );
+    final Rect ring =
+        Offset(_strokeWidth / 2, _strokeWidth / 2) &
+        Size(size.width - _strokeWidth, size.height - _strokeWidth);
     void arc(Color color, double start, double sweep) {
       canvas.drawArc(
         ring,

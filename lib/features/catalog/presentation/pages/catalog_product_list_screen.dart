@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_color_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
@@ -32,19 +33,25 @@ class CatalogProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
-    final String title = request.title.trim().isEmpty ? copy.products : request.title;
+    final String title = request.title.trim().isEmpty
+        ? copy.products
+        : request.title;
     return CmsPageLayoutLoader(
       page: 'catalog',
       builder: (BuildContext context, CmsPageLayout layout) {
-        final CatalogProductListRequest effectiveRequest = CatalogProductListRequest(
-          title: request.title,
-          search: request.search,
-          categoryId: request.categoryId,
-          brandId: request.brandId,
-          collection: request.collection,
-          searchOnly: request.searchOnly,
-          pageSize: layout.element('product_grid').number('products_per_page', request.pageSize.toDouble()).round(),
-        );
+        final CatalogProductListRequest effectiveRequest =
+            CatalogProductListRequest(
+              title: request.title,
+              search: request.search,
+              categoryId: request.categoryId,
+              brandId: request.brandId,
+              collection: request.collection,
+              searchOnly: request.searchOnly,
+              pageSize: layout
+                  .element('product_grid')
+                  .number('products_per_page', request.pageSize.toDouble())
+                  .round(),
+            );
         return CmsPageScaffold(
           layout: layout,
           defaultTitle: title,
@@ -53,12 +60,13 @@ class CatalogProductListScreen extends StatelessWidget {
               type: 'search',
               icon: Icons.search_rounded,
               tooltip: copy.search,
-              onPressed: () => showCatalogSearch(context, initialQuery: request.search),
+              onPressed: () =>
+                  showCatalogSearch(context, initialQuery: request.search),
             ),
             CmsPageHeaderAction(
               type: 'cart',
               icon: Icons.shopping_bag_outlined,
-              tooltip: 'Cart',
+              tooltip: copy.isArabic ? 'السلة' : 'Cart',
               onPressed: () => context.push('/cart'),
             ),
           ],
@@ -151,8 +159,12 @@ class _CatalogProductListViewState
       return;
     }
     final ScrollPosition position = _scrollController.position;
-    final CmsPageComponent grid = (widget.pageLayout ?? CmsPageLayout.fallback('catalog')).element('product_grid');
-    if (grid.string('pagination_mode', 'load_more') == 'automatic' && position.extentAfter < 520) {
+    final CmsPageComponent grid =
+        (widget.pageLayout ?? CmsPageLayout.fallback('catalog')).element(
+          'product_grid',
+        );
+    if (grid.string('pagination_mode', 'load_more') == 'automatic' &&
+        position.extentAfter < 520) {
       ref.read(catalogProductListControllerProvider(widget.request)).loadMore();
     }
   }
@@ -216,6 +228,19 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
+          if (pageLayout.header.enabled &&
+              pageLayout.header.boolean('show_count', true) &&
+              !controller.isAwaitingSearch &&
+              !state.isInitialLoading &&
+              state.error == null &&
+              state.totalItems != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Text('${copy.products} (${state.totalItems})',
+                  key: const Key('catalog-page-count'), textAlign: TextAlign.center),
+              ),
+            ),
           if (showSearchField)
             SliverToBoxAdapter(
               child: _SearchField(
@@ -228,13 +253,17 @@ class _ProductListContent extends StatelessWidget {
                 },
               ),
             ),
-          if (!controller.isAwaitingSearch && pageLayout.element('filter_bar').enabled)
+          if (!controller.isAwaitingSearch &&
+              pageLayout.element('filter_bar').enabled)
             SliverPersistentHeader(
               pinned: pageLayout.element('filter_bar').boolean('sticky', true),
               delegate: _CatalogToolbarHeaderDelegate(
                 extent: _elementExtent(
                   pageLayout.element('filter_bar'),
-                  pageLayout.element('filter_bar').number('block_height', 56).clamp(48, 100),
+                  pageLayout
+                      .element('filter_bar')
+                      .number('block_height', 56)
+                      .clamp(48, 100),
                 ),
                 child: CmsElementFrame(
                   component: pageLayout.element('filter_bar'),
@@ -275,8 +304,12 @@ class _ProductListContent extends StatelessWidget {
               _CatalogProductGrid(
                 items: state.items,
                 settings: pageLayout.element('product_grid'),
+                pageLayout: pageLayout,
               ),
-            if (pageLayout.element('product_grid').string('pagination_mode', 'load_more') != 'none')
+            if (pageLayout
+                    .element('product_grid')
+                    .string('pagination_mode', 'load_more') !=
+                'none')
               SliverToBoxAdapter(
                 child: _PaginationFooter(
                   state: state,
@@ -293,8 +326,7 @@ class _ProductListContent extends StatelessWidget {
   }
 
   static double _elementExtent(CmsPageComponent component, double content) {
-    return content +
-        (component.number('padding_vertical', 0).clamp(0, 40) * 2);
+    return content + (component.number('padding_vertical', 0).clamp(0, 40) * 2);
   }
 }
 
@@ -324,10 +356,13 @@ class _SearchField extends StatelessWidget {
           prefixIcon: const Icon(Icons.search_rounded, size: 26.4),
           suffixIcon: ListenableBuilder(
             listenable: controller,
-            builder: (BuildContext context, Widget? child) => controller.text.isEmpty
+            builder: (BuildContext context, Widget? child) =>
+                controller.text.isEmpty
                 ? const SizedBox.shrink()
                 : IconButton(
-                    tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).deleteButtonTooltip,
                     onPressed: onClear,
                     icon: const Icon(Icons.close_rounded),
                   ),
@@ -343,7 +378,11 @@ class _SearchField extends StatelessWidget {
 }
 
 class _CatalogToolbar extends ConsumerWidget {
-  const _CatalogToolbar({required this.state, required this.controller, required this.settings});
+  const _CatalogToolbar({
+    required this.state,
+    required this.controller,
+    required this.settings,
+  });
 
   final CatalogProductListState state;
   final CatalogProductListController controller;
@@ -360,160 +399,305 @@ class _CatalogToolbar extends ConsumerWidget {
           error: (Object error, StackTrace stackTrace) => const <StoreBrand>[],
         );
     final double gap = settings.number('button_gap', 8).clamp(0, 24).toDouble();
-    final double iconSize = settings.number('icon_size', 22).clamp(14, 36).toDouble();
-    final double widthFactor = settings.number('block_width', 100).clamp(40, 100).toDouble() / 100;
-    final Color iconColor = _cmsColor(settings.string('icon_color', '#1F2933'), Theme.of(context).colorScheme.onSurface);
-    final Color borderColor = _cmsColor(settings.string('border_color', '#DDE3E8'), Theme.of(context).dividerColor);
-    final Color backgroundColor = _cmsColor(settings.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
-    final double buttonRadius = settings.number('button_radius', 12).clamp(0, 28).toDouble();
-	Future<void> openSort() async {
-	  final CatalogSort? selected = await CatalogSortSheet.show(context, selected: state.sort);
-	  if (selected != null) await controller.changeSort(selected);
-	}
-	Future<void> openSize() async {
-	  final CatalogSizeSelection? selection = await CatalogSizeSheet.show(context, options: state.availableSizes, selectedFilters: state.filters);
-	  if (selection != null) await controller.applySize(selection.option);
-	}
-	Future<void> openFilters() async {
-	  final int minorUnit = state.items.isEmpty ? 2 : state.items.first.prices.currencyMinorUnit;
-	  final CatalogProductFilters? filters = await CatalogProductFilterSheet.show(
-	    context,
-	    initialFilters: state.filters,
-	    currencyMinorUnit: minorUnit,
-	    minimumAvailableMinor: state.filterData?.minimumPriceMinor ?? '',
-	    maximumAvailableMinor: state.filterData?.maximumPriceMinor ?? '',
-	    brands: brands,
-	    showPrice: settings.boolean('filter_price', true),
-	    showSale: settings.boolean('filter_sale', true),
-	    showBrand: settings.boolean('filter_brand', true),
-	  );
-	  if (filters != null) await controller.applyFilters(filters);
-	}
-	if (settings.string('button_style', 'outlined') == 'flat') {
-	  final List<Widget> buttons = <Widget>[
-	    if (settings.boolean('show_sort', true)) _FlatToolbarButton(key: const Key('catalog-sort-button'), label: copy.sort, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, onPressed: openSort),
-	    if (settings.boolean('filter_size', true)) _FlatToolbarButton(key: const Key('catalog-size-button'), label: copy.size, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, selected: state.filters.hasSize, onPressed: openSize),
-	    if (settings.boolean('filter_color', false)) _FlatToolbarButton(key: const Key('catalog-color-button'), label: copy.color, trailing: Icons.keyboard_arrow_down_rounded, color: iconColor, onPressed: openFilters),
-	    if (settings.boolean('show_filter', true)) _FlatToolbarButton(key: const Key('catalog-filter-button'), label: copy.filter, trailing: Icons.tune_rounded, color: iconColor, selected: state.filters.generalActiveCount > 0, onPressed: openFilters),
-	  ];
-	  return ColoredBox(
-	    color: backgroundColor,
-	    child: SizedBox(
-	      height: settings.number('block_height', 56).clamp(48, 100).toDouble(),
-	      child: DecoratedBox(
-	        decoration: BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: borderColor.withValues(alpha: .55)))),
-	        child: Row(children: buttons.map((Widget button) => Expanded(child: button)).toList(growable: false)),
-	      ),
-	    ),
-	  );
-	}
-    return ColoredBox(color: backgroundColor, child: FractionallySizedBox(
-      widthFactor: widthFactor,
-      child: Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 16, 10),
-      child: Row(
-        children: <Widget>[
-          if (settings.boolean('show_filter', true))
-          Expanded(
-            child: Badge(
-              isLabelVisible: state.filters.generalActiveCount > 0,
-              label: Text('${state.filters.generalActiveCount}'),
-              child: _ToolbarButton(
-                key: const Key('catalog-filter-button'),
-                icon: Icons.tune_rounded,
-				iconOffsetY: settings.number('filter_icon_offset_y', -2).clamp(-8, 8),
-                iconSize: iconSize,
-                iconColor: iconColor,
-                borderColor: borderColor,
-                radius: buttonRadius,
-                label: copy.filter,
-                onPressed: () async {
-                  final int minorUnit = state.items.isEmpty
-                      ? 2
-                      : state.items.first.prices.currencyMinorUnit;
-                  final CatalogProductFilters? filters =
-                      await CatalogProductFilterSheet.show(
-                        context,
-                        initialFilters: state.filters,
-                        currencyMinorUnit: minorUnit,
-                        minimumAvailableMinor:
-                            state.filterData?.minimumPriceMinor ?? '',
-                        maximumAvailableMinor:
-                            state.filterData?.maximumPriceMinor ?? '',
-                        brands: brands,
-                        showPrice: settings.boolean('filter_price', true),
-                        showSale: settings.boolean('filter_sale', true),
-                        showBrand: settings.boolean('filter_brand', true),
-                      );
-                  if (filters != null) {
-                    await controller.applyFilters(filters);
-                  }
-                },
+    final double iconSize = settings
+        .number('icon_size', 22)
+        .clamp(14, 36)
+        .toDouble();
+    final double widthFactor =
+        settings.number('block_width', 100).clamp(40, 100).toDouble() / 100;
+    final Color iconColor = _cmsColor(
+      settings.string('icon_color', '#1F2933'),
+      Theme.of(context).colorScheme.onSurface,
+    );
+    final Color borderColor = _cmsColor(
+      settings.string('border_color', '#DDE3E8'),
+      Theme.of(context).dividerColor,
+    );
+    final Color backgroundColor = _cmsColor(
+      settings.string('background_color', '#FFFFFF'),
+      Theme.of(context).colorScheme.surface,
+    );
+    final double buttonRadius = settings
+        .number('button_radius', 12)
+        .clamp(0, 28)
+        .toDouble();
+    Future<void> openSort() async {
+      final CatalogSort? selected = await CatalogSortSheet.show(
+        context,
+        selected: state.sort,
+        belowToolbar: settings.string('button_style', 'outlined') == 'flat',
+      );
+      if (selected != null) await controller.changeSort(selected);
+    }
+
+    Future<void> openSize() async {
+      final CatalogSizeSelection? selection = await CatalogSizeSheet.show(
+        context,
+        options: state.availableSizes,
+        selectedFilters: state.filters,
+        belowToolbar: settings.string('button_style', 'outlined') == 'flat',
+      );
+      if (selection != null) await controller.applySize(selection.option);
+    }
+
+    Future<void> openColor() async {
+      if (settings.string('button_style', 'outlined') == 'flat') {
+        final selection = await CatalogSizeSheet.show(context,
+          options: state.availableColors, selectedFilters: state.filters,
+          belowToolbar: true, colors: true);
+        if (selection != null) await controller.applyColor(selection.option);
+        return;
+      }
+      final CatalogColorSelection? selection = await CatalogColorSheet.show(
+        context,
+        options: state.availableColors,
+        selectedFilters: state.filters,
+      );
+      if (selection != null) await controller.applyColor(selection.option);
+    }
+
+    Future<void> openFilters() async {
+      final int minorUnit = state.items.isEmpty
+          ? 2
+          : state.items.first.prices.currencyMinorUnit;
+      final CatalogProductFilters? filters =
+          await CatalogProductFilterSheet.show(
+            context,
+            initialFilters: state.filters,
+            currencyMinorUnit: minorUnit,
+            minimumAvailableMinor: state.filterData?.minimumPriceMinor ?? '',
+            maximumAvailableMinor: state.filterData?.maximumPriceMinor ?? '',
+            brands: brands,
+            showPrice: settings.boolean('filter_price', true),
+            showSale: settings.boolean('filter_sale', true),
+            showBrand: settings.boolean('filter_brand', true),
+            sidePanel: settings.string('button_style', 'outlined') == 'flat',
+          );
+      if (filters != null) await controller.applyFilters(filters);
+    }
+
+    if (settings.string('button_style', 'outlined') == 'flat') {
+      final List<Widget> buttons = <Widget>[
+        if (settings.boolean('show_sort', true))
+          _FlatToolbarButton(
+            key: const Key('catalog-sort-button'),
+            label: copy.sort,
+            trailing: Icons.keyboard_arrow_down_rounded,
+            color: iconColor,
+            iconSize: iconSize,
+            radius: buttonRadius,
+            onPressed: openSort,
+          ),
+        if (settings.boolean('filter_size', true))
+          _FlatToolbarButton(
+            key: const Key('catalog-size-button'),
+            label: copy.size,
+            trailing: Icons.keyboard_arrow_down_rounded,
+            color: iconColor,
+            iconSize: iconSize,
+            radius: buttonRadius,
+            selected: state.filters.hasSize,
+            onPressed: openSize,
+          ),
+        if (settings.boolean('filter_color', false))
+          _FlatToolbarButton(
+            key: const Key('catalog-color-button'),
+            label: copy.color,
+            trailing: Icons.keyboard_arrow_down_rounded,
+            color: iconColor,
+            iconSize: iconSize,
+            radius: buttonRadius,
+            selected: state.filters.hasColor,
+            onPressed: openColor,
+          ),
+        if (settings.boolean('show_filter', true))
+          _FlatToolbarButton(
+            key: const Key('catalog-filter-button'),
+            label: copy.filter,
+            trailing: Icons.tune_rounded,
+            iconOffsetY: settings.number('filter_icon_offset_y', -2).clamp(-8, 8).toDouble(),
+            color: iconColor,
+            iconSize: iconSize,
+            radius: buttonRadius,
+            selected: state.filters.generalActiveCount > 0,
+            onPressed: openFilters,
+          ),
+      ];
+      return ColoredBox(
+        color: backgroundColor,
+        child: SizedBox(
+          height: settings.number('block_height', 56).clamp(48, 100).toDouble(),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.symmetric(
+                horizontal: BorderSide(
+                  color: borderColor.withValues(alpha: .55),
+                ),
+              ),
+            ),
+            child: FractionallySizedBox(
+              key: const Key('catalog-flat-toolbar-width'),
+              widthFactor: widthFactor,
+              child: Row(
+                children: [
+                  for (int index = 0; index < buttons.length; index++) ...[
+                    if (index > 0) SizedBox(width: gap),
+                    Expanded(child: buttons[index]),
+                  ],
+                ],
               ),
             ),
           ),
-          if (settings.boolean('show_filter', true) && settings.boolean('filter_size', true)) SizedBox(width: gap),
-          if (settings.boolean('filter_size', true))
-          Expanded(
-            child: Badge(
-              isLabelVisible: state.filters.hasSize,
-              label: const Icon(Icons.check_rounded, size: 12),
-              child: _ToolbarButton(
-                key: const Key('catalog-size-button'),
-                icon: Icons.straighten_rounded,
-                iconSize: iconSize,
-                iconColor: iconColor,
-                borderColor: borderColor,
-                radius: buttonRadius,
-                label: copy.size,
-                onPressed: () async {
-                  final CatalogSizeSelection? selection =
-                      await CatalogSizeSheet.show(
+        ),
+      );
+    }
+    return ColoredBox(
+      color: backgroundColor,
+      child: FractionallySizedBox(
+        widthFactor: widthFactor,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 16, 10),
+          child: Row(
+            children: <Widget>[
+              if (settings.boolean('show_filter', true))
+                Expanded(
+                  child: Badge(
+                    isLabelVisible: state.filters.generalActiveCount > 0,
+                    label: Text('${state.filters.generalActiveCount}'),
+                    child: _ToolbarButton(
+                      key: const Key('catalog-filter-button'),
+                      icon: Icons.tune_rounded,
+                      iconOffsetY: settings
+                          .number('filter_icon_offset_y', -2)
+                          .clamp(-8, 8),
+                      iconSize: iconSize,
+                      iconColor: iconColor,
+                      borderColor: borderColor,
+                      radius: buttonRadius,
+                      label: copy.filter,
+                      onPressed: () async {
+                        final int minorUnit = state.items.isEmpty
+                            ? 2
+                            : state.items.first.prices.currencyMinorUnit;
+                        final CatalogProductFilters? filters =
+                            await CatalogProductFilterSheet.show(
+                              context,
+                              initialFilters: state.filters,
+                              currencyMinorUnit: minorUnit,
+                              minimumAvailableMinor:
+                                  state.filterData?.minimumPriceMinor ?? '',
+                              maximumAvailableMinor:
+                                  state.filterData?.maximumPriceMinor ?? '',
+                              brands: brands,
+                              showPrice: settings.boolean('filter_price', true),
+                              showSale: settings.boolean('filter_sale', true),
+                              showBrand: settings.boolean('filter_brand', true),
+                            );
+                        if (filters != null) {
+                          await controller.applyFilters(filters);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              if (settings.boolean('show_filter', true) &&
+                  settings.boolean('filter_size', true))
+                SizedBox(width: gap),
+              if (settings.boolean('filter_size', true))
+                Expanded(
+                  child: Badge(
+                    isLabelVisible: state.filters.hasSize,
+                    label: const Icon(Icons.check_rounded, size: 12),
+                    child: _ToolbarButton(
+                      key: const Key('catalog-size-button'),
+                      icon: Icons.straighten_rounded,
+                      iconSize: iconSize,
+                      iconColor: iconColor,
+                      borderColor: borderColor,
+                      radius: buttonRadius,
+                      label: copy.size,
+                      onPressed: () async {
+                        final CatalogSizeSelection? selection =
+                            await CatalogSizeSheet.show(
+                              context,
+                              options: state.availableSizes,
+                              selectedFilters: state.filters,
+                            );
+                        if (selection != null) {
+                          await controller.applySize(selection.option);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              if (settings.boolean('filter_color', false)) ...<Widget>[
+                if (settings.boolean('show_filter', true) ||
+                    settings.boolean('filter_size', true))
+                  SizedBox(width: gap),
+                Expanded(
+                  child: Badge(
+                    isLabelVisible: state.filters.hasColor,
+                    label: const Icon(Icons.check_rounded, size: 12),
+                    child: _ToolbarButton(
+                      key: const Key('catalog-color-button'),
+                      icon: Icons.palette_outlined,
+                      iconSize: iconSize,
+                      iconColor: iconColor,
+                      borderColor: borderColor,
+                      radius: buttonRadius,
+                      label: copy.color,
+                      onPressed: openColor,
+                    ),
+                  ),
+                ),
+              ],
+              if ((settings.boolean('filter_size', true) ||
+                      settings.boolean('filter_color', false) ||
+                      settings.boolean('show_filter', true)) &&
+                  settings.boolean('show_sort', true))
+                SizedBox(width: gap),
+              if (settings.boolean('show_sort', true))
+                Expanded(
+                  child: _ToolbarButton(
+                    key: const Key('catalog-sort-button'),
+                    icon: Icons.swap_vert_rounded,
+                    iconSize: iconSize,
+                    iconColor: iconColor,
+                    borderColor: borderColor,
+                    radius: buttonRadius,
+                    label: copy.sort,
+                    onPressed: () async {
+                      final CatalogSort? selected = await CatalogSortSheet.show(
                         context,
-                        options: state.availableSizes,
-                        selectedFilters: state.filters,
+                        selected: state.sort,
                       );
-                  if (selection != null) {
-                    await controller.applySize(selection.option);
-                  }
-                },
-              ),
-            ),
+                      if (selected != null) {
+                        await controller.changeSort(selected);
+                      }
+                    },
+                  ),
+                ),
+              if (settings.boolean('show_result_count', false) &&
+                  state.totalItems != null) ...<Widget>[
+                SizedBox(width: gap),
+                Text(
+                  '${state.totalItems}',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+            ],
           ),
-          if (settings.boolean('filter_size', true) && settings.boolean('show_sort', true)) SizedBox(width: gap),
-          if (settings.boolean('show_sort', true))
-          Expanded(
-            child: _ToolbarButton(
-              key: const Key('catalog-sort-button'),
-              icon: Icons.swap_vert_rounded,
-              iconSize: iconSize,
-              iconColor: iconColor,
-              borderColor: borderColor,
-              radius: buttonRadius,
-              label: copy.sort,
-              onPressed: () async {
-                final CatalogSort? selected = await CatalogSortSheet.show(
-                  context,
-                  selected: state.sort,
-                );
-                if (selected != null) {
-                  await controller.changeSort(selected);
-                }
-              },
-            ),
-          ),
-          if (settings.boolean('show_result_count', false)) ...<Widget>[
-            SizedBox(width: gap),
-            Text('${state.totalItems}', style: Theme.of(context).textTheme.labelSmall),
-          ],
-        ],
-      )),
-    ));
+        ),
+      ),
+    );
   }
 }
 
 class _CatalogToolbarHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _CatalogToolbarHeaderDelegate({required this.child, required this.extent});
+  const _CatalogToolbarHeaderDelegate({
+    required this.child,
+    required this.extent,
+  });
 
   final Widget child;
   final double extent;
@@ -552,7 +736,7 @@ class _ToolbarButton extends StatelessWidget {
     required this.iconColor,
     required this.borderColor,
     required this.radius,
-	this.iconOffsetY = 0,
+    this.iconOffsetY = 0,
     super.key,
   });
 
@@ -563,7 +747,7 @@ class _ToolbarButton extends StatelessWidget {
   final Color iconColor;
   final Color borderColor;
   final double radius;
-	final double iconOffsetY;
+  final double iconOffsetY;
 
   @override
   Widget build(BuildContext context) {
@@ -571,68 +755,104 @@ class _ToolbarButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: iconColor,
         side: BorderSide(color: borderColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
         minimumSize: const Size.fromHeight(48),
         padding: const EdgeInsets.symmetric(horizontal: 6),
       ),
       onPressed: onPressed,
-	  icon: Transform.translate(offset: Offset(0, iconOffsetY), child: Icon(icon, size: iconSize, weight: 300)),
+      icon: Transform.translate(
+        offset: Offset(0, iconOffsetY),
+        child: Icon(icon, size: iconSize, weight: 300),
+      ),
       label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
     );
   }
 }
 
 class _FlatToolbarButton extends StatelessWidget {
-  const _FlatToolbarButton({required this.label, required this.trailing, required this.color, required this.onPressed, this.selected = false, super.key});
+  const _FlatToolbarButton({
+    required this.label,
+    required this.trailing,
+    required this.color,
+    required this.onPressed,
+    required this.iconSize,
+    required this.radius,
+    this.iconOffsetY = 0,
+    this.selected = false,
+    super.key,
+  });
 
   final String label;
   final IconData trailing;
   final Color color;
   final VoidCallback onPressed;
   final bool selected;
+  final double iconSize;
+  final double radius;
+  final double iconOffsetY;
 
   @override
   Widget build(BuildContext context) {
-	return TextButton(
-	  onPressed: onPressed,
-	  style: TextButton.styleFrom(foregroundColor: color, padding: const EdgeInsets.symmetric(horizontal: 3), minimumSize: const Size.fromHeight(54), shape: const RoundedRectangleBorder()),
-	  child: FittedBox(
-		fit: BoxFit.scaleDown,
-		child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-		  Text(label, style: TextStyle(fontSize: 14, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
-		  const SizedBox(width: 2),
-		  Icon(trailing, size: 18),
-		]),
-	  ),
-	);
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        minimumSize: const Size.fromHeight(54),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Transform.translate(offset: Offset(0, iconOffsetY),
+              child: Icon(trailing, size: iconSize)),
+          ],
+        ),
+      ),
+    );
   }
 }
 
 class _CatalogProductGrid extends StatelessWidget {
-  const _CatalogProductGrid({required this.items, required this.settings});
+  const _CatalogProductGrid({
+    required this.items,
+    required this.settings,
+    required this.pageLayout,
+  });
 
   final List<CatalogProduct> items;
   final CmsPageComponent settings;
+  final CmsPageLayout pageLayout;
 
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.sizeOf(context).width;
-    final int responsiveColumns = width >= 760
-        ? 4
-        : width >= 540
-        ? 3
-        : 2;
-    final int columns = settings.number('columns', 2).round().clamp(1, responsiveColumns).toInt();
+    final int columns = settings
+        .number('columns', 2)
+        .round()
+        .clamp(1, 4)
+        .toInt();
     final double gap = settings.number('gap', 12).clamp(0, 32).toDouble();
-	final double outerHorizontalPadding = settings.number('outer_horizontal_padding', 16).clamp(0, 40).toDouble();
-	final double usableWidth = width - (outerHorizontalPadding * 2) - ((columns - 1) * gap);
-    final double cardWidth = usableWidth / columns;
-    final double imageRatio = settings.number('image_ratio', 1).clamp(0.6, 1.8).toDouble();
-    final double baseExtent = (cardWidth / imageRatio + 103)
-        .clamp(250, 336)
+    final double outerHorizontalPadding = cmsContentHorizontalPadding(
+      pageLayout,
+      component: settings,
+    );
+    final double topSpacing = settings
+        .number('top_spacing', (width * 0.05).clamp(18, 24))
+        .clamp(0, 48)
         .toDouble();
-    final double extent = baseExtent * 0.98;
-	final double topSpacing = settings.number('top_spacing', (width * 0.05).clamp(18, 24)).clamp(0, 48).toDouble();
 
     final double mergeUp = settings
         .number('margin_top', 0)
@@ -644,10 +864,12 @@ class _CatalogProductGrid extends StatelessWidget {
         .toDouble();
     const EdgeInsets outerSpacing = EdgeInsets.zero;
     final EdgeInsetsGeometry innerSpacing = EdgeInsetsDirectional.fromSTEB(
-	  outerHorizontalPadding + settings.number('padding_horizontal', 0).clamp(0, 40),
+      outerHorizontalPadding +
+          settings.number('padding_horizontal', 0).clamp(0, 40),
       (topSpacing - mergeUp).clamp(0, topSpacing).toDouble() +
           settings.number('padding_vertical', 0).clamp(0, 40),
-	  outerHorizontalPadding + settings.number('padding_horizontal', 0).clamp(0, 40),
+      outerHorizontalPadding +
+          settings.number('padding_horizontal', 0).clamp(0, 40),
       (20 - mergeDown).clamp(0, 20).toDouble() +
           settings.number('padding_vertical', 0).clamp(0, 40),
     );
@@ -662,21 +884,38 @@ class _CatalogProductGrid extends StatelessWidget {
         ),
         sliver: SliverPadding(
           padding: innerSpacing,
-          sliver: SliverGrid.builder(
-            itemCount: items.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: gap,
-              crossAxisSpacing: gap,
-              mainAxisExtent: extent,
-            ),
-            itemBuilder: (BuildContext context, int index) {
-              final CatalogProduct product = items[index];
-              return CatalogProductCard(
-                key: ValueKey<int>(product.id),
-                product: product,
-                settings: settings,
-                onTap: () => context.push('/product/${product.id}'),
+          sliver: SliverList.builder(
+            itemCount: (items.length / columns).ceil(),
+            itemBuilder: (BuildContext context, int rowIndex) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: gap),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    for (
+                      int column = 0;
+                      column < columns;
+                      column++
+                    ) ...<Widget>[
+                      if (column > 0) SizedBox(width: gap),
+                      Expanded(
+                        child: rowIndex * columns + column < items.length
+                            ? CatalogProductCard(
+                                key: ValueKey<int>(
+                                  items[rowIndex * columns + column].id,
+                                ),
+                                product: items[rowIndex * columns + column],
+                                settings: settings,
+                                fitImageRatio: true,
+                                onTap: () => context.push(
+                                  '/product/${items[rowIndex * columns + column].id}',
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
               );
             },
           ),
@@ -723,7 +962,13 @@ class _CatalogLoadingGrid extends StatelessWidget {
 }
 
 class _PaginationFooter extends StatelessWidget {
-  const _PaginationFooter({required this.state, required this.onRetry, required this.onLoadMore, required this.onLoadPage, required this.settings});
+  const _PaginationFooter({
+    required this.state,
+    required this.onRetry,
+    required this.onLoadMore,
+    required this.onLoadPage,
+    required this.settings,
+  });
 
   final CatalogProductListState state;
   final VoidCallback onRetry;
@@ -762,39 +1007,132 @@ class _PaginationFooter extends StatelessWidget {
         ),
       );
     }
-    if (!state.hasNextPage) return SizedBox(height: settings.number('pagination_spacing', 16));
     final String mode = settings.string('pagination_mode', 'load_more');
+    if (!state.hasNextPage && !(mode == 'numbers' && state.hasPreviousPage)) {
+      return SizedBox(height: settings.number('pagination_spacing', 16));
+    }
     if (mode == 'automatic') return const SizedBox(height: 16);
-    final Color background = _cmsColor(settings.string('pagination_color', '#1F6F61'), Theme.of(context).colorScheme.primary);
-    final Color foreground = _cmsColor(settings.string('pagination_text_color', '#FFFFFF'), Colors.white);
-    final double height = settings.number('pagination_size', 44).clamp(32, 64).toDouble();
-    final double radius = settings.number('pagination_radius', 14).clamp(0, 32).toDouble();
-    final int visiblePageCount = state.totalPages.clamp(1, 7).toInt();
-    final int latestStart = (state.totalPages - visiblePageCount + 1)
-        .clamp(1, state.totalPages)
+    final Color background = _cmsColor(
+      settings.string('pagination_color', '#1F6F61'),
+      Theme.of(context).colorScheme.primary,
+    );
+    final Color foreground = _cmsColor(
+      settings.string('pagination_text_color', '#FFFFFF'),
+      Colors.white,
+    );
+    final double height = settings
+        .number('pagination_size', 44)
+        .clamp(32, 64)
+        .toDouble();
+    final double radius = settings
+        .number('pagination_radius', 14)
+        .clamp(0, 32)
+        .toDouble();
+    // Shopify's ProductConnection has no exact totals. Render only reachable
+    // adjacent pages, never numbered/last-page buttons based on guessedcounts.
+    if (state.cursorPagination && mode == 'numbers') {
+      final bool rtl = Directionality.of(context) == TextDirection.rtl;
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          settings.number('pagination_spacing', 16),
+          16,
+          28,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            IconButton(
+              tooltip: rtl ? 'الصفحة السابقة' : 'Previous page',
+              onPressed: state.hasPreviousPage
+                  ? () => onLoadPage(state.page - 1)
+                  : null,
+              icon: const Icon(Icons.navigate_before_rounded),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('${state.page}'),
+            ),
+            IconButton(
+              tooltip: rtl ? 'الصفحة التالية' : 'Next page',
+              onPressed: state.hasNextPage
+                  ? () => onLoadPage(state.page + 1)
+                  : null,
+              icon: const Icon(Icons.navigate_next_rounded),
+            ),
+          ],
+        ),
+      );
+    }
+    if (!state.hasNextPage && mode != 'numbers') {
+      return const SizedBox(height: 16);
+    }
+    final int totalPages = state.totalPages ?? 0;
+    final int visiblePageCount = totalPages.clamp(1, 7).toInt();
+    final int latestStart = (totalPages - visiblePageCount + 1)
+        .clamp(1, totalPages)
         .toInt();
     final int pageStart = (state.page - (visiblePageCount ~/ 2))
         .clamp(1, latestStart)
         .toInt();
     final int pageEnd = (pageStart + visiblePageCount - 1)
-        .clamp(pageStart, state.totalPages)
+        .clamp(pageStart, totalPages)
         .toInt();
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, settings.number('pagination_spacing', 16), 16, 28),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        settings.number('pagination_spacing', 16),
+        16,
+        28,
+      ),
       child: mode == 'numbers'
-          ? Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              for (int page = pageStart; page <= pageEnd; page++)
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child: SizedBox.square(dimension: height, child: OutlinedButton(
-                  onPressed: page == state.page ? null : () => onLoadPage(page),
-                  style: OutlinedButton.styleFrom(backgroundColor: page == state.page ? background : null, foregroundColor: page == state.page ? foreground : background, padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius))),
-                  child: Text('$page'),
-                ))),
-            ])
-          : SizedBox(height: height, child: FilledButton(
-              onPressed: onLoadMore,
-              style: FilledButton.styleFrom(backgroundColor: background, foregroundColor: foreground, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius))),
-              child: Text(settings.string('pagination_label', copy.loadMore)),
-            )),
+          ? Wrap(
+              alignment: WrapAlignment.center,
+              runSpacing: 6,
+              children: <Widget>[
+                for (int page = pageStart; page <= pageEnd; page++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: SizedBox.square(
+                      dimension: height,
+                      child: OutlinedButton(
+                        onPressed: page == state.page
+                            ? null
+                            : () => onLoadPage(page),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: page == state.page
+                              ? background
+                              : null,
+                          foregroundColor: page == state.page
+                              ? foreground
+                              : background,
+                          disabledForegroundColor: foreground,
+                          disabledBackgroundColor: background,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(radius),
+                          ),
+                        ),
+                        child: Text('$page'),
+                      ),
+                    ),
+                  ),
+              ],
+            )
+          : SizedBox(
+              height: height,
+              child: FilledButton(
+                onPressed: onLoadMore,
+                style: FilledButton.styleFrom(
+                  backgroundColor: background,
+                  foregroundColor: foreground,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(radius),
+                  ),
+                ),
+                child: Text(settings.string('pagination_label', copy.loadMore)),
+              ),
+            ),
     );
   }
 }
@@ -866,7 +1204,9 @@ String _friendlyError(CatalogCopy copy, Object error) {
       case StoreApiFailureKind.certificate:
         return copy.connectionError;
       case StoreApiFailureKind.cancelled:
+        return copy.storeError;
       case StoreApiFailureKind.configuration:
+        return error.message;
       case StoreApiFailureKind.unauthorized:
       case StoreApiFailureKind.notFound:
       case StoreApiFailureKind.invalidResponse:
@@ -881,5 +1221,7 @@ String _friendlyError(CatalogCopy copy, Object error) {
 Color _cmsColor(String value, Color fallback) {
   final String hex = value.replaceFirst('#', '');
   final int? parsed = int.tryParse(hex, radix: 16);
-  return parsed == null || hex.length != 6 ? fallback : Color(0xFF000000 | parsed);
+  return parsed == null || hex.length != 6
+      ? fallback
+      : Color(0xFF000000 | parsed);
 }

@@ -48,6 +48,13 @@ class CartCopy {
   String get fees => isArabic ? 'الرسوم' : 'Fees';
   String get tax => isArabic ? 'الضريبة' : 'Tax';
   String get total => isArabic ? 'الإجمالي' : 'Total';
+  String get estimatedSubtotal =>
+      isArabic ? 'الإجمالي الفرعي التقديري' : 'Estimated subtotal';
+  String get estimatedTotal =>
+      isArabic ? 'الإجمالي التقديري' : 'Estimated total';
+  String get shopifyFinalPrice => isArabic
+      ? 'السعر النهائي بيتأكد في صفحة إكمال الطلب على Shopify.'
+      : 'The final price is confirmed at Shopify checkout.';
   String get shippingAtCheckout =>
       isArabic ? 'يُحسب عند إكمال الطلب' : 'Calculated at checkout';
   String get checkout =>

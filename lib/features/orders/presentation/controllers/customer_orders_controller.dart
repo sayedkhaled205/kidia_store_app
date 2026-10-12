@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
@@ -74,10 +76,16 @@ class CustomerOrdersController extends ChangeNotifier {
   CustomerOrdersState _state = const CustomerOrdersState();
   int _operation = 0;
   bool _disposed = false;
+  int _activeListReads = 0;
+  bool _refreshRequested = false;
+  bool _refreshingLoadedPages = false;
+  Completer<void>? _refreshCompletion;
 
   CustomerOrdersState get state => _state;
 
   Future<void> loadInitial({bool refresh = false}) async {
+    if (_disposed) return;
+    _activeListReads++;
     final int operation = ++_operation;
     _replace(
       _state.copyWith(
@@ -119,16 +127,21 @@ class CustomerOrdersController extends ChangeNotifier {
           error: error,
         ),
       );
+    } finally {
+      _activeListReads--;
+      _continueLoadedRefresh();
     }
   }
 
   Future<void> loadMore() async {
-    if (_state.isInitialLoading ||
+    if (_disposed ||
+        _state.isInitialLoading ||
         _state.isRefreshing ||
         _state.isLoadingMore ||
         !_state.hasNextPage) {
       return;
     }
+    _activeListReads++;
     final int operation = _operation;
     _replace(_state.copyWith(isLoadingMore: true, loadMoreError: null));
     try {
@@ -155,16 +168,116 @@ class CustomerOrdersController extends ChangeNotifier {
       );
     } catch (error) {
       if (_isCurrent(operation)) {
+        _replace(_state.copyWith(isLoadingMore: false, loadMoreError: error));
+      }
+    } finally {
+      _activeListReads--;
+      _continueLoadedRefresh();
+    }
+  }
+
+  /// Explicit, read-only refresh for a future external-change listener.
+  ///
+  /// Keeps the same controller/scroll owner and commits the loaded pages only
+  /// after the whole batch succeeds. Calls while busy coalesce into one pending
+  /// batch; this method does not subscribe to events or start polling.
+  Future<void> refreshLoadedPages() {
+    if (_disposed) return Future<void>.value();
+    _refreshRequested = true;
+    final Completer<void> completion = _refreshCompletion ??= Completer<void>();
+    _continueLoadedRefresh();
+    return completion.future;
+  }
+
+  void _continueLoadedRefresh() {
+    if (_disposed || _refreshingLoadedPages) return;
+    if (!_refreshRequested) {
+      _refreshCompletion?.complete();
+      _refreshCompletion = null;
+      return;
+    }
+    if (_activeListReads > 0 || _state.cancellingOrderIds.isNotEmpty) return;
+    _refreshRequested = false;
+    _refreshingLoadedPages = true;
+    unawaited(_refreshLoadedBatch());
+  }
+
+  Future<void> _refreshLoadedBatch() async {
+    final int operation = ++_operation;
+    final int loadedPages = _state.page > 0 ? _state.page : 1;
+    _replace(_state.copyWith(isRefreshing: true));
+    try {
+      final CustomerOrderPage first = await _repository.getOrders(
+        page: 1,
+        perPage: pageSize,
+      );
+      if (!_isCurrent(operation)) return;
+      int totalPages = first.totalPages;
+      int totalItems = first.totalItems;
+      final List<CustomerOrderPage> results = <CustomerOrderPage>[first];
+      int pageLimit = loadedPages < totalPages ? loadedPages : totalPages;
+      for (int page = 2; page <= pageLimit; page++) {
+        final CustomerOrderPage result = await _repository.getOrders(
+          page: page,
+          perPage: pageSize,
+        );
+        if (!_isCurrent(operation)) return;
+        results.add(result);
+        totalItems = result.totalItems;
+        if (result.totalPages < totalPages) {
+          totalPages = result.totalPages;
+          pageLimit = loadedPages < totalPages ? loadedPages : totalPages;
+        }
+      }
+      if (!_isCurrent(operation)) return;
+      final Map<int, CustomerOrder> unique = <int, CustomerOrder>{
+        for (final CustomerOrderPage result in results)
+          if (result.page <= totalPages)
+            for (final CustomerOrder order in result.items) order.id: order,
+      };
+      _replace(
+        _state.copyWith(
+          items: List<CustomerOrder>.unmodifiable(unique.values),
+          page: totalPages <= 0 ? 0 : pageLimit,
+          totalItems: totalItems,
+          totalPages: totalPages,
+          isRefreshing: false,
+          error: null,
+          loadMoreError: null,
+        ),
+      );
+    } catch (error) {
+      if (_isCurrent(operation)) {
         _replace(
-          _state.copyWith(isLoadingMore: false, loadMoreError: error),
+          _state.copyWith(isRefreshing: false, error: _state.error ?? error),
         );
       }
+    } finally {
+      _refreshingLoadedPages = false;
+      // A manual load or cancellation can invalidate the old batch. Never
+      // replace its result, nor clear a newer manual load's refresh indicator.
+      if (!_disposed && _activeListReads == 0 && _state.isRefreshing) {
+        _replace(_state.copyWith(isRefreshing: false));
+      }
+      _continueLoadedRefresh();
     }
   }
 
   bool isCancelling(int orderId) => _state.cancellingOrderIds.contains(orderId);
 
+  final Map<int, CustomerOrder> _openedOrders = {};
+  Future<CustomerOrder> loadOrder(int orderId) async {
+    if (_repository is! CustomerOrderLookupRepository || _disposed) {
+      throw const CustomerOrdersRepositoryException(kind: CustomerOrdersFailureKind.configuration, message: 'Order lookup is unavailable.');
+    }
+    final order = await (_repository as CustomerOrderLookupRepository).getOrder(orderId);
+    if (_disposed) throw StateError('Order screen was disposed.');
+    _openedOrders[orderId] = order;
+    return order;
+  }
+
   CustomerOrder? orderById(int orderId) {
+    if (_openedOrders.containsKey(orderId)) return _openedOrders[orderId];
     for (final CustomerOrder order in _state.items) {
       if (order.id == orderId) {
         return order;
@@ -174,7 +287,7 @@ class CustomerOrdersController extends ChangeNotifier {
   }
 
   Future<bool> cancelOrder(CustomerOrder order) async {
-    if (!order.canCancel || isCancelling(order.id)) {
+    if (_disposed || !order.canCancel || isCancelling(order.id)) {
       return false;
     }
     if (_repository is! CustomerOrderCancellationRepository) {
@@ -191,6 +304,10 @@ class CustomerOrdersController extends ChangeNotifier {
     final CustomerOrderCancellationRepository repository =
         _repository as CustomerOrderCancellationRepository;
 
+    // The cancellation response is authoritative. An older refresh must not
+    // replace it, even if that refresh returns after cancellation succeeds.
+    if (_refreshingLoadedPages) _operation++;
+
     _replace(
       _state.copyWith(
         cancellingOrderIds: Set<int>.unmodifiable(<int>{
@@ -202,6 +319,7 @@ class CustomerOrdersController extends ChangeNotifier {
     );
     try {
       final CustomerOrder updated = await repository.cancelOrder(order.id);
+      if (_openedOrders.containsKey(updated.id)) _openedOrders[updated.id] = updated;
       _replace(
         _state.copyWith(
           items: List<CustomerOrder>.unmodifiable(<CustomerOrder>[
@@ -223,6 +341,7 @@ class CustomerOrdersController extends ChangeNotifier {
           ),
         ),
       );
+      _continueLoadedRefresh();
     }
   }
 
@@ -246,6 +365,9 @@ class CustomerOrdersController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _operation++;
+    _refreshRequested = false;
+    _refreshCompletion?.complete();
+    _refreshCompletion = null;
     super.dispose();
   }
 }

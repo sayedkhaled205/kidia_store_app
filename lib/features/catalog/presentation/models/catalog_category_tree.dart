@@ -21,6 +21,17 @@ class CatalogCategoryTree {
 
   bool get isEmpty => roots.isEmpty;
 
+  CatalogCategoryTree withPresentation(CatalogCategory presentation) {
+    CatalogCategoryNode update(CatalogCategoryNode node) => CatalogCategoryNode(
+      category: node.category.withPresentation(presentation),
+      children: node.children.map(update).toList(growable: false),
+    );
+    return CatalogCategoryTree(
+      roots: roots.map(update).toList(growable: false),
+      totalCategories: totalCategories,
+    );
+  }
+
   factory CatalogCategoryTree.fromCategories(Iterable<CatalogCategory> source) {
     final Map<int, CatalogCategory> categories = <int, CatalogCategory>{
       for (final CatalogCategory category in source)

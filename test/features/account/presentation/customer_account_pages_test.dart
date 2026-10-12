@@ -8,6 +8,10 @@ import 'package:mobishop_store_app/features/account/presentation/customer_profil
 import 'package:mobishop_store_app/features/account/presentation/customer_support_screen.dart';
 import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
 import 'package:mobishop_store_app/features/account/presentation/saved_addresses_screen.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
+import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 
 void main() {
@@ -94,6 +98,7 @@ void main() {
 Widget _app(Widget home) {
   return ProviderScope(
     overrides: [
+      authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
       customerAccountRepositoryProvider.overrideWithValue(
         const _FakeCustomerAccountRepository(),
       ),
@@ -187,4 +192,19 @@ class _FakeCustomerAccountRepository implements CustomerAccountRepository {
       alternatePhone: alternatePhone,
     );
   }
+}
+
+// This profile fixture belongs to an authenticated customer, matching the
+// production session/account identity guard. It never restores real storage.
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Future<AuthSession?> restoreSession() async => AuthSession(
+    token: 'owned-widget-fixture-session',
+    expiresAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
+    user: const AuthUser(id: 7, email: 'customer@example.com'),
+  );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Unexpected widget auth operation');
 }

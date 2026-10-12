@@ -11,7 +11,8 @@ import 'package:mobishop_store_app/features/orders/presentation/controllers/cust
 import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 class CustomerOrdersScreen extends ConsumerStatefulWidget {
-  const CustomerOrdersScreen({super.key});
+  const CustomerOrdersScreen({super.key, this.initialOrderId});
+  final int? initialOrderId;
 
   @override
   ConsumerState<CustomerOrdersScreen> createState() =>
@@ -20,6 +21,8 @@ class CustomerOrdersScreen extends ConsumerStatefulWidget {
 
 class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
   late final ScrollController _scrollController;
+  Future<CustomerOrder>? _requestedOrder;
+  CustomerOrdersController? _lookupController;
 
   @override
   void initState() {
@@ -112,6 +115,20 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
       customerOrdersControllerProvider,
     );
     final _OrdersCopy copy = _OrdersCopy.of(context);
+    if (widget.initialOrderId != null) {
+      if (_lookupController != controller) {
+        _lookupController = controller;
+        _requestedOrder = controller.loadOrder(widget.initialOrderId!);
+      }
+      return FutureBuilder<CustomerOrder>(future:_requestedOrder,builder:(context,snapshot) {
+        if (snapshot.hasData) return _CustomerOrderDetailsScreen(orderId:snapshot.data!.id,initialOrder:snapshot.data!,controller:controller,copy:copy,onCancel:(actionContext,order)=>_cancelOrder(actionContext,order,controller,copy));
+        final arabic=Localizations.localeOf(context).languageCode=='ar';
+        return Scaffold(appBar:AppBar(title:Text(copy.detailsTitle)),body:Center(child:snapshot.hasError
+          ? Column(mainAxisSize:MainAxisSize.min,children:[Text(arabic?'تعذر فتح الطلب. تحقق من الحساب والاتصال.':'Unable to open this order. Check your account and connection.'),TextButton(onPressed:()=>setState(()=>_requestedOrder=controller.loadOrder(widget.initialOrderId!)),child:Text(arabic?'إعادة المحاولة':'Retry'))])
+          :const CircularProgressIndicator()));
+      });
+    }
+
 
     return Scaffold(
       appBar: AppBar(

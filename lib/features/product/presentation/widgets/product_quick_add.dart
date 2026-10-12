@@ -79,7 +79,9 @@ class ProductQuickAddButton extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: IconButton(
         key: Key('quick-add-product-$productId'),
-        tooltip: 'إضافة سريعة للسلة',
+        tooltip: Localizations.localeOf(context).languageCode == 'ar'
+            ? 'إضافة سريعة للسلة'
+            : 'Quick add to cart',
         onPressed: () => showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,

@@ -3,7 +3,7 @@ import 'package:mobishop_store_app/features/orders/domain/entities/customer_orde
 import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
 
 class CustomerOrdersRepositoryImpl
-    implements CustomerOrdersRepository, CustomerOrderCancellationRepository {
+    implements CustomerOrdersRepository, CustomerOrderCancellationRepository, CustomerOrderLookupRepository {
   const CustomerOrdersRepositoryImpl(this._transport);
 
   final CustomerOrdersApiTransport _transport;
@@ -45,6 +45,49 @@ class CustomerOrdersRepositoryImpl
         CustomerOrdersRepositoryException(
           kind: CustomerOrdersFailureKind.unknown,
           message: 'Loading customer orders failed unexpectedly.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<CustomerOrder> getOrder(int orderId) async {
+    if (_transport is! CustomerOrderLookupTransport) {
+      throw const CustomerOrdersRepositoryException(
+        kind: CustomerOrdersFailureKind.configuration,
+        message: 'Customer order lookup is unavailable.',
+      );
+    }
+    final CustomerOrderLookupTransport transport =
+        _transport as CustomerOrderLookupTransport;
+    try {
+      final CustomerOrdersApiResponse response = await transport.fetchOrder(
+        orderId,
+      );
+      final Map<String, dynamic> json = _object(
+        response.data,
+        'order lookup response',
+      );
+      final order = _parseOrder(json['order']);
+      if (order.id != orderId) throw const FormatException('Unexpected order identity.');
+      return order;
+    } on CustomerOrdersTransportException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CustomerOrdersRepositoryException(
+          kind: _repositoryKind(error.kind),
+          message: error.message,
+          statusCode: error.statusCode,
+          cause: error,
+        ),
+        stackTrace,
+      );
+    } on FormatException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CustomerOrdersRepositoryException(
+          kind: CustomerOrdersFailureKind.invalidResponse,
+          message: 'The store returned invalid customer order data.',
           cause: error,
         ),
         stackTrace,

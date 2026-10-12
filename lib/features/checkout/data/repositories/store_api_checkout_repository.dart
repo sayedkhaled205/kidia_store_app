@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
@@ -9,38 +10,91 @@ import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart
 import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
 import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:mobishop_store_app/features/checkout/data/network/checkout_safety_transport.dart';
+import 'package:mobishop_store_app/features/checkout/data/storage/checkout_pending_attempt_store.dart';
 import 'package:mobishop_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_safety.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_recovery_repository.dart';
 
-class StoreApiCheckoutRepository implements CheckoutRepository {
+class StoreApiCheckoutRepository
+    implements CheckoutRepository, CheckoutRecoveryRepository {
   StoreApiCheckoutRepository({
     required this.cartRepository,
     required this.transport,
     required this.cartTokenStore,
-  });
+    CheckoutPendingAttemptStore? pendingAttemptStore,
+    bool Function()? currentSessionIsValid,
+    this.safetyTransport,
+    this.requireServerSafety = false,
+    this.customerId,
+  }) : pendingAttemptStore =
+           pendingAttemptStore ?? MemoryCheckoutPendingAttemptStore(),
+       _currentSessionIsValid = currentSessionIsValid ?? (() => true);
 
   final CartRepository cartRepository;
   final CheckoutApiTransport transport;
 
   /// Must be the same token store used by the cart data source.
   final CartTokenStore cartTokenStore;
+  final CheckoutPendingAttemptStore pendingAttemptStore;
+  final bool Function() _currentSessionIsValid;
+  final CheckoutSafetyTransport? safetyTransport;
 
-  Future<void> _submissionTail = Future<void>.value();
+  /// Legacy transport-only fixtures opt out explicitly; configured Native
+  /// customer checkout must inject safetyTransport and require this contract.
+  final bool requireServerSafety;
+
+  /// Independently captured authenticated buyer, not a cart/address/customer
+  /// value echoed by an order. currentSessionIsValid must bind this identity.
+  final int? customerId;
+
   String? _lastSuccessfulKey;
   CheckoutOrderResult? _lastSuccessfulResult;
 
   @override
-  Future<CheckoutState> loadCheckout() async {
+  Future<CheckoutState> loadCheckout() =>
+      pendingAttemptStore.exclusive(_loadCheckout);
+
+  Future<CheckoutState> _loadCheckout() async {
+    bool unresolved = false;
     try {
+      _assertCurrentSession();
+      unresolved = (await _readAttempt())?.isUnresolved ?? false;
+      _assertCurrentSession();
+      if (unresolved) {
+        // A fresh/empty basket cannot resolve a previously dispatched order.
+        // Show the recovery warning immediately, even offline, before any
+        // basket/configuration read can create a guest basket or time out.
+        throw _unresolvedAttempt();
+      }
       final Cart cart = await cartRepository.getCart();
       final List<CheckoutFieldDefinition> definitions =
           await _loadFieldDefinitions();
-      return CheckoutState(cart: cart, fieldDefinitions: definitions);
+      bool enforced = false;
+      if (requireServerSafety || safetyTransport != null) {
+        try {
+          enforced = (await _loadSafetyCapability()).enforced;
+        } on CheckoutRepositoryException {
+          // Read-only checkout fields remain usable while activation/recovery
+          // is unavailable. The UI and placeOrder both disable unsafe checkout.
+        }
+      }
+      _assertCurrentSession();
+      return CheckoutState(
+        cart: cart,
+        fieldDefinitions: definitions,
+        hasUnresolvedSubmission: unresolved,
+        serverSafetyRequired: requireServerSafety || safetyTransport != null,
+        serverSafetyEnforced: enforced,
+      );
+    } on CheckoutRepositoryException {
+      rethrow;
     } on CartRepositoryException catch (error, stackTrace) {
       Error.throwWithStackTrace(
         CheckoutRepositoryException(
@@ -50,6 +104,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
           apiError: error.apiError,
           authoritativeCart: error.serverCart,
           cause: error,
+          requiresOutcomeRecovery: unresolved,
         ),
         stackTrace,
       );
@@ -59,6 +114,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
           kind: CheckoutFailureKind.unknown,
           message: 'Unable to load checkout.',
           cause: error,
+          requiresOutcomeRecovery: unresolved,
         ),
         stackTrace,
       );
@@ -263,8 +319,24 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
   Future<Cart> updateCustomer({
     required CheckoutAddress billingAddress,
     required CheckoutAddress shippingAddress,
+  }) => pendingAttemptStore.exclusive(
+    () => _updateCustomer(
+      billingAddress: billingAddress,
+      shippingAddress: shippingAddress,
+    ),
+  );
+
+  Future<Cart> _updateCustomer({
+    required CheckoutAddress billingAddress,
+    required CheckoutAddress shippingAddress,
   }) async {
     try {
+      _assertCurrentSession();
+      final CheckoutPendingAttempt? previous = await _readAttempt();
+      _assertCurrentSession();
+      if (previous?.isUnresolved == true) {
+        throw _unresolvedAttempt();
+      }
       String token = cartTokenStore.read()?.trim() ?? '';
       if (token.isEmpty) {
         await cartRepository.getCart();
@@ -277,6 +349,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
         );
       }
 
+      _assertCurrentSession();
       final CheckoutApiResponse response = await transport.updateCustomer(
         cartToken: token,
         body: <String, dynamic>{
@@ -287,6 +360,7 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
           ),
         },
       );
+      _assertCurrentSession();
       return CartModel.fromJson(
         CartJson.object(response.data, 'updated_cart'),
       ).toEntity();
@@ -320,85 +394,482 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
   }
 
   @override
-  Future<CheckoutOrderResult> placeOrder(CheckoutSubmission submission) {
-    final Completer<CheckoutOrderResult> completer =
-        Completer<CheckoutOrderResult>();
-    _submissionTail = _submissionTail.then<void>((_) async {
-      try {
-        final String key = submission.idempotencyKey.trim();
-        if (!RegExp(r'^[A-Za-z0-9._:-]{1,128}$').hasMatch(key)) {
-          throw const CheckoutRepositoryException(
-            kind: CheckoutFailureKind.invalidInput,
-            message: 'A safe checkout idempotency key is required.',
-          );
-        }
-        _validateSubmission(submission);
-        if (_lastSuccessfulKey == key && _lastSuccessfulResult != null) {
-          completer.complete(_lastSuccessfulResult);
-          return;
-        }
+  Future<CheckoutOrderResult> placeOrder(CheckoutSubmission submission) =>
+      pendingAttemptStore.exclusive(() => _placeOrder(submission));
 
-        String token = cartTokenStore.read()?.trim() ?? '';
-        if (token.isEmpty) {
-          await cartRepository.getCart();
-          token = cartTokenStore.read()?.trim() ?? '';
-        }
-        if (token.isEmpty) {
-          throw const CheckoutRepositoryException(
-            kind: CheckoutFailureKind.configuration,
-            message: 'The store did not issue a Cart-Token for checkout.',
-          );
-        }
-
-        final CheckoutApiResponse response = await transport.placeOrder(
-          cartToken: token,
-          idempotencyKey: key,
-          body: _submissionJson(submission),
-        );
-        final CheckoutOrderResult result = _parseOrderResult(response.data);
-        _lastSuccessfulKey = key;
-        _lastSuccessfulResult = result;
-        completer.complete(result);
-      } on CheckoutRepositoryException catch (error, stackTrace) {
-        completer.completeError(error, stackTrace);
-      } on CheckoutApiTransportException catch (error, stackTrace) {
-        completer.completeError(_transportFailure(error), stackTrace);
-      } on CartRepositoryException catch (error, stackTrace) {
-        completer.completeError(
-          CheckoutRepositoryException(
-            kind: _cartFailureKind(error.kind),
-            message: error.message,
-            statusCode: error.statusCode,
-            apiError: error.apiError,
-            authoritativeCart: error.serverCart,
-            cause: error,
-          ),
-          stackTrace,
-        );
-      } on FormatException catch (error, stackTrace) {
-        completer.completeError(
-          CheckoutRepositoryException(
-            kind: CheckoutFailureKind.invalidResponse,
-            message: 'The store returned invalid checkout data.',
-            cause: error,
-          ),
-          stackTrace,
-        );
-      } catch (error, stackTrace) {
-        completer.completeError(
-          CheckoutRepositoryException(
-            kind: CheckoutFailureKind.unknown,
-            message: 'Checkout failed unexpectedly.',
-            cause: error,
-          ),
-          stackTrace,
+  Future<CheckoutOrderResult> _placeOrder(CheckoutSubmission submission) async {
+    bool dispatched = false;
+    bool markerWritten = false;
+    final String key = submission.idempotencyKey.trim();
+    final bool protected = requireServerSafety || safetyTransport != null;
+    try {
+      _assertCurrentSession();
+      final CheckoutPendingAttempt? previous = await _readAttempt();
+      // An awaited secure read can outlive logout or a customer switch. Do
+      // not expose either a persisted receipt or an in-memory receipt then.
+      _assertCurrentSession();
+      if (_lastSuccessfulKey == key && _lastSuccessfulResult != null) {
+        return _lastSuccessfulResult!;
+      }
+      if (previous?.confirmedResult != null &&
+          previous?.idempotencyKey == key) {
+        return previous!.confirmedResult!;
+      }
+      if (previous?.isUnresolved == true) throw _unresolvedAttempt();
+      if (!RegExp(r'^[A-Za-z0-9._:-]{1,128}$').hasMatch(key)) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.invalidInput,
+          message: 'A safe checkout idempotency key is required.',
         );
       }
-    });
-    return completer.future;
+      _validateSubmission(submission);
+      if (protected) {
+        if (submission.confirmedTotal == null) {
+          throw const CheckoutRepositoryException(
+            kind: CheckoutFailureKind.invalidInput,
+            message:
+                'An exact buyer-confirmed total is required before checkout.',
+          );
+        }
+        // Fresh capability evidence before every order POST. A cached flag or
+        // a version number cannot protect a server whose guard was disabled.
+        await _loadSafetyCapability();
+        _assertCurrentSession();
+      }
+
+      String token = cartTokenStore.read()?.trim() ?? '';
+      if (token.isEmpty) {
+        await cartRepository.getCart();
+        token = cartTokenStore.read()?.trim() ?? '';
+      }
+      if (token.isEmpty) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message: 'The store did not issue a Cart-Token for checkout.',
+        );
+      }
+
+      _assertCurrentSession();
+      final CheckoutPendingAttempt attempt = CheckoutPendingAttempt(
+        idempotencyKey: key,
+        createdAtMicros: DateTime.now().microsecondsSinceEpoch,
+      );
+      // Write and read back before the first order POST. A crashed process
+      // or new cart cannot silently drop an uncertain dispatch afterward.
+      await pendingAttemptStore.write(attempt);
+      markerWritten = true;
+      final CheckoutPendingAttempt? recorded = await _readAttempt();
+      if (recorded?.idempotencyKey != key ||
+          recorded?.createdAtMicros != attempt.createdAtMicros ||
+          recorded?.isUnresolved != true) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message: 'The checkout attempt could not be safely recorded.',
+        );
+      }
+      // Secure persistence is asynchronous. Logout/customer changes during
+      // that await must not dispatch the captured customer's old form.
+      _assertCurrentSession();
+      dispatched = true;
+      final CheckoutApiResponse response = await transport.placeOrder(
+        cartToken: token,
+        idempotencyKey: key,
+        body: _submissionJson(submission, protected: protected),
+      );
+      _assertCurrentSession();
+      if (protected && response.statusCode == 409) {
+        // Concrete HTTP transport normally throws for409. Preserve the same
+        // strict guard for adapters returning a typed response instead.
+        throw CheckoutApiTransportException(
+          kind: CheckoutTransportFailureKind.rejected,
+          statusCode: 409,
+          message: 'The platform rejected this checkout attempt.',
+          data: response.data,
+        );
+      }
+      if (response.statusCode != null &&
+          (response.statusCode! < 200 || response.statusCode! >= 300)) {
+        throw const FormatException(
+          'Checkout did not confirm a successful response.',
+        );
+      }
+      final CheckoutOrderResult result = protected
+          ? _parseProtectedOrderResult(
+              response.data,
+              isFreeOrder: submission.confirmedTotal?.totalPrice == '0',
+            )
+          : _parseOrderResult(response.data);
+      _lastSuccessfulKey = key;
+      _lastSuccessfulResult = result;
+      try {
+        await pendingAttemptStore.write(
+          CheckoutPendingAttempt(
+            idempotencyKey: key,
+            createdAtMicros: attempt.createdAtMicros,
+            confirmedResult: result,
+          ),
+        );
+      } catch (_) {
+        // We already have a real positive receipt. Never transform that
+        // success into a retry invitation. An unchanged pending marker keeps
+        // another repository/restarted process blocked until real recovery.
+      }
+      _assertCurrentSession();
+      return result;
+    } on CheckoutRepositoryException catch (error, stackTrace) {
+      if (markerWritten && !dispatched) {
+        await _releaseKnownRejection(key);
+      }
+      Error.throwWithStackTrace(
+        dispatched ? _requiringRecovery(error) : error,
+        stackTrace,
+      );
+    } on CheckoutApiTransportException catch (error, stackTrace) {
+      _assertCurrentSession(requiresOutcomeRecovery: dispatched);
+      final bool rejectedBeforeDispatch =
+          protected &&
+          dispatched &&
+          CheckoutAttemptRecovery.isProvenPreDispatchRejection(
+            error.data,
+            error.statusCode,
+            expectedAttemptKey: key,
+            expectedCustomerId: customerId,
+          );
+      final bool guardedRejection =
+          protected &&
+          dispatched &&
+          error.statusCode == 409 &&
+          error.data is Map &&
+          error.data['protocol'] == 50 &&
+          error.data['protocol'] is int &&
+          error.data['code'] ==
+              'mobishop_native_checkout50_confirmed_total_mismatch' &&
+          error.data['data'] is Map &&
+          error.data['data']['automatic_replay'] == false;
+      final CheckoutRepositoryException mapped =
+          rejectedBeforeDispatch || guardedRejection
+          ? CheckoutRepositoryException(
+              kind: CheckoutFailureKind.conflict,
+              statusCode: 409,
+              message: rejectedBeforeDispatch
+                  ? 'The store confirmed that this attempt was rejected before checkout. Review current details before confirming again.'
+                  : 'The confirmed total changed. Review the current amount before confirming again.',
+              confirmedPrePaymentRejection: true,
+              cause: error,
+            )
+          : _transportFailure(error);
+      // Protected late errors are never reinterpreted as ordinary legacy
+      // validation failures after the server claimed this buyer/attempt.
+      if (dispatched &&
+          (rejectedBeforeDispatch ||
+              guardedRejection ||
+              (!protected && _isDefinitiveValidationRejection(mapped)))) {
+        await _releaseKnownRejection(key);
+        _assertCurrentSession();
+        Error.throwWithStackTrace(mapped, stackTrace);
+      }
+      Error.throwWithStackTrace(
+        dispatched ? _requiringRecovery(mapped) : mapped,
+        stackTrace,
+      );
+    } on CartRepositoryException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: _cartFailureKind(error.kind),
+          message: error.message,
+          statusCode: error.statusCode,
+          apiError: error.apiError,
+          authoritativeCart: error.serverCart,
+          cause: error,
+          requiresOutcomeRecovery: dispatched,
+        ),
+        stackTrace,
+      );
+    } on FormatException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: dispatched
+              ? CheckoutFailureKind.invalidResponse
+              : CheckoutFailureKind.configuration,
+          message: dispatched
+              ? 'The store returned invalid checkout data.'
+              : 'The checkout attempt could not be safely recorded.',
+          cause: error,
+          requiresOutcomeRecovery: dispatched,
+        ),
+        stackTrace,
+      );
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: dispatched
+              ? CheckoutFailureKind.unknown
+              : CheckoutFailureKind.configuration,
+          message: dispatched
+              ? 'Checkout failed unexpectedly.'
+              : 'Unable to safely record checkout. No order was sent.',
+          cause: error,
+          requiresOutcomeRecovery: dispatched,
+        ),
+        stackTrace,
+      );
+    }
   }
 
-  Map<String, dynamic> _submissionJson(CheckoutSubmission submission) {
+  Future<CheckoutSafetyCapability> _loadSafetyCapability() async {
+    _assertCurrentSession();
+    if (customerId == null || customerId! <= 0) {
+      throw const CheckoutRepositoryException(
+        kind: CheckoutFailureKind.configuration,
+        message:
+            'Protected checkout requires its independently authenticated customer identity.',
+      );
+    }
+    final CheckoutSafetyTransport? safety = safetyTransport;
+    if (safety == null) {
+      throw const CheckoutRepositoryException(
+        kind: CheckoutFailureKind.configuration,
+        message: 'The platform checkout safety connector is not configured.',
+      );
+    }
+    try {
+      final CheckoutApiResponse response = await safety.loadCapabilities();
+      _assertCurrentSession();
+      if (response.statusCode != 200) {
+        throw const FormatException('Checkout capability was not confirmed.');
+      }
+      final CheckoutSafetyCapability capability =
+          CheckoutSafetyCapability.fromJson(response.data);
+      if (!capability.enforced) {
+        throw const FormatException(
+          'The platform checkout guard is unavailable.',
+        );
+      }
+      return capability;
+    } on CheckoutRepositoryException {
+      rethrow;
+    } catch (error, stackTrace) {
+      // This GET has not dispatched an order; do not create a false unknown
+      // attempt. A pre-existing pending marker is handled by recovery below.
+      _assertCurrentSession();
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message:
+              'The platform has not confirmed protected checkout. No order was sent.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<CheckoutAttemptRecovery> recoverPendingOrder() =>
+      pendingAttemptStore.exclusive(_recoverPendingOrder);
+
+  Future<CheckoutAttemptRecovery> _recoverPendingOrder() async {
+    try {
+      _assertCurrentSession();
+      final CheckoutPendingAttempt? pending = await _readAttempt();
+      _assertCurrentSession();
+      if (pending == null) throw _unresolvedAttempt();
+      await _loadSafetyCapability();
+      _assertCurrentSession();
+      final CheckoutApiResponse response = await safetyTransport!
+          .recoverAttempt(
+            idempotencyKey: pending.idempotencyKey,
+            cartToken: cartTokenStore.read(),
+          );
+      _assertCurrentSession();
+      final CheckoutAttemptRecovery recovery = CheckoutAttemptRecovery.parse(
+        response.data,
+        response.statusCode,
+        expectedAttemptKey: pending.idempotencyKey,
+        expectedCustomerId: customerId,
+      );
+      if (!recovery.isResolved) return recovery;
+      if (recovery.state == CheckoutRecoveryState.rejectedBeforePayment ||
+          recovery.state == CheckoutRecoveryState.rejectedBeforeDispatch) {
+        await _releaseKnownRejection(pending.idempotencyKey);
+        _assertCurrentSession();
+        return recovery;
+      }
+      final CheckoutOrderResult receipt = recovery.orderResult!;
+      await pendingAttemptStore.write(
+        CheckoutPendingAttempt(
+          idempotencyKey: pending.idempotencyKey,
+          createdAtMicros: pending.createdAtMicros,
+          confirmedResult: receipt,
+        ),
+      );
+      _assertCurrentSession();
+      final CheckoutPendingAttempt? recorded = await _readAttempt();
+      _assertCurrentSession();
+      if (recorded?.idempotencyKey != pending.idempotencyKey ||
+          recorded?.confirmedResult?.orderId != receipt.orderId ||
+          recorded?.confirmedResult?.status != receipt.status ||
+          recorded?.confirmedResult?.paymentStatus != receipt.paymentStatus) {
+        throw _unresolvedAttempt();
+      }
+      _lastSuccessfulKey = pending.idempotencyKey;
+      _lastSuccessfulResult = receipt;
+      return recovery;
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        error is CheckoutRepositoryException
+            ? _requiringRecovery(error)
+            : _unresolvedAttempt(cause: error),
+        stackTrace,
+      );
+    }
+  }
+
+  CheckoutOrderResult _parseProtectedOrderResult(
+    dynamic raw, {
+    required bool isFreeOrder,
+  }) {
+    final Map<String, dynamic> json = CartJson.object(raw, 'checkout');
+    // Replayed server claims return the read-only recovery shape, not another
+    // order dispatch. A locked positive receipt still does not unlock checkout.
+    if (json['state'] != null) {
+      final CheckoutAttemptRecovery recovery = CheckoutAttemptRecovery.parse(
+        json,
+        200,
+      );
+      if (recovery.state != CheckoutRecoveryState.orderCreated) {
+        throw const FormatException(
+          'The previous checkout remains unresolved.',
+        );
+      }
+      return recovery.orderResult!;
+    }
+    final dynamic extensions = json['extensions'];
+    final dynamic contract = extensions is Map
+        ? extensions[CheckoutSafetyCapability.namespace]
+        : null;
+    final dynamic payment = json['payment_result'];
+    if (contract is! Map ||
+        contract['protocol'] != 50 ||
+        contract['protocol'] is! int ||
+        contract['enforced'] != true ||
+        payment is! Map ||
+        payment['payment_status'] != 'success' ||
+        json['order_id'] is! int ||
+        (json['order_id'] as int) <= 0 ||
+        json['status'] is! String ||
+        !RegExp(r'^[a-z0-9-]{1,64}$').hasMatch(json['status'] as String)) {
+      throw const FormatException(
+        'The store did not confirm protected checkout.',
+      );
+    }
+    final CheckoutOrderResult result = _parseOrderResult(raw);
+    // WooCommerce's process_without_payment returns the already-completed
+    // order-received page as redirect_url. It is not a payment continuation.
+    // Keep every gateway/pending/foreign redirect unless this exact guarded,
+    // buyer-confirmed zero-value receipt is proved. Never navigate this URL.
+    if (!isFreeOrder ||
+        (result.status != 'processing' && result.status != 'completed') ||
+        !_isOrderReceivedReceipt(result.redirectUri, result.orderId)) {
+      return result;
+    }
+    return CheckoutOrderResult(
+      orderId: result.orderId,
+      status: result.status,
+      paymentStatus: result.paymentStatus,
+    );
+  }
+
+  bool _isOrderReceivedReceipt(Uri? uri, int orderId) {
+    final Uri? storeUri = _webUri(AppConfig.apiBaseUrl);
+    final String storePath =
+        storeUri?.path.replaceFirst(RegExp(r'/+$'), '') ?? '';
+    return uri != null &&
+        storeUri != null &&
+        uri.scheme == 'https' &&
+        uri.scheme == storeUri.scheme &&
+        uri.host == storeUri.host &&
+        uri.port == storeUri.port &&
+        uri.userInfo.isEmpty &&
+        !uri.hasFragment &&
+        uri.path.startsWith('$storePath/') &&
+        !uri.pathSegments.any((part) => part == '.' || part == '..') &&
+        RegExp('/order-received/$orderId/?\$').hasMatch(uri.path) &&
+        RegExp(r'^key=wc_order_[A-Za-z0-9]+$').hasMatch(uri.query);
+  }
+
+  Future<CheckoutPendingAttempt?> _readAttempt() async {
+    try {
+      return await pendingAttemptStore.read();
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message:
+              'Unable to verify the previous checkout attempt. No new order was sent.',
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  Future<void> _releaseKnownRejection(String key) async {
+    try {
+      await pendingAttemptStore.clearKnownRejection(key);
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(_unresolvedAttempt(cause: error), stackTrace);
+    }
+  }
+
+  bool _isDefinitiveValidationRejection(CheckoutRepositoryException error) =>
+      (error.kind == CheckoutFailureKind.invalidInput &&
+          (error.statusCode == 400 || error.statusCode == 422) &&
+          error.apiError?.code == 'rest_invalid_param' &&
+          error.fieldErrors.isNotEmpty) ||
+      (error.kind == CheckoutFailureKind.conflict &&
+          error.statusCode == 409 &&
+          error.apiError?.code == 'woocommerce_rest_cart_changed' &&
+          error.authoritativeCart != null);
+
+  CheckoutRepositoryException _unresolvedAttempt({
+    Object? cause,
+  }) => CheckoutRepositoryException(
+    kind: CheckoutFailureKind.unknown,
+    message:
+        'The previous order outcome is unconfirmed. Check your order history or contact the store before placing another order.',
+    requiresOutcomeRecovery: true,
+    cause: cause,
+  );
+
+  CheckoutRepositoryException _requiringRecovery(
+    CheckoutRepositoryException error,
+  ) => CheckoutRepositoryException(
+    kind: error.kind,
+    message: error.message,
+    statusCode: error.statusCode,
+    apiError: error.apiError,
+    fieldErrors: error.fieldErrors,
+    authoritativeCart: error.authoritativeCart,
+    cause: error.cause,
+    requiresOutcomeRecovery: true,
+  );
+
+  void _assertCurrentSession({bool requiresOutcomeRecovery = false}) {
+    if (!_currentSessionIsValid()) {
+      throw CheckoutRepositoryException(
+        kind: CheckoutFailureKind.unauthorized,
+        statusCode: 401,
+        message: 'Checkout requires its current signed-in customer.',
+        requiresOutcomeRecovery: requiresOutcomeRecovery,
+      );
+    }
+  }
+
+  Map<String, dynamic> _submissionJson(
+    CheckoutSubmission submission, {
+    bool protected = false,
+  }) {
     final String paymentMethod = submission.paymentMethodId.trim();
     return <String, dynamic>{
       'billing_address': _billingAddressJson(submission.billingAddress),
@@ -421,6 +892,11 @@ class StoreApiCheckoutRepository implements CheckoutRepository {
       // The extension namespace also marks this order as originating from the
       // mobile app, even when this store has no custom checkout fields.
       'extensions': <String, dynamic>{
+        if (protected)
+          CheckoutSafetyCapability.namespace: <String, dynamic>{
+            'protocol': CheckoutSafetyCapability.protocol,
+            'confirmed': submission.confirmedTotal!.toJson(),
+          },
         'mobishop_cms': <String, dynamic>{
           'checkout_fields': submission.customFields,
         },

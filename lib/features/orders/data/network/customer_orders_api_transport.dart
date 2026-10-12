@@ -20,6 +20,10 @@ abstract interface class CustomerOrdersApiTransport {
   });
 }
 
+abstract interface class CustomerOrderLookupTransport {
+  Future<CustomerOrdersApiResponse> fetchOrder(int orderId);
+}
+
 abstract interface class CustomerOrderCancellationTransport {
   Future<CustomerOrdersApiResponse> cancelOrder(int orderId);
 }
@@ -56,9 +60,7 @@ class CustomerOrdersTransportException implements Exception {
 
 /// Same-origin client for the signed-in WooCommerce customer's order history.
 class DioCustomerOrdersApiTransport
-    implements
-        CustomerOrdersApiTransport,
-        CustomerOrderCancellationTransport {
+    implements CustomerOrdersApiTransport, CustomerOrderCancellationTransport, CustomerOrderLookupTransport {
   DioCustomerOrdersApiTransport({
     required Uri storeUri,
     required this.authTokenReader,
@@ -78,6 +80,7 @@ class DioCustomerOrdersApiTransport
     required CustomerOrdersAuthTokenReader authTokenReader,
     Dio? dio,
   }) {
+    AppConfig.requireWooCommerceCustomerTransport('orders');
     AppConfig.validateStoreConnection();
     return DioCustomerOrdersApiTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
@@ -101,6 +104,15 @@ class DioCustomerOrdersApiTransport
       _ordersUri(page: safePage, perPage: safePerPage),
       method: 'GET',
     );
+  }
+
+  @override
+  Future<CustomerOrdersApiResponse> fetchOrder(int orderId) {
+    if (orderId <= 0) {
+      throw const CustomerOrdersTransportException(kind: CustomerOrdersTransportFailureKind.configuration, message: 'A valid customer order is required.');
+    }
+    final base = _ordersUri(page: 1, perPage: 1);
+    return _request(Uri(scheme: base.scheme, host: base.host, port: base.hasPort ? base.port : null, path: '${base.path}/$orderId'), method: 'GET');
   }
 
   @override
@@ -147,6 +159,7 @@ class DioCustomerOrdersApiTransport
           },
         ),
       );
+      _assertCurrentSession(token);
       _assertSameOrigin(response.realUri);
       return CustomerOrdersApiResponse(
         data: _jsonObject(response.data),
@@ -155,6 +168,7 @@ class DioCustomerOrdersApiTransport
     } on CustomerOrdersTransportException {
       rethrow;
     } on DioException catch (error, stackTrace) {
+      _assertCurrentSession(token);
       final Response<dynamic>? response = error.response;
       if (response != null) {
         _assertSameOrigin(response.realUri);
@@ -187,6 +201,16 @@ class DioCustomerOrdersApiTransport
     }
   }
 
+  void _assertCurrentSession(String requestToken) {
+    if (authTokenReader()?.trim() != requestToken) {
+      throw const CustomerOrdersTransportException(
+        kind: CustomerOrdersTransportFailureKind.unauthorized,
+        message: 'The customer session changed during the orders request.',
+        statusCode: 401,
+      );
+    }
+  }
+
   Uri _ordersUri({required int page, required int perPage}) {
     final String installPath = _storeUri.path == '/'
         ? ''
@@ -206,8 +230,7 @@ class DioCustomerOrdersApiTransport
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path:
-          '$installPath/wp-json/mobishop/v1/customer/orders/$orderId/cancel',
+      path: '$installPath/wp-json/mobishop/v1/customer/orders/$orderId/cancel',
       query: null,
       fragment: null,
     );
@@ -303,6 +326,7 @@ class DioCustomerOrdersApiTransport
   }
 
   static Uri _normalizeStoreUri(Uri uri) {
+    AppConfig.requireWooCommerceCustomerTransport('orders');
     final bool isHttps = uri.scheme.toLowerCase() == 'https';
     final bool isLocalDebugHttp =
         kDebugMode &&

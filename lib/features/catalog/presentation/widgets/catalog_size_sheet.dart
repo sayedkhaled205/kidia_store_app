@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'catalog_toolbar_panel.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 
@@ -7,8 +8,67 @@ abstract final class CatalogSizeSheet {
     BuildContext context, {
     required List<CatalogSizeOption> options,
     required CatalogProductFilters selectedFilters,
+    bool belowToolbar = false,
+    bool colors = false,
   }) {
     final CatalogCopy copy = CatalogCopy.of(context);
+    if (belowToolbar) {
+      CatalogSizeOption? selected;
+      for (final option in options) {
+        if (option.taxonomy == (colors ? selectedFilters.colorTaxonomy : selectedFilters.sizeTaxonomy) &&
+            option.term == (colors ? selectedFilters.colorTerm : selectedFilters.sizeTerm)) {
+          selected = option;
+        }
+      }
+      return showCatalogToolbarPanel<CatalogSizeSelection>(
+        context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (options.isEmpty) Text(colors
+                    ? (copy.isArabic ? 'لا توجد ألوان متاحة لهذه المنتجات' : 'No colors available for these products')
+                    : copy.noSizes),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final option in options)
+                      ChoiceChip(
+                        key: Key('catalog-size-${option.taxonomy}-${option.term}'),
+                        label: Text(option.label),
+                        selected: selected == option,
+                        showCheckmark: false,
+                        shape: const StadiumBorder(),
+                        onSelected: (value) => setState(() {
+                          selected = value ? option : null;
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(children: [
+                  Expanded(child: OutlinedButton(
+                    onPressed: () => setState(() => selected = null),
+                    child: Text(copy.reset),
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(
+                      CatalogSizeSelection(option: selected),
+                    ),
+                    child: Text(copy.apply),
+                  )),
+                ]),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return showModalBottomSheet<CatalogSizeSelection>(
       context: context,
       useSafeArea: true,

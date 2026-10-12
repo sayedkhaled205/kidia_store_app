@@ -4,6 +4,9 @@ import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_fi
 class CheckoutState {
   CheckoutState({
     required this.cart,
+    this.hasUnresolvedSubmission = false,
+    this.serverSafetyRequired = false,
+    this.serverSafetyEnforced = false,
     List<CheckoutFieldDefinition> fieldDefinitions =
         const <CheckoutFieldDefinition>[],
   }) : fieldDefinitions = List<CheckoutFieldDefinition>.unmodifiable(
@@ -20,6 +23,15 @@ class CheckoutState {
        );
 
   final Cart cart;
+
+  /// Persisted dispatch without an authoritative order/rejection response.
+  /// An empty or freshly fetched basket does not resolve this state.
+  final bool hasUnresolvedSubmission;
+
+  /// False means unverified/unavailable, never legacy protection inferred from
+  /// merely sending an Idempotency-Key header. Submission rechecks the server.
+  final bool serverSafetyRequired;
+  final bool serverSafetyEnforced;
   final List<String> paymentMethodIds;
   final List<CheckoutFieldDefinition> fieldDefinitions;
 

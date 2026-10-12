@@ -22,6 +22,9 @@ class ProductFakeCatalogRepository implements CatalogRepository {
   Object? productError;
   int productCalls = 0;
   int variationCalls = 0;
+  final List<CatalogProductQuery> relatedQueries = <CatalogProductQuery>[];
+  List<CatalogProduct> relatedProducts = <CatalogProduct>[];
+  Object? relatedError;
 
   @override
   Future<CatalogProduct> getProduct(int productId) async {
@@ -64,8 +67,10 @@ class ProductFakeCatalogRepository implements CatalogRepository {
   Future<CatalogPage<CatalogProduct>> getProducts(
     CatalogProductQuery query,
   ) async {
-    return const CatalogPage<CatalogProduct>(
-      items: <CatalogProduct>[],
+    relatedQueries.add(query);
+    if (relatedError != null) throw relatedError!;
+    return CatalogPage<CatalogProduct>(
+      items: relatedProducts,
       page: 1,
       perPage: 20,
       totalItems: 0,

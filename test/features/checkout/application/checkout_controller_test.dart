@@ -13,14 +13,56 @@ import '../support/checkout_test_data.dart';
 
 void main() {
   group('CheckoutController', () {
+    test(
+      'defaults fill empty core fields and preserve customer addresses',
+      () async {
+        final cartJson = checkoutCartJson();
+        (cartJson['billing_address'] as Map<String, dynamic>)['first_name'] =
+            '';
+        final fields = <CheckoutFieldDefinition>[
+          for (final key in [
+            'billing_first_name',
+            'billing_last_name',
+            'shipping_first_name',
+            'order_comments',
+          ])
+            CheckoutFieldDefinition(
+              key: key,
+              group: key.startsWith('billing')
+                  ? CheckoutFieldGroup.billing
+                  : key.startsWith('shipping')
+                  ? CheckoutFieldGroup.shipping
+                  : CheckoutFieldGroup.order,
+              type: CheckoutFieldType.text,
+              label: key,
+              defaultValue: 'Configured default',
+            ),
+        ];
+        final controller = CheckoutController(
+          repository: FakeCheckoutRepository(
+            state: CheckoutState(
+              cart: CartModel.fromJson(cartJson).toEntity(),
+              fieldDefinitions: fields,
+            ),
+          ),
+        );
+        addTearDown(controller.dispose);
+        await controller.load();
+        expect(controller.billingAddress.firstName, 'Configured default');
+        expect(controller.billingAddress.lastName, 'Lovelace');
+        expect(controller.shippingAddress.firstName, 'Ada');
+        expect(controller.customerNote, 'Configured default');
+        controller.setFieldValue('billing_first_name', 'Customer input');
+        expect(controller.valueForField(fields.first), 'Customer input');
+      },
+    );
+
     test('uses the signed-in customer email when the cart has none', () async {
       final Map<String, dynamic> cartJson = checkoutCartJson();
       (cartJson['billing_address'] as Map<String, dynamic>)['email'] = '';
       final CheckoutController controller = CheckoutController(
         repository: FakeCheckoutRepository(
-          state: CheckoutState(
-            cart: CartModel.fromJson(cartJson).toEntity(),
-          ),
+          state: CheckoutState(cart: CartModel.fromJson(cartJson).toEntity()),
         ),
         initialEmail: 'customer@example.com',
       );
@@ -58,9 +100,7 @@ void main() {
         }
         final CheckoutController controller = CheckoutController(
           repository: FakeCheckoutRepository(
-            state: CheckoutState(
-              cart: CartModel.fromJson(cartJson).toEntity(),
-            ),
+            state: CheckoutState(cart: CartModel.fromJson(cartJson).toEntity()),
           ),
         );
         addTearDown(controller.dispose);
@@ -123,13 +163,17 @@ void main() {
         );
 
         controller.setFieldValue('billing_state', 'EGC');
-        expect((await controller.submit())?.orderId, 730);
+        expect(await controller.submit(), isNull);
+        expect(repository.submitCalls, 0);
+        expect(controller.submitError, contains('confirm the order again'));
         expect(repository.updateCustomerCalls, 1);
         expect(updatedBilling.country, 'EG');
         expect(updatedBilling.state, 'EGC');
         expect(updatedShipping.country, 'EG');
         expect(updatedShipping.state, 'EGC');
         expect(controller.cart?.totals.priceMinor, '15000');
+        expect((await controller.submit())?.orderId, 730);
+        expect(repository.submitCalls, 1);
       },
     );
 
@@ -449,7 +493,7 @@ void main() {
     });
 
     test(
-      'reuses the request key after an uncertain failure until form changes',
+      'does not resend an uncertain order after another tap or form change',
       () async {
         int attempt = 0;
         final FakeCheckoutRepository repository = FakeCheckoutRepository(
@@ -473,17 +517,14 @@ void main() {
 
         expect(await controller.submit(), isNull);
         expect(await controller.submit(), isNull);
-        expect(
-          repository.submissions[0].idempotencyKey,
-          repository.submissions[1].idempotencyKey,
-        );
+        expect(repository.submitCalls, 1);
+        expect(controller.hasUnresolvedSubmission, isTrue);
+        expect(controller.canSubmit, isFalse);
 
         controller.setCustomerNote('Changed');
-        expect((await controller.submit())?.orderId, 730);
-        expect(
-          repository.submissions[2].idempotencyKey,
-          isNot(repository.submissions[1].idempotencyKey),
-        );
+        expect(await controller.submit(), isNull);
+        expect(repository.submitCalls, 1);
+        expect(controller.submitError, contains('could not be confirmed'));
       },
     );
 

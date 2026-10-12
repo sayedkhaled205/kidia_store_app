@@ -13,12 +13,14 @@ class CatalogProductCard extends StatelessWidget {
     required this.product,
     required this.onTap,
     this.settings,
+    this.fitImageRatio = false,
     super.key,
   });
 
   final CatalogProduct product;
   final VoidCallback onTap;
   final CmsPageComponent? settings;
+  final bool fitImageRatio;
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +44,27 @@ class CatalogProductCard extends StatelessWidget {
     final double imageRatio = settings == null
         ? 1
         : settings!.number('image_ratio', 1).clamp(0.6, 1.8).toDouble();
-	final double imageInset = settings?.number('image_inset', 5).clamp(0, 24).toDouble() ?? 5;
-	final double imageRadius = settings?.number('image_radius', 10).clamp(0, 40).toDouble() ?? 10;
-	final double contentHorizontalPadding = settings?.number('content_horizontal_padding', 9).clamp(0, 24).toDouble() ?? 9;
-	final double contentTopPadding = settings?.number('content_top_padding', 5).clamp(0, 24).toDouble() ?? 5;
-	final double contentBottomPadding = settings?.number('content_bottom_padding', 9).clamp(0, 24).toDouble() ?? 9;
-	final String pricePrefix = settings?.string('price_prefix', '') ?? '';
-	final Color priceColor = _quickAddColor(settings?.string('price_color', '#1F2933')) ?? colors.primary;
-	final double priceSize = settings?.number('price_size', 14).clamp(10, 28).toDouble() ?? 14;
+    final double imageInset =
+        settings?.number('image_inset', 5).clamp(0, 24).toDouble() ?? 5;
+    final double imageRadius =
+        settings?.number('image_radius', 10).clamp(0, 40).toDouble() ?? 10;
+    final double contentHorizontalPadding =
+        settings
+            ?.number('content_horizontal_padding', 9)
+            .clamp(0, 24)
+            .toDouble() ??
+        9;
+    final double contentTopPadding =
+        settings?.number('content_top_padding', 5).clamp(0, 24).toDouble() ?? 5;
+    final double contentBottomPadding =
+        settings?.number('content_bottom_padding', 9).clamp(0, 24).toDouble() ??
+        9;
+    final String pricePrefix = settings?.string('price_prefix', '') ?? '';
+    final Color priceColor =
+        _quickAddColor(settings?.string('price_color', '#1F2933')) ??
+        colors.primary;
+    final double priceSize =
+        settings?.number('price_size', 14).clamp(10, 28).toDouble() ?? 14;
     final bool showName = settings?.boolean('show_name', true) ?? true;
     final bool showPrice = settings?.boolean('show_price', true) ?? true;
     final bool showRegularPrice =
@@ -68,6 +83,166 @@ class CatalogProductCard extends StatelessWidget {
         .where((String url) => url.isNotEmpty)
         .toSet()
         .toList(growable: false);
+
+    final Widget imageRegion = ColoredBox(
+      color: colors.surface,
+      child: AspectRatio(
+        aspectRatio: imageRatio,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            if (imageUrls.isEmpty && (imageUrl == null || imageUrl.isEmpty))
+              const Padding(
+                padding: EdgeInsets.all(5),
+                child: AppNetworkImageError(),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.all(imageInset),
+                child: SizedBox.expand(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(imageRadius),
+                    child: ProductImageSwiper(
+                      imageUrls: imageUrls.isEmpty
+                          ? <String>[imageUrl ?? '']
+                          : imageUrls,
+                      enabled: imageSwipeEnabled,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                      semanticLabel:
+                          product.primaryImage?.alt.isNotEmpty == true
+                          ? product.primaryImage!.alt
+                          : product.name,
+                    ),
+                  ),
+                ),
+              ),
+            if (!product.isInStock)
+              ColoredBox(color: colors.surface.withValues(alpha: 0.68)),
+            if (showBadge)
+              PositionedDirectional(
+                start: 8,
+                top: 8,
+                child: _ProductBadge(
+                  label: !product.isInStock
+                      ? copy.outOfStock
+                      : product.isOnSale
+                      ? copy.sale
+                      : '',
+                  isError: !product.isInStock,
+                ),
+              ),
+            if (settings?.boolean('show_wishlist', false) ?? false)
+              _positionedProductAction(
+                settings?.string('product_wishlist_position', 'top_end') ??
+                    'top_end',
+                ProductWishlistButton(
+                  productId: product.id,
+                  appearance: ProductWishlistAppearance(
+                    enabled: true,
+                    iconVariant:
+                        settings?.string(
+                          'product_wishlist_icon_variant',
+                          'heart',
+                        ) ??
+                        'heart',
+                    iconStyle:
+                        settings?.string(
+                          'product_wishlist_icon_style',
+                          'outline',
+                        ) ??
+                        'outline',
+                    iconSize:
+                        settings
+                            ?.number('product_wishlist_icon_size', 20)
+                            .clamp(10, 36)
+                            .toDouble() ??
+                        20,
+                    iconColor: _quickAddColor(
+                      settings?.string(
+                        'product_wishlist_icon_color',
+                        '#1F2933',
+                      ),
+                    ),
+                    showBackground:
+                        settings?.boolean(
+                          'product_wishlist_show_background',
+                          true,
+                        ) ??
+                        true,
+                    backgroundColor: _quickAddColor(
+                      settings?.string(
+                        'product_wishlist_background_color',
+                        '#FFFFFF',
+                      ),
+                    ),
+                    backgroundSize:
+                        settings
+                            ?.number('product_wishlist_background_size', 40)
+                            .clamp(20, 64)
+                            .toDouble() ??
+                        40,
+                    backgroundRadius:
+                        settings
+                            ?.number('product_wishlist_radius', 24)
+                            .clamp(0, 40)
+                            .toDouble() ??
+                        24,
+                    position:
+                        settings?.string(
+                          'product_wishlist_position',
+                          'top_end',
+                        ) ??
+                        'top_end',
+                  ),
+                ),
+              ),
+            if (product.isInStock &&
+                (settings?.boolean('quick_add_enabled', true) ?? true))
+              _positionedProductAction(
+                settings?.string('quick_add_position', 'bottom_end') ??
+                    'bottom_end',
+                ProductQuickAddButton(
+                  productId: product.id,
+                  iconVariant:
+                      settings?.string('quick_add_icon_variant', 'bag') ??
+                      'bag',
+                  iconStyle:
+                      settings?.string('quick_add_icon_style', 'outline') ??
+                      'outline',
+                  iconSize: settings == null
+                      ? 22
+                      : settings!
+                            .number('quick_add_icon_size', 22)
+                            .clamp(10, 36)
+                            .toDouble(),
+                  iconColor: _quickAddColor(
+                    settings?.string('quick_add_icon_color', '#1F2933'),
+                  ),
+                  showBackground:
+                      settings?.boolean('quick_add_show_background', true) ??
+                      true,
+                  backgroundColor: _quickAddColor(
+                    settings?.string('quick_add_background_color', '#FFFFFF'),
+                  ),
+                  backgroundRadius: settings == null
+                      ? 24
+                      : settings!
+                            .number('quick_add_radius', 24)
+                            .clamp(0, 40)
+                            .toDouble(),
+                  backgroundSize: settings == null
+                      ? 40
+                      : settings!
+                            .number('quick_add_background_size', 40)
+                            .clamp(10, 64)
+                            .toDouble(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
 
     return Semantics(
       button: true,
@@ -88,116 +263,17 @@ class CatalogProductCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Column(
+            mainAxisSize: fitImageRatio ? MainAxisSize.min : MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(
-                child: ColoredBox(
-                  color: colors.surface,
-                  child: AspectRatio(
-                    aspectRatio: imageRatio,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: <Widget>[
-                        if (imageUrls.isEmpty &&
-                            (imageUrl == null || imageUrl.isEmpty))
-                          const Padding(
-                            padding: EdgeInsets.all(5),
-                            child: AppNetworkImageError(),
-                          )
-                        else
-						  Padding(
-							padding: EdgeInsets.all(imageInset),
-							child: SizedBox.expand(
-							  child: ClipRRect(
-								borderRadius: BorderRadius.circular(imageRadius),
-                                child: ProductImageSwiper(
-                                  imageUrls: imageUrls.isEmpty
-                                      ? <String>[imageUrl ?? '']
-                                      : imageUrls,
-                                  enabled: imageSwipeEnabled,
-                                  fit: BoxFit.cover,
-                                  alignment: Alignment.center,
-                                  semanticLabel:
-                                      product.primaryImage?.alt.isNotEmpty ==
-                                          true
-                                      ? product.primaryImage!.alt
-                                      : product.name,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (!product.isInStock)
-                          ColoredBox(
-                            color: colors.surface.withValues(alpha: 0.68),
-                          ),
-                        if (showBadge)
-                          PositionedDirectional(
-                            start: 8,
-                            top: 8,
-                            child: _ProductBadge(
-                              label: !product.isInStock
-                                  ? copy.outOfStock
-                                  : product.isOnSale
-                                  ? copy.sale
-                                  : '',
-                              isError: !product.isInStock,
-                            ),
-                          ),
-						if (settings?.boolean('show_wishlist', false) ?? false)
-						  _positionedProductAction(
-							settings?.string('product_wishlist_position', 'top_end') ?? 'top_end',
-							ProductWishlistButton(
-							  productId: product.id,
-							  appearance: ProductWishlistAppearance(
-								enabled: true,
-								iconVariant: settings?.string('product_wishlist_icon_variant', 'heart') ?? 'heart',
-								iconStyle: settings?.string('product_wishlist_icon_style', 'outline') ?? 'outline',
-								iconSize: settings?.number('product_wishlist_icon_size', 20).clamp(10, 36).toDouble() ?? 20,
-								iconColor: _quickAddColor(settings?.string('product_wishlist_icon_color', '#1F2933')),
-								showBackground: settings?.boolean('product_wishlist_show_background', true) ?? true,
-								backgroundColor: _quickAddColor(settings?.string('product_wishlist_background_color', '#FFFFFF')),
-								backgroundSize: settings?.number('product_wishlist_background_size', 40).clamp(20, 64).toDouble() ?? 40,
-								backgroundRadius: settings?.number('product_wishlist_radius', 24).clamp(0, 40).toDouble() ?? 24,
-								position: settings?.string('product_wishlist_position', 'top_end') ?? 'top_end',
-							  ),
-							),
-						  ),
-                        if (product.isInStock &&
-                            (settings?.boolean('quick_add_enabled', true) ??
-                                true))
-                          _positionedProductAction(
-							settings?.string('quick_add_position', 'bottom_end') ?? 'bottom_end',
-							ProductQuickAddButton(
-                              productId: product.id,
-                              iconVariant: settings?.string('quick_add_icon_variant', 'bag') ?? 'bag',
-                              iconStyle: settings?.string('quick_add_icon_style', 'outline') ?? 'outline',
-                              iconSize: settings == null
-                                  ? 22
-                                  : settings!
-                                        .number('quick_add_icon_size', 22)
-                                        .clamp(10, 36)
-                                        .toDouble(),
-                              iconColor: _quickAddColor(settings?.string('quick_add_icon_color', '#1F2933')),
-                              showBackground: settings?.boolean('quick_add_show_background', true) ?? true,
-                              backgroundColor: _quickAddColor(settings?.string('quick_add_background_color', '#FFFFFF')),
-                              backgroundRadius: settings == null
-                                  ? 24
-                                  : settings!
-                                        .number('quick_add_radius', 24)
-                                        .clamp(0, 40)
-                                        .toDouble(),
-							  backgroundSize: settings == null
-								  ? 40
-								  : settings!.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+              if (fitImageRatio) imageRegion else Expanded(child: imageRegion),
+              Padding(
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  contentHorizontalPadding,
+                  contentTopPadding,
+                  contentHorizontalPadding,
+                  contentBottomPadding,
                 ),
-              ),
-			  Padding(
-				padding: EdgeInsetsDirectional.fromSTEB(contentHorizontalPadding, contentTopPadding, contentHorizontalPadding, contentBottomPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -239,29 +315,37 @@ class CatalogProductCard extends StatelessWidget {
                         ),
                       ),
                     if (showPrice)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 2,
+                        crossAxisAlignment: WrapCrossAlignment.end,
                         children: <Widget>[
-                          Expanded(
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
                             child: Text(
-							  currentPrice.isEmpty ? '—' : '$pricePrefix$currentPrice',
                               maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                              currentPrice.isEmpty
+                                  ? '—'
+                                  : '$pricePrefix$currentPrice',
                               style: theme.textTheme.titleSmall?.copyWith(
-								color: priceColor,
-								fontWeight: FontWeight.w800,
-								fontSize: priceSize,
+                                color: priceColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: priceSize,
                               ),
                             ),
                           ),
                           if (showRegularPrice &&
                               product.prices.isDiscounted &&
                               regularPrice.isNotEmpty)
-                            Flexible(
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 regularPrice,
                                 maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: colors.onSurfaceVariant,
                                   decoration: TextDecoration.lineThrough,

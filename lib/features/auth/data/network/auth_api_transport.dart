@@ -12,10 +12,7 @@ import 'package:mobishop_store_app/features/auth/domain/repositories/auth_reposi
 abstract interface class AuthApiTransport {
   Future<AuthIdentity> identify(String email);
 
-  Future<AuthSession> signIn({
-    required String email,
-    required String password,
-  });
+  Future<AuthSession> signIn({required String email, required String password});
 
   Future<AuthSession> register({
     required String email,
@@ -77,6 +74,7 @@ class DioAuthApiTransport implements AuthApiTransport {
           );
 
   factory DioAuthApiTransport.forConfiguredStore({Dio? dio}) {
+    AppConfig.requireWooCommerceCustomerTransport('authentication');
     AppConfig.validateStoreConnection();
     return DioAuthApiTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
@@ -116,10 +114,7 @@ class DioAuthApiTransport implements AuthApiTransport {
     return AuthSession.fromJson(
       await _request(
         'login',
-        body: <String, dynamic>{
-          'email': email.trim(),
-          'password': password,
-        },
+        body: <String, dynamic>{'email': email.trim(), 'password': password},
       ),
     );
   }
@@ -132,10 +127,7 @@ class DioAuthApiTransport implements AuthApiTransport {
     return AuthSession.fromJson(
       await _request(
         'register',
-        body: <String, dynamic>{
-          'email': email.trim(),
-          'password': password,
-        },
+        body: <String, dynamic>{'email': email.trim(), 'password': password},
       ),
     );
   }
@@ -403,6 +395,7 @@ class DioAuthApiTransport implements AuthApiTransport {
   }
 
   static Uri _normalizeStoreUri(Uri uri) {
+    AppConfig.requireWooCommerceCustomerTransport('authentication');
     final bool isHttps = uri.scheme.toLowerCase() == 'https';
     final bool isLocalDebugHttp =
         kDebugMode &&

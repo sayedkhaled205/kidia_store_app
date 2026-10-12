@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/app_design/app_design_providers58.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
 import 'package:mobishop_store_app/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:mobishop_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
@@ -11,7 +14,8 @@ import 'package:mobishop_store_app/features/home/data/models/home_layout_model.d
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 
 final cmsPreviewHomeLayoutJsonProvider = StreamProvider<Map<String, dynamic>?>(
-  (Ref ref) => CmsPreviewLayoutBridge.homeLayouts,
+  (Ref ref) =>
+      CmsPreviewLayoutBridge.homeLayouts.where((layout) => layout != null),
 );
 
 final cmsPreviewHomeFocusTargetProvider = StreamProvider<String>(
@@ -36,6 +40,13 @@ final homeDioProvider = Provider<Dio>((Ref ref) {
 });
 
 final homeRemoteDataSourceProvider = Provider<HomeRemoteDataSource>((Ref ref) {
+  if (!AppConfig.isCmsPreview &&
+      AppConfig.commercePlatform != CommercePlatform.wooCommerce) {
+    ref.watch(portableAppDesign58Provider);
+    throw const AppConfigurationException(
+      'Foreign Home design is hydrated directly from its catalog, not a WordPress Home reader.',
+    );
+  }
   if (AppConfig.useMockHomeLayout) {
     return const MockHomeRemoteDataSource();
   }
@@ -52,26 +63,54 @@ final homeRepositoryProvider = Provider<HomeRepository>((Ref ref) {
   );
 });
 
-final homeLayoutProvider = FutureProvider.autoDispose
-    .family<HomeLayout, String>((Ref ref, String locale) async {
-      final Map<String, dynamic>? previewJson = ref
-          .watch(cmsPreviewHomeLayoutJsonProvider)
-          .value;
-      if (previewJson != null) {
-        return HomeLayoutModel.fromJson(previewJson);
+final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>(
+  (Ref ref, String locale) async {
+    if (!AppConfig.isCmsPreview &&
+        AppConfig.commercePlatform != CommercePlatform.wooCommerce) {
+      final design = ref.watch(portableAppDesign58Provider)!;
+      final catalog = ref.watch(catalogRepositoryProvider);
+      Timer? directRefresh;
+      ref.onDispose(() => directRefresh?.cancel());
+      try {
+        return await design.hydrateHome(catalog, locale: locale);
+      } finally {
+        if (ref.mounted) {
+          directRefresh = Timer(const Duration(seconds: 15), () {
+            if (ref.mounted) ref.invalidateSelf();
+          });
+        }
       }
-      // The embedded CMS owns the canonical WordPress preview payload.
-      // Falling through to the public store endpoint starts a second, much
-      // slower Home request while WordPress normalizes the unsaved Builder state.
-      if (AppConfig.isCmsPreview) {
-        return Completer<HomeLayout>().future;
+    }
+    // Await the first real packet, rather than manufacturing a Future that
+    // can never complete when the preview is first opened from another page.
+    final previewState = ref.watch(cmsPreviewHomeLayoutJsonProvider);
+    final Map<String, dynamic>? previewJson = AppConfig.isCmsPreview
+        ? (previewState.value ??
+              CmsPreviewLayoutBridge.currentHomeLayout ??
+              await ref.watch(cmsPreviewHomeLayoutJsonProvider.future))
+        : previewState.value;
+    if (previewJson != null) {
+      return HomeLayoutModel.fromJson(previewJson);
+    }
+    // The embedded CMS owns the canonical WordPress preview payload.
+    // Falling through to the public store endpoint starts a second, much
+    // slower Home request while WordPress normalizes the unsaved Builder state.
+    if (AppConfig.isCmsPreview) {
+      throw StateError('The builder has not supplied a Home layout.');
+    }
+    final HomeRepository repository = ref.watch(homeRepositoryProvider);
+    Timer? refreshTimer;
+    ref.onDispose(() => refreshTimer?.cancel());
+    try {
+      return await repository.getHomeLayout(locale: locale);
+    } finally {
+      // A slow initial read must be allowed to finish. Start the next refresh
+      // interval only after this request settles, not while it is in flight.
+      if (ref.mounted) {
+        refreshTimer = Timer(const Duration(seconds: 15), () {
+          if (ref.mounted) ref.invalidateSelf();
+        });
       }
-      final Timer refreshTimer = Timer(
-        const Duration(seconds: 5),
-        ref.invalidateSelf,
-      );
-      ref.onDispose(refreshTimer.cancel);
-      final HomeRepository repository = ref.watch(homeRepositoryProvider);
-
-      return repository.getHomeLayout(locale: locale);
-    });
+    }
+  },
+);

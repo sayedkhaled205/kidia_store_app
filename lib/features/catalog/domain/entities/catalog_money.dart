@@ -58,7 +58,10 @@ class CatalogMoney {
     if (currencyPrefix.isEmpty &&
         currencySuffix.isEmpty &&
         currencySymbol.isNotEmpty) {
-      return '$currencySymbol$amount';
+      final String separator = RegExp(r'[A-Za-z]$').hasMatch(currencySymbol)
+          ? ' '
+          : '';
+      return '$currencySymbol$separator$amount';
     }
 
     return '$currencyPrefix$amount$currencySuffix';

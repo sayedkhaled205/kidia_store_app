@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -10,76 +11,111 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
-import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_image_swiper.dart';
 
-const List<CatalogProduct> _previewWishlistProducts = <CatalogProduct>[
-  CatalogProduct(
-    id: 900001,
-    name: 'MobiShop everyday set',
-    slug: 'mobishop-everyday-set',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '45000',
-      regularPriceMinor: '52000',
-      salePriceMinor: '45000',
-    ),
-  ),
-  CatalogProduct(
-    id: 900002,
-    name: 'MobiShop summer outfit',
-    slug: 'mobishop-summer-outfit',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '39000',
-    ),
-  ),
-  CatalogProduct(
-    id: 900003,
-    name: 'Kids essentials',
-    slug: 'kids-essentials',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '32000',
-    ),
-  ),
-  CatalogProduct(
-    id: 900004,
-    name: 'Special offer',
-    slug: 'special-offer',
-    type: 'simple',
-    isPurchasable: true,
-    isInStock: true,
-    stockStatus: CatalogStockStatus.inStock,
-    prices: CatalogMoney(
-      currencyCode: 'EGP',
-      currencySymbol: 'ج.م',
-      currencyMinorUnit: 2,
-      priceMinor: '27500',
-    ),
-  ),
-];
+/// Null means no configured navigation. Invalid category IDs and unsafe URL
+/// schemes never become an accidental product action.
+String? wishlistRecommendationRoute(CmsPageComponent settings, int productId) {
+  final String type = settings.string('action_type', 'product');
+  final String value = settings.string('action_value', '').trim();
+  if (type == 'category') {
+    final int? id = int.tryParse(value);
+    return id != null && id > 0 ? '/categories/$id' : null;
+  }
+  return type == 'product' ? '/product/$productId' : null;
+}
+
+Uri? wishlistRecommendationUrl(CmsPageComponent settings) {
+  if (settings.string('action_type', 'product') != 'url') return null;
+  final Uri? uri = Uri.tryParse(settings.string('action_value', '').trim());
+  return uri != null &&
+          <String>{'https', 'http'}.contains(uri.scheme) &&
+          uri.host.isNotEmpty
+      ? uri
+      : null;
+}
+
+/// Presentation-only removal control. The screen still owns persistence and
+/// busy state; changing icon appearance never switches the wishlist repository.
+class WishlistRemoveButton extends StatelessWidget {
+  const WishlistRemoveButton({
+    required this.settings,
+    required this.tooltip,
+    required this.onPressed,
+    this.buttonKey,
+    super.key,
+  });
+
+  final CmsPageComponent settings;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Key? buttonKey;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!settings.boolean('show_wishlist', true)) {
+      return const SizedBox.shrink();
+    }
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final bool filled =
+        settings.string('product_wishlist_icon_style', 'outline') == 'filled';
+    final IconData icon = switch (settings.string(
+      'product_wishlist_icon_variant',
+      'heart',
+    )) {
+      'bookmark' => filled ? Icons.bookmark : Icons.bookmark_border,
+      'rounded' =>
+        filled ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+      _ => filled ? Icons.favorite : Icons.favorite_border,
+    };
+    return SizedBox.square(
+      dimension: settings
+          .number('product_wishlist_background_size', 40)
+          .clamp(20, 64)
+          .toDouble(),
+      child: Material(
+        color: settings.boolean('product_wishlist_show_background', true)
+            ? _wishlistHexColor(
+                    settings.string(
+                      'product_wishlist_background_color',
+                      '#FFFFFF',
+                    ),
+                  ) ??
+                  colors.surface
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(
+          settings
+              .number('product_wishlist_radius', 24)
+              .clamp(0, 40)
+              .toDouble(),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IconButton(
+          key: buttonKey,
+          tooltip: tooltip,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: onPressed,
+          icon: Icon(
+            icon,
+            size: settings
+                .number('product_wishlist_icon_size', 20)
+                .clamp(10, 36)
+                .toDouble(),
+            color:
+                _wishlistHexColor(
+                  settings.string('product_wishlist_icon_color', ''),
+                ) ??
+                colors.error,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({
@@ -107,14 +143,12 @@ class WishlistScreen extends StatefulWidget {
 
 class _WishlistScreenState extends State<WishlistScreen> {
   late WishlistController _controller;
-  Future<List<CatalogProduct>>? _themeDemoProducts;
   Timer? _snackBarTimer;
 
   @override
   void initState() {
     super.initState();
     _createController();
-    _loadThemeDemoProducts();
   }
 
   @override
@@ -125,16 +159,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
       _createController();
-      _loadThemeDemoProducts();
     }
-  }
-
-  void _loadThemeDemoProducts() {
-    _themeDemoProducts = CmsPreviewLayoutBridge.useDemoCatalog
-        ? widget.catalogRepository
-              .getProducts(CatalogProductQuery(perPage: 6))
-              .then((page) => page.items)
-        : null;
   }
 
   void _createController() {
@@ -168,8 +193,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
         final String previewState = AppConfig.isCmsPreview
             ? layout.string('wishlist_preview_state', 'products')
             : '';
-        final bool signedOutGate =
-            widget.requiresSignIn && !widget.signedIn;
+        final bool signedOutGate = widget.requiresSignIn && !widget.signedIn;
         return CmsPageScaffold(
           layout: layout,
           defaultTitle: copy.title,
@@ -177,7 +201,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
             CmsPageHeaderAction(
               type: 'cart',
               icon: Icons.shopping_bag_outlined,
-              tooltip: 'Cart',
+              tooltip: copy.arabic ? 'السلة' : 'Cart',
               onPressed: () => context.push('/cart'),
             ),
           ],
@@ -187,10 +211,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                   layout.header.boolean('show_count', true) &&
                   (previewState == 'products' ||
                       previewState.isEmpty && !signedOutGate))
-                Text(
-                  '${previewState == 'products' && _controller.length == 0 ? (CmsPreviewLayoutBridge.useDemoCatalog ? 6 : _previewWishlistProducts.length) : _controller.length}',
-                  key: const Key('wishlist-count'),
-                ),
+                Text('${_controller.length}', key: const Key('wishlist-count')),
               if (_controller.mutationError != null)
                 _MutationErrorNotice(
                   message: _controller.mutationError!,
@@ -225,35 +246,6 @@ class _WishlistScreenState extends State<WishlistScreen> {
     }
     if (previewState == 'empty') {
       return _buildEmptyState(copy, layout);
-    }
-    if (previewState == 'products') {
-      if (CmsPreviewLayoutBridge.useDemoCatalog) {
-        return FutureBuilder<List<CatalogProduct>>(
-          future: _themeDemoProducts,
-          builder: (
-            BuildContext context,
-            AsyncSnapshot<List<CatalogProduct>> snapshot,
-          ) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return _buildProductState(
-              copy,
-              layout,
-              snapshot.data!,
-              previewOnly: true,
-            );
-          },
-        );
-      }
-      return _buildProductState(
-        copy,
-        layout,
-        _controller.products.isEmpty
-            ? _previewWishlistProducts
-            : _controller.products,
-        previewOnly: _controller.products.isEmpty,
-      );
     }
     switch (_controller.status) {
       case WishlistStatus.initial:
@@ -309,21 +301,20 @@ class _WishlistScreenState extends State<WishlistScreen> {
   Widget _buildProductState(
     _WishlistCopy copy,
     CmsPageLayout layout,
-    List<CatalogProduct> products, {
-    bool previewOnly = false,
-  }) {
+    List<CatalogProduct> products,
+  ) {
     return _WishlistStatePage(
       layout: layout,
       state: 'products',
       copy: copy,
       catalogRepository: widget.catalogRepository,
-      onProductTap: previewOnly ? null : widget.onProductTap,
+      onProductTap: widget.onProductTap,
       onSignIn: widget.onSignIn,
       onContinueShopping: widget.onContinueShopping,
       products: products,
-      isMutating: previewOnly || _controller.isMutating,
-      onRefresh: previewOnly ? () async {} : _controller.refresh,
-      onRemove: previewOnly ? (_) {} : _removeProduct,
+      isMutating: _controller.isMutating,
+      onRefresh: _controller.refresh,
+      onRemove: _removeProduct,
     );
   }
 
@@ -413,8 +404,7 @@ class _WishlistStatePage extends StatelessWidget {
   }
 
   Widget _element(BuildContext context, CmsPageComponent component) {
-    if (component.type == 'sign_in_state' ||
-        component.type == 'empty_state') {
+    if (component.type == 'sign_in_state' || component.type == 'empty_state') {
       final bool signIn = component.type == 'sign_in_state';
       return CmsElementFrame(
         component: component,
@@ -423,6 +413,7 @@ class _WishlistStatePage extends StatelessWidget {
           settings: component,
           copy: copy,
           signIn: signIn,
+          horizontalPadding: cmsContentHorizontalPadding(layout),
           onContinueShopping: onContinueShopping,
           onSignIn: onSignIn,
         ),
@@ -436,6 +427,10 @@ class _WishlistStatePage extends StatelessWidget {
           products: products,
           copy: copy,
           settings: component,
+          horizontalPadding: cmsContentHorizontalPadding(
+            layout,
+            component: component,
+          ),
           isMutating: isMutating,
           onProductTap: onProductTap,
           onRemove: onRemove,
@@ -449,6 +444,11 @@ class _WishlistStatePage extends StatelessWidget {
           key: ValueKey<String>(component.id),
           repository: catalogRepository,
           settings: component,
+          horizontalPadding: cmsContentHorizontalPadding(
+            layout,
+            component: component,
+            componentKey: 'section_padding',
+          ),
           onProductTap: onProductTap,
         ),
       );
@@ -463,6 +463,7 @@ class _WishlistMessage extends StatelessWidget {
     required this.settings,
     required this.copy,
     required this.signIn,
+    required this.horizontalPadding,
     this.onContinueShopping,
     this.onSignIn,
   });
@@ -471,6 +472,7 @@ class _WishlistMessage extends StatelessWidget {
   final CmsPageComponent settings;
   final _WishlistCopy copy;
   final bool signIn;
+  final double horizontalPadding;
   final VoidCallback? onContinueShopping;
   final VoidCallback? onSignIn;
 
@@ -488,22 +490,22 @@ class _WishlistMessage extends StatelessWidget {
         .clamp(56, 180)
         .toDouble();
     final String imageUrl = settings.string('illustration_url', '');
-    final Color buttonColor = _wishlistHexColor(
-      settings.string('button_color', '#FFFFFF'),
-    ) ?? Colors.white;
-    final Color textColor = _wishlistHexColor(
-      settings.string('button_text_color', '#1D1D1D'),
-    ) ?? const Color(0xFF1D1D1D);
-    final Color borderColor = _wishlistHexColor(
-      settings.string('button_border_color', '#1D1D1D'),
-    ) ?? const Color(0xFF1D1D1D);
+    final Color buttonColor =
+        _wishlistHexColor(settings.string('button_color', '#FFFFFF')) ??
+        Colors.white;
+    final Color textColor =
+        _wishlistHexColor(settings.string('button_text_color', '#1D1D1D')) ??
+        const Color(0xFF1D1D1D);
+    final Color borderColor =
+        _wishlistHexColor(settings.string('button_border_color', '#1D1D1D')) ??
+        const Color(0xFF1D1D1D);
     final bool filled = settings.string('button_style', 'outline') == 'filled';
     return Padding(
       padding: EdgeInsets.only(
         top: settings.number('top_spacing', 56).clamp(0, 180).toDouble(),
         bottom: settings.number('bottom_spacing', 96).clamp(0, 220).toDouble(),
-        left: 20,
-        right: 20,
+        left: horizontalPadding,
+        right: horizontalPadding,
       ),
       child: Column(
         children: <Widget>[
@@ -525,9 +527,7 @@ class _WishlistMessage extends StatelessWidget {
           Text(
             settings.string(
               'title',
-              signIn
-                  ? 'Sign in to view your wishlist'
-                  : copy.emptyTitle,
+              signIn ? 'Sign in to view your wishlist' : copy.emptyTitle,
             ),
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -622,11 +622,13 @@ class _WishlistRecommendations extends StatefulWidget {
     super.key,
     required this.repository,
     required this.settings,
+    required this.horizontalPadding,
     this.onProductTap,
   });
 
   final CatalogRepository repository;
   final CmsPageComponent settings;
+  final double horizontalPadding;
   final ValueChanged<CatalogProduct>? onProductTap;
 
   @override
@@ -659,16 +661,9 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
         .round()
         .clamp(2, 12)
         .toInt();
-    if (AppConfig.isCmsPreview &&
-        !CmsPreviewLayoutBridge.useDemoCatalog) {
-      return _previewWishlistProducts.take(limit).toList(growable: false);
-    }
     final page = await widget.repository
         .getProducts(
-          CatalogProductQuery(
-            perPage: limit,
-            sort: CatalogSort.popularity,
-          ),
+          CatalogProductQuery(perPage: limit, sort: CatalogSort.popularity),
         )
         .timeout(const Duration(seconds: 8));
     return page.items.take(limit).toList(growable: false);
@@ -682,10 +677,7 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
 
   @override
   Widget build(BuildContext context) {
-    final double padding = widget.settings
-        .number('section_padding', 16)
-        .clamp(0, 32)
-        .toDouble();
+    final double padding = widget.horizontalPadding;
     return Padding(
       padding: EdgeInsets.fromLTRB(padding, 14, padding, 26),
       child: Column(
@@ -712,83 +704,99 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
           ),
           FutureBuilder<List<CatalogProduct>>(
             future: _products,
-            builder: (
-              BuildContext context,
-              AsyncSnapshot<List<CatalogProduct>> snapshot,
-            ) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(
-                  height: 160,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasError) {
-                return SizedBox(
-                  height: 92,
-                  child: Center(
-                    child: TextButton.icon(
-                      onPressed: _retry,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Retry'),
+            builder:
+                (
+                  BuildContext context,
+                  AsyncSnapshot<List<CatalogProduct>> snapshot,
+                ) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 160,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return SizedBox(
+                      height: 92,
+                      child: Center(
+                        child: TextButton.icon(
+                          onPressed: _retry,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Retry'),
+                        ),
+                      ),
+                    );
+                  }
+                  final List<CatalogProduct> products =
+                      snapshot.data ?? const <CatalogProduct>[];
+                  if (products.isEmpty) return const SizedBox.shrink();
+                  final String layoutStyle = widget.settings.string(
+                    'layout_style',
+                    'grid',
+                  );
+                  final int columns = widget.settings
+                      .number('columns', 2)
+                      .round()
+                      .clamp(1, 3)
+                      .toInt();
+                  final double gap = widget.settings
+                      .number('gap', 8)
+                      .clamp(0, 24)
+                      .toDouble();
+                  if (layoutStyle == 'carousel') {
+                    return SizedBox(
+                      height: 250,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: products.length,
+                        separatorBuilder: (_, _) => SizedBox(width: gap),
+                        itemBuilder: (BuildContext context, int index) =>
+                            SizedBox(
+                              width: 168,
+                              child: _WishlistRecommendationCard(
+                                product: products[index],
+                                settings: widget.settings,
+                                onTap: widget.onProductTap == null
+                                    ? null
+                                    : () =>
+                                          widget.onProductTap!(products[index]),
+                              ),
+                            ),
+                      ),
+                    );
+                  }
+                  return GridView.builder(
+                    key: const Key('wishlist-recommendations-grid'),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: layoutStyle == 'compact'
+                          ? (columns + 1).clamp(2, 3).toInt()
+                          : columns,
+                      mainAxisSpacing: gap,
+                      crossAxisSpacing: gap,
+                      childAspectRatio:
+                          widget.settings
+                              .number('image_ratio', .82)
+                              .clamp(.6, 1.8)
+                              .toDouble() *
+                          (widget.settings.boolean('show_price', true)
+                              ? .78
+                              : 1),
                     ),
-                  ),
-                );
-              }
-              final List<CatalogProduct> products =
-                  snapshot.data ?? const <CatalogProduct>[];
-              if (products.isEmpty) return const SizedBox.shrink();
-              final String layoutStyle = widget.settings.string('layout_style', 'grid');
-              final int columns = widget.settings
-                  .number('columns', 2)
-                  .round()
-                  .clamp(1, 3)
-                  .toInt();
-              final double gap = widget.settings
-                  .number('gap', 8)
-                  .clamp(0, 24)
-                  .toDouble();
-              if (layoutStyle == 'carousel') {
-                return SizedBox(
-                  height: 250,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
                     itemCount: products.length,
-                    separatorBuilder: (_, _) => SizedBox(width: gap),
-                    itemBuilder: (BuildContext context, int index) => SizedBox(
-                      width: 168,
-                      child: _WishlistRecommendationCard(product: products[index], settings: widget.settings, onTap: widget.onProductTap == null ? null : () => widget.onProductTap!(products[index])),
-                    ),
-                  ),
-                );
-              }
-              return GridView.builder(
-                key: const Key('wishlist-recommendations-grid'),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: layoutStyle == 'compact' ? (columns + 1).clamp(2, 3).toInt() : columns,
-                  mainAxisSpacing: gap,
-                  crossAxisSpacing: gap,
-                  childAspectRatio:
-                      widget.settings
-                          .number('image_ratio', .82)
-                          .clamp(.6, 1.8)
-                          .toDouble() *
-                      (widget.settings.boolean('show_price', true) ? .78 : 1),
-                ),
-                itemCount: products.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final CatalogProduct product = products[index];
-                  return _WishlistRecommendationCard(
-                    product: product,
-                    settings: widget.settings,
-                    onTap: widget.onProductTap == null
-                        ? null
-                        : () => widget.onProductTap!(product),
+                    itemBuilder: (BuildContext context, int index) {
+                      final CatalogProduct product = products[index];
+                      return _WishlistRecommendationCard(
+                        product: product,
+                        settings: widget.settings,
+                        onTap: widget.onProductTap == null
+                            ? null
+                            : () => widget.onProductTap!(product),
+                      );
+                    },
                   );
                 },
-              );
-            },
           ),
         ],
       ),
@@ -812,6 +820,17 @@ class _WishlistRecommendationCard extends StatelessWidget {
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
     final List<String> imageUrls = _wishlistProductImageUrls(product);
     final String actionType = settings.string('action_type', 'product');
+    final String? route = wishlistRecommendationRoute(settings, product.id);
+    final Uri? url = wishlistRecommendationUrl(settings);
+    final VoidCallback? configuredTap = actionType == 'product'
+        ? onTap
+        : route != null
+        ? () => context.go(route)
+        : url != null
+        ? () {
+            launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        : null;
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
@@ -821,69 +840,79 @@ class _WishlistRecommendationCard extends StatelessWidget {
           ) ??
           Theme.of(context).colorScheme.surface,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(settings.number('card_radius', 0).clamp(0, 32).toDouble())),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          settings.number('card_radius', 0).clamp(0, 32).toDouble(),
+        ),
+      ),
       child: InkWell(
-      onTap: actionType == 'none' ? null : onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                imageUrl.isEmpty
-                    ? AppNetworkImageError(
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                      )
-                    : ProductImageSwiper(
-                        imageUrls: imageUrls,
-                        enabled: settings.boolean(
-                          'enable_image_swipe',
-                          false,
+        onTap: configuredTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  imageUrl.isEmpty
+                      ? AppNetworkImageError(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerLow,
+                        )
+                      : ProductImageSwiper(
+                          imageUrls: imageUrls,
+                          enabled: settings.boolean(
+                            'enable_image_swipe',
+                            false,
+                          ),
+                          fit: BoxFit.cover,
+                          semanticLabel: product.name,
                         ),
-                        fit: BoxFit.cover,
-                        semanticLabel: product.name,
-                      ),
-                if (settings.boolean('show_quick_add', true) &&
-                    product.isInStock)
-                  PositionedDirectional(
-                    end: 8,
-                    bottom: 8,
-                    child: ProductQuickAddButton(productId: product.id),
-                  ),
-              ],
-            ),
-          ),
-          if (settings.boolean('show_name', false)) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              product.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-            ),
-          ],
-          if (settings.boolean('show_price', true)) ...<Widget>[
-            const SizedBox(height: 8),
-            Text.rich(
-              TextSpan(
-                text: 'From ',
-                children: <InlineSpan>[
-                  TextSpan(
-                    text: product.prices.displayAmount(
-                      product.prices.priceMinor,
+                  if (settings.boolean('show_quick_add', true) &&
+                      product.isInStock)
+                    PositionedDirectional(
+                      end: 8,
+                      bottom: 8,
+                      child: ProductQuickAddButton(productId: product.id),
                     ),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
                 ],
               ),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
             ),
+            if (settings.boolean('show_name', false)) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                product.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+            if (settings.boolean('show_price', true)) ...<Widget>[
+              const SizedBox(height: 8),
+              Text.rich(
+                TextSpan(
+                  text: 'From ',
+                  children: <InlineSpan>[
+                    TextSpan(
+                      text: product.prices.displayAmount(
+                        product.prices.priceMinor,
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ],
-        ],
-      ),
+        ),
       ),
     );
   }
@@ -1021,6 +1050,7 @@ class _WishlistGrid extends StatelessWidget {
     required this.products,
     required this.copy,
     required this.settings,
+    required this.horizontalPadding,
     required this.isMutating,
     required this.onRemove,
     this.onProductTap,
@@ -1030,6 +1060,7 @@ class _WishlistGrid extends StatelessWidget {
   final List<CatalogProduct> products;
   final _WishlistCopy copy;
   final CmsPageComponent settings;
+  final double horizontalPadding;
   final bool isMutating;
   final ValueChanged<CatalogProduct> onRemove;
   final ValueChanged<CatalogProduct>? onProductTap;
@@ -1047,46 +1078,46 @@ class _WishlistGrid extends StatelessWidget {
             .number('gap', 12)
             .clamp(0, 32)
             .toDouble();
-        final double topSpacing = (constraints.maxWidth * 0.05)
-            .clamp(18, 24)
+        final double topSpacing = settings
+            .number(
+              'top_spacing',
+              (constraints.maxWidth * 0.05).clamp(18, 24).toDouble(),
+            )
+            .clamp(0, 48)
             .toDouble();
         return GridView.builder(
-            key: instanceId == 'wishlist_grid'
-                ? const Key('wishlist-grid')
-                : ValueKey<String>('$instanceId-grid'),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsetsDirectional.fromSTEB(
-              spacing,
-              topSpacing,
-              spacing,
-              28,
-            ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columnCount,
-              mainAxisSpacing: spacing,
-              crossAxisSpacing: spacing,
-              childAspectRatio: settings
-                  .number('image_ratio', 1)
-                  .clamp(0.6, 1.8)
-                  .toDouble() *
-                  0.62,
-            ),
-            itemCount: products.length,
-            itemBuilder: (BuildContext context, int index) {
-              final CatalogProduct product = products[index];
-              return _WishlistProductCard(
-                instanceId: instanceId,
-                product: product,
-                copy: copy,
-                settings: settings,
-                removeEnabled: !isMutating,
-                onTap: onProductTap == null
-                    ? null
-                    : () => onProductTap!(product),
-                onRemove: () => onRemove(product),
-              );
-            },
+          key: instanceId == 'wishlist_grid'
+              ? const Key('wishlist-grid')
+              : ValueKey<String>('$instanceId-grid'),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsetsDirectional.fromSTEB(
+            horizontalPadding,
+            topSpacing,
+            horizontalPadding,
+            28,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio:
+                settings.number('image_ratio', 1).clamp(0.6, 1.8).toDouble() *
+                0.62,
+          ),
+          itemCount: products.length,
+          itemBuilder: (BuildContext context, int index) {
+            final CatalogProduct product = products[index];
+            return _WishlistProductCard(
+              instanceId: instanceId,
+              product: product,
+              copy: copy,
+              settings: settings,
+              removeEnabled: !isMutating,
+              onTap: onProductTap == null ? null : () => onProductTap!(product),
+              onRemove: () => onRemove(product),
+            );
+          },
         );
       },
     );
@@ -1118,6 +1149,14 @@ class _WishlistProductCard extends StatelessWidget {
     final String imageUrl = product.primaryImage?.source.toString() ?? '';
     final List<String> imageUrls = _wishlistProductImageUrls(product);
     final String cardStyle = settings.string('card_style', 'outlined');
+    final double imageInset = settings
+        .number('image_inset', 5)
+        .clamp(0, 24)
+        .toDouble();
+    final double imageRadius = settings
+        .number('image_radius', 10)
+        .clamp(0, 40)
+        .toDouble();
     return Card(
       key: instanceId == 'wishlist_grid'
           ? Key('wishlist-product-${product.id}')
@@ -1137,120 +1176,185 @@ class _WishlistProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  if (imageUrl.isEmpty)
-                    AppNetworkImageError(
-                      backgroundColor: colors.surfaceContainerLow,
-                    )
-                  else
-                    ProductImageSwiper(
-                      imageUrls: imageUrls,
-                      enabled: settings.boolean(
-                        'enable_image_swipe',
-                        false,
-                      ),
-                      fit: BoxFit.cover,
-                      semanticLabel: product.name,
-                    ),
-                  PositionedDirectional(
-                    top: 8,
-                    end: 8,
-                    child: IconButton(
-                      key: instanceId == 'wishlist_grid'
-                          ? Key('wishlist-remove-${product.id}')
-                          : ValueKey<String>(
-                              'wishlist-remove-$instanceId-${product.id}',
-                            ),
-                      tooltip: copy.remove,
-                      onPressed: removeEnabled ? onRemove : null,
-                      icon: Icon(Icons.favorite_rounded, color: colors.error),
-                    ),
-                  ),
-                  if (product.isInStock &&
-                      settings.boolean('quick_add_enabled', true))
-					_positionedWishlistAction(
-					  settings.string('quick_add_position', 'bottom_end'),
-					  AbsorbPointer(
-					    absorbing: !removeEnabled,
-					    child: ProductQuickAddButton(
-                          productId: product.id,
-                          iconVariant: settings.string('quick_add_icon_variant', 'bag'),
-                          iconStyle: settings.string('quick_add_icon_style', 'outline'),
-                          iconSize: settings.number('quick_add_icon_size', 22).clamp(10, 36).toDouble(),
-                          iconColor: _wishlistHexColor(settings.string('quick_add_icon_color', '#1F2933')),
-                          showBackground: settings.boolean('quick_add_show_background', true),
-                          backgroundColor: _wishlistHexColor(settings.string('quick_add_background_color', '#FFFFFF')),
-                          backgroundRadius: settings.number('quick_add_radius', 24).clamp(0, 40).toDouble(),
-						  backgroundSize: settings.number('quick_add_background_size', 40).clamp(10, 64).toDouble(),
-                        ),
-                      ),
-                    ),
-                  if (settings.boolean('show_badge', true) && product.isOnSale)
-                    PositionedDirectional(
-                      top: 10,
-                      start: 10,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
+              child: Padding(
+                key: ValueKey<String>(
+                  'wishlist-image-inset-$instanceId-${product.id}',
+                ),
+                padding: EdgeInsets.all(imageInset),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(imageRadius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: <Widget>[
+                      if (imageUrl.isEmpty)
+                        AppNetworkImageError(
+                          backgroundColor: colors.surfaceContainerLow,
+                        )
+                      else
+                        ProductImageSwiper(
+                          imageUrls: imageUrls,
+                          enabled: settings.boolean(
+                            'enable_image_swipe',
+                            false,
                           ),
-                          child: Text(
-                            copy.sale,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: colors.onPrimary,
-                                  fontWeight: FontWeight.w800,
+                          fit: BoxFit.cover,
+                          semanticLabel: product.name,
+                        ),
+                      _positionedWishlistAction(
+                        settings.string('product_wishlist_position', 'top_end'),
+                        WishlistRemoveButton(
+                          buttonKey: instanceId == 'wishlist_grid'
+                              ? Key('wishlist-remove-${product.id}')
+                              : ValueKey<String>(
+                                  'wishlist-remove-$instanceId-${product.id}',
                                 ),
-                          ),
+                          settings: settings,
+                          tooltip: copy.remove,
+                          onPressed: removeEnabled ? onRemove : null,
                         ),
                       ),
-                    ),
-                ],
+                      if (product.isInStock &&
+                          settings.boolean('quick_add_enabled', true))
+                        _positionedWishlistAction(
+                          settings.string('quick_add_position', 'bottom_end'),
+                          AbsorbPointer(
+                            absorbing: !removeEnabled,
+                            child: ProductQuickAddButton(
+                              productId: product.id,
+                              iconVariant: settings.string(
+                                'quick_add_icon_variant',
+                                'bag',
+                              ),
+                              iconStyle: settings.string(
+                                'quick_add_icon_style',
+                                'outline',
+                              ),
+                              iconSize: settings
+                                  .number('quick_add_icon_size', 22)
+                                  .clamp(10, 36)
+                                  .toDouble(),
+                              iconColor: _wishlistHexColor(
+                                settings.string(
+                                  'quick_add_icon_color',
+                                  '#1F2933',
+                                ),
+                              ),
+                              showBackground: settings.boolean(
+                                'quick_add_show_background',
+                                true,
+                              ),
+                              backgroundColor: _wishlistHexColor(
+                                settings.string(
+                                  'quick_add_background_color',
+                                  '#FFFFFF',
+                                ),
+                              ),
+                              backgroundRadius: settings
+                                  .number('quick_add_radius', 24)
+                                  .clamp(0, 40)
+                                  .toDouble(),
+                              backgroundSize: settings
+                                  .number('quick_add_background_size', 40)
+                                  .clamp(10, 64)
+                                  .toDouble(),
+                            ),
+                          ),
+                        ),
+                      if (settings.boolean('show_badge', true) &&
+                          product.isOnSale)
+                        PositionedDirectional(
+                          top: 10,
+                          start: 10,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              child: Text(
+                                copy.sale,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: colors.onPrimary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
             if (settings.boolean('show_name', false) ||
                 settings.boolean('show_price', true) ||
                 settings.boolean('show_rating', false))
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 10),
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  settings
+                      .number('content_horizontal_padding', 9)
+                      .clamp(0, 24)
+                      .toDouble(),
+                  settings
+                      .number('content_top_padding', 5)
+                      .clamp(0, 24)
+                      .toDouble(),
+                  settings
+                      .number('content_horizontal_padding', 9)
+                      .clamp(0, 24)
+                      .toDouble(),
+                  settings
+                      .number('content_bottom_padding', 9)
+                      .clamp(0, 24)
+                      .toDouble(),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                  if (settings.boolean('show_name', false))
-                    Text(
-                      product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  if (settings.boolean('show_price', true)) ...<Widget>[
                     if (settings.boolean('show_name', false))
-                      const SizedBox(height: 7),
-                    _WishlistPrice(
-                      money: product.prices,
-                      showRegularPrice: settings.boolean('show_regular_price', true),
-                    ),
+                      Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    if (settings.boolean('show_price', true)) ...<Widget>[
+                      if (settings.boolean('show_name', false))
+                        const SizedBox(height: 7),
+                      _WishlistPrice(
+                        money: product.prices,
+                        showRegularPrice: settings.boolean(
+                          'show_regular_price',
+                          true,
+                        ),
+                        settings: settings,
+                      ),
+                    ],
+                    if (settings.boolean('show_rating', true) &&
+                        product.averageRating > 0) ...<Widget>[
+                      const SizedBox(height: 5),
+                      Row(
+                        children: <Widget>[
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(product.averageRating.toStringAsFixed(1)),
+                        ],
+                      ),
+                    ],
                   ],
-                  if (settings.boolean('show_rating', true) && product.averageRating > 0) ...<Widget>[
-                    const SizedBox(height: 5),
-                    Row(children: <Widget>[
-                      const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
-                      const SizedBox(width: 3),
-                      Text(product.averageRating.toStringAsFixed(1)),
-                    ]),
-                  ],
-                ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1258,17 +1362,16 @@ class _WishlistProductCard extends StatelessWidget {
   }
 }
 
-List<String> _wishlistProductImageUrls(CatalogProduct product) =>
-    product.images
-        .expand(
-          (image) => <String>[
-            image.source.toString(),
-            if (image.thumbnail != null) image.thumbnail.toString(),
-          ],
-        )
-        .where((String url) => url.isNotEmpty)
-        .toSet()
-        .toList(growable: false);
+List<String> _wishlistProductImageUrls(CatalogProduct product) => product.images
+    .expand(
+      (image) => <String>[
+        image.source.toString(),
+        if (image.thumbnail != null) image.thumbnail.toString(),
+      ],
+    )
+    .where((String url) => url.isNotEmpty)
+    .toSet()
+    .toList(growable: false);
 
 Widget _positionedWishlistAction(String position, Widget child) {
   final bool top = position.startsWith('top_');
@@ -1289,10 +1392,15 @@ Color? _wishlistHexColor(String value) {
 }
 
 class _WishlistPrice extends StatelessWidget {
-  const _WishlistPrice({required this.money, required this.showRegularPrice});
+  const _WishlistPrice({
+    required this.money,
+    required this.showRegularPrice,
+    required this.settings,
+  });
 
   final CatalogMoney money;
   final bool showRegularPrice;
+  final CmsPageComponent settings;
 
   @override
   Widget build(BuildContext context) {
@@ -1305,9 +1413,15 @@ class _WishlistPrice extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
         Text(
-          current,
+          '${settings.string('price_prefix', '')}$current',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: colors.primary,
+            color:
+                _wishlistHexColor(settings.string('price_color', '#1F2933')) ??
+                colors.primary,
+            fontSize: settings
+                .number('price_size', 14)
+                .clamp(10, 28)
+                .toDouble(),
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1420,5 +1534,4 @@ class _WishlistCopy {
   String get inStock => arabic ? 'متوفر' : 'In stock';
   String get outOfStock => arabic ? 'غير متوفر' : 'Out of stock';
   String get dismiss => arabic ? 'إغلاق' : 'Dismiss';
-
 }

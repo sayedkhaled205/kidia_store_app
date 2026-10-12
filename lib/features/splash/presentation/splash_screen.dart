@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../shared/widgets/common/app_network_image.dart';
 import '../domain/splash_config.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -34,12 +35,12 @@ class SplashScreen extends StatelessWidget {
                         ? 18
                         : 0,
                   ),
-                  child: Image.network(
-                    config.imageUrl,
+                  child: AppNetworkImage(
+                    imageUrl: config.imageUrl,
                     width: config.imageWidth,
                     height: config.imageHeight,
                     fit: config.imageFit,
-                    errorBuilder: (_, _, _) => Icon(
+                    errorWidget: Icon(
                       Icons.storefront_outlined,
                       color: config.textColor,
                       size: 76,

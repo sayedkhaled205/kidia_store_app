@@ -46,6 +46,16 @@ void main() {
       expect(serialized['stock_status[]'], <String>['instock', 'onbackorder']);
     });
 
+    test('combined size and color require both attributes', () {
+      final serialized = CatalogProductQuery(attributes: [
+        CatalogAttributeFilter(taxonomy: 'pa_size', terms: ['s']),
+        CatalogAttributeFilter(taxonomy: 'pa_color', terms: ['blue']),
+      ]).toStoreApiQuery();
+      expect(serialized['attribute_relation'], 'and');
+      expect(serialized['attributes[0][slug]'], 's');
+      expect(serialized['attributes[1][slug]'], 'blue');
+    });
+
     test('serializes variation hydration queries using official filters', () {
       final Map<String, dynamic> serialized = CatalogProductQuery(
         includeIds: <int>[91, 92],

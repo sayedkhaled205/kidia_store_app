@@ -67,22 +67,22 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     required Uri storeUri,
     Dio? dio,
     this._authTokenReader,
-  })
-    : _storeUri = _normalizeStoreUri(storeUri),
-      _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              connectTimeout: const Duration(seconds: 15),
-              sendTimeout: const Duration(seconds: 20),
-              receiveTimeout: const Duration(seconds: 35),
-            ),
-          );
+  }) : _storeUri = _normalizeStoreUri(storeUri),
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               connectTimeout: const Duration(seconds: 15),
+               sendTimeout: const Duration(seconds: 20),
+               receiveTimeout: const Duration(seconds: 35),
+             ),
+           );
 
   factory StoreApiCheckoutTransport.forConfiguredStore({
     Dio? dio,
     CheckoutAuthTokenReader? authTokenReader,
   }) {
+    AppConfig.requireWooCommerceCustomerTransport('checkout');
     AppConfig.validateStoreConnection();
     return StoreApiCheckoutTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
@@ -104,6 +104,12 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
       );
     }
 
+    final Map<String, String> headers = _headers(<String, String>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Cart-Token': token,
+    }, authenticated: true);
+    final String? requestSession = headers['X-MobiShop-Session'];
     try {
       final Response<dynamic> response = await _dio.postUri<dynamic>(
         _updateCustomerUri(),
@@ -111,13 +117,10 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: _headers(<String, String>{
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Cart-Token': token,
-          }),
+          headers: headers,
         ),
       );
+      _assertCurrentSession(requestSession);
       _assertSameOrigin(response.realUri);
       return CheckoutApiResponse(
         data: _normalizeJson(response.data),
@@ -126,6 +129,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     } on CheckoutApiTransportException {
       rethrow;
     } on DioException catch (error, stackTrace) {
+      _assertCurrentSession(requestSession);
       final Response<dynamic>? response = error.response;
       if (response != null) {
         _assertSameOrigin(response.realUri);
@@ -223,6 +227,13 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     }
 
     final Uri requestUri = _checkoutUri();
+    final Map<String, String> headers = _headers(<String, String>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Cart-Token': token,
+      'Idempotency-Key': requestKey,
+    }, authenticated: true);
+    final String? requestSession = headers['X-MobiShop-Session'];
     try {
       final Response<dynamic> response = await _dio.postUri<dynamic>(
         requestUri,
@@ -230,14 +241,10 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
         options: Options(
           responseType: ResponseType.json,
           followRedirects: false,
-          headers: _headers(<String, String>{
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Cart-Token': token,
-            'Idempotency-Key': requestKey,
-          }),
+          headers: headers,
         ),
       );
+      _assertCurrentSession(requestSession);
       _assertSameOrigin(response.realUri);
       return CheckoutApiResponse(
         data: _normalizeJson(response.data),
@@ -246,6 +253,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     } on CheckoutApiTransportException {
       rethrow;
     } on DioException catch (error, stackTrace) {
+      _assertCurrentSession(requestSession);
       final Response<dynamic>? response = error.response;
       if (response != null) {
         _assertSameOrigin(response.realUri);
@@ -269,6 +277,17 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
           cause: error,
         ),
         stackTrace,
+      );
+    }
+  }
+
+  void _assertCurrentSession(String? requestSession) {
+    if (_authTokenReader != null &&
+        _authTokenReader.call()?.trim() != requestSession) {
+      throw const CheckoutApiTransportException(
+        kind: CheckoutTransportFailureKind.rejected,
+        statusCode: 401,
+        message: 'The customer session changed during checkout.',
       );
     }
   }
@@ -306,8 +325,20 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     );
   }
 
-  Map<String, String> _headers(Map<String, String> base) {
+  Map<String, String> _headers(
+    Map<String, String> base, {
+    bool authenticated = false,
+  }) {
     final String token = _authTokenReader?.call()?.trim() ?? '';
+    // An explicitly customer-bound transport must not silently become a guest
+    // checkout when its session ends or its owning screen is disposed.
+    if (authenticated && _authTokenReader != null && token.isEmpty) {
+      throw const CheckoutApiTransportException(
+        kind: CheckoutTransportFailureKind.rejected,
+        statusCode: 401,
+        message: 'Checkout requires the current signed-in customer session.',
+      );
+    }
     if (token.isNotEmpty && !_safeHeaderValue(token, maxLength: 512)) {
       throw const CheckoutApiTransportException(
         kind: CheckoutTransportFailureKind.configuration,
@@ -391,6 +422,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
   }
 
   static Uri _normalizeStoreUri(Uri uri) {
+    AppConfig.requireWooCommerceCustomerTransport('checkout');
     final String scheme = uri.scheme.toLowerCase();
     final bool isHttps = scheme == 'https';
     final bool isLocalDebug =
@@ -436,7 +468,6 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
   static bool _safeHeaderValue(String value, {required int maxLength}) {
     return value.isNotEmpty &&
         value.length <= maxLength &&
-        !value.contains('\r') &&
-        !value.contains('\n');
+        !RegExp(r'[\x00-\x1f\x7f]').hasMatch(value);
   }
 }

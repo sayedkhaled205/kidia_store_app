@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
@@ -56,14 +58,23 @@ class CartController extends AsyncNotifier<CartViewState> {
 
   @override
   Future<CartViewState> build() async {
-    final Cart cart = await _repository.getCart();
+    final String ownerToken = _authToken;
+    final Cart cart = await ref.watch(cartRepositoryProvider).getCart();
+    if (!ref.mounted || ownerToken != _authToken) {
+      throw const CartRepositoryException(
+        kind: CartFailureKind.unauthorized,
+        message: 'The customer session changed.',
+      );
+    }
     _captureCart(cart);
     return CartViewState(cart: cart);
   }
 
   Future<void> retry() async {
+    final String ownerToken = _authToken;
     state = const AsyncLoading<CartViewState>();
-    state = await AsyncValue.guard<CartViewState>(build);
+    final result = await AsyncValue.guard<CartViewState>(build);
+    if (ref.mounted && ownerToken == _authToken) state = result;
   }
 
   Future<void> refreshCart() async {
@@ -75,17 +86,22 @@ class CartController extends AsyncNotifier<CartViewState> {
     if (current.hasPendingMutation || current.isRefreshing) {
       return;
     }
+    final String ownerToken = _authToken;
 
     state = AsyncData<CartViewState>(
       current.copyWith(isRefreshing: true, lastErrorMessage: null),
     );
     try {
       final Cart cart = await _repository.getCart();
+      if (!ref.mounted || ownerToken != _authToken) {
+        return;
+      }
       _captureCart(cart);
       state = AsyncData<CartViewState>(
         CartViewState(cart: cart, isRefreshing: false),
       );
     } catch (error) {
+      if (!ref.mounted || ownerToken != _authToken) return;
       final CartRepositoryException failure = _failure(error);
       state = AsyncData<CartViewState>(
         current.copyWith(
@@ -190,6 +206,7 @@ class CartController extends AsyncNotifier<CartViewState> {
         'Please wait for the current cart update to finish.',
       );
     }
+    final String ownerToken = _authToken;
 
     state = AsyncData<CartViewState>(
       current.copyWith(
@@ -202,19 +219,27 @@ class CartController extends AsyncNotifier<CartViewState> {
 
     try {
       final Cart cart = await operation();
+      if (!ref.mounted || ownerToken != _authToken) {
+        return const CartActionResult.failure('The customer session changed.');
+      }
       state = AsyncData<CartViewState>(CartViewState(cart: cart));
       final String token = _authToken;
-      ref
-          .read(mobileAnalyticsProvider)
-          .trackInBackground(
-            eventName,
-            objectId: objectId,
-            label: label,
-            authToken: token,
-          );
+      if (AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
+        ref
+            .read(mobileAnalyticsProvider)
+            .trackInBackground(
+              eventName,
+              objectId: objectId,
+              label: label,
+              authToken: token,
+            );
+      }
       _captureCart(cart);
       return const CartActionResult.success();
     } catch (error) {
+      if (!ref.mounted || ownerToken != _authToken) {
+        return const CartActionResult.failure('The customer session changed.');
+      }
       final CartRepositoryException failure = _failure(error);
       state = AsyncData<CartViewState>(
         CartViewState(
@@ -246,10 +271,20 @@ class CartController extends AsyncNotifier<CartViewState> {
     return null;
   }
 
-  String get _authToken =>
-      ref.read(authControllerProvider).asData?.value?.token ?? '';
+  String get _authToken {
+    if (AppConfig.commercePlatform == CommercePlatform.shopify) {
+      // An opaque local owner generation, never the buyer secret or a Woo
+      // session. Customer Account auth remains unsupported, not impersonated.
+      final session = ref.read(shopifyBuyerCartSessionProvider);
+      return 'shopify-guest:${session.generation}';
+    }
+    AppConfig.requireWooCommerceCustomerTransport('cart');
+    final session = ref.read(authControllerProvider).value;
+    return session == null || session.isExpired ? '' : session.token;
+  }
 
   void _captureCart(Cart cart) {
+    if (AppConfig.commercePlatform != CommercePlatform.wooCommerce) return;
     ref
         .read(mobileAnalyticsProvider)
         .captureCartInBackground(cart, authToken: _authToken);

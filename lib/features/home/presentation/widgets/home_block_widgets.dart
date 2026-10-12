@@ -1,3 +1,5 @@
+import 'package:flutter/gestures.dart';
+import 'package:mobishop_store_app/features/search/presentation/voice_search_dialog.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -285,13 +287,12 @@ class AppHeaderBlockWidget extends StatelessWidget {
                               ),
                             ),
                             if (block.showVoiceSearch)
-                              Icon(
-                                Icons.mic_none_rounded,
-                                size: 20 * responsive,
-                                color: _parseHexColor(
-                                  block.searchIconColor,
-                                  fallback: iconColor,
-                                ),
+                              IconButton(
+                                key: const Key('home-voice-search-button'),
+                                tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'البحث بالصوت' : 'Voice search',
+                                onPressed: () => showVoiceCatalogSearch(context),
+                                icon: Icon(Icons.mic_none_rounded, size: 20 * responsive,
+                                  color: _parseHexColor(block.searchIconColor, fallback: iconColor)),
                               ),
                             if (block.showVoiceSearch)
                               SizedBox(width: 10 * responsive),
@@ -412,6 +413,9 @@ class _HeroSliderBlockWidgetState extends State<HeroSliderBlockWidget> {
                 fit: StackFit.expand,
                 children: <Widget>[
                   PageView.builder(
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
+          ),
                     controller: _pageController,
                     itemCount: widget.block.items.length,
                     onPageChanged: (int page) {
@@ -749,11 +753,11 @@ class CategoryGridBlockWidget extends StatelessWidget {
                     spacing: spacing,
                     runSpacing: compact ? block.rowGap / 2 : block.rowGap,
                     alignment: switch (block.itemsAlignment) {
-                      'left' => WrapAlignment.start,
+                      'left' => Directionality.of(context) == TextDirection.rtl ? WrapAlignment.end : WrapAlignment.start,
                       'center' => WrapAlignment.center,
-                      _ => WrapAlignment.end,
+                      _ => Directionality.of(context) == TextDirection.rtl ? WrapAlignment.start : WrapAlignment.end,
                     },
-                    textDirection: TextDirection.ltr,
+                    textDirection: Directionality.of(context),
                     children: block.items
                         .map(
                           (CategoryItem item) => SizedBox(
@@ -998,13 +1002,11 @@ class _CategoryBlockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final BorderRadius radius = forceRounded
-        ? BorderRadius.circular(18)
-        : switch (block.imageShape) {
-            'circle' => BorderRadius.circular(imageSize / 2),
-            'square' => BorderRadius.zero,
-            _ => BorderRadius.circular(18),
-          };
+    final BorderRadius radius = switch (block.imageShape) {
+      'circle' => BorderRadius.circular(imageSize / 2),
+      'square' => BorderRadius.zero,
+      _ => BorderRadius.circular(18),
+    };
     final Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -1031,7 +1033,7 @@ class _CategoryBlockCard extends StatelessWidget {
                 fallback: Theme.of(context).colorScheme.onSurface,
               ),
               fontSize: block.labelSize,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
             ),
           ),
         ],
@@ -1077,12 +1079,12 @@ class QuickLinksBlockWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-				final int effectiveColumns = block.items.isEmpty
-					? block.columns
-					: block.items.length.clamp(1, block.columns);
+                final int effectiveColumns = block.items.isEmpty
+                    ? block.columns
+                    : block.items.length.clamp(1, block.columns);
                 final double availableItemWidth =
-					(constraints.maxWidth - ((effectiveColumns - 1) * gap)) /
-					effectiveColumns;
+                    (constraints.maxWidth - ((effectiveColumns - 1) * gap)) /
+                    effectiveColumns;
                 final double gridItemSize = availableItemWidth < 1
                     ? 1
                     : availableItemWidth < itemSize
@@ -1094,7 +1096,7 @@ class QuickLinksBlockWidget extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: block.items.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-					crossAxisCount: effectiveColumns,
+                    crossAxisCount: effectiveColumns,
                     crossAxisSpacing: gap,
                     mainAxisSpacing: gap,
                     mainAxisExtent: gridItemSize + (block.showLabels ? 48 : 4),
@@ -1215,7 +1217,7 @@ class _QuickLinkCard extends StatelessWidget {
                 style: TextStyle(
                   color: labelColor,
                   fontSize: block.labelSize,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
                 ),
               ),
               if (item.subtitle != null)
@@ -1261,12 +1263,32 @@ class _ServiceLinks extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 child: Column(
                   children: <Widget>[
-                    Icon(icons[index % icons.length], size: 30, color: const Color(0xFF303038)),
+                    Icon(
+                      icons[index % icons.length],
+                      size: 30,
+                      color: const Color(0xFF303038),
+                    ),
                     const SizedBox(height: 7),
-                    Text(item.label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    Text(
+                      item.label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     if (item.subtitle != null) ...<Widget>[
                       const SizedBox(height: 2),
-                      Text(item.subtitle!, maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9.5, height: 1.2, color: Color(0xFF6C6C74))),
+                      Text(
+                        item.subtitle!,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          height: 1.2,
+                          color: Color(0xFF6C6C74),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -1663,7 +1685,11 @@ class ProductCarouselBlockWidget extends StatelessWidget {
             HomeBlockTitle(
               title: block.title!,
               showAction: block.showViewAll,
-              actionLabel: block.viewAllLabel ?? 'عرض الكل',
+              actionLabel:
+                  block.viewAllLabel ??
+                  (Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'عرض الكل'
+                      : 'View all'),
               onPressed: block.viewAllAction == null
                   ? null
                   : () {
@@ -1744,7 +1770,11 @@ class ProductGridBlockWidget extends StatelessWidget {
             HomeBlockTitle(
               title: block.title!,
               showAction: block.showViewAll,
-              actionLabel: block.viewAllLabel ?? 'عرض الكل',
+              actionLabel:
+                  block.viewAllLabel ??
+                  (Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'عرض الكل'
+                      : 'View all'),
               onPressed: block.viewAllAction == null
                   ? null
                   : () {

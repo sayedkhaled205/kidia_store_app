@@ -1,11 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 void main() {
+  testWidgets('pill compact shape survives serialized zero radius and keeps custom radius', (tester) async {
+    for (final entry in <(String, double, double, double)>[
+      ('pill', 60, 0, 30), ('pill', 80, 0, 40),
+      ('pill', 80, 12, 12), ('standard', 80, 0, 0),
+    ]) {
+      final base = _layout(compactHeight: entry.$2, transition: 'instant');
+      final layout = CmsPageLayout(
+        page: base.page, elements: base.elements, footer: base.footer,
+        header: CmsPageComponent(id: base.header.id, type: base.header.type,
+          enabled: true, settings: {...base.header.settings,
+            'compact_style': entry.$1, 'compact_radius': entry.$3}),
+      );
+      await _pumpPage(tester, layout: layout);
+      await tester.drag(find.byKey(const Key('cms-page-scroll')), const Offset(0, -240));
+      await tester.pumpAndSettle();
+      expect(_appBar(tester).compact, isTrue);
+      final material = tester.widget<Material>(find.descendant(
+        of: find.byType(CmsPageAppBar), matching: find.byType(Material),
+      ).first);
+      final shape = material.shape! as RoundedRectangleBorder;
+      expect(shape.borderRadius, BorderRadius.circular(entry.$4));
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('RTL scroll header keeps cart away from physical left logo', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final base = _layout(page: 'home', transition: 'smooth_compact', height: 112);
+    final layout = CmsPageLayout(page: base.page, header: CmsPageComponent(
+      id: 'header', type: 'app_header', enabled: true, settings: {
+        ...base.header.settings, 'logo_text': 'Kidia',
+        'layout_json': {'rows': [
+          {'columns': [
+            {'width': 80, 'align': 'left', 'items': ['logo']},
+            {'width': 20, 'align': 'right', 'items': ['cart']},
+          ]},
+          {'columns': [{'width': 100, 'align': 'left', 'items': ['search_bar']}]},
+        ]},
+      }), elements: base.elements, footer: base.footer);
+    await _pumpPage(tester, layout: layout, rtl: true, actions: [
+      CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'Cart', onPressed: () {}),
+    ]);
+    expect(tester.getRect(find.text('Kidia')).right,
+      lessThan(tester.getRect(find.byTooltip('Cart')).left));
+    await tester.drag(find.byKey(const Key('cms-page-scroll')), const Offset(0, -240));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(const Key('cms-page-morphing-search'))).right,
+      lessThanOrEqualTo(tester.getRect(find.byTooltip('Cart')).left));
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('compact search remains tappable after scroll and restores at top', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var searches = 0;
+    await _pumpPage(tester, layout: _layout(transition: 'smooth_compact'), actions: [
+      CmsPageHeaderAction(type: 'search', icon: Icons.search, tooltip: 'Search', onPressed: () => searches++),
+    ]);
+    await tester.drag(find.byKey(const Key('cms-page-scroll')), const Offset(0, -240));
+    await tester.pumpAndSettle();
+    expect(_appBar(tester).compact, isTrue);
+    await tester.tap(find.text('Search products'));
+    expect(searches, 1);
+    await tester.drag(find.byKey(const Key('cms-page-scroll')), const Offset(0, 600));
+    await tester.pumpAndSettle();
+    expect(_appBar(tester).compact, isFalse);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'collapses on every scrolled CMS page and restores only at the top',
     (WidgetTester tester) async {
@@ -113,7 +182,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_appBar(tester).preferredSize.height, 120);
-    expect(find.text('MobiShop'), findsOneWidget);
+    expect(find.text(AppConfig.storeName), findsOneWidget);
     expect(find.text('Search products'), findsOneWidget);
   });
 
@@ -451,12 +520,17 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required CmsPageLayout layout,
   ScrollController? scrollController,
+  List<CmsPageHeaderAction> actions = const [],
+  bool rtl = false,
 }) {
   return tester.pumpWidget(
-    MaterialApp(
+    ProviderScope(
+      child: MaterialApp(
+      builder: (context, child) => Directionality(textDirection: rtl ? TextDirection.rtl : TextDirection.ltr, child: child!),
       home: CmsPageScaffold(
         layout: layout,
         defaultTitle: 'Products',
+        actions: actions,
         scrollController: scrollController,
         body: ListView.builder(
           key: const Key('cms-page-scroll'),
@@ -465,6 +539,7 @@ Future<void> _pumpPage(
           itemCount: 40,
           itemBuilder: (BuildContext context, int index) => Text('Item $index'),
         ),
+      ),
       ),
     ),
   );
@@ -537,3 +612,4 @@ CmsPageLayout _layout({
     ),
   );
 }
+

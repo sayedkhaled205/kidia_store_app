@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 
 import 'runtime_store_origin.dart';
 
@@ -15,6 +16,75 @@ abstract final class AppConfig {
     defaultValue: false,
   );
 
+  /// Public saved normalized Builder settings for explicit non-Woo builds.
+  /// This is not a catalog snapshot, credential, or remote design endpoint.
+  static const String appDesignBundle = String.fromEnvironment(
+    'APP_DESIGN_BUNDLE',
+    defaultValue: '',
+  );
+
+  /// A protocol is explicit, never guessed from a URL. Existing builds retain
+  /// WooCommerce by default; an invalid value must not silently become Woo.
+  static const String _compiledStorePlatform = String.fromEnvironment(
+    'STORE_PLATFORM',
+    defaultValue: 'woocommerce',
+  );
+
+  static CommercePlatform get commercePlatform =>
+      switch (_compiledStorePlatform.trim().toLowerCase()) {
+        'woocommerce' => CommercePlatform.wooCommerce,
+        'shopify' => CommercePlatform.shopify,
+        'odoo' => CommercePlatform.odoo,
+        _ => throw const AppConfigurationException(
+          'STORE_PLATFORM must be woocommerce, shopify or odoo.',
+        ),
+      };
+
+  static const String shopifyApiVersion = String.fromEnvironment(
+    'SHOPIFY_STOREFRONT_API_VERSION',
+    defaultValue: '2026-10',
+  );
+  static const String shopifyPublicStorefrontToken = String.fromEnvironment(
+    'SHOPIFY_PUBLIC_STOREFRONT_TOKEN',
+    defaultValue: '',
+  );
+  static const String buyerCountryCode = String.fromEnvironment(
+    'STORE_COUNTRY_CODE',
+    defaultValue: '',
+  );
+  static const String _shopifyLanguageCode = String.fromEnvironment(
+    'SHOPIFY_LANGUAGE_CODE',
+    defaultValue: '',
+  );
+
+  static String get shopifyLanguageCode =>
+      _shopifyLanguageCode.trim().isNotEmpty
+      ? _shopifyLanguageCode.trim().toUpperCase()
+      : storeLocale.split(RegExp('[-_]')).first.trim().toUpperCase();
+
+  /// Direct public customer catalog connection for new platform transports.
+  /// No merchant/admin credential is consumed by this configuration.
+  static CommerceConnection get commerceConnection {
+    validateStoreConnection();
+    return CommerceConnection(
+      platform: commercePlatform,
+      storeOrigin: Uri.parse(apiBaseUrl.trim()),
+      shopifyApiVersion: shopifyApiVersion,
+      shopifyPublicStorefrontToken: shopifyPublicStorefrontToken,
+    );
+  }
+
+  /// Fixed WordPress customer APIs must call this before transport creation.
+  /// A foreign platform is unsupported, not permission to send /wp-json calls.
+  static void requireWooCommerceCustomerTransport(String capability) {
+    if (commercePlatform != CommercePlatform.wooCommerce) {
+      throw AppConfigurationException(
+        '${commercePlatform.name} $capability customer transport is not '
+        'integrated in this build. No WooCommerce fallback is allowed.',
+      );
+    }
+  }
+
   /// Legacy build define kept for one migration cycle.
   ///
   /// New builds should use `STORE_URL`. Keeping this fallback means existing
@@ -25,7 +95,7 @@ abstract final class AppConfig {
     defaultValue: '',
   );
 
-  /// WooCommerce store origin configured at build time.
+  /// Customer store origin configured at build time.
   ///
   /// Example:
   /// `flutter run --dart-define=STORE_URL=https://example.com`
@@ -66,6 +136,18 @@ abstract final class AppConfig {
     defaultValue: 'en',
   );
 
+  static const String storeDirection = String.fromEnvironment('STORE_DIRECTION');
+  static const String storeFontFamily = String.fromEnvironment('STORE_FONT_FAMILY');
+  static const String storePrimaryColor = String.fromEnvironment('STORE_PRIMARY_COLOR');
+  static const String storeSecondaryColor = String.fromEnvironment('STORE_SECONDARY_COLOR');
+  static bool get hasNativeBranding => storeFontFamily.isNotEmpty || storePrimaryColor.isNotEmpty || storeSecondaryColor.isNotEmpty;
+  static Map<String, dynamic>? get nativeIdentity =>
+      !hasNativeBranding && storeDirection.isEmpty ? null : <String, dynamic>{
+        'app_name': storeName, 'language': storeLocale, 'direction': storeDirection,
+        'font_family': storeFontFamily, 'primary_color': storePrimaryColor,
+        'secondary_color': storeSecondaryColor,
+      };
+
   /// Public WordPress endpoint that returns the per-store Firebase bootstrap.
   static const String pushConfigUrl = String.fromEnvironment(
     'PUSH_CONFIG_URL',
@@ -85,6 +167,8 @@ abstract final class AppConfig {
   );
 
   static bool get isRightToLeft {
+    if (storeDirection == 'rtl') return true;
+    if (storeDirection == 'ltr') return false;
     final String languageCode = storeLocale
         .split(RegExp('[-_]'))
         .first
@@ -97,13 +181,16 @@ abstract final class AppConfig {
   /// Keep the `flutter run --dart-define=...` command in the terminal; it is
   /// documentation input and must never be appended to this Dart expression.
   static void validateStoreConnection() {
+    // Validate even an unconfigured/mock build's explicit protocol.
+    commercePlatform;
     if (!hasConfiguredStore) {
-      if (useMockHomeLayout) {
+      if (useMockHomeLayout &&
+          commercePlatform == CommercePlatform.wooCommerce) {
         return;
       }
 
       throw const AppConfigurationException(
-        'No WooCommerce store is configured. Set STORE_URL for this build.',
+        'No customer store is configured. Set STORE_URL for this build.',
       );
     }
 
@@ -122,6 +209,30 @@ abstract final class AppConfig {
         'STORE_URL must be a valid HTTPS origin. HTTP is allowed only for '
         'localhost debug builds.',
       );
+    }
+    if (commercePlatform != CommercePlatform.wooCommerce) {
+      // Validate at application entry, before any provider can contact a host.
+      // Existing Woo subdirectory/debug semantics above remain unchanged.
+      try {
+        CommerceConnection(
+          platform: commercePlatform,
+          storeOrigin: storeUri,
+          shopifyApiVersion: shopifyApiVersion,
+          shopifyPublicStorefrontToken: shopifyPublicStorefrontToken,
+        );
+      } on FormatException catch (error) {
+        throw AppConfigurationException(error.message);
+      }
+      if (commercePlatform == CommercePlatform.shopify &&
+          ((!RegExp(r'^[A-Z]{2}(_[A-Z]{2})?$').hasMatch(shopifyLanguageCode)) ||
+              (buyerCountryCode.trim().isNotEmpty &&
+                  !RegExp(
+                    r'^[A-Z]{2}$',
+                  ).hasMatch(buyerCountryCode.trim().toUpperCase())))) {
+        throw const AppConfigurationException(
+          'Invalid Shopify country/language context configuration.',
+        );
+      }
     }
   }
 }

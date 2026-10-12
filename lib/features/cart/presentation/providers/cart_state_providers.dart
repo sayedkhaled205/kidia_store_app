@@ -3,7 +3,7 @@ import 'package:mobishop_store_app/features/cart/presentation/adapters/product_p
 import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_controller.dart';
 
 final cartControllerProvider =
-    AsyncNotifierProvider<CartController, CartViewState>(
+    AsyncNotifierProvider.autoDispose<CartController, CartViewState>(
       CartController.new,
       // The screen exposes explicit retry/refresh actions. Automatically
       // replaying cart requests can hide actionable errors and is especially
@@ -15,13 +15,13 @@ final cartControllerProvider =
 ///
 /// The previous count remains available while a pull-to-refresh is running
 /// because refreshes are represented inside [CartViewState].
-final cartBadgeCountProvider = Provider<int>((Ref ref) {
+final cartBadgeCountProvider = Provider.autoDispose<int>((Ref ref) {
   return ref.watch(cartControllerProvider).asData?.value.cart.itemsCount ?? 0;
 });
 
 /// Stable adapter that product-details screens can consume without knowing
 /// about cart repositories, Store API tokens, or presentation state.
 final addProductPurchaseSelectionProvider =
-    Provider<AddProductPurchaseSelection>((Ref ref) {
-      return ref.read(cartControllerProvider.notifier).addSelection;
+    Provider.autoDispose<AddProductPurchaseSelection>((Ref ref) {
+      return ref.watch(cartControllerProvider.notifier).addSelection;
     });

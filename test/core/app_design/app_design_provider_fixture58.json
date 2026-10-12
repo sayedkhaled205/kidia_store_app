@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "platform": "odoo",
+  "store_origin": "https://odoo.example.invalid",
+  "identity": {
+    "app_name": "Saved portable design",
+    "logo_url": "",
+    "language": "ar",
+    "direction": "rtl",
+    "primary_color": "#4EA999",
+    "secondary_color": "#256A77",
+    "font_family": "noto_sans_arabic"
+  },
+  "splash": {
+    "enabled": true,
+    "image_url": "",
+    "background_color": "#91AEBB",
+    "background_color_end": "#256A77",
+    "duration_ms": 1250,
+    "image_width": 180,
+    "image_height": 150,
+    "image_fit": "contain",
+    "image_shape": "rounded",
+    "show_store_name": true,
+    "store_name": "Saved portable design",
+    "text_color": "#FFFFFF",
+    "show_loader": false,
+    "loader_color": "#4EA999"
+  },
+  "home": {
+    "version": 1,
+    "page": "home",
+    "locale": "ar",
+    "updated_at": "2026-10-10T12:00:00Z",
+    "blocks": [
+      {
+        "id": "saved-heading",
+        "type": "text_block",
+        "enabled": true,
+        "data": {
+          "title": "Saved heading",
+          "content": "Public saved brand copy",
+          "alignment": "center",
+          "text_color": "#256A77",
+          "title_size": 26,
+          "presentation": {
+            "margin_top": 11,
+            "padding_horizontal": 17,
+            "background_color": "#EAF4F5"
+          }
+        }
+      },
+      {
+        "id": "saved-products",
+        "type": "product_grid",
+        "enabled": true,
+        "catalog_query": {
+          "kind": "products",
+          "mode": "all",
+          "limit": 8,
+          "sort": "name"
+        },
+        "data": {
+          "title": "Store products",
+          "items": [],
+          "columns": 3,
+          "card_style": "minimal",
+          "card_radius": 7,
+          "image_ratio": 0.82,
+          "show_name": true,
+          "show_price": true,
+          "show_regular_price": false,
+          "show_badge": false,
+          "show_rating": false,
+          "quick_add_enabled": false,
+          "enable_image_swipe": true,
+          "content_bottom_padding": 9
+        }
+      },
+      {
+        "id": "saved-categories",
+        "type": "category_grid",
+        "enabled": true,
+        "catalog_query": {
+          "kind": "categories",
+          "mode": "all",
+          "limit": 6,
+          "sort": "name"
+        },
+        "data": {
+          "title": "Store departments",
+          "items": [],
+          "columns": 3,
+          "layout": "grid",
+          "image_shape": "rounded",
+          "image_size": 88,
+          "show_names": true,
+          "label_color": "#256A77"
+        }
+      }
+    ]
+  },
+  "pages": {
+    "home": {
+      "page": "home",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "category": {
+      "page": "category",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "catalog": {
+      "page": "catalog",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "product": {
+      "page": "product",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "size_chart": {
+      "page": "size_chart",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "wishlist": {
+      "page": "wishlist",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    },
+    "account": {
+      "page": "account",
+      "enabled": true,
+      "settings": {
+        "page_background_color": "#EAF4F5",
+        "content_horizontal_padding": 17,
+        "font_family": "noto_sans_arabic"
+      },
+      "header": {
+        "id": "header",
+        "type": "app_header",
+        "enabled": true,
+        "settings": {
+          "height": 91,
+          "logo_text": "Saved portable design",
+          "title_source": "app_name",
+          "background_color": "#EAF4F5",
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":100,\"align\":\"center\",\"items\":[\"title\"]}]}]}"
+        }
+      },
+      "elements": [],
+      "footer": {
+        "id": "footer",
+        "type": "app_footer",
+        "enabled": true,
+        "settings": {
+          "height": 74,
+          "active_color": "#4EA999",
+          "background_color": "#FFFFFF",
+          "show_labels": true,
+          "layout_json": "{\"rows\":[{\"columns\":[{\"width\":25,\"align\":\"center\",\"items\":[\"home\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"categories\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"wishlist\"]},{\"width\":25,\"align\":\"center\",\"items\":[\"account\"]}]}]}"
+        }
+      }
+    }
+  }
+}

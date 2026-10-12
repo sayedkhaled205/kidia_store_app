@@ -37,6 +37,8 @@ class CheckoutRepositoryException implements Exception {
     this.fieldErrors = const <String, String>{},
     this.authoritativeCart,
     this.cause,
+    this.requiresOutcomeRecovery = false,
+    this.confirmedPrePaymentRejection = false,
   });
 
   final CheckoutFailureKind kind;
@@ -54,6 +56,13 @@ class CheckoutRepositoryException implements Exception {
   /// WooCommerce can return the authoritative cart with a 409 response.
   final Cart? authoritativeCart;
   final Object? cause;
+
+  /// A scoped persisted dispatch must not be retried or dismissed by reload.
+  final bool requiresOutcomeRecovery;
+
+  /// Only the exact, opted-in platform guard proves this before payment/stock.
+  /// Generic late HTTP errors are never sufficient to set this.
+  final bool confirmedPrePaymentRejection;
 
   bool get isConflict => kind == CheckoutFailureKind.conflict;
 

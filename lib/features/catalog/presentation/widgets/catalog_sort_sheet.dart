@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'catalog_toolbar_panel.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 
@@ -16,8 +17,36 @@ abstract final class CatalogSortSheet {
   static Future<CatalogSort?> show(
     BuildContext context, {
     required CatalogSort selected,
+    bool belowToolbar = false,
   }) {
     final CatalogCopy copy = CatalogCopy.of(context);
+    if (belowToolbar) {
+      return showCatalogToolbarPanel<CatalogSort>(
+        context,
+        builder: (context) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final option in const [
+                CatalogSort.relevance,
+                CatalogSort.popularity,
+                CatalogSort.newest,
+                CatalogSort.priceLowToHigh,
+                CatalogSort.priceHighToLow,
+              ])
+                ListTile(
+                  title: Text(copy.sortLabel(option)),
+                  leading: Icon(option == selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off),
+                  onTap: () => Navigator.of(context).pop(option),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
     return showModalBottomSheet<CatalogSort>(
       context: context,
       useSafeArea: true,

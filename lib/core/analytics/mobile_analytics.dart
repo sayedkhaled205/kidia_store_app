@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/cart/domain/entities/cart.dart';
 import '../config/app_config.dart';
+import '../commerce/commerce_connection.dart';
 
 final mobileAnalyticsProvider = Provider<MobileAnalytics>((Ref ref) {
   return MobileAnalytics();
@@ -141,10 +142,19 @@ class MobileAnalytics {
     unawaited(captureCart(cart, authToken: authToken));
   }
 
-  bool get _enabled =>
-      !AppConfig.isCmsPreview &&
-      !AppConfig.useMockHomeLayout &&
-      AppConfig.hasConfiguredStore;
+  bool get _enabled {
+    if (AppConfig.isCmsPreview ||
+        AppConfig.useMockHomeLayout ||
+        !AppConfig.hasConfiguredStore) {
+      return false;
+    }
+    try {
+      return AppConfig.commercePlatform == CommercePlatform.wooCommerce;
+    } on AppConfigurationException {
+      // Configuration errors belong to startup, not best-effort tracking.
+      return false;
+    }
+  }
 
   String _endpoint(String path) {
     return '${AppConfig.apiBaseUrl.trim().replaceFirst(RegExp(r'/+$'), '')}$path';
@@ -187,9 +197,7 @@ class MobileAnalytics {
       while (queue.isNotEmpty) {
         Map<String, Object?> payload;
         try {
-          payload = Map<String, Object?>.from(
-            jsonDecode(queue.first) as Map,
-          );
+          payload = Map<String, Object?>.from(jsonDecode(queue.first) as Map);
         } on Object {
           queue.removeAt(0);
           await preferences.setStringList(_queueKey, queue);

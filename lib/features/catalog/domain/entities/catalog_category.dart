@@ -95,5 +95,55 @@ class CatalogCategory {
   final int textMaxLines;
   final double lineHeight;
 
+  CatalogCategory withPresentation(CatalogCategory presentation) {
+    return CatalogCategory(
+      id: id,
+      name: name,
+      slug: slug,
+      parentId: parentId,
+      description: description,
+      count: count,
+      image: image,
+      permalink: permalink,
+      categoryLayout: presentation.categoryLayout,
+      navigationMode: presentation.navigationMode,
+      gridColumns: presentation.gridColumns,
+      cardRadius: presentation.cardRadius,
+      cardGap: presentation.cardGap,
+      cardWidthPercent: presentation.cardWidthPercent,
+      cardHeight: presentation.cardHeight,
+      marginTop: presentation.marginTop,
+      marginBottom: presentation.marginBottom,
+      spaceUp: presentation.spaceUp,
+      spaceDown: presentation.spaceDown,
+      pageBackgroundColor: presentation.pageBackgroundColor,
+      elementBackgroundColor: presentation.elementBackgroundColor,
+      cardStyle: presentation.cardStyle,
+      cardBackgroundColor: presentation.cardBackgroundColor,
+      cardShadowColor: presentation.cardShadowColor,
+      cardShadowStrength: presentation.cardShadowStrength,
+      cardShadowBlur: presentation.cardShadowBlur,
+      cardShadowOffsetY: presentation.cardShadowOffsetY,
+      showArrow: presentation.showArrow,
+      imageSize: presentation.imageSize,
+      imageShape: presentation.imageShape,
+      imageRadius: presentation.imageRadius,
+      imageFit: presentation.imageFit,
+      imageEffect: presentation.imageEffect,
+      imageScale: presentation.imageScale,
+      imagePosition: presentation.imagePosition,
+      imageBorderWidth: presentation.imageBorderWidth,
+      imageBorderColor: presentation.imageBorderColor,
+      imageBackgroundColor: presentation.imageBackgroundColor,
+      imageTextGap: presentation.imageTextGap,
+      fontSize: presentation.fontSize,
+      fontColor: presentation.fontColor,
+      fontWeight: presentation.fontWeight,
+      textAlign: presentation.textAlign,
+      textMaxLines: presentation.textMaxLines,
+      lineHeight: presentation.lineHeight,
+    );
+  }
+
   bool get isRoot => parentId == 0;
 }

@@ -3,32 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
+import '../core/commerce/commerce_connection.dart';
 
 import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/customer_profile_screen.dart';
 import '../features/account/presentation/customer_support_screen.dart';
 import '../features/account/presentation/saved_addresses_screen.dart';
+import '../features/account/presentation/odoo/odoo_account_screen56.dart';
+import '../features/account/presentation/odoo/odoo_addresses_screen56.dart';
+import '../features/account/presentation/odoo/odoo_orders_screen56.dart';
+import '../features/account/presentation/odoo/odoo_profile_screen56.dart';
+import '../features/account/presentation/odoo/odoo_support_screen56.dart';
 import '../features/auth/domain/entities/auth_session.dart';
 import '../features/auth/presentation/auth_screen.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/auth/presentation/social_auth_callback_screen.dart';
 import '../features/brands/presentation/brands_screen.dart';
 import '../features/bundles/presentation/bundle_builder_screen.dart';
-import '../features/cart/data/network/cart_token_store.dart';
 import '../features/cart/domain/entities/cart_item.dart';
 import '../features/cart/presentation/adapters/product_purchase_selection.dart'
     as cart_selection;
 import '../features/cart/presentation/cart_screen.dart';
-import '../features/cart/presentation/providers/cart_providers.dart';
 import '../features/cart/presentation/providers/cart_state_providers.dart';
 import '../features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 import '../features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import '../features/catalog/presentation/providers/catalog_providers.dart';
 import '../features/categories/presentation/categories_screen.dart';
-import '../features/checkout/data/network/checkout_api_transport.dart';
-import '../features/checkout/data/repositories/store_api_checkout_repository.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/checkout/presentation/checkout_presentation_provider.dart';
+import '../features/checkout/presentation/providers/checkout_customer_binding_provider.dart';
 import '../features/checkout/domain/entities/checkout_presentation.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/orders/presentation/customer_orders_screen.dart';
@@ -61,7 +64,15 @@ final Provider<WishlistRepository> wishlistRepositoryProvider =
       return SharedPreferencesWishlistRepository.forConfiguredStore();
     });
 
-GoRouter createAppRouter({String initialLocation = '/'}) {
+GoRouter createAppRouter({
+  String initialLocation = '/',
+  List<RouteBase> previewRoutes = const [],
+}) {
+  // Odoo's session cookie and customer entities never enter the Woo bearer
+  // graph. CMS preview keeps its existing rendering/identity contract.
+  final bool useOdooCustomer =
+      !AppConfig.isCmsPreview &&
+      AppConfig.commercePlatform == CommercePlatform.odoo;
   return GoRouter(
     initialLocation: initialLocation,
     errorBuilder: (context, state) {
@@ -73,6 +84,7 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
       );
     },
     routes: [
+      ...previewRoutes,
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return _AppStartupGate(
@@ -162,9 +174,7 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                               onWishlistToggle: (product) async {
                                 final String accessMode =
                                     ref
-                                        .read(
-                                          cmsPageLayoutProvider('wishlist'),
-                                        )
+                                        .read(cmsPageLayoutProvider('wishlist'))
                                         .value
                                         ?.string(
                                           'wishlist_access_mode',
@@ -358,9 +368,7 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
                         authControllerProvider,
                       );
                       final CmsPageLayout wishlistLayout =
-                          ref
-                              .watch(cmsPageLayoutProvider('wishlist'))
-                              .value ??
+                          ref.watch(cmsPageLayoutProvider('wishlist')).value ??
                           CmsPageLayout.fallback('wishlist');
                       final bool requiresSignIn =
                           wishlistLayout.string(
@@ -391,20 +399,29 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             routes: [
               GoRoute(
                 path: '/account',
-                builder: (context, state) => const _PageAvailabilityGate(
-                  page: 'account',
-                  child: AccountScreen(),
-                ),
+                builder: (context, state) => useOdooCustomer
+                    ? const OdooAccountScreen56()
+                    : const _PageAvailabilityGate(
+                        page: 'account',
+                        child: AccountScreen(),
+                      ),
               ),
             ],
           ),
         ],
       ),
-      GoRoute(path: '/auth', builder: (context, state) => const AuthScreen()),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) =>
+            useOdooCustomer ? const OdooSignInScreen56() : const AuthScreen(),
+      ),
       GoRoute(
         path: '/orders',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            if (useOdooCustomer) {
+              return const OdooCustomerGate56(child: OdooOrdersScreen56());
+            }
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );
@@ -419,9 +436,38 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         ),
       ),
       GoRoute(
+        path: '/orders/:orderId',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, child) {
+            final id = _positiveId(state.pathParameters['orderId'] ?? '');
+            if (id == null) {
+              return const CommerceRouteDestination(
+                icon: Icons.receipt_long_outlined,
+                title: 'تفاصيل الطلب',
+                description: 'لم يتم تحديد طلب صحيح.',
+              );
+            }
+            if (useOdooCustomer) {
+              return OdooCustomerGate56(
+                child: OdooOrderDetailsScreen56(orderId: id),
+              );
+            }
+            final authState = ref.watch(authControllerProvider);
+            if (authState.isLoading) return const _ProtectedAccountLoading();
+            if (authState.asData?.value == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
+            return CustomerOrdersScreen(key: ValueKey(id), initialOrderId: id);
+          },
+        ),
+      ),
+      GoRoute(
         path: '/addresses',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            if (useOdooCustomer) {
+              return const OdooCustomerGate56(child: OdooAddressesScreen56());
+            }
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );
@@ -439,6 +485,9 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         path: '/profile',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            if (useOdooCustomer) {
+              return const OdooCustomerGate56(child: OdooProfileScreen56());
+            }
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );
@@ -456,6 +505,9 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
         path: '/support',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            if (useOdooCustomer) {
+              return const OdooCustomerGate56(child: OdooSupportScreen56());
+            }
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );
@@ -493,26 +545,23 @@ GoRouter createAppRouter({String initialLocation = '/'}) {
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );
-            if (authState.isLoading) {
+            final AuthSession? session = authState.value;
+            if (authState.isLoading && session == null) {
               return const _CheckoutAuthLoading();
             }
-            final AuthSession? session = authState.asData?.value;
-            if (session == null) {
+            if (authState.hasError || session == null || session.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
-            final CartTokenStore tokenStore = ref.watch(cartTokenStoreProvider);
+            final binding = ref.watch(checkoutCustomerBindingProvider);
+            if (binding == null) {
+              return const AuthScreen(popOnSuccess: false);
+            }
             return CheckoutScreen(
-              repository: StoreApiCheckoutRepository(
-                cartRepository: ref.watch(cartRepositoryProvider),
-                transport: StoreApiCheckoutTransport.forConfiguredStore(
-                  dio: ref.watch(cartDioProvider),
-                  authTokenReader: () =>
-                      ref.read(authControllerProvider).asData?.value?.token,
-                ),
-                cartTokenStore: tokenStore,
-              ),
-              customerEmail: session.user.email,
+              key: ObjectKey(binding),
+              repository: binding.repository,
+              customerEmail: binding.initialEmail,
               onBackToCart: () => context.go('/cart'),
+              onReviewOrders: () => context.push('/orders'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
               design:
                   ref.watch(checkoutPresentationProvider).value?.design ??
@@ -565,12 +614,13 @@ class _PageAvailabilityGate extends ConsumerWidget {
     if (state.value == null && !state.hasError) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(key: Key('page-availability-loading')),
+          child: CircularProgressIndicator(
+            key: Key('page-availability-loading'),
+          ),
         ),
       );
     }
-    final CmsPageLayout layout =
-        state.value ?? CmsPageLayout.fallback(page);
+    final CmsPageLayout layout = state.value ?? CmsPageLayout.fallback(page);
     if (!AppConfig.isCmsPreview && !layout.enabled) {
       return const CommerceRouteDestination(
         icon: Icons.visibility_off_outlined,

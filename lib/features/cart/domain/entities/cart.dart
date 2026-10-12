@@ -18,6 +18,7 @@ class Cart {
     required this.hasCalculatedShipping,
     required List<String> paymentMethods,
     required List<CartError> errors,
+    this.checkoutUrl,
   }) : items = List<CartItem>.unmodifiable(items),
        coupons = List<CartCoupon>.unmodifiable(coupons),
        paymentMethods = List<String>.unmodifiable(paymentMethods),
@@ -35,6 +36,10 @@ class Cart {
   final bool hasCalculatedShipping;
   final List<String> paymentMethods;
   final List<CartError> errors;
+
+  /// Verified platform-hosted checkout handoff, not an order/payment result.
+  /// Contains buyer-session credentials. Never log or send to analytics.
+  final Uri? checkoutUrl;
 
   bool get isEmpty => items.isEmpty;
 }

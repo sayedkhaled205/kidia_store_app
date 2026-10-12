@@ -6,6 +6,7 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 
 enum WishlistStatus { initial, loading, ready, empty, failure }
@@ -14,7 +15,13 @@ class WishlistController extends ChangeNotifier {
   WishlistController({
     required this.repository,
     required this.catalogRepository,
-  });
+  }) {
+    if (catalogRepository is CatalogChangeSource) {
+      _catalogSubscription = (catalogRepository as CatalogChangeSource)
+          .catalogChanges
+          .listen((_) => unawaited(load(background: true)));
+    }
+  }
 
   static const int _hydrationBatchSize = 100;
 
@@ -30,6 +37,7 @@ class WishlistController extends ChangeNotifier {
   bool _isDisposed = false;
   int _requestSerial = 0;
   Future<void> _mutationTail = Future<void>.value();
+  StreamSubscription<int>? _catalogSubscription;
 
   WishlistStatus get status => _status;
   List<int> get productIds => List<int>.unmodifiable(_productIds);
@@ -43,13 +51,13 @@ class WishlistController extends ChangeNotifier {
 
   bool contains(int productId) => _productIds.contains(productId);
 
-  Future<void> load() async {
+  Future<void> load({bool background = false}) async {
     await _mutationTail;
     if (_isDisposed) {
       return;
     }
     final int serial = ++_requestSerial;
-    _status = WishlistStatus.loading;
+    if (!background) _status = WishlistStatus.loading;
     _loadError = null;
     _mutationError = null;
     _notify();
@@ -95,13 +103,15 @@ class WishlistController extends ChangeNotifier {
       if (!_canCommit(serial)) {
         return;
       }
-      _productIds = const <int>[];
-      _products = const <CatalogProduct>[];
+      if (!background) {
+        _productIds = const <int>[];
+        _products = const <CatalogProduct>[];
+      }
       _loadError = _messageFor(
         error,
         fallback: 'Unable to load your saved items. Please try again.',
       );
-      _status = WishlistStatus.failure;
+      if (!background) _status = WishlistStatus.failure;
       _notify();
     }
   }
@@ -318,6 +328,7 @@ class WishlistController extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     _requestSerial++;
+    _catalogSubscription?.cancel();
     super.dispose();
   }
 }

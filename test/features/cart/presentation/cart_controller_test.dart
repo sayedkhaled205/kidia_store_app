@@ -121,9 +121,13 @@ void main() {
 }
 
 ProviderContainer _container(CartRepository repository) {
-  return ProviderContainer(
+  final container = ProviderContainer(
     overrides: [cartRepositoryProvider.overrideWithValue(repository)],
   );
+  // This fixture represents a mounted cart consumer. An unobserved
+  // auto-disposed controller must not be expected to retain a pending mutation.
+  container.listen(cartControllerProvider, (previous, next) {});
+  return container;
 }
 
 class _FakeCartRepository implements CartRepository {

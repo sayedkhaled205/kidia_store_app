@@ -46,9 +46,11 @@ workflows:
       - name: Build signed Kidia IPA
         script: |
           set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           flutter build ipa --release \
             --build-name=1.46.69 --build-number="$(( ${PROJECT_BUILD_NUMBER:?} + 100 ))" \
             --export-options-plist="$HOME/export_options.plist" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=$STORE_NAME" \
             --dart-define="STORE_LOCALE=$STORE_LOCALE" \
@@ -131,9 +133,11 @@ workflows:
         script: |
           set -euo pipefail
           source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
             "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
@@ -142,9 +146,11 @@ workflows:
         script: |
           set -euo pipefail
           source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
             "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
@@ -155,9 +161,11 @@ workflows:
       - name: Build signed iOS IPA
         script: |
           set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           flutter build ipa --release \
             --build-name="$BUILD_VERSION_NAME" --build-number="$(( ${PROJECT_BUILD_NUMBER:?} + 100 ))" \
             --export-options-plist="$HOME/export_options.plist" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=$STORE_NAME" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
@@ -290,9 +298,11 @@ workflows:
         script: |
           set -euo pipefail
           source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
             "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
@@ -301,9 +311,11 @@ workflows:
         script: |
           set -euo pipefail
           source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
           ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
             "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \

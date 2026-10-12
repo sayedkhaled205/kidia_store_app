@@ -1,7 +1,10 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/compact_family_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
@@ -11,6 +14,30 @@ import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 
 void main() {
+  testWidgets('compact family login validates and advances without overflow at phone width', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = _FakeAuthRepository(registered: true);
+    await _pumpAuth(tester, repository, compact: true);
+    await tester.enterText(find.byKey(const Key('auth-email')), 'customer@example.com');
+    await tester.ensureVisible(find.byKey(const Key('auth-continue')));
+    await tester.tap(find.byKey(const Key('auth-continue')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-password')), findsOneWidget);
+    expect(repository.identified, ['customer@example.com']);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('auth brand follows preview identity only in CMS preview', (
+    tester,
+  ) async {
+    await _pumpAuth(tester, _FakeAuthRepository(registered: true));
+    expect(
+      find.text(AppConfig.isCmsPreview ? 'كيديا ستور' : AppConfig.storeName),
+      findsOneWidget,
+    );
+  });
   testWidgets('shows circular Google and Facebook actions on the email step', (
     WidgetTester tester,
   ) async {
@@ -65,13 +92,16 @@ void main() {
   });
 }
 
-Future<void> _pumpAuth(
-  WidgetTester tester,
-  AuthRepository repository,
-) async {
+Future<void> _pumpAuth(WidgetTester tester, AuthRepository repository, {bool compact = false}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repository),
+        compactFamilyProvider.overrideWithValue(compact),
+        previewIdentityProvider.overrideWith(
+          (ref) => Stream.value({'app_name': 'كيديا ستور'}),
+        ),
+      ],
       child: const MaterialApp(
         locale: Locale('ar'),
         supportedLocales: <Locale>[Locale('ar')],

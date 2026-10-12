@@ -9,6 +9,16 @@ import 'package:mobishop_store_app/features/orders/presentation/customer_orders_
 import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 void main() {
+  testWidgets('notification opens exact order outside the loaded history page', (tester) async {
+    final repository = _LookupOrdersRepository();
+    await tester.pumpWidget(ProviderScope(overrides:[customerOrdersRepositoryProvider.overrideWithValue(repository),cartBadgeCountProvider.overrideWithValue(0)],child:const MaterialApp(locale:Locale('ar'),supportedLocales:[Locale('ar')],localizationsDelegates:GlobalMaterialLocalizations.delegates,home:CustomerOrdersScreen(initialOrderId:321))));
+    await tester.pumpAndSettle();
+    expect(repository.requestedId,321);
+    expect(find.byKey(const Key('customer-order-details-321')),findsOneWidget);
+    expect(find.text('طلب #321'),findsOneWidget);
+    expect(tester.takeException(),isNull);
+  });
+
   testWidgets('shows the signed-in customer previous orders', (
     WidgetTester tester,
   ) async {
@@ -165,5 +175,13 @@ class _EmptyOrdersRepository implements CustomerOrdersRepository {
       totalItems: 0,
       totalPages: 0,
     );
+  }
+}
+
+class _LookupOrdersRepository extends _EmptyOrdersRepository implements CustomerOrderLookupRepository {
+  int? requestedId;
+  @override Future<CustomerOrder> getOrder(int id) async {
+    requestedId=id;
+    return CustomerOrder(id:id,number:'$id',status:'completed',statusName:'Completed',totalDisplay:'EGP 10',itemCount:0,items:const []);
   }
 }

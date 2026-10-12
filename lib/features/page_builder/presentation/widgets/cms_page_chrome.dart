@@ -1,9 +1,16 @@
+import 'package:go_router/go_router.dart';
+import 'package:mobishop_store_app/features/search/presentation/catalog_search_launcher.dart';
+import 'package:mobishop_store_app/features/search/presentation/voice_search_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
+import 'package:mobishop_store_app/core/theme/builder_font_family.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 List<Map<String, dynamic>> _configuredHeaderRows(
   CmsPageComponent header, {
@@ -22,13 +29,19 @@ double _regularHeaderHeight(CmsPageComponent header) {
   if (count <= 1) {
     return header.number('height', 64).clamp(48, 120).toDouble();
   }
-  final double first = header.number('row_1_height', 48).clamp(24, 100).toDouble();
-  final double remaining =
-      header.number('row_2_height', 48).clamp(24, 100).toDouble();
-  final double gap = (header.number('row_gap', 8).clamp(0, 24) -
-          header.number('row_merge', 0).clamp(0, 24))
-      .clamp(0, 24)
+  final double first = header
+      .number('row_1_height', 48)
+      .clamp(24, 100)
       .toDouble();
+  final double remaining = header
+      .number('row_2_height', 48)
+      .clamp(24, 100)
+      .toDouble();
+  final double gap =
+      (header.number('row_gap', 8).clamp(0, 24) -
+              header.number('row_merge', 0).clamp(0, 24))
+          .clamp(0, 24)
+          .toDouble();
   final double padding =
       header.number('vertical_padding', 8).clamp(0, 24).toDouble() * 2;
   return (padding + first + (remaining * (count - 1)) + (gap * (count - 1)))
@@ -37,21 +50,30 @@ double _regularHeaderHeight(CmsPageComponent header) {
 }
 
 double _compactHeaderHeight(CmsPageComponent header) {
-  final double configured =
-      header.number('compact_height', 60).clamp(44, 100).toDouble();
-  final int count =
-      _configuredHeaderRows(header, key: 'compact_layout_json').length;
+  final double configured = header
+      .number('compact_height', 60)
+      .clamp(44, 100)
+      .toDouble();
+  final int count = _configuredHeaderRows(
+    header,
+    key: 'compact_layout_json',
+  ).length;
   if (count <= 1) {
     return configured;
   }
-  final double first =
-      header.number('row_1_height', 48).clamp(24, 100).toDouble();
-  final double remaining =
-      header.number('row_2_height', 48).clamp(24, 100).toDouble();
-  final double gap = (header.number('row_gap', 8).clamp(0, 24) -
-          header.number('row_merge', 0).clamp(0, 24))
-      .clamp(0, 24)
+  final double first = header
+      .number('row_1_height', 48)
+      .clamp(24, 100)
       .toDouble();
+  final double remaining = header
+      .number('row_2_height', 48)
+      .clamp(24, 100)
+      .toDouble();
+  final double gap =
+      (header.number('row_gap', 8).clamp(0, 24) -
+              header.number('row_merge', 0).clamp(0, 24))
+          .clamp(0, 24)
+          .toDouble();
   final double padding =
       header.number('vertical_padding', 8).clamp(0, 24).toDouble() * 2;
   final double rowsHeight =
@@ -59,13 +81,39 @@ double _compactHeaderHeight(CmsPageComponent header) {
   return rowsHeight.clamp(configured, 360).toDouble();
 }
 
-typedef CmsPageLayoutWidgetBuilder = Widget Function(
-  BuildContext context,
-  CmsPageLayout layout,
-);
+typedef CmsPageLayoutWidgetBuilder =
+    Widget Function(BuildContext context, CmsPageLayout layout);
+
+/// Selector keys stay compatible with saved layouts; named choices resolve to
+/// actual bundled assets rather than platform-dependent generic family names.
+String? cmsPageFontFamily(String configuredFont) =>
+    builderFontFamily(configuredFont);
+
+/// The page owns its outer inset. Component insets are additional only when
+/// present in the component's saved settings; no inherited/default inset is
+/// added a second time.
+double cmsContentHorizontalPadding(
+  CmsPageLayout layout, {
+  CmsPageComponent? component,
+  String componentKey = 'outer_horizontal_padding',
+}) {
+  final double pagePadding = layout
+      .number('content_horizontal_padding', 20)
+      .clamp(0, 40)
+      .toDouble();
+  final double elementPadding =
+      component != null && component.settings.containsKey(componentKey)
+      ? component.number(componentKey, 0).clamp(0, 40).toDouble()
+      : 0;
+  return pagePadding + elementPadding;
+}
 
 class CmsElementFrame extends StatelessWidget {
-  const CmsElementFrame({required this.component, required this.child, super.key});
+  const CmsElementFrame({
+    required this.component,
+    required this.child,
+    super.key,
+  });
 
   final CmsPageComponent component;
   final Widget child;
@@ -100,10 +148,7 @@ class CmsElementFrame extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.only(
               top: component.number('space_up', 0).clamp(0, 80).toDouble(),
-              bottom: component
-                  .number('space_down', 0)
-                  .clamp(0, 80)
-                  .toDouble(),
+              bottom: component.number('space_down', 0).clamp(0, 80).toDouble(),
             ),
             child: child,
           ),
@@ -136,9 +181,7 @@ class CmsPageLayoutLoader extends ConsumerWidget {
       return builder(context, CmsPageLayout.fallback(page));
     }
     return const Scaffold(
-      body: SafeArea(
-        child: Center(child: CircularProgressIndicator()),
-      ),
+      body: SafeArea(child: Center(child: CircularProgressIndicator())),
     );
   }
 }
@@ -209,15 +252,18 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
       'collapse_on_scroll',
       false,
     );
-    final bool next = enabled && (_collapsed
-        ? extentBefore > _expandThreshold
-        : extentBefore > _collapseThreshold);
+    final bool next =
+        enabled &&
+        (_collapsed
+            ? extentBefore > _expandThreshold
+            : extentBefore > _collapseThreshold);
     final bool scrollLinked =
         widget.layout.header.string('collapse_transition', 'smooth_compact') ==
         'smooth_compact';
-    final double collapseDistance = switch (
-      widget.layout.header.string('collapse_speed', 'medium')
-    ) {
+    final double collapseDistance = switch (widget.layout.header.string(
+      'collapse_speed',
+      'medium',
+    )) {
       'fast' => 44,
       'slow' => 96,
       _ => 64,
@@ -229,9 +275,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
         (scrollLinked && (nextProgress - _collapseProgress).abs() > .001)) {
       setState(() {
         _collapsed = next;
-        _collapseProgress = scrollLinked
-            ? nextProgress
-            : (next ? 1 : 0);
+        _collapseProgress = scrollLinked ? nextProgress : (next ? 1 : 0);
       });
     }
   }
@@ -271,21 +315,20 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
 
   @override
   Widget build(BuildContext context) {
-	final String configuredFont = widget.layout.string('font_family', 'system');
-	final String? fontFamily = switch (configuredFont) {
-	  'poppins' => 'Poppins',
-	  'roboto' => 'Roboto',
-	  'noto_sans_arabic' => 'Noto Sans Arabic',
-	  'serif' => 'serif',
-	  'monospace' => 'monospace',
-	  _ => null,
-	};
-	final ThemeData pageTheme = fontFamily == null
-	    ? Theme.of(context)
-	    : Theme.of(context).copyWith(
-	        textTheme: Theme.of(context).textTheme.apply(fontFamily: fontFamily),
-	        primaryTextTheme: Theme.of(context).primaryTextTheme.apply(fontFamily: fontFamily),
-	      );
+    final String configuredFont = widget.layout.string('font_family', 'system');
+    final String? fontFamily = cmsPageFontFamily(configuredFont);
+    final ThemeData pageTheme = fontFamily == null
+        ? Theme.of(context)
+        : Theme.of(context).copyWith(
+            textTheme: Theme.of(context).textTheme.apply(
+              fontFamily: fontFamily,
+              fontFamilyFallback: const <String>['Noto Sans Arabic'],
+            ),
+            primaryTextTheme: Theme.of(context).primaryTextTheme.apply(
+              fontFamily: fontFamily,
+              fontFamilyFallback: const <String>['Noto Sans Arabic'],
+            ),
+          );
     final bool collapsed =
         widget.layout.header.boolean('collapse_on_scroll', false) && _collapsed;
     final String transition = widget.layout.header.string(
@@ -313,33 +356,41 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
             'slow' => const Duration(milliseconds: 420),
             _ => const Duration(milliseconds: 260),
           };
-	return Theme(
-	  data: pageTheme,
-	  child: TweenAnimationBuilder<double>(
-      tween: Tween<double>(end: targetHeight),
-      duration: transition == 'smooth_compact' ? Duration.zero : duration,
-      curve: Curves.easeOutCubic,
-      builder: (BuildContext context, double animatedHeight, Widget? child) =>
-          Scaffold(
-            backgroundColor: widget.backgroundColor,
-            appBar: CmsPageAppBar(
-              layout: widget.layout,
-              defaultTitle: widget.defaultTitle,
-              actions: widget.actions,
-              compact: collapsed,
-              collapseProgress: transition == 'smooth_compact'
-                  ? _collapseProgress
-                  : (collapsed ? 1 : 0),
-              visibleHeight: animatedHeight,
+    return Theme(
+      data: pageTheme,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(end: targetHeight),
+        duration: transition == 'smooth_compact' ? Duration.zero : duration,
+        curve: Curves.easeOutCubic,
+        builder: (BuildContext context, double animatedHeight, Widget? child) =>
+            Scaffold(
+              backgroundColor:
+                  widget.backgroundColor ??
+                  _color(
+                    widget.layout.string(
+                      'page_background_color',
+                      widget.layout.string('background_color', ''),
+                    ),
+                    Theme.of(context).scaffoldBackgroundColor,
+                  ),
+              appBar: CmsPageAppBar(
+                layout: widget.layout,
+                defaultTitle: widget.defaultTitle,
+                actions: widget.actions,
+                compact: collapsed,
+                collapseProgress: transition == 'smooth_compact'
+                    ? _collapseProgress
+                    : (collapsed ? 1 : 0),
+                visibleHeight: animatedHeight,
+              ),
+              body: NotificationListener<ScrollNotification>(
+                onNotification: _handleScroll,
+                child: widget.body,
+              ),
+              bottomNavigationBar: widget.bottomNavigationBar,
             ),
-            body: NotificationListener<ScrollNotification>(
-              onNotification: _handleScroll,
-              child: widget.body,
-            ),
-            bottomNavigationBar: widget.bottomNavigationBar,
-          ),
-	  ),
-	);
+      ),
+    );
   }
 }
 
@@ -364,13 +415,15 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   CmsPageComponent get _header => layout.header;
 
   @override
-  Size get preferredSize => Size.fromHeight(_header.enabled
-      ? _visibleHeight +
-          _header.number('margin_top', 0).clamp(0, 80) +
-          _header.number('margin_bottom', 0).clamp(0, 80) +
-          _header.number('space_up', 0).clamp(0, 80) +
-          _header.number('space_down', 0).clamp(0, 80)
-      : 0);
+  Size get preferredSize => Size.fromHeight(
+    _header.enabled
+        ? _visibleHeight +
+              _header.number('margin_top', 0).clamp(0, 80) +
+              _header.number('margin_bottom', 0).clamp(0, 80) +
+              _header.number('space_up', 0).clamp(0, 80) +
+              _header.number('space_down', 0).clamp(0, 80)
+        : 0,
+  );
 
   double get _visibleHeight {
     if (visibleHeight != null) return visibleHeight!;
@@ -444,7 +497,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               : 0,
         )
         .clamp(0, 40);
-    final double radius = _lerp(regularRadius, compactRadius, progress);
+    // The editor serializes zero even when no custom radius was chosen.
+    // Let the pill preset shape itself; retain explicit positive overrides.
+    final double shapedCompactRadius = compactStyle == 'pill' && compactRadius == 0
+        ? _compactHeaderHeight(_header) / 2
+        : compactRadius;
+    final double radius = _lerp(regularRadius, shapedCompactRadius, progress);
     final String regularShadow = _header.string('shadow', 'subtle');
     final String compactShadow = _header.string(
       'compact_shadow',
@@ -512,50 +570,53 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                       progress: progress,
                     )
                   : AnimatedSwitcher(
-                  key: const Key('cms-page-app-bar-transition'),
-                  duration: transitionDuration,
-                  reverseDuration: transitionDuration,
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) =>
-                          _transitionBuilder(transition, child, animation),
-                  child: FittedBox(
-                    key: ValueKey<bool>(compact),
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: (MediaQuery.sizeOf(context).width -
-                              (sideMargin * 2) -
-                              (padding * 2))
-                          .clamp(1, double.infinity)
-                          .toDouble(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: rows.indexed.expand((entry) sync* {
-                          if (entry.$1 > 0) {
-                            yield SizedBox(
-                              height:
-                                  (_header
-                                              .number('row_gap', 8)
-                                              .clamp(0, 24) -
-                                          _header
-                                              .number('row_merge', 0)
-                                              .clamp(0, 24))
-                                      .clamp(0, 24)
-                                      .toDouble(),
-                            );
-                          }
-                          yield _positionedHeaderRow(
-                            entry.$1,
-                            rows.length,
-                            _headerRow(context, entry.$2, foreground),
-                          );
-                        }).toList(growable: false),
+                      key: const Key('cms-page-app-bar-transition'),
+                      duration: transitionDuration,
+                      reverseDuration: transitionDuration,
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) =>
+                              _transitionBuilder(transition, child, animation),
+                      child: FittedBox(
+                        key: ValueKey<bool>(compact),
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: SizedBox(
+                          width:
+                              (MediaQuery.sizeOf(context).width -
+                                      (sideMargin * 2) -
+                                      (padding * 2))
+                                  .clamp(1, double.infinity)
+                                  .toDouble(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: rows.indexed
+                                .expand((entry) sync* {
+                                  if (entry.$1 > 0) {
+                                    yield SizedBox(
+                                      height:
+                                          (_header
+                                                      .number('row_gap', 8)
+                                                      .clamp(0, 24) -
+                                                  _header
+                                                      .number('row_merge', 0)
+                                                      .clamp(0, 24))
+                                              .clamp(0, 24)
+                                              .toDouble(),
+                                    );
+                                  }
+                                  yield _positionedHeaderRow(
+                                    entry.$1,
+                                    rows.length,
+                                    _headerRow(context, entry.$2, foreground),
+                                  );
+                                })
+                                .toList(growable: false),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                     ),
             ),
           ),
@@ -648,14 +709,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       'account',
     };
     final Set<String> persistentActions = regularItems
-        .where(
-          fixedActionItems.contains,
-        )
+        .where(fixedActionItems.contains)
         .toSet();
-    final Set<String> removed = <String>{
-      'search_bar',
-      ...persistentActions,
-    };
+    final Set<String> removed = <String>{'search_bar', ...persistentActions};
     final List<Map<String, dynamic>> fadingRegular = _rowsWithoutItems(
       regularRows,
       removed,
@@ -693,7 +749,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final double availableWidth = width.clamp(1, double.infinity).toDouble();
+        final double availableWidth = width
+            .clamp(1, constraints.maxWidth)
+            .toDouble();
         final double startTop = _itemTopInRows(
           regularRows,
           'search_bar',
@@ -704,11 +762,11 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         final double regularActionTop = persistentActions.isEmpty
             ? 0
             : persistentActions
-                  .map(
-                    (String item) => _itemTopInRows(regularRows, item),
+                  .map((String item) => _itemTopInRows(regularRows, item))
+                  .reduce(
+                    (double current, double next) =>
+                        current < next ? current : next,
                   )
-                  .reduce((double current, double next) =>
-                      current < next ? current : next)
                   .clamp(2, double.infinity)
                   .toDouble();
         return Stack(
@@ -747,16 +805,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 key: const Key('cms-page-morphing-search'),
                 child: _positionedItem(
                   'search_bar',
-                  _searchBar(context, _actionFor('search'), color),
+                  _searchBar(context, _resolvedAction(context, 'search'), color),
                 ),
               ),
             ),
             if (persistentActions.isNotEmpty)
               Positioned(
-                // Header actions are deliberately anchored to their regular
-                // position. Only the search bar participates in the wide
-                // search transition.
-                top: regularActionTop,
+                // Header columns use physical left/right coordinates in every locale.
+                top: _lerp(regularActionTop, (constraints.maxHeight - 48) / 2, progress),
                 right: 0,
                 height: 48,
                 child: Row(
@@ -766,10 +822,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                         (String item) => Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal:
-                                _header
-                                    .number('icon_gap', 6)
-                                    .clamp(0, 24) /
-                                2,
+                                _header.number('icon_gap', 6).clamp(0, 24) / 2,
                           ),
                           child: _item(context, item, color),
                         ),
@@ -783,19 +836,17 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Set<String> _rowItems(List<Map<String, dynamic>> rows) => rows
-      .expand(_columns)
-      .expand((Map<String, dynamic> column) {
+  Set<String> _rowItems(List<Map<String, dynamic>> rows) =>
+      rows.expand(_columns).expand((Map<String, dynamic> column) {
         final dynamic raw = column['items'];
         return raw is List ? raw.map((dynamic item) => '$item') : <String>[];
-      })
-      .toSet();
+      }).toSet();
 
   List<Map<String, dynamic>> _rowsWithoutItems(
     List<Map<String, dynamic>> rows,
-    Set<String> removed,
-    {bool preserveEmptyRows = false}
-  ) {
+    Set<String> removed, {
+    bool preserveEmptyRows = false,
+  }) {
     return rows
         .map((Map<String, dynamic> row) {
           final List<Map<String, dynamic>> columns = _columns(row)
@@ -813,10 +864,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           return <String, dynamic>{...row, 'columns': columns};
         })
         .where(
-          (Map<String, dynamic> row) => _columns(row).any(
-            (Map<String, dynamic> column) =>
-                (column['items'] as List?)?.isNotEmpty ?? false,
-          ) || preserveEmptyRows,
+          (Map<String, dynamic> row) =>
+              _columns(row).any(
+                (Map<String, dynamic> column) =>
+                    (column['items'] as List?)?.isNotEmpty ?? false,
+              ) ||
+              preserveEmptyRows,
         )
         .toList(growable: false);
   }
@@ -829,7 +882,8 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     for (final Map<String, dynamic> row in rows) {
       for (final Map<String, dynamic> column in _columns(row)) {
         final dynamic raw = column['items'];
-        if (raw is List && raw.map((dynamic value) => '$value').contains(item)) {
+        if (raw is List &&
+            raw.map((dynamic value) => '$value').contains(item)) {
           return (((column['width'] as num?)?.toDouble() ?? 100) / 100)
               .clamp(.1, 1)
               .toDouble();
@@ -839,26 +893,24 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return fallback;
   }
 
-  double _itemTopInRows(
-    List<Map<String, dynamic>> rows,
-    String item,
-  ) {
+  double _itemTopInRows(List<Map<String, dynamic>> rows, String item) {
     double top = 0;
-    final double gap = (_header.number('row_gap', 8).clamp(0, 24) -
-            _header.number('row_merge', 0).clamp(0, 24))
-        .clamp(0, 24)
-        .toDouble();
+    final double gap =
+        (_header.number('row_gap', 8).clamp(0, 24) -
+                _header.number('row_merge', 0).clamp(0, 24))
+            .clamp(0, 24)
+            .toDouble();
     for (final MapEntry<int, Map<String, dynamic>> entry
         in rows.asMap().entries) {
       final Map<String, dynamic> row = entry.value;
-      final Set<String> items = _columns(row)
-          .expand((Map<String, dynamic> column) {
-            final dynamic raw = column['items'];
-            return raw is List
-                ? raw.map((dynamic value) => '$value')
-                : const <String>[];
-          })
-          .toSet();
+      final Set<String> items = _columns(row).expand((
+        Map<String, dynamic> column,
+      ) {
+        final dynamic raw = column['items'];
+        return raw is List
+            ? raw.map((dynamic value) => '$value')
+            : const <String>[];
+      }).toSet();
       final double contentHeight = _rowContentHeight(items);
       final bool single = rows.length <= 1;
       final double rowHeight = single
@@ -893,29 +945,32 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   double _rowContentHeight(Set<String> items) {
     if (items.isEmpty) return 0;
-    return items.map((String item) {
-      if (item == 'search_bar') {
-        return _header.number('search_height', 40).clamp(32, 64).toDouble();
-      }
-      if (item == 'logo') {
-        final double subtitle = _header.string('subtitle', '').isEmpty ? 0 : 11;
-        return _header.number('logo_height', 38).clamp(20, 80).toDouble() +
-            subtitle;
-      }
-      if (item == 'title') {
-        return (_header.number('title_font_size', 18).clamp(10, 42) *
-                _header.number('title_line_height', 1.2).clamp(.8, 2))
-            .toDouble();
-      }
-      final String prefix = item == 'search' ? 'search_icon' : item;
-      return _header
-          .number(
-            '${prefix}_size',
-            _header.number('icon_size', 24),
-          )
-          .clamp(14, 40)
-          .toDouble();
-    }).reduce((double current, double next) => current > next ? current : next);
+    return items
+        .map((String item) {
+          if (item == 'search_bar') {
+            return _header.number('search_height', 40).clamp(32, 64).toDouble();
+          }
+          if (item == 'logo') {
+            final double subtitle = _header.string('subtitle', '').isEmpty
+                ? 0
+                : 11;
+            return _header.number('logo_height', 38).clamp(20, 80).toDouble() +
+                subtitle;
+          }
+          if (item == 'title') {
+            return (_header.number('title_font_size', 18).clamp(10, 42) *
+                    _header.number('title_line_height', 1.2).clamp(.8, 2))
+                .toDouble();
+          }
+          final String prefix = item == 'search' ? 'search_icon' : item;
+          return _header
+              .number('${prefix}_size', _header.number('icon_size', 24))
+              .clamp(14, 40)
+              .toDouble();
+        })
+        .reduce(
+          (double current, double next) => current > next ? current : next,
+        );
   }
 
   Widget _scrollLinkedContent(
@@ -944,23 +999,26 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: rows.indexed.expand((entry) sync* {
-                  if (entry.$1 > 0) {
-                    yield SizedBox(
-                          height: (_header.number('row_gap', 8).clamp(0, 24) -
-                                  _header
-                                      .number('row_merge', 0)
-                                      .clamp(0, 24))
-                              .clamp(0, 24)
-                              .toDouble(),
-                    );
-                  }
-                  yield _positionedHeaderRow(
-                    entry.$1,
-                    rows.length,
-                    _headerRow(context, entry.$2, color),
-                  );
-                }).toList(growable: false),
+                children: rows.indexed
+                    .expand((entry) sync* {
+                      if (entry.$1 > 0) {
+                        yield SizedBox(
+                          height:
+                              (_header.number('row_gap', 8).clamp(0, 24) -
+                                      _header
+                                          .number('row_merge', 0)
+                                          .clamp(0, 24))
+                                  .clamp(0, 24)
+                                  .toDouble(),
+                        );
+                      }
+                      yield _positionedHeaderRow(
+                        entry.$1,
+                        rows.length,
+                        _headerRow(context, entry.$2, color),
+                      );
+                    })
+                    .toList(growable: false),
               ),
             ),
           ),
@@ -1014,24 +1072,36 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     };
   }
 
-  Widget _headerRow(BuildContext context, Map<String, dynamic> row, Color color) {
+  Widget _headerRow(
+    BuildContext context,
+    Map<String, dynamic> row,
+    Color color,
+  ) {
     final List<Map<String, dynamic>> columns = _columns(row);
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Row(
-        children: columns.map((column) {
-          final double width = (column['width'] as num?)?.toDouble() ?? (100 / columns.length);
-          final String align = '${column['align'] ?? 'center'}';
-          return Expanded(
-            flex: (width * 100).round().clamp(1, 10000).toInt(),
-            child: _slot(
-              context,
-              column['items'],
-              align == 'left' ? Alignment.centerLeft : align == 'right' ? Alignment.centerRight : Alignment.center,
-              color,
-            ),
-          );
-        }).toList(growable: false),
+        children: columns
+            .map((column) {
+              final double width =
+                  (column['width'] as num?)?.toDouble() ??
+                  (100 / columns.length);
+              final String align = '${column['align'] ?? 'center'}';
+              return Expanded(
+                flex: (width * 100).round().clamp(1, 10000).toInt(),
+                child: _slot(
+                  context,
+                  column['items'],
+                  align == 'left'
+                      ? Alignment.centerLeft
+                      : align == 'right'
+                      ? Alignment.centerRight
+                      : Alignment.center,
+                  color,
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -1048,26 +1118,50 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
     // Backward compatibility for layouts saved before the percentage-column schema.
     return <Map<String, dynamic>>[
-      <String, dynamic>{'width': 33.33, 'align': 'left', 'items': row['left'] ?? <String>[]},
-      <String, dynamic>{'width': 33.34, 'align': 'center', 'items': row['center'] ?? <String>[]},
-      <String, dynamic>{'width': 33.33, 'align': 'right', 'items': row['right'] ?? <String>[]},
+      <String, dynamic>{
+        'width': 33.33,
+        'align': 'left',
+        'items': row['left'] ?? <String>[],
+      },
+      <String, dynamic>{
+        'width': 33.34,
+        'align': 'center',
+        'items': row['center'] ?? <String>[],
+      },
+      <String, dynamic>{
+        'width': 33.33,
+        'align': 'right',
+        'items': row['right'] ?? <String>[],
+      },
     ];
   }
 
   List<Map<String, dynamic>> _layoutRows() {
     final dynamic raw = _header.json('layout_json')['rows'];
     if (raw is List) {
-      final rows = raw.whereType<Map>().map((row) => Map<String, dynamic>.from(row)).take(3).toList();
+      final rows = raw
+          .whereType<Map>()
+          .map((row) => Map<String, dynamic>.from(row))
+          .take(3)
+          .toList();
       if (rows.isNotEmpty) return rows;
     }
     if (layout.page == 'product') {
-      return <Map<String, dynamic>>[<String, dynamic>{
-        'left': <String>['back'],
-        'center': <String>['title'],
-        'right': <String>['cart', 'wishlist'],
-      }];
+      return <Map<String, dynamic>>[
+        <String, dynamic>{
+          'left': <String>['back'],
+          'center': <String>['title'],
+          'right': <String>['cart', 'wishlist'],
+        },
+      ];
     }
-    return <Map<String, dynamic>>[<String, dynamic>{'left': <String>[], 'center': <String>['title'], 'right': <String>['search', 'cart']}];
+    return <Map<String, dynamic>>[
+      <String, dynamic>{
+        'left': <String>[],
+        'center': <String>['title'],
+        'right': <String>['search', 'cart'],
+      },
+    ];
   }
 
   List<Map<String, dynamic>> _compactLayoutRows() {
@@ -1098,16 +1192,27 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     ];
   }
 
-  Widget _slot(BuildContext context, dynamic rawItems, Alignment alignment, Color color) {
-    final List<String> items = rawItems is List ? rawItems.map((item) => '$item').where((item) => item != 'subtitle').toList() : <String>[];
+  Widget _slot(
+    BuildContext context,
+    dynamic rawItems,
+    Alignment alignment,
+    Color color,
+  ) {
+    final List<String> items = rawItems is List
+        ? rawItems
+              .map((item) => '$item')
+              .where((item) => item != 'subtitle')
+              .toList()
+        : <String>[];
     if (items.length == 1 && items.first == 'search_bar') {
       return Align(
         alignment: alignment,
         child: FractionallySizedBox(
-          widthFactor: _header.number('search_width_percent', 100).clamp(30, 100) / 100,
+          widthFactor:
+              _header.number('search_width_percent', 100).clamp(30, 100) / 100,
           child: _positionedItem(
             'search_bar',
-            _searchBar(context, _actionFor('search'), color),
+            _searchBar(context, _resolvedAction(context, 'search'), color),
           ),
         ),
       );
@@ -1119,10 +1224,16 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         alignment: alignment,
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: items.map((item) => Padding(
-            padding: EdgeInsets.symmetric(horizontal: _header.number('icon_gap', 6).clamp(0, 24) / 2),
-            child: _item(context, item, color),
-          )).toList(growable: false),
+          children: items
+              .map(
+                (item) => Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: _header.number('icon_gap', 6).clamp(0, 24) / 2,
+                  ),
+                  child: _item(context, item, color),
+                ),
+              )
+              .toList(growable: false),
         ),
       ),
     );
@@ -1160,46 +1271,43 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           : TextAlign.center;
       final int weight = _header.number('title_font_weight', 700).round();
       return ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth:
-                MediaQuery.sizeOf(context).width *
-                _header
-                    .number('title_max_width_percent', 100)
-                    .clamp(20, 100) /
-                100,
-          ),
-          child: Text(
-            title,
-            key: const Key('commerce-app-bar-title'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: textAlign,
-            style: TextStyle(
-              color: _color(
-                _header.string('title_color', '#1F2933'),
-                color,
-              ),
-              fontSize: _header
-                  .number('title_font_size', 18)
-                  .clamp(10, 42)
-                  .toDouble(),
-              fontWeight: FontWeight.values.firstWhere(
-                (FontWeight value) => value.value == weight,
-                orElse: () => FontWeight.w700,
-              ),
-              letterSpacing: _header
-                  .number('title_letter_spacing', 0)
-                  .clamp(-2, 8)
-                  .toDouble(),
-              height: _header
-                  .number('title_line_height', 1.2)
-                  .clamp(.8, 2)
-                  .toDouble(),
+        constraints: BoxConstraints(
+          maxWidth:
+              MediaQuery.sizeOf(context).width *
+              _header.number('title_max_width_percent', 100).clamp(20, 100) /
+              100,
+        ),
+        child: Text(
+          title,
+          key: const Key('commerce-app-bar-title'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: textAlign,
+          style: TextStyle(
+            color: _color(_header.string('title_color', '#1F2933'), color),
+            fontSize: _header
+                .number('title_font_size', 18)
+                .clamp(10, 42)
+                .toDouble(),
+            fontWeight: FontWeight.values.firstWhere(
+              (FontWeight value) => value.value == weight,
+              orElse: () => FontWeight.w700,
             ),
+            letterSpacing: _header
+                .number('title_letter_spacing', 0)
+                .clamp(-2, 8)
+                .toDouble(),
+            height: _header
+                .number('title_line_height', 1.2)
+                .clamp(.8, 2)
+                .toDouble(),
           ),
+        ),
       );
     }
-    if (item == 'subtitle') return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.
+    if (item == 'subtitle') {
+      return const SizedBox.shrink(); // Legacy layouts: subtitle now belongs to the logo item.
+    }
     if (item == 'logo') {
       final String url = _header.string('logo_url', '');
       final String subtitle = _header.string('subtitle', '');
@@ -1207,24 +1315,32 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         _header.string('logo_text_color', '#1F2933'),
         color,
       );
-      final Widget textLogo = Text(
-        _header.string('logo_text', 'MobiShop'),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: logoTextColor,
-          fontWeight: FontWeight.w900,
-          fontSize: 20,
-        ),
+      final Widget textLogo = Consumer(
+        builder: (context, ref, child) {
+          final identity = ref.watch(applicationIdentity58Provider);
+          final storeName =
+              identity?['app_name'] as String? ?? AppConfig.storeName;
+          return Text(
+            _header.string('logo_text', storeName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: logoTextColor,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+            ),
+          );
+        },
       );
       final Widget logo = url.isEmpty
           ? textLogo
-          : Image.network(
-              url,
+          : AppNetworkImage(
+              imageUrl: url,
               width: _header.number('logo_width', 118),
               height: _header.number('logo_height', 38),
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => textLogo,
+              fit: _header.string('logo_fit', 'contain') == 'cover'
+                  ? BoxFit.cover : BoxFit.contain,
+              errorWidget: textLogo,
             );
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -1241,55 +1357,171 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
     final CmsPageHeaderAction? action = item == 'back'
-        ? CmsPageHeaderAction(type: 'back', icon: Icons.arrow_back_rounded, tooltip: MaterialLocalizations.of(context).backButtonTooltip, onPressed: () => Navigator.of(context).maybePop())
-        : _actionFor(item == 'search_bar' ? 'search' : item);
+        ? CmsPageHeaderAction(
+            type: 'back',
+            icon: Icons.arrow_back_rounded,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: () => Navigator.of(context).maybePop(),
+          )
+        : _resolvedAction(context, item == 'search_bar' ? 'search' : item);
     if (item == 'search_bar') return _searchBar(context, action, color);
     if (action == null) return const SizedBox.shrink();
     return _actionButton(context, action, color);
   }
 
-  Widget _searchBar(BuildContext context, CmsPageHeaderAction? action, Color color) => InkWell(
+  Widget _searchBar(
+    BuildContext context,
+    CmsPageHeaderAction? action,
+    Color color,
+  ) => InkWell(
     onTap: action?.onPressed,
     borderRadius: BorderRadius.circular(_header.number('search_radius', 14)),
     child: Container(
       constraints: const BoxConstraints(minWidth: 120),
       height: _header.number('search_height', 40).clamp(32, 64),
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: _color(_header.string('search_background', '#F1F3F4'), Theme.of(context).colorScheme.surfaceContainerHighest), borderRadius: BorderRadius.circular(_header.number('search_radius', 14)), border: Border.all(color: _color(_header.string('search_border_color', '#DDE3E8'), Colors.transparent), width: _header.number('search_border_width', 0))),
-      child: Row(children: <Widget>[Icon(_iconFor('search', _header.string('search_icon_variant', 'rounded'), false), size: _header.number('search_icon_size', 24).clamp(16, 40), color: _color(_header.string('search_icon_color', '#1F2933'), color)), const SizedBox(width: 8), Expanded(child: Text(_header.string('search_placeholder', 'Search products'), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _color(_header.string('search_text_color', '#5F6368'), color)))), if (_header.boolean('show_voice_search', false)) Icon(Icons.mic_none_rounded, size: _header.number('search_icon_size', 24).clamp(16, 40), color: _color(_header.string('search_icon_color', '#1F2933'), color))]),
+      decoration: BoxDecoration(
+        color: _color(
+          _header.string('search_background', '#F1F3F4'),
+          Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
+        borderRadius: BorderRadius.circular(
+          _header.number('search_radius', 14),
+        ),
+        border: Border.all(
+          color: _color(
+            _header.string('search_border_color', '#DDE3E8'),
+            Colors.transparent,
+          ),
+          width: _header.number('search_border_width', 0),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            _iconFor(
+              'search',
+              _header.string('search_icon_variant', 'rounded'),
+              false,
+            ),
+            size: _header.number('search_icon_size', 24).clamp(16, 40),
+            color: _color(
+              _header.string('search_icon_color', '#1F2933'),
+              color,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _header.string('search_placeholder', 'Search products'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _color(
+                  _header.string('search_text_color', '#5F6368'),
+                  color,
+                ),
+                fontSize: _header.number('search_font_size', 14).clamp(10, 24).toDouble(),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          if (_header.boolean('show_voice_search', false))
+            IconButton(
+              key: const Key('cms-voice-search-button'),
+              tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'البحث بالصوت' : 'Voice search',
+              onPressed: () => showVoiceCatalogSearch(context),
+              icon: Icon(Icons.mic_none_rounded,
+                size: _header.number('search_icon_size', 24).clamp(16, 40),
+                color: _color(_header.string('search_icon_color', '#1F2933'), color),
+              ),
+            ),
+        ],
+      ),
     ),
   );
 
-  Widget _actionButton(BuildContext context, CmsPageHeaderAction action, Color fallbackColor) {
-    final String prefix = action.type == 'search' ? 'search_icon' : action.type == 'account' ? 'account_icon' : action.type;
-	final String backgroundKey = action.type == 'account'
-	    ? 'account_background'
-	    : '${prefix}_background';
-	final String radiusKey = action.type == 'account'
-	    ? 'account_radius'
-	    : '${prefix}_radius';
-    final String style = _header.string('${prefix}_style', action.type == 'account' ? _header.string('account_style', 'icon') : 'outline');
-    final Color color = action.color ?? _color(_header.string('${prefix}_color', _header.string('icon_color', '#1F2933')), fallbackColor);
-    final Color background = _color(_header.string(backgroundKey, '#FFFFFF'), Colors.transparent);
-    final double size = _header.number('${prefix}_size', _header.number('icon_size', 24)).clamp(14, 40).toDouble();
+  Widget _actionButton(
+    BuildContext context,
+    CmsPageHeaderAction action,
+    Color fallbackColor,
+  ) {
+    final String prefix = action.type == 'search'
+        ? 'search_icon'
+        : action.type == 'account'
+        ? 'account_icon'
+        : action.type;
+    final String backgroundKey = action.type == 'account'
+        ? 'account_background'
+        : '${prefix}_background';
+    final String radiusKey = action.type == 'account'
+        ? 'account_radius'
+        : '${prefix}_radius';
+    final String style = _header.string(
+      '${prefix}_style',
+      action.type == 'account'
+          ? _header.string('account_style', 'icon')
+          : const <String>{'orders', 'support', 'menu'}.contains(action.type)
+          ? 'circle'
+          : 'outline',
+    );
+    final Color color =
+        action.color ??
+        _color(
+          _header.string(
+            '${prefix}_color',
+            _header.string('icon_color', '#1F2933'),
+          ),
+          fallbackColor,
+        );
+    final Color background = _color(
+      _header.string(backgroundKey, '#FFFFFF'),
+      Colors.transparent,
+    );
+    final double size = _header
+        .number('${prefix}_size', _header.number('icon_size', 24))
+        .clamp(14, 40)
+        .toDouble();
     final double radius = _header.number(radiusKey, 12).clamp(0, 24).toDouble();
-    final bool selectedWishlist = action.type == 'wishlist' && action.icon == Icons.favorite_rounded;
+    final bool selectedWishlist =
+        action.type == 'wishlist' && action.icon == Icons.favorite_rounded;
     final String variant = _header.string('${action.type}_icon_variant', '');
-    final IconData icon = AppConfig.isCmsPreview &&
+    final IconData icon = action.type == 'account' && style == 'avatar'
+        ? Icons.account_circle_rounded
+        : AppConfig.isCmsPreview && action.type != 'account' && style != 'filled' &&
+            !(action.type == 'wishlist' && variant.isNotEmpty) &&
             _usesApplicationIcon(action.type, variant)
         ? action.icon
-        : _iconFor(
-            action.type,
-            variant,
-            style == 'filled' || selectedWishlist,
-          );
+        : _iconFor(action.type, variant, style == 'filled' || selectedWishlist);
+    if (action.type == 'account' && _header.boolean('show_account_label', false)) {
+      return TextButton.icon(
+        key: action.key,
+        onPressed: action.onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: color,
+          backgroundColor: style == 'filled' ? background : Colors.transparent,
+          minimumSize: const Size(48, 48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+        ),
+        icon: Icon(icon, size: size),
+        label: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 120),
+          child: Text(_header.string('account_label', action.tooltip),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+      );
+    }
     final Widget button = IconButton(
       key: action.key,
       tooltip: action.tooltip,
       onPressed: action.onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: style == 'circle' || style == 'filled' ? background : Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+        backgroundColor: style == 'circle' || style == 'filled'
+            ? background
+            : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
       ),
       color: color,
       icon: Icon(icon, size: size),
@@ -1300,16 +1532,16 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Consumer(
       child: button,
       builder: (BuildContext context, WidgetRef ref, Widget? child) {
-        final int count = ref.watch(cartBadgeCountProvider).clamp(0, 99).toInt();
+        final int count = ref
+            .watch(cartBadgeCountProvider)
+            .clamp(0, 99)
+            .toInt();
         if (count == 0) return child!;
         final double badgeSize = _header
             .number('cart_badge_size', 18)
             .clamp(12, 30)
             .toDouble();
-        final String badgeShape = _header.string(
-          'cart_badge_shape',
-          'circle',
-        );
+        final String badgeShape = _header.string('cart_badge_shape', 'circle');
         final double badgeRadius = badgeShape == 'circle'
             ? badgeSize / 2
             : badgeShape == 'pill'
@@ -1362,14 +1594,54 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   IconData _iconFor(String type, String variant, bool filled) => switch (type) {
-    'back' => variant == 'chevron' ? Icons.chevron_left_rounded : variant == 'rounded' ? Icons.keyboard_backspace_rounded : Icons.arrow_back_rounded,
-    'search' => variant == 'classic' ? Icons.search : variant == 'minimal' ? Icons.manage_search_outlined : Icons.search_rounded,
-    'cart' => variant == 'cart' ? (filled ? Icons.shopping_cart : Icons.shopping_cart_outlined) : variant == 'basket' ? (filled ? Icons.shopping_basket : Icons.shopping_basket_outlined) : (filled ? Icons.shopping_bag : Icons.shopping_bag_outlined),
-    'wishlist' => variant == 'bookmark' ? (filled ? Icons.bookmark : Icons.bookmark_border) : (filled ? Icons.favorite_rounded : Icons.favorite_border_rounded),
-    'account' => variant == 'circle' ? Icons.account_circle_outlined : variant == 'profile' ? Icons.manage_accounts_outlined : (filled ? Icons.person : Icons.person_outline_rounded),
-    'orders' => variant == 'box' ? Icons.inventory_2_outlined : variant == 'list' ? Icons.format_list_bulleted_rounded : Icons.receipt_long_outlined,
-    'support' => variant == 'chat' ? Icons.chat_bubble_outline_rounded : variant == 'support' ? Icons.support_agent_rounded : Icons.headset_mic_outlined,
-    'menu' => variant == 'dots' ? Icons.more_horiz_rounded : variant == 'grid' ? Icons.grid_view_rounded : Icons.menu_rounded,
+    'back' =>
+      variant == 'chevron'
+          ? Icons.chevron_left_rounded
+          : variant == 'rounded'
+          ? Icons.keyboard_backspace_rounded
+          : Icons.arrow_back_rounded,
+    'search' =>
+      variant == 'classic'
+          ? Icons.search
+          : variant == 'minimal'
+          ? Icons.manage_search_outlined
+          : Icons.search_rounded,
+    'cart' =>
+      variant == 'cart'
+          ? (filled ? Icons.shopping_cart : Icons.shopping_cart_outlined)
+          : variant == 'basket'
+          ? (filled ? Icons.shopping_basket : Icons.shopping_basket_outlined)
+          : (filled ? Icons.shopping_bag : Icons.shopping_bag_outlined),
+    'wishlist' =>
+      variant == 'bookmark'
+          ? (filled ? Icons.bookmark : Icons.bookmark_border)
+          : variant == 'heart'
+          ? (filled ? Icons.favorite : Icons.favorite_border)
+          : (filled ? Icons.favorite_rounded : Icons.favorite_border_rounded),
+    'account' =>
+      variant == 'circle'
+          ? Icons.account_circle_outlined
+          : variant == 'profile'
+          ? Icons.manage_accounts_outlined
+          : (filled ? Icons.person : Icons.person_outline_rounded),
+    'orders' =>
+      variant == 'box'
+          ? Icons.inventory_2_outlined
+          : variant == 'list'
+          ? Icons.format_list_bulleted_rounded
+          : Icons.receipt_long_outlined,
+    'support' =>
+      variant == 'chat'
+          ? Icons.chat_bubble_outline_rounded
+          : variant == 'support'
+          ? Icons.support_agent_rounded
+          : Icons.headset_mic_outlined,
+    'menu' =>
+      variant == 'dots'
+          ? Icons.more_horiz_rounded
+          : variant == 'grid'
+          ? Icons.grid_view_rounded
+          : Icons.menu_rounded,
     _ => _actionFor(type)?.icon ?? Icons.circle_outlined,
   };
 
@@ -1389,8 +1661,60 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         };
   }
 
+  CmsPageHeaderAction? _resolvedAction(BuildContext context, String type) {
+    final supplied = _actionFor(type);
+    if (supplied != null) return supplied;
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    final entry = switch (type) {
+      'search' => (Icons.search_rounded, arabic ? 'بحث' : 'Search', '/search'),
+      'cart' => (Icons.shopping_bag_outlined, arabic ? 'السلة' : 'Cart', '/cart'),
+      'wishlist' => (Icons.favorite_border_rounded, arabic ? 'المفضلة' : 'Wishlist', '/wishlist'),
+      'account' => (Icons.person_outline_rounded, arabic ? 'حسابي' : 'Account', '/account'),
+      'orders' => (Icons.receipt_long_outlined, arabic ? 'طلباتي' : 'Orders', '/orders'),
+      'support' => (Icons.headset_mic_outlined, arabic ? 'خدمة العملاء' : 'Customer support', '/support'),
+      'menu' => (Icons.menu_rounded, arabic ? 'القائمة' : 'Menu', ''),
+      _ => null,
+    };
+    if (entry == null) return null;
+    return CmsPageHeaderAction(type: type, icon: entry.$1, tooltip: entry.$2,
+      onPressed: () {
+        if (type == 'search') {
+          showCatalogSearch(context);
+        } else if (type == 'menu') {
+          _showNavigationMenu(context, arabic);
+        } else {
+          context.push(entry.$3);
+        }
+      });
+  }
+
+  void _showNavigationMenu(BuildContext context, bool arabic) {
+    final destinations = <(IconData, String, String)>[
+      (Icons.home_outlined, arabic ? 'الرئيسية' : 'Home', '/'),
+      (Icons.grid_view_rounded, arabic ? 'الأقسام' : 'Categories', '/categories'),
+      (Icons.shopping_bag_outlined, arabic ? 'السلة' : 'Cart', '/cart'),
+      (Icons.favorite_border_rounded, arabic ? 'المفضلة' : 'Wishlist', '/wishlist'),
+      (Icons.person_outline_rounded, arabic ? 'حسابي' : 'Account', '/account'),
+      (Icons.receipt_long_outlined, arabic ? 'طلباتي' : 'Orders', '/orders'),
+      (Icons.headset_mic_outlined, arabic ? 'خدمة العملاء' : 'Customer support', '/support'),
+    ];
+    showModalBottomSheet<void>(context: context, useSafeArea: true,
+      showDragHandle: true, builder: (sheetContext) => SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (final destination in destinations)
+            ListTile(leading: Icon(destination.$1), title: Text(destination.$2),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                context.push(destination.$3);
+              }),
+        ]),
+      ));
+  }
+
   CmsPageHeaderAction? _actionFor(String type) {
-    for (final CmsPageHeaderAction action in actions) { if (action.type == type) return action; }
+    for (final CmsPageHeaderAction action in actions) {
+      if (action.type == type) return action;
+    }
     return null;
   }
 }

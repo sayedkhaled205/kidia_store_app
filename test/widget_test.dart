@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +24,8 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
-import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart' as cart_selection;
+import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart'
+    as cart_selection;
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/product/presentation/product_detail_screen.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
@@ -58,8 +60,8 @@ void main() {
     await _pumpStartedApp(tester, router: router);
 
     expect(find.byType(ProductDetailScreen), findsOneWidget);
-	expect(find.byKey(const Key('cms-bottom-navigation')), findsNothing);
-	expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsNothing);
+    expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
 
     await _disposeApp(tester, router);
   });
@@ -292,9 +294,7 @@ void main() {
       expect(
         tester
             .widget<SizedBox>(
-              find.byKey(
-                const Key('cms-bottom-nav-icon-label-gap-home'),
-              ),
+              find.byKey(const Key('cms-bottom-nav-icon-label-gap-home')),
             )
             .height,
         9,
@@ -319,6 +319,75 @@ void main() {
       await _disposeApp(tester, router);
     },
   );
+  for (final style in ['navigation','minimal']) {
+    testWidgets('product $style renders one navigation footer instead of purchase bar', (tester) async {
+      final router=createAppRouter(initialLocation:'/product/42');
+      await _pumpStartedApp(tester,router:router,productLayout:_navigationLayout('product',height:64,iconSize:24,style:style,items:['home','wishlist']));
+      expect(find.byKey(const Key('cms-bottom-navigation')),findsOneWidget);
+      expect(find.byKey(const Key('cms-bottom-nav-home')),findsOneWidget);
+      expect(find.byKey(const Key('product-footer-size')),findsNothing);
+      expect(find.byKey(const Key('add-to-cart-button')),findsNothing);
+      expect(tester.takeException(),isNull);
+      await _disposeApp(tester,router);
+    });
+  }
+  testWidgets('switching product action layout to navigation uses defaults without modifying layout', (tester) async {
+    final router=createAppRouter(initialLocation:'/product/42');
+    final layout=_navigationLayout('product',height:64,iconSize:24,style:'navigation',items:['share','like','add_to_cart']);
+    await _pumpStartedApp(tester,router:router,productLayout:layout);
+    for(final id in ['home','categories','wishlist','account']) {
+      expect(find.byKey(Key('cms-bottom-nav-$id')),findsOneWidget);
+    }
+    expect(layout.footer.json('layout_json')['rows'].toString(),contains('add_to_cart'));
+    expect(find.byKey(const Key('product-footer-size')),findsNothing);
+    await _disposeApp(tester,router);
+  });
+
+  testWidgets('footer preserves rows, empty columns and shared column widths in RTL', (tester) async {
+    final router=createAppRouter();
+    await _pumpStartedApp(tester,router:router,homeLayout:_navigationLayout('home',height:64,iconSize:24,rows:[
+      {'columns': [ {'width':75,'items':['home','cart']}, {'width':25,'items':['wishlist']} ]},
+      {'columns': [ {'width':25,'items':[]}, {'width':75,'items':['search']} ]},
+    ]));
+    Rect box(String id)=>tester.getRect(find.byKey(Key('cms-bottom-nav-$id')));
+    final home=box('home'),cart=box('cart'),wish=box('wishlist'),search=box('search');
+    expect(home.top,cart.top); expect(home.top,wish.top);
+    expect(home.left,greaterThan(cart.left));
+    expect(search.top,greaterThanOrEqualTo(home.bottom));
+    expect(home.width/wish.width,closeTo(1.5,.01));
+    expect(search.width/home.width,closeTo(2,.01));
+    expect(tester.takeException(),isNull);
+    await _disposeApp(tester,router);
+  });
+
+  for (final item in ['search', 'cart', 'orders']) {
+    testWidgets(
+      'configured footer $item is visible and opens its existing route',
+      (tester) async {
+        final router = createAppRouter();
+        await _pumpStartedApp(
+          tester,
+          router: router,
+          homeLayout: _navigationLayout(
+            'home',
+            height: 64,
+            iconSize: 24,
+            items: ['home', item],
+          ),
+        );
+        final target = find.byKey(Key('cms-bottom-nav-$item'));
+        expect(target, findsOneWidget);
+        await tester.tap(target);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final uri =
+            router.routerDelegate.currentConfiguration.last.matchedLocation;
+        expect(uri, '/$item');
+        expect(tester.takeException(), isNull);
+        await _disposeApp(tester, router);
+      },
+    );
+  }
 }
 
 Future<void> _pumpStartedApp(
@@ -327,6 +396,7 @@ Future<void> _pumpStartedApp(
   CmsPageLayout? homeLayout,
   CmsPageLayout? categoryLayout,
   CmsPageLayout? wishlistLayout,
+  CmsPageLayout? productLayout,
   CatalogRepository catalogRepository = const _RouterCatalogRepository(),
   cart_selection.AddProductPurchaseSelection? addSelection,
 }) async {
@@ -334,12 +404,17 @@ Future<void> _pumpStartedApp(
     ProviderScope(
       overrides: [
         appStartupProvider.overrideWith((ref) async {}),
+        applicationIdentity58Provider.overrideWithValue({
+          'language': 'ar',
+          'direction': 'rtl',
+        }),
         catalogRepositoryProvider.overrideWithValue(catalogRepository),
         if (addSelection != null)
           addProductPurchaseSelectionProvider.overrideWithValue(addSelection),
         brandsRepositoryProvider.overrideWithValue(
           const _RouterBrandsRepository(),
         ),
+        if (productLayout != null) cmsPageLayoutProvider('product').overrideWith((ref) async => productLayout),
         if (homeLayout != null)
           cmsPageLayoutProvider('home').overrideWith((ref) async => homeLayout),
         if (categoryLayout != null)
@@ -365,6 +440,8 @@ CmsPageLayout _navigationLayout(
   required double iconSize,
   bool enabled = true,
   double iconLabelGap = 3,
+  List<Map<String,dynamic>>? rows,
+  String? style,
   List<String> items = const <String>[
     'home',
     'categories',
@@ -385,7 +462,7 @@ CmsPageLayout _navigationLayout(
       settings: <String, dynamic>{
         ...fallback.footer.settings,
         'layout_json': <String, dynamic>{
-          'rows': <Map<String, dynamic>>[
+          'rows': rows ?? <Map<String, dynamic>>[
             <String, dynamic>{
               'columns': items
                   .map(
@@ -399,6 +476,7 @@ CmsPageLayout _navigationLayout(
             },
           ],
         },
+        'style': style ?? fallback.footer.string('style','navigation'),
         'height': height,
         'icon_size': iconSize,
         'icon_label_gap': iconLabelGap,

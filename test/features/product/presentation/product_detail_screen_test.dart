@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
@@ -13,6 +14,80 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  testWidgets('Recommend reaches an unvisited section after a long description on first tap', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final product = CatalogProduct(
+      id: 404, name: 'Long description product', slug: 'long-product',
+      type: 'simple', prices: testMoney, isInStock: true, isPurchasable: true,
+      description: List.filled(80, 'Detailed product information.').join(' '),
+    );
+    final repository = ProductFakeCatalogRepository(product: product)
+      ..relatedProducts = <CatalogProduct>[variableProduct];
+    await tester.pumpWidget(_testApp(ProductDetailScreen(
+      productId: product.id, repository: repository,
+    )));
+    await tester.pumpAndSettle();
+    final scrollable = find.descendant(
+      of: find.byKey(const Key('product-detail-scroll')),
+      matching: find.byType(Scrollable),
+    ).first;
+    final position = tester.state<ScrollableState>(scrollable).position;
+    expect(position.pixels, 0);
+    // On a physical Android surface the gallery can exceed the viewport.
+    // Reveal only the tabs; the related-products target remains unvisited.
+    await tester.scrollUntilVisible(
+      find.text('Recommend'), 200, scrollable: scrollable,
+    );
+    await tester.tap(find.text('Recommend'));
+    await tester.pumpAndSettle();
+    expect(position.pixels, greaterThan(1000));
+    final target = tester.getRect(find.byKey(const Key('related-products-button')));
+    final viewport = tester.getRect(find.byKey(const Key('product-detail-scroll')));
+    expect(target.top, greaterThanOrEqualTo(viewport.top));
+    expect(target.bottom, lessThan(viewport.bottom));
+    expect(repository.relatedQueries, hasLength(1));
+  });
+
+  testWidgets('related products use the repository even in CMS preview', (tester) async {
+    _useTallSurface(tester);
+    final repository = ProductFakeCatalogRepository()
+      ..relatedProducts = <CatalogProduct>[variableProduct];
+    await tester.pumpWidget(_testApp(ProductDetailScreen(
+      productId: simpleProduct.id,
+      repository: repository,
+    )));
+    await tester.pumpAndSettle();
+    expect(repository.relatedQueries, hasLength(1));
+    expect(repository.relatedQueries.single.excludeIds, <int>[simpleProduct.id]);
+    expect(repository.relatedQueries.single.perPage, 4);
+    expect(tester.widget<CatalogProductCard>(find.byType(CatalogProductCard)).product.id,
+      variableProduct.id);
+    expect(find.text('MobiShop everyday set'), findsNothing);
+  });
+
+  testWidgets('failed related products can retry without fabricated fallback', (tester) async {
+    _useTallSurface(tester);
+    final repository = ProductFakeCatalogRepository()
+      ..relatedError = StateError('Catalog unavailable');
+    await tester.pumpWidget(_testApp(ProductDetailScreen(
+      productId: simpleProduct.id,
+      repository: repository,
+    )));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('related-products-retry')), findsOneWidget);
+    expect(find.byType(CatalogProductCard), findsNothing);
+    repository.relatedError = null;
+    repository.relatedProducts = <CatalogProduct>[variableProduct];
+    await tester.ensureVisible(find.byKey(const Key('related-products-retry')));
+    await tester.tap(find.byKey(const Key('related-products-retry')));
+    await tester.pumpAndSettle();
+    expect(repository.relatedQueries, hasLength(2));
+    expect(find.byType(CatalogProductCard), findsOneWidget);
+  });
+
   testWidgets('product share opens the real product link actions', (
     WidgetTester tester,
   ) async {
@@ -274,6 +349,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('product-option-pa_size-m')));
     await tester.pump();
+    expect(find.text('Size   Medium'), findsOneWidget);
+    expect(find.text('Color   Blue'), findsWidgets);
+    expect(find.text('Color   blue'), findsNothing);
     await tester.tap(find.byKey(const Key('add-to-cart-button')));
     await tester.pumpAndSettle();
 
@@ -418,6 +496,31 @@ void main() {
     );
   });
 
+  testWidgets('product footer keeps two rows and an empty column without losing purchase action', (tester) async {
+    _useTallSurface(tester);
+    ProductPurchaseSelection? captured;
+    await tester.pumpWidget(_testApp(ProductDetailScreen(
+      productId:simpleProduct.id, repository:ProductFakeCatalogRepository(),
+      onAddToCart:(selection) async { captured=selection; },
+    ),productLayout:_liveStyleProductLayout(layoutJson:{'rows':[
+      {'columns':[{'width':25,'items':[]},{'width':75,'items':['share','like']}]},
+      {'columns':[{'width':100,'items':['add_to_cart']}]},
+    ]})));
+    await tester.pumpAndSettle();
+    final share=tester.getRect(find.byKey(const Key('product-footer-column-share')));
+    final like=tester.getRect(find.byKey(const Key('product-footer-column-like')));
+    final buy=tester.getRect(find.byKey(const Key('product-footer-column-add_to_cart')));
+    expect(share.top,like.top);
+    expect(buy.top,greaterThanOrEqualTo(share.bottom));
+    expect(share.width/buy.width,closeTo(.375,.01));
+    final button=tester.getRect(find.byKey(const Key('product-add-to-cart-size')));
+    expect(button.width/buy.width,closeTo(.60,.01));
+    await tester.tap(find.byKey(const Key('add-to-cart-button')));
+    await tester.pumpAndSettle();
+    expect(captured?.quantity,1);
+    expect(tester.takeException(),isNull);
+  });
+
   testWidgets('centers the configured button width inside its footer column', (
     WidgetTester tester,
   ) async {
@@ -475,6 +578,55 @@ void main() {
       ),
     );
   });
+  testWidgets('variable product preserves outline and soft button styles', (tester) async {
+    _useTallSurface(tester);
+    for (final style in ['outline', 'soft']) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_testApp(
+        ProductDetailScreen(
+          key: ValueKey(style),
+          productId: variableProduct.id,
+          repository: ProductFakeCatalogRepository(
+            product: variableProduct, variations: testVariations,
+          ),
+          onAddToCart: (selection) async {},
+        ),
+        productLayout: _liveStyleProductLayout(footerSettings: {
+          'button_style': style,
+          'button_color': '#123456',
+        }),
+      ));
+      await tester.pumpAndSettle();
+      final button = tester.widget<FilledButton>(find.byKey(const Key('add-to-cart-button')));
+      final color = button.style!.backgroundColor!.resolve({})!;
+      expect(color.a, closeTo(style == 'outline' ? 0 : 0.14 * 0.48, 0.01));
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('footer quantity changes the actual purchase selection', (tester) async {
+    _useTallSurface(tester);
+    ProductPurchaseSelection? purchased;
+    await tester.pumpWidget(_testApp(
+      ProductDetailScreen(
+        productId: simpleProduct.id,
+        repository: ProductFakeCatalogRepository(),
+        onAddToCart: (selection) async { purchased = selection; },
+      ),
+      productLayout: _liveStyleProductLayout(footerSettings: {
+        'show_price': true,
+        'show_quantity': true,
+      }),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('product-footer-price')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('quantity-increment')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-to-cart-button')));
+    await tester.pumpAndSettle();
+    expect(purchased?.quantity, 2);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget _testApp(
@@ -484,10 +636,10 @@ Widget _testApp(
 }) {
   return ProviderScope(
     overrides: [
-      if (productLayout != null)
-        cmsPageLayoutProvider(
-          'product',
-        ).overrideWith((ref) async => productLayout),
+      // Keep screen tests independent of live store appearance on Android.
+      cmsPageLayoutProvider('product').overrideWith(
+        (ref) async => productLayout ?? CmsPageLayout.fallback('product'),
+      ),
     ],
     child: MaterialApp(
       locale: locale,
@@ -497,7 +649,7 @@ Widget _testApp(
   );
 }
 
-CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
+CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson, Map<String, dynamic> footerSettings = const {}}) {
   final CmsPageLayout fallback = CmsPageLayout.fallback('product');
   return CmsPageLayout(
     page: fallback.page,
@@ -509,7 +661,7 @@ CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
       enabled: true,
       settings: <String, dynamic>{
         ...fallback.footer.settings,
-        'style': 'navigation',
+        'style': 'product_action',
         'share_label': 'Share',
         'like_label': 'Like',
         'add_to_cart_label': 'Add to bag',
@@ -521,6 +673,7 @@ CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson}) {
         'button_border_width': 2,
         'icon_label_gap': 9,
         'layout_json': ?layoutJson,
+        ...footerSettings,
       },
     ),
   );

@@ -54,22 +54,22 @@ class StoreApiCartTransport implements CartApiTransport {
     required Uri storeUri,
     Dio? dio,
     this._authTokenReader,
-  })
-    : _storeUri = _normalizeAndValidateStoreUri(storeUri),
-      _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              connectTimeout: const Duration(seconds: 15),
-              sendTimeout: const Duration(seconds: 15),
-              receiveTimeout: const Duration(seconds: 25),
-            ),
-          );
+  }) : _storeUri = _normalizeAndValidateStoreUri(storeUri),
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               connectTimeout: const Duration(seconds: 15),
+               sendTimeout: const Duration(seconds: 15),
+               receiveTimeout: const Duration(seconds: 25),
+             ),
+           );
 
   factory StoreApiCartTransport.forConfiguredStore({
     Dio? dio,
     CartAuthTokenReader? authTokenReader,
   }) {
+    AppConfig.requireWooCommerceCustomerTransport('cart');
     AppConfig.validateStoreConnection();
     return StoreApiCartTransport(
       storeUri: Uri.parse(AppConfig.apiBaseUrl.trim()),
@@ -280,6 +280,7 @@ class StoreApiCartTransport implements CartApiTransport {
   }
 
   static Uri _normalizeAndValidateStoreUri(Uri uri) {
+    AppConfig.requireWooCommerceCustomerTransport('cart');
     final bool isHttps = uri.scheme.toLowerCase() == 'https';
     final bool isLocalDebugHttp =
         kDebugMode &&

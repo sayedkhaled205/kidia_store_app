@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/app_design/app_design_providers58.dart';
 import '../features/splash/domain/splash_config.dart';
 import '../features/splash/presentation/splash_providers.dart';
 
@@ -12,6 +15,40 @@ final appStartupProvider = FutureProvider<void>((ref) async {
     return;
   }
   AppConfig.validateStoreConnection();
-  final SplashConfig splash = await ref.watch(splashConfigProvider.future);
-  if (splash.enabled) { await Future<void>.delayed(splash.duration); }
-});
+  // Validate the approved foreign design before the branding error wrapper.
+  // This preserves its actionable configuration error and prevents Woo reads.
+  ref.watch(portableAppDesign58Provider);
+  // The existing Retry button invalidates startup. Forward that explicit
+  // action to branding too, rather than reusing its cached failed request.
+  // Riverpod 3.3.2 provides this lifecycle specifically for forwarding manual
+  // invalidation. Host tests cover it; review it when upgrading Riverpod.
+  // ignore: experimental_member_use
+  ref.onManualInvalidation(() => ref.invalidate(splashConfigProvider));
+  final SplashConfig splash;
+  try {
+    // Cap the provider wait as well as its HTTP request. A pending/retrying
+    // dependency must never leave the application on the splash indefinitely.
+    splash = await ref
+        .watch(splashConfigProvider.future)
+        .timeout(splashConfigFetchTimeout);
+  } on AppConfigurationException {
+    rethrow;
+  } catch (error) {
+    throw AppStartupBrandingException(error);
+  }
+  if (splash.enabled) {
+    await Future<void>.delayed(splash.duration);
+  }
+}, retry: (retryCount, error) => null);
+
+/// A branding-read failure, not permission to bypass store configuration,
+/// customer authentication, licensing, or a commerce transport.
+class AppStartupBrandingException implements Exception {
+  const AppStartupBrandingException(this.cause);
+
+  final Object cause;
+
+  @override
+  String toString() =>
+      'تعذر تحميل شاشة البداية من المتجر. تأكد من اتصال الإنترنت ثم اضغط إعادة المحاولة.';
+}

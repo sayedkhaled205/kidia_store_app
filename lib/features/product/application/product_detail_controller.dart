@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 
@@ -8,6 +9,7 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_mone
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 
 enum ProductDetailStatus { initial, loading, success, empty, failure }
 
@@ -53,7 +55,16 @@ typedef ProductAddToCartCallback =
     Future<void> Function(ProductPurchaseSelection selection);
 
 class ProductDetailController extends ChangeNotifier {
-  ProductDetailController({required this.repository, required this.productId});
+  ProductDetailController({required this.repository, required this.productId}) {
+    if (repository is CatalogChangeSource) {
+      _catalogSubscription = (repository as CatalogChangeSource).catalogChanges
+          .listen((_) {
+            if (!_isDisposed && !_isAdding) {
+              unawaited(load(preserveSelection: true));
+            }
+          });
+    }
+  }
 
   final CatalogRepository repository;
   final int productId;
@@ -68,6 +79,7 @@ class ProductDetailController extends ChangeNotifier {
   bool _isAdding = false;
   bool _isDisposed = false;
   int _requestSerial = 0;
+  StreamSubscription<int>? _catalogSubscription;
 
   ProductDetailStatus get status => _status;
   CatalogProduct? get product => _product;
@@ -75,6 +87,21 @@ class ProductDetailController extends ChangeNotifier {
       List<CatalogVariation>.unmodifiable(_variations);
   Map<String, String> get selectedAttributes =>
       UnmodifiableMapView<String, String>(_selectedAttributes);
+  /// Customer-facing labels, kept separate from the values used for purchasing.
+  Map<String, String> get selectedAttributeLabels {
+    final labels = <String, String>{..._selectedAttributes};
+    for (final group in optionGroups) {
+      final selected = _selectedAttributes[group.key];
+      for (final option in group.values) {
+        if (option.value == selected) {
+          labels[group.key] = option.label;
+          break;
+        }
+      }
+    }
+    return UnmodifiableMapView<String, String>(labels);
+  }
+
   int get quantity => _quantity;
   String? get loadError => _loadError;
   String? get addError => _addError;
@@ -126,7 +153,7 @@ class ProductDetailController extends ChangeNotifier {
     return variation != null && variation.isPurchasable && variation.isInStock;
   }
 
-  Future<void> load() async {
+  Future<void> load({bool preserveSelection = false}) async {
     final int serial = ++_requestSerial;
     if (productId <= 0) {
       _status = ProductDetailStatus.empty;
@@ -137,7 +164,8 @@ class ProductDetailController extends ChangeNotifier {
       return;
     }
 
-    _status = ProductDetailStatus.loading;
+    final bool background = preserveSelection && _product != null;
+    if (!background) _status = ProductDetailStatus.loading;
     _loadError = null;
     _addError = null;
     _notify();
@@ -150,12 +178,25 @@ class ProductDetailController extends ChangeNotifier {
         return;
       }
 
+      // The customer can change quantity/options during a background read.
+      // Preserve their latest selection at commit, not a request-time snapshot.
+      final Map<String, String> selectionToKeep = _selectedAttributes;
+      final int quantityToKeep = _quantity;
       _product = loadedProduct;
       _variations = List<CatalogVariation>.unmodifiable(
         loadedProduct.variations,
       );
-      _selectedAttributes = const <String, String>{};
-      _quantity = 1;
+      _selectedAttributes = preserveSelection
+          ? Map<String, String>.unmodifiable({
+              for (final entry in selectionToKeep.entries)
+                if (_findOptionGroup(
+                      entry.key,
+                    )?.values.any((option) => option.value == entry.value) ??
+                    false)
+                  entry.key: entry.value,
+            })
+          : const <String, String>{};
+      _quantity = preserveSelection ? quantityToKeep : 1;
       _status = ProductDetailStatus.success;
       _notify();
 
@@ -167,9 +208,13 @@ class ProductDetailController extends ChangeNotifier {
         _loadDetailedVariations(serial);
       }
     } on CatalogRepositoryException catch (error) {
-      _commitFailure(serial, error.message);
+      _commitFailure(serial, error.message, preserveProduct: background);
     } catch (_) {
-      _commitFailure(serial, 'Unable to load this product. Please try again.');
+      _commitFailure(
+        serial,
+        'Unable to load this product. Please try again.',
+        preserveProduct: background,
+      );
     }
   }
 
@@ -298,17 +343,23 @@ class ProductDetailController extends ChangeNotifier {
     _notify();
   }
 
-  void _commitFailure(int serial, String message) {
+  void _commitFailure(
+    int serial,
+    String message, {
+    bool preserveProduct = false,
+  }) {
     if (!_canCommit(serial)) {
       return;
     }
-    _product = null;
-    _variations = const <CatalogVariation>[];
-    _selectedAttributes = const <String, String>{};
+    if (!preserveProduct) {
+      _product = null;
+      _variations = const <CatalogVariation>[];
+      _selectedAttributes = const <String, String>{};
+    }
     _loadError = message.trim().isEmpty
         ? 'Unable to load this product. Please try again.'
         : message.trim();
-    _status = ProductDetailStatus.failure;
+    if (!preserveProduct) _status = ProductDetailStatus.failure;
     _notify();
   }
 
@@ -395,9 +446,7 @@ class ProductDetailController extends ChangeNotifier {
           : detailed.attributes
                 .where(
                   (CatalogVariationAttribute attribute) =>
-                      !_isBrokenTaxonomyKey(
-                        _variationAttributeKey(attribute),
-                      ),
+                      !_isBrokenTaxonomyKey(_variationAttributeKey(attribute)),
                 )
                 .toList(growable: false);
       merged[detailed.id] = CatalogVariation(
@@ -589,6 +638,7 @@ class ProductDetailController extends ChangeNotifier {
   void dispose() {
     _isDisposed = true;
     _requestSerial++;
+    _catalogSubscription?.cancel();
     super.dispose();
   }
 }

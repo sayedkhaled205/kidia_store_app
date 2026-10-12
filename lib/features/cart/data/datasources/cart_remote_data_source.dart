@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_error_model.dart';
@@ -57,11 +58,18 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
     required StoreApiClient storeApiClient,
     required CartApiTransport transport,
     CartTokenStore? tokenStore,
+    String? Function()? currentSessionToken,
+    bool Function()? isCurrentSession,
   }) {
+    // An explicit Woo data source is not permission to call WordPress for a
+    // Shopify/Odoo build, including CMS preview. Reject before token callbacks.
+    AppConfig.requireWooCommerceCustomerTransport('cart');
     return StoreApiCartRemoteDataSource._(
       storeApiClient,
       transport,
       tokenStore ?? MemoryCartTokenStore(),
+      currentSessionToken,
+      isCurrentSession,
     );
   }
 
@@ -69,6 +77,8 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
     this._storeApiClient,
     this._transport,
     this._tokenStore,
+    this._currentSessionToken,
+    this._isCurrentSession,
   );
 
   static const String _cartPath = '/wp-json/wc/store/v1/cart';
@@ -76,10 +86,30 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
   final StoreApiClient _storeApiClient;
   final CartApiTransport _transport;
   final CartTokenStore _tokenStore;
+  final String? Function()? _currentSessionToken;
+  final bool Function()? _isCurrentSession;
+
+  int? get _tokenGeneration => _tokenStore is CartTokenGeneration
+      ? (_tokenStore as CartTokenGeneration).generation
+      : null;
+
+  void _assertCurrentSession(String? session, int? generation) {
+    if (_isCurrentSession?.call() == false ||
+        session != _currentSessionToken?.call() ||
+        generation != _tokenGeneration) {
+      throw const CartRemoteException(
+        kind: CartFailureKind.unauthorized,
+        message: 'The customer cart session changed during this request.',
+      );
+    }
+  }
 
   @override
   Future<CartModel> fetchCart() async {
     final String? token = _validToken;
+    final session = _currentSessionToken?.call();
+    final generation = _tokenGeneration;
+    _assertCurrentSession(session, generation);
     try {
       final StoreApiResponse response = token == null
           ? await _storeApiClient.get(_cartPath)
@@ -88,8 +118,10 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
               _cartPath,
               headers: <String, String>{'Cart-Token': token},
             );
+      _assertCurrentSession(session, generation);
       return _parseSuccess(response);
     } on CartApiTransportException catch (error, stackTrace) {
+      _assertCurrentSession(session, generation);
       Error.throwWithStackTrace(_parseTransportFailure(error), stackTrace);
     }
   }
@@ -139,9 +171,13 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
   }
 
   Future<CartModel> _mutate(String path, Map<String, dynamic> body) async {
+    final session = _currentSessionToken?.call();
+    final generation = _tokenGeneration;
+    _assertCurrentSession(session, generation);
     String? token = _validToken;
     if (token == null) {
       await fetchCart();
+      _assertCurrentSession(session, generation);
       token = _validToken;
     }
     if (token == null) {
@@ -158,8 +194,10 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
         body: body,
         headers: <String, String>{'Cart-Token': token},
       );
+      _assertCurrentSession(session, generation);
       return _parseSuccess(response);
     } on CartApiTransportException catch (error, stackTrace) {
+      _assertCurrentSession(session, generation);
       Error.throwWithStackTrace(_parseTransportFailure(error), stackTrace);
     }
   }

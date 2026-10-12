@@ -33,8 +33,7 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
   static const String _productsPath = '/wp-json/wc/store/v1/products';
   static const String _categoriesPath =
       '/wp-json/wc/store/v1/products/categories';
-  static const String _categoryPagePath =
-      '/wp-json/mobishop/v1/category-page';
+  static const String _categoryPagePath = '/wp-json/mobishop/v1/category-page';
   static const String _collectionDataPath =
       '/wp-json/wc/store/v1/products/collection-data';
   static const String _variationBridgePath = '/wp-json/mobishop/v1/products';
@@ -159,23 +158,39 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
     CatalogCategoryQuery query,
   ) async {
     StoreApiResponse response;
-    try {
-      response = await _client.get(
-        _categoryPagePath,
-        queryParameters: <String, dynamic>{
-          'page': query.page,
-          'per_page': query.perPage,
-          '_mobile_cache_bust': DateTime.now().millisecondsSinceEpoch,
-        },
-      );
-    } catch (_) {
-      // Stores without the CMS category builder continue to use the standard
-      // WooCommerce endpoint, so the same app build can move between staging
-      // and live installations safely.
+    final presentationQuery =
+        query.parentId == null &&
+        query.includeIds.isEmpty &&
+        query.excludeIds.isEmpty &&
+        query.search.isEmpty &&
+        query.hideEmpty &&
+        query.sort == CatalogCategorySort.menuOrder;
+    if (!presentationQuery) {
+      // category-page is an ordered CMS presentation, not a query endpoint:
+      // it only reads page/per_page and would silently ignore roots/manual IDs.
       response = await _client.get(
         _categoriesPath,
         queryParameters: query.toStoreApiQuery(),
       );
+    } else {
+      try {
+        response = await _client.get(
+          _categoryPagePath,
+          queryParameters: <String, dynamic>{
+            'page': query.page,
+            'per_page': query.perPage,
+            '_mobile_cache_bust': DateTime.now().millisecondsSinceEpoch,
+          },
+        );
+      } catch (_) {
+        // Stores without the CMS category builder continue to use the standard
+        // WooCommerce endpoint, so the same app build can move between staging
+        // and live installations safely.
+        response = await _client.get(
+          _categoriesPath,
+          queryParameters: query.toStoreApiQuery(),
+        );
+      }
     }
 
     return _parsePage<CatalogCategoryModel>(

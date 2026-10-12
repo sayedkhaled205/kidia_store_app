@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
@@ -74,6 +75,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final String locale = Localizations.localeOf(context).toLanguageTag();
+    final bool arabic = Localizations.localeOf(context).languageCode == 'ar';
+    final identity = ref.watch(applicationIdentity58Provider);
+    final storeName = identity?['app_name'] as String? ?? AppConfig.storeName;
 
     final AsyncValue<HomeLayout> homeLayoutAsync = ref.watch(
       homeLayoutProvider(locale),
@@ -96,13 +100,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return CmsPageScaffold(
       layout: chrome,
-      defaultTitle: 'MobiShop',
+      defaultTitle: storeName,
       scrollController: _scrollController,
       actions: <CmsPageHeaderAction>[
-          CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: 'بحث', onPressed: () => showCatalogSearch(context)),
-          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: 'السلة', onPressed: () => context.go('/cart')),
-          CmsPageHeaderAction(type: 'wishlist', icon: Icons.favorite_border_rounded, tooltip: 'المفضلة', onPressed: () => context.go('/wishlist')),
-          CmsPageHeaderAction(type: 'account', icon: Icons.person_outline_rounded, tooltip: 'حسابي', onPressed: () => context.go('/account')),
+          CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: arabic ? 'بحث' : 'Search', onPressed: () => showCatalogSearch(context)),
+          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: arabic ? 'السلة' : 'Cart', onPressed: () => context.go('/cart')),
+          CmsPageHeaderAction(type: 'wishlist', icon: Icons.favorite_border_rounded, tooltip: arabic ? 'المفضلة' : 'Wishlist', onPressed: () => context.go('/wishlist')),
+          CmsPageHeaderAction(type: 'account', icon: Icons.person_outline_rounded, tooltip: arabic ? 'حسابي' : 'Account', onPressed: () => context.go('/account')),
       ],
       body: SafeArea(
         bottom: false,
