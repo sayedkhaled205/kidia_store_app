@@ -181,9 +181,23 @@ class CartController extends AsyncNotifier<CartViewState> {
     int objectId = 0,
     String label = '',
   }) async {
+    final String requestedOwner = _authToken;
+    if (state.asData == null) {
+      try {
+        // Await the existing bootstrap without replaying a cart mutation.
+        await future;
+      } catch (error) {
+        return CartActionResult.failure(_failure(error).message);
+      }
+    }
+    if (!ref.mounted || requestedOwner != _authToken) {
+      return const CartActionResult.failure('The customer session changed.');
+    }
     final CartViewState? current = state.asData?.value;
     if (current == null) {
-      return const CartActionResult.failure('The cart is still loading.');
+      return const CartActionResult.failure(
+        'Unable to load the cart. Please retry from your bag.',
+      );
     }
     if (current.hasPendingMutation) {
       return const CartActionResult.failure(
