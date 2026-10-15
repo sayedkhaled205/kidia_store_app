@@ -9,7 +9,6 @@ import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 List<Map<String, dynamic>> _configuredHeaderRows(

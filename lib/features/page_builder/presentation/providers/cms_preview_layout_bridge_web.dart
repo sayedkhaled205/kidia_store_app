@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:js_util' as js;
 import 'cms_preview_replay_stream.dart';
 
 class CmsPreviewLayoutBridge {
@@ -132,11 +131,9 @@ class CmsPreviewLayoutBridge {
     _listening = true;
     html.window.onMessage.listen((html.MessageEvent event) {
       if (event.origin != html.window.location.origin) return;
-      if (!identical(
-        js.getProperty<Object?>(event, 'source'),
-        js.getProperty<Object?>(html.window, 'parent'),
-      ))
+      if (!identical(event.source, html.window.parent)) {
         return;
+      }
       dynamic message = event.data;
       if (message is String) {
         try {

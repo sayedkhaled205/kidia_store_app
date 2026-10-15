@@ -246,7 +246,7 @@ class ShopifyCartRepository implements CartRepository {
         session.cartId!,
       );
       _checkOwner(owner);
-      return _accept(snapshot, owner);
+      return await _accept(snapshot, owner);
     } on StoreApiException catch (error) {
       _checkOwner(owner);
       if (error.kind == StoreApiFailureKind.notFound) {

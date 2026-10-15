@@ -31,14 +31,6 @@ typedef ProductWishlistToggleCallback =
     Future<bool> Function(CatalogProduct product);
 typedef ProductWishlistStatusCallback = Future<bool> Function(int productId);
 
-Color _productHexColor(String value, Color fallback) {
-  final String normalized = value.replaceFirst('#', '');
-  final int? parsed = int.tryParse(normalized, radix: 16);
-  return parsed == null || normalized.length != 6
-      ? fallback
-      : Color(0xFF000000 | parsed);
-}
-
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({
     required this.productId,
