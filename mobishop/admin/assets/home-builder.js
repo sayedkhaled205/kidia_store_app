@@ -161,7 +161,7 @@
 	}
 
 	function settingPath(name) {
-		var match = String(name || "").match(/\[settings\]((?:\[[^\]]*\])+)/);
+		var match = String(name || "").match(/^blocks\[[^\]]+\]\[settings\]((?:\[[^\]]*\])+)$/);
 		var path = [];
 		var part;
 		var pattern;
@@ -189,7 +189,7 @@
 				if (key === "" && Array.isArray(cursor)) {
 					cursor.push(value);
 				} else if (Object.prototype.hasOwnProperty.call(cursor, key)) {
-					cursor[key] = Array.isArray(cursor[key]) ? cursor[key].concat(value) : [cursor[key], value];
+					cursor[key] = value; // Only [] appends; repeated scalar controls keep the final form value.
 				} else {
 					cursor[key] = value;
 				}

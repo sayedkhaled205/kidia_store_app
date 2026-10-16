@@ -1,0 +1,18 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('mobishop/admin/assets/home-builder.js', 'utf8');
+const context = {};
+vm.createContext(context);
+vm.runInContext(source.slice(source.indexOf('function settingPath('), source.indexOf('function serializeBlocks(')), context);
+const path = name => JSON.parse(JSON.stringify(context.settingPath(name)));
+assert.deepEqual(path('blocks[4][settings][quick_add_position]_visual'), []);
+assert.deepEqual(path('blocks[4][settings][quick_add_position]'), ['quick_add_position']);
+const settings = {};
+context.assignSetting(settings, ['items','0','enabled'], '0');
+context.assignSetting(settings, ['items','0','enabled'], '1');
+context.assignSetting(settings, ['messages',''], 'First');
+context.assignSetting(settings, ['messages',''], 'Second');
+assert.equal(settings.items[0].enabled, '1');
+assert.deepEqual(Array.from(settings.messages), ['First','Second']);
+console.log('PASS: visual controls excluded, scalar toggles preserved, real lists retained.');
