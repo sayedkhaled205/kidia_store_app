@@ -433,7 +433,7 @@ abstract final class HomeBlockModel {
     required Map<String, dynamic> data,
   }) {
     final String cardStyle = _optionalString(data, 'card_style') ?? 'outlined';
-    if (!const <String>{'outlined', 'elevated', 'minimal'}.contains(cardStyle)) {
+    if (!const <String>{'outlined', 'elevated', 'minimal', 'no_shadow'}.contains(cardStyle)) {
       throw FormatException('Unsupported product card style: $cardStyle');
     }
     return ProductCarouselBlock(
@@ -483,7 +483,7 @@ abstract final class HomeBlockModel {
     required Map<String, dynamic> data,
   }) {
     final String cardStyle = _optionalString(data, 'card_style') ?? 'outlined';
-    if (!const <String>{'outlined', 'elevated', 'minimal'}.contains(cardStyle)) {
+    if (!const <String>{'outlined', 'elevated', 'minimal', 'no_shadow'}.contains(cardStyle)) {
       throw FormatException('Unsupported product card style: $cardStyle');
     }
     return ProductGridBlock(
@@ -1511,3 +1511,4 @@ abstract final class HomeBlockModel {
     return value.toLowerCase();
   }
 }
+
