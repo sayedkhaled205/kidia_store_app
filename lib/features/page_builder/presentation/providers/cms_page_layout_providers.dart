@@ -32,9 +32,9 @@ final cmsPageLayoutProvider = FutureProvider.family<CmsPageLayout, String>((
   Ref ref,
   String page,
 ) async {
-  if (!AppConfig.isCmsPreview &&
-      AppConfig.commercePlatform != CommercePlatform.wooCommerce) {
-    return ref.watch(portableAppDesign58Provider)!.pageLayout(page);
+  final design = ref.watch(portableAppDesign58Provider);
+  if (design != null) {
+    return design.pageLayout(page);
   }
   final Map<String, dynamic>? previewJson = ref
       .watch(cmsPreviewLayoutJsonProvider(page))

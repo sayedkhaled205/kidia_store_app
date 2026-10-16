@@ -65,9 +65,8 @@ final homeRepositoryProvider = Provider<HomeRepository>((Ref ref) {
 
 final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>(
   (Ref ref, String locale) async {
-    if (!AppConfig.isCmsPreview &&
-        AppConfig.commercePlatform != CommercePlatform.wooCommerce) {
-      final design = ref.watch(portableAppDesign58Provider)!;
+    final design = ref.watch(portableAppDesign58Provider);
+    if (design != null) {
       final catalog = ref.watch(catalogRepositoryProvider);
       Timer? directRefresh;
       ref.onDispose(() => directRefresh?.cancel());

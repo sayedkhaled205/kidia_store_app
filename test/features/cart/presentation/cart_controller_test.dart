@@ -93,6 +93,41 @@ void main() {
     );
   });
 
+  test('addition waits for bootstrap and runs once', () async {
+    final repository = _FakeCartRepository();
+    repository.loadCompleter = Completer<Cart>();
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    final operation = container
+        .read(cartControllerProvider.notifier)
+        .addSelection(ProductPurchaseSelection(productId: 88, quantity: 1));
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.addCalls, 0);
+    repository.loadCompleter!.complete(repository.current);
+    expect((await operation).succeeded, isTrue);
+    expect(repository.addCalls, 1);
+  });
+
+  test('bootstrap failure is reported without adding', () async {
+    final repository = _FakeCartRepository();
+    repository.loadCompleter = Completer<Cart>();
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    final operation = container
+        .read(cartControllerProvider.notifier)
+        .addSelection(ProductPurchaseSelection(productId: 88, quantity: 1));
+    repository.loadCompleter!.completeError(
+      const CartRepositoryException(
+        kind: CartFailureKind.unknown,
+        message: 'Cart service unavailable.',
+      ),
+    );
+    final result = await operation;
+    expect(result.succeeded, isFalse);
+    expect(result.message, 'Cart service unavailable.');
+    expect(repository.addCalls, 0);
+  });
+
   test('product purchase adapter forwards a variation selection', () async {
     final _FakeCartRepository repository = _FakeCartRepository();
     final ProviderContainer container = _container(repository);
@@ -136,12 +171,15 @@ class _FakeCartRepository implements CartRepository {
   Cart current;
   final CartRepositoryException? updateError;
   Completer<Cart>? updateCompleter;
+  Completer<Cart>? loadCompleter;
+  int addCalls = 0;
   int? lastAddedProductId;
   int? lastAddedQuantity;
   List<CartItemVariation> lastVariation = const <CartItemVariation>[];
 
   @override
-  Future<Cart> getCart() async => current;
+  Future<Cart> getCart() async =>
+      loadCompleter == null ? current : await loadCompleter!.future;
 
   @override
   Future<Cart> addItem({
@@ -149,6 +187,7 @@ class _FakeCartRepository implements CartRepository {
     int quantity = 1,
     List<CartItemVariation> variation = const <CartItemVariation>[],
   }) async {
+    addCalls += 1;
     lastAddedProductId = productId;
     lastAddedQuantity = quantity;
     lastVariation = variation;

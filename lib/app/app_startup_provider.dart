@@ -15,8 +15,8 @@ final appStartupProvider = FutureProvider<void>((ref) async {
     return;
   }
   AppConfig.validateStoreConnection();
-  // Validate the approved foreign design before the branding error wrapper.
-  // This preserves its actionable configuration error and prevents Woo reads.
+  // Validate the approved saved design before the branding error wrapper.
+  // This preserves its actionable configuration error before any remote reads.
   ref.watch(portableAppDesign58Provider);
   // The existing Retry button invalidates startup. Forward that explicit
   // action to branding too, rather than reusing its cached failed request.

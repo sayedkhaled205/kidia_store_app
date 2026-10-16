@@ -16,7 +16,7 @@ abstract final class AppConfig {
     defaultValue: false,
   );
 
-  /// Public saved normalized Builder settings for explicit non-Woo builds.
+  /// Public saved normalized Builder settings for native builds.
   /// This is not a catalog snapshot, credential, or remote design endpoint.
   static const String appDesignBundle = String.fromEnvironment(
     'APP_DESIGN_BUNDLE',

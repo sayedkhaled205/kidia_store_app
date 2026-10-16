@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/app_design/app_design_providers58.dart';
-import '../../../core/commerce/commerce_connection.dart';
 import '../../home/presentation/providers/home_providers.dart';
 import '../domain/splash_config.dart';
 
@@ -14,9 +13,9 @@ final splashConfigProvider = FutureProvider<SplashConfig>((ref) async {
   // The splash can also be read directly by the loading screen. Validate that
   // path before creating any transport, just as application startup does.
   AppConfig.validateStoreConnection();
-  if (!AppConfig.isCmsPreview &&
-      AppConfig.commercePlatform != CommercePlatform.wooCommerce) {
-    return ref.watch(portableAppDesign58Provider)!.splash;
+  final design = ref.watch(portableAppDesign58Provider);
+  if (design != null) {
+    return design.splash;
   }
   if (AppConfig.useMockHomeLayout) {
     return const SplashConfig(duration: Duration(milliseconds: 10));

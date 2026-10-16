@@ -11,10 +11,12 @@ final applicationIdentity58Provider = Provider<Map<String, dynamic>?>((ref) {
     return ref.watch(previewIdentityProvider).asData?.value;
   }
   try {
+    final design = ref.watch(portableAppDesign58Provider);
+    if (design != null) return design.identity;
     if (AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
       return AppConfig.nativeIdentity;
     }
-    return ref.watch(portableAppDesign58Provider)?.identity;
+    return null;
   } catch (_) {
     // The startup/Home/chrome providers display the actual configuration error.
     // Do not crash MaterialApp before its error/retry UI can be mounted, or

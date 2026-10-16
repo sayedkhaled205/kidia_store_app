@@ -4,11 +4,13 @@ import '../commerce/commerce_connection.dart';
 import '../config/app_config.dart';
 import 'app_design_bundle58.dart';
 
-/// The legacy Woo and live CMS preview paths stay exactly separate. A foreign
-/// build must supply saved public design before creating any WordPress reader.
+/// Native builds use their approved public design, including central-builder
+/// Woo builds. Only legacy Woo builds without a bundle read WordPress layouts.
+/// The live CMS preview continues to receive its unsaved design from the bridge.
 final portableAppDesign58Provider = Provider<AppDesignBundle58?>((ref) {
   if (AppConfig.isCmsPreview ||
-      AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
+      (AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
+          AppConfig.appDesignBundle.trim().isEmpty)) {
     return null;
   }
   AppConfig.validateStoreConnection();
