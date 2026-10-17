@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
@@ -13,6 +15,62 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 void main() {
+  test(
+    'opening a recently listed product skips a duplicate read and expires after 20 seconds',
+    () async {
+      final source = _CountingSource();
+      var now = DateTime(2026, 10, 17);
+      final repository = CatalogRepositoryImpl(source, now: () => now);
+      addTearDown(repository.dispose);
+      final page = await repository.getProducts(CatalogProductQuery());
+      expect(await repository.getProduct(10), same(page.items.single));
+      expect(source.productCalls, 0);
+      now = now.add(const Duration(seconds: 21));
+      await repository.getProduct(10);
+      expect(source.productCalls, 1);
+    },
+  );
+
+  test('store changes invalidate cached product and variation data', () async {
+    final changes = StreamController<int>.broadcast(sync: true);
+    final source = _CountingSource();
+    final repository = CatalogRepositoryImpl(source, changes: changes.stream);
+    addTearDown(changes.close);
+    addTearDown(repository.dispose);
+    await repository.getProduct(10);
+    await repository.getVariations(10);
+    await repository.getProduct(10);
+    await repository.getVariations(10);
+    expect(source.productCalls, 1);
+    expect(source.variationCalls, 1);
+    changes.add(1);
+    await repository.getProduct(10);
+    await repository.getVariations(10);
+    expect(source.productCalls, 2);
+    expect(source.variationCalls, 2);
+  });
+
+  test(
+    'concurrent reads share one request and an invalidated response cannot refill the cache',
+    () async {
+      final changes = StreamController<int>.broadcast(sync: true);
+      final source = _CountingSource()
+        ..pending = Completer<CatalogProductModel>();
+      final repository = CatalogRepositoryImpl(source, changes: changes.stream);
+      addTearDown(changes.close);
+      addTearDown(repository.dispose);
+      final first = repository.getProduct(10);
+      final second = repository.getProduct(10);
+      expect(source.productCalls, 1);
+      changes.add(1);
+      source.pending!.complete(_FakeCatalogRemoteDataSource._product);
+      await Future.wait([first, second]);
+      source.pending = null;
+      await repository.getProduct(10);
+      expect(source.productCalls, 2);
+    },
+  );
+
   test(
     'repository exposes domain products without leaking data models',
     () async {
@@ -50,6 +108,23 @@ void main() {
       ),
     );
   });
+}
+
+class _CountingSource extends _FakeCatalogRemoteDataSource {
+  int productCalls = 0;
+  int variationCalls = 0;
+  Completer<CatalogProductModel>? pending;
+  @override
+  Future<CatalogProductModel> fetchProduct(int productId) {
+    productCalls++;
+    return pending?.future ?? super.fetchProduct(productId);
+  }
+
+  @override
+  Future<List<CatalogVariationModel>> fetchVariations(int productId) {
+    variationCalls++;
+    return super.fetchVariations(productId);
+  }
 }
 
 class _FakeCatalogRemoteDataSource implements CatalogRemoteDataSource {

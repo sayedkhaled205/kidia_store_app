@@ -73,10 +73,12 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((Ref ref) {
   switch (AppConfig.commercePlatform) {
     case CommercePlatform.wooCommerce:
       // Default builds retain the original transport, exact paging andbus.
-      return CatalogRepositoryImpl(
+      final repository = CatalogRepositoryImpl(
         ref.watch(catalogRemoteDataSourceProvider),
         changes: ref.watch(storeCatalogChangeBusProvider).catalogChanges,
       );
+      ref.onDispose(() => unawaited(repository.dispose()));
+      return repository;
     case CommercePlatform.shopify:
       final ShopifyCatalogRepository repository = ShopifyCatalogRepository(
         gateway: ShopifyCatalogGateway(
