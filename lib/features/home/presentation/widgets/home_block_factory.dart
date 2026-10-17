@@ -9,6 +9,26 @@ abstract final class HomeBlockFactory {
     required HomeBlock block,
     required ValueChanged<HomeAction> onAction,
   }) {
+    if (block is CatalogUnavailableBlock) {
+      return Builder(
+        builder: (context) {
+          final arabic = Localizations.localeOf(context).languageCode == 'ar';
+          return Padding(
+            padding: const EdgeInsets.all(12),
+            child: Center(
+              child: TextButton.icon(
+                onPressed: () =>
+                    onAction(const HomeAction(type: 'retry_home', value: '')),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(
+                  arabic ? 'إعادة تحميل هذا القسم' : 'Reload this section',
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
     return switch (block) {
       AppHeaderBlock appHeaderBlock => AppHeaderBlockWidget(
         block: appHeaderBlock,

@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:dio/dio.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
@@ -18,6 +19,16 @@ class HomeReadSession {
     for (var attempt = 0; ; attempt++) {
       try {
         final layout = await read();
+        if (layout.blocks.any((block) => block is CatalogUnavailableBlock)) {
+          _stale.add(locale);
+          final previous = _saved[locale];
+          if (previous != null &&
+              DateTime.now().difference(previous.$2) <
+                  const Duration(minutes: 10)) {
+            return previous.$1;
+          }
+          return layout;
+        }
         _saved[locale] = (layout, DateTime.now());
         _stale.remove(locale);
         return layout;

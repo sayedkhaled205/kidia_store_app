@@ -169,7 +169,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                           blocks: _visibleBlocks,
                           keyForBlock: _keyForBlock,
                           onAction: (HomeAction action) {
-                            _handleHomeAction(context: context, action: action);
+                            if (action.type == 'retry_home') {
+                              ref.invalidate(homeLayoutProvider(locale));
+                            } else {
+                              _handleHomeAction(
+                                context: context,
+                                action: action,
+                              );
+                            }
                           },
                         ),
                       ],

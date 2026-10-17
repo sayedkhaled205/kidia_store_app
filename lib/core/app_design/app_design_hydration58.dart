@@ -1,3 +1,4 @@
+import '../../features/home/data/home_read_session.dart';
 import '../../features/catalog/domain/entities/catalog_category.dart';
 import '../../features/catalog/domain/entities/catalog_product.dart';
 import '../../features/catalog/domain/queries/catalog_category_query.dart';
@@ -119,83 +120,90 @@ Future<HomeLayout> hydrateSavedHome58(
       continue;
     }
     final query = Map<String, dynamic>.from(json['catalog_query'] as Map);
-    if (block is CategoryGridBlock) {
-      validateCatalogQuery58(query, categories: true);
-      final result = await repository.getCategories(
-        CatalogCategoryQuery(
-          perPage: query['limit'] as int,
-          hideEmpty: query['hide_empty'] == true,
-          parentId: query['mode'] == 'parent'
-              ? query['parent_id'] as int
-              : null,
-          includeIds: query['mode'] == 'ids'
-              ? (query['ids'] as List).cast<int>()
-              : const [],
-          sort: query['mode'] == 'ids'
-              ? CatalogCategorySort.include
-              : CatalogCategorySort.name,
-        ),
-      );
-      if (query['mode'] == 'ids') {
-        final ids = (query['ids'] as List).cast<int>();
-        if (result.items.any((item) => !ids.contains(item.id)) ||
-            result.items.map((item) => item.id).toSet().length !=
-                result.items.length) {
-          throw const FormatException(
-            'Catalog returned unselected categories.',
-          );
-        }
-        final items = [...result.items]
-          ..sort((a, b) => ids.indexOf(a.id).compareTo(ids.indexOf(b.id)));
-        blocks.add(_categories(block, items));
-        continue;
-      }
-      blocks.add(_categories(block, result.items));
-    } else {
-      validateCatalogQuery58(query, categories: false);
-      final List<CatalogProduct> products;
-      if (query['mode'] == 'ids') {
-        products = await Future.wait(
-          (query['ids'] as List).cast<int>().map(repository.getProduct),
-        );
-        for (var index = 0; index < products.length; index++) {
-          if (products[index].id != (query['ids'] as List)[index]) {
-            throw const FormatException(
-              'Catalog detail returned a different selected product.',
-            );
-          }
-        }
-      } else {
-        final result = await repository.getProducts(
-          CatalogProductQuery(
+    try {
+      if (block is CategoryGridBlock) {
+        validateCatalogQuery58(query, categories: true);
+        final result = await repository.getCategories(
+          CatalogCategoryQuery(
             perPage: query['limit'] as int,
-            sort: switch (query['mode']) {
-              'best_selling' => CatalogSort.popularity,
-              'top_rated' => CatalogSort.rating,
-              _ => switch (query['sort']) {
-                'newest' => CatalogSort.newest,
-                'relevance' => CatalogSort.relevance,
-                _ => CatalogSort.name,
-              },
-            },
-            featured: query['mode'] == 'featured' ? true : null,
-            onSale: query['mode'] == 'on_sale' ? true : null,
-            categoryIds: query['mode'] == 'category'
-                ? [query['category_id'] as int]
+            hideEmpty: query['hide_empty'] == true,
+            parentId: query['mode'] == 'parent'
+                ? query['parent_id'] as int
+                : null,
+            includeIds: query['mode'] == 'ids'
+                ? (query['ids'] as List).cast<int>()
                 : const [],
-            search: query['mode'] == 'search'
-                ? (query['search'] as String).trim()
-                : '',
+            sort: query['mode'] == 'ids'
+                ? CatalogCategorySort.include
+                : CatalogCategorySort.name,
           ),
         );
-        products = result.items;
+        if (query['mode'] == 'ids') {
+          final ids = (query['ids'] as List).cast<int>();
+          if (result.items.any((item) => !ids.contains(item.id)) ||
+              result.items.map((item) => item.id).toSet().length !=
+                  result.items.length) {
+            throw const FormatException(
+              'Catalog returned unselected categories.',
+            );
+          }
+          final items = [...result.items]
+            ..sort((a, b) => ids.indexOf(a.id).compareTo(ids.indexOf(b.id)));
+          blocks.add(_categories(block, items));
+          continue;
+        }
+        blocks.add(_categories(block, result.items));
+      } else {
+        validateCatalogQuery58(query, categories: false);
+        final List<CatalogProduct> products;
+        if (query['mode'] == 'ids') {
+          products = await Future.wait(
+            (query['ids'] as List).cast<int>().map(repository.getProduct),
+          );
+          for (var index = 0; index < products.length; index++) {
+            if (products[index].id != (query['ids'] as List)[index]) {
+              throw const FormatException(
+                'Catalog detail returned a different selected product.',
+              );
+            }
+          }
+        } else {
+          final result = await repository.getProducts(
+            CatalogProductQuery(
+              perPage: query['limit'] as int,
+              sort: switch (query['mode']) {
+                'best_selling' => CatalogSort.popularity,
+                'top_rated' => CatalogSort.rating,
+                _ => switch (query['sort']) {
+                  'newest' => CatalogSort.newest,
+                  'relevance' => CatalogSort.relevance,
+                  _ => CatalogSort.name,
+                },
+              },
+              featured: query['mode'] == 'featured' ? true : null,
+              onSale: query['mode'] == 'on_sale' ? true : null,
+              categoryIds: query['mode'] == 'category'
+                  ? [query['category_id'] as int]
+                  : const [],
+              search: query['mode'] == 'search'
+                  ? (query['search'] as String).trim()
+                  : '',
+            ),
+          );
+          products = result.items;
+        }
+        final items = List<HomeProductItem>.unmodifiable(
+          products.map(_product),
+        );
+        blocks.add(
+          block is ProductCarouselBlock
+              ? _carousel(block, items)
+              : _grid(block as ProductGridBlock, items),
+        );
       }
-      final items = List<HomeProductItem>.unmodifiable(products.map(_product));
-      blocks.add(
-        block is ProductCarouselBlock
-            ? _carousel(block, items)
-            : _grid(block as ProductGridBlock, items),
-      );
+    } catch (error) {
+      if (!HomeReadSession.isTransient(error)) rethrow;
+      blocks.add(CatalogUnavailableBlock(block));
     }
   }
   return HomeLayout(

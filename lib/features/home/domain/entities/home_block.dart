@@ -832,3 +832,10 @@ class SpacerBlock extends HomeBlock {
 
   final double height;
 }
+
+/// A failed live section keeps its place without inventing merchandise.
+class CatalogUnavailableBlock extends HomeBlock {
+  CatalogUnavailableBlock(HomeBlock original)
+      : super(id: original.id, type: original.type, enabled: original.enabled,
+          presentation: original.presentation);
+}

@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -669,6 +670,23 @@ void main() {
         await _parse(fixture).hydrateHome(repository, locale: 'ar');
         expect(repository.productQueries.last.search, 'shoes');
         expect(repository.productQueries.last.categoryIds, isEmpty);
+      },
+    );
+
+    test(
+      'a transient section failure preserves the saved non-catalog Home design',
+      () async {
+        final repository = _Catalog()
+          ..failure = const CatalogRepositoryException(
+            kind: StoreApiFailureKind.connection,
+            message: 'offline',
+          );
+        final home = await _parse(
+          appDesignFixture58(),
+        ).hydrateHome(repository, locale: 'ar');
+        expect(home.blocks.whereType<CatalogUnavailableBlock>(), isNotEmpty);
+        expect(home.blocks.any((b) => b is! CatalogUnavailableBlock), isTrue);
+        expect(home.blocks.whereType<ProductGridBlock>(), isEmpty);
       },
     );
 
