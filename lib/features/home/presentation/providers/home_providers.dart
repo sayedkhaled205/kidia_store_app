@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/home/data/home_read_session.dart';
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -63,6 +64,12 @@ final homeRepositoryProvider = Provider<HomeRepository>((Ref ref) {
   );
 });
 
+final homeReadSessionProvider = Provider<HomeReadSession>((ref) {
+  ref.watch(portableAppDesign58Provider);
+  ref.watch(catalogRepositoryProvider);
+  return HomeReadSession();
+});
+
 final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>(
   (Ref ref, String locale) async {
     final design = ref.watch(portableAppDesign58Provider);
@@ -71,7 +78,9 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
       Timer? directRefresh;
       ref.onDispose(() => directRefresh?.cancel());
       try {
-        return await design.hydrateHome(catalog, locale: locale);
+        return await ref
+            .read(homeReadSessionProvider)
+            .load(locale, () => design.hydrateHome(catalog, locale: locale));
       } finally {
         if (ref.mounted) {
           directRefresh = Timer(const Duration(seconds: 15), () {
@@ -101,7 +110,9 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
     Timer? refreshTimer;
     ref.onDispose(() => refreshTimer?.cancel());
     try {
-      return await repository.getHomeLayout(locale: locale);
+      return await ref
+          .read(homeReadSessionProvider)
+          .load(locale, () => repository.getHomeLayout(locale: locale));
     } finally {
       // A slow initial read must be allowed to finish. Start the next refresh
       // interval only after this request settles, not while it is in flight.

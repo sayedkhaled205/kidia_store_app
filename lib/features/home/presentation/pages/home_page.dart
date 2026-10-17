@@ -35,8 +35,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _previewScrollSubscription =
-        CmsPreviewLayoutBridge.homeScrollDeltas.listen(_scrollPreviewBy);
+    _previewScrollSubscription = CmsPreviewLayoutBridge.homeScrollDeltas.listen(
+      _scrollPreviewBy,
+    );
   }
 
   @override
@@ -87,12 +88,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
     final CmsPageLayout? loadedChrome = chromeState.value;
     if (loadedChrome == null && !chromeState.hasError) {
-      return const Scaffold(
-        body: SafeArea(child: _HomeLoadingState()),
-      );
+      return const Scaffold(body: SafeArea(child: _HomeLoadingState()));
     }
-    final CmsPageLayout chrome =
-        loadedChrome ?? CmsPageLayout.fallback('home');
+    final CmsPageLayout chrome = loadedChrome ?? CmsPageLayout.fallback('home');
     ref.listen<AsyncValue<String>>(
       cmsPreviewHomeFocusTargetProvider,
       (_, AsyncValue<String> next) => next.whenData(_focusPreviewTarget),
@@ -103,10 +101,30 @@ class _HomePageState extends ConsumerState<HomePage> {
       defaultTitle: storeName,
       scrollController: _scrollController,
       actions: <CmsPageHeaderAction>[
-          CmsPageHeaderAction(type: 'search', icon: Icons.search_rounded, tooltip: arabic ? 'بحث' : 'Search', onPressed: () => showCatalogSearch(context)),
-          CmsPageHeaderAction(type: 'cart', icon: Icons.shopping_bag_outlined, tooltip: arabic ? 'السلة' : 'Cart', onPressed: () => context.go('/cart')),
-          CmsPageHeaderAction(type: 'wishlist', icon: Icons.favorite_border_rounded, tooltip: arabic ? 'المفضلة' : 'Wishlist', onPressed: () => context.go('/wishlist')),
-          CmsPageHeaderAction(type: 'account', icon: Icons.person_outline_rounded, tooltip: arabic ? 'حسابي' : 'Account', onPressed: () => context.go('/account')),
+        CmsPageHeaderAction(
+          type: 'search',
+          icon: Icons.search_rounded,
+          tooltip: arabic ? 'بحث' : 'Search',
+          onPressed: () => showCatalogSearch(context),
+        ),
+        CmsPageHeaderAction(
+          type: 'cart',
+          icon: Icons.shopping_bag_outlined,
+          tooltip: arabic ? 'السلة' : 'Cart',
+          onPressed: () => context.go('/cart'),
+        ),
+        CmsPageHeaderAction(
+          type: 'wishlist',
+          icon: Icons.favorite_border_rounded,
+          tooltip: arabic ? 'المفضلة' : 'Wishlist',
+          onPressed: () => context.go('/wishlist'),
+        ),
+        CmsPageHeaderAction(
+          type: 'account',
+          icon: Icons.person_outline_rounded,
+          tooltip: arabic ? 'حسابي' : 'Account',
+          onPressed: () => context.go('/account'),
+        ),
       ],
       body: SafeArea(
         bottom: false,
@@ -120,6 +138,24 @@ class _HomePageState extends ConsumerState<HomePage> {
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
+                if (homeLayoutAsync.hasValue &&
+                    ref.read(homeReadSessionProvider).isStale(locale))
+                  SliverToBoxAdapter(
+                    child: MaterialBanner(
+                      content: Text(
+                        arabic
+                            ? 'الاتصال متقطع. بنعرض آخر بيانات محملة لحد ما التحديث يكتمل.'
+                            : 'Connection interrupted. Showing recently loaded content while reconnecting.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(homeLayoutProvider(locale)),
+                          child: Text(arabic ? 'تحديث' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 homeLayoutAsync.when(
                   skipLoadingOnReload: true,
                   skipLoadingOnRefresh: true,
@@ -318,9 +354,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         context.go('/account');
         return;
 
-	  case 'wishlist':
-		context.go('/wishlist');
-		return;
+      case 'wishlist':
+        context.go('/wishlist');
+        return;
 
       case 'external':
         unawaited(_openExternalUrl(context, value));

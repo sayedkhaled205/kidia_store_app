@@ -1525,7 +1525,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       color: color,
       icon: Icon(icon, size: size),
     );
-    if (action.type != 'cart' || !_header.boolean('show_cart_badge', false)) {
+    if (action.type != 'cart') {
       return button;
     }
     return Consumer(

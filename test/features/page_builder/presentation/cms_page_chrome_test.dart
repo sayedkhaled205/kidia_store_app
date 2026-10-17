@@ -444,7 +444,7 @@ void main() {
     expect(logoText.style?.color, const Color(0xFFC84F6A));
   });
 
-  testWidgets('renders the live cart count with its configured badge shape', (
+  testWidgets('cart badge is visible by default with its configured shape', (
     WidgetTester tester,
   ) async {
     final CmsPageLayout fallback = CmsPageLayout.fallback('catalog');
@@ -456,7 +456,6 @@ void main() {
         enabled: true,
         settings: <String, dynamic>{
           ...fallback.header.settings,
-          'show_cart_badge': true,
           'cart_badge_shape': 'pill',
           'cart_badge_size': 22,
           'cart_badge_background': '#C84F6A',
