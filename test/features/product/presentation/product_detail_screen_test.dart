@@ -242,7 +242,7 @@ void main() {
     expect(captured?.productId, simpleProduct.id);
     expect(captured?.variationId, isNull);
     expect(captured?.quantity, 2);
-    expect(find.text('Added to cart'), findsOneWidget);
+    expect(find.text('Added to cart'), findsNothing);
     expect(find.text('تمت الإضافة إلى السلة'), findsNothing);
   });
 

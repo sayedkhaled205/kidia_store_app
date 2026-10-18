@@ -259,13 +259,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Future<void> _addToCart() async {
-    final added = await _controller.addToCart(widget.onAddToCart);
-    if (added && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'تمت الإضافة إلى السلة' : 'Added to cart'),
-        duration: const Duration(seconds: 2),
-      ));
-    }
+    await _controller.addToCart(widget.onAddToCart);
   }
 
   Future<void> _loadWishlistState() async {

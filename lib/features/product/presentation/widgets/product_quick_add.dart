@@ -353,10 +353,7 @@ class _ProductQuickAddSheetState
       },
     );
     if (added && mounted) {
-      final messenger = ScaffoldMessenger.of(context);
-      final arabic = Localizations.localeOf(context).languageCode == 'ar';
       Navigator.of(context).pop();
-      messenger.showSnackBar(SnackBar(content: Text(arabic ? 'تمت الإضافة إلى السلة' : 'Added to cart'), duration: const Duration(seconds: 2)));
     }
   }
 }
