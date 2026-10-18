@@ -9,20 +9,86 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_vari
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_category_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
+import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
 
-/// Catalog used by the built-in Setup Theme preview.
-///
-/// The data and images arrive in the same postMessage as the selected theme,
-/// so this repository never calls the connected WooCommerce store.
-class CmsPreviewCatalogRepository implements CatalogRepository {
+/// Native preview catalog: theme fixtures in demo mode, connected store data
+/// through the authenticated parent bridge in live editor mode.
+class CmsPreviewCatalogRepository
+    implements CatalogRepository, CatalogChangeSource {
+  CmsPreviewCatalogRepository({
+    Future<Map<String, dynamic>> Function()? catalog,
+    Future<Map<String, dynamic>> Function(Map<String, dynamic>)? fetchPage,
+    bool? live,
+    Stream<int>? changes,
+    int Function()? revision,
+  }) : _catalogLoader = catalog,
+       _pageLoader = fetchPage,
+       _live = live,
+       _changes = changes,
+       _revision = revision;
+
+  final Future<Map<String, dynamic>> Function()? _catalogLoader;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic>)?
+  _pageLoader;
+  final bool? _live;
+  final Stream<int>? _changes;
+  final int Function()? _revision;
+  int _cacheRevision = -1;
+  int get _currentRevision =>
+      _revision?.call() ?? CmsPreviewLayoutBridge.catalogRevision;
+  @override
+  Stream<int> get catalogChanges =>
+      _changes ?? CmsPreviewLayoutBridge.catalogChanges;
+
+  void _synchronizeProductCache() {
+    final int revision = _currentRevision;
+    if (_cacheRevision == revision) return;
+    _loadedProducts.clear();
+    _cacheRevision = revision;
+  }
+
+  bool get _usesLiveCatalog => _live ?? CmsPreviewLayoutBridge.useLiveCatalog;
+  Future<Map<String, dynamic>> _fetchPage(Map<String, dynamic> query) =>
+      (_pageLoader ?? CmsPreviewLayoutBridge.fetchCatalogPage)(query);
+  final Map<int, CatalogProduct> _loadedProducts = <int, CatalogProduct>{};
+
   Future<Map<String, dynamic>> get _catalog =>
-      CmsPreviewLayoutBridge.demoCatalog;
+      _catalogLoader?.call() ?? CmsPreviewLayoutBridge.demoCatalog;
 
   @override
   Future<CatalogPage<CatalogProduct>> getProducts(
     CatalogProductQuery query,
   ) async {
+    if (_usesLiveCatalog) {
+      _synchronizeProductCache();
+      final int requestedRevision = _currentRevision;
+      final Map<String, dynamic> response = await _fetchPage(
+        query.toStoreApiQuery(),
+      );
+      if ('${response['error'] ?? ''}'.isNotEmpty) {
+        throw StateError('${response['error']}');
+      }
+      final List<CatalogProduct> items = await _parseProducts(
+        response['products'] is List
+            ? response['products'] as List<dynamic>
+            : const <dynamic>[],
+      );
+      if (requestedRevision == _currentRevision) {
+        for (final CatalogProduct product in items) {
+          _loadedProducts[product.id] = product;
+        }
+      }
+      final int total = _integer(response['total_items'], items.length);
+      return CatalogPage<CatalogProduct>(
+        items: items,
+        page: query.page,
+        perPage: query.perPage,
+        totalItems: total,
+        totalPages: total == 0 ? 0 : (total / query.perPage).ceil(),
+      );
+    }
     final List<CatalogProduct> products = await _products();
     Iterable<CatalogProduct> filtered = products;
     if (query.includeIds.isNotEmpty) {
@@ -40,8 +106,7 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
     if (query.search.isNotEmpty) {
       final String search = query.search.toLowerCase();
       filtered = filtered.where(
-        (CatalogProduct product) =>
-            product.name.toLowerCase().contains(search),
+        (CatalogProduct product) => product.name.toLowerCase().contains(search),
       );
     }
     final List<CatalogProduct> items = filtered.toList(growable: false);
@@ -50,6 +115,31 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
 
   @override
   Future<CatalogProduct> getProduct(int productId) async {
+    if (_usesLiveCatalog) {
+      _synchronizeProductCache();
+      final CatalogProduct? cached = _loadedProducts[productId];
+      if (cached != null) return cached;
+      final int requestedRevision = _currentRevision;
+      final Map<String, dynamic> response = await _fetchPage(<String, dynamic>{
+        'page': 1,
+        'per_page': 1,
+        'include': '$productId',
+      });
+      final List<CatalogProduct> fetched = await _parseProducts(
+        response['products'] is List
+            ? response['products'] as List<dynamic>
+            : const <dynamic>[],
+      );
+      for (final product in fetched) {
+        if (product.id == productId) {
+          if (requestedRevision == _currentRevision) {
+            _loadedProducts[productId] = product;
+          }
+          return product;
+        }
+      }
+      throw StateError('The product is not available in the connected store.');
+    }
     final List<CatalogProduct> products = await _products();
     return products.firstWhere(
       (CatalogProduct product) => product.id == productId,
@@ -61,6 +151,40 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
   Future<List<CatalogVariation>> getVariations(int productId) async {
     final CatalogProduct product = await getProduct(productId);
     if (product.type != 'variable') return const <CatalogVariation>[];
+    if (_usesLiveCatalog) {
+      final Map<int, CatalogProduct> details = {};
+      final ids = product.variations.map((variation) => variation.id).toList();
+      for (int start = 0; start < ids.length; start += 100) {
+        final response = await _fetchPage({
+          'include': ids.skip(start).take(100).join(','),
+          'type': 'variation',
+          'per_page': 100,
+          'page': 1,
+        });
+        if ('${response['error'] ?? ''}'.isNotEmpty)
+          throw StateError('${response['error']}');
+        final products = await _parseProducts(
+          response['products'] as List<dynamic>? ?? [],
+        );
+        for (final detail in products) {
+          details[detail.id] = detail;
+          _loadedProducts[detail.id] = detail;
+        }
+      }
+      return product.variations
+          .map((variation) {
+            final detail = details[variation.id];
+            return CatalogVariation(
+              id: variation.id,
+              attributes: variation.attributes,
+              isPurchasable: detail?.isPurchasable ?? false,
+              isInStock: detail?.isInStock ?? false,
+              prices: detail?.prices,
+              image: detail?.primaryImage,
+            );
+          })
+          .toList(growable: false);
+    }
     return <CatalogVariation>[
       CatalogVariation(
         id: product.id + 100,
@@ -91,11 +215,7 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
             category.name.toLowerCase().contains(search),
       );
     }
-    return _page(
-      filtered.toList(growable: false),
-      query.page,
-      query.perPage,
-    );
+    return _page(filtered.toList(growable: false), query.page, query.perPage);
   }
 
   @override
@@ -126,6 +246,10 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
     final List<dynamic> raw = catalog['products'] is List
         ? catalog['products'] as List<dynamic>
         : const <dynamic>[];
+    return _parseProducts(raw);
+  }
+
+  Future<List<CatalogProduct>> _parseProducts(List<dynamic> raw) async {
     final List<CatalogCategory> categories = await _categories();
     final Map<int, CatalogCategory> byId = <int, CatalogCategory>{
       for (final CatalogCategory category in categories) category.id: category,
@@ -134,6 +258,11 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
         .whereType<Map>()
         .map((Map item) {
           final Map<String, dynamic> json = Map<String, dynamic>.from(item);
+          if (_usesLiveCatalog && json['store_api_product'] is Map) {
+            return CatalogProductModel.fromJson(
+              Map<String, dynamic>.from(json['store_api_product'] as Map),
+            ).toEntity();
+          }
           final int id = _integer(json['id'], 9001);
           final Uri? image = _uri(json['image_url']);
           final List<dynamic> gallery = json['image_urls'] is List
@@ -142,11 +271,14 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
           final List<CatalogImage> images = gallery
               .map(_uri)
               .whereType<Uri>()
-              .map(
-                (Uri url) => CatalogImage(source: url, thumbnail: url),
-              )
+              .map((Uri url) => CatalogImage(source: url, thumbnail: url))
               .toList(growable: false);
-          final int categoryId = _integer(json['category_id'], 0);
+          final List<int> categoryIds = json['category_ids'] is List
+              ? (json['category_ids'] as List<dynamic>)
+                    .map((dynamic id) => _integer(id, 0))
+                    .where((int id) => id > 0)
+                    .toList(growable: false)
+              : <int>[_integer(json['category_id'], 0)];
           return CatalogProduct(
             id: id,
             name: '${json['name'] ?? 'Theme product'}',
@@ -154,32 +286,40 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
             type: '${json['type'] ?? 'simple'}',
             summary: '${json['summary'] ?? ''}',
             description: '${json['description'] ?? ''}',
-            isFeatured: true,
+            sku: '${json['sku'] ?? ''}',
+            isFeatured: !_usesLiveCatalog,
             isOnSale: json['is_on_sale'] == true,
-            isPurchasable: true,
-            isInStock: json['in_stock'] != false,
-            stockStatus: CatalogStockStatus.inStock,
-            averageRating: _number(json['rating'], 4.7),
-            reviewCount: _integer(json['review_count'], 24),
+            isPurchasable: _usesLiveCatalog ? json['in_stock'] == true : true,
+            isInStock: _usesLiveCatalog
+                ? json['in_stock'] == true
+                : json['in_stock'] != false,
+            stockStatus: json['in_stock'] == false
+                ? CatalogStockStatus.outOfStock
+                : json['in_stock'] == true
+                ? CatalogStockStatus.inStock
+                : CatalogStockStatus.unknown,
+            averageRating: _number(json['rating'], _usesLiveCatalog ? 0 : 4.7),
+            reviewCount: _integer(
+              json['review_count'],
+              _usesLiveCatalog ? 0 : 24,
+            ),
             prices: CatalogMoney(
               currencyCode: '${json['currency_code'] ?? 'USD'}',
               currencySymbol: '${json['currency_symbol'] ?? r'$'}',
               currencyMinorUnit: 2,
               priceMinor: '${json['price_minor'] ?? '9900'}',
-              regularPriceMinor:
-                  '${json['regular_price_minor'] ?? ''}',
+              regularPriceMinor: '${json['regular_price_minor'] ?? ''}',
               salePriceMinor: json['is_on_sale'] == true
                   ? '${json['price_minor'] ?? '9900'}'
                   : '',
             ),
             images: images.isEmpty && image != null
-                ? <CatalogImage>[
-                    CatalogImage(source: image, thumbnail: image),
-                  ]
+                ? <CatalogImage>[CatalogImage(source: image, thumbnail: image)]
                 : images,
-            categories: byId[categoryId] == null
-                ? const <CatalogCategory>[]
-                : <CatalogCategory>[byId[categoryId]!],
+            categories: categoryIds
+                .map((int id) => byId[id])
+                .whereType<CatalogCategory>()
+                .toList(growable: false),
           );
         })
         .toList(growable: false);
@@ -190,21 +330,25 @@ class CmsPreviewCatalogRepository implements CatalogRepository {
     final List<dynamic> raw = catalog['categories'] is List
         ? catalog['categories'] as List<dynamic>
         : const <dynamic>[];
-    return raw.whereType<Map>().map((Map item) {
-      final Map<String, dynamic> json = Map<String, dynamic>.from(item);
-      final int id = _integer(json['id'], 9101);
-      final Uri? image = _uri(json['image_url']);
-      return CatalogCategory(
-        id: id,
-        name: '${json['name'] ?? 'Collection'}',
-        slug: '${json['slug'] ?? 'collection-$id'}',
-        description: '${json['description'] ?? ''}',
-        count: _integer(json['count'], 12),
-        image: image == null
-            ? null
-            : CatalogImage(source: image, thumbnail: image),
-      );
-    }).toList(growable: false);
+    return raw
+        .whereType<Map>()
+        .map((Map item) {
+          final Map<String, dynamic> json = Map<String, dynamic>.from(item);
+          final int id = _integer(json['id'], 9101);
+          final Uri? image = _uri(json['image_url']);
+          return CatalogCategory(
+            id: id,
+            name: '${json['name'] ?? 'Collection'}',
+            slug: '${json['slug'] ?? 'collection-$id'}',
+            parentId: _integer(json['parent'], 0),
+            description: '${json['description'] ?? ''}',
+            count: _integer(json['count'], 12),
+            image: image == null
+                ? null
+                : CatalogImage(source: image, thumbnail: image),
+          );
+        })
+        .toList(growable: false);
   }
 
   CatalogPage<T> _page<T>(List<T> source, int page, int perPage) {
