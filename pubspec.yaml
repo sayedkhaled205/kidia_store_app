@@ -46,6 +46,7 @@ dependencies:
   url_launcher: ^6.3.2
   share_plus: ^10.1.4
   video_player: 2.11.1
+  web: ^1.1.1
   flutter_localizations:
     sdk: flutter
   speech_to_text: 7.5.0

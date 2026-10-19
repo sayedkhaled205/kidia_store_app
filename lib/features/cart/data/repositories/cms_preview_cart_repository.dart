@@ -70,11 +70,12 @@ class CmsPreviewCartRepository implements CartRepository {
   @override
   Future<Cart> updateItem({required String key, required int quantity}) async {
     _quantity(quantity);
-    if (!_items.containsKey(key))
+    if (!_items.containsKey(key)) {
       throw const CartRepositoryException(
         kind: CartFailureKind.notFound,
         message: 'Preview item no longer exists.',
       );
+    }
     _items[key]!['quantity'] = quantity;
     return _snapshot();
   }
@@ -98,11 +99,12 @@ class CmsPreviewCartRepository implements CartRepository {
   Future<Cart> removeCoupon(String code) async => _snapshot();
 
   void _quantity(int count) {
-    if (count < 1 || count > 999)
+    if (count < 1 || count > 999) {
       throw const CartRepositoryException(
         kind: CartFailureKind.invalidInput,
         message: 'Choose a quantity between 1 and 999.',
       );
+    }
   }
 
   Cart _snapshot() {

@@ -1,8 +1,6 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
-
 import 'dart:convert';
-import 'dart:html' as html;
-import 'dart:js_util' as js;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +24,7 @@ void main() {
   // The embedded preview must support keyboard and assistive interaction too.
   // Keep semantics enabled for the lifetime of this preview (not the native app).
   WidgetsFlutterBinding.ensureInitialized().ensureSemantics();
-  final Uri uri = Uri.parse(html.window.location.href);
+  final Uri uri = Uri.parse(web.window.location.href);
   final String page = uri.queryParameters['page'] ?? 'catalog';
   final String productId = uri.queryParameters['product'] ?? '1';
   final bool usesThemeDemo = uri.queryParameters['demo'] == '1';
@@ -48,63 +46,66 @@ void main() {
     previewRoutes: [
       GoRoute(
         path: '/cart',
-        builder: (_, __) =>
+        builder: (_, _) =>
             const CartScreen(checkoutRoute: '/cms-preview/checkout'),
       ),
-      GoRoute(path: '/checkout', redirect: (_, __) => '/cms-preview/checkout'),
+      GoRoute(path: '/checkout', redirect: (_, _) => '/cms-preview/checkout'),
       GoRoute(
         path: '/cms-preview/splash',
-        builder: (_, __) => const CmsSplashPreview(),
+        builder: (_, _) => const CmsSplashPreview(),
       ),
       GoRoute(
         path: '/cms-preview/checkout',
-        builder: (_, __) => const _CmsCheckoutPreview(),
+        builder: (_, _) => const _CmsCheckoutPreview(),
       ),
     ],
   );
   void reportRoute() {
-    html.document.documentElement?.dataset['previewRoute'] =
-        router.routeInformationProvider.value.uri.path;
+    web.document.documentElement?.setAttribute(
+      'data-preview-route',
+      router.routeInformationProvider.value.uri.path,
+    );
   }
 
   router.routeInformationProvider.addListener(reportRoute);
   reportRoute();
   // The builder owns one runtime. Only its authenticated same-origin parent
   // can select an editor page; normal mobile taps keep using the native router.
-  html.window.onMessage.listen((event) {
-    // dart:html wraps a foreign Window and MessageEvent.source can become
-    // null during that conversion. Compare the raw JS WindowProxy identities
-    // instead, retaining both the parent-only and same-origin boundaries.
-    if (!identical(
-          js.getProperty<Object?>(event, 'source'),
-          js.getProperty<Object?>(html.window, 'parent'),
-        ) ||
-        event.origin != html.window.location.origin)
-      return;
-    dynamic message = event.data;
-    if (message is String) {
-      try {
-        message = jsonDecode(message);
-      } catch (_) {
+  web.window.addEventListener(
+    'message',
+    ((web.MessageEvent event) {
+      // package:web exposes the raw WindowProxy. Accept only our same-origin
+      // parent, retaining the authenticated builder message boundary.
+      if (event.source != web.window.parent ||
+          event.origin != web.window.location.origin) {
         return;
       }
-    }
-    if (message is! Map || message['type'] != 'mobishop-preview-navigate')
-      return;
-    final id = int.tryParse('${message['product'] ?? ''}');
-    final path = switch (message['page']) {
-      'home' => '/',
-      'category' => '/categories',
-      'catalog' => '/products',
-      'product' => id != null && id > 0 ? '/product/$id' : '/products',
-      'wishlist' => '/wishlist',
-      'account' => '/account',
-      'splash' => '/cms-preview/splash',
-      'checkout' => '/cms-preview/checkout',
-      _ => null,
-    };
-    if (path != null) router.go(path);
-  });
+      dynamic message = event.data.dartify();
+      if (message is String) {
+        try {
+          message = jsonDecode(message);
+        } catch (_) {
+          return;
+        }
+      }
+      if (message is! Map || message['type'] != 'mobishop-preview-navigate') {
+        return;
+      }
+      final id = int.tryParse('${message['product'] ?? ''}');
+      final path = switch (message['page']) {
+        'home' => '/',
+        'category' => '/categories',
+        'catalog' => '/products',
+        'product' => id != null && id > 0 ? '/product/$id' : '/products',
+        'wishlist' => '/wishlist',
+        'account' => '/account',
+        'splash' => '/cms-preview/splash',
+        'checkout' => '/cms-preview/checkout',
+        _ => null,
+      };
+      if (path != null) router.go(path);
+    }).toJS,
+  );
   runApp(
     ProviderScope(
       overrides: [

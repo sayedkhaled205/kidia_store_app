@@ -25,8 +25,12 @@ class CmsPreviewCatalogRepository
     int Function()? revision,
   }) : _catalogLoader = catalog,
        _pageLoader = fetchPage,
+       // Preserve the public named arguments independently of private fields.
+       // ignore: prefer_initializing_formals
        _live = live,
+       // ignore: prefer_initializing_formals
        _changes = changes,
+       // ignore: prefer_initializing_formals
        _revision = revision;
 
   final Future<Map<String, dynamic>> Function()? _catalogLoader;
@@ -161,8 +165,9 @@ class CmsPreviewCatalogRepository
           'per_page': 100,
           'page': 1,
         });
-        if ('${response['error'] ?? ''}'.isNotEmpty)
+        if ('${response['error'] ?? ''}'.isNotEmpty) {
           throw StateError('${response['error']}');
+        }
         final products = await _parseProducts(
           response['products'] as List<dynamic>? ?? [],
         );

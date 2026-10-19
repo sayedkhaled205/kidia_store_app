@@ -1,9 +1,7 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
-
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' as html;
-import 'dart:js_util' as js;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
 import 'cms_preview_replay_stream.dart';
 
 class CmsPreviewLayoutBridge {
@@ -52,13 +50,13 @@ class CmsPreviewLayoutBridge {
     final Completer<Map<String, dynamic>> result =
         Completer<Map<String, dynamic>>();
     _catalogRequests[requestId] = result;
-    html.window.parent?.postMessage(
+    web.window.parent?.postMessage(
       jsonEncode(<String, dynamic>{
         'type': 'mobishop-preview-catalog-request',
         'request_id': requestId,
         'query': query,
-      }),
-      html.window.location.origin,
+      }).toJS,
+      web.window.location.origin.toJS,
     );
     try {
       return await result.future.timeout(const Duration(seconds: 25));
@@ -130,108 +128,116 @@ class CmsPreviewLayoutBridge {
   static void _listen() {
     if (_listening) return;
     _listening = true;
-    html.window.onMessage.listen((html.MessageEvent event) {
-      if (event.origin != html.window.location.origin) return;
-      if (!identical(
-        js.getProperty<Object?>(event, 'source'),
-        js.getProperty<Object?>(html.window, 'parent'),
-      )) {
-        return;
-      }
-      dynamic message = event.data;
-      if (message is String) {
-        try {
-          message = jsonDecode(message);
-        } catch (_) {
+    web.window.addEventListener(
+      'message',
+      ((web.MessageEvent event) {
+        if (event.origin != web.window.location.origin) return;
+        if (event.source != web.window.parent) {
           return;
         }
-      }
-      if (message is! Map) return;
-      if (message['type'] == 'mobishop-preview-catalog-response') {
-        final int? requestId = int.tryParse('${message['request_id'] ?? ''}');
-        final Completer<Map<String, dynamic>>? waiting =
-            _catalogRequests[requestId];
-        if (waiting != null && !waiting.isCompleted) {
-          waiting.complete(Map<String, dynamic>.from(message));
+        dynamic message = event.data.dartify();
+        if (message is String) {
+          try {
+            message = jsonDecode(message);
+          } catch (_) {
+            return;
+          }
         }
-        return;
-      }
-      if (message['type'] == 'mobishop-preview-scroll') {
-        if ('${message['page'] ?? ''}' == 'home') {
-          final double? delta = double.tryParse('${message['deltaY'] ?? ''}');
-          if (delta != null && delta != 0) _homeScrollDeltas.add(delta);
+        if (message is! Map) return;
+        if (message['type'] == 'mobishop-preview-catalog-response') {
+          final int? requestId = int.tryParse('${message['request_id'] ?? ''}');
+          final Completer<Map<String, dynamic>>? waiting =
+              _catalogRequests[requestId];
+          if (waiting != null && !waiting.isCompleted) {
+            waiting.complete(Map<String, dynamic>.from(message));
+          }
+          return;
         }
-        return;
-      }
-      if (message['type'] == 'mobishop-preview-focus') {
-        if ('${message['page'] ?? ''}' == 'home') {
-          final String target = '${message['target'] ?? ''}'.trim();
-          if (target.isNotEmpty) _focusTargets.add(target);
+        if (message['type'] == 'mobishop-preview-scroll') {
+          if ('${message['page'] ?? ''}' == 'home') {
+            final double? delta = double.tryParse('${message['deltaY'] ?? ''}');
+            if (delta != null && delta != 0) _homeScrollDeltas.add(delta);
+          }
+          return;
         }
-        return;
-      }
-      if (message['type'] != 'mobishop-preview-layout') return;
-      if (message['identity'] is Map) {
-        _identity = Map<String, dynamic>.from(message['identity'] as Map);
-        _changes.add('identity');
-      }
-      if (message['splash'] is Map) {
-        _splash = Map<String, dynamic>.from(message['splash'] as Map);
-        final Completer<Map<String, dynamic>>? ready = _splashReady;
-        if (ready != null && !ready.isCompleted) ready.complete(_splash!);
-      }
-      final String page = '${message['page'] ?? ''}';
-      final dynamic rawLayout = message['layout'];
-      if (page.isEmpty || rawLayout is! Map) return;
-      final dynamic rawLayouts = message['layouts'];
-      final Set<String> changedPages = <String>{page};
-      if (rawLayouts is Map) {
-        for (final MapEntry<dynamic, dynamic> entry in rawLayouts.entries) {
-          if (entry.value is! Map) continue;
-          final String layoutPage = '${entry.key}'.trim();
-          if (layoutPage.isEmpty) continue;
-          _current[layoutPage] = Map<String, dynamic>.from(entry.value as Map);
-          changedPages.add(layoutPage);
+        if (message['type'] == 'mobishop-preview-focus') {
+          if ('${message['page'] ?? ''}' == 'home') {
+            final String target = '${message['target'] ?? ''}'.trim();
+            if (target.isNotEmpty) _focusTargets.add(target);
+          }
+          return;
         }
-      } else {
-        _current[page] = Map<String, dynamic>.from(rawLayout);
-      }
-      if (message['home'] is Map) {
-        _home = Map<String, dynamic>.from(message['home'] as Map);
-        html.document.documentElement?.dataset['previewHomeBlocks'] =
-            '${(_home!['blocks'] as List?)?.length ?? 0}';
-      }
-      if (message['category'] is Map) {
-        _category = Map<String, dynamic>.from(message['category'] as Map);
-      }
-      bool catalogChanged = false;
-      if (message['demo_catalog'] is Map) {
-        final bool hadCatalog = _demoCatalog != null;
-        _demoCatalog = Map<String, dynamic>.from(
-          message['demo_catalog'] as Map,
-        );
-        final String nextSignature = jsonEncode(_demoCatalog);
-        if (nextSignature != _catalogSignature) {
-          _catalogSignature = nextSignature;
-          _catalogRevision++;
-          // Initial requests already wait for the first catalog packet. Only
-          // later source changes should ask active consumers to refresh.
-          catalogChanged = hadCatalog;
+        if (message['type'] != 'mobishop-preview-layout') return;
+        if (message['identity'] is Map) {
+          _identity = Map<String, dynamic>.from(message['identity'] as Map);
+          _changes.add('identity');
         }
-        final Completer<Map<String, dynamic>>? ready = _demoCatalogReady;
-        if (ready != null && !ready.isCompleted) ready.complete(_demoCatalog!);
-      }
-      // Publish only after the complete packet has been installed. Otherwise
-      // subscribers can observe new page settings with stale/missing catalog.
-      if (message['splash'] is Map) changedPages.add('splash');
-      for (final String changedPage in changedPages) {
-        _changes.add(changedPage);
-      }
-      if (catalogChanged) _catalogChanges.add(_catalogRevision);
-    });
-    html.window.parent?.postMessage(
-      jsonEncode(<String, String>{'type': 'mobishop-flutter-preview-ready'}),
-      '*',
+        if (message['splash'] is Map) {
+          _splash = Map<String, dynamic>.from(message['splash'] as Map);
+          final Completer<Map<String, dynamic>>? ready = _splashReady;
+          if (ready != null && !ready.isCompleted) ready.complete(_splash!);
+        }
+        final String page = '${message['page'] ?? ''}';
+        final dynamic rawLayout = message['layout'];
+        if (page.isEmpty || rawLayout is! Map) return;
+        final dynamic rawLayouts = message['layouts'];
+        final Set<String> changedPages = <String>{page};
+        if (rawLayouts is Map) {
+          for (final MapEntry<dynamic, dynamic> entry in rawLayouts.entries) {
+            if (entry.value is! Map) continue;
+            final String layoutPage = '${entry.key}'.trim();
+            if (layoutPage.isEmpty) continue;
+            _current[layoutPage] = Map<String, dynamic>.from(
+              entry.value as Map,
+            );
+            changedPages.add(layoutPage);
+          }
+        } else {
+          _current[page] = Map<String, dynamic>.from(rawLayout);
+        }
+        if (message['home'] is Map) {
+          _home = Map<String, dynamic>.from(message['home'] as Map);
+          web.document.documentElement?.setAttribute(
+            'data-preview-home-blocks',
+            '${(_home!['blocks'] as List?)?.length ?? 0}',
+          );
+        }
+        if (message['category'] is Map) {
+          _category = Map<String, dynamic>.from(message['category'] as Map);
+        }
+        bool catalogChanged = false;
+        if (message['demo_catalog'] is Map) {
+          final bool hadCatalog = _demoCatalog != null;
+          _demoCatalog = Map<String, dynamic>.from(
+            message['demo_catalog'] as Map,
+          );
+          final String nextSignature = jsonEncode(_demoCatalog);
+          if (nextSignature != _catalogSignature) {
+            _catalogSignature = nextSignature;
+            _catalogRevision++;
+            // Initial requests already wait for the first catalog packet. Only
+            // later source changes should ask active consumers to refresh.
+            catalogChanged = hadCatalog;
+          }
+          final Completer<Map<String, dynamic>>? ready = _demoCatalogReady;
+          if (ready != null && !ready.isCompleted) {
+            ready.complete(_demoCatalog!);
+          }
+        }
+        // Publish only after the complete packet has been installed. Otherwise
+        // subscribers can observe new page settings with stale/missing catalog.
+        if (message['splash'] is Map) changedPages.add('splash');
+        for (final String changedPage in changedPages) {
+          _changes.add(changedPage);
+        }
+        if (catalogChanged) _catalogChanges.add(_catalogRevision);
+      }).toJS,
+    );
+    web.window.parent?.postMessage(
+      jsonEncode(<String, String>{
+        'type': 'mobishop-flutter-preview-ready',
+      }).toJS,
+      web.window.location.origin.toJS,
     );
   }
 }
