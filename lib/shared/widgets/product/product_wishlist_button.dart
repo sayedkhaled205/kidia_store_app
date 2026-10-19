@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
@@ -44,12 +46,13 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
 
   Future<void> _toggle() async {
     if (_busy) return;
-    final session = ref.read(authControllerProvider).asData?.value;
-    final String accessMode = ref.read(cmsPageLayoutProvider('wishlist')).value?.string(
+    final nativeAuth = AppConfig.isCmsPreview || AppConfig.commercePlatform == CommercePlatform.wooCommerce;
+    final session = nativeAuth ? ref.read(authControllerProvider).asData?.value : null;
+    final String accessMode = nativeAuth ? ref.read(cmsPageLayoutProvider('wishlist')).value?.string(
       'wishlist_access_mode',
       'sign_in_required',
-    ) ?? 'sign_in_required';
-    if (session == null && accessMode == 'sign_in_required') {
+    ) ?? 'sign_in_required' : 'guest';
+    if (nativeAuth && session == null && accessMode == 'sign_in_required') {
       await context.push('/auth');
       return;
     }

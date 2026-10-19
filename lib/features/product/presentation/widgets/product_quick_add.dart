@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
 import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart'
@@ -260,8 +261,12 @@ class _ProductQuickAddSheetState
                     ],
                   ),
                   const Divider(height: 32),
+                  if (usesHostedOdooCart297)
+                    Text(Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'اختار المقاس والكمية وكمّل الشراء في صفحة المنتج بالمتجر.'
+                        : 'Choose options and quantity, then complete your purchase on the store product page.'),
                   for (final ProductOptionGroup group
-                      in _controller.optionGroups) ...<Widget>[
+                      in usesHostedOdooCart297 ? const <ProductOptionGroup>[] : _controller.optionGroups) ...<Widget>[
                     Text(
                       group.label,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -313,14 +318,18 @@ class _ProductQuickAddSheetState
               height: 54,
               child: FilledButton.icon(
                 key: const Key('product-quick-add-submit'),
-                onPressed: _controller.canAddToCart ? _addToCart : null,
+                onPressed: usesHostedOdooCart297
+                    ? (_controller.product?.isPurchasable == true ? _addToCart : null)
+                    : (_controller.canAddToCart ? _addToCart : null),
                 icon: _controller.isAdding
                     ? const SizedBox.square(
                         dimension: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.shopping_bag_outlined),
-                label: const Text('أضف إلى السلة'),
+                label: Text(usesHostedOdooCart297
+                    ? (Localizations.localeOf(context).languageCode == 'ar' ? 'متابعة في المتجر' : 'Continue on store')
+                    : 'أضف إلى السلة'),
               ),
             ),
           ),
@@ -330,6 +339,10 @@ class _ProductQuickAddSheetState
   }
 
   Future<void> _addToCart() async {
+    if (usesHostedOdooCart297) {
+      await openHostedProduct297(context, ref, _controller.product?.permalink);
+      return;
+    }
     final addSelection = ref.read(addProductPurchaseSelectionProvider);
     final bool added = await _controller.addToCart(
       (ProductPurchaseSelection selection) async {

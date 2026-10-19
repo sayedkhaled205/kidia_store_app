@@ -2,6 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/push/push_bootstrap_config.dart';
 
 void main() {
+  test(
+    'incomplete Firebase options cannot register even with a valid endpoint',
+    () {
+      final config = PushBootstrapConfig.fromJson({
+        'enabled': true,
+        'clientReady': true,
+        'registrationUrl': 'https://store.example/push/devices',
+        'firebaseOptions': {'projectId': 'partial'},
+      });
+      expect(config.canRegister, isFalse);
+    },
+  );
+
+  test('rejects credentials embedded in public endpoint URLs', () {
+    final config = PushBootstrapConfig.fromJson({
+      'enabled': true,
+      'clientReady': true,
+      'registrationUrl': 'https://user:password@store.example/push/devices',
+      'eventsUrl': 'https://user:password@store.example/push/events',
+    });
+    expect(config.registrationUrl, isNull);
+    expect(config.eventsUrl, isNull);
+  });
+
   test('keeps iOS identity and rejects another platform configuration', () {
     final FirebaseClientOptions options =
         FirebaseClientOptions.fromJson(<String, dynamic>{

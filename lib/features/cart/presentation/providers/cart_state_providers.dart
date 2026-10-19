@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
 import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_controller.dart';
 
@@ -18,6 +20,7 @@ final cartControllerProvider =
 /// The previous count remains available while a pull-to-refresh is running
 /// because refreshes are represented inside [CartViewState].
 final cartBadgeCountProvider = Provider.autoDispose<int>((Ref ref) {
+  if (!AppConfig.isCmsPreview && AppConfig.commercePlatform == CommercePlatform.odoo) return 0;
   return ref.watch(cartControllerProvider).asData?.value.cart.itemsCount ?? 0;
 });
 

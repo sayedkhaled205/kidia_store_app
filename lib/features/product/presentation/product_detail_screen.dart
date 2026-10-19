@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'product_size_chart.dart';
 import 'product_gallery_ratio.dart';
 import 'dart:async';
@@ -238,6 +239,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     if (product == null) {
       return;
     }
+    if (usesHostedOdooCart297) {
+      await openHostedProduct297(context, ref, product.permalink);
+      return;
+    }
     if (product.hasVariations && !_controller.canAddToCart) {
       _controller.clearAddError();
       final bool chooseComplete =
@@ -259,6 +264,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Future<void> _addToCart() async {
+    if (usesHostedOdooCart297) {
+      await openHostedProduct297(context, ref, _controller.product?.permalink);
+      return;
+    }
     await _controller.addToCart(widget.onAddToCart);
   }
 
@@ -437,7 +446,7 @@ class _ProductContentState extends State<_ProductContent> {
                     copy: copy,
                   ),
                 ),
-              if (pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
+              if (!usesHostedOdooCart297 && pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 24),
                 CmsElementFrame(
                   key: variationsKey,
@@ -456,7 +465,7 @@ class _ProductContentState extends State<_ProductContent> {
                 ),
               ],
               const SizedBox(height: 18),
-              if (pageLayout.element('purchase_bar').enabled &&
+              if (!usesHostedOdooCart297 && pageLayout.element('purchase_bar').enabled &&
                   pageLayout.element('purchase_bar').boolean('show_quantity', true))
                 CmsElementFrame(
                   component: pageLayout.element('purchase_bar'),
@@ -1886,7 +1895,7 @@ class _PurchaseBar extends StatelessWidget {
 	  _ => buttonColor,
 	};
 	final bool awaitingProductOptions =
-	    product.hasVariations && !controller.canAddToCart;
+	    !usesHostedOdooCart297 && product.hasVariations && !controller.canAddToCart;
 	final Color purchaseButtonBackground = awaitingProductOptions
 	    ? buttonBackground.withValues(alpha: buttonBackground.a * 0.48)
 	    : buttonBackground;
@@ -1908,7 +1917,8 @@ class _PurchaseBar extends StatelessWidget {
 	final Widget purchaseLabel = Text(
 	  controller.isAdding
 	      ? 'جارٍ الإضافة…'
-	      : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
+	      : usesHostedOdooCart297 ? (copy.arabic ? 'متابعة في المتجر' : 'Continue on store')
+          : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
 	);
 	final footerItems = <(String, double, Widget, int)>[];
 	for (final (String item, double width, int row) in effectivePlacements) {
@@ -2007,7 +2017,7 @@ class _PurchaseBar extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
-            if (footer.boolean('show_quantity', false))
+            if (!usesHostedOdooCart297 && footer.boolean('show_quantity', false))
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: _QuantitySelector(controller: controller, copy: copy),

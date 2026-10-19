@@ -27,11 +27,17 @@ final class PushBootstrapConfig {
   final FirebaseClientOptions? firebase;
 
   bool get canRegister =>
-      enabled && clientReady && registrationUrl != null && firebase != null;
+      enabled &&
+      clientReady &&
+      registrationUrl != null &&
+      firebase?.isComplete == true;
 
   static Uri? _httpsUrl(Object? value) {
     final Uri? uri = Uri.tryParse(value is String ? value.trim() : '');
-    return uri != null && uri.scheme == 'https' && uri.hasAuthority
+    return uri != null &&
+            uri.scheme == 'https' &&
+            uri.host.isNotEmpty &&
+            uri.userInfo.isEmpty
         ? uri
         : null;
   }

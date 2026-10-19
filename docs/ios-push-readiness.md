@@ -24,3 +24,58 @@ Before TestFlight:
 
 Firebase project readiness and the server's validate-only FCM test do not prove
 APNs credentials, signing, or actual delivery to an iPhone.
+
+## Customer release contract
+
+The generic `mobishop-customer-dual-release` workflow contains no default store,
+Apple team, certificate or profile. The server selects it only for a registered
+signing identity bound to the store UUID, owner, website host and Firebase iOS
+bundle. The separate existing staging workflow remains a compatibility fixture;
+its successful IPA cannot establish readiness for a different customer.
+
+The server's registration records these public values:
+
+- `workflow_id`: `mobishop-customer-dual-release`.
+- `signing_group`: the store's Codemagic secret environment group.
+- `bundle_id`, `team_id`, `profile_uuid`, `certificate_sha256`.
+- `verified_at`, `expires_at` and an explicit enabled state.
+
+Build dispatch supplies `environment.groups` with that single selected group,
+and public variables `IOS_BUNDLE_ID`, `APPLE_TEAM_ID`,
+`IOS_SIGNING_PROFILE_UUID`, `IOS_SIGNING_CERTIFICATE_SHA256`. They accompany the
+existing store URL, name, version and public app design variables. A missing or
+expired registration blocks iOS dispatch before a paid build is started. It does
+not block a correctly configured Android-only build.
+
+The selected secret group contains `CM_PROVISIONING_PROFILE` (base64 profile),
+`CM_CERTIFICATE` (base64 distribution P12) and optional
+`CM_CERTIFICATE_PASSWORD`. These secrets never enter the app design, public
+request metadata, repository, or build artifacts. API callers cannot select an
+arbitrary secret group or override the registered identity.
+
+`tool/verify_ios_signing.py --install` verifies the exact profile UUID, bundle,
+team, expiration, production APNs entitlement, App Store distribution type and
+certificate fingerprint before importing the certificate into the isolated
+build keychain. `--ipa` verifies the exported application again, including its
+code signature, embedded profile, entitlements and actual leaf certificate.
+Checking only an archive before export is insufficient. Validation failures
+stop the release and do not publish an unsigned or differently signed IPA.
+
+Keep these readiness signals distinct:
+
+- `ios_config_ready`: Firebase SDK configuration exists for the exact bundle.
+- `ios_signing_ready`: a valid registered Apple signing identity exists.
+- `ios_push_ready`: an APNs credential is verified for that same Apple team,
+  Firebase project and iOS bundle. A config file is not this evidence.
+- Device delivery: independently confirmed on an iPhone, with permission,
+  foreground/background/terminated handling and notification destinations.
+
+Connecting a commerce store cannot create an Apple Developer membership,
+accept Apple's agreements, or infer permission to reuse another team's identity.
+Those account prerequisites must already be provisioned by the service or be
+connected once by the authorized account owner. Store catalog connection and
+Android readiness should continue while iOS prerequisites are pending.
+
+References: [Codemagic white-label builds](https://docs.codemagic.io/yaml-quick-start/white-label-getting-started/),
+[Codemagic signing methods](https://docs.codemagic.io/yaml-code-signing/alternative-code-signing-methods/),
+[Firebase Flutter iOS prerequisites](https://firebase.google.com/docs/cloud-messaging/flutter/get-started).
