@@ -557,3 +557,60 @@ workflows:
             fi
 
             curl "${CURL_ARGS[@]}" "$MOBISHOP_CALLBACK_URL"
+
+  mobishop-ios-simulator-check:
+    name: Customer iOS simulator verification
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.44.8
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Validate public customer configuration
+        script: |
+          set -euo pipefail
+          test -n "${STORE_URL:?}"
+          test -n "${IOS_BUNDLE_ID:?}"
+          test -n "${STORE_NAME:?}"
+          python3 tool/test_configure_ios_store.py
+          python3 tool/configure_ios_store.py --simulator
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+      - name: Prepare Flutter and selected app icon
+        script: |
+          set -euo pipefail
+          flutter pub get
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Verify application source
+        script: |
+          set -euo pipefail
+          flutter analyze lib test
+          flutter test
+      - name: Compile iOS simulator application
+        script: |
+          set -euo pipefail
+          flutter build ios --simulator --debug \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Launch on iPhone simulator
+        script: |
+          set -euo pipefail
+          xcrun simctl list devices available -j > "$CM_BUILD_DIR/.simulator-devices.json"
+          SIMULATOR_ID=$(python3 -c 'import json,os; data=json.load(open(os.environ["CM_BUILD_DIR"]+"/.simulator-devices.json")); print(next(d["udid"] for runtime,devices in data["devices"].items() if ".iOS-" in runtime for d in devices if d.get("isAvailable") and d["name"].startswith("iPhone")))')
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcrun simctl install "$SIMULATOR_ID" build/ios/iphonesimulator/Runner.app
+          mkdir -p build/ios/simulator-artifacts
+          python3 tool/test_verify_ios_simulator.py
+          python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
+          xcrun simctl io "$SIMULATOR_ID" screenshot build/ios/simulator-artifacts/launch.png
+          ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
+    artifacts:
+      - build/ios/simulator-artifacts/Runner-simulator.zip
+      - build/ios/simulator-artifacts/launch.png
+      - build/ios/simulator-artifacts/launch-check.json

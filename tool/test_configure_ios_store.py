@@ -31,6 +31,26 @@ class StoreIdentityTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 configure(Path("nonexistent"), bundle, team, name)
 
+    def test_simulator_identity_has_no_signing_team(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "ios/Runner.xcodeproj/project.pbxproj"
+            project.parent.mkdir(parents=True)
+            project.write_text("PRODUCT_BUNDLE_IDENTIFIER = com.example.mobishopStoreApp;\n" * 3)
+            info = root / "ios/Runner/Info.plist"
+            info.parent.mkdir()
+            info.write_bytes(plistlib.dumps({"CFBundleVersion": "$(FLUTTER_BUILD_NUMBER)"}))
+            configure(root, "com.customer.simulator", None, "Customer store", signing_required=False)
+            self.assertEqual(project.read_text().count("PRODUCT_BUNDLE_IDENTIFIER = com.customer.simulator;"), 3)
+            self.assertNotIn("DEVELOPMENT_TEAM", project.read_text())
+            self.assertEqual(plistlib.loads(info.read_bytes())["CFBundleDisplayName"], "Customer store")
+
+    def test_unsigned_mode_cannot_accept_team(self):
+        with self.assertRaises(ValueError):
+            configure(Path("nonexistent"), "com.customer.store", "AB12345678", "Store", signing_required=False)
+        with self.assertRaises(ValueError):
+            configure(Path("nonexistent"), "com.customer.store", None, "Store")
+
 
 if __name__ == "__main__":
     unittest.main()

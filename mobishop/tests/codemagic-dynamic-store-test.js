@@ -38,9 +38,9 @@ for (const command of ["build apk", "build appbundle"]) {
   );
 }
 assert.doesNotMatch(
-  workflow,
+  workflow.split("  mobishop-ios-simulator-check:")[0],
   /flutter build ios/,
-  "Codemagic must not attempt an unsigned iOS customer build before Apple signing is configured."
+  "Release workflows must not produce unsigned iOS customer builds; the separate simulator check is only a QA artifact."
 );
 assert.match(
   workflow,
