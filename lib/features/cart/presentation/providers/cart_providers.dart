@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/commerce/shopify_storefront_client.dart';
+import 'package:mobishop_store_app/core/commerce/shopify_checkout_policy297.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
@@ -109,6 +110,7 @@ final cartRepositoryProvider = Provider.autoDispose<CartRepository>((Ref ref) {
       gateway: ShopifyCartGateway(
         transport: transport,
         connection: AppConfig.commerceConnection,
+        checkoutPolicy: ref.watch(shopifyCheckoutPolicy297Provider),
         countryCode: AppConfig.buyerCountryCode.trim().isEmpty
             ? null
             : AppConfig.buyerCountryCode,
@@ -141,6 +143,15 @@ final shopifyCartTransportProvider = Provider<ShopifyStorefrontCartTransport>((
   );
   ref.onDispose(client.close);
   return client;
+});
+
+final shopifyCheckoutPolicy297Provider = Provider<ShopifyCheckoutPolicy297>((
+  ref,
+) {
+  return ShopifyCheckoutPolicy297(
+    connection: AppConfig.commerceConnection,
+    reader: ref.watch(shopifyCartTransportProvider),
+  );
 });
 
 final shopifyBuyerCartSessionProvider = Provider<ShopifyBuyerCartSession>((

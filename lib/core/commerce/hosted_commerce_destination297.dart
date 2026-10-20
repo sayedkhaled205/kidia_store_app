@@ -15,6 +15,7 @@ abstract final class HostedCommerceDestination297 {
       CommercePlatform.odoo => switch (route) {
         '/cart' => '/shop/cart',
         '/checkout' => '/shop/checkout',
+        '/account-help' => '/web/login',
         _ => null,
       },
     };

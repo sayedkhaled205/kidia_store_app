@@ -37,6 +37,10 @@ void main() {
       HostedCommerceDestination297.forRoute(odoo, '/checkout').toString(),
       'https://odoo.example/shop/checkout',
     );
+    expect(
+      HostedCommerceDestination297.forRoute(odoo, '/account-help').toString(),
+      'https://odoo.example/web/login',
+    );
   });
   test('Woo and supported native routes remain native', () {
     for (final path in ['/auth', '/account', '/cart', '/checkout']) {

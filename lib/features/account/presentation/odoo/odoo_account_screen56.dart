@@ -336,10 +336,24 @@ class _OdooSignInScreen56State extends ConsumerState<OdooSignInScreen56> {
                   Text(
                     odooCopy56(
                       context,
-                      'استخدم حساب العميل الموجود على المتجر. إنشاء الحساب من هذه الشاشة غير متاح حاليًا.',
-                      'Use your existing store customer account. Registration is not available on this screen yet.',
+                      'لو محتاج حساب جديد أو نسيت كلمة المرور، افتح خيارات الدخول على موقع المتجر. بعدها ارجع وسجّل دخولك هنا.',
+                      'For a new account or a forgotten password, open the sign-in options on the store website. Then return and sign in here.',
                     ),
                     textAlign: TextAlign.center,
+                  ),
+                  TextButton.icon(
+                    key: const Key('odoo-website-account-help'),
+                    onPressed: _busy || restoring
+                        ? null
+                        : () => context.push('/store-flow?route=/account-help'),
+                    icon: const Icon(Icons.open_in_browser),
+                    label: Text(
+                      odooCopy56(
+                        context,
+                        'خيارات الدخول على موقع المتجر',
+                        'Sign-in options on store website',
+                      ),
+                    ),
                   ),
                 ],
               ),

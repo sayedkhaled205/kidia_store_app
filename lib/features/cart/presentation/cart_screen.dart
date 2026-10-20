@@ -14,6 +14,7 @@ import 'package:mobishop_store_app/features/cart/presentation/adapters/product_p
 import 'package:mobishop_store_app/features/cart/presentation/cart_copy.dart';
 import 'package:mobishop_store_app/features/cart/presentation/controllers/cart_controller.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_money.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
@@ -21,6 +22,10 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 
 typedef CartCheckoutCallback =
     FutureOr<void> Function(BuildContext context, Cart cart);
+
+final shopifyCheckoutLauncher297Provider = Provider<Future<bool> Function(Uri)>(
+  (_) => (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+);
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key, this.onCheckout, this.checkoutRoute});
@@ -242,17 +247,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     try {
       if (AppConfig.commercePlatform == CommercePlatform.shopify) {
         final Uri? checkout = cart.checkoutUrl;
-        if (checkout == null ||
-            checkout.scheme != 'https' ||
-            checkout.host != AppConfig.commerceConnection.storeOrigin.host ||
-            checkout.userInfo.isNotEmpty ||
-            (checkout.hasPort && checkout.port != 443)) {
+        if (checkout == null) {
           _showMessage(copy.checkoutUnavailable);
           return;
         }
+        await ref.read(shopifyCheckoutPolicy297Provider).verify(checkout);
+        if (!mounted) return;
         // Only this explicit buyer tap hands off to Shopify's hosted checkout.
         // No background redirect, checkout completion, order or payment call.
-        if (!await launchUrl(checkout, mode: LaunchMode.externalApplication) &&
+        if (!await ref.read(shopifyCheckoutLauncher297Provider)(checkout) &&
             mounted) {
           _showMessage(copy.checkoutUnavailable);
         }

@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/commerce/shopify_storefront_client.dart';
+import 'package:mobishop_store_app/core/commerce/shopify_checkout_policy297.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 
 /// Exact platform decimal value: no client-side tax/discount/total arithmetic.
@@ -151,12 +152,18 @@ class ShopifyCartGateway {
     required this.transport,
     required CommerceConnection connection,
     Set<String> trustedCheckoutHosts = const <String>{},
+    ShopifyCheckoutPolicy297? checkoutPolicy,
     String? countryCode,
     String? languageCode,
-  }) : _checkoutHosts = Set<String>.unmodifiable(<String>{
-         connection.storeOrigin.host,
-         ...trustedCheckoutHosts.map((String host) => host.toLowerCase()),
-       }),
+  }) : checkoutPolicy =
+           checkoutPolicy ??
+           ShopifyCheckoutPolicy297(
+             connection: connection,
+             reader: transport,
+             trustedHosts: trustedCheckoutHosts
+                 .map((host) => host.toLowerCase())
+                 .toSet(),
+           ),
        countryCode = _context(countryCode, false),
        languageCode = _context(languageCode, true) {
     if (connection.platform != CommercePlatform.shopify) {
@@ -165,15 +172,10 @@ class ShopifyCartGateway {
       );
     }
     connection.requireCapability(CustomerCommerceCapability.cart);
-    if (_checkoutHosts.any(
-      (String host) => host.isEmpty || host.contains(RegExp(r'[^a-z0-9.-]')),
-    )) {
-      throw const FormatException('Checkout hosts must be explicit DNS names.');
-    }
   }
 
   final ShopifyStorefrontCartTransport transport;
-  final Set<String> _checkoutHosts;
+  final ShopifyCheckoutPolicy297 checkoutPolicy;
   final String? countryCode;
   final String? languageCode;
 
@@ -204,7 +206,7 @@ class ShopifyCartGateway {
         message: 'Shopify cart is unavailable or expired.',
       );
     }
-    final ShopifyCartSnapshot cart = _cart(_map(data['cart']));
+    final ShopifyCartSnapshot cart = await _cart(_map(data['cart']));
     if (cart.id != cartId) {
       throw const FormatException('Shopify returned a different buyer cart.');
     }
@@ -321,6 +323,9 @@ class ShopifyCartGateway {
     String document,
     Map<String, dynamic> variables,
   ) async {
+    // Resolve this shop's primary domain before a write. A bootstrap failure
+    // must never leave a newly created cart with an unknown mutation outcome.
+    await checkoutPolicy.prepare();
     try {
       final Map<String, dynamic> data = await transport.cartMutation(
         document,
@@ -336,7 +341,7 @@ class ShopifyCartGateway {
       final List<ShopifyCartIssue> warnings = _issues(result['warnings']);
       final ShopifyCartSnapshot? cart = result['cart'] == null
           ? null
-          : _cart(_map(result['cart']));
+          : await _cart(_map(result['cart']));
       if (cart != null &&
           variables['cartId'] != null &&
           cart.id != variables['cartId']) {
@@ -364,19 +369,16 @@ class ShopifyCartGateway {
     }
   }
 
-  ShopifyCartSnapshot _cart(Map<String, dynamic> data) {
+  Future<ShopifyCartSnapshot> _cart(Map<String, dynamic> data) async {
     final String id = _string(data['id']);
     _gid(id, 'Cart');
     final Uri? checkout = Uri.tryParse(_string(data['checkoutUrl']));
-    if (checkout == null ||
-        checkout.scheme != 'https' ||
-        checkout.userInfo.isNotEmpty ||
-        !_checkoutHosts.contains(checkout.host) ||
-        (checkout.hasPort && checkout.port != 443)) {
+    if (checkout == null) {
       throw const FormatException(
         'Checkout is not on a verified platform host.',
       );
     }
+    await checkoutPolicy.verify(checkout);
     final Map<String, dynamic> lines = _map(data['lines']);
     final Map<String, dynamic> page = _map(lines['pageInfo']);
     final bool hasNext = _bool(page['hasNextPage']);
