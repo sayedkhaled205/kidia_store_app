@@ -1,5 +1,6 @@
 """Bounded launch check with Flutter logs and screenshot error detection."""
 import argparse
+import base64
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,45 @@ def fatal_signals(value):
     return [name for name, pattern in FATAL_PATTERNS.items() if re.search(pattern, value, re.I)]
 
 
+def normalized_text(value):
+    return " ".join(re.findall(r"\w+", value.casefold()))
+
+
+def storefront_evidence(lines, encoded_design=""):
+    # These are actual application labels, not iOS permission-dialog text.
+    labels = {
+        "home", "category", "categories", "wishlist", "account", "search products",
+        "الرئيسية", "الأقسام", "المفضلة", "حسابي", "البحث عن منتجات",
+    }
+    if encoded_design:
+        try:
+            design = json.loads(base64.b64decode(encoded_design, validate=True))
+            blocks = design["home"]["blocks"]
+            if not isinstance(blocks, list):
+                raise ValueError()
+        except (ValueError, KeyError, TypeError):
+            raise ValueError("Saved design labels could not be read for startup inspection") from None
+
+        def collect(value):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    if key in {"title", "label", "button_label", "search_placeholder"} and isinstance(child, str):
+                        labels.add(child)
+                    elif isinstance(child, (dict, list)):
+                        collect(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect(child)
+
+        for block in blocks:
+            if isinstance(block, dict) and block.get("enabled", True):
+                collect(block.get("data", {}))
+    expected = {normalized_text(label) for label in labels if 4 <= len(label.strip()) <= 120}
+    expected -= {"allow", "don t allow", "settings", "notifications"}
+    visible = {normalized_text(line) for line in lines}
+    return sorted(expected & visible)
+
+
 def read_log(path):
     if not path.is_file():
         raise ValueError("Simulator application output was not captured")
@@ -29,7 +69,7 @@ def read_log(path):
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep):
+def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep, encoded_design=""):
     try:
         device = str(uuid.UUID(device)).upper()
     except ValueError:
@@ -72,8 +112,9 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     signals = fatal_signals(logs)
     if signals:
         raise ValueError("Simulator startup errors in application logs: " + ", ".join(signals))
-    if not re.search(r"Dart VM service is listening|flutter:", logs, re.I):
-        raise ValueError("No Flutter startup output was captured; a live PID alone is insufficient")
+    # iOS debug output can legitimately omit Flutter's VM-service banner.
+    # Screenshot inspection is mandatory even when the captured logs are empty.
+    flutter_output = bool(re.search(r"Dart VM service is listening|flutter:", logs, re.I))
     ocr = runner([
         "xcrun", "swift", str(Path(__file__).with_name("ios_launch_ocr.swift")),
         str(screenshot), str(recognized),
@@ -90,10 +131,14 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     signals = fatal_signals("\n".join(lines))
     if signals:
         raise ValueError("Simulator startup error screen detected: " + ", ".join(signals))
+    visible_storefront_labels = storefront_evidence(lines, encoded_design)
+    if len(visible_storefront_labels) < 2:
+        raise ValueError("Simulator screen has insufficient storefront evidence; a live PID or system dialog alone is insufficient")
     return {
         "status": "startup_no_detected_fatal_errors", "duration_seconds": 12,
         "bundle_id": bundle, "device_id": device, "process_alive": True,
-        "flutter_output_captured": True, "screenshot_inspected": True,
+        "application_logs_checked": True, "flutter_output_captured": flutter_output,
+        "screenshot_inspected": True, "storefront_labels_matched": len(visible_storefront_labels),
         "recognized_lines": len(lines), "fatal_signals": [],
         "limitations": "Bounded startup check only; live login, checkout, payment and push remain unverified.",
     }
@@ -106,7 +151,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.report.parent.mkdir(parents=True, exist_ok=True)
     try:
-        report = verify(args.device, os.environ["IOS_BUNDLE_ID"], args.report.parent)
+        report = verify(args.device, os.environ["IOS_BUNDLE_ID"], args.report.parent,
+                        encoded_design=os.environ.get("APP_DESIGN_BUNDLE", ""))
         args.report.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print("iOS startup logs and screen contain no detected fatal errors during the bounded check.")
     except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:

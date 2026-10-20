@@ -1,10 +1,11 @@
+import base64
 import json
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 
-from verify_ios_simulator import fatal_signals, verify
+from verify_ios_simulator import fatal_signals, storefront_evidence, verify
 
 
 class SimulatorLaunchTest(unittest.TestCase):
@@ -37,8 +38,8 @@ class SimulatorLaunchTest(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0, "", "")
         self.fail("Unexpected command: " + str(command))
 
-    def check(self, runner=None, sleeper=lambda _: None):
-        return verify(self.device, self.bundle, self.artifacts, runner or self.runner, sleeper)
+    def check(self, runner=None, sleeper=lambda _: None, encoded_design=""):
+        return verify(self.device, self.bundle, self.artifacts, runner or self.runner, sleeper, encoded_design)
 
     def test_running_process_logs_and_screen_are_verified(self):
         waits = []
@@ -98,10 +99,47 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.assertIn("invalid_saved_design", fatal_signals("Invalid APP\nDESIGN BUNDLE"))
         self.assertIn("provider_exception", fatal_signals("Provider\nException"))
 
-    def test_empty_flutter_capture_does_not_pass_on_pid_alone(self):
+    def test_healthy_storefront_does_not_require_optional_flutter_debug_output(self):
         self.logs = ""
-        with self.assertRaisesRegex(ValueError, "live PID alone"):
+        self.errors = "Warning: Unable to create restoration in progress marker file"
+        result = self.check()
+        self.assertFalse(result["flutter_output_captured"])
+        self.assertTrue(result["screenshot_inspected"])
+        self.assertEqual(result["storefront_labels_matched"], 2)
+
+    def test_permission_dialog_alone_does_not_pass_on_pid(self):
+        self.logs = ""
+        self.lines = ["Store would like to send you notifications", "Notifications may include alerts", "Don't Allow", "Allow"]
+        with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
             self.check()
+
+    def test_error_screen_still_rejected_with_no_flutter_output(self):
+        self.logs = ""
+        self.lines = ["ProviderException", "Invalid APP_DESIGN_BUNDLE", "Home", "Account"]
+        with self.assertRaisesRegex(ValueError, "error screen"):
+            self.check()
+
+    def test_actual_fixed_home_labels_are_recognized_behind_normal_permission_dialog(self):
+        self.logs = ""
+        self.lines = ["03:25", "kidia", "Search products", "Kids Style", "Nursery", "Toys", "Newborn",
+                      "Would Like to Send You Notifications", "Don't Allow", "Allow", "Shop now", "NEW ARRIVAL"]
+        design = {"home": {"blocks": [{"type": "quick_links", "data": {"items": [{"label": "Kids Style"}, {"label": "Nursery"}, {"label": "Toys"}, {"label": "Newborn"}]}},
+                                     {"type": "hero_slider", "data": {"items": [{"button_label": "Shop now"}]}},
+                                     {"type": "product_carousel", "data": {"title": "NEW ARRIVAL"}}]}}
+        encoded = base64.b64encode(json.dumps(design).encode()).decode()
+        result = self.check(encoded_design=encoded)
+        self.assertGreaterEqual(result["storefront_labels_matched"], 6)
+
+    def test_no_storefront_marker_means_inconclusive_failure_even_with_debug_banner(self):
+        self.lines = ["03:25", "Settings", "Camera", "Calendar", "Photos"]
+        with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
+            self.check()
+
+    def test_disabled_block_labels_and_permission_buttons_do_not_count(self):
+        design = {"home": {"blocks": [{"enabled": False, "data": {"label": "Ghost collection"}},
+                                     {"data": {"label": "Allow", "button_label": "Don't Allow"}}]}}
+        encoded = base64.b64encode(json.dumps(design).encode()).decode()
+        self.assertEqual(storefront_evidence(["Ghost collection", "Allow", "Don't Allow"], encoded), [])
 
     def test_missing_or_failed_screenshot_is_failure(self):
         def runner(command, **kwargs):

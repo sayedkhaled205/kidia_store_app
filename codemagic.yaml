@@ -702,9 +702,9 @@ workflows:
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl install "$SIMULATOR_ID" build/ios/iphonesimulator/Runner.app
           mkdir -p build/ios/simulator-artifacts
+          ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
           python3 tool/test_verify_ios_simulator.py
           python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
-          ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/launch.png

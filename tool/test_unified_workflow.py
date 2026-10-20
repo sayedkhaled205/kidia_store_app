@@ -30,7 +30,9 @@ class UnifiedWorkflowTests(unittest.TestCase):
         workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['mobishop-ios-simulator-check']
         launch = next(step['script'] for step in workflow['scripts'] if step['name'] == 'Launch on iPhone simulator')
         self.assertIn('set -euo pipefail', launch)
-        self.assertLess(launch.index('tool/verify_ios_simulator.py'), launch.index('ditto -c -k'))
+        # Retain the simulator binary for diagnosis even if the health gate fails.
+        self.assertLess(launch.index('ditto -c -k'), launch.index('tool/verify_ios_simulator.py'))
+        self.assertEqual(launch.strip().splitlines()[-1], 'python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json')
         for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
             self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
 
