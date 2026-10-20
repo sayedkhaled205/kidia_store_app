@@ -54,6 +54,25 @@ class ConnectorPackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             builder.verify_features(files, self.manifest)
 
+    def test_checkout_setup_and_owned_payment_refresh_must_ship(self):
+        for missing in ['includes/class-native-checkout-setup50.php', 'includes/class-native-checkout-bootstrap50.php', 'api/class-native-checkout-safety50.php', 'api/class-customer-orders-endpoint.php']:
+            with self.subTest(missing=missing):
+                files = dict(self.files)
+                del files[missing]
+                with self.assertRaises(ValueError):
+                    builder.verify_features(files, self.manifest)
+
+    def test_checkout_setup_must_remain_authorized_and_automatic(self):
+        for key, marker in [
+            ('includes/class-native-checkout-setup50.php', b"current_user_can( 'manage_woocommerce' )"),
+            ('includes/central/bootstrap.php', b'MobiShop_Native_Checkout_Setup50::prepare()'),
+        ]:
+            with self.subTest(key=key):
+                files = dict(self.files)
+                files[key] = files[key].replace(marker, b'/* removed */')
+                with self.assertRaises(ValueError):
+                    builder.verify_features(files, self.manifest)
+
     def test_version_must_match_both_metadata_files(self):
         manifest = copy.deepcopy(self.manifest)
         manifest['version'] = '9.9.9'

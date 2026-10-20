@@ -7,7 +7,7 @@ add_action('rest_api_init', static function (): void {
         'methods' => 'GET', 'permission_callback' => $permission,
         'callback' => static function () {
             return new WP_REST_Response(['ok'=>true, 'version'=>MOBISHOP_VERSION,
-                'contract'=>296, 'capabilities'=>['store_data','application_state','push_status','push_actions','bootstrap'],
+                'contract'=>297, 'capabilities'=>['store_data','application_state','push_status','push_actions','bootstrap','native_checkout_setup'],
                 'installation_id'=>(string) get_option('mobishop_installation_id','')], 200, ['Cache-Control'=>'no-store, private']);
         },
     ]);
@@ -22,8 +22,13 @@ add_action('rest_api_init', static function (): void {
             $result=$manager->verify();
             if (is_wp_error($result) || !$manager->is_active()) $result=$manager->activate($body['license_key']);
             if (is_wp_error($result)) return new WP_Error('activation_unconfirmed','Store activation could not be confirmed.',['status'=>503]);
+            if (!$manager->is_active()) return new WP_Error('activation_unconfirmed','Store activation could not be confirmed.',['status'=>503]);
+            require_once MOBISHOP_PATH.'includes/class-native-checkout-setup50.php';
+            $checkout=MobiShop_Native_Checkout_Setup50::prepare();
+            if (is_wp_error($checkout)) return $checkout;
             // Token and signed proof remain solely in the native license manager.
             return new WP_REST_Response(['ok'=>true,'active'=>$manager->is_active(),
+                'native_checkout'=>$checkout,
                 'installation_id'=>(string)get_option('mobishop_installation_id','')],200,['Cache-Control'=>'no-store, private']);
         },
     ]);

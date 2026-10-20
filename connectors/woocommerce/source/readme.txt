@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.75
+Stable tag: 1.46.76
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,11 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.76 =
+* Prepare native checkout protection automatically through the existing authorized WooMobile connection, preserving installation identity and prior checkout attempts.
+* Report unavailable checkout protection explicitly, and support authenticated owned-order payment-status refresh without creating or paying an order.
+* Preserve a verified external-payment hand-off as an existing unpaid order, without replaying checkout or claiming payment completion.
 
 = 1.46.75 =
 * Restore the verified website sign-in bridge for native apps, with automatic WooCommerce account-page discovery and one-time, browser-bound authentication exchange.

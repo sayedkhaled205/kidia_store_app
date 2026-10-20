@@ -47,6 +47,17 @@ final class MobiShop_Customer_Orders_Endpoint {
 
 		register_rest_route(
 			'mobishop/v1',
+			'/customer/orders/(?P<id>\d+)',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array( $this, 'get_order' ),
+				'permission_callback' => array( $this, 'authenticate_customer' ),
+				'args' => array( 'id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint', 'validate_callback' => static fn( $value ): bool => absint( $value ) > 0 ) ),
+			)
+		);
+
+		register_rest_route(
+			'mobishop/v1',
 			'/customer/orders/(?P<id>\d+)/cancel',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -140,6 +151,25 @@ final class MobiShop_Customer_Orders_Endpoint {
 		$response->header( 'Pragma', 'no-cache' );
 		$response->header( 'X-WP-Total', (string) max( 0, (int) $result->total ) );
 		$response->header( 'X-WP-TotalPages', (string) max( 0, (int) $result->max_num_pages ) );
+		return $response;
+	}
+
+	/** Refresh one existing order after a browser payment; never create or pay it. */
+	public function get_order( WP_REST_Request $request ) {
+		$customer_id = get_current_user_id();
+		if ( $customer_id <= 0 ) {
+			return $this->unauthorized_error();
+		}
+		if ( ! function_exists( 'wc_get_order' ) ) {
+			return new WP_Error( 'mobishop_orders_woocommerce_unavailable', 'Order history is unavailable.', array( 'status' => 503 ) );
+		}
+		$order = wc_get_order( absint( $request->get_param( 'id' ) ) );
+		if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_customer_id' ) ) || (int) $order->get_customer_id() !== $customer_id ) {
+			return new WP_Error( 'mobishop_order_not_found', 'The requested order was not found.', array( 'status' => 404 ) );
+		}
+		$response = new WP_REST_Response( array( 'order' => $this->order_payload( $order ) ), 200 );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Pragma', 'no-cache' );
 		return $response;
 	}
 
@@ -247,6 +277,9 @@ final class MobiShop_Customer_Orders_Endpoint {
 
 		$status            = sanitize_key( (string) $order->get_status() );
 		$cancellation_type = $this->cancellation_type( $order );
+		$is_paid = is_callable( array( $order, 'is_paid' ) ) && (bool) $order->is_paid();
+		$needs_payment = is_callable( array( $order, 'needs_payment' ) ) && (bool) $order->needs_payment();
+		$payment_url = ! $is_paid && $needs_payment ? $this->payment_url( $order ) : '';
 		return array(
 			'id'            => (int) $order->get_id(),
 			'number'        => sanitize_text_field( (string) $order->get_order_number() ),
@@ -260,7 +293,63 @@ final class MobiShop_Customer_Orders_Endpoint {
 			'items'         => $items,
 			'can_cancel'    => '' !== $cancellation_type,
 			'cancellation_type' => $cancellation_type,
+			'is_paid'       => $is_paid,
+			'needs_payment' => $needs_payment,
+			'payment_method' => is_callable( array( $order, 'get_payment_method' ) ) ? sanitize_key( (string) $order->get_payment_method() ) : '',
+			'payment_url'   => $payment_url,
+			'payment_endpoint_path' => '' !== $payment_url ? (string) parse_url( $payment_url, PHP_URL_PATH ) : '',
 		);
+	}
+
+	/** Only an owned order's canonical same-store Woo payment URL may leave the API. */
+	private function payment_url( $order ): string {
+		if ( ! is_callable( array( $order, 'get_checkout_payment_url' ) ) || ! is_callable( array( $order, 'get_order_key' ) )
+			|| ! function_exists( 'wc_get_endpoint_url' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
+			return '';
+		}
+		try {
+			$url = $order->get_checkout_payment_url();
+			$key = $order->get_order_key();
+			if ( ! is_string( $url ) || strlen( $url ) > 4096 || preg_match( '/[\\\\\x00-\x20\x7f]/', $url ) || ! is_string( $key ) || ! preg_match( '/^wc_order_[A-Za-z0-9]+$/D', $key ) ) {
+				return '';
+			}
+			$home = parse_url( home_url( '/' ) );
+			$parts = parse_url( $url );
+			// Derive the store's actual configured/localized endpoint independently
+			// of the gateway-filtered payment URL.
+			$expected = parse_url( wc_get_endpoint_url( 'order-pay', (int) $order->get_id(), wc_get_checkout_url() ) );
+			if ( ! is_array( $home ) || ! is_array( $parts ) || ( $home['scheme'] ?? '' ) !== 'https' || ( $parts['scheme'] ?? '' ) !== 'https'
+				|| empty( $home['host'] ) || strtolower( $parts['host'] ?? '' ) !== strtolower( $home['host'] )
+				|| ( $parts['port'] ?? 443 ) !== ( $home['port'] ?? 443 )
+				|| isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['fragment'] )
+				|| ! is_array( $expected ) || ( $expected['scheme'] ?? '' ) !== 'https'
+				|| strtolower( $expected['host'] ?? '' ) !== strtolower( $home['host'] )
+				|| ( $expected['port'] ?? 443 ) !== ( $home['port'] ?? 443 )
+				|| isset( $expected['user'] ) || isset( $expected['pass'] ) || isset( $expected['fragment'] )
+				|| ( $parts['path'] ?? '' ) !== ( $expected['path'] ?? '' ) ) {
+				return '';
+			}
+			$path = $parts['path'] ?? '';
+			$prefix = rtrim( $home['path'] ?? '', '/' ) . '/';
+			$decoded = rawurldecode( $path );
+			if ( ! str_starts_with( $path, $prefix ) || preg_match( '/%(?![a-f0-9]{2})|%2f|%5c/i', $path )
+				|| preg_match( '/[%\\\\\x00-\x20\x7f]/', $decoded )
+				|| in_array( '..', explode( '/', $decoded ), true ) || in_array( '.', explode( '/', $decoded ), true )
+				|| ! preg_match( '#/' . (int) $order->get_id() . '/?$#D', $path ) ) {
+				return '';
+			}
+			$query = $parts['query'] ?? '';
+			if ( count( explode( '&', $query ) ) !== 2 ) {
+				return '';
+			}
+			parse_str( $query, $params );
+			if ( count( $params ) !== 2 || ( $params['pay_for_order'] ?? null ) !== 'true' || ! is_string( $params['key'] ?? null ) || ! hash_equals( $key, $params['key'] ) ) {
+				return '';
+			}
+			return $url;
+		} catch ( Throwable $error ) {
+			return '';
+		}
 	}
 
 	private function cancellation_type( $order ): string {

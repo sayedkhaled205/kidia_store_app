@@ -1,9 +1,20 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.75",
-  "verified_release_zip_sha256": "cdf17554b729670505a045a3bbb281e7a39d361d5782a74142b0a29beba1e4c2",
+  "version": "1.46.76",
   "files": {
+    "SOURCE-BUILD.txt": {
+      "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
+      "newline": "lf",
+      "source_sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b",
+      "sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b"
+    },
+    "admin/assets/theme-previews/beauty.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty.webp",
+      "newline": "binary",
+      "source_sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432",
+      "sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432"
+    },
     "admin/assets/theme-previews/beauty/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty/banner-1.webp",
       "newline": "binary",
@@ -148,11 +159,11 @@
       "source_sha256": "e5e12c72c34031c58dfb7d9e81d0c4cbc140022bf277a2727fca9e8d60355848",
       "sha256": "e5e12c72c34031c58dfb7d9e81d0c4cbc140022bf277a2727fca9e8d60355848"
     },
-    "admin/assets/theme-previews/beauty.webp": {
-      "source": "mobishop/admin/assets/theme-previews/beauty.webp",
+    "admin/assets/theme-previews/coffee.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee.webp",
       "newline": "binary",
-      "source_sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432",
-      "sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432"
+      "source_sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d",
+      "sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d"
     },
     "admin/assets/theme-previews/coffee/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/coffee/banner-1.webp",
@@ -298,12 +309,6 @@
       "source_sha256": "e063620f5e74491486dcf8021ff1bdc0078a3b742c1ddd8c3f343e80a2bd399d",
       "sha256": "e063620f5e74491486dcf8021ff1bdc0078a3b742c1ddd8c3f343e80a2bd399d"
     },
-    "admin/assets/theme-previews/coffee.webp": {
-      "source": "mobishop/admin/assets/theme-previews/coffee.webp",
-      "newline": "binary",
-      "source_sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d",
-      "sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d"
-    },
     "admin/assets/theme-previews/editorial_runway/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-1.webp",
       "newline": "binary",
@@ -447,6 +452,12 @@
       "newline": "binary",
       "source_sha256": "20bb28cfc039d5f11a241e19913e0700c2ef3b26405a8e4c0114ab4ae71a7aa7",
       "sha256": "20bb28cfc039d5f11a241e19913e0700c2ef3b26405a8e4c0114ab4ae71a7aa7"
+    },
+    "admin/assets/theme-previews/electronics.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics.webp",
+      "newline": "binary",
+      "source_sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823",
+      "sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823"
     },
     "admin/assets/theme-previews/electronics/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/electronics/banner-1.webp",
@@ -592,12 +603,6 @@
       "source_sha256": "791197c5179e63f99b135073b0e3e4cbc66447c8bd72028b000e13d9a61e9f8c",
       "sha256": "791197c5179e63f99b135073b0e3e4cbc66447c8bd72028b000e13d9a61e9f8c"
     },
-    "admin/assets/theme-previews/electronics.webp": {
-      "source": "mobishop/admin/assets/theme-previews/electronics.webp",
-      "newline": "binary",
-      "source_sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823",
-      "sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823"
-    },
     "admin/assets/theme-previews/family_pop/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/family_pop/banner-1.webp",
       "newline": "binary",
@@ -741,6 +746,12 @@
       "newline": "binary",
       "source_sha256": "b4e284eb0d708776986888a1d48b5e989d87a1b395b01183560d953a7eb1bd05",
       "sha256": "b4e284eb0d708776986888a1d48b5e989d87a1b395b01183560d953a7eb1bd05"
+    },
+    "admin/assets/theme-previews/fashion.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion.webp",
+      "newline": "binary",
+      "source_sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82",
+      "sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82"
     },
     "admin/assets/theme-previews/fashion/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/fashion/banner-1.webp",
@@ -886,11 +897,11 @@
       "source_sha256": "51196ea81186a1c40f1c2d452b18622b56b5be68474a4de89b107568bb7d9138",
       "sha256": "51196ea81186a1c40f1c2d452b18622b56b5be68474a4de89b107568bb7d9138"
     },
-    "admin/assets/theme-previews/fashion.webp": {
-      "source": "mobishop/admin/assets/theme-previews/fashion.webp",
+    "admin/assets/theme-previews/grocery.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery.webp",
       "newline": "binary",
-      "source_sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82",
-      "sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82"
+      "source_sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26",
+      "sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26"
     },
     "admin/assets/theme-previews/grocery/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/grocery/banner-1.webp",
@@ -1035,12 +1046,6 @@
       "newline": "binary",
       "source_sha256": "5d0c1f9acdf9e640fd3719fdd5dd78de42609a8480aea72ddd72e5b66d793a93",
       "sha256": "5d0c1f9acdf9e640fd3719fdd5dd78de42609a8480aea72ddd72e5b66d793a93"
-    },
-    "admin/assets/theme-previews/grocery.webp": {
-      "source": "mobishop/admin/assets/theme-previews/grocery.webp",
-      "newline": "binary",
-      "source_sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26",
-      "sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26"
     },
     "admin/assets/theme-previews/home-living.webp": {
       "source": "mobishop/admin/assets/theme-previews/home-living.webp",
@@ -1510,6 +1515,12 @@
       "source_sha256": "56c381358279baf44b6d3ddbda592215038493d7dd901dd791ea6d7060a6ae1c",
       "sha256": "56c381358279baf44b6d3ddbda592215038493d7dd901dd791ea6d7060a6ae1c"
     },
+    "admin/assets/theme-previews/luxury.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury.webp",
+      "newline": "binary",
+      "source_sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905",
+      "sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905"
+    },
     "admin/assets/theme-previews/luxury/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/luxury/banner-1.webp",
       "newline": "binary",
@@ -1653,12 +1664,6 @@
       "newline": "binary",
       "source_sha256": "024a2b71f87fe2ffaf404e3027b00b3d8b1e7f4692b06b9bd5aab935801b32e7",
       "sha256": "024a2b71f87fe2ffaf404e3027b00b3d8b1e7f4692b06b9bd5aab935801b32e7"
-    },
-    "admin/assets/theme-previews/luxury.webp": {
-      "source": "mobishop/admin/assets/theme-previews/luxury.webp",
-      "newline": "binary",
-      "source_sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905",
-      "sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905"
     },
     "admin/assets/theme-previews/marketplace_plus/banner-1.webp": {
       "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-1.webp",
@@ -2419,8 +2424,8 @@
     "api/class-customer-orders-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",
       "newline": "lf",
-      "source_sha256": "e05cc64e4ff3eb78266a1b9b7f947978cdb36ddcd76fed532535319ff9bbab26",
-      "sha256": "e05cc64e4ff3eb78266a1b9b7f947978cdb36ddcd76fed532535319ff9bbab26"
+      "source_sha256": "4aa7fbe00337429d24c7b1d377c28c3bee50e4930d67506a9a9b1d77b5e9c963",
+      "sha256": "4aa7fbe00337429d24c7b1d377c28c3bee50e4930d67506a9a9b1d77b5e9c963"
     },
     "api/class-home-layout-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-home-layout-endpoint.php",
@@ -2431,8 +2436,8 @@
     "api/class-native-checkout-safety50.php": {
       "source": "connectors/woocommerce/source/api/class-native-checkout-safety50.php",
       "newline": "lf",
-      "source_sha256": "5abe987c3795774aa9af8fe7a80e0ed1539a1617bf34d999403231881562d8ad",
-      "sha256": "5abe987c3795774aa9af8fe7a80e0ed1539a1617bf34d999403231881562d8ad"
+      "source_sha256": "a1284feb05aff4eddb05cc639b5a360783c1da99909ba43ab29e4ac1551cd6e2",
+      "sha256": "a1284feb05aff4eddb05cc639b5a360783c1da99909ba43ab29e4ac1551cd6e2"
     },
     "api/class-native-qa-isolation51.php": {
       "source": "connectors/woocommerce/source/api/class-native-qa-isolation51.php",
@@ -2593,8 +2598,8 @@
     "includes/central/bootstrap.php": {
       "source": "connectors/woocommerce/source/includes/central/bootstrap.php",
       "newline": "lf",
-      "source_sha256": "bacb97ba2562d49984d2d49ee8fb17fbbd66260f6cc208c3d8e5d41eacd3e73b",
-      "sha256": "bacb97ba2562d49984d2d49ee8fb17fbbd66260f6cc208c3d8e5d41eacd3e73b"
+      "source_sha256": "65582773a317fd5aac3139fa4b9af365af1f688ea38c2dcbce883bb5623ec22f",
+      "sha256": "65582773a317fd5aac3139fa4b9af365af1f688ea38c2dcbce883bb5623ec22f"
     },
     "includes/central/class-central-commerce.php": {
       "source": "connectors/woocommerce/source/includes/central/class-central-commerce.php",
@@ -2791,8 +2796,14 @@
     "includes/class-native-checkout-bootstrap50.php": {
       "source": "connectors/woocommerce/source/includes/class-native-checkout-bootstrap50.php",
       "newline": "lf",
-      "source_sha256": "6a50b5b5b2dafcfbce4f8cfc5d82328d5e0730eec2bb985d6d35963148160ac0",
-      "sha256": "6a50b5b5b2dafcfbce4f8cfc5d82328d5e0730eec2bb985d6d35963148160ac0"
+      "source_sha256": "ea43c506a0a9017a7de3de9cf3748dbe7217da19d6f47e8c325aa4a0f38f4033",
+      "sha256": "ea43c506a0a9017a7de3de9cf3748dbe7217da19d6f47e8c325aa4a0f38f4033"
+    },
+    "includes/class-native-checkout-setup50.php": {
+      "source": "connectors/woocommerce/source/includes/class-native-checkout-setup50.php",
+      "newline": "lf",
+      "source_sha256": "15dac7eab2504054a20c5343276375119b9a0345e77d29b5bf5f37cda8b3f929",
+      "sha256": "15dac7eab2504054a20c5343276375119b9a0345e77d29b5bf5f37cda8b3f929"
     },
     "includes/presets/kids-home-tail293.json": {
       "source": "connectors/woocommerce/source/includes/presets/kids-home-tail293.json",
@@ -2911,8 +2922,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "a4bd22aa1b7fa8e88322e8d044a676b1e8884d859ae961fc3ac1b03821561300",
-      "sha256": "a4bd22aa1b7fa8e88322e8d044a676b1e8884d859ae961fc3ac1b03821561300"
+      "source_sha256": "80275b9a5d028ced1304eeeb76ad22495f36a8ff49bdecd2c0f18dd613141622",
+      "sha256": "80275b9a5d028ced1304eeeb76ad22495f36a8ff49bdecd2c0f18dd613141622"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2947,14 +2958,12 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "e3d1c21eccf9c3f857534dbedb9e3b0d1af6d6ff0514ba68563c9ca7fd6d1819",
-      "sha256": "e3d1c21eccf9c3f857534dbedb9e3b0d1af6d6ff0514ba68563c9ca7fd6d1819"
-    },
-    "SOURCE-BUILD.txt": {
-      "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
-      "newline": "lf",
-      "source_sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b",
-      "sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b"
+      "source_sha256": "c8264c987bfd4cdd671d01477da0f3703d6a8aee801b3d296a1d18e0cc2672cf",
+      "sha256": "c8264c987bfd4cdd671d01477da0f3703d6a8aee801b3d296a1d18e0cc2672cf"
     }
+  },
+  "baseline_release": {
+    "version": "1.46.75",
+    "sha256": "cdf17554b729670505a045a3bbb281e7a39d361d5782a74142b0a29beba1e4c2"
   }
 }

@@ -1,10 +1,7 @@
 <?php
 /**
- * Normal Native checkout wiring; disabled unless server configuration opts in.
- *
- * wp-config.php must load the existing immutable installation key before
- * plugins load. This bootstrap never finds, generates, copies, or rotates keys
- * and never installs the ledger. Safety50 verifies its existing fingerprint.
+ * Read-only runtime wiring after the authorized central setup has prepared storage.
+ * Explicit server configuration is preserved. Public requests never install tables.
  *
  * @package MobiShop
  */
@@ -17,14 +14,19 @@ final class MobiShop_Native_Checkout_Bootstrap50 {
 	private static ?MobiShop_Native_Checkout_Safety50 $instance = null;
 
 	public static function boot(): void {
-		if ( ! defined( 'MOBISHOP_NATIVE_CHECKOUT50_ENABLED' ) || true !== MOBISHOP_NATIVE_CHECKOUT50_ENABLED || self::$started ) {
+		if ( self::$started ) {
 			return;
 		}
 		self::$started = true;
-		// A failed opt-in must not quietly reach unguarded core checkout.
+		// A missing/disabled setup remains discoverable and cannot bypass safety.
 		add_filter( 'rest_pre_dispatch', array( self::class, 'fail_closed' ), 1000, 3 );
 		add_action( 'rest_api_init', array( self::class, 'register_unavailable_routes' ), 20 );
 		try {
+			require_once MOBISHOP_PATH . 'includes/class-native-checkout-setup50.php';
+			if ( ! MobiShop_Native_Checkout_Setup50::runtime_enabled() ) {
+				self::$failed = true;
+				return;
+			}
 			if ( did_action( 'rest_api_init' ) ) {
 				throw new RuntimeException( 'Native checkout bootstrap was called too late.' );
 			}
@@ -75,7 +77,7 @@ final class MobiShop_Native_Checkout_Bootstrap50 {
 		return $result;
 	}
 
-	/** Only startup failure needs these routes; healthy routes belong to Safety50. */
+	/** Unprepared/disabled/failed setups report false; healthy routes belong to Safety50. */
 	public static function register_unavailable_routes(): void {
 		if ( ! self::$failed ) {
 			return;

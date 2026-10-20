@@ -42,10 +42,15 @@ jobs:
         run: |
           unzip -q build/woocommerce/mobi2app-connector-*.zip -d build/woocommerce
           find build/woocommerce/mobi2app-connector -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-      - name: Test packaged authentication contracts
+      - name: Test packaged authentication and checkout setup contracts
         env:
           MOBISHOP_CONNECTOR_TEST_ROOT: ${{ github.workspace }}/build/woocommerce/mobi2app-connector
-        run: php connectors/woocommerce/tests/website-auth-contract-test.php
+        run: |
+          php connectors/woocommerce/tests/website-auth-contract-test.php
+          php connectors/woocommerce/tests/native-checkout-setup-contract-test.php
+          php connectors/woocommerce/tests/native-checkout-safety50-contract-test.php
+          php connectors/woocommerce/tests/native-checkout-safety50-contract-test.php --missing-installation-key
+          php connectors/woocommerce/tests/customer-orders-endpoint-contract-test.php
       - name: Validate connector release tag
         if: github.event_name == 'release'
         env:

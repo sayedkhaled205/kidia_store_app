@@ -9,9 +9,13 @@ Build and verify:
 ```sh
 python3 tool/build_woocommerce_connector.py
 python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
-unzip -q build/woocommerce/mobi2app-connector-1.46.75.zip -d build/woocommerce
+unzip -q build/woocommerce/mobi2app-connector-1.46.76.zip -d build/woocommerce
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
   php connectors/woocommerce/tests/website-auth-contract-test.php
+MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
+  php connectors/woocommerce/tests/native-checkout-setup-contract-test.php
+MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
+  php connectors/woocommerce/tests/customer-orders-endpoint-contract-test.php
 ```
 
 The output is a versioned installable ZIP and `connector-release.json` containing
@@ -37,6 +41,24 @@ It includes automatic central setup, store data, application state and push
 bridges, plus website authentication. Packaging fails if one of these modules or
 its registration disappears. Website authentication inherits the store's actual
 login methods; it does not invent OTP or social providers for an unconfigured site.
+
+Version 1.46.76 adds native checkout preparation to the existing authorized
+central bootstrap. Both existing administrator capabilities and an active
+installation license remain required. A random internal deduplication key is
+persisted once in a non-autoloaded option before installing the existing four
+ledger tables. Explicit server disables and existing external keys are honored;
+unowned, mismatched or active partial ledgers fail closed without being reset.
+Only owned unused interrupted setup can resume. Public capability reads never
+write the key/schema. The central service must verify `enforced: true` on a later
+request before announcing checkout readiness. WooCommerce 9.9+ and PHP 8.1+ are
+required for this native protection; ordinary website checkout is unchanged.
+
+Owned-order refresh is read-only. Payment URLs are emitted only for the exact
+HTTPS store installation and independently derived configured WooCommerce
+order-pay endpoint, with the matching order ID/key. Localized/custom path slugs
+are supported; unsafe redirects return empty URL/path fields while retaining
+the actual payment status. These stub contract tests do not
+represent a live gateway, SMS, email, stock or order creation test.
 
 Use a GitHub release tag `connector-vX.Y.Z` to attach this tested ZIP. The legacy
 WordPress.org deployment workflow skips these tags. Directory approval and a

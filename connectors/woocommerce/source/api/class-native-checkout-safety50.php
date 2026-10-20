@@ -297,7 +297,7 @@ final class MobiShop_Native_Checkout_Wpdb50 implements MobiShop_Native_Checkout_
 
 	/** Only exact pre-payment rejection or authoritative created order resolves. */
 	public function settle( string $buyer, string $attempt, string $state, string $payment ): bool {
-		if ( ! in_array( $state, array( 'rejected_before_payment', 'order_created' ), true ) || ! in_array( $payment, array( '', 'success', 'unknown' ), true ) ) {
+		if ( ! in_array( $state, array( 'rejected_before_payment', 'order_created' ), true ) || ! in_array( $payment, array( '', 'success', 'unknown', 'pending' ), true ) || ( 'pending' === $payment && 'order_created' !== $state ) ) {
 			return false;
 		}
 		if ( '0' !== (string) $this->db->get_var( 'SELECT @@in_transaction' ) || false === $this->db->query( 'START TRANSACTION' ) ) {
@@ -690,9 +690,16 @@ final class MobiShop_Native_Checkout_Safety50 {
 		$current = $this->identity( $this->active['request'] );
 		$order = is_array( $row ) && (int) ( $row['order_id'] ?? 0 ) > 0 ? wc_get_order( (int) $row['order_id'] ) : false;
 		$wc = WC();
+		// A successful gateway hand-off may leave a real order awaiting browser
+		// payment. Accept only that exact core status and Woo's unpaid predicate.
+		// A pending/failed gateway envelope itself is still ambiguous above.
+		$awaiting_payment = $order instanceof WC_Order && 'pending' === $order->get_status()
+			&& 'pending' === ( $data['status'] ?? null )
+			&& is_callable( array( $order, 'needs_payment' ) ) && $order->needs_payment()
+			&& is_callable( array( $order, 'is_paid' ) ) && ! $order->is_paid();
 		// Recheck the exact original subject and durable order proof before mutating
 		// any cart. A successful gateway envelope alone never authorizes clearing it.
-		if ( is_wp_error( $current ) || $current !== $this->active['customer'] || $this->active['conflict'] || ! is_array( $row ) || 'in_progress' !== ( $row['state'] ?? '' ) || (int) ( $row['customer_id'] ?? 0 ) !== $current || (int) ( $row['order_id'] ?? 0 ) !== $this->active['order_id'] || ( $row['buyer_scope'] ?? '' ) !== $this->active['buyer'] || ( $row['attempt_hash'] ?? '' ) !== $this->active['attempt'] || ( $row['cart_scope'] ?? '' ) !== $this->active['cart'] || 1 !== (int) ( $row['guard_passed'] ?? 0 ) || 1 !== (int) ( $row['dispatch_finished'] ?? 0 ) || ! $order instanceof WC_Order || (int) $order->get_customer_id() !== $current || (string) $order->get_meta( '_mobishop_native_attempt50', true ) !== $this->active['attempt'] || (string) $order->get_meta( '_mobishop_native_buyer50', true ) !== $this->active['buyer'] || ! in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) || $this->cart_identity( $this->active['request'], $current, false ) !== $this->active['cart_user'] || ! hash_equals( $this->active['cart'], $this->digest( 'cart', $this->active['cart_user'] ) ) || ! $this->store->owns_cart( $this->active['cart'], $this->active['buyer'] ) || ! $wc || ! $wc->session || (string) $wc->session->get_customer_id() !== $this->active['cart_user'] || ! is_callable( array( $wc->session, 'save_data' ) ) || ! $wc->customer || (int) $wc->customer->get_id() !== $current || ! $wc->cart || ! is_callable( array( $wc->cart, 'is_empty' ) ) ) {
+		if ( is_wp_error( $current ) || $current !== $this->active['customer'] || $this->active['conflict'] || ! is_array( $row ) || 'in_progress' !== ( $row['state'] ?? '' ) || (int) ( $row['customer_id'] ?? 0 ) !== $current || (int) ( $row['order_id'] ?? 0 ) !== $this->active['order_id'] || ( $row['buyer_scope'] ?? '' ) !== $this->active['buyer'] || ( $row['attempt_hash'] ?? '' ) !== $this->active['attempt'] || ( $row['cart_scope'] ?? '' ) !== $this->active['cart'] || 1 !== (int) ( $row['guard_passed'] ?? 0 ) || 1 !== (int) ( $row['dispatch_finished'] ?? 0 ) || ! $order instanceof WC_Order || (int) $order->get_customer_id() !== $current || (string) $order->get_meta( '_mobishop_native_attempt50', true ) !== $this->active['attempt'] || (string) $order->get_meta( '_mobishop_native_buyer50', true ) !== $this->active['buyer'] || ( ! $awaiting_payment && ! in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) || $this->cart_identity( $this->active['request'], $current, false ) !== $this->active['cart_user'] || ! hash_equals( $this->active['cart'], $this->digest( 'cart', $this->active['cart_user'] ) ) || ! $this->store->owns_cart( $this->active['cart'], $this->active['buyer'] ) || ! $wc || ! $wc->session || (string) $wc->session->get_customer_id() !== $this->active['cart_user'] || ! is_callable( array( $wc->session, 'save_data' ) ) || ! $wc->customer || (int) $wc->customer->get_id() !== $current || ! $wc->cart || ! is_callable( array( $wc->cart, 'is_empty' ) ) ) {
 			return $this->error( 'outcome_unknown', 503 );
 		}
 		if ( ! $wc->cart->is_empty() ) {
@@ -708,12 +715,14 @@ final class MobiShop_Native_Checkout_Safety50 {
 			return $this->error( 'outcome_unknown', 503 );
 		}
 		$wc->session->save_data(); // Also persist a cart already emptied by core.
-		$recovered = $this->recovery_response( $row, $this->active['customer'], 'success', $this->active['request'] );
+		$recovered = $this->recovery_response( $row, $this->active['customer'], $awaiting_payment ? 'pending' : 'success', $this->active['request'] );
 		// Preserve core's authenticated response, but never persist its private data.
 		if ( 200 !== $recovered->get_status() || 'order_created' !== ( $recovered->get_data()['state'] ?? '' ) || $recovered->get_data()['checkout_locked'] ) {
 			return $recovered;
 		}
-		return $this->no_store( $response );
+		// Do not label gateway hand-off as captured payment or expose an
+		// arbitrary gateway URL. The owned order endpoint supplies continuation.
+		return $awaiting_payment ? $recovered : $this->no_store( $response );
 	}
 
 	/** Request-local purchased items only; never serialize product objects or PII. */
@@ -795,7 +804,11 @@ final class MobiShop_Native_Checkout_Safety50 {
 			return $this->response( array( 'state' => 'unknown', 'automatic_replay' => false ), 202 );
 		}
 		$status = $order->get_status();
-		if ( 'order_created' !== $row['state'] && ! in_array( $status, array( 'processing', 'completed', 'on-hold' ), true ) ) {
+		$verified_pending = 'pending' === $observed_payment && 'pending' === $status
+			&& 1 === (int) ( $row['dispatch_finished'] ?? 0 )
+			&& is_callable( array( $order, 'needs_payment' ) ) && $order->needs_payment()
+			&& is_callable( array( $order, 'is_paid' ) ) && ! $order->is_paid();
+		if ( 'order_created' !== $row['state'] && ! $verified_pending && ! in_array( $status, array( 'processing', 'completed', 'on-hold' ), true ) ) {
 			return $this->response( array( 'state' => 'in_progress', 'automatic_replay' => false ), 202 );
 		}
 		$total = self::decimal_to_minor( $order->get_total( 'edit' ), wc_get_price_decimals() );
@@ -803,6 +816,12 @@ final class MobiShop_Native_Checkout_Safety50 {
 			return $this->response( array( 'state' => 'unknown', 'automatic_replay' => false ), 503 );
 		}
 		$payment = 'order_created' === $row['state'] ? $row['payment_status'] : $observed_payment;
+		// The immutable receipt records hand-off, not subsequent capture. If the
+		// order has since changed, let the owned order endpoint confirm payment
+		// without emitting an inconsistent pending + completed/cancelled receipt.
+		if ( 'pending' === $payment && 'pending' !== $status ) {
+			$payment = 'unknown';
+		}
 		$locked = 'order_created' !== $row['state'];
 		if ( $locked && 1 === (int) ( $row['dispatch_finished'] ?? 0 ) && $request ) {
 			$cart_user = $this->cart_identity( $request, $customer, false );
