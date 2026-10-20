@@ -117,6 +117,7 @@ class StoreApiCartTransport implements CartApiTransport {
             headers: requestHeaders,
           ),
         ),
+        readOnly: method == CartApiMethod.get,
       );
 
       _assertSameOrigin(response.realUri);

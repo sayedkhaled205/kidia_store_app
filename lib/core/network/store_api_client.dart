@@ -83,6 +83,7 @@ class DioStoreApiClient implements StoreApiClient {
             },
           ),
         ),
+        readOnly: true,
       );
 
       if (!_hasSameOrigin(response.realUri, _storeUri)) {

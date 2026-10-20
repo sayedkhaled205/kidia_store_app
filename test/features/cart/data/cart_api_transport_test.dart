@@ -11,6 +11,7 @@ void main() {
       DioExceptionType.connectionTimeout,
       DioExceptionType.sendTimeout,
       DioExceptionType.receiveTimeout,
+      DioExceptionType.connectionError,
     ]) {
       test('mutation retry is safe at $phase boundary', () async {
         var attempts = 0;

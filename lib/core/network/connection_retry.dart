@@ -1,13 +1,23 @@
 import 'package:dio/dio.dart';
 
-/// Retry only a connection establishment timeout, before a request was sent.
-/// Send/receive failures can follow a committed mutation and must not replay.
-Future<T> retryConnectionOnce<T>(Future<T> Function() request) async {
+/// Read requests may retry transient transport failures once. Mutations retry
+/// only connection establishment timeouts, before any request was sent.
+Future<T> retryConnectionOnce<T>(
+  Future<T> Function() request, {
+  bool readOnly = false,
+}) async {
   try {
     return await request();
   } on DioException catch (error) {
-    if (error.type != DioExceptionType.connectionTimeout ||
-        error.response != null) {
+    final retryable =
+        error.type == DioExceptionType.connectionTimeout ||
+        (readOnly &&
+            const {
+              DioExceptionType.connectionError,
+              DioExceptionType.sendTimeout,
+              DioExceptionType.receiveTimeout,
+            }.contains(error.type));
+    if (!retryable || error.response != null) {
       rethrow;
     }
     return request();
