@@ -19,6 +19,11 @@ class CustomerOrder {
     this.dateCreated,
     this.canCancel = false,
     this.cancellationType = CustomerOrderCancellationType.none,
+    this.isPaid,
+    this.needsPayment,
+    this.paymentUri,
+    this.paymentMethod = '',
+    this.paymentEndpointPath = '',
   });
 
   final int id;
@@ -31,6 +36,13 @@ class CustomerOrder {
   final DateTime? dateCreated;
   final bool canCancel;
   final CustomerOrderCancellationType cancellationType;
+
+  /// Null means the connector did not provide verified payment facts.
+  final bool? isPaid;
+  final bool? needsPayment;
+  final Uri? paymentUri;
+  final String paymentMethod;
+  final String paymentEndpointPath;
 
   bool get isCancellationRequest =>
       cancellationType == CustomerOrderCancellationType.request;

@@ -60,7 +60,10 @@ class CustomerOrdersTransportException implements Exception {
 
 /// Same-origin client for the signed-in WooCommerce customer's order history.
 class DioCustomerOrdersApiTransport
-    implements CustomerOrdersApiTransport, CustomerOrderCancellationTransport, CustomerOrderLookupTransport {
+    implements
+        CustomerOrdersApiTransport,
+        CustomerOrderCancellationTransport,
+        CustomerOrderLookupTransport {
   DioCustomerOrdersApiTransport({
     required Uri storeUri,
     required this.authTokenReader,
@@ -109,10 +112,21 @@ class DioCustomerOrdersApiTransport
   @override
   Future<CustomerOrdersApiResponse> fetchOrder(int orderId) {
     if (orderId <= 0) {
-      throw const CustomerOrdersTransportException(kind: CustomerOrdersTransportFailureKind.configuration, message: 'A valid customer order is required.');
+      throw const CustomerOrdersTransportException(
+        kind: CustomerOrdersTransportFailureKind.configuration,
+        message: 'A valid customer order is required.',
+      );
     }
     final base = _ordersUri(page: 1, perPage: 1);
-    return _request(Uri(scheme: base.scheme, host: base.host, port: base.hasPort ? base.port : null, path: '${base.path}/$orderId'), method: 'GET');
+    return _request(
+      Uri(
+        scheme: base.scheme,
+        host: base.host,
+        port: base.hasPort ? base.port : null,
+        path: '${base.path}/$orderId',
+      ),
+      method: 'GET',
+    );
   }
 
   @override
@@ -154,6 +168,7 @@ class DioCustomerOrdersApiTransport
           followRedirects: false,
           headers: <String, String>{
             'Accept': 'application/json',
+            'Cache-Control': 'no-store',
             if (method != 'GET') 'Content-Type': 'application/json',
             'X-MobiShop-Session': token,
           },

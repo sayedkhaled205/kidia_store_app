@@ -5,6 +5,7 @@ import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
 import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
+import 'package:mobishop_store_app/features/checkout/presentation/checkout_payment_continuation298.dart';
 import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
 import 'package:mobishop_store_app/features/orders/presentation/controllers/customer_orders_controller.dart';
@@ -120,15 +121,48 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
         _lookupController = controller;
         _requestedOrder = controller.loadOrder(widget.initialOrderId!);
       }
-      return FutureBuilder<CustomerOrder>(future:_requestedOrder,builder:(context,snapshot) {
-        if (snapshot.hasData) return _CustomerOrderDetailsScreen(orderId:snapshot.data!.id,initialOrder:snapshot.data!,controller:controller,copy:copy,onCancel:(actionContext,order)=>_cancelOrder(actionContext,order,controller,copy));
-        final arabic=Localizations.localeOf(context).languageCode=='ar';
-        return Scaffold(appBar:AppBar(title:Text(copy.detailsTitle)),body:Center(child:snapshot.hasError
-          ? Column(mainAxisSize:MainAxisSize.min,children:[Text(arabic?'تعذر فتح الطلب. تحقق من الحساب والاتصال.':'Unable to open this order. Check your account and connection.'),TextButton(onPressed:()=>setState(()=>_requestedOrder=controller.loadOrder(widget.initialOrderId!)),child:Text(arabic?'إعادة المحاولة':'Retry'))])
-          :const CircularProgressIndicator()));
-      });
+      return FutureBuilder<CustomerOrder>(
+        future: _requestedOrder,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return _CustomerOrderDetailsScreen(
+              orderId: snapshot.data!.id,
+              initialOrder: snapshot.data!,
+              controller: controller,
+              copy: copy,
+              onCancel: (actionContext, order) =>
+                  _cancelOrder(actionContext, order, controller, copy),
+            );
+          }
+          final arabic = Localizations.localeOf(context).languageCode == 'ar';
+          return Scaffold(
+            appBar: AppBar(title: Text(copy.detailsTitle)),
+            body: Center(
+              child: snapshot.hasError
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          arabic
+                              ? 'تعذر فتح الطلب. تحقق من الحساب والاتصال.'
+                              : 'Unable to open this order. Check your account and connection.',
+                        ),
+                        TextButton(
+                          onPressed: () => setState(
+                            () => _requestedOrder = controller.loadOrder(
+                              widget.initialOrderId!,
+                            ),
+                          ),
+                          child: Text(arabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    )
+                  : const CircularProgressIndicator(),
+            ),
+          );
+        },
+      );
     }
-
 
     return Scaffold(
       appBar: AppBar(
@@ -143,8 +177,7 @@ class _CustomerOrdersScreenState extends ConsumerState<CustomerOrdersScreen> {
           controller: controller,
           scrollController: _scrollController,
           copy: copy,
-          onOpen: (CustomerOrder order) =>
-              _openOrder(order, controller, copy),
+          onOpen: (CustomerOrder order) => _openOrder(order, controller, copy),
         ),
       ),
     );
@@ -434,10 +467,7 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
         final ThemeData theme = Theme.of(context);
         final ColorScheme colors = theme.colorScheme;
         return Scaffold(
-          appBar: AppBar(
-            centerTitle: true,
-            title: Text(copy.detailsTitle),
-          ),
+          appBar: AppBar(centerTitle: true, title: Text(copy.detailsTitle)),
           body: ListView(
             key: Key('customer-order-details-${order.id}'),
             padding: const EdgeInsets.all(MobiShopSpacing.md),
@@ -596,6 +626,26 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (order.needsPayment == true || order.status == 'pending') ...[
+                const SizedBox(height: MobiShopSpacing.md),
+                FilledButton.icon(
+                  key: Key('customer-order-payment-${order.id}'),
+                  onPressed: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (context) => Scaffold(
+                        appBar: AppBar(title: Text(copy.detailsTitle)),
+                        body: CheckoutPaymentContinuation298(orderId: order.id),
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.payment),
+                  label: Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'متابعة الدفع والتحقق من الطلب'
+                        : 'Continue payment and check order',
+                  ),
+                ),
+              ],
               if (order.canCancel) ...<Widget>[
                 const SizedBox(height: MobiShopSpacing.md),
                 Align(
@@ -848,9 +898,8 @@ class _OrdersCopy {
   String get errorTitle =>
       arabic ? 'تعذر تحميل طلباتك' : 'Could not load your orders';
   String get cancelOrder => arabic ? 'إلغاء الطلب' : 'Cancel order';
-  String get requestCancellation => arabic
-      ? 'طلب إلغاء'
-      : 'Request cancellation';
+  String get requestCancellation =>
+      arabic ? 'طلب إلغاء' : 'Request cancellation';
   String get keepOrder => arabic ? 'الاحتفاظ بالطلب' : 'Keep order';
   String get cancelled => arabic
       ? 'تم إلغاء الطلب بنجاح.'
@@ -872,12 +921,10 @@ class _OrdersCopy {
     return arabic ? 'جارٍ إلغاء الطلب…' : 'Cancelling…';
   }
 
-  String cancelTitle(CustomerOrder order) => order.isCancellationRequest
-      ? requestCancellation
-      : cancelOrder;
+  String cancelTitle(CustomerOrder order) =>
+      order.isCancellationRequest ? requestCancellation : cancelOrder;
 
-  String confirmCancellation(CustomerOrder order) =>
-      order.isCancellationRequest
+  String confirmCancellation(CustomerOrder order) => order.isCancellationRequest
       ? arabic
             ? 'إرسال الطلب'
             : 'Send request'
@@ -925,8 +972,7 @@ class _OrdersCopy {
   }
 
   String cancelError(Object? error, CustomerOrder order) {
-    if (error is CustomerOrdersRepositoryException &&
-        error.statusCode == 409) {
+    if (error is CustomerOrdersRepositoryException && error.statusCode == 409) {
       return arabic
           ? 'لم يعد هذا الطلب متاحًا للإلغاء.'
           : 'This order can no longer be cancelled.';

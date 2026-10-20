@@ -3,7 +3,10 @@ import 'package:mobishop_store_app/features/orders/domain/entities/customer_orde
 import 'package:mobishop_store_app/features/orders/domain/repositories/customer_orders_repository.dart';
 
 class CustomerOrdersRepositoryImpl
-    implements CustomerOrdersRepository, CustomerOrderCancellationRepository, CustomerOrderLookupRepository {
+    implements
+        CustomerOrdersRepository,
+        CustomerOrderCancellationRepository,
+        CustomerOrderLookupRepository {
   const CustomerOrdersRepositoryImpl(this._transport);
 
   final CustomerOrdersApiTransport _transport;
@@ -71,7 +74,9 @@ class CustomerOrdersRepositoryImpl
         'order lookup response',
       );
       final order = _parseOrder(json['order']);
-      if (order.id != orderId) throw const FormatException('Unexpected order identity.');
+      if (order.id != orderId) {
+        throw const FormatException('Unexpected order identity.');
+      }
       return order;
     } on CustomerOrdersTransportException catch (error, stackTrace) {
       Error.throwWithStackTrace(
@@ -145,10 +150,7 @@ class CustomerOrdersRepositoryImpl
     final int safePage = _nonNegativeInt(json['page'], 'page');
     final int safePerPage = _nonNegativeInt(json['per_page'], 'per_page');
     final int totalItems = _nonNegativeInt(json['total'], 'total');
-    final int totalPages = _nonNegativeInt(
-      json['total_pages'],
-      'total_pages',
-    );
+    final int totalPages = _nonNegativeInt(json['total_pages'], 'total_pages');
 
     return CustomerOrderPage(
       items: List<CustomerOrder>.unmodifiable(orders),
@@ -214,6 +216,23 @@ class CustomerOrdersRepositoryImpl
       dateCreated: dateCreated,
       canCancel: canCancel,
       cancellationType: cancellationType,
+      // Do not coerce strings, missing values, or order status into payment
+      // evidence. Older connectors remain readable but cannot authorize pay.
+      isPaid: json['is_paid'] is bool ? json['is_paid'] as bool : null,
+      needsPayment: json['needs_payment'] is bool
+          ? json['needs_payment'] as bool
+          : null,
+      paymentUri:
+          json['payment_url'] is String &&
+              (json['payment_url'] as String).isNotEmpty
+          ? Uri.tryParse(json['payment_url'] as String)
+          : null,
+      paymentMethod: json['payment_method'] is String
+          ? json['payment_method'] as String
+          : '',
+      paymentEndpointPath: json['payment_endpoint_path'] is String
+          ? json['payment_endpoint_path'] as String
+          : '',
     );
   }
 
@@ -279,9 +298,12 @@ class CustomerOrdersRepositoryImpl
     if (value is bool) {
       return value;
     }
-    return const <String>{'1', 'true', 'yes', 'on'}.contains(
-      _text(value).trim().toLowerCase(),
-    );
+    return const <String>{
+      '1',
+      'true',
+      'yes',
+      'on',
+    }.contains(_text(value).trim().toLowerCase());
   }
 
   CustomerOrderCancellationType _cancellationType(dynamic value) {

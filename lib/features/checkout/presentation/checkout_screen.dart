@@ -13,6 +13,7 @@ import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_fi
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
+import 'checkout_payment_continuation298.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({
@@ -118,6 +119,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           onRetry: _controller.load,
         );
       case CheckoutStatus.success:
+        final result = _controller.orderResult!;
+        if (result.requiresRedirect ||
+            result.status == 'pending' ||
+            result.paymentStatus != 'success') {
+          return CheckoutPaymentContinuation298(
+            orderId: result.orderId,
+            onReviewOrders: widget.onReviewOrders,
+          );
+        }
         return _CheckoutSuccess(result: _controller.orderResult!, copy: copy);
       case CheckoutStatus.ready:
       case CheckoutStatus.submitting:
@@ -1370,14 +1380,6 @@ class _CheckoutSuccess extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(copy.orderNumber(result.orderId)),
-            if (result.requiresRedirect) ...<Widget>[
-              const SizedBox(height: 14),
-              Text(
-                copy.secureRedirect,
-                key: const Key('checkout-redirect-required'),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ],
         ),
       ),
@@ -1540,9 +1542,6 @@ class _CheckoutCopy {
   String get emptyCart => arabic ? 'سلة التسوق فارغة.' : 'Your cart is empty.';
   String get backToCart => arabic ? 'العودة إلى السلة' : 'Back to cart';
   String get orderReceived => arabic ? 'تم استلام طلبك' : 'Order received';
-  String get secureRedirect => arabic
-      ? 'تحتاج طريقة الدفع إلى متابعة آمنة. سيعالج التطبيق رابط التحويل من خلال التكامل المخصص.'
-      : 'Payment requires a secure next step. The app integration should handle the returned redirect.';
   String get firstNameRequired =>
       arabic ? 'الاسم الأول مطلوب.' : 'First name is required.';
   String get lastNameRequired =>

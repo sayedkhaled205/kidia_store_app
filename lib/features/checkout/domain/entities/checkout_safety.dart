@@ -166,7 +166,10 @@ class CheckoutAttemptRecovery {
         order['currency_code'] is! String ||
         order['currency_minor_unit'] is! int ||
         (raw['payment_status'] != 'success' &&
-            raw['payment_status'] != 'unknown')) {
+            raw['payment_status'] != 'unknown' &&
+            // Only the explicit, durable order-created receipt can authorize
+            // continuation. A gateway's bare pending envelope is not proof.
+            !(raw['payment_status'] == 'pending' && status == 'pending'))) {
       throw const FormatException('Unverified recovered checkout receipt.');
     }
     CheckoutConfirmedTotal(
