@@ -25,6 +25,12 @@ def foreign(platform="odoo"):
 
 
 class NativeBuildDefines81Tests(unittest.TestCase):
+    def test_only_explicit_qa_artifacts_join_test_notification_audience(self):
+        environment = {"STORE_URL": "https://woo.example/"}
+        self.assertIs(native_defines(environment | {"MOBISHOP_ANDROID_BUILD_MODE": "qa"})["APP_TEST_BUILD"], True)
+        for mode in ("release", "", "unknown"):
+            self.assertNotIn("APP_TEST_BUILD", native_defines(environment | {"MOBISHOP_ANDROID_BUILD_MODE": mode}))
+
     def test_existing_woo_defaults_and_no_private_environment_leak(self):
         actual = native_defines({"STORE_URL": "https://woo.example/store/", "MOBISHOP_CALLBACK_TOKEN": "private",
                                  "SHOPIFY_ADMIN_TOKEN": "shpat_private", "UNRELATED_SECRET": "private"})
@@ -114,11 +120,17 @@ class NativeBuildDefines81Tests(unittest.TestCase):
     def test_every_native_build_uses_the_same_preflight_and_json_file(self):
         workflow = (ROOT / "codemagic.yaml").read_text(encoding="utf-8")
         builds = [step for step in re.split(r"(?m)^      - name:", workflow) if "flutter build " in step]
-        self.assertEqual(len(builds), 6)
+        self.assertEqual(len(builds), 10)
         for step in builds:
-            self.assertIn('python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"', step)
+            preflight = 'python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"'
+            if 'flutter build ios --simulator' in step:
+                simulator = workflow.split('  mobishop-ios-simulator-check:', 1)[1]
+                self.assertIn(preflight, simulator)
+                self.assertLess(simulator.index(preflight), simulator.index('flutter build ios'))
+            else:
+                self.assertIn(preflight, step)
+                self.assertLess(step.index("python3 tool/native_build_defines81.py"), step.index("flutter build "))
             self.assertIn('--dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json"', step)
-            self.assertLess(step.index("python3 tool/native_build_defines81.py"), step.index("flutter build "))
             self.assertIn('--dart-define="STORE_URL=$STORE_URL"', step)
 
 

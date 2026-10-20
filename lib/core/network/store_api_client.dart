@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:mobishop_store_app/core/network/connection_retry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
@@ -68,17 +69,19 @@ class DioStoreApiClient implements StoreApiClient {
     final Uri requestUri = _buildRequestUri(path, queryParameters);
 
     try {
-      final Response<dynamic> response = await _dio.getUri<dynamic>(
-        requestUri,
-        options: Options(
-          responseType: ResponseType.json,
-          followRedirects: false,
-          headers: const <String, dynamic>{
-            'Accept': 'application/json',
-            'X-MobiShop-Channel': 'mobile',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-          },
+      final Response<dynamic> response = await retryConnectionOnce(
+        () => _dio.getUri<dynamic>(
+          requestUri,
+          options: Options(
+            responseType: ResponseType.json,
+            followRedirects: false,
+            headers: const <String, dynamic>{
+              'Accept': 'application/json',
+              'X-MobiShop-Channel': 'mobile',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+            },
+          ),
         ),
       );
 
@@ -145,9 +148,7 @@ class DioStoreApiClient implements StoreApiClient {
         : parsedPath.path;
 
     final bool isWooStoreApi = relativePath.startsWith('wp-json/wc/store/');
-    final bool isMobileCmsApi = relativePath.startsWith(
-      'wp-json/mobishop/v1/',
-    );
+    final bool isMobileCmsApi = relativePath.startsWith('wp-json/mobishop/v1/');
     if (!isWooStoreApi && !isMobileCmsApi) {
       throw const StoreApiException(
         kind: StoreApiFailureKind.configuration,

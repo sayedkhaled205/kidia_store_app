@@ -6,6 +6,9 @@ import 'runtime_store_origin.dart';
 abstract final class AppConfig {
   const AppConfig._();
 
+  /// QA artifacts belong to the test notification audience only.
+  static const bool isTestBuild = bool.fromEnvironment('APP_TEST_BUILD');
+
   static const bool _useMockHomeLayout = bool.fromEnvironment(
     'USE_MOCK_HOME_LAYOUT',
     defaultValue: false,

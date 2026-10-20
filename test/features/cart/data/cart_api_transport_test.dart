@@ -7,6 +7,57 @@ import 'cart_test_fixture.dart';
 
 void main() {
   group('StoreApiCartTransport', () {
+    for (final phase in [
+      DioExceptionType.connectionTimeout,
+      DioExceptionType.sendTimeout,
+      DioExceptionType.receiveTimeout,
+    ]) {
+      test('mutation retry is safe at $phase boundary', () async {
+        var attempts = 0;
+        final dio = Dio();
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              attempts++;
+              if (attempts == 1) {
+                handler.reject(
+                  DioException(requestOptions: options, type: phase),
+                );
+              } else {
+                handler.resolve(
+                  Response<dynamic>(
+                    requestOptions: options,
+                    data: cartJsonFixture(),
+                    statusCode: 200,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+        final transport = StoreApiCartTransport(
+          storeUri: Uri.parse('https://shop.example.com'),
+          dio: dio,
+        );
+        final operation = transport.request(
+          CartApiMethod.post,
+          '/wp-json/wc/store/v1/cart/add-item',
+          body: {'id': 42, 'quantity': 1},
+          headers: {'Cart-Token': 'test-only'},
+        );
+        if (phase == DioExceptionType.connectionTimeout) {
+          await operation;
+          expect(attempts, 2);
+        } else {
+          await expectLater(
+            operation,
+            throwsA(isA<StoreApiException>()),
+          );
+          expect(attempts, 1);
+        }
+      });
+    }
+
     test('keeps tokenized mutations on the configured store', () async {
       RequestOptions? captured;
       final Dio dio = Dio();

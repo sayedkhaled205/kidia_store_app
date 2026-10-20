@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:mobishop_store_app/core/network/connection_retry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
@@ -105,14 +106,16 @@ class StoreApiCartTransport implements CartApiTransport {
     };
 
     try {
-      final Response<dynamic> response = await _dio.requestUri<dynamic>(
-        requestUri,
-        data: body,
-        options: Options(
-          method: method == CartApiMethod.get ? 'GET' : 'POST',
-          responseType: ResponseType.json,
-          followRedirects: false,
-          headers: requestHeaders,
+      final Response<dynamic> response = await retryConnectionOnce(
+        () => _dio.requestUri<dynamic>(
+          requestUri,
+          data: body,
+          options: Options(
+            method: method == CartApiMethod.get ? 'GET' : 'POST',
+            responseType: ResponseType.json,
+            followRedirects: false,
+            headers: requestHeaders,
+          ),
         ),
       );
 

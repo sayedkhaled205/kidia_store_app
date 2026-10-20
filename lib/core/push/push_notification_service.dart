@@ -290,7 +290,7 @@ final class PushNotificationService with WidgetsBindingObserver {
         'platform': _platform,
         'client_id': clientId,
         'locale': AppConfig.storeLocale,
-        'test': false,
+        'test': AppConfig.isTestBuild,
       },
     );
   }

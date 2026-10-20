@@ -170,6 +170,8 @@ def native_defines(environment):
         reject("STORE_PLATFORM must be woocommerce, shopify or odoo.")
     store_origin = origin(environment.get("STORE_URL", ""), clean=platform != "woocommerce")
     result = {"STORE_PLATFORM": platform}
+    if environment.get("MOBISHOP_ANDROID_BUILD_MODE") == "qa":
+        result["APP_TEST_BUILD"] = True
     bundle = environment.get("APP_DESIGN_BUNDLE", "")
     if platform != "woocommerce" or bundle:
         validate_bundle(bundle, platform, store_origin)
