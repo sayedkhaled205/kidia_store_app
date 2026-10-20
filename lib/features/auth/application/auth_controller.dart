@@ -6,6 +6,7 @@ import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart'
 import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/website_auth_providers.dart';
 
 class AuthController extends AsyncNotifier<AuthSession?> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
@@ -15,6 +16,17 @@ class AuthController extends AsyncNotifier<AuthSession?> {
 
   Future<AuthIdentity> identify(String email) {
     return _repository.identify(email.trim());
+  }
+
+  Future<AuthSession> signInThroughWebsite() async {
+    final operationRef = ref;
+    final session = await ref.read(websiteAuthServiceProvider).signIn();
+    if (!operationRef.mounted) return session;
+    state = AsyncData<AuthSession?>(session);
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground('login', authToken: session.token);
+    return session;
   }
 
   /// Apply the profile confirmed by the store without restarting authentication.

@@ -10,6 +10,8 @@ import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dar
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_copy.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/website_auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/website_auth_screen.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -54,6 +56,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget build(BuildContext context) {
     // Start secure-session restoration before the customer submits a form.
     ref.watch(authControllerProvider);
+    final website = ref.watch(websiteAuthEnabledProvider);
+    if (website.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (website.hasError) {
+      return Scaffold(appBar: AppBar(), body: Center(child: FilledButton(
+        onPressed: () => ref.invalidate(websiteAuthEnabledProvider),
+        child: Text(Localizations.localeOf(context).languageCode == 'ar'
+          ? 'تعذر تحميل تسجيل الدخول — حاول مرة أخرى' : 'Unable to load sign-in — retry'),
+      )));
+    }
+    if (website.value == true) return const WebsiteAuthScreen();
     final AuthCopy copy = AuthCopy.of(context);
     final bool flat = ref.watch(compactFamilyProvider);
     final logo = ref.watch(cmsPageLayoutProvider('account')).value?.header.string('logo_url', '') ?? '';

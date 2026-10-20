@@ -1,3 +1,7 @@
+import java.net.URI
+import java.security.MessageDigest
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -8,6 +12,13 @@ val storeAppName = providers.gradleProperty("APP_NAME")
     .orElse("MobiShop Store")
 val storeApplicationId = providers.gradleProperty("APPLICATION_ID")
     .orElse("com.mobishop.mobishop_store_app")
+val loginDefines = (project.findProperty("dart-defines") as? String).orEmpty()
+    .split(',').filter { it.isNotEmpty() }
+    .map { String(Base64.getDecoder().decode(it), Charsets.UTF_8).split('=', limit = 2) }
+    .filter { it.size == 2 }.associate { it[0] to it[1] }
+val loginHost = URI(loginDefines["STORE_URL"] ?: loginDefines["WOOCOMMERCE_BASE_URL"] ?: "https://unconfigured.invalid").host.orEmpty().lowercase()
+val loginSuffix = MessageDigest.getInstance("SHA-256").digest(loginHost.toByteArray(Charsets.UTF_8))
+    .take(8).joinToString("") { "%02x".format(it.toInt() and 0xff) }
 val releaseKeyNames = listOf("CM_KEYSTORE_PATH", "CM_KEYSTORE_PASSWORD", "CM_KEY_ALIAS", "CM_KEY_PASSWORD")
 val releaseKeyValues = releaseKeyNames.associateWith { System.getenv(it).orEmpty() }
 val hasReleaseKey = releaseKeyValues.values.all { it.isNotEmpty() }
@@ -52,6 +63,7 @@ android {
 
     defaultConfig {
         applicationId = storeApplicationId.get()
+        manifestPlaceholders["mobishopLoginScheme"] = "mobishop-login-$loginSuffix"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // flutter_secure_storage 10 uses Android Keystore ciphers available
