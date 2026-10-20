@@ -8,6 +8,7 @@ class CatalogImage {
 
   final Uri source;
   final Uri? thumbnail;
+  Uri get cardSource => thumbnail ?? source;
   final String name;
   final String alt;
 }

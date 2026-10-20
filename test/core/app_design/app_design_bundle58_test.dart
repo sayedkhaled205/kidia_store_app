@@ -49,6 +49,7 @@ CatalogProduct _product(
   String regularPriceMinor = '15000',
   bool inStock = true,
   bool withImage = true,
+  bool withThumbnail = false,
 }) => CatalogProduct(
   id: id,
   name: '$name $id',
@@ -70,6 +71,9 @@ CatalogProduct _product(
       ? <CatalogImage>[
           CatalogImage(
             source: Uri.parse('$appDesignOrigin58/images/live-$id.png'),
+            thumbnail: withThumbnail
+                ? Uri.parse('$appDesignOrigin58/images/live-$id-300x300.png')
+                : null,
           ),
         ]
       : const <CatalogImage>[],
@@ -622,6 +626,32 @@ void main() {
         expect(repository.productQueries, hasLength(2));
         expect(repository.categoryQueries, hasLength(2));
         expect(firstGrid.items.single.price, '123.45');
+      },
+    );
+
+    test(
+      'home cards request thumbnails while product originals stay available',
+      () async {
+        final repository = _Catalog()
+          ..products = [_product(71, withThumbnail: true)];
+        final home = await _parse(
+          appDesignFixture58(),
+        ).hydrateHome(repository, locale: 'ar');
+        final card = home.blocks
+            .whereType<ProductGridBlock>()
+            .single
+            .items
+            .single;
+        expect(card.imageUrl, '$appDesignOrigin58/images/live-71-300x300.png');
+        expect(card.imageUrls, [
+          '$appDesignOrigin58/images/live-71-300x300.png',
+        ]);
+        expect(
+          repository.products.single.primaryImage!.source.toString(),
+          '$appDesignOrigin58/images/live-71.png',
+        );
+        final fallback = _product(72).primaryImage!;
+        expect(fallback.cardSource, fallback.source);
       },
     );
 

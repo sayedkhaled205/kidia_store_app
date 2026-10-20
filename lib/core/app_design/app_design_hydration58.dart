@@ -233,9 +233,9 @@ HomeProductItem _product(CatalogProduct product) {
   return HomeProductItem(
     id: product.id,
     name: product.name,
-    imageUrl: product.primaryImage?.source.toString() ?? '',
+    imageUrl: product.primaryImage?.cardSource.toString() ?? '',
     imageUrls: List<String>.unmodifiable(
-      product.images.map((image) => image.source.toString()),
+      product.images.map((image) => image.cardSource.toString()),
     ),
     price: money.decimalAmount(money.priceMinor),
     regularPrice: money.regularPriceMinor.isEmpty

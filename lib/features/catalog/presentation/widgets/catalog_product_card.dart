@@ -27,9 +27,7 @@ class CatalogProductCard extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final CatalogCopy copy = CatalogCopy.of(context);
-    final String? imageUrl =
-        product.primaryImage?.source.toString() ??
-        product.primaryImage?.thumbnail?.toString();
+    final String? imageUrl = product.primaryImage?.cardSource.toString();
     final String currentPrice = product.prices.displayAmount(
       product.prices.priceMinor,
     );
@@ -74,12 +72,7 @@ class CatalogProductCard extends StatelessWidget {
     final bool imageSwipeEnabled =
         settings?.boolean('enable_image_swipe', false) ?? false;
     final List<String> imageUrls = product.images
-        .expand(
-          (image) => <String>[
-            image.source.toString(),
-            if (image.thumbnail != null) image.thumbnail.toString(),
-          ],
-        )
+        .map((image) => image.cardSource.toString())
         .where((String url) => url.isNotEmpty)
         .toSet()
         .toList(growable: false);
