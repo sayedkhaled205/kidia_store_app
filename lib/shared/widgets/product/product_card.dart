@@ -78,6 +78,24 @@ class ProductCard extends StatelessWidget {
   final int? wishlistProductId;
   final ProductWishlistAppearance wishlistAppearance;
 
+  /// Price-only cards need no space for the hidden name or rating rows.
+  static double priceOnlyContentHeight(
+    BuildContext context, {
+    required String price,
+    required String currencySymbol,
+    String? regularPrice,
+    bool compact = false,
+    double? contentBottomPadding,
+  }) =>
+      (compact ? 8 : 10) +
+      ProductPrice(
+        price: price,
+        regularPrice: regularPrice,
+        currencySymbol: currencySymbol,
+        compact: compact,
+      ).measureHeight(context) +
+      (contentBottomPadding ?? (compact ? 10 : 12));
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -439,7 +457,8 @@ class _ProductInformation extends StatelessWidget {
             ),
           ],
           if (showPrice) ...<Widget>[
-            SizedBox(height: compact ? 6 : 8),
+            if (showName || (showRating && rating > 0))
+              SizedBox(height: compact ? 6 : 8),
             ProductPrice(
               price: price,
               regularPrice: showRegularPrice ? regularPrice : null,

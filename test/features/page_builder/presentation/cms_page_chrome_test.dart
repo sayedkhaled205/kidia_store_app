@@ -5,8 +5,31 @@ import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('short wordmark uses its saved contain frame without stretching', (tester) async {
+    for (final fit in ['contain', 'cover']) {
+      final base = _layout(page: 'home', height: 112);
+      final layout = CmsPageLayout(page: base.page, header: CmsPageComponent(
+        id: 'header', type: 'app_header', enabled: true, settings: {
+          ...base.header.settings,
+          'logo_url': 'https://store.example/logo.png',
+          'logo_width': 100, 'logo_height': 32, 'logo_fit': fit,
+          'layout_json': {'rows': [
+            {'columns': [{'width': 100, 'align': 'left', 'items': ['logo']}]},
+          ]},
+        }), elements: base.elements, footer: base.footer);
+      await _pumpPage(tester, layout: layout);
+      final image = tester.widget<AppNetworkImage>(find.byType(AppNetworkImage));
+      expect(image.width, 100);
+      expect(image.height, 32);
+      expect(image.fit, fit == 'contain' ? BoxFit.contain : BoxFit.cover);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   testWidgets('pill compact shape survives serialized zero radius and keeps custom radius', (tester) async {
     for (final entry in <(String, double, double, double)>[
       ('pill', 60, 0, 30), ('pill', 80, 0, 40),

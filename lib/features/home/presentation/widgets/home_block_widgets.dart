@@ -1678,7 +1678,9 @@ class ProductCarouselBlockWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(
+        vertical: !block.showName && !block.showRating ? 8 : 10,
+      ),
       child: Column(
         children: [
           if (block.title != null)
@@ -1707,9 +1709,16 @@ class ProductCarouselBlockWidget extends StatelessWidget {
           SizedBox(
             height:
                 (block.itemWidth / block.imageRatio) +
-                (block.showName || block.showPrice || block.showRating
-                    ? 126
-                    : 8),
+                _homeProductContentHeight(
+                  context,
+                  items: block.items,
+                  showName: block.showName,
+                  showPrice: block.showPrice,
+                  showRegularPrice: block.showRegularPrice,
+                  showRating: block.showRating,
+                  compact: true,
+                  contentBottomPadding: block.contentBottomPadding,
+                ),
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -1763,7 +1772,9 @@ class ProductGridBlockWidget extends StatelessWidget {
     final int columns = block.columns.clamp(1, 4).toInt();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(
+        vertical: !block.showName && !block.showRating ? 8 : 10,
+      ),
       child: Column(
         children: [
           if (block.title != null)
@@ -1800,11 +1811,17 @@ class ProductGridBlockWidget extends StatelessWidget {
                 final double itemWidth =
                     (constraints.maxWidth - ((columns - 1) * spacing)) /
                     columns;
-                final bool showsInformation =
-                    block.showName || block.showPrice || block.showRating;
                 final double itemHeight =
                     (itemWidth / block.imageRatio) +
-                    (showsInformation ? 126 : 0);
+                    _homeProductContentHeight(
+                      context,
+                      items: block.items,
+                      showName: block.showName,
+                      showPrice: block.showPrice,
+                      showRegularPrice: block.showRegularPrice,
+                      showRating: block.showRating,
+                      contentBottomPadding: block.contentBottomPadding,
+                    );
 
                 return GridView.builder(
                   itemCount: block.items.length,
@@ -3158,6 +3175,33 @@ Color _parseHexColor(String? value, {required Color fallback}) {
   final int? colorValue = int.tryParse(normalized, radix: 16);
 
   return colorValue == null ? fallback : Color(colorValue);
+}
+
+double _homeProductContentHeight(
+  BuildContext context, {
+  required List<HomeProductItem> items,
+  required bool showName,
+  required bool showPrice,
+  required bool showRegularPrice,
+  required bool showRating,
+  required double contentBottomPadding,
+  bool compact = false,
+}) {
+  // Keep the established rich-card layout; price-only collections should not
+  // reserve the same name/rating area when those fields are intentionally off.
+  if (showName || showRating) return 126;
+  if (!showPrice) return 0;
+  return items.fold<double>(0, (height, item) {
+    final itemHeight = ProductCard.priceOnlyContentHeight(
+      context,
+      price: item.price,
+      regularPrice: showRegularPrice ? item.regularPrice : null,
+      currencySymbol: item.currencySymbol,
+      compact: compact,
+      contentBottomPadding: contentBottomPadding,
+    );
+    return itemHeight > height ? itemHeight : height;
+  });
 }
 
 class _HomeProductCardAdapter extends StatelessWidget {
