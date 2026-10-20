@@ -36,6 +36,24 @@ class UnifiedWorkflowTests(unittest.TestCase):
         self.assertIn('${BUILD_VERSION_NAME:?}', scripts)
         self.assertIn('python3 tool/configure_ios_store.py', scripts)
 
+    def test_android_qa_is_explicit_and_dual_releases_cannot_downgrade(self):
+        workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
+        for name in ('mobishop-release', 'mobishop-dual-release', 'mobishop-customer-dual-release'):
+            workflow = workflows[name]
+            expected = 'qa' if name == 'mobishop-release' else 'release'
+            self.assertEqual(workflow['environment']['vars']['MOBISHOP_ANDROID_BUILD_MODE'], expected)
+            steps = workflow['scripts']
+            preflight = next(step['script'] for step in steps if step['name'] == 'Verify Android build mode and registered signer')
+            self.assertIn('tool/verify_android_signing.py --prepare', preflight)
+            if expected == 'release':
+                self.assertIn('test "${MOBISHOP_ANDROID_BUILD_MODE:?}" = release', preflight)
+                self.assertEqual(workflow['environment']['vars']['MOBISHOP_REQUIRE_RELEASE_SIGNING'], 'true')
+            package = next(step['script'] for step in steps if step['name'] == 'Package application build files')
+            self.assertIn('--apk "$APK_PATH" --aab "$AAB_PATH"', package)
+            self.assertIn('"$PACKAGE_DIR/android-build-verification.json"', package)
+            self.assertLess(package.index('tool/verify_android_signing.py'), package.index('ditto -c -k'))
+            self.assertEqual(steps[-1]['name'], 'Mark build successful')
+
 
 if __name__ == '__main__':
     unittest.main()

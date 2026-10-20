@@ -87,6 +87,8 @@ workflows:
           - kidia_app_store_distribution
       vars:
         APPLE_TEAM_ID: AC7BML9GL6
+        MOBISHOP_ANDROID_BUILD_MODE: release
+        MOBISHOP_REQUIRE_RELEASE_SIGNING: "true"
     cache:
       cache_paths:
         - $FLUTTER_ROOT/.pub-cache
@@ -110,6 +112,12 @@ workflows:
             echo "ANDROID_APPLICATION_ID must be a valid lowercase Android application ID."
             exit 1
           fi
+      - name: Verify Android build mode and registered signer
+        script: |
+          set -euo pipefail
+          test "${MOBISHOP_ANDROID_BUILD_MODE:?}" = release
+          python3 tool/test_verify_android_signing.py
+          python3 tool/verify_android_signing.py --prepare --env-file "${CM_ENV:?}"
       - name: Validate registered iOS identity
         script: |
           set -euo pipefail
@@ -189,6 +197,10 @@ workflows:
           AAB_PATH=$(find build/app/outputs/bundle \
             -type f -name "*.aab" | head -n 1)
 
+          python3 tool/verify_android_signing.py \
+            --apk "$APK_PATH" --aab "$AAB_PATH" \
+            --output "$CM_BUILD_DIR/build/android-build-verification.json"
+
           PACKAGE_DIR="$CM_BUILD_DIR/build/mobishop-package"
           OUTPUT_DIR="$CM_BUILD_DIR/build/mobishop-artifacts"
           rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
@@ -196,6 +208,7 @@ workflows:
 
           cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
           cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          cp "$CM_BUILD_DIR/build/android-build-verification.json" "$PACKAGE_DIR/android-build-verification.json"
           IPA_PATH=$(find build/ios/ipa -type f -name '*.ipa' | head -n 1)
           test -s "$APK_PATH"
           test -s "$AAB_PATH"
@@ -207,6 +220,7 @@ workflows:
         script: touch "$CM_BUILD_DIR/.mobishop-build-success"
     artifacts:
       - build/mobishop-artifacts/mobishop-build-files.zip
+      - build/android-build-verification.json
     publishing:
       scripts:
         - name: Send build result to MobiShop API
@@ -261,6 +275,9 @@ workflows:
       cocoapods: default
       # The API supplies exactly one registered store-specific secret group.
       # No customer receives another store's signing material by default.
+      vars:
+        MOBISHOP_ANDROID_BUILD_MODE: release
+        MOBISHOP_REQUIRE_RELEASE_SIGNING: "true"
     cache:
       cache_paths:
         - $FLUTTER_ROOT/.pub-cache
@@ -284,6 +301,12 @@ workflows:
             echo "ANDROID_APPLICATION_ID must be a valid lowercase Android application ID."
             exit 1
           fi
+      - name: Verify Android build mode and registered signer
+        script: |
+          set -euo pipefail
+          test "${MOBISHOP_ANDROID_BUILD_MODE:?}" = release
+          python3 tool/test_verify_android_signing.py
+          python3 tool/verify_android_signing.py --prepare --env-file "${CM_ENV:?}"
       - name: Validate registered iOS identity
         script: |
           set -euo pipefail
@@ -360,6 +383,10 @@ workflows:
           AAB_PATH=$(find build/app/outputs/bundle \
             -type f -name "*.aab" | head -n 1)
 
+          python3 tool/verify_android_signing.py \
+            --apk "$APK_PATH" --aab "$AAB_PATH" \
+            --output "$CM_BUILD_DIR/build/android-build-verification.json"
+
           PACKAGE_DIR="$CM_BUILD_DIR/build/mobishop-package"
           OUTPUT_DIR="$CM_BUILD_DIR/build/mobishop-artifacts"
           rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
@@ -367,6 +394,7 @@ workflows:
 
           cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
           cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          cp "$CM_BUILD_DIR/build/android-build-verification.json" "$PACKAGE_DIR/android-build-verification.json"
           IPA_PATH=$(find build/ios/ipa -type f -name '*.ipa' | head -n 1)
           test -s "$APK_PATH"
           test -s "$AAB_PATH"
@@ -378,6 +406,7 @@ workflows:
         script: touch "$CM_BUILD_DIR/.mobishop-build-success"
     artifacts:
       - build/mobishop-artifacts/mobishop-build-files.zip
+      - build/android-build-verification.json
     publishing:
       scripts:
         - name: Send build result to MobiShop API
@@ -423,7 +452,7 @@ workflows:
             curl "${CURL_ARGS[@]}" "$MOBISHOP_CALLBACK_URL"
 
   mobishop-release:
-    name: MobiShop Android
+    name: MobiShop Android test build (QA)
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
@@ -431,6 +460,8 @@ workflows:
       flutter: 3.44.8
       xcode: latest
       cocoapods: default
+      vars:
+        MOBISHOP_ANDROID_BUILD_MODE: qa
     cache:
       cache_paths:
         - $FLUTTER_ROOT/.pub-cache
@@ -454,6 +485,11 @@ workflows:
             echo "ANDROID_APPLICATION_ID must be a valid lowercase Android application ID."
             exit 1
           fi
+      - name: Verify Android build mode and registered signer
+        script: |
+          set -euo pipefail
+          python3 tool/test_verify_android_signing.py
+          python3 tool/verify_android_signing.py --prepare --env-file "${CM_ENV:?}"
       - name: Install Flutter dependencies
         script: flutter pub get
       - name: Generate selected store app icons
@@ -501,6 +537,10 @@ workflows:
           AAB_PATH=$(find build/app/outputs/bundle \
             -type f -name "*.aab" | head -n 1)
 
+          python3 tool/verify_android_signing.py \
+            --apk "$APK_PATH" --aab "$AAB_PATH" \
+            --output "$CM_BUILD_DIR/build/android-build-verification.json"
+
           PACKAGE_DIR="$CM_BUILD_DIR/build/mobishop-package"
           OUTPUT_DIR="$CM_BUILD_DIR/build/mobishop-artifacts"
           rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
@@ -508,12 +548,14 @@ workflows:
 
           cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
           cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          cp "$CM_BUILD_DIR/build/android-build-verification.json" "$PACKAGE_DIR/android-build-verification.json"
           ditto -c -k --sequesterRsrc \
             "$PACKAGE_DIR" "$OUTPUT_DIR/mobishop-build-files.zip"
       - name: Mark build successful
         script: touch "$CM_BUILD_DIR/.mobishop-build-success"
     artifacts:
       - build/mobishop-artifacts/mobishop-build-files.zip
+      - build/android-build-verification.json
     publishing:
       scripts:
         - name: Send build result to MobiShop API

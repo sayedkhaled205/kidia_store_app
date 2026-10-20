@@ -11,11 +11,27 @@ val storeApplicationId = providers.gradleProperty("APPLICATION_ID")
 val releaseKeyNames = listOf("CM_KEYSTORE_PATH", "CM_KEYSTORE_PASSWORD", "CM_KEY_ALIAS", "CM_KEY_PASSWORD")
 val releaseKeyValues = releaseKeyNames.associateWith { System.getenv(it).orEmpty() }
 val hasReleaseKey = releaseKeyValues.values.all { it.isNotEmpty() }
+val androidBuildMode = System.getenv("MOBISHOP_ANDROID_BUILD_MODE").orEmpty().ifEmpty { "release" }
+require(androidBuildMode in setOf("qa", "release")) {
+    "Android build mode must be qa or release."
+}
 require(hasReleaseKey || releaseKeyValues.values.all { it.isEmpty() }) {
     "Android signing configuration is incomplete. Supply all four CM_KEYSTORE variables."
 }
 require(System.getenv("MOBISHOP_REQUIRE_RELEASE_SIGNING") != "true" || hasReleaseKey) {
     "A release keystore is required for a store submission build."
+}
+require(androidBuildMode != "qa" || (!hasReleaseKey && System.getenv("MOBISHOP_REQUIRE_RELEASE_SIGNING") != "true")) {
+    "An Android test build must not use a release signing identity."
+}
+// Normal local debug tasks still work. A release task can use Android's debug
+// key only when QA was explicitly selected; missing credentials never downgrade.
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.project == project && it.name.contains("Release") }) {
+        require(androidBuildMode == "qa" || hasReleaseKey) {
+            "A release keystore is required. Use explicit qa mode only for a test build."
+        }
+    }
 }
 
 android {
@@ -60,9 +76,11 @@ android {
 
     buildTypes {
         release {
-            // Existing staging builds remain installable without store credentials.
-            // Submission pipelines must set MOBISHOP_REQUIRE_RELEASE_SIGNING=true.
-            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "storeRelease" else "debug")
+            signingConfig = when {
+                androidBuildMode == "qa" -> signingConfigs.getByName("debug")
+                hasReleaseKey -> signingConfigs.getByName("storeRelease")
+                else -> null
+            }
         }
     }
 }

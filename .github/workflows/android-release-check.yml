@@ -12,6 +12,9 @@ on:
       - 'tool/build_app_icons.py'
       - 'tool/test_build_app_icons.py'
       - 'tool/requirements-build.txt'
+      - 'tool/verify_android_signing.py'
+      - 'tool/VerifyAndroidSigning.java'
+      - 'tool/test_verify_android_signing.py'
 
 permissions:
   contents: read
@@ -30,6 +33,8 @@ jobs:
       - run: flutter pub get
       - name: Check version request boundaries
         run: bash tool/test_android_build_version.sh
+      - name: Check signing policy and cryptographic rejection cases
+        run: MOBISHOP_TEST_JDK="$JAVA_HOME" python3 tool/test_verify_android_signing.py
       - name: Test and generate native icon fixture
         run: |
           python3 -m pip install -r tool/requirements-build.txt
@@ -48,16 +53,29 @@ jobs:
           CM_KEY_ALIAS: ci-test
           CM_KEY_PASSWORD: ci-test-password
           MOBISHOP_REQUIRE_RELEASE_SIGNING: 'true'
+          MOBISHOP_ANDROID_BUILD_MODE: release
+          ANDROID_APPLICATION_ID: com.mobishop.releasecheck
           ORG_GRADLE_PROJECT_APP_NAME: 'كيديا اختبار'
           ORG_GRADLE_PROJECT_APPLICATION_ID: com.mobishop.releasecheck
           BUILD_VERSION_NAME: '1.2.3'
           BUILD_VERSION_CODE: '123'
         run: |
+          set -euo pipefail
+          export ANDROID_SIGNING_CERTIFICATE_SHA256="$(java tool/VerifyAndroidSigning.java keystore "$CM_KEYSTORE_PATH" | python3 -c 'import json,sys; print(json.load(sys.stdin)["certificate_sha256"])')"
+          python3 tool/verify_android_signing.py --prepare
           source tool/android_build_version.sh
           flutter build apk --release "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
             --dart-define=STORE_URL=https://example.com \
             --dart-define=STORE_NAME=MobiShop \
             --dart-define=STORE_LOCALE=ar
+          flutter build appbundle --release "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define=STORE_URL=https://example.com \
+            --dart-define=STORE_NAME=MobiShop \
+            --dart-define=STORE_LOCALE=ar
+          python3 tool/verify_android_signing.py \
+            --apk build/app/outputs/flutter-apk/app-release.apk \
+            --aab build/app/outputs/bundle/release/app-release.aab \
+            --output "$RUNNER_TEMP/android-signing-fixture.json"
       - name: Check actual APK identity and certificate
         run: |
           set -euo pipefail
