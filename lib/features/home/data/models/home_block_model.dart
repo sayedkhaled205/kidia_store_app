@@ -201,8 +201,13 @@ abstract final class HomeBlockModel {
 		_optionalString(data, 'overlay_position') ?? 'start';
 	final String indicatorStyle =
 		_optionalString(data, 'indicator_style') ?? 'pill';
-	final String indicatorPosition =
+	final String savedIndicatorPosition =
 		_optionalString(data, 'indicator_position') ?? 'below';
+	// Central Builder saves this placement as "inside". Older WordPress
+	// layouts call the same placement "image_bottom"; render both identically.
+	final String indicatorPosition = savedIndicatorPosition == 'inside'
+		? 'image_bottom'
+		: savedIndicatorPosition;
 	if (!const <String>{'cover', 'contain'}.contains(imageFit)) {
 	  throw FormatException('Unsupported hero image fit: $imageFit');
 	}

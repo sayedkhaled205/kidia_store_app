@@ -43,6 +43,16 @@ workflows:
       - name: Apply existing distribution profile
         script: |
           xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build signed Kidia IPA
         script: |
           set -euo pipefail
@@ -137,6 +147,17 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android APK
         script: |
           set -euo pipefail
@@ -327,6 +348,17 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android APK
         script: |
           set -euo pipefail
@@ -502,6 +534,17 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build Android APK
         script: |
           set -euo pipefail
@@ -630,6 +673,17 @@ workflows:
           set -euo pipefail
           flutter analyze lib test
           flutter test
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Compile iOS simulator application
         script: |
           set -euo pipefail
@@ -650,9 +704,11 @@ workflows:
           mkdir -p build/ios/simulator-artifacts
           python3 tool/test_verify_ios_simulator.py
           python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
-          xcrun simctl io "$SIMULATOR_ID" screenshot build/ios/simulator-artifacts/launch.png
           ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/launch.png
       - build/ios/simulator-artifacts/launch-check.json
+      - build/ios/simulator-artifacts/launch-stdout.log
+      - build/ios/simulator-artifacts/launch-stderr.log
+      - build/ios/simulator-artifacts/launch-screen-text.json

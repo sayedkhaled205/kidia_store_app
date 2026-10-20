@@ -7,6 +7,33 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class UnifiedWorkflowTests(unittest.TestCase):
+    def test_actual_customer_design_is_checked_before_every_native_build(self):
+        workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
+        for name, workflow in workflows.items():
+            steps = workflow['scripts']
+            checks = [i for i, step in enumerate(steps) if step['name'] == 'Validate actual compiled customer design']
+            self.assertEqual(len(checks), 1, name)
+            preflight = steps[checks[0]]['script']
+            self.assertIn('flutter test test/core/app_design/compiled_design_preflight297_test.dart', preflight)
+            self.assertIn('python3 tool/native_build_defines81.py', preflight)
+            if name != 'kidia-ios-testflight':
+                self.assertIn('--dart-define=REQUIRE_SAVED_DESIGN=true', preflight)
+            for i, step in enumerate(steps):
+                if 'flutter build ' not in step['script']:
+                    continue
+                self.assertLess(checks[0], i, name)
+                for value in ('--dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json"', '--dart-define="STORE_URL=$STORE_URL"'):
+                    self.assertIn(value, preflight)
+                    self.assertIn(value, step['script'])
+
+    def test_simulator_success_requires_log_and_screen_validation(self):
+        workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['mobishop-ios-simulator-check']
+        launch = next(step['script'] for step in workflow['scripts'] if step['name'] == 'Launch on iPhone simulator')
+        self.assertIn('set -euo pipefail', launch)
+        self.assertLess(launch.index('tool/verify_ios_simulator.py'), launch.index('ditto -c -k'))
+        for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
+            self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
+
     def test_signed_outputs_are_required_before_success(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         dual = workflows['mobishop-dual-release']
