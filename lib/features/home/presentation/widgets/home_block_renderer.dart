@@ -18,7 +18,19 @@ class HomeBlockRenderer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<HomeBlock> enabledBlocks = blocks
-        .where((HomeBlock block) => block.enabled)
+        .where(
+          (HomeBlock block) =>
+              block.enabled &&
+              // Hydration has completed here. A successful collection with
+              // no matches must not reserve a carousel's height or frame
+              // spacing. Failed requests remain CatalogUnavailableBlock so
+              // their retry action stays visible.
+              switch (block) {
+                ProductCarouselBlock products => products.items.isNotEmpty,
+                ProductGridBlock products => products.items.isNotEmpty,
+                _ => true,
+              },
+        )
         .toList(growable: false);
 
     if (enabledBlocks.isEmpty) {
@@ -37,10 +49,7 @@ class HomeBlockRenderer extends StatelessWidget {
           key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
           child: HomeBlockFrame(
             block: block,
-            child: HomeBlockFactory.create(
-              block: block,
-              onAction: onAction,
-            ),
+            child: HomeBlockFactory.create(block: block, onAction: onAction),
           ),
         );
       },
