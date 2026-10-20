@@ -161,8 +161,9 @@ void main() {
           // remain between the visible price and the next product image.
           expect(nextImage.top - firstPrice.bottom, closeTo(20, 0.01));
           expect(tester.takeException(), isNull);
-          if (width == 390 && scale == 1)
+          if (width == 390 && scale == 1) {
             await _capture(tester, 'grid-spacing301');
+          }
         },
       );
       testWidgets(
@@ -181,10 +182,11 @@ void main() {
           final nextSection = tester.getRect(
             find.byKey(const Key('next-section')),
           );
-            expect(nextSection.top - price.bottom, closeTo(16, 0.01));
+          expect(nextSection.top - price.bottom, closeTo(16, 0.01));
           expect(tester.takeException(), isNull);
-          if (width == 390 && scale == 1)
+          if (width == 390 && scale == 1) {
             await _capture(tester, 'carousel-spacing301');
+          }
         },
       );
     }
