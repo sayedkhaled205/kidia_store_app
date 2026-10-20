@@ -1,6 +1,11 @@
 # MobiShop Store
 
 A reusable Flutter storefront and WordPress plugin for WooCommerce stores.
+
+New WooMobile store connections use **Mobi2App Connector for WooCommerce** from
+[`connectors/woocommerce`](connectors/woocommerce/README.md). Build its reviewed
+package with `python3 tool/build_woocommerce_connector.py`; the older `mobishop/`
+CMS plugin and `mobishop.zip` remain separate legacy artifacts.
 The app reads public catalog data from the official WooCommerce Store API and
 reads its CMS home layout from the bundled **MobiShop** plugin.
 
@@ -9,7 +14,8 @@ reads its CMS home layout from the bundled **MobiShop** plugin.
 1. Install Flutter and Android Studio (including an Android SDK).
 2. Copy `config/store.example.json` to `config/store.local.json`.
 3. Set `STORE_URL` to the HTTPS origin of the WooCommerce store.
-4. Install `mobishop.zip` in WordPress and activate it.
+4. Build `python3 tool/build_woocommerce_connector.py`, then install the generated
+   versioned ZIP from `build/woocommerce/` in WordPress and activate it.
 5. Run:
 
 ```bash
@@ -53,7 +59,7 @@ embedded in the Flutter app. Payment gateways likewise require credentials and
 server-side adapters owned by each store. The generic checkout deliberately
 does not store or transmit raw card details.
 
-## WordPress package
+## Legacy WordPress CMS package
 
 `mobishop.zip` is the installable plugin archive. Replace the installed
 plugin only after backing up the site, then verify Library, Home Builder,

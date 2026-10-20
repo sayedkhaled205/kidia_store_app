@@ -1,0 +1,10 @@
+Mobi2App Connector for WooCommerce 1.46.73
+
+PHP and first-party JavaScript are distributed as readable source.
+There is no compiled application or visual builder in this connector.
+
+public/assets/vendor/qrcode.min.js is QRCode.js by David Shim, licensed under
+the MIT license in public/assets/vendor/qrcode.LICENSE. Readable upstream
+source and build instructions: https://github.com/davidshimjs/qrcodejs
+
+Legacy theme artwork is retained for existing stored layout references.

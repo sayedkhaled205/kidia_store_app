@@ -1,0 +1,2960 @@
+{
+  "schema": 1,
+  "slug": "mobi2app-connector",
+  "version": "1.46.75",
+  "verified_release_zip_sha256": "cdf17554b729670505a045a3bbb281e7a39d361d5782a74142b0a29beba1e4c2",
+  "files": {
+    "admin/assets/theme-previews/beauty/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "264785f636846387ea52c7af76662e6730f93d0982203fd85c2fc18462cc88bb",
+      "sha256": "264785f636846387ea52c7af76662e6730f93d0982203fd85c2fc18462cc88bb"
+    },
+    "admin/assets/theme-previews/beauty/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "7c8d56594ebdc42cb9460ff6520b64526eb92d689109952f48e0746ff5f949b8",
+      "sha256": "7c8d56594ebdc42cb9460ff6520b64526eb92d689109952f48e0746ff5f949b8"
+    },
+    "admin/assets/theme-previews/beauty/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "9bab3a5a980d075e19534c8f6c723ff0649d0f89f98d1d2e7c0a3b42fa329381",
+      "sha256": "9bab3a5a980d075e19534c8f6c723ff0649d0f89f98d1d2e7c0a3b42fa329381"
+    },
+    "admin/assets/theme-previews/beauty/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "b715824a93294f4de67573c4d031d023d37233a72be66a2f9a82b2a56e457bd3",
+      "sha256": "b715824a93294f4de67573c4d031d023d37233a72be66a2f9a82b2a56e457bd3"
+    },
+    "admin/assets/theme-previews/beauty/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "9381d37ed7630b447289ecd704805edd4c753139a2dba41f50ec3a293ddde482",
+      "sha256": "9381d37ed7630b447289ecd704805edd4c753139a2dba41f50ec3a293ddde482"
+    },
+    "admin/assets/theme-previews/beauty/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "d48831083f450b03f05176ad6d800ffd466422e3e5374816b22253fb542c6720",
+      "sha256": "d48831083f450b03f05176ad6d800ffd466422e3e5374816b22253fb542c6720"
+    },
+    "admin/assets/theme-previews/beauty/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "3d78ae526243594c8395428100574b55e9a24240b42b89b318772beb0f3f212a",
+      "sha256": "3d78ae526243594c8395428100574b55e9a24240b42b89b318772beb0f3f212a"
+    },
+    "admin/assets/theme-previews/beauty/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "737b63c996a0dccd59c162d05e9a658776d0f34ba55f98eba0c946537c31d263",
+      "sha256": "737b63c996a0dccd59c162d05e9a658776d0f34ba55f98eba0c946537c31d263"
+    },
+    "admin/assets/theme-previews/beauty/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "94c42e1f5b15178de8e78e8474f277235388791c64ac3eb37b6827a2df152cfc",
+      "sha256": "94c42e1f5b15178de8e78e8474f277235388791c64ac3eb37b6827a2df152cfc"
+    },
+    "admin/assets/theme-previews/beauty/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "6effc8034ae9d2cf6724d9251ee3b7d19f0530068534fac8efedeec5f45c900b",
+      "sha256": "6effc8034ae9d2cf6724d9251ee3b7d19f0530068534fac8efedeec5f45c900b"
+    },
+    "admin/assets/theme-previews/beauty/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "30c54500ee71db61bb1afe3aa264a3dc683d94bfed738c8dcdef2bb400722a7b",
+      "sha256": "30c54500ee71db61bb1afe3aa264a3dc683d94bfed738c8dcdef2bb400722a7b"
+    },
+    "admin/assets/theme-previews/beauty/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "b7cc2d5ebf0a793ce3f719843797320c8ef467880c080c5c474f2e73cf32fd8c",
+      "sha256": "b7cc2d5ebf0a793ce3f719843797320c8ef467880c080c5c474f2e73cf32fd8c"
+    },
+    "admin/assets/theme-previews/beauty/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "8a19e36a5622a4e80c19334330cd73d3789e08a2a389c42af968e8b45500e770",
+      "sha256": "8a19e36a5622a4e80c19334330cd73d3789e08a2a389c42af968e8b45500e770"
+    },
+    "admin/assets/theme-previews/beauty/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "2635edb58d62afce04dcbdddf7df235ac0785dbfb9b7b9cfe61844574cd2ff2b",
+      "sha256": "2635edb58d62afce04dcbdddf7df235ac0785dbfb9b7b9cfe61844574cd2ff2b"
+    },
+    "admin/assets/theme-previews/beauty/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "e0a7dfdac222ad71232fdfe80f2ea0227180537c3bff65755cae10aba27767c4",
+      "sha256": "e0a7dfdac222ad71232fdfe80f2ea0227180537c3bff65755cae10aba27767c4"
+    },
+    "admin/assets/theme-previews/beauty/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "3b157f7feb052e34574aa7f856b7330fb122bf035f4995c63c16d2ff61a4393e",
+      "sha256": "3b157f7feb052e34574aa7f856b7330fb122bf035f4995c63c16d2ff61a4393e"
+    },
+    "admin/assets/theme-previews/beauty/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "061511316d84ee2337a01d4800d7e7bf6bc9fc073b19d6effcf914a937514312",
+      "sha256": "061511316d84ee2337a01d4800d7e7bf6bc9fc073b19d6effcf914a937514312"
+    },
+    "admin/assets/theme-previews/beauty/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "f73dd2f17bc153300df1dde7857226f9b839f2f042507f1b1c542ed792abea66",
+      "sha256": "f73dd2f17bc153300df1dde7857226f9b839f2f042507f1b1c542ed792abea66"
+    },
+    "admin/assets/theme-previews/beauty/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "7b49dff8763b20672db7f7a388660cdf23c71b17836393981e56450d7ade9dbc",
+      "sha256": "7b49dff8763b20672db7f7a388660cdf23c71b17836393981e56450d7ade9dbc"
+    },
+    "admin/assets/theme-previews/beauty/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "39246eaa5dd06b9d5a5e6523c4cdb7b1c5006706f3a00565e52b16a6a51c792e",
+      "sha256": "39246eaa5dd06b9d5a5e6523c4cdb7b1c5006706f3a00565e52b16a6a51c792e"
+    },
+    "admin/assets/theme-previews/beauty/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "6053f16d8ce2c43061d06e96f46da62c8f80d6ad5631e084e87ba8bbbe0bd613",
+      "sha256": "6053f16d8ce2c43061d06e96f46da62c8f80d6ad5631e084e87ba8bbbe0bd613"
+    },
+    "admin/assets/theme-previews/beauty/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "21f945e4140dd56c11f927658e11e835479f3b08fdb78e9fd88f06fd7c537d07",
+      "sha256": "21f945e4140dd56c11f927658e11e835479f3b08fdb78e9fd88f06fd7c537d07"
+    },
+    "admin/assets/theme-previews/beauty/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "8023fd9898101496677c9815763a0200b06d8fb879414f601e42556b325fea92",
+      "sha256": "8023fd9898101496677c9815763a0200b06d8fb879414f601e42556b325fea92"
+    },
+    "admin/assets/theme-previews/beauty/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "e5e12c72c34031c58dfb7d9e81d0c4cbc140022bf277a2727fca9e8d60355848",
+      "sha256": "e5e12c72c34031c58dfb7d9e81d0c4cbc140022bf277a2727fca9e8d60355848"
+    },
+    "admin/assets/theme-previews/beauty.webp": {
+      "source": "mobishop/admin/assets/theme-previews/beauty.webp",
+      "newline": "binary",
+      "source_sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432",
+      "sha256": "2f805e93bc41632d7323d3ebbf77eff639d353c6e2aaf03888e67affd7da3432"
+    },
+    "admin/assets/theme-previews/coffee/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "cdab7e5b191804e38ff1ca83a2ba1fd2fd5b5b9cae0308229fb5d6813c9e0f6d",
+      "sha256": "cdab7e5b191804e38ff1ca83a2ba1fd2fd5b5b9cae0308229fb5d6813c9e0f6d"
+    },
+    "admin/assets/theme-previews/coffee/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "65720db9b208c4f7377f81d29eab8267c7c2b6ba2fb0a60bd15eb2b6d3128af4",
+      "sha256": "65720db9b208c4f7377f81d29eab8267c7c2b6ba2fb0a60bd15eb2b6d3128af4"
+    },
+    "admin/assets/theme-previews/coffee/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "7026260cc4254c626d15efb91efeba29c6df1f8f0a43429ed474587a6225e86a",
+      "sha256": "7026260cc4254c626d15efb91efeba29c6df1f8f0a43429ed474587a6225e86a"
+    },
+    "admin/assets/theme-previews/coffee/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "8c9bfb50a44b8d9d3435765c296b382ef1ccbe3dd6d25aabe2ccb1752cb0974a",
+      "sha256": "8c9bfb50a44b8d9d3435765c296b382ef1ccbe3dd6d25aabe2ccb1752cb0974a"
+    },
+    "admin/assets/theme-previews/coffee/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "5e844d5820497890e8b934e1772bde4bc49db22e68018d23adec6921832c57a1",
+      "sha256": "5e844d5820497890e8b934e1772bde4bc49db22e68018d23adec6921832c57a1"
+    },
+    "admin/assets/theme-previews/coffee/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "9a2c2d45c4d862707a5a120567d148da38d4fbb3164a866021f74629aed86769",
+      "sha256": "9a2c2d45c4d862707a5a120567d148da38d4fbb3164a866021f74629aed86769"
+    },
+    "admin/assets/theme-previews/coffee/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "e32f9dcac605178e6c16adbeff5ac0609cc839521f6b386b0055c61b814e3d72",
+      "sha256": "e32f9dcac605178e6c16adbeff5ac0609cc839521f6b386b0055c61b814e3d72"
+    },
+    "admin/assets/theme-previews/coffee/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "9fe32b8b6accbb3d1f156034ab28160f35e25c0f5a9f38c552bc515c1ac4f972",
+      "sha256": "9fe32b8b6accbb3d1f156034ab28160f35e25c0f5a9f38c552bc515c1ac4f972"
+    },
+    "admin/assets/theme-previews/coffee/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "586e33bba20024e7129a0745b1ac4ab228f35addc58be4825524838c039b5f2f",
+      "sha256": "586e33bba20024e7129a0745b1ac4ab228f35addc58be4825524838c039b5f2f"
+    },
+    "admin/assets/theme-previews/coffee/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "53ef9d9c3ca976fe69eb5769d141c26308815707181be32605c68da24e76d672",
+      "sha256": "53ef9d9c3ca976fe69eb5769d141c26308815707181be32605c68da24e76d672"
+    },
+    "admin/assets/theme-previews/coffee/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "d824063bf08aa38fe487a52d2866a6408b13f1b5b73167a722836c6f6a12a0ff",
+      "sha256": "d824063bf08aa38fe487a52d2866a6408b13f1b5b73167a722836c6f6a12a0ff"
+    },
+    "admin/assets/theme-previews/coffee/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "3889e7787da3bc7dfeb25420effd5c9a180d42be57c0936fb204b5ac06fa2c2a",
+      "sha256": "3889e7787da3bc7dfeb25420effd5c9a180d42be57c0936fb204b5ac06fa2c2a"
+    },
+    "admin/assets/theme-previews/coffee/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "cd3a89f8e25f477c39073602ce0190e74f9a83f9db2a596f05aad3c41b9ca631",
+      "sha256": "cd3a89f8e25f477c39073602ce0190e74f9a83f9db2a596f05aad3c41b9ca631"
+    },
+    "admin/assets/theme-previews/coffee/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "c8dcbe5f1fd44762bf8cfa72ed6bf9bca703606834b9c6d878c895878e9e1fce",
+      "sha256": "c8dcbe5f1fd44762bf8cfa72ed6bf9bca703606834b9c6d878c895878e9e1fce"
+    },
+    "admin/assets/theme-previews/coffee/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "89d5b0bf4b1fdbd4d861c65cc3482428d2f8c5045c3c00fe0f081b93552f7420",
+      "sha256": "89d5b0bf4b1fdbd4d861c65cc3482428d2f8c5045c3c00fe0f081b93552f7420"
+    },
+    "admin/assets/theme-previews/coffee/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "85a40bfceb02acf2a8e28918895d4da0039c410bf82ca61966b23fce0b9e8797",
+      "sha256": "85a40bfceb02acf2a8e28918895d4da0039c410bf82ca61966b23fce0b9e8797"
+    },
+    "admin/assets/theme-previews/coffee/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "ef21b7c40aa489cf672d0f827f380bed5e867548180520da7ed44d89c6684b71",
+      "sha256": "ef21b7c40aa489cf672d0f827f380bed5e867548180520da7ed44d89c6684b71"
+    },
+    "admin/assets/theme-previews/coffee/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "a7a49773cc0d68980fa24a45b154df80ef1de937ac6272541125015860daf08c",
+      "sha256": "a7a49773cc0d68980fa24a45b154df80ef1de937ac6272541125015860daf08c"
+    },
+    "admin/assets/theme-previews/coffee/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "c03a288537b1a7e684cf16fb206c4167913a7d0e7cf2bdba5b79b4561d6dcabd",
+      "sha256": "c03a288537b1a7e684cf16fb206c4167913a7d0e7cf2bdba5b79b4561d6dcabd"
+    },
+    "admin/assets/theme-previews/coffee/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "82e22a5b88a53752dce91df7eccb3117f9aa9fab240489936bc3022eff031920",
+      "sha256": "82e22a5b88a53752dce91df7eccb3117f9aa9fab240489936bc3022eff031920"
+    },
+    "admin/assets/theme-previews/coffee/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "640e0c44bfca5c8ec4ec6fd037b1c16ebe49d62fa45c88bd66f0e0373cb7ebfc",
+      "sha256": "640e0c44bfca5c8ec4ec6fd037b1c16ebe49d62fa45c88bd66f0e0373cb7ebfc"
+    },
+    "admin/assets/theme-previews/coffee/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "f2d9e60055872e69c1616211a976fcad53ede41313bd78cade832d44c796f1c0",
+      "sha256": "f2d9e60055872e69c1616211a976fcad53ede41313bd78cade832d44c796f1c0"
+    },
+    "admin/assets/theme-previews/coffee/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "833e617a22ef70455a4f6f614850d3ce221b48d2d60b3b5e2872cb825b76d005",
+      "sha256": "833e617a22ef70455a4f6f614850d3ce221b48d2d60b3b5e2872cb825b76d005"
+    },
+    "admin/assets/theme-previews/coffee/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "e063620f5e74491486dcf8021ff1bdc0078a3b742c1ddd8c3f343e80a2bd399d",
+      "sha256": "e063620f5e74491486dcf8021ff1bdc0078a3b742c1ddd8c3f343e80a2bd399d"
+    },
+    "admin/assets/theme-previews/coffee.webp": {
+      "source": "mobishop/admin/assets/theme-previews/coffee.webp",
+      "newline": "binary",
+      "source_sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d",
+      "sha256": "fe98373a3ab2ece8fa65f01d4597cbd650f26f88d7001c74cd043b1f0065485d"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "74660848313417c91e06f707321dc5c5749b1454b2c095795d5779392738bfbf",
+      "sha256": "74660848313417c91e06f707321dc5c5749b1454b2c095795d5779392738bfbf"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "522251fffd690c3fd03df6f25e3fbcd6e0af4c6c366d8b58d616bcd1ac8c3214",
+      "sha256": "522251fffd690c3fd03df6f25e3fbcd6e0af4c6c366d8b58d616bcd1ac8c3214"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "713d1ce5d293f9dbaad765625ca546cd2d366aeb4299558f64191a3a31307987",
+      "sha256": "713d1ce5d293f9dbaad765625ca546cd2d366aeb4299558f64191a3a31307987"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "b4643967f0c4e889baf19084c98684e84456f757b022de10c008cbec17d0567b",
+      "sha256": "b4643967f0c4e889baf19084c98684e84456f757b022de10c008cbec17d0567b"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "f245a6fa0d0ad376d083c81c91f13957f86b638f8fa0c5547ad38b0ba7778c48",
+      "sha256": "f245a6fa0d0ad376d083c81c91f13957f86b638f8fa0c5547ad38b0ba7778c48"
+    },
+    "admin/assets/theme-previews/editorial_runway/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "4809c82261814e8d86f6b5f6cc8c1737719408f35aa0340e84ab2c63700545d1",
+      "sha256": "4809c82261814e8d86f6b5f6cc8c1737719408f35aa0340e84ab2c63700545d1"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "853023a3568df27141a4e8cb13877706f13c90312db859124a68667a2986c57e",
+      "sha256": "853023a3568df27141a4e8cb13877706f13c90312db859124a68667a2986c57e"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "bbb9b305af22a5eebbeead5e044b49b1e1d02d69f93138ff9e60afacc0f514c9",
+      "sha256": "bbb9b305af22a5eebbeead5e044b49b1e1d02d69f93138ff9e60afacc0f514c9"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "e25abf6aa6c27eba4864676de1699f66e7dd6009dd638f73467e065367f258a1",
+      "sha256": "e25abf6aa6c27eba4864676de1699f66e7dd6009dd638f73467e065367f258a1"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "24646ed4fc62b12e271ca459c5773e46db4e167414e8655f3815d09cc1e9ecbe",
+      "sha256": "24646ed4fc62b12e271ca459c5773e46db4e167414e8655f3815d09cc1e9ecbe"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "bf70ed9859c7e61e0db9c673e04b5b0e8220c40926b51abe32de2c0a54ce0a38",
+      "sha256": "bf70ed9859c7e61e0db9c673e04b5b0e8220c40926b51abe32de2c0a54ce0a38"
+    },
+    "admin/assets/theme-previews/editorial_runway/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "03556d07a12dfe05562c7e1b25d50b21ef7b9c2eca76ccb8a708a9a55bcb0ecb",
+      "sha256": "03556d07a12dfe05562c7e1b25d50b21ef7b9c2eca76ccb8a708a9a55bcb0ecb"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "79d0ed9731ae80dd6b3fbf70cad10ed136bd81c49be4b456771b10e09199423c",
+      "sha256": "79d0ed9731ae80dd6b3fbf70cad10ed136bd81c49be4b456771b10e09199423c"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "5805fc5cf0c4cb88bd369a8fdf06306f6e2fd4266f2a4543efd28d4c73ed3c65",
+      "sha256": "5805fc5cf0c4cb88bd369a8fdf06306f6e2fd4266f2a4543efd28d4c73ed3c65"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "7568f16746700b840af39d864ecea219bced7d1a4c74894b014a0de194ffa321",
+      "sha256": "7568f16746700b840af39d864ecea219bced7d1a4c74894b014a0de194ffa321"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "5e5c85f619043ee6a490e93eb98cc3ca077242e075b7cc457d804f54bcddf85a",
+      "sha256": "5e5c85f619043ee6a490e93eb98cc3ca077242e075b7cc457d804f54bcddf85a"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "b00f3c357cff6d141696610b5bb8ba8fabfc069e810d808d606017bf6efd2414",
+      "sha256": "b00f3c357cff6d141696610b5bb8ba8fabfc069e810d808d606017bf6efd2414"
+    },
+    "admin/assets/theme-previews/editorial_runway/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "21bde3450752a58ffe45870203858d56f718233d5b13e2bae8b831c4a66834a6",
+      "sha256": "21bde3450752a58ffe45870203858d56f718233d5b13e2bae8b831c4a66834a6"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "d9e6e1047bcae55e13c3bc1dac79b8302d2127fb582c02b6ddcec0fd5cf97417",
+      "sha256": "d9e6e1047bcae55e13c3bc1dac79b8302d2127fb582c02b6ddcec0fd5cf97417"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "7a3e56734727780209004cf44c5bb597ce577b4d9052add0de63b63fd7bab20f",
+      "sha256": "7a3e56734727780209004cf44c5bb597ce577b4d9052add0de63b63fd7bab20f"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "429c548bf482501f3337148a2536b8b4f0d618060c53750ae372535624c3d152",
+      "sha256": "429c548bf482501f3337148a2536b8b4f0d618060c53750ae372535624c3d152"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "a3e962064540ed62750af4e4f6f43bf6f202daf3625f03c233b6156db5bbc859",
+      "sha256": "a3e962064540ed62750af4e4f6f43bf6f202daf3625f03c233b6156db5bbc859"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "af610c7ea88d5fdfb77d166869b514423d1bc5cfb5065483234afb55b9e5e741",
+      "sha256": "af610c7ea88d5fdfb77d166869b514423d1bc5cfb5065483234afb55b9e5e741"
+    },
+    "admin/assets/theme-previews/editorial_runway/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/editorial_runway/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "20bb28cfc039d5f11a241e19913e0700c2ef3b26405a8e4c0114ab4ae71a7aa7",
+      "sha256": "20bb28cfc039d5f11a241e19913e0700c2ef3b26405a8e4c0114ab4ae71a7aa7"
+    },
+    "admin/assets/theme-previews/electronics/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "615b3498e279dd23ed70d9eed6d71691669bef2155267de61ac2167c63904cbb",
+      "sha256": "615b3498e279dd23ed70d9eed6d71691669bef2155267de61ac2167c63904cbb"
+    },
+    "admin/assets/theme-previews/electronics/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "2b536ac4600ff9730cc4111cd0461429b154ca81fc21edb0249f408eaef30bfe",
+      "sha256": "2b536ac4600ff9730cc4111cd0461429b154ca81fc21edb0249f408eaef30bfe"
+    },
+    "admin/assets/theme-previews/electronics/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "8a09550e902046edd23a678af331ada187e8735da96e9c38113ab473fdb44072",
+      "sha256": "8a09550e902046edd23a678af331ada187e8735da96e9c38113ab473fdb44072"
+    },
+    "admin/assets/theme-previews/electronics/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "a50b501ca11bc93aa6a1a7ea53e6ca2a48edaa301fd35de5544b450fb5291776",
+      "sha256": "a50b501ca11bc93aa6a1a7ea53e6ca2a48edaa301fd35de5544b450fb5291776"
+    },
+    "admin/assets/theme-previews/electronics/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "b96f23fddcb7df304935a62f988d0f489597c0c20619cd6daeb0db37be6601d4",
+      "sha256": "b96f23fddcb7df304935a62f988d0f489597c0c20619cd6daeb0db37be6601d4"
+    },
+    "admin/assets/theme-previews/electronics/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "b6c8e1ffb6cf933be7e719b897f7c39a555dacab8eb1bbfc431fee7fc32db504",
+      "sha256": "b6c8e1ffb6cf933be7e719b897f7c39a555dacab8eb1bbfc431fee7fc32db504"
+    },
+    "admin/assets/theme-previews/electronics/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "b46efd915b86ddee5e195b7385aa4a46bd5548b7bca808990d5a343c87d18d24",
+      "sha256": "b46efd915b86ddee5e195b7385aa4a46bd5548b7bca808990d5a343c87d18d24"
+    },
+    "admin/assets/theme-previews/electronics/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "31515257a588f913251fb28a63bf1ed60175ec9248992a319c3527bbbe5ed8ad",
+      "sha256": "31515257a588f913251fb28a63bf1ed60175ec9248992a319c3527bbbe5ed8ad"
+    },
+    "admin/assets/theme-previews/electronics/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "bef32795cb226366881a7b2c0590a859f519476c21693136b816c0b398a0b6d6",
+      "sha256": "bef32795cb226366881a7b2c0590a859f519476c21693136b816c0b398a0b6d6"
+    },
+    "admin/assets/theme-previews/electronics/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "2920582e5eca4c4a23e73c217cbd55a0c868ac7f704f3b221f818b15a20c55ac",
+      "sha256": "2920582e5eca4c4a23e73c217cbd55a0c868ac7f704f3b221f818b15a20c55ac"
+    },
+    "admin/assets/theme-previews/electronics/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "fa64d8665cf189b3894746c3c059967f62d9ca1f95f73da8e9ddb6afbef9087d",
+      "sha256": "fa64d8665cf189b3894746c3c059967f62d9ca1f95f73da8e9ddb6afbef9087d"
+    },
+    "admin/assets/theme-previews/electronics/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "3ee10897577d29d35d3d4a577365cf6178889efb77da01d52e88de79f22f1aad",
+      "sha256": "3ee10897577d29d35d3d4a577365cf6178889efb77da01d52e88de79f22f1aad"
+    },
+    "admin/assets/theme-previews/electronics/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "6ec3861992aa697d4db588c752e4ef09e0c4b3a2dad7f2606f6d7b135eed3b2a",
+      "sha256": "6ec3861992aa697d4db588c752e4ef09e0c4b3a2dad7f2606f6d7b135eed3b2a"
+    },
+    "admin/assets/theme-previews/electronics/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "d161104f8fc60f0c1a4854d9ef8f75f0bcbdd32c540b2acfc14fe428eb6d59e7",
+      "sha256": "d161104f8fc60f0c1a4854d9ef8f75f0bcbdd32c540b2acfc14fe428eb6d59e7"
+    },
+    "admin/assets/theme-previews/electronics/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "d12f499e239a21432279fc859ff0d09ff0c9ae2434e2644ea451afadc16509ce",
+      "sha256": "d12f499e239a21432279fc859ff0d09ff0c9ae2434e2644ea451afadc16509ce"
+    },
+    "admin/assets/theme-previews/electronics/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "6f8f257cea3238518dbeda5303d976979a6e0c116c67beb1b796203fbaa3ed48",
+      "sha256": "6f8f257cea3238518dbeda5303d976979a6e0c116c67beb1b796203fbaa3ed48"
+    },
+    "admin/assets/theme-previews/electronics/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "574a3b52972342bffe799d6571a5a5e6061797c10e9548560ac64f3934b01a57",
+      "sha256": "574a3b52972342bffe799d6571a5a5e6061797c10e9548560ac64f3934b01a57"
+    },
+    "admin/assets/theme-previews/electronics/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "65f5a25cfcc2770cb575d84504216e49036660f3489d2889c6fec13a0a33efcf",
+      "sha256": "65f5a25cfcc2770cb575d84504216e49036660f3489d2889c6fec13a0a33efcf"
+    },
+    "admin/assets/theme-previews/electronics/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "3430882e7f0c5297844d1b25df1814387503ab256d3a5a04d83cd5e5a649f112",
+      "sha256": "3430882e7f0c5297844d1b25df1814387503ab256d3a5a04d83cd5e5a649f112"
+    },
+    "admin/assets/theme-previews/electronics/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "7e368cff5f3a258caa5cd05e7da9a66279b28bf731b210a97e17d5277b43498a",
+      "sha256": "7e368cff5f3a258caa5cd05e7da9a66279b28bf731b210a97e17d5277b43498a"
+    },
+    "admin/assets/theme-previews/electronics/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "4bcb2332ae523894da09539cf590b4c36819901c97ad9dc165a251f3059b2f72",
+      "sha256": "4bcb2332ae523894da09539cf590b4c36819901c97ad9dc165a251f3059b2f72"
+    },
+    "admin/assets/theme-previews/electronics/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "ac50154396ed90ce60ff963aff6582efeaa9ad2972a6b55b399c2e6704e74562",
+      "sha256": "ac50154396ed90ce60ff963aff6582efeaa9ad2972a6b55b399c2e6704e74562"
+    },
+    "admin/assets/theme-previews/electronics/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "5ad429edbb43955fcd1ef9d95d6692be2cfade6a0518f3828c2ff0398a76e7c9",
+      "sha256": "5ad429edbb43955fcd1ef9d95d6692be2cfade6a0518f3828c2ff0398a76e7c9"
+    },
+    "admin/assets/theme-previews/electronics/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "791197c5179e63f99b135073b0e3e4cbc66447c8bd72028b000e13d9a61e9f8c",
+      "sha256": "791197c5179e63f99b135073b0e3e4cbc66447c8bd72028b000e13d9a61e9f8c"
+    },
+    "admin/assets/theme-previews/electronics.webp": {
+      "source": "mobishop/admin/assets/theme-previews/electronics.webp",
+      "newline": "binary",
+      "source_sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823",
+      "sha256": "9d9a5c61e65951d3a4b3e074fcf4ba038db91dfb854afd47a9d865f59ffdc823"
+    },
+    "admin/assets/theme-previews/family_pop/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "55205daa52994c7e2b13599e052ea794c3ebe00c8da1a19ae15f28e6e71d6cbd",
+      "sha256": "55205daa52994c7e2b13599e052ea794c3ebe00c8da1a19ae15f28e6e71d6cbd"
+    },
+    "admin/assets/theme-previews/family_pop/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "d4a3197861157553b4a261429665a74e4418cac96fcac4b7fd8a9db3550d744e",
+      "sha256": "d4a3197861157553b4a261429665a74e4418cac96fcac4b7fd8a9db3550d744e"
+    },
+    "admin/assets/theme-previews/family_pop/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "9edbc43be3bf53b1b090971d64bf050a1686f640ef417cf2b2e6f92fbc63ba0f",
+      "sha256": "9edbc43be3bf53b1b090971d64bf050a1686f640ef417cf2b2e6f92fbc63ba0f"
+    },
+    "admin/assets/theme-previews/family_pop/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "0e2d34df4d95daed677d2b6ddeff0de42e8f47d082ab6c101abda08b8e57af19",
+      "sha256": "0e2d34df4d95daed677d2b6ddeff0de42e8f47d082ab6c101abda08b8e57af19"
+    },
+    "admin/assets/theme-previews/family_pop/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "612e5d50232a82d3e1be127e6310fe9db4c11430d54e2c19a60eda444d67ec19",
+      "sha256": "612e5d50232a82d3e1be127e6310fe9db4c11430d54e2c19a60eda444d67ec19"
+    },
+    "admin/assets/theme-previews/family_pop/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "71df0229d2911c2eddc2cc44aea092d8971f1dac9b8f0bfe99b4f01693fe0626",
+      "sha256": "71df0229d2911c2eddc2cc44aea092d8971f1dac9b8f0bfe99b4f01693fe0626"
+    },
+    "admin/assets/theme-previews/family_pop/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "10cba14e65ef6c713771cbb48cb38e87a9cc0ed019d588e44ea9f84008e61f8b",
+      "sha256": "10cba14e65ef6c713771cbb48cb38e87a9cc0ed019d588e44ea9f84008e61f8b"
+    },
+    "admin/assets/theme-previews/family_pop/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "9de99113cc8f44643a6b846558c48e5461d3706163127d954bae83d3c35eba6a",
+      "sha256": "9de99113cc8f44643a6b846558c48e5461d3706163127d954bae83d3c35eba6a"
+    },
+    "admin/assets/theme-previews/family_pop/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "e85ce5e7e0ac62cb56ef20adfe160cc11068607e592d912a5595b98715eead57",
+      "sha256": "e85ce5e7e0ac62cb56ef20adfe160cc11068607e592d912a5595b98715eead57"
+    },
+    "admin/assets/theme-previews/family_pop/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "238787fc07074a7e1502ee4dff4d5ff625f046a83f630bf12ea6d3a47ac2db2c",
+      "sha256": "238787fc07074a7e1502ee4dff4d5ff625f046a83f630bf12ea6d3a47ac2db2c"
+    },
+    "admin/assets/theme-previews/family_pop/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "008da17d88b4ef3a807f09fb20b1c7cc207de839e2413579a5a47ffbf78070c1",
+      "sha256": "008da17d88b4ef3a807f09fb20b1c7cc207de839e2413579a5a47ffbf78070c1"
+    },
+    "admin/assets/theme-previews/family_pop/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "4528dee66b471b42939786e8a2fd12a0c5567a70f3dd20b6a00824175b83cae5",
+      "sha256": "4528dee66b471b42939786e8a2fd12a0c5567a70f3dd20b6a00824175b83cae5"
+    },
+    "admin/assets/theme-previews/family_pop/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "d593b1c419b8e7d59f74bda3ca66683797964494c0bc93547586e1468f918e44",
+      "sha256": "d593b1c419b8e7d59f74bda3ca66683797964494c0bc93547586e1468f918e44"
+    },
+    "admin/assets/theme-previews/family_pop/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "4024f76809ec6000b0fa1d7a783fd525d6a52d6f1bedb7b30357c088f00fc0ad",
+      "sha256": "4024f76809ec6000b0fa1d7a783fd525d6a52d6f1bedb7b30357c088f00fc0ad"
+    },
+    "admin/assets/theme-previews/family_pop/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "ca658f519b33bab75371ff8d95ca31848e4ba4f05799e03916ac3d29ad8e724e",
+      "sha256": "ca658f519b33bab75371ff8d95ca31848e4ba4f05799e03916ac3d29ad8e724e"
+    },
+    "admin/assets/theme-previews/family_pop/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "58c2ba6856ad9704ba2bde8071729287fb3dd842ce1516c7758eb6db6e0ff1b1",
+      "sha256": "58c2ba6856ad9704ba2bde8071729287fb3dd842ce1516c7758eb6db6e0ff1b1"
+    },
+    "admin/assets/theme-previews/family_pop/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "6a11d0c6213f4e6308c9bb0ecd39761bf85bf9cf2a4d8248ecb53c013fe40ee4",
+      "sha256": "6a11d0c6213f4e6308c9bb0ecd39761bf85bf9cf2a4d8248ecb53c013fe40ee4"
+    },
+    "admin/assets/theme-previews/family_pop/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "f2427ff2989fc277b99a3f5aad6f47bf1156268bc55dcc95fa0649564286b572",
+      "sha256": "f2427ff2989fc277b99a3f5aad6f47bf1156268bc55dcc95fa0649564286b572"
+    },
+    "admin/assets/theme-previews/family_pop/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "2baeec4ac364cf35e5882e1265035a71608e8d5832eb580387c1f1387a811b95",
+      "sha256": "2baeec4ac364cf35e5882e1265035a71608e8d5832eb580387c1f1387a811b95"
+    },
+    "admin/assets/theme-previews/family_pop/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "1b9ddb13c9c331275676ba1d30054610b144b1784d0447d40095575801ff734e",
+      "sha256": "1b9ddb13c9c331275676ba1d30054610b144b1784d0447d40095575801ff734e"
+    },
+    "admin/assets/theme-previews/family_pop/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "a63ab2da3293c64f827d70b7801abd3aec0e843de9e180a3095ecad638c3241f",
+      "sha256": "a63ab2da3293c64f827d70b7801abd3aec0e843de9e180a3095ecad638c3241f"
+    },
+    "admin/assets/theme-previews/family_pop/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "3ad11a85c7da4e182ced0eb2a186b9963ec1fa4991239069d82ba05b2dfa6822",
+      "sha256": "3ad11a85c7da4e182ced0eb2a186b9963ec1fa4991239069d82ba05b2dfa6822"
+    },
+    "admin/assets/theme-previews/family_pop/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "f0c1319b3a05096c321a76fe153f08b27b01a6936f7b977bd24e5dd2e079ac60",
+      "sha256": "f0c1319b3a05096c321a76fe153f08b27b01a6936f7b977bd24e5dd2e079ac60"
+    },
+    "admin/assets/theme-previews/family_pop/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/family_pop/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "b4e284eb0d708776986888a1d48b5e989d87a1b395b01183560d953a7eb1bd05",
+      "sha256": "b4e284eb0d708776986888a1d48b5e989d87a1b395b01183560d953a7eb1bd05"
+    },
+    "admin/assets/theme-previews/fashion/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "e338ded9de1a906ea0aefa903c42469d4d579ec52040675d286174bc0c9dfa8b",
+      "sha256": "e338ded9de1a906ea0aefa903c42469d4d579ec52040675d286174bc0c9dfa8b"
+    },
+    "admin/assets/theme-previews/fashion/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "882705cb1b697f5bbdf77f9a63f064493b9630b1a113524742cf720a569df4cf",
+      "sha256": "882705cb1b697f5bbdf77f9a63f064493b9630b1a113524742cf720a569df4cf"
+    },
+    "admin/assets/theme-previews/fashion/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "5ccb0b98e85fd641c9e293a90a9a0008cf39b1fce317f7749c4b5b487c9c9f58",
+      "sha256": "5ccb0b98e85fd641c9e293a90a9a0008cf39b1fce317f7749c4b5b487c9c9f58"
+    },
+    "admin/assets/theme-previews/fashion/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "bf910c84449ce43a65cc84af8a97c1da868b4e0b17b10fc9c62e72114944a62d",
+      "sha256": "bf910c84449ce43a65cc84af8a97c1da868b4e0b17b10fc9c62e72114944a62d"
+    },
+    "admin/assets/theme-previews/fashion/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "1e9b36d943ceb213b41a498168026d83f48d8ed229a53f13434f874d6ce01565",
+      "sha256": "1e9b36d943ceb213b41a498168026d83f48d8ed229a53f13434f874d6ce01565"
+    },
+    "admin/assets/theme-previews/fashion/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "47b8741969e43da13ad0889be1a974a518c80cc6f5e8b62db2682df8cc7153d0",
+      "sha256": "47b8741969e43da13ad0889be1a974a518c80cc6f5e8b62db2682df8cc7153d0"
+    },
+    "admin/assets/theme-previews/fashion/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "3cd64718dfcc83a6af4137756fd46aeb5fd5f707f608635e54a029c502f42f4e",
+      "sha256": "3cd64718dfcc83a6af4137756fd46aeb5fd5f707f608635e54a029c502f42f4e"
+    },
+    "admin/assets/theme-previews/fashion/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "965c5d6ed0b714955962957a466a6332a017b8c42a641bbae6c096e0ec52b14e",
+      "sha256": "965c5d6ed0b714955962957a466a6332a017b8c42a641bbae6c096e0ec52b14e"
+    },
+    "admin/assets/theme-previews/fashion/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "00f5051cda66fa6578b1cb3cc466521f8abf3ec7c48592f5996ac3b51d1d0e1b",
+      "sha256": "00f5051cda66fa6578b1cb3cc466521f8abf3ec7c48592f5996ac3b51d1d0e1b"
+    },
+    "admin/assets/theme-previews/fashion/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "af6bc73478890a2955d148f3b538c083ce1a4cc3c56ed6d238f4e8264ef158c3",
+      "sha256": "af6bc73478890a2955d148f3b538c083ce1a4cc3c56ed6d238f4e8264ef158c3"
+    },
+    "admin/assets/theme-previews/fashion/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "6ea0627029f812afe8c4065447cb7f56f835d91a43a20804017397864a7ba05c",
+      "sha256": "6ea0627029f812afe8c4065447cb7f56f835d91a43a20804017397864a7ba05c"
+    },
+    "admin/assets/theme-previews/fashion/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "686037f89b90d5b180aec063a295ec1e35dc6b003d49ad8c31b543782f6a8de3",
+      "sha256": "686037f89b90d5b180aec063a295ec1e35dc6b003d49ad8c31b543782f6a8de3"
+    },
+    "admin/assets/theme-previews/fashion/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "a5d99db1ab7fa8eb97511ee6554b8fcc412a1d1105fc90aaa0bc61887c3aac4a",
+      "sha256": "a5d99db1ab7fa8eb97511ee6554b8fcc412a1d1105fc90aaa0bc61887c3aac4a"
+    },
+    "admin/assets/theme-previews/fashion/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "d4ac1189e3fe7035e5c7c417cd2eb099df966f40b5b8132b3a5bf3501a7e39ac",
+      "sha256": "d4ac1189e3fe7035e5c7c417cd2eb099df966f40b5b8132b3a5bf3501a7e39ac"
+    },
+    "admin/assets/theme-previews/fashion/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "00482efde2bc9bfbcb11bbda7811e3d255a14c9d19550b5c1152237edf14c470",
+      "sha256": "00482efde2bc9bfbcb11bbda7811e3d255a14c9d19550b5c1152237edf14c470"
+    },
+    "admin/assets/theme-previews/fashion/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "54484c0da73e1f7ef159a3c2a6310ada5f34da5b4db28ca9a99559d4b06c299b",
+      "sha256": "54484c0da73e1f7ef159a3c2a6310ada5f34da5b4db28ca9a99559d4b06c299b"
+    },
+    "admin/assets/theme-previews/fashion/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "fd6464a46d687671c4d4b6df847108c036fcafb8ddac2cb7f7f9bc735d570f1d",
+      "sha256": "fd6464a46d687671c4d4b6df847108c036fcafb8ddac2cb7f7f9bc735d570f1d"
+    },
+    "admin/assets/theme-previews/fashion/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "80885b977fcc849a62be0d0ba866972835c7ad57f5d7578f4b149c5afb00e4f2",
+      "sha256": "80885b977fcc849a62be0d0ba866972835c7ad57f5d7578f4b149c5afb00e4f2"
+    },
+    "admin/assets/theme-previews/fashion/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "e2f6544e8b8bbd9a9f3f08e018289a4531bb6a5d1fb115b6daa7fe906cb235c9",
+      "sha256": "e2f6544e8b8bbd9a9f3f08e018289a4531bb6a5d1fb115b6daa7fe906cb235c9"
+    },
+    "admin/assets/theme-previews/fashion/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "3cd3a52040e77704c90c3c51595a75c2331ef1cb8defc0907d7c3dfede408b84",
+      "sha256": "3cd3a52040e77704c90c3c51595a75c2331ef1cb8defc0907d7c3dfede408b84"
+    },
+    "admin/assets/theme-previews/fashion/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "df7d4aeb9416ace9f848b1e6153be42ce667222531c966d56bffb22869e8bc98",
+      "sha256": "df7d4aeb9416ace9f848b1e6153be42ce667222531c966d56bffb22869e8bc98"
+    },
+    "admin/assets/theme-previews/fashion/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "c0e657d2ac6960c14ddc444675007686b099fc779a147ff5c702b5584462f357",
+      "sha256": "c0e657d2ac6960c14ddc444675007686b099fc779a147ff5c702b5584462f357"
+    },
+    "admin/assets/theme-previews/fashion/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "49b6e1696e1dc5dd8f5ff4c5e719440e65002b12b23eb174e03d6885b07b017f",
+      "sha256": "49b6e1696e1dc5dd8f5ff4c5e719440e65002b12b23eb174e03d6885b07b017f"
+    },
+    "admin/assets/theme-previews/fashion/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "51196ea81186a1c40f1c2d452b18622b56b5be68474a4de89b107568bb7d9138",
+      "sha256": "51196ea81186a1c40f1c2d452b18622b56b5be68474a4de89b107568bb7d9138"
+    },
+    "admin/assets/theme-previews/fashion.webp": {
+      "source": "mobishop/admin/assets/theme-previews/fashion.webp",
+      "newline": "binary",
+      "source_sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82",
+      "sha256": "ad338bd7c5a93c957fc25ab8c4f6e1f2e9d346fc5ce7e9b81c83bf93cef7ce82"
+    },
+    "admin/assets/theme-previews/grocery/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "f69b00b6eaf52ef0bc9a6d5386bf43ec5c903ae917300fa48b7e22e7715c4c6b",
+      "sha256": "f69b00b6eaf52ef0bc9a6d5386bf43ec5c903ae917300fa48b7e22e7715c4c6b"
+    },
+    "admin/assets/theme-previews/grocery/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "616583ceb4800645ea0c31e04dc9d05c186d8094eb1c4a814153f40d019ea03c",
+      "sha256": "616583ceb4800645ea0c31e04dc9d05c186d8094eb1c4a814153f40d019ea03c"
+    },
+    "admin/assets/theme-previews/grocery/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "f59addc1c70e0fdd545692957107d7a60f20cdc212ea2ba1708fdfe49d88d64f",
+      "sha256": "f59addc1c70e0fdd545692957107d7a60f20cdc212ea2ba1708fdfe49d88d64f"
+    },
+    "admin/assets/theme-previews/grocery/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "c32d0bb829160bfcfdfd56c81f4e40752375198b6b3c102620c7ece99610fea3",
+      "sha256": "c32d0bb829160bfcfdfd56c81f4e40752375198b6b3c102620c7ece99610fea3"
+    },
+    "admin/assets/theme-previews/grocery/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "20e9a70650c273e7a33237a59707c4a909606fc4a45606b9a7c4f0c2afb6f1f6",
+      "sha256": "20e9a70650c273e7a33237a59707c4a909606fc4a45606b9a7c4f0c2afb6f1f6"
+    },
+    "admin/assets/theme-previews/grocery/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "5d6e91cd5b41409fe3fce158afb2bd1919bf52fc9b3366c1582874d29c9cfca1",
+      "sha256": "5d6e91cd5b41409fe3fce158afb2bd1919bf52fc9b3366c1582874d29c9cfca1"
+    },
+    "admin/assets/theme-previews/grocery/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "eb009b371468d891a8a46e0c98062e10e06ff6a697141ce972520d890e1d0310",
+      "sha256": "eb009b371468d891a8a46e0c98062e10e06ff6a697141ce972520d890e1d0310"
+    },
+    "admin/assets/theme-previews/grocery/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "127e57bbdce0455b94104d7fdbaeb9f503f3ea18db3f6128e29b97c41c082366",
+      "sha256": "127e57bbdce0455b94104d7fdbaeb9f503f3ea18db3f6128e29b97c41c082366"
+    },
+    "admin/assets/theme-previews/grocery/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "d896d305cfac366ebec91f2eef75760f3779f1cdbb89b0ef0a70056516940d52",
+      "sha256": "d896d305cfac366ebec91f2eef75760f3779f1cdbb89b0ef0a70056516940d52"
+    },
+    "admin/assets/theme-previews/grocery/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "0966107554c64f17c8868fb11f22492b2cfaa5cd3dc8ff1b9455786d95f77def",
+      "sha256": "0966107554c64f17c8868fb11f22492b2cfaa5cd3dc8ff1b9455786d95f77def"
+    },
+    "admin/assets/theme-previews/grocery/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "f6191b9363b2ad046b38c790d402b26794105491f2ca372e15c57d229ed9b238",
+      "sha256": "f6191b9363b2ad046b38c790d402b26794105491f2ca372e15c57d229ed9b238"
+    },
+    "admin/assets/theme-previews/grocery/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "f6d47f0ceeca28be4b298cb9c28ac166fdcb1e9e9c3b1a27f6b15e8233d2a9c5",
+      "sha256": "f6d47f0ceeca28be4b298cb9c28ac166fdcb1e9e9c3b1a27f6b15e8233d2a9c5"
+    },
+    "admin/assets/theme-previews/grocery/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "a5ca3c16ca2f852df6bb797a5c775c26b3bd57d168e3138f20b477868f88bec7",
+      "sha256": "a5ca3c16ca2f852df6bb797a5c775c26b3bd57d168e3138f20b477868f88bec7"
+    },
+    "admin/assets/theme-previews/grocery/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "ba14b87a5ed4c78a43e6e9715db25e558eb3327e890f46030e1e1e1ad9f091fb",
+      "sha256": "ba14b87a5ed4c78a43e6e9715db25e558eb3327e890f46030e1e1e1ad9f091fb"
+    },
+    "admin/assets/theme-previews/grocery/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "3760e5f6cf5dfcbcf80ede8e520affc911d837a7fc9ca68afaf4da230d643758",
+      "sha256": "3760e5f6cf5dfcbcf80ede8e520affc911d837a7fc9ca68afaf4da230d643758"
+    },
+    "admin/assets/theme-previews/grocery/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "7109db5480ae5043ae3bd431e7d01d6a01dd0a891dc7d54f2bcc30e7188e1aac",
+      "sha256": "7109db5480ae5043ae3bd431e7d01d6a01dd0a891dc7d54f2bcc30e7188e1aac"
+    },
+    "admin/assets/theme-previews/grocery/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "34f37cfe4431f94921df9ee2cc1ee6e3211f089dc5b5ee4a125e60e99e173da5",
+      "sha256": "34f37cfe4431f94921df9ee2cc1ee6e3211f089dc5b5ee4a125e60e99e173da5"
+    },
+    "admin/assets/theme-previews/grocery/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "e5ef292a9706a884b6e4139bee86c4b1fe206bf6752ff6b00e03d9f8669b3ef7",
+      "sha256": "e5ef292a9706a884b6e4139bee86c4b1fe206bf6752ff6b00e03d9f8669b3ef7"
+    },
+    "admin/assets/theme-previews/grocery/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "a554515ef62de6cd16aeecd037c3709c957081fa4f3fd62b772d83ca24839b0f",
+      "sha256": "a554515ef62de6cd16aeecd037c3709c957081fa4f3fd62b772d83ca24839b0f"
+    },
+    "admin/assets/theme-previews/grocery/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "ef27639c43363f67cfd7c48aa4748300ad1658938c89bc12ec8668bd0d6c363d",
+      "sha256": "ef27639c43363f67cfd7c48aa4748300ad1658938c89bc12ec8668bd0d6c363d"
+    },
+    "admin/assets/theme-previews/grocery/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "ffaec66628c6be342161aa0f030f14311594a0aa2b8cc109509384ad944428bb",
+      "sha256": "ffaec66628c6be342161aa0f030f14311594a0aa2b8cc109509384ad944428bb"
+    },
+    "admin/assets/theme-previews/grocery/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "7705e43038ef01bb7e74b3c2851d3cee494f06a92b3c8574e27515a94608a276",
+      "sha256": "7705e43038ef01bb7e74b3c2851d3cee494f06a92b3c8574e27515a94608a276"
+    },
+    "admin/assets/theme-previews/grocery/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "c90f0af4e3f3759bedf6e593962de59bcfdb23ac843c6c597f282d5f96d0caad",
+      "sha256": "c90f0af4e3f3759bedf6e593962de59bcfdb23ac843c6c597f282d5f96d0caad"
+    },
+    "admin/assets/theme-previews/grocery/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "5d0c1f9acdf9e640fd3719fdd5dd78de42609a8480aea72ddd72e5b66d793a93",
+      "sha256": "5d0c1f9acdf9e640fd3719fdd5dd78de42609a8480aea72ddd72e5b66d793a93"
+    },
+    "admin/assets/theme-previews/grocery.webp": {
+      "source": "mobishop/admin/assets/theme-previews/grocery.webp",
+      "newline": "binary",
+      "source_sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26",
+      "sha256": "335dfea9bacaef4621e2e331e84b80e0624efca0b517387d1f24f3546c049f26"
+    },
+    "admin/assets/theme-previews/home-living.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home-living.webp",
+      "newline": "binary",
+      "source_sha256": "cc982c8256e3f3c46bd73a7ae7981eddcc7897e4272d4211b536798f43975ef1",
+      "sha256": "cc982c8256e3f3c46bd73a7ae7981eddcc7897e4272d4211b536798f43975ef1"
+    },
+    "admin/assets/theme-previews/home_living/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "c9f2fc4ef510de79c0c14ea6fb6c8f63ed4bc2edb29526c1e44a387e88f6ec67",
+      "sha256": "c9f2fc4ef510de79c0c14ea6fb6c8f63ed4bc2edb29526c1e44a387e88f6ec67"
+    },
+    "admin/assets/theme-previews/home_living/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "e981865c8b51944ba356d90440c5140f868720f8f66aa591a331581d098ecbfc",
+      "sha256": "e981865c8b51944ba356d90440c5140f868720f8f66aa591a331581d098ecbfc"
+    },
+    "admin/assets/theme-previews/home_living/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "34546b9af8558e1d1f2456d8f339009778e3474ad65a11660df0a8b32455e9f0",
+      "sha256": "34546b9af8558e1d1f2456d8f339009778e3474ad65a11660df0a8b32455e9f0"
+    },
+    "admin/assets/theme-previews/home_living/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "9baed9dce1a3a91e3f610ad91c98f0bfda027c8da04f57c9703c6b617f930536",
+      "sha256": "9baed9dce1a3a91e3f610ad91c98f0bfda027c8da04f57c9703c6b617f930536"
+    },
+    "admin/assets/theme-previews/home_living/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "3f8a04347bafad019adbc825a2287e79cc76ca2ac01339426375fe9891b0dc92",
+      "sha256": "3f8a04347bafad019adbc825a2287e79cc76ca2ac01339426375fe9891b0dc92"
+    },
+    "admin/assets/theme-previews/home_living/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "7af3f6feb9ffabacf18afc69772ecd3a447e5e97dbbee998e2fa640952301526",
+      "sha256": "7af3f6feb9ffabacf18afc69772ecd3a447e5e97dbbee998e2fa640952301526"
+    },
+    "admin/assets/theme-previews/home_living/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "2f83cbffbc97598cf283e69e5bcd2e30c6225ab8443ea3c22a8a92fd9cba5a38",
+      "sha256": "2f83cbffbc97598cf283e69e5bcd2e30c6225ab8443ea3c22a8a92fd9cba5a38"
+    },
+    "admin/assets/theme-previews/home_living/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "badeebaa8e2f1e757310936bd2dead4ecfc0d84bf6cfdd978ac810041abb51e1",
+      "sha256": "badeebaa8e2f1e757310936bd2dead4ecfc0d84bf6cfdd978ac810041abb51e1"
+    },
+    "admin/assets/theme-previews/home_living/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "e952686a42a4d6e298248c03e2e184d3a0e731547397b4f542dbc87475c47f44",
+      "sha256": "e952686a42a4d6e298248c03e2e184d3a0e731547397b4f542dbc87475c47f44"
+    },
+    "admin/assets/theme-previews/home_living/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "f83fcffac156ee4a6b799bac0a6b68b3066ae6deddb4e2bcbed933de4567e7f6",
+      "sha256": "f83fcffac156ee4a6b799bac0a6b68b3066ae6deddb4e2bcbed933de4567e7f6"
+    },
+    "admin/assets/theme-previews/home_living/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "25ba4167abf910fea01d5cd5be05b7eef08b2888b8504dbf27fdc0a1870273d3",
+      "sha256": "25ba4167abf910fea01d5cd5be05b7eef08b2888b8504dbf27fdc0a1870273d3"
+    },
+    "admin/assets/theme-previews/home_living/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "20173fe6c8901ac25b4e1ce9a339193751986fdf87f8a75f46b44530c5f75596",
+      "sha256": "20173fe6c8901ac25b4e1ce9a339193751986fdf87f8a75f46b44530c5f75596"
+    },
+    "admin/assets/theme-previews/home_living/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "05b36734fa551bd714637d4937fa7f3b084c0bf3cec6cbc26135bf1514160cd7",
+      "sha256": "05b36734fa551bd714637d4937fa7f3b084c0bf3cec6cbc26135bf1514160cd7"
+    },
+    "admin/assets/theme-previews/home_living/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "7ad4c2339d7ffcc24abc091f60a27656cd67736fd8d726500cf7da1a2910e4cb",
+      "sha256": "7ad4c2339d7ffcc24abc091f60a27656cd67736fd8d726500cf7da1a2910e4cb"
+    },
+    "admin/assets/theme-previews/home_living/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "38c1d35da3ddff1b1e0f72e938e99812b686b074057c7bebbec4dbd66371615d",
+      "sha256": "38c1d35da3ddff1b1e0f72e938e99812b686b074057c7bebbec4dbd66371615d"
+    },
+    "admin/assets/theme-previews/home_living/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "ce97847f5c3328993f2ed20af4c5326a60621c786f3bc0b5579dc3a57027239d",
+      "sha256": "ce97847f5c3328993f2ed20af4c5326a60621c786f3bc0b5579dc3a57027239d"
+    },
+    "admin/assets/theme-previews/home_living/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "c6a093a6400c83c552ef75135729711528e7e24fd55596fe233715a34474c9b3",
+      "sha256": "c6a093a6400c83c552ef75135729711528e7e24fd55596fe233715a34474c9b3"
+    },
+    "admin/assets/theme-previews/home_living/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "06a57ba808128b22093ef29cb0a046bd36253ea06257c6b7d7b06152dea3472e",
+      "sha256": "06a57ba808128b22093ef29cb0a046bd36253ea06257c6b7d7b06152dea3472e"
+    },
+    "admin/assets/theme-previews/home_living/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "f74485e9b4a890e4fbc0bd9e66c7d882445cacb228ae1be8d134ea4d953334f2",
+      "sha256": "f74485e9b4a890e4fbc0bd9e66c7d882445cacb228ae1be8d134ea4d953334f2"
+    },
+    "admin/assets/theme-previews/home_living/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "1ba4dfc1c635de85addf0c629dfa06a5c5f9b644ce53f3bb194c470a92403be7",
+      "sha256": "1ba4dfc1c635de85addf0c629dfa06a5c5f9b644ce53f3bb194c470a92403be7"
+    },
+    "admin/assets/theme-previews/home_living/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "53227e282b36e188ff680f84f6b5623fc41c51ec3daebeac784fd1ad1e2ddc68",
+      "sha256": "53227e282b36e188ff680f84f6b5623fc41c51ec3daebeac784fd1ad1e2ddc68"
+    },
+    "admin/assets/theme-previews/home_living/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "27622a6d46738b113d540f32e024fa7fdeba7b7aa8f32ecdc58c2031a120bf7e",
+      "sha256": "27622a6d46738b113d540f32e024fa7fdeba7b7aa8f32ecdc58c2031a120bf7e"
+    },
+    "admin/assets/theme-previews/home_living/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "9e334b43926dfb290bb061b6518d46bf09dccc4d0daeaa1b7e1ddabd31a01a29",
+      "sha256": "9e334b43926dfb290bb061b6518d46bf09dccc4d0daeaa1b7e1ddabd31a01a29"
+    },
+    "admin/assets/theme-previews/home_living/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/home_living/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "a85890311a5b021e5e6ef18b36ef7710539e66c9d021a5cd6ffeed34c08de1ef",
+      "sha256": "a85890311a5b021e5e6ef18b36ef7710539e66c9d021a5cd6ffeed34c08de1ef"
+    },
+    "admin/assets/theme-previews/jewelry/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "cfbf80b9e6d29442c7edd262ed57420b58635d1a7ed955e9aadf461dd5bb18b1",
+      "sha256": "cfbf80b9e6d29442c7edd262ed57420b58635d1a7ed955e9aadf461dd5bb18b1"
+    },
+    "admin/assets/theme-previews/jewelry/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "2b098890c3116a32dd902a7b383fe418d8efdd472d93ce1319d3ec257aba0d82",
+      "sha256": "2b098890c3116a32dd902a7b383fe418d8efdd472d93ce1319d3ec257aba0d82"
+    },
+    "admin/assets/theme-previews/jewelry/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "29edf8dbb304b962a94ddd1a15313b5b27b403ffc8d086ce00898105a24e5958",
+      "sha256": "29edf8dbb304b962a94ddd1a15313b5b27b403ffc8d086ce00898105a24e5958"
+    },
+    "admin/assets/theme-previews/jewelry/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "79100b7645105ae30b1f16d4a1fb29ebe4bdd446d2ec66898226a88a076c5f63",
+      "sha256": "79100b7645105ae30b1f16d4a1fb29ebe4bdd446d2ec66898226a88a076c5f63"
+    },
+    "admin/assets/theme-previews/jewelry/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "cdac1940de71e5b30d7d31420cb871a8b260c0aa5feaccf6aa197bbea9bc3af3",
+      "sha256": "cdac1940de71e5b30d7d31420cb871a8b260c0aa5feaccf6aa197bbea9bc3af3"
+    },
+    "admin/assets/theme-previews/jewelry/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "cef21732599074a3804ebe3ed3a2636feb1cdf58ba23413e5a6a9bcb4c57ed87",
+      "sha256": "cef21732599074a3804ebe3ed3a2636feb1cdf58ba23413e5a6a9bcb4c57ed87"
+    },
+    "admin/assets/theme-previews/jewelry/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "da3c1bdbbf81433fe6dcc5cfe0cf590b28b465b470ea2a2c32763b86b2f03898",
+      "sha256": "da3c1bdbbf81433fe6dcc5cfe0cf590b28b465b470ea2a2c32763b86b2f03898"
+    },
+    "admin/assets/theme-previews/jewelry/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "656423b5dff628b09e55051977b2bea17c421bc61a266702cc5ad0c47b8ab2c2",
+      "sha256": "656423b5dff628b09e55051977b2bea17c421bc61a266702cc5ad0c47b8ab2c2"
+    },
+    "admin/assets/theme-previews/jewelry/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "32b4ac4e4e741251db3a703b0fa5e847b48f703327dfe166c121ed0ff16931e6",
+      "sha256": "32b4ac4e4e741251db3a703b0fa5e847b48f703327dfe166c121ed0ff16931e6"
+    },
+    "admin/assets/theme-previews/jewelry/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "61766ea294c4661195e6dc3ca7d8be554cfaccd4276cc9e279c4fe0f24a80624",
+      "sha256": "61766ea294c4661195e6dc3ca7d8be554cfaccd4276cc9e279c4fe0f24a80624"
+    },
+    "admin/assets/theme-previews/jewelry/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "5caebf32c595a25a93432b670529330e7686c78548776e3f4c32d5fc976fff9a",
+      "sha256": "5caebf32c595a25a93432b670529330e7686c78548776e3f4c32d5fc976fff9a"
+    },
+    "admin/assets/theme-previews/jewelry/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "f0cd3364e6414a427be1f5d506437a71aa5ffeaa99e37d720999fe8efd547c2d",
+      "sha256": "f0cd3364e6414a427be1f5d506437a71aa5ffeaa99e37d720999fe8efd547c2d"
+    },
+    "admin/assets/theme-previews/jewelry/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "de86c78ac5138af660de38ab15feecb6a60c1119d67299ab30dc1402eab3f63b",
+      "sha256": "de86c78ac5138af660de38ab15feecb6a60c1119d67299ab30dc1402eab3f63b"
+    },
+    "admin/assets/theme-previews/jewelry/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "0b992b8da7ee1af0c37f8cd317808d941cca8b77e3a17b1fa6f2811c4e3b179a",
+      "sha256": "0b992b8da7ee1af0c37f8cd317808d941cca8b77e3a17b1fa6f2811c4e3b179a"
+    },
+    "admin/assets/theme-previews/jewelry/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "92c5d9af3b8e81c7a88a7d00c9d18435bf7a5550aeab904bfbf140146eb9593b",
+      "sha256": "92c5d9af3b8e81c7a88a7d00c9d18435bf7a5550aeab904bfbf140146eb9593b"
+    },
+    "admin/assets/theme-previews/jewelry/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "2d6cc96d114dd9424bd5ec42692b6058622cae086345edaeedc100f5c31ba181",
+      "sha256": "2d6cc96d114dd9424bd5ec42692b6058622cae086345edaeedc100f5c31ba181"
+    },
+    "admin/assets/theme-previews/jewelry/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "9842d83042e869b01e740b5d5fa298c6096f05bd3a44afa64deb89250fd84ed5",
+      "sha256": "9842d83042e869b01e740b5d5fa298c6096f05bd3a44afa64deb89250fd84ed5"
+    },
+    "admin/assets/theme-previews/jewelry/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "36b3e8962f0828b399ad48f31fe850c7e18d28758dd34ee754daa0737c09f49a",
+      "sha256": "36b3e8962f0828b399ad48f31fe850c7e18d28758dd34ee754daa0737c09f49a"
+    },
+    "admin/assets/theme-previews/jewelry/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "10b91b3b12c7f98b588d7f0b2b42fff0ccb3c76a8e44cb99b0868ab69d5fca33",
+      "sha256": "10b91b3b12c7f98b588d7f0b2b42fff0ccb3c76a8e44cb99b0868ab69d5fca33"
+    },
+    "admin/assets/theme-previews/jewelry/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "0a8a80072981e798b9b78f504bb3af4e0edfdb683754755107b9e2a3e6453c66",
+      "sha256": "0a8a80072981e798b9b78f504bb3af4e0edfdb683754755107b9e2a3e6453c66"
+    },
+    "admin/assets/theme-previews/jewelry/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "27a3466107c321e51c493cd812a31f417b416a76787a528ccd450884eeb32744",
+      "sha256": "27a3466107c321e51c493cd812a31f417b416a76787a528ccd450884eeb32744"
+    },
+    "admin/assets/theme-previews/jewelry/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "fabe64a9d12ec14b1140897813bd5fdc89356d4a0a3a5737e556189502fc806c",
+      "sha256": "fabe64a9d12ec14b1140897813bd5fdc89356d4a0a3a5737e556189502fc806c"
+    },
+    "admin/assets/theme-previews/jewelry/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "a966b78bd48416dfa4466258d7e5a39e6336f982741029b419aba0f7d514954b",
+      "sha256": "a966b78bd48416dfa4466258d7e5a39e6336f982741029b419aba0f7d514954b"
+    },
+    "admin/assets/theme-previews/jewelry/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/jewelry/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "d4d9b8b2e6c0e1f7f36de98a2f084affa4bd5ea86541d5a41afcb859b3d35bc8",
+      "sha256": "d4d9b8b2e6c0e1f7f36de98a2f084affa4bd5ea86541d5a41afcb859b3d35bc8"
+    },
+    "admin/assets/theme-previews/kids-baby.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids-baby.webp",
+      "newline": "binary",
+      "source_sha256": "34477a591165123c0f16b18da24e753d1d90058dcf616eab4f5ee3a688c5f0e4",
+      "sha256": "34477a591165123c0f16b18da24e753d1d90058dcf616eab4f5ee3a688c5f0e4"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "c914e7e8f45014d2f5889b2f662db6fb5292cdab62b36f11ba34eeb85ffc789e",
+      "sha256": "c914e7e8f45014d2f5889b2f662db6fb5292cdab62b36f11ba34eeb85ffc789e"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "0ce90d956b79236e8c97015ce0752dc011c28bf4ad55bdd4faed4df9d14457e9",
+      "sha256": "0ce90d956b79236e8c97015ce0752dc011c28bf4ad55bdd4faed4df9d14457e9"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "ef6203b0e52dd71abec393cea58c5efe0aed34ea5527e26080779454158b8dcb",
+      "sha256": "ef6203b0e52dd71abec393cea58c5efe0aed34ea5527e26080779454158b8dcb"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "29557ea957e5e4e123cd21b00c9f59aaff249cadb41d374b8a1601f95824f60d",
+      "sha256": "29557ea957e5e4e123cd21b00c9f59aaff249cadb41d374b8a1601f95824f60d"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "49e52052120c15cbb71718f68f6511f742157dca470e8d887ee8328bf4fdc8a5",
+      "sha256": "49e52052120c15cbb71718f68f6511f742157dca470e8d887ee8328bf4fdc8a5"
+    },
+    "admin/assets/theme-previews/kids_baby/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "6bd925388c8df53053463a30599e151743bfbf8e12bcd2c7709e04e21f8d5c4d",
+      "sha256": "6bd925388c8df53053463a30599e151743bfbf8e12bcd2c7709e04e21f8d5c4d"
+    },
+    "admin/assets/theme-previews/kids_baby/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "1ae73443298533fabbd6631db4c15bac42a712356201312a27077d9adb10b4a1",
+      "sha256": "1ae73443298533fabbd6631db4c15bac42a712356201312a27077d9adb10b4a1"
+    },
+    "admin/assets/theme-previews/kids_baby/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "749bd92d1abd4da557a087ebdbe8fab6380dc29e93b70760538a182e66ca1a6a",
+      "sha256": "749bd92d1abd4da557a087ebdbe8fab6380dc29e93b70760538a182e66ca1a6a"
+    },
+    "admin/assets/theme-previews/kids_baby/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "deb6726b13df96f1dc546d8510d48e5cd913d1ddfc3cfdec1b1b7e91812a5693",
+      "sha256": "deb6726b13df96f1dc546d8510d48e5cd913d1ddfc3cfdec1b1b7e91812a5693"
+    },
+    "admin/assets/theme-previews/kids_baby/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "afa5c4a7518168bf5757e0721f5cc4f8911021098c15a70bfa566dd714f181be",
+      "sha256": "afa5c4a7518168bf5757e0721f5cc4f8911021098c15a70bfa566dd714f181be"
+    },
+    "admin/assets/theme-previews/kids_baby/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "cb645ab63ea44e679134166745378e4520355deac6a7f820872c6289232069a1",
+      "sha256": "cb645ab63ea44e679134166745378e4520355deac6a7f820872c6289232069a1"
+    },
+    "admin/assets/theme-previews/kids_baby/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "ad51954cf188f5ca81cbb0aee2edc97aa269b5f2ff41e057e8cc89990a90faee",
+      "sha256": "ad51954cf188f5ca81cbb0aee2edc97aa269b5f2ff41e057e8cc89990a90faee"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "ede3d44b58ee4adebbb9af844dafa7d28b8b1bf6331a50d0101dc0feb860584d",
+      "sha256": "ede3d44b58ee4adebbb9af844dafa7d28b8b1bf6331a50d0101dc0feb860584d"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "b331c3f5131560644f222457a7bbf92668ad296d65486884a3a5bebf0ab6f4cc",
+      "sha256": "b331c3f5131560644f222457a7bbf92668ad296d65486884a3a5bebf0ab6f4cc"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "7a03d0fe1ab52ed7eaa2c154123e29b3b94e9c7d8c342fa6c492723ed621e4f7",
+      "sha256": "7a03d0fe1ab52ed7eaa2c154123e29b3b94e9c7d8c342fa6c492723ed621e4f7"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "2add956bf55caa34ad85d17eded7a55511d10f50aea8f13f18262aabd44c6ce6",
+      "sha256": "2add956bf55caa34ad85d17eded7a55511d10f50aea8f13f18262aabd44c6ce6"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "41062ea5c6908531a79f4a8d9fc6b90b331b8d24043e089aecd2799833953126",
+      "sha256": "41062ea5c6908531a79f4a8d9fc6b90b331b8d24043e089aecd2799833953126"
+    },
+    "admin/assets/theme-previews/kids_baby/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "79ade82b0a0bb44ef523769e03353769e752c82af18a8435af21b73e02f09cb5",
+      "sha256": "79ade82b0a0bb44ef523769e03353769e752c82af18a8435af21b73e02f09cb5"
+    },
+    "admin/assets/theme-previews/kids_baby/new-user-293.svg": {
+      "source": "connectors/woocommerce/source/admin/assets/theme-previews/kids_baby/new-user-293.svg",
+      "newline": "lf",
+      "source_sha256": "b83e1fd3ca97e2dd53fe75ac503abb3f538c2ac4c1be49ce35c9f8cb87b36379",
+      "sha256": "b83e1fd3ca97e2dd53fe75ac503abb3f538c2ac4c1be49ce35c9f8cb87b36379"
+    },
+    "admin/assets/theme-previews/kids_baby/new-user-293.webp": {
+      "source": "connectors/woocommerce/source/admin/assets/theme-previews/kids_baby/new-user-293.webp",
+      "newline": "binary",
+      "source_sha256": "e98064f4df63c1929739af792da74be4392f7d26cf1812975736748d5dab19d0",
+      "sha256": "e98064f4df63c1929739af792da74be4392f7d26cf1812975736748d5dab19d0"
+    },
+    "admin/assets/theme-previews/kids_baby/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "21f004e3629d377a17d13049113fcb5cf0fd8d8ecbd24895d220211587a97917",
+      "sha256": "21f004e3629d377a17d13049113fcb5cf0fd8d8ecbd24895d220211587a97917"
+    },
+    "admin/assets/theme-previews/kids_baby/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "5736110b50d3404050ae21087f4e4891901096ca6d63d2f50f3a629bc2b207d4",
+      "sha256": "5736110b50d3404050ae21087f4e4891901096ca6d63d2f50f3a629bc2b207d4"
+    },
+    "admin/assets/theme-previews/kids_baby/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "580b4e9990112780376f995dd062df53fe983bd56c3569ae2f5742a4c8dc7c22",
+      "sha256": "580b4e9990112780376f995dd062df53fe983bd56c3569ae2f5742a4c8dc7c22"
+    },
+    "admin/assets/theme-previews/kids_baby/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "2d1f43c64bdf0a1a5a287211484c1d8848f4272150f06a4f8185895fdc70b29e",
+      "sha256": "2d1f43c64bdf0a1a5a287211484c1d8848f4272150f06a4f8185895fdc70b29e"
+    },
+    "admin/assets/theme-previews/kids_baby/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "c4b15fb78a7f7535486592fbead205d86b752b39fa05e1e0c17d0399a23fc8a0",
+      "sha256": "c4b15fb78a7f7535486592fbead205d86b752b39fa05e1e0c17d0399a23fc8a0"
+    },
+    "admin/assets/theme-previews/kids_baby/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/kids_baby/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "6a9b689fa67badfd505cad3c7569ae608563b7921e37dae3ed09e43c7cddee0c",
+      "sha256": "6a9b689fa67badfd505cad3c7569ae608563b7921e37dae3ed09e43c7cddee0c"
+    },
+    "admin/assets/theme-previews/kids_baby/service-293.svg": {
+      "source": "connectors/woocommerce/source/admin/assets/theme-previews/kids_baby/service-293.svg",
+      "newline": "lf",
+      "source_sha256": "21fc5ef91a60ee80ab21a7686f70d824d8ab20530a61f35b88a21ed247ab3dbf",
+      "sha256": "21fc5ef91a60ee80ab21a7686f70d824d8ab20530a61f35b88a21ed247ab3dbf"
+    },
+    "admin/assets/theme-previews/kids_baby/service-293.webp": {
+      "source": "connectors/woocommerce/source/admin/assets/theme-previews/kids_baby/service-293.webp",
+      "newline": "binary",
+      "source_sha256": "56c381358279baf44b6d3ddbda592215038493d7dd901dd791ea6d7060a6ae1c",
+      "sha256": "56c381358279baf44b6d3ddbda592215038493d7dd901dd791ea6d7060a6ae1c"
+    },
+    "admin/assets/theme-previews/luxury/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "d3037d8e0d161a67790c070f8b8237998eda254f8c84dbefa009b1a7c113f1ec",
+      "sha256": "d3037d8e0d161a67790c070f8b8237998eda254f8c84dbefa009b1a7c113f1ec"
+    },
+    "admin/assets/theme-previews/luxury/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "f6f79c6f1f5a4baf8b31f8b27db5963ec1b9da6d1f9b9ce119d44bdb2352a946",
+      "sha256": "f6f79c6f1f5a4baf8b31f8b27db5963ec1b9da6d1f9b9ce119d44bdb2352a946"
+    },
+    "admin/assets/theme-previews/luxury/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "ec29a025ac8a0fa1338a632fd5d350ea710737d7cdeed106126ff65a645e2d92",
+      "sha256": "ec29a025ac8a0fa1338a632fd5d350ea710737d7cdeed106126ff65a645e2d92"
+    },
+    "admin/assets/theme-previews/luxury/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "f1e6e80ae1356cf12399366b141bff9f88f499f804f1627aac073df7679ae07b",
+      "sha256": "f1e6e80ae1356cf12399366b141bff9f88f499f804f1627aac073df7679ae07b"
+    },
+    "admin/assets/theme-previews/luxury/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "37cf8c0c626b6a6e7c49a57ec2787d35ff7dc0de1afc8451267480c12ec019f5",
+      "sha256": "37cf8c0c626b6a6e7c49a57ec2787d35ff7dc0de1afc8451267480c12ec019f5"
+    },
+    "admin/assets/theme-previews/luxury/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "20861a1f2f28032c7a76f4489f41ccc5f22e4e8a6636b0a16ff7724086607cd9",
+      "sha256": "20861a1f2f28032c7a76f4489f41ccc5f22e4e8a6636b0a16ff7724086607cd9"
+    },
+    "admin/assets/theme-previews/luxury/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "f8a63e37f0896cd063fef63af37c14e02a3acd9491edef4fd13fed494441ccaf",
+      "sha256": "f8a63e37f0896cd063fef63af37c14e02a3acd9491edef4fd13fed494441ccaf"
+    },
+    "admin/assets/theme-previews/luxury/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "c0344d521363cb124410ba707a4f8461f36e270342e3700db805b048b039a3a7",
+      "sha256": "c0344d521363cb124410ba707a4f8461f36e270342e3700db805b048b039a3a7"
+    },
+    "admin/assets/theme-previews/luxury/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "8bfb12b39360d9b8284e32684df97fe9fadbcc277951389693d756b19a36d252",
+      "sha256": "8bfb12b39360d9b8284e32684df97fe9fadbcc277951389693d756b19a36d252"
+    },
+    "admin/assets/theme-previews/luxury/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "66805309e8291294b944d93bb88964089eed20e1a0f724c16e11886c71333e4f",
+      "sha256": "66805309e8291294b944d93bb88964089eed20e1a0f724c16e11886c71333e4f"
+    },
+    "admin/assets/theme-previews/luxury/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "3ed18e4bb073ddacd37d79e121ca7ee0910faf4cadce9729eeb5cdb64342f6c4",
+      "sha256": "3ed18e4bb073ddacd37d79e121ca7ee0910faf4cadce9729eeb5cdb64342f6c4"
+    },
+    "admin/assets/theme-previews/luxury/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "7ade77a4ebf9018676105fc622e70257b7e81d25005e3a5dfc1dfa3ec557ac5b",
+      "sha256": "7ade77a4ebf9018676105fc622e70257b7e81d25005e3a5dfc1dfa3ec557ac5b"
+    },
+    "admin/assets/theme-previews/luxury/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "af51a0b640d3d50c1296c6593f623b6ed13cb57e127c7ecbf1329d375e986ad5",
+      "sha256": "af51a0b640d3d50c1296c6593f623b6ed13cb57e127c7ecbf1329d375e986ad5"
+    },
+    "admin/assets/theme-previews/luxury/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "9c7da090521a56dd5e50f0f6e3b385da529ead01278fe3a94d3f910b97824c3f",
+      "sha256": "9c7da090521a56dd5e50f0f6e3b385da529ead01278fe3a94d3f910b97824c3f"
+    },
+    "admin/assets/theme-previews/luxury/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "bb0a7517a8acf85ebe91ffc52e106792307c4dcbf87ec59661a43ededf4cec4f",
+      "sha256": "bb0a7517a8acf85ebe91ffc52e106792307c4dcbf87ec59661a43ededf4cec4f"
+    },
+    "admin/assets/theme-previews/luxury/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "11c399f30a940f75dd337052d604f0605b5a71677236ea0695fc0fa11d78a7be",
+      "sha256": "11c399f30a940f75dd337052d604f0605b5a71677236ea0695fc0fa11d78a7be"
+    },
+    "admin/assets/theme-previews/luxury/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "f522069b2bcf68dc56b812e01d9883908dfd5a79fb868c137f920396f7a9fafd",
+      "sha256": "f522069b2bcf68dc56b812e01d9883908dfd5a79fb868c137f920396f7a9fafd"
+    },
+    "admin/assets/theme-previews/luxury/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "ff241d6dbe039a649eafd4d35527a2b942b25e4a56cc4c9aa5731e38a227bf7a",
+      "sha256": "ff241d6dbe039a649eafd4d35527a2b942b25e4a56cc4c9aa5731e38a227bf7a"
+    },
+    "admin/assets/theme-previews/luxury/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "19014d504ab4981271585a3abcaa1ade7126bba6091e1f2d9c11db2821246d0c",
+      "sha256": "19014d504ab4981271585a3abcaa1ade7126bba6091e1f2d9c11db2821246d0c"
+    },
+    "admin/assets/theme-previews/luxury/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "14d30f3f5a4838ac0c3bea7be19bebdcdb7d25266730229182a3bf596e17e40b",
+      "sha256": "14d30f3f5a4838ac0c3bea7be19bebdcdb7d25266730229182a3bf596e17e40b"
+    },
+    "admin/assets/theme-previews/luxury/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "e4fd4653c1e52f2579aa1058abf4e612c2a38190edf280dce6108b0494c5d088",
+      "sha256": "e4fd4653c1e52f2579aa1058abf4e612c2a38190edf280dce6108b0494c5d088"
+    },
+    "admin/assets/theme-previews/luxury/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "02a4ebc029c24c1f03f8cd83b3cadce866f5a2c7dd9ff7ae8e235967974fd7c5",
+      "sha256": "02a4ebc029c24c1f03f8cd83b3cadce866f5a2c7dd9ff7ae8e235967974fd7c5"
+    },
+    "admin/assets/theme-previews/luxury/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "6a5cae8a8d5cdd709369d0251dea2831c9bdd858bbb14625cb455e82bee22e7a",
+      "sha256": "6a5cae8a8d5cdd709369d0251dea2831c9bdd858bbb14625cb455e82bee22e7a"
+    },
+    "admin/assets/theme-previews/luxury/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "024a2b71f87fe2ffaf404e3027b00b3d8b1e7f4692b06b9bd5aab935801b32e7",
+      "sha256": "024a2b71f87fe2ffaf404e3027b00b3d8b1e7f4692b06b9bd5aab935801b32e7"
+    },
+    "admin/assets/theme-previews/luxury.webp": {
+      "source": "mobishop/admin/assets/theme-previews/luxury.webp",
+      "newline": "binary",
+      "source_sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905",
+      "sha256": "c549f15e5ab6b0a970fda5e49b831cfc1c9f17ea7dbb88c1ec0c1aabeab96905"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "d29206379fd12c8d3d72c11fac783081880d62339435e57c40bfd96579fa6f65",
+      "sha256": "d29206379fd12c8d3d72c11fac783081880d62339435e57c40bfd96579fa6f65"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "30f4e38e02afc197e4d9b74351b636b65c73f34a60adb9496a8f8fd5912091a9",
+      "sha256": "30f4e38e02afc197e4d9b74351b636b65c73f34a60adb9496a8f8fd5912091a9"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "1880d47ec8b42c7d8462b47dc0b582cdb4be7f1aaada4bf69ec48868aedaa976",
+      "sha256": "1880d47ec8b42c7d8462b47dc0b582cdb4be7f1aaada4bf69ec48868aedaa976"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "a6b427a68dbcb1aba7c5e8deb9fe6e9d446e98b8e5bab6e9399919bf4d4abe2a",
+      "sha256": "a6b427a68dbcb1aba7c5e8deb9fe6e9d446e98b8e5bab6e9399919bf4d4abe2a"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "b77a8e5c5c6bde04eb0164cd32e66d3083362c60d3ee234d62f3db70ab26ed08",
+      "sha256": "b77a8e5c5c6bde04eb0164cd32e66d3083362c60d3ee234d62f3db70ab26ed08"
+    },
+    "admin/assets/theme-previews/marketplace_plus/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "41ccdae6463ad4441430d8e0d66d7e0755b2587fffcb5edf066f05905fa2a45e",
+      "sha256": "41ccdae6463ad4441430d8e0d66d7e0755b2587fffcb5edf066f05905fa2a45e"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "572a7c269d454ad45ea73aff3aabb0288ff048c69219311946c7bc63dbe5bf28",
+      "sha256": "572a7c269d454ad45ea73aff3aabb0288ff048c69219311946c7bc63dbe5bf28"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "16dd5bcdc4a97240ef02606b05d142288b6845b41e9c296c04d7cb7ffc1b8e1a",
+      "sha256": "16dd5bcdc4a97240ef02606b05d142288b6845b41e9c296c04d7cb7ffc1b8e1a"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "948abcd0a704cc0f3c21dac116c533ff8e25bd0c2d597ca50069545f848d99c1",
+      "sha256": "948abcd0a704cc0f3c21dac116c533ff8e25bd0c2d597ca50069545f848d99c1"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "2df59f5d554d2f84a9a708546ec44b281ae5c5be054afe9b5f4943491c77b8a3",
+      "sha256": "2df59f5d554d2f84a9a708546ec44b281ae5c5be054afe9b5f4943491c77b8a3"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "11f1725ab9fc8748228648f85d100a74d728b45aae67fe48507d0b3d46a9674b",
+      "sha256": "11f1725ab9fc8748228648f85d100a74d728b45aae67fe48507d0b3d46a9674b"
+    },
+    "admin/assets/theme-previews/marketplace_plus/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "f7bed77090f2fbef9ef4b06c78074053d673368cedef3b19ca321f4e341922f9",
+      "sha256": "f7bed77090f2fbef9ef4b06c78074053d673368cedef3b19ca321f4e341922f9"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "d81906b95dc7d4bd35eca1c34edd7a87466e70f8fddd3b5c48b99143ff177a75",
+      "sha256": "d81906b95dc7d4bd35eca1c34edd7a87466e70f8fddd3b5c48b99143ff177a75"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "b0e36a5f44093419cde473e09f2b19beef561cad416ec483ec6002c4f9b2ede8",
+      "sha256": "b0e36a5f44093419cde473e09f2b19beef561cad416ec483ec6002c4f9b2ede8"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "c3373e59db602b7df5673b969635d025eefc50ee89e168bd29faf532eeca681e",
+      "sha256": "c3373e59db602b7df5673b969635d025eefc50ee89e168bd29faf532eeca681e"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "edce482f13b5324aef4b9cad5d60c8142362dad643aeb5cf61f928bc2aa837a9",
+      "sha256": "edce482f13b5324aef4b9cad5d60c8142362dad643aeb5cf61f928bc2aa837a9"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "aae7dd06d9cebee415e0dee6d74c129900e1e6a2f0c9bad05484221fa791ef5a",
+      "sha256": "aae7dd06d9cebee415e0dee6d74c129900e1e6a2f0c9bad05484221fa791ef5a"
+    },
+    "admin/assets/theme-previews/marketplace_plus/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "6a823d52720e86c169cd11517b5600604f2b158cdc98a61b74057ad266bc236e",
+      "sha256": "6a823d52720e86c169cd11517b5600604f2b158cdc98a61b74057ad266bc236e"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "a253c28610ba00f7071d42df558496be6fc8c0cd20cb0cef09d2c0435f5dbb25",
+      "sha256": "a253c28610ba00f7071d42df558496be6fc8c0cd20cb0cef09d2c0435f5dbb25"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "1f71a8433edcbb4dda2eea9931cff67876bf0733213d388ab481cea72d56d29a",
+      "sha256": "1f71a8433edcbb4dda2eea9931cff67876bf0733213d388ab481cea72d56d29a"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "34f94c70cd993d54cfce1822385ab3d9b819ce3c182a4fe8782fa8cb696b40e2",
+      "sha256": "34f94c70cd993d54cfce1822385ab3d9b819ce3c182a4fe8782fa8cb696b40e2"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "654b7b8d5590693316d028c826e227351d0e1f40ffd4af615c5174b1bb87fd8b",
+      "sha256": "654b7b8d5590693316d028c826e227351d0e1f40ffd4af615c5174b1bb87fd8b"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "eb189ba33148754321295a23bc0661e585280d93e4c75863f6c8fbdb992dd41e",
+      "sha256": "eb189ba33148754321295a23bc0661e585280d93e4c75863f6c8fbdb992dd41e"
+    },
+    "admin/assets/theme-previews/marketplace_plus/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/marketplace_plus/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "53d80e51aa1e10c0554d35fa613a2625645a0ff2f0fea828095b25d160472c83",
+      "sha256": "53d80e51aa1e10c0554d35fa613a2625645a0ff2f0fea828095b25d160472c83"
+    },
+    "admin/assets/theme-previews/multi-store.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi-store.webp",
+      "newline": "binary",
+      "source_sha256": "3f8291a1f9facc41244086a381d0f0688fe8f79d4c27a12c33731013fc4d47cb",
+      "sha256": "3f8291a1f9facc41244086a381d0f0688fe8f79d4c27a12c33731013fc4d47cb"
+    },
+    "admin/assets/theme-previews/multi_store/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "67300c167064e0d1d2ed6bf7fbc8f508a8e5765f97ea9866e94c705a24706f72",
+      "sha256": "67300c167064e0d1d2ed6bf7fbc8f508a8e5765f97ea9866e94c705a24706f72"
+    },
+    "admin/assets/theme-previews/multi_store/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "355e1b3f54f23499cc47aa0d8bb8715af3ab779e9a7c64884641d8887e08901e",
+      "sha256": "355e1b3f54f23499cc47aa0d8bb8715af3ab779e9a7c64884641d8887e08901e"
+    },
+    "admin/assets/theme-previews/multi_store/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "ead766aeb2d1bd1c46a17133bf2b20175825a8c039db6fadd2ec6edff5477d83",
+      "sha256": "ead766aeb2d1bd1c46a17133bf2b20175825a8c039db6fadd2ec6edff5477d83"
+    },
+    "admin/assets/theme-previews/multi_store/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "a23586dea73df135ef8cba90d45403be3be04a78561919506bd20ebb2ef12b9c",
+      "sha256": "a23586dea73df135ef8cba90d45403be3be04a78561919506bd20ebb2ef12b9c"
+    },
+    "admin/assets/theme-previews/multi_store/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "9326b92443edc0a3095a688b91f975c05837b59c0ef786190d129fe47f6f73cc",
+      "sha256": "9326b92443edc0a3095a688b91f975c05837b59c0ef786190d129fe47f6f73cc"
+    },
+    "admin/assets/theme-previews/multi_store/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "9ad547c95ffec5c9e18650c2b95a9b5ab459e44fd4556879a39f9042b047180e",
+      "sha256": "9ad547c95ffec5c9e18650c2b95a9b5ab459e44fd4556879a39f9042b047180e"
+    },
+    "admin/assets/theme-previews/multi_store/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "f41fc96dcd5b5020c139915d0aa367d515795423232c59310bb1e734a42c185e",
+      "sha256": "f41fc96dcd5b5020c139915d0aa367d515795423232c59310bb1e734a42c185e"
+    },
+    "admin/assets/theme-previews/multi_store/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "adf265d983eb8421bcc0c0668d8b1e29b5abd691c2a356222e89fadd99b57d69",
+      "sha256": "adf265d983eb8421bcc0c0668d8b1e29b5abd691c2a356222e89fadd99b57d69"
+    },
+    "admin/assets/theme-previews/multi_store/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "8480f6f57e1d7ac5eb4b18aa9ebca514c0c690c71d5df724ea04b0958e7f7d12",
+      "sha256": "8480f6f57e1d7ac5eb4b18aa9ebca514c0c690c71d5df724ea04b0958e7f7d12"
+    },
+    "admin/assets/theme-previews/multi_store/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "280765b45dfa04daf3730508aeef0065adb0b4b75c01a798dcfe673024dc6b93",
+      "sha256": "280765b45dfa04daf3730508aeef0065adb0b4b75c01a798dcfe673024dc6b93"
+    },
+    "admin/assets/theme-previews/multi_store/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "6816a95a0ee8a51f9bfea18ca7ad46f8878948d8f85cb94052bd0c39e1cbe9e1",
+      "sha256": "6816a95a0ee8a51f9bfea18ca7ad46f8878948d8f85cb94052bd0c39e1cbe9e1"
+    },
+    "admin/assets/theme-previews/multi_store/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "e8e90cdebdbad6c87501c01c6df94c15df42354954fea6d2ab9f5d46ae5b42c6",
+      "sha256": "e8e90cdebdbad6c87501c01c6df94c15df42354954fea6d2ab9f5d46ae5b42c6"
+    },
+    "admin/assets/theme-previews/multi_store/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "168e05233105af272b3058d9edf958398dcb3c9b720339c255c9d501fcfc8882",
+      "sha256": "168e05233105af272b3058d9edf958398dcb3c9b720339c255c9d501fcfc8882"
+    },
+    "admin/assets/theme-previews/multi_store/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "2366b305b867188acfdbfab82a9ccdc6c6ded29bae5895a7b96cf68b6f6f3151",
+      "sha256": "2366b305b867188acfdbfab82a9ccdc6c6ded29bae5895a7b96cf68b6f6f3151"
+    },
+    "admin/assets/theme-previews/multi_store/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "365f8bc06e2e8c8a3f38d4dcada5ce61e6ea3e01091665bf47a5a5f778a9f021",
+      "sha256": "365f8bc06e2e8c8a3f38d4dcada5ce61e6ea3e01091665bf47a5a5f778a9f021"
+    },
+    "admin/assets/theme-previews/multi_store/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "cee3bcc5402bda006caa057b4b95af2e7978239d043d60d5832171f9524be5c1",
+      "sha256": "cee3bcc5402bda006caa057b4b95af2e7978239d043d60d5832171f9524be5c1"
+    },
+    "admin/assets/theme-previews/multi_store/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "27d85b0cfa4a9a9c42860a77b7a4923e4943dff74c88f24e9db532f0b11bca54",
+      "sha256": "27d85b0cfa4a9a9c42860a77b7a4923e4943dff74c88f24e9db532f0b11bca54"
+    },
+    "admin/assets/theme-previews/multi_store/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "a2a58222eb14681042768b8eb0d1e83ef27cf95a3a8127a20bcf6af47c0c7372",
+      "sha256": "a2a58222eb14681042768b8eb0d1e83ef27cf95a3a8127a20bcf6af47c0c7372"
+    },
+    "admin/assets/theme-previews/multi_store/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "75e45343eec8f05e3eb23bb91d77ca82e563a8a7e1f51deae7bb90b5fc377ab7",
+      "sha256": "75e45343eec8f05e3eb23bb91d77ca82e563a8a7e1f51deae7bb90b5fc377ab7"
+    },
+    "admin/assets/theme-previews/multi_store/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "293f960f232daea59ca5eb34972bfc99f4d591a1b9eda15184b746b826167d41",
+      "sha256": "293f960f232daea59ca5eb34972bfc99f4d591a1b9eda15184b746b826167d41"
+    },
+    "admin/assets/theme-previews/multi_store/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "0f9bd5f53ddb16f1f9c96386b4d205c160389006e202b20da7c674b3db8619aa",
+      "sha256": "0f9bd5f53ddb16f1f9c96386b4d205c160389006e202b20da7c674b3db8619aa"
+    },
+    "admin/assets/theme-previews/multi_store/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "f870fc214cdcebf57553f732885b8506f2baabdcd5bd8aa1d42700ebcf5498b8",
+      "sha256": "f870fc214cdcebf57553f732885b8506f2baabdcd5bd8aa1d42700ebcf5498b8"
+    },
+    "admin/assets/theme-previews/multi_store/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "bc84164389fcbbce1266c918b16b2f7ec699bd78e05b071acc509a14058c9edf",
+      "sha256": "bc84164389fcbbce1266c918b16b2f7ec699bd78e05b071acc509a14058c9edf"
+    },
+    "admin/assets/theme-previews/multi_store/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/multi_store/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "d03856f3be6c58ec389d84de2cc4e1459b5f06e0cf8a72eb118b86772e6ab016",
+      "sha256": "d03856f3be6c58ec389d84de2cc4e1459b5f06e0cf8a72eb118b86772e6ab016"
+    },
+    "admin/assets/theme-previews/pet_care/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "7d0c5634b7ce0a5e2bc30f4bf6d7efb65d80a95dd41fff1876e0b53f70e3f623",
+      "sha256": "7d0c5634b7ce0a5e2bc30f4bf6d7efb65d80a95dd41fff1876e0b53f70e3f623"
+    },
+    "admin/assets/theme-previews/pet_care/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "c72fa0af907096417ead80de453bdeadcd8df1d0098dd9bc516ff2197aa2b67e",
+      "sha256": "c72fa0af907096417ead80de453bdeadcd8df1d0098dd9bc516ff2197aa2b67e"
+    },
+    "admin/assets/theme-previews/pet_care/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "22d6e1cc9e880da0257001c7e0012abbd94014a80050b37c3664c8a19e520b1d",
+      "sha256": "22d6e1cc9e880da0257001c7e0012abbd94014a80050b37c3664c8a19e520b1d"
+    },
+    "admin/assets/theme-previews/pet_care/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "be4488f21bb00967057a539fc83aa3ca649830032c0c1c7837cf8f5db6fb6157",
+      "sha256": "be4488f21bb00967057a539fc83aa3ca649830032c0c1c7837cf8f5db6fb6157"
+    },
+    "admin/assets/theme-previews/pet_care/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "81b55c7d7bf9ddca29a49d97c6955ef09a6993f8cf3c46a475b4b5bab2825935",
+      "sha256": "81b55c7d7bf9ddca29a49d97c6955ef09a6993f8cf3c46a475b4b5bab2825935"
+    },
+    "admin/assets/theme-previews/pet_care/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "e6c7c88867d8395df4804506b2b4de2ff16b6193f0fa548c8dd977b983b5698f",
+      "sha256": "e6c7c88867d8395df4804506b2b4de2ff16b6193f0fa548c8dd977b983b5698f"
+    },
+    "admin/assets/theme-previews/pet_care/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "6628f138641f523aec20aff3ff814b668e9b452f821e111137324cf75a1a3923",
+      "sha256": "6628f138641f523aec20aff3ff814b668e9b452f821e111137324cf75a1a3923"
+    },
+    "admin/assets/theme-previews/pet_care/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "b8f0325d6c8a41ddfb43091fc595b4e075bc61b0c1be63bae7fb9270d260cd67",
+      "sha256": "b8f0325d6c8a41ddfb43091fc595b4e075bc61b0c1be63bae7fb9270d260cd67"
+    },
+    "admin/assets/theme-previews/pet_care/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "66a16ebd18ac27fa74f5ab6e6412ed82f0c4b012b8fad7147c9f2ab20df4dca4",
+      "sha256": "66a16ebd18ac27fa74f5ab6e6412ed82f0c4b012b8fad7147c9f2ab20df4dca4"
+    },
+    "admin/assets/theme-previews/pet_care/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "312948bc706ba7053d5bdbf05c94188924dc4aff321efb427d36a43dee93aed6",
+      "sha256": "312948bc706ba7053d5bdbf05c94188924dc4aff321efb427d36a43dee93aed6"
+    },
+    "admin/assets/theme-previews/pet_care/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "90fa7b68c4c97aa3907372f5a60b3e00d7d39529f0796f1d633bff6747625aed",
+      "sha256": "90fa7b68c4c97aa3907372f5a60b3e00d7d39529f0796f1d633bff6747625aed"
+    },
+    "admin/assets/theme-previews/pet_care/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "13d15a23a8ee00f66925f48c2280bea9377068444735a2e918dbd5d6c699d0db",
+      "sha256": "13d15a23a8ee00f66925f48c2280bea9377068444735a2e918dbd5d6c699d0db"
+    },
+    "admin/assets/theme-previews/pet_care/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "09f1314d569335987acddf61998bd28c9cc74dc35a8bab25f706122d8690a2c2",
+      "sha256": "09f1314d569335987acddf61998bd28c9cc74dc35a8bab25f706122d8690a2c2"
+    },
+    "admin/assets/theme-previews/pet_care/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "a95afcc139f41ce4d2b46e34d4af0050fddd4b9a56c042bae9ece6ea479f5819",
+      "sha256": "a95afcc139f41ce4d2b46e34d4af0050fddd4b9a56c042bae9ece6ea479f5819"
+    },
+    "admin/assets/theme-previews/pet_care/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "8d8f0591764e1bc6cc5be8fc3470350492bbdbd7dd65a241735ede35b0147c54",
+      "sha256": "8d8f0591764e1bc6cc5be8fc3470350492bbdbd7dd65a241735ede35b0147c54"
+    },
+    "admin/assets/theme-previews/pet_care/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "f108902468adcbde5dd4026a7bb05f3bb74b233bc4c862a420db7b5445a478b3",
+      "sha256": "f108902468adcbde5dd4026a7bb05f3bb74b233bc4c862a420db7b5445a478b3"
+    },
+    "admin/assets/theme-previews/pet_care/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "1bd2a11f465cd12193603aa5b7e5fd56f42608e8acc11b3c2c375c484341f97f",
+      "sha256": "1bd2a11f465cd12193603aa5b7e5fd56f42608e8acc11b3c2c375c484341f97f"
+    },
+    "admin/assets/theme-previews/pet_care/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "38133cda0b1d07e5c4a4bfec11fd7d8c54ac33314fa78f3d31bdfbd694973b67",
+      "sha256": "38133cda0b1d07e5c4a4bfec11fd7d8c54ac33314fa78f3d31bdfbd694973b67"
+    },
+    "admin/assets/theme-previews/pet_care/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "ad2e919372ee108203551f0d9efb5a482d49b918adda235d8bbd6cd2c8c01ab1",
+      "sha256": "ad2e919372ee108203551f0d9efb5a482d49b918adda235d8bbd6cd2c8c01ab1"
+    },
+    "admin/assets/theme-previews/pet_care/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "c21aafaf5b59635ffc647b6225c2ae61065489d2e895664e6ee6824c2a54a62f",
+      "sha256": "c21aafaf5b59635ffc647b6225c2ae61065489d2e895664e6ee6824c2a54a62f"
+    },
+    "admin/assets/theme-previews/pet_care/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "a0fbdd79075211bbb8cf1500b91368250cdf62fe8bd7c3c383133d18c346b90e",
+      "sha256": "a0fbdd79075211bbb8cf1500b91368250cdf62fe8bd7c3c383133d18c346b90e"
+    },
+    "admin/assets/theme-previews/pet_care/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "264b00d16241df88ce1d66f74c7650f0b9b088636208e995f0b1c830c9939980",
+      "sha256": "264b00d16241df88ce1d66f74c7650f0b9b088636208e995f0b1c830c9939980"
+    },
+    "admin/assets/theme-previews/pet_care/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "de2d30a244d411c4307d0950456c655f87dc2605619dee1edae414490553d20d",
+      "sha256": "de2d30a244d411c4307d0950456c655f87dc2605619dee1edae414490553d20d"
+    },
+    "admin/assets/theme-previews/pet_care/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/pet_care/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "6e478da7cb54d6af994bb6c00ee2190244cafaff5dfc583f7180acc9c672223c",
+      "sha256": "6e478da7cb54d6af994bb6c00ee2190244cafaff5dfc583f7180acc9c672223c"
+    },
+    "admin/assets/theme-previews/sports-fitness.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports-fitness.webp",
+      "newline": "binary",
+      "source_sha256": "81666e4bca13a5f765a6094dd1dc44b7a6ba2c952036f7966755c274475caf85",
+      "sha256": "81666e4bca13a5f765a6094dd1dc44b7a6ba2c952036f7966755c274475caf85"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "04ec543f353ea59639babd89f6453dc9bee91b1e562abde131666f38a5922168",
+      "sha256": "04ec543f353ea59639babd89f6453dc9bee91b1e562abde131666f38a5922168"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "8a5b6933eb41b0b66b47835c573c0067272514fcd3e71dad9b5c5f86cafd30f5",
+      "sha256": "8a5b6933eb41b0b66b47835c573c0067272514fcd3e71dad9b5c5f86cafd30f5"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "1b43e579cdf2a35ce5ddb1804646f30607fd3c02c88ad847f9b890076adb1cc7",
+      "sha256": "1b43e579cdf2a35ce5ddb1804646f30607fd3c02c88ad847f9b890076adb1cc7"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "a23a6b676c997639b867cc2285c696776d7775ec651da78466ae5c06cfb5c9e3",
+      "sha256": "a23a6b676c997639b867cc2285c696776d7775ec651da78466ae5c06cfb5c9e3"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "28d7a21f4dcfbde726e78b4cd6847d865d01d5c6749e6a6979ebd34893e468eb",
+      "sha256": "28d7a21f4dcfbde726e78b4cd6847d865d01d5c6749e6a6979ebd34893e468eb"
+    },
+    "admin/assets/theme-previews/sports_fitness/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "2241e839b18ea2a0a1e86df3f478da16538fe80f538773764f9c11b12bff1354",
+      "sha256": "2241e839b18ea2a0a1e86df3f478da16538fe80f538773764f9c11b12bff1354"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "72f57c1ec1b56821c7e85d4957441f2300f72fe476a10e1afd9d8ecd52ac1076",
+      "sha256": "72f57c1ec1b56821c7e85d4957441f2300f72fe476a10e1afd9d8ecd52ac1076"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "fc8673937ff811bf2cee31d9fdf731d02a7253095ceb137dec7e1cb41e993532",
+      "sha256": "fc8673937ff811bf2cee31d9fdf731d02a7253095ceb137dec7e1cb41e993532"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "d57b861a1ebb0b46f149bbc040abd30eaeba180beae2b521d47fd05eb880c218",
+      "sha256": "d57b861a1ebb0b46f149bbc040abd30eaeba180beae2b521d47fd05eb880c218"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "c882bc77496cf8a34eb2962d075258e962d42263b9e7efda759f180fe4e597b8",
+      "sha256": "c882bc77496cf8a34eb2962d075258e962d42263b9e7efda759f180fe4e597b8"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "0b1f6ee0a4132acbd5cbd72e5cad701959dbcdb6c43313997879200a6d507f8f",
+      "sha256": "0b1f6ee0a4132acbd5cbd72e5cad701959dbcdb6c43313997879200a6d507f8f"
+    },
+    "admin/assets/theme-previews/sports_fitness/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "ac48506cfc5eee71ad623c26c4d65a3bee4b21f9f6ac4bb313e802ac6ffbf6a7",
+      "sha256": "ac48506cfc5eee71ad623c26c4d65a3bee4b21f9f6ac4bb313e802ac6ffbf6a7"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "a0409d8f0113e6e224eab5c0e9b43abadbe5cbc25bd7569f583eccf041e6999a",
+      "sha256": "a0409d8f0113e6e224eab5c0e9b43abadbe5cbc25bd7569f583eccf041e6999a"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "3a54da75c3c5ed51af5e40b28c5ca7bb6a52558f0fe6085d6e2e49f45d2b159a",
+      "sha256": "3a54da75c3c5ed51af5e40b28c5ca7bb6a52558f0fe6085d6e2e49f45d2b159a"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "818cc125bd30f2805988466335674a3ead0d8ae3d14e7bbdb47da766be6ae80c",
+      "sha256": "818cc125bd30f2805988466335674a3ead0d8ae3d14e7bbdb47da766be6ae80c"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "d2f04a524382492ba1f46dbd43413d4ba505af8f1d605070f1722a6a0cb7a269",
+      "sha256": "d2f04a524382492ba1f46dbd43413d4ba505af8f1d605070f1722a6a0cb7a269"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "a4429ca7e53f3b82d34d214190880be1f15a500faac67df9c809c86b10a9f82b",
+      "sha256": "a4429ca7e53f3b82d34d214190880be1f15a500faac67df9c809c86b10a9f82b"
+    },
+    "admin/assets/theme-previews/sports_fitness/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "ad2c1191aee80d08a9031863781745b212e35eb36d7361a8ec7262e001d52bc3",
+      "sha256": "ad2c1191aee80d08a9031863781745b212e35eb36d7361a8ec7262e001d52bc3"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "4c70e7b24f99059914f6002d10f3791383548152079b4b40e406767dbf156aa2",
+      "sha256": "4c70e7b24f99059914f6002d10f3791383548152079b4b40e406767dbf156aa2"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "963773dac2ec7d0ff912faa4518652c297b38af7035291b2871e2982f349ac49",
+      "sha256": "963773dac2ec7d0ff912faa4518652c297b38af7035291b2871e2982f349ac49"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "c0180131c0f96284a3e765f888d4cb534f49af2330a5e31ea5b20ecdc615e59b",
+      "sha256": "c0180131c0f96284a3e765f888d4cb534f49af2330a5e31ea5b20ecdc615e59b"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "23f1bb89918b8e67ae2bde82c5075230e4035bee7953f4670ba76be5a881a04c",
+      "sha256": "23f1bb89918b8e67ae2bde82c5075230e4035bee7953f4670ba76be5a881a04c"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "d78449dba1fe211cd92e360f476bb6cf7fa587e52e16e19bba8ce4568d19986b",
+      "sha256": "d78449dba1fe211cd92e360f476bb6cf7fa587e52e16e19bba8ce4568d19986b"
+    },
+    "admin/assets/theme-previews/sports_fitness/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/sports_fitness/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "4f09d7c5b07dddf43ba9bf8607506cfef47c1582d9b77846ea8b711a51e0dd07",
+      "sha256": "4f09d7c5b07dddf43ba9bf8607506cfef47c1582d9b77846ea8b711a51e0dd07"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-1.webp",
+      "newline": "binary",
+      "source_sha256": "29c21ebca9ce8b3151982c6c710a77e18f0ebe761c7fc1a741d1d54692c6f0eb",
+      "sha256": "29c21ebca9ce8b3151982c6c710a77e18f0ebe761c7fc1a741d1d54692c6f0eb"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-2.webp",
+      "newline": "binary",
+      "source_sha256": "634675c1bab03382e36aad13cc12d49cf7d56efd951e02a8ba79434f84230061",
+      "sha256": "634675c1bab03382e36aad13cc12d49cf7d56efd951e02a8ba79434f84230061"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-3.webp",
+      "newline": "binary",
+      "source_sha256": "52bca4096b2b0503c51e07ea18d5f03b4b6309fd5bbb503c779fbfd6bc0c08eb",
+      "sha256": "52bca4096b2b0503c51e07ea18d5f03b4b6309fd5bbb503c779fbfd6bc0c08eb"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-4.webp",
+      "newline": "binary",
+      "source_sha256": "12aa631171fad0936648b86a8f93d266b54340596286e3ddeea90c316e5461bb",
+      "sha256": "12aa631171fad0936648b86a8f93d266b54340596286e3ddeea90c316e5461bb"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-5.webp",
+      "newline": "binary",
+      "source_sha256": "bda581f447ed770a01de1c4d603e322f385efcd559d74a1db9fb44df36a5707d",
+      "sha256": "bda581f447ed770a01de1c4d603e322f385efcd559d74a1db9fb44df36a5707d"
+    },
+    "admin/assets/theme-previews/studio_fashion/banner-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/banner-6.webp",
+      "newline": "binary",
+      "source_sha256": "328bac38b85cbba36face053475418fb6b001b4bac6206dbded5351205cad5b7",
+      "sha256": "328bac38b85cbba36face053475418fb6b001b4bac6206dbded5351205cad5b7"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-1.webp",
+      "newline": "binary",
+      "source_sha256": "221b6891c1b554f144bf40a485471f050f22e9306ba5e64f1d6b50297bb0faa3",
+      "sha256": "221b6891c1b554f144bf40a485471f050f22e9306ba5e64f1d6b50297bb0faa3"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-2.webp",
+      "newline": "binary",
+      "source_sha256": "16fd62c25c4ddd1d62fd0b8c6828bcae3aeb19749bb21039530614bd5b930613",
+      "sha256": "16fd62c25c4ddd1d62fd0b8c6828bcae3aeb19749bb21039530614bd5b930613"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-3.webp",
+      "newline": "binary",
+      "source_sha256": "878b03a3e1ab76dd7ede20397cfe43cb18c62007ffbe3e67d0f5bdf9f634cea7",
+      "sha256": "878b03a3e1ab76dd7ede20397cfe43cb18c62007ffbe3e67d0f5bdf9f634cea7"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-4.webp",
+      "newline": "binary",
+      "source_sha256": "5df0072aa5b4f29d038543151d655a6b595ab82c3e398f9e00c7f6ca007a6052",
+      "sha256": "5df0072aa5b4f29d038543151d655a6b595ab82c3e398f9e00c7f6ca007a6052"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-5.webp",
+      "newline": "binary",
+      "source_sha256": "b0e9758f954c89e8f21a16ca94c8bbbbd77df132d1223ca5bf7627937e51f0d2",
+      "sha256": "b0e9758f954c89e8f21a16ca94c8bbbbd77df132d1223ca5bf7627937e51f0d2"
+    },
+    "admin/assets/theme-previews/studio_fashion/category-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/category-6.webp",
+      "newline": "binary",
+      "source_sha256": "cab275738e447b029285f99ac64dbc023e10a7174ddd67dce1bd9abd470b5595",
+      "sha256": "cab275738e447b029285f99ac64dbc023e10a7174ddd67dce1bd9abd470b5595"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-1.webp",
+      "newline": "binary",
+      "source_sha256": "cf6fe9b25cf46ad863a05980596c7903d2bb6c50d1a37bca38cb8c2d06671b46",
+      "sha256": "cf6fe9b25cf46ad863a05980596c7903d2bb6c50d1a37bca38cb8c2d06671b46"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-2.webp",
+      "newline": "binary",
+      "source_sha256": "a1a615a35dfe01c0e23be85d0308e289a509bf20a4f376b504082003f083df0b",
+      "sha256": "a1a615a35dfe01c0e23be85d0308e289a509bf20a4f376b504082003f083df0b"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-3.webp",
+      "newline": "binary",
+      "source_sha256": "1b79b1d1d59844195a7de668be194e42ac8074989d068c0b9781bed4f64c63d2",
+      "sha256": "1b79b1d1d59844195a7de668be194e42ac8074989d068c0b9781bed4f64c63d2"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-4.webp",
+      "newline": "binary",
+      "source_sha256": "9f68e86effb0f5b68a7707358149a48217a6fb43012661fa0a95ea35fd6d44c1",
+      "sha256": "9f68e86effb0f5b68a7707358149a48217a6fb43012661fa0a95ea35fd6d44c1"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-5.webp",
+      "newline": "binary",
+      "source_sha256": "b4719ec74d0df80e723691e463144953b90f72e7114fc2f13ec850618d578ae9",
+      "sha256": "b4719ec74d0df80e723691e463144953b90f72e7114fc2f13ec850618d578ae9"
+    },
+    "admin/assets/theme-previews/studio_fashion/hero-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/hero-6.webp",
+      "newline": "binary",
+      "source_sha256": "657b406e9f888fe8a0227d27fd83526f17f126e147500c65516b9d1b23900b52",
+      "sha256": "657b406e9f888fe8a0227d27fd83526f17f126e147500c65516b9d1b23900b52"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-1.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-1.webp",
+      "newline": "binary",
+      "source_sha256": "79a46746ab54b4675ca808d592f662fb75bb5675643987b4bb73246b705fb9e3",
+      "sha256": "79a46746ab54b4675ca808d592f662fb75bb5675643987b4bb73246b705fb9e3"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-2.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-2.webp",
+      "newline": "binary",
+      "source_sha256": "d186915a41f97301382e776fcf0e42d82231d0d0341a01e1fa6c60018bc658b7",
+      "sha256": "d186915a41f97301382e776fcf0e42d82231d0d0341a01e1fa6c60018bc658b7"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-3.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-3.webp",
+      "newline": "binary",
+      "source_sha256": "e3adf5ff876c64ae213d00dd804ffa280bcea5b329e074dac0178ddffafa90b5",
+      "sha256": "e3adf5ff876c64ae213d00dd804ffa280bcea5b329e074dac0178ddffafa90b5"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-4.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-4.webp",
+      "newline": "binary",
+      "source_sha256": "3c4d4cf98b0fe5ed4a9714fcc1162550da142ddd1178c03fc2a719d095145047",
+      "sha256": "3c4d4cf98b0fe5ed4a9714fcc1162550da142ddd1178c03fc2a719d095145047"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-5.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-5.webp",
+      "newline": "binary",
+      "source_sha256": "b729ea6f900cf7bb02a8ea75e0d86461718732f35ed2dcaab8b75be8a8df5c6f",
+      "sha256": "b729ea6f900cf7bb02a8ea75e0d86461718732f35ed2dcaab8b75be8a8df5c6f"
+    },
+    "admin/assets/theme-previews/studio_fashion/product-6.webp": {
+      "source": "mobishop/admin/assets/theme-previews/studio_fashion/product-6.webp",
+      "newline": "binary",
+      "source_sha256": "b97db0e819455cc99c52f88215f24432bae424cda9b154d80b6d337d5b2a3193",
+      "sha256": "b97db0e819455cc99c52f88215f24432bae424cda9b154d80b6d337d5b2a3193"
+    },
+    "api/class-category-page-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-category-page-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "650b3a17838c61de7ff68765210702697a279d02348fe3e018e0fdf3b84ce435",
+      "sha256": "650b3a17838c61de7ff68765210702697a279d02348fe3e018e0fdf3b84ce435"
+    },
+    "api/class-checkout-config-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-checkout-config-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "ffabac74c4898b597c92d2091c677b45a7fd072cc886a34338819fabf733ab29",
+      "sha256": "ffabac74c4898b597c92d2091c677b45a7fd072cc886a34338819fabf733ab29"
+    },
+    "api/class-customer-account-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "e436cb063f2eb9e9355ea444274f41216dbd0161b461294c1bdecc861d45724b",
+      "sha256": "e436cb063f2eb9e9355ea444274f41216dbd0161b461294c1bdecc861d45724b"
+    },
+    "api/class-customer-auth-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-auth-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "06a6ae7420628d18934cdcfdea0571770dc9e93630382b212e34df2b323588b6",
+      "sha256": "06a6ae7420628d18934cdcfdea0571770dc9e93630382b212e34df2b323588b6"
+    },
+    "api/class-customer-orders-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "e05cc64e4ff3eb78266a1b9b7f947978cdb36ddcd76fed532535319ff9bbab26",
+      "sha256": "e05cc64e4ff3eb78266a1b9b7f947978cdb36ddcd76fed532535319ff9bbab26"
+    },
+    "api/class-home-layout-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-home-layout-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "9345fa87ab792e1ea88a4cce905bd29b92f50601f42b1034f83712c4a024375b",
+      "sha256": "9345fa87ab792e1ea88a4cce905bd29b92f50601f42b1034f83712c4a024375b"
+    },
+    "api/class-native-checkout-safety50.php": {
+      "source": "connectors/woocommerce/source/api/class-native-checkout-safety50.php",
+      "newline": "lf",
+      "source_sha256": "5abe987c3795774aa9af8fe7a80e0ed1539a1617bf34d999403231881562d8ad",
+      "sha256": "5abe987c3795774aa9af8fe7a80e0ed1539a1617bf34d999403231881562d8ad"
+    },
+    "api/class-native-qa-isolation51.php": {
+      "source": "connectors/woocommerce/source/api/class-native-qa-isolation51.php",
+      "newline": "lf",
+      "source_sha256": "ea88a6e62ed51f0c8578136e02bde78e53226f48daf021a51d04aa9812185803",
+      "sha256": "ea88a6e62ed51f0c8578136e02bde78e53226f48daf021a51d04aa9812185803"
+    },
+    "api/class-page-layout-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-page-layout-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "aa9243fe18351fddac423a4e884298268a75ee7e80613fff86a36e8f542cd0e8",
+      "sha256": "aa9243fe18351fddac423a4e884298268a75ee7e80613fff86a36e8f542cd0e8"
+    },
+    "api/class-product-brand-bridge.php": {
+      "source": "connectors/woocommerce/source/api/class-product-brand-bridge.php",
+      "newline": "lf",
+      "source_sha256": "12281befae84791c5695aefd2411791db0a2b48cd820276e89a604e2b792d30e",
+      "sha256": "12281befae84791c5695aefd2411791db0a2b48cd820276e89a604e2b792d30e"
+    },
+    "api/class-product-variation-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-product-variation-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "efa9a930dac548a04679e76010fe5c64424a7524c4430a6babf28f1d30dc8daf",
+      "sha256": "efa9a930dac548a04679e76010fe5c64424a7524c4430a6babf28f1d30dc8daf"
+    },
+    "api/class-splash-screen-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-splash-screen-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "9a88a1ceb0941ed847d852f7607561280a32e0571dfda19946232b3a096d4916",
+      "sha256": "9a88a1ceb0941ed847d852f7607561280a32e0571dfda19946232b3a096d4916"
+    },
+    "api/class-store-api-price-compatibility.php": {
+      "source": "connectors/woocommerce/source/api/class-store-api-price-compatibility.php",
+      "newline": "lf",
+      "source_sha256": "e5ed68ba174330153262c40a609f30c5a88d8a0c258a9307b32cd1dccc9f32fc",
+      "sha256": "e5ed68ba174330153262c40a609f30c5a88d8a0c258a9307b32cd1dccc9f32fc"
+    },
+    "api/class-store-changes-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-store-changes-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "f799b9a04b02c65e87152914f2b7ab6215089bb822cbba08106a46b116220b7c",
+      "sha256": "f799b9a04b02c65e87152914f2b7ab6215089bb822cbba08106a46b116220b7c"
+    },
+    "api/class-website-auth-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-website-auth-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "31005f276aca5c2badf94ad6496206377fd5be7c42405dedb64e545fe56d46c1",
+      "sha256": "31005f276aca5c2badf94ad6496206377fd5be7c42405dedb64e545fe56d46c1"
+    },
+    "includes/blocks/class-mobishop-app-header-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-app-header-block.php",
+      "newline": "lf",
+      "source_sha256": "db9b623a5e2e12b9a2eb7045a53a3b2b39e47d323c5e51a455a97290152d3ca5",
+      "sha256": "db9b623a5e2e12b9a2eb7045a53a3b2b39e47d323c5e51a455a97290152d3ca5"
+    },
+    "includes/blocks/class-mobishop-banner-grid-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-banner-grid-block.php",
+      "newline": "lf",
+      "source_sha256": "b0e6c93cdd878711a51b4f0e23b72236a45e1ce2976849ea3b703df846ffd5db",
+      "sha256": "b0e6c93cdd878711a51b4f0e23b72236a45e1ce2976849ea3b703df846ffd5db"
+    },
+    "includes/blocks/class-mobishop-brand-carousel-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-brand-carousel-block.php",
+      "newline": "lf",
+      "source_sha256": "2463107fd3be0e52c03bd6f45501d6fa6f2b0d8c0f58edb9a1ed5785ca142428",
+      "sha256": "2463107fd3be0e52c03bd6f45501d6fa6f2b0d8c0f58edb9a1ed5785ca142428"
+    },
+    "includes/blocks/class-mobishop-bundle-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-bundle-block.php",
+      "newline": "lf",
+      "source_sha256": "526b6a308fce6a45e2038f26468a8e9903b04660503c335613b0a3b564e50246",
+      "sha256": "526b6a308fce6a45e2038f26468a8e9903b04660503c335613b0a3b564e50246"
+    },
+    "includes/blocks/class-mobishop-category-grid-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-category-grid-block.php",
+      "newline": "lf",
+      "source_sha256": "df4caf4b79a76ac3c405c0aa3497ceaa9ebd8cae31a701724a2e65108fb2633e",
+      "sha256": "df4caf4b79a76ac3c405c0aa3497ceaa9ebd8cae31a701724a2e65108fb2633e"
+    },
+    "includes/blocks/class-mobishop-countdown-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-countdown-block.php",
+      "newline": "lf",
+      "source_sha256": "f5b48b88812e306ef84519490ce2a6020f6f399c5b507a5e59ee2600180f84a9",
+      "sha256": "f5b48b88812e306ef84519490ce2a6020f6f399c5b507a5e59ee2600180f84a9"
+    },
+    "includes/blocks/class-mobishop-coupon-banner-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-coupon-banner-block.php",
+      "newline": "lf",
+      "source_sha256": "9ecc42947923c276307047a76a8798de2ab8fb67eee7159b51384e6dd9bd0930",
+      "sha256": "9ecc42947923c276307047a76a8798de2ab8fb67eee7159b51384e6dd9bd0930"
+    },
+    "includes/blocks/class-mobishop-divider-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-divider-block.php",
+      "newline": "lf",
+      "source_sha256": "d129ab235d342d23a565ed05ef2125867ffd87c36a81c5f0784c958a1d236968",
+      "sha256": "d129ab235d342d23a565ed05ef2125867ffd87c36a81c5f0784c958a1d236968"
+    },
+    "includes/blocks/class-mobishop-hero-slider-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-hero-slider-block.php",
+      "newline": "lf",
+      "source_sha256": "9ca4e7811188d87c0b3c4d4637d8c4e2cf08b58ab08dc927a4ae781d4703c80c",
+      "sha256": "9ca4e7811188d87c0b3c4d4637d8c4e2cf08b58ab08dc927a4ae781d4703c80c"
+    },
+    "includes/blocks/class-mobishop-image-banner-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-image-banner-block.php",
+      "newline": "lf",
+      "source_sha256": "de7576a65fc2391c2e33cdb6def76ce6f4b9c8469ee4f92ca5d2c82fca6ad766",
+      "sha256": "de7576a65fc2391c2e33cdb6def76ce6f4b9c8469ee4f92ca5d2c82fca6ad766"
+    },
+    "includes/blocks/class-mobishop-product-carousel-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-product-carousel-block.php",
+      "newline": "lf",
+      "source_sha256": "dadf6d5767a5e03f8f244523adbdf47884afd646a5f74037abf96cf01ce72a92",
+      "sha256": "dadf6d5767a5e03f8f244523adbdf47884afd646a5f74037abf96cf01ce72a92"
+    },
+    "includes/blocks/class-mobishop-product-grid-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-product-grid-block.php",
+      "newline": "lf",
+      "source_sha256": "05a11f72b73f2e81f024651c15ecb398205f7a7f5d3a4e22c09fce81b74bfbd8",
+      "sha256": "05a11f72b73f2e81f024651c15ecb398205f7a7f5d3a4e22c09fce81b74bfbd8"
+    },
+    "includes/blocks/class-mobishop-promo-strip-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-promo-strip-block.php",
+      "newline": "lf",
+      "source_sha256": "88bc6ea80b0f1ee4c95f25053cd24ff98b42095b9fdb6804128199f821fb2f23",
+      "sha256": "88bc6ea80b0f1ee4c95f25053cd24ff98b42095b9fdb6804128199f821fb2f23"
+    },
+    "includes/blocks/class-mobishop-quick-links-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-quick-links-block.php",
+      "newline": "lf",
+      "source_sha256": "941d0bef2c4c67f31de9684731c8f7e78e6b38e8fbbc8e6fa07a52b5c5a0b1c6",
+      "sha256": "941d0bef2c4c67f31de9684731c8f7e78e6b38e8fbbc8e6fa07a52b5c5a0b1c6"
+    },
+    "includes/blocks/class-mobishop-section-header-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-section-header-block.php",
+      "newline": "lf",
+      "source_sha256": "35fa1976d6bc26e279b754d97e7ac04d03035477e51bdfb4dd9070a389c47120",
+      "sha256": "35fa1976d6bc26e279b754d97e7ac04d03035477e51bdfb4dd9070a389c47120"
+    },
+    "includes/blocks/class-mobishop-spacer-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-spacer-block.php",
+      "newline": "lf",
+      "source_sha256": "e04fb5b9335a9baedab903f0dec71de7a00b7ce17ee7dca1ec1427562ca110b0",
+      "sha256": "e04fb5b9335a9baedab903f0dec71de7a00b7ce17ee7dca1ec1427562ca110b0"
+    },
+    "includes/blocks/class-mobishop-text-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-text-block.php",
+      "newline": "lf",
+      "source_sha256": "e25c2e88de67b2ff4314ed15999c423fde0c45050def85da73ab862f0f288486",
+      "sha256": "e25c2e88de67b2ff4314ed15999c423fde0c45050def85da73ab862f0f288486"
+    },
+    "includes/blocks/class-mobishop-video-banner-block.php": {
+      "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-video-banner-block.php",
+      "newline": "lf",
+      "source_sha256": "57c785fd0abeb5b3d292bd8c40031c1d75a2714debcd8a26b53b84517f723c61",
+      "sha256": "57c785fd0abeb5b3d292bd8c40031c1d75a2714debcd8a26b53b84517f723c61"
+    },
+    "includes/central/bootstrap.php": {
+      "source": "connectors/woocommerce/source/includes/central/bootstrap.php",
+      "newline": "lf",
+      "source_sha256": "bacb97ba2562d49984d2d49ee8fb17fbbd66260f6cc208c3d8e5d41eacd3e73b",
+      "sha256": "bacb97ba2562d49984d2d49ee8fb17fbbd66260f6cc208c3d8e5d41eacd3e73b"
+    },
+    "includes/central/class-central-commerce.php": {
+      "source": "connectors/woocommerce/source/includes/central/class-central-commerce.php",
+      "newline": "crlf",
+      "source_sha256": "874882ab7f71beb9d9aba7165364e23bf67c4cf36158b430447e8235415c82c8",
+      "sha256": "738fafac4a2016c38815e7c6a629a8d5e0558cf5938dcbbe029fbd43d60fc0f2"
+    },
+    "includes/central/kidia-builder-application-bridge.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-builder-application-bridge.php",
+      "newline": "crlf",
+      "source_sha256": "566368b972d8caf9eac0dd94ac29f003d6a035e024facb7943276cf5788886a1",
+      "sha256": "91b71bc80659fece3cf1f459a7b4ebb2249c1c7a1338bc71309e4a44e9b19595"
+    },
+    "includes/central/kidia-builder-application-commit.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-builder-application-commit.php",
+      "newline": "crlf",
+      "source_sha256": "ee47e5c206f4ee200059e6bb82fd5f544eaf17c29cd41aeb76907d5ccc357cd3",
+      "sha256": "d2409b6d419eb0a371a80cc51061f84894c507544cde72e2fcb6d511494dacae"
+    },
+    "includes/central/kidia-builder-form-state.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-builder-form-state.php",
+      "newline": "crlf",
+      "source_sha256": "78c5e153ff1bd9b503ae4a27ad6efce230c1b6285bb0f59a97152d4db1619b9a",
+      "sha256": "935630570347900b90b75e4bbe29596037f414000776d908eafdded8a6928e1c"
+    },
+    "includes/central/kidia-builder-setup-identity.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-builder-setup-identity.php",
+      "newline": "crlf",
+      "source_sha256": "9aa9b962798b2d0b80930146537818c6714cb52c5f12ad807da45fb0dbb35d36",
+      "sha256": "4786ca38af7718ebac71847ce38b68f0b377ecfbb9fd616499cadae41ad7f21b"
+    },
+    "includes/central/kidia-push-actions.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-push-actions.php",
+      "newline": "crlf",
+      "source_sha256": "629a4826b9293ef173c980d5bb96f4f4dd2f4172785b5c54676f519678c074b6",
+      "sha256": "1563d8e8e222c9cfe69ae7827cdb2dc951e55b380fed85015ee9ad70707f4aa7"
+    },
+    "includes/central/kidia-push-admin-bridge.php": {
+      "source": "connectors/woocommerce/source/includes/central/kidia-push-admin-bridge.php",
+      "newline": "crlf",
+      "source_sha256": "522fd4fea3d581dbe212b905061867e9d100df902839f45ec9a870c64e794580",
+      "sha256": "ec1f38e9310d05733f078da9e66c28567c8aa4c4c7faa74fc0a08070e2402b02"
+    },
+    "includes/central/loader.php": {
+      "source": "connectors/woocommerce/source/includes/central/loader.php",
+      "newline": "crlf",
+      "source_sha256": "181bcdedd12ff9692d7f3fce0675a761db45af34387ed799659f0aec9334a74e",
+      "sha256": "5756b59ad8bc53f210814f84088e60f28e26a92e0fb0a2085529597c6774e7d4"
+    },
+    "includes/central/store-data-view.php": {
+      "source": "connectors/woocommerce/source/includes/central/store-data-view.php",
+      "newline": "crlf",
+      "source_sha256": "8002df7529ff46d0f855c4a0bc7019b716cefaca8d213c1f9c1fee1af93d4648",
+      "sha256": "846dfe5f1418b68cbf53336868cf67c6339fc1280882bf376768e6c3d416c915"
+    },
+    "includes/central/store-data.php": {
+      "source": "connectors/woocommerce/source/includes/central/store-data.php",
+      "newline": "crlf",
+      "source_sha256": "ce7c943bf4943c0203bdd1113041097c700cffab184e71fef238142106764d52",
+      "sha256": "e3d5a5b994b1426bf8e6d87b134e676e0cde9d7d2c63102d9d85213fa8bcdc4f"
+    },
+    "includes/class-mobishop-activator.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-activator.php",
+      "newline": "lf",
+      "source_sha256": "d7adcea4f88bce46a494d2bc5c0ec60f3a17fba92b10191642343743a72c8bea",
+      "sha256": "d7adcea4f88bce46a494d2bc5c0ec60f3a17fba92b10191642343743a72c8bea"
+    },
+    "includes/class-mobishop-ai-analysis-job.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-ai-analysis-job.php",
+      "newline": "lf",
+      "source_sha256": "d4304e676678668801d5125d20b5a324e949ad3732024dbc4385b3725166e030",
+      "sha256": "d4304e676678668801d5125d20b5a324e949ad3732024dbc4385b3725166e030"
+    },
+    "includes/class-mobishop-ai-offer-engine.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-ai-offer-engine.php",
+      "newline": "lf",
+      "source_sha256": "82aa374007f38ac5b6f1682eca1581d46cf8764b51a35b74f77ba4356aa20ae2",
+      "sha256": "82aa374007f38ac5b6f1682eca1581d46cf8764b51a35b74f77ba4356aa20ae2"
+    },
+    "includes/class-mobishop-analytics.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-analytics.php",
+      "newline": "lf",
+      "source_sha256": "5100369631daa358717318e698ad360a79fa3d1d827642d53f768bb82e8702aa",
+      "sha256": "5100369631daa358717318e698ad360a79fa3d1d827642d53f768bb82e8702aa"
+    },
+    "includes/class-mobishop-app-exporter.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-app-exporter.php",
+      "newline": "lf",
+      "source_sha256": "651d88e7fb96924b7fd68bc914430854d749e56a8fc54f0926c0f84899878ceb",
+      "sha256": "651d88e7fb96924b7fd68bc914430854d749e56a8fc54f0926c0f84899878ceb"
+    },
+    "includes/class-mobishop-block-registry.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-block-registry.php",
+      "newline": "lf",
+      "source_sha256": "e1e1abc6752b366574543d2183037493f886be8b1ac0ab3e69c916fd4a7d670e",
+      "sha256": "e1e1abc6752b366574543d2183037493f886be8b1ac0ab3e69c916fd4a7d670e"
+    },
+    "includes/class-mobishop-block.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-block.php",
+      "newline": "lf",
+      "source_sha256": "164e2101f74814e8be8b9d8903c22fed97dda90e2fa653c904335f7c405b1ce5",
+      "sha256": "164e2101f74814e8be8b9d8903c22fed97dda90e2fa653c904335f7c405b1ce5"
+    },
+    "includes/class-mobishop-bundle-recipes.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-bundle-recipes.php",
+      "newline": "lf",
+      "source_sha256": "7f3f621f96eda164314a39d7a8879d4687fd235c533d0f01ac083f79d1f95e99",
+      "sha256": "7f3f621f96eda164314a39d7a8879d4687fd235c533d0f01ac083f79d1f95e99"
+    },
+    "includes/class-mobishop-category-page-store.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-category-page-store.php",
+      "newline": "lf",
+      "source_sha256": "35c6c48a34171b2661133a2045a8225c703016ee6ff1663c6acfd62d9bcbaeec",
+      "sha256": "35c6c48a34171b2661133a2045a8225c703016ee6ff1663c6acfd62d9bcbaeec"
+    },
+    "includes/class-mobishop-checkout-fields-store.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-checkout-fields-store.php",
+      "newline": "lf",
+      "source_sha256": "a1968fe8c8ae5829f35ed4251a6f60f5f9e6b4283366287c638164690a460da0",
+      "sha256": "a1968fe8c8ae5829f35ed4251a6f60f5f9e6b4283366287c638164690a460da0"
+    },
+    "includes/class-mobishop-coupon-channel.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-coupon-channel.php",
+      "newline": "lf",
+      "source_sha256": "6f46113fae14f0af379378c62d47d5b8f9d1f5beaaae724dc9d626a613e82c8a",
+      "sha256": "6f46113fae14f0af379378c62d47d5b8f9d1f5beaaae724dc9d626a613e82c8a"
+    },
+    "includes/class-mobishop-deactivator.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-deactivator.php",
+      "newline": "lf",
+      "source_sha256": "736d5548f4d6e2011cf374a51d9c6495ba4a1daf0ab4079ab789d2c897f1cf97",
+      "sha256": "736d5548f4d6e2011cf374a51d9c6495ba4a1daf0ab4079ab789d2c897f1cf97"
+    },
+    "includes/class-mobishop-kids-home-preset.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-kids-home-preset.php",
+      "newline": "lf",
+      "source_sha256": "df25d69a75bea501c855e3ae7af6dbc3d843340b7bc0ce4e9f86be82e9319c20",
+      "sha256": "df25d69a75bea501c855e3ae7af6dbc3d843340b7bc0ce4e9f86be82e9319c20"
+    },
+    "includes/class-mobishop-layout-store.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-layout-store.php",
+      "newline": "lf",
+      "source_sha256": "b92347dd24f8e620b5a47ad0a7fffd1c484e6b5b83e8bbebb692d92a03e21f31",
+      "sha256": "b92347dd24f8e620b5a47ad0a7fffd1c484e6b5b83e8bbebb692d92a03e21f31"
+    },
+    "includes/class-mobishop-license-manager.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-license-manager.php",
+      "newline": "lf",
+      "source_sha256": "973420a1486d37a99866f5fd6d848c2ffda775ac377e7d2b86d34e2e926581f9",
+      "sha256": "973420a1486d37a99866f5fd6d848c2ffda775ac377e7d2b86d34e2e926581f9"
+    },
+    "includes/class-mobishop-page-layout-store.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-page-layout-store.php",
+      "newline": "binary",
+      "source_sha256": "da8624c7fe042f9b44a1b59d6f3debf6c07b3de369384c3f34ee394093785df0",
+      "sha256": "da8624c7fe042f9b44a1b59d6f3debf6c07b3de369384c3f34ee394093785df0"
+    },
+    "includes/class-mobishop-product-channel-visibility.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-product-channel-visibility.php",
+      "newline": "lf",
+      "source_sha256": "209233e996fbbc7da2b1b9cb51f1b6f408a9f8274945e8d0b69d34465653a2e6",
+      "sha256": "209233e996fbbc7da2b1b9cb51f1b6f408a9f8274945e8d0b69d34465653a2e6"
+    },
+    "includes/class-mobishop-push-service.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-push-service.php",
+      "newline": "lf",
+      "source_sha256": "91610d84d4d41bd16b8759e791f6ea274609b790bc5b9a8eaa9691708fc317b1",
+      "sha256": "91610d84d4d41bd16b8759e791f6ea274609b790bc5b9a8eaa9691708fc317b1"
+    },
+    "includes/class-mobishop-recovery-campaigns.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-recovery-campaigns.php",
+      "newline": "lf",
+      "source_sha256": "89ac72a4a8c7a5c49e4f5772683c11755780dc38fd71dcf8003f6c4d91bb845e",
+      "sha256": "89ac72a4a8c7a5c49e4f5772683c11755780dc38fd71dcf8003f6c4d91bb845e"
+    },
+    "includes/class-mobishop-setup-wizard.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-setup-wizard.php",
+      "newline": "lf",
+      "source_sha256": "4f1fc9f3847aebe258ecb40c915209f7f8749c32b42112bb74d3b4157e4b1169",
+      "sha256": "4f1fc9f3847aebe258ecb40c915209f7f8749c32b42112bb74d3b4157e4b1169"
+    },
+    "includes/class-mobishop-website-app-promotion.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop-website-app-promotion.php",
+      "newline": "lf",
+      "source_sha256": "6d6639ca25348e28218b24d2a30c6a39f1f7ade5e6474a994a3fb45afd5b9e58",
+      "sha256": "6d6639ca25348e28218b24d2a30c6a39f1f7ade5e6474a994a3fb45afd5b9e58"
+    },
+    "includes/class-mobishop.php": {
+      "source": "connectors/woocommerce/source/includes/class-mobishop.php",
+      "newline": "crlf",
+      "source_sha256": "6e5753f0fbb10c7b3bfe9d1984852e894bb77af472d31ca8699f5147b0b1ac8c",
+      "sha256": "712e72f5f4858da4d743a24d98fad3e31960f2c4d94ed295d9bbc0acfe02895d"
+    },
+    "includes/class-native-checkout-bootstrap50.php": {
+      "source": "connectors/woocommerce/source/includes/class-native-checkout-bootstrap50.php",
+      "newline": "lf",
+      "source_sha256": "6a50b5b5b2dafcfbce4f8cfc5d82328d5e0730eec2bb985d6d35963148160ac0",
+      "sha256": "6a50b5b5b2dafcfbce4f8cfc5d82328d5e0730eec2bb985d6d35963148160ac0"
+    },
+    "includes/presets/kids-home-tail293.json": {
+      "source": "connectors/woocommerce/source/includes/presets/kids-home-tail293.json",
+      "newline": "lf",
+      "source_sha256": "81c5d7455ad770f386db700a16354261d49e532f76a240795f84609a42ef9a67",
+      "sha256": "81c5d7455ad770f386db700a16354261d49e532f76a240795f84609a42ef9a67"
+    },
+    "includes/schema/app-header.php": {
+      "source": "connectors/woocommerce/source/includes/schema/app-header.php",
+      "newline": "lf",
+      "source_sha256": "e2b5c070585f9f9b3dcb1c8352150c8931d197da2068d8f6330129fb3acb6c3b",
+      "sha256": "e2b5c070585f9f9b3dcb1c8352150c8931d197da2068d8f6330129fb3acb6c3b"
+    },
+    "includes/schema/banner-grid.php": {
+      "source": "connectors/woocommerce/source/includes/schema/banner-grid.php",
+      "newline": "lf",
+      "source_sha256": "e20def2e48c49ee0310e280604da74065b97fd3559e129a98cfab250a9f804de",
+      "sha256": "e20def2e48c49ee0310e280604da74065b97fd3559e129a98cfab250a9f804de"
+    },
+    "includes/schema/brand-carousel.php": {
+      "source": "connectors/woocommerce/source/includes/schema/brand-carousel.php",
+      "newline": "lf",
+      "source_sha256": "4ae115ab85f34a4da8d0fd15e6086d0e820d026617a080422e70f964a22476ae",
+      "sha256": "4ae115ab85f34a4da8d0fd15e6086d0e820d026617a080422e70f964a22476ae"
+    },
+    "includes/schema/bundle-collection.php": {
+      "source": "connectors/woocommerce/source/includes/schema/bundle-collection.php",
+      "newline": "lf",
+      "source_sha256": "cfbb0ac95cb4ff0228d3d52189f6ce99ecf1c6da229fc33c8d329e7df9083388",
+      "sha256": "cfbb0ac95cb4ff0228d3d52189f6ce99ecf1c6da229fc33c8d329e7df9083388"
+    },
+    "includes/schema/category-grid.php": {
+      "source": "connectors/woocommerce/source/includes/schema/category-grid.php",
+      "newline": "lf",
+      "source_sha256": "00f36f725422b7d5a4f8a677be05e9eb72d63326d2da028048cddc7b5c1b4c9b",
+      "sha256": "00f36f725422b7d5a4f8a677be05e9eb72d63326d2da028048cddc7b5c1b4c9b"
+    },
+    "includes/schema/countdown.php": {
+      "source": "connectors/woocommerce/source/includes/schema/countdown.php",
+      "newline": "lf",
+      "source_sha256": "9b2301abddd7d3e81b22bd1d5fdb726793969351658eceb2fe320d1c61f504ab",
+      "sha256": "9b2301abddd7d3e81b22bd1d5fdb726793969351658eceb2fe320d1c61f504ab"
+    },
+    "includes/schema/coupon-banner.php": {
+      "source": "connectors/woocommerce/source/includes/schema/coupon-banner.php",
+      "newline": "lf",
+      "source_sha256": "0fffdcc7e5c4159b5cebb9989c1862b0d9bec68f1f10be51bb2751de6441e53d",
+      "sha256": "0fffdcc7e5c4159b5cebb9989c1862b0d9bec68f1f10be51bb2751de6441e53d"
+    },
+    "includes/schema/divider.php": {
+      "source": "connectors/woocommerce/source/includes/schema/divider.php",
+      "newline": "lf",
+      "source_sha256": "e6c6b561a657d94eb0e8841fd5ac2e663a3478c916ad1d306d6edc3e029f9e3c",
+      "sha256": "e6c6b561a657d94eb0e8841fd5ac2e663a3478c916ad1d306d6edc3e029f9e3c"
+    },
+    "includes/schema/hero-slider.php": {
+      "source": "connectors/woocommerce/source/includes/schema/hero-slider.php",
+      "newline": "lf",
+      "source_sha256": "5cff584b2a72aad5e91202093b77ff842e618fb921be9fa853c2b11b17bfb88e",
+      "sha256": "5cff584b2a72aad5e91202093b77ff842e618fb921be9fa853c2b11b17bfb88e"
+    },
+    "includes/schema/image-banner.php": {
+      "source": "connectors/woocommerce/source/includes/schema/image-banner.php",
+      "newline": "lf",
+      "source_sha256": "4fbd80b1cedae7b887bfc15e63ebc783e8b28a76d73014f577eda2db114e6438",
+      "sha256": "4fbd80b1cedae7b887bfc15e63ebc783e8b28a76d73014f577eda2db114e6438"
+    },
+    "includes/schema/product-carousel.php": {
+      "source": "connectors/woocommerce/source/includes/schema/product-carousel.php",
+      "newline": "lf",
+      "source_sha256": "b0ba00e84c0f9245ad66e259e15a253c55b1c6e6b6bb8b77cab0db484c13d4ce",
+      "sha256": "b0ba00e84c0f9245ad66e259e15a253c55b1c6e6b6bb8b77cab0db484c13d4ce"
+    },
+    "includes/schema/product-grid.php": {
+      "source": "connectors/woocommerce/source/includes/schema/product-grid.php",
+      "newline": "lf",
+      "source_sha256": "1708503506b6685180d8871e9f55d65cc70d713dc261109ea94d5cfc176c7f76",
+      "sha256": "1708503506b6685180d8871e9f55d65cc70d713dc261109ea94d5cfc176c7f76"
+    },
+    "includes/schema/promo-strip.php": {
+      "source": "connectors/woocommerce/source/includes/schema/promo-strip.php",
+      "newline": "lf",
+      "source_sha256": "cd2722b84583c9e42e9c4fce5fb39076fa677df464034b80847a9cc33bc536a7",
+      "sha256": "cd2722b84583c9e42e9c4fce5fb39076fa677df464034b80847a9cc33bc536a7"
+    },
+    "includes/schema/quick-links.php": {
+      "source": "connectors/woocommerce/source/includes/schema/quick-links.php",
+      "newline": "lf",
+      "source_sha256": "f6f4bf44417a30b4fd035323d2598cfcdfd779e7ec5dd23e4184bc05da8bceec",
+      "sha256": "f6f4bf44417a30b4fd035323d2598cfcdfd779e7ec5dd23e4184bc05da8bceec"
+    },
+    "includes/schema/section-header.php": {
+      "source": "connectors/woocommerce/source/includes/schema/section-header.php",
+      "newline": "lf",
+      "source_sha256": "11e2799a4efc94370980bb9a4373abd24dacb4adf2a3b7e643259e4dd08eaf52",
+      "sha256": "11e2799a4efc94370980bb9a4373abd24dacb4adf2a3b7e643259e4dd08eaf52"
+    },
+    "includes/schema/spacer.php": {
+      "source": "connectors/woocommerce/source/includes/schema/spacer.php",
+      "newline": "lf",
+      "source_sha256": "3ec030df71715a45ec5a50e4b048df492f1e52825098238eec8378a54adf01a1",
+      "sha256": "3ec030df71715a45ec5a50e4b048df492f1e52825098238eec8378a54adf01a1"
+    },
+    "includes/schema/text-block.php": {
+      "source": "connectors/woocommerce/source/includes/schema/text-block.php",
+      "newline": "lf",
+      "source_sha256": "78151aeab16893dec8fdf358a374be49e529a49722d589d7957dbb3441f355a3",
+      "sha256": "78151aeab16893dec8fdf358a374be49e529a49722d589d7957dbb3441f355a3"
+    },
+    "includes/schema/video-banner.php": {
+      "source": "connectors/woocommerce/source/includes/schema/video-banner.php",
+      "newline": "lf",
+      "source_sha256": "60d9821247c2aa9fcd125d7ccd63c02e0e2b0de93e0f10722a7e824692aa47b5",
+      "sha256": "60d9821247c2aa9fcd125d7ccd63c02e0e2b0de93e0f10722a7e824692aa47b5"
+    },
+    "mobi2app-connector.php": {
+      "source": "connectors/woocommerce/source/mobi2app-connector.php",
+      "newline": "lf",
+      "source_sha256": "a4bd22aa1b7fa8e88322e8d044a676b1e8884d859ae961fc3ac1b03821561300",
+      "sha256": "a4bd22aa1b7fa8e88322e8d044a676b1e8884d859ae961fc3ac1b03821561300"
+    },
+    "public/assets/vendor/qrcode.LICENSE": {
+      "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
+      "newline": "crlf",
+      "source_sha256": "aaa1f349028a59432eb00222b8ddfe4d2ccebdce04cf8348dcb8d41b7068107b",
+      "sha256": "036eb2ba30ccb140d99a9acab6e077a76bbc492ddc21c041a85103ea6769fc83"
+    },
+    "public/assets/vendor/qrcode.min.js": {
+      "source": "mobishop/public/assets/vendor/qrcode.min.js",
+      "newline": "lf",
+      "source_sha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36",
+      "sha256": "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36"
+    },
+    "public/assets/website-analytics.js": {
+      "source": "connectors/woocommerce/source/public/assets/website-analytics.js",
+      "newline": "lf",
+      "source_sha256": "0303ac2c0527a455c7acb3e41b62e050c7752597a3f88e0af772de3afd22b584",
+      "sha256": "0303ac2c0527a455c7acb3e41b62e050c7752597a3f88e0af772de3afd22b584"
+    },
+    "public/assets/website-app-promotion.css": {
+      "source": "mobishop/public/assets/website-app-promotion.css",
+      "newline": "crlf",
+      "source_sha256": "04729adc22a5fff77e70cc4e31b7af4c12a4e9a42f1269a924ea849e9b6ae35d",
+      "sha256": "72fc74eb1e7062d15d9c754b598ad94c46f36696b3601b2aa2ee7e44fed41716"
+    },
+    "public/assets/website-app-promotion.js": {
+      "source": "connectors/woocommerce/source/public/assets/website-app-promotion.js",
+      "newline": "lf",
+      "source_sha256": "9a8361cdfb07c00d834534acb3b1cf858722fac3dd78fb6e3a0127cee3a7331c",
+      "sha256": "9a8361cdfb07c00d834534acb3b1cf858722fac3dd78fb6e3a0127cee3a7331c"
+    },
+    "readme.txt": {
+      "source": "connectors/woocommerce/source/readme.txt",
+      "newline": "lf",
+      "source_sha256": "e3d1c21eccf9c3f857534dbedb9e3b0d1af6d6ff0514ba68563c9ca7fd6d1819",
+      "sha256": "e3d1c21eccf9c3f857534dbedb9e3b0d1af6d6ff0514ba68563c9ca7fd6d1819"
+    },
+    "SOURCE-BUILD.txt": {
+      "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
+      "newline": "lf",
+      "source_sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b",
+      "sha256": "72ae3d3b89e3c9f76f9fb22d7bf3dcc233b330ab1d75cc48446c796e913a9d0b"
+    }
+  }
+}

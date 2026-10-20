@@ -1,0 +1,83 @@
+name: WooCommerce connector package
+
+on:
+  pull_request:
+    paths:
+      - 'connectors/woocommerce/**'
+      - 'mobishop/**'
+      - 'tool/build_woocommerce_connector.py'
+      - 'tool/test_build_woocommerce_connector.py'
+      - '.github/workflows/woocommerce-connector.yml'
+  push:
+    branches: [main, 'agent/**']
+    paths:
+      - 'connectors/woocommerce/**'
+      - 'mobishop/**'
+      - 'tool/build_woocommerce_connector.py'
+      - 'tool/test_build_woocommerce_connector.py'
+      - '.github/workflows/woocommerce-connector.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'connector-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build reviewed connector source
+        run: python3 tool/build_woocommerce_connector.py
+      - name: Test packaging regressions
+        run: python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
+      - name: Extract package and check PHP syntax
+        run: |
+          unzip -q build/woocommerce/mobi2app-connector-*.zip -d build/woocommerce
+          find build/woocommerce/mobi2app-connector -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test packaged authentication contracts
+        env:
+          MOBISHOP_CONNECTOR_TEST_ROOT: ${{ github.workspace }}/build/woocommerce/mobi2app-connector
+        run: php connectors/woocommerce/tests/website-auth-contract-test.php
+      - name: Validate connector release tag
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          version=json.load(open('build/woocommerce/connector-release.json'))['version']
+          assert os.environ['RELEASE_TAG'] == 'connector-v' + version, 'Release tag must match tested connector version'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: woocommerce-connector
+          path: |
+            build/woocommerce/mobi2app-connector-*.zip
+            build/woocommerce/connector-release.json
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'connector-v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: woocommerce-connector
+          path: release
+      - name: Attach tested connector release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" release/mobi2app-connector-*.zip release/connector-release.json --clobber
