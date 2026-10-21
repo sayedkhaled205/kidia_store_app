@@ -334,9 +334,11 @@ final class MobiShop_Native_Checkout_Wpdb50 implements MobiShop_Native_Checkout_
 /** Opt-in direct platform wrapper. It never creates or pays an order itself. */
 final class MobiShop_Native_Checkout_Safety50 {
 	public const NAMESPACE = 'mobishop_native_checkout50';
+	private const PAYMENT_HOOK = 'woocommerce_rest_checkout_process_payment_with_context';
 	private MobiShop_Native_Checkout_Store50 $store;
 	private bool $registered = false;
 	private ?array $active = null;
+	private ?array $deferred_payment_hook = null;
 	private WeakMap $pre_rejections;
 
 	public function __construct( ?MobiShop_Native_Checkout_Store50 $store = null ) {
@@ -564,6 +566,7 @@ final class MobiShop_Native_Checkout_Safety50 {
 				}
 				return $this->error( 'outcome_unknown', 503 );
 			} finally {
+				$this->restore_payment_hook();
 				$this->active = null;
 			}
 		} catch ( Throwable $error ) {
@@ -657,6 +660,83 @@ final class MobiShop_Native_Checkout_Safety50 {
 		}
 		$this->active['after_stock'] = true;
 		$this->validate_final( $order, new WP_Error() );
+		$this->defer_online_payment( $order );
+	}
+
+	/**
+	 * Empty Native payment data cannot supply website card fields or tokens.
+	 * Keep Woo's validated, reserved pending order and let its own order-pay
+	 * page collect those fields. Core offline methods retain their normal flow.
+	 */
+	private function defer_online_payment( $order ): void {
+		$request = $this->active['request'];
+		$method = $request->get_param( 'payment_method' );
+		if ( ! is_string( $method ) || '' === $method || in_array( $method, array( 'cod', 'bacs', 'cheque' ), true ) || array() !== $request->get_param( 'payment_data' ) || '0' === $this->active['confirmed']['total_price'] ) {
+			return;
+		}
+		if ( $this->deferred_payment_hook || ! class_exists( 'WP_Hook' ) || ! $order instanceof WC_Order || ! is_callable( array( $order, 'get_payment_method' ) ) || $method !== $order->get_payment_method() || 'pending' !== $order->get_status() || ! $order->needs_payment() || $order->is_paid() ) {
+			throw new RuntimeException( 'Native website payment hand-off could not be established.' );
+		}
+		$original = $GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] ?? null;
+		if ( null !== $original && ! $original instanceof WP_Hook ) {
+			throw new RuntimeException( 'Native payment hook is unavailable.' );
+		}
+		$replacement = new WP_Hook();
+		$replacement->add_filter( self::PAYMENT_HOOK, array( $this, 'handoff_payment' ), PHP_INT_MIN, 2 );
+		$this->deferred_payment_hook = array( 'original' => $original, 'replacement' => $replacement, 'method' => $method, 'used' => false );
+		// Setting a successful result at an early priority alone is insufficient:
+		// third-party handlers need not respect it and could still charge. Replace
+		// this one hook only until this exact guarded dispatch unwinds in finally.
+		$GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] = $replacement;
+	}
+
+	/** A successful hand-off is not a captured payment or a paid order. */
+	public function handoff_payment( $context, &$result ): void {
+		if ( ! $this->active || ! $this->deferred_payment_hook || $this->deferred_payment_hook['used'] || ! $this->active['passed'] || ! $this->active['after_stock'] || ( $GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] ?? null ) !== $this->deferred_payment_hook['replacement'] || ! $context instanceof \Automattic\WooCommerce\StoreApi\Payments\PaymentContext || ! $result instanceof \Automattic\WooCommerce\StoreApi\Payments\PaymentResult || '' !== $result->status || $context->payment_method !== $this->deferred_payment_hook['method'] || array() !== $context->payment_data ) {
+			throw new RuntimeException( 'Native payment context could not be established.' );
+		}
+		$this->validate_payment_hook();
+		$this->deferred_payment_hook['used'] = true;
+		$order = $context->order;
+		$this->validate_final( $order, new WP_Error() );
+		$persisted = wc_get_order( $this->active['order_id'] );
+		foreach ( array( $order, $persisted ) as $candidate ) {
+			if ( ! $candidate instanceof WC_Order || ! is_callable( array( $candidate, 'get_payment_method' ) ) || $candidate->get_payment_method() !== $this->deferred_payment_hook['method'] || 'pending' !== $candidate->get_status() || ! $candidate->needs_payment() || $candidate->is_paid() || self::decimal_to_minor( $candidate->get_total( 'edit' ), wc_get_price_decimals() ) !== $this->active['confirmed']['total_price'] || $candidate->get_currency() !== $this->active['confirmed']['currency_code'] ) {
+				throw new RuntimeException( 'Native pending payment order could not be established.' );
+			}
+		}
+		$gateway = $context->get_payment_method_instance();
+		if ( ! $gateway instanceof WC_Payment_Gateway || $gateway->id !== $this->deferred_payment_hook['method'] ) {
+			throw new RuntimeException( 'Native selected payment method is unavailable.' );
+		}
+		$this->validate_payment_hook();
+		// Keep this sentinel installed: a repeated action must fail on used=true.
+		// Removing callbacks while WP_Hook iterates cannot suppress a same-priority
+		// callback already captured by its foreach, so reject added handlers instead.
+		// finish() emits the existing pending receipt. The owned order endpoint
+		// separately supplies a validated same-origin order-pay URL to the app.
+		$result->set_status( 'success' );
+	}
+
+	private function validate_payment_hook(): void {
+		$hook = $this->deferred_payment_hook['replacement'];
+		$callbacks = $hook->callbacks;
+		$rows = isset( $callbacks[ PHP_INT_MIN ] ) && is_array( $callbacks[ PHP_INT_MIN ] ) ? array_values( $callbacks[ PHP_INT_MIN ] ) : array();
+		if ( ( $GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] ?? null ) !== $hook || array( PHP_INT_MIN ) !== array_keys( $callbacks ) || 1 !== count( $rows ) || ( $rows[0]['function'] ?? null ) !== array( $this, 'handoff_payment' ) || 2 !== ( $rows[0]['accepted_args'] ?? null ) ) {
+			throw new RuntimeException( 'Native payment hook changed during hand-off.' );
+		}
+	}
+
+	private function restore_payment_hook(): void {
+		if ( null === $this->deferred_payment_hook ) {
+			return;
+		}
+		if ( null === $this->deferred_payment_hook['original'] ) {
+			unset( $GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] );
+		} else {
+			$GLOBALS['wp_filter'][ self::PAYMENT_HOOK ] = $this->deferred_payment_hook['original'];
+		}
+		$this->deferred_payment_hook = null;
 	}
 
 	public function recover( WP_REST_Request $request ) {

@@ -1757,8 +1757,8 @@ final class MobiShop_Setup_Wizard {
 			$layout['header']['settings']['title_font_weight'] = '600';
 			if ( 'home' === $page ) {
 				$layout['header']['settings']['logo_width'] = 100;
-				$layout['header']['settings']['logo_height'] = 54;
-				$layout['header']['settings']['logo_fit'] = 'cover';
+				$layout['header']['settings']['logo_height'] = 32;
+				$layout['header']['settings']['logo_fit'] = 'contain';
 				$layout['header']['settings']['row_1_height'] = 56;
 				$layout['header']['settings']['row_gap'] = 4;
 			}
@@ -2041,21 +2041,22 @@ final class MobiShop_Setup_Wizard {
 	private function build_splash_settings( array $theme, string $primary, string $secondary, string $app_name, string $logo_url ): array {
 		$splash_image = $logo_url;
 		$foreground   = $this->readable_foreground( $primary, $secondary );
+		$is_kids      = 'kids_baby' === ( $theme['layout_profile'] ?? '' );
 		return array(
 			'enabled'              => true,
 			'image_url'            => $splash_image,
-			'background_color'     => $primary,
-			'background_color_end' => $secondary,
-			'duration_ms'          => 1800,
-			'image_width'          => 140,
-			'image_height'         => 140,
+			'background_color'     => $is_kids ? '#FFFFFF' : $primary,
+			'background_color_end' => $is_kids ? '#FFFFFF' : $secondary,
+			'duration_ms'          => $is_kids ? 800 : 1800,
+			'image_width'          => $is_kids ? 176 : 140,
+			'image_height'         => $is_kids ? 72 : 140,
 			'image_fit'            => 'contain',
 			'image_shape'          => 'none',
-			'show_store_name'      => true,
+			'show_store_name'      => ! $is_kids,
 			'store_name'           => $app_name,
-			'text_color'           => $foreground,
+			'text_color'           => $is_kids ? '#253A46' : $foreground,
 			'show_loader'          => true,
-			'loader_color'         => $foreground,
+			'loader_color'         => $is_kids ? '#4EA999' : $foreground,
 		);
 	}
 

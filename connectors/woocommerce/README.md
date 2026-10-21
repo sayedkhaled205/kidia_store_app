@@ -9,7 +9,7 @@ Build and verify:
 ```sh
 python3 tool/build_woocommerce_connector.py
 python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
-unzip -q build/woocommerce/mobi2app-connector-1.46.76.zip -d build/woocommerce
+unzip -q build/woocommerce/mobi2app-connector-1.46.78.zip -d build/woocommerce
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
   php connectors/woocommerce/tests/website-auth-contract-test.php
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
@@ -52,6 +52,16 @@ Only owned unused interrupted setup can resume. Public capability reads never
 write the key/schema. The central service must verify `enforced: true` on a later
 request before announcing checkout readiness. WooCommerce 9.9+ and PHP 8.1+ are
 required for this native protection; ordinary website checkout is unchanged.
+
+Version 1.46.78 reads each merchant's enabled gateway names, while Store API
+continues to determine availability for the actual cart. An authenticated Native
+checkout with empty gateway payment data keeps the single protected pending order
+and continues on that merchant's existing order-pay page. The payment-context
+dispatcher is isolated only during that guarded request and restored in `finally`;
+it cannot invoke a gateway with missing card fields. Core COD, bank transfer,
+cheque, free orders and ordinary website checkout keep their existing paths.
+No gateway credentials are copied into the builder or app. A hand-off remains
+pending until the merchant's payment provider actually updates the order.
 
 Owned-order refresh is read-only. Payment URLs are emitted only for the exact
 HTTPS store installation and independently derived configured WooCommerce
