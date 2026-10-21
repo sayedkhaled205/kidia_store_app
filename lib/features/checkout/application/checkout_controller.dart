@@ -70,6 +70,7 @@ class CheckoutController extends ChangeNotifier {
   String get paymentMethodId => _paymentMethodId;
   List<String> get paymentMethodIds =>
       _checkout?.paymentMethodIds ?? const <String>[];
+  String? paymentMethodLabel(String id) => _checkout?.paymentMethodLabel(id);
   Map<String, String> get fieldErrors =>
       UnmodifiableMapView<String, String>(_fieldErrors);
   String? get loadError => _loadError;
@@ -805,6 +806,8 @@ class CheckoutController extends ChangeNotifier {
       hasUnresolvedSubmission: _hasUnresolvedSubmission,
       serverSafetyRequired: _checkout?.serverSafetyRequired ?? false,
       serverSafetyEnforced: _checkout?.serverSafetyEnforced ?? false,
+      paymentMethodLabels:
+          _checkout?.paymentMethodLabels ?? const <String, String>{},
       fieldDefinitions:
           _checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[],
     );

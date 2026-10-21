@@ -7,9 +7,13 @@ class CheckoutState {
     this.hasUnresolvedSubmission = false,
     this.serverSafetyRequired = false,
     this.serverSafetyEnforced = false,
+    Map<String, String> paymentMethodLabels = const <String, String>{},
     List<CheckoutFieldDefinition> fieldDefinitions =
         const <CheckoutFieldDefinition>[],
-  }) : fieldDefinitions = List<CheckoutFieldDefinition>.unmodifiable(
+  }) : paymentMethodLabels = Map<String, String>.unmodifiable(
+         paymentMethodLabels,
+       ),
+       fieldDefinitions = List<CheckoutFieldDefinition>.unmodifiable(
          fieldDefinitions.toList()..sort(
            (CheckoutFieldDefinition first, CheckoutFieldDefinition second) =>
                first.priority.compareTo(second.priority),
@@ -33,6 +37,10 @@ class CheckoutState {
   final bool serverSafetyRequired;
   final bool serverSafetyEnforced;
   final List<String> paymentMethodIds;
+  final Map<String, String> paymentMethodLabels;
+
+  String? paymentMethodLabel(String id) =>
+      paymentMethodIds.contains(id) ? paymentMethodLabels[id] : null;
   final List<CheckoutFieldDefinition> fieldDefinitions;
 
   bool get needsPayment => cart.needsPayment;

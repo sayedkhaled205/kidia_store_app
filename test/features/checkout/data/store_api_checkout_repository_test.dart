@@ -14,6 +14,34 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 import '../support/checkout_test_data.dart';
 
 void main() {
+  test('merchant labels do not expand available cart gateways', () async {
+    final transport = FakeCheckoutTransport()
+      ..configurationResponse = const CheckoutApiResponse(
+        data: {
+          'payment_methods': [
+            {'id': 'custom_card', 'title': 'الكارت — اسم المتجر'},
+            {'id': 'cod', 'title': 'الدفع للمندوب'},
+            {'id': 'disabled_for_this_address', 'title': 'غير متاح'},
+            {'id': 'invalid', 'title': 42},
+          ],
+        },
+      );
+    final repository = StoreApiCheckoutRepository(
+      cartRepository: FakeCheckoutCartRepository(
+        cart: checkoutCart(paymentMethods: ['custom_card', 'cod']),
+      ),
+      transport: transport,
+      cartTokenStore: MemoryCartTokenStore(),
+    );
+    final state = await repository.loadCheckout();
+    expect(state.paymentMethodIds, ['custom_card', 'cod']);
+    expect(state.paymentMethodLabel('custom_card'), 'الكارت — اسم المتجر');
+    expect(state.paymentMethodLabel('cod'), 'الدفع للمندوب');
+    expect(state.paymentMethodLabel('disabled_for_this_address'), isNull);
+    expect(state.paymentMethodLabels.containsKey('invalid'), isFalse);
+    expect(transport.configurationCalls, 1);
+  });
+
   test(
     'loads payment requirements and method ids from the cart Store API',
     () async {
@@ -79,7 +107,9 @@ void main() {
 
       expect(state.hasDynamicFields, isTrue);
       expect(
-        state.fieldDefinitions.map((CheckoutFieldDefinition field) => field.key),
+        state.fieldDefinitions.map(
+          (CheckoutFieldDefinition field) => field.key,
+        ),
         <String>['billing_phone', 'billing_vat_number'],
       );
       expect(
@@ -233,8 +263,7 @@ void main() {
       expect(keys, isNot(contains('billing_delivery_note')));
       final CheckoutFieldDefinition postcode = state.fieldDefinitions
           .singleWhere(
-            (CheckoutFieldDefinition field) =>
-                field.key == 'shipping_postcode',
+            (CheckoutFieldDefinition field) => field.key == 'shipping_postcode',
           );
       expect(postcode.group, CheckoutFieldGroup.shipping);
       expect(postcode.type, CheckoutFieldType.hidden);
@@ -243,8 +272,7 @@ void main() {
       expect(postcode.label, 'الرمز البريدي');
       final CheckoutFieldDefinition address = state.fieldDefinitions
           .singleWhere(
-            (CheckoutFieldDefinition field) =>
-                field.key == 'billing_address_1',
+            (CheckoutFieldDefinition field) => field.key == 'billing_address_1',
           );
       expect(address.group, CheckoutFieldGroup.billing);
       expect(address.required, isTrue);
@@ -528,12 +556,11 @@ void main() {
             },
           },
         );
-      final StoreApiCheckoutRepository repository =
-          StoreApiCheckoutRepository(
-            cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
-            transport: transport,
-            cartTokenStore: (MemoryCartTokenStore()..write('token')),
-          );
+      final StoreApiCheckoutRepository repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: (MemoryCartTokenStore()..write('token')),
+      );
 
       await expectLater(
         repository.placeOrder(_submission('all-field-errors')),
@@ -759,10 +786,7 @@ void main() {
       await transport.loadConfiguration();
 
       expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
-      expect(
-        captured?.uri.path,
-        '/wp-json/mobishop/v1/checkout-config',
-      );
+      expect(captured?.uri.path, '/wp-json/mobishop/v1/checkout-config');
     },
   );
 

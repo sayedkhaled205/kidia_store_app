@@ -828,7 +828,9 @@ class _PaymentSection extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: _PaymentMethodTile(
                         methodId: method,
-                        label: copy.paymentMethodLabel(method),
+                        label:
+                            controller.paymentMethodLabel(method) ??
+                            copy.paymentMethodLabel(method),
                         selected: controller.paymentMethodId == method,
                         enabled: !controller.isSubmitting,
                         onTap: () => controller.setPaymentMethod(method),

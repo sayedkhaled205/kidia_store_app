@@ -69,7 +69,8 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 5,
+				'version'  => 6,
+				'payment_methods' => $this->payment_method_labels(),
 				'design'   => $checkout_store->design(),
 				'defaults' => array(
 					'country' => $default_country,
@@ -87,6 +88,20 @@ final class MobiShop_Checkout_Config_Endpoint {
 	}
 
 	/** Allow the app to submit custom plugin fields inside Store API extensions. */
+	public function payment_method_labels(): array {
+		$methods = array();
+		// Display metadata only. Store API cart.payment_methods remains the
+		// authority for availability after shipping, customer and total rules.
+		foreach ( WC()->payment_gateways()->payment_gateways() as $id => $gateway ) {
+			if ( 'yes' !== $gateway->enabled ) continue;
+			$methods[] = array(
+				'id' => (string) $id,
+				'title' => html_entity_decode( wp_strip_all_tags( $gateway->get_title() ), ENT_QUOTES, 'UTF-8' ),
+			);
+		}
+		return $methods;
+	}
+
 	public function register_store_api_data(): void {
 		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ||
 			! class_exists( '\\Automattic\\WooCommerce\\StoreApi\\Schemas\\V1\\CheckoutSchema' ) ) {

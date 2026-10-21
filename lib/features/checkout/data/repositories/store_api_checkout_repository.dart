@@ -74,8 +74,8 @@ class StoreApiCheckoutRepository
         throw _unresolvedAttempt();
       }
       final Cart cart = await cartRepository.getCart();
-      final List<CheckoutFieldDefinition> definitions =
-          await _loadFieldDefinitions();
+      final (definitions, paymentLabels) =
+          await _loadPresentationConfiguration();
       bool enforced = false;
       if (requireServerSafety || safetyTransport != null) {
         try {
@@ -89,6 +89,7 @@ class StoreApiCheckoutRepository
       return CheckoutState(
         cart: cart,
         fieldDefinitions: definitions,
+        paymentMethodLabels: paymentLabels,
         hasUnresolvedSubmission: unresolved,
         serverSafetyRequired: requireServerSafety || safetyTransport != null,
         serverSafetyEnforced: enforced,
@@ -121,13 +122,33 @@ class StoreApiCheckoutRepository
     }
   }
 
-  Future<List<CheckoutFieldDefinition>> _loadFieldDefinitions() async {
+  Future<(List<CheckoutFieldDefinition>, Map<String, String>)>
+  _loadPresentationConfiguration() async {
     try {
       final CheckoutApiResponse response = await transport.loadConfiguration();
       final Map<String, dynamic>? json = _objectOrNull(response.data);
+      final labels = <String, String>{};
+      final rawMethods = json?['payment_methods'];
+      if (rawMethods is List) {
+        for (final method in rawMethods) {
+          if (method is! Map ||
+              method['id'] is! String ||
+              method['title'] is! String) {
+            continue;
+          }
+          final id = (method['id'] as String).trim();
+          final title = (method['title'] as String).trim();
+          if (id.isNotEmpty &&
+              id.length <= 100 &&
+              title.isNotEmpty &&
+              title.length <= 200) {
+            labels[id] = title;
+          }
+        }
+      }
       final dynamic rawFields = json?['fields'];
       if (rawFields is! List) {
-        return const <CheckoutFieldDefinition>[];
+        return (const <CheckoutFieldDefinition>[], labels);
       }
       final List<CheckoutFieldDefinition> fields = <CheckoutFieldDefinition>[];
       for (final dynamic rawField in rawFields) {
@@ -137,12 +158,12 @@ class StoreApiCheckoutRepository
           fields.add(field);
         }
       }
-      return _normalizeFieldDefinitions(fields, json!);
+      return (_normalizeFieldDefinitions(fields, json!), labels);
     } catch (_) {
       // Older plugin versions keep the safe built-in checkout fields. The
       // shopping flow must not fail merely because dynamic styling metadata
       // is not yet installed.
-      return const <CheckoutFieldDefinition>[];
+      return (const <CheckoutFieldDefinition>[], const <String, String>{});
     }
   }
 

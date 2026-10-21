@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.76",
+  "version": "1.46.77",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
@@ -2406,8 +2406,8 @@
     "api/class-checkout-config-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-checkout-config-endpoint.php",
       "newline": "lf",
-      "source_sha256": "ffabac74c4898b597c92d2091c677b45a7fd072cc886a34338819fabf733ab29",
-      "sha256": "ffabac74c4898b597c92d2091c677b45a7fd072cc886a34338819fabf733ab29"
+      "source_sha256": "bea19df44cd0100e76fe9822d9ad98982b22bf3db22f818ac83bd05329f6765a",
+      "sha256": "bea19df44cd0100e76fe9822d9ad98982b22bf3db22f818ac83bd05329f6765a"
     },
     "api/class-customer-account-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",
@@ -2922,8 +2922,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "80275b9a5d028ced1304eeeb76ad22495f36a8ff49bdecd2c0f18dd613141622",
-      "sha256": "80275b9a5d028ced1304eeeb76ad22495f36a8ff49bdecd2c0f18dd613141622"
+      "source_sha256": "493d4bacd3b949b91c5344e702dfd732dc157265de8336c4ac446d39b3e3ec97",
+      "sha256": "493d4bacd3b949b91c5344e702dfd732dc157265de8336c4ac446d39b3e3ec97"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2958,8 +2958,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "c8264c987bfd4cdd671d01477da0f3703d6a8aee801b3d296a1d18e0cc2672cf",
-      "sha256": "c8264c987bfd4cdd671d01477da0f3703d6a8aee801b3d296a1d18e0cc2672cf"
+      "source_sha256": "87a10d7a8689be59a805991716dac0dac09d241bd9284d04ab01a6fcc385b196",
+      "sha256": "87a10d7a8689be59a805991716dac0dac09d241bd9284d04ab01a6fcc385b196"
     }
   },
   "baseline_release": {
