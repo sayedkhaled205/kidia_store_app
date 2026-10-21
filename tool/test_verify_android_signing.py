@@ -44,6 +44,39 @@ def manifest(package=PACKAGE):
 
 
 class SigningPolicyTests(unittest.TestCase):
+    def test_managed_qa_requires_key_and_bound_fingerprint(self):
+        for changes in ({}, {"MOBISHOP_QA_KEYSTORE": "Zml4dHVyZQ=="}, {"MOBISHOP_QA_CERT_SHA256": DIGEST}):
+            with self.subTest(changes=tuple(changes)), self.assertRaises(SigningError):
+                identity({**qa(), "MOBISHOP_REQUIRE_QA_SIGNING": "true", **changes})
+        env = {**qa(), "MOBISHOP_QA_KEYSTORE": "Zml4dHVyZQ==", "MOBISHOP_QA_CERT_SHA256": DIGEST}
+        expected = identity(env)
+        self.assertTrue(validate_signer({"certificate_sha256": DIGEST, "subject": "CN=Android Debug"}, expected))
+        with self.assertRaises(SigningError):
+            validate_signer({"certificate_sha256": "2b" * 32, "subject": "CN=Android Debug"}, expected)
+        with self.assertRaises(SigningError):
+            identity({**release(), "MOBISHOP_QA_KEYSTORE": "Zml4dHVyZQ=="})
+
+    def test_managed_qa_preflight_verifies_private_file_without_exporting_key(self):
+        with tempfile.TemporaryDirectory() as directory, patch("tempfile.tempdir", directory):
+            env_file = Path(directory) / "env"
+            encoded = base64.b64encode(b"disposable-private-key-fixture").decode()
+            env = {**qa(), "MOBISHOP_QA_KEYSTORE": encoded, "MOBISHOP_QA_CERT_SHA256": DIGEST}
+            with patch("verify_android_signing.certificate_report", return_value={"certificate_sha256": DIGEST, "subject": "CN=Android Debug"}) as verifier:
+                prepare(env, env_file)
+                path = verifier.call_args.args[1]
+                self.assertEqual(path.read_bytes(), b"disposable-private-key-fixture")
+                self.assertNotIn(encoded, env_file.read_text())
+                self.assertIn("MOBISHOP_QA_KEYSTORE=\n", env_file.read_text())
+                self.assertEqual(verifier.call_args.args[2]["CM_KEY_ALIAS"], "androiddebugkey")
+
+    def test_managed_qa_rejects_wrong_signer_and_removes_temporary_key(self):
+        with tempfile.TemporaryDirectory() as directory, patch("tempfile.tempdir", directory):
+            env_file = Path(directory) / "env"
+            env = {**qa(), "MOBISHOP_QA_KEYSTORE": "Zml4dHVyZQ==", "MOBISHOP_QA_CERT_SHA256": DIGEST}
+            with patch("verify_android_signing.certificate_report", return_value={"certificate_sha256": "2b" * 32, "subject": "CN=Android Debug"}), self.assertRaises(SigningError):
+                prepare(env, env_file)
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
     def test_mode_is_mandatory(self):
         for mode in ("", "production", "QA"):
             with self.subTest(mode=mode), self.assertRaises(SigningError):
@@ -177,6 +210,22 @@ class JavaSignatureTests(unittest.TestCase):
         bundle = certificate_report("bundle", self.jar, self.env)
         self.assertEqual(key["certificate_sha256"], bundle["certificate_sha256"])
         self.assertEqual(bundle["verified_entries"], 2)
+
+    def test_managed_qa_rebuilds_keep_the_same_real_private_signer(self):
+        key_path = self.root / "disposable-qa.p12"
+        self.command("keytool", "-genkeypair", "-noprompt", "-storetype", "PKCS12",
+                     "-keystore", str(key_path), "-storepass", "android", "-keypass", "android",
+                     "-alias", "androiddebugkey", "-dname", "CN=Android Debug,O=Android,C=US",
+                     "-keyalg", "RSA", "-validity", "2")
+        verifier_env = {"JAVA_HOME": str(self.java_home), "CM_KEYSTORE_PASSWORD": "android", "CM_KEY_PASSWORD": "android", "CM_KEY_ALIAS": "androiddebugkey"}
+        signer = certificate_report("keystore", key_path, verifier_env)
+        env = {**qa(), "JAVA_HOME": str(self.java_home), "MOBISHOP_REQUIRE_QA_SIGNING": "true",
+               "MOBISHOP_QA_CERT_SHA256": signer["certificate_sha256"],
+               "MOBISHOP_QA_KEYSTORE": base64.b64encode(key_path.read_bytes()).decode()}
+        with patch("tempfile.tempdir", str(self.root)):
+            for build in (1, 2):
+                prepare(env, self.root / f"qa-env-{build}")
+        self.assertTrue(validate_signer(signer, identity(env)))
 
     def test_wrong_key_password_is_rejected(self):
         with self.assertRaises(SigningError):

@@ -37,7 +37,15 @@ def identity(environment):
     if mode == "qa":
         if any(credentials + sources) or digest or environment.get("MOBISHOP_REQUIRE_RELEASE_SIGNING") == "true":
             raise SigningError("A test build must not receive release signing credentials or identity.")
+        qa_key = environment.get("MOBISHOP_QA_KEYSTORE", "")
+        qa_path = environment.get("MOBISHOP_QA_KEYSTORE_PATH", "")
+        digest = environment.get("MOBISHOP_QA_CERT_SHA256", "").lower()
+        if qa_key or qa_path or digest or environment.get("MOBISHOP_REQUIRE_QA_SIGNING") == "true":
+            if sum(bool(value) for value in (qa_key, qa_path)) != 1 or not re.fullmatch(r"[a-f0-9]{64}", digest):
+                raise SigningError("A managed test build requires its stable private QA signer and fingerprint.")
     else:
+        if any(environment.get(field) for field in ("MOBISHOP_QA_KEYSTORE", "MOBISHOP_QA_KEYSTORE_PATH", "MOBISHOP_QA_CERT_SHA256")):
+            raise SigningError("A release build must not receive a QA signing identity.")
         if not re.fullmatch(r"[a-f0-9]{64}", digest):
             raise SigningError("The registered Android upload certificate fingerprint is required.")
         if not all(credentials) or sum(bool(value) for value in sources) != 1:
@@ -86,12 +94,16 @@ def validate_signer(report, expected):
             raise SigningError("The signer belongs to a different registered Android identity.")
     elif not debug:
         raise SigningError("The test build unexpectedly used a non-debug signing identity.")
+    elif expected["certificate_sha256"] and digest != expected["certificate_sha256"]:
+        raise SigningError("The test artifact does not match this application's stable QA signer.")
     return debug
 
 
 def prepare(environment, env_file):
     expected = identity(environment)
     if expected["mode"] == "qa":
+        if expected["certificate_sha256"]:
+            prepare_qa(environment, env_file, expected)
         print("ANDROID TEST BUILD: for testing only; not signed for Google Play distribution.")
         return
     environment = dict(environment)
@@ -128,6 +140,37 @@ def prepare(environment, env_file):
         if temporary:
             temporary.unlink(missing_ok=True)
         raise
+
+
+def prepare_qa(environment, env_file, expected):
+    if not env_file:
+        raise SigningError("An environment file is required for managed QA signing.")
+    temporary = None
+    try:
+        if environment.get("MOBISHOP_QA_KEYSTORE"):
+            data = base64.b64decode(environment["MOBISHOP_QA_KEYSTORE"], validate=True)
+            if not data or len(data) > 1024 * 1024:
+                raise SigningError("The private QA keystore size is invalid.")
+            with tempfile.NamedTemporaryFile(prefix="mobishop-qa-", suffix=".p12", delete=False) as handle:
+                temporary = Path(handle.name)
+                handle.write(data)
+            temporary.chmod(0o600)
+            path = temporary
+        else:
+            path = Path(environment["MOBISHOP_QA_KEYSTORE_PATH"])
+        if not path.is_file():
+            raise SigningError("The private QA signer is unavailable.")
+        verifier_environment = dict(environment, CM_KEYSTORE_PASSWORD="android", CM_KEY_ALIAS="androiddebugkey", CM_KEY_PASSWORD="android")
+        validate_signer(certificate_report("keystore", path, verifier_environment), expected)
+        with Path(env_file).open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write("MOBISHOP_QA_KEYSTORE_PATH=" + shlex.quote(str(path)) + "\n")
+            stream.write("MOBISHOP_QA_KEYSTORE=\n")
+    except Exception as error:
+        if temporary:
+            temporary.unlink(missing_ok=True)
+        if isinstance(error, SigningError):
+            raise
+        raise SigningError("The private QA signer could not be prepared.") from None
 
 
 def proto_fields(data):

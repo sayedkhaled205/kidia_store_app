@@ -76,6 +76,18 @@ android {
     }
 
     signingConfigs {
+        val qaKeyPath = System.getenv("MOBISHOP_QA_KEYSTORE_PATH").orEmpty()
+        require(androidBuildMode != "qa" || System.getenv("MOBISHOP_REQUIRE_QA_SIGNING") != "true" || qaKeyPath.isNotEmpty()) {
+            "A managed test build requires its stable private QA signer."
+        }
+        if (androidBuildMode == "qa" && qaKeyPath.isNotEmpty()) {
+            getByName("debug") {
+                storeFile = file(qaKeyPath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
         if (hasReleaseKey) {
             create("storeRelease") {
                 storeFile = file(releaseKeyValues.getValue("CM_KEYSTORE_PATH"))
