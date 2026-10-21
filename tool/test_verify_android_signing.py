@@ -44,6 +44,21 @@ def manifest(package=PACKAGE):
 
 
 class SigningPolicyTests(unittest.TestCase):
+    def test_ci_reinjected_secret_must_match_prepared_qa_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "qa.p12"
+            path.write_bytes(b"disposable-private-key-fixture")
+            env = {**qa(), "MOBISHOP_REQUIRE_QA_SIGNING": "true", "MOBISHOP_QA_CERT_SHA256": DIGEST,
+                   "MOBISHOP_QA_KEYSTORE": base64.b64encode(path.read_bytes()).decode(),
+                   "MOBISHOP_QA_KEYSTORE_PATH": str(path)}
+            self.assertEqual(identity(env)["certificate_sha256"], DIGEST)
+            path.write_bytes(b"different-key")
+            with self.assertRaises(SigningError):
+                identity(env)
+            path.unlink()
+            with self.assertRaises(SigningError):
+                identity(env)
+
     def test_managed_qa_requires_key_and_bound_fingerprint(self):
         for changes in ({}, {"MOBISHOP_QA_KEYSTORE": "Zml4dHVyZQ=="}, {"MOBISHOP_QA_CERT_SHA256": DIGEST}):
             with self.subTest(changes=tuple(changes)), self.assertRaises(SigningError):

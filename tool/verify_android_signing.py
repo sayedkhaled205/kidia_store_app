@@ -41,7 +41,17 @@ def identity(environment):
         qa_path = environment.get("MOBISHOP_QA_KEYSTORE_PATH", "")
         digest = environment.get("MOBISHOP_QA_CERT_SHA256", "").lower()
         if qa_key or qa_path or digest or environment.get("MOBISHOP_REQUIRE_QA_SIGNING") == "true":
-            if sum(bool(value) for value in (qa_key, qa_path)) != 1 or not re.fullmatch(r"[a-f0-9]{64}", digest):
+            # CI can re-inject API secrets after CM_ENV has cleared the base64
+            # value. Accept the prepared file alongside it only if identical.
+            if qa_key and qa_path:
+                try:
+                    path = Path(qa_path)
+                    same_key = path.stat().st_size <= 1024 * 1024 and path.read_bytes() == base64.b64decode(qa_key, validate=True)
+                except (OSError, ValueError):
+                    same_key = False
+                if not same_key:
+                    raise SigningError("The prepared QA signer differs from the registered private key.")
+            if not (qa_key or qa_path) or not re.fullmatch(r"[a-f0-9]{64}", digest):
                 raise SigningError("A managed test build requires its stable private QA signer and fingerprint.")
     else:
         if any(environment.get(field) for field in ("MOBISHOP_QA_KEYSTORE", "MOBISHOP_QA_KEYSTORE_PATH", "MOBISHOP_QA_CERT_SHA256")):
