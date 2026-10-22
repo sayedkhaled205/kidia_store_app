@@ -19,6 +19,15 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     return _repository.identify(email.trim());
   }
 
+  /// Called only after the native proof service securely commits its session.
+  void acceptNativeSession(AuthSession session) {
+    if (!ref.mounted || session.isExpired) return;
+    state = AsyncData<AuthSession?>(session);
+    ref
+        .read(mobileAnalyticsProvider)
+        .trackInBackground('login', authToken: session.token);
+  }
+
   Future<AuthSession> signInThroughWebsite({
     WebsiteAuthBrowser? presenter,
     WebsiteAuthAttempt? attempt,

@@ -18,6 +18,12 @@ final class MobiShop_Customer_Auth_Endpoint {
 
 	/** Register REST routes and Store API customer authentication. */
 	public function register(): void {
+		require_once __DIR__ . '/class-native-customer-auth-endpoint.php';
+		$native = new MobiShop_Native_Customer_Auth_Endpoint(
+			fn( WP_User $user ) => $this->issue_session_response( $user ),
+			fn( WP_User $user ): bool => $this->is_allowed_customer( $user )
+		);
+		$native->register();
 		require_once __DIR__ . '/class-website-auth-endpoint.php';
 		$website = new MobiShop_Website_Auth_Endpoint(
 			fn( WP_User $user ) => $this->issue_session_response( $user ),
@@ -538,6 +544,15 @@ final class MobiShop_Customer_Auth_Endpoint {
 
 	/** Issue a random, revocable, expiring customer session. */
 	private function issue_session_response( WP_User $user ) {
+		// Apply the store's required profile step to every session entry point,
+		// including the older email and browser social endpoints.
+		if ( ! $this->is_customer_ready( $user ) ) {
+			return new WP_Error(
+				'mobishop_auth_profile_required',
+				__( 'Complete the required account information before signing in.', 'mobi2app-connector' ),
+				array( 'status' => 403 )
+			);
+		}
 		try {
 			$secret = bin2hex( random_bytes( 32 ) );
 		} catch ( Throwable $error ) {
@@ -614,9 +629,14 @@ final class MobiShop_Customer_Auth_Endpoint {
 		}
 
 		$user = get_user_by( 'id', $user_id );
-		return $user instanceof WP_User && $this->is_allowed_customer( $user )
+		return $user instanceof WP_User && $this->is_allowed_customer( $user ) && $this->is_customer_ready( $user )
 			? $user
 			: null;
+	}
+
+	/** Readiness filters must inspect the supplied user, without resolving the current user again. */
+	private function is_customer_ready( WP_User $user ): bool {
+		return (bool) apply_filters( 'mobishop_auth_customer_ready', ! get_user_meta( $user->ID, 'kidia_phone_setup_required', true ), $user );
 	}
 
 	/** Return normalized, non-expired session metadata. */
@@ -658,6 +678,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( in_array( 'administrator', $roles, true ) ||
 			in_array( 'shop_manager', $roles, true ) ||
 			! empty( $allcaps['manage_options'] ) ||
+			! empty( $allcaps['edit_users'] ) ||
 			! empty( $allcaps['manage_woocommerce'] ) ) {
 			return false;
 		}

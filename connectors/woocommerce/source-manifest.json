@@ -2418,8 +2418,14 @@
     "api/class-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "06a6ae7420628d18934cdcfdea0571770dc9e93630382b212e34df2b323588b6",
-      "sha256": "06a6ae7420628d18934cdcfdea0571770dc9e93630382b212e34df2b323588b6"
+      "source_sha256": "dea16bdc43dcef62ce84285e990728f800b9cb779c053cca7a530cbcd7778a82",
+      "sha256": "dea16bdc43dcef62ce84285e990728f800b9cb779c053cca7a530cbcd7778a82"
+    },
+    "api/class-native-customer-auth-endpoint.php": {
+      "source": "connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php",
+      "newline": "lf",
+      "source_sha256": "00e107256a5756a1c1c990ff6f21bf96a2b28fe369ed1d9e1fca780d880e0f8f",
+      "sha256": "00e107256a5756a1c1c990ff6f21bf96a2b28fe369ed1d9e1fca780d880e0f8f"
     },
     "api/class-customer-orders-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",

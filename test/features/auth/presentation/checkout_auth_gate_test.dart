@@ -6,10 +6,12 @@ import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
+import 'package:mobishop_store_app/features/auth/domain/entities/native_auth.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dart';
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
 
 void main() {
   testWidgets('checkout shows the same auth screen for a signed-out customer', (
@@ -22,6 +24,11 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+          nativeAuthActionsProvider.overrideWithValue(_IdleNativeActions()),
+          nativeAuthConfigProvider.overrideWith(
+            (_) async =>
+                const NativeAuthConfig(methods: {'email_password': true}),
+          ),
         ],
         child: MobiShopApp(router: router),
       ),
@@ -32,6 +39,14 @@ void main() {
     expect(find.byKey(const Key('auth-email')), findsOneWidget);
     expect(find.byKey(const Key('auth-continue')), findsOneWidget);
   });
+}
+
+class _IdleNativeActions implements NativeAuthActions {
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _SignedOutRepository implements AuthRepository {

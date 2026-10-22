@@ -17,7 +17,9 @@ abstract interface class PushMessagingClient {
 final class FirebasePushMessagingClient implements PushMessagingClient {
   @override
   Future<void> configure(FirebaseClientOptions options) async {
-    if (Firebase.apps.isEmpty) {
+    // Merchant sign-in can initialize its own named Firebase app first. Push
+    // still needs the default app, regardless of other projects being present.
+    if (!Firebase.apps.any((app) => app.name == defaultFirebaseAppName)) {
       await Firebase.initializeApp(
         options: FirebaseOptions(
           apiKey: options.apiKey,

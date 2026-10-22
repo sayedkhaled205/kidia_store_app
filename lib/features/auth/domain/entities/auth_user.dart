@@ -15,7 +15,8 @@ class AuthUser {
     };
     final String email = json['email']?.toString().trim() ?? '';
     if (id <= 0 ||
-        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+        (email.isNotEmpty &&
+            !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email))) {
       throw const FormatException('The authentication user is invalid.');
     }
 
