@@ -169,17 +169,19 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$g = $this->settings()['google'];
 		$authorized = $this->platform( $request ) === 'ios' ? array( $g['ios_client_id'] ?? '' ) : (array) ( $g['android_client_ids'] ?? array() );
 		$authorized[] = $g['server_client_id'];
-		if ( ! $claims || ! $this->fresh( $claims, false ) || ( $claims['aud'] ?? null ) !== $g['server_client_id']
-			|| ! in_array( $claims['iss'] ?? null, array( 'accounts.google.com', 'https://accounts.google.com' ), true )
-			|| ( isset( $claims['azp'] ) && ! in_array( $claims['azp'], $authorized, true ) )
-			|| ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
+		if ( ! $claims ) return $this->error( 'invalid_proof', 401, 'google_signature' );
+		if ( ! $this->fresh( $claims, false ) ) return $this->error( 'invalid_proof', 401, 'google_time' );
+		if ( ( $claims['aud'] ?? null ) !== $g['server_client_id'] ) return $this->error( 'invalid_proof', 401, 'google_audience' );
+		if ( ! in_array( $claims['iss'] ?? null, array( 'accounts.google.com', 'https://accounts.google.com' ), true ) ) return $this->error( 'invalid_proof', 401, 'google_issuer' );
+		if ( isset( $claims['azp'] ) && ! in_array( $claims['azp'], $authorized, true ) ) return $this->error( 'invalid_proof', 401, 'google_presenter' );
+		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401, 'google_email' );
 		$email = strtolower( $claims['email'] );
 		$proof = array( 'kind' => 'google', 'sub' => $claims['sub'], 'email' => $email,
 			'authoritative' => (bool) preg_match( '/@(gmail|googlemail)\.com$/', $email ) || ( is_string( $claims['hd'] ?? null ) && $claims['hd'] !== '' ) );
 		$linked = $this->google_user( $proof['sub'] );
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
-			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
+			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401, 'google_customer_policy' );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
 		// Google is not authoritative for arbitrary third-party email accounts.
@@ -437,7 +439,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			|| ! is_string( $header['kid'] ?? null ) || strlen( $header['kid'] ) > 256 || ! empty( $header['crit'] ) ) return null;
 		$key = 'mobishop_native_certs_' . hash( 'sha256', $url );
 		$certs = get_transient( $key );
-		if ( ! is_array( $certs ) ) {
+		// Refresh once on an unknown key after provider rotation. Bound refreshes
+		// per issuer so random key IDs cannot force an outbound request per login.
+		$refresh_key = $key . '_refresh';
+		if ( ! is_array( $certs ) || ( ! isset( $certs[ $header['kid'] ] ) && ! get_transient( $refresh_key ) ) ) {
+			set_transient( $refresh_key, 1, 60 );
 			$response = wp_remote_get( $url, array( 'timeout' => 10, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => 65536 ) );
 			if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) return null;
 			$certs = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -458,7 +464,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$now = time();
 		if ( ! is_string( $claims['sub'] ?? null ) || $claims['sub'] === '' || strlen( $claims['sub'] ) > 255
 			|| ! is_int( $claims['exp'] ?? null ) || $claims['exp'] <= $now
-			|| ! is_int( $claims['iat'] ?? null ) || $claims['iat'] > $now + ( $phone ? 0 : 30 ) || $claims['iat'] < $now - 600
+			|| ! is_int( $claims['iat'] ?? null ) || $claims['iat'] > $now + ( $phone ? 0 : 30 ) || $claims['iat'] <= 0 || $claims['iat'] >= $claims['exp']
+			// Google SDKs may reuse an unexpired ID token. Its signed expiry,
+			// audience and issuer govern validity; the OTP proof stays recent.
+			|| ( $phone && $claims['iat'] < $now - 600 )
 			|| ( isset( $claims['nbf'] ) && ( ! is_int( $claims['nbf'] ) || $claims['nbf'] > $now + 30 ) ) ) return false;
 		return ! $phone || ( is_int( $claims['auth_time'] ?? null ) && $claims['auth_time'] <= $now && $claims['auth_time'] >= $now - 600 );
 	}
@@ -536,7 +545,15 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $response;
 	}
 
-	private function error( string $code, int $status ) {
+	private function error( string $code, int $status, string $reason = '' ) {
+		if ( $reason !== '' ) {
+			// Aggregate only fixed reason codes, never tokens or customer data.
+			$key = 'mobishop_native_auth_diagnostics';
+			$counts = get_transient( $key );
+			if ( ! is_array( $counts ) ) $counts = array();
+			$counts[ $reason ] = array( 'count' => min( 1000000, (int) ( $counts[ $reason ]['count'] ?? 0 ) + 1 ), 'last_at' => time() );
+			set_transient( $key, $counts, HOUR_IN_SECONDS );
+		}
 		return new WP_Error( 'mobishop_native_' . $code, __( 'Sign-in could not be completed. Please try again.', 'mobi2app-connector' ), array( 'status' => $status ) );
 	}
 }

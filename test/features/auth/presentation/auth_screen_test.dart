@@ -248,6 +248,7 @@ void main() {
         ..actions.verifyError = const AuthRepositoryException(
           kind: AuthFailureKind.unauthorized,
           message: 'Invalid code',
+          code: 'invalid-verification-code',
         );
       await fixture.pump(tester);
       await _identify(tester, '01012345678');
@@ -257,11 +258,113 @@ void main() {
       await _tap(tester, 'auth-verify-otp');
       expect(find.text('رمز التحقق غير صحيح أو انتهت صلاحيته'), findsOneWidget);
       expect(fixture.actions.commits, 0);
+      expect(find.byKey(const Key('auth-otp')), findsNothing);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-password')), findsNothing);
       fixture.actions.verifyError = null;
+      await _tap(tester, 'auth-retry-otp');
+      await tester.enterText(find.byKey(const Key('auth-otp')), '654321');
       await _tap(tester, 'auth-verify-otp');
+      expect(fixture.actions.sentPhones, hasLength(1));
       expect(fixture.actions.commits, 1);
     },
   );
+
+  testWidgets(
+    'SMS send failure offers password and Google without losing checkout',
+    (tester) async {
+      final fixture = _Fixture()
+        ..actions.sendError = const AuthRepositoryException(
+          kind: AuthFailureKind.invalidInput,
+          code: 'app-not-authorized',
+          message: 'Verification unavailable',
+        );
+      await fixture.pump(
+        tester,
+        route: '/checkout',
+        size: const Size(320, 640),
+      );
+      await _startOtp(tester);
+      expect(find.text('اختار طريقة تانية للدخول'), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      expect(find.byKey(const Key('auth-otp')), findsNothing);
+      await _tap(tester, 'auth-use-password');
+      await tester.enterText(
+        find.byKey(const Key('auth-password')),
+        'password',
+      );
+      await _tap(tester, 'auth-sign-in');
+      expect(
+        fixture.router.routeInformationProvider.value.uri.path,
+        '/checkout',
+      );
+      expect(fixture.actions.commits, 1);
+      expect(fixture.actions.cancelCalls, greaterThan(0));
+    },
+  );
+
+  testWidgets(
+    'failed automatic OTP can recover with Google and retains resend cooldown',
+    (tester) async {
+      final automatic = Completer<NativeAuthResult?>();
+      final fixture = _Fixture()
+        ..actions.automaticResults.add(automatic.future);
+      await fixture.pump(tester);
+      await _startOtp(tester);
+      automatic.completeError(
+        const AuthRepositoryException(
+          kind: AuthFailureKind.server,
+          message: 'Verification unavailable',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('اختار طريقة تانية للدخول'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(const Key('auth-retry-otp')))
+            .onPressed,
+        isNull,
+      );
+      await tester.pump(const Duration(seconds: 61));
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(const Key('auth-retry-otp')))
+            .onPressed,
+        isNotNull,
+      );
+      await _tap(tester, 'auth-google');
+      expect(fixture.actions.commits, 1);
+    },
+  );
+
+  testWidgets('cancelled Google recovery requests a fresh OTP after cooldown', (
+    tester,
+  ) async {
+    final fixture = _Fixture()
+      ..actions.verifyError = const AuthRepositoryException(
+        kind: AuthFailureKind.invalidInput,
+        code: 'invalid-verification-code',
+        message: 'Incorrect code',
+      )
+      ..actions.googleError = PlatformException(code: 'sign_in_canceled');
+    await fixture.pump(tester);
+    await _startOtp(tester);
+    await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+    await _tap(tester, 'auth-verify-otp');
+    await _tap(tester, 'auth-google');
+    expect(find.text('اختار طريقة تانية للدخول'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('auth-retry-otp')))
+          .onPressed,
+      isNull,
+    );
+    await tester.pump(const Duration(seconds: 61));
+    await _tap(tester, 'auth-retry-otp');
+    expect(fixture.actions.sentPhones, hasLength(2));
+    expect(fixture.actions.otpTickets.last, isNull);
+    expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+  });
 
   testWidgets('failed session commit retries the proven result only', (
     tester,
@@ -579,6 +682,7 @@ class _Actions implements NativeAuthActions {
   Future<NativeAuthResult>? googleFuture;
   Object? googleError;
   Object? verifyError;
+  Object? sendError;
   Object? commitError;
   Object? configError;
   final identifiers = <String>[];
@@ -633,6 +737,7 @@ class _Actions implements NativeAuthActions {
     sentPhones.add(phone);
     resends.add(resend);
     otpTickets.add(ticket);
+    if (sendError != null) throw sendError!;
     return NativeOtpChallenge(
       phone: phone,
       handle: Object(),

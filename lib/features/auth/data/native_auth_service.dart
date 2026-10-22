@@ -533,7 +533,9 @@ class NativeAuthService implements NativeAuthActions {
       );
       _checkOrigin(response.realUri);
       final status = response.statusCode ?? 0;
-      if (status < 200 || status >= 300) throw _httpError(status);
+      if (status < 200 || status >= 300) {
+        throw _httpError(status, response.data);
+      }
       final value = response.data is String
           ? jsonDecode(response.data as String)
           : response.data;
@@ -542,7 +544,7 @@ class NativeAuthService implements NativeAuthActions {
     } on DioException catch (error) {
       if (error.response != null) {
         _checkOrigin(error.response!.realUri);
-        throw _httpError(error.response!.statusCode ?? 0);
+        throw _httpError(error.response!.statusCode ?? 0, error.response!.data);
       }
       throw _safe(error);
     }
@@ -590,25 +592,50 @@ class NativeAuthService implements NativeAuthActions {
     code: 'unavailable',
   );
 
-  static AuthRepositoryException _httpError(int status) =>
-      AuthRepositoryException(
-        kind: switch (status) {
-          400 || 422 => AuthFailureKind.invalidInput,
-          401 || 403 => AuthFailureKind.unauthorized,
-          409 => AuthFailureKind.conflict,
-          429 => AuthFailureKind.rateLimited,
-          >= 500 => AuthFailureKind.server,
-          _ => AuthFailureKind.invalidResponse,
-        },
-        statusCode: status,
-        message: switch (status) {
-          400 || 422 => 'راجع البيانات وحاول تاني.',
-          401 || 403 => 'تعذر تأكيد بيانات الدخول.',
-          409 => 'تعذر ربط الحساب. ابدأ محاولة جديدة.',
-          429 => 'محاولات كتير. انتظر قليلًا وحاول تاني.',
-          _ => 'تعذر الاتصال بالمتجر. حاول تاني.',
-        },
-      );
+  static AuthRepositoryException _httpError(int status, [Object? body]) {
+    // Only translate known connector codes; never display arbitrary server text.
+    Object? value = body;
+    if (value is String) {
+      try {
+        value = jsonDecode(value);
+      } catch (_) {
+        value = null;
+      }
+    }
+    final code = value is Map ? value['code'] : null;
+    const messages = {
+      'mobishop_native_invalid_proof':
+          'تعذر التحقق من محاولة الدخول. اختار الحساب وحاول تاني، أو استخدم كلمة المرور.',
+      'mobishop_native_invalid_ticket': 'انتهت محاولة الدخول. ابدأ من جديد.',
+      'mobishop_native_additional_proof_required':
+          'الحساب ده محتاج تأكيد إضافي. استخدم كلمة مرور حساب المتجر أو رقم الموبايل.',
+      'mobishop_native_account_conflict':
+          'تعذر ربط حساب جوجل بالحساب الحالي. استخدم طريقة الدخول المعتادة للحساب.',
+      'mobishop_native_unavailable':
+          'طريقة الدخول دي غير متاحة حاليًا. اختار طريقة تانية.',
+    };
+    return AuthRepositoryException(
+      kind: switch (status) {
+        400 || 422 => AuthFailureKind.invalidInput,
+        401 || 403 => AuthFailureKind.unauthorized,
+        409 => AuthFailureKind.conflict,
+        429 => AuthFailureKind.rateLimited,
+        >= 500 => AuthFailureKind.server,
+        _ => AuthFailureKind.invalidResponse,
+      },
+      statusCode: status,
+      code: messages.containsKey(code) ? code as String : null,
+      message:
+          messages[code] ??
+          switch (status) {
+            400 || 422 => 'راجع البيانات وحاول تاني.',
+            401 || 403 => 'تعذر تأكيد بيانات الدخول.',
+            409 => 'تعذر ربط الحساب. ابدأ محاولة جديدة.',
+            429 => 'محاولات كتير. انتظر قليلًا وحاول تاني.',
+            _ => 'تعذر الاتصال بالمتجر. حاول تاني.',
+          },
+    );
+  }
 
   static AuthRepositoryException _safe(Object error) {
     if (error is AuthRepositoryException) return error;
@@ -622,11 +649,34 @@ class NativeAuthService implements NativeAuthActions {
     }
     if (error is NativeAuthSdkException) {
       return AuthRepositoryException(
-        kind: AuthFailureKind.invalidInput,
+        kind: switch (error.code) {
+          'too-many-requests' ||
+          'quota-exceeded' => AuthFailureKind.rateLimited,
+          'network-request-failed' => AuthFailureKind.connection,
+          _ => AuthFailureKind.invalidInput,
+        },
         code: error.code,
-        message: error.code == 'invalid-verification-code'
-            ? 'رمز التأكيد غير صحيح. جرّب تاني.'
-            : 'تعذر إكمال التحقق. حاول تاني.',
+        message: switch (error.code) {
+          'invalid-verification-code' => 'رمز التأكيد غير صحيح. جرّب تاني.',
+          'session-expired' || 'code-expired' =>
+            'انتهت صلاحية رمز التحقق. اطلب رمز جديد أو اختار طريقة دخول تانية.',
+          'invalid-phone-number' => 'راجع رقم الموبايل وكود الدولة وحاول تاني.',
+          'network-request-failed' =>
+            'الاتصال انقطع أثناء التحقق. راجع الإنترنت وحاول تاني.',
+          'too-many-requests' || 'quota-exceeded' =>
+            'إرسال الرموز متوقف مؤقتًا. انتظر قليلًا أو استخدم طريقة دخول تانية.',
+          'app-not-authorized' ||
+          'invalid-app-credential' ||
+          'missing-client-identifier' ||
+          'operation-not-allowed' ||
+          'captcha-check-failed' =>
+            'تعذر تفعيل التحقق على النسخة دي. استخدم كلمة المرور أو جوجل مؤقتًا.',
+          'google-not-configured' ||
+          'google-native-registration-required' ||
+          'google-clientConfigurationError' =>
+            'الدخول بجوجل غير جاهز في النسخة دي. استخدم طريقة دخول تانية.',
+          _ => 'تعذر إكمال التحقق. اختار طريقة دخول تانية أو حاول مرة أخرى.',
+        },
       );
     }
     if (error is DioException) {

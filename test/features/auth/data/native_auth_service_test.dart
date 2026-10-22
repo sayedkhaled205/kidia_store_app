@@ -77,6 +77,50 @@ Future<void> _until(bool Function() ready) async {
 
 void main() {
   test(
+    'known connector failures keep safe reason codes without exposing server text',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async => h.response(request, {
+        'code': 'mobishop_native_additional_proof_required',
+        'message': 'private server data must never be shown',
+      }, status: 403);
+      await expectLater(
+        h.service.google(),
+        throwsA(
+          _failure
+              .having(
+                (e) => e.code,
+                'code',
+                'mobishop_native_additional_proof_required',
+              )
+              .having(
+                (e) => e.message,
+                'safe message',
+                isNot(contains('private server data')),
+              ),
+        ),
+      );
+      expect(h.store.writes, 0);
+    },
+  );
+
+  test('SMS SDK quota and invalid-code errors remain actionable', () async {
+    final h = _Harness();
+    final challenge = await h.service.sendOtp('+201012345678');
+    h.sdk.manual = () async =>
+        throw const NativeAuthSdkException('quota-exceeded');
+    await expectLater(
+      h.service.verifyOtp(challenge, '123456'),
+      throwsA(
+        _failure
+            .having((e) => e.kind, 'kind', AuthFailureKind.rateLimited)
+            .having((e) => e.code, 'code', 'quota-exceeded'),
+      ),
+    );
+    expect(h.store.writes, 0);
+  });
+
+  test(
     'fixed HTTPS merchant endpoints retain installation path and disable redirects',
     () async {
       final h = _Harness();

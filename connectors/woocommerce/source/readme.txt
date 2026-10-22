@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.80
+Stable tag: 1.46.81
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,10 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.81 =
+* Accept valid Google ID tokens until their signed expiry and refresh rotated signing keys safely.
+* Keep native authentication failures diagnosable without storing customer data or credentials.
 
 = 1.46.80 =
 * Read payment method names from each merchant's enabled WooCommerce gateways; the current cart remains authoritative for payment availability.

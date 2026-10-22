@@ -29,6 +29,15 @@ class AuthCopy {
       : 'Enter the full phone number starting with + and the country code';
   String get chooseMethod =>
       isArabic ? 'اختار طريقة الدخول' : 'Choose how to sign in';
+  String get chooseAnotherMethod =>
+      isArabic ? 'اختار طريقة تانية للدخول' : 'Choose another way to sign in';
+  String get otpAlternatives => isArabic
+      ? 'التحقق بالرمز ما اكتملش. تقدر تستخدم طريقة تانية متاحة لحسابك، أو تحاول بالرمز تاني.'
+      : 'Code verification did not finish. Use another method available for your account, or try the code again.';
+  String get retryCode =>
+      isArabic ? 'إعادة إدخال الرمز' : 'Enter the code again';
+  String get retryOtp =>
+      isArabic ? 'المحاولة برمز تحقق جديد' : 'Try a new verification code';
   String get usePassword => isArabic ? 'الدخول بكلمة المرور' : 'Use password';
   String get useOtp => isArabic ? 'الدخول برمز تحقق' : 'Use verification code';
   String get otpTitle =>

@@ -18,6 +18,7 @@ import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart'
 enum _AuthStep {
   identifier,
   method,
+  recovery,
   password,
   createPassword,
   otp,
@@ -51,6 +52,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   NativeAuthResult? _pendingCommit;
   NativeOtpChallenge? _challenge;
   String? _otpTicket;
+  String? _recoveryPhone;
+  bool _canRetryCode = false;
   _AuthStep _step = _AuthStep.identifier;
   bool _busy = false;
   bool _resolving = false;
@@ -267,7 +270,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     : copy.resendOtp,
                               ),
                             ),
-                          if (_step == _AuthStep.identifier &&
+                          if ([
+                                _AuthStep.identifier,
+                                _AuthStep.method,
+                                _AuthStep.password,
+                                _AuthStep.recovery,
+                              ].contains(_step) &&
                               config.allows('google')) ...[
                             if (hasIdentifier) ...[
                               const SizedBox(height: 24),
@@ -286,6 +294,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               onPressed: _busy
                                   ? null
                                   : () => _perform((flow) async {
+                                      _otpEpoch++;
+                                      // Google starts a new service attempt, so
+                                      // the previous phone proof cannot be reused.
+                                      setState(() {
+                                        _challenge = null;
+                                        _otpTicket = null;
+                                        _continuation = null;
+                                        _canRetryCode = false;
+                                      });
                                       final result = await _actions!.google();
                                       if (_active(flow)) {
                                         await _acceptResult(result, flow);
@@ -333,6 +350,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   String _title(AuthCopy copy) => switch (_step) {
     _AuthStep.identifier => copy.title,
     _AuthStep.method => copy.chooseMethod,
+    _AuthStep.recovery => copy.chooseAnotherMethod,
     _AuthStep.password => copy.existingTitle,
     _AuthStep.createPassword => copy.createTitle,
     _AuthStep.otp => copy.otpTitle,
@@ -344,7 +362,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   List<Widget> _identitySummary(AuthCopy copy) {
     final value = _step == _AuthStep.otp
         ? _challenge?.phone ?? _phone.text
-        : _identity?.identifier ?? '';
+        : _identity?.identifier ?? _recoveryPhone ?? '';
     return [
       if (_step == _AuthStep.otp)
         Text(copy.otpSent, textAlign: TextAlign.center, style: _secondaryStyle),
@@ -423,6 +441,74 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               padding: EdgeInsets.only(top: 16),
               child: Center(child: CircularProgressIndicator()),
             ),
+        ];
+      case _AuthStep.recovery:
+        return [
+          Text(
+            copy.otpAlternatives,
+            textAlign: TextAlign.center,
+            style: _secondaryStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_identity?.allows('password') == true ||
+              (_identity == null && config.allows('phone_password')))
+            _methodButton(
+              key: const Key('auth-use-password'),
+              label: copy.usePassword,
+              icon: Icons.password_rounded,
+              onPressed: () => _perform((flow) async {
+                _otpEpoch++;
+                await _actions!.cancel();
+                if (!_active(flow)) return;
+                final identity =
+                    _identity ?? await _actions!.identify(_recoveryPhone!);
+                if (!_active(flow)) return;
+                if (!identity.allows('password')) {
+                  throw StateError('Password is unavailable.');
+                }
+                setState(() {
+                  _identity = identity;
+                  _continuation = null;
+                  _challenge = null;
+                  _otpTicket = null;
+                  _password.clear();
+                  _step = _AuthStep.password;
+                });
+              }),
+            ),
+          const SizedBox(height: 12),
+          TextButton(
+            key: const Key('auth-retry-otp'),
+            onPressed: _busy || (!_canRetryCode && _resendSeconds > 0)
+                ? null
+                : () {
+                    if (_canRetryCode && _challenge != null) {
+                      setState(() {
+                        _otp.clear();
+                        _error = null;
+                        _step = _AuthStep.otp;
+                      });
+                    } else {
+                      unawaited(
+                        _perform(
+                          (flow) => _sendOtp(
+                            flow,
+                            _recoveryPhone!,
+                            ticket: _otpTicket,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+            child: Text(
+              _canRetryCode
+                  ? copy.retryCode
+                  : _resendSeconds > 0
+                  ? '${copy.retryOtp} ($_resendSeconds)'
+                  : copy.retryOtp,
+            ),
+          ),
+          if (_busy) const Center(child: CircularProgressIndicator()),
         ];
       case _AuthStep.password:
       case _AuthStep.createPassword:
@@ -714,7 +800,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   bool get _hasSubmit =>
       _pendingCommit != null ||
-      ![_AuthStep.method, _AuthStep.accounts].contains(_step);
+      ![
+        _AuthStep.method,
+        _AuthStep.recovery,
+        _AuthStep.accounts,
+      ].contains(_step);
   String get _submitKey => switch (_step) {
     _AuthStep.identifier => 'auth-continue',
     _AuthStep.password => 'auth-sign-in',
@@ -780,13 +870,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           final challenge = _challenge;
           final epoch = _otpEpoch;
           if (challenge == null) return;
-          final result = await _actions!.verifyOtp(
-            challenge,
-            _digits(_otp.text.trim()),
-            ticket: _otpTicket,
-          );
-          if (_active(flow) && epoch == _otpEpoch) {
-            await _acceptResult(result, flow);
+          try {
+            final result = await _actions!.verifyOtp(
+              challenge,
+              _digits(_otp.text.trim()),
+              ticket: _otpTicket,
+            );
+            if (_active(flow) && epoch == _otpEpoch) {
+              await _acceptResult(result, flow);
+            }
+          } catch (error) {
+            if (_active(flow) && epoch == _otpEpoch) {
+              _showOtpRecovery(error, challenge.phone, ticket: _otpTicket);
+            }
           }
         case _AuthStep.registration:
           final continuation = _continuation!;
@@ -800,6 +896,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
           if (_active(flow)) await _acceptResult(result, flow);
         case _AuthStep.method:
+        case _AuthStep.recovery:
         case _AuthStep.accounts:
           break;
       }
@@ -835,11 +932,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     String? ticket,
   }) async {
     final epoch = ++_otpEpoch;
-    final challenge = await _actions!.sendOtp(
-      phone,
-      resend: previous,
-      ticket: ticket,
-    );
+    NativeOtpChallenge challenge;
+    try {
+      challenge = await _actions!.sendOtp(
+        phone,
+        resend: previous,
+        ticket: ticket,
+      );
+    } catch (error) {
+      if (_active(flow) && epoch == _otpEpoch) {
+        _challenge = null;
+        _showOtpRecovery(error, phone, ticket: ticket);
+      }
+      return;
+    }
     // Always observe automaticResult so a late SDK failure is never unhandled.
     unawaited(
       challenge.automaticResult.then<void>(
@@ -849,8 +955,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           }
         },
         onError: (Object error, StackTrace stack) {
-          if (_active(flow) && epoch == _otpEpoch && !_busy) {
-            setState(() => _error = _messageFor(error));
+          if (_active(flow) && epoch == _otpEpoch && !_resolving) {
+            _showOtpRecovery(error, phone, ticket: ticket);
           }
         },
       ),
@@ -865,11 +971,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _startResendTimer();
   }
 
+  void _showOtpRecovery(Object error, String phone, {String? ticket}) {
+    final message = _messageFor(error);
+    _operation++;
+    _otpEpoch++; // A late automatic callback cannot sign in after recovery.
+    setState(() {
+      _recoveryPhone = phone;
+      _otpTicket = ticket;
+      _canRetryCode =
+          _challenge != null &&
+          error is AuthRepositoryException &&
+          error.code == 'invalid-verification-code';
+      _step = _AuthStep.recovery;
+      _busy = false;
+      _error = message;
+    });
+  }
+
   void _startResendTimer() {
     _resendTimer?.cancel();
     _resendSeconds = 60;
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || _step != _AuthStep.otp || _closing) {
+      if (!mounted ||
+          ![_AuthStep.otp, _AuthStep.recovery].contains(_step) ||
+          _closing) {
         timer.cancel();
         return;
       }
@@ -929,7 +1054,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         return copy.cancelled;
       }
       if (error.kind == AuthFailureKind.unauthorized &&
-          error.code != 'expired') {
+          (error.code == null || error.code == 'invalid-verification-code')) {
         if (_step == _AuthStep.otp) return copy.otpIncorrect;
         if (_step == _AuthStep.password || _step == _AuthStep.createPassword) {
           return copy.passwordIncorrect;
@@ -963,6 +1088,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _continuation = null;
       _challenge = null;
       _otpTicket = null;
+      _recoveryPhone = null;
+      _canRetryCode = false;
+      _resendSeconds = 0;
       _pendingCommit = null;
       _busy = false;
       _resolving = false;

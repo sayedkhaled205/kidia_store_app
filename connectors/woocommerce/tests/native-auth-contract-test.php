@@ -482,7 +482,17 @@ $GLOBALS['native_users'][9]['password'] = 'password-nine';
 native_clear_rate();
 $google = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims(), array( 'email' => 'changed@gmail.com' ) ) ), 'verifier' => $verifier, 'user_id' => 9 ) ) ), 'Linked Google' );
 native_assert( $google['status'] === 'authenticated' && $google['user_id'] === 7, 'Linked Google subject retains the established customer despite a changed email' );
-foreach ( array( 'aud' => 'attacker.apps.googleusercontent.com', 'azp' => 'attacker.apps.googleusercontent.com', 'iss' => 'https://attacker.example', 'exp' => time() - 1 ) as $claim => $value ) {
+$cached_google = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims(), array( 'iat' => time() - 1800, 'exp' => time() + 1800 ) ) ), 'verifier' => $verifier ) ) ), 'Unexpired cached Google proof' );
+native_assert( $cached_google['status'] === 'authenticated' && $cached_google['user_id'] === 7, 'An unexpired Google SDK token is not rejected after ten minutes' );
+$cert_key = 'mobishop_native_certs_' . hash( 'sha256', 'https://www.googleapis.com/oauth2/v1/certs' );
+set_transient( $cert_key, array( 'previous-kid' => $GLOBALS['native_public_key'] ), 300 );
+unset( $GLOBALS['native_transients'][$cert_key . '_refresh'] );
+$requests_before_rotation = count( $GLOBALS['native_http'] );
+native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( native_google_claims() ), 'verifier' => $verifier ) ) ), 'Rotated Google signing key' );
+native_assert( count( $GLOBALS['native_http'] ) === $requests_before_rotation + 1, 'Unknown cached key refreshes trusted issuer certificates once' );
+foreach ( array( 'unknown-one', 'unknown-two' ) as $kid ) native_rejected( $endpoint->google( native_request( array( 'id_token' => native_jwt( native_google_claims(), array( 'kid' => $kid ) ), 'verifier' => $verifier ) ) ), 'Unknown rotated keys still fail verification' );
+native_assert( count( $GLOBALS['native_http'] ) === $requests_before_rotation + 1, 'Unknown key IDs cannot trigger unbounded certificate refreshes' );
+foreach ( array( 'aud' => 'attacker.apps.googleusercontent.com', 'azp' => 'attacker.apps.googleusercontent.com', 'iss' => 'https://attacker.example', 'exp' => time() - 1, 'iat' => time() + 120 ) as $claim => $value ) {
     native_clear_rate();
     native_rejected( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims(), array( $claim => $value ) ) ), 'verifier' => $verifier ) ) ), 'Reject invalid Google ' . $claim );
 }
