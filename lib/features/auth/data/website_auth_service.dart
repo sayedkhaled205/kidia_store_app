@@ -4,11 +4,47 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:mobishop_store_app/features/auth/data/storage/auth_session_store.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 
 typedef WebsiteAuthBrowser = Future<String> Function(Uri uri);
+
+/// Cancellation applies until the verified session begins its storage commit.
+/// The commit is a single logical operation: once started, closing the page
+/// cannot revoke a successfully authenticated session halfway through storage.
+class WebsiteAuthAttempt {
+  bool _cancelled = false;
+  bool _committing = false;
+  final Completer<void> _cancelSignal = Completer<void>();
+
+  void cancel() {
+    if (!_committing && !_cancelled) {
+      _cancelled = true;
+      _cancelSignal.complete();
+    }
+  }
+
+  void checkActive() {
+    if (_cancelled) throw PlatformException(code: 'CANCELED');
+  }
+
+  void beginCommit() {
+    checkActive();
+    _committing = true;
+  }
+
+  Future<T> waitFor<T>(Future<T> operation) {
+    checkActive();
+    return Future.any([
+      operation,
+      _cancelSignal.future.then<T>(
+        (_) => throw PlatformException(code: 'CANCELED'),
+      ),
+    ]);
+  }
+}
 
 /// The store owns OTP, email, Google and verified account selection. Only a
 /// one-use code returns from its browser; the session stays on HTTPS/storage.
@@ -53,20 +89,26 @@ class WebsiteAuthService {
     return response['enabled'] == true && response['version'] == 1;
   }
 
-  Future<AuthSession> signIn() async {
+  Future<AuthSession> signIn({
+    WebsiteAuthBrowser? presenter,
+    WebsiteAuthAttempt? attempt,
+  }) async {
     if (_active) throw StateError('Sign-in already in progress.');
     _active = true;
     try {
+      attempt?.checkActive();
       final state = _random();
       final verifier = _random();
       final started = DateTime.now();
-      final start = await _request(
+      final startRequest = _request(
         'start',
         body: {
           'state': state,
           'challenge': sha256.convert(utf8.encode(verifier)).toString(),
         },
       );
+      final start = await (attempt?.waitFor(startRequest) ?? startRequest);
+      attempt?.checkActive();
       final uri = Uri.tryParse(start['authorize_url']?.toString() ?? '');
       if (uri == null ||
           uri.origin != store.origin ||
@@ -77,7 +119,10 @@ class WebsiteAuthService {
           ).hasMatch(uri.queryParameters['mobishop_login'] ?? '')) {
         throw const FormatException('Invalid store login URL.');
       }
-      final result = Uri.parse(await browser(uri));
+      final presentation = (presenter ?? browser)(uri);
+      final callback = await (attempt?.waitFor(presentation) ?? presentation);
+      attempt?.checkActive();
+      final result = Uri.parse(callback);
       if (DateTime.now().difference(started) > const Duration(minutes: 10) ||
           result.scheme != schemeFor(store) ||
           result.host != 'auth' ||
@@ -93,17 +138,19 @@ class WebsiteAuthService {
           ).hasMatch(result.queryParameters['code'] ?? '')) {
         throw const FormatException('Invalid or expired sign-in callback.');
       }
+      final exchangeRequest = _request(
+        'exchange',
+        body: {
+          'code': result.queryParameters['code'],
+          'state': state,
+          'verifier': verifier,
+        },
+      );
       final session = AuthSession.fromJson(
-        await _request(
-          'exchange',
-          body: {
-            'code': result.queryParameters['code'],
-            'state': state,
-            'verifier': verifier,
-          },
-        ),
+        await (attempt?.waitFor(exchangeRequest) ?? exchangeRequest),
       );
       if (session.isExpired) throw const FormatException('Expired session.');
+      attempt?.beginCommit();
       await sessions.write(session);
       return session;
     } finally {

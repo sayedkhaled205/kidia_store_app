@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
+import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
@@ -18,9 +19,15 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     return _repository.identify(email.trim());
   }
 
-  Future<AuthSession> signInThroughWebsite() async {
+  Future<AuthSession> signInThroughWebsite({
+    WebsiteAuthBrowser? presenter,
+    WebsiteAuthAttempt? attempt,
+  }) async {
     final operationRef = ref;
-    final session = await ref.read(websiteAuthServiceProvider).signIn();
+    final session = await ref
+        .read(websiteAuthServiceProvider)
+        .signIn(presenter: presenter, attempt: attempt);
+    attempt?.checkActive();
     if (!operationRef.mounted) return session;
     state = AsyncData<AuthSession?>(session);
     ref

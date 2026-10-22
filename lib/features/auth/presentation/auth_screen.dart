@@ -67,7 +67,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ? 'تعذر تحميل تسجيل الدخول — حاول مرة أخرى' : 'Unable to load sign-in — retry'),
       )));
     }
-    if (website.value == true) return const WebsiteAuthScreen();
+    if (website.value == true) {
+      return WebsiteAuthScreen(popOnSuccess: widget.popOnSuccess);
+    }
     final AuthCopy copy = AuthCopy.of(context);
     final bool flat = ref.watch(compactFamilyProvider);
     final logo = ref.watch(cmsPageLayoutProvider('account')).value?.header.string('logo_url', '') ?? '';
