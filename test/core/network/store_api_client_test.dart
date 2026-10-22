@@ -49,6 +49,8 @@ void main() {
           capturedRequest?.uri.queryParametersAll['stock_status[]'],
           <String>['instock', 'onbackorder'],
         );
+        expect(capturedRequest?.uri.queryParameters['_mobile_cache_bust'], isNotEmpty);
+        expect(capturedRequest?.headers['Cache-Control'], contains('no-store'));
         expect(response.header('x-wp-total'), '0');
       },
     );

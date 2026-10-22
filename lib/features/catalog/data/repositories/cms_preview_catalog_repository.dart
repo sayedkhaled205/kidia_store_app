@@ -121,13 +121,15 @@ class CmsPreviewCatalogRepository
   Future<CatalogProduct> getProduct(int productId) async {
     if (_usesLiveCatalog) {
       _synchronizeProductCache();
-      final CatalogProduct? cached = _loadedProducts[productId];
-      if (cached != null) return cached;
+      // Remember only which resource to request, never its old sellability.
+      // Woo's default product collection excludes variation IDs.
+      final bool isVariation = _loadedProducts[productId]?.type == 'variation';
       final int requestedRevision = _currentRevision;
       final Map<String, dynamic> response = await _fetchPage(<String, dynamic>{
         'page': 1,
         'per_page': 1,
         'include': '$productId',
+        if (isVariation) 'type': 'variation',
       });
       final List<CatalogProduct> fetched = await _parseProducts(
         response['products'] is List

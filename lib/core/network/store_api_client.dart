@@ -58,6 +58,7 @@ class DioStoreApiClient implements StoreApiClient {
     );
   }
 
+  static int _readSerial = 0;
   final Uri _storeUri;
   final Dio _dio;
 
@@ -66,7 +67,11 @@ class DioStoreApiClient implements StoreApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
-    final Uri requestUri = _buildRequestUri(path, queryParameters);
+    final Uri requestUri = _buildRequestUri(path, <String, dynamic>{
+      ...?queryParameters,
+      // Request directives alone do not change a CDN's URL cache key.
+      '_mobile_cache_bust': '${DateTime.now().microsecondsSinceEpoch}-${_readSerial++}',
+    });
 
     try {
       final Response<dynamic> response = await retryConnectionOnce(
