@@ -508,6 +508,17 @@ void main() {
       },
     );
 
+    test('splash proportions are optional for existing saved designs', () {
+      final fixture = appDesignFixture58();
+      expect(_parse(fixture).splash.imageAspectRatio, 0);
+      appDesignMap58(fixture['splash'])['image_aspect_ratio'] = 3.2;
+      expect(_parse(fixture).splash.imageAspectRatio, 3.2);
+      for (final ratio in <dynamic>[-1, 11, '3.2', null]) {
+        appDesignMap58(fixture['splash'])['image_aspect_ratio'] = ratio;
+        expect(() => _parse(fixture), throwsFormatException);
+      }
+    });
+
     test('required normalized splash fields cannot be silently defaulted', () {
       for (final field in appDesignMap58(appDesignFixture58()['splash']).keys) {
         final fixture = appDesignFixture58();

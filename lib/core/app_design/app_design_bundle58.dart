@@ -133,7 +133,7 @@ class AppDesignBundle58 {
   }
 
   static void _validateSplash(Map<String, dynamic> value) {
-    _keys(value, const {
+    const requiredKeys = {
       'enabled',
       'image_url',
       'background_color',
@@ -141,7 +141,6 @@ class AppDesignBundle58 {
       'duration_ms',
       'image_width',
       'image_height',
-      'image_aspect_ratio',
       'image_fit',
       'image_shape',
       'show_store_name',
@@ -149,8 +148,17 @@ class AppDesignBundle58 {
       'text_color',
       'show_loader',
       'loader_color',
-    }, required: true);
-    if (value.isEmpty) throw _invalid();
+    };
+    _keys(value, {...requiredKeys, 'image_aspect_ratio'});
+    if (!requiredKeys.every(value.containsKey)) throw _invalid();
+    // Existing saved designs predate this optional wordmark proportion.
+    // Validate it when present without invalidating those designs.
+    if (value.containsKey('image_aspect_ratio')) {
+      final ratio = value['image_aspect_ratio'];
+      if (ratio is! num || !ratio.isFinite || ratio < 0 || ratio > 10) {
+        throw _invalid();
+      }
+    }
     for (final key in ['enabled', 'show_store_name', 'show_loader']) {
       if (value.containsKey(key) && value[key] is! bool) throw _invalid();
     }
