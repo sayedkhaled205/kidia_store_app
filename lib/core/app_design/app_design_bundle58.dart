@@ -141,6 +141,7 @@ class AppDesignBundle58 {
       'duration_ms',
       'image_width',
       'image_height',
+      'image_aspect_ratio',
       'image_fit',
       'image_shape',
       'show_store_name',

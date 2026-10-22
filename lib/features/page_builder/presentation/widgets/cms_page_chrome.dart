@@ -499,7 +499,8 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         .clamp(0, 40);
     // The editor serializes zero even when no custom radius was chosen.
     // Let the pill preset shape itself; retain explicit positive overrides.
-    final double shapedCompactRadius = compactStyle == 'pill' && compactRadius == 0
+    final double shapedCompactRadius =
+        compactStyle == 'pill' && compactRadius == 0
         ? _compactHeaderHeight(_header) / 2
         : compactRadius;
     final double radius = _lerp(regularRadius, shapedCompactRadius, progress);
@@ -805,14 +806,22 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 key: const Key('cms-page-morphing-search'),
                 child: _positionedItem(
                   'search_bar',
-                  _searchBar(context, _resolvedAction(context, 'search'), color),
+                  _searchBar(
+                    context,
+                    _resolvedAction(context, 'search'),
+                    color,
+                  ),
                 ),
               ),
             ),
             if (persistentActions.isNotEmpty)
               Positioned(
                 // Header columns use physical left/right coordinates in every locale.
-                top: _lerp(regularActionTop, (constraints.maxHeight - 48) / 2, progress),
+                top: _lerp(
+                  regularActionTop,
+                  (constraints.maxHeight - 48) / 2,
+                  progress,
+                ),
                 right: 0,
                 height: 48,
                 child: Row(
@@ -1337,10 +1346,12 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           : AppNetworkImage(
               imageUrl: url,
               trimTransparentPadding: true,
+              contentAspectRatio: _header.number('logo_aspect_ratio', 0),
               width: _header.number('logo_width', 118),
               height: _header.number('logo_height', 38),
               fit: _header.string('logo_fit', 'contain') == 'cover'
-                  ? BoxFit.cover : BoxFit.contain,
+                  ? BoxFit.cover
+                  : BoxFit.contain,
               errorWidget: textLogo,
             );
       return Column(
@@ -1422,7 +1433,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   _header.string('search_text_color', '#5F6368'),
                   color,
                 ),
-                fontSize: _header.number('search_font_size', 14).clamp(10, 24).toDouble(),
+                fontSize: _header
+                    .number('search_font_size', 14)
+                    .clamp(10, 24)
+                    .toDouble(),
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -1430,11 +1444,17 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (_header.boolean('show_voice_search', false))
             IconButton(
               key: const Key('cms-voice-search-button'),
-              tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'البحث بالصوت' : 'Voice search',
+              tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'البحث بالصوت'
+                  : 'Voice search',
               onPressed: () => showVoiceCatalogSearch(context),
-              icon: Icon(Icons.mic_none_rounded,
+              icon: Icon(
+                Icons.mic_none_rounded,
                 size: _header.number('search_icon_size', 24).clamp(16, 40),
-                color: _color(_header.string('search_icon_color', '#1F2933'), color),
+                color: _color(
+                  _header.string('search_icon_color', '#1F2933'),
+                  color,
+                ),
               ),
             ),
         ],
@@ -1489,12 +1509,15 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final String variant = _header.string('${action.type}_icon_variant', '');
     final IconData icon = action.type == 'account' && style == 'avatar'
         ? Icons.account_circle_rounded
-        : AppConfig.isCmsPreview && action.type != 'account' && style != 'filled' &&
-            !(action.type == 'wishlist' && variant.isNotEmpty) &&
-            _usesApplicationIcon(action.type, variant)
+        : AppConfig.isCmsPreview &&
+              action.type != 'account' &&
+              style != 'filled' &&
+              !(action.type == 'wishlist' && variant.isNotEmpty) &&
+              _usesApplicationIcon(action.type, variant)
         ? action.icon
         : _iconFor(action.type, variant, style == 'filled' || selectedWishlist);
-    if (action.type == 'account' && _header.boolean('show_account_label', false)) {
+    if (action.type == 'account' &&
+        _header.boolean('show_account_label', false)) {
       return TextButton.icon(
         key: action.key,
         onPressed: action.onPressed,
@@ -1502,13 +1525,18 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           foregroundColor: color,
           backgroundColor: style == 'filled' ? background : Colors.transparent,
           minimumSize: const Size(48, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radius),
+          ),
         ),
         icon: Icon(icon, size: size),
         label: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 120),
-          child: Text(_header.string('account_label', action.tooltip),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Text(
+            _header.string('account_label', action.tooltip),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       );
     }
@@ -1548,48 +1576,51 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             : badgeShape == 'pill'
             ? badgeSize / 2
             : badgeSize * 0.28;
-        return CartCountPulse(count: count, child: Stack(
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            child!,
-            PositionedDirectional(
-              top: -2,
-              end: -2,
-              child: Container(
-                key: const Key('cms-cart-count-badge'),
-                constraints: BoxConstraints(
-                  minWidth: badgeSize,
-                  minHeight: badgeSize,
-                ),
-                height: badgeSize,
-                padding: EdgeInsets.symmetric(
-                  horizontal: badgeShape == 'pill' ? 4 : 0,
-                ),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _color(
-                    _header.string('cart_badge_background', '#E94B5F'),
-                    Theme.of(context).colorScheme.error,
+        return CartCountPulse(
+          count: count,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              child!,
+              PositionedDirectional(
+                top: -2,
+                end: -2,
+                child: Container(
+                  key: const Key('cms-cart-count-badge'),
+                  constraints: BoxConstraints(
+                    minWidth: badgeSize,
+                    minHeight: badgeSize,
                   ),
-                  borderRadius: BorderRadius.circular(badgeRadius),
-                ),
-                child: Text(
-                  '$count',
-                  maxLines: 1,
-                  style: TextStyle(
+                  height: badgeSize,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: badgeShape == 'pill' ? 4 : 0,
+                  ),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
                     color: _color(
-                      _header.string('cart_badge_text_color', '#FFFFFF'),
-                      Theme.of(context).colorScheme.onError,
+                      _header.string('cart_badge_background', '#E94B5F'),
+                      Theme.of(context).colorScheme.error,
                     ),
-                    fontSize: (badgeSize * 0.52).clamp(7, 15).toDouble(),
-                    fontWeight: FontWeight.w700,
-                    height: 1,
+                    borderRadius: BorderRadius.circular(badgeRadius),
+                  ),
+                  child: Text(
+                    '$count',
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: _color(
+                        _header.string('cart_badge_text_color', '#FFFFFF'),
+                        Theme.of(context).colorScheme.onError,
+                      ),
+                      fontSize: (badgeSize * 0.52).clamp(7, 15).toDouble(),
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ));
+            ],
+          ),
+        );
       },
     );
   }
@@ -1668,16 +1699,39 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final entry = switch (type) {
       'search' => (Icons.search_rounded, arabic ? 'بحث' : 'Search', '/search'),
-      'cart' => (Icons.shopping_bag_outlined, arabic ? 'السلة' : 'Cart', '/cart'),
-      'wishlist' => (Icons.favorite_border_rounded, arabic ? 'المفضلة' : 'Wishlist', '/wishlist'),
-      'account' => (Icons.person_outline_rounded, arabic ? 'حسابي' : 'Account', '/account'),
-      'orders' => (Icons.receipt_long_outlined, arabic ? 'طلباتي' : 'Orders', '/orders'),
-      'support' => (Icons.headset_mic_outlined, arabic ? 'خدمة العملاء' : 'Customer support', '/support'),
+      'cart' => (
+        Icons.shopping_bag_outlined,
+        arabic ? 'السلة' : 'Cart',
+        '/cart',
+      ),
+      'wishlist' => (
+        Icons.favorite_border_rounded,
+        arabic ? 'المفضلة' : 'Wishlist',
+        '/wishlist',
+      ),
+      'account' => (
+        Icons.person_outline_rounded,
+        arabic ? 'حسابي' : 'Account',
+        '/account',
+      ),
+      'orders' => (
+        Icons.receipt_long_outlined,
+        arabic ? 'طلباتي' : 'Orders',
+        '/orders',
+      ),
+      'support' => (
+        Icons.headset_mic_outlined,
+        arabic ? 'خدمة العملاء' : 'Customer support',
+        '/support',
+      ),
       'menu' => (Icons.menu_rounded, arabic ? 'القائمة' : 'Menu', ''),
       _ => null,
     };
     if (entry == null) return null;
-    return CmsPageHeaderAction(type: type, icon: entry.$1, tooltip: entry.$2,
+    return CmsPageHeaderAction(
+      type: type,
+      icon: entry.$1,
+      tooltip: entry.$2,
       onPressed: () {
         if (type == 'search') {
           showCatalogSearch(context);
@@ -1686,30 +1740,53 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         } else {
           context.push(entry.$3);
         }
-      });
+      },
+    );
   }
 
   void _showNavigationMenu(BuildContext context, bool arabic) {
     final destinations = <(IconData, String, String)>[
       (Icons.home_outlined, arabic ? 'الرئيسية' : 'Home', '/'),
-      (Icons.grid_view_rounded, arabic ? 'الأقسام' : 'Categories', '/categories'),
+      (
+        Icons.grid_view_rounded,
+        arabic ? 'الأقسام' : 'Categories',
+        '/categories',
+      ),
       (Icons.shopping_bag_outlined, arabic ? 'السلة' : 'Cart', '/cart'),
-      (Icons.favorite_border_rounded, arabic ? 'المفضلة' : 'Wishlist', '/wishlist'),
+      (
+        Icons.favorite_border_rounded,
+        arabic ? 'المفضلة' : 'Wishlist',
+        '/wishlist',
+      ),
       (Icons.person_outline_rounded, arabic ? 'حسابي' : 'Account', '/account'),
       (Icons.receipt_long_outlined, arabic ? 'طلباتي' : 'Orders', '/orders'),
-      (Icons.headset_mic_outlined, arabic ? 'خدمة العملاء' : 'Customer support', '/support'),
+      (
+        Icons.headset_mic_outlined,
+        arabic ? 'خدمة العملاء' : 'Customer support',
+        '/support',
+      ),
     ];
-    showModalBottomSheet<void>(context: context, useSafeArea: true,
-      showDragHandle: true, builder: (sheetContext) => SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          for (final destination in destinations)
-            ListTile(leading: Icon(destination.$1), title: Text(destination.$2),
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                context.push(destination.$3);
-              }),
-        ]),
-      ));
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final destination in destinations)
+              ListTile(
+                leading: Icon(destination.$1),
+                title: Text(destination.$2),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  context.push(destination.$3);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   CmsPageHeaderAction? _actionFor(String type) {

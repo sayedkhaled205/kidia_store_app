@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.78
+Stable tag: 1.46.80
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,7 +62,7 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Changelog ==
 
-= 1.46.78 =
+= 1.46.80 =
 * Read payment method names from each merchant's enabled WooCommerce gateways; the current cart remains authoritative for payment availability.
 * Continue online payments on the merchant's existing order-pay page when Native has no gateway payment data, without separate app gateway credentials or duplicate orders.
 * Retain the shared Kids home spacing, product collections, logo proportions and splash defaults.

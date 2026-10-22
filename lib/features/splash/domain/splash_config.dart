@@ -10,6 +10,7 @@ class SplashConfig {
     this.imageWidth = 140,
     this.imageHeight = 140,
     this.imageFit = BoxFit.contain,
+    this.imageAspectRatio = 0,
     this.imageShape = 'none',
     this.showStoreName = true,
     this.storeName = '',
@@ -26,6 +27,7 @@ class SplashConfig {
   final double imageWidth;
   final double imageHeight;
   final BoxFit imageFit;
+  final double imageAspectRatio;
   final String imageShape;
   final bool showStoreName;
   final String storeName;
@@ -46,6 +48,7 @@ class SplashConfig {
     ),
     imageWidth: _number(json['image_width'], 140).clamp(40, 320),
     imageHeight: _number(json['image_height'], 140).clamp(40, 320),
+    imageAspectRatio: _number(json['image_aspect_ratio'], 0).clamp(0, 10),
     imageFit: switch ('${json['image_fit']}') {
       'cover' => BoxFit.cover,
       'fill' => BoxFit.fill,

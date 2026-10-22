@@ -45,6 +45,8 @@ class SplashScreen extends StatelessWidget {
                         ),
                         child: AppNetworkImage(
                           imageUrl: config.imageUrl,
+                          trimTransparentPadding: true,
+                          contentAspectRatio: config.imageAspectRatio,
                           width: config.imageWidth,
                           height: config.imageHeight,
                           fit: config.imageFit,

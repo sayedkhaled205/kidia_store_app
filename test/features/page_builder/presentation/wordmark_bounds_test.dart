@@ -37,4 +37,22 @@ void main() {
       );
     }
   });
+  test('opaque light canvas is trimmed without removing colored artwork', () {
+    for (final background in [230, 255]) {
+      final pixels = Uint8List(100 * 100 * 4);
+      for (var i = 0; i < pixels.length; i += 4) {
+        pixels[i] = pixels[i + 1] = pixels[i + 2] = background;
+        pixels[i + 3] = 255;
+      }
+      for (var y = 30; y < 70; y++) {
+        for (var x = 10; x < 90; x++) {
+          pixels[(y * 100 + x) * 4] = 30;
+        }
+      }
+      expect(
+        visibleWordmarkBounds(pixels, 100, 100),
+        const Rect.fromLTRB(10, 30, 90, 70),
+      );
+    }
+  });
 }

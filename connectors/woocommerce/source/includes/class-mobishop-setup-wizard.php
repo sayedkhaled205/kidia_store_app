@@ -1757,9 +1757,9 @@ final class MobiShop_Setup_Wizard {
 			$layout['header']['settings']['title_font_weight'] = '600';
 			if ( 'home' === $page ) {
 				$layout['header']['settings']['logo_width'] = 160;
-				$layout['header']['settings']['logo_height'] = 56;
+				$layout['header']['settings']['logo_height'] = 38;
 				$layout['header']['settings']['logo_fit'] = 'contain';
-				$layout['header']['settings']['row_1_height'] = 56;
+				$layout['header']['settings']['row_1_height'] = 44;
 				$layout['header']['settings']['row_gap'] = 4;
 			}
 			$this->configure_element( $layout, 'product_tabs', array( 'after_summary' => true ) );
@@ -2047,9 +2047,9 @@ final class MobiShop_Setup_Wizard {
 			'image_url'            => $splash_image,
 			'background_color'     => $is_kids ? '#FFFFFF' : $primary,
 			'background_color_end' => $is_kids ? '#FFFFFF' : $secondary,
-			'duration_ms'          => $is_kids ? 800 : 1800,
-			'image_width'          => $is_kids ? 176 : 140,
-			'image_height'         => $is_kids ? 72 : 140,
+			'duration_ms'          => $is_kids ? 1300 : 1800,
+			'image_width'          => $is_kids ? 264 : 140,
+			'image_height'         => $is_kids ? 108 : 140,
 			'image_fit'            => 'contain',
 			'image_shape'          => 'none',
 			'show_store_name'      => ! $is_kids,

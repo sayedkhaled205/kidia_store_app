@@ -147,7 +147,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _StoreMark(storeName: storeName, logoUrl: logo),
+                        _StoreMark(
+                          storeName: storeName,
+                          logoUrl: logo,
+                          aspectRatio:
+                              ref
+                                  .watch(cmsPageLayoutProvider('account'))
+                                  .value
+                                  ?.header
+                                  .number('logo_aspect_ratio', 0) ??
+                              0,
+                        ),
                         const SizedBox(height: 24),
                         Text(
                           _title(copy),
@@ -1014,9 +1024,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 }
 
 class _StoreMark extends StatelessWidget {
-  const _StoreMark({required this.storeName, required this.logoUrl});
+  const _StoreMark({
+    required this.storeName,
+    required this.logoUrl,
+    this.aspectRatio = 0,
+  });
   final String storeName;
   final String logoUrl;
+  final double aspectRatio;
   @override
   Widget build(BuildContext context) {
     final name = Center(
@@ -1041,6 +1056,8 @@ class _StoreMark extends StatelessWidget {
               : AppNetworkImage(
                   key: const Key('auth-store-logo'),
                   imageUrl: logoUrl,
+                  trimTransparentPadding: true,
+                  contentAspectRatio: aspectRatio,
                   width: 220,
                   height: 64,
                   fit: BoxFit.contain,

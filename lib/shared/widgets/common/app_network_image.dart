@@ -17,6 +17,7 @@ class AppNetworkImage extends StatelessWidget {
     this.placeholder,
     this.errorWidget,
     this.trimTransparentPadding = false,
+    this.contentAspectRatio = 0,
   });
 
   final String imageUrl;
@@ -30,6 +31,7 @@ class AppNetworkImage extends StatelessWidget {
   final Widget? placeholder;
   final Widget? errorWidget;
   final bool trimTransparentPadding;
+  final double contentAspectRatio;
 
   @override
   Widget build(BuildContext context) {
@@ -39,77 +41,77 @@ class AppNetworkImage extends StatelessWidget {
       // A live product/category without imagery remains a real record. Show
       // its finite placeholder immediately, without requesting an empty URL.
       child: imageUrl.trim().isEmpty
-          ? errorWidget ?? AppNetworkImageError(
-              width: width,
-              height: height,
-              backgroundColor: backgroundColor,
-            )
-          : trimTransparentPadding && !kIsWeb ? WordmarkImage(
-              url: imageUrl, width: width ?? 160, height: height ?? 56,
+          ? errorWidget ??
+                AppNetworkImageError(
+                  width: width,
+                  height: height,
+                  backgroundColor: backgroundColor,
+                )
+          : trimTransparentPadding && !kIsWeb
+          ? WordmarkImage(
+              contentAspectRatio: contentAspectRatio,
+              url: imageUrl,
+              width: width ?? 160,
+              height: height ?? 56,
               fallback: errorWidget ?? const SizedBox.shrink(),
-            ) : kIsWeb ? Image.network(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: fit,
-        alignment: alignment,
-        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-        loadingBuilder: (context, child, progress) => progress == null
-            ? child
-            : (placeholder ?? AppNetworkImageLoading(
-                width: width,
-                height: height,
-                backgroundColor: backgroundColor,
-              )),
-        errorBuilder: (context, error, stackTrace) =>
-            errorWidget ?? AppNetworkImageError(
+            )
+          : kIsWeb
+          ? Image.network(
+              imageUrl,
               width: width,
               height: height,
-              backgroundColor: backgroundColor,
+              fit: fit,
+              alignment: alignment,
+              webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : (placeholder ??
+                        AppNetworkImageLoading(
+                          width: width,
+                          height: height,
+                          backgroundColor: backgroundColor,
+                        )),
+              errorBuilder: (context, error, stackTrace) =>
+                  errorWidget ??
+                  AppNetworkImageError(
+                    width: width,
+                    height: height,
+                    backgroundColor: backgroundColor,
+                  ),
+            )
+          : CachedNetworkImage(
+              imageUrl: imageUrl,
+              width: width,
+              height: height,
+              fit: fit,
+              alignment: alignment,
+              fadeInDuration: const Duration(milliseconds: 220),
+              fadeOutDuration: const Duration(milliseconds: 120),
+              placeholderFadeInDuration: const Duration(milliseconds: 120),
+              placeholder: (BuildContext context, String url) {
+                return placeholder ??
+                    AppNetworkImageLoading(
+                      width: width,
+                      height: height,
+                      backgroundColor: backgroundColor,
+                    );
+              },
+              errorWidget: (BuildContext context, String url, Object error) {
+                return errorWidget ??
+                    AppNetworkImageError(
+                      width: width,
+                      height: height,
+                      backgroundColor: backgroundColor,
+                    );
+              },
             ),
-      ) : CachedNetworkImage(
-        imageUrl: imageUrl,
-        width: width,
-        height: height,
-        fit: fit,
-        alignment: alignment,
-        fadeInDuration: const Duration(milliseconds: 220),
-        fadeOutDuration: const Duration(milliseconds: 120),
-        placeholderFadeInDuration: const Duration(milliseconds: 120),
-        placeholder: (
-            BuildContext context,
-            String url,
-            ) {
-          return placeholder ??
-              AppNetworkImageLoading(
-                width: width,
-                height: height,
-                backgroundColor: backgroundColor,
-              );
-        },
-        errorWidget: (
-            BuildContext context,
-            String url,
-            Object error,
-            ) {
-          return errorWidget ??
-              AppNetworkImageError(
-                width: width,
-                height: height,
-                backgroundColor: backgroundColor,
-              );
-        },
-      ),
     );
 
     if (borderRadius == null) {
       return image;
     }
 
-    return ClipRRect(
-      borderRadius: borderRadius!,
-      child: image,
-    );
+    return ClipRRect(borderRadius: borderRadius!, child: image);
   }
 }
 
@@ -145,10 +147,7 @@ class _AppNetworkImageLoadingState extends State<AppNetworkImageLoading>
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
 
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
   }
 
   @override
@@ -161,8 +160,8 @@ class _AppNetworkImageLoadingState extends State<AppNetworkImageLoading>
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    final Color baseColor = widget.backgroundColor ??
-        colorScheme.surfaceContainerHighest;
+    final Color baseColor =
+        widget.backgroundColor ?? colorScheme.surfaceContainerHighest;
 
     final Color highlightColor = colorScheme.surfaceContainerLow;
 
@@ -171,16 +170,9 @@ class _AppNetworkImageLoadingState extends State<AppNetworkImageLoading>
       height: widget.height,
       child: AnimatedBuilder(
         animation: _animation,
-        builder: (
-            BuildContext context,
-            Widget? child,
-            ) {
+        builder: (BuildContext context, Widget? child) {
           return ColoredBox(
-            color: Color.lerp(
-              baseColor,
-              highlightColor,
-              _animation.value,
-            )!,
+            color: Color.lerp(baseColor, highlightColor, _animation.value)!,
             child: child,
           );
         },
@@ -188,9 +180,7 @@ class _AppNetworkImageLoadingState extends State<AppNetworkImageLoading>
           child: Icon(
             Icons.image_outlined,
             size: 28,
-            color: colorScheme.onSurfaceVariant.withValues(
-              alpha: 0.45,
-            ),
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
           ),
         ),
       ),
@@ -220,8 +210,7 @@ class AppNetworkImageError extends StatelessWidget {
       width: width,
       height: height,
       child: ColoredBox(
-        color: backgroundColor ??
-            colorScheme.surfaceContainerHighest,
+        color: backgroundColor ?? colorScheme.surfaceContainerHighest,
         child: Center(
           child: Icon(
             Icons.broken_image_outlined,
