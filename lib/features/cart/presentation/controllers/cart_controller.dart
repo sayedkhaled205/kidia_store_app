@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/live_updates/store_change_bus.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
@@ -256,9 +257,27 @@ class CartController extends AsyncNotifier<CartViewState> {
         return const CartActionResult.failure('The customer session changed.');
       }
       final CartRepositoryException failure = _failure(error);
+      Cart reconciledCart = failure.serverCart ?? current.cart;
+      if ((failure.apiError?.code ?? '').contains('stock')) {
+        // A rejected add is never replayed. Re-read the customer's actual basket
+        // and invalidate public stock snapshots after the purchase callback ends.
+        try {
+          reconciledCart = await _repository.getCart();
+        } catch (_) {
+          // Keep the last authoritative snapshot and original stock rejection.
+        }
+        if (!ref.mounted || ownerToken != _authToken) {
+          return const CartActionResult.failure('The customer session changed.');
+        }
+        Future<void>(() {
+          if (ref.mounted && ownerToken == _authToken) {
+            ref.read(storeCatalogChangeBusProvider).notifyCatalogChanged();
+          }
+        });
+      }
       state = AsyncData<CartViewState>(
         CartViewState(
-          cart: failure.serverCart ?? current.cart,
+          cart: reconciledCart,
           lastErrorMessage: failure.message,
         ),
       );

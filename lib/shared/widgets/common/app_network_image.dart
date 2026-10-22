@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'wordmark_image.dart';
 
 class AppNetworkImage extends StatelessWidget {
   const AppNetworkImage({
@@ -15,6 +16,7 @@ class AppNetworkImage extends StatelessWidget {
     this.semanticLabel,
     this.placeholder,
     this.errorWidget,
+    this.trimTransparentPadding = false,
   });
 
   final String imageUrl;
@@ -27,6 +29,7 @@ class AppNetworkImage extends StatelessWidget {
   final String? semanticLabel;
   final Widget? placeholder;
   final Widget? errorWidget;
+  final bool trimTransparentPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,10 @@ class AppNetworkImage extends StatelessWidget {
               height: height,
               backgroundColor: backgroundColor,
             )
-          : kIsWeb ? Image.network(
+          : trimTransparentPadding && !kIsWeb ? WordmarkImage(
+              url: imageUrl, width: width ?? 160, height: height ?? 56,
+              fallback: errorWidget ?? const SizedBox.shrink(),
+            ) : kIsWeb ? Image.network(
         imageUrl,
         width: width,
         height: height,

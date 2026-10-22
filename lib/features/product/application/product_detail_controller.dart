@@ -60,7 +60,7 @@ class ProductDetailController extends ChangeNotifier {
       _catalogSubscription = (repository as CatalogChangeSource).catalogChanges
           .listen((_) {
             if (!_isDisposed && !_isAdding) {
-              unawaited(load(preserveSelection: true));
+              unawaited(load(preserveSelection: true, preserveAddError: true));
             }
           });
     }
@@ -153,7 +153,7 @@ class ProductDetailController extends ChangeNotifier {
     return variation != null && variation.isPurchasable && variation.isInStock;
   }
 
-  Future<void> load({bool preserveSelection = false}) async {
+  Future<void> load({bool preserveSelection = false, bool preserveAddError = false}) async {
     final int serial = ++_requestSerial;
     if (productId <= 0) {
       _status = ProductDetailStatus.empty;
@@ -167,7 +167,7 @@ class ProductDetailController extends ChangeNotifier {
     final bool background = preserveSelection && _product != null;
     if (!background) _status = ProductDetailStatus.loading;
     _loadError = null;
-    _addError = null;
+    if (!preserveAddError) _addError = null;
     _notify();
 
     try {

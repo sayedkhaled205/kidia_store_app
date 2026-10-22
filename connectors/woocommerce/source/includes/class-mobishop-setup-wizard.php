@@ -1756,8 +1756,8 @@ final class MobiShop_Setup_Wizard {
 			$layout['header']['settings']['title_font_size'] = 16;
 			$layout['header']['settings']['title_font_weight'] = '600';
 			if ( 'home' === $page ) {
-				$layout['header']['settings']['logo_width'] = 100;
-				$layout['header']['settings']['logo_height'] = 32;
+				$layout['header']['settings']['logo_width'] = 160;
+				$layout['header']['settings']['logo_height'] = 56;
 				$layout['header']['settings']['logo_fit'] = 'contain';
 				$layout['header']['settings']['row_1_height'] = 56;
 				$layout['header']['settings']['row_gap'] = 4;

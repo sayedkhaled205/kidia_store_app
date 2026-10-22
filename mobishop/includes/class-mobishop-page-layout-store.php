@@ -683,8 +683,8 @@ final class MobiShop_Page_Layout_Store {
 			$header_settings['search_placeholder'] = __( 'Search products', 'mobishop' );
 			$header_settings['background_color'] = '#FFFFFF';
 			$header_settings['icon_color'] = '#1F2933';
-			$header_settings['logo_width'] = 132;
-			$header_settings['logo_height'] = 42;
+			$header_settings['logo_width'] = 160;
+			$header_settings['logo_height'] = 56;
 			$header_settings['cart_size'] = 28;
 			$header_settings['show_cart_badge'] = false;
 			$header_settings['logo_url'] = $this->site_logo_url();

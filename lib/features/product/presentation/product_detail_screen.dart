@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'product_size_chart.dart';
 import 'product_gallery_ratio.dart';
@@ -1871,7 +1872,7 @@ class _PurchaseBar extends StatelessWidget {
 	// A configured product action must never be silently squeezed back to the
 	// category footer height. Grow the product footer when the button is taller.
     final rowIds = placements.map((p) => p.$3).toSet();
-    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + footerLabelSize * 1.25 : 0) + 8;
+    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 8;
     final minimumRowHeight = configuredButtonHeight > iconHeight ? configuredButtonHeight : iconHeight;
     final minimumFooterHeight = minimumRowHeight * rowIds.length;
     final footerHeight = configuredFooterHeight > minimumFooterHeight ? configuredFooterHeight : minimumFooterHeight;
@@ -1967,7 +1968,7 @@ class _PurchaseBar extends StatelessWidget {
 	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))), side: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), Colors.transparent), width: footer.number('border_width', 1))),
       child: SafeArea(
         top: false,
-		bottom: footer.boolean('safe_area', true),
+		bottom: !AppConfig.isCmsPreview || footer.boolean('safe_area', true),
 		minimum: EdgeInsets.fromLTRB(
           MediaQuery.sizeOf(context).width *
                   footer.number('side_spacing_percent', 5).clamp(0, 25) /
@@ -1980,7 +1981,7 @@ class _PurchaseBar extends StatelessWidget {
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_bottom', 0).clamp(0, 80) +
-              footer.number('space_down', 0).clamp(0, 80),
+              footer.number('space_down', 0).clamp(0, 80) + 6,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2109,13 +2110,13 @@ class _FooterAction extends StatelessWidget {
               height: iconLabelGap,
             ),
             SizedBox(
-              height: labelSize * 1.25,
+              height: MediaQuery.textScalerOf(context).scale(labelSize) * 1.6,
               child: Center(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: color, fontSize: labelSize, height: 1),
+                  style: TextStyle(color: color, fontSize: labelSize, height: 1.3),
                 ),
               ),
             ),

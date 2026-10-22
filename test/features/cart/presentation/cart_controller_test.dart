@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/live_updates/store_change_bus.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
@@ -15,6 +16,28 @@ import 'package:mobishop_store_app/features/cart/presentation/providers/cart_sta
 import '../data/cart_test_fixture.dart';
 
 void main() {
+  test('stock rejection refreshes basket and invalidates catalog without replaying add', () async {
+    final repository = _FakeCartRepository();
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    await container.read(cartControllerProvider.future);
+    var invalidations = 0;
+    final subscription = container.read(storeCatalogChangeBusProvider).catalogChanges.listen((_) => invalidations++);
+    addTearDown(subscription.cancel);
+    repository.current = _fixtureCart(quantity: 2);
+    repository.addError = const CartRepositoryException(
+      kind: CartFailureKind.invalidInput, message: 'Stock is reserved.', statusCode: 400,
+      apiError: CartError(code: 'woocommerce_rest_product_partially_out_of_stock', message: 'Stock is reserved.'),
+    );
+    final result = await container.read(cartControllerProvider.notifier).addSelection(ProductPurchaseSelection(productId: 88));
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(result.succeeded, false);
+    expect(repository.addCalls, 1);
+    expect(container.read(cartBadgeCountProvider), 2);
+    expect(invalidations, 1);
+    expect(container.read(cartControllerProvider).requireValue.lastErrorMessage, 'Stock is reserved.');
+  });
   test(
     'loads cart, exposes badge count, and keeps pending item state',
     () async {
@@ -170,6 +193,7 @@ class _FakeCartRepository implements CartRepository {
 
   Cart current;
   final CartRepositoryException? updateError;
+  CartRepositoryException? addError;
   Completer<Cart>? updateCompleter;
   Completer<Cart>? loadCompleter;
   int addCalls = 0;
@@ -188,6 +212,7 @@ class _FakeCartRepository implements CartRepository {
     List<CartItemVariation> variation = const <CartItemVariation>[],
   }) async {
     addCalls += 1;
+    if (addError != null) throw addError!;
     lastAddedProductId = productId;
     lastAddedQuantity = quantity;
     lastVariation = variation;

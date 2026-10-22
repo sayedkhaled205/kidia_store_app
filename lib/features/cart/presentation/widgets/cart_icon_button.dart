@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_count_pulse.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
@@ -45,14 +46,14 @@ class CartIconButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Badge.count(
-          count: itemCount > 99 ? 99 : itemCount,
-          isLabelVisible: itemCount > 0,
-          backgroundColor: colors.error,
-          textColor: colors.onError,
-          child: const Icon(
-            Icons.shopping_bag_outlined,
-            size: iconSize,
+        icon: CartCountPulse(
+          count: itemCount,
+          child: Badge.count(
+            count: itemCount > 99 ? 99 : itemCount,
+            isLabelVisible: itemCount > 0,
+            backgroundColor: colors.error,
+            textColor: colors.onError,
+            child: const Icon(Icons.shopping_bag_outlined, size: iconSize),
           ),
         ),
       ),

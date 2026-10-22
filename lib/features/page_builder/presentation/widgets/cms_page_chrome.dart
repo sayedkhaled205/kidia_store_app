@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_count_pulse.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/features/search/presentation/catalog_search_launcher.dart';
 import 'package:mobishop_store_app/features/search/presentation/voice_search_dialog.dart';
@@ -1335,6 +1336,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? textLogo
           : AppNetworkImage(
               imageUrl: url,
+              trimTransparentPadding: true,
               width: _header.number('logo_width', 118),
               height: _header.number('logo_height', 38),
               fit: _header.string('logo_fit', 'contain') == 'cover'
@@ -1535,7 +1537,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             .watch(cartBadgeCountProvider)
             .clamp(0, 99)
             .toInt();
-        if (count == 0) return child!;
+        if (count == 0) return CartCountPulse(count: count, child: child!);
         final double badgeSize = _header
             .number('cart_badge_size', 18)
             .clamp(12, 30)
@@ -1546,7 +1548,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             : badgeShape == 'pill'
             ? badgeSize / 2
             : badgeSize * 0.28;
-        return Stack(
+        return CartCountPulse(count: count, child: Stack(
           clipBehavior: Clip.none,
           children: <Widget>[
             child!,
@@ -1587,7 +1589,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ],
-        );
+        ));
       },
     );
   }

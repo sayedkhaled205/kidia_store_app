@@ -36,6 +36,7 @@ class AppHeaderBlockWidget extends StatelessWidget {
     final Widget identity = block.logoUrl != null
         ? AppNetworkImage(
             imageUrl: block.logoUrl!,
+            trimTransparentPadding: true,
             height: block.logoHeight * responsive,
             fit: BoxFit.contain,
             semanticLabel: block.title,

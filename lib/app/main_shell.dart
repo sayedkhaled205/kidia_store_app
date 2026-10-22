@@ -176,7 +176,7 @@ class _MainShellState extends ConsumerState<MainShell>
     final minimumRowHeight =
         footerIconBoxSize +
         (footer.boolean('show_labels', true)
-            ? footerLabelSize * 1.25 +
+            ? MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 +
                   footer.number('icon_label_gap', 3).clamp(0, 12)
             : 0) +
         8;
@@ -217,7 +217,8 @@ class _MainShellState extends ConsumerState<MainShell>
           ? null
           : SafeArea(
               top: false,
-              bottom: footer.boolean('safe_area', true),
+              bottom: !AppConfig.isCmsPreview || footer.boolean('safe_area', true),
+              minimum: const EdgeInsets.only(bottom: 6),
               child: Padding(
                 padding: EdgeInsets.only(
                   top:
@@ -312,7 +313,7 @@ class _MainShellState extends ConsumerState<MainShell>
                                   key: Key(
                                     'cms-bottom-nav-label-box-${item.id}',
                                   ),
-                                  height: footerLabelSize * 1.25,
+                                  height: MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6,
                                   child: Center(
                                     child: Text(
                                       _footerLabel(footer, item),
@@ -322,7 +323,7 @@ class _MainShellState extends ConsumerState<MainShell>
                                         color: color,
                                         fontSize: footerLabelSize,
                                         fontFamily: footerFontFamily,
-                                        height: 1,
+                                        height: 1.3,
                                         fontWeight: selected
                                             ? FontWeight.w700
                                             : FontWeight.w500,

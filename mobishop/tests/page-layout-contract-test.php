@@ -167,7 +167,7 @@ $home_rows = json_decode( $home_default['header']['settings']['layout_json'], tr
 mobishop_page_assert( 2 === count( $home_rows ) && array( 'logo' ) === $home_rows[0]['columns'][0]['items'] && 100 === $home_rows[1]['columns'][0]['width'] && array( 'search_bar' ) === $home_rows[1]['columns'][0]['items'], 'Home header must default to the two-row percentage-column layout.' );
 mobishop_page_assert( 100 === $home_default['header']['settings']['search_width_percent'], 'Home search must default to the full available width.' );
 mobishop_page_assert( 8 === $home_default['header']['settings']['row_gap'], 'Home header rows must preserve the measured compact-store gap.' );
-mobishop_page_assert( 120 === $home_default['header']['settings']['height'] && 42 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the compact-store proportions.' );
+mobishop_page_assert( 120 === $home_default['header']['settings']['height'] && 56 === $home_default['header']['settings']['logo_height'], 'Home header height and logo must use the compact-store proportions.' );
 mobishop_page_assert( 44 === $home_default['header']['settings']['search_height'] && 22 === $home_default['header']['settings']['search_radius'], 'Home search must use the compact-store height and pill radius.' );
 $compact_rows = json_decode( $home_default['header']['settings']['compact_layout_json'], true )['rows'];
 mobishop_page_assert( true === $home_default['header']['settings']['collapse_on_scroll'], 'Home header must allow the collapsed scroll header by default.' );
