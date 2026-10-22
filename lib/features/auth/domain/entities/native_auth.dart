@@ -104,12 +104,14 @@ class NativeAuthResult {
     if (json['status'] == 'select_account' && json['accounts'] is List) {
       final accounts = (json['accounts'] as List)
           .map((item) {
-            if (item is! Map)
+            if (item is! Map) {
               throw const FormatException('Invalid account choice.');
+            }
             final id = int.tryParse('${item['id']}') ?? 0;
             final name = item['name']?.toString() ?? '';
-            if (id <= 0 || name.isEmpty)
+            if (id <= 0 || name.isEmpty) {
               throw const FormatException('Invalid account choice.');
+            }
             return NativeAuthAccount(
               id: id,
               name: name,

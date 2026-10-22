@@ -20,8 +20,9 @@ final nativeAuthActionsProvider = Provider.autoDispose<NativeAuthActions>((
     platform: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
     onCommitted: (session) async {
       await ref.read(authControllerProvider.future);
-      if (ref.mounted)
+      if (ref.mounted) {
         ref.read(authControllerProvider.notifier).acceptNativeSession(session);
+      }
     },
   );
   ref.onDispose(actions.cancel);
