@@ -15,6 +15,9 @@ import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dar
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
+
+import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
   for(final selected in ['orders','addresses','profile','support']) {
@@ -126,6 +129,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+          nativeAuthActionsProvider.overrideWithValue(IdleNativeAuthActions()),
         ],
         child: MaterialApp.router(
           locale: const Locale('ar'),
@@ -149,6 +153,8 @@ void main() {
       await tester.tap(find.byKey(key));
       await tester.pumpAndSettle();
       expect(find.byType(AuthScreen), findsOneWidget);
+      expect(find.byKey(const Key('auth-email')), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
       await tester.tap(find.byKey(const Key('auth-close')));
       await tester.pumpAndSettle();

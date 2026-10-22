@@ -9,6 +9,8 @@ import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
 import 'package:mobishop_store_app/app/app_startup_provider.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
 import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:mobishop_store_app/features/brands/domain/repositories/brands_repository.dart';
 import 'package:mobishop_store_app/features/brands/presentation/brands_screen.dart';
@@ -32,6 +34,7 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 import 'features/product/support/product_test_data.dart';
+import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
   testWidgets('app shows its startup splash safely', (tester) async {
@@ -383,6 +386,10 @@ void main() {
         final uri =
             router.routerDelegate.currentConfiguration.last.matchedLocation;
         expect(uri, '/$item');
+        if (item == 'orders') {
+          expect(find.byType(AuthScreen), findsOneWidget);
+          expect(find.byKey(const Key('auth-email')), findsOneWidget);
+        }
         expect(tester.takeException(), isNull);
         await _disposeApp(tester, router);
       },
@@ -404,6 +411,7 @@ Future<void> _pumpStartedApp(
     ProviderScope(
       overrides: [
         appStartupProvider.overrideWith((ref) async {}),
+        nativeAuthActionsProvider.overrideWithValue(IdleNativeAuthActions()),
         applicationIdentity58Provider.overrideWithValue({
           'language': 'ar',
           'direction': 'rtl',
