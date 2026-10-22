@@ -371,7 +371,9 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
                       'page_background_color',
                       widget.layout.string('background_color', ''),
                     ),
-                    Theme.of(context).scaffoldBackgroundColor,
+                    widget.layout.page == 'home'
+                        ? Colors.white
+                        : Theme.of(context).scaffoldBackgroundColor,
                   ),
               appBar: CmsPageAppBar(
                 layout: widget.layout,

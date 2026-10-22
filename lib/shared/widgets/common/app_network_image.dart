@@ -47,6 +47,15 @@ class AppNetworkImage extends StatelessWidget {
                   height: height,
                   backgroundColor: backgroundColor,
                 )
+          : trimTransparentPadding &&
+                kIsWeb &&
+                wordmarkAspectRatio(imageUrl) > 0
+          ? WebWordmarkImage(
+              url: imageUrl,
+              width: width ?? 160,
+              height: height ?? 56,
+              fallback: errorWidget ?? const SizedBox.shrink(),
+            )
           : trimTransparentPadding && !kIsWeb
           ? WordmarkImage(
               contentAspectRatio: contentAspectRatio,

@@ -44,6 +44,81 @@ Rect visibleWordmarkBounds(Uint8List rgba, int width, int height) {
         );
 }
 
+/// Optional geometry travels with the logo URL across saved builder designs.
+double wordmarkAspectRatio(String url) {
+  final fragment = Uri.tryParse(url)?.fragment ?? '';
+  if (!fragment.startsWith('wm=')) return 0;
+  final parts = fragment.substring(3).split(',');
+  if (parts.length != 5) return 0;
+  final coordinates = parts
+      .map((part) => double.tryParse(part) ?? double.nan)
+      .toList();
+  if (!coordinates.every((value) => value.isFinite) ||
+      coordinates[0] < 0 ||
+      coordinates[1] < 0 ||
+      coordinates[2] <= 0 ||
+      coordinates[3] <= 0 ||
+      coordinates[0] + coordinates[2] > 1.001 ||
+      coordinates[1] + coordinates[3] > 1.001) {
+    return 0;
+  }
+  final ratio = coordinates.last;
+  return ratio.isFinite && ratio > 0 && ratio <= 10 ? ratio : 0;
+}
+
+/// Keep preview geometry proportional without reading cross-origin image pixels.
+class WebWordmarkImage extends StatelessWidget {
+  const WebWordmarkImage({
+    required this.url,
+    required this.width,
+    required this.height,
+    required this.fallback,
+    super.key,
+  });
+  final String url;
+  final double width, height;
+  final Widget fallback;
+  @override
+  Widget build(BuildContext context) {
+    final crop = Uri.parse(
+      url,
+    ).fragment.substring(3).split(',').map(double.parse).toList();
+    final size = applyBoxFit(
+      BoxFit.contain,
+      Size(crop[4], 1),
+      Size(width, height),
+    ).destination;
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Center(
+        child: ClipRect(
+          child: SizedBox(
+            width: size.width,
+            height: size.height,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: -crop[0] * size.width / crop[2],
+                  top: -crop[1] * size.height / crop[3],
+                  width: size.width / crop[2],
+                  height: size.height / crop[3],
+                  child: Image.network(
+                    url,
+                    fit: BoxFit.fill,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                    errorBuilder: (context, error, stack) => fallback,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class WordmarkImage extends StatefulWidget {
   const WordmarkImage({
     required this.url,
@@ -158,7 +233,9 @@ class _WordmarkImageState extends State<WordmarkImage> {
             painter: _WordmarkPainter(
               _image!,
               _bounds!,
-              widget.contentAspectRatio,
+              widget.contentAspectRatio > 0
+                  ? widget.contentAspectRatio
+                  : wordmarkAspectRatio(widget.url),
             ),
           ),
   );

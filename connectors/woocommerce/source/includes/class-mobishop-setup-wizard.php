@@ -1316,6 +1316,8 @@ final class MobiShop_Setup_Wizard {
 				$settings['title'] = '';
 				$settings['subtitle'] = '';
 				$settings['label_size'] = 12;
+				$settings['block_background'] = '#FFFFFF';
+				$settings['margin_top'] = 0;
 				$settings['label_weight'] = 400;
 			}
 			if ( 'kids_baby' === $profile && 'category_grid' === $type ) {
@@ -1402,8 +1404,8 @@ final class MobiShop_Setup_Wizard {
 				'title'        => $copy[ ( $index - 1 ) % max( 1, count( $copy ) ) ] ?? __( 'Discover the collection', 'mobi2app-connector' ),
 				'subtitle'     => $theme['description'] ?? '',
 				'button_label' => __( 'Shop now', 'mobi2app-connector' ),
-				'action_type'  => '',
-				'action_value' => '',
+				'action_type'  => 'kids_baby' === ($theme['layout_profile'] ?? '') ? 'collection' : '',
+				'action_value' => 'kids_baby' === ($theme['layout_profile'] ?? '') ? 'latest' : '',
 			);
 		}
 		return $slides;
@@ -1472,7 +1474,7 @@ final class MobiShop_Setup_Wizard {
 			'beauty'         => array( 'Skincare', 'Bath & Body', 'Makeup', 'Natural Care', 'Wellness', 'Daily Glow' ),
 			'electronics'    => array( 'Mobile', 'Computing', 'Wearables', 'Gaming', 'Smart Home', 'Audio' ),
 			'home_living'    => array( 'Living Room', 'Tableware', 'Bedroom', 'Lighting', 'Workspace', 'Natural Home' ),
-			'kids_baby'      => array( 'Newborn', 'Toys', 'Nursery', 'Kids Style', 'Feeding', 'Family Picks' ),
+			'kids_baby'      => array( 'Kids Style', 'Nursery', 'Toys', 'Newborn', 'Feeding', 'Family Picks' ),
 			'sports_fitness' => array( 'Running', 'Footwear', 'Gym Gear', 'Training', 'Outdoor', 'Studio' ),
 			'grocery'        => array( 'Fresh Produce', 'Pantry', 'Bakery', 'Drinks', 'Breakfast', 'Weekly Basket' ),
 			'luxury'         => array( 'Evening', 'Leather', 'Timepieces', 'Fragrance', 'The Gallery', 'Signature' ),
@@ -1490,6 +1492,31 @@ final class MobiShop_Setup_Wizard {
 	}
 
 	/** @param array<string,mixed> $theme @return array<int,array<string,mixed>> */
+	/** Read local artwork geometry for browser previews without changing the image. */
+	public static function logo_crop( string $url ): array {
+		if ( ! function_exists('attachment_url_to_postid') ) { return array(); }
+		static $cache = array();
+		if ( array_key_exists($url,$cache) ) { return $cache[$url]; }
+		$id = attachment_url_to_postid( preg_replace('/#.*$/', '', $url) );
+		$file = $id ? get_attached_file( $id ) : '';
+		if ( ! $file || ! is_file( $file ) || filesize( $file ) > 8388608 || ! function_exists( 'imagecreatefromstring' ) ) { return array(); }
+		$size = @getimagesize( $file );
+		if ( ! $size || $size[0] * $size[1] > 4000000 ) { return array(); }
+		$image = @imagecreatefromstring( file_get_contents( $file ) );
+		if ( ! $image ) { return array(); }
+		$base=imagecolorsforindex($image,imagecolorat($image,0,0));
+		$is_canvas=static function($color)use($base){return $color['alpha']<8 && abs($color['red']-$base['red'])<8 && abs($color['green']-$base['green'])<8 && abs($color['blue']-$base['blue'])<8;};
+		$white=$base['red']>220 && $base['green']>220 && $base['blue']>220 && $is_canvas($base);
+		foreach(array(array($size[0]-1,0),array(0,$size[1]-1),array($size[0]-1,$size[1]-1)) as $corner){$white=$white && $is_canvas(imagecolorsforindex($image,imagecolorat($image,$corner[0],$corner[1])));}
+		$left=$size[0]; $top=$size[1]; $right=-1; $bottom=-1;
+		for ( $y=0; $y<$size[1]; $y++ ) { for ( $x=0; $x<$size[0]; $x++ ) {
+			$c=imagecolorsforindex($image,imagecolorat($image,$x,$y));
+			if ( $c['alpha'] < 120 && !($white && $is_canvas($c)) ) { $left=min($left,$x); $right=max($right,$x); $top=min($top,$y); $bottom=max($bottom,$y); }
+		} }
+		imagedestroy($image);
+		return $cache[$url] = $right < $left ? array() : array('x'=>$left/$size[0],'y'=>$top/$size[1],'width'=>($right-$left+1)/$size[0],'height'=>($bottom-$top+1)/$size[1],'aspect'=>($right-$left+1)/max(1,$bottom-$top+1));
+	}
+
 	private function build_demo_quick_links( array $theme ): array {
 		$items = array();
 		foreach ( array_slice( $this->theme_demo_labels( $theme ), 0, 4 ) as $index => $label ) {
@@ -1501,6 +1528,14 @@ final class MobiShop_Setup_Wizard {
 				'action_type'  => '',
 				'action_value' => '',
 			);
+		}
+		if ( 'kids_baby' === ( $theme['layout_profile'] ?? '' ) ) {
+			$aliases = array( array('kids-style','children-clothes','ملابس أطفال','ملابس-أطفال'), array('nursery','baby-essentials','مستلزمات الأطفال','مستلزمات-الأطفال'), array('toys','ألعاب','العاب'), array('newborn','new-born','ملابس مواليد','ملابس-مواليد') );
+			$terms = function_exists('get_terms') ? get_terms( array('taxonomy'=>'product_cat','hide_empty'=>false) ) : array();
+			foreach ( $items as $i => &$item ) {
+				$item['action_type']='search'; $item['action_value']=$item['label'];
+				if ( ! is_wp_error($terms) ) { foreach ( $terms as $term ) { if ( in_array(urldecode($term->slug),$aliases[$i],true) || in_array($term->name,$aliases[$i],true) ) { $item['action_type']='category'; $item['action_value']=(string)$term->term_id; break; } } }
+			} unset($item);
 		}
 		return $items;
 	}
@@ -1748,6 +1783,9 @@ final class MobiShop_Setup_Wizard {
 		}
 		if ( 'kids_baby' === ( $theme['layout_profile'] ?? '' ) ) {
 			$layout['settings']['font_family'] = 'poppins';
+			$layout['settings']['page_background_color'] = '#FFFFFF';
+			$crop = self::logo_crop( $logo_url );
+			if ( $crop ) { $layout['header']['settings']['logo_url'] = preg_replace('/#.*$/', '', $logo_url) . '#wm=' . implode(',', $crop); }
 			$layout['header']['settings']['search_font_size'] = 16;
 			$layout['header']['settings']['search_height'] = 42;
 			$layout['header']['settings']['search_background'] = '#F6F7F5';
@@ -1756,11 +1794,13 @@ final class MobiShop_Setup_Wizard {
 			$layout['header']['settings']['title_font_size'] = 16;
 			$layout['header']['settings']['title_font_weight'] = '600';
 			if ( 'home' === $page ) {
-				$layout['header']['settings']['logo_width'] = 160;
-				$layout['header']['settings']['logo_height'] = 38;
+				$layout['header']['settings']['logo_width'] = 140;
+				$layout['header']['settings']['logo_height'] = 48;
 				$layout['header']['settings']['logo_fit'] = 'contain';
-				$layout['header']['settings']['row_1_height'] = 44;
-				$layout['header']['settings']['row_gap'] = 4;
+				$layout['header']['settings']['row_1_height'] = 52;
+				$layout['header']['settings']['row_gap'] = 2;
+				$layout['header']['settings']['row_2_height'] = 42;
+				$layout['header']['settings']['vertical_padding'] = 4;
 			}
 			$this->configure_element( $layout, 'product_tabs', array( 'after_summary' => true ) );
 			$this->configure_element( $layout, 'account_menu', array( 'compact_family' => true ) );

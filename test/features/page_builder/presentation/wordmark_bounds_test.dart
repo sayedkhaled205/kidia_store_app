@@ -5,6 +5,22 @@ import 'package:mobishop_store_app/shared/widgets/common/wordmark_image.dart';
 
 void main() {
   test(
+    'saved logo geometry has the same aspect in native and web previews',
+    () {
+      expect(
+        wordmarkAspectRatio(
+          'https://store.example/logo.png#wm=0.04,0.25,0.91,0.5,2.95',
+        ),
+        2.95,
+      );
+      expect(wordmarkAspectRatio('https://store.example/logo.png'), 0);
+      expect(
+        wordmarkAspectRatio('https://store.example/logo.png#wm=0,0,1,1,NaN'),
+        0,
+      );
+    },
+  );
+  test(
     'transparent padding is excluded without cutting visible logo pixels',
     () {
       final pixels = Uint8List(100 * 100 * 4);
