@@ -32,6 +32,7 @@ import '../features/catalog/presentation/pages/catalog_product_list_screen.dart'
 import '../features/catalog/presentation/providers/catalog_providers.dart';
 import '../features/categories/presentation/categories_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
+import '../features/checkout/presentation/merchant_checkout_screen88.dart';
 import '../features/checkout/presentation/checkout_presentation_provider.dart';
 import '../features/checkout/presentation/providers/checkout_customer_binding_provider.dart';
 import '../features/checkout/domain/entities/checkout_presentation.dart';
@@ -575,6 +576,9 @@ GoRouter createAppRouter({
             final binding = ref.watch(checkoutCustomerBindingProvider);
             if (binding == null) {
               return const AuthScreen(popOnSuccess: false);
+            }
+            if (!AppConfig.isCmsPreview) {
+              return MerchantCheckoutScreen88(key: ObjectKey(binding));
             }
             return CheckoutScreen(
               key: ObjectKey(binding),

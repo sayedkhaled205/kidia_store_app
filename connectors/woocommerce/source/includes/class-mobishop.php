@@ -77,6 +77,7 @@ require_once MOBISHOP_PATH . 'api/class-home-layout-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-product-brand-bridge.php';
 require_once MOBISHOP_PATH . 'api/class-product-variation-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-checkout-config-endpoint.php';
+require_once MOBISHOP_PATH . 'api/class-embedded-checkout88.php';
 require_once MOBISHOP_PATH . 'api/class-customer-auth-endpoint.php';
 require_once MOBISHOP_PATH . 'includes/class-native-checkout-bootstrap50.php';
 require_once MOBISHOP_PATH . 'api/class-store-changes-endpoint.php';
@@ -214,6 +215,7 @@ final class MobiShop {
 
 
 	private function register_api_modules(): void {
+		(new MobiShop_Embedded_Checkout88())->register();
 
 		(new MobiShop_Home_Layout_Endpoint_V4())
 			->register();
