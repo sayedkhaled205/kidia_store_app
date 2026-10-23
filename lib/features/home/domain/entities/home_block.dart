@@ -505,6 +505,10 @@ class ProductGridBlock extends HomeBlock {
     required this.showBadge,
     required this.showRating,
     required this.quickAddEnabled,
+    this.loadAll = false,
+    this.source = 'latest',
+    this.categoryId = 0,
+    this.productIds = const [],
     this.contentBottomPadding = 12,
     this.imageSwipeEnabled = false,
     this.quickAddAppearance = const ProductQuickAddAppearance(),
@@ -512,6 +516,10 @@ class ProductGridBlock extends HomeBlock {
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
+  final bool loadAll;
+  final String source;
+  final int categoryId;
+  final List<int> productIds;
   final String? subtitle;
   final List<HomeProductItem> items;
   final int columns;

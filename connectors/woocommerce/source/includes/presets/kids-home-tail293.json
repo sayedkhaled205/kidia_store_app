@@ -466,7 +466,7 @@
       "title": "ALL PRODUCTS",
       "subtitle": "",
       "source": "latest",
-      "limit": 12,
+      "limit": "all",
       "columns": 2,
       "category_id": 0,
       "product_ids": "",

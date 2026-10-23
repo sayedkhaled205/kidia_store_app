@@ -144,7 +144,7 @@ final class MobiShop_Product_Grid_Block extends MobiShop_Block {
 			'title'          => sanitize_text_field( (string) ( $settings['title'] ?? '' ) ),
 			'subtitle'       => sanitize_textarea_field( (string) ( $settings['subtitle'] ?? '' ) ),
 			'source'         => $source,
-			'limit'          => max( 1, min( 50, absint( $settings['limit'] ?? 8 ) ) ),
+			'limit'          => 'all' === ( $settings['limit'] ?? '' ) ? 'all' : max( 1, min( 50, absint( $settings['limit'] ?? 8 ) ) ),
 			'columns'        => max( 1, min( 4, absint( $settings['columns'] ?? 2 ) ) ),
 			'category_id'    => absint( $settings['category_id'] ?? 0 ),
 			'product_ids'    => implode( ',', $product_ids ),
@@ -256,6 +256,10 @@ final class MobiShop_Product_Grid_Block extends MobiShop_Block {
 			'title'           => $settings['title'],
 			'subtitle'        => $settings['subtitle'],
 			'items'           => $items,
+			'limit'           => $settings['limit'],
+			'source'          => $settings['source'],
+			'category_id'     => $settings['category_id'],
+			'product_ids'     => $settings['product_ids'],
 			'columns'         => $settings['columns'],
 			'show_view_all'   => $settings['show_view_all'],
 			'view_all_label'  => $settings['view_all_label'],
@@ -372,7 +376,12 @@ final class MobiShop_Product_Grid_Block extends MobiShop_Block {
 			</div>
 			<div class="mobishop-builder-field">
 				<label><?php esc_html_e( 'Products Limit', 'mobishop' ); ?></label>
-				<input type="number" min="1" max="50" step="1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]" value="<?php echo esc_attr( (string) $settings['limit'] ); ?>">
+				<select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][limit]">
+                    <option value="all" <?php selected( 'all', (string) $settings['limit'] ); ?>>All</option>
+                    <?php for ( $count = 1; $count <= 50; $count++ ) : ?>
+                        <option value="<?php echo esc_attr( (string) $count ); ?>" <?php selected( (string) $count, (string) $settings['limit'] ); ?>><?php echo esc_html( (string) $count ); ?></option>
+                    <?php endfor; ?>
+                </select>
 			</div>
 			<div class="mobishop-builder-field">
 				<label><?php esc_html_e( 'Columns', 'mobishop' ); ?></label>
@@ -422,7 +431,7 @@ final class MobiShop_Product_Grid_Block extends MobiShop_Block {
 	private function query_products( array $settings ): array {
 		$args = array(
 			'status' => 'publish',
-			'limit'  => $settings['limit'],
+			'limit'  => 'all' === $settings['limit'] ? 20 : $settings['limit'],
 			'return' => 'objects',
 		);
 

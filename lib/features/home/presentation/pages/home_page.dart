@@ -167,6 +167,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       slivers: <Widget>[
                         HomeBlockRenderer(
                           blocks: _visibleBlocks,
+                          scrollController: _scrollController,
                           keyForBlock: _keyForBlock,
                           onAction: (HomeAction action) {
                             if (action.type == 'retry_home') {

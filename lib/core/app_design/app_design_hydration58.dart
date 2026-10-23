@@ -193,7 +193,7 @@ Future<HomeLayout> hydrateSavedHome58(
           products = result.items;
         }
         final items = List<HomeProductItem>.unmodifiable(
-          products.map(_product),
+          products.map(homeProductFromCatalog),
         );
         blocks.add(
           block is ProductCarouselBlock
@@ -215,7 +215,7 @@ Future<HomeLayout> hydrateSavedHome58(
   );
 }
 
-HomeProductItem _product(CatalogProduct product) {
+HomeProductItem homeProductFromCatalog(CatalogProduct product) {
   final money = product.prices;
   final regular = BigInt.tryParse(money.regularPriceMinor);
   final price = BigInt.tryParse(money.priceMinor);
@@ -315,6 +315,10 @@ ProductCarouselBlock _carousel(
 ProductGridBlock _grid(ProductGridBlock b, List<HomeProductItem> items) =>
     ProductGridBlock(
       id: b.id,
+      loadAll: b.loadAll,
+      source: b.source,
+      categoryId: b.categoryId,
+      productIds: b.productIds,
       enabled: b.enabled,
       presentation: b.presentation,
       title: b.title,

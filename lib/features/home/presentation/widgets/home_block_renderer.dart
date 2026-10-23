@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_factory.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_frame.dart';
+import 'kids_home_product_feed.dart';
 
 class HomeBlockRenderer extends StatelessWidget {
   const HomeBlockRenderer({
     required this.blocks,
     required this.onAction,
     this.keyForBlock,
+    this.scrollController,
     super.key,
   });
 
   final List<HomeBlock> blocks;
   final ValueChanged<HomeAction> onAction;
   final Key Function(String blockId)? keyForBlock;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +52,15 @@ class HomeBlockRenderer extends StatelessWidget {
           key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
           child: HomeBlockFrame(
             block: block,
-            child: HomeBlockFactory.create(block: block, onAction: onAction),
+            child: block is ProductGridBlock &&
+                    block.loadAll &&
+                    scrollController != null
+                ? KidsHomeProductFeed(
+                    block: block,
+                    scrollController: scrollController!,
+                    onAction: onAction,
+                  )
+                : HomeBlockFactory.create(block: block, onAction: onAction),
           ),
         );
       },
