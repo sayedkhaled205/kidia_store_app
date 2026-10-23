@@ -135,8 +135,10 @@ final class MobiShop_Push_Service {
 
 	/** @return array<string,mixed> */
 	public static function connection_status(): array {
-		$license_active = class_exists( 'MobiShop_License_Manager' )
-			&& ( new MobiShop_License_Manager() )->is_active();
+		// Keep the existing response field for older apps, but a verified store
+		// notification connection also enables Push independently of a build plan.
+		$license_active = ( class_exists( 'MobiShop_Store_Notifications' ) && MobiShop_Store_Notifications::connection() )
+			|| ( class_exists( 'MobiShop_License_Manager' ) && ( new MobiShop_License_Manager() )->is_active() );
 		$project = $license_active ? self::project_status() : array();
 		$project_state = sanitize_key( (string) ( $project['status'] ?? 'not_started' ) );
 		$connected = $license_active && 'ready' === $project_state && ! empty( $project['messaging_ready'] );

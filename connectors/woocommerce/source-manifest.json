@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.86",
+  "version": "1.46.87",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "8ec63d912f07f56cf5ce54aaa4238517705f1356e9bd1a32f4f97829e9fd2b63",
-      "sha256": "8ec63d912f07f56cf5ce54aaa4238517705f1356e9bd1a32f4f97829e9fd2b63"
+      "source_sha256": "93a3869ef7c77eba43b82b5248ab38630adbef96147654f01874c3eee4366f6b",
+      "sha256": "93a3869ef7c77eba43b82b5248ab38630adbef96147654f01874c3eee4366f6b"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2652,8 +2652,8 @@
     "includes/central/loader.php": {
       "source": "connectors/woocommerce/source/includes/central/loader.php",
       "newline": "crlf",
-      "source_sha256": "181bcdedd12ff9692d7f3fce0675a761db45af34387ed799659f0aec9334a74e",
-      "sha256": "5756b59ad8bc53f210814f84088e60f28e26a92e0fb0a2085529597c6774e7d4"
+      "source_sha256": "78c8167381d5bcdb13ca878f269f4053aaba27ce7538dfd12a3881a17bf0d9f7",
+      "sha256": "14ecfc811f90e4cd12ada1a1318241a0ff4ec4c1de55e57d37a2e0f00437800a"
     },
     "includes/central/store-data-view.php": {
       "source": "connectors/woocommerce/source/includes/central/store-data-view.php",
@@ -2754,8 +2754,8 @@
     "includes/class-mobishop-license-manager.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-license-manager.php",
       "newline": "lf",
-      "source_sha256": "973420a1486d37a99866f5fd6d848c2ffda775ac377e7d2b86d34e2e926581f9",
-      "sha256": "973420a1486d37a99866f5fd6d848c2ffda775ac377e7d2b86d34e2e926581f9"
+      "source_sha256": "135b56b46468031ededcbc134a33c05221ab68a729ff5cd4adafa6df7ed885d2",
+      "sha256": "135b56b46468031ededcbc134a33c05221ab68a729ff5cd4adafa6df7ed885d2"
     },
     "includes/class-mobishop-page-layout-store.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-page-layout-store.php",
@@ -2772,8 +2772,8 @@
     "includes/class-mobishop-push-service.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-push-service.php",
       "newline": "lf",
-      "source_sha256": "91610d84d4d41bd16b8759e791f6ea274609b790bc5b9a8eaa9691708fc317b1",
-      "sha256": "91610d84d4d41bd16b8759e791f6ea274609b790bc5b9a8eaa9691708fc317b1"
+      "source_sha256": "3c0764f85bb1dc37318b2c0ce0fe1b67cf0b5bb373d3c3b60f6fe12f7d572423",
+      "sha256": "3c0764f85bb1dc37318b2c0ce0fe1b67cf0b5bb373d3c3b60f6fe12f7d572423"
     },
     "includes/class-mobishop-recovery-campaigns.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-recovery-campaigns.php",
@@ -2928,8 +2928,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "0b9028de5f1710a8c73a79f1eb2e76967f9c9dd2bb30e89a25bbd27059a5f2df",
-      "sha256": "0b9028de5f1710a8c73a79f1eb2e76967f9c9dd2bb30e89a25bbd27059a5f2df"
+      "source_sha256": "62319c8e3edbb48c8746dfa7cffce6930d2c367c5e6b381363b68e8a272cc319",
+      "sha256": "62319c8e3edbb48c8746dfa7cffce6930d2c367c5e6b381363b68e8a272cc319"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2964,8 +2964,14 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "40be9bb4b4189475d7367b46d97a421d0d6cabe7cef27af2bc436014914496f1",
-      "sha256": "40be9bb4b4189475d7367b46d97a421d0d6cabe7cef27af2bc436014914496f1"
+      "source_sha256": "955fd569cacd279fef5c433d06a9817f26d4c5cfe5a7da75b0ce005d02961a79",
+      "sha256": "955fd569cacd279fef5c433d06a9817f26d4c5cfe5a7da75b0ce005d02961a79"
+    },
+    "includes/central/store-notifications.php": {
+      "newline": "lf",
+      "source": "connectors/woocommerce/source/includes/central/store-notifications.php",
+      "source_sha256": "88dead9f3f60d49a2a88775884b69f932c5ffc4b63d0a7b96f475ea84aa74f8c",
+      "sha256": "88dead9f3f60d49a2a88775884b69f932c5ffc4b63d0a7b96f475ea84aa74f8c"
     }
   },
   "baseline_release": {

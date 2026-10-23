@@ -277,6 +277,9 @@ final class MobiShop_License_Manager {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function firebase_service_request( string $path = '', string $method = 'GET', array $body = array() ) {
+		if ( class_exists( 'MobiShop_Store_Notifications' ) && MobiShop_Store_Notifications::connection() ) {
+			return MobiShop_Store_Notifications::request( $path, $method, $body );
+		}
 		$state = $this->state();
 		$token = isset( $state['activation_token'] ) ? (string) $state['activation_token'] : '';
 		if ( '' === $token || ! $this->is_active() ) {
@@ -342,6 +345,9 @@ final class MobiShop_License_Manager {
 		$platform = sanitize_key( $platform );
 		if ( ! in_array( $platform, array( 'android', 'ios' ), true ) ) {
 			return new WP_Error( 'invalid_firebase_platform', __( 'The Firebase application platform is invalid.', 'mobi2app-connector' ) );
+		}
+		if ( class_exists( 'MobiShop_Store_Notifications' ) && MobiShop_Store_Notifications::connection() ) {
+			return MobiShop_Store_Notifications::request( 'project/' . $platform . '-config', 'GET', array(), true );
 		}
 
 		$state = $this->state();

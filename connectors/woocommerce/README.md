@@ -9,7 +9,7 @@ Build and verify:
 ```sh
 python3 tool/build_woocommerce_connector.py
 python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
-unzip -q build/woocommerce/mobi2app-connector-1.46.86.zip -d build/woocommerce
+unzip -q build/woocommerce/mobi2app-connector-1.46.87.zip -d build/woocommerce
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
   php connectors/woocommerce/tests/website-auth-contract-test.php
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
@@ -83,3 +83,5 @@ refreshes totals and available payment methods after selection. It never invents
 a postcode or substitutes a free shipping charge for an unavailable quote.
 Destination contract checks run against the packaged connector in CI. Successful
 local contracts are not evidence of deployment or a successful card charge.
+
+Version 1.46.87 completes the authenticated store notification connection expected by the shared onboarding service. It verifies the exact store token at the fixed central HTTPS origin, stores it without autoloading, binds it to the installed website origin, and reuses it for Firebase config and delivery. Existing licensed transports remain available for older installations. No notification is sent during setup.

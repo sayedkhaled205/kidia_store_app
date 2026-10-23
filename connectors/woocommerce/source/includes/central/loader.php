@@ -6,3 +6,4 @@ require_once __DIR__.'/kidia-push-actions.php';
 require_once __DIR__.'/kidia-push-admin-bridge.php';
 require_once __DIR__.'/kidia-builder-application-bridge.php';
 require_once __DIR__.'/bootstrap.php';
+require_once __DIR__.'/store-notifications.php';
