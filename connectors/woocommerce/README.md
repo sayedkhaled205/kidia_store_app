@@ -9,7 +9,7 @@ Build and verify:
 ```sh
 python3 tool/build_woocommerce_connector.py
 python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
-unzip -q build/woocommerce/mobi2app-connector-1.46.78.zip -d build/woocommerce
+unzip -q build/woocommerce/mobi2app-connector-1.46.86.zip -d build/woocommerce
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
   php connectors/woocommerce/tests/website-auth-contract-test.php
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
@@ -74,3 +74,12 @@ Use a GitHub release tag `connector-vX.Y.Z` to attach this tested ZIP. The legac
 WordPress.org deployment workflow skips these tags. Directory approval and a
 WooMobile distribution deployment remain distinct operations; this workflow does
 not bypass either authorization.
+
+Version 1.46.86 preserves the merchant's required address fields and allowed
+countries, including per-country state choices. A single allowed country remains
+automatic. Native WooCommerce checkout quotes the current destination before the
+rest of the contact form is complete, exposes every returned package/rate, and
+refreshes totals and available payment methods after selection. It never invents
+a postcode or substitutes a free shipping charge for an unavailable quote.
+Destination contract checks run against the packaged connector in CI. Successful
+local contracts are not evidence of deployment or a successful card charge.

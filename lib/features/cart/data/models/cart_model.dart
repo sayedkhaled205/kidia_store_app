@@ -6,8 +6,11 @@ import 'package:mobishop_store_app/features/cart/data/models/cart_json.dart';
 import 'package:mobishop_store_app/features/cart/data/models/cart_totals_model.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 
+import '../../domain/entities/cart_shipping.dart';
+
 class CartModel {
   CartModel({
+    List<CartShippingPackage> shippingPackages = const [],
     required List<CartItemModel> items,
     required List<CartCouponModel> coupons,
     required this.totals,
@@ -20,7 +23,8 @@ class CartModel {
     required this.hasCalculatedShipping,
     required List<String> paymentMethods,
     required List<CartErrorModel> errors,
-  }) : items = List<CartItemModel>.unmodifiable(items),
+  }) : shippingPackages = List.unmodifiable(shippingPackages),
+       items = List<CartItemModel>.unmodifiable(items),
        coupons = List<CartCouponModel>.unmodifiable(coupons),
        paymentMethods = List<String>.unmodifiable(paymentMethods),
        errors = List<CartErrorModel>.unmodifiable(errors);
@@ -49,6 +53,46 @@ class CartModel {
             .toList(growable: false);
 
     return CartModel(
+      shippingPackages: _parseList<CartShippingPackage>(
+        json['shipping_rates'],
+        'shipping_rates',
+        (package) {
+          final id = CartJson.nullableInteger(package['package_id']);
+          if (id == null || id < 0) {
+            throw const FormatException('Invalid shipping package.');
+          }
+          return CartShippingPackage(
+            id: id,
+            name: CartJson.text(package['name']),
+            rates: _parseList<CartShippingRate>(
+              package['shipping_rates'],
+              'shipping_rates[]',
+              (rate) {
+                final id = CartJson.text(rate['rate_id']).trim();
+                if (id.isEmpty) {
+                  throw const FormatException('Invalid shipping rate.');
+                }
+                return CartShippingRate(
+                  id: id,
+                  name: CartJson.text(rate['name']),
+                  priceMinor: CartJson.minorUnits(
+                    rate['price'],
+                    'shipping.price',
+                  ),
+                  taxMinor: CartJson.minorUnits(
+                    rate['taxes'],
+                    'shipping.taxes',
+                  ),
+                  currency: CartCurrencyModel.fromJson(rate).toEntity(),
+                  selected: CartJson.boolean(rate['selected']),
+                  description: CartJson.text(rate['description']),
+                  deliveryTime: CartJson.text(rate['delivery_time']),
+                );
+              },
+            ),
+          );
+        },
+      ),
       items: items,
       coupons: coupons,
       totals: CartTotalsModel.fromJson(
@@ -70,6 +114,7 @@ class CartModel {
     );
   }
 
+  final List<CartShippingPackage> shippingPackages;
   final List<CartItemModel> items;
   final List<CartCouponModel> coupons;
   final CartTotalsModel totals;
@@ -84,6 +129,7 @@ class CartModel {
   final List<CartErrorModel> errors;
 
   Cart toEntity() => Cart(
+    shippingPackages: shippingPackages,
     items: items.map((CartItemModel item) => item.toEntity()).toList(),
     coupons: coupons
         .map((CartCouponModel coupon) => coupon.toEntity())

@@ -4,6 +4,8 @@ import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_totals.dart';
 
+import 'cart_shipping.dart';
+
 class Cart {
   Cart({
     required List<CartItem> items,
@@ -19,11 +21,14 @@ class Cart {
     required List<String> paymentMethods,
     required List<CartError> errors,
     this.checkoutUrl,
-  }) : items = List<CartItem>.unmodifiable(items),
+    List<CartShippingPackage> shippingPackages = const [],
+  }) : shippingPackages = List.unmodifiable(shippingPackages),
+       items = List<CartItem>.unmodifiable(items),
        coupons = List<CartCoupon>.unmodifiable(coupons),
        paymentMethods = List<String>.unmodifiable(paymentMethods),
        errors = List<CartError>.unmodifiable(errors);
 
+  final List<CartShippingPackage> shippingPackages;
   final List<CartItem> items;
   final List<CartCoupon> coupons;
   final CartTotals totals;

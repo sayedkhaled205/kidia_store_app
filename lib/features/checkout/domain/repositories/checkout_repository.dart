@@ -16,6 +16,19 @@ abstract interface class CheckoutRepository {
   Future<CheckoutOrderResult> placeOrder(CheckoutSubmission submission);
 }
 
+/// Capability for native, server-calculated shipping. Hosted platform checkout
+/// remains responsible for its own shipping and payment configuration.
+abstract interface class CheckoutShippingRepository {
+  Future<Cart> quoteShipping({
+    required CheckoutAddress billingAddress,
+    required CheckoutAddress shippingAddress,
+  });
+  Future<Cart> selectShippingRate({
+    required int packageId,
+    required String rateId,
+  });
+}
+
 enum CheckoutFailureKind {
   invalidInput,
   configuration,

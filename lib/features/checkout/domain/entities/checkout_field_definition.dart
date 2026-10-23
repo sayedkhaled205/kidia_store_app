@@ -22,6 +22,7 @@ class CheckoutFieldDefinition {
     Map<String, String> options = const <String, String>{},
     this.defaultValue = '',
     this.autocomplete = '',
+    this.optionsByCountry = const {},
   }) : options = Map<String, String>.unmodifiable(options);
 
   final String key;
@@ -34,6 +35,7 @@ class CheckoutFieldDefinition {
   final Map<String, String> options;
   final String defaultValue;
   final String autocomplete;
+  final Map<String, Map<String, String>> optionsByCountry;
 
   bool get isVisible => type != CheckoutFieldType.hidden;
 
@@ -58,6 +60,7 @@ class CheckoutFieldDefinition {
       options: options ?? this.options,
       defaultValue: defaultValue ?? this.defaultValue,
       autocomplete: autocomplete ?? this.autocomplete,
+      optionsByCountry: optionsByCountry,
     );
   }
 }

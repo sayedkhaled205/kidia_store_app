@@ -54,6 +54,23 @@ class CheckoutController extends ChangeNotifier {
   int _submissionSequence = 0;
   int _requestSerial = 0;
   int _customerUpdateSerial = 0;
+  int _addressRevision = 0;
+  int _quotedRevision = 0;
+  bool _isSelectingShipping = false;
+  bool get supportsShippingQuotes => repository is CheckoutShippingRepository;
+  bool get isUpdatingShipping =>
+      _isUpdatingCustomer || _isSelectingShipping || _customerUpdateDirty;
+  bool get shippingQuoteCurrent =>
+      !isUpdatingShipping &&
+      _quotedRevision == _addressRevision &&
+      _addressUpdateError == null;
+  bool get shippingReady =>
+      !needsShipping ||
+      (shippingQuoteCurrent &&
+          cart?.hasCalculatedShipping == true &&
+          cart!.shippingPackages.isNotEmpty &&
+          cart!.shippingPackages.every((package) => package.hasSelection));
+
   bool _customerUpdateDirty = false;
   bool _isUpdatingCustomer = false;
   bool _isRecoveringOrder = false;
@@ -98,16 +115,34 @@ class CheckoutController extends ChangeNotifier {
       (_checkout?.serverSafetyRequired != true ||
           _checkout?.serverSafetyEnforced == true) &&
       _status == CheckoutStatus.ready &&
-      cart?.isEmpty == false;
+      cart?.isEmpty == false &&
+      !isUpdatingShipping &&
+      (!supportsShippingQuotes || shippingReady);
 
   String? errorFor(String field) => _fieldErrors[field];
 
   List<CheckoutFieldDefinition> fieldsFor(CheckoutFieldGroup group) {
     return List<CheckoutFieldDefinition>.unmodifiable(
-      (_checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[]).where(
-        (CheckoutFieldDefinition field) =>
-            field.group == group && field.isVisible,
-      ),
+      (_checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[])
+          .where(
+            (CheckoutFieldDefinition field) =>
+                field.group == group && field.isVisible,
+          )
+          .map(_fieldForCurrentCountry),
+    );
+  }
+
+  CheckoutFieldDefinition _fieldForCurrentCountry(
+    CheckoutFieldDefinition field,
+  ) {
+    if (field.optionsByCountry.isEmpty) return field;
+    final country = field.group == CheckoutFieldGroup.shipping
+        ? _effectiveShippingAddress().country
+        : _billingAddress.country;
+    final options = field.optionsByCountry[country] ?? const <String, String>{};
+    return field.copyWith(
+      options: options,
+      type: options.isEmpty ? CheckoutFieldType.text : CheckoutFieldType.select,
     );
   }
 
@@ -177,11 +212,17 @@ class CheckoutController extends ChangeNotifier {
       _pendingIdempotencyKey = null;
       _addressUpdateError = null;
       _customerUpdateDirty = false;
+      _addressRevision++;
+      _quotedRevision = _addressRevision;
       _orderResult = null;
       _status = CheckoutStatus.ready;
       if (loaded.hasUnresolvedSubmission) {
         _retainUnresolvedSubmission();
         return;
+      }
+      if (supportsShippingQuotes &&
+          _effectiveShippingAddress().country.isNotEmpty) {
+        _scheduleCustomerUpdate();
       }
       _notify();
     } on CheckoutRepositoryException catch (error) {
@@ -262,7 +303,11 @@ class CheckoutController extends ChangeNotifier {
       case 'billing_postcode':
         _billingAddress = _billingAddress.copyWith(postcode: value);
       case 'billing_country':
-        _billingAddress = _billingAddress.copyWith(country: value);
+        _billingAddress = _billingAddress.copyWith(
+          country: value,
+          state: '',
+          postcode: '',
+        );
       case 'billing_email':
         _billingAddress = _billingAddress.copyWith(email: value);
       case 'billing_phone':
@@ -284,7 +329,11 @@ class CheckoutController extends ChangeNotifier {
       case 'shipping_postcode':
         _shippingAddress = _shippingAddress.copyWith(postcode: value);
       case 'shipping_country':
-        _shippingAddress = _shippingAddress.copyWith(country: value);
+        _shippingAddress = _shippingAddress.copyWith(
+          country: value,
+          state: '',
+          postcode: '',
+        );
       case 'shipping_email':
         _shippingAddress = _shippingAddress.copyWith(email: value);
       case 'shipping_phone':
@@ -409,6 +458,11 @@ class CheckoutController extends ChangeNotifier {
       return null;
     }
     if (!validate()) {
+      return null;
+    }
+    if (supportsShippingQuotes && !shippingReady) {
+      _submitError = 'Choose an available shipping option for this address.';
+      _notify();
       return null;
     }
     return _performSubmit(confirmedTotals!);
@@ -673,6 +727,7 @@ class CheckoutController extends ChangeNotifier {
         cart?.isEmpty != false) {
       return;
     }
+    _addressRevision++;
     _customerUpdateDirty = true;
     _addressUpdateError = null;
     _customerUpdateDebounce?.cancel();
@@ -680,6 +735,7 @@ class CheckoutController extends ChangeNotifier {
       const Duration(milliseconds: 500),
       () => unawaited(_syncCustomerNow()),
     );
+    _notify();
   }
 
   Future<void> _syncCustomerNow() async {
@@ -697,11 +753,12 @@ class CheckoutController extends ChangeNotifier {
       return;
     }
 
-    if (!_hasCompleteAddressForCustomerUpdate()) {
+    if (!supportsShippingQuotes && !_hasCompleteAddressForCustomerUpdate()) {
       // The next form edit marks the address dirty again. Avoid retaining a
       // queued partial update that would only produce another server error.
       _customerUpdateDirty = false;
       _addressUpdateError = null;
+      _notify();
       return;
     }
 
@@ -722,20 +779,31 @@ class CheckoutController extends ChangeNotifier {
   }
 
   Future<void> _performCustomerUpdate(int serial) async {
+    final int revision = _addressRevision;
     _isUpdatingCustomer = true;
     _addressUpdateError = null;
     _notify();
     try {
-      final Cart updatedCart = await repository.updateCustomer(
-        billingAddress: _billingAddress.trimmed(),
-        shippingAddress: _effectiveShippingAddress().trimmed(),
-      );
-      if (_isDisposed || serial != _customerUpdateSerial) {
+      final Cart updatedCart = supportsShippingQuotes
+          ? await (repository as CheckoutShippingRepository).quoteShipping(
+              billingAddress: _billingAddress.trimmed(),
+              shippingAddress: _effectiveShippingAddress().trimmed(),
+            )
+          : await repository.updateCustomer(
+              billingAddress: _billingAddress.trimmed(),
+              shippingAddress: _effectiveShippingAddress().trimmed(),
+            );
+      if (_isDisposed ||
+          serial != _customerUpdateSerial ||
+          revision != _addressRevision) {
         return;
       }
+      _quotedRevision = revision;
       _applyAuthoritativeCart(updatedCart);
     } on CheckoutRepositoryException catch (error) {
-      if (_isDisposed || serial != _customerUpdateSerial) {
+      if (_isDisposed ||
+          serial != _customerUpdateSerial ||
+          revision != _addressRevision) {
         return;
       }
       if (error.requiresOutcomeRecovery) {
@@ -754,13 +822,63 @@ class CheckoutController extends ChangeNotifier {
                 ? 'Unable to calculate shipping for this address.'
                 : error.message.trim());
     } catch (_) {
-      if (_isDisposed || serial != _customerUpdateSerial) {
+      if (_isDisposed ||
+          serial != _customerUpdateSerial ||
+          revision != _addressRevision) {
         return;
       }
       _addressUpdateError = 'Unable to calculate shipping for this address.';
     } finally {
       if (!_isDisposed && serial == _customerUpdateSerial) {
         _isUpdatingCustomer = false;
+        _notify();
+      }
+    }
+  }
+
+  Future<void> refreshShipping() async {
+    if (!_canEditForm || _hasUnresolvedSubmission) return;
+    _scheduleCustomerUpdate();
+    await _syncCustomerNow();
+  }
+
+  Future<void> selectShippingRate(int packageId, String rateId) async {
+    if (!_canEditForm ||
+        !supportsShippingQuotes ||
+        _hasUnresolvedSubmission ||
+        !shippingQuoteCurrent) {
+      return;
+    }
+    final matches = cart!.shippingPackages.where(
+      (package) => package.id == packageId,
+    );
+    if (matches.length != 1 ||
+        !matches.single.rates.any(
+          (rate) => rate.id == rateId && !rate.selected,
+        )) {
+      return;
+    }
+    _isSelectingShipping = true;
+    _addressUpdateError = null;
+    _notify();
+    try {
+      final updated = await (repository as CheckoutShippingRepository)
+          .selectShippingRate(packageId: packageId, rateId: rateId);
+      if (!_isDisposed) _applyAuthoritativeCart(updated);
+    } on CheckoutRepositoryException catch (error) {
+      if (_isDisposed) return;
+      if (error.requiresOutcomeRecovery) {
+        _retainUnresolvedSubmission();
+        return;
+      }
+      _addressUpdateError = error.message;
+    } catch (_) {
+      if (!_isDisposed) {
+        _addressUpdateError = 'Unable to update shipping. Please try again.';
+      }
+    } finally {
+      if (!_isDisposed) {
+        _isSelectingShipping = false;
         _notify();
       }
     }
@@ -832,7 +950,7 @@ class CheckoutController extends ChangeNotifier {
         ? _billingAddress.country.trim().toUpperCase()
         : (defaultFor('billing_country').isNotEmpty
               ? defaultFor('billing_country')
-              : 'EG');
+              : '');
     final String shippingCountry = _shippingAddress.country.trim().isNotEmpty
         ? _shippingAddress.country.trim().toUpperCase()
         : (defaultFor('shipping_country').isNotEmpty
@@ -916,7 +1034,8 @@ class CheckoutController extends ChangeNotifier {
   }) {
     final List<CheckoutFieldDefinition> definitions =
         _checkout?.fieldDefinitions ?? const <CheckoutFieldDefinition>[];
-    for (final CheckoutFieldDefinition field in definitions) {
+    for (final definition in definitions) {
+      final field = _fieldForCurrentCountry(definition);
       if (!field.isVisible ||
           (addressOnly && !_isCoreAddressField(field.key)) ||
           (field.group == CheckoutFieldGroup.shipping && !needsShipping) ||
@@ -1118,6 +1237,7 @@ class CheckoutController extends ChangeNotifier {
   bool get _canEditForm =>
       !_isDisposed &&
       !_isRecoveringOrder &&
+      !_isSelectingShipping &&
       _status != CheckoutStatus.submitting &&
       _status != CheckoutStatus.success;
 

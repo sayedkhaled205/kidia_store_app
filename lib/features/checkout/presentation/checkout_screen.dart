@@ -427,6 +427,10 @@ class _CheckoutForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (controller.supportsShippingQuotes && controller.needsShipping) ...[
+          _ShippingSection(controller: controller, copy: copy),
+          const SizedBox(height: 16),
+        ],
         _PaymentSection(controller: controller, copy: copy),
       ],
     );
@@ -502,6 +506,10 @@ class _DynamicCheckoutForm extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 16),
+        if (controller.supportsShippingQuotes && controller.needsShipping) ...[
+          _ShippingSection(controller: controller, copy: copy),
+          const SizedBox(height: 16),
+        ],
         _PaymentSection(controller: controller, copy: copy),
       ],
     );
@@ -805,6 +813,61 @@ class _AddressFields extends StatelessWidget {
   }
 }
 
+class _ShippingSection extends StatelessWidget {
+  const _ShippingSection({required this.controller, required this.copy});
+  final CheckoutController controller;
+  final _CheckoutCopy copy;
+  @override
+  Widget build(BuildContext context) => _CheckoutSection(
+    title: copy.shipping,
+    icon: Icons.local_shipping_outlined,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (controller.isUpdatingShipping) ...[
+          const LinearProgressIndicator(),
+          const SizedBox(height: 8),
+          Text(copy.calculatingShipping),
+        ] else if (!controller.shippingQuoteCurrent ||
+            controller.cart!.hasCalculatedShipping != true)
+          Text(copy.shippingAddressNeeded)
+        else if (controller.cart!.shippingPackages.isEmpty ||
+            controller.cart!.shippingPackages.any(
+              (package) => package.rates.isEmpty,
+            ))
+          Text(copy.noShippingRates),
+        if (controller.shippingQuoteCurrent)
+          for (final package in controller.cart!.shippingPackages) ...[
+            if (controller.cart!.shippingPackages.length > 1)
+              Text(package.name),
+            for (final rate in package.rates)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _PaymentMethodTile(
+                  methodId: 'shipping-${package.id}-${rate.id}',
+                  label:
+                      '${rate.name} — ${_formatMinor((BigInt.parse(rate.priceMinor) + BigInt.parse(rate.taxMinor)).toString(), rate.currency)}',
+                  selected: rate.selected,
+                  enabled:
+                      !controller.isSubmitting &&
+                      !controller.hasUnresolvedSubmission,
+                  onTap: () =>
+                      controller.selectShippingRate(package.id, rate.id),
+                ),
+              ),
+          ],
+        if (controller.addressUpdateError != null) ...[
+          _InlineError(message: controller.addressUpdateError!),
+          TextButton(
+            onPressed: controller.refreshShipping,
+            child: Text(copy.retry),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 class _PaymentSection extends StatelessWidget {
   const _PaymentSection({required this.controller, required this.copy});
 
@@ -963,12 +1026,14 @@ class _OrderSummary extends StatelessWidget {
             ),
           _SummaryLine(
             label: copy.shipping,
-            value: _formatMinor(
-              cart.totals.shippingMinor,
-              cart.totals.currency,
-            ),
+            value:
+                controller.needsShipping &&
+                    (!controller.shippingQuoteCurrent ||
+                        !cart.hasCalculatedShipping)
+                ? copy.shippingPending
+                : _formatMinor(cart.totals.shippingMinor, cart.totals.currency),
           ),
-          if (controller.isUpdatingCustomer) ...<Widget>[
+          if (controller.isUpdatingShipping) ...<Widget>[
             const SizedBox(height: 8),
             const LinearProgressIndicator(),
             const SizedBox(height: 6),
@@ -1535,6 +1600,13 @@ class _CheckoutCopy {
   String get summary => arabic ? 'ملخص الطلب' : 'Order summary';
   String get discount => arabic ? 'الخصم' : 'Discount';
   String get shipping => arabic ? 'الشحن' : 'Shipping';
+  String get shippingPending => arabic ? 'لم يُحسب بعد' : 'Not calculated yet';
+  String get shippingAddressNeeded => arabic
+      ? 'حدد عنوان التوصيل لعرض خيارات الشحن وأسعارها.'
+      : 'Enter your delivery address to see shipping options and prices.';
+  String get noShippingRates => arabic
+      ? 'لا تتوفر طريقة شحن لهذا العنوان. راجع العنوان أو تواصل مع المتجر.'
+      : 'No shipping option is available for this address. Check the address or contact the store.';
   String get calculatingShipping => arabic
       ? 'جارٍ حساب الشحن حسب المحافظة والعنوان…'
       : 'Calculating shipping for this address…';

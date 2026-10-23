@@ -69,7 +69,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 6,
+				'version'  => 7,
 				'payment_methods' => $this->payment_method_labels(),
 				'design'   => $checkout_store->design(),
 				'defaults' => array(
@@ -193,20 +193,34 @@ final class MobiShop_Checkout_Config_Endpoint {
 					}
 				}
 
-				$default  = is_scalar( $field['default'] ?? '' ) ? (string) $field['default'] : '';
+				$default  = is_scalar( $field['default'] ?? '' ) ? (string) ( $field['default'] ?? '' ) : '';
 				$required = ! empty( $field['required'] );
 				$is_country = 'country' === $type || str_ends_with( $key, '_country' );
 				$is_state   = 'state' === $type || str_ends_with( $key, '_state' );
+				$options_by_country = array();
+				$allowed_countries = 'shipping' === $group
+					? WC()->countries->get_shipping_countries()
+					: WC()->countries->get_allowed_countries();
 				if ( $is_country ) {
-					$type     = 'hidden';
-					$options  = array();
-					$default  = $default_country;
-					$required = false;
+					// Single-country stores need no extra input. International
+					// stores must retain their allowed destinations and choice.
+					$options = ! empty( $options ) ? $options : $allowed_countries;
+					if ( 1 === count( $options ) ) {
+						$type = 'hidden';
+						$default = (string) array_key_first( $options );
+					} else {
+						$type = 'select';
+						$default = isset( $options[ $default ] ) ? $default : ( isset( $options[ $default_country ] ) ? $default_country : '' );
+					}
 				} elseif ( $is_state ) {
-					$options  = ! empty( $states ) ? $states : $options;
-					$type     = ! empty( $options ) ? 'select' : 'text';
-					$required = ! empty( $options ) ? true : $required;
+					foreach ( array_keys( $allowed_countries ) as $country_code ) {
+						$options_by_country[ $country_code ] = $this->get_country_states( (string) $country_code );
+					}
+					$options = ! empty( $options ) ? $options : $states;
+					$options_by_country[ $default_country ] = $options;
+					$type = ! empty( $options ) ? 'select' : 'text';
 				}
+
 
 				$normalized[] = array(
 					'key'          => $key,
@@ -217,6 +231,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 					'required'     => $required,
 					'priority'     => isset( $field['priority'] ) ? (int) $field['priority'] : 100,
 					'options'      => $options,
+					'options_by_country' => $options_by_country,
 					'default'      => $default,
 					'autocomplete' => sanitize_text_field( (string) ( $field['autocomplete'] ?? '' ) ),
 				);
@@ -260,7 +275,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 	private function get_default_country(): string {
 		$location = function_exists( 'wc_get_base_location' ) ? wc_get_base_location() : array();
 		$country  = isset( $location['country'] ) ? strtoupper( sanitize_key( (string) $location['country'] ) ) : '';
-		return preg_match( '/^[A-Z]{2}$/', $country ) ? $country : 'EG';
+		return preg_match( '/^[A-Z]{2}$/', $country ) ? $country : '';
 	}
 
 	/** WooCommerce state codes and localized labels for the store country. */

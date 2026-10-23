@@ -9,6 +9,7 @@ import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
 import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
 import 'package:mobishop_store_app/features/checkout/data/models/checkout_country_data.dart';
+import '../models/checkout_field_normalizer.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/checkout_safety_transport.dart';
 import 'package:mobishop_store_app/features/checkout/data/storage/checkout_pending_attempt_store.dart';
@@ -23,7 +24,10 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_recovery_repository.dart';
 
 class StoreApiCheckoutRepository
-    implements CheckoutRepository, CheckoutRecoveryRepository {
+    implements
+        CheckoutRepository,
+        CheckoutRecoveryRepository,
+        CheckoutShippingRepository {
   StoreApiCheckoutRepository({
     required this.cartRepository,
     required this.transport,
@@ -158,7 +162,7 @@ class StoreApiCheckoutRepository
           fields.add(field);
         }
       }
-      return (_normalizeFieldDefinitions(fields, json!), labels);
+      return (CheckoutFieldNormalizer.normalize(fields, json!), labels);
     } catch (_) {
       // Older plugin versions keep the safe built-in checkout fields. The
       // shopping flow must not fail merely because dynamic styling metadata
@@ -167,174 +171,68 @@ class StoreApiCheckoutRepository
     }
   }
 
-  List<CheckoutFieldDefinition> _normalizeFieldDefinitions(
-    List<CheckoutFieldDefinition> fields,
-    Map<String, dynamic> configuration,
-  ) {
-    final Map<String, dynamic>? defaults = _objectOrNull(
-      configuration['defaults'],
-    );
-    String country =
-        defaults?['country']?.toString().trim().toUpperCase() ?? '';
-    if (country.isEmpty) {
-      for (final CheckoutFieldDefinition field in fields) {
-        if ((field.key == 'billing_country' ||
-                field.key == 'shipping_country') &&
-            field.defaultValue.trim().isNotEmpty) {
-          country = field.defaultValue.trim().toUpperCase();
-          break;
-        }
-      }
-    }
-    if (!RegExp(r'^[A-Z]{2}$').hasMatch(country)) {
-      country = 'EG';
-    }
+  @override
+  Future<Cart> quoteShipping({
+    required CheckoutAddress billingAddress,
+    required CheckoutAddress shippingAddress,
+  }) => pendingAttemptStore.exclusive(
+    () => _updateCustomer(
+      billingAddress: billingAddress,
+      shippingAddress: shippingAddress,
+      destinationOnly: true,
+    ),
+  );
 
-    Map<String, String> states = _stringMap(defaults?['states']);
-    if (states.isEmpty) {
-      states = CheckoutCountryData.statesFor(country);
+  @override
+  Future<Cart> selectShippingRate({
+    required int packageId,
+    required String rateId,
+  }) => pendingAttemptStore.exclusive(() async {
+    _assertCurrentSession();
+    if ((await _readAttempt())?.isUnresolved == true) {
+      throw _unresolvedAttempt();
     }
-
-    final List<CheckoutFieldDefinition> normalized =
-        <CheckoutFieldDefinition>[];
-    final Set<String> seenKeys = <String>{};
-    for (final CheckoutFieldDefinition field in fields) {
-      if (field.key == 'billing_email' || field.key == 'shipping_email') {
-        continue;
-      }
-      if (!seenKeys.add(field.key)) {
-        continue;
-      }
-      if (_isPostcodeField(field.key)) {
-        // The live store requires a shipping postcode at API level even
-        // though checkout does not use it to collect the customer's address.
-        // Keep the schema entry for payload compatibility, but never ask the
-        // customer to enter a value.
-        normalized.add(
-          field.copyWith(
-            type: CheckoutFieldType.hidden,
-            required: false,
-            options: const <String, String>{},
-            defaultValue: '',
-          ),
-        );
-        continue;
-      }
-      if (_isCountryField(field.key)) {
-        normalized.add(
-          field.copyWith(
-            type: CheckoutFieldType.hidden,
-            required: false,
-            options: const <String, String>{},
-            defaultValue: country,
-          ),
-        );
-        continue;
-      }
-      if (_isStateField(field.key)) {
-        final Map<String, String> availableStates = field.options.isNotEmpty
-            ? field.options
-            : states;
-        normalized.add(
-          field.copyWith(
-            type: availableStates.isEmpty
-                ? CheckoutFieldType.text
-                : CheckoutFieldType.select,
-            required: availableStates.isNotEmpty ? true : field.required,
-            options: availableStates,
-          ),
-        );
-        continue;
-      }
-      normalized.add(field);
-    }
-
-    // A legacy checkout configuration can expose a required shipping field
-    // without its billing counterpart. When the customer uses one address,
-    // the app sends billing values as the shipping address, so that missing
-    // counterpart would otherwise be impossible to enter. Mirror every
-    // required standard shipping field into billing while keeping custom
-    // plugin fields in their original group.
-    final List<CheckoutFieldDefinition> shippingFields =
-        List<CheckoutFieldDefinition>.of(normalized);
-    for (final CheckoutFieldDefinition field in shippingFields) {
-      final String? billingKey = _billingCounterpartFor(field);
-      if (billingKey == null || !seenKeys.add(billingKey)) {
-        continue;
-      }
-      normalized.add(
-        CheckoutFieldDefinition(
-          key: billingKey,
-          group: CheckoutFieldGroup.billing,
-          type: field.type,
-          label: field.label,
-          placeholder: field.placeholder,
-          required: true,
-          priority: field.priority,
-          options: field.options,
-          defaultValue: field.defaultValue,
-          autocomplete: field.autocomplete
-              .replaceAll('section-shipping', 'section-billing')
-              .replaceAll('shipping ', 'billing '),
-        ),
+    _assertCurrentSession();
+    final shippingTransport = transport;
+    final token = cartTokenStore.read()?.trim() ?? '';
+    if (shippingTransport is! CheckoutShippingTransport ||
+        token.isEmpty ||
+        packageId < 0 ||
+        rateId.trim().isEmpty) {
+      throw const CheckoutRepositoryException(
+        kind: CheckoutFailureKind.configuration,
+        message: 'Shipping selection is unavailable.',
       );
     }
-    normalized.sort(
-      (CheckoutFieldDefinition first, CheckoutFieldDefinition second) =>
-          first.priority.compareTo(second.priority),
-    );
-
-    return List<CheckoutFieldDefinition>.unmodifiable(normalized);
-  }
-
-  String? _billingCounterpartFor(CheckoutFieldDefinition field) {
-    if (field.group != CheckoutFieldGroup.shipping ||
-        !field.required ||
-        !field.isVisible ||
-        !field.key.startsWith('shipping_')) {
-      return null;
+    try {
+      final response = await (shippingTransport as CheckoutShippingTransport)
+          .selectShippingRate(
+            cartToken: token,
+            packageId: packageId,
+            rateId: rateId,
+          );
+      _assertCurrentSession();
+      return CartModel.fromJson(
+        CartJson.object(response.data, 'shipping_cart'),
+      ).toEntity();
+    } on CheckoutApiTransportException catch (error, stack) {
+      Error.throwWithStackTrace(_transportFailure(error), stack);
+    } on FormatException {
+      throw const CheckoutRepositoryException(
+        kind: CheckoutFailureKind.invalidResponse,
+        message: 'The store returned invalid shipping options.',
+      );
     }
-    final String suffix = field.key.substring('shipping_'.length);
-    if (!<String>{
-      'first_name',
-      'last_name',
-      'company',
-      'address_1',
-      'address_2',
-      'city',
-      'state',
-      'postcode',
-      'country',
-      'phone',
-    }.contains(suffix)) {
-      return null;
-    }
-    return 'billing_$suffix';
-  }
+  });
 
-  Map<String, String> _stringMap(dynamic raw) {
-    if (raw is! Map) {
-      return const <String, String>{};
-    }
-    final Map<String, String> values = <String, String>{};
-    for (final MapEntry<dynamic, dynamic> entry in raw.entries) {
-      final String key = entry.key?.toString().trim() ?? '';
-      final String value = entry.value?.toString().trim() ?? '';
-      if (key.isNotEmpty && value.isNotEmpty) {
-        values[key] = value;
-      }
-    }
-    return Map<String, String>.unmodifiable(values);
-  }
-
-  bool _isCountryField(String key) =>
-      key == 'billing_country' || key == 'shipping_country';
-
-  bool _isStateField(String key) =>
-      key == 'billing_state' || key == 'shipping_state';
-
-  bool _isPostcodeField(String key) =>
-      key == 'billing_postcode' || key == 'shipping_postcode';
+  Map<String, String> _destinationJson(CheckoutAddress address) => {
+    'country': address.country.trim().toUpperCase(),
+    'state': address.state.trim(),
+    'city': address.city.trim(),
+    'postcode': address.postcode.trim(),
+    'address_1': address.address1.trim(),
+    'address_2': address.address2.trim(),
+  };
 
   @override
   Future<Cart> updateCustomer({
@@ -350,6 +248,7 @@ class StoreApiCheckoutRepository
   Future<Cart> _updateCustomer({
     required CheckoutAddress billingAddress,
     required CheckoutAddress shippingAddress,
+    bool destinationOnly = false,
   }) async {
     try {
       _assertCurrentSession();
@@ -374,11 +273,15 @@ class StoreApiCheckoutRepository
       final CheckoutApiResponse response = await transport.updateCustomer(
         cartToken: token,
         body: <String, dynamic>{
-          'billing_address': _billingAddressJson(billingAddress),
-          'shipping_address': _shippingAddressJson(
-            shippingAddress,
-            billingAddress: billingAddress,
-          ),
+          'billing_address': destinationOnly
+              ? _destinationJson(billingAddress)
+              : _billingAddressJson(billingAddress),
+          'shipping_address': destinationOnly
+              ? _destinationJson(shippingAddress)
+              : _shippingAddressJson(
+                  shippingAddress,
+                  billingAddress: billingAddress,
+                ),
         },
       );
       _assertCurrentSession();
@@ -967,19 +870,12 @@ class StoreApiCheckoutRepository
     return <String, String>{
       'first_name': address.firstName,
       'last_name': address.lastName,
-      // Some WooCommerce versions incorrectly retain old Customizer flags
-      // that make hidden company/address-line-2 fields required by Store API.
-      // A valid text fallback satisfies that API-only contract without adding
-      // customer-facing fields the merchant removed from classic checkout.
-      'company': _hiddenTextAddressValue(address.company),
+      'company': address.company,
       'address_1': address.address1,
-      'address_2': _hiddenTextAddressValue(address.address2),
+      'address_2': address.address2,
       'city': address.city,
       'state': address.state,
-      // WooCommerce may retain postcode as required in Store API even when
-      // the merchant removes it from checkout. A valid numeric fallback keeps
-      // order submission compatible without exposing a customer-facing field.
-      'postcode': _hiddenPostcodeValue(address.postcode),
+      'postcode': address.postcode,
       'country': address.country,
       'phone': address.phone,
     };
@@ -1008,12 +904,6 @@ class StoreApiCheckoutRepository
         : address.phone;
     return _addressJson(address.copyWith(phone: phone));
   }
-
-  String _hiddenTextAddressValue(String value) =>
-      value.trim().isEmpty ? 'N/A' : value.trim();
-
-  String _hiddenPostcodeValue(String value) =>
-      value.trim().isEmpty ? '00000' : value.trim();
 
   String _guestEmailForPhone(String phone) {
     final StringBuffer digits = StringBuffer();

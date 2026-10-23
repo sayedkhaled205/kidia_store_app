@@ -28,6 +28,14 @@ abstract interface class CheckoutApiTransport {
   });
 }
 
+abstract interface class CheckoutShippingTransport {
+  Future<CheckoutApiResponse> selectShippingRate({
+    required String cartToken,
+    required int packageId,
+    required String rateId,
+  });
+}
+
 enum CheckoutTransportFailureKind {
   configuration,
   timeout,
@@ -62,7 +70,8 @@ class CheckoutApiTransportException implements Exception {
 ///
 /// It accepts one fixed endpoint and sends only the in-memory Cart-Token. No
 /// payment credentials are persisted or logged here.
-class StoreApiCheckoutTransport implements CheckoutApiTransport {
+class StoreApiCheckoutTransport
+    implements CheckoutApiTransport, CheckoutShippingTransport {
   StoreApiCheckoutTransport({
     required Uri storeUri,
     Dio? dio,
@@ -95,6 +104,23 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
   Future<CheckoutApiResponse> updateCustomer({
     required String cartToken,
     required Map<String, dynamic> body,
+  }) => _mutateCart(cartToken: cartToken, body: body, path: 'update-customer');
+
+  @override
+  Future<CheckoutApiResponse> selectShippingRate({
+    required String cartToken,
+    required int packageId,
+    required String rateId,
+  }) => _mutateCart(
+    cartToken: cartToken,
+    body: {'package_id': packageId, 'rate_id': rateId},
+    path: 'select-shipping-rate',
+  );
+
+  Future<CheckoutApiResponse> _mutateCart({
+    required String cartToken,
+    required Map<String, dynamic> body,
+    required String path,
   }) async {
     final String token = cartToken.trim();
     if (!_safeHeaderValue(token, maxLength: 4096)) {
@@ -112,7 +138,7 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     final String? requestSession = headers['X-MobiShop-Session'];
     try {
       final Response<dynamic> response = await _dio.postUri<dynamic>(
-        _updateCustomerUri(),
+        _updateCustomerUri(path),
         data: body,
         options: Options(
           responseType: ResponseType.json,
@@ -303,12 +329,12 @@ class StoreApiCheckoutTransport implements CheckoutApiTransport {
     );
   }
 
-  Uri _updateCustomerUri() {
+  Uri _updateCustomerUri(String action) {
     final String installPath = _storeUri.path == '/'
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/wc/store/v1/cart/update-customer',
+      path: '$installPath/wp-json/wc/store/v1/cart/$action',
       query: null,
       fragment: null,
     );

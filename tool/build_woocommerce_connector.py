@@ -49,7 +49,7 @@ def verify_features(files: dict[str, bytes], manifest: dict) -> None:
         'includes/class-native-checkout-bootstrap50.php': ['MobiShop_Native_Checkout_Setup50::runtime_enabled()', 'native-checkout-capabilities', 'fail_closed'],
         'api/class-native-checkout-safety50.php': ['key_configured()', 'installation_sql()', 'key_fingerprint', 'defer_online_payment', 'handoff_payment', 'restore_payment_hook'],
         'api/class-customer-orders-endpoint.php': ['/customer/orders/(?P<id>\\d+)', "'get_order'", "'authenticate_customer'", "'needs_payment'", "'is_paid'", "'payment_url'", "'payment_method'", "'payment_endpoint_path'", "wc_get_endpoint_url( 'order-pay'"],
-        'api/class-checkout-config-endpoint.php': ["'payment_methods'", 'payment_method_labels()', 'payment_gateways()', 'get_title()', 'no-store'],
+        'api/class-checkout-config-endpoint.php': ["'payment_methods'", 'payment_method_labels()', 'payment_gateways()', 'get_title()', 'no-store', "'options_by_country'", 'get_shipping_countries()', 'get_allowed_countries()'],
         'includes/central/store-data.php': ['/central/store-data', 'permission_callback'],
         'includes/central/kidia-push-admin-bridge.php': ['/builder/push-status', '/builder/push-actions', 'permission_callback'],
         'includes/central/kidia-builder-application-bridge.php': ['/builder/application-state', 'permission_callback'],

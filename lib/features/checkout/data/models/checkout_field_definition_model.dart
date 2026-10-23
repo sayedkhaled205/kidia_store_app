@@ -32,6 +32,15 @@ abstract final class CheckoutFieldDefinitionModel {
       required: _boolean(json['required']),
       priority: _integer(json['priority'], fallback: 100),
       options: options,
+      optionsByCountry: {
+        if (json['options_by_country'] is Map)
+          for (final entry in (json['options_by_country'] as Map).entries)
+            if (entry.value is Map)
+              entry.key.toString(): {
+                for (final option in (entry.value as Map).entries)
+                  option.key.toString(): _text(option.value),
+              },
+      },
       defaultValue: _text(json['default']),
       autocomplete: _text(json['autocomplete']),
     );

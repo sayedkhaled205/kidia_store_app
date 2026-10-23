@@ -23,7 +23,7 @@ abstract final class CheckoutFieldNormalizer {
       }
     }
     if (!RegExp(r'^[A-Z]{2}$').hasMatch(country)) {
-      country = 'EG';
+      country = '';
     }
 
     Map<String, String> states = _stringMap(defaults?['states']);
@@ -35,34 +35,15 @@ abstract final class CheckoutFieldNormalizer {
         <CheckoutFieldDefinition>[];
     final Set<String> seenKeys = <String>{};
     for (final CheckoutFieldDefinition field in fields) {
-      if (field.key == 'billing_email' || field.key == 'shipping_email') {
-        continue;
-      }
       if (!seenKeys.add(field.key)) {
-        continue;
-      }
-      if (_isPostcodeField(field.key)) {
-        // The live store requires a shipping postcode at API level even
-        // though checkout does not use it to collect the customer's address.
-        // Keep the schema entry for payload compatibility, but never ask the
-        // customer to enter a value.
-        normalized.add(
-          field.copyWith(
-            type: CheckoutFieldType.hidden,
-            required: false,
-            options: const <String, String>{},
-            defaultValue: '',
-          ),
-        );
         continue;
       }
       if (_isCountryField(field.key)) {
         normalized.add(
           field.copyWith(
-            type: CheckoutFieldType.hidden,
-            required: false,
-            options: const <String, String>{},
-            defaultValue: country,
+            defaultValue: field.defaultValue.isEmpty
+                ? country
+                : field.defaultValue,
           ),
         );
         continue;
@@ -76,7 +57,7 @@ abstract final class CheckoutFieldNormalizer {
             type: availableStates.isEmpty
                 ? CheckoutFieldType.text
                 : CheckoutFieldType.select,
-            required: availableStates.isNotEmpty ? true : field.required,
+            required: field.required,
             options: availableStates,
           ),
         );
@@ -108,6 +89,7 @@ abstract final class CheckoutFieldNormalizer {
           required: true,
           priority: field.priority,
           options: field.options,
+          optionsByCountry: field.optionsByCountry,
           defaultValue: field.defaultValue,
           autocomplete: field.autocomplete
               .replaceAll('section-shipping', 'section-billing')
@@ -168,7 +150,4 @@ abstract final class CheckoutFieldNormalizer {
 
   static bool _isStateField(String key) =>
       key == 'billing_state' || key == 'shipping_state';
-
-  static bool _isPostcodeField(String key) =>
-      key == 'billing_postcode' || key == 'shipping_postcode';
 }
