@@ -208,7 +208,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
           body: Column(
             children: <Widget>[
               if (_controller.status == WishlistStatus.ready &&
-                  layout.header.boolean('show_count', true) &&
+                  layout.header.boolean('show_count', false) &&
                   (previewState == 'products' ||
                       previewState.isEmpty && !signedOutGate))
                 Text('${_controller.length}', key: const Key('wishlist-count')),
@@ -1085,6 +1085,31 @@ class _WishlistGrid extends StatelessWidget {
             )
             .clamp(0, 48)
             .toDouble();
+        final double itemWidth =
+            (constraints.maxWidth -
+                horizontalPadding * 2 -
+                spacing * (columnCount - 1)) /
+            columnCount;
+        final double inset = settings
+            .number('image_inset', 5)
+            .clamp(0, 24)
+            .toDouble();
+        final double imageHeight =
+            (itemWidth - inset * 2).clamp(1, double.infinity) /
+                settings.number('image_ratio', 1).clamp(0.6, 1.8) +
+            inset * 2;
+        final double contentHeight = products.fold<double>(0, (
+          height,
+          product,
+        ) {
+          final measured = _wishlistContentHeight(
+            context,
+            settings,
+            product,
+            itemWidth,
+          );
+          return measured > height ? measured : height;
+        });
         return GridView.builder(
           key: instanceId == 'wishlist_grid'
               ? const Key('wishlist-grid')
@@ -1101,9 +1126,7 @@ class _WishlistGrid extends StatelessWidget {
             crossAxisCount: columnCount,
             mainAxisSpacing: spacing,
             crossAxisSpacing: spacing,
-            childAspectRatio:
-                settings.number('image_ratio', 1).clamp(0.6, 1.8).toDouble() *
-                0.62,
+            mainAxisExtent: imageHeight + contentHeight,
           ),
           itemCount: products.length,
           itemBuilder: (BuildContext context, int index) {
@@ -1113,6 +1136,7 @@ class _WishlistGrid extends StatelessWidget {
               product: product,
               copy: copy,
               settings: settings,
+              imageHeight: imageHeight,
               removeEnabled: !isMutating,
               onTap: onProductTap == null ? null : () => onProductTap!(product),
               onRemove: () => onRemove(product),
@@ -1132,6 +1156,7 @@ class _WishlistProductCard extends StatelessWidget {
     required this.settings,
     required this.removeEnabled,
     required this.onRemove,
+    this.imageHeight,
     this.onTap,
   });
 
@@ -1142,6 +1167,7 @@ class _WishlistProductCard extends StatelessWidget {
   final bool removeEnabled;
   final VoidCallback onRemove;
   final VoidCallback? onTap;
+  final double? imageHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1157,6 +1183,9 @@ class _WishlistProductCard extends StatelessWidget {
         .number('image_radius', 10)
         .clamp(0, 40)
         .toDouble();
+    Widget imageFrame({required Widget child}) => imageHeight == null
+        ? Expanded(child: child)
+        : SizedBox(height: imageHeight, child: child);
     return Card(
       key: instanceId == 'wishlist_grid'
           ? Key('wishlist-product-${product.id}')
@@ -1175,7 +1204,7 @@ class _WishlistProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Expanded(
+            imageFrame(
               child: Padding(
                 key: ValueKey<String>(
                   'wishlist-image-inset-$instanceId-${product.id}',
@@ -1337,7 +1366,7 @@ class _WishlistProductCard extends StatelessWidget {
                         settings: settings,
                       ),
                     ],
-                    if (settings.boolean('show_rating', true) &&
+                    if (settings.boolean('show_rating', false) &&
                         product.averageRating > 0) ...<Widget>[
                       const SizedBox(height: 5),
                       Row(
@@ -1360,6 +1389,80 @@ class _WishlistProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+double _wishlistContentHeight(
+  BuildContext context,
+  CmsPageComponent settings,
+  CatalogProduct product,
+  double cardWidth,
+) {
+  final theme = Theme.of(context).textTheme;
+  final showName = settings.boolean('show_name', false);
+  final showPrice = settings.boolean('show_price', true);
+  final showRating = settings.boolean('show_rating', false);
+  if (!showName && !showPrice && !showRating) return 0;
+  final width =
+      (cardWidth -
+              2 * settings.number('content_horizontal_padding', 9).clamp(0, 24))
+          .clamp(1, double.infinity)
+          .toDouble();
+  Size measure(String text, TextStyle? style, {int? maxLines}) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
+      maxLines: maxLines,
+      ellipsis: maxLines == null ? null : '…',
+    )..layout(maxWidth: width);
+    final size = painter.size;
+    painter.dispose();
+    return size;
+  }
+
+  double height =
+      settings.number('content_top_padding', 5).clamp(0, 24) +
+      settings.number('content_bottom_padding', 9).clamp(0, 24);
+  if (showName) {
+    height += measure(
+      product.name,
+      theme.bodyMedium?.copyWith(fontWeight: FontWeight.w400),
+      maxLines: 2,
+    ).height;
+  }
+  if (showPrice) {
+    if (showName) height += 7;
+    final money = product.prices;
+    final current = measure(
+      '${settings.string('price_prefix', '')}${money.displayAmount(money.priceMinor)}',
+      theme.titleSmall?.copyWith(
+        fontSize: settings.number('price_size', 14).clamp(10, 28).toDouble(),
+        fontWeight: FontWeight.w900,
+      ),
+    );
+    double priceHeight = current.height;
+    final regular = money.displayAmount(money.regularPriceMinor);
+    if (settings.boolean('show_regular_price', true) &&
+        money.isDiscounted &&
+        regular.isNotEmpty) {
+      final previous = measure(regular, theme.labelSmall);
+      priceHeight = current.width + 7 + previous.width > width
+          ? current.height + 3 + previous.height
+          : (current.height > previous.height
+                ? current.height
+                : previous.height);
+    }
+    height += priceHeight;
+  }
+  if (showRating && product.averageRating > 0) {
+    final ratingHeight = measure(
+      product.averageRating.toStringAsFixed(1),
+      DefaultTextStyle.of(context).style,
+    ).height;
+    height += 5 + (ratingHeight > 16 ? ratingHeight : 16);
+  }
+  return height.ceilToDouble();
 }
 
 List<String> _wishlistProductImageUrls(CatalogProduct product) => product.images

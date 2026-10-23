@@ -63,15 +63,13 @@ void main() {
     expect(find.byKey(const Key('wishlist-empty')), findsNothing);
     expect(find.text('Everyday Jacket'), findsNothing);
     expect(find.text(r'$85.00'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-count')), findsNothing);
     expect(find.text('1 item'), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
     final double logicalWidth =
         tester.view.physicalSize.width / tester.view.devicePixelRatio;
     expect(
-      tester
-          .getCenter(find.byKey(const Key('commerce-app-bar-title')))
-          .dx,
+      tester.getCenter(find.byKey(const Key('commerce-app-bar-title'))).dx,
       closeTo(logicalWidth / 2, 0.5),
     );
 
@@ -128,6 +126,43 @@ void main() {
         grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     expect(delegate.crossAxisCount, 2);
     expect(grid.padding?.resolve(TextDirection.rtl).top, 24);
+  });
+
+  testWidgets('mobile wishlist keeps image proportions and compact rows', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      _testApp(
+        WishlistScreen(
+          repository: FakeWishlistRepository(ids: <int>[1, 2, 3]),
+          catalogRepository: FakeWishlistCatalogRepository(
+            products: const [
+              wishlistProductOne,
+              wishlistProductTwo,
+              wishlistProductThree,
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final image = find
+        .descendant(
+          of: find.byKey(
+            const ValueKey('wishlist-image-inset-wishlist_grid-1'),
+          ),
+          matching: find.byType(ClipRRect),
+        )
+        .first;
+    final size = tester.getSize(image);
+    expect(size.width / size.height, closeTo(.75, .001));
+    final card = tester.getRect(find.byKey(const Key('wishlist-product-1')));
+    expect(card.height - size.height, lessThan(65));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('shows a retryable load error', (WidgetTester tester) async {
