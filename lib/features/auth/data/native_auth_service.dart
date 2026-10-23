@@ -689,7 +689,16 @@ class NativeAuthService implements NativeAuthActions {
           DioExceptionType.badCertificate => AuthFailureKind.certificate,
           _ => AuthFailureKind.connection,
         },
-        message: 'تعذر الاتصال الآمن بالمتجر. حاول تاني.',
+        message: switch (error.type) {
+          DioExceptionType.connectionTimeout ||
+          DioExceptionType.sendTimeout ||
+          DioExceptionType.receiveTimeout ||
+          DioExceptionType.transformTimeout =>
+            'الاتصال بالمتجر أخد وقت أطول من المتوقع. راجع الإنترنت وحاول تاني.',
+          DioExceptionType.badCertificate =>
+            'تعذر التحقق من شهادة أمان المتجر. حاول لاحقًا أو تواصل مع الدعم.',
+          _ => 'تعذر الاتصال بالمتجر. راجع الإنترنت وحاول تاني.',
+        },
       );
     }
     return const AuthRepositoryException(

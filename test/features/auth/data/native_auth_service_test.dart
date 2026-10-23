@@ -76,6 +76,94 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  for (final type in [
+    DioExceptionType.connectionError,
+    DioExceptionType.unknown,
+    DioExceptionType.connectionTimeout,
+    DioExceptionType.sendTimeout,
+    DioExceptionType.receiveTimeout,
+    DioExceptionType.transformTimeout,
+    DioExceptionType.badCertificate,
+  ]) {
+    for (final stage in ['config', 'identify']) {
+      test(
+        '$stage $type remains retryable without an authentication downgrade',
+        () async {
+          final h = _Harness();
+          var attempts = 0;
+          var unavailable = true;
+          h.dio.interceptors.insert(
+            0,
+            InterceptorsWrapper(
+              onRequest: (request, callback) {
+                if (request.uri.path.endsWith('/$stage')) {
+                  attempts++;
+                  if (unavailable) {
+                    callback.reject(
+                      DioException(
+                        requestOptions: request,
+                        type: type,
+                        message: 'private network diagnostics',
+                      ),
+                    );
+                    return;
+                  }
+                }
+                callback.next(request);
+              },
+            ),
+          );
+          h.handler = (request) async => h.response(request, {
+            'identifier': 'customer@example.com',
+            'kind': 'email',
+            'methods': ['password'],
+          });
+          final expectedKind = switch (type) {
+            DioExceptionType.badCertificate => AuthFailureKind.certificate,
+            DioExceptionType.connectionTimeout ||
+            DioExceptionType.sendTimeout ||
+            DioExceptionType.receiveTimeout ||
+            DioExceptionType.transformTimeout => AuthFailureKind.timeout,
+            _ => AuthFailureKind.connection,
+          };
+          final expectedMessage = switch (expectedKind) {
+            AuthFailureKind.certificate => contains('شهادة أمان'),
+            AuthFailureKind.timeout => contains('وقت أطول'),
+            _ => contains('راجع الإنترنت'),
+          };
+          await expectLater(
+            h.service.identify('customer@example.com'),
+            throwsA(
+              _failure
+                  .having((e) => e.kind, 'kind', expectedKind)
+                  .having(
+                    (e) => e.message,
+                    'actionable message',
+                    expectedMessage,
+                  )
+                  .having(
+                    (e) => e.message,
+                    'safe message',
+                    isNot(contains('private')),
+                  ),
+            ),
+          );
+          expect(attempts, 1);
+          expect(h.store.writes, 0);
+          expect(h.sdk.googleCalls, 0);
+          expect(h.sdk.challenges, isEmpty);
+          expect(h.legacy.identifications, 0);
+
+          unavailable = false;
+          final identity = await h.service.identify('customer@example.com');
+          expect(identity.methods, ['password']);
+          expect(attempts, 2);
+          expect(h.store.writes, 0);
+        },
+      );
+    }
+  }
+
   test(
     'known connector failures keep safe reason codes without exposing server text',
     () async {
