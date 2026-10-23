@@ -236,9 +236,15 @@ class _ProductListContent extends StatelessWidget {
               state.totalItems != null)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: Text('${copy.products} (${state.totalItems})',
-                  key: const Key('catalog-page-count'), textAlign: TextAlign.center),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                child: Text(
+                  '${copy.products} (${state.totalItems})',
+                  key: const Key('catalog-page-count'),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           if (showSearchField)
@@ -437,15 +443,19 @@ class _CatalogToolbar extends ConsumerWidget {
         selectedFilters: state.filters,
         belowToolbar: settings.string('button_style', 'outlined') == 'flat',
       );
-      if (selection != null) await controller.applySize(selection.option);
+      if (selection != null) await controller.applySizes(selection.options);
     }
 
     Future<void> openColor() async {
       if (settings.string('button_style', 'outlined') == 'flat') {
-        final selection = await CatalogSizeSheet.show(context,
-          options: state.availableColors, selectedFilters: state.filters,
-          belowToolbar: true, colors: true);
-        if (selection != null) await controller.applyColor(selection.option);
+        final selection = await CatalogSizeSheet.show(
+          context,
+          options: state.availableColors,
+          selectedFilters: state.filters,
+          belowToolbar: true,
+          colors: true,
+        );
+        if (selection != null) await controller.applyColors(selection.options);
         return;
       }
       final CatalogColorSelection? selection = await CatalogColorSheet.show(
@@ -453,7 +463,7 @@ class _CatalogToolbar extends ConsumerWidget {
         options: state.availableColors,
         selectedFilters: state.filters,
       );
-      if (selection != null) await controller.applyColor(selection.option);
+      if (selection != null) await controller.applyColors(selection.options);
     }
 
     Future<void> openFilters() async {
@@ -515,7 +525,10 @@ class _CatalogToolbar extends ConsumerWidget {
             key: const Key('catalog-filter-button'),
             label: copy.filter,
             trailing: Icons.tune_rounded,
-            iconOffsetY: settings.number('filter_icon_offset_y', -2).clamp(-8, 8).toDouble(),
+            iconOffsetY: settings
+                .number('filter_icon_offset_y', -2)
+                .clamp(-8, 8)
+                .toDouble(),
             color: iconColor,
             iconSize: iconSize,
             radius: buttonRadius,
@@ -624,7 +637,7 @@ class _CatalogToolbar extends ConsumerWidget {
                               selectedFilters: state.filters,
                             );
                         if (selection != null) {
-                          await controller.applySize(selection.option);
+                          await controller.applySizes(selection.options);
                         }
                       },
                     ),
@@ -800,8 +813,10 @@ class _FlatToolbarButton extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: color,
         padding: const EdgeInsets.symmetric(horizontal: 3),
-        minimumSize: const Size.fromHeight(54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+        minimumSize: const Size.fromHeight(44),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+        ),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -816,8 +831,10 @@ class _FlatToolbarButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            Transform.translate(offset: Offset(0, iconOffsetY),
-              child: Icon(trailing, size: iconSize)),
+            Transform.translate(
+              offset: Offset(0, iconOffsetY),
+              child: Icon(trailing, size: iconSize),
+            ),
           ],
         ),
       ),

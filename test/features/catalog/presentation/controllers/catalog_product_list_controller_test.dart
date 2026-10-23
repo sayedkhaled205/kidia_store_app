@@ -13,17 +13,23 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
-    test('notification offers destination requests only sale products', () async {
-      final repository = _FakeCatalogRepository(
-        products: (query) async => _page(query, items: [_product(1)], totalItems: 1, totalPages: 1),
-      );
-      final controller = CatalogProductListController(repository,
-        request: const CatalogProductListRequest(collection: 'sale'));
-      await controller.loadInitial();
-      expect(repository.productQueries.single.onSale, isTrue);
-      expect(controller.state.items.single.id, 1);
-      controller.dispose();
-    });
+    test(
+      'notification offers destination requests only sale products',
+      () async {
+        final repository = _FakeCatalogRepository(
+          products: (query) async =>
+              _page(query, items: [_product(1)], totalItems: 1, totalPages: 1),
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(collection: 'sale'),
+        );
+        await controller.loadInitial();
+        expect(repository.productQueries.single.onSale, isTrue);
+        expect(controller.state.items.single.id, 1);
+        controller.dispose();
+      },
+    );
 
     test(
       'loads the first page then appends a deduplicated next page',
@@ -144,30 +150,114 @@ void main() {
       controller.dispose();
     });
 
-    test('color combines with size and preserves other filters when cleared', () async {
-      final repository = _FakeCatalogRepository(products: (query) async => _page(query, items: [_product(1, withSizes: true)], totalItems: 1, totalPages: 1));
-      final controller = CatalogProductListController(repository, request: const CatalogProductListRequest());
-      await controller.loadInitial();
-      expect(controller.state.availableColors.single.term, 'blue');
-      await controller.applyFilters(const CatalogProductFilters(onSaleOnly: true, minimumPriceMinor: '1000', maximumPriceMinor: '9000', brandId: 18));
-      await controller.applyColor(controller.state.availableColors.single);
-      await controller.applySize(controller.state.availableSizes.last);
-      var query = repository.productQueries.last;
-      expect(query.attributes.map((a) => a.taxonomy), ['pa_size', 'pa_color']);
-      expect(query.attributes.last.terms, ['blue']);
-      expect(query.brandIds, [18]);
-      expect(query.onSale, true);
-      expect(query.minimumPriceMinor, '1000');
-      expect(query.maximumPriceMinor, '9000');
-      expect(controller.state.filters.hasColor, true);
-      await controller.applyColor(null);
-      query = repository.productQueries.last;
-      expect(query.attributes.single.taxonomy, 'pa_size');
-      expect(controller.state.filters.hasColor, false);
-      expect(query.brandIds, [18]);
-      expect(query.onSale, true);
-      controller.dispose();
-    });
+    test(
+      'multiple sizes and colors use OR terms with AND across groups',
+      () async {
+        final repository = _FakeCatalogRepository();
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(categoryId: 7),
+        );
+        await controller.loadInitial();
+        const small = CatalogSizeOption(
+          taxonomy: 'pa_size',
+          term: 's',
+          label: 'Small',
+        );
+        const medium = CatalogSizeOption(
+          taxonomy: 'pa_size',
+          term: 'm',
+          label: 'Medium',
+        );
+        const red = CatalogSizeOption(
+          taxonomy: 'pa_color',
+          term: 'red',
+          label: 'Red',
+        );
+        const blue = CatalogSizeOption(
+          taxonomy: 'pa_color',
+          term: 'blue',
+          label: 'Blue',
+        );
+        await controller.applyFilters(
+          const CatalogProductFilters(
+            onSaleOnly: true,
+            minimumPriceMinor: '1000',
+            sizes: [small, medium],
+            colors: [red, blue],
+          ),
+        );
+        final query = repository.productQueries.last;
+        expect(query.categoryIds, [7]);
+        expect(query.attributes.first.terms, ['m', 's']);
+        expect(query.attributes.last.terms, ['blue', 'red']);
+        expect(query.toStoreApiQuery()['attribute_relation'], 'and');
+        expect(query.toStoreApiQuery()['attributes[0][operator]'], 'in');
+        expect(query.toStoreApiQuery()['attributes[1][slug]'], 'blue,red');
+        expect(controller.state.filters.activeCount, 6);
+        final before = repository.productQueries.length;
+        await controller.applySizes([medium, small, small]);
+        expect(repository.productQueries.length, before);
+        await controller.applyColors([blue]);
+        expect(repository.productQueries.last.attributes.last.terms, ['blue']);
+        expect(controller.state.filters.sizes.length, 2);
+        await controller.applySizes([]);
+        expect(
+          repository.productQueries.last.attributes.single.taxonomy,
+          'pa_color',
+        );
+        expect(repository.productQueries.last.minimumPriceMinor, '1000');
+        expect(repository.productQueries.last.onSale, true);
+        controller.dispose();
+      },
+    );
+    test(
+      'color combines with size and preserves other filters when cleared',
+      () async {
+        final repository = _FakeCatalogRepository(
+          products: (query) async => _page(
+            query,
+            items: [_product(1, withSizes: true)],
+            totalItems: 1,
+            totalPages: 1,
+          ),
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(),
+        );
+        await controller.loadInitial();
+        expect(controller.state.availableColors.single.term, 'blue');
+        await controller.applyFilters(
+          const CatalogProductFilters(
+            onSaleOnly: true,
+            minimumPriceMinor: '1000',
+            maximumPriceMinor: '9000',
+            brandId: 18,
+          ),
+        );
+        await controller.applyColor(controller.state.availableColors.single);
+        await controller.applySize(controller.state.availableSizes.last);
+        var query = repository.productQueries.last;
+        expect(query.attributes.map((a) => a.taxonomy), [
+          'pa_size',
+          'pa_color',
+        ]);
+        expect(query.attributes.last.terms, ['blue']);
+        expect(query.brandIds, [18]);
+        expect(query.onSale, true);
+        expect(query.minimumPriceMinor, '1000');
+        expect(query.maximumPriceMinor, '9000');
+        expect(controller.state.filters.hasColor, true);
+        await controller.applyColor(null);
+        query = repository.productQueries.last;
+        expect(query.attributes.single.taxonomy, 'pa_size');
+        expect(controller.state.filters.hasColor, false);
+        expect(query.brandIds, [18]);
+        expect(query.onSale, true);
+        controller.dispose();
+      },
+    );
 
     test(
       'discovers sizes and sends the selected size to WooCommerce',
@@ -237,7 +327,13 @@ CatalogProduct _product(int id, {bool withSizes = false}) {
     isInStock: true,
     attributes: withSizes
         ? const <CatalogProductAttribute>[
-            CatalogProductAttribute(id: 2, name: 'Color', taxonomy: 'pa_color', hasVariations: true, terms: [CatalogAttributeTerm(id: 3, name: 'Blue', slug: 'blue')]),
+            CatalogProductAttribute(
+              id: 2,
+              name: 'Color',
+              taxonomy: 'pa_color',
+              hasVariations: true,
+              terms: [CatalogAttributeTerm(id: 3, name: 'Blue', slug: 'blue')],
+            ),
             CatalogProductAttribute(
               id: 1,
               name: 'Size',

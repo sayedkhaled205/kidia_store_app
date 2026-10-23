@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'catalog_toolbar_panel.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
+import 'catalog_toolbar_panel.dart';
 
 abstract final class CatalogSizeSheet {
   static Future<CatalogSizeSelection?> show(
@@ -11,62 +11,16 @@ abstract final class CatalogSizeSheet {
     bool belowToolbar = false,
     bool colors = false,
   }) {
-    final CatalogCopy copy = CatalogCopy.of(context);
+    Widget panel(BuildContext context) => _CatalogOptionPanel(
+      options: options,
+      initialSelection: colors ? selectedFilters.colors : selectedFilters.sizes,
+      colors: colors,
+      showTitle: !belowToolbar,
+    );
     if (belowToolbar) {
-      CatalogSizeOption? selected;
-      for (final option in options) {
-        if (option.taxonomy == (colors ? selectedFilters.colorTaxonomy : selectedFilters.sizeTaxonomy) &&
-            option.term == (colors ? selectedFilters.colorTerm : selectedFilters.sizeTerm)) {
-          selected = option;
-        }
-      }
       return showCatalogToolbarPanel<CatalogSizeSelection>(
         context,
-        builder: (context) => StatefulBuilder(
-          builder: (context, setState) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (options.isEmpty) Text(colors
-                    ? (copy.isArabic ? 'لا توجد ألوان متاحة لهذه المنتجات' : 'No colors available for these products')
-                    : copy.noSizes),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    for (final option in options)
-                      ChoiceChip(
-                        key: Key('catalog-size-${option.taxonomy}-${option.term}'),
-                        label: Text(option.label),
-                        selected: selected == option,
-                        showCheckmark: false,
-                        shape: const StadiumBorder(),
-                        onSelected: (value) => setState(() {
-                          selected = value ? option : null;
-                        }),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(children: [
-                  Expanded(child: OutlinedButton(
-                    onPressed: () => setState(() => selected = null),
-                    child: Text(copy.reset),
-                  )),
-                  const SizedBox(width: 8),
-                  Expanded(child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(
-                      CatalogSizeSelection(option: selected),
-                    ),
-                    child: Text(copy.apply),
-                  )),
-                ]),
-              ],
-            ),
-          ),
-        ),
+        builder: panel,
       );
     }
     return showModalBottomSheet<CatalogSizeSelection>(
@@ -74,84 +28,196 @@ abstract final class CatalogSizeSheet {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext context) => ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.72,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 10),
-              child: Text(
-                copy.chooseSize,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            if (options.isEmpty)
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 18, 20, 28),
-                child: Text(
-                  copy.noSizes,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              )
-            else
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 16),
-                  children: <Widget>[
-                    ListTile(
-                      key: const Key('catalog-size-all'),
-                      title: Text(copy.allSizes),
-                      leading: Icon(
-                        selectedFilters.hasSize
-                            ? Icons.radio_button_off_rounded
-                            : Icons.radio_button_checked_rounded,
-                      ),
-                      selected: !selectedFilters.hasSize,
-                      onTap: () => Navigator.of(
-                        context,
-                      ).pop(const CatalogSizeSelection()),
-                    ),
-                    for (final CatalogSizeOption option in options)
-                      ListTile(
-                        key: Key(
-                          'catalog-size-${option.taxonomy}-${option.term}',
-                        ),
-                        title: Text(option.label),
-                        leading: Icon(
-                          selectedFilters.sizeTaxonomy == option.taxonomy &&
-                                  selectedFilters.sizeTerm == option.term
-                              ? Icons.radio_button_checked_rounded
-                              : Icons.radio_button_off_rounded,
-                        ),
-                        selected:
-                            selectedFilters.sizeTaxonomy == option.taxonomy &&
-                            selectedFilters.sizeTerm == option.term,
-                        onTap: () => Navigator.of(
-                          context,
-                        ).pop(CatalogSizeSelection(option: option)),
-                      ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+      builder: panel,
     );
   }
 }
 
 class CatalogSizeSelection {
-  const CatalogSizeSelection({this.option});
+  const CatalogSizeSelection({this.options = const []});
+  final List<CatalogSizeOption> options;
+}
 
-  final CatalogSizeOption? option;
+class _CatalogOptionPanel extends StatefulWidget {
+  const _CatalogOptionPanel({
+    required this.options,
+    required this.initialSelection,
+    required this.colors,
+    required this.showTitle,
+  });
+  final List<CatalogSizeOption> options;
+  final List<CatalogSizeOption> initialSelection;
+  final bool colors;
+  final bool showTitle;
+  @override
+  State<_CatalogOptionPanel> createState() => _CatalogOptionPanelState();
+}
+
+class _CatalogOptionPanelState extends State<_CatalogOptionPanel> {
+  late final Map<String, CatalogSizeOption> _selected = {
+    for (final option in widget.initialSelection) option.key: option,
+  };
+  @override
+  Widget build(BuildContext context) {
+    final copy = CatalogCopy.of(context);
+    final theme = Theme.of(context);
+    final options = <String, CatalogSizeOption>{
+      for (final option in widget.initialSelection) option.key: option,
+      for (final option in widget.options) option.key: option,
+    }.values;
+    final prefix = widget.colors ? 'catalog-color' : 'catalog-size';
+    final buttonStyle = ButtonStyle(
+      minimumSize: const WidgetStatePropertyAll(Size.fromHeight(42)),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 12),
+      ),
+      textStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 14)),
+    );
+    return SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * .55,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (widget.showTitle) ...[
+                Text(
+                  widget.colors ? copy.chooseColor : copy.chooseSize,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Flexible(
+                child: SingleChildScrollView(
+                  child: options.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            widget.colors ? copy.noColors : copy.noSizes,
+                          ),
+                        )
+                      : Wrap(
+                          spacing: 8,
+                          runSpacing: 2,
+                          children: [
+                            for (final option in options)
+                              FilterChip(
+                                key: Key(
+                                  '$prefix-${option.taxonomy}-${option.term}',
+                                ),
+                                label: Text(option.label),
+                                labelStyle: theme.textTheme.labelLarge
+                                    ?.copyWith(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: _selected.containsKey(option.key)
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
+                                    ),
+                                avatar:
+                                    widget.colors &&
+                                        _color(option.label) != null
+                                    ? Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _color(option.label),
+                                          border: Border.all(
+                                            color: theme
+                                                .colorScheme
+                                                .outlineVariant,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                                selected: _selected.containsKey(option.key),
+                                showCheckmark: false,
+                                visualDensity: const VisualDensity(
+                                  horizontal: -2,
+                                  vertical: -1,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                ),
+                                shape: const StadiumBorder(),
+                                backgroundColor: theme.colorScheme.surface,
+                                selectedColor: theme.colorScheme.primary
+                                    .withValues(alpha: .08),
+                                side: BorderSide(
+                                  color: _selected.containsKey(option.key)
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.outlineVariant,
+                                  width: _selected.containsKey(option.key)
+                                      ? 1.5
+                                      : 1,
+                                ),
+                                onSelected: (value) => setState(() {
+                                  if (value) {
+                                    _selected[option.key] = option;
+                                  } else {
+                                    _selected.remove(option.key);
+                                  }
+                                }),
+                              ),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: Key('$prefix-reset'),
+                      style: buttonStyle,
+                      onPressed: () => setState(_selected.clear),
+                      child: Text(copy.reset),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      key: Key('$prefix-apply'),
+                      style: buttonStyle,
+                      onPressed: () => Navigator.of(context).pop(
+                        CatalogSizeSelection(
+                          options: List.unmodifiable(_selected.values),
+                        ),
+                      ),
+                      child: Text(copy.apply),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color? _color(String label) => switch (label.trim().toLowerCase()) {
+    'red' || 'أحمر' || 'احمر' => const Color(0xFFE47782),
+    'orange' || 'برتقالي' => const Color(0xFFEBA24E),
+    'pink' || 'وردي' || 'بينك' => const Color(0xFFDA88B8),
+    'brown' || 'بني' => const Color(0xFFAA7662),
+    'yellow' || 'أصفر' || 'اصفر' => const Color(0xFFE5CC63),
+    'blue' || 'أزرق' || 'ازرق' => const Color(0xFF83ADD6),
+    'green' || 'أخضر' || 'اخضر' => const Color(0xFF85B995),
+    'white' || 'أبيض' || 'ابيض' => Colors.white,
+    'black' || 'أسود' || 'اسود' => Colors.black,
+    'grey' || 'gray' || 'رمادي' => Colors.grey,
+    _ => null,
+  };
 }
