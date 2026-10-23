@@ -3,7 +3,7 @@
  * Plugin Name:       Mobi2App Connector for WooCommerce
  * Plugin URI:        https://woomobile.app/
  * Description:       Connect WooCommerce to WooMobile. Manage your mobile application from the WooMobile dashboard.
- * Version:           1.46.84
+ * Version:           1.46.85
  * Requires at least: 6.4
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 define(
 	'MOBISHOP_VERSION',
-	'1.46.84'
+	'1.46.85'
 );
 
 if ( ! defined( 'MOBISHOP_LICENSE_PUBLIC_KEY' ) ) {

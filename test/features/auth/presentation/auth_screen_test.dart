@@ -40,6 +40,23 @@ void main() {
     },
   );
 
+  testWidgets('Kids sign-in logo is ten percent smaller without distortion', (
+    tester,
+  ) async {
+    final fixture = _Fixture();
+    await fixture.pump(
+      tester,
+      logo: 'https://store.example/logo.png',
+      logoScale: 0.9,
+    );
+    final image = tester.widget<AppNetworkImage>(
+      find.byKey(const Key('auth-store-logo')),
+    );
+    expect(image.width, 198);
+    expect(image.height, closeTo(57.6, 0.001));
+    expect(image.fit, BoxFit.contain);
+  });
+
   testWidgets('capabilities hide unsupported phone and Google methods', (
     tester,
   ) async {
@@ -606,6 +623,7 @@ class _Fixture {
     WidgetTester tester, {
     String route = '/auth',
     String logo = '',
+    double logoScale = 1,
     Size size = const Size(390, 844),
   }) async {
     tester.view.physicalSize = size;
@@ -649,7 +667,7 @@ class _Fixture {
             (_) async => CmsPageLayout.fromJson({
               'page': 'account',
               'header': {
-                'settings': {'logo_url': logo},
+                'settings': {'logo_url': logo, 'auth_logo_scale': logoScale},
               },
             }),
           ),

@@ -47,7 +47,8 @@ class AccountScreen extends ConsumerWidget {
     final previewIdentity = AppConfig.isCmsPreview
         ? ref.watch(previewIdentityProvider).asData?.value
         : null;
-    final storeName = previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
+    final storeName =
+        previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     final bool isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     final AsyncValue<AuthSession?> authState = ref.watch(
@@ -120,7 +121,9 @@ class AccountScreen extends ConsumerWidget {
                 component: menuSettings,
                 child: Card(
                   elevation: flat ? 0 : null,
-                  margin: flat ? const EdgeInsets.symmetric(horizontal: 16) : null,
+                  margin: flat
+                      ? const EdgeInsets.symmetric(horizontal: 16)
+                      : null,
                   shape: flat ? const RoundedRectangleBorder() : null,
                   clipBehavior: Clip.antiAlias,
                   child: Column(
@@ -140,7 +143,8 @@ class AccountScreen extends ConsumerWidget {
                             action: visibleActions[index],
                           ),
                         ),
-                        if (!flat && index < visibleActions.length - 1) const Divider(),
+                        if (!flat && index < visibleActions.length - 1)
+                          const Divider(),
                       ],
                     ],
                   ),
@@ -151,11 +155,22 @@ class AccountScreen extends ConsumerWidget {
               const SizedBox(height: MobiShopSpacing.lg),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
-                child: OutlinedButton.icon(
-                  key: const Key('account-sign-out'),
-                  onPressed: () => _signOut(context, ref, isArabic),
-                  icon: const Icon(Icons.logout_rounded),
-                  label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
+                child: Center(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
+                      textStyle: const TextStyle(fontSize: 14),
+                      iconSize: 18,
+                    ),
+                    key: const Key('account-sign-out'),
+                    onPressed: () => _signOut(context, ref, isArabic),
+                    icon: const Icon(Icons.logout_rounded),
+                    label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
+                  ),
                 ),
               ),
             ],
@@ -375,20 +390,23 @@ class _AccountActionTile extends StatelessWidget {
         vertical: MobiShopSpacing.xs,
       ),
       minTileHeight: flat ? 64 : null,
-      leading: flat ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary) : Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: MobiShopColors.primaryLight,
-          borderRadius: BorderRadius.circular(MobiShopRadius.sm),
-        ),
-        child: Icon(action.icon, color: MobiShopColors.primaryDark),
-      ),
+      leading: flat
+          ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary)
+          : Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: MobiShopColors.primaryLight,
+                borderRadius: BorderRadius.circular(MobiShopRadius.sm),
+              ),
+              child: Icon(action.icon, color: MobiShopColors.primaryDark),
+            ),
       title: Text(
         action.label(isArabic),
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: flat ? FontWeight.w400 : FontWeight.w800, fontSize: flat ? 16 : null),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: flat ? FontWeight.w400 : FontWeight.w800,
+          fontSize: flat ? 16 : null,
+        ),
       ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,

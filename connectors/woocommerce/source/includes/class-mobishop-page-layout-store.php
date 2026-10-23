@@ -43,6 +43,7 @@ final class MobiShop_Page_Layout_Store {
 			self::field( 'compact_shadow', __( 'Collapsed header shadow', 'mobi2app-connector' ), 'select', 'subtle', array( 'none' => __( 'None', 'mobi2app-connector' ), 'subtle' => __( 'Subtle', 'mobi2app-connector' ), 'strong' => __( 'Strong', 'mobi2app-connector' ) ) ),
 			self::field( 'title', __( 'Page title', 'mobi2app-connector' ), 'text', '' ),
 			self::field( 'subtitle', __( 'Subtitle', 'mobi2app-connector' ), 'text', '' ),
+			self::field( 'auth_logo_scale', __( 'Sign-in logo scale', 'mobi2app-connector' ), 'number', 1, array(), 0.5, 1.5 ),
 			self::field( 'logo_url', __( 'Logo image', 'mobi2app-connector' ), 'image', '' ),
 			self::field( 'logo_fit', __( 'Logo fitting', 'mobishop' ), 'select', 'contain', array( 'contain' => __( 'Show whole image', 'mobishop' ), 'cover' => __( 'Fill logo frame', 'mobishop' ) ) ),
 			self::field( 'logo_text', __( 'Logo text', 'mobi2app-connector' ), 'text', __( 'Mobi2App Connector for WooCommerce', 'mobi2app-connector' ) ),

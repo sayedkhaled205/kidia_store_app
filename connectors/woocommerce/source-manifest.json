@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.84",
+  "version": "1.46.85",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "803cded3ee10d59429aa273c1b148948c3a6b2d4e428e55083e25ee09a6cf154",
-      "sha256": "803cded3ee10d59429aa273c1b148948c3a6b2d4e428e55083e25ee09a6cf154"
+      "source_sha256": "59621c9c44f013c766b35f59584614b9adae7b07096dc1e6f3785537aa8372d5",
+      "sha256": "59621c9c44f013c766b35f59584614b9adae7b07096dc1e6f3785537aa8372d5"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2760,8 +2760,8 @@
     "includes/class-mobishop-page-layout-store.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-page-layout-store.php",
       "newline": "binary",
-      "source_sha256": "405ff940018f450c6a263c1766d1f498187e139f494ca6c167afe6e0c1674106",
-      "sha256": "405ff940018f450c6a263c1766d1f498187e139f494ca6c167afe6e0c1674106"
+      "source_sha256": "9431b3d591da852eb11c054fa85c3e18a86c7c56dcec54934bcceaee61208e0e",
+      "sha256": "9431b3d591da852eb11c054fa85c3e18a86c7c56dcec54934bcceaee61208e0e"
     },
     "includes/class-mobishop-product-channel-visibility.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-product-channel-visibility.php",
@@ -2784,8 +2784,8 @@
     "includes/class-mobishop-setup-wizard.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-setup-wizard.php",
       "newline": "lf",
-      "source_sha256": "39abbbf37c2b7b1c867644a84c9c7085b2f9db3836e5e120526e79a84982ecff",
-      "sha256": "39abbbf37c2b7b1c867644a84c9c7085b2f9db3836e5e120526e79a84982ecff"
+      "source_sha256": "f977e8ece6157a672b43cd84f61f1ccf5a5ead1b9e55bba006b7f4b33b6c5521",
+      "sha256": "f977e8ece6157a672b43cd84f61f1ccf5a5ead1b9e55bba006b7f4b33b6c5521"
     },
     "includes/class-mobishop-website-app-promotion.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-website-app-promotion.php",
@@ -2928,8 +2928,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "a8aa8397b913d6eb4a118c73e52bba332fc7f54d60d1db890edc4c02937ce7aa",
-      "sha256": "a8aa8397b913d6eb4a118c73e52bba332fc7f54d60d1db890edc4c02937ce7aa"
+      "source_sha256": "da20f553cbb424387ca571681eb84ec6b9202d9dcd783be263cbfb8193e84e5d",
+      "sha256": "da20f553cbb424387ca571681eb84ec6b9202d9dcd783be263cbfb8193e84e5d"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2964,8 +2964,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "bddbe3860aa2672d47858e5526a118de69242589644289cd3242d6e631725ee1",
-      "sha256": "bddbe3860aa2672d47858e5526a118de69242589644289cd3242d6e631725ee1"
+      "source_sha256": "db19a76fe28d7d704fe7da1ed67fc0556ef219798a4bc57511a60c0df56daa91",
+      "sha256": "db19a76fe28d7d704fe7da1ed67fc0556ef219798a4bc57511a60c0df56daa91"
     }
   },
   "baseline_release": {
