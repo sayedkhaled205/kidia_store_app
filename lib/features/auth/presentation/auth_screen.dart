@@ -153,6 +153,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         _StoreMark(
                           storeName: storeName,
                           logoUrl: logo,
+                          scale:
+                              ref
+                                  .watch(cmsPageLayoutProvider('account'))
+                                  .value
+                                  ?.header
+                                  .number('auth_logo_scale', 1) ??
+                              1,
                           aspectRatio:
                               ref
                                   .watch(cmsPageLayoutProvider('account'))
@@ -1156,10 +1163,12 @@ class _StoreMark extends StatelessWidget {
     required this.storeName,
     required this.logoUrl,
     this.aspectRatio = 0,
+    this.scale = 1,
   });
   final String storeName;
   final String logoUrl;
   final double aspectRatio;
+  final double scale;
   @override
   Widget build(BuildContext context) {
     final name = Center(
@@ -1186,8 +1195,8 @@ class _StoreMark extends StatelessWidget {
                   imageUrl: logoUrl,
                   trimTransparentPadding: true,
                   contentAspectRatio: aspectRatio,
-                  width: 220,
-                  height: 64,
+                  width: 220 * scale.clamp(0.5, 1.5),
+                  height: 64 * scale.clamp(0.5, 1.5),
                   fit: BoxFit.contain,
                   semanticLabel: storeName,
                   placeholder: name,

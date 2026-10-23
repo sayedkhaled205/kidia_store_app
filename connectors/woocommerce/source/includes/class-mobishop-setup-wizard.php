@@ -1783,6 +1783,7 @@ final class MobiShop_Setup_Wizard {
 		}
 		if ( 'kids_baby' === ( $theme['layout_profile'] ?? '' ) ) {
 			$layout['settings']['font_family'] = 'poppins';
+			$layout['header']['settings']['auth_logo_scale'] = 0.9;
 			$layout['settings']['page_background_color'] = '#FFFFFF';
 			$crop = self::logo_crop( $logo_url );
 			if ( $crop ) { $layout['header']['settings']['logo_url'] = preg_replace('/#.*$/', '', $logo_url) . '#wm=' . implode(',', $crop); }
@@ -1794,8 +1795,8 @@ final class MobiShop_Setup_Wizard {
 			$layout['header']['settings']['title_font_size'] = 16;
 			$layout['header']['settings']['title_font_weight'] = '600';
 			if ( 'home' === $page ) {
-				$layout['header']['settings']['logo_width'] = 100;
-				$layout['header']['settings']['logo_height'] = 34;
+				$layout['header']['settings']['logo_width'] = 90;
+				$layout['header']['settings']['logo_height'] = 30.6;
 				$layout['header']['settings']['logo_fit'] = 'contain';
 				$layout['header']['settings']['row_1_height'] = 52;
 				$layout['header']['settings']['row_gap'] = 2;
