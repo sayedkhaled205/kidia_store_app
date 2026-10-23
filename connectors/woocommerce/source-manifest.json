@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.83",
+  "version": "1.46.84",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "d92d913ed3e2373b77aa749ff59a6ba0f346d615b2eb040dbc49ed5bedf19548",
-      "sha256": "d92d913ed3e2373b77aa749ff59a6ba0f346d615b2eb040dbc49ed5bedf19548"
+      "source_sha256": "803cded3ee10d59429aa273c1b148948c3a6b2d4e428e55083e25ee09a6cf154",
+      "sha256": "803cded3ee10d59429aa273c1b148948c3a6b2d4e428e55083e25ee09a6cf154"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2634,8 +2634,8 @@
     "includes/central/kidia-builder-setup-identity.php": {
       "source": "connectors/woocommerce/source/includes/central/kidia-builder-setup-identity.php",
       "newline": "crlf",
-      "source_sha256": "9aa9b962798b2d0b80930146537818c6714cb52c5f12ad807da45fb0dbb35d36",
-      "sha256": "4786ca38af7718ebac71847ce38b68f0b377ecfbb9fd616499cadae41ad7f21b"
+      "source_sha256": "dd73865d786e614aaa226d1b3c1d5555ce2adc31123f42ae0fad119f1960e73d",
+      "sha256": "f899b0c13a4ab1099482263437b6543c7fe0aa4f13016ceae5c70a4b888dca02"
     },
     "includes/central/kidia-push-actions.php": {
       "source": "connectors/woocommerce/source/includes/central/kidia-push-actions.php",
@@ -2928,8 +2928,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "a000b53da2fce78331b07b33db4de26e4b5398e7973df6dfc88421a76862d303",
-      "sha256": "a000b53da2fce78331b07b33db4de26e4b5398e7973df6dfc88421a76862d303"
+      "source_sha256": "a8aa8397b913d6eb4a118c73e52bba332fc7f54d60d1db890edc4c02937ce7aa",
+      "sha256": "a8aa8397b913d6eb4a118c73e52bba332fc7f54d60d1db890edc4c02937ce7aa"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2964,8 +2964,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "f26088eab65dca794b23703cd89876f64509ff486751ebfa305291556e0d3a9a",
-      "sha256": "f26088eab65dca794b23703cd89876f64509ff486751ebfa305291556e0d3a9a"
+      "source_sha256": "bddbe3860aa2672d47858e5526a118de69242589644289cd3242d6e631725ee1",
+      "sha256": "bddbe3860aa2672d47858e5526a118de69242589644289cd3242d6e631725ee1"
     }
   },
   "baseline_release": {

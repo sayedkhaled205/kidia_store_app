@@ -33,6 +33,20 @@ final class MobiShop_Central_Setup_Identity
             'page_themes'=>array_fill_keys(array_keys(MobiShop_Setup_Wizard::setup_pages()),$themeKey),
             'enabled_pages'=>$enabled->invoke($wizard,$submitted['enabled_pages']??null),
         ];
+        // Theme application consumes the canonical identity, not the page layout.
+        // Carry artwork bounds here so applying a preset cannot restore padded logos.
+        if($themeKey==='kids_baby' && $identity['logo_url']!=='') {
+            $url=$identity['logo_url'];
+            if(explode('#',$url)[0]===explode('#',$logoRaw)[0]) $url=$logoRaw;
+            $saved=get_option('mobishop_app_identity',[]);
+            $savedUrl=is_array($saved)?(string)($saved['logo_url']??''):'';
+            if(!str_contains($url,'#wm=') && str_contains($savedUrl,'#wm=') && explode('#',$url)[0]===explode('#',$savedUrl)[0]) $url=$savedUrl;
+            $parts=[];
+            if(preg_match('/#wm=([0-9.,]+)$/D',$url,$match)) $parts=array_map('floatval',explode(',',$match[1]));
+            $valid=count($parts)===5 && $parts[0]>=0 && $parts[1]>=0 && $parts[2]>0 && $parts[3]>0 && $parts[0]+$parts[2]<=1.001 && $parts[1]+$parts[3]<=1.001 && $parts[4]>0 && $parts[4]<=20;
+            $crop=$valid?$parts:MobiShop_Setup_Wizard::logo_crop($url);
+            if($crop) $identity['logo_url']=explode('#',$url)[0].'#wm='.implode(',',$crop);
+        }
         return $identity;
     }
 
