@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app/app.dart';
+import 'features/auth/data/cms_preview_auth_actions.dart';
+import 'features/auth/presentation/providers/native_auth_providers.dart';
+import 'core/config/app_config.dart';
 import 'features/cart/data/repositories/cms_preview_cart_repository.dart';
 import 'features/cart/presentation/providers/cart_providers.dart';
 import 'features/cart/presentation/cart_screen.dart';
@@ -109,6 +112,12 @@ void main() {
   runApp(
     ProviderScope(
       overrides: [
+        nativeAuthActionsProvider.overrideWith(
+          (ref) => CmsPreviewAuthActions(
+            CmsPreviewLayoutBridge.fetchAuthConfiguration,
+            isArabic: AppConfig.storeLocale.startsWith('ar'),
+          ),
+        ),
         catalogRepositoryProvider.overrideWithValue(previewCatalog),
         cartRepositoryProvider.overrideWithValue(
           CmsPreviewCartRepository(previewCatalog),

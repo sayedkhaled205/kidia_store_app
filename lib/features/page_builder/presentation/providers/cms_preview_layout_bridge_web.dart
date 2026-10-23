@@ -23,6 +23,8 @@ class CmsPreviewLayoutBridge {
   static final Map<int, Completer<Map<String, dynamic>>> _catalogRequests =
       <int, Completer<Map<String, dynamic>>>{};
   static int _nextCatalogRequest = 0;
+  static final Map<int, Completer<Map<String, dynamic>>> _authRequests = {};
+  static int _nextAuthRequest = 0;
   static final StreamController<String> _changes =
       StreamController<String>.broadcast();
   static final StreamController<String> _focusTargets =
@@ -34,6 +36,25 @@ class CmsPreviewLayoutBridge {
   static bool useLiveCatalog = false;
 
   static Map<String, dynamic>? get currentHomeLayout => _home;
+
+  static Future<Map<String, dynamic>> fetchAuthConfiguration() async {
+    _listen();
+    final requestId = ++_nextAuthRequest;
+    final result = Completer<Map<String, dynamic>>();
+    _authRequests[requestId] = result;
+    web.window.parent?.postMessage(
+      jsonEncode({
+        'type': 'mobishop-preview-auth-config-request',
+        'request_id': requestId,
+      }).toJS,
+      web.window.location.origin.toJS,
+    );
+    try {
+      return await result.future.timeout(const Duration(seconds: 25));
+    } finally {
+      _authRequests.remove(requestId);
+    }
+  }
 
   static int get catalogRevision => _catalogRevision;
 
@@ -144,6 +165,14 @@ class CmsPreviewLayoutBridge {
           }
         }
         if (message is! Map) return;
+        if (message['type'] == 'mobishop-preview-auth-config-response') {
+          final requestId = int.tryParse('${message['request_id'] ?? ''}');
+          final waiting = _authRequests[requestId];
+          if (waiting != null && !waiting.isCompleted) {
+            waiting.complete(Map<String, dynamic>.from(message));
+          }
+          return;
+        }
         if (message['type'] == 'mobishop-preview-catalog-response') {
           final int? requestId = int.tryParse('${message['request_id'] ?? ''}');
           final Completer<Map<String, dynamic>>? waiting =
