@@ -62,58 +62,101 @@ class CatalogProductFilters {
     this.maximumPriceMinor = '',
     this.brandId,
     this.brandLabel = '',
-    this.sizeTaxonomy = '',
-    this.sizeTerm = '',
-    this.sizeLabel = '',
-    this.colorTaxonomy = '',
-    this.colorTerm = '',
-    this.colorLabel = '',
-  });
+    String sizeTaxonomy = '',
+    String sizeTerm = '',
+    String sizeLabel = '',
+    String colorTaxonomy = '',
+    String colorTerm = '',
+    String colorLabel = '',
+    List<CatalogSizeOption>? sizes,
+    List<CatalogSizeOption>? colors,
+    // Public selection arguments remain compatible with legacy single-value filters.
+    // ignore: prefer_initializing_formals
+  }) : _sizes = sizes,
+       // ignore: prefer_initializing_formals
+       _colors = colors,
+       _legacySize = (taxonomy: sizeTaxonomy, term: sizeTerm, label: sizeLabel),
+       _legacyColor = (
+         taxonomy: colorTaxonomy,
+         term: colorTerm,
+         label: colorLabel,
+       );
 
   final bool onSaleOnly;
   final String minimumPriceMinor;
   final String maximumPriceMinor;
   final int? brandId;
   final String brandLabel;
-  final String sizeTaxonomy;
-  final String sizeTerm;
-  final String sizeLabel;
-  final String colorTaxonomy;
-  final String colorTerm;
-  final String colorLabel;
+  final List<CatalogSizeOption>? _sizes;
+  final List<CatalogSizeOption>? _colors;
+  final ({String taxonomy, String term, String label}) _legacySize;
+  final ({String taxonomy, String term, String label}) _legacyColor;
+
+  List<CatalogSizeOption> get sizes => _options(_sizes, _legacySize);
+  List<CatalogSizeOption> get colors => _options(_colors, _legacyColor);
+  String get sizeTaxonomy => sizes.firstOrNull?.taxonomy ?? '';
+  String get sizeTerm => sizes.firstOrNull?.term ?? '';
+  String get sizeLabel => sizes.firstOrNull?.label ?? '';
+  String get colorTaxonomy => colors.firstOrNull?.taxonomy ?? '';
+  String get colorTerm => colors.firstOrNull?.term ?? '';
+  String get colorLabel => colors.firstOrNull?.label ?? '';
+
+  static List<CatalogSizeOption> _options(
+    List<CatalogSizeOption>? values,
+    ({String taxonomy, String term, String label}) legacy,
+  ) {
+    final entries =
+        values ??
+        [
+          if (legacy.taxonomy.isNotEmpty && legacy.term.isNotEmpty)
+            CatalogSizeOption(
+              taxonomy: legacy.taxonomy,
+              term: legacy.term,
+              label: legacy.label,
+            ),
+        ];
+    final unique = <String, CatalogSizeOption>{
+      for (final option in entries)
+        if (option.taxonomy.isNotEmpty && option.term.isNotEmpty)
+          option.key: option,
+    }.values.toList()..sort((a, b) => a.key.compareTo(b.key));
+    return List.unmodifiable(unique);
+  }
 
   bool get hasBrand => brandId != null && brandId! > 0;
-  bool get hasColor => colorTaxonomy.isNotEmpty && colorTerm.isNotEmpty;
-  bool get hasSize => sizeTaxonomy.isNotEmpty && sizeTerm.isNotEmpty;
-
-  int get generalActiveCount {
-    return (onSaleOnly ? 1 : 0) +
-        (minimumPriceMinor.isNotEmpty ? 1 : 0) +
-        (maximumPriceMinor.isNotEmpty ? 1 : 0) +
-        (hasBrand ? 1 : 0);
-  }
-
-  int get activeCount {
-    return generalActiveCount + (hasSize ? 1 : 0) + (hasColor ? 1 : 0);
-  }
-
+  bool get hasColor => colors.isNotEmpty;
+  bool get hasSize => sizes.isNotEmpty;
+  int get generalActiveCount =>
+      (onSaleOnly ? 1 : 0) +
+      (minimumPriceMinor.isNotEmpty ? 1 : 0) +
+      (maximumPriceMinor.isNotEmpty ? 1 : 0) +
+      (hasBrand ? 1 : 0);
+  int get activeCount => generalActiveCount + sizes.length + colors.length;
   bool get isEmpty => activeCount == 0;
 
+  CatalogProductFilters withOptions({
+    List<CatalogSizeOption>? sizes,
+    List<CatalogSizeOption>? colors,
+  }) => CatalogProductFilters(
+    onSaleOnly: onSaleOnly,
+    minimumPriceMinor: minimumPriceMinor,
+    maximumPriceMinor: maximumPriceMinor,
+    brandId: brandId,
+    brandLabel: brandLabel,
+    sizes: List.unmodifiable(sizes ?? this.sizes),
+    colors: List.unmodifiable(colors ?? this.colors),
+  );
+
   @override
-  bool operator ==(Object other) {
-    return other is CatalogProductFilters &&
-        other.onSaleOnly == onSaleOnly &&
-        other.minimumPriceMinor == minimumPriceMinor &&
-        other.maximumPriceMinor == maximumPriceMinor &&
-        other.brandId == brandId &&
-        other.brandLabel == brandLabel &&
-        other.sizeTaxonomy == sizeTaxonomy &&
-        other.sizeTerm == sizeTerm &&
-        other.sizeLabel == sizeLabel &&
-        other.colorTaxonomy == colorTaxonomy &&
-        other.colorTerm == colorTerm &&
-        other.colorLabel == colorLabel;
-  }
+  bool operator ==(Object other) =>
+      other is CatalogProductFilters &&
+      other.onSaleOnly == onSaleOnly &&
+      other.minimumPriceMinor == minimumPriceMinor &&
+      other.maximumPriceMinor == maximumPriceMinor &&
+      other.brandId == brandId &&
+      other.brandLabel == brandLabel &&
+      listEquals(other.sizes, sizes) &&
+      listEquals(other.colors, colors);
 
   @override
   int get hashCode => Object.hash(
@@ -122,12 +165,8 @@ class CatalogProductFilters {
     maximumPriceMinor,
     brandId,
     brandLabel,
-    sizeTaxonomy,
-    sizeTerm,
-    sizeLabel,
-    colorTaxonomy,
-    colorTerm,
-    colorLabel,
+    Object.hashAll(sizes),
+    Object.hashAll(colors),
   );
 }
 
@@ -137,12 +176,15 @@ class CatalogSizeOption {
     required this.term,
     required this.label,
   });
-
   final String taxonomy;
   final String term;
   final String label;
-
   String get key => '$taxonomy|$term';
+  @override
+  bool operator ==(Object other) =>
+      other is CatalogSizeOption && other.key == key;
+  @override
+  int get hashCode => key.hashCode;
 }
 
 class CatalogProductListState {
@@ -561,43 +603,12 @@ class CatalogProductListController extends ChangeNotifier {
     await loadInitial();
   }
 
-  Future<void> applySize(CatalogSizeOption? size) {
-    final CatalogProductFilters current = _state.filters;
-    return applyFilters(
-      CatalogProductFilters(
-        onSaleOnly: current.onSaleOnly,
-        minimumPriceMinor: current.minimumPriceMinor,
-        maximumPriceMinor: current.maximumPriceMinor,
-        brandId: current.brandId,
-        brandLabel: current.brandLabel,
-        sizeTaxonomy: size?.taxonomy ?? '',
-        sizeTerm: size?.term ?? '',
-        sizeLabel: size?.label ?? '',
-        colorTaxonomy: current.colorTaxonomy,
-        colorTerm: current.colorTerm,
-        colorLabel: current.colorLabel,
-      ),
-    );
-  }
-
-  Future<void> applyColor(CatalogSizeOption? color) {
-    final CatalogProductFilters current = _state.filters;
-    return applyFilters(
-      CatalogProductFilters(
-        onSaleOnly: current.onSaleOnly,
-        minimumPriceMinor: current.minimumPriceMinor,
-        maximumPriceMinor: current.maximumPriceMinor,
-        brandId: current.brandId,
-        brandLabel: current.brandLabel,
-        sizeTaxonomy: current.sizeTaxonomy,
-        sizeTerm: current.sizeTerm,
-        sizeLabel: current.sizeLabel,
-        colorTaxonomy: color?.taxonomy ?? '',
-        colorTerm: color?.term ?? '',
-        colorLabel: color?.label ?? '',
-      ),
-    );
-  }
+  Future<void> applySize(CatalogSizeOption? size) => applySizes([?size]);
+  Future<void> applyColor(CatalogSizeOption? color) => applyColors([?color]);
+  Future<void> applySizes(List<CatalogSizeOption> sizes) =>
+      applyFilters(_state.filters.withOptions(sizes: sizes));
+  Future<void> applyColors(List<CatalogSizeOption> colors) =>
+      applyFilters(_state.filters.withOptions(colors: colors));
 
   Future<void> submitSearch(String value) async {
     final String search = value.trim();
@@ -663,21 +674,23 @@ class CatalogProductListController extends ChangeNotifier {
           : const <int>[],
       minimumPriceMinor: filters.minimumPriceMinor,
       maximumPriceMinor: filters.maximumPriceMinor,
-      attributes: <CatalogAttributeFilter>[
-        if (filters.hasSize)
-          CatalogAttributeFilter(
-            taxonomy: filters.sizeTaxonomy,
-            terms: <String>[filters.sizeTerm],
-          ),
-        if (filters.hasColor)
-          CatalogAttributeFilter(
-            taxonomy: filters.colorTaxonomy,
-            terms: <String>[filters.colorTerm],
-          ),
-      ],
+      attributes: _attributeFilters([...filters.sizes, ...filters.colors]),
       onSale: filters.onSaleOnly || collectionIsSale ? true : null,
       featured: collectionIsFeatured ? true : null,
     );
+  }
+
+  static List<CatalogAttributeFilter> _attributeFilters(
+    List<CatalogSizeOption> options,
+  ) {
+    final groups = <String, Set<String>>{};
+    for (final option in options) {
+      groups.putIfAbsent(option.taxonomy, () => <String>{}).add(option.term);
+    }
+    return [
+      for (final group in groups.entries)
+        CatalogAttributeFilter(taxonomy: group.key, terms: group.value),
+    ];
   }
 
   static List<CatalogSizeOption> _discoverSizeOptions(

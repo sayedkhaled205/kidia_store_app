@@ -41,7 +41,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
       return showGeneralDialog<CatalogProductFilters>(
         context: context,
         barrierDismissible: true,
-        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
         barrierColor: Colors.black45,
         pageBuilder: (context, animation, secondaryAnimation) => Align(
           alignment: Alignment.centerRight,
@@ -50,25 +52,38 @@ class CatalogProductFilterSheet extends StatefulWidget {
             height: double.infinity,
             child: Material(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
               clipBehavior: Clip.antiAlias,
-              child: SafeArea(child: Column(children: [
-                Align(alignment: Alignment.topRight, child: IconButton(
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                )),
-                Expanded(child: CatalogProductFilterSheet(
-                  initialFilters: initialFilters,
-                  currencyMinorUnit: currencyMinorUnit,
-                  minimumAvailableMinor: minimumAvailableMinor,
-                  maximumAvailableMinor: maximumAvailableMinor,
-                  brands: brands,
-                  showPrice: showPrice,
-                  showSale: showSale,
-                  showBrand: showBrand,
-                )),
-              ])),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        tooltip: MaterialLocalizations.of(
+                          context,
+                        ).closeButtonTooltip,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                    Expanded(
+                      child: CatalogProductFilterSheet(
+                        initialFilters: initialFilters,
+                        currencyMinorUnit: currencyMinorUnit,
+                        minimumAvailableMinor: minimumAvailableMinor,
+                        maximumAvailableMinor: maximumAvailableMinor,
+                        brands: brands,
+                        showPrice: showPrice,
+                        showSale: showSale,
+                        showBrand: showBrand,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -159,20 +174,22 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
             children: <Widget>[
               Text(
                 copy.filters,
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 18),
-              if (widget.showSale) SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: Text(copy.onSaleOnly),
-                secondary: const Icon(Icons.local_offer_outlined),
-                value: _onSaleOnly,
-                onChanged: (bool value) => setState(() {
-                  _onSaleOnly = value;
-                }),
-              ),
+              const SizedBox(height: 10),
+              if (widget.showSale)
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(copy.onSaleOnly),
+                  secondary: const Icon(Icons.local_offer_outlined),
+                  value: _onSaleOnly,
+                  onChanged: (bool value) => setState(() {
+                    _onSaleOnly = value;
+                  }),
+                ),
               if (widget.showBrand && widget.brands.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
@@ -209,45 +226,46 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   }),
                 ),
               ],
-              if (widget.showPrice) const Divider(height: 32),
-              if (widget.showPrice) Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      controller: _minimumController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+              if (widget.showPrice) const Divider(height: 20),
+              if (widget.showPrice)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        controller: _minimumController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: copy.minimumPrice,
+                          hintText: minimumAvailable.isEmpty
+                              ? null
+                              : minimumAvailable,
+                        ),
+                        validator: (String? value) =>
+                            _priceValidator(value, copy),
                       ),
-                      decoration: InputDecoration(
-                        labelText: copy.minimumPrice,
-                        hintText: minimumAvailable.isEmpty
-                            ? null
-                            : minimumAvailable,
-                      ),
-                      validator: (String? value) =>
-                          _priceValidator(value, copy),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _maximumController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _maximumController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: copy.maximumPrice,
+                          hintText: maximumAvailable.isEmpty
+                              ? null
+                              : maximumAvailable,
+                        ),
+                        validator: (String? value) =>
+                            _priceValidator(value, copy),
                       ),
-                      decoration: InputDecoration(
-                        labelText: copy.maximumPrice,
-                        hintText: maximumAvailable.isEmpty
-                            ? null
-                            : maximumAvailable,
-                      ),
-                      validator: (String? value) =>
-                          _priceValidator(value, copy),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               if (_rangeError != null) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
@@ -257,7 +275,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 14),
               FilledButton(
                 onPressed: () => _submit(copy),
                 child: Text(copy.apply),
@@ -266,12 +284,8 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(
                   CatalogProductFilters(
-                    sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
-                    sizeTerm: widget.initialFilters.sizeTerm,
-                    sizeLabel: widget.initialFilters.sizeLabel,
-                    colorTaxonomy: widget.initialFilters.colorTaxonomy,
-                    colorTerm: widget.initialFilters.colorTerm,
-                    colorLabel: widget.initialFilters.colorLabel,
+                    sizes: widget.initialFilters.sizes,
+                    colors: widget.initialFilters.colors,
                   ),
                 ),
                 child: Text(copy.reset),
@@ -332,12 +346,8 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
         maximumPriceMinor: maximum,
         brandId: _brandId,
         brandLabel: _selectedBrandLabel(),
-        sizeTaxonomy: widget.initialFilters.sizeTaxonomy,
-        sizeTerm: widget.initialFilters.sizeTerm,
-        sizeLabel: widget.initialFilters.sizeLabel,
-        colorTaxonomy: widget.initialFilters.colorTaxonomy,
-        colorTerm: widget.initialFilters.colorTerm,
-        colorLabel: widget.initialFilters.colorLabel,
+        sizes: widget.initialFilters.sizes,
+        colors: widget.initialFilters.colors,
       ),
     );
   }
