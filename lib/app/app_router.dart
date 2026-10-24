@@ -32,6 +32,7 @@ import '../features/catalog/presentation/pages/catalog_product_list_screen.dart'
 import '../features/catalog/presentation/providers/catalog_providers.dart';
 import '../features/categories/presentation/categories_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
+import '../features/checkout/presentation/odoo_checkout_screen101.dart';
 import '../features/checkout/presentation/checkout_presentation_provider.dart';
 import '../features/checkout/presentation/providers/checkout_customer_binding_provider.dart';
 import '../features/checkout/domain/entities/checkout_presentation.dart';
@@ -188,6 +189,8 @@ GoRouter createAppRouter({
                                             selection.variationId ??
                                             selection.productId,
                                         quantity: selection.quantity,
+                                        catalogProductId: selection.productId,
+                                        variantId: selection.variationId,
                                         variation: selection
                                             .selectedAttributes
                                             .entries
@@ -598,6 +601,7 @@ GoRouter createAppRouter({
         path: '/checkout',
         builder: (context, state) => Consumer(
           builder: (context, ref, child) {
+            if (useOdooCustomer) return const OdooCheckoutScreen101();
             final AsyncValue<AuthSession?> authState = ref.watch(
               authControllerProvider,
             );

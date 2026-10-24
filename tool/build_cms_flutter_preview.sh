@@ -27,6 +27,7 @@ if (window.__mobishopPreviewVersion) { _flutter.buildConfig.builds.forEach(funct
 node "$ROOT/tool/patch_cms_flutter_bootstrap.mjs" \
   "$OUTPUT/flutter_bootstrap.js"
 cp "$ROOT/tool/cms-preview.htaccess" "$OUTPUT/.htaccess"
+node "$ROOT/tool/normalize_cms_preview_artifacts.mjs" "$OUTPUT"
 
 # Dart2JS uses CanvasKit. Keep both runtime-compatible CanvasKit variants and
 # omit debug symbols plus WASM renderers that this build cannot select.

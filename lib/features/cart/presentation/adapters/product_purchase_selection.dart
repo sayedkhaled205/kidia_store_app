@@ -9,11 +9,14 @@ class ProductPurchaseSelection {
   ProductPurchaseSelection({
     required this.productId,
     this.quantity = 1,
+    this.catalogProductId,
+    this.variantId,
     List<CartItemVariation> variation = const <CartItemVariation>[],
   }) : variation = List<CartItemVariation>.unmodifiable(variation);
 
   final int productId;
   final int quantity;
+  final int? catalogProductId, variantId;
   final List<CartItemVariation> variation;
 }
 

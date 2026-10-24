@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-25",
+  "result": "CHECKOUT101_HTTP_PASS",
+  "origin": "https://odoo-staging.kidiastore.com",
+  "client": "Actual Flutter OdooCustomerClient51, OdooCartRepository85 and OdooCheckout101",
+  "test_source": "tool/live_odoo_checkout101_test.dart",
+  "test_source_sha256": "bafb0f5b8e272a1aa2b7935a363ea3664a2d9f41ff9c04fc049e9fdddeccfe5a",
+  "fresh_guest_basket": true,
+  "initial_address_fields": 8,
+  "selected_country": "Egypt",
+  "country_specific_address_fields": 9,
+  "shipping_rates_returned": 1,
+  "own_basket_empty_after_cleanup": true,
+  "address_saved": false,
+  "carrier_selected": false,
+  "order_confirmed": false,
+  "payment_executed": false,
+  "emulator_verified": false,
+  "earlier_failures": [
+    "Localized /en/ form action rejected; fixed in shared parser.",
+    "State field hidden before country choice; supported only for the original empty state selector.",
+    "First alphabetic country has no configured states despite merchant-required state. It remains rejected; passing probe explicitly selects Egypt."
+  ]
+}

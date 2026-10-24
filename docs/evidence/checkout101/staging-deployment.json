@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-25",
+  "origin": "https://odoo-staging.kidiastore.com",
+  "result": "six_runtime_files_deployed_and_parser_followup_deployed",
+  "database_writes": 0,
+  "feature_flags_changed": false,
+  "payment_enabled": false,
+  "module_upgrade": false,
+  "runtime_sha256": {
+    "__manifest__.py": "e272741d75b9b8f06bc1faaeafd65d5cb74218173478540f7b3ccd2705b54cde",
+    "controllers/cart_api85.py": "21ba2a8f954eba8cf3427616215a7253b1d77cdd32ab701ec6e1c896f797c921",
+    "controllers/customer_api.py": "4a6c1355feb03525bd595ccaf6b55cb70225385e0cd3cec7fd2a5a8f01be5f49",
+    "services/cart_service85.py": "032420b12c69ecda9135d3eca97a92a49162405a778d1ea4fc3fbf45cfd876b8",
+    "services/shipping100.py": "143ef13f0e5528edd67cf305231024323fcc6e524a52d64642b595a0b9984506",
+    "services/checkout101.py": "4914ce2a4d10be90b6e3a208dc3c373fecb7b4d911d3f3dcfa178a8d71433dc5"
+  },
+  "recovery_backups": [
+    "/root/qa-odoo-checkout101-before-20261025",
+    "/root/qa-odoo-checkout101-locale-before-20261025"
+  ],
+  "source_hashes_verified_after_deployment": true,
+  "proof": [
+    "odoo-checkout101-deployed.png",
+    "odoo-checkout101-locale-deployed.png",
+    "odoo-checkout101-source-verified.png"
+  ]
+}

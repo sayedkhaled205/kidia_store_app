@@ -261,7 +261,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         }
         return;
       }
-      AppConfig.requireWooCommerceCustomerTransport('checkout');
+      if (AppConfig.commercePlatform != CommercePlatform.odoo) {
+        AppConfig.requireWooCommerceCustomerTransport('checkout');
+      }
       if (widget.onCheckout != null) {
         await widget.onCheckout!(context, cart);
         if (mounted) await ref.read(cartControllerProvider.notifier).refreshCart();
@@ -422,7 +424,7 @@ class _CartLoadedBody extends StatelessWidget {
               );
             },
           ),
-          SliverToBoxAdapter(
+          if (AppConfig.commercePlatform != CommercePlatform.odoo) SliverToBoxAdapter(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 920),

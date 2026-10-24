@@ -6,7 +6,7 @@ import 'package:mobishop_store_app/core/commerce/odoo_customer_session_store51.d
 import 'package:mobishop_store_app/core/config/app_config.dart';
 
 /// Separate protocol graph; no Woo AuthSession/token, analytics or merchant API.
-/// Routes/UI do not consume this graph yet. Website/company binding remains
+/// Native customer, cart and checkout screens share this owner. Binding remains
 /// server-enforced for this exact validated HTTPS origin on every request.
 final odooCustomerConnection51Provider = Provider<CommerceConnection>((ref) {
   final connection = AppConfig.commerceConnection;
@@ -75,14 +75,9 @@ class OdooCustomerSessionController51
     final ticket = _intentGeneration;
     final client = ref.read(odooCustomerClient51Provider);
     try {
-      final customer = await client.login(login: login, password: password);
+      await client.login(login: login, password: password);
       if (ref.mounted && ticket == _intentGeneration) {
-        state = AsyncData(
-          OdooCustomerSession51(
-            customer: customer,
-            expiresAt: client.sessionExpiresAt,
-          ),
-        );
+        state = AsyncData(client.verifiedSession51);
       }
     } catch (_) {
       if (ref.mounted &&
@@ -97,7 +92,7 @@ class OdooCustomerSessionController51
   Future<void> signOut() async {
     final client = ref.read(odooCustomerClient51Provider);
     _intentGeneration += 1;
-    state = const AsyncData(OdooCustomerSession51());
+    state = const AsyncLoading();
     try {
       await client.logout();
     } on OdooCustomerException51 catch (error) {
@@ -105,6 +100,8 @@ class OdooCustomerSessionController51
           error.statusCode != null) {
         rethrow;
       }
+    } finally {
+      if (ref.mounted) state = const AsyncData(OdooCustomerSession51());
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "package": "odoo-native-customer-checkout101-candidate.zip",
+  "sha256": "324579b00eba673aae6e62764c416979811ca77545bd052b3ba8f09ebbd527a1",
+  "deployed": false,
+  "files": {
+    "__init__.py": "8d0f9f96d22cd68857b7bb9d0e4909c3387b7246ae416dab6e6bf55ad8374a34",
+    "__manifest__.py": "e272741d75b9b8f06bc1faaeafd65d5cb74218173478540f7b3ccd2705b54cde",
+    "controllers/__init__.py": "e56aca2f290254601fcae375f9b96f6c49cb34c8c60e16840a36a6e3ff029648",
+    "controllers/cart_api85.py": "21ba2a8f954eba8cf3427616215a7253b1d77cdd32ab701ec6e1c896f797c921",
+    "controllers/customer_api.py": "4a6c1355feb03525bd595ccaf6b55cb70225385e0cd3cec7fd2a5a8f01be5f49",
+    "models/__init__.py": "370d912a61d50e3c5bc0c1b69867715214ab0a10a3b73d36821f01f10b3a6fed",
+    "models/ir_http.py": "4d1ad3c6a9caf229c7c99f48ed298a66b7b9168c96d73cc2b1af917834f295e8",
+    "models/sale_order85.py": "007c9b17c589d7f831ffd282b0d7f9215269a6be6f64c54b520dca2568d116d6",
+    "services/__init__.py": "de7de2858f1a9767d8355a9ef6eb1da1aceb2a2868a9065549f87de2b29adcf7",
+    "services/cart_contract85.py": "eb2d9af821af7626b9c780de76f2b1a75ffa444fb3b45516ab6309975827292b",
+    "services/cart_service85.py": "032420b12c69ecda9135d3eca97a92a49162405a778d1ea4fc3fbf45cfd876b8",
+    "services/checkout101.py": "4914ce2a4d10be90b6e3a208dc3c373fecb7b4d911d3f3dcfa178a8d71433dc5",
+    "services/customer_service.py": "502c04a13d919bea2eac5bf8e0e9f37c63aded2f6db692e093ea6ea6465ce0ae",
+    "services/shipping100.py": "143ef13f0e5528edd67cf305231024323fcc6e524a52d64642b595a0b9984506",
+    "tests/__init__.py": "af05126d9350891c2c474c0139be0410a2495105255312aa1a274be46bdafa9d",
+    "tests/test_cart_contract85_host.py": "71fb87d8d9699dea4308976410b75dc2ec8a4888a61a55b40ef83cdbe12ee2ed",
+    "tests/test_cart_service85.py": "41bf09af064ebc23dd6a747183cf07a3c89cc3689ec7ab897baa28fc90ce6e15",
+    "tests/test_checkout101_host.py": "055e4dd00b58012afa6a759b98ffc6302dab5b5af1d233944c25b0cc03b7242d",
+    "tests/test_checkout101_orm.py": "1c5f7d1055c7bc5e6a5fda5dc457b4721630517ae7b5a76edc36a99c2960b05c",
+    "tests/test_customer_service.py": "d1fa26818147068457873bb421314f94df57fd66528389950be38d1de115206b",
+    "tests/test_shipping100_host.py": "999de0757360212a2db46141ce70aa50ef506e964af626746a9683111b2bbf63",
+    "tests/test_shipping100_orm.py": "ca8a111d2674d2720805fd92b38e0dff655ab8f0d8fbe53625a37093911641f7"
+  }
+}

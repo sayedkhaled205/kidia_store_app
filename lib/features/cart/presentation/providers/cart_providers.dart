@@ -17,6 +17,8 @@ import 'package:mobishop_store_app/features/cart/data/shopify/shopify_cart_gatew
 import 'package:mobishop_store_app/features/cart/data/shopify/shopify_cart_session_store.dart';
 import 'package:mobishop_store_app/features/cart/data/shopify/shopify_cart_variant_resolver.dart';
 import 'package:mobishop_store_app/features/cart/domain/repositories/cart_repository.dart';
+import '../../../auth/presentation/providers/odoo_customer_providers51.dart';
+import '../../data/repositories/odoo_cart_repository85.dart';
 
 /// One configured Dio client is shared by the Store API bootstrap request and
 /// token-authenticated cart requests for the lifetime of the provider scope.
@@ -103,6 +105,35 @@ final cartRemoteDataSourceProvider = Provider.autoDispose<CartRemoteDataSource>(
 );
 
 final cartRepositoryProvider = Provider.autoDispose<CartRepository>((Ref ref) {
+  if (AppConfig.commercePlatform == CommercePlatform.odoo) {
+    final client = ref.watch(odooCustomerClient51Provider);
+    final identity = ref.watch(
+      odooCustomerSession51Provider.select(
+        (s) => (
+          s.isLoading,
+          s.hasError,
+          s.asData?.value.customer?.id,
+          s.asData?.value.customer?.partnerId,
+        ),
+      ),
+    );
+    final epoch = client.sessionEpoch85;
+    final repository = OdooCartRepository85(
+      client: client,
+      isCurrentSession: () {
+        if (!ref.mounted || client.sessionEpoch85 != epoch) return false;
+        final state = ref.read(odooCustomerSession51Provider);
+        return !state.isLoading &&
+            !state.hasError &&
+            !identity.$1 &&
+            !identity.$2 &&
+            state.asData?.value.customer?.id == identity.$3 &&
+            state.asData?.value.customer?.partnerId == identity.$4;
+      },
+    );
+    ref.onDispose(repository.dispose);
+    return repository;
+  }
   if (AppConfig.commercePlatform == CommercePlatform.shopify) {
     final session = ref.watch(shopifyBuyerCartSessionProvider);
     final transport = ref.watch(shopifyCartTransportProvider);

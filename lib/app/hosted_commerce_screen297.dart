@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../core/commerce/commerce_connection.dart';
 import '../core/commerce/hosted_commerce_destination297.dart';
 import '../core/config/app_config.dart';
 
@@ -14,9 +13,8 @@ final hostedCommerceLauncher297Provider = Provider<HostedCommerceLauncher297>(
           launchUrl(destination, mode: LaunchMode.inAppBrowserView),
 );
 
-bool get usesHostedOdooCart297 =>
-    !AppConfig.isCmsPreview &&
-    AppConfig.commercePlatform == CommercePlatform.odoo;
+// Odoo products and baskets now use the dedicated buyer-session transport.
+bool get usesHostedOdooCart297 => false;
 
 Future<void> openHostedProduct297(
   BuildContext context,

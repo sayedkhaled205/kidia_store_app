@@ -64,6 +64,7 @@ class CommerceConnection {
         },
         CommercePlatform.odoo => const <CustomerCommerceCapability>{
           CustomerCommerceCapability.catalog,
+          CustomerCommerceCapability.cart,
         },
       };
 

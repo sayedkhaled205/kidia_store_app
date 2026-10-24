@@ -60,7 +60,7 @@
         "origin": "https://alpha.odoo.example.invalid",
         "locale": "ar",
         "country": "EG",
-        "passed": 74
+        "passed": 88
       },
       {
         "platform": "odoo",
@@ -68,10 +68,10 @@
         "origin": "https://beta.odoo.example.invalid",
         "locale": "en",
         "country": "US",
-        "passed": 74
+        "passed": 88
       }
     ],
-    "total_passed": 394,
+    "total_passed": 422,
     "skipped": 0,
     "real_merchant_requests": 0,
     "real_payments": 0,
@@ -89,7 +89,8 @@
       "Odoo native cart read/add/update/remove with exact owner and server totals",
       "Persist guest SID separately from authenticated customer identity",
       "Revoke malformed capabilities; reject queued writes after owner switch; never replay failed cart writes"
-    ]
+    ],
+    "evidence": "docs/evidence/checkout101/matrix.json"
   },
   "platform_limits": {
     "woocommerce": {
@@ -136,14 +137,15 @@
       "native_catalog": true,
       "native_customer_account": "Separate customer-session adapter exists.",
       "native_cart_and_checkout": false,
-      "remaining": "Wire and verify native cart/address/shipping/payment UI and HTTP flow. No active card gateway exists on the authorized Odoo store; no paid acceptance claimed.",
+      "remaining": "Verify emulator/UI flow and implement/verify native payment adapters. Authorized Odoo store has no active card gateway.",
       "evidence": [
         "lib/core/commerce/commerce_connection.dart",
         "lib/app/app_router.dart",
         "lib/core/commerce/odoo_customer_session_store51.dart"
       ],
-      "native_cart_transport": "Implemented and tested; not wired into the main application cart routes/providers.",
-      "native_shipping": "Original carrier hooks implemented in an undeployed connector candidate; 11 rollback ORM checks passed. Native HTTP/UI acceptance is pending."
+      "native_cart_transport": "Wired into the main cart providers, badge and product actions in source; actual variant is resolved before addition.",
+      "native_shipping": "Original merchant carrier/tax hooks pass 17 rollback ORM checks including address tests; native client HTTP metadata/country change/quote passed. Emulator/payment acceptance is not claimed.",
+      "native_address_shipping_ui": "Native Flutter form and shipping selection implemented and tested; 101.1/100.1 runtime deployed on authorized Odoo staging; fresh guest HTTP metadata and shipping quote verified."
     }
   },
   "regression_gates": {
@@ -296,5 +298,104 @@
     "application_rebuilt": false,
     "preview_rebuilt": false,
     "native_payment_acceptance_newly_claimed": false
+  },
+  "last_updated": "2026-10-25",
+  "generalization_progress101": {
+    "merchant_specific_source_conditions_added": false,
+    "source_changes": [
+      "Native Odoo cart and checkout routes use the shared customer session, never Woo identity or hosted cart redirects.",
+      "Resolve selected Odoo product variant, reject ambiguous selection and discard responses after an owner change.",
+      "Read standard address labels, required/readonly fields, country/state choices and separate-address setting from original inherited merchant QWeb.",
+      "Preserve existing separate billing/delivery choice; save with original address hooks and invalidate old shipping quotes.",
+      "Native carrier selection displays exact server totals and rejects stale revisions.",
+      "Version the shared Odoo connector source and run its parser/contract tests in GitHub CI.",
+      "Accept original localized form actions and wait for country choice before projecting an empty dependent state selector."
+    ],
+    "verification": {
+      "offline_matrix_passed": 422,
+      "offline_matrix_skipped": 0,
+      "matrix_runner_tests_passed": 4,
+      "host_contract_tests_passed": 24,
+      "actual_odoo_orm_tests_passed": 17,
+      "actual_odoo_orm_skipped": 0,
+      "actual_odoo_orm_rollback_verified": true,
+      "targeted_dart_analysis": "No issues found",
+      "native_address_shipping_http_passed": true,
+      "installed_merchant_form_rollback_probe_passed": true,
+      "flutter_sdk": "3.44.8",
+      "preview_bootstrap_contract": "passed",
+      "preview_bridge_tests_passed": 12
+    },
+    "evidence_directory": "docs/evidence/checkout101",
+    "connector_candidate": {
+      "package": "odoo-native-customer-checkout101-candidate.zip",
+      "sha256": "324579b00eba673aae6e62764c416979811ca77545bd052b3ba8f09ebbd527a1",
+      "deployed": false
+    },
+    "candidate_source": "connectors/odoo/source/woomobile_native_customer_api51",
+    "application_rebuilt": false,
+    "preview_rebuilt": true,
+    "payment_adapter_complete": false,
+    "native_http_acceptance": false,
+    "ios_payment_acceptance": false,
+    "limits": [
+      "Unknown custom address controls and JavaScript/CSS form behavior are not certified.",
+      "No arbitrary gateway support or all-platform native checkout readiness is claimed.",
+      "Shopify direct native payment permission remains denied; existing website handoff is not counted as native acceptance.",
+      "A country whose merchant-required state has no configured choices remains unsupported; the verified live destination is Egypt."
+    ],
+    "runtime_staging_deployment": {
+      "date": "2026-10-25",
+      "origin": "https://odoo-staging.kidiastore.com",
+      "result": "six_runtime_files_deployed_and_parser_followup_deployed",
+      "database_writes": 0,
+      "feature_flags_changed": false,
+      "payment_enabled": false,
+      "module_upgrade": false,
+      "runtime_sha256": {
+        "__manifest__.py": "e272741d75b9b8f06bc1faaeafd65d5cb74218173478540f7b3ccd2705b54cde",
+        "controllers/cart_api85.py": "21ba2a8f954eba8cf3427616215a7253b1d77cdd32ab701ec6e1c896f797c921",
+        "controllers/customer_api.py": "4a6c1355feb03525bd595ccaf6b55cb70225385e0cd3cec7fd2a5a8f01be5f49",
+        "services/cart_service85.py": "032420b12c69ecda9135d3eca97a92a49162405a778d1ea4fc3fbf45cfd876b8",
+        "services/shipping100.py": "143ef13f0e5528edd67cf305231024323fcc6e524a52d64642b595a0b9984506",
+        "services/checkout101.py": "4914ce2a4d10be90b6e3a208dc3c373fecb7b4d911d3f3dcfa178a8d71433dc5"
+      },
+      "recovery_backups": [
+        "/root/qa-odoo-checkout101-before-20261025",
+        "/root/qa-odoo-checkout101-locale-before-20261025"
+      ],
+      "source_hashes_verified_after_deployment": true,
+      "proof": [
+        "odoo-checkout101-deployed.png",
+        "odoo-checkout101-locale-deployed.png",
+        "odoo-checkout101-source-verified.png"
+      ]
+    },
+    "live_address_shipping_http": {
+      "date": "2026-10-25",
+      "result": "CHECKOUT101_HTTP_PASS",
+      "origin": "https://odoo-staging.kidiastore.com",
+      "client": "Actual Flutter OdooCustomerClient51, OdooCartRepository85 and OdooCheckout101",
+      "test_source": "tool/live_odoo_checkout101_test.dart",
+      "test_source_sha256": "bafb0f5b8e272a1aa2b7935a363ea3664a2d9f41ff9c04fc049e9fdddeccfe5a",
+      "fresh_guest_basket": true,
+      "initial_address_fields": 8,
+      "selected_country": "Egypt",
+      "country_specific_address_fields": 9,
+      "shipping_rates_returned": 1,
+      "own_basket_empty_after_cleanup": true,
+      "address_saved": false,
+      "carrier_selected": false,
+      "order_confirmed": false,
+      "payment_executed": false,
+      "emulator_verified": false,
+      "earlier_failures": [
+        "Localized /en/ form action rejected; fixed in shared parser.",
+        "State field hidden before country choice; supported only for the original empty state selector.",
+        "First alphabetic country has no configured states despite merchant-required state. It remains rejected; passing probe explicitly selects Egypt."
+      ]
+    },
+    "preview_published": false,
+    "preview_artifact_sha256": "3597c11d64b81b4e569717c5d3ef33684c7daaeb486579688b3ab3251097f509"
   }
 }

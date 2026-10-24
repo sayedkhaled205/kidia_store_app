@@ -11,11 +11,6 @@ import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_providers.dart';
-import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
-import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
-import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
-import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
-import '../features/product/support/product_test_data.dart';
 
 void main() {
   final platform = AppConfig.commercePlatform;
@@ -54,8 +49,6 @@ void main() {
   }
   final hostedRoutes = platform == CommercePlatform.shopify
       ? ['/account', '/auth', '/orders', '/orders/23', '/profile', '/addresses']
-      : platform == CommercePlatform.odoo
-      ? ['/cart', '/checkout']
       : <String>[];
   for (final route in hostedRoutes) {
     testWidgets(
@@ -89,64 +82,6 @@ void main() {
           AppConfig.commerceConnection.storeOrigin.host,
         );
         expect(opened.single.path, isNot(contains('wp-json')));
-        expect(tester.takeException(), isNull);
-      },
-    );
-  }
-
-  if (platform == CommercePlatform.odoo) {
-    test('Odoo cart badge never instantiates a Woo cart', () {
-      final container = ProviderContainer(
-        overrides: [
-          cartRepositoryProvider.overrideWith(
-            (ref) => throw StateError('Must remain hosted'),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      expect(container.read(cartBadgeCountProvider), 0);
-    });
-    testWidgets(
-      'Odoo quick purchase opens exact product without fake cart success',
-      (tester) async {
-        final opened = <Uri>[];
-        final product = CatalogProduct(
-          id: 42,
-          name: 'Blue Shirt',
-          slug: 'blue-shirt',
-          type: 'simple',
-          prices: testMoney,
-          isPurchasable: true,
-          isInStock: true,
-          permalink: AppConfig.commerceConnection.storeOrigin.resolve(
-            '/shop/blue-shirt-42',
-          ),
-        );
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              cartRepositoryProvider.overrideWith(
-                (ref) => throw StateError('Native cart must not initialize'),
-              ),
-              catalogRepositoryProvider.overrideWithValue(
-                ProductFakeCatalogRepository(product: product),
-              ),
-              hostedCommerceLauncher297Provider.overrideWithValue((uri) async {
-                opened.add(uri);
-                return true;
-              }),
-            ],
-            child: const MaterialApp(
-              home: Scaffold(body: ProductQuickAddButton(productId: 42)),
-            ),
-          ),
-        );
-        await tester.tap(find.byKey(const Key('quick-add-product-42')));
-        await tester.pumpAndSettle();
-        expect(find.text('Continue on store'), findsOneWidget);
-        await tester.tap(find.byKey(const Key('product-quick-add-submit')));
-        await tester.pumpAndSettle();
-        expect(opened, [product.permalink]);
         expect(tester.takeException(), isNull);
       },
     );

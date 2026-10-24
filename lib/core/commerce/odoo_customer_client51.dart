@@ -61,6 +61,7 @@ class OdooCustomerClient51 {
   bool _checkoutEnabled85 = false;
   bool _freeCheckout85 = false;
   bool _paymentHandoff85 = false;
+  bool _checkoutForm101 = false;
   int _ownerEpoch85 = 0;
 
   /// Local revocation stamp only. Never sent as a credential or persisted.
@@ -74,6 +75,7 @@ class OdooCustomerClient51 {
   bool get freeCheckoutSupported85 => checkoutSupported85 && _freeCheckout85;
   bool get paymentHandoffSupported85 =>
       checkoutSupported85 && _paymentHandoff85;
+  bool get checkoutFormSupported101 => cartSupported85 && _checkoutForm101;
 
   bool get isAuthenticated =>
       !_closed &&
@@ -245,6 +247,7 @@ class OdooCustomerClient51 {
                 partnerId: (_customer ?? loginCustomer!).partnerId,
               ));
     _cartEnabled85 = false;
+    _checkoutForm101 = false;
     _checkoutEnabled85 = false;
     _freeCheckout85 = false;
     _paymentHandoff85 = false;
@@ -309,6 +312,10 @@ class OdooCustomerClient51 {
       verifiedHandoff = handoff;
     }
     _cartEnabled85 = cartEnabled;
+    _checkoutForm101 =
+        cartEnabled &&
+        response['checkout_form_contract_version'] == '101.1' &&
+        response['shipping_contract_version'] == '100.1';
     _checkoutEnabled85 = checkoutEnabled;
     _freeCheckout85 = verifiedFree;
     _paymentHandoff85 = verifiedHandoff;
@@ -381,6 +388,52 @@ class OdooCustomerClient51 {
   /// Cart operations share the exact customer session transport. The whitelist
   /// is intentionally closed; no arbitrary Odoo/admin/builder URL is admitted.
   Future<Map<String, dynamic>> cart85() => _cartRequest85('cart');
+
+  Future<Map<String, dynamic>> checkoutForm101({
+    required String addressType,
+    int? countryId,
+  }) => _write(
+    () => _checkoutRequest101('checkout/address/form', {
+      'address_type': addressType,
+      'country_id': countryId,
+    }),
+  );
+
+  Future<Map<String, dynamic>> saveCheckoutAddress101({
+    required String addressType,
+    required Map<String, String> fields,
+    required bool useForShipping,
+  }) => _write(
+    () => _checkoutRequest101('checkout/address/save', {
+      'address_type': addressType,
+      'fields': fields,
+      'use_for_shipping': useForShipping,
+    }),
+  );
+
+  Future<Map<String, dynamic>> shippingQuote101() =>
+      _write(() => _checkoutRequest101('checkout/shipping/quote', {}));
+
+  Future<Map<String, dynamic>> selectShipping101({
+    required int carrierId,
+    required String revision,
+  }) => _write(
+    () => _checkoutRequest101('checkout/shipping/select', {
+      'carrier_id': carrierId,
+      'cart_revision': revision,
+    }),
+  );
+
+  Future<Map<String, dynamic>> _checkoutRequest101(
+    String path,
+    Map<String, dynamic> payload,
+  ) async {
+    await _ensureCartSession85();
+    if (!checkoutFormSupported101) {
+      throw const OdooCustomerException51('checkout_form_unavailable');
+    }
+    return _cartRequest85(path, payload: payload);
+  }
 
   Future<Map<String, dynamic>> addCartItem85({
     required int productId,
@@ -602,6 +655,7 @@ class OdooCustomerClient51 {
     _generation += 1;
     _ownerEpoch85 += 1;
     _cartEnabled85 = false;
+    _checkoutForm101 = false;
     _checkoutEnabled85 = false;
     _freeCheckout85 = false;
     _paymentHandoff85 = false;
@@ -674,7 +728,7 @@ class OdooCustomerClient51 {
   }) async {
     if (_closed ||
         !RegExp(
-          r'^(session|login|logout|profile|addresses(?:/[1-9][0-9]{0,9})?|orders(?:/[1-9][0-9]{0,9})?|revision|cart(?:/items(?:/[1-9][0-9]{0,9})?)?)$',
+          r'^(session|login|logout|profile|addresses(?:/[1-9][0-9]{0,9})?|orders(?:/[1-9][0-9]{0,9})?|revision|cart(?:/items(?:/[1-9][0-9]{0,9})?)?|checkout/(?:address/(?:form|save)|shipping/(?:quote|select)))$',
         ).hasMatch(endpoint)) {
       throw const OdooCustomerException51('unapproved_customer_endpoint');
     }
@@ -759,6 +813,7 @@ class OdooCustomerClient51 {
           _csrf = null;
           _identityVerified = false;
           _cartEnabled85 = false;
+          _checkoutForm101 = false;
           _checkoutEnabled85 = false;
           _freeCheckout85 = false;
           _paymentHandoff85 = false;

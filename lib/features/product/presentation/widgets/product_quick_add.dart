@@ -349,6 +349,8 @@ class _ProductQuickAddSheetState
         final result = await addSelection(
           cart_selection.ProductPurchaseSelection(
             productId: selection.variationId ?? selection.productId,
+            catalogProductId: selection.productId,
+            variantId: selection.variationId,
             quantity: selection.quantity,
             variation: selection.selectedAttributes.entries
                 .map(

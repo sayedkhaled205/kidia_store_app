@@ -36,7 +36,6 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"0cd610717bde95fd88343c64f81c11ba4e5c0010","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 if (window.__mobishopPreviewVersion) { _flutter.buildConfig.builds.forEach(function (build) { if (build.mainJsPath) { build.mainJsPath += "?v=" + encodeURIComponent(window.__mobishopPreviewVersion); } }); }
-
 window.__mobishopStartFlutterPreview=function(){
 return _flutter.loader.load({
 config:{canvasKitBaseUrl:"canvaskit/"},

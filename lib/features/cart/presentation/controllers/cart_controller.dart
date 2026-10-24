@@ -4,6 +4,7 @@ import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/providers/odoo_customer_providers51.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_error.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
@@ -59,6 +60,10 @@ class CartController extends AsyncNotifier<CartViewState> {
 
   @override
   Future<CartViewState> build() async {
+    if (AppConfig.commercePlatform == CommercePlatform.odoo) {
+      await ref.watch(odooCustomerSession51Provider.future);
+      if (!ref.mounted) throw StateError('Shopping session ended.');
+    }
     final String ownerToken = _authToken;
     final Cart cart = await ref.watch(cartRepositoryProvider).getCart();
     if (!ref.mounted || ownerToken != _authToken) {
@@ -306,6 +311,10 @@ class CartController extends AsyncNotifier<CartViewState> {
   }
 
   String get _authToken {
+    if (AppConfig.commercePlatform == CommercePlatform.odoo) {
+      final client = ref.read(odooCustomerClient51Provider);
+      return 'odoo:${client.sessionEpoch85}:${client.customer?.id ?? 0}';
+    }
     if (AppConfig.commercePlatform == CommercePlatform.shopify) {
       // An opaque local owner generation, never the buyer secret or a Woo
       // session. Customer Account auth remains unsupported, not impersonated.

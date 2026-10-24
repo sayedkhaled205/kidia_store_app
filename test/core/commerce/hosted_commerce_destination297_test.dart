@@ -30,12 +30,12 @@ void main() {
       );
     }
     expect(
-      HostedCommerceDestination297.forRoute(odoo, '/cart').toString(),
-      'https://odoo.example/shop/cart',
+      HostedCommerceDestination297.forRoute(odoo, '/cart'),
+      isNull,
     );
     expect(
-      HostedCommerceDestination297.forRoute(odoo, '/checkout').toString(),
-      'https://odoo.example/shop/checkout',
+      HostedCommerceDestination297.forRoute(odoo, '/checkout'),
+      isNull,
     );
     expect(
       HostedCommerceDestination297.forRoute(odoo, '/account-help').toString(),

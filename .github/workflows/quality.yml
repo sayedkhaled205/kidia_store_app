@@ -11,6 +11,21 @@ permissions:
   contents: read
 
 jobs:
+  odoo-connector:
+    name: Shared Odoo address and shipping contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install lxml==6.1.1
+      - name: Check shared connector contracts
+        run: |
+          python connectors/odoo/source/woomobile_native_customer_api51/tests/test_cart_contract85_host.py
+          python connectors/odoo/source/woomobile_native_customer_api51/tests/test_shipping100_host.py
+          python connectors/odoo/source/woomobile_native_customer_api51/tests/test_checkout101_host.py
+
   commerce-contracts:
     name: Commerce contracts (${{ matrix.platform }})
     runs-on: ubuntu-latest

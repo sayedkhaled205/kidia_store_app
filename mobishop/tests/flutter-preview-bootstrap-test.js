@@ -92,7 +92,7 @@ assert.match(
 );
 assert.match(
   homePage,
-  /homeScrollDeltas\.listen\(_scrollPreviewBy\)[\s\S]*_scrollController\.jumpTo\(next\)/,
+  /homeScrollDeltas\.listen\(\s*_scrollPreviewBy\s*,?\s*\)[\s\S]*_scrollController\.jumpTo\(next\)/,
   "The Home preview must apply iframe wheel deltas directly to its own scroll controller.",
 );
 assert.doesNotMatch(

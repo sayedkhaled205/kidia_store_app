@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-25",
+  "result": "CHECKOUT101_SEVENTEEN_ORM_PASS",
+  "observed_in": "WHM terminal on the authorized Odoo installation",
+  "screenshot": "odoo-checkout101-seventeen-pass.png",
+  "test_source_sha256": "61261e10004a4c2769753075e2af6fc6a0f63ab97fba082f4a23d0c65426aa8a",
+  "tests_run": 17,
+  "tests_passed": 17,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "cleanup_errors": [],
+  "actual_installed_odoo_orm": true,
+  "business_methods_mocked": false,
+  "normal_transactioncase_cleanup": true,
+  "rollback_fixture_absence_verified_with_new_cursor": true,
+  "fixture_counts_before_and_after": {
+    "account.tax": 0,
+    "delivery.carrier": 0,
+    "ir.ui.view": 0,
+    "product.pricelist": 0,
+    "product.pricelist.item": 0,
+    "product.product": 0,
+    "res.partner": 0,
+    "res.users": 0,
+    "sale.order": 0,
+    "website": 0
+  },
+  "http_request_fixture": "Werkzeug request and real Odoo Session with standard request/render attributes; original controllers and ORM hooks.",
+  "candidate_loaded_in_isolated_shell_only": true,
+  "module_upgrade": false,
+  "feature_gate_changed": false,
+  "native_http_acceptance": false,
+  "paid_checkout_acceptance": false,
+  "tracked_stock_acceptance": false,
+  "additional_checks": [
+    "Merchant inherited QWeb label is used",
+    "Original combined address update binds billing and delivery and removes old carrier",
+    "Separate delivery does not overwrite billing and remains selected when reopening",
+    "Unsupported merchant controls are not silently dropped",
+    "Caller cannot select partner/order/required-field authority"
+  ]
+}
