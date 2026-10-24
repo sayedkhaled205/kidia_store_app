@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-24",
+  "universal_native_checkout_ready": false,
+  "scope": "Source audit and isolated regression tests. Offline tests are not live checkout certification.",
+  "shared_fixes": {
+    "woocommerce_connector": "1.46.98",
+    "card_receipt": "Store the authenticated provider order ID before WooCommerce payment completion hooks. Preserve transaction, amount, currency, merchant and session verification.",
+    "mobile_orders": "Filter _mobishop_order_source=mobile in HPOS or legacy order storage. Retain store-api creation semantics and combine existing filters with AND.",
+    "logo": "Give web fallback images their uncropped dimensions so saved wordmark geometry is not fitted twice.",
+    "merchant_specific_source_conditions_added": false
+  },
+  "live_verification": {
+    "platform": "woocommerce",
+    "mobile_filter_result_count": 4,
+    "mobile_and_verified_card_result_count": 2,
+    "historical_receipts_restored": 2,
+    "historical_order_status_changed": false,
+    "new_charge_or_refund_executed": false,
+    "preview_logo_visually_verified": true,
+    "connector_and_preview_deployed": true
+  },
+  "offline_matrix": {
+    "runner": "tool/verify_commerce_matrix.py",
+    "cases": [
+      {"platform": "woocommerce", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 51},
+      {"platform": "woocommerce", "merchant": "beta", "locale": "en", "country": "US", "passed": 51},
+      {"platform": "shopify", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 40},
+      {"platform": "shopify", "merchant": "beta", "locale": "en", "country": "US", "passed": 40},
+      {"platform": "odoo", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 26},
+      {"platform": "odoo", "merchant": "beta", "locale": "en", "country": "US", "passed": 26}
+    ],
+    "total_passed": 234,
+    "skipped": 0,
+    "real_merchant_requests": 0,
+    "real_payments": 0,
+    "checks": ["compile-time platform selection", "merchant origin and credential isolation", "redirect rejection", "cart and customer session isolation", "wishlist isolation", "platform routing", "merchant checkout fields and shipping contracts"]
+  },
+  "platform_limits": {
+    "woocommerce": {
+      "native_checkout": true,
+      "native_payment_adapters": ["kashier_card", "cod", "bacs", "cheque"],
+      "limits": ["Other gateways need a verified shared adapter; they are not automatically native.", "Merchant customizations outside supported checkout contracts need compatibility testing.", "A new merchant still requires its actual connector, authentication and signing configuration."]
+    },
+    "shopify": {
+      "native_catalog_and_cart": true,
+      "native_checkout": false,
+      "checkout": "Current cart flow launches the validated Shopify checkout URL.",
+      "remaining": "Implement and verify the platform-supported in-app checkout and customer account integration against an authorized test store.",
+      "evidence": ["lib/core/commerce/commerce_connection.dart", "lib/features/cart/presentation/cart_screen.dart", "test/features/cart/presentation/shopify_checkout_handoff297_test.dart"]
+    },
+    "odoo": {
+      "native_catalog": true,
+      "native_customer_account": "Separate customer-session adapter exists.",
+      "native_cart_and_checkout": false,
+      "remaining": "Connect the native cart, shipping and payment flow to the dedicated customer API; verify against an authorized Odoo store.",
+      "evidence": ["lib/core/commerce/commerce_connection.dart", "lib/app/app_router.dart", "lib/core/commerce/odoo_customer_session_store51.dart"]
+    }
+  },
+  "regression_gates": {
+    "github": "commerce-contracts job compiles all three platform variants with two separate merchant fixtures each.",
+    "codemagic": "Every native workflow runs the matrix for its selected platform before building.",
+    "failure_policy": "Reject missing platform sentinel, skipped tests, failed tests, incomplete execution or nonzero exit status."
+  }
+}

@@ -38,6 +38,7 @@ def verify_features(files: dict[str, bytes], manifest: dict) -> None:
         if private_material.search(data):
             raise ValueError(f'Private key or access-token pattern cannot ship: {name}')
     required = {
+        'includes/class-mobishop-order-source98.php': ['_mobishop_order_source', 'hpos_query', 'legacy_query', 'filter-by-created-via'],
         'api/class-embedded-checkout88.php': ['/customer/checkout/session', 'session_context_from_request', 'validate_cart_token', 'hash_equals', 'DELETE FROM', 'httponly', 'no-store', 'customer_capabilities'],
         'mobi2app-connector.php': [f'Version:           {version}', "'MOBISHOP_VERSION'", f"'{version}'"],
         'readme.txt': [f'Stable tag: {version}'],

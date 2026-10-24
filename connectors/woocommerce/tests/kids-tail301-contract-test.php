@@ -14,6 +14,8 @@ foreach ($preset as $index => $row) {
     $expected['settings']['space_down'] = 0;
     if ($row['id'] === 'kids293_welcome_products') { $expected['settings']['source'] = 'latest'; }
     if ($row['id'] === 'kids293_categories') { $expected['settings']['gap'] = 12; }
+    // bb80dfb4 changed the all-products section to progressive loading.
+    if ($row['id'] === 'kids293_all_products') { $expected['settings']['limit'] = 'all'; }
     if ($expected !== $row) { throw new RuntimeException('Unreviewed preset delta: ' . $row['id']); }
 }
 $prefix = [

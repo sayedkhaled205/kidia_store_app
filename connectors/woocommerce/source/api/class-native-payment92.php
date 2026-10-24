@@ -166,7 +166,16 @@ final class MobiShop_Native_Payment92 {
 				$data = ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response )
 					? json_decode( wp_remote_retrieve_body( $response ), true ) : null;
 				$transaction = is_array( $data ) ? self::paid_transaction( $data, $record ) : null;
-				if ( null !== $transaction ) $order->payment_complete( $transaction );
+				if ( null !== $transaction ) {
+					$receipt = self::verified_receipt( $data, $record );
+					if ( null !== $receipt ) {
+						// Use the gateway's normal metadata so its admin badge, filters
+						// and reconciliation tools recognize native-app payments too.
+						$order->update_meta_data( 'kashierOrderId', $receipt['gateway_order_id'] );
+						$order->update_meta_data( '_mobishop_verified_card98', $receipt );
+					}
+					$order->payment_complete( $transaction );
+				}
 			}
 			return $this->response( array( 'order_id' => $id, 'paid' => $order->is_paid(), 'status' => $order->get_status() ) );
 		} );
@@ -210,6 +219,21 @@ final class MobiShop_Native_Payment92 {
 			if ( null === $paid ) return null;
 		}
 		return $paid;
+	}
+
+	/** Return only a receipt proven by the authenticated provider lookup. */
+	public static function verified_receipt( array $data, array $record ): ?array {
+		$transaction = self::paid_transaction( $data, $record );
+		if ( null === $transaction ) return null;
+		foreach ( $data['data'] as $row ) {
+			if ( ! is_array( $row ) || ( $row['merchantOrderId'] ?? '' ) !== $record['reference']
+				|| ( $row['status'] ?? '' ) !== 'CAPTURED' ) continue;
+			$id = $row['orderId'] ?? null;
+			if ( ! is_string( $id ) || ! preg_match( '/^[A-Za-z0-9-]{1,100}$/D', $id ) ) return null;
+			return array( 'gateway' => 'kashier', 'gateway_order_id' => $id,
+				'transaction_id' => $transaction, 'amount' => $record['amount'], 'currency' => $record['currency'] );
+		}
+		return null;
 	}
 
 	public static function money( $value ): ?string {

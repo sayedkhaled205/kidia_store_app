@@ -7,6 +7,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class UnifiedWorkflowTests(unittest.TestCase):
+    def test_each_native_build_runs_explicit_platform_contracts(self):
+        workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
+        for name, workflow in workflows.items():
+            steps = workflow['scripts']
+            checks = [i for i, step in enumerate(steps) if step['name'] == 'Verify merchant and platform contracts']
+            self.assertEqual(len(checks), 1, name)
+            script = steps[checks[0]]['script']
+            self.assertIn('tool/verify_commerce_matrix.py', script)
+            self.assertIn('--platform "${STORE_PLATFORM:-woocommerce}"', script)
+            for i, step in enumerate(steps):
+                if 'flutter build ' in step['script']:
+                    self.assertLess(checks[0], i, name)
+
     def test_actual_customer_design_is_checked_before_every_native_build(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         for name, workflow in workflows.items():

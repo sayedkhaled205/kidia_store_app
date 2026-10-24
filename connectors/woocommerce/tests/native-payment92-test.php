@@ -7,6 +7,17 @@ $tx=['operation'=>'pay','status'=>'SUCCESS','currency'=>'EGP','amount'=>70,'tran
 $row=['merchantOrderId'=>$record['reference'],'merchantId'=>$record['merchant'],'sessionId'=>$record['session'],'status'=>'CAPTURED','method'=>'card','order'=>['amount'=>70,'currency'=>'EGP'],'totalCapturedAmount'=>70,'totalRefundedAmount'=>0,'transactions'=>[$tx]];
 $response=['status'=>'SUCCESS','data'=>[$row]];
 check(MobiShop_Native_Payment92::paid_transaction($response,$record)==='TX-123','exact captured provider payment is accepted');
+$receiptResponse=$response;
+$receiptResponse['data'][0]['orderId']='00916dc7-7a3a-4875-af44-118bc678378b';
+$receipt=MobiShop_Native_Payment92::verified_receipt($receiptResponse,$record);
+check($receipt['gateway_order_id']===$receiptResponse['data'][0]['orderId'] && $receipt['transaction_id']==='TX-123','normal gateway order ID is retained for paid-card badge and filters');
+check(MobiShop_Native_Payment92::verified_receipt($response,$record)===null,'missing provider order ID is never replaced by a made-up receipt');
+foreach (['totalRefundedAmount'=>1,'totalCapturedAmount'=>69,'status'=>'AUTHORIZED','merchantId'=>'another-merchant'] as $key=>$value) {
+ $bad=$receiptResponse;$bad['data'][0][$key]=$value;
+ check(MobiShop_Native_Payment92::verified_receipt($bad,$record)===null,'receipt rejects unverified '.$key);
+}
+$bad=$receiptResponse;$bad['data'][0]['orderId']='<script>';
+check(MobiShop_Native_Payment92::verified_receipt($bad,$record)===null,'unsafe provider order identifier is rejected');
 foreach (['merchantOrderId'=>'other','merchantId'=>'MID-other','sessionId'=>'other','status'=>'AUTHORIZED','method'=>'wallet','totalCapturedAmount'=>75,'totalRefundedAmount'=>1] as $key=>$value) {
   $bad=$response; $bad['data'][0][$key]=$value;
   check(MobiShop_Native_Payment92::paid_transaction($bad,$record)===null,'reject mismatched '.$key);
@@ -65,9 +76,11 @@ class WP_REST_Request implements ArrayAccess {
 class WP_REST_Response { public function __construct(public $data){} public function header($a,$b){} }
 class WC_Gateway_Kashier_Card { public $id='kashier_card',$enabled='yes',$merchant_id='MID-123-123',$api_key='key',$secret_key='secret',$testmode=true,$enable_connected_account=false; function get_option($k){return 'no';} }
 class WC_Order {
+ public $paid=false, $settlements=0, $settled_meta=[], $settled_transaction='';
  public $meta=['_mobishop_native_attempt50'=>'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','_mobishop_native_buyer50'=>'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'], $amount='70.00', $customer=7;
  function get_id(){return 15;} function get_customer_id(){return $this->customer;} function get_meta($k){return $this->meta[$k]??'';}
- function update_meta_data($k,$v){$this->meta[$k]=$v;} function save(){} function needs_payment(){return true;} function is_paid(){return false;} function get_status(){return 'pending';} function get_total($c){return $this->amount;} function get_currency(){return 'EGP';}
+ function update_meta_data($k,$v){$this->meta[$k]=$v;} function save(){} function needs_payment(){return !$this->paid;} function is_paid(){return $this->paid;} function get_status(){return $this->paid?'processing':'pending';} function get_total($c){return $this->amount;} function get_currency(){return 'EGP';}
+ function payment_complete($transaction){$this->settlements++;$this->settled_meta=$this->meta;$this->settled_transaction=$transaction;$this->paid=true;}
 }
 class MobiShop_Customer_Auth_Endpoint { function session_context_from_request($r){return ['user_id'=>7];} }
 class MobiShop_Native_Checkout_Wpdb50 {
@@ -91,3 +104,22 @@ $order->customer=8;check($endpoint->prepare($request) instanceof WP_Error && $po
 $order->amount='75.00';check($endpoint->prepare($request) instanceof WP_Error && $posts===1,'changed total cannot reuse or duplicate payment');
 $order=new WC_Order;$timeout=true;$endpoint->prepare($request);$endpoint->prepare($request);
 check($posts===2,'provider timeout leaves durable uncertainty and cannot replay');
+
+function add_query_arg($key,$value,$url){return $url.'?'.http_build_query([$key=>$value]);}
+function wp_remote_get($url,$args){$GLOBALS['lookup_count']++;$GLOBALS['lookup_args']=$args;return $GLOBALS['provider_result'];}
+$lookup_count=0;
+$order=new WC_Order;
+$order->meta['_mobishop_native_payment92']=$record+['test'=>true];
+$provider_result=$receiptResponse;
+$result=$endpoint->status($request);
+check($result instanceof WP_REST_Response && $result->data['paid']===true,'provider capture completes the native order');
+check($order->settled_meta['kashierOrderId']===$receipt['gateway_order_id'] && $order->settled_meta['_mobishop_verified_card98']===$receipt,'gateway receipt is present when normal Woo payment completion hooks run');
+check($order->settled_transaction==='TX-123' && $lookup_args['redirection']===0,'settlement uses the verified transaction and disallows provider redirects');
+$endpoint->status($request);
+check($order->settlements===1 && $lookup_count===1,'polling a paid order does not repeat settlement or provider lookup');
+$order=new WC_Order;
+$order->meta['_mobishop_native_payment92']=$record+['test'=>true];
+$provider_result=$receiptResponse;
+$provider_result['data'][0]['merchantId']='other-merchant';
+$endpoint->status($request);
+check(!$order->is_paid() && $order->get_meta('kashierOrderId')==='' && $order->settlements===0,'mismatched provider receipt cannot add a badge or settle the order');

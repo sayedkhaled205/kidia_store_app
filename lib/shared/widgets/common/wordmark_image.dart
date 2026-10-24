@@ -105,6 +105,10 @@ class WebWordmarkImage extends StatelessWidget {
                   height: size.height / crop[3],
                   child: Image.network(
                     url,
+                    // HTML fallback images need the full uncropped dimensions,
+                    // otherwise the engine may fit the square source again.
+                    width: size.width / crop[2],
+                    height: size.height / crop[3],
                     fit: BoxFit.fill,
                     webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                     errorBuilder: (context, error, stack) => fallback,

@@ -11,6 +11,34 @@ permissions:
   contents: read
 
 jobs:
+  commerce-contracts:
+    name: Commerce contracts (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [woocommerce, shopify, odoo]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Check matrix runner
+        run: python3 -m unittest discover -s tool -p test_verify_commerce_matrix.py
+      - name: Test two merchants with explicit platform builds
+        run: python3 tool/verify_commerce_matrix.py --platform "${{ matrix.platform }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: commerce-contracts-${{ matrix.platform }}
+          path: |
+            build/commerce-matrix.json
+            build/${{ matrix.platform }}-*.log
+          if-no-files-found: error
+
   plugin:
     name: WordPress plugin
     runs-on: ubuntu-latest

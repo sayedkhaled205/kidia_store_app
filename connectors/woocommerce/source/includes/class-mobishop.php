@@ -22,6 +22,7 @@ require_once MOBISHOP_PATH . 'includes/class-mobishop-checkout-fields-store.php'
 require_once MOBISHOP_PATH . 'includes/class-mobishop-setup-wizard.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-license-manager.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-analytics.php';
+require_once MOBISHOP_PATH . 'includes/class-mobishop-order-source98.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-product-channel-visibility.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-offer-engine.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-analysis-job.php';
@@ -104,6 +105,7 @@ final class MobiShop {
 
 		(new MobiShop_License_Manager())->register();
 		(new MobiShop_Analytics())->register();
+		(new MobiShop_Order_Source98())->register();
 		MobiShop_AI_Analysis_Job::register();
 		(new MobiShop_Product_Channel_Visibility())->register();
 		(new MobiShop_Recovery_Campaigns())->register();

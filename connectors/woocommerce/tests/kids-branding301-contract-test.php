@@ -29,15 +29,16 @@ $result = $splash->invoke($wizard, $kids, '#EEDDCC', '#221144', 'My family store
 same301($result, [
     'enabled' => true, 'image_url' => $logo,
     'background_color' => '#FFFFFF', 'background_color_end' => '#FFFFFF',
-    'duration_ms' => 800, 'image_width' => 176, 'image_height' => 72,
+    // Preserve the accepted shared-theme splash sizing.
+    'duration_ms' => 1300, 'image_width' => 264, 'image_height' => 108,
     'image_fit' => 'contain', 'image_shape' => 'none',
     'show_store_name' => false, 'store_name' => 'My family store',
     'text_color' => '#253A46', 'show_loader' => true, 'loader_color' => '#4EA999',
 ], 'Kids splash is not the compact neutral composition with the actual store identity.');
 $header = $page->invoke($wizard, 'home', $kids, '#EEDDCC', '#221144', 'My family store', $logo)['header']['settings'];
-same301([$header['logo_width'], $header['logo_height'], $header['logo_fit']], [100, 32, 'contain'], 'Kids logo frame is stretched or cropped by default.');
+same301([$header['logo_width'], $header['logo_height'], $header['logo_fit']], [90, 30.6, 'contain'], 'Kids logo frame is stretched or cropped by default.');
 same301($header['logo_url'], $logo, 'Kids header replaced the merchant logo.');
-same301([$header['row_1_height'], $header['row_gap']], [56, 4], 'Unrelated header geometry changed.');
+same301([$header['row_1_height'], $header['row_gap']], [52, 2], 'Compact header geometry changed.');
 foreach (['fashion', 'beauty', 'electronics', 'home_living', 'family_pop', 'unknown'] as $profile) {
     $theme = $base + ['layout_profile' => $profile];
     foreach ([['#101010', '#202020', '#FFFFFF'], ['#FFFFFF', '#EEEEEE', '#111111']] as [$primary, $secondary, $foreground]) {

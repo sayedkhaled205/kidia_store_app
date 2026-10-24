@@ -43,6 +43,8 @@ workflows:
       - name: Apply existing distribution profile
         script: |
           xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+      - name: Verify merchant and platform contracts
+        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -147,6 +149,8 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Verify merchant and platform contracts
+        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -348,6 +352,8 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Verify merchant and platform contracts
+        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -535,6 +541,8 @@ workflows:
         script: flutter analyze lib test
       - name: Run Flutter tests
         script: flutter test
+      - name: Verify merchant and platform contracts
+        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -674,6 +682,8 @@ workflows:
           set -euo pipefail
           flutter analyze lib test
           flutter test
+      - name: Verify merchant and platform contracts
+        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
