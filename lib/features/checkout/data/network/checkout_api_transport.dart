@@ -198,7 +198,7 @@ class StoreApiCheckoutTransport
           followRedirects: false,
           headers: _headers(const <String, String>{
             'Accept': 'application/json',
-          }),
+          }, authenticated: _authTokenReader != null),
         ),
       );
       _assertSameOrigin(response.realUri);
@@ -345,7 +345,8 @@ class StoreApiCheckoutTransport
         ? ''
         : _storeUri.path.replaceFirst(RegExp(r'/$'), '');
     return _storeUri.replace(
-      path: '$installPath/wp-json/mobishop/v1/checkout-config',
+      path:
+          '$installPath/wp-json/mobishop/v1/${_authTokenReader == null ? 'checkout-config' : 'customer/checkout/config'}',
       query: null,
       fragment: null,
     );

@@ -88,6 +88,29 @@ class CheckoutController extends ChangeNotifier {
   List<String> get paymentMethodIds =>
       _checkout?.paymentMethodIds ?? const <String>[];
   String? paymentMethodLabel(String id) => _checkout?.paymentMethodLabel(id);
+  bool paymentMethodSupported(String id) =>
+      _checkout?.nativePaymentAdapters[id] != 'unavailable';
+  int addressSelectionRevision = 0;
+
+  void selectSavedAddress(Map<String, String> values) {
+    if (!_canEditForm) return;
+    setShipToDifferentAddress(false);
+    if (values.containsKey('country')) {
+      setFieldValue('billing_country', values['country']!);
+    }
+    for (final field
+        in _checkout?.fieldDefinitions ?? <CheckoutFieldDefinition>[]) {
+      if (field.group != CheckoutFieldGroup.billing ||
+          field.key == 'billing_country') {
+        continue;
+      }
+      final key = field.key.replaceFirst(RegExp(r'^billing_'), '');
+      if (values.containsKey(key)) setFieldValue(field.key, values[key]!);
+    }
+    addressSelectionRevision++;
+    _notify();
+  }
+
   Map<String, String> get fieldErrors =>
       UnmodifiableMapView<String, String>(_fieldErrors);
   String? get loadError => _loadError;
@@ -387,7 +410,8 @@ class CheckoutController extends ChangeNotifier {
     if (needsPayment) {
       if (_paymentMethodId.isEmpty) {
         errors['paymentMethod'] = 'Choose a payment method.';
-      } else if (!paymentMethodIds.contains(_paymentMethodId)) {
+      } else if (!paymentMethodIds.contains(_paymentMethodId) ||
+          !paymentMethodSupported(_paymentMethodId)) {
         errors['paymentMethod'] = 'This payment method is no longer available.';
       }
     }
@@ -921,6 +945,8 @@ class CheckoutController extends ChangeNotifier {
   void _applyAuthoritativeCart(Cart authoritativeCart) {
     _checkout = CheckoutState(
       cart: authoritativeCart,
+      savedAddresses: _checkout?.savedAddresses ?? const [],
+      nativePaymentAdapters: _checkout?.nativePaymentAdapters ?? const {},
       hasUnresolvedSubmission: _hasUnresolvedSubmission,
       serverSafetyRequired: _checkout?.serverSafetyRequired ?? false,
       serverSafetyEnforced: _checkout?.serverSafetyEnforced ?? false,
@@ -1048,7 +1074,8 @@ class CheckoutController extends ChangeNotifier {
       if (field.group == CheckoutFieldGroup.shipping &&
           !_shipToDifferentAddress) {
         final String? billingKey = _billingKeyForShippingField(field.key);
-        if (billingKey == null) {
+        if (billingKey == null ||
+            !definitions.any((f) => f.key == billingKey)) {
           // Classic checkout does not require shipping-only custom fields
           // when one address is used for billing and shipping.
           continue;

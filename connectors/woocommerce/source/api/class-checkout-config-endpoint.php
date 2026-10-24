@@ -34,6 +34,11 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 	/** Register the native checkout configuration endpoint. */
 	public function register_routes(): void {
+		register_rest_route( 'mobishop/v1', '/customer/checkout/config', array(
+			'methods' => WP_REST_Server::READABLE,
+			'callback' => array( $this, 'get_checkout_config' ),
+			'permission_callback' => array( new MobiShop_Native_Payment92(), 'authenticate' ),
+		) );
 		register_rest_route(
 			'mobishop/v1',
 			'/checkout-config',
@@ -69,7 +74,9 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 7,
+				'version'  => 8,
+				'renderer' => 'native',
+				'saved_addresses' => $this->saved_addresses(),
 				'payment_methods' => $this->payment_method_labels(),
 				'design'   => $checkout_store->design(),
 				'defaults' => array(
@@ -77,7 +84,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 					'states'  => $states,
 				),
 				'fields'   => $this->normalize_fields(
-					$checkout_store->checkout_groups(),
+					$this->merchant_groups(),
 					$default_country
 				),
 			)
@@ -85,6 +92,42 @@ final class MobiShop_Checkout_Config_Endpoint {
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
 		$response->header( 'Pragma', 'no-cache' );
 		return $response;
+	}
+
+	/** Read current merchant fields on every checkout; never a stale builder copy. */
+	private function merchant_groups(): array {
+		return array( 'billing' => WC()->checkout()->get_checkout_fields( 'billing' ),
+			'shipping' => WC()->checkout()->get_checkout_fields( 'shipping' ),
+			'order' => WC()->checkout()->get_checkout_fields( 'order' ) );
+	}
+
+	private function saved_addresses(): array {
+		$id = get_current_user_id();
+		if ( $id <= 0 ) return array();
+		$customer = new WC_Customer( $id );
+		$rows = array();
+		foreach ( array( 'billing', 'shipping' ) as $group ) {
+			$values = $customer->{ 'get_' . $group }();
+			if ( empty( $values['address_1'] ) ) continue;
+			$rows[] = array( 'id' => $group, 'label' => trim( ( $values['first_name'] ?? '' ) . ' ' . ( $values['last_name'] ?? '' ) ), 'values' => $values );
+		}
+		// Address-book integrations supply only the current authenticated buyer.
+		$rows = apply_filters( 'mobishop_native_checkout_addresses92', $rows, $id );
+		$output = array();
+		$seen = array();
+		foreach ( is_array( $rows ) ? array_slice( $rows, 0, 30 ) : array() as $row ) {
+			if ( ! is_array( $row ) || ! is_array( $row['values'] ?? null ) ) continue;
+			$values = array();
+			foreach ( $row['values'] as $key => $value ) {
+				if ( is_string( $key ) && preg_match( '/^[a-zA-Z0-9_]{1,100}$/D', $key ) && is_scalar( $value ) ) $values[ $key ] = substr( sanitize_text_field( (string) $value ), 0, 500 );
+			}
+			$fingerprint = hash( 'sha256', wp_json_encode( $values ) );
+			if ( isset( $seen[ $fingerprint ] ) || empty( $values['address_1'] ) ) continue;
+			$seen[ $fingerprint ] = true;
+			$output[] = array( 'id' => substr( sanitize_key( (string) ( $row['id'] ?? $fingerprint ) ), 0, 100 ),
+				'label' => sanitize_text_field( (string) ( $row['label'] ?? '' ) ), 'values' => $values );
+		}
+		return $output;
 	}
 
 	/** Allow the app to submit custom plugin fields inside Store API extensions. */
@@ -97,6 +140,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 			$methods[] = array(
 				'id' => (string) $id,
 				'title' => html_entity_decode( wp_strip_all_tags( $gateway->get_title() ), ENT_QUOTES, 'UTF-8' ),
+				'native_adapter' => MobiShop_Native_Payment92::adapter( $gateway ),
 			);
 		}
 		return $methods;
@@ -158,7 +202,7 @@ final class MobiShop_Checkout_Config_Endpoint {
 		}
 
 		$definitions = array();
-		foreach ( $this->normalize_fields( ( new MobiShop_Checkout_Fields_Store() )->checkout_groups(), $this->get_default_country() ) as $definition ) {
+		foreach ( $this->normalize_fields( $this->merchant_groups(), $this->get_default_country() ) as $definition ) {
 			$definitions[ $definition['key'] ] = $definition;
 		}
 
@@ -242,7 +286,9 @@ final class MobiShop_Checkout_Config_Endpoint {
 			$normalized,
 			static fn( array $first, array $second ): int => $first['priority'] <=> $second['priority']
 		);
-		return $this->remove_duplicate_visible_fields( $normalized );
+		// Distinct merchant fields may legitimately share a label. Identity is
+		// their key, never translated display text.
+		return $normalized;
 	}
 
 	/** Keep one visible field per label and group, preferring Woo core fields. */

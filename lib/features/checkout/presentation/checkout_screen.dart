@@ -254,7 +254,17 @@ class _CheckoutReady extends StatelessWidget {
           final bool wide = constraints.maxWidth >= 920;
           final Widget form = Form(
             key: formKey,
-            child: _CheckoutForm(controller: controller, copy: copy),
+            child: Column(
+              children: [
+                if (controller.checkout?.savedAddresses.isNotEmpty == true)
+                  _SavedCheckoutAddresses92(controller: controller),
+                _CheckoutForm(
+                  key: ValueKey(controller.addressSelectionRevision),
+                  controller: controller,
+                  copy: copy,
+                ),
+              ],
+            ),
           );
           final Widget summary = _OrderSummary(
             controller: controller,
@@ -345,8 +355,92 @@ class _CheckoutReady extends StatelessWidget {
   }
 }
 
+class _SavedCheckoutAddresses92 extends StatelessWidget {
+  const _SavedCheckoutAddresses92({required this.controller});
+  final CheckoutController controller;
+  @override
+  Widget build(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            ar ? 'عناوينك المحفوظة' : 'Your saved addresses',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 112,
+            child: ListView.separated(
+              key: const Key('checkout-saved-addresses'),
+              scrollDirection: Axis.horizontal,
+              itemCount: controller.checkout!.savedAddresses.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final address = controller.checkout!.savedAddresses[index];
+                final selected =
+                    controller.billingAddress.address1 ==
+                        address.values['address_1'] &&
+                    controller.billingAddress.state == address.values['state'];
+                return SizedBox(
+                  width: 240,
+                  child: OutlinedButton(
+                    key: ValueKey('checkout-address-${address.id}'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.all(12),
+                      backgroundColor: selected
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : null,
+                    ),
+                    onPressed: controller.isSubmitting
+                        ? null
+                        : () => controller.selectSavedAddress(address.values),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            address.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            [
+                                  address.values['address_1'],
+                                  address.values['city'],
+                                  address.values['phone'],
+                                ]
+                                .whereType<String>()
+                                .where((v) => v.isNotEmpty)
+                                .join(' · '),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CheckoutForm extends StatelessWidget {
-  const _CheckoutForm({required this.controller, required this.copy});
+  const _CheckoutForm({
+    required this.controller,
+    required this.copy,
+    super.key,
+  });
 
   final CheckoutController controller;
   final _CheckoutCopy copy;
@@ -895,7 +989,9 @@ class _PaymentSection extends StatelessWidget {
                             controller.paymentMethodLabel(method) ??
                             copy.paymentMethodLabel(method),
                         selected: controller.paymentMethodId == method,
-                        enabled: !controller.isSubmitting,
+                        enabled:
+                            !controller.isSubmitting &&
+                            controller.paymentMethodSupported(method),
                         onTap: () => controller.setPaymentMethod(method),
                       ),
                     ),
@@ -1595,8 +1691,8 @@ class _CheckoutCopy {
       ? 'هذا الطلب لا يحتاج إلى دفع.'
       : 'No payment is required for this order.';
   String get gatewayDisclaimer => arabic
-      ? 'نعرض الطرق التي يرسلها المتجر فقط. أي بيانات خاصة ببوابة دفع أو بطاقة يجب أن تتم من خلال تكامل آمن مخصص أو صفحة تحويل.'
-      : 'Only methods returned by the store are shown. Gateway-specific or card data requires a dedicated secure integration or redirect.';
+      ? 'اختَر طريقة الدفع المناسبة.'
+      : 'Choose your preferred payment method.';
   String get summary => arabic ? 'ملخص الطلب' : 'Order summary';
   String get discount => arabic ? 'الخصم' : 'Discount';
   String get shipping => arabic ? 'الشحن' : 'Shipping';

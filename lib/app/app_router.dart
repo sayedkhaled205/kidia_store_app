@@ -32,7 +32,6 @@ import '../features/catalog/presentation/pages/catalog_product_list_screen.dart'
 import '../features/catalog/presentation/providers/catalog_providers.dart';
 import '../features/categories/presentation/categories_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
-import '../features/checkout/presentation/merchant_checkout_screen88.dart';
 import '../features/checkout/presentation/checkout_presentation_provider.dart';
 import '../features/checkout/presentation/providers/checkout_customer_binding_provider.dart';
 import '../features/checkout/domain/entities/checkout_presentation.dart';
@@ -79,10 +78,24 @@ GoRouter createAppRouter({
   return GoRouter(
     initialLocation: initialLocation,
     redirect: (context, state) {
-      if (AppConfig.isCmsPreview || AppConfig.commercePlatform == CommercePlatform.wooCommerce) return null;
-      if (AppConfig.commercePlatform == CommercePlatform.shopify && state.uri.path == '/checkout') return '/cart';
-      final destination = HostedCommerceDestination297.forRoute(AppConfig.commerceConnection, state.uri.path);
-      return destination == null ? null : Uri(path: '/store-flow', queryParameters: {'route': state.uri.path}).toString();
+      if (AppConfig.isCmsPreview ||
+          AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
+        return null;
+      }
+      if (AppConfig.commercePlatform == CommercePlatform.shopify &&
+          state.uri.path == '/checkout') {
+        return '/cart';
+      }
+      final destination = HostedCommerceDestination297.forRoute(
+        AppConfig.commerceConnection,
+        state.uri.path,
+      );
+      return destination == null
+          ? null
+          : Uri(
+              path: '/store-flow',
+              queryParameters: {'route': state.uri.path},
+            ).toString();
     },
     errorBuilder: (context, state) {
       return CommerceRouteDestination(
@@ -98,11 +111,21 @@ GoRouter createAppRouter({
         path: '/store-flow',
         builder: (context, state) {
           final route = state.uri.queryParameters['route'] ?? '';
-          final destination = HostedCommerceDestination297.forRoute(AppConfig.commerceConnection, route);
+          final destination = HostedCommerceDestination297.forRoute(
+            AppConfig.commerceConnection,
+            route,
+          );
           if (destination == null) {
-            return const CommerceRouteDestination(icon: Icons.link_off, title: 'الصفحة غير متاحة', description: 'تعذر فتح هذا الرابط.');
+            return const CommerceRouteDestination(
+              icon: Icons.link_off,
+              title: 'الصفحة غير متاحة',
+              description: 'تعذر فتح هذا الرابط.',
+            );
           }
-          return HostedCommerceScreen297(destination: destination, route: route);
+          return HostedCommerceScreen297(
+            destination: destination,
+            route: route,
+          );
         },
       ),
       StatefulShellRoute.indexedStack(
@@ -201,11 +224,19 @@ GoRouter createAppRouter({
                                           'sign_in_required',
                                         ) ??
                                     'sign_in_required';
-                                final AuthSession? session = !AppConfig.isCmsPreview && AppConfig.commercePlatform != CommercePlatform.wooCommerce ? null : ref
-                                    .read(authControllerProvider)
-                                    .asData
-                                    ?.value;
-                                if ((AppConfig.isCmsPreview || AppConfig.commercePlatform == CommercePlatform.wooCommerce) && session == null &&
+                                final AuthSession? session =
+                                    !AppConfig.isCmsPreview &&
+                                        AppConfig.commercePlatform !=
+                                            CommercePlatform.wooCommerce
+                                    ? null
+                                    : ref
+                                          .read(authControllerProvider)
+                                          .asData
+                                          ?.value;
+                                if ((AppConfig.isCmsPreview ||
+                                        AppConfig.commercePlatform ==
+                                            CommercePlatform.wooCommerce) &&
+                                    session == null &&
                                     accessMode == 'sign_in_required') {
                                   await context.push('/auth');
                                   return false;
@@ -384,19 +415,23 @@ GoRouter createAppRouter({
                   page: 'wishlist',
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final nativeAuth = AppConfig.isCmsPreview || AppConfig.commercePlatform == CommercePlatform.wooCommerce;
-                      final AsyncValue<AuthSession?> authState = nativeAuth ? ref.watch(
-                        authControllerProvider,
-                      ) : const AsyncData(null);
+                      final nativeAuth =
+                          AppConfig.isCmsPreview ||
+                          AppConfig.commercePlatform ==
+                              CommercePlatform.wooCommerce;
+                      final AsyncValue<AuthSession?> authState = nativeAuth
+                          ? ref.watch(authControllerProvider)
+                          : const AsyncData(null);
                       final CmsPageLayout wishlistLayout =
                           ref.watch(cmsPageLayoutProvider('wishlist')).value ??
                           CmsPageLayout.fallback('wishlist');
-                      final bool requiresSignIn = nativeAuth &&
+                      final bool requiresSignIn =
+                          nativeAuth &&
                           wishlistLayout.string(
-                            'wishlist_access_mode',
-                            'sign_in_required',
-                          ) ==
-                          'sign_in_required';
+                                'wishlist_access_mode',
+                                'sign_in_required',
+                              ) ==
+                              'sign_in_required';
                       if (!AppConfig.isCmsPreview && authState.isLoading) {
                         return const _ProtectedAccountLoading();
                       }
@@ -576,9 +611,6 @@ GoRouter createAppRouter({
             final binding = ref.watch(checkoutCustomerBindingProvider);
             if (binding == null) {
               return const AuthScreen(popOnSuccess: false);
-            }
-            if (!AppConfig.isCmsPreview) {
-              return MerchantCheckoutScreen88(key: ObjectKey(binding));
             }
             return CheckoutScreen(
               key: ObjectKey(binding),

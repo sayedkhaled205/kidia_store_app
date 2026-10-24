@@ -22,8 +22,6 @@ class CheckoutPresentation {
   final CheckoutDesign design;
 
   factory CheckoutPresentation.fromJson(Map<String, dynamic> json) {
-    return CheckoutPresentation(
-      design: CheckoutDesign.fromApi(json['design']),
-    );
+    return CheckoutPresentation(design: CheckoutDesign.fromApi(json['design']));
   }
 }

@@ -12,6 +12,54 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 import '../support/checkout_test_data.dart';
 
 void main() {
+  test(
+    'saved shipping address updates the actual destination and clears separate address mode',
+    () async {
+      final controller = CheckoutController(
+        repository: FakeCheckoutRepository(
+          state: CheckoutState(
+            cart: checkoutCart(),
+            fieldDefinitions: [
+              for (final key in [
+                'country',
+                'state',
+                'address_1',
+                'city',
+                'phone',
+              ])
+                CheckoutFieldDefinition(
+                  key: 'billing_$key',
+                  group: CheckoutFieldGroup.billing,
+                  type: CheckoutFieldType.text,
+                  label: key,
+                ),
+            ],
+            nativePaymentAdapters: const {
+              'cod': 'offline',
+              'custom': 'unavailable',
+            },
+          ),
+        ),
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
+      controller.setShipToDifferentAddress(true);
+      controller.selectSavedAddress({
+        'country': 'EG',
+        'state': 'C',
+        'address_1': 'Test street',
+        'city': 'Cairo',
+        'phone': '01000000000',
+      });
+      expect(controller.shipToDifferentAddress, false);
+      expect(controller.billingAddress.country, 'EG');
+      expect(controller.billingAddress.state, 'C');
+      expect(controller.billingAddress.address1, 'Test street');
+      expect(controller.addressSelectionRevision, 1);
+      expect(controller.paymentMethodSupported('custom'), false);
+      expect(controller.paymentMethodSupported('cod'), true);
+    },
+  );
   group('CheckoutController', () {
     test(
       'defaults fill empty core fields and preserve customer addresses',

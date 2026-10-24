@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
+import '../features/checkout/data/network/native_payment_client92.dart';
 import '../core/push/native_push_actions_host.dart';
 import '../core/app_design/application_identity_provider58.dart';
 import '../core/live_updates/native_live_updates_host.dart';
@@ -22,7 +23,9 @@ class MobiShopApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final GoRouter routerConfig = router ?? ref.watch(appRouterProvider);
-    final Map<String, dynamic>? identity = ref.watch(applicationIdentity58Provider);
+    final Map<String, dynamic>? identity = ref.watch(
+      applicationIdentity58Provider,
+    );
     final Locale configuredLocale = _configuredStoreLocale(
       identity?['language'] as String?,
     );
@@ -33,52 +36,54 @@ class MobiShopApp extends ConsumerWidget {
         ? false
         : AppConfig.isRightToLeft;
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: identity?['app_name'] as String? ?? AppConfig.storeName,
-      routerConfig: routerConfig,
-      locale: configuredLocale,
-      supportedLocales: <Locale>[
-        configuredLocale,
-        if (configuredLocale.languageCode != 'ar') const Locale('ar'),
-        if (configuredLocale.languageCode != 'en') const Locale('en'),
-      ],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      // Flutter Web otherwise inherits the desktop browser platform. That
-      // changes Material metrics and interaction defaults even though the
-      // preview is rendered inside a phone-sized viewport. The CMS preview is
-      // an Android application preview, so make it use the same platform
-      // defaults as the installed app without changing native builds.
-      theme: AppConfig.isCmsPreview
-          ? previewIdentityTheme(MobiShopTheme.light, identity)
-          : identity == null
-          ? MobiShopTheme.light
-          : applicationIdentityTheme(MobiShopTheme.light, identity),
-      builder: (context, child) {
-        final Widget app = Directionality(
-          textDirection: rightToLeft ? TextDirection.rtl : TextDirection.ltr,
-          child: child ?? const SizedBox.shrink(),
-        );
-        if (!AppConfig.isCmsPreview) {
-          return NativePushActionsHost(
-            router: routerConfig,
-            child: NativeLiveUpdatesHost(child: app),
+    return NativePaymentHost92(
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: identity?['app_name'] as String? ?? AppConfig.storeName,
+        routerConfig: routerConfig,
+        locale: configuredLocale,
+        supportedLocales: <Locale>[
+          configuredLocale,
+          if (configuredLocale.languageCode != 'ar') const Locale('ar'),
+          if (configuredLocale.languageCode != 'en') const Locale('en'),
+        ],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        // Flutter Web otherwise inherits the desktop browser platform. That
+        // changes Material metrics and interaction defaults even though the
+        // preview is rendered inside a phone-sized viewport. The CMS preview is
+        // an Android application preview, so make it use the same platform
+        // defaults as the installed app without changing native builds.
+        theme: AppConfig.isCmsPreview
+            ? previewIdentityTheme(MobiShopTheme.light, identity)
+            : identity == null
+            ? MobiShopTheme.light
+            : applicationIdentityTheme(MobiShopTheme.light, identity),
+        builder: (context, child) {
+          final Widget app = Directionality(
+            textDirection: rightToLeft ? TextDirection.rtl : TextDirection.ltr,
+            child: child ?? const SizedBox.shrink(),
           );
-        }
+          if (!AppConfig.isCmsPreview) {
+            return NativePushActionsHost(
+              router: routerConfig,
+              child: NativeLiveUpdatesHost(child: app),
+            );
+          }
 
-        // WordPress inherits the desktop accessibility/text environment. Do
-        // not let that environment resize only the embedded preview; the
-        // phone and the preview must calculate the same header/footer slots.
-        final MediaQueryData media = MediaQuery.of(context);
-        return MediaQuery(
-          data: media.copyWith(
-            textScaler: TextScaler.noScaling,
-            boldText: false,
-            navigationMode: NavigationMode.traditional,
-          ),
-          child: app,
-        );
-      },
+          // WordPress inherits the desktop accessibility/text environment. Do
+          // not let that environment resize only the embedded preview; the
+          // phone and the preview must calculate the same header/footer slots.
+          final MediaQueryData media = MediaQuery.of(context);
+          return MediaQuery(
+            data: media.copyWith(
+              textScaler: TextScaler.noScaling,
+              boldText: false,
+              navigationMode: NavigationMode.traditional,
+            ),
+            child: app,
+          );
+        },
+      ),
     );
   }
 }

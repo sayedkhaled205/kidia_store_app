@@ -14,6 +14,68 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 import '../support/checkout_test_data.dart';
 
 void main() {
+  test(
+    'configured native checkout cannot silently use default or stale fields',
+    () async {
+      final transport = FakeCheckoutTransport();
+      final repository = StoreApiCheckoutRepository(
+        cartRepository: FakeCheckoutCartRepository(cart: checkoutCart()),
+        transport: transport,
+        cartTokenStore: MemoryCartTokenStore(),
+        requireMerchantConfiguration: true,
+      );
+      await expectLater(
+        repository.loadCheckout(),
+        throwsA(
+          isA<CheckoutRepositoryException>().having(
+            (e) => e.kind,
+            'kind',
+            CheckoutFailureKind.configuration,
+          ),
+        ),
+      );
+      expect(transport.calls, 0);
+      transport.configurationResponse = const CheckoutApiResponse(
+        data: {
+          'version': 8,
+          'renderer': 'native',
+          'payment_methods': [
+            {'id': 'cod', 'title': 'Courier', 'native_adapter': 'offline'},
+          ],
+          'fields': [
+            {
+              'key': 'billing_first_name',
+              'group': 'billing',
+              'type': 'text',
+              'label': 'Full name',
+              'required': true,
+            },
+            {
+              'key': 'shipping_last_name',
+              'group': 'shipping',
+              'type': 'text',
+              'label': 'Surname',
+              'required': true,
+            },
+          ],
+          'saved_addresses': [
+            {
+              'id': 'billing',
+              'label': 'Home',
+              'values': {'address_1': 'Test street', 'country': 'EG'},
+            },
+          ],
+        },
+      );
+      final state = await repository.loadCheckout();
+      expect(state.fieldDefinitions.map((f) => f.key), [
+        'billing_first_name',
+        'shipping_last_name',
+      ]);
+      expect(state.nativePaymentAdapters, {'cod': 'offline'});
+      expect(state.savedAddresses.single.values['address_1'], 'Test street');
+    },
+  );
   test('merchant labels do not expand available cart gateways', () async {
     final transport = FakeCheckoutTransport()
       ..configurationResponse = const CheckoutApiResponse(
@@ -320,18 +382,9 @@ void main() {
         (body['billing_address'] as Map<String, String>)['email'],
         'guest-01000000000@no-email.invalid',
       );
-      expect(
-        (body['billing_address'] as Map<String, String>)['company'],
-        '',
-      );
-      expect(
-        (body['billing_address'] as Map<String, String>)['address_2'],
-        '',
-      );
-      expect(
-        (body['billing_address'] as Map<String, String>)['postcode'],
-        '',
-      );
+      expect((body['billing_address'] as Map<String, String>)['company'], '');
+      expect((body['billing_address'] as Map<String, String>)['address_2'], '');
+      expect((body['billing_address'] as Map<String, String>)['postcode'], '');
       final Map<String, String> shipping =
           body['shipping_address'] as Map<String, String>;
       expect(shipping['company'], '');
@@ -786,7 +839,10 @@ void main() {
       await transport.loadConfiguration();
 
       expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
-      expect(captured?.uri.path, '/wp-json/mobishop/v1/checkout-config');
+      expect(
+        captured?.uri.path,
+        '/wp-json/mobishop/v1/customer/checkout/config',
+      );
     },
   );
 

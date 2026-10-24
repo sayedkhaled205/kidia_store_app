@@ -16,6 +16,7 @@ import 'package:mobishop_store_app/features/checkout/data/storage/checkout_pendi
 import 'package:mobishop_store_app/features/checkout/data/models/checkout_field_definition_model.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'package:mobishop_store_app/features/checkout/domain/entities/saved_checkout_address92.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_submission.dart';
@@ -36,6 +37,7 @@ class StoreApiCheckoutRepository
     bool Function()? currentSessionIsValid,
     this.safetyTransport,
     this.requireServerSafety = false,
+    this.requireMerchantConfiguration = false,
     this.customerId,
   }) : pendingAttemptStore =
            pendingAttemptStore ?? MemoryCheckoutPendingAttemptStore(),
@@ -53,6 +55,7 @@ class StoreApiCheckoutRepository
   /// Legacy transport-only fixtures opt out explicitly; configured Native
   /// customer checkout must inject safetyTransport and require this contract.
   final bool requireServerSafety;
+  final bool requireMerchantConfiguration;
 
   /// Independently captured authenticated buyer, not a cart/address/customer
   /// value echoed by an order. currentSessionIsValid must bind this identity.
@@ -78,7 +81,7 @@ class StoreApiCheckoutRepository
         throw _unresolvedAttempt();
       }
       final Cart cart = await cartRepository.getCart();
-      final (definitions, paymentLabels) =
+      final (definitions, paymentLabels, savedAddresses, adapters) =
           await _loadPresentationConfiguration();
       bool enforced = false;
       if (requireServerSafety || safetyTransport != null) {
@@ -94,6 +97,8 @@ class StoreApiCheckoutRepository
         cart: cart,
         fieldDefinitions: definitions,
         paymentMethodLabels: paymentLabels,
+        savedAddresses: savedAddresses,
+        nativePaymentAdapters: adapters,
         hasUnresolvedSubmission: unresolved,
         serverSafetyRequired: requireServerSafety || safetyTransport != null,
         serverSafetyEnforced: enforced,
@@ -126,12 +131,33 @@ class StoreApiCheckoutRepository
     }
   }
 
-  Future<(List<CheckoutFieldDefinition>, Map<String, String>)>
+  Future<
+    (
+      List<CheckoutFieldDefinition>,
+      Map<String, String>,
+      List<SavedCheckoutAddress92>,
+      Map<String, String>,
+    )
+  >
   _loadPresentationConfiguration() async {
     try {
       final CheckoutApiResponse response = await transport.loadConfiguration();
       final Map<String, dynamic>? json = _objectOrNull(response.data);
+      if (requireMerchantConfiguration &&
+          (json?['version'] is! int ||
+              (json!['version'] as int) < 8 ||
+              json['renderer'] != 'native' ||
+              json['fields'] is! List ||
+              (json['fields'] as List).isEmpty ||
+              json['payment_methods'] is! List)) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message:
+              'The store checkout configuration is unavailable. Please try again.',
+        );
+      }
       final labels = <String, String>{};
+      final adapters = <String, String>{};
       final rawMethods = json?['payment_methods'];
       if (rawMethods is List) {
         for (final method in rawMethods) {
@@ -147,12 +173,21 @@ class StoreApiCheckoutRepository
               title.isNotEmpty &&
               title.length <= 200) {
             labels[id] = title;
+            adapters[id] =
+                const {'offline', 'kashier'}.contains(method['native_adapter'])
+                ? method['native_adapter'] as String
+                : 'unavailable';
           }
         }
       }
       final dynamic rawFields = json?['fields'];
       if (rawFields is! List) {
-        return (const <CheckoutFieldDefinition>[], labels);
+        return (
+          const <CheckoutFieldDefinition>[],
+          labels,
+          const <SavedCheckoutAddress92>[],
+          adapters,
+        );
       }
       final List<CheckoutFieldDefinition> fields = <CheckoutFieldDefinition>[];
       for (final dynamic rawField in rawFields) {
@@ -162,12 +197,29 @@ class StoreApiCheckoutRepository
           fields.add(field);
         }
       }
-      return (CheckoutFieldNormalizer.normalize(fields, json!), labels);
+      return (
+        CheckoutFieldNormalizer.normalize(fields, json!),
+        labels,
+        SavedCheckoutAddress92.parse(json['saved_addresses']),
+        adapters,
+      );
     } catch (_) {
+      if (requireMerchantConfiguration) {
+        throw const CheckoutRepositoryException(
+          kind: CheckoutFailureKind.configuration,
+          message:
+              'The store checkout configuration is unavailable. Please try again.',
+        );
+      }
       // Older plugin versions keep the safe built-in checkout fields. The
       // shopping flow must not fail merely because dynamic styling metadata
       // is not yet installed.
-      return (const <CheckoutFieldDefinition>[], const <String, String>{});
+      return (
+        const <CheckoutFieldDefinition>[],
+        const <String, String>{},
+        const <SavedCheckoutAddress92>[],
+        const <String, String>{},
+      );
     }
   }
 
@@ -837,8 +889,12 @@ class StoreApiCheckoutRepository
               ? billing.phone
               : submission.shippingAddress.phone.trim(),
         );
-    if (!_isValidStandardAddress(billing, requiresPhone: true) ||
-        !_isValidStandardAddress(shipping, requiresPhone: true) ||
+    // Required/custom fields come from the current merchant schema and are
+    // validated by the form and Woo. Do not impose legacy address requirements
+    // (for example a surname) on merchants that deliberately omit them.
+    if ((!requireMerchantConfiguration &&
+            (!_isValidStandardAddress(billing, requiresPhone: true) ||
+                !_isValidStandardAddress(shipping, requiresPhone: true))) ||
         (billing.email.isNotEmpty &&
             !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(billing.email)) ||
         submission.customerNote.trim().length > 1000) {

@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
+import 'saved_checkout_address92.dart';
 
 class CheckoutState {
   CheckoutState({
@@ -7,6 +8,8 @@ class CheckoutState {
     this.hasUnresolvedSubmission = false,
     this.serverSafetyRequired = false,
     this.serverSafetyEnforced = false,
+    this.savedAddresses = const [],
+    this.nativePaymentAdapters = const {},
     Map<String, String> paymentMethodLabels = const <String, String>{},
     List<CheckoutFieldDefinition> fieldDefinitions =
         const <CheckoutFieldDefinition>[],
@@ -27,6 +30,8 @@ class CheckoutState {
        );
 
   final Cart cart;
+  final List<SavedCheckoutAddress92> savedAddresses;
+  final Map<String, String> nativePaymentAdapters;
 
   /// Persisted dispatch without an authoritative order/rejection response.
   /// An empty or freshly fetched basket does not resolve this state.

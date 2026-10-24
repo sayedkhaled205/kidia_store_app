@@ -70,6 +70,7 @@ final checkoutCustomerBindingProvider =
           ),
           currentSessionIsValid: sessionIsCurrent,
           requireServerSafety: true,
+          requireMerchantConfiguration: true,
           safetyTransport: StoreApiCheckoutSafetyTransport(
             storeUri: storeUri,
             dio: ref.watch(cartDioProvider),

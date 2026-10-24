@@ -113,8 +113,8 @@ class _CheckoutPaymentContinuation298State
                           ? 'راجع حالة هذا الطلب في طلباتك قبل إجراء أي عملية جديدة.'
                           : 'Review this order in your order history before taking another action.')
                     : ar
-                    ? 'كمّل الدفع من صفحة المتجر، ثم ارجع للتحقق من نفس الطلب. لا تحتاج لإنشاء طلب جديد.'
-                    : 'Continue payment on the store, then return to check this order. You do not need to place another order.',
+                    ? 'كمّل الدفع بأمان داخل التطبيق. طلبك محفوظ ولا تحتاج لإنشاء طلب جديد.'
+                    : 'Complete payment securely in the app. Your order is saved; you do not need to create another order.',
                 key: const Key('checkout-redirect-required'),
                 textAlign: TextAlign.center,
               ),
