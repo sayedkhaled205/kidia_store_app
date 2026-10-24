@@ -155,6 +155,15 @@ hardcoded in the shared connector/application.
 
 120 checkout tests pass, including seven schema/policy regressions; 11 packaged
 PHP merchant-schema checks, six destination checks and 14 package tests pass.
-Full lib/test analysis is clean. Device verification of the new policy is pending.
+Full lib/test analysis is clean. Android QA Build 58 (versionCode 35, runtime
+commit 3e518c30) passed CI and was installed over Build 57 on the API 35 emulator.
+The native screen shows the current merchant governorate label and saved
+addresses, hides the disabled separate-address switch, retains merchant shipping
+rates (55/60 EGP), and opens inline card fields before the single payment/order
+button. The existing basket total remains 70 EGP. No order or payment was
+submitted during this policy verification. APK/AAB hashes match the build
+manifest, the APK signer matches the existing QA installation, and no runtime
+errors were observed. Connector 1.46.97 is deployed to the merchant and shared
+customer download; the public package hash matches the source-built artifact.
 This implementation covers the WooCommerce connector; it does not certify
 arbitrary site JavaScript or native checkout parity for Odoo/Shopify.
