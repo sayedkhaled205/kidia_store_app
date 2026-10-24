@@ -22,43 +22,177 @@
   "offline_matrix": {
     "runner": "tool/verify_commerce_matrix.py",
     "cases": [
-      {"platform": "woocommerce", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 51},
-      {"platform": "woocommerce", "merchant": "beta", "locale": "en", "country": "US", "passed": 51},
-      {"platform": "shopify", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 40},
-      {"platform": "shopify", "merchant": "beta", "locale": "en", "country": "US", "passed": 40},
-      {"platform": "odoo", "merchant": "alpha", "locale": "ar", "country": "EG", "passed": 26},
-      {"platform": "odoo", "merchant": "beta", "locale": "en", "country": "US", "passed": 26}
+      {
+        "platform": "woocommerce",
+        "merchant": "alpha",
+        "origin": "https://alpha.woocommerce.example.invalid",
+        "locale": "ar",
+        "country": "EG",
+        "passed": 67
+      },
+      {
+        "platform": "woocommerce",
+        "merchant": "beta",
+        "origin": "https://beta.woocommerce.example.invalid/shop",
+        "locale": "en",
+        "country": "US",
+        "passed": 67
+      },
+      {
+        "platform": "shopify",
+        "merchant": "alpha",
+        "origin": "https://matrix-alpha.myshopify.com",
+        "locale": "ar",
+        "country": "EG",
+        "passed": 56
+      },
+      {
+        "platform": "shopify",
+        "merchant": "beta",
+        "origin": "https://matrix-beta.myshopify.com",
+        "locale": "en",
+        "country": "US",
+        "passed": 56
+      },
+      {
+        "platform": "odoo",
+        "merchant": "alpha",
+        "origin": "https://alpha.odoo.example.invalid",
+        "locale": "ar",
+        "country": "EG",
+        "passed": 62
+      },
+      {
+        "platform": "odoo",
+        "merchant": "beta",
+        "origin": "https://beta.odoo.example.invalid",
+        "locale": "en",
+        "country": "US",
+        "passed": 62
+      }
     ],
-    "total_passed": 234,
+    "total_passed": 370,
     "skipped": 0,
     "real_merchant_requests": 0,
     "real_payments": 0,
-    "checks": ["compile-time platform selection", "merchant origin and credential isolation", "redirect rejection", "cart and customer session isolation", "wishlist isolation", "platform routing", "merchant checkout fields and shipping contracts"]
+    "checks": [
+      "compile-time platform selection",
+      "merchant origin and credential isolation",
+      "redirect rejection",
+      "cart and customer session isolation",
+      "wishlist isolation",
+      "platform routing",
+      "merchant checkout fields and shipping contracts",
+      "WordPress subdirectory design/installation identity",
+      "Odoo 51.1 account compatibility with enabled 85.1 cart contract",
+      "Odoo restore ownership, revocation, redirects and capability validation"
+    ]
   },
   "platform_limits": {
     "woocommerce": {
       "native_checkout": true,
-      "native_payment_adapters": ["kashier_card", "cod", "bacs", "cheque"],
-      "limits": ["Other gateways need a verified shared adapter; they are not automatically native.", "Merchant customizations outside supported checkout contracts need compatibility testing.", "A new merchant still requires its actual connector, authentication and signing configuration."]
+      "native_payment_adapters": [
+        "kashier_card",
+        "cod",
+        "bacs",
+        "cheque"
+      ],
+      "limits": [
+        "Other gateways need a verified shared adapter; they are not automatically native.",
+        "Merchant customizations outside supported checkout contracts need compatibility testing.",
+        "A new merchant still requires its actual connector, authentication and signing configuration."
+      ]
     },
     "shopify": {
       "native_catalog_and_cart": true,
       "native_checkout": false,
       "checkout": "Current cart flow launches the validated Shopify checkout URL.",
       "remaining": "Implement and verify the platform-supported in-app checkout and customer account integration against an authorized test store.",
-      "evidence": ["lib/core/commerce/commerce_connection.dart", "lib/features/cart/presentation/cart_screen.dart", "test/features/cart/presentation/shopify_checkout_handoff297_test.dart"]
+      "evidence": [
+        "lib/core/commerce/commerce_connection.dart",
+        "lib/features/cart/presentation/cart_screen.dart",
+        "test/features/cart/presentation/shopify_checkout_handoff297_test.dart"
+      ]
     },
     "odoo": {
       "native_catalog": true,
       "native_customer_account": "Separate customer-session adapter exists.",
       "native_cart_and_checkout": false,
       "remaining": "Connect the native cart, shipping and payment flow to the dedicated customer API; verify against an authorized Odoo store.",
-      "evidence": ["lib/core/commerce/commerce_connection.dart", "lib/app/app_router.dart", "lib/core/commerce/odoo_customer_session_store51.dart"]
+      "evidence": [
+        "lib/core/commerce/commerce_connection.dart",
+        "lib/app/app_router.dart",
+        "lib/core/commerce/odoo_customer_session_store51.dart"
+      ]
     }
   },
   "regression_gates": {
     "github": "commerce-contracts job compiles all three platform variants with two separate merchant fixtures each.",
     "codemagic": "Every native workflow runs the matrix for its selected platform before building.",
     "failure_policy": "Reject missing platform sentinel, skipped tests, failed tests, incomplete execution or nonzero exit status."
+  },
+  "generalization_progress99": {
+    "source_changes": [
+      "Accept the independently advertised and strictly validated Odoo 85.1 cart capabilities without breaking native account51 login/restore. Do not implicitly enable native checkout.",
+      "Preserve the exact WordPress installation path in Flutter connection/design validation and native build generation; reject bundles belonging to a different folder on the same host.",
+      "Include the WordPress subdirectory case and Odoo account compatibility tests in the six-case matrix. Run native build generator tests in all five Codemagic workflows and GitHub platform jobs."
+    ],
+    "merchant_specific_source_conditions_added": false,
+    "regression_reproduced_before_fix": {
+      "failed_odoo_account_cases": 3,
+      "passed_other_cases": 17
+    },
+    "verification": {
+      "offline_matrix_passed": 370,
+      "skipped": 0,
+      "native_build_generator_tests_passed": 11,
+      "matrix_runner_tests_passed": 4,
+      "workflow_tests_passed": 6,
+      "targeted_flutter_analysis": "No issues found"
+    },
+    "live_odoo_public_probe": {
+      "origin": "https://odoo-staging.kidiastore.com",
+      "status": 200,
+      "account_contract": "51.1",
+      "cart_contract": "85.1",
+      "fresh_guest_session_accepted_by_actual_flutter_client": true,
+      "customer_login_executed": false,
+      "cart_or_order_mutation": false,
+      "payment_executed": false
+    },
+    "live_odoo_readonly_server_review": {
+      "website_id": 1,
+      "database_transaction": "READ ONLY; rolled back",
+      "providers": [
+        {
+          "id": 15,
+          "code": "custom",
+          "custom_mode": "wire_transfer",
+          "methods": [
+            "wire_transfer"
+          ],
+          "state": "enabled"
+        },
+        {
+          "id": 17,
+          "code": "none",
+          "display_name": "Cash on Delivery",
+          "methods": [],
+          "state": "enabled"
+        }
+      ],
+      "active_card_gateway_found": false,
+      "shipping_delivery_type": "kidia_governorate",
+      "account_on_checkout": "optional"
+    },
+    "unmerged_older_odoo_cart_candidate": "Audited native85/86 implementation. Its nonzero checkout hands off to the website, conflicting with the requested native fields. It has not been silently activated.",
+    "remaining": [
+      "Implement the Odoo native cart/shipping/payment graph and verify with original server hooks; account compatibility alone does not complete checkout.",
+      "An Odoo test environment with a configured card gateway is needed for card acceptance.",
+      "An authorized Shopify test store and a decision about official in-app Shopify Checkout Kit versus strictly native fields are pending.",
+      "Current installed apps and deployed preview have not been rebuilt from these source changes; future native builds consume the updated source.",
+      "No claim of arbitrary gateway or customization compatibility, or iOS payment acceptance."
+    ],
+    "shopify_official_reference": "https://shopify.dev/docs/storefronts/mobile/checkout-kit"
   }
 }

@@ -38,6 +38,13 @@ class CommerceMatrixTests(unittest.TestCase):
             with self.subTest(code=code, output=output):
                 self.assertFalse(summarize(output, code)["passed"])
 
+    def test_woo_matrix_includes_a_subdirectory_installation(self):
+        fixtures = list(cases("woocommerce"))
+        self.assertTrue(fixtures[1]["origin"].endswith("/shop"))
+        for platform in ("shopify", "odoo"):
+            for fixture in cases(platform):
+                self.assertNotIn("/shop", fixture["origin"])
+
     def test_any_other_skipped_or_failed_test_rejects_the_case(self):
         for changes in ({"skipped": True}, {"result": "failure"}):
             event = {"type": "testDone", "testID": 8, "hidden": False,

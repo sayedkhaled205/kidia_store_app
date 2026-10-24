@@ -53,6 +53,23 @@ class NativeBuildDefines81Tests(unittest.TestCase):
         encoded = base64.b64encode(json.dumps(bundle).encode()).decode()
         self.assertEqual(native_defines(environment | {"APP_DESIGN_BUNDLE": encoded})["APP_DESIGN_BUNDLE"], encoded)
 
+    def test_woo_design_binds_to_the_exact_installation_folder(self):
+        bundle = copy.deepcopy(FIXTURE)
+        for path in ("/shop", "/store-b", "/%D9%85%D8%AA%D8%AC%D8%B1"):
+            store = "https://woo.example.invalid" + path
+            bundle.update(platform="woocommerce", store_origin=store)
+            encoded = base64.b64encode(json.dumps(bundle).encode()).decode()
+            environment = {"STORE_PLATFORM": "woocommerce", "STORE_URL": store + "/", "APP_DESIGN_BUNDLE": encoded}
+            self.assertEqual(native_defines(environment)["APP_DESIGN_BUNDLE"], encoded)
+            for other in ("https://woo.example.invalid", "https://woo.example.invalid/other"):
+                with self.subTest(path=path, other=other), self.assertRaises(ValueError):
+                    native_defines(environment | {"STORE_URL": other})
+
+    def test_woo_build_rejects_ambiguous_folder_or_nonstandard_authority(self):
+        for tail in (":9443/shop", "/shop//", "/shop%2fother", "/shop%5cother", "/shop%252fother", "/shop%0aother", "/shop/../other"):
+            with self.subTest(tail=tail), self.assertRaises(ValueError):
+                native_defines({"STORE_URL": "https://woo.example.invalid" + tail})
+
     def test_unknown_platform_missing_bundle_and_wrong_binding_fail_closed(self):
         environment, _ = foreign()
         for changes in ({"STORE_PLATFORM": ""}, {"STORE_PLATFORM": "magento"}, {"APP_DESIGN_BUNDLE": ""},

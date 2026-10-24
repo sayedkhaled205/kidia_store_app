@@ -10,7 +10,7 @@ class CommerceConnection {
     required Uri storeOrigin,
     this.shopifyApiVersion = '2026-10',
     String shopifyPublicStorefrontToken = '',
-  }) : storeOrigin = _origin(storeOrigin),
+  }) : storeOrigin = _origin(storeOrigin, platform),
        shopifyPublicStorefrontToken = _publicToken(
          shopifyPublicStorefrontToken,
        ) {
@@ -32,6 +32,9 @@ class CommerceConnection {
   }
 
   final CommercePlatform platform;
+
+  /// Store identity including the WordPress installation path, when present.
+  /// Odoo and Shopify contracts require a root HTTPS origin.
   final Uri storeOrigin;
   final String shopifyApiVersion;
 
@@ -73,19 +76,36 @@ class CommerceConnection {
     }
   }
 
-  static Uri _origin(Uri source) {
+  static Uri _origin(Uri source, CommercePlatform platform) {
     if (source.scheme != 'https' ||
         source.host.isEmpty ||
         source.userInfo.isNotEmpty ||
         source.hasQuery ||
         source.hasFragment ||
         (source.hasPort && source.port != 443) ||
-        (source.path.isNotEmpty && source.path != '/')) {
+        (platform != CommercePlatform.wooCommerce &&
+            source.path.isNotEmpty &&
+            source.path != '/')) {
       throw const FormatException(
         'A customer connection requires a clean HTTPS store origin.',
       );
     }
-    return Uri(scheme: 'https', host: source.host.toLowerCase());
+    final path = source.path.replaceFirst(RegExp(r'/$'), '');
+    if (path.isNotEmpty &&
+        (source.path.contains('//') ||
+            source.pathSegments
+                .where((segment) => segment.isNotEmpty)
+                .any(
+                  (segment) =>
+                      segment == '.' ||
+                      segment == '..' ||
+                      segment.contains(RegExp(r'[/\\%\x00-\x1f\x7f]')),
+                ))) {
+      throw const FormatException(
+        'An unambiguous store installation path is required.',
+      );
+    }
+    return Uri(scheme: 'https', host: source.host.toLowerCase(), path: path);
   }
 
   static String _publicToken(String source) {

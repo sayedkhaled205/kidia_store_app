@@ -206,8 +206,6 @@ class OdooCustomerClient51 {
       'addresses': true,
       'orders': true,
       'register': false,
-      'cart': false,
-      'checkout': false,
       'push': false,
     };
     if (expectedCapabilities.entries.any(
@@ -216,6 +214,25 @@ class OdooCustomerClient51 {
           capabilities[entry.key] != entry.value,
     )) {
       throw _invalid();
+    }
+    // Account contract 51.1 is also served by stores with the independently
+    // gated cart contract enabled. Validate that advertised contract without
+    // treating it as permission to use an unimplemented checkout transport.
+    // Requiring cart=false here broke login as soon as a merchant enabled it.
+    final cart = capabilities['cart'];
+    final checkout = capabilities['checkout'];
+    if (cart is! bool ||
+        checkout is! bool ||
+        (checkout && !cart) ||
+        (cart && response['cart_contract_version'] != '85.1')) {
+      throw _invalid();
+    }
+    if (cart) {
+      final free = capabilities['free_checkout'];
+      final handoff = capabilities['payment_handoff'];
+      if (free is! bool || handoff is! bool || checkout != (free || handoff)) {
+        throw _invalid();
+      }
     }
     _csrf = csrf;
     _customer = next;

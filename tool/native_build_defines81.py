@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, quote, unquote, urlsplit
 
 
 PLATFORMS = {"woocommerce", "shopify", "odoo"}
@@ -32,10 +32,26 @@ def origin(value, *, clean):
         uri = urlsplit(value)
         if (uri.scheme != "https" or not uri.hostname or uri.username is not None
                 or uri.password is not None or uri.query or uri.fragment
-                or (clean and (uri.port not in (None, 443) or uri.path not in ("", "/")))
+                or uri.port not in (None, 443)
+                or (clean and uri.path not in ("", "/"))
                 or re.search(r"\s|[\x00-\x1f\x7f]", value)):
             reject("STORE_URL must be the configured HTTPS customer store origin.")
-        return "https://" + uri.hostname.lower()
+        # WordPress can live in a folder. Both the packaged design and Flutter
+        # connection must retain it; two installations on one host are distinct
+        # stores, not interchangeable design/customer identities.
+        if "//" in uri.path:
+            reject()
+        segments = []
+        for segment in uri.path.rstrip("/").split("/")[1:]:
+            decoded = unquote(segment, errors="strict")
+            if decoded in (".", "..") or re.search(r"[/\\%\x00-\x1f\x7f]", decoded):
+                reject()
+            segments.append(quote(decoded, safe="-._~!$&'()*+,;=:@"))
+        path = "/" + "/".join(segments) if segments else ""
+        host = uri.hostname.lower()
+        if ":" in host:
+            host = "[" + host + "]"
+        return "https://" + host + path
     except (ValueError, TypeError):
         reject("STORE_URL must be the configured HTTPS customer store origin.")
 
@@ -140,7 +156,8 @@ def validate_bundle(encoded, platform, store_origin):
         if (not isinstance(bundle, dict)
                 or set(bundle) != {"schema_version", "platform", "store_origin", "identity", "splash", "home", "pages"}
                 or type(bundle["schema_version"]) is not int or bundle["schema_version"] != 1
-                or bundle["platform"] != platform or origin(bundle["store_origin"], clean=True) != store_origin
+                or bundle["platform"] != platform
+                or origin(bundle["store_origin"], clean=platform != "woocommerce") != store_origin
                 or any(not isinstance(bundle[key], dict) for key in ("identity", "splash", "home", "pages"))
                 or set(bundle["pages"]) != PAGES):
             reject()

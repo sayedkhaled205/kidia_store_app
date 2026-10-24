@@ -14,6 +14,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 COMMON = [
     "test/core/commerce/platform_binding_test.dart",
+    "test/core/commerce/commerce_connection_test.dart",
     "test/core/commerce/merchant_isolation_test.dart",
     "test/core/commerce/hosted_commerce_destination297_test.dart",
     "test/features/auth/presentation/website_auth_platform_gate_test.dart",
@@ -30,7 +31,10 @@ PLATFORM_TESTS = {
         "test/core/commerce/shopify_checkout_policy297_test.dart",
         "test/features/cart/presentation/shopify_checkout_handoff297_test.dart",
     ],
-    "odoo": ["test/features/account/presentation/odoo_account_help297_test.dart"],
+    "odoo": [
+        "test/features/account/presentation/odoo_account_help297_test.dart",
+        "test/core/commerce/odoo_customer_contract_test.dart",
+    ],
 }
 SENTINEL = "matrix compiled platform and merchant are explicit"
 
@@ -39,9 +43,10 @@ def cases(platform):
     for merchant, locale, country in (("alpha", "ar", "EG"), ("beta", "en", "US")):
         host = (f"matrix-{merchant}.myshopify.com" if platform == "shopify"
                 else f"{merchant}.{platform}.example.invalid")
+        path = "/shop" if platform == "woocommerce" and merchant == "beta" else ""
         yield {
             "name": f"{platform}-{merchant}", "platform": platform,
-            "origin": f"https://{host}", "locale": locale, "country": country,
+            "origin": f"https://{host}{path}", "locale": locale, "country": country,
         }
 
 

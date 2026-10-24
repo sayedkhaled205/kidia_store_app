@@ -44,7 +44,10 @@ workflows:
         script: |
           xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
       - name: Verify merchant and platform contracts
-        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -150,7 +153,10 @@ workflows:
       - name: Run Flutter tests
         script: flutter test
       - name: Verify merchant and platform contracts
-        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -353,7 +359,10 @@ workflows:
       - name: Run Flutter tests
         script: flutter test
       - name: Verify merchant and platform contracts
-        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -542,7 +551,10 @@ workflows:
       - name: Run Flutter tests
         script: flutter test
       - name: Verify merchant and platform contracts
-        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail
@@ -683,7 +695,10 @@ workflows:
           flutter analyze lib test
           flutter test
       - name: Verify merchant and platform contracts
-        script: python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
       - name: Validate actual compiled customer design
         script: |
           set -euo pipefail

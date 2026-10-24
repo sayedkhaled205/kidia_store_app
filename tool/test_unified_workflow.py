@@ -15,6 +15,7 @@ class UnifiedWorkflowTests(unittest.TestCase):
             self.assertEqual(len(checks), 1, name)
             script = steps[checks[0]]['script']
             self.assertIn('tool/verify_commerce_matrix.py', script)
+            self.assertIn('test_native_build_defines81.py', script)
             self.assertIn('--platform "${STORE_PLATFORM:-woocommerce}"', script)
             for i, step in enumerate(steps):
                 if 'flutter build ' in step['script']:
