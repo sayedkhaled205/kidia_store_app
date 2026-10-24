@@ -205,7 +205,7 @@ class ProductDetailController extends ChangeNotifier {
       // enrich stock, prices and images without keeping the whole screen on a
       // loading spinner while extra network requests finish.
       if (loadedProduct.hasVariations) {
-        _loadDetailedVariations(serial);
+        await _loadDetailedVariations(serial);
       }
     } on CatalogRepositoryException catch (error) {
       _commitFailure(serial, error.message, preserveProduct: background);

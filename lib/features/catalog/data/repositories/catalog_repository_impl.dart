@@ -17,20 +17,13 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
     this._remoteDataSource, {
     Stream<int>? changes,
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now,
-       _changes = changes?.asBroadcastStream() {
+  }) : _changes = changes?.asBroadcastStream() {
     _changeSubscription = _changes?.listen((_) => _clearProductReads());
   }
 
   final CatalogRemoteDataSource _remoteDataSource;
-  final DateTime Function() _now;
   final Stream<int>? _changes;
   StreamSubscription<int>? _changeSubscription;
-  int _revision = 0;
-  static const _productReadLifetime = Duration(seconds: 20);
-  static const _maxProductReads = 96;
-  final _products = <int, _RecentProductRead<CatalogProduct>>{};
-  final _variations = <int, _RecentProductRead<List<CatalogVariation>>>{};
   final _productRequests = <int, Future<CatalogProduct>>{};
   final _variationRequests = <int, Future<List<CatalogVariation>>>{};
 
@@ -38,9 +31,6 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
   Stream<int> get catalogChanges => _changes ?? const Stream<int>.empty();
 
   void _clearProductReads() {
-    _revision++;
-    _products.clear();
-    _variations.clear();
     _productRequests.clear();
     _variationRequests.clear();
   }
@@ -50,61 +40,33 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
     await _changeSubscription?.cancel();
   }
 
-  void _remember<T>(Map<int, _RecentProductRead<T>> cache, int id, T value) {
-    cache.remove(id);
-    cache[id] = _RecentProductRead(value, _now().add(_productReadLifetime));
-    while (cache.length > _maxProductReads) {
-      cache.remove(cache.keys.first);
-    }
-  }
-
-  Future<T> _recentRead<T>(
+  // Share only overlapping requests. A completed catalog/card read must never
+  // decide a later purchase: availability can change before a revision poll.
+  Future<T> _freshRead<T>(
     int id,
-    Map<int, _RecentProductRead<T>> cache,
     Map<int, Future<T>> pending,
     Future<T> Function() load,
   ) async {
-    final saved = cache[id];
-    if (saved != null && _now().isBefore(saved.expiresAt)) return saved.value;
     final inFlight = pending[id];
     if (inFlight != null) return inFlight;
-    final revision = _revision;
     final request = load();
     pending[id] = request;
     try {
-      final value = await request;
-      if (revision == _revision) _remember(cache, id, value);
-      return value;
+      return await request;
     } finally {
       if (identical(pending[id], request)) pending.remove(id);
     }
   }
 
   @override
-  Future<CatalogPage<CatalogProduct>> getProducts(CatalogProductQuery query) {
-    final revision = _revision;
-    return _guard(() async {
-      final page = (await _remoteDataSource.fetchProducts(
-        query,
-      )).map((model) => model.toEntity());
-      // Store API lists contain the same public product fields as detail reads.
-      // Reuse a just-rendered card instead of blocking quick-add on another GET.
-      // Prices/stock expire quickly, store changes invalidate immediately, and
-      // every cart mutation still uses WooCommerce's authoritative validation.
-      if (revision == _revision) {
-        for (final product in page.items) {
-          _remember(_products, product.id, product);
-        }
-      }
-      return page;
-    });
-  }
+  Future<CatalogPage<CatalogProduct>> getProducts(CatalogProductQuery query) =>
+      _guard(() async => (await _remoteDataSource.fetchProducts(query))
+          .map((model) => model.toEntity()));
 
   @override
   Future<CatalogProduct> getProduct(int productId) {
-    return _recentRead(
+    return _freshRead(
       productId,
-      _products,
       _productRequests,
       () => _guard(
         () async =>
@@ -115,9 +77,8 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
 
   @override
   Future<List<CatalogVariation>> getVariations(int productId) {
-    return _recentRead(
+    return _freshRead(
       productId,
-      _variations,
       _variationRequests,
       () => _guard(
         () async => List<CatalogVariation>.unmodifiable(
@@ -189,10 +150,4 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
       );
     }
   }
-}
-
-class _RecentProductRead<T> {
-  const _RecentProductRead(this.value, this.expiresAt);
-  final T value;
-  final DateTime expiresAt;
 }

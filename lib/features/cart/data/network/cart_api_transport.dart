@@ -102,6 +102,9 @@ class StoreApiCartTransport implements CartApiTransport {
       'Accept': 'application/json',
       if (method == CartApiMethod.post) 'Content-Type': 'application/json',
       ...?headers,
+      'X-MobiShop-Channel': 'mobile',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       if (authToken.isNotEmpty) 'X-MobiShop-Session': authToken,
     };
 
