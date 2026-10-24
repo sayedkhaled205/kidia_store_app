@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/app_design/app_design_hydration58.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -107,6 +108,46 @@ Future<void> _pumpFeed(
 }
 
 void main() {
+  test('normalized All feed retains its validated catalog selection', () async {
+    for (final mode in ['latest', 'category', 'on_sale', 'featured']) {
+      final repository = _Repository()
+        ..fetch = (query) async => page(query, []);
+      final layout = await hydrateSavedHome58(
+        {
+          'version': 1,
+          'page': 'home',
+          'locale': 'en',
+          'updated_at': '2026-10-24T00:00:00Z',
+          'blocks': [
+            {
+              'id': 'any-customer-final-section',
+              'type': 'product_grid',
+              'enabled': true,
+              'data': {'limit': 'all', 'items': <dynamic>[]},
+              'catalog_query': {
+                'kind': 'products',
+                'mode': mode,
+                'limit': 12,
+                'sort': 'newest',
+                if (mode == 'category') 'category_id': 37,
+              },
+            },
+          ],
+        },
+        repository,
+        locale: 'en',
+      );
+      final grid = layout.blocks.single as ProductGridBlock;
+      expect(grid.loadAll, isTrue);
+      expect(grid.source, mode);
+      expect(grid.categoryId, mode == 'category' ? 37 : 0);
+      expect(
+        repository.queries.single.categoryIds,
+        mode == 'category' ? [37] : isEmpty,
+      );
+    }
+  });
+
   test('All survives parsing; numeric limits remain finite', () {
     expect(block('all').loadAll, isTrue);
     expect(block(12).loadAll, isFalse);

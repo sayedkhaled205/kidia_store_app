@@ -198,7 +198,7 @@ Future<HomeLayout> hydrateSavedHome58(
         blocks.add(
           block is ProductCarouselBlock
               ? _carousel(block, items)
-              : _grid(block as ProductGridBlock, items),
+              : _grid(block as ProductGridBlock, items, query),
         );
       }
     } catch (error) {
@@ -312,36 +312,46 @@ ProductCarouselBlock _carousel(
   wishlistAppearance: b.wishlistAppearance,
 );
 
-ProductGridBlock _grid(ProductGridBlock b, List<HomeProductItem> items) =>
-    ProductGridBlock(
-      id: b.id,
-      loadAll: b.loadAll,
-      source: b.source,
-      categoryId: b.categoryId,
-      productIds: b.productIds,
-      enabled: b.enabled,
-      presentation: b.presentation,
-      title: b.title,
-      subtitle: b.subtitle,
-      items: items,
-      columns: b.columns,
-      showViewAll: b.showViewAll,
-      viewAllLabel: b.viewAllLabel,
-      viewAllAction: b.viewAllAction,
-      cardStyle: b.cardStyle,
-      imageRatio: b.imageRatio,
-      cardRadius: b.cardRadius,
-      showName: b.showName,
-      showPrice: b.showPrice,
-      showRegularPrice: b.showRegularPrice,
-      showBadge: b.showBadge,
-      showRating: b.showRating,
-      quickAddEnabled: b.quickAddEnabled,
-      contentBottomPadding: b.contentBottomPadding,
-      imageSwipeEnabled: b.imageSwipeEnabled,
-      quickAddAppearance: b.quickAddAppearance,
-      wishlistAppearance: b.wishlistAppearance,
-    );
+ProductGridBlock _grid(
+  ProductGridBlock b,
+  List<HomeProductItem> items,
+  Map<String, dynamic> query,
+) => ProductGridBlock(
+  id: b.id,
+  loadAll: b.loadAll,
+  // The normalized bundle carries selection only in catalog_query.
+  // Keep that same selection when the All feed requests later pages.
+  source: switch (query['mode']) {
+    'ids' => 'manual',
+    'all' => 'latest',
+    final String mode => mode,
+    _ => b.source,
+  },
+  categoryId: query['category_id'] as int? ?? 0,
+  productIds: (query['ids'] as List?)?.cast<int>() ?? const [],
+  enabled: b.enabled,
+  presentation: b.presentation,
+  title: b.title,
+  subtitle: b.subtitle,
+  items: items,
+  columns: b.columns,
+  showViewAll: b.showViewAll,
+  viewAllLabel: b.viewAllLabel,
+  viewAllAction: b.viewAllAction,
+  cardStyle: b.cardStyle,
+  imageRatio: b.imageRatio,
+  cardRadius: b.cardRadius,
+  showName: b.showName,
+  showPrice: b.showPrice,
+  showRegularPrice: b.showRegularPrice,
+  showBadge: b.showBadge,
+  showRating: b.showRating,
+  quickAddEnabled: b.quickAddEnabled,
+  contentBottomPadding: b.contentBottomPadding,
+  imageSwipeEnabled: b.imageSwipeEnabled,
+  quickAddAppearance: b.quickAddAppearance,
+  wishlistAppearance: b.wishlistAppearance,
+);
 
 FormatException _unsupported() => const FormatException(
   'Unsupported APP_DESIGN_BUNDLE catalog selector; no filter is silently ignored.',
