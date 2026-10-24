@@ -17,6 +17,7 @@ final class MobiShop_Embedded_Checkout88 {
         } );
         add_filter( 'determine_current_user', array( $this, 'scoped_user' ), 40 );
         add_filter( 'user_has_cap', array( $this, 'customer_capabilities' ), 100, 4 );
+        add_action( 'init', array( $this, 'restore_identity' ), -30 );
         add_action( 'init', array( $this, 'redeem' ), -20 );
         add_action( 'woocommerce_init', array( $this, 'restore_cart' ), 5 );
         add_action( 'template_redirect', array( $this, 'redirect' ), -100 );
@@ -133,6 +134,12 @@ final class MobiShop_Embedded_Checkout88 {
         return (int) $scope['user_id'];
     }
 
+    public function restore_identity(): void {
+        // Another extension may have resolved the user before our filter was
+        // registered. Resolve the scoped cookie before Woo opens its session.
+        if ( isset( $_COOKIE[ self::COOKIE ] ) ) wp_set_current_user( (int) $this->scoped_user( 0 ) );
+    }
+
     public function customer_capabilities( array $caps, array $required, array $args, $user ): array {
         if ( null === $this->scope || (int) $user->ID !== (int) $this->scope['user_id'] ) return $caps;
         return array_intersect_key( $caps, array( 'read' => true ) );
@@ -169,6 +176,12 @@ final class MobiShop_Embedded_Checkout88 {
         if ( null === $this->bootstrap ) return;
         $data = $this->cart_data( $this->bootstrap['cart_key'], (int) $this->bootstrap['user_id'] );
         if ( null === $data || ! WC()->session ) $this->deny();
+        // Extensions can initialize Woo before init. Rebind that handler after
+        // the ticket has selected the customer and removed the old cookie.
+        // Otherwise the copied basket is saved to a guest session and checkout
+        // opens the customer's empty session on the following request.
+        WC()->session->init_session_cookie();
+        if ( (string) WC()->session->get_customer_id() !== (string) $this->bootstrap['user_id'] ) $this->deny();
         // Use Woo's session layer. No price, stock, field, gateway or order rules are replaced.
         foreach ( $data as $key => $value ) {
             if ( in_array( $key, array( 'customer', 'order_awaiting_payment', 'store_api_draft_order', 'previous_customer_id' ), true ) ) continue;
@@ -192,7 +205,7 @@ final class MobiShop_Embedded_Checkout88 {
     public function document_style(): void {
         if ( null === $this->scope || ! is_checkout() ) return;
         // Only surrounding site chrome is removed. Merchant checkout markup/JS stays intact.
-        echo '<style id="mobishop-checkout88-chrome">.site-header,#masthead,.site-footer,#colophon,.woocommerce-breadcrumb{display:none!important}body{min-width:0!important}</style>';
+        echo '<style id="mobishop-checkout88-chrome">.site-header,#masthead,header#header,.site-footer,#colophon,footer#footer,.woocommerce-breadcrumb{display:none!important}body{min-width:0!important}</style>';
     }
 
     private function deny(): void {

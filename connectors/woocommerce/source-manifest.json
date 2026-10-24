@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.89",
+  "version": "1.46.90",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "41eff13ce6690363b8834a985081f91c909c994e9510589d92f2207f3e0b7676",
-      "sha256": "41eff13ce6690363b8834a985081f91c909c994e9510589d92f2207f3e0b7676"
+      "source_sha256": "4dda016e34d3d67dd8be9edabc507ad12ee673dac4c289e2b24ad72cd93cc13b",
+      "sha256": "4dda016e34d3d67dd8be9edabc507ad12ee673dac4c289e2b24ad72cd93cc13b"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2928,8 +2928,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "728326074f4edc4b240e85e0a5cd6266a20ad13f28b4c546b853f0822c34058f",
-      "sha256": "728326074f4edc4b240e85e0a5cd6266a20ad13f28b4c546b853f0822c34058f"
+      "source_sha256": "e698aa746729e4bcd18fc3c90d00960a1c1ada1da9e4a8d912518f76f77e2593",
+      "sha256": "e698aa746729e4bcd18fc3c90d00960a1c1ada1da9e4a8d912518f76f77e2593"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2964,8 +2964,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "06c24ae880e190b0754cc766900421208b110498a538f45bb2643a9116056ae5",
-      "sha256": "06c24ae880e190b0754cc766900421208b110498a538f45bb2643a9116056ae5"
+      "source_sha256": "4e254b7ccd19dc0c39c3f47d1c0fe6c6b6a6dfd58802298845f32688b222b781",
+      "sha256": "4e254b7ccd19dc0c39c3f47d1c0fe6c6b6a6dfd58802298845f32688b222b781"
     },
     "includes/central/store-notifications.php": {
       "newline": "lf",
@@ -2976,8 +2976,8 @@
     "api/class-embedded-checkout88.php": {
       "newline": "lf",
       "source": "connectors/woocommerce/source/api/class-embedded-checkout88.php",
-      "source_sha256": "1ffeb3b7e1b7014451c037fcd81a0f2a5941320284493a4651336ed31faf55a6",
-      "sha256": "1ffeb3b7e1b7014451c037fcd81a0f2a5941320284493a4651336ed31faf55a6"
+      "source_sha256": "bd3a28c9633073d4718e8466a04950c2b56979ca92949c08869b1156467ebda4",
+      "sha256": "bd3a28c9633073d4718e8466a04950c2b56979ca92949c08869b1156467ebda4"
     }
   },
   "baseline_release": {

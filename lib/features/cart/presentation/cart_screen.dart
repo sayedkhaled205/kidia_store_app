@@ -264,12 +264,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       AppConfig.requireWooCommerceCustomerTransport('checkout');
       if (widget.onCheckout != null) {
         await widget.onCheckout!(context, cart);
+        if (mounted) await ref.read(cartControllerProvider.notifier).refreshCart();
         return;
       }
 
       final String route = widget.checkoutRoute?.trim() ?? '';
       if (route.isNotEmpty) {
         await context.push<void>(route);
+        if (mounted) await ref.read(cartControllerProvider.notifier).refreshCart();
         return;
       }
       _showMessage(copy.checkoutUnavailable);

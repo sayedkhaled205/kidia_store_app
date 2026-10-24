@@ -10,6 +10,22 @@ import 'cart_test_fixture.dart';
 
 void main() {
   group('StoreApiCartRemoteDataSource', () {
+    test('reopens the authenticated basket after checkout clears guest token', () async {
+      final client = _FakeStoreApiClient(const <StoreApiResponse>[]);
+      final transport = _FakeCartApiTransport(<Object>[_cartResponse(token: 'customer-cart')]);
+      final tokens = MemoryCartTokenStore();
+      final source = StoreApiCartRemoteDataSource(
+        storeApiClient: client,
+        transport: transport,
+        tokenStore: tokens,
+        currentSessionToken: () => 'signed-in-customer',
+      );
+      await source.fetchCart();
+      expect(client.paths, isEmpty);
+      expect(transport.requests.single.method, CartApiMethod.get);
+      expect(transport.requests.single.headers, isEmpty);
+      expect(tokens.read(), 'customer-cart');
+    });
     test('bootstraps with StoreApiClient then reuses Cart-Token', () async {
       final _FakeStoreApiClient client = _FakeStoreApiClient(<StoreApiResponse>[
         _cartResponse(token: 'token-1'),

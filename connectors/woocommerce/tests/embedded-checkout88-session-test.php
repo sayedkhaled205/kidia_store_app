@@ -55,6 +55,9 @@ function set_transient($key,$value,$ttl) { $GLOBALS['transients88'][$key]=$value
 function get_transient($key) { return $GLOBALS['transients88'][$key]??false; }
 function WC() {
     static $wc; return $wc??= (object)['session'=>new class {
+        private $customer = 'old-guest';
+        function init_session_cookie() { $this->customer = (string) get_current_user_id(); }
+        function get_customer_id() { return $this->customer; }
         function set($key,$value) { $GLOBALS['writes88'][$key]=$value; }
         function set_customer_session_cookie($v) {}
         function save_data() {}
@@ -85,6 +88,7 @@ denied88(fn()=>$bridge->redeem(),'revocation before redeem'); $sessions88=$saved
 $wpdb->race=true; denied88(fn()=>$bridge->redeem(),'concurrent redeem rejected'); $wpdb->race=false;
 $wpdb->active='new-uncertain-attempt'; denied88(fn()=>$bridge->redeem(),'dispatch started after ticket creation'); $wpdb->active=null;
 $bridge->redeem(); $bridge->restore_cart();
+expect88(WC()->session->get_customer_id()==='10','early guest handler rebound to ticket customer');
 expect88($writes88['cart']['item']['extension_metadata']==='retained','extension cart metadata retained');
 expect88(!isset($writes88['customer']) && !isset($writes88['order_awaiting_payment']),'no source identity or pending order copied');
 expect88($bridge->customer_capabilities(['read'=>true,'manage_options'=>true,'manage_woocommerce'=>true],[],[],(object)['ID'=>10])===['read'=>true],'never administrator capabilities');
@@ -95,9 +99,21 @@ expect88((new MobiShop_Embedded_Checkout88())->scoped_user(1)===0,'stale cookie 
 $scope=array_values($transients88)[0]; $transients88['mobishop_checkout88_'.hash('sha256',str_repeat('b',64))]=$scope;
 $_SERVER['REQUEST_URI']='/shop/check-out/'; $_GET=[];
 expect88((new MobiShop_Embedded_Checkout88())->scoped_user(1)===10,'checkout uses exact customer');
+$current88=0;
+(new MobiShop_Embedded_Checkout88())->restore_identity();
+expect88($current88===10,'cached anonymous user resolved before Woo initializes');
 $_SERVER['REQUEST_URI']='/shop/wp-admin/';
 expect88((new MobiShop_Embedded_Checkout88())->scoped_user(1)===0,'cookie cannot grant admin session');
+$current88=1;
+(new MobiShop_Embedded_Checkout88())->restore_identity();
+expect88($current88===0,'out-of-scope cookie clears cached administrator identity');
 $_SERVER['REQUEST_URI']='/shop/check-out/'; $sessions88=[];
 expect88((new MobiShop_Embedded_Checkout88())->scoped_user(1)===0,'logout immediately revokes scoped cookie');
+$current88=10;
+(new MobiShop_Embedded_Checkout88())->restore_identity();
+expect88($current88===0,'revoked cookie cannot retain cached customer identity');
+$_COOKIE=[]; $current88=22;
+(new MobiShop_Embedded_Checkout88())->restore_identity();
+expect88($current88===22,'ordinary website login is unchanged without scoped cookie');
 echo "$count embedded checkout session checks passed\n";
 }

@@ -50,9 +50,9 @@ class CartRemoteException implements Exception {
 
 /// Official WooCommerce Store API cart data source.
 ///
-/// The first tokenless GET is deliberately delegated to the shared
-/// [StoreApiClient]. Once WooCommerce issues a Cart-Token, all cart requests use
-/// [CartApiTransport] so the token can be attached to GET and POST requests.
+/// Guest bootstrap uses [StoreApiClient]. Authenticated requests always use
+/// [CartApiTransport], including after checkout clears a guest Cart-Token, so
+/// the customer's mobile session continues to identify the same basket.
 class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
   factory StoreApiCartRemoteDataSource({
     required StoreApiClient storeApiClient,
@@ -111,12 +111,12 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
     final generation = _tokenGeneration;
     _assertCurrentSession(session, generation);
     try {
-      final StoreApiResponse response = token == null
+      final StoreApiResponse response = token == null && (session?.isEmpty ?? true)
           ? await _storeApiClient.get(_cartPath)
           : await _transport.request(
               CartApiMethod.get,
               _cartPath,
-              headers: <String, String>{'Cart-Token': token},
+              headers: <String, String>{'Cart-Token': ?token},
             );
       _assertCurrentSession(session, generation);
       return _parseSuccess(response);

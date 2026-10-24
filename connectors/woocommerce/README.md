@@ -9,7 +9,7 @@ Build and verify:
 ```sh
 python3 tool/build_woocommerce_connector.py
 python3 -m unittest discover -s tool -p test_build_woocommerce_connector.py
-unzip -q build/woocommerce/mobi2app-connector-1.46.88.zip -d build/woocommerce
+unzip -q build/woocommerce/mobi2app-connector-1.46.90.zip -d build/woocommerce
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
   php connectors/woocommerce/tests/website-auth-contract-test.php
 MOBISHOP_CONNECTOR_TEST_ROOT="$PWD/build/woocommerce/mobi2app-connector" \
@@ -87,3 +87,5 @@ local contracts are not evidence of deployment or a successful card charge.
 Version 1.46.87 completes the authenticated store notification connection expected by the shared onboarding service. It verifies the exact store token at the fixed central HTTPS origin, stores it without autoloading, binds it to the installed website origin, and reuses it for Firebase config and delivery. Existing licensed transports remain available for older installations. No notification is sent during setup.
 
 Version 1.46.88 transfers the authenticated app basket into the merchant checkout using a 90-second, single-use POST ticket. The scoped Secure/HttpOnly session is revoked with the mobile session and grants no general WordPress login or administrator capabilities. Merchant checkout fields, shipping rules and gateway forms execute inside the app WebView. Card data is handled by the existing merchant gateway, never by a Flutter JavaScript bridge. Unknown prior native dispatches block a new checkout. Existing native and CMS preview transports remain available.
+
+Version 1.46.90 resolves the scoped customer before WooCommerce initializes, including when another extension cached the guest identity early. It rebinds an early guest session handler before basket transfer and removes Flatsome outer header/footer only within the scoped app checkout. Ordinary website sessions and merchant checkout/payment fields remain unchanged. The app also reloads the authenticated customer basket after returning from checkout.
