@@ -206,6 +206,33 @@ final class MobiShop_Embedded_Checkout88 {
         if ( null === $this->scope || ! is_checkout() ) return;
         // Only surrounding site chrome is removed. Merchant checkout markup/JS stays intact.
         echo '<style id="mobishop-checkout88-chrome">.site-header,#masthead,header#header,.site-footer,#colophon,footer#footer,.woocommerce-breadcrumb{display:none!important}body{min-width:0!important}</style>';
+        // Woo leaves its blocking overlay in place when an expired checkout
+        // nonce returns 403. Explain recovery without renewing authentication
+        // or touching payment fields, amounts, or merchant submission logic.
+        echo <<<'HTML'
+<script id="mobishop-checkout88-expiry">
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.jQuery) return;
+  var $ = window.jQuery;
+  $(document).ajaxError(function (_event, xhr, settings) {
+    if (xhr.status !== 403 || !/[?&]wc-ajax=update_order_review(?:&|$)/.test(settings.url || '')) return;
+    $('.woocommerce-checkout-payment,.woocommerce-checkout-review-order-table,form.checkout').unblock();
+    if (document.getElementById('mobishop-checkout88-expired')) return;
+    var notice = document.createElement('div');
+    notice.id = 'mobishop-checkout88-expired';
+    notice.className = 'woocommerce-error';
+    notice.setAttribute('role', 'alert');
+    notice.textContent = document.documentElement.lang.indexOf('ar') === 0
+      ? 'انتهت جلسة الدفع. ارجع للسلة وافتح إتمام الطلب مرة تانية.'
+      : 'Your checkout session expired. Return to the cart and open checkout again.';
+    var form = document.querySelector('form.checkout');
+    if (form) form.prepend(notice);
+    $('#place_order').prop('disabled', true);
+    notice.scrollIntoView({block:'center'});
+  });
+});
+</script>
+HTML;
     }
 
     private function deny(): void {
