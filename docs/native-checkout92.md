@@ -124,3 +124,13 @@ or payment dispatch. Offline checkout retains its existing behavior.
 Local verification: all 109 checkout tests pass, including 15 new inline/payment
 contract cases; targeted analysis is clean. The prior live capture validates the
 underlying provider/bank path, not an end-to-end charge from this new form.
+
+Build 57 / Android version code 34 (runtime source 9695f433) passed the CI
+analysis/tests/design preflight and produced verified APK/AAB artifacts. Installed
+over Build 56 with login and basket preserved. Device checks confirmed saved
+addresses and rounded fields, Cairo shipping 55 / total 70 EGP, card fields
+directly below selection, COD collapsing the card fields, and the single payment
+confirmation button. Empty-card submission stays on the form with field errors.
+No new real charge was submitted during this UI review. Four additional SDK
+tests intercept all HTTP calls and cover capture, decline, changed totals and
+changed customer without transmitting test card values to an external service.
