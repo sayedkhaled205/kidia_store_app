@@ -107,6 +107,44 @@ class NativePaymentClient92 {
     await _request(id);
   }
 
+  /// Used by the inline SDK form after the buyer's single confirmation.
+  /// The SDK result is provisional; only this authenticated merchant read can
+  /// produce a paid result. No retry or second order is issued on any failure.
+  Future<bool> payInline(
+    int id, {
+    required KashierInlineCardController card,
+    required bool arabic,
+    required String amount,
+    required String currency,
+  }) async {
+    final identity = token();
+    final data = await _request(id, prepare: true);
+    if (data['adapter'] != 'kashier' ||
+        data['session_id'] is! String ||
+        !RegExp(r'^[a-f0-9]{24}$').hasMatch(data['session_id'] as String) ||
+        !const {'live', 'test'}.contains(data['mode']) ||
+        data['amount'] != amount ||
+        data['currency'] != currency) {
+      throw StateError('Payment no longer matches the confirmed total.');
+    }
+    // Even cancellation/timeout may settle. Never infer failure from a callback.
+    try {
+      await card.pay(
+        sessionId: data['session_id'] as String,
+        mode: data['mode'] == 'live' ? KashierMode.live : KashierMode.test,
+        language: arabic ? KashierLanguage.ar : KashierLanguage.en,
+        expectedAmount: amount,
+        expectedCurrency: currency,
+        canContinue: () => identity != null && token() == identity,
+      );
+    } catch (_) {
+      // Do not expose SDK error payloads or raw card/provider responses.
+    }
+    final status = await _request(id);
+    return status['paid'] == true &&
+        const {'processing', 'completed'}.contains(status['status']);
+  }
+
   Future<bool> present(int id, {required bool arabic}) async {
     final data = await _request(id, prepare: true);
     if (data['adapter'] != 'kashier' ||

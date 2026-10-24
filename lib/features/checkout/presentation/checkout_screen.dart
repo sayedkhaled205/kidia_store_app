@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kashier_flutter_sdk/kashier_flutter_sdk.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
@@ -14,6 +15,7 @@ import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_or
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 import 'checkout_payment_continuation298.dart';
+import 'providers/checkout_inline_payment95.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({
@@ -43,6 +45,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late CheckoutController _controller;
   bool _checkoutTracked = false;
+  final _inlineCard = KashierInlineCardController();
+  bool _payingInline = false;
+  CheckoutOrderResult? _paidResult;
+
+  bool get _usesInlineCard =>
+      _controller.needsPayment &&
+      _controller.checkout?.nativePaymentAdapters[_controller
+              .paymentMethodId] ==
+          'kashier';
 
   @override
   void initState() {
@@ -57,6 +68,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         oldWidget.customerEmail != widget.customerEmail) {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
+      _inlineCard.clear();
+      _paidResult = null;
+      _payingInline = false;
+      _checkoutTracked = false;
       _createController();
     }
   }
@@ -73,6 +88,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (!mounted) {
       return;
     }
+    if (!_usesInlineCard) _inlineCard.clear();
     final Cart? cart = _controller.cart;
     if (!widget.isPreview &&
         !_checkoutTracked &&
@@ -93,6 +109,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   void dispose() {
+    _inlineCard.clear();
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
@@ -101,13 +118,70 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final _CheckoutCopy copy = _CheckoutCopy.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(copy.title)),
-      body: _buildBody(copy),
+    final theme = Theme.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xffd9d9d9)),
+    );
+    return PopScope(
+      canPop: !_payingInline,
+      child: Theme(
+        data: theme.copyWith(
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 19,
+            ),
+            border: border,
+            enabledBorder: border,
+            disabledBorder: border,
+            focusedBorder: border.copyWith(
+              borderSide: BorderSide(
+                color: theme.colorScheme.primary,
+                width: 1.5,
+              ),
+            ),
+            labelStyle: const TextStyle(fontSize: 16, color: Color(0xff727272)),
+            floatingLabelStyle: const TextStyle(
+              fontSize: 13,
+              color: Color(0xff727272),
+            ),
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: Text(
+              copy.title,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            automaticallyImplyLeading: !_payingInline,
+          ),
+          body: _InlineCheckoutCardScope(
+            card: _inlineCard,
+            processing: _payingInline,
+            child: _buildBody(copy),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildBody(_CheckoutCopy copy) {
+    if (_paidResult != null) {
+      return _CheckoutSuccess(result: _paidResult!, copy: copy);
+    }
+    // Keep the SDK-owned fields mounted while preparing the protected order.
+    // The normal pending-order continuation is only a recovery path, never an
+    // intermediate screen in the successful one-button checkout flow.
+    if (_payingInline) {
+      return _ready(copy);
+    }
     switch (_controller.status) {
       case CheckoutStatus.initial:
       case CheckoutStatus.loading:
@@ -142,7 +216,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             recovering: _controller.isRecoveringOrder,
           );
         }
-        return _CheckoutReady(
+        return _ready(copy);
+    }
+  }
+
+  Widget _ready(_CheckoutCopy copy) => Stack(
+    children: [
+      AbsorbPointer(
+        absorbing: _payingInline,
+        child: _CheckoutReady(
           formKey: _formKey,
           controller: _controller,
           copy: copy,
@@ -150,11 +232,32 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           design: widget.design,
           onReviewOrders: widget.onReviewOrders,
           onRecover: _recoverOrder,
-        );
-    }
-  }
+        ),
+      ),
+      if (_payingInline)
+        Positioned.fill(
+          child: ColoredBox(
+            color: Colors.white70,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    copy.completingPayment,
+                    key: const Key('checkout-completing-payment'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+    ],
+  );
 
   Future<void> _submit() async {
+    if (_payingInline || _controller.isSubmitting) return;
     if (widget.isPreview) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_CheckoutCopy.of(context).previewOnly)),
@@ -163,14 +266,63 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
     final bool controllerValid = _controller.validate();
     final bool formValid = _formKey.currentState?.validate() ?? false;
-    if (!controllerValid || !formValid) {
+    final inline = _usesInlineCard;
+    final cardValid = !inline || _inlineCard.validate();
+    if (!controllerValid || !formValid || !cardValid) {
       return;
     }
-    final CheckoutOrderResult? result = await _controller.submit();
-    if (!mounted || result == null) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final controller = _controller;
+    final confirmedCart = controller.cart;
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    bool isCurrent() => mounted && identical(controller, _controller);
+    if (inline) setState(() => _payingInline = true);
+    CheckoutOrderResult? result;
+    try {
+      result = await controller.submit();
+      if (!isCurrent() || result == null) return;
+      if (inline &&
+          (result.paymentStatus != 'success' ||
+              result.status == 'pending' ||
+              result.requiresRedirect)) {
+        final totals = confirmedCart!.totals;
+        final units = totals.currency.minorUnit;
+        final digits = totals.priceMinor.padLeft(units + 1, '0');
+        final whole = units == 0
+            ? digits
+            : digits.substring(0, digits.length - units);
+        final fraction = units == 0
+            ? '00'
+            : digits.substring(digits.length - units).padRight(2, '0');
+        final paid = await ref.read(checkoutInlinePayment95Provider)(
+          orderId: result.orderId,
+          card: _inlineCard,
+          amount: '$whole.$fraction',
+          currency: totals.currency.code,
+          arabic: arabic,
+        );
+        if (!isCurrent()) return;
+        if (paid) {
+          result = CheckoutOrderResult(
+            orderId: result.orderId,
+            status: 'processing',
+            paymentStatus: 'success',
+          );
+          _paidResult = result;
+        }
+      }
+    } catch (_) {
+      // Preserve the exact receipt for authoritative recovery. Never submit a
+      // second order/payment or report a charge as failed based on an SDK error.
+    } finally {
+      if (isCurrent() && inline) setState(() => _payingInline = false);
+    }
+    if (!isCurrent() || result == null) {
       return;
     }
-    final Cart? cart = _controller.cart;
+    widget.onOrderSuccess?.call(result);
+    if (result.paymentStatus != 'success' || result.requiresRedirect) return;
+    final Cart? cart = confirmedCart;
     final MobileAnalytics? analytics = _analytics;
     final String authToken = _authToken;
     analytics?.trackInBackground(
@@ -194,7 +346,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         );
       }
     }
-    widget.onOrderSuccess?.call(result);
   }
 
   Future<void> _recoverOrder() async {
@@ -224,6 +375,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final int minor = int.tryParse(cart.totals.priceMinor) ?? 0;
     return minor / math.pow(10, cart.totals.currency.minorUnit);
   }
+}
+
+class _InlineCheckoutCardScope extends InheritedWidget {
+  const _InlineCheckoutCardScope({
+    required this.card,
+    required this.processing,
+    required super.child,
+  });
+  final KashierInlineCardController card;
+  final bool processing;
+  static _InlineCheckoutCardScope? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_InlineCheckoutCardScope>();
+  @override
+  bool updateShouldNotify(_InlineCheckoutCardScope oldWidget) =>
+      oldWidget.card != card || oldWidget.processing != processing;
 }
 
 class _CheckoutReady extends StatelessWidget {
@@ -970,6 +1136,7 @@ class _PaymentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inline = _InlineCheckoutCardScope.of(context);
     return _CheckoutSection(
       title: copy.payment,
       icon: Icons.payments_outlined,
@@ -993,6 +1160,28 @@ class _PaymentSection extends StatelessWidget {
                             !controller.isSubmitting &&
                             controller.paymentMethodSupported(method),
                         onTap: () => controller.setPaymentMethod(method),
+                        trailing:
+                            controller
+                                    .checkout
+                                    ?.nativePaymentAdapters[method] ==
+                                'kashier'
+                            ? const CardBrandIcon(iconHeight: 17)
+                            : null,
+                        expandedChild:
+                            controller.paymentMethodId == method &&
+                                controller
+                                        .checkout
+                                        ?.nativePaymentAdapters[method] ==
+                                    'kashier' &&
+                                inline != null
+                            ? KashierInlineCardForm(
+                                key: const Key('checkout-inline-card'),
+                                controller: inline.card,
+                                enabled:
+                                    !inline.processing &&
+                                    !controller.isSubmitting,
+                              )
+                            : null,
                       ),
                     ),
                 if (controller.errorFor('paymentMethod') != null) ...<Widget>[
@@ -1037,6 +1226,8 @@ class _PaymentMethodTile extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onTap,
+    this.expandedChild,
+    this.trailing,
   });
 
   final String methodId;
@@ -1044,43 +1235,59 @@ class _PaymentMethodTile extends StatelessWidget {
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
+  final Widget? expandedChild;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Material(
-      color: selected ? colors.primaryContainer : colors.surface,
+      color: selected ? const Color(0xfff5f5f5) : Colors.white,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: selected ? colors.primary : colors.outlineVariant,
-          width: selected ? 2 : 1,
+          width: selected ? 1.5 : 1,
         ),
       ),
-      child: InkWell(
-        key: Key('checkout-payment-$methodId'),
-        borderRadius: BorderRadius.circular(14),
-        onTap: enabled ? onTap : null,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: <Widget>[
-              Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
-                color: selected ? colors.primary : colors.onSurfaceVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            key: Key('checkout-payment-$methodId'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: enabled ? onTap : null,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: selected ? colors.primary : colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 10),
+                    trailing!,
+                  ],
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (expandedChild != null) ...[
+            const Divider(height: 1, color: Color(0xffdddddd)),
+            Padding(padding: const EdgeInsets.all(16), child: expandedChild!),
+          ],
+        ],
       ),
     );
   }
@@ -1104,6 +1311,10 @@ class _OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Cart cart = controller.cart!;
+    final inline =
+        controller.checkout?.nativePaymentAdapters[controller
+            .paymentMethodId] ==
+        'kashier';
     return _CheckoutSection(
       title: copy.summary,
       icon: Icons.shopping_bag_outlined,
@@ -1205,7 +1416,11 @@ class _OrderSummary extends StatelessWidget {
                   )
                 : const Icon(Icons.lock_outline),
             label: Text(
-              controller.isSubmitting ? copy.placingOrder : copy.placeOrder,
+              controller.isSubmitting
+                  ? copy.placingOrder
+                  : inline
+                  ? copy.payAndPlaceOrder
+                  : copy.placeOrder,
             ),
           ),
         ],
@@ -1278,7 +1493,7 @@ class _CheckoutSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final CheckoutDesign design = _CheckoutDesignScope.of(context);
     final ColorScheme colors = Theme.of(context).colorScheme;
-    final double padding = design == CheckoutDesign.compact ? 12 : 18;
+    final double padding = design == CheckoutDesign.compact ? 12 : 0;
     final Widget content = Padding(
       padding: EdgeInsets.all(padding),
       child: Column(
@@ -1286,13 +1501,16 @@ class _CheckoutSection extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(icon, size: design == CheckoutDesign.compact ? 19 : null),
-              const SizedBox(width: 9),
+              if (design == CheckoutDesign.compact) ...[
+                Icon(icon, size: 19),
+                const SizedBox(width: 9),
+              ],
               Expanded(
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
+                    fontSize: design == CheckoutDesign.compact ? 18 : 22,
                   ),
                 ),
               ),
@@ -1313,6 +1531,7 @@ class _CheckoutSection extends StatelessWidget {
         child: content,
       );
     }
+    if (design == CheckoutDesign.classic) return content;
     return Card(
       margin: EdgeInsets.zero,
       color: design == CheckoutDesign.summaryFirst
@@ -1708,6 +1927,11 @@ class _CheckoutCopy {
       : 'Calculating shipping for this address…';
   String get total => arabic ? 'الإجمالي' : 'Total';
   String get placeOrder => arabic ? 'تأكيد الطلب' : 'Place order';
+  String get payAndPlaceOrder =>
+      arabic ? 'الدفع وتأكيد الطلب' : 'Pay and place order';
+  String get completingPayment => arabic
+      ? 'جارٍ إتمام الدفع وتأكيد الطلب…'
+      : 'Completing payment and confirming your order…';
   String get placingOrder => arabic ? 'جارٍ تأكيد الطلب…' : 'Placing order…';
   String get emptyCart => arabic ? 'سلة التسوق فارغة.' : 'Your cart is empty.';
   String get backToCart => arabic ? 'العودة إلى السلة' : 'Back to cart';

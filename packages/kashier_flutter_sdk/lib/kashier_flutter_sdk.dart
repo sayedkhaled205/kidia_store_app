@@ -38,3 +38,6 @@ export 'models/kashier_wallet_provider.dart';
 // Public widgets
 export 'src/payment_handler/apple_pay/kashier_apple_pay_button.dart';
 export 'src/ui/kashier_payment_provider.dart';
+export 'src/ui/card/inline_card_form.dart'
+    show KashierInlineCardController, KashierInlineCardForm;
+export 'src/ui/card/card_brand_icon.dart' show CardBrandIcon;

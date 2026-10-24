@@ -18,6 +18,15 @@ Runtime files (lib, assets, ios and package metadata) are unchanged except:
   workaround stripped it, leaving the October 24 live test blank with
   AUTHENTICATION_IN_PROGRESS. TLS/WAF validation and payment reconciliation are
   unchanged; no merchant HTML or local card-processing implementation is added.
+- `lib/src/ui/card/inline_card_form.dart`: adds SDK-owned ephemeral card fields
+  that can live below the merchant's native payment selector. The controller
+  exposes validation, clearing and payment, not card values. It reuses the SDK's
+  formatters, validator, API, card handler and bank challenge widget. It checks
+  the exact session currency/amount and current customer before its one payment
+  request. Card storage is disabled. The application prepares the protected order
+  only after the buyer submits the complete form, and still requires server
+  reconciliation before displaying success. The original payment sheet remains
+  available for explicit recovery of an existing unpaid order.
 
 Regression tests live in the application's checkout tests. Remove this local
 snapshot when an upstream release fixes the race and passes those tests.

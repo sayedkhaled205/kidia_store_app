@@ -7,7 +7,8 @@ addresses through authenticated connector configuration v8. Shipping quotations
 and availability still come from the merchant's Store API. Production checkout
 does not fall back to a generic form if that configuration is unavailable.
 
-Kashier uses the official Flutter SDK 0.1.4 payment sheet. The merchant server
+Kashier uses the pinned Flutter SDK 0.1.4 runtime, with the documented inline
+card-form extension. The merchant server
 creates one durable session per protected unpaid order, retaining its credentials.
 The SDK owns card entry and bank 3DS; it does not render the merchant checkout.
 Callbacks do not mark orders paid. Server reconciliation requires the exact
@@ -21,13 +22,11 @@ Address book extensions can supply current-customer rows via the documented
 mobishop_native_checkout_addresses92 filter; core billing/shipping are included.
 
 Limitations still requiring work/acceptance:
-- The SDK displays its card sheet after the protected pending order is created;
-  it does not expose card inputs directly below the checkout radio button.
 - Shopify/Odoo native checkout parity is not implemented by this change. Existing
   platform paths remain; no all-platform or all-gateway readiness claim is made.
 - Custom website JavaScript fields/validation and arbitrary address book plugins
   require supported adapters; copying labels alone cannot reproduce that logic.
-- Actual card authorization/capture and iOS runtime have not yet been verified.
+- iOS runtime has not yet been verified. See the verified Android capture below.
 
 Local verification: Flutter analyzer clean; 577 Flutter tests passed, 4 existing
 tests skipped. Packaged PHP contracts cover native payment, tenant isolation,
@@ -93,3 +92,35 @@ All 48 payment contract cases pass, including the original durable-session guard
 Broader packaged checks pass except two existing Kids-theme snapshot expectations,
 which fail identically against unchanged 1.46.93. Native authentication passes all
 300 checks with the local OpenSSL extension enabled.
+
+Verified live payment, 2026-10-24
+-------------------------------
+After installing Google's signed WebView 134.0.6998.135 on the QA emulator,
+the user completed bank verification for order 650814 in Build 56. The provider
+reported CAPTURED 70 EGP with one successful pay transaction and approved 3DS.
+WooCommerce independently reported paid=true, status=processing, total=70 and
+shipping=55 with kashier_card. The SDK displayed its Arabic success screen.
+The earlier order 650809 remained unpaid with an expired session; it was not
+automatically retried. No refund or cancellation was performed.
+
+Inline checkout 95
+------------------
+For any merchant advertising the verified Kashier native adapter, selecting the
+card method now reveals the SDK-owned number, expiry, security-code and name
+fields immediately. Rounded white inputs and a light-gray payment accordion
+match the requested visual reference. Merchant address labels, field requirements,
+shipping calculation and payment availability remain authoritative.
+
+One "Pay and place order" action validates all fields before order creation,
+prepares the durable pending order in the background, and submits its exact
+payment session once. There is no intermediate order-created screen. Only an
+authenticated, reconciled paid state displays success and records purchase
+analytics. Cancellation or an uncertain result retains that same order for
+explicit recovery. Double taps, changed customer/store context, and mismatched
+session totals do not create another payment. Card fields stay inside the SDK,
+are never included in merchant requests or analytics, and clear on method change
+or payment dispatch. Offline checkout retains its existing behavior.
+
+Local verification: all 109 checkout tests pass, including 15 new inline/payment
+contract cases; targeted analysis is clean. The prior live capture validates the
+underlying provider/bank path, not an end-to-end charge from this new form.
