@@ -74,8 +74,9 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 8,
+				'version'  => 9,
 				'renderer' => 'native',
+				'shipping' => $this->shipping_policy(),
 				'saved_addresses' => $this->saved_addresses(),
 				'payment_methods' => $this->payment_method_labels(),
 				'design'   => $checkout_store->design(),
@@ -99,6 +100,16 @@ final class MobiShop_Checkout_Config_Endpoint {
 		return array( 'billing' => WC()->checkout()->get_checkout_fields( 'billing' ),
 			'shipping' => WC()->checkout()->get_checkout_fields( 'shipping' ),
 			'order' => WC()->checkout()->get_checkout_fields( 'order' ) );
+	}
+
+	/** Merchant policy, independent of the REST request's usually empty cart.
+	 * The native cart still decides whether the purchased items need shipping.
+	 */
+	private function shipping_policy(): array {
+		$allowed = wc_shipping_enabled() && ! wc_ship_to_billing_address_only();
+		return array( 'allow_different_address' => $allowed && (bool) apply_filters(
+			'woocommerce_cart_needs_shipping_address', true
+		) );
 	}
 
 	private function saved_addresses(): array {

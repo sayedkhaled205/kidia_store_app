@@ -73,7 +73,9 @@ abstract final class CheckoutFieldNormalizer {
     // required standard shipping field into billing while keeping custom
     // plugin fields in their original group.
     final List<CheckoutFieldDefinition> shippingFields =
-        configuration['renderer'] == 'native' && configuration['version'] == 8
+        configuration['renderer'] == 'native' &&
+            configuration['version'] is int &&
+            (configuration['version'] as int) >= 8
         ? <CheckoutFieldDefinition>[]
         : List<CheckoutFieldDefinition>.of(normalized);
     for (final CheckoutFieldDefinition field in shippingFields) {

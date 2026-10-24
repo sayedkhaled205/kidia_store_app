@@ -22,8 +22,13 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
   late final Cart _cart = _buildCart();
 
   @override
-  Future<CheckoutState> loadCheckout() async =>
-      CheckoutState(cart: _cart, fieldDefinitions: _fields());
+  Future<CheckoutState> loadCheckout() async => CheckoutState(
+    cart: _cart,
+    fieldDefinitions: _fields(),
+    allowDifferentShippingAddress:
+        layout['checkout_shipping'] is Map &&
+        (layout['checkout_shipping'] as Map)['allow_different_address'] == true,
+  );
 
   @override
   Future<Cart> updateCustomer({

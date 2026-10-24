@@ -134,3 +134,26 @@ confirmation button. Empty-card submission stays on the form with field errors.
 No new real charge was submitted during this UI review. Four additional SDK
 tests intercept all HTTP calls and cover capture, decline, changed totals and
 changed customer without transmitting test card values to an external service.
+
+Merchant shipping policy 96
+---------------------------
+Connector 1.46.96 exports native schema version 9 with
+`shipping.allow_different_address`, derived from WooCommerce shipping enablement,
+the merchant's billing-only destination setting, and the normal shipping-address
+suppression filter. It does not infer permission from a REST request's empty cart.
+The app additionally checks whether the actual basket needs shipping. Unknown
+policy stays hidden; both legacy and dynamic forms honor explicit permission.
+Stored old shipping addresses cannot reactivate a disabled option or leak into
+shipping quotes/orders, including after cart refresh and rejected-order recovery.
+
+Each checkout opening reads the current filtered WooCommerce fields and shipping
+policy with no-store responses. Labels, placeholders, required flags, options and
+removed fields remain merchant-owned. Version 9 and later do not revive legacy
+synthetic billing fields. No merchant name, governorate label or shipping rate is
+hardcoded in the shared connector/application.
+
+120 checkout tests pass, including seven schema/policy regressions; 11 packaged
+PHP merchant-schema checks, six destination checks and 14 package tests pass.
+Full lib/test analysis is clean. Device verification of the new policy is pending.
+This implementation covers the WooCommerce connector; it does not certify
+arbitrary site JavaScript or native checkout parity for Odoo/Shopify.

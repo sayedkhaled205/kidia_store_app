@@ -8,6 +8,7 @@ class CheckoutState {
     this.hasUnresolvedSubmission = false,
     this.serverSafetyRequired = false,
     this.serverSafetyEnforced = false,
+    this.allowDifferentShippingAddress = true,
     this.savedAddresses = const [],
     this.nativePaymentAdapters = const {},
     Map<String, String> paymentMethodLabels = const <String, String>{},
@@ -30,6 +31,9 @@ class CheckoutState {
        );
 
   final Cart cart;
+
+  /// Production repositories supply the merchant's current shipping policy.
+  final bool allowDifferentShippingAddress;
   final List<SavedCheckoutAddress92> savedAddresses;
   final Map<String, String> nativePaymentAdapters;
 

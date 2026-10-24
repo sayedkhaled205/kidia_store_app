@@ -83,6 +83,8 @@ class CheckoutController extends ChangeNotifier {
   CheckoutAddress get billingAddress => _billingAddress;
   CheckoutAddress get shippingAddress => _shippingAddress;
   bool get shipToDifferentAddress => _shipToDifferentAddress;
+  bool get allowDifferentShippingAddress =>
+      needsShipping && (_checkout?.allowDifferentShippingAddress ?? false);
   String get customerNote => _customerNote;
   String get paymentMethodId => _paymentMethodId;
   List<String> get paymentMethodIds =>
@@ -216,6 +218,7 @@ class CheckoutController extends ChangeNotifier {
       _applyDefaultCountries(loaded.fieldDefinitions);
       _shipToDifferentAddress =
           loaded.needsShipping &&
+          loaded.allowDifferentShippingAddress &&
           _hasAddress(_shippingAddress) &&
           !_sameAddress(_billingAddress, _shippingAddress);
       _paymentMethodId = loaded.paymentMethodIds.length == 1
@@ -275,6 +278,7 @@ class CheckoutController extends ChangeNotifier {
 
   void setShipToDifferentAddress(bool value) {
     if (!_canEditForm) return;
+    if (value && !allowDifferentShippingAddress) return;
     if (_shipToDifferentAddress == value) {
       return;
     }
@@ -711,6 +715,9 @@ class CheckoutController extends ChangeNotifier {
       if (!_canCommit(serial)) return null;
       _checkout = loaded;
       _hasUnresolvedSubmission = loaded.hasUnresolvedSubmission;
+      if (!loaded.allowDifferentShippingAddress) {
+        _shipToDifferentAddress = false;
+      }
       _customerUpdateDirty = !_hasUnresolvedSubmission;
       if (!paymentMethodIds.contains(_paymentMethodId)) {
         _paymentMethodId = paymentMethodIds.length == 1
@@ -947,6 +954,8 @@ class CheckoutController extends ChangeNotifier {
       cart: authoritativeCart,
       savedAddresses: _checkout?.savedAddresses ?? const [],
       nativePaymentAdapters: _checkout?.nativePaymentAdapters ?? const {},
+      allowDifferentShippingAddress:
+          _checkout?.allowDifferentShippingAddress ?? false,
       hasUnresolvedSubmission: _hasUnresolvedSubmission,
       serverSafetyRequired: _checkout?.serverSafetyRequired ?? false,
       serverSafetyEnforced: _checkout?.serverSafetyEnforced ?? false,

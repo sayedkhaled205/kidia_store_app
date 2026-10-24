@@ -81,8 +81,13 @@ class StoreApiCheckoutRepository
         throw _unresolvedAttempt();
       }
       final Cart cart = await cartRepository.getCart();
-      final (definitions, paymentLabels, savedAddresses, adapters) =
-          await _loadPresentationConfiguration();
+      final (
+        definitions,
+        paymentLabels,
+        savedAddresses,
+        adapters,
+        differentShipping,
+      ) = await _loadPresentationConfiguration();
       bool enforced = false;
       if (requireServerSafety || safetyTransport != null) {
         try {
@@ -99,6 +104,7 @@ class StoreApiCheckoutRepository
         paymentMethodLabels: paymentLabels,
         savedAddresses: savedAddresses,
         nativePaymentAdapters: adapters,
+        allowDifferentShippingAddress: differentShipping,
         hasUnresolvedSubmission: unresolved,
         serverSafetyRequired: requireServerSafety || safetyTransport != null,
         serverSafetyEnforced: enforced,
@@ -137,6 +143,7 @@ class StoreApiCheckoutRepository
       Map<String, String>,
       List<SavedCheckoutAddress92>,
       Map<String, String>,
+      bool,
     )
   >
   _loadPresentationConfiguration() async {
@@ -157,6 +164,10 @@ class StoreApiCheckoutRepository
         );
       }
       final labels = <String, String>{};
+      // Missing metadata is not permission to offer a second destination.
+      final shipping = json?['shipping'];
+      final differentShipping =
+          shipping is Map && shipping['allow_different_address'] == true;
       final adapters = <String, String>{};
       final rawMethods = json?['payment_methods'];
       if (rawMethods is List) {
@@ -187,6 +198,7 @@ class StoreApiCheckoutRepository
           labels,
           const <SavedCheckoutAddress92>[],
           adapters,
+          differentShipping,
         );
       }
       final List<CheckoutFieldDefinition> fields = <CheckoutFieldDefinition>[];
@@ -202,6 +214,7 @@ class StoreApiCheckoutRepository
         labels,
         SavedCheckoutAddress92.parse(json['saved_addresses']),
         adapters,
+        differentShipping,
       );
     } catch (_) {
       if (requireMerchantConfiguration) {
@@ -219,6 +232,7 @@ class StoreApiCheckoutRepository
         const <String, String>{},
         const <SavedCheckoutAddress92>[],
         const <String, String>{},
+        false,
       );
     }
   }

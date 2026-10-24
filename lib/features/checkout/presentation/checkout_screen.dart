@@ -638,7 +638,7 @@ class _CheckoutForm extends StatelessWidget {
             onChanged: controller.updateBillingAddress,
           ),
         ),
-        if (controller.needsShipping) ...<Widget>[
+        if (controller.allowDifferentShippingAddress) ...<Widget>[
           const SizedBox(height: 16),
           SwitchListTile.adaptive(
             key: const Key('checkout-different-shipping-toggle'),
@@ -732,7 +732,8 @@ class _DynamicCheckoutForm extends StatelessWidget {
               enabled: enabled,
             ),
           ),
-        if (controller.needsShipping && shipping.isNotEmpty) ...<Widget>[
+        if (controller.allowDifferentShippingAddress &&
+            shipping.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
           SwitchListTile.adaptive(
             key: const Key('checkout-different-shipping-toggle'),
