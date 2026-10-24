@@ -37,11 +37,14 @@ class WP_REST_Request implements ArrayAccess {
 class WP_REST_Response { public function __construct(public $data){} public function header($a,$b){} }
 class WC_Gateway_Kashier_Card { public $id='kashier_card',$enabled='yes',$merchant_id='MID-123-123',$api_key='key',$secret_key='secret',$testmode=true,$enable_connected_account=false; function get_option($k){return 'no';} }
 class WC_Order {
- public $meta=['_mobishop_native_attempt50'=>'attempt'], $amount='70.00', $customer=7;
+ public $meta=['_mobishop_native_attempt50'=>'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','_mobishop_native_buyer50'=>'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'], $amount='70.00', $customer=7;
  function get_id(){return 15;} function get_customer_id(){return $this->customer;} function get_meta($k){return $this->meta[$k]??'';}
  function update_meta_data($k,$v){$this->meta[$k]=$v;} function save(){} function needs_payment(){return true;} function is_paid(){return false;} function get_status(){return 'pending';} function get_total($c){return $this->amount;} function get_currency(){return 'EGP';}
 }
 class MobiShop_Customer_Auth_Endpoint { function session_context_from_request($r){return ['user_id'=>7];} }
+class MobiShop_Native_Checkout_Wpdb50 {
+ function find($buyer,$attempt){return ['state'=>$GLOBALS['guard_state']??'order_created','customer_id'=>7,'order_id'=>15,'buyer_scope'=>$buyer,'attempt_hash'=>$attempt,'guard_passed'=>1,'dispatch_finished'=>1];}
+}
 class FakeDb { public $prefix='wp_'; function prepare($s,$v){return $s;} function get_var($s){return '1';} }
 $wpdb=new FakeDb; $order=new WC_Order; $gateway=new WC_Gateway_Kashier_Card; $posts=0; $timeout=false;
 function wc_get_order($id){global $order;return $order;} function wc_get_payment_gateway_by_order($o){global $gateway;return $gateway;}
@@ -53,6 +56,9 @@ $endpoint=new MobiShop_Native_Payment92; $request=new WP_REST_Request;
 $first=$endpoint->prepare($request);$second=$endpoint->prepare($request);
 check($first instanceof WP_REST_Response && $second instanceof WP_REST_Response && $posts===1,'repeated taps reuse one durable provider session');
 check(!str_contains(json_encode($first),'secret')&&!str_contains(json_encode($first),'api_key'),'mobile response contains no merchant credentials');
+$guard_state='in_progress'; check($endpoint->prepare($request) instanceof WP_Error && $posts===1,'unfinished guard cannot start payment');
+$guard_state='rejected_before_payment'; check($endpoint->prepare($request) instanceof WP_Error && $posts===1,'rejected order cannot start payment');
+$guard_state='order_created';
 $order->customer=8;check($endpoint->prepare($request) instanceof WP_Error && $posts===1,'other customer cannot create payment');$order->customer=7;
 $order->amount='75.00';check($endpoint->prepare($request) instanceof WP_Error && $posts===1,'changed total cannot reuse or duplicate payment');
 $order=new WC_Order;$timeout=true;$endpoint->prepare($request);$endpoint->prepare($request);

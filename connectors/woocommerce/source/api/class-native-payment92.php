@@ -43,8 +43,17 @@ final class MobiShop_Native_Payment92 {
 
 	private function owned_order( WP_REST_Request $request ) {
 		$order = wc_get_order( (int) $request['id'] );
-		return $order instanceof WC_Order && (int) $order->get_customer_id() === get_current_user_id()
-			&& '' !== (string) $order->get_meta( '_mobishop_native_attempt50' ) ? $order : null;
+		if ( ! $order instanceof WC_Order || (int) $order->get_customer_id() !== get_current_user_id()
+			|| ! class_exists( 'MobiShop_Native_Checkout_Wpdb50' ) ) return null;
+		$buyer = (string) $order->get_meta( '_mobishop_native_buyer50' );
+		$attempt = (string) $order->get_meta( '_mobishop_native_attempt50' );
+		if ( ! preg_match( '/^[a-f0-9]{64}$/D', $buyer ) || ! preg_match( '/^[a-f0-9]{64}$/D', $attempt ) ) return null;
+		$row = ( new MobiShop_Native_Checkout_Wpdb50() )->find( $buyer, $attempt );
+		return is_array( $row ) && ( $row['state'] ?? '' ) === 'order_created'
+			&& (int) ( $row['customer_id'] ?? 0 ) === get_current_user_id()
+			&& (int) ( $row['order_id'] ?? 0 ) === $order->get_id()
+			&& ( $row['buyer_scope'] ?? '' ) === $buyer && ( $row['attempt_hash'] ?? '' ) === $attempt
+			&& (int) ( $row['guard_passed'] ?? 0 ) === 1 && (int) ( $row['dispatch_finished'] ?? 0 ) === 1 ? $order : null;
 	}
 
 	public function prepare( WP_REST_Request $request ) {
@@ -52,8 +61,9 @@ final class MobiShop_Native_Payment92 {
 		$order = $this->owned_order( $request );
 		if ( ! $order ) return self::error( 'unavailable', 404 );
 		$id = $order->get_id();
-		return $this->locked( $id, function () use ( $id ) {
-			$order = wc_get_order( $id );
+		return $this->locked( $id, function () use ( $id, $request ) {
+			$order = $this->owned_order( $request );
+			if ( ! $order ) return self::error( 'unavailable', 404 );
 			$gateway = wc_get_payment_gateway_by_order( $order );
 			if ( ! $gateway || 'yes' !== $gateway->enabled || 'kashier' !== self::adapter( $gateway )
 				|| ! $order->needs_payment() || $order->is_paid() || 'pending' !== $order->get_status()
