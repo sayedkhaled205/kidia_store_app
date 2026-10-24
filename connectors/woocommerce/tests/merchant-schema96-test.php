@@ -54,7 +54,7 @@ $checks96 = 0;
 function check96($ok, $message) { if (!$ok) throw new RuntimeException($message); ++$GLOBALS['checks96']; echo "PASS $message\n"; }
 $response = $api->get_checkout_config();
 check96($response->data['shipping']['allow_different_address'] === true, 'billing default still allows another address');
-check96($response->data['version'] === 9 && $response->data['renderer'] === 'native', 'versioned native contract');
+check96($response->data['version'] === 8 && $response->data['renderer'] === 'native', 'additive policy preserves installed v8 clients');
 check96(str_contains($response->headers['Cache-Control'], 'no-store'), 'merchant fields are never cached');
 $options96['woocommerce_ship_to_destination'] = 'billing_only';
 check96($api->get_checkout_config()->data['shipping']['allow_different_address'] === false, 'billing-only hides another address');

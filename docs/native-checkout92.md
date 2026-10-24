@@ -137,7 +137,7 @@ changed customer without transmitting test card values to an external service.
 
 Merchant shipping policy 96
 ---------------------------
-Connector 1.46.96 exports native schema version 9 with
+Connector 1.46.97 extends native schema version 8 with
 `shipping.allow_different_address`, derived from WooCommerce shipping enablement,
 the merchant's billing-only destination setting, and the normal shipping-address
 suppression filter. It does not infer permission from a REST request's empty cart.
@@ -148,8 +148,9 @@ shipping quotes/orders, including after cart refresh and rejected-order recovery
 
 Each checkout opening reads the current filtered WooCommerce fields and shipping
 policy with no-store responses. Labels, placeholders, required flags, options and
-removed fields remain merchant-owned. Version 9 and later do not revive legacy
-synthetic billing fields. No merchant name, governorate label or shipping rate is
+removed fields remain merchant-owned. The version remains 8 for installed clients;
+the updated app also avoids legacy synthetic billing fields for future versions.
+No merchant name, governorate label or shipping rate is
 hardcoded in the shared connector/application.
 
 120 checkout tests pass, including seven schema/policy regressions; 11 packaged

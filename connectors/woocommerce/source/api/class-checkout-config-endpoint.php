@@ -74,7 +74,8 @@ final class MobiShop_Checkout_Config_Endpoint {
 
 		$response = rest_ensure_response(
 			array(
-				'version'  => 9,
+				// Additive metadata keeps the v8 field contract for installed apps.
+				'version'  => 8,
 				'renderer' => 'native',
 				'shipping' => $this->shipping_policy(),
 				'saved_addresses' => $this->saved_addresses(),
