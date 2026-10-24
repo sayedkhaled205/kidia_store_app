@@ -372,7 +372,7 @@ packages:
     source: hosted
     version: "1.1.2"
   flutter_inappwebview_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: flutter_inappwebview_platform_interface
       sha256: cf5323e194096b6ede7a1ca808c3e0a078e4b33cc3f6338977d75b4024ba2500
@@ -663,10 +663,9 @@ packages:
   kashier_flutter_sdk:
     dependency: "direct main"
     description:
-      name: kashier_flutter_sdk
-      sha256: "299d14aec060f1ddc7fa3da8da6e29c569bd1e6b75b7b16e773692aeb5b09dab"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/kashier_flutter_sdk"
+      relative: true
+    source: path
     version: "0.1.4"
   leak_tracker:
     dependency: transitive

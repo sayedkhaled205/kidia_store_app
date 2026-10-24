@@ -47,3 +47,27 @@ check. Build 55 uses source 7eb09746 for full application validation.
 Connector 1.46.93 additionally requires the persisted guarded checkout attempt
 to be complete, successful and owned by the same customer/order before issuing
 a provider session. The packaged PHP suite passes all 29 native-payment cases.
+# Runtime verification, 2026-10-24
+
+Build 55 / Android version code 32 was installed over the existing QA app.
+Saved addresses and merchant-labelled Flutter fields were visible. Cairo shipping
+55 EGP changed to outskirts 60 EGP (totals 70/75), and selecting Beheira changed
+the method to Delta governorates at 60 EGP. Restoring Cairo restored 55 EGP.
+COD and card selection worked; no COD order was submitted.
+
+One explicitly authorized live card test created pending order 650809 at 70 EGP.
+Kashier's native card fields rendered inside the application. The user submitted
+the card; the bank verification view became blank. The provider reported
+INITIATED / AUTHENTICATION_IN_PROGRESS and captured amount 0 at inspection.
+This is **not a completed payment test**. Do not automatically retry, reset its
+ledger, or create a second payment. Subsequent settlement remains authoritative.
+
+The first SDK launch also exposed an upstream connectivity startup race. The
+pinned local SDK runtime snapshot waits for initialization; regression tests
+cover a delayed platform response and callback failures/cancellation. Failure
+also reconciles the existing order and remains visible to the user.
+The bank challenge snapshot also preserves the provider-supplied redirectHtml
+parameter. Kashier's current public 3ds-redirect component requires it to start
+issuer authentication. A widget regression checks the exact URL handed to the
+native WebView. A new live runtime attempt is still needed; no capture has been
+verified from this source change alone.

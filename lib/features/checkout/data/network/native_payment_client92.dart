@@ -3,6 +3,46 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:kashier_flutter_sdk/kashier_flutter_sdk.dart';
 
+typedef KashierPaymentRunner92 =
+    Future<void> Function({
+      required String sessionId,
+      required void Function(KashierPaymentResult result) onSuccess,
+      required void Function(KashierPaymentError error) onFailure,
+      void Function(KashierPaymentPending pending)? onPending,
+    });
+
+/// Keep SDK failure/cancellation distinct from a completed payment presentation.
+/// Never retry a payment automatically or expose provider payloads/card details.
+Future<void> presentKashierSession92(
+  String session,
+  String mode,
+  bool arabic, {
+  KashierPaymentRunner92? runner,
+}) async {
+  KashierSDK.initialize(
+    mode: mode == 'live' ? KashierMode.live : KashierMode.test,
+    language: arabic ? KashierLanguage.ar : KashierLanguage.en,
+  );
+  final finished = Completer<void>();
+  KashierErrorCode? failure;
+  void complete() {
+    if (!finished.isCompleted) finished.complete();
+  }
+
+  await (runner ?? KashierSDK.startPayment)(
+    sessionId: session,
+    onSuccess: (_) => complete(),
+    onPending: (_) => complete(),
+    onFailure: (error) {
+      if (finished.isCompleted) return;
+      failure = error.code;
+      complete();
+    },
+  );
+  await finished.future;
+  if (failure != null) throw StateError('Native payment: ${failure!.name}');
+}
+
 /// One customer, one merchant, one existing order. No website checkout fallback.
 class NativePaymentClient92 {
   NativePaymentClient92({
@@ -19,7 +59,7 @@ class NativePaymentClient92 {
                receiveTimeout: const Duration(seconds: 35),
              ),
            ),
-       _presentSession = presentSession ?? _presentKashier;
+       _presentSession = presentSession ?? presentKashierSession92;
   final Uri store;
   final String? Function() token;
   final Dio _dio;
@@ -75,37 +115,18 @@ class NativePaymentClient92 {
         !const {'live', 'test'}.contains(data['mode'])) {
       throw StateError('This payment method has no verified native adapter.');
     }
-    await _presentSession(
-      data['session_id'] as String,
-      data['mode'] as String,
-      arabic,
-    );
-    // SDK callbacks are not payment evidence. Reconcile with the owned order.
-    await reconcile(id);
-    return true;
-  }
-
-  static Future<void> _presentKashier(
-    String session,
-    String mode,
-    bool arabic,
-  ) async {
-    KashierSDK.initialize(
-      mode: mode == 'live' ? KashierMode.live : KashierMode.test,
-      language: arabic ? KashierLanguage.ar : KashierLanguage.en,
-    );
-    final finished = Completer<void>();
-    void complete() {
-      if (!finished.isCompleted) finished.complete();
+    try {
+      await _presentSession(
+        data['session_id'] as String,
+        data['mode'] as String,
+        arabic,
+      );
+    } finally {
+      // A failed/cancelled SDK flow can still be settling. Reconcile this order
+      // too, without ever issuing another order or payment automatically.
+      await reconcile(id);
     }
-
-    await KashierSDK.startPayment(
-      sessionId: session,
-      onSuccess: (_) => complete(),
-      onPending: (_) => complete(),
-      onFailure: (_) => complete(),
-    );
-    await finished.future;
+    return true;
   }
 }
 

@@ -3,6 +3,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/native_payment_client92.dart';
 
 void main() {
+  test(
+    'a failed SDK flow reconciles the same order without retrying a payment',
+    () async {
+      final methods = <String>[];
+      final dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (r, h) {
+              methods.add(r.method);
+              h.resolve(
+                Response(
+                  requestOptions: r,
+                  statusCode: 200,
+                  data: r.method == 'POST'
+                      ? {
+                          'order_id': 15,
+                          'adapter': 'kashier',
+                          'session_id': '123456789012345678901234',
+                          'mode': 'test',
+                        }
+                      : {'order_id': 15, 'paid': false, 'status': 'pending'},
+                ),
+              );
+            },
+          ),
+        );
+      final client = NativePaymentClient92(
+        store: Uri.parse('https://merchant.example'),
+        token: () => 'buyer',
+        dio: dio,
+        presentSession: (_, _, _) async => throw StateError('SDK failed'),
+      );
+      await expectLater(client.present(15, arabic: true), throwsStateError);
+      expect(methods, ['POST', 'GET']);
+    },
+  );
   for (final store in [
     'https://merchant-one.example',
     'https://merchant-two.example/shop',
