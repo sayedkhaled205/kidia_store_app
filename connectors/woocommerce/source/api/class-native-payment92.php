@@ -175,20 +175,41 @@ final class MobiShop_Native_Payment92 {
 	public static function paid_transaction( array $data, array $record ): ?string {
 		if ( 'SUCCESS' !== ( $data['status'] ?? '' ) || ! is_array( $data['data'] ?? null ) ) return null;
 		$matches = array_values( array_filter( $data['data'], static fn( $row ) => is_array( $row ) && ( $row['merchantOrderId'] ?? '' ) === $record['reference'] ) );
-		if ( 1 !== count( $matches ) ) return null;
-		$row = $matches[0];
-		if ( ( $row['merchantId'] ?? '' ) !== $record['merchant'] || ( $row['status'] ?? '' ) !== 'CAPTURED'
-			|| ( $row['sessionId'] ?? '' ) !== $record['session'] || ( $row['method'] ?? '' ) !== 'card'
-			|| ( $row['order']['currency'] ?? '' ) !== $record['currency'] || self::money( $row['order']['amount'] ?? null ) !== $record['amount']
-			|| self::money( $row['totalCapturedAmount'] ?? null ) !== $record['amount'] || self::money( $row['totalRefundedAmount'] ?? null ) !== '0.00'
-			|| ! is_array( $row['transactions'] ?? null ) ) return null;
-		foreach ( $row['transactions'] as $transaction ) {
-			if ( is_array( $transaction ) && in_array( $transaction['operation'] ?? '', array( 'pay', 'capture' ), true )
-				&& ( $transaction['status'] ?? '' ) === 'SUCCESS' && ( $transaction['currency'] ?? '' ) === $record['currency']
-				&& self::money( $transaction['amount'] ?? null ) === $record['amount'] && is_string( $transaction['transactionId'] ?? null )
-				&& preg_match( '/^[A-Za-z0-9-]{1,100}$/D', $transaction['transactionId'] ) ) return $transaction['transactionId'];
+		$paid = null;
+		foreach ( $matches as $row ) {
+			if ( ( $row['merchantId'] ?? '' ) !== $record['merchant']
+				|| ( $row['sessionId'] ?? '' ) !== $record['session'] || ( $row['method'] ?? '' ) !== 'card'
+				|| ! is_array( $row['order'] ?? null ) || ( $row['order']['currency'] ?? '' ) !== $record['currency']
+				|| self::money( $row['order']['amount'] ?? null ) !== $record['amount']
+				|| self::money( $row['totalRefundedAmount'] ?? null ) !== '0.00'
+				|| ! is_array( $row['transactions'] ?? null ) ) return null;
+			$captured = self::money( $row['totalCapturedAmount'] ?? null );
+			// Kashier retains a separate row for each bank-authentication attempt.
+			// Zero-value attempts are not charges, but conflicting money/identity is ambiguous.
+			if ( '0.00' === $captured ) {
+				if ( ! in_array( $row['status'] ?? '', array( 'INITIATED', 'FAILED', 'CANCELLED', 'EXPIRED' ), true )
+					|| self::money( $row['totalAuthorizedAmount'] ?? null ) !== '0.00' ) return null;
+				foreach ( $row['transactions'] as $transaction ) {
+					if ( ! is_array( $transaction ) || ( ( $transaction['status'] ?? '' ) === 'SUCCESS'
+						&& ( ! in_array( $transaction['operation'] ?? '', array( '3dsecure_verify', 'authenticate_payer' ), true )
+							|| ( $transaction['currency'] ?? '' ) !== $record['currency']
+							|| self::money( $transaction['amount'] ?? null ) !== $record['amount'] ) ) ) return null;
+				}
+				continue;
+			}
+			if ( null !== $paid || 'CAPTURED' !== ( $row['status'] ?? '' ) || $captured !== $record['amount'] ) return null;
+			foreach ( $row['transactions'] as $transaction ) {
+				if ( is_array( $transaction ) && in_array( $transaction['operation'] ?? '', array( 'pay', 'capture' ), true )
+					&& ( $transaction['status'] ?? '' ) === 'SUCCESS' ) {
+					if ( null !== $paid || ( $transaction['currency'] ?? '' ) !== $record['currency']
+						|| self::money( $transaction['amount'] ?? null ) !== $record['amount'] || ! is_string( $transaction['transactionId'] ?? null )
+						|| ! preg_match( '/^[A-Za-z0-9-]{1,100}$/D', $transaction['transactionId'] ) ) return null;
+					$paid = $transaction['transactionId'];
+				}
+			}
+			if ( null === $paid ) return null;
 		}
-		return null;
+		return $paid;
 	}
 
 	public static function money( $value ): ?string {

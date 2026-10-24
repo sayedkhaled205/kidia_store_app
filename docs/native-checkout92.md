@@ -71,3 +71,25 @@ parameter. Kashier's current public 3ds-redirect component requires it to start
 issuer authentication. A widget regression checks the exact URL handed to the
 native WebView. A new live runtime attempt is still needed; no capture has been
 verified from this source change alone.
+
+Build 56 / Android version code 33 installs with the expected release signature.
+The first native payment-sheet launch and card form work after a cold start.
+The user's next real attempt still produced a blank bank verification view.
+Both provider records remained INITIATED, AUTHENTICATION_IN_PROGRESS, with zero
+captured/refunded/authorized totals. No successful charge has been verified.
+
+The emulator uses Google WebView 124.0.6367.219. Read-only CORS preflight checks
+to Kashier's device endpoint return 404 without ACAO for both Android and desktop
+Chromium 124, while Chromium 141 returns 204 with ACAO. Updating the actual signed
+WebView is the next runtime check; user-agent spoofing or disabling protections
+is not an acceptable fix. No payment was retried by the agent.
+
+Connector 1.46.94 handles Kashier's multiple authentication rows for one session.
+It accepts exactly one matching full capture alongside uncharged authentication
+attempts with zero authorized/refunded/captured totals. Conflicting identity,
+currency, money, successful monetary operations, duplicate captures, missing
+monetary evidence and multiple successful pay/capture transactions require review.
+All 48 payment contract cases pass, including the original durable-session guard.
+Broader packaged checks pass except two existing Kids-theme snapshot expectations,
+which fail identically against unchanged 1.46.93. Native authentication passes all
+300 checks with the local OpenSSL extension enabled.

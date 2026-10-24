@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.93",
+  "version": "1.46.94",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "a77cfcb9c154f9dd74d70ba1fc41c2a9dcb5652410d5ee471246d1709b4b859b",
-      "sha256": "a77cfcb9c154f9dd74d70ba1fc41c2a9dcb5652410d5ee471246d1709b4b859b"
+      "source_sha256": "839e5808d145ed835c6ad442efbb8daedbaffb0f31b50cca17c77fff4733938c",
+      "sha256": "839e5808d145ed835c6ad442efbb8daedbaffb0f31b50cca17c77fff4733938c"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2928,8 +2928,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "1462134fd6bd03e2ec990b3a42e6cb87ab9f60d0bffcf5cb5557c7de368b832b",
-      "sha256": "1462134fd6bd03e2ec990b3a42e6cb87ab9f60d0bffcf5cb5557c7de368b832b"
+      "source_sha256": "a82c486218f9027a83ce72ef464b72af7a6d25c24c17fab1aaf5260350da37a4",
+      "sha256": "a82c486218f9027a83ce72ef464b72af7a6d25c24c17fab1aaf5260350da37a4"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2964,8 +2964,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "f8ee398276094bea5613e1b84af83b53b499342d98b64f1192aa81e8051a8ec3",
-      "sha256": "f8ee398276094bea5613e1b84af83b53b499342d98b64f1192aa81e8051a8ec3"
+      "source_sha256": "3e2aa678c49f75fc23d0acfb617d0de84ae32669b8bc1a95663629debc2c14ca",
+      "sha256": "3e2aa678c49f75fc23d0acfb617d0de84ae32669b8bc1a95663629debc2c14ca"
     },
     "includes/central/store-notifications.php": {
       "newline": "lf",
@@ -2982,8 +2982,8 @@
     "api/class-native-payment92.php": {
       "source": "connectors/woocommerce/source/api/class-native-payment92.php",
       "newline": "lf",
-      "source_sha256": "e52f14f67485d0c3a31f9294699f0a539ee7f08ac81ddc2b16ffa8ef3c3a6e81",
-      "sha256": "e52f14f67485d0c3a31f9294699f0a539ee7f08ac81ddc2b16ffa8ef3c3a6e81"
+      "source_sha256": "3a25e0e3f489848a3507920778cb2f19c278e0973a2e22019f56a6613612434d",
+      "sha256": "3a25e0e3f489848a3507920778cb2f19c278e0973a2e22019f56a6613612434d"
     }
   },
   "baseline_release": {

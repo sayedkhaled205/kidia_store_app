@@ -19,6 +19,34 @@ $bad=$response; $bad['data'][0]['transactions'][0]['status']='FAILURE';
 check(MobiShop_Native_Payment92::paid_transaction($bad,$record)===null,'reconciliation envelope is not payment success');
 $bad=$response; $bad['data'][]=$row;
 check(MobiShop_Native_Payment92::paid_transaction($bad,$record)===null,'ambiguous duplicate provider records do not settle');
+$attempt=$row;
+$attempt['status']='INITIATED';$attempt['totalCapturedAmount']=0;$attempt['totalAuthorizedAmount']=0;
+$attempt['transactions'][0]['operation']='3dsecure_verify';
+$attempt['transactions'][0]['transactionResponseCode']='AUTHENTICATION_IN_PROGRESS';
+foreach ([[$attempt,$row],[$row,$attempt],[$attempt,$attempt,$row]] as $rows) {
+  check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>$rows],$record)==='TX-123','one captured payment survives earlier uncharged authentication attempts');
+}
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$attempt,$attempt]],$record)===null,'multiple uncharged authentication attempts remain unpaid');
+$authenticated=$attempt;$authenticated['transactions'][0]['operation']='authenticate_payer';
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$authenticated,$row]],$record)==='TX-123','payer authentication without money does not hide a later exact capture');
+$authenticated['transactions'][0]['currency']='USD';
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$authenticated,$row]],$record)===null,'conflicting authentication currency requires review');
+foreach (['merchantId'=>'other','sessionId'=>'other','method'=>'wallet','status'=>'AUTHORIZED','totalAuthorizedAmount'=>70,'totalCapturedAmount'=>1,'totalRefundedAmount'=>1] as $key=>$value) {
+  $conflict=$attempt;$conflict[$key]=$value;
+  check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$row,$conflict]],$record)===null,'retry cannot hide conflicting '.$key);
+}
+$conflict=$attempt;unset($conflict['totalAuthorizedAmount']);
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$conflict,$row]],$record)===null,'missing retry monetary evidence requires review');
+$conflict=$attempt;$conflict['order']['currency']='USD';
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$row,$conflict]],$record)===null,'wrong-currency retry requires review');
+$conflict=$attempt;$conflict['transactions'][0]['operation']='pay';
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$row,$conflict]],$record)===null,'successful pay with zero aggregate cannot be ignored');
+$bad=$response;$bad['data'][0]['transactions'][]=$tx;
+check(MobiShop_Native_Payment92::paid_transaction($bad,$record)===null,'duplicate successful monetary transactions require review');
+$bad=$response;$bad['data'][0]['transactions'][0]['amount']=69;
+check(MobiShop_Native_Payment92::paid_transaction($bad,$record)===null,'aggregate success cannot hide wrong transaction amount');
+$unrelated=$attempt;$unrelated['merchantOrderId']='another-order';
+check(MobiShop_Native_Payment92::paid_transaction(['status'=>'SUCCESS','data'=>[$unrelated,$row]],$record)==='TX-123','search results are scoped to the exact order reference');
 foreach (['70.001','-70','7e1',null,[],true] as $value) check(MobiShop_Native_Payment92::money($value)===null,'reject invalid or inexact money');
 $data=['amount'=>70,'currency'=>'EGP','merchantOrderId'=>$record['reference'],'status'=>'SUCCESS','method'=>'card','transactionId'=>'TX-123'];
 $keys=array_keys($data); sort($keys); $signed=[]; foreach($keys as $key)$signed[$key]=$data[$key];

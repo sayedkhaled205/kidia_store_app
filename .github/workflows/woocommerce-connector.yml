@@ -57,6 +57,7 @@ jobs:
           php connectors/woocommerce/tests/checkout-destination-contract-test.php
           php connectors/woocommerce/tests/store-notifications-contract-test.php
           php connectors/woocommerce/tests/native-website-payment-contract-test.php
+          php connectors/woocommerce/tests/native-payment92-test.php
           php connectors/woocommerce/tests/kids-branding301-contract-test.php
           php connectors/woocommerce/tests/kids-tail301-contract-test.php
       - name: Validate connector release tag
