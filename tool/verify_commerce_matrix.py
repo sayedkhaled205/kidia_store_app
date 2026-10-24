@@ -34,6 +34,7 @@ PLATFORM_TESTS = {
     "odoo": [
         "test/features/account/presentation/odoo_account_help297_test.dart",
         "test/core/commerce/odoo_customer_contract_test.dart",
+        "test/core/commerce/odoo_cart_contract100_test.dart",
     ],
 }
 SENTINEL = "matrix compiled platform and merchant are explicit"

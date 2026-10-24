@@ -60,7 +60,7 @@
         "origin": "https://alpha.odoo.example.invalid",
         "locale": "ar",
         "country": "EG",
-        "passed": 62
+        "passed": 74
       },
       {
         "platform": "odoo",
@@ -68,10 +68,10 @@
         "origin": "https://beta.odoo.example.invalid",
         "locale": "en",
         "country": "US",
-        "passed": 62
+        "passed": 74
       }
     ],
-    "total_passed": 370,
+    "total_passed": 394,
     "skipped": 0,
     "real_merchant_requests": 0,
     "real_payments": 0,
@@ -85,7 +85,10 @@
       "merchant checkout fields and shipping contracts",
       "WordPress subdirectory design/installation identity",
       "Odoo 51.1 account compatibility with enabled 85.1 cart contract",
-      "Odoo restore ownership, revocation, redirects and capability validation"
+      "Odoo restore ownership, revocation, redirects and capability validation",
+      "Odoo native cart read/add/update/remove with exact owner and server totals",
+      "Persist guest SID separately from authenticated customer identity",
+      "Revoke malformed capabilities; reject queued writes after owner switch; never replay failed cart writes"
     ]
   },
   "platform_limits": {
@@ -107,23 +110,40 @@
       "native_catalog_and_cart": true,
       "native_checkout": false,
       "checkout": "Current cart flow launches the validated Shopify checkout URL.",
-      "remaining": "Implement and verify the platform-supported in-app checkout and customer account integration against an authorized test store.",
+      "remaining": "Direct native payment mutation is denied with the existing Storefront access. A permitted native payment integration is required; Checkout Kit is not silently substituted.",
       "evidence": [
         "lib/core/commerce/commerce_connection.dart",
         "lib/features/cart/presentation/cart_screen.dart",
         "test/features/cart/presentation/shopify_checkout_handoff297_test.dart"
-      ]
+      ],
+      "user_checkout_choice": "Strict native fields (first option in the original question).",
+      "live_test_store": {
+        "name": "WooMobile Connector Review",
+        "origin": "https://woomobile-connector-review.myshopify.com",
+        "test_gateway_active": true,
+        "published_products_read": 15,
+        "fresh_guest_cart_add_update_remove": "passed",
+        "cleanup_empty_cart_verified": true,
+        "payment_probe": "Nonexistent cart, zero-value freePaymentMethod; no order or charge.",
+        "cartPaymentUpdate_result": "ACCESS_DENIED",
+        "build_license": "Revoked; not bypassed or reactivated.",
+        "order_created": false,
+        "payment_executed": false,
+        "tokens_or_credentials_exported": false
+      }
     },
     "odoo": {
       "native_catalog": true,
       "native_customer_account": "Separate customer-session adapter exists.",
       "native_cart_and_checkout": false,
-      "remaining": "Connect the native cart, shipping and payment flow to the dedicated customer API; verify against an authorized Odoo store.",
+      "remaining": "Wire and verify native cart/address/shipping/payment UI and HTTP flow. No active card gateway exists on the authorized Odoo store; no paid acceptance claimed.",
       "evidence": [
         "lib/core/commerce/commerce_connection.dart",
         "lib/app/app_router.dart",
         "lib/core/commerce/odoo_customer_session_store51.dart"
-      ]
+      ],
+      "native_cart_transport": "Implemented and tested; not wired into the main application cart routes/providers.",
+      "native_shipping": "Original carrier hooks implemented in an undeployed connector candidate; 11 rollback ORM checks passed. Native HTTP/UI acceptance is pending."
     }
   },
   "regression_gates": {
@@ -187,12 +207,94 @@
     },
     "unmerged_older_odoo_cart_candidate": "Audited native85/86 implementation. Its nonzero checkout hands off to the website, conflicting with the requested native fields. It has not been silently activated.",
     "remaining": [
-      "Implement the Odoo native cart/shipping/payment graph and verify with original server hooks; account compatibility alone does not complete checkout.",
-      "An Odoo test environment with a configured card gateway is needed for card acceptance.",
-      "An authorized Shopify test store and a decision about official in-app Shopify Checkout Kit versus strictly native fields are pending.",
-      "Current installed apps and deployed preview have not been rebuilt from these source changes; future native builds consume the updated source.",
-      "No claim of arbitrary gateway or customization compatibility, or iOS payment acceptance."
+      "Continue Odoo native cart/address/shipping/payment UI integration; account and cart transport alone do not complete checkout.",
+      "An Odoo test environment with a configured card gateway is still required for card acceptance.",
+      "Shopify test store and strict-native choice are resolved in progress100; direct native payment access remains denied.",
+      "Installed applications and preview have not been rebuilt from these source changes.",
+      "No claim of arbitrary gateway/customization compatibility or iOS payment acceptance."
     ],
     "shopify_official_reference": "https://shopify.dev/docs/storefronts/mobile/checkout-kit"
+  },
+  "generalization_progress100": {
+    "merchant_specific_source_conditions_added": false,
+    "source_changes": [
+      "Website-bound native Odoo cart transport with durable guest sessions, owner-change guards and exact server totals.",
+      "New Odoo shipping quotes/select candidate uses installed carrier availability, rate, fiscal-position and tax hooks; rejects invalid rates and client-supplied price authority.",
+      "Include the Odoo cart contract in all Odoo merchant matrix cases."
+    ],
+    "verification": {
+      "offline_matrix_passed": 394,
+      "offline_matrix_skipped": 0,
+      "matrix_runner_tests_passed": 4,
+      "odoo_host_contract_tests_passed": 8,
+      "odoo_host_shipping_tests_passed": 6,
+      "targeted_flutter_analysis": "No issues found",
+      "actual_odoo_orm_tests_passed": 11,
+      "actual_odoo_orm_skipped": 0,
+      "actual_odoo_orm_rollback_verified": true
+    },
+    "live_odoo_cart": {
+      "origin": "https://odoo-staging.kidiastore.com",
+      "client": "Actual Flutter OdooCustomerClient51 and OdooCartRepository85",
+      "fresh_guest_add_quantity_update_remove": "passed",
+      "cleanup_empty_cart_verified": true,
+      "customer_login_executed": false,
+      "order_confirmed": false,
+      "payment_executed": false
+    },
+    "odoo_shipping_orm": {
+      "date": "2026-10-24",
+      "result": "SHIPPING100_ELEVEN_ORM_PASS",
+      "recorded_from": "Visible WHM terminal output; screenshot retained locally.",
+      "screenshot": "odoo-shipping100-eleven-pass.png",
+      "actual_installed_odoo_orm": true,
+      "tests_run": 11,
+      "tests_passed": 11,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "cleanup_errors": [],
+      "normal_transactioncase_cleanup": true,
+      "rollback_fixture_absence_verified_with_new_cursor": true,
+      "fixture_counts_before_and_after": {
+        "account.tax": 0,
+        "delivery.carrier": 0,
+        "product.pricelist": 0,
+        "product.pricelist.item": 0,
+        "product.product": 0,
+        "res.partner": 0,
+        "res.users": 0,
+        "sale.order": 0,
+        "website": 0
+      },
+      "business_methods_mocked": false,
+      "http_request_fixture": "Standard Werkzeug WSGI request and real Odoo Session; request proxies point to the same test fixture.",
+      "helper_loaded_in_isolated_shell_only": true,
+      "module_upgrade": false,
+      "feature_gate_changed": false,
+      "native_http_acceptance": false,
+      "paid_checkout_acceptance": false,
+      "tracked_stock_acceptance": false,
+      "checks": [
+        "Original guest cart add, quantity update and removal",
+        "Guest cart isolation and guest-to-customer binding",
+        "Reject stale totals before confirmation",
+        "Original free order confirmation and receipt recovery",
+        "Original website carrier availability by destination",
+        "Shipping tax and displayed amount match original website calculation",
+        "Carrier selection uses the current server rate and original delivery line",
+        "Unavailable carrier cannot replace selected carrier",
+        "Reject stale cart revisions and caller-controlled price/order/partner/website fields"
+      ]
+    },
+    "odoo_shipping_candidate": {
+      "package": "odoo-native-customer-shipping100-candidate.zip",
+      "sha256": "bf8d98132ae1266b6c4ad5a57efc434328585258d0d0f206d711e006d08a8f6d",
+      "deployed": false,
+      "canonical_source": "addons/woomobile_native_customer_api51 in the Kidia Odoo workspace"
+    },
+    "application_rebuilt": false,
+    "preview_rebuilt": false,
+    "native_payment_acceptance_newly_claimed": false
   }
 }

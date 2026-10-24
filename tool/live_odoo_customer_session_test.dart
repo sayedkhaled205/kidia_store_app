@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/commerce/odoo_customer_client51.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/cart/data/odoo/odoo_cart85.dart';
 
 void main() {
   test(
@@ -19,6 +20,17 @@ void main() {
       expect(session.authenticated, isFalse);
       expect(session.customer, isNull);
       expect(client.isAuthenticated, isFalse);
+      if (client.cartSupported85) {
+        final response = await client.cart85();
+        final cart = OdooCart85.fromResponse(
+          response,
+          customerId: null,
+          origin: connection.storeOrigin,
+        ).cart;
+        expect(cart.isEmpty, isTrue);
+        expect(cart.totals.priceMinor, '0');
+        expect(cart.paymentMethods, isEmpty);
+      }
     },
   );
 }

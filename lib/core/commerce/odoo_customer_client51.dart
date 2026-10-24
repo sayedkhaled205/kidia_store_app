@@ -7,7 +7,8 @@ import 'commerce_connection.dart';
 import 'odoo_customer_session_store51.dart';
 
 /// A direct Odoo portal-customer client. This deliberately does not implement
-/// Woo's bearer-token repositories, registration, cart, checkout or order writes.
+/// Woo's bearer-token repositories or registration. Native cart operations
+/// require the separately negotiated, website-bound Odoo 85.1 contract.
 /// Its separate Odoo providers are not a replacement for Woo's UI/auth graph.
 /// HTTP and Native acceptance are still required before activating those routes.
 class OdooCustomerClient51 {
@@ -52,6 +53,27 @@ class OdooCustomerClient51 {
   bool _identityVerified = false;
   _OdooLogoutSnapshot51? _verifiedLogout;
   Future<void>? _logoutFuture;
+  Future<OdooCustomerSession51>? _publicSessionRead51;
+  ({int generation, String? sid, int? customerId, int? partnerId})?
+  _publicSessionReadKey51;
+  Future<void>? _cartBootstrap85;
+  bool _cartEnabled85 = false;
+  bool _checkoutEnabled85 = false;
+  bool _freeCheckout85 = false;
+  bool _paymentHandoff85 = false;
+  int _ownerEpoch85 = 0;
+
+  /// Local revocation stamp only. Never sent as a credential or persisted.
+  int get sessionEpoch85 => _ownerEpoch85;
+  bool get cartSupported85 =>
+      !_closed &&
+      _cartEnabled85 &&
+      _cookie != null &&
+      _cookie!.expiresAt.isAfter(DateTime.now().toUtc());
+  bool get checkoutSupported85 => cartSupported85 && _checkoutEnabled85;
+  bool get freeCheckoutSupported85 => checkoutSupported85 && _freeCheckout85;
+  bool get paymentHandoffSupported85 =>
+      checkoutSupported85 && _paymentHandoff85;
 
   bool get isAuthenticated =>
       !_closed &&
@@ -62,6 +84,28 @@ class OdooCustomerClient51 {
   OdooCustomerProfile51? get customer => isAuthenticated ? _customer : null;
   DateTime? get sessionExpiresAt => isAuthenticated ? _cookie!.expiresAt : null;
 
+  /// Same-owner view used by the Native notifier. Rolling, verified cookie
+  /// expiry never replaces the logical UI identity or remounts a dirty form.
+  OdooCustomerSession51 get verifiedSession51 => _boundSession51(customer);
+
+  OdooCustomerSession51 _boundSession51(OdooCustomerProfile51? profile) {
+    if (profile == null) return const OdooCustomerSession51();
+    final epoch = sessionEpoch85;
+    return OdooCustomerSession51(
+      customer: profile,
+      expiresAt: sessionExpiresAt,
+      verifiedExpiry51: () {
+        final current = customer;
+        if (epoch != sessionEpoch85 ||
+            current?.id != profile.id ||
+            current?.partnerId != profile.partnerId) {
+          return null;
+        }
+        return sessionExpiresAt;
+      },
+    );
+  }
+
   /// A fresh server read, not permission to use a cached customer while offline.
   /// Odoo enforces website/company ownership in its session claim on every route;
   /// those IDs are not present in contract 51.1's public response.
@@ -70,7 +114,32 @@ class OdooCustomerClient51 {
       throw const OdooCustomerException51('customer_session_changed');
     }
     await _loadStoredSession();
-    return _session();
+    if (_logoutFuture != null) {
+      throw const OdooCustomerException51('customer_session_changed');
+    }
+    final expected = _expectedIdentity;
+    final key = (
+      generation: _generation,
+      sid: _cookie?.value,
+      customerId: expected?.customerId ?? _customer?.id,
+      partnerId: expected?.partnerId ?? _customer?.partnerId,
+    );
+    final existing = _publicSessionRead51;
+    if (existing != null && _publicSessionReadKey51 == key) return existing;
+    late final Future<OdooCustomerSession51> read;
+    // Foreground revalidation and the initial cart share one same-owner read.
+    // A new SID/generation or expected UID never joins an older verification.
+    // Internal login/private-SID verification calls _session directly, so it
+    // cannot await its own public read or weaken its exact identity check.
+    read = _session().whenComplete(() {
+      if (identical(_publicSessionRead51, read)) {
+        _publicSessionRead51 = null;
+        _publicSessionReadKey51 = null;
+      }
+    });
+    _publicSessionRead51 = read;
+    _publicSessionReadKey51 = key;
+    return read;
   }
 
   /// A stored SID is only a candidate. No cached identity is exposed offline.
@@ -119,17 +188,16 @@ class OdooCustomerClient51 {
     _storeLoaded = true;
     if (stored != null) {
       _cookie = _OdooCookie51(stored.sessionId, stored.expiresAt);
-      _expectedIdentity = (
-        customerId: stored.customerId,
-        partnerId: stored.partnerId,
-      );
+      _expectedIdentity = stored.isGuest
+          ? null
+          : (customerId: stored.customerId, partnerId: stored.partnerId);
       _csrf = null;
       _customer = null;
       _identityVerified = false;
     }
   }
 
-  Future<void> _persistSession(OdooCustomerProfile51 customer) async {
+  Future<void> _persistSession(OdooCustomerProfile51? customer) async {
     final ticket = _generation;
     final storageTicket = _storageGeneration;
     final cookie = _cookie!;
@@ -137,8 +205,8 @@ class OdooCustomerClient51 {
       origin: origin,
       sessionId: cookie.value,
       expiresAt: cookie.expiresAt,
-      customerId: customer.id,
-      partnerId: customer.partnerId,
+      customerId: customer?.id ?? 0,
+      partnerId: customer?.partnerId ?? 0,
     );
     try {
       await _storeOperation(() async {
@@ -176,6 +244,10 @@ class OdooCustomerClient51 {
                 customerId: (_customer ?? loginCustomer!).id,
                 partnerId: (_customer ?? loginCustomer!).partnerId,
               ));
+    _cartEnabled85 = false;
+    _checkoutEnabled85 = false;
+    _freeCheckout85 = false;
+    _paymentHandoff85 = false;
     final response = await _request('session');
     final auth = _object(response['auth']);
     if (auth['protocol'] != 'odoo_session_cookie' ||
@@ -215,25 +287,31 @@ class OdooCustomerClient51 {
     )) {
       throw _invalid();
     }
-    // Account contract 51.1 is also served by stores with the independently
-    // gated cart contract enabled. Validate that advertised contract without
-    // treating it as permission to use an unimplemented checkout transport.
-    // Requiring cart=false here broke login as soon as a merchant enabled it.
-    final cart = capabilities['cart'];
-    final checkout = capabilities['checkout'];
-    if (cart is! bool ||
-        checkout is! bool ||
-        (checkout && !cart) ||
-        (cart && response['cart_contract_version'] != '85.1')) {
+    final cartEnabled = capabilities['cart'];
+    final checkoutEnabled = capabilities['checkout'];
+    if (cartEnabled is! bool ||
+        checkoutEnabled is! bool ||
+        (checkoutEnabled && !cartEnabled) ||
+        ((cartEnabled || checkoutEnabled) &&
+            response['cart_contract_version'] != '85.1')) {
       throw _invalid();
     }
-    if (cart) {
+    var verifiedFree = false, verifiedHandoff = false;
+    if (cartEnabled) {
       final free = capabilities['free_checkout'];
       final handoff = capabilities['payment_handoff'];
-      if (free is! bool || handoff is! bool || checkout != (free || handoff)) {
+      if (free is! bool ||
+          handoff is! bool ||
+          checkoutEnabled != (free || handoff)) {
         throw _invalid();
       }
+      verifiedFree = free;
+      verifiedHandoff = handoff;
     }
+    _cartEnabled85 = cartEnabled;
+    _checkoutEnabled85 = checkoutEnabled;
+    _freeCheckout85 = verifiedFree;
+    _paymentHandoff85 = verifiedHandoff;
     _csrf = csrf;
     _customer = next;
     _identityVerified = false;
@@ -251,11 +329,14 @@ class OdooCustomerClient51 {
       _assertCurrent(verificationTicket);
       _expectedIdentity = (customerId: next.id, partnerId: next.partnerId);
       _identityVerified = true;
+    } else if (_cartEnabled85) {
+      // A genuine anonymous Odoo cart uses the same protected SID jar. This
+      // candidate never promotes an anonymous identity into an authenticated
+      // customer and is discarded on explicit logout/account switch.
+      _verifiedLogout = _OdooLogoutSnapshot51(_cookie!, csrf);
+      await _persistSession(null);
     }
-    return OdooCustomerSession51(
-      customer: next,
-      expiresAt: next == null ? null : _cookie!.expiresAt,
-    );
+    return _boundSession51(next);
   }
 
   Future<OdooCustomerProfile51> login({
@@ -296,6 +377,69 @@ class OdooCustomerClient51 {
     }
     return user;
   });
+
+  /// Cart operations share the exact customer session transport. The whitelist
+  /// is intentionally closed; no arbitrary Odoo/admin/builder URL is admitted.
+  Future<Map<String, dynamic>> cart85() => _cartRequest85('cart');
+
+  Future<Map<String, dynamic>> addCartItem85({
+    required int productId,
+    required int quantity,
+  }) => _write(() {
+    if (quantity < 1 || quantity > 2147483647) {
+      throw const OdooCustomerException51('invalid_cart_quantity');
+    }
+    return _cartRequest85(
+      'cart/items',
+      payload: {'product_id': _positiveId(productId), 'quantity': quantity},
+    );
+  });
+
+  Future<Map<String, dynamic>> updateCartItem85({
+    required int lineId,
+    required int quantity,
+  }) => _write(() {
+    if (quantity < 0 || quantity > 2147483647) {
+      throw const OdooCustomerException51('invalid_cart_quantity');
+    }
+    return _cartRequest85(
+      'cart/items/${_positiveId(lineId)}',
+      payload: {'quantity': quantity},
+    );
+  });
+
+  Future<void> _ensureCartSession85() async {
+    if (_csrf == null ||
+        !_cartEnabled85 ||
+        _cookie == null ||
+        !_cookie!.expiresAt.isAfter(DateTime.now().toUtc())) {
+      final pending = _cartBootstrap85 ??= session().then<void>((_) {});
+      try {
+        await pending;
+      } finally {
+        if (identical(_cartBootstrap85, pending)) _cartBootstrap85 = null;
+      }
+    }
+    if (!_cartEnabled85) {
+      throw const OdooCustomerException51('cart_contract_unavailable');
+    }
+  }
+
+  Future<Map<String, dynamic>> _cartRequest85(
+    String endpoint, {
+    Map<String, dynamic>? payload,
+  }) async {
+    await _ensureCartSession85();
+    final owner = sessionEpoch85;
+    final uid = customer?.id;
+    final response = await _request(endpoint, payload: payload);
+    if (owner != sessionEpoch85 ||
+        response['customer_id'] != uid ||
+        response['cart_contract_version'] != '85.1') {
+      throw const OdooCustomerException51('customer_session_changed');
+    }
+    return response;
+  }
 
   Future<OdooCustomerProfile51> profile() async {
     final expected = _requireCustomer();
@@ -456,12 +600,19 @@ class OdooCustomerClient51 {
 
   void _clearMemory() {
     _generation += 1;
+    _ownerEpoch85 += 1;
+    _cartEnabled85 = false;
+    _checkoutEnabled85 = false;
+    _freeCheckout85 = false;
+    _paymentHandoff85 = false;
     _cookie = null;
     _csrf = null;
     _customer = null;
     _identityVerified = false;
     _expectedIdentity = null;
     _verifiedLogout = null;
+    _publicSessionRead51 = null;
+    _publicSessionReadKey51 = null;
   }
 
   void close() {
@@ -523,7 +674,7 @@ class OdooCustomerClient51 {
   }) async {
     if (_closed ||
         !RegExp(
-          r'^(session|login|logout|profile|addresses(?:/[1-9][0-9]{0,9})?|orders(?:/[1-9][0-9]{0,9})?|revision)$',
+          r'^(session|login|logout|profile|addresses(?:/[1-9][0-9]{0,9})?|orders(?:/[1-9][0-9]{0,9})?|revision|cart(?:/items(?:/[1-9][0-9]{0,9})?)?)$',
         ).hasMatch(endpoint)) {
       throw const OdooCustomerException51('unapproved_customer_endpoint');
     }
@@ -587,7 +738,11 @@ class OdooCustomerClient51 {
         if (response.statusCode == 401 || response.statusCode == 403) {
           await clearLocalSession();
         }
-        throw OdooCustomerException51(code, statusCode: response.statusCode);
+        throw OdooCustomerException51(
+          code,
+          statusCode: response.statusCode,
+          response: json,
+        );
       }
       if (acceptCookie) {
         final cookies = response.headers['set-cookie'] ?? const <String>[];
@@ -598,13 +753,20 @@ class OdooCustomerClient51 {
         final next = _OdooCookie51.parse(sessionCookies.single);
         // Cookie rotation invalidates other requests that used an older SID.
         final rotated = sentCookie?.value != next.value;
+        final hadCartContract = _cartEnabled85;
         if (rotated) {
           _generation += 1;
           _csrf = null;
           _identityVerified = false;
+          _cartEnabled85 = false;
+          _checkoutEnabled85 = false;
+          _freeCheckout85 = false;
+          _paymentHandoff85 = false;
         }
         _cookie = next;
-        if (rotated && _customer != null && endpoint != 'session') {
+        if (rotated &&
+            (_customer != null || hadCartContract) &&
+            !const {'session', 'login', 'logout'}.contains(endpoint)) {
           // A private response must never install a different customer's SID
           // for the next orders/address read. Re-prove the exact uid/partner
           // with the rotated cookie before exposing this response at all.
@@ -651,25 +813,42 @@ class _OdooLogoutSnapshot51 {
 }
 
 class OdooCustomerException51 implements Exception {
-  const OdooCustomerException51(this.code, {this.statusCode});
+  const OdooCustomerException51(this.code, {this.statusCode, this.response});
   final String code;
   final int? statusCode;
+
+  /// A validated public envelope, never the request/cookie/CSRF credentials.
+  final Map<String, dynamic>? response;
   @override
   String toString() => 'Odoo customer request failed ($code).';
 }
 
 class OdooCustomerSession51 {
-  const OdooCustomerSession51({OdooCustomerProfile51? customer, this.expiresAt})
+  const OdooCustomerSession51({
+    OdooCustomerProfile51? customer,
+    DateTime? expiresAt,
+    DateTime? Function()? verifiedExpiry51,
+  })
     // Keep the public constructor name while hiding an expired identity.
     // ignore: prefer_initializing_formals
-    : _customer = customer;
+    : _customer = customer,
+       // Keep the backwards-compatible public constructor field names.
+       // ignore: prefer_initializing_formals
+       _expiresAt = expiresAt,
+       // ignore: prefer_initializing_formals
+       _verifiedExpiry51 = verifiedExpiry51;
   final OdooCustomerProfile51? _customer;
-  final DateTime? expiresAt;
+  final DateTime? _expiresAt;
+  final DateTime? Function()? _verifiedExpiry51;
+  DateTime? get expiresAt =>
+      _verifiedExpiry51 == null ? _expiresAt : _verifiedExpiry51();
   OdooCustomerProfile51? get customer => authenticated ? _customer : null;
-  bool get authenticated =>
-      _customer != null &&
-      expiresAt != null &&
-      expiresAt!.isAfter(DateTime.now().toUtc());
+  bool get authenticated {
+    final expiry = expiresAt;
+    return _customer != null &&
+        expiry != null &&
+        expiry.isAfter(DateTime.now().toUtc());
+  }
 }
 
 class OdooCustomerProfile51 {

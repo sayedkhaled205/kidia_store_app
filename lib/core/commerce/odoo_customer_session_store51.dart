@@ -19,10 +19,11 @@ class OdooCustomerStoredSession51 {
        ).storeOrigin,
        expiresAt = expiresAt.toUtc() {
     if (!RegExp(r'^[A-Za-z0-9_-]{16,512}$').hasMatch(sessionId) ||
-        customerId < 1 ||
+        customerId < 0 ||
         customerId > 9999999999 ||
-        partnerId < 1 ||
+        partnerId < 0 ||
         partnerId > 9999999999 ||
+        (customerId == 0) != (partnerId == 0) ||
         this.expiresAt.isAfter(
           DateTime.now().toUtc().add(const Duration(seconds: 31536000)),
         )) {
@@ -43,7 +44,7 @@ class OdooCustomerStoredSession51 {
         data.length != keys.length ||
         data.keys.any((key) => key is! String || !keys.contains(key)) ||
         data['v'] is! int ||
-        data['v'] != 1 ||
+        !const {1, 2}.contains(data['v']) ||
         data['origin'] is! String ||
         data['session_id'] is! String ||
         data['expires_at'] is! String ||
@@ -63,6 +64,11 @@ class OdooCustomerStoredSession51 {
       customerId: data['customer_id'] as int,
       partnerId: data['partner_id'] as int,
     );
+    // Version 1 remains the exact authenticated contract. Version 2 is an
+    // anonymous SID candidate only; zero is never accepted as a customer UID.
+    if ((data['v'] == 2) != record.isGuest) {
+      throw const FormatException('Invalid stored Odoo identity version.');
+    }
     if (record.origin.toString() != data['origin']) {
       throw const FormatException('Invalid stored Odoo customer origin.');
     }
@@ -73,10 +79,11 @@ class OdooCustomerStoredSession51 {
   final String sessionId;
   final DateTime expiresAt;
   final int customerId, partnerId;
+  bool get isGuest => customerId == 0 && partnerId == 0;
   bool get isExpired => !expiresAt.isAfter(DateTime.now().toUtc());
 
   Map<String, Object> toJson() => {
-    'v': 1,
+    'v': isGuest ? 2 : 1,
     'origin': origin.toString(),
     'session_id': sessionId,
     'expires_at': expiresAt.toIso8601String(),
