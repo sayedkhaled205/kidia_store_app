@@ -81,7 +81,7 @@ CatalogPage<CatalogProduct> page(
   cursorHasNextPage: more,
 );
 
-Future<void> pumpFeed(
+Future<void> _pumpFeed(
   WidgetTester tester,
   _Repository repository,
   ScrollController scroll,
@@ -120,7 +120,7 @@ void main() {
     repository.fetch = (query) async =>
         query.page == 1 ? first.future : page(query, [2, 3]);
     final scroll = ScrollController();
-    await pumpFeed(tester, repository, scroll);
+    await _pumpFeed(tester, repository, scroll);
     await tester.pump();
     expect(repository.queries.length, 1);
     first.complete(page(repository.queries.first, [1, 2], more: true));
@@ -145,7 +145,7 @@ void main() {
     final repository = _Repository();
     repository.fetch = (_) async => throw StateError('offline');
     final scroll = ScrollController();
-    await pumpFeed(tester, repository, scroll);
+    await _pumpFeed(tester, repository, scroll);
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
     expect(
