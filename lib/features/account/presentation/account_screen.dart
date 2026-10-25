@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
@@ -44,6 +46,7 @@ class AccountScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ui = AppUiControlsScope.of(context);
     final previewIdentity = AppConfig.isCmsPreview
         ? ref.watch(previewIdentityProvider).asData?.value
         : null;
@@ -158,18 +161,26 @@ class AccountScreen extends ConsumerWidget {
                 child: Center(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 38),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
+                      minimumSize: Size(0, ui.number('logout_height')),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ui.number('logout_padding'),
                         vertical: 8,
                       ),
-                      textStyle: const TextStyle(fontSize: 14),
-                      iconSize: 18,
+                      textStyle: TextStyle(
+                        fontSize: ui.number('logout_font_size'),
+                      ),
+                      iconSize: ui.number('logout_icon_size'),
                     ),
                     key: const Key('account-sign-out'),
                     onPressed: () => _signOut(context, ref, isArabic),
                     icon: const Icon(Icons.logout_rounded),
-                    label: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
+                    label: Text(
+                      ui.text(
+                        'logout_label',
+                        isArabic,
+                        isArabic ? 'تسجيل الخروج' : 'Sign out',
+                      ),
+                    ),
                   ),
                 ),
               ),

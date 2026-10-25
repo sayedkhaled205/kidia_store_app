@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
 /// Draw attention once when the authoritative quantity increases, never on load.
 class CartCountPulse extends StatefulWidget {
@@ -16,27 +17,50 @@ class _CartCountPulseState extends State<CartCountPulse>
     vsync: this,
     duration: const Duration(milliseconds: 440),
   );
-  late final Animation<double> _scale = TweenSequence<double>([
-    TweenSequenceItem(
-      tween: Tween<double>(
-        begin: 1,
-        end: 1.35,
-      ).chain(CurveTween(curve: Curves.easeOut)),
-      weight: 45,
-    ),
-    TweenSequenceItem(
-      tween: Tween<double>(
-        begin: 1.35,
-        end: 1,
-      ).chain(CurveTween(curve: Curves.easeInOut)),
-      weight: 55,
-    ),
-  ]).animate(_controller);
+  bool _enabled = true;
+  double _peak = 1.35;
+  late Animation<double> _scale;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _configure();
+  }
+
+  void _configure() {
+    final ui = AppUiControlsScope.of(context);
+    _enabled =
+        ui.boolean('cart_pulse_enabled') &&
+        !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+    _peak = ui.number('cart_pulse_scale');
+    _controller.duration = Duration(
+      milliseconds: ui.number('cart_pulse_duration').round(),
+    );
+    if (!_enabled) _controller.reset();
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1,
+          end: _peak,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 45,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: _peak,
+          end: 1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 55,
+      ),
+    ]).animate(_controller);
+  }
 
   @override
   void didUpdateWidget(CartCountPulse oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.count > oldWidget.count &&
+    _configure();
+    if (_enabled &&
+        widget.count > oldWidget.count &&
         !(MediaQuery.maybeOf(context)?.disableAnimations ?? false)) {
       _controller.forward(from: 0);
     }
@@ -55,4 +79,3 @@ class _CartCountPulseState extends State<CartCountPulse>
     child: widget.child,
   );
 }
-

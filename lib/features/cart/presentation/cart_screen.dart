@@ -93,7 +93,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             onPressed: _goBack,
             icon: const Icon(Icons.arrow_back_rounded),
           ),
-          title: Text(flat ? '${copy.isArabic ? 'السلة' : 'Bag'}${current == null || current.cart.isEmpty ? '' : ' (${current.cart.itemsCount})'}' : copy.title),
+          title: Text(flat ? '${copy.compactTitle}${current == null || current.cart.isEmpty ? '' : ' (${current.cart.itemsCount})'}' : copy.title),
           actions: <Widget>[
             if (flat) IconButton(
               tooltip: copy.isArabic ? 'المفضلة' : 'Wishlist',

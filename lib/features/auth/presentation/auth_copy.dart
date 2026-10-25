@@ -1,21 +1,28 @@
 import 'package:flutter/widgets.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
 class AuthCopy {
-  const AuthCopy._({required this.isArabic});
+  const AuthCopy._({required this.isArabic, required this.controls});
 
   factory AuthCopy.of(BuildContext context) {
     return AuthCopy._(
       isArabic: Localizations.localeOf(context).languageCode == 'ar',
+      controls: AppUiControlsScope.of(context),
     );
   }
 
   final bool isArabic;
+  final AppUiControls controls;
 
   String get identifier =>
       isArabic ? 'رقم الموبايل أو البريد الإلكتروني' : 'Phone number or email';
-  String get identifierIntro => isArabic
-      ? 'اكتب رقم موبايلك أو بريدك الإلكتروني للمتابعة'
-      : 'Enter your phone number or email to continue';
+  String get identifierIntro => controls.text(
+    'auth_intro',
+    isArabic,
+    isArabic
+        ? 'اكتب رقم موبايلك أو بريدك الإلكتروني للمتابعة'
+        : 'Enter your phone number or email to continue',
+  );
   String get identifierRequired => isArabic
       ? 'اكتب رقم موبايل أو بريد إلكتروني صحيح'
       : 'Enter a valid phone number or email';
@@ -79,17 +86,28 @@ class AuthCopy {
       ? 'تم إلغاء الدخول. تقدر تحاول مرة أخرى.'
       : 'Sign-in was cancelled. You can try again.';
 
-  String get title =>
-      isArabic ? 'تسجيل الدخول أو إنشاء حساب' : 'Sign in or create an account';
-  String get intro => isArabic
-      ? 'اكتب بريدك الإلكتروني للمتابعة'
-      : 'Enter your email address to continue';
+  String get title => controls.text(
+    'auth_title',
+    isArabic,
+    isArabic ? 'تسجيل الدخول أو إنشاء حساب' : 'Sign in or create an account',
+  );
+  String get intro => controls.text(
+    'auth_intro',
+    isArabic,
+    isArabic
+        ? 'اكتب بريدك الإلكتروني للمتابعة'
+        : 'Enter your email address to continue',
+  );
   String get email => isArabic ? 'البريد الإلكتروني' : 'Email address';
   String get emailHint => isArabic ? 'name@example.com' : 'name@example.com';
   String get emailRequired => isArabic
       ? 'اكتب بريدًا إلكترونيًا صحيحًا'
       : 'Enter a valid email address';
-  String get continueLabel => isArabic ? 'متابعة' : 'Continue';
+  String get continueLabel => controls.text(
+    'auth_continue',
+    isArabic,
+    isArabic ? 'متابعة' : 'Continue',
+  );
   String get existingTitle =>
       isArabic ? 'أدخل كلمة المرور' : 'Enter your password';
   String get existingSubtitle => isArabic

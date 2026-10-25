@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +39,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
+  AppUiControls get _ui => AppUiControlsScope.of(context);
   final _formKey = GlobalKey<FormState>();
   final _identifier = TextEditingController();
   final _password = TextEditingController();
@@ -123,9 +125,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _ui.color('auth_background'),
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: _ui.color('auth_background'),
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
@@ -141,7 +143,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           child: Align(
             alignment: Alignment.topCenter,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              padding: EdgeInsets.fromLTRB(
+                _ui.number('auth_side_padding'),
+                _ui.number('auth_top_spacing'),
+                _ui.number('auth_side_padding'),
+                24,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: AutofillGroup(
@@ -168,15 +175,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   .number('logo_aspect_ratio', 0) ??
                               0,
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: _ui.number('auth_logo_gap')),
                         Text(
                           _title(copy),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
-                                fontSize: 23,
+                                fontSize: _ui.number('auth_title_size'),
                                 fontWeight: FontWeight.w700,
-                                color: MobiShopColors.textPrimary,
+                                color: _ui.color('auth_title_color'),
                               ),
                         ),
                         const SizedBox(height: 8),
@@ -759,10 +766,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   InputDecoration _decoration(String label) => InputDecoration(
     labelText: label,
     filled: false,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: _ui.number('auth_field_padding'),
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(_ui.number('auth_field_radius')),
+    ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(_ui.number('auth_field_radius')),
       borderSide: const BorderSide(color: Color(0xFFD9DFE3)),
     ),
   );
@@ -774,7 +786,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }) => FilledButton(
     key: key,
     style: FilledButton.styleFrom(
-      minimumSize: const Size.fromHeight(50),
+      minimumSize: Size.fromHeight(_ui.number('auth_button_height')),
       shape: const StadiumBorder(),
     ),
     onPressed: _busy ? null : onPressed,
