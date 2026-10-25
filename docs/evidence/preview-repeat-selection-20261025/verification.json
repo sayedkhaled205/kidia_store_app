@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-25",
+  "runtime": "f4f2f12f3108",
+  "scope": "Shared builder Home preview selection and product parsing",
+  "causes": [
+    "A photo-less catalog product caused the whole product section to be discarded before rendering.",
+    "Empty collections had no mounted preview target.",
+    "Fractional alignment could land inside a long product grid instead of at its heading.",
+    "The 15-second startup timeout repeatedly aborted healthy cold downloads on the slow connection; explicit errors still retry immediately and the startup guard now allows 180 seconds."
+  ],
+  "automated": {
+    "cms_preview_interactions": "5 passed: repeated forward/backward selection, long section alignment, empty collection targets, idle scheduling, mouse dragging and distant geometry",
+    "native_and_product_images": "11 passed",
+    "home_model_and_empty_native_sections": "22 passed including optional-image cases",
+    "targeted_analysis": "No issues found",
+    "release_web_build": "passed"
+  },
+  "concurrent_work": "Merged remote UI-control changes; deployment stages from current live assets and checks original hashes before activation.",
+  "browser_verification": {
+    "staged_runtime": "passed in embedded browser",
+    "selection_sequence": [
+      "ALL PRODUCTS",
+      "New User Zone",
+      "FLASH SALE",
+      "NEW ARRIVAL",
+      "mouse wheel down",
+      "NEW ARRIVAL again",
+      "mouse drag down"
+    ],
+    "results": [
+      "Each card immediately received mint selection styling",
+      "Preview aligned selected section at its heading",
+      "Repeated selection restored the same section after manual scroll",
+      "Mouse wheel and drag both moved the phone contents",
+      "Photo-less products retained their real prices and existing image placeholder"
+    ],
+    "live_runtime": "passed: ALL PRODUCTS -> New User Zone -> ALL PRODUCTS on canonical index.html after activation; heading and mint card highlight visibly matched every click",
+    "cold_load": "First attempt exceeded the startup guard on this slow connection; the following attempt completed. Subsequent card selection needed no reload.",
+    "screenshots": [
+      "live-all-products.png",
+      "live-second-selection.png"
+    ]
+  },
+  "deployment": {
+    "activated": true,
+    "runtime": "f4f2f12f3108",
+    "archive_sha256": "3b07ac6d1ea06bef0ca4ba74def4c5ecaa6476a82c24acb54758b29cd9f26ae5",
+    "original_live_hashes": "all matched during activation",
+    "verified_at_utc": "2026-10-25T20:20:00Z"
+  }
+}
