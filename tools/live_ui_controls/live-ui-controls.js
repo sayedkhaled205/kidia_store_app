@@ -37,6 +37,9 @@
       if (response.status === 422) throw new Error('راجع القيم وحدود الأحجام. النصوص لا تقبل أكواد أو أسطر جديدة.');
       throw new Error('تعذر حفظ الإعدادات. افتح النافذة مجددًا للتحقق من آخر حفظ.');
     }
+    if (!response.headers.get('Content-Type')?.includes('application/json')) {
+      throw new Error('تعذر تأكيد الحفظ. أعد فتح البيلدر لتجديد الجلسة ثم راجع الإعدادات المحفوظة.');
+    }
     return response.json();
   }
   function setBusy(value) { busy = value; save.disabled = reset.disabled = value || !data; close.disabled = value; }

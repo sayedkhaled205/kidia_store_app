@@ -13,6 +13,7 @@ foreach ([['unknown'=>true],['auth_title_size'=>999],['cart_pulse_enabled'=>'fal
     catch (Illuminate\Validation\ValidationException) {}
 }
 check(Controls::normalize(['auth_title_size'=>23,'auth_background'=>'#ffffff']) === [], 'Default values remain implicit');
+check(Controls::normalize(['auth_title_en'=>null]) === [], 'HTTP empty text normalization restores default');
 DB::beginTransaction();
 try {
     $store = Store::whereKey(29)->lockForUpdate()->firstOrFail();

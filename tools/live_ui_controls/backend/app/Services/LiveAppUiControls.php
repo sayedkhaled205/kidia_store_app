@@ -17,6 +17,8 @@ final class LiveAppUiControls
         $schema = self::schema(); $result = [];
         foreach ($values as $key => $value) {
             $rule = $schema[$key] ?? null;
+            // Laravel converts empty form strings to null before validation.
+            if ($rule && $rule['type'] === 'text' && $value === null) $value = '';
             $valid = $rule && match ($rule['type']) {
                 'number' => (is_int($value) || is_float($value)) && is_finite((float)$value) && $value >= $rule['min'] && $value <= $rule['max'],
                 'boolean' => is_bool($value),
