@@ -190,7 +190,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text('Dresses'),
-        findsOneWidget,
+        findsWidgets,
         reason: '${entry.key} children',
       );
       expect(

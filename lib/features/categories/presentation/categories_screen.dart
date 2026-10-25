@@ -391,6 +391,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                       selected: selected,
                       showChildren: _settings.navigationMode == 'expand_inline',
                       gap: _settings.cardGap,
+                      onOpen: () => _openNode(selected),
                     ),
                   ),
                 ],
@@ -515,33 +516,21 @@ class _CategorySidebarDetail extends StatelessWidget {
     required this.selected,
     required this.showChildren,
     required this.gap,
+    required this.onOpen,
   });
 
   final CatalogCategoryNode selected;
   final bool showChildren;
   final double gap;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    if (!showChildren) {
-      return const SizedBox(
-        height: 180,
-        child: Center(child: Icon(Icons.touch_app_outlined, size: 42)),
-      );
-    }
-    if (selected.children.isEmpty) {
-      return SizedBox(
-        height: 180,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(Icons.category_outlined, size: 42),
-              const SizedBox(height: 8),
-              Text(selected.category.name),
-            ],
-          ),
-        ),
+    if (!showChildren || selected.children.isEmpty) {
+      return _CategoryBanner(
+        node: selected,
+        expanded: false,
+        onTap: onOpen,
       );
     }
     return _InlineSubcategoryPanel(
