@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-25",
+  "live_version": "2db942ce9de2",
+  "activated": true,
+  "builder": "https://api.woomobile.app/mobishop-builder-v26/index.html",
+  "verified_store": "063df377-fcf0-4256-a104-1977b6b117b7",
+  "archive_sha256": "9bf2d836f70bf1bb69a6c54d7ff447f15e4a848123310b2565f2ec61d80c0cac",
+  "checks": {
+    "helper_node_tests": 7,
+    "bridge_node_tests": 12,
+    "merged_flutter_tests": 7,
+    "native_lazy_rendering_tests": 3,
+    "dart_analyze": "No issues",
+    "web_build": "success",
+    "real_mouse_drag_home": "passed",
+    "real_mouse_drag_catalog": "passed",
+    "wheel_without_extra_click": "passed",
+    "immediate_distant_element_focus": "passed",
+    "repeated_same_card_after_manual_scroll": "passed",
+    "subtle_card_highlight": "passed"
+  },
+  "concurrent_work": {
+    "merged_through": "697b05a",
+    "live_design_publish_script": "preserved",
+    "live_ui_controls_script": "preserved",
+    "native_ui_controls": "merged into rebuilt preview",
+    "other_checkout": "untouched"
+  },
+  "scope": "Preview interaction only; no customer design save, app publication or store data changes",
+  "backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-2db942ce9de2"
+}
