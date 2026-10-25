@@ -8,6 +8,8 @@ import '../features/checkout/data/network/native_payment_client92.dart';
 import '../core/push/native_push_actions_host.dart';
 import '../core/app_design/application_identity_provider58.dart';
 import '../core/app_design/live_app_design_provider.dart';
+import '../core/app_design/app_ui_controls.dart';
+import '../core/app_design/app_ui_controls_provider.dart';
 import '../core/live_updates/native_live_updates_host.dart';
 import '../core/theme/mobishop_theme.dart';
 import '../core/theme/preview_identity_theme.dart';
@@ -24,6 +26,7 @@ class MobiShopApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final GoRouter routerConfig = router ?? ref.watch(appRouterProvider);
+    final uiControls = ref.watch(appUiControlsProvider);
     final Map<String, dynamic>? identity = ref.watch(
       applicationIdentity58Provider,
     );
@@ -62,7 +65,10 @@ class MobiShopApp extends ConsumerWidget {
         builder: (context, child) {
           final Widget app = Directionality(
             textDirection: rightToLeft ? TextDirection.rtl : TextDirection.ltr,
-            child: child ?? const SizedBox.shrink(),
+            child: AppUiControlsScope(
+              controls: uiControls,
+              child: child ?? const SizedBox.shrink(),
+            ),
           );
           if (!AppConfig.isCmsPreview) {
             return NativePushActionsHost(

@@ -1,0 +1,249 @@
+{
+  "auth_side_padding": {
+    "group": "تسجيل الدخول",
+    "label": "المسافة الجانبية",
+    "type": "number",
+    "default": 24,
+    "min": 12,
+    "max": 36,
+    "step": 1
+  },
+  "auth_top_spacing": {
+    "group": "تسجيل الدخول",
+    "label": "المسافة أعلى اللوجو",
+    "type": "number",
+    "default": 8,
+    "min": 0,
+    "max": 32,
+    "step": 1
+  },
+  "auth_logo_gap": {
+    "group": "تسجيل الدخول",
+    "label": "المسافة تحت اللوجو",
+    "type": "number",
+    "default": 24,
+    "min": 8,
+    "max": 40,
+    "step": 1
+  },
+  "auth_title_size": {
+    "group": "تسجيل الدخول",
+    "label": "حجم عنوان تسجيل الدخول",
+    "type": "number",
+    "default": 23,
+    "min": 18,
+    "max": 30,
+    "step": 1
+  },
+  "auth_button_height": {
+    "group": "تسجيل الدخول",
+    "label": "ارتفاع زر المتابعة",
+    "type": "number",
+    "default": 50,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "auth_field_radius": {
+    "group": "تسجيل الدخول",
+    "label": "استدارة خانات الإدخال",
+    "type": "number",
+    "default": 10,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "auth_field_padding": {
+    "group": "تسجيل الدخول",
+    "label": "المسافة داخل خانات الإدخال",
+    "type": "number",
+    "default": 17,
+    "min": 12,
+    "max": 22,
+    "step": 1
+  },
+  "auth_background": {
+    "group": "تسجيل الدخول",
+    "label": "لون خلفية تسجيل الدخول",
+    "type": "color",
+    "default": "#FFFFFF"
+  },
+  "auth_title_color": {
+    "group": "تسجيل الدخول",
+    "label": "لون عنوان تسجيل الدخول",
+    "type": "color",
+    "default": "#202124"
+  },
+  "logout_height": {
+    "group": "الحساب",
+    "label": "ارتفاع زر تسجيل الخروج",
+    "type": "number",
+    "default": 38,
+    "min": 32,
+    "max": 56,
+    "step": 1
+  },
+  "logout_font_size": {
+    "group": "الحساب",
+    "label": "حجم خط تسجيل الخروج",
+    "type": "number",
+    "default": 14,
+    "min": 12,
+    "max": 18,
+    "step": 1
+  },
+  "logout_icon_size": {
+    "group": "الحساب",
+    "label": "حجم أيقونة تسجيل الخروج",
+    "type": "number",
+    "default": 18,
+    "min": 14,
+    "max": 24,
+    "step": 1
+  },
+  "logout_padding": {
+    "group": "الحساب",
+    "label": "المسافة الجانبية داخل زر الخروج",
+    "type": "number",
+    "default": 18,
+    "min": 8,
+    "max": 32,
+    "step": 1
+  },
+  "cart_pulse_enabled": {
+    "group": "السلة",
+    "label": "تحريك عدّاد السلة عند الإضافة",
+    "type": "boolean",
+    "default": true
+  },
+  "cart_pulse_scale": {
+    "group": "السلة",
+    "label": "تكبير عدّاد السلة أثناء الحركة",
+    "type": "number",
+    "default": 1.35,
+    "min": 1,
+    "max": 1.6,
+    "step": 0.05
+  },
+  "cart_pulse_duration": {
+    "group": "السلة",
+    "label": "مدة حركة عدّاد السلة (مللي ثانية)",
+    "type": "number",
+    "default": 440,
+    "min": 200,
+    "max": 1000,
+    "step": 20
+  },
+  "auth_title_ar": {
+    "group": "تسجيل الدخول",
+    "label": "عنوان تسجيل الدخول — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 120
+  },
+  "auth_title_en": {
+    "group": "تسجيل الدخول",
+    "label": "عنوان تسجيل الدخول — English",
+    "type": "text",
+    "default": "",
+    "max_length": 120
+  },
+  "auth_intro_ar": {
+    "group": "تسجيل الدخول",
+    "label": "وصف تسجيل الدخول — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 240
+  },
+  "auth_intro_en": {
+    "group": "تسجيل الدخول",
+    "label": "وصف تسجيل الدخول — English",
+    "type": "text",
+    "default": "",
+    "max_length": 240
+  },
+  "auth_continue_ar": {
+    "group": "تسجيل الدخول",
+    "label": "نص زر المتابعة — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  },
+  "auth_continue_en": {
+    "group": "تسجيل الدخول",
+    "label": "نص زر المتابعة — English",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  },
+  "logout_label_ar": {
+    "group": "الحساب",
+    "label": "نص زر تسجيل الخروج — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  },
+  "logout_label_en": {
+    "group": "الحساب",
+    "label": "نص زر تسجيل الخروج — English",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  },
+  "cart_title_ar": {
+    "group": "السلة",
+    "label": "عنوان السلة — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 80
+  },
+  "cart_title_en": {
+    "group": "السلة",
+    "label": "عنوان السلة — English",
+    "type": "text",
+    "default": "",
+    "max_length": 80
+  },
+  "cart_empty_title_ar": {
+    "group": "السلة",
+    "label": "عنوان السلة الفارغة — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 120
+  },
+  "cart_empty_title_en": {
+    "group": "السلة",
+    "label": "عنوان السلة الفارغة — English",
+    "type": "text",
+    "default": "",
+    "max_length": 120
+  },
+  "cart_empty_message_ar": {
+    "group": "السلة",
+    "label": "وصف السلة الفارغة — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 240
+  },
+  "cart_empty_message_en": {
+    "group": "السلة",
+    "label": "وصف السلة الفارغة — English",
+    "type": "text",
+    "default": "",
+    "max_length": 240
+  },
+  "cart_checkout_ar": {
+    "group": "السلة",
+    "label": "نص زر إتمام الطلب — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  },
+  "cart_checkout_en": {
+    "group": "السلة",
+    "label": "نص زر إتمام الطلب — English",
+    "type": "text",
+    "default": "",
+    "max_length": 60
+  }
+}
