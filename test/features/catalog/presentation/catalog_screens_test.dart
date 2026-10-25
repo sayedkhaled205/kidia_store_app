@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
@@ -19,6 +20,57 @@ import 'package:mobishop_store_app/features/search/presentation/search_screen.da
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 void main() {
+  testWidgets('square cards fill two equal columns on a phone', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(categoryLayout: 'visual_grid', gridColumns: 2),
+        const CategoriesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final first = find.byKey(const Key('category-visual-card-1'));
+    final second = find.byKey(const Key('category-visual-card-3'));
+    final size = tester.getSize(first);
+    expect(size.width, closeTo(size.height, 1));
+    expect(size.width, greaterThan(150));
+    expect(tester.getTopLeft(first).dy, tester.getTopLeft(second).dy);
+    expect(tester.getTopLeft(first).dx, isNot(tester.getTopLeft(second).dx));
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final mode in ['separate_page', 'expand_inline']) {
+    testWidgets('three category levels work with $mode', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(navigationMode: mode, deepTree: true),
+          const CategoriesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dresses').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Summer dresses'), findsOneWidget);
+      if (mode == 'separate_page') {
+        await tester.tap(find.byKey(const Key('category-back-to-roots')));
+        await tester.pumpAndSettle();
+        expect(find.text('Dresses'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('category-back-to-roots')));
+        await tester.pumpAndSettle();
+      } else {
+        await tester.tap(find.text('Women').first);
+        await tester.pumpAndSettle();
+      }
+      expect(find.text('Men'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('empty search waits for a customer query', (
     WidgetTester tester,
   ) async {
@@ -60,25 +112,15 @@ void main() {
     expect(categoryTitle.style?.fontSize, closeTo(20 * responsiveScale, 0.001));
     expect(categoryTitle.style?.color, const Color(0xFF123456));
     expect(
-      tester
-          .getSize(
-            find.byKey(const Key('category-image-text-gap-1')),
-          )
-          .width,
+      tester.getSize(find.byKey(const Key('category-image-text-gap-1'))).width,
       closeTo(24 * responsiveScale, 0.001),
     );
     final Finder artworkFinder = find.byKey(const Key('category-artwork-1'));
-    expect(
-      tester.getSize(artworkFinder),
-      Size.square(80 * responsiveScale),
-    );
+    expect(tester.getSize(artworkFinder), Size.square(80 * responsiveScale));
     final Container artwork = tester.widget<Container>(artworkFinder);
     final BoxDecoration decoration = artwork.decoration! as BoxDecoration;
     final BorderRadius borderRadius = decoration.borderRadius! as BorderRadius;
-    expect(
-      borderRadius.topLeft.x,
-      closeTo(40 * responsiveScale, 0.001),
-    );
+    expect(borderRadius.topLeft.x, closeTo(40 * responsiveScale, 0.001));
     expect(find.byKey(const Key('categories-search-action')), findsOneWidget);
 
     final Container squareArtwork = tester.widget<Container>(
@@ -114,7 +156,7 @@ void main() {
     expect(find.byType(SafeArea), findsWidgets);
   });
 
-  testWidgets('category page renders all five CMS layouts', (
+  testWidgets('category page renders all six CMS layouts', (
     WidgetTester tester,
   ) async {
     const Map<String, Key> layouts = <String, Key>{
@@ -123,6 +165,7 @@ void main() {
       'circular_grid': Key('category-layout-circular_grid'),
       'compact_grid': Key('category-layout-compact_grid'),
       'sidebar': Key('category-layout-sidebar'),
+      'image_banner': Key('category-layout-image_banner'),
     };
     for (final MapEntry<String, Key> entry in layouts.entries) {
       await tester.pumpWidget(
@@ -145,12 +188,24 @@ void main() {
       expect(sectionMerge.transform.getTranslation().y, 1);
       await tester.tap(find.text('Women').last);
       await tester.pumpAndSettle();
-      expect(find.text('Dresses'), findsOneWidget, reason: '${entry.key} children');
-      expect(find.text('Men'), findsNothing, reason: '${entry.key} children only');
+      expect(
+        find.text('Dresses'),
+        findsOneWidget,
+        reason: '${entry.key} children',
+      );
+      expect(
+        find.text('Men'),
+        findsNothing,
+        reason: '${entry.key} children only',
+      );
       expect(find.byKey(const Key('category-back-to-roots')), findsOneWidget);
       await tester.tap(find.byKey(const Key('category-back-to-roots')));
       await tester.pumpAndSettle();
-      expect(find.text('Men'), findsOneWidget, reason: '${entry.key} back to roots');
+      expect(
+        find.text('Men'),
+        findsOneWidget,
+        reason: '${entry.key} back to roots',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
     }
   });
@@ -162,6 +217,7 @@ void main() {
       'visual_grid': Key('category-visual-card-1'),
       'circular_grid': Key('category-circular-card-1'),
       'compact_grid': Key('category-compact-card-1'),
+      'image_banner': Key('category-banner-card-1'),
     };
     for (final MapEntry<String, Key> entry in layoutSurfaces.entries) {
       await tester.pumpWidget(
@@ -219,7 +275,7 @@ void main() {
     await tester.tap(find.byKey(const Key('category-sidebar-root-3')));
     await tester.pumpAndSettle();
     expect(find.text('Dresses'), findsNothing);
-    expect(find.text('Men'), findsWidgets);
+    expect(find.text('Products in 3'), findsOneWidget);
   });
 
   testWidgets('product list uses three controls without a duplicate search', (
@@ -252,9 +308,8 @@ void main() {
       find.byKey(const Key('catalog-product-grid-padding')),
     );
     expect(gridPadding.padding.resolve(TextDirection.ltr).top, 0);
-    final SliverPersistentHeader toolbar = tester.widget<SliverPersistentHeader>(
-      find.byType(SliverPersistentHeader),
-    );
+    final SliverPersistentHeader toolbar = tester
+        .widget<SliverPersistentHeader>(find.byType(SliverPersistentHeader));
     expect(toolbar.pinned, isTrue);
 
     await tester.tap(find.byKey(const Key('catalog-size-button')));
@@ -298,9 +353,7 @@ void main() {
     );
     expect(find.byType(BottomSheet), findsNothing);
     expect(
-      tester
-          .getTopLeft(find.byKey(const Key('catalog-search-top-overlay')))
-          .dy,
+      tester.getTopLeft(find.byKey(const Key('catalog-search-top-overlay'))).dy,
       lessThan(160),
     );
   });
@@ -309,7 +362,14 @@ void main() {
 Widget _app(CatalogRepository repository, Widget home) {
   return ProviderScope(
     overrides: [catalogRepositoryProvider.overrideWithValue(repository)],
-    child: MaterialApp(locale: const Locale('en'), home: home),
+    child: MaterialApp.router(
+      locale: const Locale('en'),
+      routerConfig: GoRouter(routes: [
+        GoRoute(path: '/', builder: (context, state) => home),
+        GoRoute(path: '/categories/:id', builder: (context, state) =>
+          Scaffold(body: Text('Products in ${state.pathParameters['id']}'))),
+      ]),
+    ),
   );
 }
 
@@ -317,10 +377,14 @@ class _ScreenCatalogRepository implements CatalogRepository {
   _ScreenCatalogRepository({
     this.categoryLayout = 'default',
     this.navigationMode = 'drilldown',
+    this.gridColumns = 4,
+    this.deepTree = false,
   });
 
   final String categoryLayout;
   final String navigationMode;
+  final int gridColumns;
+  final bool deepTree;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -384,7 +448,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
           lineHeight: 1.4,
           categoryLayout: categoryLayout,
           navigationMode: navigationMode,
-          gridColumns: 4,
+          gridColumns: gridColumns,
           cardRadius: 20,
           cardGap: 12,
           marginTop: 7,
@@ -407,10 +471,17 @@ class _ScreenCatalogRepository implements CatalogRepository {
           imageSize: 64,
           imageShape: 'square',
         ),
+        if (deepTree)
+          const CatalogCategory(
+            id: 4,
+            name: 'Summer dresses',
+            slug: 'summer',
+            parentId: 2,
+          ),
       ],
       page: query.page,
       perPage: query.perPage,
-      totalItems: 3,
+      totalItems: deepTree ? 4 : 3,
       totalPages: 1,
     );
   }

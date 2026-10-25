@@ -144,7 +144,7 @@ final class MobiShop_Category_Page_Store {
 	public static function sanitize_general( array $settings ): array {
 		$defaults = self::general_defaults();
 		return array(
-			'category_layout'  => self::choice( $settings['category_layout'] ?? '', array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' ), $defaults['category_layout'] ),
+			'category_layout'  => self::choice( $settings['category_layout'] ?? '', array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar', 'image_banner' ), $defaults['category_layout'] ),
 			'navigation_mode'  => self::choice( $settings['navigation_mode'] ?? '', array( 'expand_inline', 'separate_page' ), $defaults['navigation_mode'] ),
 			'grid_columns'     => min( 4, max( 2, absint( $settings['grid_columns'] ?? $defaults['grid_columns'] ) ) ),
 			'card_radius'      => min( 32, max( 0, absint( $settings['card_radius'] ?? $defaults['card_radius'] ) ) ),

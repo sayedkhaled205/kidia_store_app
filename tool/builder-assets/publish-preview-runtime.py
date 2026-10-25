@@ -87,12 +87,12 @@ patched_source = contracts.repair_central(source).replace(old_shell, new_bundle 
 changes = {
     new_central: patched_source.encode(),
     new_frame: html.replace(frame_js, new_frame_js).encode(),
-    new_frame_js: frame_source.replace(old_bundle, new_bundle).encode(),
+    new_frame_js: contracts.repair_frame(frame_source).replace(old_bundle, new_bundle).encode(),
     new_helper: helper,
     review: index.replace(central, new_central).replace(old_helper, new_helper).encode(),
 }
 assert changes[review].decode().replace(new_central, central).replace(new_helper, old_helper) == index
-assert changes[new_frame_js].decode().replace(new_bundle, old_bundle) == frame_source
+assert changes[new_frame_js].decode().replace(new_bundle, old_bundle) == contracts.repair_frame(frame_source)
 for name, data in changes.items():
     assert not (root / name).exists()
     write(name, data)

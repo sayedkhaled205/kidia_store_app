@@ -76,6 +76,7 @@ class CatalogCategoryModel extends CatalogCategory {
           'circular_grid',
           'compact_grid',
           'sidebar',
+          'image_banner',
         },
         'default',
       ),

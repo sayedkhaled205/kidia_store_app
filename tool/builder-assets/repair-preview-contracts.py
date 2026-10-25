@@ -31,3 +31,15 @@ def repair_central(source):
     source = replace_once(source, "      frame.inert = false;\n      setTransition('');\n      return;",
         "      frame.inert = false;\n      sendMobilePreview(true);\n      setTransition('');\n      return;")
     return '/* preview-commerce-contract-v1 */\n' + helper + '\n' + source
+
+def repair_frame(source):
+    if '/* category-designer-v1:' in source:
+        return source
+    helper = Path(__file__).with_name('category-designer.js').read_text(encoding='utf-8')
+    source = replace_once(source,
+        '      root.innerHTML = normalizeReferenceHtml(html);',
+        "      root.innerHTML = normalizeReferenceHtml(html);\n      if (screen === 'category-builder') KidiaCategoryDesigner.prepare(root);")
+    source = replace_once(source,
+        '  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};',
+        "  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};\n    if (screen === 'category-builder') { KidiaCategoryDesigner.hydrate(root, store); if (window.KidiaCategoryMenu) window.KidiaCategoryMenu.init(); }")
+    return helper + '\n' + source

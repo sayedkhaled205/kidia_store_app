@@ -137,7 +137,7 @@ class _CategoryLayoutView extends StatefulWidget {
 }
 
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
-  int? _selectedRoot;
+  final List<int> _categoryPath = <int>[];
   int _sidebarRootIndex = 0;
   final Set<int> _expandedRootIds = <int>{};
 
@@ -147,17 +147,21 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   @override
   Widget build(BuildContext context) {
     final String layout = _settings.categoryLayout;
-    final CatalogCategoryNode? selectedRoot = _selectedRoot == null
-        ? null
-        : widget.tree.roots[_selectedRoot!
-              .clamp(0, widget.tree.roots.length - 1)
-              .toInt()];
+    CatalogCategoryNode? selectedRoot;
+    var level = widget.tree.roots;
+    for (final id in _categoryPath) {
+      final matches = level.where((node) => node.category.id == id);
+      if (matches.isEmpty) break;
+      selectedRoot = matches.first;
+      level = selectedRoot.children;
+    }
+    final selected = selectedRoot;
     final List<CatalogCategoryNode> visibleNodes = selectedRoot == null
         ? widget.tree.roots
         : selectedRoot.children;
     final Widget content = layout == 'sidebar'
         ? _sidebar(visibleNodes)
-        : layout == 'default'
+        : layout == 'default' || layout == 'image_banner'
         ? _defaultList(visibleNodes)
         : _grid(layout, visibleNodes);
     return Transform.translate(
@@ -176,15 +180,34 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           ),
           child: Column(
             children: <Widget>[
-              if (selectedRoot != null)
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    key: const Key('category-back-to-roots'),
-                    onPressed: () => setState(() => _selectedRoot = null),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: Text(selectedRoot.category.name),
-                  ),
+              if (selected != null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        key: const Key('category-back-to-roots'),
+                        onPressed: () => setState(() {
+                          _categoryPath.removeLast();
+                          _sidebarRootIndex = 0;
+                        }),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        label: Text(
+                          selected.category.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          _openCategoryProducts(context, selected.category),
+                      child: Text(
+                        CatalogCopy.of(context).isArabic
+                            ? 'عرض الكل'
+                            : 'View all',
+                      ),
+                    ),
+                  ],
                 ),
               Expanded(child: content),
             ],
@@ -198,7 +221,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView.separated(
-        key: const Key('category-layout-default'),
+        key: Key('category-layout-${_settings.categoryLayout}'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
         itemCount: nodes.length,
@@ -209,13 +232,33 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           return Align(
             child: FractionallySizedBox(
               widthFactor: _settings.cardWidthPercent / 100,
-              child: _CategoryBranch(
-                node: node,
-                expanded: expanded,
-                showInlineChildren: _settings.navigationMode == 'expand_inline',
-                onTap: () => _openNode(node),
-                onExpand: () => _openNode(node),
-              ),
+              child: _settings.categoryLayout == 'image_banner'
+                  ? Column(
+                      children: [
+                        _CategoryBanner(
+                          node: node,
+                          expanded: expanded,
+                          onTap: () => _openNode(node),
+                        ),
+                        if (expanded &&
+                            _settings.navigationMode == 'expand_inline')
+                          _InlineSubcategoryPanel(
+                            key: Key(
+                              'category-inline-panel-${node.category.id}',
+                            ),
+                            node: node,
+                            gap: _settings.cardGap,
+                          ),
+                      ],
+                    )
+                  : _CategoryBranch(
+                      node: node,
+                      expanded: expanded,
+                      showInlineChildren:
+                          _settings.navigationMode == 'expand_inline',
+                      onTap: () => _openNode(node),
+                      onExpand: () => _openNode(node),
+                    ),
             ),
           );
         },
@@ -249,7 +292,11 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                 crossAxisCount: columns,
                 mainAxisSpacing: _settings.cardGap,
                 crossAxisSpacing: _settings.cardGap,
-                mainAxisExtent: extent,
+                mainAxisExtent:
+                    layout == 'visual_grid' && _settings.cardHeight <= 0
+                    ? null
+                    : extent,
+                childAspectRatio: 1,
               ),
               delegate: SliverChildBuilderDelegate(
                 (BuildContext context, int index) => Align(
@@ -325,7 +372,8 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                             node: nodes[index],
                             selected: index == selectedIndex,
                             onTap: () {
-                              if (_settings.navigationMode == 'expand_inline') {
+                              if (_settings.navigationMode == 'expand_inline' &&
+                                  nodes[index].children.isNotEmpty) {
                                 setState(() => _sidebarRootIndex = index);
                               } else {
                                 _openNode(nodes[index]);
@@ -364,13 +412,101 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       });
       return;
     }
-    if (_settings.navigationMode != 'separate_page' &&
-        _selectedRoot == null &&
-        node.children.isNotEmpty) {
-      setState(() => _selectedRoot = widget.tree.roots.indexOf(node));
+    if (node.children.isNotEmpty) {
+      setState(() {
+        _categoryPath.add(node.category.id);
+        _sidebarRootIndex = 0;
+        _expandedRootIds.clear();
+      });
       return;
     }
     _openCategoryProducts(context, node.category);
+  }
+}
+
+class _CategoryBanner extends StatelessWidget {
+  const _CategoryBanner({
+    required this.node,
+    required this.expanded,
+    required this.onTap,
+  });
+  final CatalogCategoryNode node;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = node.category;
+    return Material(
+      key: Key('category-banner-card-${category.id}'),
+      borderRadius: BorderRadius.circular(category.cardRadius),
+      clipBehavior: Clip.antiAlias,
+      color: const Color(0xff426f64),
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: category.cardHeight > 0 ? category.cardHeight : 164,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AppNetworkImage(
+                imageUrl: category.image?.source.toString() ?? '',
+                fit: BoxFit.cover,
+                semanticLabel: category.name,
+                errorWidget: const Center(
+                  child: Icon(
+                    Icons.category_outlined,
+                    color: Colors.white54,
+                    size: 56,
+                  ),
+                ),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x10000000), Color(0xcc000000)],
+                  ),
+                ),
+              ),
+              PositionedDirectional(
+                start: 18,
+                end: 16,
+                bottom: 18,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        category.name,
+                        maxLines: category.textMaxLines,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: category.fontSize,
+                          fontWeight: _categoryFontWeight(category.fontWeight),
+                        ),
+                      ),
+                    ),
+                    if (category.showArrow)
+                      IconButton(
+                        key: Key('category-expand-${category.id}'),
+                        onPressed: onTap,
+                        icon: Icon(
+                          expanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -408,58 +544,10 @@ class _CategorySidebarDetail extends StatelessWidget {
         ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            _CategoryArtwork(category: selected.category, maximumSize: 48),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                selected.category.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: gap),
-        LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final double tileWidth = (constraints.maxWidth - gap) / 2;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: <Widget>[
-                for (final CatalogCategoryNode node in selected.children)
-                  SizedBox(
-                    key: Key('category-sidebar-child-${node.category.id}'),
-                    width: tileWidth,
-                    height: node.category.cardHeight > 0
-                        ? node.category.cardHeight
-                        : (node.category.imageSize.clamp(32.0, 76.0) +
-                                  node.category.imageTextGap +
-                                  node.category.fontSize *
-                                      node.category.lineHeight *
-                                      node.category.textMaxLines +
-                                  16) *
-                              _categoryResponsiveScale(context),
-                    child: _SubcategoryTile(
-                      category: node.category,
-                      maximumImageSize: 76,
-                      onTap: () =>
-                          _openCategoryProducts(context, node.category),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
+    return _InlineSubcategoryPanel(
+      key: ValueKey(selected.category.id),
+      node: selected,
+      gap: gap,
     );
   }
 }
@@ -501,6 +589,80 @@ class _CategoryGridTile extends StatelessWidget {
         size: compact ? 21 : 20,
       ),
     );
+    if (layout == 'visual_grid') {
+      return _CategoryCardSurface(
+        category: category,
+        child: Material(
+          key: Key('category-visual-card-${category.id}'),
+          color: Colors.transparent,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap ?? () => _openCategoryProducts(context, category),
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: SizedBox.expand(
+                    child: category.image != null
+                        ? AppNetworkImage(
+                            imageUrl: category.image!.source.toString(),
+                            fit: category.imageFit == 'contain'
+                                ? BoxFit.contain
+                                : BoxFit.cover,
+                          )
+                        : ColoredBox(
+                            color: theme.colorScheme.surfaceContainerLow,
+                            child: Icon(
+                              Icons.category_outlined,
+                              size: 38,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 6, 7),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          category.name,
+                          maxLines: category.textMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: _categoryTextAlign(category.textAlign),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: _categoryColor(
+                              category.fontColor,
+                              theme.colorScheme.onSurface,
+                            ),
+                            fontSize: category.fontSize,
+                            fontWeight: _categoryFontWeight(
+                              category.fontWeight,
+                            ),
+                            height: category.lineHeight,
+                          ),
+                        ),
+                      ),
+                      if (category.showArrow)
+                        IconButton(
+                          key: Key('category-expand-${category.id}'),
+                          onPressed: hasChildren ? onExpand : onTap,
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 30,
+                            height: 30,
+                          ),
+                          padding: EdgeInsets.zero,
+                          icon: arrow,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     if (compact) {
       return _CategoryCardSurface(
         category: category,
@@ -620,7 +782,7 @@ class _CategoryGridTile extends StatelessWidget {
   }
 }
 
-class _InlineSubcategoryPanel extends StatelessWidget {
+class _InlineSubcategoryPanel extends StatefulWidget {
   const _InlineSubcategoryPanel({
     super.key,
     required this.node,
@@ -629,6 +791,16 @@ class _InlineSubcategoryPanel extends StatelessWidget {
 
   final CatalogCategoryNode node;
   final double gap;
+
+  @override
+  State<_InlineSubcategoryPanel> createState() =>
+      _InlineSubcategoryPanelState();
+}
+
+class _InlineSubcategoryPanelState extends State<_InlineSubcategoryPanel> {
+  int? expandedId;
+  CatalogCategoryNode get node => widget.node;
+  double get gap => widget.gap;
 
   @override
   Widget build(BuildContext context) {
@@ -645,32 +817,81 @@ class _InlineSubcategoryPanel extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: EdgeInsets.only(bottom: gap),
-            child: Text(
-              node.category.name,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    node.category.name,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      _openCategoryProducts(context, node.category),
+                  child: Text(
+                    CatalogCopy.of(context).isArabic ? 'عرض الكل' : 'View all',
+                  ),
+                ),
+              ],
             ),
           ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: gap,
-              crossAxisSpacing: gap,
-              mainAxisExtent: 142,
+          LayoutBuilder(
+            builder: (context, constraints) => GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: (constraints.maxWidth / 100).floor().clamp(
+                  1,
+                  3,
+                ),
+                mainAxisSpacing: gap,
+                crossAxisSpacing: gap,
+                mainAxisExtent: node.children
+                    .map((child) {
+                      final category = child.category;
+                      return (72 +
+                                  category.imageTextGap +
+                                  category.fontSize *
+                                      category.lineHeight *
+                                      category.textMaxLines) *
+                              _categoryResponsiveScale(context) +
+                          20;
+                    })
+                    .fold<double>(
+                      142,
+                      (height, value) => value > height ? value : height,
+                    ),
+              ),
+              itemCount: node.children.length,
+              itemBuilder: (BuildContext context, int index) {
+                final CatalogCategory child = node.children[index].category;
+                return _SubcategoryTile(
+                  category: child,
+                  maximumImageSize: 72,
+                  onTap: () {
+                    if (node.children[index].children.isEmpty) {
+                      _openCategoryProducts(context, child);
+                    } else {
+                      setState(
+                        () => expandedId = expandedId == child.id
+                            ? null
+                            : child.id,
+                      );
+                    }
+                  },
+                );
+              },
             ),
-            itemCount: node.children.length,
-            itemBuilder: (BuildContext context, int index) {
-              final CatalogCategory child = node.children[index].category;
-              return _SubcategoryTile(
-                category: child,
-                maximumImageSize: 72,
-                onTap: () => _openCategoryProducts(context, child),
-              );
-            },
           ),
+          for (final child in node.children)
+            if (child.category.id == expandedId)
+              _InlineSubcategoryPanel(
+                key: ValueKey(child.category.id),
+                node: child,
+                gap: gap,
+              ),
         ],
       ),
     );
@@ -827,83 +1048,7 @@ class _CategoryBranch extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: !showInlineChildren || !expanded
                   ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                        12,
-                        2,
-                        12,
-                        14,
-                      ),
-                      child: LayoutBuilder(
-                        builder:
-                            (BuildContext context, BoxConstraints constraints) {
-                              const int columns = 3;
-                              const double spacing = 10;
-                              final double cardWidth =
-                                  (constraints.maxWidth -
-                                      spacing * (columns - 1)) /
-                                  columns;
-                              final double maximumImageSize = cardWidth - 10;
-                              final double cardHeight = node.children.fold(0, (
-                                double height,
-                                CatalogCategoryNode node,
-                              ) {
-                                final CatalogCategory child = node.category;
-                                final double imageHeight =
-                                    (child.imageSize * responsive)
-                                        .clamp(
-                                          32 * responsive,
-                                          maximumImageSize,
-                                        )
-                                        .toDouble();
-                                final double textHeight =
-                                    child.fontSize *
-                                    responsive *
-                                    child.lineHeight *
-                                    child.textMaxLines;
-                                final double automaticHeight =
-                                    imageHeight +
-                                    child.imageTextGap * responsive +
-                                    textHeight +
-                                    16;
-                                final double requested = child.cardHeight > 0
-                                    ? child.cardHeight
-                                    : automaticHeight;
-                                return requested > height ? requested : height;
-                              });
-                              return GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: node.children.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: columns,
-                                      mainAxisSpacing: spacing,
-                                      crossAxisSpacing: spacing,
-                                      mainAxisExtent: cardHeight,
-                                    ),
-                                itemBuilder: (BuildContext context, int index) {
-                                  final CatalogCategory child =
-                                      node.children[index].category;
-                                  return Align(
-                                    child: FractionallySizedBox(
-                                      widthFactor: child.cardWidthPercent / 100,
-                                      heightFactor: 1,
-                                      child: _SubcategoryTile(
-                                        category: child,
-                                        maximumImageSize: maximumImageSize,
-                                        onTap: () => _openCategoryProducts(
-                                          context,
-                                          child,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                      ),
-                    ),
+                  : _InlineSubcategoryPanel(node: node, gap: category.cardGap),
             ),
           ],
         ),
