@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../commerce/commerce_connection.dart';
 import '../config/app_config.dart';
 import 'app_design_bundle58.dart';
+import 'live_app_design_provider.dart';
 
 /// Native builds use their approved public design, including central-builder
 /// Woo builds. Only legacy Woo builds without a bundle read WordPress layouts.
@@ -14,6 +15,8 @@ final portableAppDesign58Provider = Provider<AppDesignBundle58?>((ref) {
     return null;
   }
   AppConfig.validateStoreConnection();
+  final published = ref.watch(liveAppDesignProvider);
+  if (published != null) return published;
   try {
     return AppDesignBundle58.fromEncoded(
       AppConfig.appDesignBundle,

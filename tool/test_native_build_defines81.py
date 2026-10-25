@@ -25,6 +25,19 @@ def foreign(platform="odoo"):
 
 
 class NativeBuildDefines81Tests(unittest.TestCase):
+    def test_live_design_endpoint_is_public_and_cannot_replace_store_binding(self):
+        environment, _ = foreign()
+        endpoint = "https://api.woomobile.app/v1/app-design/063df377-fcf0-4256-a104-1977b6b117b7"
+        result = native_defines(environment | {"APP_DESIGN_UPDATE_URL": endpoint})
+        self.assertEqual(result["APP_DESIGN_UPDATE_URL"], endpoint)
+        self.assertEqual(result["APP_DESIGN_BUNDLE"], environment["APP_DESIGN_BUNDLE"])
+        for bad in (endpoint.replace("https:", "http:"), endpoint.replace("api.woomobile.app", "foreign.invalid"),
+                    endpoint + "?token=private", endpoint + "#fragment", endpoint.replace("https://", "https://user:private@")):
+            with self.subTest(endpoint=bad), self.assertRaises(ValueError):
+                native_defines(environment | {"APP_DESIGN_UPDATE_URL": bad})
+        with self.assertRaises(ValueError):
+            native_defines({"STORE_URL": "https://woo.example", "APP_DESIGN_UPDATE_URL": endpoint})
+
     def test_only_explicit_qa_artifacts_join_test_notification_audience(self):
         environment = {"STORE_URL": "https://woo.example/"}
         self.assertIs(native_defines(environment | {"MOBISHOP_ANDROID_BUILD_MODE": "qa"})["APP_TEST_BUILD"], True)

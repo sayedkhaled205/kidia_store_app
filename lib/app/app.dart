@@ -7,6 +7,7 @@ import '../core/config/app_config.dart';
 import '../features/checkout/data/network/native_payment_client92.dart';
 import '../core/push/native_push_actions_host.dart';
 import '../core/app_design/application_identity_provider58.dart';
+import '../core/app_design/live_app_design_provider.dart';
 import '../core/live_updates/native_live_updates_host.dart';
 import '../core/theme/mobishop_theme.dart';
 import '../core/theme/preview_identity_theme.dart';
@@ -66,7 +67,10 @@ class MobiShopApp extends ConsumerWidget {
           if (!AppConfig.isCmsPreview) {
             return NativePushActionsHost(
               router: routerConfig,
-              child: NativeLiveUpdatesHost(child: app),
+              child: LiveAppDesignHost(
+                router: routerConfig,
+                child: NativeLiveUpdatesHost(child: app),
+              ),
             );
           }
 
