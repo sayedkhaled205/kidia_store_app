@@ -193,6 +193,11 @@ def native_defines(environment):
     if platform != "woocommerce" or bundle:
         validate_bundle(bundle, platform, store_origin)
         result["APP_DESIGN_BUNDLE"] = bundle  # Preserve exact public design/selectors.
+    update_url = environment.get("APP_DESIGN_UPDATE_URL", "").strip()
+    if update_url:
+        if not bundle or not re.fullmatch(r"https://api\.woomobile\.app/v1/app-design/[a-f0-9-]{36}", update_url):
+            reject("Invalid public design update endpoint.")
+        result["APP_DESIGN_UPDATE_URL"] = update_url
     token = environment.get("SHOPIFY_PUBLIC_STOREFRONT_TOKEN", "").strip()
     if (len(token) > 512 or re.search(r"\s|[\x00-\x1f\x7f]", token) or PRIVATE_VALUE.search(token)):
         reject("Only a public Shopify Storefront token may be packaged.")
