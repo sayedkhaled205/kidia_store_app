@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_factory.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_frame.dart';
@@ -43,27 +44,39 @@ class HomeBlockRenderer extends StatelessWidget {
       );
     }
 
+    Widget buildBlock(HomeBlock block) {
+      return KeyedSubtree(
+        key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
+        child: HomeBlockFrame(
+          block: block,
+          child:
+              block is ProductGridBlock &&
+                  block.loadAll &&
+                  scrollController != null
+              ? KidsHomeProductFeed(
+                  block: block,
+                  scrollController: scrollController!,
+                  onAction: onAction,
+                )
+              : HomeBlockFactory.create(block: block, onAction: onAction),
+        ),
+      );
+    }
+
+    // Editor selection needs exact geometry for distant sections immediately.
+    // Sliver adapters keep all section keys mounted without guessing offsets.
+    // Installed apps retain the lazy list and its normal memory behavior.
+    if (AppConfig.isCmsPreview) {
+      return SliverMainAxisGroup(
+        slivers: [
+          for (final block in enabledBlocks)
+            SliverToBoxAdapter(child: buildBlock(block)),
+        ],
+      );
+    }
     return SliverList.builder(
       itemCount: enabledBlocks.length,
-      itemBuilder: (BuildContext context, int index) {
-        final HomeBlock block = enabledBlocks[index];
-
-        return KeyedSubtree(
-          key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
-          child: HomeBlockFrame(
-            block: block,
-            child: block is ProductGridBlock &&
-                    block.loadAll &&
-                    scrollController != null
-                ? KidsHomeProductFeed(
-                    block: block,
-                    scrollController: scrollController!,
-                    onAction: onAction,
-                  )
-                : HomeBlockFactory.create(block: block, onAction: onAction),
-          ),
-        );
-      },
+      itemBuilder: (_, index) => buildBlock(enabledBlocks[index]),
     );
   }
 }

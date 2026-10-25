@@ -15,6 +15,7 @@ import 'package:mobishop_store_app/features/search/presentation/catalog_search_l
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_focus_frame.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,6 +29,8 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   late final ScrollController _scrollController;
   StreamSubscription<double>? _previewScrollSubscription;
+  StreamSubscription<String>? _previewFocusSubscription;
+  int _focusRequest = 0;
   final Map<String, GlobalKey> _blockKeys = <String, GlobalKey>{};
   List<HomeBlock> _visibleBlocks = const <HomeBlock>[];
 
@@ -38,11 +41,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     _previewScrollSubscription = CmsPreviewLayoutBridge.homeScrollDeltas.listen(
       _scrollPreviewBy,
     );
+    // Selection is a command: repeated clicks on the same ID must still run.
+    _previewFocusSubscription = CmsPreviewLayoutBridge.homeFocusTargets.listen(
+      _focusPreviewTarget,
+    );
   }
 
   @override
   void dispose() {
     _previewScrollSubscription?.cancel();
+    _previewFocusSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -91,10 +99,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       return const Scaffold(body: SafeArea(child: _HomeLoadingState()));
     }
     final CmsPageLayout chrome = loadedChrome ?? CmsPageLayout.fallback('home');
-    ref.listen<AsyncValue<String>>(
-      cmsPreviewHomeFocusTargetProvider,
-      (_, AsyncValue<String> next) => next.whenData(_focusPreviewTarget),
-    );
 
     return CmsPageScaffold(
       layout: chrome,
@@ -222,7 +226,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       _blockKeys.putIfAbsent(blockId, GlobalKey.new);
 
   void _focusPreviewTarget(String target) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final int request = ++_focusRequest;
+    schedulePreviewFocus(() {
+      if (request != _focusRequest) return;
       if (!mounted || !_scrollController.hasClients) return;
       if (target.startsWith('__wheel__:')) {
         final double? delta = double.tryParse(target.split(':').last);
@@ -237,7 +243,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (target == 'header') {
         _scrollController.animateTo(
           0,
-          duration: const Duration(milliseconds: 280),
+          duration: const Duration(milliseconds: 140),
           curve: Curves.easeOutCubic,
         );
         return;
@@ -245,7 +251,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (target == 'footer') {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 280),
+          duration: const Duration(milliseconds: 140),
           curve: Curves.easeOutCubic,
         );
         return;
@@ -254,7 +260,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       if (blockContext != null) {
         Scrollable.ensureVisible(
           blockContext,
-          duration: const Duration(milliseconds: 320),
+          duration: const Duration(milliseconds: 140),
           curve: Curves.easeOutCubic,
           alignment: .18,
         );
@@ -272,7 +278,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             curve: Curves.easeOutCubic,
           )
           .then((_) {
-            if (!mounted) return;
+            if (!mounted || request != _focusRequest) return;
             final BuildContext? context = _blockKeys[target]?.currentContext;
             if (context != null && context.mounted) {
               Scrollable.ensureVisible(
