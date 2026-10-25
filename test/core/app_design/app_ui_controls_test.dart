@@ -94,8 +94,9 @@ void main() {
       'cart_title_en': 'Your bag',
       'cart_checkout_en': 'Place order',
     });
-    for (final text in ['Welcome back', 'Next', 'Your bag', 'Place order'])
+    for (final text in ['Welcome back', 'Next', 'Your bag', 'Place order']) {
       expect(find.text(text), findsOneWidget);
+    }
     await show({});
     expect(find.text('Welcome back'), findsNothing);
     expect(find.text('Sign in or create an account'), findsOneWidget);
