@@ -23,6 +23,7 @@
   function focusTarget(editor, target) {
     const preview = mobile();
     if (!preview || !activeEditor(editor) || typeof target !== 'string' || !target) return;
+    markSelection(editor.contentDocument, target);
     clearTimeout(pendingFocus);
     const packet = {type: 'mobishop-preview-focus', page: 'home', target};
     const route = preview.contentDocument?.documentElement.getAttribute('data-preview-route');
@@ -33,10 +34,31 @@
       }, 250);
     } else select(preview, packet);
   }
+  function cardId(card) {
+    return card.dataset.chromePart || card.querySelector('.mobishop-block-id')?.value || card.dataset.libraryId || '';
+  }
+  function markSelection(doc, target) {
+    doc.documentElement.dataset.previewSelectedBlock = target;
+    for (const card of doc.querySelectorAll('.mobishop-builder-block,.mobishop-fixed-chrome-card')) {
+      card.classList.toggle('is-preview-selected', cardId(card) === target);
+    }
+  }
   function bindEditor(frame) {
     const doc = frame.contentDocument;
     if (!doc || documents.has(doc)) return;
     documents.add(doc);
+    const style = doc.createElement('style');
+    style.textContent = `
+      body.kidia-cms-builder-screen .mobishop-builder-block.is-preview-selected,
+      body.kidia-cms-builder-screen .mobishop-fixed-chrome-card.is-preview-selected {background:#eaf6f2!important;border-color:#78b7aa!important;box-shadow:inset 3px 0 #318b78!important;}
+      body.kidia-cms-builder-screen .is-preview-selected > .mobishop-builder-block__header,
+      body.kidia-cms-builder-screen .is-preview-selected > .mobishop-page-card__header {background:#eaf6f2!important;}
+    `;
+    (doc.head || doc.documentElement).append(style);
+    doc.addEventListener('mobishop:home-preview-state', () => {
+      const selected = doc.documentElement.dataset.previewSelectedBlock;
+      if (selected) markSelection(doc, selected);
+    });
     doc.addEventListener('mobishop:home-preview-focus', event => {
       focusTarget(frame, event.detail?.target);
     });
@@ -47,8 +69,7 @@
       if (event.target.closest('button,input,select,textarea,a,label,[role="button"],[contenteditable="true"],.mobishop-builder-block__header,.mobishop-page-card__header')) return;
       const card = event.target.closest('.mobishop-builder-block,.mobishop-fixed-chrome-card');
       if (!card) return;
-      focusTarget(frame, card.dataset.chromePart ||
-        card.querySelector('.mobishop-block-id')?.value || card.dataset.libraryId || '');
+      focusTarget(frame, cardId(card));
     });
   }
   function bindPreview(frame) {
@@ -68,8 +89,19 @@
       send(frame, {type: 'mobishop-preview-scroll', page: 'home', deltaY: delta});
       event.preventDefault();
     });
-    // Flutter handles wheel/touch input itself. Do not cancel those events or
-    // relay them a second time: the persistent runtime also hosts other pages.
+    // Real mouse wheels can be swallowed by CanvasKit/semantics in a scaled
+    // iframe. Route Home through its controller once, before engine listeners;
+    // do not interfere with text fields, horizontal scrolling, or browser zoom.
+    doc.addEventListener('wheel', event => {
+      if (doc.documentElement.getAttribute('data-preview-route') !== '/' ||
+          event.ctrlKey || event.shiftKey || !event.deltaY ||
+          Math.abs(event.deltaX) > Math.abs(event.deltaY) ||
+          event.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? frame.contentWindow.innerHeight : 1;
+      send(frame, {type: 'mobishop-preview-scroll', page: 'home', deltaY: event.deltaY * unit});
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, {capture: true, passive: false});
   }
   function scan() {
     if (!window.document) return;

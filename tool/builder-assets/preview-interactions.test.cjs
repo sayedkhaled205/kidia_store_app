@@ -34,8 +34,11 @@ test('blank card area selects; controls and existing header handler are not dupl
   const s = setup(), doc = s.editor.contentDocument;
   doc.querySelector('.blank').click();
   assert.equal(s.messages[1].data.target, 'hero-4');
+  assert.equal(doc.querySelector('.mobishop-builder-block').classList.contains('is-preview-selected'), true);
+  doc.dispatchEvent(new s.w.CustomEvent('mobishop:home-preview-focus', {detail: {target: 'another-block'}}));
+  assert.equal(doc.querySelector('.mobishop-builder-block').classList.contains('is-preview-selected'), false);
   doc.querySelector('input').click(); doc.querySelector('button').click();
-  assert.equal(s.messages.length, 2);
+  assert.equal(s.messages.length, 4);
   s.dom.window.close();
 });
 test('cached inactive editor cannot move the current preview', () => {
@@ -53,9 +56,9 @@ test('card navigation returns from a mobile route before focusing; runtime is re
   assert.equal(s.w.document.getElementById('kidia-shared-flutter'), s.preview);
   s.dom.window.close();
 });
-test('wheel remains native on home and other routes; keys only scroll Home outside fields', () => {
+test('other routes keep native wheel; keys only scroll Home outside fields', () => {
   const s = setup(), doc = s.preview.contentDocument;
-  for (const route of ['/', '/products', '/account', '/auth']) {
+  for (const route of ['/products', '/account', '/auth']) {
     doc.documentElement.setAttribute('data-preview-route', route);
     const wheel = new s.w.WheelEvent('wheel', {deltaY: 80, bubbles: true, cancelable: true});
     doc.getElementById('surface').dispatchEvent(wheel);
@@ -69,6 +72,24 @@ test('wheel remains native on home and other routes; keys only scroll Home outsi
   assert.equal(s.messages.length, 0);
   doc.getElementById('surface').dispatchEvent(down());
   assert.equal(s.messages[0].data.deltaY, 72);
+  s.dom.window.close();
+});
+test('Home mouse wheel is delivered once before the engine, with line units normalized', () => {
+  const s = setup(), doc = s.preview.contentDocument;
+  let engineCalls = 0;
+  doc.getElementById('surface').addEventListener('wheel', () => engineCalls++);
+  const wheel = new s.w.WheelEvent('wheel', {deltaY: 3, deltaMode: 1, bubbles: true, cancelable: true});
+  doc.getElementById('surface').dispatchEvent(wheel);
+  assert.equal(wheel.defaultPrevented, true);
+  assert.equal(engineCalls, 0);
+  assert.equal(s.messages.length, 1);
+  assert.equal(s.messages[0].data.deltaY, 48);
+  for (const options of [{ctrlKey: true}, {shiftKey: true}, {deltaX: 100}]) {
+    const e = new s.w.WheelEvent('wheel', {deltaY: 20, bubbles: true, cancelable: true, ...options});
+    doc.getElementById('surface').dispatchEvent(e);
+    assert.equal(e.defaultPrevented, false);
+  }
+  assert.equal(s.messages.length, 1);
   s.dom.window.close();
 });
 test('preview shell does not swallow wheel events based on stale initial page', () => {
