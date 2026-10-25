@@ -13,6 +13,13 @@
   function send(frame, packet) {
     frame.contentWindow.postMessage(JSON.stringify(packet), location.origin);
   }
+  function select(preview, packet) {
+    // Existing Flutter bundles expose selection as an equality-filtered state.
+    // Clear that state with an unmatched target before replaying a command, so
+    // selecting the same card after a manual scroll/navigation still works.
+    send(preview, {type: 'mobishop-preview-focus', page: 'home', target: '__preview_focus_reset__'});
+    send(preview, packet);
+  }
   function focusTarget(editor, target) {
     const preview = mobile();
     if (!preview || !activeEditor(editor) || typeof target !== 'string' || !target) return;
@@ -22,9 +29,9 @@
     if (route && route !== '/') {
       send(preview, {type: 'mobishop-preview-navigate', page: 'home'});
       pendingFocus = setTimeout(() => {
-        if (activeEditor(editor) && preview === mobile()) send(preview, packet);
+        if (activeEditor(editor) && preview === mobile()) select(preview, packet);
       }, 250);
-    } else send(preview, packet);
+    } else select(preview, packet);
   }
   function bindEditor(frame) {
     const doc = frame.contentDocument;

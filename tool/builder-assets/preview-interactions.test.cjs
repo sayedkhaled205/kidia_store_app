@@ -23,15 +23,19 @@ function setup() {
 test('selected home card reaches shared Flutter with its exact stable ID', () => {
   const s = setup();
   s.editor.contentDocument.dispatchEvent(new s.w.CustomEvent('mobishop:home-preview-focus', {detail: {target: 'banner-42'}}));
-  assert.deepEqual(s.messages, [{data: {type: 'mobishop-preview-focus', page: 'home', target: 'banner-42'}, origin: 'https://builder.example'}]);
+  assert.equal(s.messages[0].data.target, '__preview_focus_reset__');
+  assert.deepEqual(s.messages[1], {data: {type: 'mobishop-preview-focus', page: 'home', target: 'banner-42'}, origin: 'https://builder.example'});
+  s.editor.contentDocument.dispatchEvent(new s.w.CustomEvent('mobishop:home-preview-focus', {detail: {target: 'banner-42'}}));
+  assert.equal(s.messages[2].data.target, '__preview_focus_reset__');
+  assert.equal(s.messages[3].data.target, 'banner-42');
   s.dom.window.close();
 });
 test('blank card area selects; controls and existing header handler are not duplicated', () => {
   const s = setup(), doc = s.editor.contentDocument;
   doc.querySelector('.blank').click();
-  assert.equal(s.messages[0].data.target, 'hero-4');
+  assert.equal(s.messages[1].data.target, 'hero-4');
   doc.querySelector('input').click(); doc.querySelector('button').click();
-  assert.equal(s.messages.length, 1);
+  assert.equal(s.messages.length, 2);
   s.dom.window.close();
 });
 test('cached inactive editor cannot move the current preview', () => {
@@ -45,7 +49,7 @@ test('card navigation returns from a mobile route before focusing; runtime is re
   s.editor.contentDocument.dispatchEvent(new s.w.CustomEvent('mobishop:home-preview-focus', {detail: {target: 'hero'}}));
   assert.equal(s.messages[0].data.type, 'mobishop-preview-navigate');
   await new Promise(resolve => setTimeout(resolve, 280));
-  assert.equal(s.messages[1].data.target, 'hero');
+  assert.equal(s.messages[2].data.target, 'hero');
   assert.equal(s.w.document.getElementById('kidia-shared-flutter'), s.preview);
   s.dom.window.close();
 });
