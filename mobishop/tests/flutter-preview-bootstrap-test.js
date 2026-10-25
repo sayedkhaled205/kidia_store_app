@@ -5,6 +5,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const previewRoot = path.join(__dirname, "..", "admin", "flutter-preview");
+assert.deepEqual(
+  fs.readFileSync(path.join(previewRoot, "assets/assets/branding/google-g.png")),
+  fs.readFileSync(path.join(__dirname, "..", "..", "assets/branding/google-g.png")),
+  "The published preview must include the same full-color Google mark as the mobile app.",
+);
 const index = fs.readFileSync(path.join(previewRoot, "index.html"), "utf8");
 const sourceIndex = fs.readFileSync(
   path.join(__dirname, "..", "..", "web", "index.html"),

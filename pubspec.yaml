@@ -150,6 +150,7 @@ flutter:
           weight: 700
 
   assets:
+    - assets/branding/google-g.png
     - assets/fonts/Roboto-OFL.txt
     - assets/fonts/NotoSansArabic-OFL.txt
     - assets/fonts/NotoSerif-OFL.txt

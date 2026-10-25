@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,52 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('Google sign-in keeps a bundled full-color mark without tinting', (
+    tester,
+  ) async {
+    await _Fixture().pump(tester);
+    final image = tester.widget<Image>(
+      find.byKey(const Key('auth-google-brand')),
+    );
+    expect(image.image, const AssetImage('assets/branding/google-g.png'));
+    expect(image.color, isNull);
+    expect(image.fit, BoxFit.contain);
+    expect(image.width, 24);
+    expect(image.height, 24);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('auth-google')),
+        matching: find.text('G'),
+      ),
+      findsNothing,
+    );
+    // Check the actual packaged pixels, so a missing or monochrome replacement
+    // also fails even when the widget and asset name have stayed unchanged.
+    await tester.runAsync(() async {
+      final data = await rootBundle.load('assets/branding/google-g.png');
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      final pixels = (await frame.image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!;
+      final colors = <String>{};
+      for (var i = 0; i < pixels.lengthInBytes; i += 4) {
+        if (pixels.getUint8(i + 3) < 240) continue;
+        final r = pixels.getUint8(i),
+            g = pixels.getUint8(i + 1),
+            b = pixels.getUint8(i + 2);
+        if (r > 180 && g < 130 && b < 130) colors.add('red');
+        if (r > 180 && g > 150 && b < 100) colors.add('yellow');
+        if (g > 120 && r < 100 && b < 150) colors.add('green');
+        if (b > 180 && r < 130 && g < 180) colors.add('blue');
+      }
+      frame.image.dispose();
+      codec.dispose();
+      expect(colors, containsAll(['red', 'yellow', 'green', 'blue']));
+    });
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'CMS preview refreshes Google availability on each sign-in visit',
     (tester) async {

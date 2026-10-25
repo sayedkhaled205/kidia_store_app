@@ -319,13 +319,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 minimumSize: const Size.fromHeight(50),
                                 shape: const StadiumBorder(),
                               ),
-                              icon: const Text(
-                                'G',
-                                style: TextStyle(
-                                  color: Color(0xFF4285F4),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 23,
-                                ),
+                              icon: Image.asset(
+                                'assets/branding/google-g.png',
+                                key: const Key('auth-google-brand'),
+                                width: 24,
+                                height: 24,
+                                fit: BoxFit.contain,
+                                excludeFromSemantics: true,
                               ),
                               label: Text(copy.continueWithGoogle),
                             ),

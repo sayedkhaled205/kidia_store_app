@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-25",
+  "change": "Bundle the official full-color Google G in the shared AuthScreen used by mobile and CMS preview.",
+  "source_asset": "assets/branding/google-g.png",
+  "asset_source": "https://developers.google.com/static/identity/images/g-logo.png",
+  "checks": {
+    "auth_flutter_tests": 33,
+    "preview_bridge_tests": 12,
+    "preview_bootstrap_asset_equality": "passed",
+    "targeted_dart_analysis": "passed",
+    "flutter_build": "3.44.8 web release",
+    "live_builder_reload": "new immutable bundle and frame references confirmed",
+    "live_auth_visual": "full-color Google G visible after loading connected capabilities"
+  },
+  "preview_archive_sha256": "96dbbc50cd43d7cc84cfa37af6bee6c02cc9a69bde8e9c20f98aa902a8a746ba",
+  "published_bundle": "assets/flutter-preview-google-mark-96dbbc50cd43/",
+  "publication": "New immutable preview; current live central helper, logo geometry and header customizations retained. Activation checks hashes of reviewed and original files.",
+  "regression_guards": "Widget checks bundled asset, aspect ratio and no tint/font glyph; decoded PNG must contain all four Google colors. Builder packaging compares source and bundled asset bytes. Both suites run in existing quality workflow.",
+  "mobile_status": "Shared source updated; no new APK produced for this icon-only request. Existing installed apps receive the mark with their next build."
+}
