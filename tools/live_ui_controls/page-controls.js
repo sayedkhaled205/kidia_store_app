@@ -1,0 +1,182 @@
+(function (scope) {
+  'use strict';
+  const pageKeys = (screen, schema) => Object.keys(schema).filter(key =>
+    screen === 'account-builder' ? /^(auth_|logout_)/.test(key) :
+    screen === 'home-builder' ? key.startsWith('cart_pulse_') :
+    screen === 'checkout-builder' ? key.startsWith('cart_') && !key.startsWith('cart_pulse_') : false);
+  const valueOf = (data, key) => data.values[key] ?? data.schema[key].default;
+  function mergeChanges(schema, baseline, changed, latest) {
+    const merged = {...latest};
+    for (const [key, value] of Object.entries(changed)) {
+      if (!schema[key]) throw new Error('Unknown control');
+      const current = latest[key] ?? schema[key].default;
+      if (current !== baseline[key] && current !== value) {
+        throw new Error('الإعدادات اتغيرت في جلسة أخرى. حدّث الصفحة لمراجعة أحدث نسخة قبل الحفظ.');
+      }
+      merged[key] = value;
+    }
+    return merged;
+  }
+  const model = {pageKeys, valueOf, mergeChanges};
+  if (typeof module !== 'undefined' && module.exports) { module.exports = model; return; }
+  if (scope.MobiShopPageControls) return;
+  const states = new WeakMap(), observed = new WeakSet();
+  let loaded;
+  const store = new URL(location.href).searchParams.get('store') || '';
+  const endpoint = '/account/builder/live-design/controls';
+  const supported = new Set(['home-builder', 'account-builder', 'checkout-builder']);
+  async function request(url, body, csrf) {
+    const response = await fetch(url, {
+      method: body ? 'POST' : 'GET', credentials: 'same-origin',
+      headers: {Accept: 'application/json', ...(body ? {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf} : {})},
+      ...(body ? {body: JSON.stringify(body)} : {}),
+    });
+    if (!response.ok || !response.headers.get('Content-Type')?.includes('application/json')) {
+      if (response.status === 409) throw new Error('الإعدادات اتغيرت في جلسة أخرى. حدّث الصفحة قبل الحفظ.');
+      if (response.status === 422) throw new Error('راجع القيم والأحجام والنصوص قبل الحفظ.');
+      throw new Error('تعذر تأكيد حفظ إعدادات الصفحة. حدّث البيلدر وراجع القيم المحفوظة.');
+    }
+    return response.json();
+  }
+  function load() {
+    if (!loaded) loaded = Promise.all([
+      request('/account/builder/context?store=' + encodeURIComponent(store)),
+      request(endpoint + '?store=' + encodeURIComponent(store)),
+    ]).then(([context, data]) => {
+      if (context.store !== store || !data.schema || !data.values) throw new Error('تعذر تحميل إعدادات الصفحة.');
+      return {context, data};
+    }).catch(error => { loaded = null; throw error; });
+    return loaded;
+  }
+  function make(doc, tag, text, parent, className) {
+    const node = doc.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    if (parent) parent.append(node);
+    return node;
+  }
+  function style(doc) {
+    if (doc.getElementById('wm-page-controls-style')) return;
+    const node = make(doc, 'style', '', doc.head);
+    node.id = 'wm-page-controls-style';
+    node.textContent = '.wm-page-controls{margin:14px 0;direction:rtl;color:#20413d}.wm-page-controls-card{border:1px solid #c5dcd6;border-radius:14px;background:#fff;overflow:hidden}.wm-page-controls summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:16px;font-weight:700;padding:18px;list-style:none}.wm-page-controls summary::after{content:"⌄";font-size:22px;color:#277d6d}.wm-page-controls[open]>summary::after{transform:rotate(180deg)}.wm-page-controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px}.wm-page-controls label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:14px}.wm-page-controls input{box-sizing:border-box;width:100%;height:40px;border:1px solid #a8c7bf;border-radius:9px;padding:8px;background:#fff;color:#203d38;font-size:14px}.wm-page-controls input[type=color]{padding:4px}.wm-page-controls input[type=checkbox]{width:22px;height:22px;accent-color:#217b69}.wm-page-controls-note{margin:0;padding:0 16px 14px;font-size:12px;color:#627d76}.wm-page-controls-status:empty{display:none}.wm-page-controls-status{margin:10px 0;color:#a32922}.wm-page-controls-heading{font-size:15px;font-weight:700;padding:12px 16px 0}.wm-page-controls-error{padding:12px;border:1px solid #d9a79e;border-radius:8px;color:#a32922}@media(max-width:560px){.wm-page-controls-grid{grid-template-columns:1fr}}';
+  }
+  function card(doc, title) {
+    const section = make(doc, 'details', '', null, 'wm-page-controls wm-page-controls-card');
+    make(doc, 'summary', title, section);
+    return section;
+  }
+  function targetContainers(doc, screen, form) {
+    const containers = {};
+    if (screen === 'account-builder') {
+      const settings = form.querySelector('.mobishop-page-settings-card');
+      const logoutBody = form.querySelector('[data-element="logout_button"] > .mobishop-page-card__body');
+      if (!settings || !logoutBody) return null;
+      const auth = card(doc, 'تسجيل الدخول');
+      auth.dataset.wmControlsGroup = 'auth';
+      settings.insertAdjacentElement('afterend', auth);
+      const logout = make(doc, 'div', '', null, 'wm-page-controls');
+      logout.dataset.wmControlsGroup = 'logout';
+      make(doc, 'div', 'حجم ونص زر تسجيل الخروج', logout, 'wm-page-controls-heading');
+      logoutBody.prepend(logout);
+      containers.auth = auth; containers.logout = logout;
+    } else if (screen === 'home-builder') {
+      const body = form.querySelector('[data-chrome-part="header"] > .mobishop-page-card__body');
+      if (!body) return null;
+      const pulse = card(doc, 'حركة عدّاد السلة');
+      pulse.dataset.wmControlsGroup = 'pulse'; body.prepend(pulse); containers.pulse = pulse;
+    } else {
+      const design = form.querySelector('.mobishop-checkout-design-panel');
+      if (!design) return null;
+      const cart = card(doc, 'السلة');
+      cart.dataset.wmControlsGroup = 'cart'; design.insertAdjacentElement('afterend', cart); containers.cart = cart;
+    }
+    return containers;
+  }
+  function group(key) { return key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
+  async function mount(frame) {
+    const screen = frame.dataset.screen;
+    if (!supported.has(screen)) return null;
+    const doc = frame.contentDocument;
+    const form = doc?.querySelector(screen === 'home-builder' ? '#mobishop-home-builder-form' : 'form.mobishop-page-editor');
+    if (!form) return null;
+    if (states.has(doc)) return states.get(doc);
+    const state = {form, screen, inputs: new Map(), baseline: {}, ready: null};
+    states.set(doc, state);
+    state.ready = load().then(({context, data}) => {
+      if (!frame.isConnected || frame.contentDocument !== doc) return;
+      style(doc);
+      const containers = targetContainers(doc, screen, form);
+      if (!containers) throw new Error('تعذر تحميل مكان إعدادات الصفحة. حدّث البيلدر.');
+      state.context = context; state.data = data;
+      const grids = {};
+      for (const [key, parent] of Object.entries(containers)) grids[key] = make(doc, 'div', '', parent, 'wm-page-controls-grid');
+      for (const key of pageKeys(screen, data.schema)) {
+        const spec = data.schema[key], label = make(doc, 'label', spec.label, grids[group(key)]);
+        const input = make(doc, 'input', '', label);
+        // Keep the existing page serializer intact; the same Save Page action
+        // persists these versioned controls before committing the page layout.
+        input.dataset.wmUiControl = key;
+        input.type = spec.type === 'boolean' ? 'checkbox' : spec.type;
+        if (spec.type === 'number') { input.min = spec.min; input.max = spec.max; input.step = spec.step; input.required = true; }
+        if (spec.type === 'text') { input.maxLength = spec.max_length; input.placeholder = 'النص الأصلي'; input.dir = key.endsWith('_en') ? 'ltr' : 'rtl'; }
+        const value = valueOf(data, key);
+        if (spec.type === 'boolean') input.checked = value; else input.value = String(value);
+        state.baseline[key] = value; state.inputs.set(key, input);
+      }
+      for (const container of Object.values(containers)) make(doc, 'p', 'تُحفظ مع إعدادات الصفحة. النص الفارغ يستخدم النص الأصلي.', container, 'wm-page-controls-note');
+      state.status = make(doc, 'p', '', Object.values(containers)[0], 'wm-page-controls-status');
+      state.status.setAttribute('role', 'status');
+      state.status.setAttribute('aria-live', 'polite');
+      doc.addEventListener('click', event => {
+        if (event.target.closest('#mobishop-collapse-all')) for (const node of Object.values(containers)) if (node.tagName === 'DETAILS') node.open = false;
+        if (event.target.closest('#mobishop-expand-all')) for (const node of Object.values(containers)) if (node.tagName === 'DETAILS') node.open = true;
+      });
+      doc.querySelector('.wm-page-controls-error')?.remove();
+    }).catch(error => {
+      states.delete(doc); style(doc);
+      let notice = doc.querySelector('.wm-page-controls-error');
+      if (!notice) { notice = make(doc, 'p', '', null, 'wm-page-controls-error'); form.prepend(notice); }
+      notice.textContent = error.message; throw error;
+    });
+    return state;
+  }
+  async function save(frame) {
+    if (!supported.has(frame.dataset.screen)) return;
+    const state = await mount(frame);
+    if (!state) throw new Error('إعدادات الصفحة لسه بتتحمل. حاول الحفظ بعد اكتمالها.');
+    await state.ready;
+    if (!state.data || store !== new URL(location.href).searchParams.get('store')) throw new Error('اتغير المتجر. حدّث الصفحة قبل الحفظ.');
+    const changed = {};
+    for (const [key, input] of state.inputs) {
+      if (!input.checkValidity()) { input.reportValidity(); throw new Error('راجع القيم والأحجام قبل الحفظ.'); }
+      const spec = state.data.schema[key];
+      const value = spec.type === 'boolean' ? input.checked : spec.type === 'number' ? input.valueAsNumber : input.value;
+      if (value !== state.baseline[key]) changed[key] = value;
+    }
+    if (!Object.keys(changed).length) return;
+    const latest = await request(endpoint + '?store=' + encodeURIComponent(store));
+    const controls = mergeChanges(latest.schema, state.baseline, changed, latest.values);
+    const result = await request(endpoint, {store, controls, controls_digest: latest.controls_digest}, state.context.csrf_token);
+    for (const key of Object.keys(changed)) state.baseline[key] = valueOf(result, key);
+    state.data = result;
+    state.status.textContent = '';
+    loaded = Promise.resolve({context: state.context, data: result});
+  }
+  function observe() {
+    for (const frame of document.querySelectorAll('iframe[data-screen]')) {
+      if (observed.has(frame)) continue;
+      observed.add(frame);
+      frame.addEventListener('load', () => { mount(frame).then(s => s?.ready).catch(() => {}); });
+      mount(frame).then(s => s?.ready).catch(() => {});
+    }
+  }
+  addEventListener('message', event => {
+    if (event.origin !== location.origin || !['kidia:ready', 'kidia:visual-ready'].includes(event.data?.type)) return;
+    const frame = [...document.querySelectorAll('iframe[data-screen]')].find(f => f.contentWindow === event.source && f.dataset.screen === event.data.screen);
+    if (frame) mount(frame).then(s => s?.ready).catch(() => {});
+  });
+  new MutationObserver(observe).observe(document.querySelector('.kidia-central-stage') || document.body, {childList: true, subtree: true});
+  scope.MobiShopPageControls = {save};
+  observe();
+})(typeof window === 'undefined' ? globalThis : window);
