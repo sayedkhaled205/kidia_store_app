@@ -75,6 +75,8 @@ jobs:
         run: npm run test:builders
       - name: Check connected sign-in preview availability
         run: node tool/builder-assets/preview-auth-config.test.cjs
+      - name: Check shared preview scrolling and element selection
+        run: node tool/builder-assets/preview-interactions.test.cjs
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
 

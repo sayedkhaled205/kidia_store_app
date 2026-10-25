@@ -167,14 +167,14 @@ test("Home Flutter preview focuses the selected Builder element", async () => {
   assert.equal(messages.at(-1).origin, "https://store.example");
 });
 
-test("Home wheel handling stays inside the Flutter iframe", () => {
+test("Persistent Flutter shell leaves wheel handling to the current page", () => {
   const sourceIndex = fs.readFileSync(
     path.resolve(__dirname, "..", "..", "web", "index.html"),
     "utf8",
   );
-  assert.match(
+  assert.doesNotMatch(
     sourceIndex,
-    /document\.addEventListener\('wheel'[\s\S]*mobishop-preview-scroll[\s\S]*deltaY[\s\S]*preventDefault/,
+    /document\.addEventListener\('wheel'/,
   );
 });
 
