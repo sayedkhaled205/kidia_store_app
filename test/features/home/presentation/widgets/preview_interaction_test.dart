@@ -4,10 +4,76 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/theme/cms_preview_scroll_behavior.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_renderer.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_focus_frame.dart';
 
 void main() {
+  testWidgets(
+    'empty product cards remain selectable repeatedly in the editor',
+    (tester) async {
+      final scroll = ScrollController();
+      final keys = <String, GlobalKey>{};
+      final blocks = <HomeBlock>[
+        for (var i = 0; i < 4; i++) ...[
+          SpacerBlock(id: 'gap-$i', enabled: true, height: 700),
+          HomeBlockModel.fromJson({
+            'id': 'products-$i',
+            'type': i.isEven ? 'product_carousel' : 'product_grid',
+            'enabled': true,
+            'data': {'title': 'Products $i', 'items': [], 'limit': 'all'},
+          }),
+        ],
+        const SpacerBlock(id: 'end', enabled: true, height: 700),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CustomScrollView(
+              controller: scroll,
+              slivers: [
+                HomeBlockRenderer(
+                  blocks: blocks,
+                  onAction: (_) {},
+                  keyForBlock: (id) => keys.putIfAbsent(id, GlobalKey.new),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (AppConfig.isCmsPreview) {
+        // Jump forward, backward, then repeat an earlier selection after manual
+        // scrolling. Every empty carousel/grid needs real, stable geometry.
+        for (final i in [3, 0, 2, 1, 3, 0]) {
+          final key = keys['products-$i']!;
+          expect(key.currentContext, isNotNull);
+          schedulePreviewFocus(
+            () => Scrollable.ensureVisible(
+              key.currentContext!,
+              alignment: .18,
+              duration: const Duration(milliseconds: 140),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final top = tester.getTopLeft(find.byKey(key)).dy;
+          final height = tester.getSize(find.byKey(key)).height;
+          expect(top, closeTo((600 - height) * .18, 2));
+          scroll.jumpTo(0);
+          await tester.pumpAndSettle();
+        }
+      } else {
+        scroll.jumpTo(scroll.position.maxScrollExtent);
+        await tester.pumpAndSettle();
+        expect(find.textContaining('No products are available'), findsNothing);
+        expect(keys.keys.where((id) => id.startsWith('products-')), isEmpty);
+      }
+      await tester.pumpWidget(const SizedBox());
+      scroll.dispose();
+    },
+  );
+
   testWidgets('idle preview starts selection without a carousel tick', (
     tester,
   ) async {
