@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-25",
+  "commit": "287eaab9",
+  "shared_branch": "codex/unified-mobile-build",
+  "preserved_concurrent_commit": "461c4626",
+  "scope": ["native preview wheel handling", "Home editor card selection and repeated focus"],
+  "published_helper": "assets/preview-interactions-e3118f8f13c0.js",
+  "deployment": "Current live index and central script preserved; only versioned shell reference plus helper added; original and staged hashes verified before atomic activation.",
+  "automated_checks": {"preview_interactions": "6 passed", "existing_flutter_bridge": "12 passed"},
+  "browser_checks": ["Home wheel up/down", "Catalog wheel after route switch", "Shop by category and New User Zone cards focus corresponding sections", "Same card reselected after manual scroll", "Same card selected after visiting Account returns Home and focuses banner"],
+  "unchanged": ["shared checkout dirty WooCommerce setup wizard", "live design publish script", "Google branding and auth visibility changes", "customer store layouts and publishing state"],
+  "observation": "Intermittent connected catalog fetch warning also appeared during review; retry and catalog route returned products. Not changed by this preview interaction patch."
+}
