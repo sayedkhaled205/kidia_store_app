@@ -51,3 +51,23 @@ test('invalid or circular parents and untrusted image URLs stay safe', () => {
   assert.equal(result.length,3);assert.equal(result[0].parent,0);assert.equal(result[0].image,'');assert.equal(result[2].parent,0);
   s.dom.window.close();
 });
+test('catalog refresh recovers a failed first load and keeps saved names', () => {
+  const s=setup();s.api.prepare(s.root);
+  s.api.hydrate(s.root,{items_error:'Temporary outage'},{entries:[['categories[41][name]','Saved clothing']]});
+  s.api.refresh(s.root,{url:'https://shop.example',category_items:catalog});
+  assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,4);
+  assert.equal(s.root.querySelector('[name="categories[41][name]"]').value,'Saved clothing');
+  assert.match(s.root.querySelector('.kidia-category-source').textContent,/4 categories from shop.example/);
+  s.dom.window.close();
+});
+test('updated catalog preserves unsaved names and never restores removed IDs', () => {
+  const s=setup();s.api.prepare(s.root);s.api.hydrate(s.root,{category_items:catalog});
+  s.root.querySelector('[name="categories[41][name]"]').value='Unsaved draft';
+  s.api.refresh(s.root,{category_items:[...catalog.slice(0,3),{id:50,name:'New category'}]});
+  assert.equal(s.root.querySelector('[name="categories[41][name]"]').value,'Unsaved draft');
+  assert.equal(s.root.querySelector('[data-term-id="44"]'),null);
+  assert.ok(s.root.querySelector('[data-term-id="50"]'));
+  s.api.refresh(s.root,{items_error:'Temporary failure',category_items:[]});
+  assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,4);
+  s.dom.window.close();
+});

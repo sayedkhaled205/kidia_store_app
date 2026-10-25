@@ -1,4 +1,4 @@
-/* category-designer-v1: merchant catalog only; presentation never owns records. */
+/* category-designer-v2: merchant catalog only; presentation never owns records. */
 (function (scope) {
   'use strict';
   const shared = {card_width_percent:100, card_height:0, show_arrow:1,
@@ -20,6 +20,7 @@
       {grid_columns:2,card_radius:18,card_gap:14,card_style:'no_shadow',image_size:118,image_shape:'rounded',image_radius:14,image_fit:'cover',text_align:'start',font_size:18}]
   ].map(([id,title,description,settings]) => ({id,title,description,settings:{...shared,...settings,category_layout:id}}));
   const q=(root,selector)=>root.querySelector(selector);
+  const savedCategories=new WeakMap();
   const el=(doc,tag,cls,text)=>{const item=doc.createElement(tag);if(cls)item.className=cls;if(text!=null)item.textContent=text;return item;};
   function imageUrl(value){try{const u=new URL(String(value||''));return ['https:','http:'].includes(u.protocol)?u.href:'';}catch(_){return '';}}
   function normalize(items) {
@@ -36,23 +37,31 @@
     const status=el(root.ownerDocument,'p','kidia-category-source','Loading categories from your connected store…');
     status.setAttribute('role','status');area.append(status);
     installDesigns(root);
+    if(!root.dataset.categoryRefreshReady){root.dataset.categoryRefreshReady='1';scope.addEventListener('message',event=>{
+      if(event.source!==scope.parent||event.origin!==scope.location.origin||event.data?.type!=='kidia:catalog-update')return;
+      refresh(root,event.data.store||{});
+    });}
   }
-  function hydrate(root,store){
+  function hydrate(root,store,settings){
     const area=q(root,'.mobishop-category-items');if(!area)return;
+    if(settings?.entries)savedCategories.set(root,settings.entries.filter(([name])=>name.startsWith('categories[')));
+    if(!Array.isArray(store.category_items)&&area.querySelector('.mobishop-category-row'))return false;
     const items=normalize(store.category_items);
     const signature=JSON.stringify([store.public_id,items]);
-    if(area.dataset.catalogSignature===signature)return;
+    if(area.dataset.catalogSignature===signature)return false;
     // Only the current connector's category IDs may have form controls. Never
     // clone captured merchant rows, even when the connector returns no records.
     area.querySelectorAll('.mobishop-category-list,.kidia-menu-layout,.kidia-menu-tools').forEach(n=>n.remove());
     area.removeAttribute('data-menu-ready');
     area.dataset.catalogSignature=signature;
+    const appearance=q(root,'.kidia-category-appearance');
+    if(appearance){const general=q(appearance,'.mobishop-category-general');if(general)appearance.replaceWith(general);}
     const doc=root.ownerDocument;
     const status=q(area,'.kidia-category-source')||el(doc,'p','kidia-category-source');
     status.setAttribute('role','status');
     let host='';try{host=new URL(store.url).hostname;}catch(_){}
-    status.textContent=store.items_error? 'Categories could not be loaded from the connected store. Reload to retry.'
-      :items.length?`${items.length} categories from ${host||'your connected store'}`:'No categories in the connected store.';
+    status.textContent=items.length?`${items.length} categories from ${host||'your connected store'}`
+      :store.items_error?'Categories are temporarily unavailable. Retrying automatically…':'No categories in the connected store.';
     if(!status.parentNode)area.prepend(status);
     const byParent=new Map();items.forEach(item=>{if(!byParent.has(item.parent))byParent.set(item.parent,[]);byParent.get(item.parent).push(item);});
     function field(card,id,key,value,cls,type='hidden'){
@@ -75,6 +84,23 @@
       }return list;
     }
     area.append(level(0));
+    return true;
+  }
+  function refresh(root,store){
+    if(!Array.isArray(store.category_items)||store.items_error&&!store.category_items.length)return;
+    const hadRows=Boolean(q(root,'.mobishop-category-row'));
+    const draft=hadRows?Array.from(new scope.FormData(root.closest('form')||q(root,'form'))).filter(([name])=>name.startsWith('categories[')):(savedCategories.get(root)||[]);
+    const customImages=new Map();root.querySelectorAll('.mobishop-category-row').forEach(row=>{const image=q(row,'.mobishop-category-image img');const id=q(row,'.mobishop-category-image-id');if(image&&Number(id?.value)>0)customImages.set(row.dataset.termId,image.src);});
+    const open=Boolean(q(root,'.kidia-category-appearance')?.open);
+    if(!hydrate(root,store))return;
+    scope.KidiaCategoryMenu?.init();
+    const groups=new Map();for(const [name,value] of draft){if(!groups.has(name))groups.set(name,[]);groups.get(name).push(String(value));}
+    for(const input of root.querySelectorAll('[name^="categories["]')){const values=groups.get(input.name);if(!values)continue;if(input.type==='checkbox'||input.type==='radio')input.checked=values.includes(input.value);else input.value=values[values.length-1];}
+    scope.KidiaCategoryMenu?.restore();
+    root.querySelectorAll('.mobishop-category-name-input').forEach(input=>input.dispatchEvent(new Event('input',{bubbles:true})));
+    root.querySelectorAll('.mobishop-category-row').forEach(row=>{const src=customImages.get(row.dataset.termId);const box=q(row,'.mobishop-category-image');if(src&&box){const img=el(root.ownerDocument,'img');img.src=src;img.alt='';box.replaceChildren(img);}});
+    const appearance=q(root,'.kidia-category-appearance');if(appearance)appearance.open=open;
+    q(root,'.mobishop-category-name-input')?.dispatchEvent(new Event('change',{bubbles:true}));
   }
   function installDesigns(root){
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
@@ -100,6 +126,6 @@
       .kidia-category-designs button.kidia-category-design{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;align-content:start!important;align-items:start!important;height:auto!important;min-height:195px;white-space:normal!important;gap:6px!important;direction:ltr;text-align:left!important}.kidia-category-designs .kidia-category-sample{display:grid!important;width:100%!important;min-width:0!important;flex:none!important}.kidia-category-designs .kidia-category-design strong,.kidia-category-designs .kidia-category-design small{display:block!important;width:100%!important;white-space:normal!important;text-align:left!important}
     `;doc.head.append(style);}
   }
-  const api={designs,normalize,prepare,hydrate,installDesigns};scope.KidiaCategoryDesigner=api;
+  const api={designs,normalize,prepare,hydrate,refresh,installDesigns};scope.KidiaCategoryDesigner=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
