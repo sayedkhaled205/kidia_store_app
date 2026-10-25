@@ -727,7 +727,10 @@ abstract final class HomeBlockModel {
     return HomeProductItem(
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
-      imageUrl: _requiredUrl(json, 'image_url'),
+      // A catalog product may legitimately have no photo. Let the product
+      // card show its existing image placeholder instead of dropping the
+      // entire collection (and its editor focus target).
+      imageUrl: _optionalUrl(json, 'image_url') ?? '',
       imageUrls: json['image_urls'] is List
           ? (json['image_urls'] as List)
                 .map((dynamic value) => '$value'.trim())

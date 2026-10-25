@@ -9,6 +9,40 @@ import 'package:mobishop_store_app/features/home/presentation/widgets/home_block
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_focus_frame.dart';
 
 void main() {
+  testWidgets('long collections focus at their heading on every selection', (
+    tester,
+  ) async {
+    final keys = [GlobalKey(), GlobalKey()];
+    final scroll = ScrollController();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            controller: scroll,
+            child: Column(
+              children: [
+                const SizedBox(height: 900),
+                SizedBox(key: keys[0], height: 3200),
+                SizedBox(key: keys[1], height: 1300),
+                const SizedBox(height: 800),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final index in [0, 1, 0, 1]) {
+      schedulePreviewFocus(
+        () => focusPreviewSection(keys[index].currentContext!),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.byKey(keys[index])).dy, closeTo(0, 1));
+    }
+    await tester.pumpWidget(const SizedBox());
+    scroll.dispose();
+  });
+
   testWidgets(
     'empty product cards remain selectable repeatedly in the editor',
     (tester) async {
@@ -49,17 +83,10 @@ void main() {
         for (final i in [3, 0, 2, 1, 3, 0]) {
           final key = keys['products-$i']!;
           expect(key.currentContext, isNotNull);
-          schedulePreviewFocus(
-            () => Scrollable.ensureVisible(
-              key.currentContext!,
-              alignment: .18,
-              duration: const Duration(milliseconds: 140),
-            ),
-          );
+          schedulePreviewFocus(() => focusPreviewSection(key.currentContext!));
           await tester.pumpAndSettle();
           final top = tester.getTopLeft(find.byKey(key)).dy;
-          final height = tester.getSize(find.byKey(key)).height;
-          expect(top, closeTo((600 - height) * .18, 2));
+          expect(top, closeTo(0, 2));
           scroll.jumpTo(0);
           await tester.pumpAndSettle();
         }

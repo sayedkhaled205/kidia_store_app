@@ -258,12 +258,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
       final BuildContext? blockContext = _blockKeys[target]?.currentContext;
       if (blockContext != null) {
-        Scrollable.ensureVisible(
-          blockContext,
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOutCubic,
-          alignment: .18,
-        );
+        focusPreviewSection(blockContext);
         return;
       }
       final int index = _visibleBlocks.indexWhere(
@@ -281,12 +276,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             if (!mounted || request != _focusRequest) return;
             final BuildContext? context = _blockKeys[target]?.currentContext;
             if (context != null && context.mounted) {
-              Scrollable.ensureVisible(
-                context,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                alignment: .18,
-              );
+              focusPreviewSection(context);
             }
           });
     });
