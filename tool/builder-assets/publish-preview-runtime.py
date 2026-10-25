@@ -11,6 +11,12 @@ import re
 import shutil
 import sys
 import zipfile
+import importlib.util
+
+repair_path = Path(__file__).with_name('repair-preview-contracts.py')
+spec = importlib.util.spec_from_file_location('preview_contracts', repair_path)
+contracts = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(contracts)
 
 root = Path(sys.argv[1]).resolve()
 archive = Path(sys.argv[2])
@@ -77,7 +83,7 @@ for path in [root / new_bundle, *(root / new_bundle).rglob('*')]:
     os.chmod(path, 0o755 if path.is_dir() else 0o644)
     if path.is_file():
         published[path.relative_to(root).as_posix()] = sha(path.read_bytes())
-patched_source = source.replace(old_shell, new_bundle + 'index.html').replace(old_bundle, new_bundle).replace(frame, new_frame)
+patched_source = contracts.repair_central(source).replace(old_shell, new_bundle + 'index.html').replace(old_bundle, new_bundle).replace(frame, new_frame)
 changes = {
     new_central: patched_source.encode(),
     new_frame: html.replace(frame_js, new_frame_js).encode(),

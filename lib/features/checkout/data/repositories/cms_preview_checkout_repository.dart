@@ -14,10 +14,20 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 /// Uses the application's real CheckoutScreen with an isolated, non-ordering
 /// cart. The builder never receives a customer session or submits a purchase.
 class CmsPreviewCheckoutRepository implements CheckoutRepository {
-  CmsPreviewCheckoutRepository(this.layout, this.catalog);
+  CmsPreviewCheckoutRepository(
+    this.layout,
+    this.catalog, {
+    this.configuration = const {},
+  });
 
   final Map<String, dynamic> layout;
   final Map<String, dynamic> catalog;
+  final Map<String, dynamic> configuration;
+
+  List<Map> get _methods => (configuration['payment_methods'] as List? ?? [])
+      .whereType<Map>()
+      .where((m) => '${m['id'] ?? ''}'.isNotEmpty)
+      .toList();
 
   late final Cart _cart = _buildCart();
 
@@ -25,9 +35,16 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
   Future<CheckoutState> loadCheckout() async => CheckoutState(
     cart: _cart,
     fieldDefinitions: _fields(),
+    paymentMethodLabels: {
+      for (final m in _methods) '${m['id']}': '${m['title'] ?? m['id']}',
+    },
+    nativePaymentAdapters: {
+      for (final m in _methods)
+        '${m['id']}': '${m['native_adapter'] ?? 'unavailable'}',
+    },
     allowDifferentShippingAddress:
-        layout['checkout_shipping'] is Map &&
-        (layout['checkout_shipping'] as Map)['allow_different_address'] == true,
+        configuration['shipping'] is Map &&
+        (configuration['shipping'] as Map)['allow_different_address'] == true,
   );
 
   @override
@@ -45,7 +62,7 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
   }
 
   List<CheckoutFieldDefinition> _fields() {
-    final dynamic raw = layout['checkout_fields'];
+    final dynamic raw = layout['checkout_fields'] ?? configuration['fields'];
     if (raw is! List) return const <CheckoutFieldDefinition>[];
     final List<CheckoutFieldDefinition> fields = <CheckoutFieldDefinition>[];
     for (final Map<String, dynamic> item in raw.whereType<Map>().map(
@@ -91,7 +108,8 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
       if (field != null) fields.add(field);
     }
     return CheckoutFieldNormalizer.normalize(fields, <String, dynamic>{
-      'defaults': layout['checkout_defaults'],
+      ...configuration,
+      'defaults': configuration['defaults'] ?? layout['checkout_defaults'],
     });
   }
 
@@ -99,9 +117,11 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
     final List<dynamic> raw = catalog['products'] is List
         ? catalog['products'] as List<dynamic>
         : const <dynamic>[];
-    const CartCurrency currency = CartCurrency(
-      code: 'EGP',
-      symbol: 'EGP',
+    final first = raw.whereType<Map>().firstOrNull;
+    final currencyCode = '${first?['currency_code'] ?? 'USD'}';
+    final CartCurrency currency = CartCurrency(
+      code: currencyCode,
+      symbol: '${first?['currency_symbol'] ?? currencyCode}',
       minorUnit: 2,
       decimalSeparator: '.',
       thousandSeparator: ',',
@@ -190,14 +210,18 @@ class CmsPreviewCheckoutRepository implements CheckoutRepository {
         taxMinor: '0',
         currency: currency,
       ),
-      shippingAddress: const CartAddress(country: 'EG'),
-      billingAddress: const CartAddress(country: 'EG'),
+      shippingAddress: CartAddress(
+        country: '${(configuration['defaults'] as Map?)?['country'] ?? ''}',
+      ),
+      billingAddress: CartAddress(
+        country: '${(configuration['defaults'] as Map?)?['country'] ?? ''}',
+      ),
       itemsCount: items.length,
       itemsWeight: 0,
-      needsPayment: false,
+      needsPayment: sum > 0,
       needsShipping: true,
-      hasCalculatedShipping: true,
-      paymentMethods: const [],
+      hasCalculatedShipping: false,
+      paymentMethods: [for (final m in _methods) '${m['id']}'],
       errors: const [],
     );
   }

@@ -25,6 +25,8 @@ class CmsPreviewLayoutBridge {
   static int _nextCatalogRequest = 0;
   static final Map<int, Completer<Map<String, dynamic>>> _authRequests = {};
   static int _nextAuthRequest = 0;
+  static final Map<int, Completer<Map<String, dynamic>>> _checkoutRequests = {};
+  static int _nextCheckoutRequest = 0;
   static final StreamController<String> _changes =
       StreamController<String>.broadcast();
   static final StreamController<String> _focusTargets =
@@ -36,6 +38,33 @@ class CmsPreviewLayoutBridge {
   static bool useLiveCatalog = false;
 
   static Map<String, dynamic>? get currentHomeLayout => _home;
+
+  static Future<Map<String, dynamic>> fetchCheckoutConfiguration() async {
+    _listen();
+    final requestId = ++_nextCheckoutRequest;
+    final result = Completer<Map<String, dynamic>>();
+    _checkoutRequests[requestId] = result;
+    web.window.parent?.postMessage(
+      jsonEncode({
+        'type': 'mobishop-preview-checkout-config-request',
+        'request_id': requestId,
+      }).toJS,
+      web.window.location.origin.toJS,
+    );
+    try {
+      final data = await result.future.timeout(const Duration(seconds: 25));
+      if (data['error'] != null ||
+          data['fields'] is! List ||
+          data['payment_methods'] is! List) {
+        throw const FormatException(
+          'Checkout preview configuration unavailable.',
+        );
+      }
+      return data;
+    } finally {
+      _checkoutRequests.remove(requestId);
+    }
+  }
 
   static Future<Map<String, dynamic>> fetchAuthConfiguration() async {
     _listen();
@@ -165,6 +194,14 @@ class CmsPreviewLayoutBridge {
           }
         }
         if (message is! Map) return;
+        if (message['type'] == 'mobishop-preview-checkout-config-response') {
+          final requestId = int.tryParse('${message['request_id'] ?? ''}');
+          final waiting = _checkoutRequests[requestId];
+          if (waiting != null && !waiting.isCompleted) {
+            waiting.complete(Map<String, dynamic>.from(message));
+          }
+          return;
+        }
         if (message['type'] == 'mobishop-preview-auth-config-response') {
           final requestId = int.tryParse('${message['request_id'] ?? ''}');
           final waiting = _authRequests[requestId];

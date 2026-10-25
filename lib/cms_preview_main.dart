@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import 'app/app.dart';
 import 'features/auth/data/cms_preview_auth_actions.dart';
+import 'features/auth/presentation/auth_screen.dart';
 import 'features/auth/presentation/providers/native_auth_providers.dart';
 import 'core/config/app_config.dart';
 import 'features/cart/data/repositories/cms_preview_cart_repository.dart';
@@ -49,10 +50,11 @@ void main() {
     previewRoutes: [
       GoRoute(
         path: '/cart',
-        builder: (_, _) =>
-            const CartScreen(checkoutRoute: '/cms-preview/checkout'),
+        builder: (_, _) => const CartScreen(checkoutRoute: '/checkout'),
       ),
-      GoRoute(path: '/checkout', redirect: (_, _) => '/cms-preview/checkout'),
+      // Shopping follows the same signed-out gate as the installed app. The
+      // editor's Checkout tab has its own non-ordering design route below.
+      GoRoute(path: '/checkout', builder: (_, _) => const AuthScreen()),
       GoRoute(
         path: '/cms-preview/splash',
         builder: (_, _) => const CmsSplashPreview(),
@@ -131,8 +133,16 @@ void main() {
   );
 }
 
-class _CmsCheckoutPreview extends StatelessWidget {
+class _CmsCheckoutPreview extends StatefulWidget {
   const _CmsCheckoutPreview();
+
+  @override
+  State<_CmsCheckoutPreview> createState() => _CmsCheckoutPreviewState();
+}
+
+class _CmsCheckoutPreviewState extends State<_CmsCheckoutPreview> {
+  late Future<Map<String, dynamic>> configuration =
+      CmsPreviewLayoutBridge.fetchCheckoutConfiguration();
 
   @override
   Widget build(BuildContext context) {
@@ -154,11 +164,46 @@ class _CmsCheckoutPreview extends StatelessWidget {
                 body: Center(child: CircularProgressIndicator()),
               );
             }
-            return CheckoutScreen(
-              isPreview: true,
-              key: ValueKey<String>(jsonEncode(layout)),
-              repository: CmsPreviewCheckoutRepository(layout, catalog),
-              design: CheckoutDesign.fromApi(layout['checkout_design']),
+            return FutureBuilder<Map<String, dynamic>>(
+              future: configuration,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'تعذر تحميل إعدادات إتمام الطلب من المتجر.',
+                          ),
+                          TextButton(
+                            onPressed: () => setState(() {
+                              configuration =
+                                  CmsPreviewLayoutBridge.fetchCheckoutConfiguration();
+                            }),
+                            child: const Text('إعادة المحاولة'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return CheckoutScreen(
+                  isPreview: true,
+                  key: ValueKey<String>(jsonEncode(layout)),
+                  repository: CmsPreviewCheckoutRepository(
+                    layout,
+                    catalog,
+                    configuration: snapshot.data!,
+                  ),
+                  design: CheckoutDesign.fromApi(layout['checkout_design']),
+                );
+              },
             );
           },
         );

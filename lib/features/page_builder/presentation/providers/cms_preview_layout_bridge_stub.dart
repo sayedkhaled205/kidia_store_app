@@ -6,6 +6,8 @@ class CmsPreviewLayoutBridge {
   static Map<String, dynamic>? get currentHomeLayout => null;
   static Future<Map<String, dynamic>> fetchAuthConfiguration() =>
       Future.error(UnsupportedError('Authentication preview is web-only.'));
+  static Future<Map<String, dynamic>> fetchCheckoutConfiguration() =>
+      Future.error(UnsupportedError('Checkout preview is web-only.'));
   static int get catalogRevision => 0;
   static Stream<int> get catalogChanges => const Stream<int>.empty();
   static Stream<Map<String, dynamic>?> get identitySettings =>
