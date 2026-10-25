@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-26",
+  "source_commit": "ba464d06a8ebe2967045216450ac6c7ba4f6a3af",
+  "deployed_runtime": "087422e57117",
+  "status": "activated_and_verified_on_canonical_builder",
+  "root_causes": [
+    "The reported builder store is connected to staging.kidiastore.com, whose Google, phone OTP and card gateway are disabled; production kidiastore.com enables them.",
+    "The isolated checkout preview discarded merchant defaults, schema version and payment methods, and hardcoded needsPayment=false.",
+    "Preview cart checkout bypassed the authentication route, and reselecting an editor tab did not always reset phone subnavigation.",
+    "Home product sections with missing product images had been dropped; the preceding runtime fix is retained.",
+    "The selected App Icon source was already a distorted square crop. The original proportional logo was selected and saved through the media picker."
+  ],
+  "automated_checks": {
+    "flutter_analysis": "passed for changed preview modules",
+    "flutter_tests": "10 passed: preview checkout contract, checkout auth gate, preview auth actions, repeated selection and mouse scrolling",
+    "node_commerce_configuration": "3 passed",
+    "node_auth_configuration": "passed",
+    "node_preview_interactions": "7 passed with existing jsdom dependency",
+    "central_repair": "exact anchor validation, idempotency and JavaScript syntax passed",
+    "flutter_web_build": "release build passed"
+  },
+  "browser_checks": [
+    "Canonical production Account preview shows the branded Google sign-in button.",
+    "Canonical production Checkout uses the merchant governorate field and offers card plus cash on delivery.",
+    "Selecting card displays number, expiry, security code and cardholder fields inline.",
+    "Review: preview cart checkout and order history require login; same editor tab can restore the corresponding page.",
+    "Canonical staging Home exposes ALL PRODUCTS and moves again when New User Zone is selected.",
+    "Staging App Icon original logo was saved and checked visually."
+  ],
+  "deployment_safety": {
+    "concurrent_work": "Preserved page-controls-6a1ecc9a4025.js and unrelated live files; source hashes checked again immediately before activation.",
+    "staged_review": true,
+    "backup": "preview-runtime-backup-087422e57117",
+    "new_main_sha256": "36e7eab0278d6f03260809de1731dda47d60295601f2e9b51e661e8ee17ab0d3"
+  },
+  "limits": [
+    "No real payment, real order or shipping quote was submitted in this preview verification.",
+    "The preview is a nonordering isolated basket and reports shipping as not yet calculated.",
+    "Staging authentication and gateway settings were not enabled or changed.",
+    "The added checkout metadata bridge is WooCommerce-specific; this evidence does not assert Shopify or Odoo checkout support."
+  ],
+  "screenshots": [
+    "google-canonical.png",
+    "card-canonical.png",
+    "home-canonical.png",
+    "logo-corrected.png",
+    "checkout-requires-login.png"
+  ]
+}
