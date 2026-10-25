@@ -9,11 +9,14 @@
       throw new Error('Invalid preview store origin.');
     url.pathname = url.pathname.replace(/\/+$/, '') + '/wp-json/mobishop/v1/auth/native/config';
     url.search = '?platform=android';
+    // Availability can change after native Google registration. Do not reuse a
+    // browser/CDN response from before that registration on a later preview.
+    url.searchParams.set('_preview', Date.now().toString(36));
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetchPublic(url.href, {
-        credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
+        credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer', cache: 'no-store',
         headers: {Accept: 'application/json'}, signal: controller.signal
       });
       if (response.status === 404) return {

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
+import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/native_auth.dart';
@@ -20,6 +21,68 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets(
+    'CMS preview refreshes Google availability on each sign-in visit',
+    (tester) async {
+      var googleEnabled = true;
+      var requests = 0;
+      final preview = CmsPreviewAuthActions(() async {
+        requests++;
+        return {
+          'version': 1,
+          'enabled': true,
+          'methods': {
+            'email_password': true,
+            'phone_otp': true,
+            'google': googleEnabled,
+          },
+        };
+      }, isArabic: true);
+      final fixture = _Fixture();
+      await fixture.pump(tester, previewActions: preview);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      await _tap(tester, 'auth-google');
+      expect(find.textContaining('دي معاينة لشاشة الدخول'), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      for (final enabled in [false, true]) {
+        fixture.router.go('/account');
+        await tester.pumpAndSettle();
+        googleEnabled = enabled;
+        fixture.router.go('/auth');
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('auth-google')),
+          enabled ? findsOneWidget : findsNothing,
+        );
+      }
+      expect(requests, 3);
+      expect(fixture.actions.commits, 0);
+    },
+  );
+
+  testWidgets('CMS preview can retry unavailable settings and restore Google', (
+    tester,
+  ) async {
+    var available = false;
+    final fixture = _Fixture();
+    await fixture.pump(
+      tester,
+      previewActions: CmsPreviewAuthActions(() async {
+        if (!available) throw StateError('offline');
+        return {
+          'version': 1,
+          'enabled': true,
+          'methods': {'email_password': true, 'google': true},
+        };
+      }, isArabic: true),
+    );
+    expect(find.byKey(const Key('auth-config-retry')), findsOneWidget);
+    available = true;
+    await _tap(tester, 'auth-config-retry');
+    expect(find.byKey(const Key('auth-google')), findsOneWidget);
+    expect(find.byKey(const Key('auth-config-retry')), findsNothing);
+  });
+
   testWidgets(
     'native phone/email screen has one close, real brand and enabled Google only',
     (tester) async {
@@ -624,6 +687,7 @@ class _Fixture {
     String route = '/auth',
     String logo = '',
     double logoScale = 1,
+    NativeAuthActions? previewActions,
     Size size = const Size(390, 844),
   }) async {
     tester.view.physicalSize = size;
@@ -658,8 +722,11 @@ class _Fixture {
       ProviderScope(
         overrides: [
           authControllerProvider.overrideWith(() => auth),
-          nativeAuthActionsProvider.overrideWithValue(actions),
-          nativeAuthConfigProvider.overrideWith((ref) => actions.config()),
+          nativeAuthActionsProvider.overrideWithValue(
+            previewActions ?? actions,
+          ),
+          if (previewActions == null)
+            nativeAuthConfigProvider.overrideWith((ref) => actions.config()),
           applicationIdentity58Provider.overrideWithValue({
             'app_name': 'متجر الاختبار',
           }),

@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-25",
+  "scope": "Connected WooCommerce Google sign-in visibility in the CMS preview",
+  "original_report": "Google was absent in the user's screenshot.",
+  "investigation": {
+    "google_enabled_in_public_android_configuration": true,
+    "google_visible_before_change_in_existing_builder_tab": true,
+    "original_disappearance_reproduced": false,
+    "root_cause_confirmed": false
+  },
+  "change": "Fetch current public auth capabilities with no-store and a cache-busting request parameter. Keep provider flags authoritative; never force-enable Google.",
+  "deployment": {
+    "activated": true,
+    "entry_asset": "assets/original-central-auth-1e869b121fc6.js",
+    "entry_sha256": "61cfeb6bfc15396443191fe4b9234d57efa7c5b3a73ea086b08c04e12674f9ec",
+    "previous_entry": "assets/original-central-header-raised-20261025.js",
+    "non_auth_builder_code_preserved_byte_for_byte": true,
+    "flutter_bundle_replaced": false,
+    "backup": "/home/woomobile/woomobile-api/public/preview-auth-backup-1e869b121fc6"
+  },
+  "verification": {
+    "flutter_auth_screen_and_preview_action_tests": "32 passed",
+    "javascript_routing_freshness_and_two_store_isolation": "passed",
+    "publisher_review_preservation_drift_rejection_activation": "passed",
+    "targeted_dart_analysis": "no issues",
+    "live_main_builder_after_reload": "Google button visible alongside phone/email input",
+    "review_button_action": "Displays preview-only explanation; no identity or SMS request issued",
+    "screenshot": "google-visible-live.png",
+    "new_native_sign_in_end_to_end_test": false
+  },
+  "regression_checks": "Preview UI checks run in flutter test; public capability helper checks added to the quality workflow."
+}
