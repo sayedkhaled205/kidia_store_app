@@ -67,6 +67,9 @@ test('updated catalog preserves unsaved names and never restores removed IDs', (
   assert.equal(s.root.querySelector('[name="categories[41][name]"]').value,'Unsaved draft');
   assert.equal(s.root.querySelector('[data-term-id="44"]'),null);
   assert.ok(s.root.querySelector('[data-term-id="50"]'));
+  // Keep the hidden fallback at 1 so a later uncheck really hides the category.
+  s.root.querySelector('[name="categories[41][hidden]"][type="checkbox"]').checked=false;
+  assert.deepEqual(Array.from(new s.w.FormData(s.root).getAll('categories[41][hidden]')),['1']);
   s.api.refresh(s.root,{items_error:'Temporary failure',category_items:[]});
   assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,4);
   s.dom.window.close();

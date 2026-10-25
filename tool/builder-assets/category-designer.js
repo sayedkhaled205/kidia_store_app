@@ -95,7 +95,7 @@
     if(!hydrate(root,store))return;
     scope.KidiaCategoryMenu?.init();
     const groups=new Map();for(const [name,value] of draft){if(!groups.has(name))groups.set(name,[]);groups.get(name).push(String(value));}
-    for(const input of root.querySelectorAll('[name^="categories["]')){const values=groups.get(input.name);if(!values)continue;if(input.type==='checkbox'||input.type==='radio')input.checked=values.includes(input.value);else input.value=values[values.length-1];}
+    for(const input of root.querySelectorAll('input[name]')){const values=groups.get(input.name);if(!values)continue;if(input.type==='checkbox'||input.type==='radio')input.checked=values.includes(input.value);else if(!(input.type==='hidden'&&input.name.endsWith('[hidden]')))input.value=values[values.length-1];}
     scope.KidiaCategoryMenu?.restore();
     root.querySelectorAll('.mobishop-category-name-input').forEach(input=>input.dispatchEvent(new Event('input',{bubbles:true})));
     root.querySelectorAll('.mobishop-category-row').forEach(row=>{const src=customImages.get(row.dataset.termId);const box=q(row,'.mobishop-category-image');if(src&&box){const img=el(root.ownerDocument,'img');img.src=src;img.alt='';box.replaceChildren(img);}});
