@@ -216,9 +216,10 @@
           retryOrFail();
         }
       });
-      // Recover inside the iframe before the WordPress page looks frozen.
-      // Two fresh-cache retries cover intermittent mobile/WebAssembly stalls.
-      startupTimer = window.setTimeout(retryOrFail, 15000);
+      // A cold preview downloads the application and CanvasKit. Do not abort
+      // healthy downloads every 15 seconds on a slow connection. Explicit
+      // network/runtime errors still recover immediately through the handlers.
+      startupTimer = window.setTimeout(retryOrFail, 180000);
       document.body.appendChild(bootstrap);
     })();
   </script>
