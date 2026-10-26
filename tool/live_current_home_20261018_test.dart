@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
@@ -48,7 +49,7 @@ void main() {
         );
         expect(products, greaterThan(0));
         expect(categories, greaterThan(0));
-        print(
+        debugPrint(
           'LIVE_HOME_VERIFIED blocks=${home.blocks.length} products=$products categories=$categories',
         );
       } finally {

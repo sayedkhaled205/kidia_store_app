@@ -67,8 +67,8 @@ assert.doesNotMatch(
 );
 assert.match(
   index,
-  /preview_attempt[\s\S]*attempt < 2[\s\S]*String\(attempt \+ 1\)[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*15000\)/,
-  "A preview that never mounts must retry twice with fresh cache keys instead of loading forever.",
+  /preview_attempt[\s\S]*attempt < 2[\s\S]*String\(attempt \+ 1\)[\s\S]*preview_retry[\s\S]*Date\.now\(\)[\s\S]*location\.replace[\s\S]*setTimeout\(retryOrFail,\s*180000\)/,
+  "A cold preview must retain its three-minute startup budget, with at most two fresh-cache retries instead of loading forever.",
 );
 assert.match(
   index,
@@ -90,10 +90,10 @@ assert.match(
   /html, body \{[\s\S]*width: 100%;[\s\S]*height: 100%;[\s\S]*margin: 0;[\s\S]*overflow: hidden;/,
   "The Flutter view must fill a stable, margin-free preview viewport.",
 );
-assert.match(
+assert.doesNotMatch(
   sourceIndex,
-  /document\.addEventListener\('wheel'[\s\S]*mobishop-preview-scroll[\s\S]*window\.location\.origin[\s\S]*preventDefault/,
-  "Home wheel input must be captured inside the Flutter iframe and sent directly to Dart.",
+  /document\.addEventListener\(['"]wheel/,
+  "The persistent iframe shell must not capture all route scrolling as Home-only input; Flutter owns direct wheel events.",
 );
 assert.match(
   homePage,

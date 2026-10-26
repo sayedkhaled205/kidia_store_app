@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,13 +48,13 @@ void main() {
         final added = await repo.addItem(productId: product.id);
         key = added.items.singleWhere((i) => i.productId == product.id).key;
         expect(added.itemsCount, 1);
-        print('LIVE_CART_VERIFIED initial=0 immediate_add_response=1');
-        final cleaned = await repo.removeItem(key!);
+        debugPrint('LIVE_CART_VERIFIED initial=0 immediate_add_response=1');
+        final cleaned = await repo.removeItem(key);
         key = null;
         expect(cleaned.itemsCount, 0);
-        print('LIVE_CART_CLEANED count=0');
+        debugPrint('LIVE_CART_CLEANED count=0');
       } finally {
-        if (key != null) await repo.removeItem(key!);
+        if (key != null) await repo.removeItem(key);
         dio.close(force: true);
         container.dispose();
         HttpOverrides.global = previous;

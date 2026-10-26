@@ -167,7 +167,9 @@ assert.match(pageStore, /font_family[\s\S]*content_horizontal_padding/, "Page Bu
 assert.match(pageStore, /outer_horizontal_padding[\s\S]*image_inset[\s\S]*price_prefix[\s\S]*price_color/, "Product grids must expose exact image, spacing and price controls.");
 assert.match(catalogCard, /imageInset[\s\S]*imageRadius[\s\S]*contentHorizontalPadding[\s\S]*pricePrefix[\s\S]*priceColor/, "Flutter product cards must consume every Family Pop grid token.");
 assert.match(catalogScreen, /button_style[\s\S]*_FlatToolbarButton[\s\S]*catalog-color-button/, "Flutter catalog must render the official flat Sort, Size, Color and Filter toolbar.");
-assert.match(pageChrome, /font_family[\s\S]*Poppins[\s\S]*textTheme\.apply/, "Flutter page chrome must apply the selected page font throughout the screen.");
+assert.match(pageChrome, /cmsPageFontFamily\(String configuredFont\)\s*=>\s*builderFontFamily\(configuredFont\)/, "Page chrome must use the shared font resolver.");
+assert.match(pageChrome, /font_family[\s\S]*cmsPageFontFamily\(configuredFont\)[\s\S]*textTheme\.apply\([\s\S]*fontFamily: fontFamily/, "Flutter page chrome must apply the selected page font throughout the screen.");
+assert.match(fs.readFileSync(path.join(root, "..", "lib/core/theme/builder_font_family.dart"), "utf8"), /'poppins'\s*=>\s*'Poppins'/, "The shared resolver must retain the licensed Poppins family.");
 assert.match(productScreen, /show_button_icon[\s\S]*FilledButton\.icon[\s\S]*FilledButton\(/, "Product purchase bar must support the official text-only button.");
 assert.match(pubspec, /family:\s*Poppins[\s\S]*Poppins-Regular\.ttf[\s\S]*Poppins-Bold\.ttf/, "The licensed Poppins family must be bundled for deterministic visual parity.");
 for (const fontFile of ["Poppins-Regular.ttf", "Poppins-Medium.ttf", "Poppins-SemiBold.ttf", "Poppins-Bold.ttf", "OFL.txt"]) {
@@ -268,7 +270,7 @@ assert.match(dashboardTemplate, /\.mobishop-app-build__card-label\s*\{[^}]*font-
 assert.match(dashboardTemplate, /Build Your App[\s\S]*Android &amp; iOS/, "The build card must show only the Android and iOS platform subtitle beneath Build Your App.");
 assert.match(dashboardTemplate, /last 10 days[\s\S]*data-build-download-again[\s\S]*data-build-new-version/, "A successful build from the last 10 days must offer download again or a new build.");
 assert.match(codemagic, /flutter build apk --release[\s\S]*flutter build appbundle --release[\s\S]*app-release\.apk[\s\S]*app-release\.aab[\s\S]*mobishop-build-files\.zip/, "Codemagic must package both the direct-install APK and Google Play AAB.");
-const androidWorkflow = codemagic.split(/^  mobishop-release:\s*$/m)[1];
+const androidWorkflow = codemagic.match(/^  mobishop-release:\s*\r?\n([\s\S]*?)(?=^  [a-z][\w-]*:\s*$|$(?![\s\S]))/m)?.[1];
 assert.ok(androidWorkflow, "The existing Android customer workflow must remain available.");
 assert.doesNotMatch(androidWorkflow, /flutter build ios|ios-app\.zip|\.ipa/, "The Android customer bundle must not include iOS output from the separate signed workflow.");
 assert.doesNotMatch(wizardTemplate, /mobishop-saved-themes/, "Saved Themes must no longer occupy the Setup Wizard.");
@@ -355,10 +357,13 @@ assert.match(wizardScript, /normalizeHex[\s\S]*data-color-code[\s\S]*syncColorPa
 assert.match(wizardScript, /homePreviewEndpoint[\s\S]*categoryPreviewEndpoint[\s\S]*mobishop-preview-layout[\s\S]*mobishop-flutter-preview-ready/, "Built-in theme preview must render real Home, Category and page layouts in Flutter.");
 assert.match(wizardScript, /postPreviewJson\(url, body, attempt\)[\s\S]*setTimeout\(resolve, 250\)[\s\S]*return \[pageName, previewPageLayout\(snapshot, pageName\)\][\s\S]*return homeFallback[\s\S]*return categoryFallback/, "A temporary failure in one preview endpoint must retry and fall back without taking down the complete theme preview.");
 assert.match(wizardScript, /demo_catalog[\s\S]*searchParams\.set\('demo', '1'\)[\s\S]*searchParams\.set\('product', '9001'\)/, "Built-in previews must route every page through the theme-only demo catalog.");
-assert.match(previewMain, /catalogRepositoryProvider\.overrideWithValue[\s\S]*CmsPreviewCatalogRepository/, "Flutter theme previews must replace the live catalog repository.");
-assert.match(previewMain, /page == 'splash'[\s\S]*splashConfigProvider\.overrideWith[\s\S]*CmsPreviewLayoutBridge\.splashConfig[\s\S]*appStartupProvider\.overrideWith[\s\S]*_splashPreviewHold\.future/, "The embedded Flutter preview must render the selected theme Splash from its posted snapshot and keep it visible for review.");
-assert.match(previewCatalog, /CmsPreviewLayoutBridge\.demoCatalog/, "The preview catalog must read only the selected theme payload.");
-assert.doesNotMatch(previewCatalog, /Dio|StoreApi|apiBaseUrl|wc_/, "The preview catalog must never call the merchant store.");
+assert.match(previewMain, /previewCatalog = CmsPreviewCatalogRepository\(\)[\s\S]*catalogRepositoryProvider\.overrideWithValue\(previewCatalog\)/, "Flutter previews must use their shared preview catalog repository.");
+assert.match(previewMain, /usesThemeDemo = uri\.queryParameters\['demo'\] == '1'[\s\S]*useDemoCatalog = usesThemeDemo[\s\S]*useLiveCatalog = !usesThemeDemo/, "Only theme-demo previews use fixtures; the live editor must use its connected merchant.");
+assert.match(previewMain, /'splash' => '\/cms-preview\/splash'[\s\S]*path: '\/cms-preview\/splash',[\s\S]*const CmsSplashPreview\(\)/, "The embedded preview must route to the live Splash preview without restarting application startup.");
+assert.match(fs.readFileSync(path.join(root, "..", "lib/features/splash/presentation/cms_splash_preview.dart"), "utf8"), /CmsPreviewLayoutBridge\.splashSettings[\s\S]*StreamBuilder[\s\S]*SplashConfig\.fromJson\(settings\)[\s\S]*SplashScreen\(config: config\)/, "The Splash preview must render every posted snapshot through the actual application screen.");
+assert.match(previewCatalog, /CmsPreviewLayoutBridge\.demoCatalog/, "The theme-demo catalog must read the selected theme payload.");
+assert.match(previewCatalog, /CmsPreviewLayoutBridge\.fetchCatalogPage[\s\S]*if \(_usesLiveCatalog\)/, "The live editor must obtain merchant data through the authenticated bridge.");
+assert.doesNotMatch(previewCatalog, /import[^\n]*(?:dio|store_api)|apiBaseUrl|wc_/, "The preview catalog must not bypass the authenticated parent bridge with direct store requests.");
 assert.match(previewBridge, /demo_catalog[\s\S]*_demoCatalogReady/, "The preview bridge must deliver the bundled demo catalog before product pages render.");
 assert.match(wizardScript, /mobishop-theme-modal__select/, "Full preview must allow selecting the previewed complete theme.");
 assert.match(wizardScript, /document\.querySelector\('\.mobishop-setup-hero'\)/, "Wizard navigation must keep the Setup & Themes hero visible.");

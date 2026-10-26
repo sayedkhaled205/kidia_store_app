@@ -1,0 +1,11 @@
+{
+  "slug": "mobi2app-connector",
+  "version": "1.46.100",
+  "file": "mobi2app-connector-1.46.100.zip",
+  "sha256": "a004f901f6e2767edb294e9282062491bf4c92c5369ab7d37a59ef6808d50bb6",
+  "files": 499,
+  "verified_files": 499,
+  "verified_at": "2026-10-26T08:43:42.748671+00:00",
+  "source_commit": "645163ecd42dd9fa499aaba98902a1e365ca7216",
+  "scope": "Public shared download only; existing installed merchant connectors and settings were not modified."
+}

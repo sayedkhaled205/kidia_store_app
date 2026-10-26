@@ -1082,7 +1082,8 @@ function runPageBuilderTest() {
   assert.match(wishlistSource, /settings\s*\.number\('columns', 2\)/, "Wishlist columns must be consumed by the mobile grid.");
   assert.match(wishlistSource, /settings\.string\(\s*'title',[\s\S]{0,120}copy\.emptyTitle/, "Wishlist empty-state copy must be consumed by the shared state renderer.");
   assert.match(wishlistSource, /wishlist_preview_state[\s\S]*_buildSignInState[\s\S]*_buildEmptyState[\s\S]*_buildProductState/, "The Flutter preview must independently render all three Wishlist states.");
-  assert.match(wishlistSource, /AppConfig\.isCmsPreview[\s\S]*_previewWishlistProducts[\s\S]*Duration\(seconds: 8\)[\s\S]*Retry/, "Wishlist recommendations must use immediate preview data and a bounded retryable production request.");
+  assert.match(wishlistSource, /widget\.repository[\s\S]*getProducts\([\s\S]*Duration\(seconds: 8\)[\s\S]*onPressed: _retry/, "Wishlist recommendations must use the connected catalog and a bounded retryable request in every renderer.");
+  assert.doesNotMatch(wishlistSource, /_previewWishlistProducts/, "The preview must not restore invented wishlist recommendations.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
   assert.match(wishlistSource, /quick_add_icon_variant/, "Wishlist must consume Quick Add appearance settings.");
   const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
@@ -1099,7 +1100,8 @@ function runPageBuilderTest() {
   assert.match(storeSource, /self::field\( 'tabs_json'[\s\S]*'tabs'[\s\S]*overview[\s\S]*reviews[\s\S]*recommend/, "Product Tabs must save a repeatable list instead of three fixed labels.");
   assert.match(productScreenSource, /_productTabConfigs[\s\S]*ListView\.builder[\s\S]*widget\.onSelected\(tab\.target\)/, "The mobile Product Tabs row must support a scrollable, variable number of tappable tabs.");
   assert.match(productScreenSource, /Scrollable\.ensureVisible[\s\S]*variationsKey[\s\S]*descriptionKey[\s\S]*reviewsKey[\s\S]*recommendKey/, "Every Product Tab target must scroll to its real product section.");
-  assert.match(productScreenSource, /AppConfig\.isCmsPreview[\s\S]*_previewRelatedProducts[\s\S]*timeout\(const Duration\(seconds: 8\)\)[\s\S]*related-products-retry/, "Related products must render immediately in CMS preview and expose a bounded retry in the app.");
+  assert.match(productScreenSource, /widget\.repository[\s\S]*getProducts\([\s\S]*timeout\(const Duration\(seconds: 8\)\)[\s\S]*related-products-retry/, "Related products must use the connected catalog with a bounded retry in preview and app.");
+  assert.doesNotMatch(productScreenSource, /_previewRelatedProducts/, "The preview must not restore invented related products.");
   assert.match(productImageSwiperSource, /PageView\.builder[\s\S]*onPageChanged[\s\S]*showIndicator/, "The shared product image control must swipe gallery images directly on a product card.");
   assert.match(catalogCardSource, /enable_image_swipe[\s\S]*ProductImageSwiper/, "Catalog and related product cards must consume the image-swipe On/Off setting.");
   assert.match(wishlistSource, /enable_image_swipe[\s\S]*ProductImageSwiper/, "Wishlist products and recommendations must consume the image-swipe On/Off setting.");
@@ -1126,7 +1128,8 @@ function runPageBuilderTest() {
 	const settingsSectionsSource = fs.readFileSync(path.join(pluginRoot, "admin", "assets", "settings-sections.js"), "utf8");
 	assert.match(settingsSectionsSource, /enhanceProductPositions/, "Home product elements must receive the same visual position selector.");
 	const layoutProviderSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "page_builder", "presentation", "providers", "cms_page_layout_providers.dart"), "utf8");
-	assert.match(layoutProviderSource, /Duration\(seconds: 5\)/, "Visible pages must refresh CMS settings promptly without restarting the app.");
+	assert.match(layoutProviderSource, /previewJson != null[\s\S]*CmsPageLayout\.fromJson\(previewJson\)/, "Preview edits must be applied immediately through the shared bridge.");
+	assert.match(layoutProviderSource, /finally[\s\S]*ref\.mounted[\s\S]*Timer\(const Duration\(seconds: 15\)[\s\S]*ref\.invalidateSelf\(\)/, "Live CMS refresh must wait for the previous request to settle and stop after disposal.");
 	assert.match(pageTemplateSource, /Colors & appearance/, "Page element backgrounds must be grouped in Colors & Appearance.");
 	const homeTemplateSource = fs.readFileSync(path.join(pluginRoot, "admin", "templates", "block-template.php"), "utf8");
 	assert.equal((homeTemplateSource.match(/\[settings\]\[block_background\]/g) || []).length, 1, "Every Home element must render exactly one shared background control.");
@@ -1768,7 +1771,7 @@ function runHeaderPositionAndProductApplyAllContractTest() {
 	assert.doesNotMatch(shellScript, /resetDocumentScroll|window\.scrollTo/, "Every CMS view, including Builders, must preserve the WordPress document scrollbar.");
 	assert.match(shellScript, /syncBuilderScreen\(payload\.builderScreen\)/, "Dynamic CMS navigation must preserve the fixed Builder workspace after view changes.");
 	assert.match(homePreviewBridge, /data-mobishop-builder-cards-scroll[\s\S]*\(cards \|\| window\)\.scrollBy/, "Keyboard navigation must scroll the card rail rather than the whole page.");
-	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _actionFor\('search'\), color\)/, "The morphing search bar must retain its saved position.");
+	assert.match(flutter, /'search_bar',[\s\S]*_searchBar\(context, _resolvedAction\(context, 'search'\), color\)/, "The morphing search bar must retain its saved position.");
 	assert.match(sections, /dataset\.applyProductSettings = scope[\s\S]*Apply to all/, "Quick Add and Wishlist panels must render independent Apply to all buttons.");
 	assert.match(sections, /closest\("\[data-apply-product-settings\]"\)[\s\S]*applyProductSettings\(button\)/, "The Apply to all buttons must invoke the copy operation.");
 	assert.match(sections, /document\.querySelectorAll\("input\[name\]:not\(\[type=hidden\]\),select\[name\],textarea\[name\]"\)[\s\S]*setSettingValue/, "Apply to all must update every visible matching card control immediately.");
