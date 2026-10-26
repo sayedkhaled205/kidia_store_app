@@ -59,7 +59,7 @@ try:
     # The test wraps all database mutations, including releases, in a rollback.
     result = subprocess.run([php, str(test)], text=True, capture_output=True)
     print(result.stdout)
-    if result.returncode:
+    if result.returncode or 'PASS: 36 controls' not in result.stdout or 'All test data rolled back.' not in result.stdout:
         print(result.stderr)
         raise RuntimeError('Backend verification failed')
     target = web/helper_name

@@ -39,6 +39,9 @@ try {
     $entries[] = ['checkout_design', 'compact'];
     data_set($withCheckout, 'builder.screens.checkout-builder.entries', $entries);
     $store->settings = $withCheckout; $store->timestamps = false; $store->save();
+    // Match the actual request boundary. Disabling Eloquent timestamps also
+    // disables its implicit date casts on this temporary test instance.
+    $store = $store->fresh();
     $draft = Design::status($store); check($draft['has_changes'], 'New controls detected');
     $two = Design::publish($store,(int)$store->user_id,$one['revision'],$draft['draft_digest']);
     $release = Design::query($store)->orderByDesc('id')->first();

@@ -8,6 +8,7 @@ import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/commerce/odoo_customer_client51.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/account/presentation/odoo/odoo_account_screen56.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/odoo_customer_providers51.dart';
@@ -22,6 +23,9 @@ void main() {
       final controller = _GuestController();
       final container = ProviderContainer(
         overrides: [
+          // This authentication contract has no embedded design. Branding is
+          // exercised with real published bundles in the publication tests.
+          applicationIdentity58Provider.overrideWithValue(null),
           odooCustomerSession51Provider.overrideWith(() => controller),
           authRepositoryProvider.overrideWith(
             (_) => throw StateError('Woo auth must not initialize for Odoo'),
@@ -104,6 +108,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            applicationIdentity58Provider.overrideWithValue(null),
             odooCustomerSession51Provider.overrideWith(
               () => _GuestController(
                 restore: () async {
@@ -158,6 +163,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            applicationIdentity58Provider.overrideWithValue(null),
             odooCustomerSession51Provider.overrideWith(
               () => _GuestController(restore: () => restore.future),
             ),
