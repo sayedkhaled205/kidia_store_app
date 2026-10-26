@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-26",
+  "source_commit": "e1df2c1bfaea90d757d1260d14e22ad032c36d4e",
+  "connector_release_commit": "ca98a5740f2d4b52408a1e8222739f8731676c0c",
+  "deployed_preview_runtime": "46ee65ac71a3",
+  "preview_main_sha256": "e483b5a5a5baae42c513d98fff10e388eb57b2c35e8d2c583a8882239d3877d5",
+  "new_layouts": [
+    "top_tabs",
+    "split_rows",
+    "grouped_shelves",
+    "text_directory"
+  ],
+  "total_layouts": 10,
+  "desktop_picker_columns": 4,
+  "legacy_layout_select_visible": false,
+  "validation": {
+    "flutter_category_screens": "14 passed; includes deep navigation, both subcategory modes, new layouts at 320px and 1.5 text scale",
+    "flutter_model_and_override_tests": "8 passed",
+    "javascript": "16 passed across category designer, auth, commerce and preview interactions",
+    "php": "Category store, migration/schema, endpoint contract and builder lint passed",
+    "connector_package": "498 files verified against pinned source manifest; only category validation and three version metadata files changed from 1.46.98",
+    "build": "Flutter web release passed; changed Dart files analyze clean",
+    "browser": "All four new layouts visually reviewed. Department switching, three-level text directory navigation and back exercised. top_tabs saved and confirmed by server readback and full page reload. Canonical production shows 10 cards, four per row, 35 current website categories, and hidden old Layout control."
+  },
+  "connector": {
+    "version": "1.46.99",
+    "published_manifest": "https://woomobile.app/downloads/connector-release.json",
+    "published_sha256": "45f25551f800b50910349d65875753f5013ad9e772be7cd8865e8842b5ef7c3d",
+    "local_windows_archive_sha256": "5886338e28fd45b749408be9b7e3e82d9f277481cc86136e15b444468e9e9938",
+    "archive_note": "Platform ZIP metadata differs between local Windows and server builds; each of all 498 file bytes is checked against identical reviewed manifest hashes before publication. Public release JSON matches server artifact."
+  },
+  "save_issue_found_and_fixed": "Live connector 1.46.98 allowed only five old layout values and normalized new values to default. Deployed common validator with ten values in 1.46.99, then repeated save/readback/reload successfully.",
+  "preservation": {
+    "saved_original_layout": "default",
+    "saved_original_columns": "3",
+    "saved_original_navigation": "separate_page",
+    "original_general_settings_restored": true,
+    "comparison": "All original general settings equal after case-insensitive hex color normalization",
+    "other_chat_asset_retained": "assets/page-controls-6a1ecc9a4025.js",
+    "publisher": "Activation checks all original and staged file fingerprints. Current live edits retained."
+  },
+  "backups": [
+    "/home/woomobile/woomobile-api/public/preview-runtime-backup-46ee65ac71a3",
+    "/root/category-designs-expanded-20261026/connector99/backup"
+  ],
+  "scope": "Shared source, central web preview, WooCommerce live connector and public connector download updated. No new Android APK or iOS artifact built in this task."
+}

@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-26",
+  "scope": "Category layout design patterns; screenshots span app versions, not a claim about current installed app releases. No reference brand assets copied.",
+  "reference_count": 12,
+  "references": [
+    {
+      "app": "Nike",
+      "url": "https://www.nike.sa/en/nike-app.html",
+      "inspection": "Visually inspected official app screenshot",
+      "pattern": "Department tabs, editorial imagery, wide banners",
+      "decision": "top_tabs; existing image_banner"
+    },
+    {
+      "app": "UNIQLO",
+      "url": "https://www.uniqlo.com/ca/fr/special-feature/service-update",
+      "inspection": "Visually inspected official service-update screenshot",
+      "pattern": "Department tabs and compact two-column categories",
+      "decision": "top_tabs; existing compact_grid"
+    },
+    {
+      "app": "ASOS",
+      "url": "https://www.buzzfeed.com/francinehendrickson/asos-style-match-mobile-app",
+      "inspection": "Visually inspected historical app screenshot (2018)",
+      "pattern": "Split image and title rows; department tabs",
+      "decision": "split_rows"
+    },
+    {
+      "app": "Target",
+      "url": "https://baymard.com/blog/mobile-app-ux-trends",
+      "inspection": "Visually inspected actual app capture",
+      "pattern": "Category collections grouped beneath headings",
+      "decision": "grouped_shelves"
+    },
+    {
+      "app": "H&M",
+      "url": "https://mwm.ai/de/apps/h-m/834465911",
+      "inspection": "Visually inspected app screenshot mirrored by Aptoide",
+      "pattern": "Minimal text directory with dividers",
+      "decision": "text_directory"
+    },
+    {
+      "app": "Amazon",
+      "url": "https://amazonforum.my.site.com/s/question/0D56Q0000A7UI4USQW/can-you-edit-your-shortcuts",
+      "inspection": "Search screenshot reference reviewed",
+      "pattern": "Square department tiles",
+      "decision": "Already covered by visual_grid"
+    },
+    {
+      "app": "Walmart",
+      "url": "https://baymard.com/ux-benchmark/case-studies/walmart",
+      "inspection": "Search screenshot reference reviewed",
+      "pattern": "Clear department rows",
+      "decision": "Already covered by clean list"
+    },
+    {
+      "app": "Zara",
+      "url": "https://juliayeager.github.io/zara.html",
+      "inspection": "Historical before-app screenshot reference, not redesign treated as shipped",
+      "pattern": "Text department navigation",
+      "decision": "Overlaps text_directory; no extra variant"
+    },
+    {
+      "app": "Sephora",
+      "url": "https://www.appbrain.com/appstore/sephora-uae-beauty-makeup/ios-1472335881",
+      "inspection": "Search app screenshot reference reviewed",
+      "pattern": "Compact photo tiles",
+      "decision": "Already covered by compact_grid"
+    },
+    {
+      "app": "IKEA",
+      "url": "https://www.ikea.com/ee/en/customer-service/mobile-apps/",
+      "inspection": "Official app reference reviewed",
+      "pattern": "Square category grid",
+      "decision": "Already covered by visual_grid"
+    },
+    {
+      "app": "Etsy",
+      "url": "https://baymard.com/ux-benchmark/case-studies/etsy",
+      "inspection": "Search screenshot reference reviewed",
+      "pattern": "Thumbnail category list",
+      "decision": "Already covered by clean list"
+    },
+    {
+      "app": "SHEIN",
+      "url": "https://shein.sooftware.com/android",
+      "inspection": "Search app screenshot reference reviewed",
+      "pattern": "Side department menu and circle grid",
+      "decision": "Already covered by sidebar/circular_grid"
+    }
+  ],
+  "added": [
+    "top_tabs",
+    "split_rows",
+    "grouped_shelves",
+    "text_directory"
+  ],
+  "total_designs": 10,
+  "picker_desktop_columns": 4,
+  "redundant_layout_control": "Hidden from UI and keyboard; preserved solely as serialized form value for backwards compatibility"
+}
