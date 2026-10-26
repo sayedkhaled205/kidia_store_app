@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:collection';
+
 import '../../features/home/data/home_read_session.dart';
 import '../../features/catalog/domain/entities/catalog_category.dart';
 import '../../features/catalog/domain/entities/catalog_product.dart';
@@ -100,6 +103,12 @@ void validateCatalogQuery58(
   }
 }
 
+/// Independent sections' catalog reads overlap instead of running one after
+/// another, but at most [_maxConcurrentCatalogReads] repository calls (list
+/// reads, category reads or individual manual product detail reads) are ever
+/// in flight for one hydration, bounding this Home's repository reads.
+const _maxConcurrentCatalogReads = 3;
+
 Future<HomeLayout> hydrateSavedHome58(
   Map<String, dynamic> saved,
   CatalogRepository repository, {
@@ -111,100 +120,48 @@ Future<HomeLayout> hydrateSavedHome58(
       'APP_DESIGN_BUNDLE has no saved Home layout for this locale.',
     );
   }
-  final blocks = <HomeBlock>[];
-  for (final raw in saved['blocks'] as List) {
-    final json = Map<String, dynamic>.from(raw as Map);
+  final rawBlocks = saved['blocks'] as List;
+  final blocks = List<HomeBlock?>.filled(rawBlocks.length, null);
+  final limiter = _CatalogReadLimiter(_maxConcurrentCatalogReads);
+  Object? fatalError;
+  StackTrace? fatalStackTrace;
+
+  final tasks = <Future<void>>[];
+  for (var index = 0; index < rawBlocks.length; index++) {
+    final json = Map<String, dynamic>.from(rawBlocks[index] as Map);
     final block = HomeBlockModel.fromJson(json);
     if (!block.enabled || !json.containsKey('catalog_query')) {
-      blocks.add(block);
+      blocks[index] = block;
       continue;
     }
     final query = Map<String, dynamic>.from(json['catalog_query'] as Map);
-    try {
-      if (block is CategoryGridBlock) {
-        validateCatalogQuery58(query, categories: true);
-        final result = await repository.getCategories(
-          CatalogCategoryQuery(
-            perPage: query['limit'] as int,
-            hideEmpty: query['hide_empty'] == true,
-            parentId: query['mode'] == 'parent'
-                ? query['parent_id'] as int
-                : null,
-            includeIds: query['mode'] == 'ids'
-                ? (query['ids'] as List).cast<int>()
-                : const [],
-            sort: query['mode'] == 'ids'
-                ? CatalogCategorySort.include
-                : CatalogCategorySort.name,
-          ),
+    // Invoked immediately (not deferred), so each section's slot requests are
+    // registered with the limiter in saved block order before the next
+    // section's are, even though their catalog reads resolve out of order.
+    tasks.add(() async {
+      try {
+        blocks[index] = await _hydrateCatalogBlock58(
+          block,
+          query,
+          repository,
+          limiter,
         );
-        if (query['mode'] == 'ids') {
-          final ids = (query['ids'] as List).cast<int>();
-          if (result.items.any((item) => !ids.contains(item.id)) ||
-              result.items.map((item) => item.id).toSet().length !=
-                  result.items.length) {
-            throw const FormatException(
-              'Catalog returned unselected categories.',
-            );
-          }
-          final items = [...result.items]
-            ..sort((a, b) => ids.indexOf(a.id).compareTo(ids.indexOf(b.id)));
-          blocks.add(_categories(block, items));
-          continue;
+      } on Object catch (error, stackTrace) {
+        if (!HomeReadSession.isTransient(error)) {
+          // A non-transient failure is already fatal; stop handing further
+          // queued reads to the limiter. In-flight reads still settle.
+          fatalError ??= error;
+          fatalStackTrace ??= stackTrace;
+          limiter.stop(error, stackTrace);
+          return;
         }
-        blocks.add(_categories(block, result.items));
-      } else {
-        validateCatalogQuery58(query, categories: false);
-        final List<CatalogProduct> products;
-        if (query['mode'] == 'ids') {
-          products = await Future.wait(
-            (query['ids'] as List).cast<int>().map(repository.getProduct),
-          );
-          for (var index = 0; index < products.length; index++) {
-            if (products[index].id != (query['ids'] as List)[index]) {
-              throw const FormatException(
-                'Catalog detail returned a different selected product.',
-              );
-            }
-          }
-        } else {
-          final result = await repository.getProducts(
-            CatalogProductQuery(
-              perPage: query['limit'] as int,
-              sort: switch (query['mode']) {
-                'best_selling' => CatalogSort.popularity,
-                'top_rated' => CatalogSort.rating,
-                _ => switch (query['sort']) {
-                  'newest' => CatalogSort.newest,
-                  'relevance' => CatalogSort.relevance,
-                  _ => CatalogSort.name,
-                },
-              },
-              featured: query['mode'] == 'featured' ? true : null,
-              onSale: query['mode'] == 'on_sale' ? true : null,
-              categoryIds: query['mode'] == 'category'
-                  ? [query['category_id'] as int]
-                  : const [],
-              search: query['mode'] == 'search'
-                  ? (query['search'] as String).trim()
-                  : '',
-            ),
-          );
-          products = result.items;
-        }
-        final items = List<HomeProductItem>.unmodifiable(
-          products.map(homeProductFromCatalog),
-        );
-        blocks.add(
-          block is ProductCarouselBlock
-              ? _carousel(block, items)
-              : _grid(block as ProductGridBlock, items, query),
-        );
+        blocks[index] = CatalogUnavailableBlock(block);
       }
-    } catch (error) {
-      if (!HomeReadSession.isTransient(error)) rethrow;
-      blocks.add(CatalogUnavailableBlock(block));
-    }
+    }());
+  }
+  await Future.wait(tasks);
+  if (fatalError != null) {
+    Error.throwWithStackTrace(fatalError!, fatalStackTrace!);
   }
   return HomeLayout(
     version: base.version,
@@ -213,8 +170,166 @@ Future<HomeLayout> hydrateSavedHome58(
     // the interface language must not make an otherwise valid Home disappear.
     locale: locale,
     updatedAt: base.updatedAt,
-    blocks: blocks,
+    blocks: blocks.cast<HomeBlock>(),
   );
+}
+
+Future<HomeBlock> _hydrateCatalogBlock58(
+  HomeBlock block,
+  Map<String, dynamic> query,
+  CatalogRepository repository,
+  _CatalogReadLimiter limiter,
+) async {
+  if (block is CategoryGridBlock) {
+    validateCatalogQuery58(query, categories: true);
+    final result = await limiter.schedule(
+      () => repository.getCategories(
+        CatalogCategoryQuery(
+          perPage: query['limit'] as int,
+          hideEmpty: query['hide_empty'] == true,
+          parentId: query['mode'] == 'parent'
+              ? query['parent_id'] as int
+              : null,
+          includeIds: query['mode'] == 'ids'
+              ? (query['ids'] as List).cast<int>()
+              : const [],
+          sort: query['mode'] == 'ids'
+              ? CatalogCategorySort.include
+              : CatalogCategorySort.name,
+        ),
+      ),
+    );
+    if (query['mode'] == 'ids') {
+      final ids = (query['ids'] as List).cast<int>();
+      if (result.items.any((item) => !ids.contains(item.id)) ||
+          result.items.map((item) => item.id).toSet().length !=
+              result.items.length) {
+        throw const FormatException('Catalog returned unselected categories.');
+      }
+      final items = [...result.items]
+        ..sort((a, b) => ids.indexOf(a.id).compareTo(ids.indexOf(b.id)));
+      return _categories(block, items);
+    }
+    return _categories(block, result.items);
+  }
+  validateCatalogQuery58(query, categories: false);
+  final List<CatalogProduct> products;
+  if (query['mode'] == 'ids') {
+    final ids = (query['ids'] as List).cast<int>();
+    // Each manual product detail read shares the same limiter slots as every
+    // other section's reads; Future.wait preserves the requested id order
+    // regardless of which read resolves first.
+    products = await Future.wait(
+      ids.map(
+        (id) => limiter.schedule(() async {
+          final product = await repository.getProduct(id);
+          if (product.id != id) {
+            throw const FormatException(
+              'Catalog detail returned a different selected product.',
+            );
+          }
+          return product;
+        }),
+      ),
+    );
+  } else {
+    final result = await limiter.schedule(
+      () => repository.getProducts(
+        CatalogProductQuery(
+          perPage: query['limit'] as int,
+          sort: switch (query['mode']) {
+            'best_selling' => CatalogSort.popularity,
+            'top_rated' => CatalogSort.rating,
+            _ => switch (query['sort']) {
+              'newest' => CatalogSort.newest,
+              'relevance' => CatalogSort.relevance,
+              _ => CatalogSort.name,
+            },
+          },
+          featured: query['mode'] == 'featured' ? true : null,
+          onSale: query['mode'] == 'on_sale' ? true : null,
+          categoryIds: query['mode'] == 'category'
+              ? [query['category_id'] as int]
+              : const [],
+          search: query['mode'] == 'search'
+              ? (query['search'] as String).trim()
+              : '',
+        ),
+      ),
+    );
+    products = result.items;
+  }
+  final items = List<HomeProductItem>.unmodifiable(
+    products.map(homeProductFromCatalog),
+  );
+  return block is ProductCarouselBlock
+      ? _carousel(block, items)
+      : _grid(block as ProductGridBlock, items, query);
+}
+
+/// Bounds concurrent catalog repository calls across one Home hydration.
+/// Only the actual repository call is scheduled through this limiter (never
+/// the surrounding per-section coordination), so nested scheduling cannot
+/// deadlock: a section awaiting its own reads never itself occupies a slot.
+class _CatalogReadLimiter {
+  _CatalogReadLimiter(this._maxConcurrent);
+  final int _maxConcurrent;
+  int _active = 0;
+  final Queue<Completer<bool>> _waiters = Queue<Completer<bool>>();
+  bool _stopped = false;
+  Object? _failure;
+  StackTrace? _failureStack;
+
+  void stop(Object error, StackTrace stackTrace) {
+    if (_stopped) return;
+    _failure = error;
+    _failureStack = stackTrace;
+    _stopped = true;
+    while (_waiters.isNotEmpty) {
+      _waiters.removeFirst().complete(false);
+    }
+  }
+
+  Future<T> schedule<T>(Future<T> Function() task) async {
+    if (!await _acquire()) {
+      Error.throwWithStackTrace(_failure!, _failureStack!);
+    }
+    try {
+      if (_stopped) Error.throwWithStackTrace(_failure!, _failureStack!);
+      return await task();
+    } on Object catch (error, stackTrace) {
+      // Stop before releasing the slot: a freed slot must never be handed to
+      // a still-queued read once this read's failure is already fatal.
+      if (!HomeReadSession.isTransient(error)) stop(error, stackTrace);
+      rethrow;
+    } finally {
+      _release();
+    }
+  }
+
+  Future<bool> _acquire() {
+    if (_stopped) return Future.value(false);
+    if (_active < _maxConcurrent) {
+      _active++;
+      return Future.value(true);
+    }
+    final completer = Completer<bool>();
+    _waiters.add(completer);
+    return completer.future;
+  }
+
+  void _release() {
+    _active--;
+    if (_waiters.isEmpty) return;
+    if (_stopped) {
+      while (_waiters.isNotEmpty) {
+        _waiters.removeFirst().complete(false);
+      }
+      return;
+    }
+    _active++;
+    _waiters.removeFirst().complete(true);
+  }
 }
 
 HomeProductItem homeProductFromCatalog(CatalogProduct product) {

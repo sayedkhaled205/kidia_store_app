@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -144,7 +145,236 @@ class _Catalog implements CatalogRepository {
   }) => throw UnsupportedError('Hydration must not create a filter request.');
 }
 
+class _ControlledCatalog extends _Catalog {
+  final started = <String>[];
+  final gates = <Completer<void>>[];
+  final failures = <String, Object>{};
+  int active = 0;
+  int peak = 0;
+  int? wrongProductIdFor;
+
+  Future<T> _hold<T>(String label, Future<T> Function() read) async {
+    started.add(label);
+    final gate = Completer<void>();
+    gates.add(gate);
+    active++;
+    if (active > peak) peak = active;
+    try {
+      await gate.future;
+      if (failures.containsKey(label)) throw failures[label]!;
+      return await read();
+    } finally {
+      active--;
+    }
+  }
+
+  @override
+  Future<CatalogPage<CatalogProduct>> getProducts(CatalogProductQuery query) =>
+      _hold('list:${query.perPage}', () => super.getProducts(query));
+
+  @override
+  Future<CatalogProduct> getProduct(int id) => _hold(
+    'product:$id',
+    () => wrongProductIdFor == id
+        ? Future.value(_product(999))
+        : super.getProduct(id),
+  );
+
+  @override
+  Future<CatalogPage<CatalogCategory>> getCategories(
+    CatalogCategoryQuery query,
+  ) => _hold('categories', () => super.getCategories(query));
+
+  Future<void> settle() async {
+    for (var round = 0; round < 20; round++) {
+      for (final gate in [...gates]) {
+        if (!gate.isCompleted) gate.complete();
+      }
+      await Future<void>.delayed(Duration.zero);
+      if (active == 0) return;
+    }
+    fail('Hydration did not release its pending reads.');
+  }
+}
+
+Map<String, dynamic> _parallelFixture(int sections) {
+  final fixture = appDesignFixture58();
+  final home = appDesignMap58(fixture['home']);
+  final template = appDesignMap58((home['blocks'] as List)[1]);
+  home['blocks'] = [
+    for (var i = 0; i < sections; i++)
+      {
+        ...template,
+        'id': 'parallel-$i',
+        'catalog_query': {
+          'kind': 'products',
+          'mode': 'all',
+          'limit': i + 1,
+          'sort': 'name',
+        },
+      },
+  ];
+  fixture['home'] = home;
+  return fixture;
+}
+
 void main() {
+  group('bounded parallel Home reads', () {
+    test(
+      'three sections overlap and out-of-order results retain saved order',
+      () async {
+        final repository = _ControlledCatalog();
+        final future = _parse(
+          _parallelFixture(6),
+        ).hydrateHome(repository, locale: 'ar');
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started, ['list:1', 'list:2', 'list:3']);
+        repository.gates[2].complete();
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started, ['list:1', 'list:2', 'list:3', 'list:4']);
+        await repository.settle();
+        final layout = await future;
+        expect(layout.blocks.map((b) => b.id), [
+          for (var i = 0; i < 6; i++) 'parallel-$i',
+        ]);
+        expect(repository.peak, 3);
+        expect(repository.active, 0);
+      },
+    );
+
+    test(
+      'manual products share the limit and retain selection order',
+      () async {
+        final fixture = _parallelFixture(2);
+        final blocks = appDesignMap58(fixture['home'])['blocks'] as List;
+        blocks.first['catalog_query'] = {
+          'kind': 'products',
+          'mode': 'ids',
+          'limit': 5,
+          'ids': [5, 4, 3, 2, 1],
+        };
+        final repository = _ControlledCatalog()
+          ..products = [for (var id = 1; id <= 5; id++) _product(id)];
+        final future = _parse(fixture).hydrateHome(repository, locale: 'ar');
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started, ['product:5', 'product:4', 'product:3']);
+        repository.gates[1].complete();
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started.last, 'product:2');
+        await repository.settle();
+        final layout = await future;
+        expect(
+          (layout.blocks.first as ProductGridBlock).items.map((p) => p.id),
+          [5, 4, 3, 2, 1],
+        );
+        expect(repository.started, contains('list:2'));
+        expect(repository.peak, 3);
+      },
+    );
+
+    test(
+      'categories share slots while static and disabled sections do not fetch',
+      () async {
+        final fixture = _parallelFixture(3);
+        final home = appDesignMap58(fixture['home']);
+        final original =
+            appDesignMap58(appDesignFixture58()['home'])['blocks'] as List;
+        final blocks = home['blocks'] as List;
+        blocks[1]['enabled'] = false;
+        home['blocks'] = [original[0], original[2], ...blocks];
+        fixture['home'] = home;
+        final repository = _ControlledCatalog();
+        final future = _parse(fixture).hydrateHome(repository, locale: 'ar');
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started, ['categories', 'list:1', 'list:3']);
+        await repository.settle();
+        expect((await future).blocks.length, 5);
+        expect(repository.peak, 3);
+      },
+    );
+
+    test('transient failure remains local to its section', () async {
+      final repository = _ControlledCatalog();
+      repository.failures['list:2'] = const CatalogRepositoryException(
+        kind: StoreApiFailureKind.timeout,
+        message: 'Timeout',
+      );
+      final future = _parse(
+        _parallelFixture(5),
+      ).hydrateHome(repository, locale: 'ar');
+      await Future<void>.delayed(Duration.zero);
+      await repository.settle();
+      final blocks = (await future).blocks;
+      expect(blocks[1], isA<CatalogUnavailableBlock>());
+      expect(blocks.whereType<ProductGridBlock>().length, 4);
+      expect(repository.started.length, 5);
+      expect(repository.peak, 3);
+    });
+
+    test(
+      'a mismatched manual product stops queued reads before they start',
+      () async {
+        final fixture = _parallelFixture(2);
+        (appDesignMap58(fixture['home'])['blocks'] as List)
+            .first['catalog_query'] = {
+          'kind': 'products',
+          'mode': 'ids',
+          'limit': 5,
+          'ids': [5, 4, 3, 2, 1],
+        };
+        final repository = _ControlledCatalog()
+          ..products = [for (var id = 1; id <= 5; id++) _product(id)]
+          ..wrongProductIdFor = 5;
+        final rejected = expectLater(
+          _parse(fixture).hydrateHome(repository, locale: 'ar'),
+          throwsA(isA<FormatException>()),
+        );
+        await Future<void>.delayed(Duration.zero);
+        repository.gates.first.complete();
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.started.length, 3);
+        await repository.settle();
+        await rejected;
+        expect(repository.started.length, 3);
+      },
+    );
+
+    for (final manual in [false, true]) {
+      test(
+        'fatal read retains original error and stops queued work (manual=$manual)',
+        () async {
+          final fixture = _parallelFixture(6);
+          if (manual) {
+            (appDesignMap58(fixture['home'])['blocks'] as List)
+                .first['catalog_query'] = {
+              'kind': 'products',
+              'mode': 'ids',
+              'limit': 5,
+              'ids': [5, 4, 3, 2, 1],
+            };
+          }
+          final repository = _ControlledCatalog()
+            ..products = [for (var id = 1; id <= 5; id++) _product(id)];
+          const error = CatalogRepositoryException(
+            kind: StoreApiFailureKind.unauthorized,
+            message: 'Unauthorized',
+            statusCode: 403,
+          );
+          repository.failures[manual ? 'product:5' : 'list:1'] = error;
+          final future = _parse(fixture).hydrateHome(repository, locale: 'ar');
+          final rejected = expectLater(future, throwsA(same(error)));
+          await Future<void>.delayed(Duration.zero);
+          repository.gates.first.complete();
+          await Future<void>.delayed(Duration.zero);
+          expect(repository.started.length, 3);
+          await repository.settle();
+          await rejected;
+          expect(repository.started.length, 3);
+          expect(repository.active, 0);
+        },
+      );
+    }
+  });
   for (final platform in CommercePlatform.values) {
     test('saved $platform Home works in both app languages', () async {
       final fixture = appDesignFixture58()
