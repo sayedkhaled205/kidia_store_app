@@ -106,7 +106,11 @@ class AccountScreen extends ConsumerWidget {
                     isArabic
                         ? 'تسجيل الدخول / إنشاء حساب'
                         : 'Sign in / Register',
-                    const ['Sign in / Register', 'تسجيل الدخول / إنشاء حساب'],
+                    const [
+                      'Sign in / Register',
+                      'Sign in / Create account',
+                      'تسجيل الدخول / إنشاء حساب',
+                    ],
                   ),
                   showEmail: summarySettings.boolean('show_email', true),
                   cardStyle: summarySettings.string('card_style', 'elevated'),

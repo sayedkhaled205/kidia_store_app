@@ -20,6 +20,23 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  testWidgets('legacy English guest title follows Arabic app language', (tester) async {
+    await tester.pumpWidget(ProviderScope(overrides: [
+      authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+      cmsPageLayoutProvider('account').overrideWith((ref) async => CmsPageLayout.fromJson({
+        'page': 'account', 'header': {'enabled': false}, 'footer': {'enabled': false},
+        'elements': [
+          {'id': 'account_summary', 'enabled': true, 'settings': {'guest_title': 'Sign in / Create account'}},
+          {'id': 'account_menu', 'enabled': false},
+        ],
+      })),
+    ], child: const MaterialApp(locale: Locale('ar'), supportedLocales: [Locale('ar')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates, home: AccountScreen())));
+    await tester.pumpAndSettle();
+    expect(find.text('تسجيل الدخول / إنشاء حساب'), findsOneWidget);
+    expect(find.text('Sign in / Create account'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
   for(final selected in ['orders','addresses','profile','support']) {
     testWidgets('account menu shows only the configured action: $selected', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390,844));
