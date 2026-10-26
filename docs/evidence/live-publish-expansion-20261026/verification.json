@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-26",
+  "source_commit": "fbe2b5d8feb521375ee2fe317e1066d3d1a914c1",
+  "verification_commit": "80727fb78be93a48aa7fa295c2e922a6228df761",
+  "scope": "shared WooCommerce, Shopify and Odoo builder runtime",
+  "local_checks": {
+    "flutter_full_suite": {
+      "passed": 776,
+      "skipped": 6,
+      "failed": 0,
+      "note": "before final Odoo styling/Arabic and URI-email review fixes; those passed subsequent targeted tests and CI"
+    },
+    "post_review_publication_and_account": {
+      "passed": 7,
+      "failed": 0
+    },
+    "final_odoo_account_widgets": {
+      "passed": 3,
+      "failed": 0
+    },
+    "analysis": "No issues found",
+    "schema_fields": 36,
+    "schema_generation": "matched",
+    "preview_asset_verification": {
+      "assets": 46,
+      "differences": 0
+    },
+    "web_release": "built",
+    "node_php_contracts": "passed"
+  },
+  "server": {
+    "backend_transaction": "explicit PASS marker verified; owner/concurrency/draft isolation/support/checkout/publication/rollback; all database changes rolled back",
+    "preview_runtime": "2a53908a23c9",
+    "helper": "assets/page-controls-899e24b034fc.js",
+    "activated": true,
+    "source_branch": "codex/unified-mobile-build",
+    "backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-2a53908a23c9"
+  },
+  "odoo_matrix": {
+    "scope": "offline contracts; not live payment or universal platform readiness",
+    "complete": true,
+    "cases": [
+      {
+        "name": "odoo-alpha",
+        "platform": "odoo",
+        "origin": "https://alpha.odoo.example.invalid",
+        "locale": "ar",
+        "country": "EG",
+        "passed": true,
+        "tests_passed": 213,
+        "failed_tests": [],
+        "skipped_tests": [],
+        "platform_binding_executed": true
+      },
+      {
+        "name": "odoo-beta",
+        "platform": "odoo",
+        "origin": "https://beta.odoo.example.invalid",
+        "locale": "en",
+        "country": "US",
+        "passed": true,
+        "tests_passed": 213,
+        "failed_tests": [],
+        "skipped_tests": [],
+        "platform_binding_executed": true
+      }
+    ]
+  },
+  "worker": {
+    "route": "Claude subscription",
+    "smoke": "READY",
+    "implementation": "exited 1, no changes; Codex continued; no API billing fallback"
+  },
+  "limitations": [
+    "New runtime consumers need one baseline installed app update.",
+    "Subsequent supported configuration updates use Publish; arbitrary native code, launcher assets, SDKs and permissions still need binary updates.",
+    "No physical iOS execution; no new live payment charge in this task.",
+    "Shopify official checkout remains Shopify-controlled."
+  ],
+  "ci": {
+    "tested_commit": "80727fb78be93a48aa7fa295c2e922a6228df761",
+    "quality": {
+      "run": 40332603168,
+      "conclusion": "success",
+      "includes": [
+        "full Flutter tests",
+        "static analysis",
+        "three-platform two-merchant contracts",
+        "WordPress/PHP/JS contracts",
+        "preview rebuild equality",
+        "Android debug APK build"
+      ]
+    },
+    "shared_builder": {
+      "run": 40332603530,
+      "conclusion": "success"
+    },
+    "connector": {
+      "run": 40330507553,
+      "conclusion": "success",
+      "source_commit": "fbe2b5d8feb521375ee2fe317e1066d3d1a914c1"
+    }
+  },
+  "live_visual": {
+    "canonical_url": "https://api.woomobile.app/mobishop-builder-v26/index.html",
+    "verified": [
+      "public support editor with 4 controls",
+      "Google button present with multicolor G",
+      "phone/email input present",
+      "account language choice retained",
+      "current runtime loaded from 2a53908a23c9"
+    ],
+    "screenshot": "published-builder.png",
+    "merchant_draft_writes": "none outside rolled-back backend test"
+  }
+}
