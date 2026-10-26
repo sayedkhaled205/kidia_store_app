@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -8,6 +11,48 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/wishlist_test_data.dart';
 
 void main() {
+  testWidgets('Arabic wishlist preserves merchant custom text', (tester) async {
+    final base = CmsPageLayout.fallback('wishlist');
+    final layout = CmsPageLayout(page:base.page,header:base.header,footer:base.footer,
+      elements:base.elements.map((e)=>CmsPageComponent(id:e.id,type:e.type,enabled:e.enabled,
+        settings:{...e.settings, if(e.type == 'empty_state') ...{
+          'title':'My special collection','description':'Custom instructions','button_label':'Browse my shop',
+        }},
+      )).toList());
+    await tester.pumpWidget(ProviderScope(overrides:[
+      cmsPageLayoutProvider('wishlist').overrideWith((_) async=>layout),
+    ],child:MaterialApp(locale:const Locale('ar'),supportedLocales:const[Locale('ar'),Locale('en')],
+      localizationsDelegates:GlobalMaterialLocalizations.delegates,
+      home:WishlistScreen(repository:FakeWishlistRepository(),catalogRepository:FakeWishlistCatalogRepository()),
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('My special collection'), findsOneWidget);
+    expect(find.text('Custom instructions'), findsOneWidget);
+    expect(find.text('Browse my shop'), findsOneWidget);
+  });
+  testWidgets('Arabic wishlist translates saved default empty and sign-in copy', (tester) async {
+    for (final signIn in [false, true]) {
+      await tester.pumpWidget(ProviderScope(child: MaterialApp(
+        locale: const Locale('ar'),
+        supportedLocales: const [Locale('ar'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: WishlistScreen(
+          key: ValueKey(signIn),
+          repository: FakeWishlistRepository(),
+          catalogRepository: FakeWishlistCatalogRepository(),
+          requiresSignIn: signIn,
+        ),
+      )));
+      await tester.pumpAndSettle();
+      expect(find.text(signIn ? 'سجّل الدخول لعرض المفضلة' : 'المفضلة فارغة'), findsOneWidget);
+      expect(find.text(signIn ? 'تسجيل الدخول' : 'متابعة التسوق'), findsOneWidget);
+      expect(find.text('قد يعجبك أيضًا'), findsOneWidget);
+      expect(find.text('Your wishlist is empty'), findsNothing);
+      expect(find.text('You may also like'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
   testWidgets('shows an empty wishlist without the local-only banner', (
     WidgetTester tester,
   ) async {

@@ -11,6 +11,7 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/wishlist/application/wishlist_controller.dart';
 import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:mobishop_store_app/features/product/presentation/widgets/product_quick_add.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
@@ -525,9 +526,12 @@ class _WishlistMessage extends StatelessWidget {
             height: settings.number('content_gap', 18).clamp(0, 48).toDouble(),
           ),
           Text(
-            settings.string(
-              'title',
-              signIn ? 'Sign in to view your wishlist' : copy.emptyTitle,
+            cmsFooterLabel(
+              settings.string('title', ''),
+              signIn ? copy.signInTitle : copy.emptyTitle,
+              signIn
+                  ? const ['Sign in to view your wishlist', 'سجّل الدخول لعرض المفضلة']
+                  : const ['Your wishlist is empty', 'المفضلة فارغة'],
             ),
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -544,7 +548,10 @@ class _WishlistMessage extends StatelessWidget {
           if (settings.boolean('show_description', !signIn)) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              settings.string('description', copy.emptyBody),
+              cmsFooterLabel(settings.string('description', ''), copy.emptyBody,
+                const ['Add items here by clicking the little heart!',
+                  'Tap the heart on any product to save it here.',
+                  'اضغط على القلب بجوار أي منتج لحفظه هنا.']),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: settings
@@ -603,9 +610,11 @@ class _WishlistMessage extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  settings.string(
-                    'button_label',
-                    signIn ? 'Sign In' : copy.continueShopping,
+                  cmsFooterLabel(
+                    settings.string('button_label', ''),
+                    signIn ? copy.signIn : copy.continueShopping,
+                    signIn ? const ['Sign In', 'تسجيل الدخول']
+                        : const ['Go Shopping', 'Continue shopping', 'متابعة التسوق'],
                   ),
                 ),
               ),
@@ -684,7 +693,9 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            widget.settings.string('title', 'You may also like'),
+            cmsFooterLabel(widget.settings.string('title', ''),
+              _WishlistCopy.of(context).recommendations,
+              const ['You may also like', 'قد يعجبك أيضًا']),
             style: TextStyle(
               fontSize: widget.settings
                   .number('title_size', 20)
@@ -1621,6 +1632,9 @@ class _WishlistCopy {
       : 'Saved on this device for this store only.';
   String get loading => arabic ? 'جارٍ تحميل المفضلة…' : 'Loading wishlist…';
   String get emptyTitle => arabic ? 'المفضلة فارغة' : 'Your wishlist is empty';
+  String get signInTitle => arabic ? 'سجّل الدخول لعرض المفضلة' : 'Sign in to view your wishlist';
+  String get signIn => arabic ? 'تسجيل الدخول' : 'Sign In';
+  String get recommendations => arabic ? 'قد يعجبك أيضًا' : 'You may also like';
   String get emptyBody => arabic
       ? 'اضغط على القلب بجوار أي منتج لحفظه هنا.'
       : 'Tap the heart on any product to save it here.';

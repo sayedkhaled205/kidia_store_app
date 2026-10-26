@@ -13,6 +13,15 @@ import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_
 import 'package:mobishop_store_app/features/catalog/presentation/models/catalog_category_tree.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
 
+// Bumped on every Categories footer tap so the category screen can reset its
+// drilldown/expansion state without refetching the catalog tree.
+final categoryEntryRevisionProvider = NotifierProvider<CategoryEntryRevision, int>(CategoryEntryRevision.new);
+class CategoryEntryRevision extends Notifier<int> {
+  @override
+  int build() => 0;
+  void enter() => state++;
+}
+
 final catalogCategoryTreeProvider =
     FutureProvider.autoDispose<CatalogCategoryTree>((Ref ref) async {
       final CatalogRepository repository = ref.watch(catalogRepositoryProvider);

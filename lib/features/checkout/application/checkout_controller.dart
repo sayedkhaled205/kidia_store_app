@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
+import '../domain/entities/saved_checkout_address92.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart.dart';
@@ -93,8 +94,41 @@ class CheckoutController extends ChangeNotifier {
   bool paymentMethodSupported(String id) =>
       _checkout?.nativePaymentAdapters[id] != 'unavailable';
   int addressSelectionRevision = 0;
+  String? _selectedSavedAddressId;
+  Map<String, String> _savedAddressContactDefaults = const {};
+  bool _editingSavedAddress = false;
+  String? get selectedSavedAddressId => _selectedSavedAddressId;
+  List<SavedCheckoutAddress92> get savedAddresses =>
+      SavedCheckoutAddress92.distinct(_checkout?.savedAddresses ?? const [], defaults: _savedAddressContactDefaults);
 
-  void selectSavedAddress(Map<String, String> values) {
+  bool get showBillingEditor => _selectedSavedAddressId == null ||
+      _editingSavedAddress || !_billingAddressComplete ||
+      _fieldErrors.keys.any(_isBillingError);
+
+  bool _isBillingError(String key) =>
+      key.startsWith('billing_') || key.startsWith('billing.') ||
+      (_checkout?.fieldDefinitions.any((field) => field.key == key &&
+          field.group == CheckoutFieldGroup.billing) ?? false);
+
+  bool get _billingAddressComplete {
+    final errors = <String, String>{};
+    if (hasDynamicFields) {
+      _validateDynamicFields(errors);
+    } else {
+      _validateAddress(_billingAddress, prefix: 'billing',
+          requiresEmail: false, requiresPhone: true, errors: errors);
+    }
+    return !errors.keys.any(_isBillingError);
+  }
+
+  void editSavedAddress() {
+    if (!_canEditForm) return;
+    _editingSavedAddress = true;
+    _notify();
+  }
+
+
+  void selectSavedAddress(Map<String, String> values, {String? addressId}) {
     if (!_canEditForm) return;
     setShipToDifferentAddress(false);
     // Replace the address as a whole. Missing optional fields belong to the
@@ -118,6 +152,12 @@ class CheckoutController extends ChangeNotifier {
         setFieldValue(field.key, values[key] ?? field.defaultValue);
       }
     }
+    _selectedSavedAddressId = addressId ?? savedAddresses
+        .where((row) => matchesSavedAddress(row.values)).firstOrNull?.id;
+    _editingSavedAddress = !_billingAddressComplete;
+    // Old validation messages must not follow a different selected address.
+    _fieldErrors = {for (final entry in _fieldErrors.entries)
+      if (!_isBillingError(entry.key)) entry.key: entry.value};
     addressSelectionRevision++;
     _notify();
   }
@@ -135,14 +175,16 @@ class CheckoutController extends ChangeNotifier {
 
   bool matchesSavedAddress(Map<String, String> values) {
     if (_billingAddress.address1.isEmpty) return false;
-    return _billingAddress.address1 == (values['address_1'] ?? '') &&
-        _billingAddress.address2 == (values['address_2'] ?? '') &&
-        _billingAddress.city == (values['city'] ?? '') &&
-        _billingAddress.state == (values['state'] ?? '') &&
-        _billingAddress.postcode == (values['postcode'] ?? '') &&
-        _billingAddress.country == (values['country'] ?? _billingAddress.country) &&
-        _billingAddress.firstName == (values['first_name'] ?? '') &&
-        _billingAddress.lastName == (values['last_name'] ?? '');
+    final coreKeys = {'first_name', 'last_name', 'company', 'address_1',
+      'address_2', 'city', 'state', 'postcode', 'country'};
+    for (final key in {...coreKeys, ...values.keys}) {
+      // A missing contact uses the signed-in customer's existing contact.
+      if ((key == 'email' || key == 'phone') && !values.containsKey(key)) continue;
+      final fieldKey = (_checkout?.fieldDefinitions.any((field) => field.key == key &&
+          field.group == CheckoutFieldGroup.billing) ?? false) ? key : 'billing_$key';
+      if (_valueForKey(fieldKey).trim() != (values[key] ?? '').trim()) return false;
+    }
+    return true;
   }
 
   Map<String, String> get fieldErrors =>
@@ -268,6 +310,10 @@ class CheckoutController extends ChangeNotifier {
           if (!_isCoreCheckoutField(field.key) && field.defaultValue.isNotEmpty)
             field.key: field.defaultValue,
       };
+      _savedAddressContactDefaults = {'email': _billingAddress.email, 'phone': _billingAddress.phone};
+      _selectedSavedAddressId = savedAddresses
+          .where((row) => matchesSavedAddress(row.values)).firstOrNull?.id;
+      _editingSavedAddress = !_billingAddressComplete;
       _pendingIdempotencyKey = null;
       _addressUpdateError = null;
       _customerUpdateDirty = false;
@@ -297,6 +343,7 @@ class CheckoutController extends ChangeNotifier {
 
   void updateBillingAddress(CheckoutAddress address) {
     if (!_canEditForm) return;
+    _selectedSavedAddressId = null;
     _billingAddress = address;
     _onFormChanged('billing.');
     _scheduleCustomerUpdate();
@@ -406,6 +453,7 @@ class CheckoutController extends ChangeNotifier {
           fieldKey: value,
         });
     }
+    if (_isBillingError(fieldKey)) _selectedSavedAddressId = null;
     _onFormChanged(fieldKey);
     if (fieldKey.startsWith('billing_') || fieldKey.startsWith('shipping_')) {
       _scheduleCustomerUpdate();
@@ -456,6 +504,7 @@ class CheckoutController extends ChangeNotifier {
       errors['customerNote'] = 'The order note is too long.';
     }
 
+    if (errors.keys.any(_isBillingError)) _editingSavedAddress = true;
     _fieldErrors = Map<String, String>.unmodifiable(errors);
     _submitError = null;
     _notify();
@@ -1252,6 +1301,7 @@ class CheckoutController extends ChangeNotifier {
     if (mapped.isEmpty) {
       return false;
     }
+    if (mapped.keys.any(_isBillingError)) _editingSavedAddress = true;
     _fieldErrors = Map<String, String>.unmodifiable(<String, String>{
       ..._fieldErrors,
       ...mapped,

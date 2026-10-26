@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/saved_checkout_address92.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,22 +34,74 @@ void main() {
   testWidgets('choose either saved address or start a new address', (tester) async {
     _useTallSurface(tester);
     final repo = FakeCheckoutRepository(state: CheckoutState(cart: checkoutCart(), savedAddresses: [
-      const SavedCheckoutAddress92(id:'home',label:'Home',values:{'country':'US','state':'CA','city':'First city','address_1':'First street','address_2':'Suite 4'}),
-      const SavedCheckoutAddress92(id:'work',label:'Work',values:{'country':'US','state':'CA','city':'Second city','address_1':'Second street'}),
+      const SavedCheckoutAddress92(id:'home',label:'Home',values:{'first_name':'Ada','last_name':'Test','phone':'5550100','country':'US','state':'CA','city':'First city','address_1':'First street','address_2':'Suite 4'}),
+      const SavedCheckoutAddress92(id:'work',label:'Work',values:{'first_name':'Ada','last_name':'Test','phone':'5550101','country':'US','state':'CA','city':'Second city','address_1':'Second street'}),
     ]));
     await tester.pumpWidget(_testApp(CheckoutScreen(repository:repo)));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('checkout-address-home')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('checkout-billing-address1')), findsNothing);
+    expect(find.byKey(const Key('checkout-address-selected-home')), findsOneWidget);
+    expect(find.byKey(const Key('checkout-customer-note')), findsOneWidget);
+    expect(find.byKey(const Key('checkout-different-shipping-toggle')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('checkout-edit-address')));
+    await tester.pumpAndSettle();
     expect(find.widgetWithText(TextFormField,'First street'), findsOneWidget);
     await tester.tap(find.byKey(const Key('checkout-address-work')));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(TextFormField,'Second street'), findsOneWidget);
+    expect(find.byKey(const Key('checkout-billing-address1')), findsNothing);
+    expect(find.byKey(const Key('checkout-address-selected-home')), findsNothing);
+    expect(find.byKey(const Key('checkout-address-selected-work')), findsOneWidget);
     expect(find.widgetWithText(TextFormField,'First street'), findsNothing);
     await tester.tap(find.byKey(const Key('checkout-new-address')));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextFormField,'Second street'), findsNothing);
     expect(find.byKey(const Key('checkout-billing-address1')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Arabic checkout headings follow app locale, including saved addresses', (tester) async {
+    _useTallSurface(tester);
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'), supportedLocales: const [Locale('ar'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      home: CheckoutScreen(repository: FakeCheckoutRepository(state: CheckoutState(
+        cart: checkoutCart(), savedAddresses: const [SavedCheckoutAddress92(
+          id: 'incomplete', label: 'Test', values: {'address_1': 'Test street'},
+        )],
+      ))),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('إتمام الطلب'), findsOneWidget);
+    expect(find.text('عناوينك المحفوظة'), findsOneWidget);
+    expect(find.text('عنوان جديد'), findsOneWidget);
+    expect(find.text('Checkout'), findsNothing);
+    expect(find.text('Billing address'), findsNothing);
+    await tester.tap(find.byKey(const Key('checkout-address-incomplete')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('checkout-billing-address1')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('complete saved address submits without repeated billing fields', (tester) async {
+    _useTallSurface(tester);
+    final repo = FakeCheckoutRepository(state: CheckoutState(cart: checkoutCart(), savedAddresses: const [
+      SavedCheckoutAddress92(id: 'one', label: 'One', values: {
+        'first_name':'Ada','last_name':'Test','phone':'5550100', 'country':'US',
+        'state':'CA','city':'Test city','address_1':'Test street',
+      }),
+    ]));
+    await tester.pumpWidget(_testApp(CheckoutScreen(repository: repo)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('checkout-address-one')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('checkout-billing-firstName')), findsNothing);
+    await tester.tap(find.byKey(const Key('checkout-place-order')));
+    await tester.pumpAndSettle();
+    expect(repo.submissions, hasLength(1));
+    expect(repo.submissions.single.billingAddress.address1, 'Test street');
+    expect(repo.submissions.single.shippingAddress.address1, 'Test street');
     expect(tester.takeException(), isNull);
   });
 

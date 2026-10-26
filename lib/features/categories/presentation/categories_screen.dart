@@ -25,6 +25,7 @@ class CategoriesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final CatalogCopy copy = CatalogCopy.of(context);
+    final entryRevision = ref.watch(categoryEntryRevisionProvider);
     final AsyncValue<CatalogCategoryTree> tree = ref.watch(
       catalogCategoryTreeProvider,
     );
@@ -105,6 +106,7 @@ class CategoriesScreen extends ConsumerWidget {
                   }
 
                   return _CategoryLayoutView(
+                    key: ValueKey(entryRevision),
                     tree:
                         presentationSettings != null && categorySettings != null
                         ? value.withPresentation(categorySettings)
@@ -123,6 +125,7 @@ class CategoriesScreen extends ConsumerWidget {
 
 class _CategoryLayoutView extends StatefulWidget {
   const _CategoryLayoutView({
+    super.key,
     required this.tree,
     required this.onRefresh,
     this.settings,
@@ -192,33 +195,42 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           child: Column(
             children: <Widget>[
               if (selected != null)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton.icon(
-                        key: const Key('category-back-to-roots'),
-                        onPressed: () => setState(() {
-                          _categoryPath.removeLast();
-                          _sidebarRootIndex = 0;
-                        }),
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        label: Text(
-                          selected.category.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: SizedBox(
+                    height: 48,
+                    child: NavigationToolbar(
+                      centerMiddle: true,
+                      middleSpacing: 8,
+                      leading: SizedBox(width: 96, child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: IconButton(
+                          key: const Key('category-back-to-roots'),
+                          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                          onPressed: () => setState(() {
+                            _categoryPath.removeLast();
+                            _sidebarRootIndex = 0;
+                          }),
+                          icon: const BackButtonIcon(),
                         ),
+                      )),
+                      middle: Text(selected.category.name,
+                        key: const Key('category-level-title'),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      trailing: SizedBox(width: 96, child: OutlinedButton(
+                        key: const Key('category-view-all'),
+                        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                        onPressed: () => _openCategoryProducts(context, selected.category),
+                        child: FittedBox(fit: BoxFit.scaleDown, child: Text(
+                          CatalogCopy.of(context).isArabic ? 'عرض الكل' : 'View all',
+                          maxLines: 1,
+                        )),
+                      )),
                     ),
-                    TextButton(
-                      onPressed: () =>
-                          _openCategoryProducts(context, selected.category),
-                      child: Text(
-                        CatalogCopy.of(context).isArabic
-                            ? 'عرض الكل'
-                            : 'View all',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               Expanded(child: content),
             ],
@@ -928,9 +940,15 @@ class _CategoryGridTile extends StatelessWidget {
                     child: Row(
                       children: <Widget>[
                         Expanded(
-                          child: Text(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: category.textAlign == 'center' ? Alignment.center
+                                : category.textAlign == 'end' ? AlignmentDirectional.centerEnd
+                                : AlignmentDirectional.centerStart,
+                            child: Text(
                             category.name,
-                            maxLines: category.textMaxLines,
+                            maxLines: 1,
+                            softWrap: false,
                             overflow: TextOverflow.ellipsis,
                             textAlign: _categoryTextAlign(category.textAlign),
                             style: theme.textTheme.labelLarge?.copyWith(
@@ -944,6 +962,7 @@ class _CategoryGridTile extends StatelessWidget {
                               ),
                               height: category.lineHeight,
                             ),
+                          ),
                           ),
                         ),
                         if (category.showArrow)

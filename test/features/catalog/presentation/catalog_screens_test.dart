@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
+import 'package:mobishop_store_app/app/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +25,59 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('Categories footer always returns from a child to root after Home', (tester) async {
+    await tester.pumpWidget(_app(_ScreenCatalogRepository(
+      categoryLayout:'visual_grid', gridColumns:2, navigationMode:'separate_page', deepTree:true,
+    ), const CategoriesScreen(), shell:true));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Women').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dresses').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Summer dresses'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('cms-bottom-nav-home')));
+    await tester.pumpAndSettle();
+    expect(find.text('Home screen'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
+    await tester.pumpAndSettle();
+    expect(find.text('Women'), findsOneWidget);
+    expect(find.text('Men'), findsOneWidget);
+    expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+    // A second tap after opening another child must also reset the local path.
+    await tester.tap(find.text('Women'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+  });
+  for (final direction in TextDirection.values) {
+    for (final width in [320.0,360.0,390.0]) {
+      testWidgets('single-line category title and centered header $direction $width', (tester) async {
+        tester.view.physicalSize = Size(width, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(_app(_ScreenCatalogRepository(
+          categoryLayout:'visual_grid', gridColumns:2, rootName:'مستلزمات الأطفال', navigationMode:'separate_page',
+        ), const CategoriesScreen(),direction:direction,scale:1.5));
+        await tester.pumpAndSettle();
+        final title = find.text('مستلزمات الأطفال');
+        expect(tester.widget<Text>(title).maxLines, 1);
+        expect(tester.widget<Text>(title).softWrap, false);
+        expect(find.ancestor(of:title,matching:find.byType(FittedBox)), findsOneWidget);
+        await tester.tap(title);
+        await tester.pumpAndSettle();
+        expect(tester.getCenter(find.byKey(const Key('category-level-title'))).dx, closeTo(width/2, 1));
+        expect(find.byKey(const Key('category-view-all')), findsOneWidget);
+        expect(tester.widget(find.byKey(const Key('category-view-all'))), isA<OutlinedButton>());
+        await tester.tap(find.byKey(const Key('category-back-to-roots')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('category-level-title')), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
   testWidgets('cursor load more works without an exact page count', (tester) async {
     final repository = _ScreenCatalogRepository(cursor: true);
       await tester.pumpWidget(_app(repository, const CatalogProductListScreen(
@@ -502,10 +557,11 @@ void main() {
   });
 }
 
-Widget _app(CatalogRepository repository, Widget home) {
+Widget _app(CatalogRepository repository, Widget home, {bool shell = false, TextDirection? direction, double scale = 1}) {
   return ProviderScope(
     overrides: [
       catalogRepositoryProvider.overrideWithValue(repository),
+      cartBadgeCountProvider.overrideWithValue(0),
       // These renderer fixtures carry presentation settings on their category
       // records. Do not require a compiled merchant design or a live CMS read.
       // Saved-design validation and platform binding have their own contracts.
@@ -530,9 +586,22 @@ Widget _app(CatalogRepository repository, Widget home) {
     ],
     child: MaterialApp.router(
       locale: const Locale('en'),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+        child: Directionality(textDirection: direction ?? TextDirection.ltr, child: child!),
+      ),
       routerConfig: GoRouter(
+        initialLocation: shell ? '/categories' : '/',
         routes: [
-          GoRoute(path: '/', builder: (context, state) => home),
+          if (shell) StatefulShellRoute.indexedStack(
+            builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
+            branches: [
+              StatefulShellBranch(routes:[GoRoute(path:'/home',builder:(_,_)=>const Scaffold(body:Text('Home screen')))]),
+              StatefulShellBranch(routes:[GoRoute(path:'/categories',builder:(_,_)=>home)]),
+              StatefulShellBranch(routes:[GoRoute(path:'/wishlist',builder:(_,_)=>const Scaffold())]),
+              StatefulShellBranch(routes:[GoRoute(path:'/account',builder:(_,_)=>const Scaffold())]),
+            ],
+          ) else GoRoute(path: '/', builder: (context, state) => home),
           GoRoute(
             path: '/categories/:id',
             builder: (context, state) => Scaffold(
@@ -548,6 +617,7 @@ Widget _app(CatalogRepository repository, Widget home) {
 class _ScreenCatalogRepository implements CatalogRepository {
   _ScreenCatalogRepository({
     this.categoryLayout = 'default',
+    this.rootName = 'Women',
     this.navigationMode = 'drilldown',
     this.gridColumns = 4,
     this.deepTree = false,
@@ -556,6 +626,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   });
 
   final String categoryLayout;
+  final String rootName;
   final String navigationMode;
   final int gridColumns;
   final bool deepTree;
@@ -621,7 +692,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
       items: <CatalogCategory>[
         CatalogCategory(
           id: 1,
-          name: 'Women',
+          name: rootName,
           slug: 'women',
           count: 8,
           imageSize: 80,
