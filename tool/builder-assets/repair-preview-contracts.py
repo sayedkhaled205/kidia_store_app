@@ -6,6 +6,7 @@ def replace_once(source, before, after):
     return source.replace(before, after, 1)
 
 def repair_central(source):
+    source = repair_centered_loader_central(source)
     source = repair_category_brand_central(source)
     if '/* preview-commerce-contract-v1 */' in source:
         return source
@@ -32,6 +33,37 @@ def repair_central(source):
     source = replace_once(source, "      frame.inert = false;\n      setTransition('');\n      return;",
         "      frame.inert = false;\n      sendMobilePreview(true);\n      setTransition('');\n      return;")
     return '/* preview-commerce-contract-v1 */\n' + helper + '\n' + source
+
+def repair_centered_loader_central(source):
+    if '/* centered-page-loader-v1 */' in source:
+        return source
+    return replace_once(source,
+        "  const transitionText = document.getElementById('kidia-page-transition-text');",
+        """  const transitionText = document.getElementById('kidia-page-transition-text');
+  /* centered-page-loader-v1 */
+  const loaderStyle = document.createElement('style');
+  loaderStyle.textContent = `
+    #kidia-page-transition:not(.is-error) {
+      inset: 0; transform: none; width: auto; max-width: none;
+      display: grid; place-items: center; padding: 0; border: 0;
+      border-radius: 0; background: transparent; box-shadow: none;
+      pointer-events: none;
+    }
+    #kidia-page-transition:not(.is-error)::before {
+      content: ''; width: 48px; height: 48px; box-sizing: border-box;
+      border: 4px solid #dfeee9; border-top-color: var(--web-accent, #21806b);
+      border-radius: 50%; animation: kidia-page-loader-spin .8s linear infinite;
+    }
+    #kidia-page-transition:not(.is-error) #kidia-page-transition-text {
+      position: absolute; width: 1px; height: 1px; padding: 0;
+      margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+    @keyframes kidia-page-loader-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #kidia-page-transition:not(.is-error)::before { animation-duration: 2s; }
+    }
+  `;
+  document.head.append(loaderStyle);""")
 
 def repair_category_brand_central(source):
     if 'identity: applicationPreviewIdentity || {},' in source:
