@@ -16,6 +16,12 @@
     "errors": 0,
     "warnings": 326
   },
-  "review_upload_status": "processing",
-  "production_installation": "not changed by this task"
+  "review_upload_status": "verified in WordPress submission history",
+  "production_installation": "not changed by this task",
+  "review_status": "Being Reviewed - waiting on action from our plugins team",
+  "submission_url": "https://wordpress.org/plugins/developers/add/",
+  "uploaded_at": "2026-10-26",
+  "wordpress_review_zip_identifier": "c073d6a823998c5550bb6ba80fc28d08",
+  "manual_email_sent": false,
+  "review_notes": "Included with updated submission; dashboard acknowledges receipt."
 }
