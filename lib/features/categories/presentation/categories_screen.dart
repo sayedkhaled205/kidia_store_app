@@ -139,6 +139,7 @@ class _CategoryLayoutView extends StatefulWidget {
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   final List<int> _categoryPath = <int>[];
   int _sidebarRootIndex = 0;
+  int? _tabRootId;
   final Set<int> _expandedRootIds = <int>{};
 
   CatalogCategory get _settings =>
@@ -148,7 +149,14 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   Widget build(BuildContext context) {
     final String layout = _settings.categoryLayout;
     CatalogCategoryNode? selectedRoot;
-    var level = widget.tree.roots;
+    final tabRoot = widget.tree.roots.firstWhere(
+      (node) => node.category.id == _tabRootId,
+      orElse: () => widget.tree.roots.first,
+    );
+    final baseNodes = layout == 'top_tabs'
+        ? (tabRoot.children.isEmpty ? [tabRoot] : tabRoot.children)
+        : widget.tree.roots;
+    var level = baseNodes;
     for (final id in _categoryPath) {
       final matches = level.where((node) => node.category.id == id);
       if (matches.isEmpty) break;
@@ -157,13 +165,16 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     }
     final selected = selectedRoot;
     final List<CatalogCategoryNode> visibleNodes = selectedRoot == null
-        ? widget.tree.roots
+        ? baseNodes
         : selectedRoot.children;
-    final Widget content = layout == 'sidebar'
-        ? _sidebar(visibleNodes)
-        : layout == 'default' || layout == 'image_banner'
-        ? _defaultList(visibleNodes)
-        : _grid(layout, visibleNodes);
+    final Widget content = switch (layout) {
+      'sidebar' => _sidebar(visibleNodes),
+      'top_tabs' => _tabs(tabRoot, visibleNodes),
+      'grouped_shelves' => _shelves(visibleNodes),
+      'split_rows' || 'text_directory' => _editorialList(visibleNodes),
+      'default' || 'image_banner' => _defaultList(visibleNodes),
+      _ => _grid(layout, visibleNodes),
+    };
     return Transform.translate(
       key: const Key('category-section-layout-merge'),
       offset: Offset(0, _settings.marginBottom - _settings.marginTop),
@@ -403,7 +414,188 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     );
   }
 
-  void _openNode(CatalogCategoryNode node) {
+  Widget _tabs(CatalogCategoryNode selected, List<CatalogCategoryNode> nodes) {
+    final theme = Theme.of(context);
+    return Column(
+      key: const Key('category-layout-top_tabs'),
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              for (final root in widget.tree.roots)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 8),
+                  child: ChoiceChip(
+                    key: Key('category-tab-${root.category.id}'),
+                    label: Text(root.category.name),
+                    selected: root.category.id == selected.category.id,
+                    showCheckmark: false,
+                    onSelected: (_) => setState(() {
+                      _tabRootId = root.category.id;
+                      _categoryPath.clear();
+                      _expandedRootIds.clear();
+                    }),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  selected.category.name,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    _openCategoryProducts(context, selected.category),
+                child: Text(
+                  CatalogCopy.of(context).isArabic ? 'عرض الكل' : 'View all',
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: _grid('visual_grid', nodes)),
+      ],
+    );
+  }
+
+  Widget _editorialList(List<CatalogCategoryNode> nodes) {
+    final split = _settings.categoryLayout == 'split_rows';
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: ListView.separated(
+        key: Key('category-layout-${_settings.categoryLayout}'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        itemCount: nodes.length,
+        separatorBuilder: (_, _) => split
+            ? SizedBox(height: _settings.cardGap)
+            : Divider(
+                height: 1,
+                color: Theme.of(context).dividerColor.withValues(alpha: .22),
+              ),
+        itemBuilder: (context, index) {
+          final node = nodes[index];
+          final expanded = _expandedRootIds.contains(node.category.id);
+          return Column(
+            children: [
+              _CategoryEditorialRow(
+                node: node,
+                split: split,
+                expanded: expanded,
+                onTap: () => _openNode(node),
+              ),
+              if (expanded && _settings.navigationMode == 'expand_inline')
+                _InlineSubcategoryPanel(
+                  key: Key('category-inline-panel-${node.category.id}'),
+                  node: node,
+                  gap: _settings.cardGap,
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _shelves(List<CatalogCategoryNode> nodes) {
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: ListView.separated(
+        key: const Key('category-layout-grouped_shelves'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        itemCount: nodes.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 22),
+        itemBuilder: (context, index) {
+          final node = nodes[index];
+          if (node.children.isEmpty) {
+            return _CategoryEditorialRow(
+              node: node,
+              split: true,
+              expanded: false,
+              onTap: () => _openNode(node),
+            );
+          }
+          final height =
+              (148 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2))
+                  .toDouble();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      node.category.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        _openCategoryProducts(context, node.category),
+                    child: Text(
+                      CatalogCopy.of(context).isArabic
+                          ? 'عرض الكل'
+                          : 'View all',
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: height,
+                child: ListView.separated(
+                  key: Key('category-shelf-${node.category.id}'),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: node.children.length,
+                  separatorBuilder: (_, _) =>
+                      SizedBox(width: _settings.cardGap),
+                  itemBuilder: (context, childIndex) {
+                    final child = node.children[childIndex];
+                    return SizedBox(
+                      width: 124,
+                      child: _CategoryGridTile(
+                        node: child,
+                        layout: 'visual_grid',
+                        expanded: _expandedRootIds.contains(child.category.id),
+                        onTap: () => _openNode(child, ancestor: node),
+                        onExpand: () => _openNode(child, ancestor: node),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (_settings.navigationMode == 'expand_inline')
+                for (final child in node.children)
+                  if (_expandedRootIds.contains(child.category.id) &&
+                      child.children.isNotEmpty)
+                    _InlineSubcategoryPanel(
+                      key: Key('category-inline-panel-${child.category.id}'),
+                      node: child,
+                      gap: _settings.cardGap,
+                    ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openNode(CatalogCategoryNode node, {CatalogCategoryNode? ancestor}) {
     if (_settings.navigationMode == 'expand_inline' &&
         node.children.isNotEmpty) {
       setState(() {
@@ -415,6 +607,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
     }
     if (node.children.isNotEmpty) {
       setState(() {
+        if (ancestor != null) _categoryPath.add(ancestor.category.id);
         _categoryPath.add(node.category.id);
         _sidebarRootIndex = 0;
         _expandedRootIds.clear();
@@ -422,6 +615,113 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       return;
     }
     _openCategoryProducts(context, node.category);
+  }
+}
+
+class _CategoryEditorialRow extends StatelessWidget {
+  const _CategoryEditorialRow({
+    required this.node,
+    required this.split,
+    required this.expanded,
+    required this.onTap,
+  });
+  final CatalogCategoryNode node;
+  final bool split;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = node.category;
+    final theme = Theme.of(context);
+    final title = Text(
+      category.name,
+      maxLines: category.textMaxLines,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontSize: category.fontSize,
+        fontWeight: _categoryFontWeight(category.fontWeight),
+        color: _categoryColor(category.fontColor, theme.colorScheme.onSurface),
+      ),
+    );
+    final arrow = category.showArrow
+        ? Icon(
+            node.children.isEmpty
+                ? Icons.chevron_right_rounded
+                : expanded
+                ? Icons.keyboard_arrow_up_rounded
+                : Icons.keyboard_arrow_down_rounded,
+            size: 20,
+          )
+        : const SizedBox.shrink();
+    return Material(
+      key: Key('category-${split ? 'split' : 'directory'}-card-${category.id}'),
+      color: split
+          ? _categoryColor(
+              category.cardBackgroundColor,
+              theme.colorScheme.surfaceContainerLow,
+            )
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(split ? category.cardRadius : 0),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: split
+            ? SizedBox(
+                height: category.cardHeight > 0 ? category.cardHeight : 128,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(child: title),
+                            const SizedBox(height: 8),
+                            arrow,
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: SizedBox.expand(
+                        child: category.image != null
+                            ? AppNetworkImage(
+                                imageUrl: category.image!.source.toString(),
+                                fit: category.imageFit == 'cover'
+                                    ? BoxFit.cover
+                                    : BoxFit.contain,
+                              )
+                            : ColoredBox(
+                                color: theme.colorScheme.surfaceContainerLow,
+                                child: Icon(
+                                  Icons.category_outlined,
+                                  size: 42,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 18,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: title),
+                    const SizedBox(width: 12),
+                    arrow,
+                  ],
+                ),
+              ),
+      ),
+    );
   }
 }
 
@@ -527,11 +827,7 @@ class _CategorySidebarDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!showChildren || selected.children.isEmpty) {
-      return _CategoryBanner(
-        node: selected,
-        expanded: false,
-        onTap: onOpen,
-      );
+      return _CategoryBanner(node: selected, expanded: false, onTap: onOpen);
     }
     return _InlineSubcategoryPanel(
       key: ValueKey(selected.category.id),

@@ -38,7 +38,7 @@ mobishop_category_assert( 'separate_page' === $separate['general']['navigation_m
 mobishop_category_assert( 5 === $saved['version'], 'The Category element must save the current schema version.' );
 mobishop_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 mobishop_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );
-$layouts = array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar' );
+$layouts = array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar', 'image_banner', 'top_tabs', 'split_rows', 'grouped_shelves', 'text_directory' );
 foreach ( $layouts as $layout ) {
 	$saved_layout = $store->save_settings( array( 'enabled' => '1', 'general' => array( 'category_layout' => $layout, 'grid_columns' => 4, 'card_radius' => 21, 'card_gap' => 13, 'show_arrow' => '0' ) ) );
 	mobishop_category_assert( $layout === $saved_layout['general']['category_layout'], "$layout must save as a category layout." );

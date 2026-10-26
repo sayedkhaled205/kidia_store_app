@@ -28,10 +28,12 @@ test('captured QA categories cannot leak into another connected merchant', () =>
   assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,0);
   s.dom.window.close();
 });
-test('six visual designs preserve merchant records and navigation preference', () => {
+test('ten curated designs preserve merchant records and navigation preference', () => {
   const s=setup();s.api.prepare(s.root);s.api.hydrate(s.root,{category_items:catalog});
   const buttons=Array.from(s.root.querySelectorAll('.kidia-category-design'));
-  assert.equal(buttons.length,6);
+  assert.equal(buttons.length,10);
+  assert.equal(s.root.querySelector('[name="category_general[category_layout]"]').hidden,true);
+  assert.equal(s.root.querySelector('[name="category_general[category_layout]"]').tabIndex,-1);
   assert.equal(s.root.querySelector('[data-design="visual_grid"]').getAttribute('aria-pressed'),'true');
   const records=()=>Array.from(new s.w.FormData(s.root)).filter(([key])=>key.startsWith('categories['));
   const before=records();

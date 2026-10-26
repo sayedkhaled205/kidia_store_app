@@ -5,6 +5,25 @@ import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 
 void main() {
+  test('curated category layouts survive connector presentation parsing', () {
+    for (final layout in [
+      'top_tabs',
+      'split_rows',
+      'grouped_shelves',
+      'text_directory',
+    ]) {
+      final category = CatalogCategoryModel.fromJson({
+        'id': 41,
+        'name': 'Department',
+        'presentation': {
+          'category_layout': layout,
+          'navigation_mode': 'expand_inline',
+        },
+      });
+      expect(category.categoryLayout, layout);
+      expect(category.navigationMode, 'expand_inline');
+    }
+  });
   group('CatalogProductModel', () {
     test(
       'parses a Store API product and tolerates malformed optional records',

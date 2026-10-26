@@ -1,4 +1,4 @@
-/* category-designer-v2: merchant catalog only; presentation never owns records. */
+/* category-designer-v3: curated layouts; merchant catalog only. */
 (function (scope) {
   'use strict';
   const shared = {card_width_percent:100, card_height:0, show_arrow:1,
@@ -17,7 +17,15 @@
     ['sidebar','Side menu','Main categories beside their subcategories',
       {grid_columns:2,card_radius:12,card_gap:10,card_style:'no_shadow',image_size:68,image_shape:'rounded',image_radius:16,image_fit:'contain',text_align:'center',font_size:13}],
     ['image_banner','Wide banners','Full-width photos with readable titles',
-      {grid_columns:2,card_radius:18,card_gap:14,card_style:'no_shadow',image_size:118,image_shape:'rounded',image_radius:14,image_fit:'cover',text_align:'start',font_size:18}]
+      {grid_columns:2,card_radius:18,card_gap:14,card_style:'no_shadow',image_size:118,image_shape:'rounded',image_radius:14,image_fit:'cover',text_align:'start',font_size:18}],
+    ['top_tabs','Department tabs','Switch departments above a full-width grid',
+      {grid_columns:2,card_radius:12,card_gap:12,card_style:'outlined',image_size:100,image_shape:'rounded',image_radius:12,image_fit:'contain',text_align:'center'}],
+    ['split_rows','Split image rows','Large photos beside clear category names',
+      {grid_columns:2,card_radius:12,card_gap:12,card_style:'no_shadow',image_size:118,image_shape:'square',image_radius:0,image_fit:'contain',text_align:'start',font_size:17}],
+    ['grouped_shelves','Grouped shelves','Browse subcategories under each department',
+      {grid_columns:2,card_radius:12,card_gap:10,card_style:'outlined',image_size:90,image_shape:'rounded',image_radius:12,image_fit:'contain',text_align:'center',font_size:13}],
+    ['text_directory','Text directory','Fast scanning, even without category photos',
+      {grid_columns:2,card_radius:0,card_gap:0,card_style:'no_shadow',image_size:64,image_shape:'square',image_radius:0,image_fit:'contain',text_align:'start',font_size:17}]
   ].map(([id,title,description,settings]) => ({id,title,description,settings:{...shared,...settings,category_layout:id}}));
   const q=(root,selector)=>root.querySelector(selector);
   const savedCategories=new WeakMap();
@@ -106,7 +114,9 @@
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
     const doc=root.ownerDocument;const current=select.value;
     select.replaceChildren(...designs.map(d=>{const option=el(doc,'option','',d.title);option.value=d.id;return option;}));select.value=current||'default';
-    const section=el(doc,'section','kidia-category-designs');section.append(el(doc,'h3','','Choose a category design'),el(doc,'p','','Six layouts. Your website categories stay the same.'));
+    select.hidden=true;select.tabIndex=-1;select.setAttribute('aria-hidden','true');
+    const oldLabel=select.closest('label');if(oldLabel){oldLabel.hidden=true;oldLabel.classList.add('kidia-category-layout-field');}
+    const section=el(doc,'section','kidia-category-designs');section.append(el(doc,'h3','','Choose a category design'),el(doc,'p','',`${designs.length} useful layouts. Choose the one that fits your catalog.`));
     const grid=el(doc,'div','kidia-category-design-grid');grid.setAttribute('role','group');grid.setAttribute('aria-label','Category designs');section.append(grid);
     function update(){grid.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.design===select.value)));}
     function apply(id){const preset=designs.find(d=>d.id===id);if(!preset)return;
@@ -119,11 +129,26 @@
     for(const design of designs){const button=el(doc,'button','kidia-category-design');button.type='button';button.dataset.design=design.id;
       const sample=el(doc,'span','kidia-category-sample is-'+design.id);sample.setAttribute('aria-hidden','true');for(let i=0;i<6;i++){const tile=el(doc,'i');tile.append(el(doc,'b'),el(doc,'em'));sample.append(tile);}button.append(sample,el(doc,'strong','',design.title),el(doc,'small','',design.description));button.onclick=()=>apply(design.id);grid.append(button);}
     const general=q(root,'.mobishop-category-general');general.prepend(section);select.addEventListener('change',update);root.addEventListener('change',update);update();
-    // The select remains a compact alternative to the visual design cards.
-    select.addEventListener('change',event=>{if(event.isTrusted)apply(select.value);});
+    // Keep the hidden form value for saved themes; the gallery is the only picker.
     if(!doc.getElementById('kidia-category-designer-style')){const style=el(doc,'style');style.id='kidia-category-designer-style';style.textContent=`
       .kidia-category-designs{margin:0 0 22px;padding:18px;background:#f6faf9;border:1px solid #cfdfdb;border-radius:16px}.kidia-category-designs h3{margin:0 0 6px!important}.kidia-category-designs p{margin:0 0 16px!important;color:#647873}.kidia-category-design-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.kidia-category-design{padding:12px;border:1px solid #cbded8;border-radius:13px;background:#fff;color:#23433a;text-align:start;cursor:pointer;display:grid;gap:6px;min-width:0}.kidia-category-design[aria-pressed=true]{border:2px solid #287f6d;padding:11px;box-shadow:0 0 0 3px #e2f2ed;background:#f0f9f6}.kidia-category-design:focus-visible{outline:3px solid #319c85;outline-offset:3px}.kidia-category-design strong{font-size:14px}.kidia-category-design small{font-size:12px;line-height:1.45;color:#60756e}.kidia-category-sample{display:grid;gap:5px;background:#eef3f1;border-radius:8px;padding:10px;height:108px;box-sizing:border-box;overflow:hidden}.kidia-category-sample i{display:flex;align-items:center;gap:6px;background:white;border-radius:4px;padding:4px;min-height:0}.kidia-category-sample b{display:block;background:#b3d7ca;width:25%;height:100%;min-height:9px;border-radius:3px}.kidia-category-sample em{display:block;background:#83aa9e;width:45%;height:4px;border-radius:4px}.kidia-category-sample.is-default i:nth-child(n+4){display:none}.kidia-category-sample.is-visual_grid{grid-template-columns:repeat(2,1fr)}.kidia-category-sample.is-visual_grid i{flex-direction:column}.kidia-category-sample.is-visual_grid b{width:100%;flex:1}.kidia-category-sample.is-visual_grid i:nth-child(n+5){display:none}.kidia-category-sample.is-circular_grid{grid-template-columns:repeat(3,1fr)}.kidia-category-sample.is-circular_grid i{flex-direction:column;background:none}.kidia-category-sample.is-circular_grid b{width:25px;height:25px;border-radius:50%}.kidia-category-sample.is-circular_grid em{width:80%}.kidia-category-sample.is-compact_grid{grid-template-columns:repeat(2,1fr)}.kidia-category-sample.is-sidebar{grid-template-columns:30% 1fr 1fr}.kidia-category-sample.is-sidebar i:nth-child(3n+1){background:#c1e0d5}.kidia-category-sample.is-sidebar i{flex-direction:column}.kidia-category-sample.is-sidebar b{width:80%;flex:1}.kidia-category-sample.is-image_banner{grid-template-rows:1fr 1fr}.kidia-category-sample.is-image_banner i{background:linear-gradient(115deg,#85b2a2,#cfdfb9);align-items:end}.kidia-category-sample.is-image_banner b{display:none}.kidia-category-sample.is-image_banner em{background:#fff;width:60%}.kidia-category-sample.is-image_banner i:nth-child(n+3){display:none}.kidia-category-source{color:#44675d;padding:10px 0}.kidia-category-design-grid button:hover{border-color:#287f6d}@media(max-width:700px){.kidia-category-design-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
       .kidia-category-designs button.kidia-category-design{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;align-content:start!important;align-items:start!important;height:auto!important;min-height:195px;white-space:normal!important;gap:6px!important;direction:ltr;text-align:left!important}.kidia-category-designs .kidia-category-sample{display:grid!important;width:100%!important;min-width:0!important;flex:none!important}.kidia-category-designs .kidia-category-design strong,.kidia-category-designs .kidia-category-design small{display:block!important;width:100%!important;white-space:normal!important;text-align:left!important}
+      .kidia-category-layout-field{display:none!important}.kidia-category-general select[name="category_general[category_layout]"]{display:none!important}
+      .kidia-category-designs{padding:14px}.kidia-category-designs h3{font-size:18px!important}.kidia-category-designs p{font-size:12px!important;margin-bottom:12px!important}
+      .kidia-category-design-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+      .kidia-category-designs button.kidia-category-design{min-height:158px;padding:9px!important;gap:5px!important;border-width:1px;box-shadow:none}
+      .kidia-category-designs button.kidia-category-design[aria-pressed=true]{border-color:#287f6d;box-shadow:inset 0 0 0 1px #287f6d;background:#eef8f4}
+      .kidia-category-designs .kidia-category-sample{height:76px;padding:7px;gap:4px}
+      .kidia-category-designs .kidia-category-design strong{font-size:12px!important;line-height:1.3}
+      .kidia-category-designs .kidia-category-design small{font-size:11px!important;line-height:1.35}
+      .kidia-category-sample.is-circular_grid b{width:17px;height:17px;min-height:17px}
+      .kidia-category-sample.is-top_tabs{grid-template-columns:repeat(3,1fr);grid-template-rows:12px 1fr 1fr}
+      .kidia-category-sample.is-top_tabs:before{content:'';grid-column:1/-1;background:repeating-linear-gradient(90deg,#6b9e8d 0 28%,transparent 28% 34%);border-radius:3px}
+      .kidia-category-sample.is-top_tabs i{flex-direction:column}.kidia-category-sample.is-top_tabs b{width:80%;flex:1}
+      .kidia-category-sample.is-split_rows{grid-template-rows:1fr 1fr 1fr}.kidia-category-sample.is-split_rows i{flex-direction:row-reverse}.kidia-category-sample.is-split_rows b{width:48%}.kidia-category-sample.is-split_rows i:nth-child(n+4){display:none}
+      .kidia-category-sample.is-grouped_shelves{grid-template-columns:repeat(3,1fr);grid-template-rows:8px 1fr 8px 1fr}.kidia-category-sample.is-grouped_shelves:before,.kidia-category-sample.is-grouped_shelves:after{content:'';grid-column:1/-1;background:#83aa9e;width:55%;border-radius:3px}.kidia-category-sample.is-grouped_shelves:after{grid-row:3}.kidia-category-sample.is-grouped_shelves i{flex-direction:column}.kidia-category-sample.is-grouped_shelves b{width:80%;flex:1}
+      .kidia-category-sample.is-text_directory{gap:0}.kidia-category-sample.is-text_directory i{border-radius:0;border-bottom:1px solid #cdded8}.kidia-category-sample.is-text_directory b{display:none}.kidia-category-sample.is-text_directory em{width:70%;height:3px}
+      @media(max-width:540px){.kidia-category-design-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     `;doc.head.append(style);}
   }
   const api={designs,normalize,prepare,hydrate,refresh,installDesigns};scope.KidiaCategoryDesigner=api;

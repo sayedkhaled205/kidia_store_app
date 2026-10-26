@@ -156,7 +156,7 @@ void main() {
     expect(find.byType(SafeArea), findsWidgets);
   });
 
-  testWidgets('category page renders all six CMS layouts', (
+  testWidgets('category page renders the list and grid CMS layouts', (
     WidgetTester tester,
   ) async {
     const Map<String, Key> layouts = <String, Key>{
@@ -166,6 +166,8 @@ void main() {
       'compact_grid': Key('category-layout-compact_grid'),
       'sidebar': Key('category-layout-sidebar'),
       'image_banner': Key('category-layout-image_banner'),
+      'split_rows': Key('category-layout-split_rows'),
+      'text_directory': Key('category-layout-text_directory'),
     };
     for (final MapEntry<String, Key> entry in layouts.entries) {
       await tester.pumpWidget(
@@ -206,6 +208,80 @@ void main() {
         findsOneWidget,
         reason: '${entry.key} back to roots',
       );
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  for (final layout in ['top_tabs', 'grouped_shelves']) {
+    for (final mode in ['separate_page', 'expand_inline']) {
+      testWidgets('$layout preserves nested navigation with $mode', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          _app(
+            _ScreenCatalogRepository(
+              categoryLayout: layout,
+              navigationMode: mode,
+              gridColumns: 2,
+              deepTree: true,
+            ),
+            const CategoriesScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(Key('category-layout-$layout')), findsOneWidget);
+        expect(find.text('Dresses'), findsOneWidget);
+        await tester.tap(find.text('Dresses'));
+        await tester.pumpAndSettle();
+        expect(find.text('Summer dresses'), findsOneWidget);
+        if (mode == 'separate_page') {
+          await tester.tap(find.byKey(const Key('category-back-to-roots')));
+          await tester.pumpAndSettle();
+          expect(find.text('Dresses'), findsWidgets);
+        }
+        if (layout == 'top_tabs') {
+          await tester.tap(find.byKey(const Key('category-tab-3')));
+          await tester.pumpAndSettle();
+          expect(find.text('Dresses'), findsNothing);
+          expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+          await tester.tap(find.byKey(const Key('category-tab-1')));
+          await tester.pumpAndSettle();
+          expect(find.text('Dresses'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
+  testWidgets('curated layouts fit a narrow phone and larger text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final layout in [
+      'top_tabs',
+      'grouped_shelves',
+      'split_rows',
+      'text_directory',
+    ]) {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(categoryLayout: layout, gridColumns: 2),
+          const MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(1.5)),
+            child: CategoriesScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(Key('category-layout-$layout')), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: layout);
       await tester.pumpWidget(const SizedBox.shrink());
     }
   });
@@ -364,11 +440,17 @@ Widget _app(CatalogRepository repository, Widget home) {
     overrides: [catalogRepositoryProvider.overrideWithValue(repository)],
     child: MaterialApp.router(
       locale: const Locale('en'),
-      routerConfig: GoRouter(routes: [
-        GoRoute(path: '/', builder: (context, state) => home),
-        GoRoute(path: '/categories/:id', builder: (context, state) =>
-          Scaffold(body: Text('Products in ${state.pathParameters['id']}'))),
-      ]),
+      routerConfig: GoRouter(
+        routes: [
+          GoRoute(path: '/', builder: (context, state) => home),
+          GoRoute(
+            path: '/categories/:id',
+            builder: (context, state) => Scaffold(
+              body: Text('Products in ${state.pathParameters['id']}'),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
