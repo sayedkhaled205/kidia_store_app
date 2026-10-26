@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-26",
+  "source_commit": "f4878eea53aac625d61c9732c2793df719abc181",
+  "deployed_preview_runtime": "28632dd38590",
+  "preview_main_sha256": "e072d22190b8e26eaf11c73a0197b14b92298fe64b8975dd4dfb6387ce2da481",
+  "scope": "Shared category editor, Flutter category renderer, category settings validation, and central web preview. No Android APK or iOS artifact built in this change.",
+  "root_cause": "The central category editor reused captured merchant rows rather than rebuilding from the current connected store. A transient initial catalog failure also left an empty editor until reload.",
+  "layouts": ["Clean list", "Square cards", "Circle gallery", "Quick tiles", "Side menu", "Wide banners"],
+  "square_cards": "Two columns; card height follows width unless explicitly overridden. Images preserve their aspect ratio.",
+  "catalog": {
+    "verified_store": "6990b322-e396-46bb-a188-a1e472b6bf64",
+    "website": "https://kidiastore.com",
+    "category_count": 35,
+    "source": "Current connector category_items, not captured rows or merchant name filtering",
+    "refresh": "Accepts same-origin parent catalog updates, preserves draft names, visibility, custom artwork and hierarchy, and removes controls for records no longer supplied by the connector. A failed empty refresh retains existing records."
+  },
+  "validation": {
+    "flutter_category_and_catalog_tests": "9 passed; includes six layouts, square two-column geometry, three-level inline and separate-page navigation",
+    "other_flutter_preview_tests": "5 passed; category overrides, checkout preview and auth preview",
+    "javascript_tests": "16 passed; category isolation and recovery plus existing auth, commerce and preview interaction checks",
+    "php": "Category store and endpoint tests passed; connector PHP lint passed",
+    "connector_manifest": "498 files verified",
+    "build": "Flutter web release build passed",
+    "publisher": "Upgrade from v1 and idempotency verified; generated frame JavaScript syntax checked; current live file fingerprints verified before activation",
+    "browser": "All six designs inspected, real category rows verified, inline and separate-page subcategories exercised, square selection saved and reloaded",
+    "concurrency": "Existing page-controls-6a1ecc9a4025.js retained. Other working checkouts and generated unrelated files were not committed."
+  },
+  "saved_selection": {
+    "category_layout": "visual_grid",
+    "grid_columns": "2",
+    "navigation_mode": "separate_page"
+  },
+  "limitations": "Cross-store isolation is covered with distinct merchant fixtures. This change does not claim a new end-to-end checkout test for every ecommerce platform."
+}
