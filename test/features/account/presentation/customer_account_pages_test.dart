@@ -15,6 +15,88 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 
 void main() {
+  testWidgets('text country rejects malformed codes and saves uppercase', (
+    tester,
+  ) async {
+    final repo = _ManualCountryRepository();
+    await tester.pumpWidget(
+      _app(const SavedAddressesScreen(), repository: repo),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تعديل'));
+    await tester.pumpAndSettle();
+    final country = find.byKey(const Key('customer-address-billing_country'));
+    final save = find.byKey(const Key('save-customer-address'));
+    for (final invalid in ['U', 'United States']) {
+      await tester.enterText(country, invalid);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(repo.saved, isNull);
+    }
+    await tester.enterText(country, 'us');
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(repo.saved?.values['billing_country'], 'US');
+  });
+  testWidgets(
+    'country change resets dependent fields and preserves typed street',
+    (tester) async {
+      final repo = _InternationalAccountRepository();
+      await tester.pumpWidget(
+        _app(const SavedAddressesScreen(), repository: repo),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('90210'), findsOneWidget);
+      await tester.tap(find.text('تعديل'));
+      await tester.pumpAndSettle();
+      final street = find.byKey(
+        const Key('customer-address-billing_address_1'),
+      );
+      final country = find.byKey(const Key('customer-address-billing_country'));
+      final state = find.byKey(const Key('customer-address-billing_state'));
+      final postcode = find.byKey(
+        const Key('customer-address-billing_postcode'),
+      );
+      await tester.enterText(street, 'Typed street');
+      await tester.tap(country);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Canada').last);
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextFormField>(street).initialValue, 'Typed street');
+      expect(tester.widget<TextFormField>(postcode).initialValue, '');
+      final select = tester.widget<DropdownButtonFormField<String>>(state);
+      expect(select.initialValue, isNull);
+      await tester.tap(state);
+      await tester.pumpAndSettle();
+      expect(find.text('California'), findsNothing);
+      await tester.tap(find.text('Ontario').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('save-customer-address')),
+      );
+      await tester.tap(find.byKey(const Key('save-customer-address')));
+      await tester.pumpAndSettle();
+      expect(
+        repo.saved,
+        isNull,
+        reason: 'Required postcode must block empty save',
+      );
+      await tester.ensureVisible(postcode);
+      await tester.enterText(postcode, 'K1A 0B1');
+      await tester.ensureVisible(
+        find.byKey(const Key('save-customer-address')),
+      );
+      await tester.tap(find.byKey(const Key('save-customer-address')));
+      await tester.pumpAndSettle();
+      expect(repo.saved?.values, containsPair('billing_country', 'CA'));
+      expect(repo.saved?.values, containsPair('billing_state', 'ON'));
+      expect(repo.saved?.values, containsPair('billing_postcode', 'K1A 0B1'));
+      expect(
+        repo.saved?.values,
+        containsPair('billing_address_1', 'Typed street'),
+      );
+    },
+  );
   testWidgets('saved addresses use store fields without showing postcode', (
     WidgetTester tester,
   ) async {
@@ -95,12 +177,12 @@ void main() {
   });
 }
 
-Widget _app(Widget home) {
+Widget _app(Widget home, {CustomerAccountRepository? repository}) {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
       customerAccountRepositoryProvider.overrideWithValue(
-        const _FakeCustomerAccountRepository(),
+        repository ?? const _FakeCustomerAccountRepository(),
       ),
       cartBadgeCountProvider.overrideWithValue(0),
     ],
@@ -111,6 +193,89 @@ Widget _app(Widget home) {
       home: home,
     ),
   );
+}
+
+class _InternationalAccountRepository extends _FakeCustomerAccountRepository {
+  CustomerAddress? saved;
+  @override
+  Future<CustomerAccount> getAccount() async => CustomerAccount(
+    profile: _account.profile,
+    support: _account.support,
+    shipping: _account.shipping,
+    billing:
+        saved ??
+        CustomerAddress(
+          type: CustomerAddressType.billing,
+          values: {
+            'billing_address_1': 'Old street',
+            'billing_country': 'US',
+            'billing_state': 'CA',
+            'billing_postcode': '90210',
+          },
+        ),
+    addressFields: [
+      CustomerAddressField(
+        key: 'billing_address_1',
+        type: CustomerAddressFieldType.text,
+        addressType: CustomerAddressType.billing,
+        label: 'Address',
+        required: true,
+      ),
+      CustomerAddressField(
+        key: 'billing_country',
+        type: CustomerAddressFieldType.select,
+        addressType: CustomerAddressType.billing,
+        label: 'Country',
+        required: true,
+        options: {'US': 'United States', 'CA': 'Canada'},
+      ),
+      CustomerAddressField(
+        key: 'billing_state',
+        type: CustomerAddressFieldType.select,
+        addressType: CustomerAddressType.billing,
+        label: 'State',
+        required: true,
+        optionsByCountry: {
+          'US': {'CA': 'California'},
+          'CA': {'ON': 'Ontario'},
+        },
+      ),
+      CustomerAddressField(
+        key: 'billing_postcode',
+        type: CustomerAddressFieldType.text,
+        addressType: CustomerAddressType.billing,
+        label: 'Postcode',
+        required: true,
+      ),
+    ],
+  );
+  @override
+  Future<CustomerAddress> updateAddress(CustomerAddress address) async {
+    saved = address;
+    return address;
+  }
+}
+
+class _ManualCountryRepository extends _InternationalAccountRepository {
+  @override
+  Future<CustomerAccount> getAccount() async {
+    final account = await super.getAccount();
+    return CustomerAccount(
+      profile: account.profile,
+      support: account.support,
+      billing: account.billing,
+      shipping: account.shipping,
+      addressFields: [
+        CustomerAddressField(
+          key: 'billing_country',
+          type: CustomerAddressFieldType.text,
+          addressType: CustomerAddressType.billing,
+          label: 'Country',
+          required: true,
+        ),
+      ],
+    );
+  }
 }
 
 final CustomerAccount _account = CustomerAccount(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mobishop_store_app/core/commerce/currency_minor_units.dart';
 
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
@@ -37,25 +38,8 @@ class ShopifyCartRepository implements CartRepository {
     }
   }
 
-  static const Map<String, int> supportedCurrencyMinorUnits = <String, int>{
-    'EGP': 2,
-    'USD': 2,
-    'EUR': 2,
-    'GBP': 2,
-    'AED': 2,
-    'SAR': 2,
-    'CAD': 2,
-    'AUD': 2,
-    'NZD': 2,
-    'CHF': 2,
-    'CNY': 2,
-    'HKD': 2,
-    'JPY': 0,
-    'KRW': 0,
-    'KWD': 3,
-    'BHD': 3,
-    'OMR': 3,
-  };
+  static const Map<String, int> supportedCurrencyMinorUnits =
+      commerceCurrencyMinorUnits;
   final ShopifyCartGateway gateway;
   final ShopifyBuyerCartSession session;
   final ShopifyCartVariantResolver variantResolver;

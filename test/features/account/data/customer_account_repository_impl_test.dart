@@ -5,7 +5,50 @@ import 'package:mobishop_store_app/features/account/domain/entities/customer_acc
 import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
 
 void main() {
-  test('parses profile, addresses, support and hides postcode', () async {
+  test('country and state metadata remain merchant-owned', () async {
+    final transport = _FakeAccountTransport();
+    transport.config = {
+      'fields': [
+        {
+          'key': 'billing_country',
+          'group': 'billing',
+          'type': 'country',
+          'label': 'Country',
+          'required': true,
+          'options': {'US': 'United States', 'CA': 'Canada'},
+          'default': 'US',
+        },
+        {
+          'key': 'billing_state',
+          'group': 'billing',
+          'type': 'state',
+          'label': 'State',
+          'options_by_country': {
+            'US': {'CA': 'California'},
+            'CA': {'ON': 'Ontario'},
+            'GB': {},
+          },
+        },
+        {
+          'key': 'shipping_postcode',
+          'group': 'shipping',
+          'type': 'hidden',
+          'label': 'Postcode',
+        },
+      ],
+    };
+    final account = await CustomerAccountRepositoryImpl(transport).getAccount();
+    final country = account.addressFields.first;
+    expect(country.isVisible, true);
+    expect(country.required, true);
+    expect(country.options.keys, ['US', 'CA']);
+    expect(country.defaultValue, 'US');
+    final state = account.addressFields[1];
+    expect(state.forCountry('CA').options, {'ON': 'Ontario'});
+    expect(state.forCountry('GB').type, CustomerAddressFieldType.text);
+    expect(account.addressFields.last.isVisible, false);
+  });
+  test('honors merchant postcode requirements and defaults', () async {
     final _FakeAccountTransport transport = _FakeAccountTransport();
     final CustomerAccountRepositoryImpl repository =
         CustomerAccountRepositoryImpl(transport);
@@ -19,9 +62,25 @@ void main() {
     final CustomerAddressField postcode = account.addressFields.singleWhere(
       (CustomerAddressField field) => field.key == 'billing_postcode',
     );
-    expect(postcode.isVisible, isFalse);
-    expect(postcode.required, isFalse);
-    expect(postcode.defaultValue, isEmpty);
+    expect(postcode.isVisible, isTrue);
+    expect(postcode.required, isTrue);
+    expect(postcode.defaultValue, '12345');
+  });
+
+  test('preserves international postcode on unrelated address edits', () async {
+    final repository = CustomerAccountRepositoryImpl(_FakeAccountTransport());
+    final address = await repository.updateAddress(
+      CustomerAddress(
+        type: CustomerAddressType.shipping,
+        values: const {
+          'shipping_address_1': 'New street',
+          'shipping_country': 'GB',
+          'shipping_postcode': 'SW1A 1AA',
+        },
+      ),
+    );
+    expect(address.valueFor('shipping_postcode'), 'SW1A 1AA');
+    expect(address.valueFor('shipping_country'), 'GB');
   });
 
   test('updates profile and address through WooCommerce transport', () async {
@@ -40,9 +99,7 @@ void main() {
     final CustomerAddress address = await repository.updateAddress(
       CustomerAddress(
         type: CustomerAddressType.shipping,
-        values: const <String, String>{
-          'shipping_address_1': '2 New Street',
-        },
+        values: const <String, String>{'shipping_address_1': '2 New Street'},
       ),
     );
 
@@ -99,9 +156,7 @@ void main() {
       repository.updateAddress(
         CustomerAddress(
           type: CustomerAddressType.shipping,
-          values: const <String, String>{
-            'shipping_address_1': '2 New Street',
-          },
+          values: const <String, String>{'shipping_address_1': '2 New Street'},
         ),
       ),
       throwsA(
@@ -116,11 +171,10 @@ void main() {
 }
 
 class _FakeAccountTransport implements CustomerAccountApiTransport {
-  _FakeAccountTransport({
-    this.persistWrites = true,
-  });
+  _FakeAccountTransport({this.persistWrites = true});
 
   final bool persistWrites;
+  Map<String, dynamic>? config;
   Map<String, String>? profileValues;
   CustomerAddressType? addressType;
 
@@ -153,27 +207,28 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
 
   @override
   Future<Map<String, dynamic>> fetchAddressConfig() async {
-    return <String, dynamic>{
-      'fields': <dynamic>[
+    return config ??
         <String, dynamic>{
-          'key': 'billing_address_1',
-          'group': 'billing',
-          'type': 'text',
-          'label': 'Address',
-          'required': true,
-          'priority': 50,
-        },
-        <String, dynamic>{
-          'key': 'billing_postcode',
-          'group': 'billing',
-          'type': 'text',
-          'label': 'Postcode',
-          'required': true,
-          'priority': 90,
-          'default': '12345',
-        },
-      ],
-    };
+          'fields': <dynamic>[
+            <String, dynamic>{
+              'key': 'billing_address_1',
+              'group': 'billing',
+              'type': 'text',
+              'label': 'Address',
+              'required': true,
+              'priority': 50,
+            },
+            <String, dynamic>{
+              'key': 'billing_postcode',
+              'group': 'billing',
+              'type': 'text',
+              'label': 'Postcode',
+              'required': true,
+              'priority': 90,
+              'default': '12345',
+            },
+          ],
+        };
   }
 
   @override
@@ -204,10 +259,7 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
     return <String, dynamic>{
       'address': persistWrites
           ? values
-          : <String, String>{
-              ...values,
-              'shipping_address_1': 'Old address',
-            },
+          : <String, String>{...values, 'shipping_address_1': 'Old address'},
     };
   }
 }

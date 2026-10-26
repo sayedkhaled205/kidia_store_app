@@ -66,7 +66,8 @@
 	function restoreDraft(fields) {
 		(fields || []).forEach(function (saved) {
 			var matches = Array.prototype.filter.call(form.elements, function (field) {
-				return field.name === saved.name;
+				return field.name === saved.name && (field.type || "text") === saved.type &&
+					(!(field.type === "checkbox" || field.type === "radio") || field.value === saved.value);
 			});
 			Array.prototype.forEach.call(matches, function (field) {
 				if (field.type === "checkbox" || field.type === "radio") {

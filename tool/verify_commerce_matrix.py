@@ -31,6 +31,8 @@ COMMON = [
 ]
 PLATFORM_TESTS = {
     "woocommerce": [
+        "test/features/account/data/customer_account_repository_impl_test.dart",
+        "test/features/account/presentation/customer_account_pages_test.dart",
         "test/features/checkout/merchant_schema96_test.dart",
         "test/features/checkout/application/checkout_shipping_test.dart",
         "test/features/checkout/data/native_inline95_test.dart",
@@ -42,11 +44,13 @@ PLATFORM_TESTS = {
         "test/features/orders/data/customer_orders_repository_impl_test.dart",
     ],
     "shopify": [
+        "test/core/commerce/shopify_currency_precision_test.dart",
         "test/core/commerce/shopify_checkout_policy297_test.dart",
         "test/features/cart/presentation/shopify_checkout_handoff297_test.dart",
         "test/features/cart/data/shopify_cart_recovery_test.dart",
     ],
     "odoo": [
+        "test/features/wishlist/application/odoo_wishlist_access_test.dart",
         "test/features/account/presentation/odoo_account_help297_test.dart",
         "test/core/commerce/odoo_customer_contract_test.dart",
         "test/core/commerce/odoo_cart_contract100_test.dart",

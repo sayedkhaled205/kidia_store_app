@@ -18,6 +18,7 @@ match = re.search(r'<script src="(assets/original-central-[^"?]+\.js)(?:\?[^"\n]
 assert match, 'Active central Builder script not found'
 source = root / match[1]
 code = source.read_text(encoding='utf-8')
+original_code = code
 needle = 'else result=await save(request.screen,event.data.state);'
 replacement = """else {
           if (['home-builder','account-builder','checkout-builder'].includes(request.screen)) {
@@ -30,6 +31,13 @@ if 'await window.MobiShopPageControls.save(sender);' not in code:
     assert code.count(needle) == 1, 'Builder save path changed; review before integration'
     code = code.replace(needle, replacement)
 controls = Path(__file__).with_name('page-controls.js').read_bytes()
+if 'MobiShopPageControls.decoratePreview(packet)' not in code:
+    needle = 'mobileFrame.contentWindow.postMessage(JSON.stringify(packet), location.origin);'
+    assert code.count(needle) == 1, 'Preview dispatch changed; review before integration'
+    code = code.replace(needle, 'mobileFrame.contentWindow.postMessage(JSON.stringify(window.MobiShopPageControls ? window.MobiShopPageControls.decoratePreview(packet) : packet), location.origin);')
+    needle = 'function sendMobilePreview(forceNavigation = false) {'
+    assert code.count(needle) == 1, 'Preview refresh changed; review before integration'
+    code = code.replace(needle, "window.addEventListener('mobishop:page-controls-preview', () => sendMobilePreview());\n  " + needle)
 central_name = 'assets/original-central-page-controls-' + hashlib.sha256(code.encode()).hexdigest()[:12] + '.js'
 controls_name = 'assets/page-controls-' + hashlib.sha256(controls).hexdigest()[:12] + '.js'
 updated = original.replace(match[1], central_name)
@@ -47,6 +55,7 @@ for name, raw in [(central_name, code.encode()), (controls_name, controls)]:
         shutil.copymode(index, target)
         if hasattr(os, 'chown'): os.chown(target, index.stat().st_uid, index.stat().st_gid)
 assert index.read_text(encoding='utf-8') == original, 'Builder changed concurrently'
+assert source.read_text(encoding='utf-8') == original_code, 'Builder script changed concurrently'
 temp = root / 'index.inline-controls.tmp'
 temp.write_text(updated, encoding='utf-8')
 shutil.copymode(index, temp)

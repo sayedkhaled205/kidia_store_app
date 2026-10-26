@@ -38,6 +38,26 @@ import 'features/product/support/product_test_data.dart';
 import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  testWidgets('disabled account route respects the shared availability gate', (
+    tester,
+  ) async {
+    final router = createAppRouter(initialLocation: '/account');
+    await _pumpStartedApp(
+      tester,
+      router: router,
+      accountLayout: _navigationLayout(
+        'account',
+        height: 64,
+        iconSize: 24,
+        enabled: false,
+      ),
+    );
+    expect(
+      find.text('تم إيقاف هذه الصفحة من إعدادات التطبيق.'),
+      findsOneWidget,
+    );
+    await _disposeApp(tester, router);
+  });
   testWidgets('app shows its startup splash safely', (tester) async {
     final Completer<void> startupCompleter = Completer<void>();
 
@@ -405,6 +425,7 @@ Future<void> _pumpStartedApp(
   CmsPageLayout? categoryLayout,
   CmsPageLayout? wishlistLayout,
   CmsPageLayout? productLayout,
+  CmsPageLayout? accountLayout,
   CatalogRepository catalogRepository = const _RouterCatalogRepository(),
   cart_selection.AddProductPurchaseSelection? addSelection,
 }) async {
@@ -425,6 +446,7 @@ Future<void> _pumpStartedApp(
           const _RouterBrandsRepository(),
         ),
         if (productLayout != null) cmsPageLayoutProvider('product').overrideWith((ref) async => productLayout),
+        if (accountLayout != null) cmsPageLayoutProvider('account').overrideWith((ref) async => accountLayout),
         if (homeLayout != null)
           cmsPageLayoutProvider('home').overrideWith((ref) async => homeLayout),
         if (categoryLayout != null)

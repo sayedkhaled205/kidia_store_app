@@ -1,0 +1,26 @@
+[
+  {
+    "name": "woo-staging",
+    "passed": true
+  },
+  {
+    "name": "woo-kidia",
+    "passed": true
+  },
+  {
+    "name": "odoo-staging",
+    "passed": true
+  },
+  {
+    "name": "shopify-review",
+    "passed": false
+  },
+  {
+    "name": "woo-guest-cart",
+    "passed": true
+  },
+  {
+    "name": "odoo-guest-checkout",
+    "passed": true
+  }
+]

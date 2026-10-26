@@ -17,11 +17,23 @@
     }
     return merged;
   }
-  const model = {pageKeys, valueOf, mergeChanges};
+  function decoratePacket(packet, controls) {
+    const home = packet.layouts?.home;
+    if (!home || !controls) return packet;
+    const layout = {...home, settings: {...home.settings, ui_controls_v1: {...controls}}};
+    return {...packet, layouts: {...packet.layouts, home: layout},
+      ...(packet.page === 'home' ? {layout} : {})};
+  }
+  function inputValue(input, spec) { return spec.type === 'boolean' ? input.checked : spec.type === 'number' ? input.valueAsNumber : spec.type === 'color' ? input.value.toUpperCase() : input.value; }
+  const draftKey = (store, screen) => 'mobishop-controls-draft-v1:' + store + ':' + screen;
+  function draftChanges(schema, baseline, values) {
+    return Object.fromEntries(Object.keys(values).filter(key => schema[key] && values[key] !== baseline[key]).map(key => [key, values[key]]));
+  }
+  const model = {pageKeys, valueOf, mergeChanges, decoratePacket, draftKey, draftChanges, inputValue};
   if (typeof module !== 'undefined' && module.exports) { module.exports = model; return; }
   if (scope.MobiShopPageControls) return;
   const states = new WeakMap(), observed = new WeakSet();
-  let loaded;
+  let loaded, previewData;
   const store = new URL(location.href).searchParams.get('store') || '';
   const endpoint = '/account/builder/live-design/controls';
   const supported = new Set(['home-builder', 'account-builder', 'checkout-builder']);
@@ -44,9 +56,33 @@
       request(endpoint + '?store=' + encodeURIComponent(store)),
     ]).then(([context, data]) => {
       if (context.store !== store || !data.schema || !data.values) throw new Error('تعذر تحميل إعدادات الصفحة.');
+      previewData = data;
+      refreshPreview();
       return {context, data};
     }).catch(error => { loaded = null; throw error; });
     return loaded;
+  }
+  function refreshPreview() { scope.dispatchEvent(new Event('mobishop:page-controls-preview')); }
+  function inputValues(state) {
+    return Object.fromEntries([...state.inputs].map(([key, input]) => [key,
+      input.checkValidity() ? inputValue(input, state.data.schema[key]) : state.baseline[key]]));
+  }
+  function storeDraft(state) {
+    const changed = draftChanges(state.data.schema, state.baseline, inputValues(state));
+    try {
+      const key = draftKey(store, state.screen);
+      if (Object.keys(changed).length) sessionStorage.setItem(key, JSON.stringify({baseline: state.baseline, changed}));
+      else sessionStorage.removeItem(key);
+    } catch (_) {}
+  }
+  function decoratePreview(packet) {
+    if (!previewData || store !== new URL(location.href).searchParams.get('store')) return packet;
+    const values = Object.fromEntries(Object.keys(previewData.schema).map(key => [key, valueOf(previewData, key)]));
+    for (const frame of document.querySelectorAll('iframe[data-screen]')) {
+      const state = states.get(frame.contentDocument);
+      if (state?.data) Object.assign(values, draftChanges(state.data.schema, state.baseline, inputValues(state)));
+    }
+    return decoratePacket(packet, values);
   }
   function make(doc, tag, text, parent, className) {
     const node = doc.createElement(tag);
@@ -126,18 +162,39 @@
         if (spec.format === 'email') { input.type = 'email'; input.dir = 'ltr'; input.placeholder = 'support@example.com'; }
         if (spec.format === 'phone') { input.type = 'tel'; input.dir = 'ltr'; input.placeholder = '+201234567890'; input.pattern = '\\+?[0-9][0-9 ()\\-]{5,30}[0-9]'; }
         const value = valueOf(data, key);
-        if (spec.type === 'boolean') input.checked = value; else input.value = String(value);
+        if (spec.type === 'boolean') input.defaultChecked = input.checked = value; else input.defaultValue = input.value = String(value);
         state.baseline[key] = value; state.inputs.set(key, input);
       }
       for (const container of Object.values(containers)) make(doc, 'p', 'تُحفظ مع إعدادات الصفحة. النص الفارغ يستخدم النص الأصلي.', container, 'wm-page-controls-note');
       state.status = make(doc, 'p', '', Object.values(containers)[0], 'wm-page-controls-status');
       state.status.setAttribute('role', 'status');
       state.status.setAttribute('aria-live', 'polite');
+      try {
+        const draft = JSON.parse(sessionStorage.getItem(draftKey(store, screen)) || 'null');
+        if (draft?.baseline && draft?.changed) {
+          for (const [key, input] of state.inputs) {
+            if (!Object.hasOwn(draft.changed, key) || !Object.hasOwn(draft.baseline, key)) continue;
+            const spec = data.schema[key], value = draft.changed[key];
+            if (typeof value !== typeof valueOf(data, key)) continue;
+            if (spec.type === 'boolean') input.checked = value; else input.value = String(value);
+            state.baseline[key] = draft.baseline[key];
+          }
+          state.status.textContent = 'تم استرجاع تعديلاتك غير المحفوظة.';
+        }
+      } catch (_) {}
+      const update = event => {
+        if (!event.target?.dataset?.wmUiControl) return;
+        storeDraft(state); refreshPreview();
+      };
+      form.addEventListener('input', update);
+      form.addEventListener('change', update);
+      form.addEventListener('reset', () => setTimeout(() => { storeDraft(state); refreshPreview(); }, 0));
       doc.addEventListener('click', event => {
         if (event.target.closest('#mobishop-collapse-all')) for (const node of Object.values(containers)) if (node.tagName === 'DETAILS') node.open = false;
         if (event.target.closest('#mobishop-expand-all')) for (const node of Object.values(containers)) if (node.tagName === 'DETAILS') node.open = true;
       });
       doc.querySelector('.wm-page-controls-error')?.remove();
+      refreshPreview();
     }).catch(error => {
       states.delete(doc); style(doc);
       let notice = doc.querySelector('.wm-page-controls-error');
@@ -156,17 +213,24 @@
     for (const [key, input] of state.inputs) {
       if (!input.checkValidity()) { input.reportValidity(); throw new Error('راجع القيم والأحجام قبل الحفظ.'); }
       const spec = state.data.schema[key];
-      const value = spec.type === 'boolean' ? input.checked : spec.type === 'number' ? input.valueAsNumber : input.value;
+      const value = inputValue(input, spec);
       if (value !== state.baseline[key]) changed[key] = value;
     }
-    if (!Object.keys(changed).length) return;
+    if (!Object.keys(changed).length) { storeDraft(state); return; }
     const latest = await request(endpoint + '?store=' + encodeURIComponent(store));
     const controls = mergeChanges(latest.schema, state.baseline, changed, latest.values);
     const result = await request(endpoint, {store, controls, controls_digest: latest.controls_digest}, state.context.csrf_token);
-    for (const key of Object.keys(changed)) state.baseline[key] = valueOf(result, key);
+    for (const [key, input] of state.inputs) {
+      const value = valueOf(result, key);
+      state.baseline[key] = value;
+      if (result.schema[key].type === 'boolean') input.defaultChecked = input.checked = value; else input.defaultValue = input.value = String(value);
+    }
     state.data = result;
+    previewData = result;
+    storeDraft(state);
     state.status.textContent = '';
     loaded = Promise.resolve({context: state.context, data: result});
+    refreshPreview();
   }
   function observe() {
     for (const frame of document.querySelectorAll('iframe[data-screen]')) {
@@ -182,6 +246,7 @@
     if (frame) mount(frame).then(s => s?.ready).catch(() => {});
   });
   new MutationObserver(observe).observe(document.querySelector('.kidia-central-stage') || document.body, {childList: true, subtree: true});
-  scope.MobiShopPageControls = {save};
+  scope.MobiShopPageControls = {save, decoratePreview};
   observe();
+  load().catch(() => {});
 })(typeof window === 'undefined' ? globalThis : window);

@@ -1,0 +1,69 @@
+{
+  "baseline": "f6d1520dada3481e6ba98007c50d770dd4a1c1d8",
+  "flutter": {
+    "passed": 800,
+    "skipped": 9,
+    "failures": 0
+  },
+  "commerce_matrix": {
+    "merchants_per_platform": 2,
+    "platforms": [
+      "woocommerce",
+      "shopify",
+      "odoo"
+    ],
+    "locales": [
+      "ar",
+      "en"
+    ],
+    "passed": 1318,
+    "failures": 0
+  },
+  "builder_connector_suites": {
+    "passed": 68,
+    "failures": 0
+  },
+  "odoo_python_contracts": 24,
+  "build_definition_and_matrix_runner_checks": 17,
+  "server_transaction_test": {
+    "controls": 36,
+    "result": "PASS",
+    "test_data_rolled_back": true
+  },
+  "native_odoo_account_disabled_route": "PASS",
+  "native_odoo_wishlist": {
+    "passed": 3
+  },
+  "preview_build": {
+    "files_checked": 46,
+    "differences": 0,
+    "javascript_syntax": "PASS"
+  },
+  "live_scope": {
+    "woocommerce": [
+      "public catalog on staging and Kidia",
+      "fresh staging guest cart add/remove with verified empty cleanup"
+    ],
+    "odoo": [
+      "public staging catalog",
+      "fresh guest cart and country-dependent checkout metadata/rates; own cart cleared"
+    ],
+    "shopify": [
+      "Builder admin inventory connected, 17 products",
+      "buyer API blocked: Online Store channel is locked"
+    ]
+  },
+  "limitations": [
+    "No live card transaction executed in this audit",
+    "Native source fixes require an updated installed app; shared build source applies to every merchant",
+    "Shopify buyer end-to-end test requires an accessible sales channel; admin access is a separate capability",
+    "Wishlist is device-local and store-scoped; this audit does not claim cross-device synchronization",
+    "Third-party payment providers and arbitrary merchant extensions cannot be universally certified from these fixtures"
+  ],
+  "preexisting_unowned_changes": "Generated desktop plugins, preview bootstrap/index/NOTICES and older untracked evidence preserved and excluded",
+  "live_initial_hashes": {
+    "index.html": "314f93fc6d294952a04e937ed4ec98594decf7707e6e0a35416861dca17913f9",
+    "central": "d0bf7a9c08516e7dd1e14a37749ef381207c5363310af41acb5cff55af052e9f",
+    "page-controls": "899e24b034fcfdb85748b323b96937bfea139727fe9692a82e99b425efe295f8"
+  }
+}

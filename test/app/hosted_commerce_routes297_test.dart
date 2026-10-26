@@ -11,41 +11,50 @@ import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_providers.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
   final platform = AppConfig.commercePlatform;
   if (platform != CommercePlatform.wooCommerce) {
-    testWidgets('foreign product favorites remain local without Woo sign-in', (
-      tester,
-    ) async {
-      SharedPreferences.setMockInitialValues({});
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authRepositoryProvider.overrideWith(
-              (ref) => throw StateError('Woo auth must not initialize'),
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: ProductWishlistButton(
-                productId: 42,
-                appearance: ProductWishlistAppearance(enabled: true),
+    testWidgets(
+      'foreign guest product favorites remain local without Woo sign-in',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              cmsPageLayoutProvider('wishlist').overrideWith(
+                (_) async => CmsPageLayout.fromJson({
+                  'page': 'wishlist',
+                  'settings': {'wishlist_access_mode': 'guest'},
+                }),
+              ),
+              authRepositoryProvider.overrideWith(
+                (ref) => throw StateError('Woo auth must not initialize'),
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: ProductWishlistButton(
+                  productId: 42,
+                  appearance: ProductWishlistAppearance(enabled: true),
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('product-card-wishlist-42')));
-      await tester.pumpAndSettle();
-      expect(
-        await SharedPreferencesWishlistRepository.forConfiguredStore()
-            .loadProductIds(),
-        [42],
-      );
-      expect(tester.takeException(), isNull);
-    });
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('product-card-wishlist-42')));
+        await tester.pumpAndSettle();
+        expect(
+          await SharedPreferencesWishlistRepository.forConfiguredStore()
+              .loadProductIds(),
+          [42],
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
   final hostedRoutes = platform == CommercePlatform.shopify
       ? ['/account', '/auth', '/orders', '/orders/23', '/profile', '/addresses']

@@ -60,9 +60,14 @@ class CustomerAddressField {
     this.required = false,
     this.priority = 100,
     Map<String, String> options = const <String, String>{},
+    Map<String, Map<String, String>> optionsByCountry = const {},
     this.defaultValue = '',
     this.autocomplete = '',
-  }) : options = Map<String, String>.unmodifiable(options);
+  }) : options = Map<String, String>.unmodifiable(options),
+       optionsByCountry = Map.unmodifiable({
+         for (final entry in optionsByCountry.entries)
+           entry.key: Map<String, String>.unmodifiable(entry.value),
+       });
 
   final String key;
   final CustomerAddressFieldType type;
@@ -72,10 +77,33 @@ class CustomerAddressField {
   final bool required;
   final int priority;
   final Map<String, String> options;
+  final Map<String, Map<String, String>> optionsByCountry;
   final String defaultValue;
   final String autocomplete;
 
   bool get isVisible => type != CustomerAddressFieldType.hidden;
+
+  CustomerAddressField forCountry(String country) {
+    if (!key.endsWith('_state') || optionsByCountry.isEmpty || !isVisible) {
+      return this;
+    }
+    final choices = optionsByCountry[country] ?? const <String, String>{};
+    return CustomerAddressField(
+      key: key,
+      addressType: addressType,
+      label: label,
+      type: choices.isEmpty
+          ? CustomerAddressFieldType.text
+          : CustomerAddressFieldType.select,
+      placeholder: placeholder,
+      required: required,
+      priority: priority,
+      options: choices,
+      optionsByCountry: optionsByCountry,
+      defaultValue: defaultValue,
+      autocomplete: autocomplete,
+    );
+  }
 }
 
 class CustomerSupportDetails {
@@ -98,8 +126,7 @@ class CustomerAccount {
     required this.billing,
     required this.shipping,
     required this.support,
-    List<CustomerAddressField> addressFields =
-        const <CustomerAddressField>[],
+    List<CustomerAddressField> addressFields = const <CustomerAddressField>[],
   }) : addressFields = List<CustomerAddressField>.unmodifiable(addressFields);
 
   final CustomerProfile profile;

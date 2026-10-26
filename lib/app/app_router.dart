@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/wishlist/application/wishlist_access_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -214,29 +215,9 @@ GoRouter createAppRouter({
                                 return ids.contains(productId);
                               },
                               onWishlistToggle: (product) async {
-                                final String accessMode =
-                                    ref
-                                        .read(cmsPageLayoutProvider('wishlist'))
-                                        .value
-                                        ?.string(
-                                          'wishlist_access_mode',
-                                          'sign_in_required',
-                                        ) ??
-                                    'sign_in_required';
-                                final AuthSession? session =
-                                    !AppConfig.isCmsPreview &&
-                                        AppConfig.commercePlatform !=
-                                            CommercePlatform.wooCommerce
-                                    ? null
-                                    : ref
-                                          .read(authControllerProvider)
-                                          .asData
-                                          ?.value;
-                                if ((AppConfig.isCmsPreview ||
-                                        AppConfig.commercePlatform ==
-                                            CommercePlatform.wooCommerce) &&
-                                    session == null &&
-                                    accessMode == 'sign_in_required') {
+                                final access = ref.read(wishlistAccessProvider);
+                                if (access.loading) return false;
+                                if (access.requiresSignIn && !access.signedIn) {
                                   await context.push('/auth');
                                   return false;
                                 }
@@ -246,8 +227,11 @@ GoRouter createAppRouter({
                                 var saved = false;
                                 await repository.updateProductIds((ids) {
                                   saved = !ids.contains(product.id);
-                                  return saved ? <int>[product.id, ...ids]
-                                      : ids.where((id) => id != product.id).toList();
+                                  return saved
+                                      ? <int>[product.id, ...ids]
+                                      : ids
+                                            .where((id) => id != product.id)
+                                            .toList();
                                 });
                                 return saved;
                               },
@@ -411,31 +395,15 @@ GoRouter createAppRouter({
                   page: 'wishlist',
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final nativeAuth =
-                          AppConfig.isCmsPreview ||
-                          AppConfig.commercePlatform ==
-                              CommercePlatform.wooCommerce;
-                      final AsyncValue<AuthSession?> authState = nativeAuth
-                          ? ref.watch(authControllerProvider)
-                          : const AsyncData(null);
-                      final CmsPageLayout wishlistLayout =
-                          ref.watch(cmsPageLayoutProvider('wishlist')).value ??
-                          CmsPageLayout.fallback('wishlist');
-                      final bool requiresSignIn =
-                          nativeAuth &&
-                          wishlistLayout.string(
-                                'wishlist_access_mode',
-                                'sign_in_required',
-                              ) ==
-                              'sign_in_required';
-                      if (!AppConfig.isCmsPreview && authState.isLoading) {
+                      final access = ref.watch(wishlistAccessProvider);
+                      if (!AppConfig.isCmsPreview && access.loading) {
                         return const _ProtectedAccountLoading();
                       }
                       return WishlistScreen(
                         repository: ref.watch(wishlistRepositoryProvider),
                         catalogRepository: ref.watch(catalogRepositoryProvider),
-                        signedIn: authState.asData?.value != null,
-                        requiresSignIn: requiresSignIn,
+                        signedIn: access.signedIn,
+                        requiresSignIn: access.requiresSignIn,
                         onProductTap: (product) =>
                             context.push('/product/${product.id}'),
                         onContinueShopping: () => context.go('/'),
@@ -451,12 +419,12 @@ GoRouter createAppRouter({
             routes: [
               GoRoute(
                 path: '/account',
-                builder: (context, state) => useOdooCustomer
-                    ? const OdooAccountScreen56()
-                    : const _PageAvailabilityGate(
-                        page: 'account',
-                        child: AccountScreen(),
-                      ),
+                builder: (context, state) => _PageAvailabilityGate(
+                  page: 'account',
+                  child: useOdooCustomer
+                      ? const OdooAccountScreen56()
+                      : const AccountScreen(),
+                ),
               ),
             ],
           ),

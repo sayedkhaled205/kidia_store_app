@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:mobishop_store_app/core/commerce/currency_minor_units.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,25 +84,7 @@ final catalogRepositoryProvider = Provider<CatalogRepository>((Ref ref) {
       final ShopifyCatalogRepository repository = ShopifyCatalogRepository(
         gateway: ShopifyCatalogGateway(
           client: ref.watch(shopifyCatalogReaderProvider),
-          currencyMinorUnits: const <String, int>{
-            'EGP': 2,
-            'USD': 2,
-            'EUR': 2,
-            'GBP': 2,
-            'AED': 2,
-            'SAR': 2,
-            'CAD': 2,
-            'AUD': 2,
-            'NZD': 2,
-            'CHF': 2,
-            'CNY': 2,
-            'HKD': 2,
-            'JPY': 0,
-            'KRW': 0,
-            'KWD': 3,
-            'BHD': 3,
-            'OMR': 3,
-          },
+          currencyMinorUnits: commerceCurrencyMinorUnits,
           countryCode: AppConfig.buyerCountryCode.trim().isEmpty
               ? null
               : AppConfig.buyerCountryCode,

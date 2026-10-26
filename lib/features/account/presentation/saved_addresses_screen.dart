@@ -29,9 +29,7 @@ class SavedAddressesScreen extends ConsumerWidget {
       ),
       body: account.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(
-            key: Key('saved-addresses-loading'),
-          ),
+          child: CircularProgressIndicator(key: Key('saved-addresses-loading')),
         ),
         error: (Object error, StackTrace stackTrace) => _AccountPageError(
           message: _errorMessage(error, isArabic),
@@ -207,6 +205,8 @@ class _AddressCard extends StatelessWidget {
       value('address_1'),
       value('address_2'),
       area,
+      value('postcode'),
+      value('country'),
       localEgyptianPhoneNumber(value('phone')),
       localEgyptianPhoneNumber(value('phone1')),
       value('email'),
@@ -236,6 +236,29 @@ class _AddressEditorState extends State<_AddressEditor> {
   late final Map<String, String> _values;
   bool _saving = false;
   String? _error;
+
+  String _countryFor(CustomerAddressField field) =>
+      (_values['${field.addressType == CustomerAddressType.billing ? 'billing' : 'shipping'}_country'] ??
+              '')
+          .trim()
+          .toUpperCase();
+
+  void _change(CustomerAddressField field, String value) {
+    if (field.key.endsWith('_country')) value = value.trim().toUpperCase();
+    if (field.key.endsWith('_country') && _values[field.key] != value) {
+      setState(() {
+        _values[field.key] = value;
+        final prefix = field.key.substring(
+          0,
+          field.key.length - 'country'.length,
+        );
+        _values['${prefix}state'] = '';
+        _values['${prefix}postcode'] = '';
+      });
+    } else {
+      _values[field.key] = value;
+    }
+  }
 
   @override
   void initState() {
@@ -294,10 +317,13 @@ class _AddressEditorState extends State<_AddressEditor> {
             for (final CustomerAddressField field in widget.fields)
               if (field.isVisible) ...<Widget>[
                 _AddressField(
-                  field: field,
+                  key: ValueKey(
+                    '${field.key}:${field.key.endsWith('_state') || field.key.endsWith('_postcode') ? _countryFor(field) : ''}',
+                  ),
+                  field: field.forCountry(_countryFor(field)),
                   initialValue: _values[field.key] ?? '',
                   enabled: !_saving,
-                  onChanged: (String value) => _values[field.key] = value,
+                  onChanged: (String value) => _change(field, value),
                 ),
                 const SizedBox(height: MobiShopSpacing.sm),
               ],
@@ -371,6 +397,7 @@ class _AddressEditorState extends State<_AddressEditor> {
 
 class _AddressField extends StatelessWidget {
   const _AddressField({
+    super.key,
     required this.field,
     required this.initialValue,
     required this.enabled,
@@ -390,10 +417,19 @@ class _AddressField extends StatelessWidget {
       if (field.required && text.isEmpty) {
         return isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
       }
+      if (field.key.endsWith('_country') &&
+          text.isNotEmpty &&
+          !RegExp(r'^[A-Za-z]{2}$').hasMatch(text)) {
+        return isArabic
+            ? 'أدخل رمز الدولة من حرفين، مثل EG'
+            : 'Enter a two-letter country code, such as US';
+      }
       if (field.type == CustomerAddressFieldType.email &&
           text.isNotEmpty &&
           !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)) {
-        return isArabic ? 'أدخل بريدًا إلكترونيًا صحيحًا' : 'Enter a valid email';
+        return isArabic
+            ? 'أدخل بريدًا إلكترونيًا صحيحًا'
+            : 'Enter a valid email';
       }
       return null;
     }
@@ -486,16 +522,19 @@ bool _isArabic(BuildContext context) =>
 String _errorMessage(Object error, bool isArabic) {
   if (error is CustomerAccountRepositoryException) {
     return switch (error.kind) {
-      CustomerAccountFailureKind.unauthorized => isArabic
-          ? 'انتهت جلسة الحساب. سجّل الدخول من جديد.'
-          : 'Your session expired. Sign in again.',
+      CustomerAccountFailureKind.unauthorized =>
+        isArabic
+            ? 'انتهت جلسة الحساب. سجّل الدخول من جديد.'
+            : 'Your session expired. Sign in again.',
       CustomerAccountFailureKind.connection ||
-      CustomerAccountFailureKind.timeout => isArabic
-          ? 'تعذر الاتصال بالمتجر. تحقق من الإنترنت وحاول مرة أخرى.'
-          : 'Could not reach the store. Check your connection and try again.',
-      _ => isArabic
-          ? 'تعذر تحميل بيانات الحساب. حاول مرة أخرى.'
-          : 'Could not load account data. Try again.',
+      CustomerAccountFailureKind.timeout =>
+        isArabic
+            ? 'تعذر الاتصال بالمتجر. تحقق من الإنترنت وحاول مرة أخرى.'
+            : 'Could not reach the store. Check your connection and try again.',
+      _ =>
+        isArabic
+            ? 'تعذر تحميل بيانات الحساب. حاول مرة أخرى.'
+            : 'Could not load account data. Try again.',
     };
   }
   return isArabic

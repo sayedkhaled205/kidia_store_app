@@ -1,0 +1,78 @@
+{
+  "scope": "offline contracts; not live payment or universal platform readiness",
+  "complete": true,
+  "cases": [
+    {
+      "name": "woocommerce-alpha",
+      "platform": "woocommerce",
+      "origin": "https://alpha.woocommerce.example.invalid",
+      "locale": "ar",
+      "country": "EG",
+      "passed": true,
+      "tests_passed": 241,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    },
+    {
+      "name": "woocommerce-beta",
+      "platform": "woocommerce",
+      "origin": "https://beta.woocommerce.example.invalid/shop",
+      "locale": "en",
+      "country": "US",
+      "passed": true,
+      "tests_passed": 241,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    },
+    {
+      "name": "shopify-alpha",
+      "platform": "shopify",
+      "origin": "https://matrix-alpha.myshopify.com",
+      "locale": "ar",
+      "country": "EG",
+      "passed": true,
+      "tests_passed": 202,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    },
+    {
+      "name": "shopify-beta",
+      "platform": "shopify",
+      "origin": "https://matrix-beta.myshopify.com",
+      "locale": "en",
+      "country": "US",
+      "passed": true,
+      "tests_passed": 202,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    },
+    {
+      "name": "odoo-alpha",
+      "platform": "odoo",
+      "origin": "https://alpha.odoo.example.invalid",
+      "locale": "ar",
+      "country": "EG",
+      "passed": true,
+      "tests_passed": 216,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    },
+    {
+      "name": "odoo-beta",
+      "platform": "odoo",
+      "origin": "https://beta.odoo.example.invalid",
+      "locale": "en",
+      "country": "US",
+      "passed": true,
+      "tests_passed": 216,
+      "failed_tests": [],
+      "skipped_tests": [],
+      "platform_binding_executed": true
+    }
+  ]
+}

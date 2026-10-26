@@ -1,0 +1,342 @@
+[
+  {
+    "test": "unsaved-draft-recovery-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "builder-assets-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "shared-builder-controls-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "banner-chrome-header-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "setup-wizard-shell-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "persistent-cms-sidebar-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "cms-entry-navigation-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "app-builder-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "license-integration-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "firebase-provisioning-integration-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "firebase-native-client-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "store-data-analytics-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "store-data-instant-update-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ai-offer-workspace-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ai-analysis-progress-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "background-job-stack-drag-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "completed-job-notice-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "custom-date-filter-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "website-app-promotion-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "checkout-status-control-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "flutter-preview-bootstrap-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "flutter-preview-bridge-test.js",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "category-designer.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "preview-auth-config.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "preview-commerce-config.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "preview-interactions.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "page-controls.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "page-controls-runtime.test.cjs",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "abandoned-cart-import-runtime-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ai-analysis-job-runtime-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "app-build-queue-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "app-download-runtime-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "auth-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "block-presentation-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "category-grid-block-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "category-page-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "category-page-store-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "collapsed-header-template-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "customer-account-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "customer-orders-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "firebase-platform-config-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "home-blocks-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "layout-store-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "page-layout-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "product-variation-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "splash-screen-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "store-data-orders-runtime-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "address-book-adapter-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "all-products-grid-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "auth-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "checkout-destination-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "customer-orders-endpoint-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "embedded-checkout88-policy-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "embedded-checkout88-session-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "kids-branding301-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "kids-tail301-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "merchant-payment-labels-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "merchant-schema96-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-auth-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-auth-legacy-gate-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-checkout-safety50-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-checkout-setup-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-payment92-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "native-website-payment-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "order-source98-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "product-variation-public-access-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "store-notifications-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "website-auth-contract-test.php",
+    "passed": true,
+    "exit_code": 0
+  }
+]

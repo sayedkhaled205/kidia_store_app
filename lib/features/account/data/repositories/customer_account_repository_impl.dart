@@ -86,12 +86,7 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       final String prefix = address.type == CustomerAddressType.billing
           ? 'billing'
           : 'shipping';
-      final Map<String, String> values = <String, String>{
-        ...address.values,
-        // The store deliberately disables postcode. Clear an old saved
-        // value without ever showing or requiring this field in the app.
-        '${prefix}_postcode': '',
-      };
+      final Map<String, String> values = <String, String>{...address.values};
       final Map<String, dynamic> response = await transport.updateAddress(
         address.type,
         values,
@@ -100,10 +95,7 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
         _object(response['address'], 'address'),
       );
       _verifyAddressWrite(prefix, values, savedValues);
-      return CustomerAddress(
-        type: address.type,
-        values: savedValues,
-      );
+      return CustomerAddress(type: address.type, values: savedValues);
     } on CustomerAccountTransportException catch (error, stackTrace) {
       Error.throwWithStackTrace(_transportFailure(error), stackTrace);
     } on FormatException catch (error, stackTrace) {
@@ -122,7 +114,9 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
     Map<String, dynamic> json,
     Map<String, dynamic>? configuration,
   ) {
-    final CustomerProfile profile = _profile(_object(json['profile'], 'profile'));
+    final CustomerProfile profile = _profile(
+      _object(json['profile'], 'profile'),
+    );
     final CustomerAddress billing = CustomerAddress(
       type: CustomerAddressType.billing,
       values: _stringMap(_object(json['billing'], 'billing')),
@@ -177,7 +171,11 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
       'alternate_phone': saved.alternatePhone,
     };
     for (final MapEntry<String, String> entry in expected.entries) {
-      if (!_samePersistedValue(entry.key, entry.value, actual[entry.key] ?? '')) {
+      if (!_samePersistedValue(
+        entry.key,
+        entry.value,
+        actual[entry.key] ?? '',
+      )) {
         throw FormatException(
           'The store did not persist customer profile field ${entry.key}.',
         );
@@ -253,30 +251,28 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
         'shipping' => CustomerAddressType.shipping,
         _ => null,
       };
-      if (group == null || !_supportedAddressKey(key, group) || !seen.add(key)) {
+      if (group == null ||
+          !_supportedAddressKey(key, group) ||
+          !seen.add(key)) {
         continue;
       }
-      final bool isPostcode = key.endsWith('_postcode');
-      final bool isCountry = key.endsWith('_country');
       fields.add(
         CustomerAddressField(
           key: key,
           addressType: group,
-          type: isPostcode || isCountry
-              ? CustomerAddressFieldType.hidden
-              : _fieldType(_text(json['type'])),
+          type: _fieldType(_text(json['type'])),
           label: _text(json['label']).isEmpty ? key : _text(json['label']),
           placeholder: _text(json['placeholder']),
-          required: isPostcode || isCountry ? false : _boolean(json['required']),
+          required: _boolean(json['required']),
           priority: _integer(json['priority'], fallback: 100),
-          options: isPostcode || isCountry
-              ? const <String, String>{}
-              : _stringMap(json['options']),
-          defaultValue: isPostcode
-              ? ''
-              : isCountry && _text(json['default']).isEmpty
-              ? 'EG'
-              : _text(json['default']),
+          options: _stringMap(json['options']),
+          optionsByCountry: {
+            for (final entry in _optionalObject(
+              json['options_by_country'],
+            ).entries)
+              entry.key: _stringMap(entry.value),
+          },
+          defaultValue: _text(json['default']),
           autocomplete: _text(json['autocomplete']),
         ),
       );
@@ -340,11 +336,19 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
         ),
         CustomerAddressField(
           key: '${prefix}_country',
-          type: CustomerAddressFieldType.hidden,
+          type: CustomerAddressFieldType.text,
           addressType: type,
           label: 'الدولة',
-          defaultValue: 'EG',
+          placeholder: 'ISO country code (US, GB, EG)',
+          required: true,
           priority: 90,
+        ),
+        CustomerAddressField(
+          key: '${prefix}_postcode',
+          type: CustomerAddressFieldType.text,
+          addressType: type,
+          label: 'الرمز البريدي / Postcode',
+          priority: 95,
         ),
         if (type == CustomerAddressType.billing)
           CustomerAddressField(
@@ -478,6 +482,11 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
     if (value is bool) {
       return value;
     }
-    return <String>{'1', 'true', 'yes', 'on'}.contains(_text(value).toLowerCase());
+    return <String>{
+      '1',
+      'true',
+      'yes',
+      'on',
+    }.contains(_text(value).toLowerCase());
   }
 }

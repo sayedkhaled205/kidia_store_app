@@ -77,6 +77,7 @@ jobs:
         run: |
           python3 tool/generate_app_ui_controls.py --check
           node tools/live_ui_controls/page-controls.test.cjs
+          node tools/live_ui_controls/page-controls-runtime.test.cjs
           php tools/live_ui_controls/presentation-test.php
       - name: Check connected sign-in preview availability
         run: node tool/builder-assets/preview-auth-config.test.cjs
