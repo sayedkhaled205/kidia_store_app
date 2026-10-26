@@ -184,19 +184,12 @@ class CustomerOrdersRepositoryImpl
     final bool serverCanCancel = _boolean(json['can_cancel']);
     final CustomerOrderCancellationType parsedCancellationType =
         _cancellationType(json['cancellation_type']);
-    final bool websiteCancellationFallback = const <String>{
-      'processing',
-      'on-hold',
-    }.contains(status);
     final bool canCancel =
         serverCanCancel ||
-        parsedCancellationType != CustomerOrderCancellationType.none ||
-        websiteCancellationFallback;
+        parsedCancellationType != CustomerOrderCancellationType.none;
     final CustomerOrderCancellationType cancellationType =
         parsedCancellationType != CustomerOrderCancellationType.none
         ? parsedCancellationType
-        : websiteCancellationFallback
-        ? CustomerOrderCancellationType.request
         : canCancel
         ? CustomerOrderCancellationType.cancel
         : CustomerOrderCancellationType.none;

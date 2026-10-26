@@ -46,7 +46,13 @@ class ShopifyBuyerCartSession {
   Future<void> hydrate(int owner) async {
     _checkOwner(owner);
     if (_hydrated) return;
-    await (_hydration ??= _load(owner));
+    final loading = _hydration ??= _load(owner);
+    try {
+      await loading;
+    } catch (_) {
+      if (identical(_hydration, loading)) _hydration = null;
+      rethrow;
+    }
     _checkOwner(owner);
   }
 

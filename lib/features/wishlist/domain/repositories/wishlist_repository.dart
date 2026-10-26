@@ -9,8 +9,12 @@ abstract interface class WishlistRepository {
 // Product screens and the wishlist can be mounted together. Serialize their
 // read/modify/write operations so a stale screen cannot erase a newer save.
 final _wishlistWrites = Expando<Future<void>>();
+final _wishlistChanges = Expando<StreamController<List<int>>>();
 
 extension WishlistMutation on WishlistRepository {
+  Stream<List<int>> get productIdChanges =>
+      (_wishlistChanges[this] ??= StreamController<List<int>>.broadcast()).stream;
+
   Future<List<int>> updateProductIds(
     FutureOr<List<int>> Function(List<int> current) update,
   ) {
@@ -24,6 +28,7 @@ extension WishlistMutation on WishlistRepository {
         if (current.length != next.length ||
             Iterable<int>.generate(current.length).any((i) => current[i] != next[i])) {
           await saveProductIds(next);
+          _wishlistChanges[this]?.add(List<int>.unmodifiable(next));
         }
         result.complete(next);
       } catch (error, stack) {

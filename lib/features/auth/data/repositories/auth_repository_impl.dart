@@ -117,7 +117,14 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthSession?> restoreSession() async {
-    final AuthSession? stored = await sessionStore.read();
+    final AuthSession? stored;
+    try {
+      stored = await sessionStore.read();
+    } catch (_) {
+      // Locked OS storage cannot authenticate or poison later sign-in attempts.
+      // Retain the stored session so it can be restored once storage recovers.
+      return null;
+    }
     if (stored == null) {
       return null;
     }

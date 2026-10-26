@@ -49,6 +49,7 @@ class NativePaymentClient92 {
     required this.store,
     required this.token,
     Dio? dio,
+    Future<void> Function(Duration duration)? wait,
     Future<void> Function(String session, String mode, bool arabic)?
     presentSession,
   }) : _dio =
@@ -59,10 +60,12 @@ class NativePaymentClient92 {
                receiveTimeout: const Duration(seconds: 35),
              ),
            ),
-       _presentSession = presentSession ?? presentKashierSession92;
+       _presentSession = presentSession ?? presentKashierSession92,
+       _wait = wait ?? Future<void>.delayed;
   final Uri store;
   final String? Function() token;
   final Dio _dio;
+  final Future<void> Function(Duration duration) _wait;
   final Future<void> Function(String session, String mode, bool arabic)
   _presentSession;
 
@@ -107,6 +110,22 @@ class NativePaymentClient92 {
     await _request(id);
   }
 
+  /// Read-only settlement window. Webhooks may arrive after the SDK callback.
+  /// Never replay a charge; an unresolved result remains an existing order.
+  Future<bool> confirmPayment(int id) async {
+    final identity = token();
+    for (var attempt = 0; attempt < 6; attempt++) {
+      if (attempt > 0) await _wait(Duration(seconds: attempt));
+      if (identity == null || token() != identity) {
+        throw StateError('The payment customer changed.');
+      }
+      final status = await _request(id);
+      if (status['paid'] == true && const {'processing', 'completed'}.contains(status['status'])) return true;
+      if (const {'failed', 'cancelled', 'refunded'}.contains(status['status'])) return false;
+    }
+    return false;
+  }
+
   /// Used by the inline SDK form after the buyer's single confirmation.
   /// The SDK result is provisional; only this authenticated merchant read can
   /// produce a paid result. No retry or second order is issued on any failure.
@@ -140,9 +159,8 @@ class NativePaymentClient92 {
     } catch (_) {
       // Do not expose SDK error payloads or raw card/provider responses.
     }
-    final status = await _request(id);
-    return status['paid'] == true &&
-        const {'processing', 'completed'}.contains(status['status']);
+    if (token() != identity) throw StateError('The payment customer changed.');
+    return confirmPayment(id);
   }
 
   Future<bool> present(int id, {required bool arabic}) async {

@@ -16,6 +16,20 @@ import 'package:mobishop_store_app/features/cart/presentation/providers/cart_sta
 import '../data/cart_test_fixture.dart';
 
 void main() {
+  test('late refresh cannot overwrite a newer quantity mutation', () async {
+    final repository = _FakeCartRepository();
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    final initial = await container.read(cartControllerProvider.future);
+    repository.loadCompleter = Completer<Cart>();
+    final controller = container.read(cartControllerProvider.notifier);
+    final refresh = controller.refreshCart();
+    await controller.updateQuantity(initial.cart.items.single, 3);
+    repository.loadCompleter!.complete(_fixtureCart(quantity: 1));
+    await refresh;
+    expect(container.read(cartControllerProvider).requireValue.cart.items.single.quantity, 3);
+    expect(container.read(cartControllerProvider).requireValue.isRefreshing, false);
+  });
   test('stock rejection refreshes basket and invalidates catalog without replaying add', () async {
     final repository = _FakeCartRepository();
     final container = _container(repository);

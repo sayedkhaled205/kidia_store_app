@@ -43,6 +43,7 @@ void main() {
         store: Uri.parse('https://merchant.example'),
         token: () => token,
         dio: dio,
+            wait: (_) async {},
       );
       await expectLater(
         client.payInline(
@@ -91,6 +92,7 @@ void main() {
             store: Uri.parse('https://merchant.example'),
             token: () => 'buyer',
             dio: dio,
+            wait: (_) async {},
           );
           expect(
             await client.payInline(
@@ -111,7 +113,7 @@ void main() {
             'EGP',
             true,
           ));
-          expect(requests.map((r) => r.method), ['POST', 'GET']);
+          expect(requests.map((r) => r.method), ['POST', ...List.filled(paid ? 1 : 6, 'GET')]);
           expect(
             requests.every((r) => r.data == null && !r.followRedirects),
             true,

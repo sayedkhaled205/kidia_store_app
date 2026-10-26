@@ -35,6 +35,7 @@ abstract final class HomeLayoutModel {
     }
 
     final List<HomeBlock> blocks = <HomeBlock>[];
+    final ids = <String>{};
 
     for (int index = 0; index < value.length; index++) {
       final dynamic rawBlock = value[index];
@@ -58,7 +59,9 @@ abstract final class HomeLayoutModel {
       }
 
       try {
-        blocks.add(HomeBlockModel.fromJson(blockJson));
+        final block = HomeBlockModel.fromJson(blockJson);
+        // Sections are addressed by ID/GlobalKey. Keep the first valid one.
+        if (ids.add(block.id)) blocks.add(block);
       } on FormatException catch (error, stackTrace) {
         developer.log(
           'Skipped malformed ${rawType ?? 'unknown'} block at index $index: $error',

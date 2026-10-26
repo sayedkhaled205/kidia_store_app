@@ -463,7 +463,13 @@ final class _GoogleBackend implements NativeGoogleBackend {
         serverClientId: serverClientId,
         clientId: clientId,
       );
-      await _initialized;
+      try {
+        await _initialized;
+      } catch (_) {
+        _initialized = null;
+        _configuration = null;
+        rethrow;
+      }
       if (!google.supportsAuthenticate()) {
         throw const NativeAuthSdkException('native-platform-required');
       }

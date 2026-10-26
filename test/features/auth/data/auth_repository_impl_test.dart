@@ -10,6 +10,16 @@ import 'package:mobishop_store_app/features/auth/domain/entities/social_auth.dar
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
 void main() {
+  test('locked secure storage does not poison sign-in or delete the session', () async {
+    final store = _TemporarilyLockedStore()..value = _session();
+    final repo = AuthRepositoryImpl(transport: _FakeAuthTransport(),
+      sessionStore: store, socialPendingStore: MemorySocialAuthPendingStore());
+    expect(await repo.restoreSession(), isNull);
+    expect(store.value, isNotNull);
+    store.locked = false;
+    expect((await repo.restoreSession())?.user.id, 7);
+    expect((await repo.signIn(email: 'customer@example.com', password: 'test')).user.id, 7);
+  });
   group('AuthRepositoryImpl', () {
     test('uses the server decision for the progressive email step', () async {
       final _FakeAuthTransport transport = _FakeAuthTransport()
@@ -177,6 +187,15 @@ String _token(String character) =>
 
 String _secret(String character) =>
     List<String>.filled(64, character).join();
+
+class _TemporarilyLockedStore extends MemoryAuthSessionStore {
+  bool locked = true;
+  @override
+  Future<AuthSession?> read() async {
+    if (locked) throw StateError('Storage temporarily locked');
+    return super.read();
+  }
+}
 
 class _FakeAuthTransport implements AuthApiTransport {
   AuthIdentity identity = const AuthIdentity(

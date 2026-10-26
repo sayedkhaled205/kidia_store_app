@@ -8,10 +8,10 @@ import 'package:mobishop_store_app/features/orders/presentation/providers/custom
 
 final checkoutPaymentController298Provider = Provider.autoDispose
     .family<CheckoutPaymentController298, int>((ref, orderId) {
-      final session = ref.watch(authControllerProvider).value;
-      final identity = (session?.user.id, session?.token);
+      final identity = ref.watch(authControllerProvider.select((state) =>
+        (state.value?.user.id, state.value?.token)));
       bool current() {
-        if (!ref.mounted || session == null) return false;
+        if (!ref.mounted || identity.$1 == null) return false;
         final auth = ref.read(authControllerProvider);
         final value = auth.value;
         return !auth.hasError &&

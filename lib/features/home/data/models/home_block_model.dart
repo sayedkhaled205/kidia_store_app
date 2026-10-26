@@ -494,7 +494,7 @@ abstract final class HomeBlockModel {
     return ProductGridBlock(
       id: id,
       loadAll: data['limit'] == 'all',
-      source: data['source'] as String? ?? 'latest',
+      source: _optionalString(data, 'source') ?? 'latest',
       categoryId: int.tryParse('${data['category_id'] ?? 0}') ?? 0,
       productIds: '${data['product_ids'] ?? ''}'.split(RegExp(r'[\s,]+'))
           .map(int.tryParse).whereType<int>().where((id) => id > 0).toList(),

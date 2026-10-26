@@ -325,7 +325,12 @@ class ShopifyCartGateway {
   ) async {
     // Resolve this shop's primary domain before a write. A bootstrap failure
     // must never leave a newly created cart with an unknown mutation outcome.
-    await checkoutPolicy.prepare();
+    try {
+      await checkoutPolicy.prepare();
+    } catch (_) {
+      // No mutation was dispatched: allow an explicit retry after recovery.
+      throw const ShopifyCartMutationFailure(needsReconciliation: false);
+    }
     try {
       final Map<String, dynamic> data = await transport.cartMutation(
         document,

@@ -143,7 +143,7 @@ void main() {
       transport: transport,
       connection: connection,
     );
-    await expectLater(gateway.createCart(), throwsFormatException);
+    await expectLater(gateway.createCart(), throwsA(isA<ShopifyCartMutationFailure>().having((e) => e.needsReconciliation, 'dispatched', false)));
     expect(transport.writes, 0);
     transport.failBootstrap = false;
     final result = await gateway.createCart();

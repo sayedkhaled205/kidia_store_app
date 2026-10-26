@@ -61,6 +61,7 @@ final catalogCategoryTreeProvider =
             ? applySavedCategoryOverrides83(
                 categories,
                 Map<String, dynamic>.from(saved),
+                allowUnresolvedImages: AppConfig.commercePlatform == CommercePlatform.wooCommerce,
               )
             : categories,
       );

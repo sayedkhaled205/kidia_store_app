@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:mobishop_store_app/features/checkout/domain/entities/saved_checkout_address92.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,25 @@ import 'package:mobishop_store_app/features/checkout/presentation/checkout_scree
 import '../support/checkout_test_data.dart';
 
 void main() {
+  testWidgets('double confirmation during address sync reports one order once', (tester) async {
+    _useTallSurface(tester);
+    final sync = Completer<void>();
+    var reports = 0;
+    final repo = FakeCheckoutRepository(onUpdateCustomer: (_, _) async {
+      await sync.future;
+      return checkoutCart();
+    });
+    await tester.pumpWidget(_testApp(CheckoutScreen(repository: repo, onOrderSuccess: (_) => reports++)));
+    await tester.pumpAndSettle();
+    final confirm = tester.widget<FilledButton>(find.byKey(const Key('checkout-place-order'))).onPressed!;
+    confirm();
+    confirm();
+    await tester.pump();
+    sync.complete();
+    await tester.pumpAndSettle();
+    expect(repo.submitCalls, 1);
+    expect(reports, 1);
+  });
   testWidgets('choose either saved address or start a new address', (tester) async {
     _useTallSurface(tester);
     final repo = FakeCheckoutRepository(state: CheckoutState(cart: checkoutCart(), savedAddresses: [

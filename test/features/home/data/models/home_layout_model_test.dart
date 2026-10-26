@@ -4,6 +4,20 @@ import 'package:mobishop_store_app/features/home/data/models/home_layout_model.d
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 
 void main() {
+  test('bad scalar types and duplicate IDs do not lose healthy home blocks', () {
+    final layout = HomeLayoutModel.fromJson({
+      'version': 4, 'page': 'home', 'locale': 'en',
+      'updated_at': '2026-07-15T20:00:00Z',
+      'blocks': [
+        {'id': 'bad', 'type': 'product_grid', 'data': {'source': 42}},
+        {'id': 'first', 'type': 'spacer', 'data': {'height': 16}},
+        {'id': 'first', 'type': 'spacer', 'data': {'height': 32}},
+        {'id': 'last', 'type': 'spacer', 'data': {'height': 24}},
+      ],
+    });
+    expect(layout.blocks.map((b) => b.id), ['first', 'last']);
+    expect((layout.blocks.first as SpacerBlock).height, 16);
+  });
   group('HomeLayoutModel', () {
     test('parses a valid CMS block', () {
       final layout = HomeLayoutModel.fromJson(<String, dynamic>{

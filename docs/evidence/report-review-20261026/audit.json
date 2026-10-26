@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-26",
+  "base_commit": "73f07e719354e2b031c6a271e4bfb6b10a1ae712",
+  "scope": "Validate the supplied static review against current code; correct confirmed reliability defects without redesigning the application or replacing existing integrations.",
+  "report_limit": "The supplied report explicitly did not run the app, analyzer, or tests. Its 352 entries and severity ratings are review claims, not 352 reproduced failures. This audit is targeted, not an independent certification of every claim.",
+  "fixed": [
+    {"ids": "R7-01", "finding": "WooCommerce image IDs awaiting URL resolution could reject the category tree.", "change": "Retain the live category image while the saved image is unresolved. Other platforms and explicit URLs retain validation.", "test": "category_overrides83_test.dart"},
+    {"ids": "R3-01 / HOME-1; R3-03 / HOME-2", "finding": "Malformed product source or duplicate block IDs could break home rendering.", "change": "Normalize optional source strings and keep the first valid section per ID while retaining later valid sections.", "test": "home_layout_model_test.dart; malformed source reproduced before fix"},
+    {"ids": "AUTH-1", "finding": "A temporary secure-storage read failure prevented session initialization.", "change": "Return an unauthenticated state without deleting the saved session; a later restoration or sign-in can proceed.", "test": "auth_repository_impl_test.dart; reproduced before fix"},
+    {"ids": "R1-01 / AUTH-3", "finding": "Google SDK initialization cached a rejected future.", "change": "Clear failed initialization so the next explicit attempt can recover.", "test": "google_initialization_retry_test.dart; real backend with a fake platform implementation"},
+    {"ids": "C1", "finding": "Two checkout callbacks could run while address synchronization preceded submission.", "change": "Guard the full active submission, including address synchronization.", "test": "checkout_screen_test.dart; two callbacks result in one submission and one continuation"},
+    {"ids": "C5", "finding": "An old cart refresh could overwrite a newer quantity mutation.", "change": "Discard refresh results from before the latest accepted mutation.", "test": "cart_controller_test.dart; reproduced before fix"},
+    {"ids": "GAP-1; GAP-2", "finding": "Shopify pre-dispatch bootstrap and hydration failures could permanently block later attempts.", "change": "Distinguish a failure before dispatch from an ambiguous server write; retry failed storage hydration. Ambiguous dispatched writes remain protected against duplicate creation.", "test": "shopify_cart_recovery_test.dart; shopify_checkout_policy297_test.dart"},
+    {"ids": "CHK-2", "finding": "One immediate read after the card SDK callback could miss delayed server settlement.", "change": "Poll only the same authenticated order up to six times with bounded delays; never re-submit a charge or create another order. Stop on terminal status or changed customer.", "test": "native_payment92_test.dart; native_inline95_test.dart"},
+    {"ids": "C6 / CHK-5", "finding": "A profile-only auth update could recreate the payment controller.", "change": "Observe customer identity and token rather than the entire profile object.", "test": "checkout and payment regression suites; no new real transaction"},
+    {"ids": "O1 / ORD-2", "finding": "The client invented cancellation permission from processing/on-hold status.", "change": "Use the server cancellation capability and preserve its explicit cancel/request type.", "test": "customer_orders_repository_impl_test.dart; negative permission plus both positive action types"},
+    {"ids": "WISH-1; W2 / WISH-3 / WISH-5 / WISH-6", "finding": "Some product-card hearts bypassed the shared wishlist mutation queue.", "change": "Use the same repository and serialized updates, broadcast successful changes, ignore stale loads, and show a save error without falsely filling the heart.", "test": "product_wishlist_button_test.dart; rapid independent hearts, shared removals, failed save then retry"},
+    {"ids": "Additional current-source defect", "finding": "Two saved-address labels contained non-UTF-8 bytes.", "change": "Restore the existing Arabic text in UTF-8 without changing styling.", "test": "Analyzer and checkout widget tests"}
+  ],
+  "already_addressed_or_partly_stale": [
+    {"ids": "W1 / WISH-2", "reason": "Current wishlist controller no longer prunes saved IDs because a catalog response is incomplete; prior regression tests passed again."},
+    {"ids": "C3 / CHK-1", "reason": "Saved-address switching already recreates form values and clears optional values. The old fallback postcode field was removed. This does not certify every country-specific storefront configuration."},
+    {"ids": "GAP-7", "reason": "The current web shell leaves wheel/touch handling to Flutter; the old self-posted wheel handler cited by the report is no longer the active implementation."},
+    {"ids": "GAP-5", "reason": "Shopify policy tests already existed; repository recovery and buyer-session tests were added. This is not full coverage of every Shopify repository branch."}
+  ],
+  "not_changed": [
+    {"ids": "AUTH-2; ACC-1; PROD-2; ORD-1", "reason": "Forgot-password/account deletion/full reviews/new order detail experiences require new features, APIs or UI. Excluded from this design-preserving reliability patch."},
+    {"ids": "R1-06; PROD-3", "reason": "Default support destinations and configured fit-summary content need store/product decisions; no invented contact data or visible content changes were applied."},
+    {"ids": "R4-04 / PROD-1", "reason": "Variation-selection constraints need a dedicated availability/navigation design decision and regression matrix. Existing variation behavior was retained."},
+    {"ids": "B2 / BUN-1", "reason": "Atomic multi-item bundle addition/rollback is not provided by the existing sequential flow; a repository/server contract change is required. Not fixed by pretending that partial writes can safely be replayed."},
+    {"ids": "CAT-5", "reason": "Some platform-specific filtering is unsupported. Hiding or redesigning filters was excluded from this patch; a separate capability-aware change remains."},
+    {"ids": "SPL-1", "reason": "The current startup design intentionally waits for validated branding/configuration with retry. Bypassing that contract was not treated as a safe bug fix."},
+    {"ids": "Other report entries", "reason": "No claim that all lower-priority entries were reproduced or fixed. Broad refactors, SDK upgrades, design changes and new features were excluded."}
+  ],
+  "validation": {
+    "broad_flutter_suite": {"passed": 585, "skipped": 1, "failed": 0, "skipped_reason": "Live-design smoke test requires explicit endpoint/origin environment variables."},
+    "subsequent_order_capability_suite": {"passed": 4, "failed": 0, "note": "Includes two additional positive-action tests; other two overlap the broad run."},
+    "changed_file_analysis": "No issues found",
+    "release_preview_build": "Succeeded, including WebAssembly dry-run",
+    "real_orders_or_payments_created": false,
+    "installed_android_or_ios_build_updated": false,
+    "wishlist_scope": "Persistent on the current device and store; this patch does not introduce account or cross-device synchronization."
+  }
+}

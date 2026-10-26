@@ -56,6 +56,7 @@ class CartViewState {
 const Object _notProvided = Object();
 
 class CartController extends AsyncNotifier<CartViewState> {
+  int _mutationRevision = 0;
   CartRepository get _repository => ref.read(cartRepositoryProvider);
 
   @override
@@ -84,6 +85,7 @@ class CartController extends AsyncNotifier<CartViewState> {
   }
 
   Future<void> refreshCart() async {
+    final revision = _mutationRevision;
     final CartViewState? current = state.asData?.value;
     if (current == null) {
       await retry();
@@ -99,7 +101,7 @@ class CartController extends AsyncNotifier<CartViewState> {
     );
     try {
       final Cart cart = await _repository.getCart();
-      if (!ref.mounted || ownerToken != _authToken) {
+      if (!ref.mounted || ownerToken != _authToken || revision != _mutationRevision) {
         return;
       }
       _captureCart(cart);
@@ -107,7 +109,7 @@ class CartController extends AsyncNotifier<CartViewState> {
         CartViewState(cart: cart, isRefreshing: false),
       );
     } catch (error) {
-      if (!ref.mounted || ownerToken != _authToken) return;
+      if (!ref.mounted || ownerToken != _authToken || revision != _mutationRevision) return;
       final CartRepositoryException failure = _failure(error);
       state = AsyncData<CartViewState>(
         current.copyWith(
@@ -229,6 +231,7 @@ class CartController extends AsyncNotifier<CartViewState> {
     }
     final String ownerToken = _authToken;
 
+    _mutationRevision++;
     state = AsyncData<CartViewState>(
       current.copyWith(
         pendingItemKeys: itemKey == null ? const <String>{} : <String>{itemKey},

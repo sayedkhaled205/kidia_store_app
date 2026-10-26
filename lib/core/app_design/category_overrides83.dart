@@ -52,9 +52,10 @@ void validateSavedCategoryOverrides83(
 
 List<CatalogCategory> applySavedCategoryOverrides83(
   List<CatalogCategory> source,
-  Map<String, dynamic> overrides,
-) {
-  validateSavedCategoryOverrides83(overrides);
+  Map<String, dynamic> overrides, {
+  bool allowUnresolvedImages = false,
+}) {
+  validateSavedCategoryOverrides83(overrides, allowUnresolvedImages: allowUnresolvedImages);
   final originals = {for (final category in source) category.id: category};
   Map<String, dynamic> setting(int id) => overrides['$id'] is Map
       ? Map<String, dynamic>.from(overrides['$id'] as Map)
@@ -106,7 +107,7 @@ List<CatalogCategory> applySavedCategoryOverrides83(
       final hidden = ancestorHidden || saved['hidden'] == true;
       if (!hidden) {
         final alias = saved['name'] as String? ?? '';
-        final image = saved['image_id'] is int && saved['image_id'] > 0
+        final image = saved['image_id'] is int && saved['image_id'] > 0 && saved.containsKey('image_url')
             ? CatalogImage(
                 source: _publicImage(saved['image_url']),
                 thumbnail: saved.containsKey('image_thumbnail_url')

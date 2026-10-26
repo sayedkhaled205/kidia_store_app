@@ -257,7 +257,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   );
 
   Future<void> _submit() async {
-    if (_payingInline || _controller.isSubmitting) return;
+    if (_payingInline || _controller.isSubmitting || _controller.hasActiveSubmission) return;
     if (widget.isPreview) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_CheckoutCopy.of(context).previewOnly)),
@@ -534,14 +534,14 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
         children: [
           Row(children: [
             Expanded(child: Text(
-              ar ? 'ÚäÇæíäß ÇáãÍİæÙÉ' : 'Your saved addresses',
+              ar ? 'Ø¹Ù†Ø§ÙˆÙŠÙ†Ùƒ Ø§Ù„Ù…Ø­ÙÙˆØ¸Ø©' : 'Your saved addresses',
               style: Theme.of(context).textTheme.titleMedium,
             )),
             TextButton.icon(
               key: const Key('checkout-new-address'),
               onPressed: controller.isSubmitting ? null : controller.enterNewAddress,
               icon: const Icon(Icons.add, size: 18),
-              label: Text(ar ? 'ÚäæÇä ÌÏíÏ' : 'New address'),
+              label: Text(ar ? 'Ø¹Ù†ÙˆØ§Ù† Ø¬Ø¯ÙŠØ¯' : 'New address'),
             ),
           ]),
           const SizedBox(height: 8),

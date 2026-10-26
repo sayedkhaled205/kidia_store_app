@@ -4,6 +4,18 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_cate
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 
 void main() {
+  test('unresolved Woo artwork retains the live category image', () {
+    final image = CatalogImage(source: Uri.parse('https://store.example/live.png'));
+    final source = [CatalogCategory(id: 1, name: 'Live', slug: 'live', image: image)];
+    final saved = <String, dynamic>{'1': {
+      'parent_id': null, 'display_order': 0, 'hidden': false,
+      'image_id': 44, 'name': 'Saved name',
+    }};
+    final result = applySavedCategoryOverrides83(source, saved, allowUnresolvedImages: true);
+    expect(result.single.image, same(image));
+    expect(result.single.name, 'Saved name');
+    expect(() => applySavedCategoryOverrides83(source, saved), throwsFormatException);
+  });
   test(
     'saved category overrides retain exact hierarchy/order/hiding/public artwork',
     () {

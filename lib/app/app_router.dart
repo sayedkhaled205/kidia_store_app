@@ -47,7 +47,8 @@ import '../features/search/presentation/search_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import '../features/splash/presentation/splash_providers.dart';
 import '../features/splash/domain/splash_config.dart';
-import '../features/wishlist/data/shared_preferences_wishlist_repository.dart';
+import '../features/wishlist/application/wishlist_repository_provider.dart';
+export '../features/wishlist/application/wishlist_repository_provider.dart';
 import '../features/wishlist/domain/repositories/wishlist_repository.dart';
 import '../features/wishlist/presentation/wishlist_screen.dart';
 import 'app_startup_provider.dart';
@@ -61,11 +62,6 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
 
   return router;
 });
-
-final Provider<WishlistRepository> wishlistRepositoryProvider =
-    Provider<WishlistRepository>((ref) {
-      return SharedPreferencesWishlistRepository.forConfiguredStore();
-    });
 
 GoRouter createAppRouter({
   String initialLocation = '/',

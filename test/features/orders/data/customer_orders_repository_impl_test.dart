@@ -4,8 +4,22 @@ import 'package:mobishop_store_app/features/orders/data/repositories/customer_or
 import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 
 void main() {
+  for (final type in <String>['cancel', 'request']) {
+    test('preserves the server-authorized $type action', () async {
+      final repository = CustomerOrdersRepositoryImpl(_FakeOrdersTransport({
+        'orders': [{'id': 102, 'number': '102', 'status': 'processing',
+          'status_name': 'Processing', 'total_display': 'EGP 10.00', 'can_cancel': true,
+          'cancellation_type': type, 'item_count': 0, 'items': <dynamic>[]}],
+        'page': 1, 'per_page': 20, 'total': 1, 'total_pages': 1,
+      }));
+      final page = await repository.getOrders(page: 1, perPage: 20);
+      expect(page.items.single.canCancel, isTrue);
+      expect(page.items.single.cancellationType, type == 'request'
+          ? CustomerOrderCancellationType.request : CustomerOrderCancellationType.cancel);
+    });
+  }
   test(
-    'keeps website cancellation requests visible for processing orders',
+    'does not invent cancellation permission from processing status',
     () async {
       final CustomerOrdersRepositoryImpl repository =
           CustomerOrdersRepositoryImpl(
@@ -47,10 +61,10 @@ void main() {
       expect(page.items.single.statusName, 'قيد التنفيذ');
       expect(page.items.single.totalDisplay, 'EGP 1,320.00');
       expect(page.items.single.items.last.quantity, 2);
-      expect(page.items.single.canCancel, isTrue);
+      expect(page.items.single.canCancel, isFalse);
       expect(
         page.items.single.cancellationType,
-        CustomerOrderCancellationType.request,
+        CustomerOrderCancellationType.none,
       );
     },
   );

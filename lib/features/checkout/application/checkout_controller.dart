@@ -152,6 +152,7 @@ class CheckoutController extends ChangeNotifier {
   String? get addressUpdateError => _addressUpdateError;
   CheckoutOrderResult? get orderResult => _orderResult;
   bool get isSubmitting => _status == CheckoutStatus.submitting;
+  bool get hasActiveSubmission => _activeSubmission != null;
   bool get isUpdatingCustomer => _isUpdatingCustomer;
   bool get isRecoveringOrder => _isRecoveringOrder;
   bool get canRecoverOrder =>

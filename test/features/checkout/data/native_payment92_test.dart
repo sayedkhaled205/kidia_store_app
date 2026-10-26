@@ -3,6 +3,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/native_payment_client92.dart';
 
 void main() {
+  for (final outcome in ['delayed', 'pending', 'failed', 'changed-buyer']) {
+    test('settlement confirmation: $outcome, read-only and bounded', () async {
+      var token = 'buyer';
+      var reads = 0;
+      final delays = <Duration>[];
+      final dio = Dio()..interceptors.add(InterceptorsWrapper(onRequest: (r,h) {
+        expect(r.method, 'GET');
+        expect(r.path, endsWith('/15/native-payment/status'));
+        reads++;
+        final paid = outcome == 'delayed' && reads == 3;
+        h.resolve(Response(requestOptions: r, statusCode: 200, data: {
+          'order_id': 15, 'paid': paid,
+          'status': paid ? 'processing' : outcome == 'failed' ? 'failed' : 'pending',
+        }));
+      }));
+      final client = NativePaymentClient92(store: Uri.parse('https://merchant.example'),
+        token: () => token, dio: dio, wait: (delay) async {
+          delays.add(delay);
+          if (outcome == 'changed-buyer') token = 'other';
+        });
+      if (outcome == 'changed-buyer') {
+        await expectLater(client.confirmPayment(15), throwsStateError);
+        expect(reads, 1);
+      } else {
+        expect(await client.confirmPayment(15), outcome == 'delayed');
+        expect(reads, outcome == 'delayed' ? 3 : outcome == 'failed' ? 1 : 6);
+        expect(delays.length, reads - 1);
+      }
+    });
+  }
+
   test(
     'a failed SDK flow reconciles the same order without retrying a payment',
     () async {
