@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-26",
+  "source_commit": "a025928966aec9aa0eb1ac95ada66c7d5c134704",
+  "preview_runtime": "8e1360577aab",
+  "production_url": "https://api.woomobile.app/mobishop-builder-v26/index.html?store=6990b322-e396-46bb-a188-a1e472b6bf64#product-builder",
+  "tests": {
+    "flutter_commerce_product_wishlist_app": 182,
+    "result": "passed",
+    "checkout_analyzer": "No issues found",
+    "php_address_adapter": "passed locally and on production PHP with synthetic fixture"
+  },
+  "reviews": {
+    "browser": "production IAB",
+    "off_removes_tab": true,
+    "on_restores_tab": true,
+    "off_while_selected": "verified in staged IAB",
+    "saved_layout_changed": false
+  },
+  "wishlist": {
+    "verified": [
+      "new preference instance/cache reload",
+      "store isolation",
+      "add/remove/toggle",
+      "concurrent controllers",
+      "failed writes",
+      "failed storage read and retry",
+      "offline catalog and later save",
+      "pagination",
+      "preserved unavailable IDs",
+      "existing sign-in gate widget tests"
+    ],
+    "scope": "device and store, not server customer account",
+    "cms_preview": "separate in-memory sample list",
+    "cross_device_sync": false,
+    "live_device_reinstall_test": false
+  },
+  "addresses": {
+    "ui_tests": [
+      "two saved choices",
+      "new address",
+      "optional fields cleared",
+      "country retained for new entry",
+      "shipping repriced for selected governorate",
+      "cross-city match"
+    ],
+    "website_source": "Kidia_Shipping_Addresses / kidia_shipping_addresses_v1",
+    "source_sha256": "884bc69a449f6da7c0aa6edfd607710453e2b327616d56807bf4dbe2612b0695",
+    "adapter_path": "/home/kidiastore/public_html/wp-content/mu-plugins/mobi2app-kidia-address-book.php",
+    "adapter_sha256": "0c2a178f64586ea3f39becd7634f488ee42b8ccbf6e53aec1ef87c9ffa2af038",
+    "shared_contract": "mobishop_native_checkout_addresses92",
+    "security_tests": [
+      "guest returns no addresses",
+      "other customer ID does not read metadata"
+    ],
+    "live_guest_config": {
+      "valid_json": true,
+      "fields": 17,
+      "saved_addresses": 0,
+      "payment_methods": [
+        "kashier_card",
+        "cod"
+      ],
+      "billing_state_label": "المحافظة"
+    },
+    "live_signed_in_customer_e2e": false,
+    "customer_records_modified": false
+  },
+  "deployment": {
+    "backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-8e1360577aab",
+    "retained_other_chat_asset": "assets/page-controls-6a1ecc9a4025.js",
+    "android_apk_built": false,
+    "ios_built": false
+  }
+}
