@@ -1,0 +1,25 @@
+{
+  "source_commit": "cc90bd8eea7e0f60cb3c80541a232279fc2a5b99",
+  "runtime": "918356dd652a",
+  "public_url": "https://api.woomobile.app/mobishop-builder-v26/index.html?store=6990b322-e396-46bb-a188-a1e472b6bf64#account-builder",
+  "activated": true,
+  "archive_sha256": "dda3b89ed7971a0ea4d1ffa5be189fc9c3237638ee80df848e14eb1587eb68ea",
+  "backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-918356dd652a",
+  "live_browser_checks": [
+    "Canonical account preview loads runtime 918356dd652a",
+    "Arabic account labels, Arabic default sign-in heading and RTL",
+    "Language sheet offers Phone language, Arabic and English",
+    "English selection immediately changes account labels, footer and LTR",
+    "English selection survives navigation to Home and back to Account",
+    "Home loads successfully in English with real saved sections",
+    "Manual Arabic selection returns Arabic account and RTL",
+    "English auth retains Phone number or email and Continue with Google"
+  ],
+  "final_followup_tests": {"account_and_locale": {"passed": 20, "skipped": 2}, "odoo_account_and_locale": {"passed": 14, "skipped": 1}},
+  "ci": [
+    {"name": "Quality checks", "run": 40320619128, "result": "success", "includes": ["full Flutter tests", "Flutter analysis", "preview gestures and language tests", "preview build and committed artifact comparison", "Android debug APK build", "WooCommerce/Odoo/Shopify contracts"]},
+    {"name": "WooCommerce connector package", "run": 40320619138, "result": "success"},
+    {"name": "Shared builder merchant regressions", "run": 40320618887, "result": "success"}
+  ],
+  "deployment_scope": "Shared app source and public builder preview; existing installed apps were not replaced and require their normal rebuild/update. Merchant design settings were not saved or changed during browser checks."
+}
