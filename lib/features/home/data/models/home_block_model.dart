@@ -479,6 +479,7 @@ abstract final class HomeBlockModel {
       ),
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
+      cardOutlineColor: _optionalSafeHexColor(data, 'card_outline_color'),
     );
   }
 
@@ -540,6 +541,7 @@ abstract final class HomeBlockModel {
       ),
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
+      cardOutlineColor: _optionalSafeHexColor(data, 'card_outline_color'),
     );
   }
 
@@ -1522,6 +1524,23 @@ abstract final class HomeBlockModel {
     }
 
     return value.toLowerCase();
+  }
+
+  /// Unlike [_optionalHexColor], an invalid value falls back to null instead
+  /// of throwing, so one bad optional color never drops the whole block.
+  static String? _optionalSafeHexColor(Map<String, dynamic> json, String key) {
+    final dynamic value = json[key];
+
+    if (value is! String) {
+      return null;
+    }
+
+    final String normalized = value.trim();
+    final bool isValid = RegExp(
+      r'^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$',
+    ).hasMatch(normalized);
+
+    return isValid ? normalized.toLowerCase() : null;
   }
 }
 

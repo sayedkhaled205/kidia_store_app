@@ -28,6 +28,7 @@ class ProductCard extends StatelessWidget {
     this.compact = false,
     this.cardRadius = 20,
     this.showBorder = true,
+    this.outlineColor,
     this.elevation = 0,
     this.showName = true,
     this.showPrice = true,
@@ -64,6 +65,7 @@ class ProductCard extends StatelessWidget {
   final bool compact;
   final double cardRadius;
   final bool showBorder;
+  final Color? outlineColor;
   final double elevation;
   final bool showName;
   final bool showPrice;
@@ -110,7 +112,7 @@ class ProductCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
           side: showBorder
-              ? BorderSide(color: colorScheme.outlineVariant)
+              ? BorderSide(color: outlineColor ?? colorScheme.primary)
               : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,

@@ -249,7 +249,9 @@ class CatalogProductCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
           side: cardStyle == 'outlined'
-              ? BorderSide(color: colors.outlineVariant)
+              ? BorderSide(
+                  color: _quickAddColor(settings?.string('card_outline_color', '')) ?? colors.primary,
+                )
               : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,

@@ -73,7 +73,7 @@ def repair_category_brand_central(source):
 
 def repair_frame(source):
     if '/* category-designer-v5:' in source:
-        return source
+        return repair_product_outline_frame(source)
     if any(f'/* category-designer-v{v}:' in source for v in (1, 2, 3, 4)):
         end = source.index("})(typeof window==='undefined'?globalThis:window);") + len("})(typeof window==='undefined'?globalThis:window);")
         source = source[end:].lstrip('\n')
@@ -87,4 +87,16 @@ def repair_frame(source):
     source = replace_once(source,
         '  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};',
         "  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};\n    if (screen === 'category-builder') { KidiaCategoryDesigner.hydrate(root, store, payload.settings, payload.identity); if (window.KidiaCategoryMenu) window.KidiaCategoryMenu.init(); }")
-    return helper + '\n' + source
+    return repair_product_outline_frame(helper + '\n' + source)
+
+def repair_product_outline_frame(source):
+    if '/* product-outline-field-v1 */' in source:
+        return source
+    helper = Path(__file__).with_name('product-outline.js').read_text(encoding='utf-8')
+    source = replace_once(source, '      root.innerHTML = normalizeReferenceHtml(html);',
+        '      root.innerHTML = normalizeReferenceHtml(html);\n      KidiaProductOutline.prepare(root);')
+    source = replace_once(source, '    const store = payload && payload.store ? payload.store : {};\n    if (screen === \'category-builder\')',
+        '    const store = payload && payload.store ? payload.store : {};\n    KidiaProductOutline.prepare(root, payload.identity);\n    if (screen === \'category-builder\')')
+    source = replace_once(source, '        KidiaApplicationSave.prepareHomeItems(rendered, savedBlock.settings || {})();',
+        '        KidiaProductOutline.prepare(rendered, payload.identity);\n        KidiaApplicationSave.prepareHomeItems(rendered, savedBlock.settings || {})();')
+    return '/* product-outline-field-v1 */\n' + helper + '\n' + source

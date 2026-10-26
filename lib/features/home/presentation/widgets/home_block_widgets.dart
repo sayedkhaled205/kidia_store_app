@@ -1735,6 +1735,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
                     onAction: onAction,
                     compact: true,
                     cardStyle: block.cardStyle,
+                    cardOutlineColor: block.cardOutlineColor,
                     imageRatio: block.imageRatio,
                     cardRadius: block.cardRadius,
                     showName: block.showName,
@@ -1839,6 +1840,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       product: block.items[index],
                       onAction: onAction,
                       cardStyle: block.cardStyle,
+                      cardOutlineColor: block.cardOutlineColor,
                       imageRatio: block.imageRatio,
                       cardRadius: block.cardRadius,
                       showName: block.showName,
@@ -3211,6 +3213,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
     required this.onAction,
     this.compact = false,
     this.cardStyle = 'outlined',
+    this.cardOutlineColor,
     this.imageRatio = 1,
     this.cardRadius = 20,
     this.showName = true,
@@ -3229,6 +3232,7 @@ class _HomeProductCardAdapter extends StatelessWidget {
   final ValueChanged<HomeAction> onAction;
   final bool compact;
   final String cardStyle;
+  final String? cardOutlineColor;
   final double imageRatio;
   final double cardRadius;
   final bool showName;
@@ -3261,6 +3265,10 @@ class _HomeProductCardAdapter extends StatelessWidget {
       imageAspectRatio: imageRatio,
       cardRadius: cardRadius,
       showBorder: cardStyle == 'outlined',
+      outlineColor: _parseHexColor(
+        cardOutlineColor,
+        fallback: Theme.of(context).colorScheme.primary,
+      ),
       elevation: cardStyle == 'elevated' ? 3 : 0,
       showName: showName,
       showPrice: showPrice,

@@ -180,6 +180,7 @@ class _KidsHomeProductFeedState extends ConsumerState<KidsHomeProductFeed> {
       viewAllLabel: b.viewAllLabel,
       viewAllAction: b.viewAllAction,
       cardStyle: b.cardStyle,
+      cardOutlineColor: b.cardOutlineColor,
       imageRatio: b.imageRatio,
       cardRadius: b.cardRadius,
       showName: b.showName,
