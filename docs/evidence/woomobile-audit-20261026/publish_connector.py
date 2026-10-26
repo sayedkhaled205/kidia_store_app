@@ -31,7 +31,7 @@ def fetch(commit, path):
 def publish(base, commit, directory, backup, apply=False):
     old = json.loads(fetch(base, 'connectors/woocommerce/source-manifest.json'))
     new = json.loads(fetch(commit, 'connectors/woocommerce/source-manifest.json'))
-    assert old['version'] == '1.46.102' and new['version'] == '1.46.103'
+    assert old['version'] == '1.46.101' and new['version'] == '1.46.103'
     alias = directory / 'mobi2app-connector.zip'
     release = directory / 'connector-release.json'
     before = {p: p.read_bytes() for p in (alias, release)}
@@ -58,8 +58,7 @@ def publish(base, commit, directory, backup, apply=False):
         assert digest(data) == record['sha256'], name
         files[name] = data
         changed.append(name)
-    assert set(changed) == {'SOURCE-BUILD.txt', 'mobi2app-connector.php', 'readme.txt',
-                            'api/class-customer-auth-endpoint.php', 'includes/class-mobishop-app-exporter.php'}
+    assert set(changed) == {'api/class-native-payment92.php', 'SOURCE-BUILD.txt', 'includes/class-mobishop-app-exporter.php', 'readme.txt', 'api/class-product-variation-endpoint.php', 'api/class-customer-auth-endpoint.php', 'includes/central/kidia-builder-form-state.php', 'mobi2app-connector.php', 'includes/class-mobishop-page-layout-store.php', 'includes/central/class-central-commerce.php', 'includes/central/store-data-view.php', 'api/class-customer-orders-endpoint.php', 'api/class-website-auth-endpoint.php'}
     assert set(files) == set(new['files'])
     target_name = 'mobi2app-connector-1.46.103.zip'
     buffer = io.BytesIO()
