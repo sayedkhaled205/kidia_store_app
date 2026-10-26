@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/checkout/domain/entities/saved_checkout_address92.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_order_result.dart';
@@ -9,6 +10,28 @@ import 'package:mobishop_store_app/features/checkout/presentation/checkout_scree
 import '../support/checkout_test_data.dart';
 
 void main() {
+  testWidgets('choose either saved address or start a new address', (tester) async {
+    _useTallSurface(tester);
+    final repo = FakeCheckoutRepository(state: CheckoutState(cart: checkoutCart(), savedAddresses: [
+      const SavedCheckoutAddress92(id:'home',label:'Home',values:{'country':'US','state':'CA','city':'First city','address_1':'First street','address_2':'Suite 4'}),
+      const SavedCheckoutAddress92(id:'work',label:'Work',values:{'country':'US','state':'CA','city':'Second city','address_1':'Second street'}),
+    ]));
+    await tester.pumpWidget(_testApp(CheckoutScreen(repository:repo)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('checkout-address-home')));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField,'First street'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('checkout-address-work')));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField,'Second street'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField,'First street'), findsNothing);
+    await tester.tap(find.byKey(const Key('checkout-new-address')));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField,'Second street'), findsNothing);
+    expect(find.byKey(const Key('checkout-billing-address1')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('renders standard address, payment, and summary data', (
     WidgetTester tester,
   ) async {

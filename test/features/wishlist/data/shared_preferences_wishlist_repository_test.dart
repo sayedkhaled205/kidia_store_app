@@ -26,6 +26,17 @@ void main() {
     expect(firstStore.storageKey, isNot(secondStore.storageKey));
   });
 
+  test('a new repository and preference cache retain adds and removals', () async {
+    final first = SharedPreferencesWishlistRepository(storeUrl: 'https://shop.example.com/');
+    await first.saveProductIds([3, 1, 2]);
+    SharedPreferences.resetStatic();
+    final reopened = SharedPreferencesWishlistRepository(storeUrl: 'https://shop.example.com');
+    expect(await reopened.loadProductIds(), [3, 1, 2]);
+    await reopened.saveProductIds([3, 2]);
+    SharedPreferences.resetStatic();
+    expect(await SharedPreferencesWishlistRepository(storeUrl: 'https://shop.example.com').loadProductIds(), [3, 2]);
+  });
+
   test('canonicalizes the same store origin to one stable scope', () {
     final SharedPreferencesWishlistRepository first =
         SharedPreferencesWishlistRepository(

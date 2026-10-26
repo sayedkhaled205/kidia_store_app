@@ -247,16 +247,13 @@ GoRouter createAppRouter({
                                 final repository = ref.read(
                                   wishlistRepositoryProvider,
                                 );
-                                final List<int> ids = await repository
-                                    .loadProductIds();
-                                final bool isSaved = ids.contains(product.id);
-                                final List<int> nextIds = isSaved
-                                    ? ids
-                                          .where((int id) => id != product.id)
-                                          .toList(growable: false)
-                                    : <int>[...ids, product.id];
-                                await repository.saveProductIds(nextIds);
-                                return !isSaved;
+                                var saved = false;
+                                await repository.updateProductIds((ids) {
+                                  saved = !ids.contains(product.id);
+                                  return saved ? <int>[product.id, ...ids]
+                                      : ids.where((id) => id != product.id).toList();
+                                });
+                                return saved;
                               },
                             );
                           },

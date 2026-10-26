@@ -52,6 +52,34 @@ class ShippingTransport extends FakeCheckoutTransport implements CheckoutShippin
   }
 }
 void main() {
+  test('saved addresses replace optional fields, reprice shipping and allow a new destination', () async {
+    final repo = ShippingRepository();
+    repo.onQuote = (address) async => quote(price: address.state == 'EGGZ' ? '6000' : '5500');
+    final controller = CheckoutController(repository: repo);
+    addTearDown(controller.dispose);
+    await controller.load();
+    controller.selectSavedAddress({'first_name':'Test','country':'EG','state':'EGC','city':'Cairo','address_1':'Street','address_2':'Floor 4','postcode':'12345'});
+    await controller.refreshShipping();
+    expect(repo.destinations.last.address2, 'Floor 4');
+    expect(controller.cart!.totals.shippingMinor, '5500');
+    final second = {'first_name':'Test','country':'EG','state':'EGGZ','city':'Giza','address_1':'Street'};
+    controller.selectSavedAddress(second);
+    expect(controller.shippingQuoteCurrent, isFalse);
+    expect(controller.billingAddress.address2, '');
+    expect(controller.billingAddress.postcode, '');
+    expect(controller.matchesSavedAddress(second), isTrue);
+    expect(controller.matchesSavedAddress({...second,'city':'Other city'}), isFalse);
+    await controller.refreshShipping();
+    expect(repo.destinations.last.city, 'Giza');
+    expect(controller.cart!.totals.shippingMinor, '6000');
+    controller.enterNewAddress();
+    expect(controller.billingAddress.address1, '');
+    expect(controller.billingAddress.country, 'EG');
+    expect(controller.matchesSavedAddress(second), isFalse);
+    expect(controller.shippingQuoteCurrent, isFalse);
+    expect(repo.submitCalls, 0);
+  });
+
   test('governorate quotes before customer names and street are complete',() async {
     final repo=ShippingRepository();
     final controller=CheckoutController(repository:repo);addTearDown(controller.dispose);

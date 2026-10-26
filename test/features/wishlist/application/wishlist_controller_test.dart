@@ -9,6 +9,72 @@ import '../support/wishlist_test_data.dart';
 
 void main() {
   group('WishlistController', () {
+    test('an add before loading preserves previously persisted items', () async {
+      final storage = FakeWishlistRepository(ids: [1]);
+      final controller = WishlistController(repository: storage,
+        catalogRepository: FakeWishlistCatalogRepository());
+      addTearDown(controller.dispose);
+      expect(await controller.add(2, product: wishlistProductTwo), isTrue);
+      expect(storage.ids, [2, 1]);
+    });
+
+    test('concurrent controllers merge writes and repeated toggle cancels', () async {
+      final storage = FakeWishlistRepository(ids: [3]);
+      final catalog = FakeWishlistCatalogRepository();
+      final a = WishlistController(repository: storage, catalogRepository: catalog);
+      final b = WishlistController(repository: storage, catalogRepository: catalog);
+      addTearDown(a.dispose); addTearDown(b.dispose);
+      await Future.wait([
+        a.add(1, product: wishlistProductOne),
+        b.add(2, product: wishlistProductTwo),
+      ]);
+      expect(storage.ids.toSet(), {1, 2, 3});
+      await Future.wait([
+        a.toggle(1, product: wishlistProductOne),
+        b.toggle(1, product: wishlistProductOne),
+      ]);
+      expect(storage.ids.toSet(), {1, 2, 3});
+    });
+
+    test('catalog failure and later save do not erase stored items', () async {
+      final storage = FakeWishlistRepository(ids: [1, 3]);
+      final catalog = FakeWishlistCatalogRepository(
+        onGetProducts: (_) async => throw StateError('offline'));
+      final controller = WishlistController(repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(controller.status, WishlistStatus.failure);
+      expect(controller.contains(1), isTrue);
+      expect(await controller.add(2, product: wishlistProductTwo), isTrue);
+      expect(storage.ids, [2, 1, 3]);
+    });
+
+    test('failed read prevents overwriting and a later retry succeeds', () async {
+      final storage = FakeWishlistRepository(ids: [1],
+        onLoad: () async => throw StateError('storage unavailable'));
+      final controller = WishlistController(repository: storage,
+        catalogRepository: FakeWishlistCatalogRepository());
+      addTearDown(controller.dispose);
+      expect(await controller.add(2, product: wishlistProductTwo), isFalse);
+      expect(storage.ids, [1]); expect(storage.saveCalls, 0);
+      storage.onLoad = null;
+      expect(await controller.add(2, product: wishlistProductTwo), isTrue);
+      expect(storage.ids, [2, 1]);
+    });
+
+    test('follows provider pagination and preserves saved ordering', () async {
+      final storage = FakeWishlistRepository(ids: [2, 1]);
+      final catalog = FakeWishlistCatalogRepository(onGetProducts: (query) async =>
+        CatalogPage<CatalogProduct>(items: [query.page == 1 ? wishlistProductOne : wishlistProductTwo],
+          page: query.page, perPage: 1, totalItems: 2, totalPages: 2));
+      final controller = WishlistController(repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(catalog.productQueries.map((q) => q.page), [1, 2]);
+      expect(controller.products.map((p) => p.id), [2, 1]);
+      expect(storage.saveCalls, 0);
+    });
+
     test(
       'hydrates include ids and preserves the locally saved order',
       () async {
@@ -133,7 +199,7 @@ void main() {
       },
     );
 
-    test('prunes ids for products that no longer exist in the store', () async {
+    test('keeps unavailable saved IDs without destructive catalog cleanup', () async {
       final FakeWishlistRepository wishlist = FakeWishlistRepository(
         ids: <int>[1, 999],
       );
@@ -148,8 +214,8 @@ void main() {
       await controller.load();
       await controller.add(1, product: wishlistProductOne);
 
-      expect(controller.productIds, <int>[1]);
-      expect(wishlist.ids, <int>[1]);
+      expect(controller.productIds, <int>[1, 999]);
+      expect(wishlist.ids, <int>[1, 999]);
     });
 
     test('uses empty and failure states without leaking invalid ids', () async {

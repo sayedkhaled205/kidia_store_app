@@ -97,20 +97,52 @@ class CheckoutController extends ChangeNotifier {
   void selectSavedAddress(Map<String, String> values) {
     if (!_canEditForm) return;
     setShipToDifferentAddress(false);
-    if (values.containsKey('country')) {
-      setFieldValue('billing_country', values['country']!);
-    }
-    for (final field
-        in _checkout?.fieldDefinitions ?? <CheckoutFieldDefinition>[]) {
-      if (field.group != CheckoutFieldGroup.billing ||
-          field.key == 'billing_country') {
-        continue;
+    // Replace the address as a whole. Missing optional fields belong to the
+    // selected address too; retaining them would mix two customers' locations.
+    updateBillingAddress(CheckoutAddress(
+      firstName: values['first_name'] ?? '',
+      lastName: values['last_name'] ?? '',
+      company: values['company'] ?? '',
+      address1: values['address_1'] ?? '',
+      address2: values['address_2'] ?? '',
+      city: values['city'] ?? '',
+      state: values['state'] ?? '',
+      postcode: values['postcode'] ?? '',
+      country: values['country'] ?? _billingAddress.country,
+      email: values['email'] ?? _billingAddress.email,
+      phone: values['phone'] ?? _billingAddress.phone,
+    ));
+    for (final field in _checkout?.fieldDefinitions ?? <CheckoutFieldDefinition>[]) {
+      if (field.group == CheckoutFieldGroup.billing && !const {'billing_first_name', 'billing_last_name', 'billing_company', 'billing_address_1', 'billing_address_2', 'billing_city', 'billing_state', 'billing_postcode', 'billing_country', 'billing_email', 'billing_phone'}.contains(field.key)) {
+        final key = field.key.replaceFirst(RegExp(r'^billing_'), '');
+        setFieldValue(field.key, values[key] ?? field.defaultValue);
       }
-      final key = field.key.replaceFirst(RegExp(r'^billing_'), '');
-      if (values.containsKey(key)) setFieldValue(field.key, values[key]!);
     }
     addressSelectionRevision++;
     _notify();
+  }
+
+  void enterNewAddress() {
+    if (!_canEditForm) return;
+    selectSavedAddress({
+      'first_name': _billingAddress.firstName,
+      'last_name': _billingAddress.lastName,
+      'country': _billingAddress.country,
+      'email': _billingAddress.email,
+      'phone': _billingAddress.phone,
+    });
+  }
+
+  bool matchesSavedAddress(Map<String, String> values) {
+    if (_billingAddress.address1.isEmpty) return false;
+    return _billingAddress.address1 == (values['address_1'] ?? '') &&
+        _billingAddress.address2 == (values['address_2'] ?? '') &&
+        _billingAddress.city == (values['city'] ?? '') &&
+        _billingAddress.state == (values['state'] ?? '') &&
+        _billingAddress.postcode == (values['postcode'] ?? '') &&
+        _billingAddress.country == (values['country'] ?? _billingAddress.country) &&
+        _billingAddress.firstName == (values['first_name'] ?? '') &&
+        _billingAddress.lastName == (values['last_name'] ?? '');
   }
 
   Map<String, String> get fieldErrors =>

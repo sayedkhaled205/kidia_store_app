@@ -361,7 +361,18 @@ class _ProductContentState extends State<_ProductContent> {
     final CatalogMoney money = controller.displayedPrice ?? product.prices;
     final bool inStock = variation?.isInStock ?? product.isInStock;
     final CmsPageComponent tabsSettings = pageLayout.element('product_tabs');
-    final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings);
+    // A tab must point to a section that is actually present, including when
+    // the merchant has given that tab a custom label.
+    final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings)
+        .where((tab) => switch (tab.target) {
+          'reviews' => pageLayout.element('reviews').enabled,
+          'recommend' => pageLayout.element('related_products').enabled,
+          'description' => pageLayout.element('description').enabled,
+          'variations' => !usesHostedOdooCart297 &&
+              pageLayout.element('variations').enabled &&
+              controller.optionGroups.isNotEmpty,
+          _ => pageLayout.element('product_summary').enabled,
+        }).toList(growable: false);
     final bool summaryBeforeTabs = tabsSettings.boolean('after_summary', false);
     Widget summary() => CmsElementFrame(
       key: overviewKey,

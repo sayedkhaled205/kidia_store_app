@@ -14,6 +14,36 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  for (final customLabel in [false, true]) {
+    testWidgets('disabled reviews hide their navigation target (custom: $customLabel)', (tester) async {
+      _useTallSurface(tester);
+      final base = CmsPageLayout.fallback('product');
+      for (final enabled in [true, false, true]) {
+        final layout = CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
+          elements: base.elements.map((element) => CmsPageComponent(
+            id: element.id, type: element.type,
+            enabled: element.id == 'reviews' ? enabled : element.enabled,
+            settings: {...element.settings,
+              if (customLabel && element.id == 'product_tabs') 'tabs_json': [
+                {'label': 'Overview', 'target': 'overview'},
+                {'label': 'Customer opinions', 'target': 'reviews'},
+              ],
+            },
+          )).toList());
+        await tester.pumpWidget(_testApp(ProductDetailScreen(
+          productId: simpleProduct.id, repository: ProductFakeCatalogRepository()), productLayout: layout));
+        await tester.pumpAndSettle();
+        expect(find.text(customLabel ? 'Customer opinions' : 'Reviews'), enabled ? findsWidgets : findsNothing);
+        expect(find.text('Overview'), findsOneWidget);
+        if (enabled) {
+          await tester.tap(find.text(customLabel ? 'Customer opinions' : 'Reviews').first);
+          await tester.pumpAndSettle();
+        }
+        expect(tester.takeException(), isNull);
+      }
+    });
+  }
+
   testWidgets('Recommend reaches an unvisited section after a long description on first tap', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -637,8 +667,8 @@ Widget _testApp(
   return ProviderScope(
     overrides: [
       // Keep screen tests independent of live store appearance on Android.
-      cmsPageLayoutProvider('product').overrideWith(
-        (ref) async => productLayout ?? CmsPageLayout.fallback('product'),
+      cmsPageLayoutProvider('product').overrideWithValue(
+        AsyncData(productLayout ?? CmsPageLayout.fallback('product')),
       ),
     ],
     child: MaterialApp(

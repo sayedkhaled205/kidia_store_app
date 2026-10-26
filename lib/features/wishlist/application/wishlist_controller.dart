@@ -77,6 +77,7 @@ class WishlistController extends ChangeNotifier {
         return;
       }
 
+      _productIds = List<int>.unmodifiable(storedIds);
       final List<CatalogProduct> hydrated = await _hydrate(storedIds);
       if (!_canCommit(serial)) {
         return;
@@ -87,7 +88,7 @@ class WishlistController extends ChangeNotifier {
       final List<int> availableIds = storedIds
           .where(byId.containsKey)
           .toList(growable: false);
-      _productIds = List<int>.unmodifiable(availableIds);
+      _productIds = List<int>.unmodifiable(storedIds);
       _products = List<CatalogProduct>.unmodifiable(
         availableIds.map((int productId) => byId[productId]!),
       );
@@ -96,16 +97,11 @@ class WishlistController extends ChangeNotifier {
           : WishlistStatus.ready;
       _notify();
 
-      if (availableIds.length != storedIds.length) {
-        _scheduleStaleIdCleanup(serial, availableIds);
-      }
+      // Missing/temporarily unpublished catalog records are not evidence that
+      // the customer removed them. Never erase saved IDs during hydration.
     } catch (error) {
       if (!_canCommit(serial)) {
         return;
-      }
-      if (!background) {
-        _productIds = const <int>[];
-        _products = const <CatalogProduct>[];
       }
       _loadError = _messageFor(
         error,
@@ -118,91 +114,51 @@ class WishlistController extends ChangeNotifier {
 
   Future<void> refresh() => load();
 
-  Future<bool> add(int productId, {CatalogProduct? product}) {
-    return _enqueueMutation(() => _addNow(productId, product: product));
-  }
+  Future<bool> add(int productId, {CatalogProduct? product}) =>
+      _enqueueMutation(() => _changeNow(productId, product: product, save: true));
 
-  Future<bool> remove(int productId) {
-    return _enqueueMutation(() => _removeNow(productId));
-  }
+  Future<bool> remove(int productId) =>
+      _enqueueMutation(() => _changeNow(productId, save: false));
 
-  Future<bool> toggle(int productId, {CatalogProduct? product}) {
-    return _enqueueMutation(() {
-      return contains(productId)
-          ? _removeNow(productId)
-          : _addNow(productId, product: product);
-    });
-  }
+  Future<bool> toggle(int productId, {CatalogProduct? product}) =>
+      _enqueueMutation(() => _changeNow(productId, product: product));
 
-  Future<bool> _addNow(int productId, {CatalogProduct? product}) async {
-    if (_isDisposed || productId <= 0 || contains(productId)) {
-      return false;
-    }
+  Future<bool> _changeNow(int productId, {CatalogProduct? product, bool? save}) async {
+    if (_isDisposed || productId <= 0) return false;
     _requestSerial++;
     _beginMutation();
+    var changed = false;
+    CatalogProduct? resolved;
     try {
-      CatalogProduct resolvedProduct = product?.id == productId
-          ? product!
-          : await catalogRepository.getProduct(productId);
-      if (resolvedProduct.id != productId) {
-        throw const WishlistStorageException(
-          'The store returned the wrong product for this saved item.',
-        );
-      }
-      final List<int> nextIds = <int>[productId, ..._productIds];
-      await repository.saveProductIds(nextIds);
-      if (_isDisposed) {
-        return false;
-      }
-
-      final Map<int, CatalogProduct> currentProducts = <int, CatalogProduct>{
-        for (final CatalogProduct item in _products) item.id: item,
-      };
-      currentProducts[productId] = resolvedProduct;
+      final nextIds = await repository.updateProductIds((current) async {
+        final exists = current.contains(productId);
+        final shouldSave = save ?? !exists;
+        if (exists == shouldSave) return current;
+        if (shouldSave) {
+          resolved = product?.id == productId
+              ? product : await catalogRepository.getProduct(productId);
+          if (resolved?.id != productId) {
+            throw const WishlistStorageException(
+              'The store returned the wrong product for this saved item.',
+            );
+          }
+        }
+        changed = true;
+        return shouldSave ? <int>[productId, ...current]
+            : current.where((id) => id != productId).toList();
+      });
+      if (_isDisposed) return false;
+      final byId = {for (final item in _products) item.id: item};
+      if (resolved != null) byId[productId] = resolved!;
       _productIds = List<int>.unmodifiable(nextIds);
       _products = List<CatalogProduct>.unmodifiable(
-        nextIds
-            .map((int id) => currentProducts[id])
-            .whereType<CatalogProduct>(),
-      );
-      _status = WishlistStatus.ready;
-      return true;
-    } catch (error) {
-      _mutationError = _messageFor(
-        error,
-        fallback: 'Unable to save this item on your device.',
-      );
-      return false;
-    } finally {
-      _endMutation();
-    }
-  }
-
-  Future<bool> _removeNow(int productId) async {
-    if (_isDisposed || productId <= 0 || !contains(productId)) {
-      return false;
-    }
-    _requestSerial++;
-    _beginMutation();
-    try {
-      final List<int> nextIds = _productIds
-          .where((int id) => id != productId)
-          .toList(growable: false);
-      await repository.saveProductIds(nextIds);
-      if (_isDisposed) {
-        return false;
-      }
-      _productIds = List<int>.unmodifiable(nextIds);
-      _products = List<CatalogProduct>.unmodifiable(
-        _products.where((CatalogProduct item) => item.id != productId),
+        nextIds.map((id) => byId[id]).whereType<CatalogProduct>(),
       );
       _status = nextIds.isEmpty ? WishlistStatus.empty : WishlistStatus.ready;
-      return true;
+      return changed;
     } catch (error) {
-      _mutationError = _messageFor(
-        error,
-        fallback: 'Unable to remove this item from your device.',
-      );
+      _mutationError = _messageFor(error,
+        fallback: 'Unable to update saved items on your device.');
       return false;
     } finally {
       _endMutation();
@@ -220,9 +176,11 @@ class WishlistController extends ChangeNotifier {
           ? start + _hydrationBatchSize
           : productIds.length;
       final List<int> batch = productIds.sublist(start, end);
+      for (int pageNumber = 1; pageNumber <= 100; pageNumber++) {
       final CatalogPage<CatalogProduct> page = await catalogRepository
           .getProducts(
             CatalogProductQuery(
+              page: pageNumber,
               includeIds: batch,
               perPage: batch.length,
               sort: CatalogSort.includeOrder,
@@ -234,6 +192,11 @@ class WishlistController extends ChangeNotifier {
           (CatalogProduct product) => requestedIds.contains(product.id),
         ),
       );
+      if (!page.hasNextPage) break;
+      if (pageNumber == 100 || page.items.isEmpty) {
+        throw const WishlistStorageException('Unable to load all saved items. Please try again.');
+      }
+      }
     }
     return List<CatalogProduct>.unmodifiable(products);
   }
@@ -248,29 +211,6 @@ class WishlistController extends ChangeNotifier {
       }
     });
     return completer.future;
-  }
-
-  void _scheduleStaleIdCleanup(int serial, List<int> availableIds) {
-    unawaited(
-      _enqueueMutation(() async {
-        if (!_canCommit(serial)) {
-          return false;
-        }
-        try {
-          await repository.saveProductIds(availableIds);
-          return true;
-        } catch (error) {
-          if (_canCommit(serial)) {
-            _mutationError = _messageFor(
-              error,
-              fallback: 'Unable to update saved items on this device.',
-            );
-            _notify();
-          }
-          return false;
-        }
-      }),
-    );
   }
 
   void _beginMutation() {

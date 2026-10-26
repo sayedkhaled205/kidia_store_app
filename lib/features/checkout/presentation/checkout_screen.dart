@@ -532,10 +532,18 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            ar ? 'Ø¹Ù†Ø§ÙˆÙŠÙ†Ùƒ Ø§Ù„Ù…Ø­ÙÙˆØ¸Ø©' : 'Your saved addresses',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Row(children: [
+            Expanded(child: Text(
+              ar ? 'ÚäÇæíäß ÇáãÍÝæÙÉ' : 'Your saved addresses',
+              style: Theme.of(context).textTheme.titleMedium,
+            )),
+            TextButton.icon(
+              key: const Key('checkout-new-address'),
+              onPressed: controller.isSubmitting ? null : controller.enterNewAddress,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(ar ? 'ÚäæÇä ÌÏíÏ' : 'New address'),
+            ),
+          ]),
           const SizedBox(height: 8),
           SizedBox(
             height: 112,
@@ -546,10 +554,7 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final address = controller.checkout!.savedAddresses[index];
-                final selected =
-                    controller.billingAddress.address1 ==
-                        address.values['address_1'] &&
-                    controller.billingAddress.state == address.values['state'];
+                final selected = controller.matchesSavedAddress(address.values);
                 return SizedBox(
                   width: 240,
                   child: OutlinedButton(
