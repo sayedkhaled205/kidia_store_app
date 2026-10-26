@@ -2876,6 +2876,7 @@ final class MobiShop_Admin {
 					if ( 'mobishop-checkout-suggestions' === $page ) {
 						wp_enqueue_script( 'mobishop-checkout-fields', MOBISHOP_URL . 'admin/assets/checkout-fields-builder.js', array(), MOBISHOP_VERSION . '-' . (string) filemtime( MOBISHOP_PATH . 'admin/assets/checkout-fields-builder.js' ), true );
 					}
+					wp_enqueue_script( 'mobishop-color-picker', MOBISHOP_URL . 'admin/assets/color-picker.js', array(), MOBISHOP_VERSION . '-' . (string) filemtime( MOBISHOP_PATH . 'admin/assets/color-picker.js' ), true );
 					wp_enqueue_script( 'mobishop-settings-sections', MOBISHOP_URL . 'admin/assets/settings-sections.js', array(), MOBISHOP_VERSION . '-' . (string) filemtime( MOBISHOP_PATH . 'admin/assets/settings-sections.js' ), true );
 					wp_localize_script(
 						'mobishop-settings-sections',
