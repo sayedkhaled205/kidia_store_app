@@ -114,6 +114,7 @@ final class MobiShop_Discount_Rules_Summary {
 		$result = self::query( $filters );
 
 		echo '<section class="mobishop-discount-rules-summary">';
+		echo '<style>.mobishop-discount-rules-summary .mobishop-rule-dates{min-width:155px}.mobishop-rule-dates span{display:block;white-space:nowrap;direction:ltr;unicode-bidi:isolate}.mobishop-discount-rules-summary td{vertical-align:middle}.mobishop-discount-rules-summary td:first-child{min-width:160px}</style>';
 		echo '<h3>' . esc_html__( 'Discount Rules', 'mobi2app-connector' ) . '</h3>';
 
 		if ( $result['error'] ) {
@@ -183,9 +184,9 @@ final class MobiShop_Discount_Rules_Summary {
 			}
 			echo '</td>';
 			echo '<td>' . esc_html( $row['type_label'] ) . '</td>';
-			echo '<td>' . esc_html( $row['offer'] ) . '</td>';
+			echo '<td><bdi dir="auto">' . esc_html( $row['offer'] ) . '</bdi></td>';
 			echo '<td><span class="mobishop-status">' . esc_html( self::status_label( $row['status'] ) ) . '</span></td>';
-			echo '<td>' . esc_html( self::format_dates( $row['date_from'], $row['date_to'] ) ) . '</td>';
+			echo '<td class="mobishop-rule-dates"><span>' . esc_html( null === $row['date_from'] ? __( 'No start date', 'mobi2app-connector' ) : gmdate( 'Y-m-d H:i', $row['date_from'] ) ) . '</span><span>' . esc_html( null === $row['date_to'] ? __( 'No end date', 'mobi2app-connector' ) : gmdate( 'Y-m-d H:i', $row['date_to'] ) ) . '</span></td>';
 			echo '<td>' . esc_html( self::format_usage( $row['usage_limits'], $row['used_limits'] ) ) . '</td>';
 			echo '</tr>';
 		}
@@ -336,7 +337,8 @@ final class MobiShop_Discount_Rules_Summary {
 			$to = is_numeric( $range['to'] ?? null ) ? '–' . $range['to'] : '+';
 			if ( isset( $range['free_qty'] ) && is_numeric( $range['free_qty'] ) ) {
 				$benefit = 'free_product' === ( $range['free_type'] ?? '' ) ? __( 'free', 'mobi2app-connector' ) : __( 'discounted', 'mobi2app-connector' );
-				$parts[] = sprintf( __( 'Buy %1$s, get %2$s %3$s', 'mobi2app-connector' ), $from, $range['free_qty'], $benefit );
+				// The qualifying quantity can include the gift in cheapest-item modes.
+				$parts[] = sprintf( __( 'From %1$s items: %2$s %3$s', 'mobi2app-connector' ), $from, $range['free_qty'], $benefit );
 			} elseif ( $amount( $range ) ) { $parts[] = $from . $to . ': ' . $amount( $range ); }
 		}
 		return $parts ? implode( '; ', $parts ) : __( 'See website rule', 'mobi2app-connector' );

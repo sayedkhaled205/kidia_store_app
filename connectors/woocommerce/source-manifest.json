@@ -3006,8 +3006,8 @@
     "includes/central/class-discount-rules-summary.php": {
       "source": "connectors/woocommerce/source/includes/central/class-discount-rules-summary.php",
       "newline": "lf",
-      "source_sha256": "8ae46c6bf3fa07436d4f22be37c03fcc8da83cbcc760f12b6884e33b50664c7b",
-      "sha256": "8ae46c6bf3fa07436d4f22be37c03fcc8da83cbcc760f12b6884e33b50664c7b"
+      "source_sha256": "595d45c1dcc10932ae5d212ad36d62e1fd9c042c1c3674da3d86be86a330eb62",
+      "sha256": "595d45c1dcc10932ae5d212ad36d62e1fd9c042c1c3674da3d86be86a330eb62"
     }
   },
   "baseline_release": {
