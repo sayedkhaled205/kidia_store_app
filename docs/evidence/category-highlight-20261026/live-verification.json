@@ -1,0 +1,22 @@
+{
+  "verified_on": "2026-10-26",
+  "feature_commit": "b46da96ca1c990e02f11f4acbcb477341cfaf1fa",
+  "public_preview_runtime": "23462e092d03",
+  "connector_release": "1.46.101",
+  "checks": {
+    "highlight_visible_below_square_card_image": true,
+    "highlight_color_change_visible": true,
+    "enabled_and_custom_color_survive_save_and_reload": true,
+    "disabled_and_default_color_survive_save_and_reload": true,
+    "original_clean_list_layout_restored": true,
+    "unsaved_square_card_example_discarded": true
+  },
+  "final_saved_state": {
+    "layout": "Clean list",
+    "name_highlight_enabled": false,
+    "name_highlight_color": "#eff8f5"
+  },
+  "screenshot": "highlight-example.png",
+  "screenshot_note": "Temporary unsaved Square cards example; final merchant layout remains Clean list with highlight disabled.",
+  "native_installation": "Shared runtime supports this option in the next application build; no installed application was replaced during this change."
+}
