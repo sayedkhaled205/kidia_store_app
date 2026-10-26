@@ -28,6 +28,7 @@ COMMON = [
     "test/features/wishlist/application/wishlist_controller_test.dart",
     "test/features/wishlist/presentation/wishlist_screen_test.dart",
     "test/shared/widgets/product_wishlist_button_test.dart",
+    "test/shared/widgets/product_outline_test.dart",
     "test/features/product/presentation/product_detail_screen_test.dart",
     "test/features/catalog/presentation/catalog_screens_test.dart",
     "test/features/catalog/presentation/catalog_multi_select_test.dart",
