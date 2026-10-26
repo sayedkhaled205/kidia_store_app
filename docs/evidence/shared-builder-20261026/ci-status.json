@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "id": 40298031260,
+      "head_sha": "0f4a74fb562fa4e4429ec309eb7a155b8c25072b",
+      "name": "Shared builder merchant regressions",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40298031260"
+    },
+    {
+      "id": 40298031091,
+      "head_sha": "0f4a74fb562fa4e4429ec309eb7a155b8c25072b",
+      "name": "Quality checks",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40298031091"
+    },
+    {
+      "id": 40295847011,
+      "head_sha": "5e0a8c56b3991b5826d5baca83e6243e553a4a9a",
+      "name": "WooCommerce connector package",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40295847011"
+    }
+  ]
+}

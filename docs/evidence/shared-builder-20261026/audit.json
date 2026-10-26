@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-26",
+  "matrix_cases": 6,
+  "matrix_passed": 1176,
+  "matrix_skipped": 0,
+  "connector_checks_passed": 112,
+  "browser_suites_passed": 21,
+  "public_version": "1.46.100",
+  "public_files": 499,
+  "ui_changed_by_audit": false,
+  "new_native_build_delivered": false,
+  "live_payment_performed": false,
+  "wishlist_scope": "device and store; not cross-device account sync",
+  "server_route": "central-builder + native_design_revision -> shared native_runtime_branch",
+  "other_merchants": "shared supported platform/provider contracts; initial merchant settings required",
+  "unsupported_plugins": "require one reusable provider adapter, not per-merchant hardcoding"
+}
