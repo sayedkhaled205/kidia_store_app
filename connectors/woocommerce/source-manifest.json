@@ -2784,8 +2784,8 @@
     "includes/class-mobishop-page-layout-store.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-page-layout-store.php",
       "newline": "binary",
-      "source_sha256": "9f9c122191cd34b5ec00d2a44d387ceb0fb49c393f908bca3f574be4b9bb05b6",
-      "sha256": "9f9c122191cd34b5ec00d2a44d387ceb0fb49c393f908bca3f574be4b9bb05b6"
+      "source_sha256": "585478b0437bb4ccc69576548d5710823e6f82ea6ac44d417c9ddfcbda0e67de",
+      "sha256": "585478b0437bb4ccc69576548d5710823e6f82ea6ac44d417c9ddfcbda0e67de"
     },
     "includes/class-mobishop-product-channel-visibility.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-product-channel-visibility.php",
