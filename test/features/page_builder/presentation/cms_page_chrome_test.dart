@@ -8,6 +8,67 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('persistent header actions stay fixed throughout repeated scrolling', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final rtl in [false, true]) {
+      for (final actionType in ['cart', 'orders']) {
+        final controller = ScrollController();
+        var presses = 0;
+        final base = _layout(page: 'home', transition: 'smooth_compact', height: 112);
+        final layout = CmsPageLayout(
+          page: base.page,
+          header: CmsPageComponent(
+            id: 'header', type: 'app_header', enabled: true,
+            settings: {
+              ...base.header.settings,
+              'horizontal_padding': 16,
+              'compact_horizontal_padding': rtl ? 24 : 16,
+              'compact_side_margin': rtl ? 8 : 0,
+              'logo_text': 'Store',
+              'layout_json': {'rows': [
+                {'columns': [
+                  {'width': 80, 'align': 'left', 'items': ['logo']},
+                  {'width': 20, 'align': 'right', 'items': [actionType]},
+                ]},
+                {'columns': [{'width': 100, 'align': 'left', 'items': ['search_bar']}]},
+              ]},
+            },
+          ),
+          elements: base.elements,
+          footer: base.footer,
+        );
+        await _pumpPage(tester, layout: layout, rtl: rtl,
+          scrollController: controller, actions: [
+            CmsPageHeaderAction(type: actionType,
+              icon: Icons.shopping_bag_outlined, tooltip: 'Fixed action',
+              onPressed: () => presses++),
+          ]);
+        final action = find.byTooltip('Fixed action');
+        final initialRect = tester.getRect(action);
+        final search = find.byKey(const Key('cms-page-morphing-search'));
+        final initialSearchTop = tester.getTopLeft(search).dy;
+        for (final offset in <double>[1, 8, 24, 32, 40, 56, 64, 160, 48, 12, 0, 64, 0]) {
+          controller.jumpTo(offset);
+          await tester.pump();
+          expect(tester.getRect(action), initialRect,
+            reason: '$actionType rtl=$rtl scroll=$offset');
+          if (offset >= 64) {
+            expect(tester.getTopLeft(search).dy, lessThan(initialSearchTop));
+            await tester.tap(action);
+            presses--;
+            expect(presses, 0);
+          }
+          expect(tester.takeException(), isNull);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        controller.dispose();
+      }
+    }
+  });
+
   testWidgets('short wordmark uses its saved contain frame without stretching', (tester) async {
     for (final fit in ['contain', 'cover']) {
       final base = _layout(page: 'home', height: 112);

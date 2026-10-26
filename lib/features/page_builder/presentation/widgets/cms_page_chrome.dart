@@ -566,6 +566,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ? _smoothCompactContent(
                       context,
                       color: foreground,
+                      actionRightOffset: regularPadding - padding - sideMargin,
                       width:
                           MediaQuery.sizeOf(context).width -
                           (sideMargin * 2) -
@@ -670,6 +671,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget _smoothCompactContent(
     BuildContext context, {
     required Color color,
+    required double actionRightOffset,
     required double width,
     required double progress,
   }) {
@@ -818,13 +820,10 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             if (persistentActions.isNotEmpty)
               Positioned(
-                // Header columns use physical left/right coordinates in every locale.
-                top: _lerp(
-                  regularActionTop,
-                  (constraints.maxHeight - 48) / 2,
-                  progress,
-                ),
-                right: 0,
+                // Keep actions at their expanded viewport position while the
+                // search and header shrink, including changing side insets.
+                top: regularActionTop,
+                right: actionRightOffset,
                 height: 48,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

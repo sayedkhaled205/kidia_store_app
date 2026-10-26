@@ -1,0 +1,19 @@
+{
+  "issue": "Header action shifts while search collapses on scroll",
+  "regression_reproduced_before_fix": true,
+  "first_scroll_before_fix": {
+    "start_top": 17,
+    "after_one_pixel_scroll_top": 17.4
+  },
+  "header_widget_tests_passed": 18,
+  "stationary_cases": [
+    "cart",
+    "orders",
+    "LTR",
+    "RTL",
+    "changing compact side padding and margin",
+    "repeated scroll down and up"
+  ],
+  "shared_runtime_source": true,
+  "merchant_settings_changed": false
+}
