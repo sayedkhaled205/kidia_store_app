@@ -15,6 +15,25 @@ const catalog = [
   {id:43,name:'Newborn',parent:42},
   {id:44,name:'Home',parent:0},
 ];
+test('new category highlights use each merchant brand without replacing saved colors', () => {
+  const s=setup();s.api.prepare(s.root);
+  const key='category_general[name_highlight_color]';
+  for(const brand of ['#4da99b','#cc7722']){
+    const settings={entries:[['category_general[font_size]','18']]};
+    s.api.hydrate(s.root,{category_items:catalog},settings,{primary_color:brand});
+    assert.equal(new Map(settings.entries).get(key),brand);
+    assert.equal(new Map(settings.entries).get('category_general[font_size]'),'18');
+  }
+  for(const custom of ['#abcdef','#eff8f5']){
+    const settings={entries:[[key,custom]]};
+    s.api.hydrate(s.root,{category_items:catalog},settings,{primary_color:'#4da99b'});
+    assert.equal(new Map(settings.entries).get(key),custom);
+  }
+  const settings={entries:[]};
+  s.api.hydrate(s.root,{category_items:catalog},settings,{primary_color:'invalid'});
+  assert.equal(settings.entries.length,0);
+  s.dom.window.close();
+});
 test('name highlight controls install once and preserve choice across designs', () => {
   const s=setup(); s.api.prepare(s.root); s.api.prepare(s.root);
   const check=s.root.querySelector('[name="category_general[name_highlight_enabled]"][type="checkbox"]');

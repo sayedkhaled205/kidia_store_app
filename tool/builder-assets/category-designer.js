@@ -1,4 +1,4 @@
-/* category-designer-v4: curated layouts; optional saved name highlight. */
+/* category-designer-v5: curated layouts; merchant brand highlight default. */
 (function (scope) {
   'use strict';
   const shared = {card_width_percent:100, card_height:0, show_arrow:1,
@@ -50,8 +50,17 @@
       refresh(root,event.data.store||{});
     });}
   }
-  function hydrate(root,store,settings){
+  function hydrate(root,store,settings,identity){
     const area=q(root,'.mobishop-category-items');if(!area)return;
+    const colorName='category_general[name_highlight_color]';
+    const brand=String(identity?.primary_color||'');
+    if(settings&&/^#[0-9a-f]{6}$/i.test(brand)){
+      const entries=Array.isArray(settings.entries)?settings.entries:[];
+      const saved=entries.filter(([name])=>name===colorName).at(-1)?.[1];
+      // A saved custom color always wins, including a previously chosen pale color.
+      if(!/^#[0-9a-f]{6}$/i.test(String(saved||'')))
+        settings.entries=[...entries.filter(([name])=>name!==colorName),[colorName,brand]];
+    }
     if(settings?.entries)savedCategories.set(root,settings.entries.filter(([name])=>name.startsWith('categories[')));
     if(!Array.isArray(store.category_items)&&area.querySelector('.mobishop-category-row'))return false;
     const items=normalize(store.category_items);

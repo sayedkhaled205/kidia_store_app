@@ -6,6 +6,7 @@ def replace_once(source, before, after):
     return source.replace(before, after, 1)
 
 def repair_central(source):
+    source = repair_category_brand_central(source)
     if '/* preview-commerce-contract-v1 */' in source:
         return source
     helper = Path(__file__).with_name('preview-commerce-config.js').read_text()
@@ -32,10 +33,16 @@ def repair_central(source):
         "      frame.inert = false;\n      sendMobilePreview(true);\n      setTransition('');\n      return;")
     return '/* preview-commerce-contract-v1 */\n' + helper + '\n' + source
 
-def repair_frame(source):
-    if '/* category-designer-v4:' in source:
+def repair_category_brand_central(source):
+    if 'identity: applicationPreviewIdentity || {},' in source:
         return source
-    if any(f'/* category-designer-v{v}:' in source for v in (1, 2, 3)):
+    return replace_once(source, '          settings: payload.state || {},',
+        '          settings: payload.state || {},\n          identity: applicationPreviewIdentity || {},')
+
+def repair_frame(source):
+    if '/* category-designer-v5:' in source:
+        return source
+    if any(f'/* category-designer-v{v}:' in source for v in (1, 2, 3, 4)):
         end = source.index("})(typeof window==='undefined'?globalThis:window);") + len("})(typeof window==='undefined'?globalThis:window);")
         source = source[end:].lstrip('\n')
         source = source.replace("\n      if (screen === 'category-builder') KidiaCategoryDesigner.prepare(root);", '')
@@ -47,5 +54,5 @@ def repair_frame(source):
         "      root.innerHTML = normalizeReferenceHtml(html);\n      if (screen === 'category-builder') KidiaCategoryDesigner.prepare(root);")
     source = replace_once(source,
         '  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};',
-        "  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};\n    if (screen === 'category-builder') { KidiaCategoryDesigner.hydrate(root, store, payload.settings); if (window.KidiaCategoryMenu) window.KidiaCategoryMenu.init(); }")
+        "  async function hydrate(payload) {\n    const store = payload && payload.store ? payload.store : {};\n    if (screen === 'category-builder') { KidiaCategoryDesigner.hydrate(root, store, payload.settings, payload.identity); if (window.KidiaCategoryMenu) window.KidiaCategoryMenu.init(); }")
     return helper + '\n' + source
