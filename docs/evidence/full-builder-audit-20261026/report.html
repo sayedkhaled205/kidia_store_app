@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مراجعة البيلدر والمنصات الثلاث — 26 أكتوبر 2026</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f6f7;color:#173d40;font:16px/1.8 system-ui,Arial,sans-serif}main{max-width:1120px;margin:auto;padding:36px 22px 70px}h1{font-size:29px;line-height:1.5;margin:12px 0}h2{font-size:21px;margin:0 0 12px}.eyebrow{color:#507576}.lead{font-size:18px;max-width:920px}.card{background:white;border:1px solid #bed2d4;border-radius:18px;padding:25px;margin:20px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.stat{background:#e2f3ed;border-radius:12px;padding:18px}.stat strong{font-size:30px;display:block;color:#146a59}.note{background:#fff7df;border-inline-start:5px solid #c48b15;padding:16px 20px;border-radius:10px}.tag{display:inline-block;border-radius:30px;background:#dff1e9;padding:4px 14px;color:#146a59;font-weight:700}table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:right;padding:14px 10px;border-bottom:1px solid #dce7e7;vertical-align:top}th{background:#edf5f4}a{color:#166b71}li{margin:8px 0}img{width:100%;border:1px solid #cad9d9;border-radius:12px}figcaption{font-size:14px;color:#507576;margin-top:10px}code{direction:ltr;unicode-bidi:embed;font-size:13px;overflow-wrap:anywhere}summary{cursor:pointer;font-weight:700}@media(max-width:650px){.stats{grid-template-columns:1fr}main{padding:20px 12px}.card{padding:17px}h1{font-size:24px}table{font-size:13px}}
+</style>
+<main>
+<div class="eyebrow">WooMobile • مراجعة 26 أكتوبر 2026</div>
+<h1>الإصلاحات في المصدر المشترك للبيلدر</h1>
+<p class="lead">تم إصلاح العيوب المثبتة في العناوين، والعملات، وقواعد دخول المفضلة على أودو، ومعاينة التعديلات واستعادة المسودات. الإصلاحات لا تعتمد على اسم كيديا أو متجر بعينه، وتحافظ على شكل الشاشات الحالي.</p>
+<p class="tag">نسخة البرفيو الجديدة منشورة ومراجَعة</p>
+<section class="card">
+<h2>نتائج الاختبارات</h2>
+<div class="stats"><div class="stat"><strong>800</strong>اختبار تطبيق ناجح<br>9 اختبارات متروكة بشروطها، بلا إخفاقات</div><div class="stat"><strong>1,318</strong>نتيجة ناجحة في مصفوفة المنصات<br>متجران لكل منصة مع العربية والإنجليزية</div><div class="stat"><strong>68 / 68</strong>مجموعة اختبار ناجحة<br>للبيلدر والربط من نسخة نظيفة للمصدر</div></div>
+<p>نجحت أيضًا 24 حالة لعقود أودو، و17 فحصًا لإعدادات البناء ومصفوفة الاختبار، وفحص 36 عنصر تحكم على السيرفر مع التراجع عن بيانات التجربة. الأعداد تمثل مجموعات تشغيل متداخلة وليست عددًا مجمعًا لاختبارات فريدة.</p>
+<p>تحليل التطبيق بلا ملاحظات. مطابقة 46 ملفًا للبرفيو بلا اختلافات. انتهت وظائف الفحص الآلي الست بالنجاح، بما فيها بناء أندرويد، على المصدر <code>8cecc54d55c03b46a3140c9bc372b93a3a3d566d</code>. نتائجها محفوظة مع هذه المراجعة.</p>
+</section>
+<section class="card">
+<h2>ما الذي تغير؟</h2>
+<table><thead><tr><th>المشكلة</th><th>الإصلاح العام</th></tr></thead><tbody>
+<tr><td>العنوان المحفوظ لا يحترم حقول المتجر بالكامل</td><td>قراءة ظهور الحقول وإلزاميتها والقيم والاختيارات من إعداد المتجر. الحفاظ على الرمز البريدي والبلد، والتحقق من رمز البلد، وإعادة اختيار المحافظة عند تغيير البلد دون فقد باقي الكتابة.</td></tr>
+<tr><td>افتراض عدد ثابت للخانات العشرية في شوبيفاي</td><td>توحيد دقة العملة بين المنتجات والسلة وفق بيانات ISO 4217 بدل تطبيق خانتين على كل العملات.</td></tr>
+<tr><td>المفضلة على أودو لا تستخدم هوية أودو بصورة موحدة</td><td>قاعدة مشتركة لصفحة المفضلة وزر القلب، تراعي السماح للضيف أو اشتراط الدخول، واستعادة الجلسة وانتهاءها.</td></tr>
+<tr><td>إيقاف صفحة الحساب لا يطبق على أودو بنفس الطريقة</td><td>إدخال حساب أودو في نفس فحص إتاحة الصفحات المشترك.</td></tr>
+<tr><td>تعديل عناصر التحكم لا يظهر فورًا في البرفيو</td><td>تمرير القيم المتغيرة فقط إلى المعاينة دون تغيير بنية سكاشن الهوم، مع منع اختلاف صيغة اللون من تسجيل تعديل وهمي.</td></tr>
+<tr><td>استعادة مسودة قد تخلط اختيارات أو متاجر مختلفة</td><td>عزل المسودة حسب المتجر والصفحة، وفحص التعارض، وتصحيح استعادة الاختيارات في محرر ووردبريس القديم.</td></tr>
+</tbody></table>
+</section>
+<section class="card">
+<h2>ما تم اختباره على المتاجر المتصلة</h2>
+<table><thead><tr><th>المنصة</th><th>التحقق الفعلي</th><th>حدود النتيجة</th></tr></thead><tbody>
+<tr><td>WooCommerce</td><td>قراءة الكتالوج على كيديا وبيئة الاختبار. إضافة وحذف من سلة ضيف جديدة ببيئة الاختبار والتأكد أنها عادت فارغة.</td><td>لم تنفذ عملية خصم كارت في هذه الدورة.</td></tr>
+<tr><td>Odoo</td><td>قراءة الكتالوج وسلة الضيف وحقول الشحن وأسعاره عند تغيير البلد على بيئة الاختبار، ثم تنظيف السلة.</td><td>هذه النتيجة لا تثبت عمل كل بوابة دفع إضافية عند كل عميل.</td></tr>
+<tr><td>Shopify</td><td>الدخول للإدارة بالحساب المحفوظ. فتح معاينة المتجر، واختيار متغير منتج وإضافته للسلة وفتح صفحة الدفع الرسمية، ثم حذفه والتأكد أن السلة فارغة.</td><td>متجر التطوير مقفول أمام واجهة شراء التطبيق. الدخول للإدارة أو معاينة الموقع لا يرفع هذا القيد، ولذلك اختبار ربط التطبيق الحي للنهاية لم يكتمل.</td></tr>
+</tbody></table>
+<p>لم تُدخل بيانات بطاقة أو بيانات عميل جديدة، ولم تتغير خطة شوبيفاي أو صلاحياته أو وسائل دخوله.</p>
+</section>
+<section class="card">
+<h2>مراجعة البرفيو بعد النشر</h2>
+<ul><li>زر Google ظاهر، وتغيير نص الدخول المؤقت ظهر فورًا قبل الحفظ ثم أُعيد للنص الأصلي دون حفظ إعداد متجر.</li><li>آخر سكشن منتجات في الهوم ظاهر. الانتقال من كارت «ALL PRODUCTS» إلى «NEW ARRIVAL» يعمل في نفس الجلسة، وعجلة الماوس تحرك البرفيو.</li><li>تصميمات الأقسام العشرة وخيار تمييز أسماء الأقسام ما زالت موجودة، والقائمة المعروضة تحمل أقسام الموقع الفعلية.</li><li>إيقاف التقييمات يخفي القسم والتبويب العلوي معًا. أُعيد الاختيار بعد التجربة إلى حالته الأصلية دون حفظ. <a href="reviews-disabled-proof.png">لقطة الاختبار</a>.</li></ul>
+<figure><img src="live-preview-proof.png" alt="نص اختبار مؤقت يظهر فورًا في البرفيو بجانب خانة تعديله وزر Google"><figcaption>إثبات المعاينة الفورية. هذا نص تجربة فقط، وقد أُعيد بعد اللقطة للنص الأصلي دون حفظ أو نشر إعدادات المتجر.</figcaption></figure>
+</section>
+<div class="note"><strong>ما يحتاج متابعة فعلية:</strong> إصلاحات البرفيو منشورة بالفعل. إصلاحات كود التطبيق تدخل في البناء المشترك الجديد، والتطبيقات القديمة المثبتة تحتاج نسخة مبنية بهذا المصدر. اختبار شوبيفاي الحي من التطبيق يحتاج متجرًا يسمح لواجهة الشراء بالوصول. المفضلة الحالية محفوظة محليًا لكل متجر؛ لا تعني النتيجة مزامنتها بين أجهزة العميل.</div>
+<section class="card"><h2>ثبات التعديلات</h2><p>المصدر محفوظ في فرع البناء المشترك، مع اختبارات تمنع رجوع الحالات المكتشفة. النشر أخذ نسخًا احتياطية قبل تفعيل البرفيو، والتعديلات الموجودة مسبقًا من العمل الموازي لم تدخل ضمن هذا التغيير. نتيجة هذه الدورة تؤكد الحالات التي تم فحصها، ولا تضمن توافق كل إضافة تجارية أو بوابة دفع غير مجربة.</p>
+<details><summary>الأدلة الفنية</summary><p>مصدر التطبيق والبرفيو: <code>8a2d030ffef520e33225d9e38e32c9058b2ff675</code>. الإصلاح اللاحق يحدّث اختبارات المفضلة فقط إلى القاعدة المشتركة.</p><p>نسخة البرفيو: <code>418d87619cf2</code>. فرع المصدر: <code>codex/unified-mobile-build</code>.</p><ul><li><a href="verification.json">تفاصيل النطاق والنشر والاختبارات</a></li><li><a href="builder-contracts.json">نتائج مجموعات اختبارات البيلدر</a></li><li><a href="commerce-matrix.json">نتائج مصفوفة المنصات</a></li><li><a href="https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40352693977">الفحوص الآلية للمصدر النهائي</a></li></ul></details></section>
+</main></html>

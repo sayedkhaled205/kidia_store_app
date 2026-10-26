@@ -1,0 +1,38 @@
+{
+  "run_id": 40352693977,
+  "source_commit": "8cecc54d55c03b46a3140c9bc372b93a3a3d566d",
+  "conclusion": "success",
+  "url": "https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40352693977",
+  "jobs": [
+    {
+      "name": "Flutter app",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Shared Odoo address and shipping contracts",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Commerce contracts (shopify)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Commerce contracts (woocommerce)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Commerce contracts (odoo)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "WordPress plugin",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

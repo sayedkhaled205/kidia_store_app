@@ -21,7 +21,8 @@
   },
   "builder_connector_suites": {
     "passed": 68,
-    "failures": 0
+    "failures": 0,
+    "note": "All 68 suites rerun from a fresh archive of the final source. Two obsolete source-shape guards were updated to the shared wishlist policy; behavior remains covered by runtime tests."
   },
   "odoo_python_contracts": 24,
   "build_definition_and_matrix_runner_checks": 17,
@@ -50,7 +51,11 @@
     ],
     "shopify": [
       "Builder admin inventory connected, 17 products",
-      "buyer API blocked: Online Store channel is locked"
+      "buyer API blocked: Online Store channel is locked",
+      "Signed in to admin using existing saved account",
+      "Development-store password restriction is enabled and locked by Shopify",
+      "Authorized storefront preview: selected a product variant, added one item to an initially empty cart, opened official checkout, then removed the item and verified cart empty",
+      "No customer details, card details, payment, plan, permissions or new credentials submitted"
     ]
   },
   "limitations": [
@@ -65,5 +70,66 @@
     "index.html": "314f93fc6d294952a04e937ed4ec98594decf7707e6e0a35416861dca17913f9",
     "central": "d0bf7a9c08516e7dd1e14a37749ef381207c5363310af41acb5cff55af052e9f",
     "page-controls": "899e24b034fcfdb85748b323b96937bfea139727fe9692a82e99b425efe295f8"
+  },
+  "source_commit": "8cecc54d55c03b46a3140c9bc372b93a3a3d566d",
+  "source_branch": "codex/unified-mobile-build",
+  "deployment": {
+    "preview_version": "418d87619cf2",
+    "preview_source_commit": "8a2d030ffef520e33225d9e38e32c9058b2ff675",
+    "preview_activated": true,
+    "central_asset": "original-central-page-controls-fe07338aa0f5.js",
+    "controls_asset": "page-controls-591bdbbe41e6.js",
+    "preview_backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-418d87619cf2",
+    "controls_index_backup": "/home/woomobile/woomobile-api/public/mobishop-builder-v26/index.before-page-controls-20261026152944.html",
+    "merchant_configuration_saved_or_published_by_ui_smoke": false
+  },
+  "live_preview_checks": {
+    "canonical_page_loads_current_assets": true,
+    "google_button_visible": true,
+    "unsaved_auth_title_updates_preview_immediately": true,
+    "temporary_auth_title_restored_without_save": true,
+    "home_lower_product_section_renders": true,
+    "repeated_card_selection_all_products_then_new_arrival": true,
+    "mouse_wheel_scroll_changes_mobile_viewport": true,
+    "ten_category_designs_and_name_highlight_retained": true,
+    "reviews_off_hides_tab_and_section_and_original_state_restored": true
+  },
+  "ci": {
+    "run_id": 40352693977,
+    "source_commit": "8cecc54d55c03b46a3140c9bc372b93a3a3d566d",
+    "conclusion": "success",
+    "url": "https://github.com/sayedkhaled205/kidia_store_app/actions/runs/40352693977",
+    "jobs": [
+      {
+        "name": "Flutter app",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Shared Odoo address and shipping contracts",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Commerce contracts (shopify)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Commerce contracts (woocommerce)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Commerce contracts (odoo)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "WordPress plugin",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
   }
 }
