@@ -15,9 +15,10 @@ def patch(name, source):
     if "'card_outline_color'" in source:
         raise ValueError('Outline already exists; reconcile instead of overwriting: ' + name)
     if name == FILES[0]:
-        anchor = "\t\t\tself::field( 'card_radius', __( 'Card radius', 'mobishop' ), 'number', 16, array(), 0, 40 ),"
+        domain = 'mobi2app-connector' if "__( 'Card radius', 'mobi2app-connector' )" in source else 'mobishop'
+        anchor = "\t\t\tself::field( 'card_radius', __( 'Card radius', '" + domain + "' ), 'number', 16, array(), 0, 40 ),"
         assert source.count(anchor) == 1
-        source = source.replace(anchor, "\t\t\tself::field( 'card_outline_color', __( 'Outline color', 'mobishop' ), 'color', " + BRAND + " ),\n" + anchor)
+        source = source.replace(anchor, "\t\t\tself::field( 'card_outline_color', __( 'Outline color', '" + domain + "' ), 'color', " + BRAND + " ),\n" + anchor)
         anchor = "'columns', 'gap', 'card_style', 'card_radius'"
         assert source.count(anchor) == 2
         source = source.replace(anchor, "'columns', 'gap', 'card_style', 'card_outline_color', 'card_radius'")
@@ -38,4 +39,4 @@ if __name__ == '__main__':
         out = target / name
         assert (root / name).resolve() != out.resolve()
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(patch(name, (root / name).read_text(encoding='utf-8')), encoding='utf-8')
+        out.write_bytes(patch(name, (root / name).read_bytes().decode('utf-8')).encode('utf-8'))
