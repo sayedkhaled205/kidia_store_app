@@ -46,6 +46,7 @@ jobs:
         env:
           MOBISHOP_CONNECTOR_TEST_ROOT: ${{ github.workspace }}/build/woocommerce/mobi2app-connector
         run: |
+          php connectors/woocommerce/tests/product-variation-public-access-test.php
           php connectors/woocommerce/tests/native-auth-contract-test.php
           php connectors/woocommerce/tests/native-auth-legacy-gate-test.php
           php connectors/woocommerce/tests/website-auth-contract-test.php

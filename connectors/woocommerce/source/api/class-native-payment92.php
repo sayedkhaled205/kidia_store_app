@@ -135,7 +135,7 @@ final class MobiShop_Native_Payment92 {
 
 	public static function verified_signature( array $data, string $signature, string $key, array $record ): bool {
 		$keys = $data['signatureKeys'] ?? null;
-		if ( ! is_array( $keys ) || ! array_is_list( $keys ) || count( $keys ) > 40 || '' === $key
+		if ( ! is_array( $keys ) || array_values( $keys ) !== $keys || count( $keys ) > 40 || '' === $key
 			|| ! preg_match( '/^[a-fA-F0-9]{64}$/D', $signature ) ) return false;
 		foreach ( array( 'amount', 'currency', 'merchantOrderId', 'status', 'method', 'transactionId' ) as $required ) {
 			if ( ! in_array( $required, $keys, true ) ) return false;

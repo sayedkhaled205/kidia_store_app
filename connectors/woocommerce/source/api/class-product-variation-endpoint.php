@@ -25,7 +25,7 @@ final class MobiShop_Product_Variation_Endpoint {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_variations' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_public_product' ),
 				'args'                => array(
 					'id' => array(
 						'required'          => true,
@@ -38,8 +38,14 @@ final class MobiShop_Product_Variation_Endpoint {
 		);
 	}
 
-	/** Return exact purchasability and attributes for every variation. */
-	public function get_variations( WP_REST_Request $request ) {
+	/** Only publicly available products may use this anonymous storefront route. */
+	public function check_public_product( WP_REST_Request $request ) {
+		$product = $this->get_public_product( absint( $request['id'] ) );
+		return is_wp_error( $product ) ? $product : true;
+	}
+
+	/** Resolve the parent before reading any variation attributes, prices or images. */
+	private function get_public_product( int $product_id ) {
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return new WP_Error(
 				'mobishop_woocommerce_unavailable',
@@ -48,20 +54,43 @@ final class MobiShop_Product_Variation_Endpoint {
 			);
 		}
 
-		$product = wc_get_product( absint( $request['id'] ) );
-		if ( ! $product instanceof WC_Product_Variable ) {
+		$product = wc_get_product( $product_id );
+		if ( ! $product instanceof WC_Product_Variable
+			|| 'publish' !== $product->get_status()
+			|| '' !== (string) get_post_field( 'post_password', $product_id, 'raw' )
+			|| ! in_array( $product->get_catalog_visibility(), array( 'visible', 'catalog', 'search' ), true )
+			|| ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) && ! $product->is_in_stock() )
+			// REST serves both catalog and search products, without an archive context.
+			// Honor storefront visibility filters, but never let them expose drafts,
+			// private, password-protected or hidden products (even to administrators).
+			|| ! apply_filters( 'woocommerce_product_is_visible', true, $product_id ) ) {
 			return new WP_Error(
-				'mobishop_product_not_variable',
-				__( 'The requested product has no variations.', 'mobi2app-connector' ),
+				'mobishop_product_not_found',
+				__( 'The requested product is not available.', 'mobi2app-connector' ),
 				array( 'status' => 404 )
 			);
+		}
+		return $product;
+	}
+
+	/** Return purchasability and attributes for publicly available variations. */
+	public function get_variations( WP_REST_Request $request ) {
+		// Keep direct handler calls subject to the same public-read policy.
+		$product = $this->get_public_product( absint( $request['id'] ) );
+		if ( is_wp_error( $product ) ) {
+			return $product;
 		}
 
 		$variations       = array();
 		$attribute_matrix = $this->get_parent_attribute_matrix( $product );
 		foreach ( $product->get_children() as $variation_id ) {
 			$variation = wc_get_product( $variation_id );
-			if ( ! $variation instanceof WC_Product_Variation ) {
+			if ( ! $variation instanceof WC_Product_Variation
+				|| $product->get_id() !== $variation->get_parent_id()
+				|| 'publish' !== $variation->get_status()
+				|| '' !== (string) get_post_field( 'post_password', $variation_id, 'raw' )
+				|| ! $variation->variation_is_visible()
+				|| ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) && ! $variation->is_in_stock() ) ) {
 				continue;
 			}
 

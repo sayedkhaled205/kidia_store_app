@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.101
+Stable tag: 1.46.102
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,11 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.102 =
+* Protect the public variation route with explicit publication and storefront visibility checks for the parent and its variations.
+* Prevent private, draft, hidden and password-protected product data from being exposed, including to signed-in administrators on this public route.
+* Correct connector translation domains and retain WordPress 6.4 / PHP 8.0 compatibility in list validation.
 
 = 1.46.81 =
 * Accept valid Google ID tokens until their signed expiry and refresh rotated signing keys safely.

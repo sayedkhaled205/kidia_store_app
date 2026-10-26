@@ -9,6 +9,10 @@ declare( strict_types=1 );
 
 define( 'ABSPATH', __DIR__ );
 
+function wp_parse_url( $url, $component = -1 ) {
+	return parse_url( $url, $component );
+}
+
 $GLOBALS['mobishop_routes']          = array();
 $GLOBALS['mobishop_current_user_id'] = 7;
 $GLOBALS['mobishop_order_query']     = array();

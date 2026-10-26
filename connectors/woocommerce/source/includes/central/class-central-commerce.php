@@ -5,7 +5,7 @@ final class MobiShop_Central_Commerce {
 private const CAPABILITY = 'manage_woocommerce';
 	public function store_data_page(): void {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobishop' ) );
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'mobi2app-connector' ) );
 		}
 		$store_tab    = isset( $_GET['store_tab'] ) ? sanitize_key( wp_unslash( $_GET['store_tab'] ) ) : 'products';
 		$store_source = isset( $_GET['store_source'] ) ? sanitize_key( wp_unslash( $_GET['store_source'] ) ) : 'all';

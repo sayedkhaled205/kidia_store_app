@@ -1,0 +1,374 @@
+[
+  {
+    "file": "mobi2app-connector.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-category-page-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-checkout-config-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-customer-account-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-customer-auth-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-customer-orders-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-embedded-checkout88.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-home-layout-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-native-checkout-safety50.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-native-customer-auth-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-native-payment92.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-native-qa-isolation51.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-page-layout-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-product-brand-bridge.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-product-variation-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-splash-screen-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-store-api-price-compatibility.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-store-changes-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "api\\class-website-auth-endpoint.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-activator.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-ai-analysis-job.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-ai-offer-engine.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-analytics.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-app-exporter.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-block-registry.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-bundle-recipes.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-category-page-store.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-checkout-fields-store.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-coupon-channel.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-deactivator.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-kids-home-preset.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-layout-store.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-license-manager.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-order-source98.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-page-layout-store.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-product-channel-visibility.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-push-service.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-recovery-campaigns.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-setup-wizard.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop-website-app-promotion.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-mobishop.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-native-checkout-bootstrap50.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\class-native-checkout-setup50.php",
+    "passed": true
+  },
+  {
+    "file": "integrations\\kidia-address-book.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-app-header-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-banner-grid-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-brand-carousel-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-bundle-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-category-grid-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-countdown-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-coupon-banner-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-divider-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-hero-slider-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-image-banner-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-product-carousel-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-product-grid-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-promo-strip-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-quick-links-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-section-header-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-spacer-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-text-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\blocks\\class-mobishop-video-banner-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\bootstrap.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\class-central-commerce.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-builder-application-bridge.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-builder-application-commit.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-builder-form-state.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-builder-setup-identity.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-push-actions.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\kidia-push-admin-bridge.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\loader.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\store-data-view.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\store-data.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\central\\store-notifications.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\app-header.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\banner-grid.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\brand-carousel.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\bundle-collection.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\category-grid.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\countdown.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\coupon-banner.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\divider.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\hero-slider.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\image-banner.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\product-carousel.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\product-grid.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\promo-strip.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\quick-links.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\section-header.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\spacer.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\text-block.php",
+    "passed": true
+  },
+  {
+    "file": "includes\\schema\\video-banner.php",
+    "passed": true
+  }
+]

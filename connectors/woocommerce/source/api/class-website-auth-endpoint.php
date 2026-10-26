@@ -82,11 +82,10 @@ final class MobiShop_Website_Auth_Endpoint {
 	private function change( string $id, array $old, ?array $next ): bool {
 		global $wpdb;
 		if ( $next === null ) {
-			$sql = $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) );
+			$changed = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) ) ) === 1;
 		} else {
-			$sql = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) );
+			$changed = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) ) ) === 1;
 		}
-		$changed = $wpdb->query( $sql ) === 1;
 		wp_cache_delete( self::PREFIX . $id, 'options' );
 		return $changed;
 	}

@@ -125,7 +125,7 @@ final class MobiShop_Central_Form_State
                 if ($json === false) throw new InvalidArgumentException('Invalid Home payload.');
                 $blocks = json_decode($json,true,512,JSON_THROW_ON_ERROR);
             } else $blocks = $form['blocks'] ?? null;
-            if (!is_array($blocks) || !array_is_list($blocks)) throw new InvalidArgumentException('Home block list required.');
+            if (!is_array($blocks) || array_values($blocks) !== $blocks) throw new InvalidArgumentException('Home block list required.');
             $homeStore = new MobiShop_Layout_Store;
             $normalize = new ReflectionMethod(MobiShop_Layout_Store::class,'normalize_layout');
             $reorder = new ReflectionMethod(MobiShop_Layout_Store::class,'reorder_layout');
