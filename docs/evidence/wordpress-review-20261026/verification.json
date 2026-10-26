@@ -1,0 +1,27 @@
+{
+  "slug": "mobi2app-connector",
+  "version": "1.46.102",
+  "file": "mobi2app-connector-1.46.102.zip",
+  "sha256": "24a7567008db1430a376050571cd01586a0e6c71c4f67258058dd183a0d13f73",
+  "files": 499,
+  "review_request_date": "2026-10-25",
+  "base_commit": "c1e8d552a6fa9d4ebc9c0de3c316a5ece2bbda95",
+  "permission_contract_assertions": 64,
+  "wordpress_rest_assertions": 51,
+  "packaged_contract_suites": 20,
+  "packaging_tests": 15,
+  "php_lint_files": 93,
+  "plugin_check": {
+    "category": "plugin_repo",
+    "errors": 0,
+    "warnings": 326
+  },
+  "review_upload_status": "verified in WordPress submission history",
+  "production_installation": "not changed by this task",
+  "review_status": "Being Reviewed - waiting on action from our plugins team",
+  "submission_url": "https://wordpress.org/plugins/developers/add/",
+  "uploaded_at": "2026-10-26",
+  "wordpress_review_zip_identifier": "c073d6a823998c5550bb6ba80fc28d08",
+  "manual_email_sent": false,
+  "review_notes": "Included with updated submission; dashboard acknowledges receipt."
+}

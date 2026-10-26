@@ -103,3 +103,18 @@ Version 1.46.88 transfers the authenticated app basket into the merchant checkou
 Version 1.46.90 resolves the scoped customer before WooCommerce initializes, including when another extension cached the guest identity early. It rebinds an early guest session handler before basket transfer and removes Flatsome outer header/footer only within the scoped app checkout. Ordinary website sessions and merchant checkout/payment fields remain unchanged. The app also reloads the authenticated customer basket after returning from checkout.
 
 Version 1.46.91 explains an expired scoped checkout after a 403 shipping refresh, removes the stuck loading overlay and asks the customer to reopen checkout. Session expiry, nonce validation and merchant payment processing remain unchanged.
+
+Version 1.46.102 adds an explicit permission callback to the public product
+variation route. Both the permission callback and the response handler require a
+published variable parent, no password, public catalog/search visibility and
+the merchant's storefront visibility rules. Administrator privileges do not
+bypass these checks on the public route. Non-public, unrelated and invisible
+children are excluded before reading their attributes, prices or images.
+
+`tests/product-variation-public-access-test.php` tests the extracted release in
+CI, including the Arabic attribute matrix and stock visibility settings.
+`tests/product-variation-public-access-integration.php` runs with WP-CLI
+`eval-file` in an isolated local WordPress/WooCommerce installation. Skip the
+installed connector, set `MOBISHOP_CONNECTOR_TEST_ROOT` to the extracted release,
+and run it with a test administrator present. It uses actual REST dispatch for
+anonymous and administrator callers and rolls back its database fixtures.

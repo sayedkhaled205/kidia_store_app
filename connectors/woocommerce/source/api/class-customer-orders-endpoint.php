@@ -297,7 +297,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 			'needs_payment' => $needs_payment,
 			'payment_method' => is_callable( array( $order, 'get_payment_method' ) ) ? sanitize_key( (string) $order->get_payment_method() ) : '',
 			'payment_url'   => $payment_url,
-			'payment_endpoint_path' => '' !== $payment_url ? (string) parse_url( $payment_url, PHP_URL_PATH ) : '',
+			'payment_endpoint_path' => '' !== $payment_url ? (string) wp_parse_url( $payment_url, PHP_URL_PATH ) : '',
 		);
 	}
 
@@ -313,11 +313,11 @@ final class MobiShop_Customer_Orders_Endpoint {
 			if ( ! is_string( $url ) || strlen( $url ) > 4096 || preg_match( '/[\\\\\x00-\x20\x7f]/', $url ) || ! is_string( $key ) || ! preg_match( '/^wc_order_[A-Za-z0-9]+$/D', $key ) ) {
 				return '';
 			}
-			$home = parse_url( home_url( '/' ) );
-			$parts = parse_url( $url );
+			$home = wp_parse_url( home_url( '/' ) );
+			$parts = wp_parse_url( $url );
 			// Derive the store's actual configured/localized endpoint independently
 			// of the gateway-filtered payment URL.
-			$expected = parse_url( wc_get_endpoint_url( 'order-pay', (int) $order->get_id(), wc_get_checkout_url() ) );
+			$expected = wp_parse_url( wc_get_endpoint_url( 'order-pay', (int) $order->get_id(), wc_get_checkout_url() ) );
 			if ( ! is_array( $home ) || ! is_array( $parts ) || ( $home['scheme'] ?? '' ) !== 'https' || ( $parts['scheme'] ?? '' ) !== 'https'
 				|| empty( $home['host'] ) || strtolower( $parts['host'] ?? '' ) !== strtolower( $home['host'] )
 				|| ( $parts['port'] ?? 443 ) !== ( $home['port'] ?? 443 )
