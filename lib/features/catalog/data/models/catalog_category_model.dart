@@ -45,6 +45,8 @@ class CatalogCategoryModel extends CatalogCategory {
     super.imageTextGap,
     super.fontSize,
     super.fontColor,
+    super.nameHighlightEnabled,
+    super.nameHighlightColor,
     super.fontWeight,
     super.textAlign,
     super.textMaxLines,
@@ -68,27 +70,23 @@ class CatalogCategoryModel extends CatalogCategory {
       count: _nonNegativeCount(json['count']),
       image: CatalogImageModel.tryParse(json['image']),
       permalink: CatalogJson.webUri(json['permalink'] ?? json['link']),
-      categoryLayout: _choice(
-        presentation['category_layout'],
-        const <String>{
-          'default',
-          'visual_grid',
-          'circular_grid',
-          'compact_grid',
-          'sidebar',
-          'image_banner',
-          'top_tabs',
-          'split_rows',
-          'grouped_shelves',
-          'text_directory',
-        },
+      categoryLayout: _choice(presentation['category_layout'], const <String>{
         'default',
-      ),
-      navigationMode: _choice(
-        presentation['navigation_mode'],
-        const <String>{'drilldown', 'expand_inline', 'separate_page'},
+        'visual_grid',
+        'circular_grid',
+        'compact_grid',
+        'sidebar',
+        'image_banner',
+        'top_tabs',
+        'split_rows',
+        'grouped_shelves',
+        'text_directory',
+      }, 'default'),
+      navigationMode: _choice(presentation['navigation_mode'], const <String>{
         'drilldown',
-      ),
+        'expand_inline',
+        'separate_page',
+      }, 'drilldown'),
       gridColumns: _boundedDouble(
         presentation['grid_columns'],
         2,
@@ -116,25 +114,19 @@ class CatalogCategoryModel extends CatalogCategory {
         presentation['element_background_color'],
         '#FFFFFF',
       ),
-      cardStyle: _choice(
-        presentation['card_style'],
-        const <String>{'minimal', 'no_shadow', 'outlined', 'elevated'},
+      cardStyle: _choice(presentation['card_style'], const <String>{
+        'minimal',
+        'no_shadow',
         'outlined',
-      ),
+        'elevated',
+      }, 'outlined'),
       cardBackgroundColor: _hexColor(
         presentation['card_background_color'],
         '#FFFFFF',
       ),
-      cardShadowColor: _hexColor(
-        presentation['card_shadow_color'],
-        '#000000',
-      ),
-      cardShadowStrength: _boundedDouble(
-        presentation['card_shadow_strength'],
-        0,
-        40,
-        10,
-      ) / 100,
+      cardShadowColor: _hexColor(presentation['card_shadow_color'], '#000000'),
+      cardShadowStrength:
+          _boundedDouble(presentation['card_shadow_strength'], 0, 40, 10) / 100,
       cardShadowBlur: _boundedDouble(
         presentation['card_shadow_blur'],
         0,
@@ -151,58 +143,56 @@ class CatalogCategoryModel extends CatalogCategory {
           ? presentation['show_arrow'] as bool
           : true,
       imageSize: _boundedDouble(presentation['image_size'], 32, 120, 68),
-      imageShape: _choice(
-        presentation['image_shape'],
-        const <String>{'square', 'rounded', 'circle'},
+      imageShape: _choice(presentation['image_shape'], const <String>{
+        'square',
         'rounded',
-      ),
+        'circle',
+      }, 'rounded'),
       imageRadius:
           _boundedDouble(presentation['image_radius'], 0, 50, 18) / 100,
-      imageFit: _choice(
-        presentation['image_fit'],
-        const <String>{'contain', 'cover'},
+      imageFit: _choice(presentation['image_fit'], const <String>{
         'contain',
-      ),
-      imageEffect: _choice(
-        presentation['image_effect'],
-        const <String>{'none', 'shadow', 'grayscale'},
+        'cover',
+      }, 'contain'),
+      imageEffect: _choice(presentation['image_effect'], const <String>{
         'none',
-      ),
+        'shadow',
+        'grayscale',
+      }, 'none'),
       imageScale:
           _boundedDouble(presentation['image_scale'], 80, 150, 100) / 100,
-      imagePosition: _choice(
-        presentation['image_position'],
-        const <String>{'center', 'top', 'bottom', 'left', 'right'},
+      imagePosition: _choice(presentation['image_position'], const <String>{
         'center',
-      ),
-      imageBorderWidth: _boundedDouble(
-        presentation['border_width'],
-        0,
-        8,
-        0,
-      ),
-      imageBorderColor: _hexColor(
-        presentation['border_color'],
-        '#DDE5E2',
-      ),
+        'top',
+        'bottom',
+        'left',
+        'right',
+      }, 'center'),
+      imageBorderWidth: _boundedDouble(presentation['border_width'], 0, 8, 0),
+      imageBorderColor: _hexColor(presentation['border_color'], '#DDE5E2'),
       imageBackgroundColor: _hexColor(
         presentation['background_color'],
         '#FFFFFF',
       ),
-      imageTextGap: _boundedDouble(
-        presentation['image_text_gap'],
-        0,
-        40,
-        10,
-      ),
+      imageTextGap: _boundedDouble(presentation['image_text_gap'], 0, 40, 10),
       fontSize: _boundedDouble(presentation['font_size'], 10, 30, 16),
       fontColor: _hexColor(presentation['font_color'], '#1F2933'),
-      fontWeight: _fontWeight(presentation['font_weight']),
-      textAlign: _choice(
-        presentation['text_align'],
-        const <String>{'start', 'center', 'end'},
-        'start',
+      nameHighlightEnabled: const {
+        true,
+        1,
+        '1',
+        'true',
+      }.contains(presentation['name_highlight_enabled']),
+      nameHighlightColor: _hexColor(
+        presentation['name_highlight_color'],
+        '#EFF8F5',
       ),
+      fontWeight: _fontWeight(presentation['font_weight']),
+      textAlign: _choice(presentation['text_align'], const <String>{
+        'start',
+        'center',
+        'end',
+      }, 'start'),
       textMaxLines: _boundedDouble(
         presentation['text_max_lines'],
         1,
@@ -257,6 +247,8 @@ class CatalogCategoryModel extends CatalogCategory {
       imageTextGap: imageTextGap,
       fontSize: fontSize,
       fontColor: fontColor,
+      nameHighlightEnabled: nameHighlightEnabled,
+      nameHighlightColor: nameHighlightColor,
       fontWeight: fontWeight,
       textAlign: textAlign,
       textMaxLines: textMaxLines,
@@ -284,11 +276,7 @@ class CatalogCategoryModel extends CatalogCategory {
         : parsed.clamp(minimum, maximum).toDouble();
   }
 
-  static String _choice(
-    dynamic value,
-    Set<String> choices,
-    String fallback,
-  ) {
+  static String _choice(dynamic value, Set<String> choices, String fallback) {
     final String parsed = CatalogJson.string(value).toLowerCase();
     return choices.contains(parsed) ? parsed : fallback;
   }

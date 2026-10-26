@@ -33,9 +33,9 @@ def repair_central(source):
     return '/* preview-commerce-contract-v1 */\n' + helper + '\n' + source
 
 def repair_frame(source):
-    if '/* category-designer-v3:' in source:
+    if '/* category-designer-v4:' in source:
         return source
-    if '/* category-designer-v1:' in source or '/* category-designer-v2:' in source:
+    if any(f'/* category-designer-v{v}:' in source for v in (1, 2, 3)):
         end = source.index("})(typeof window==='undefined'?globalThis:window);") + len("})(typeof window==='undefined'?globalThis:window);")
         source = source[end:].lstrip('\n')
         source = source.replace("\n      if (screen === 'category-builder') KidiaCategoryDesigner.prepare(root);", '')

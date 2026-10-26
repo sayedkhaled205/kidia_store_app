@@ -4,6 +4,9 @@ This is the canonical source of **Mobi2App Connector for WooCommerce** distribut
 to new WooMobile stores. The `mobishop/` directory and `mobishop.zip` are the older
 CMS plugin; do not use those packages as replacements for this connector.
 
+Version 1.46.101 adds optional category-name background highlighting to the shared
+category schema and response. Existing designs default to no highlight.
+
 Version 1.46.100 includes the known saved-address provider adapter in the shared
 package and loads it automatically. It detects `Kidia_Shipping_Addresses`, reads
 only the signed-in customer's addresses, retains native Woo billing/shipping

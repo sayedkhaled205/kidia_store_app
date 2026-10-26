@@ -20,6 +20,7 @@ require dirname( __DIR__ ) . '/includes/class-mobishop-category-page-store.php';
 
 $store = new MobiShop_Category_Page_Store();
 $migrated = $store->get_settings();
+mobishop_category_assert( false === $migrated['general']['name_highlight_enabled'], 'Existing category designs must not gain a highlight automatically.' );
 mobishop_category_assert( true === $migrated['enabled'], 'Legacy category pages must remain visible.' );
 mobishop_category_assert( array( 11, 22 ) === array_keys( $migrated['categories'] ), 'Legacy term rows must migrate without loss.' );
 mobishop_category_assert( 92 === $migrated['general']['image_size'] && 'circle' === $migrated['general']['image_shape'], 'The first displayed legacy row must seed the one General Settings block.' );
@@ -49,4 +50,11 @@ mobishop_category_assert( 120 === $saved['general']['image_size'] && 30 === $sav
 mobishop_category_assert( '#FDF4E7' === $saved['general']['element_background_color'], 'The Category element background must save independently from page and card backgrounds.' );
 mobishop_category_assert( 76 === $saved['general']['card_width_percent'] && 144 === $saved['general']['card_height'], 'Category card width and height must save independently.' );
 
+$store->save_settings( array( 'general' => array( 'name_highlight_enabled' => '1', 'name_highlight_color' => '#e0f2ed' ) ) );
+$highlight = $store->get_settings();
+mobishop_category_assert( true === $highlight['general']['name_highlight_enabled'] && '#E0F2ED' === $highlight['general']['name_highlight_color'], 'Name highlight and its color must survive save and reload.' );
+$disabled = $store->save_settings( array( 'general' => array( 'name_highlight_enabled' => '0', 'name_highlight_color' => '#e0f2ed' ) ) );
+mobishop_category_assert( false === $disabled['general']['name_highlight_enabled'] && '#E0F2ED' === $disabled['general']['name_highlight_color'], 'Turning highlight off must retain its chosen color.' );
+$invalid = $store->save_settings( array( 'general' => array( 'name_highlight_color' => 'invalid' ) ) );
+mobishop_category_assert( '#EFF8F5' === $invalid['general']['name_highlight_color'], 'Invalid name highlight colors must use the safe default.' );
 fwrite( STDOUT, "Category-page store migration and one-element schema passed.\n" );

@@ -15,6 +15,24 @@ const catalog = [
   {id:43,name:'Newborn',parent:42},
   {id:44,name:'Home',parent:0},
 ];
+test('name highlight controls install once and preserve choice across designs', () => {
+  const s=setup(); s.api.prepare(s.root); s.api.prepare(s.root);
+  const check=s.root.querySelector('[name="category_general[name_highlight_enabled]"][type="checkbox"]');
+  const color=s.root.querySelector('[name="category_general[name_highlight_color]"]');
+  assert.equal(s.root.querySelectorAll('[name="category_general[name_highlight_color]"]').length,1);
+  assert.equal(check.checked,false);
+  assert.equal(color.value,'#eff8f5');
+  assert.deepEqual(Array.from(new s.w.FormData(s.root).getAll(check.name)),['0']);
+  check.click(); color.value='#e0f2ed';
+  for(const button of s.root.querySelectorAll('.kidia-category-design')) {
+    button.click(); assert.equal(check.checked,true); assert.equal(color.value,'#e0f2ed');
+  }
+  assert.deepEqual(Array.from(new s.w.FormData(s.root).getAll(check.name)),['0','1']);
+  check.click();
+  assert.deepEqual(Array.from(new s.w.FormData(s.root).getAll(check.name)),['0']);
+  assert.equal(color.value,'#e0f2ed');
+  s.dom.window.close();
+});
 test('captured QA categories cannot leak into another connected merchant', () => {
   const s=setup();s.api.prepare(s.root);
   assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,0);

@@ -634,14 +634,20 @@ class _CategoryEditorialRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = node.category;
     final theme = Theme.of(context);
-    final title = Text(
-      category.name,
-      maxLines: category.textMaxLines,
-      overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontSize: category.fontSize,
-        fontWeight: _categoryFontWeight(category.fontWeight),
-        color: _categoryColor(category.fontColor, theme.colorScheme.onSurface),
+    final title = _CategoryNameHighlight(
+      category: category,
+      child: Text(
+        category.name,
+        maxLines: category.textMaxLines,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontSize: category.fontSize,
+          fontWeight: _categoryFontWeight(category.fontWeight),
+          color: _categoryColor(
+            category.fontColor,
+            theme.colorScheme.onSurface,
+          ),
+        ),
       ),
     );
     final arrow = category.showArrow
@@ -778,14 +784,24 @@ class _CategoryBanner extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        category.name,
-                        maxLines: category.textMaxLines,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: category.fontSize,
-                          fontWeight: _categoryFontWeight(category.fontWeight),
+                      child: _CategoryNameHighlight(
+                        category: category,
+                        child: Text(
+                          category.name,
+                          maxLines: category.textMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: category.nameHighlightEnabled
+                                ? _categoryColor(
+                                    category.fontColor,
+                                    Colors.black,
+                                  )
+                                : Colors.white,
+                            fontSize: category.fontSize,
+                            fontWeight: _categoryFontWeight(
+                              category.fontWeight,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -904,42 +920,46 @@ class _CategoryGridTile extends StatelessWidget {
                           ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 6, 7),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          category.name,
-                          maxLines: category.textMaxLines,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: _categoryTextAlign(category.textAlign),
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: _categoryColor(
-                              category.fontColor,
-                              theme.colorScheme.onSurface,
+                _CategoryNameHighlight(
+                  category: category,
+                  padding: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 6, 7),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            maxLines: category.textMaxLines,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: _categoryTextAlign(category.textAlign),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: _categoryColor(
+                                category.fontColor,
+                                theme.colorScheme.onSurface,
+                              ),
+                              fontSize: category.fontSize,
+                              fontWeight: _categoryFontWeight(
+                                category.fontWeight,
+                              ),
+                              height: category.lineHeight,
                             ),
-                            fontSize: category.fontSize,
-                            fontWeight: _categoryFontWeight(
-                              category.fontWeight,
-                            ),
-                            height: category.lineHeight,
                           ),
                         ),
-                      ),
-                      if (category.showArrow)
-                        IconButton(
-                          key: Key('category-expand-${category.id}'),
-                          onPressed: hasChildren ? onExpand : onTap,
-                          visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 30,
-                            height: 30,
+                        if (category.showArrow)
+                          IconButton(
+                            key: Key('category-expand-${category.id}'),
+                            onPressed: hasChildren ? onExpand : onTap,
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 30,
+                              height: 30,
+                            ),
+                            padding: EdgeInsets.zero,
+                            icon: arrow,
                           ),
-                          padding: EdgeInsets.zero,
-                          icon: arrow,
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -964,19 +984,22 @@ class _CategoryGridTile extends StatelessWidget {
                   _CategoryArtwork(category: category, maximumSize: imageLimit),
                   SizedBox(width: category.imageTextGap),
                   Expanded(
-                    child: Text(
-                      category.name,
-                      maxLines: category.textMaxLines,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: _categoryTextAlign(category.textAlign),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: _categoryColor(
-                          category.fontColor,
-                          theme.colorScheme.onSurface,
+                    child: _CategoryNameHighlight(
+                      category: category,
+                      child: Text(
+                        category.name,
+                        maxLines: category.textMaxLines,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: _categoryTextAlign(category.textAlign),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: _categoryColor(
+                            category.fontColor,
+                            theme.colorScheme.onSurface,
+                          ),
+                          fontWeight: _categoryFontWeight(category.fontWeight),
+                          fontSize: category.fontSize,
+                          height: category.lineHeight,
                         ),
-                        fontWeight: _categoryFontWeight(category.fontWeight),
-                        fontSize: category.fontSize,
-                        height: category.lineHeight,
                       ),
                     ),
                   ),
@@ -1042,19 +1065,22 @@ class _CategoryGridTile extends StatelessWidget {
                 SizedBox(height: category.imageTextGap),
                 SizedBox(
                   width: double.infinity,
-                  child: Text(
-                    category.name,
-                    maxLines: category.textMaxLines,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: _categoryTextAlign(category.textAlign),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: _categoryColor(
-                        category.fontColor,
-                        theme.colorScheme.onSurface,
+                  child: _CategoryNameHighlight(
+                    category: category,
+                    child: Text(
+                      category.name,
+                      maxLines: category.textMaxLines,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: _categoryTextAlign(category.textAlign),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: _categoryColor(
+                          category.fontColor,
+                          theme.colorScheme.onSurface,
+                        ),
+                        fontSize: category.fontSize,
+                        fontWeight: _categoryFontWeight(category.fontWeight),
+                        height: category.lineHeight,
                       ),
-                      fontSize: category.fontSize,
-                      fontWeight: _categoryFontWeight(category.fontWeight),
-                      height: category.lineHeight,
                     ),
                   ),
                 ),
@@ -1213,19 +1239,24 @@ class _CategorySidebarRootButton extends StatelessWidget {
               SizedBox(height: category.imageTextGap),
               SizedBox(
                 width: double.infinity,
-                child: Text(
-                  category.name,
-                  maxLines: category.textMaxLines,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: _categoryTextAlign(category.textAlign),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: _categoryColor(
-                      category.fontColor,
-                      selected ? colors.onSecondaryContainer : colors.onSurface,
+                child: _CategoryNameHighlight(
+                  category: category,
+                  child: Text(
+                    category.name,
+                    maxLines: category.textMaxLines,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: _categoryTextAlign(category.textAlign),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: _categoryColor(
+                        category.fontColor,
+                        selected
+                            ? colors.onSecondaryContainer
+                            : colors.onSurface,
+                      ),
+                      fontWeight: _categoryFontWeight(category.fontWeight),
+                      fontSize: category.fontSize,
+                      height: category.lineHeight,
                     ),
-                    fontWeight: _categoryFontWeight(category.fontWeight),
-                    fontSize: category.fontSize,
-                    height: category.lineHeight,
                   ),
                 ),
               ),
@@ -1289,22 +1320,25 @@ class _CategoryBranch extends StatelessWidget {
                         width: category.imageTextGap * responsive,
                       ),
                       Expanded(
-                        child: Text(
-                          category.name,
-                          key: Key('category-title-${category.id}'),
-                          maxLines: category.textMaxLines,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: _categoryTextAlign(category.textAlign),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: _categoryColor(
-                              category.fontColor,
-                              colors.onSurface,
+                        child: _CategoryNameHighlight(
+                          category: category,
+                          child: Text(
+                            category.name,
+                            key: Key('category-title-${category.id}'),
+                            maxLines: category.textMaxLines,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: _categoryTextAlign(category.textAlign),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: _categoryColor(
+                                category.fontColor,
+                                colors.onSurface,
+                              ),
+                              fontSize: category.fontSize * responsive,
+                              fontWeight: _categoryFontWeight(
+                                category.fontWeight,
+                              ),
+                              height: category.lineHeight,
                             ),
-                            fontSize: category.fontSize * responsive,
-                            fontWeight: _categoryFontWeight(
-                              category.fontWeight,
-                            ),
-                            height: category.lineHeight,
                           ),
                         ),
                       ),
@@ -1379,23 +1413,27 @@ class _SubcategoryTile extends StatelessWidget {
                 ),
               ),
               SizedBox(height: category.imageTextGap * responsive),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(5, 0, 5, 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    category.name,
-                    maxLines: category.textMaxLines,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: _categoryTextAlign(category.textAlign),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: _categoryColor(
-                        category.fontColor,
-                        colors.onSurface,
+              _CategoryNameHighlight(
+                category: category,
+                padding: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      category.name,
+                      maxLines: category.textMaxLines,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: _categoryTextAlign(category.textAlign),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: _categoryColor(
+                          category.fontColor,
+                          colors.onSurface,
+                        ),
+                        fontSize: category.fontSize * responsive,
+                        fontWeight: _categoryFontWeight(category.fontWeight),
+                        height: category.lineHeight,
                       ),
-                      fontSize: category.fontSize * responsive,
-                      fontWeight: _categoryFontWeight(category.fontWeight),
-                      height: category.lineHeight,
                     ),
                   ),
                 ),
@@ -1403,6 +1441,32 @@ class _SubcategoryTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryNameHighlight extends StatelessWidget {
+  const _CategoryNameHighlight({
+    required this.category,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+  });
+  final CatalogCategory category;
+  final Widget child;
+  final EdgeInsets padding;
+  @override
+  Widget build(BuildContext context) {
+    if (!category.nameHighlightEnabled) return child;
+    return ColoredBox(
+      key: Key('category-name-highlight-${category.id}'),
+      color: _categoryColor(
+        category.nameHighlightColor,
+        const Color(0xffeff8f5),
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

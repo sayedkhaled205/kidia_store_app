@@ -3,9 +3,15 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_cate
 double categoryGridExtent(CatalogCategory settings, String layout) {
   if (settings.cardHeight > 0) return settings.cardHeight;
   final compact = layout == 'compact_grid';
-  final imageLimit = compact ? 54.0 : layout == 'circular_grid' ? 82.0 : 118.0;
+  final imageLimit = compact
+      ? 54.0
+      : layout == 'circular_grid'
+      ? 82.0
+      : 118.0;
   final imageHeight = settings.imageSize.clamp(32.0, imageLimit);
-  final textHeight = settings.fontSize * settings.lineHeight * settings.textMaxLines;
+  final textHeight =
+      settings.fontSize * settings.lineHeight * settings.textMaxLines +
+      (settings.nameHighlightEnabled ? 12 : 0);
   // Compact cards place the image beside the text; other grids stack them.
   final contentHeight = compact
       ? (imageHeight > textHeight ? imageHeight : textHeight) + 14

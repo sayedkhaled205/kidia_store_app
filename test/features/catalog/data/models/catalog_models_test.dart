@@ -5,6 +5,35 @@ import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 
 void main() {
+  test('category name highlight defaults off and survives saved presentation', () {
+    final original = CatalogCategoryModel.fromJson({'id': 9, 'name': 'Child'});
+    expect(original.nameHighlightEnabled, isFalse);
+    for (final value in [true, 1, '1', 'true']) {
+      final settings = CatalogCategoryModel.fromJson({
+        'id': 1,
+        'presentation': {
+          'name_highlight_enabled': value,
+          'name_highlight_color': '#E0F2ED',
+        },
+      }).toEntity();
+      final child = original.withPresentation(settings);
+      expect(child.nameHighlightEnabled, isTrue);
+      expect(child.nameHighlightColor, '#E0F2ED');
+      expect(child.id, 9);
+      expect(child.name, 'Child');
+    }
+    for (final value in [false, 0, '0', 'false', null]) {
+      final settings = CatalogCategoryModel.fromJson({
+        'id': 1,
+        'presentation': {
+          'name_highlight_enabled': value,
+          'name_highlight_color': 'invalid',
+        },
+      });
+      expect(settings.nameHighlightEnabled, isFalse);
+      expect(settings.nameHighlightColor, '#EFF8F5');
+    }
+  });
   test('curated category layouts survive connector presentation parsing', () {
     for (final layout in [
       'top_tabs',

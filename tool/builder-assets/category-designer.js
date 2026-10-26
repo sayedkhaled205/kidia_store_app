@@ -1,4 +1,4 @@
-/* category-designer-v3: curated layouts; merchant catalog only. */
+/* category-designer-v4: curated layouts; optional saved name highlight. */
 (function (scope) {
   'use strict';
   const shared = {card_width_percent:100, card_height:0, show_arrow:1,
@@ -111,6 +111,7 @@
     q(root,'.mobishop-category-name-input')?.dispatchEvent(new Event('change',{bubbles:true}));
   }
   function installDesigns(root){
+    installNameHighlight(root);
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
     const doc=root.ownerDocument;const current=select.value;
     select.replaceChildren(...designs.map(d=>{const option=el(doc,'option','',d.title);option.value=d.id;return option;}));select.value=current||'default';
@@ -150,6 +151,20 @@
       .kidia-category-sample.is-text_directory{gap:0}.kidia-category-sample.is-text_directory i{border-radius:0;border-bottom:1px solid #cdded8}.kidia-category-sample.is-text_directory b{display:none}.kidia-category-sample.is-text_directory em{width:70%;height:3px}
       @media(max-width:540px){.kidia-category-design-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     `;doc.head.append(style);}
+  }
+  function installNameHighlight(root){
+    const general=q(root,'.mobishop-category-general');
+    if(!general||q(general,'[name="category_general[name_highlight_enabled]"]'))return;
+    const doc=root.ownerDocument;
+    const anchor=q(general,'[name="category_general[font_color]"]')?.closest('label');
+    const toggle=el(doc,'label','','Highlight category names');
+    const off=el(doc,'input');off.type='hidden';off.name='category_general[name_highlight_enabled]';off.value='0';
+    const input=el(doc,'input');input.type='checkbox';input.name=off.name;input.value='1';
+    toggle.append(off,input);
+    const colorLabel=el(doc,'label','','Name highlight color');
+    const color=el(doc,'input');color.type='color';color.name='category_general[name_highlight_color]';color.value='#eff8f5';colorLabel.append(color);
+    if(anchor){anchor.after(toggle,colorLabel);}else{general.append(toggle,colorLabel);}
+    // The ordinary form pipeline owns persistence, dirty state and preview updates.
   }
   const api={designs,normalize,prepare,hydrate,refresh,installDesigns};scope.KidiaCategoryDesigner=api;
   if(typeof module!=='undefined')module.exports=api;

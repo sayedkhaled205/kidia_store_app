@@ -167,6 +167,8 @@
 			fontSize: (isChild ? Math.min(requestedSize, 14) : Math.min(requestedSize, 18)) + "px",
 			color: setting("font_color") || "#1F2933",
 			fontWeight: setting("font_weight") || "800",
+			backgroundColor: setting("name_highlight_enabled") === "1" ? setting("name_highlight_color") || "#EFF8F5" : "transparent",
+                    padding: setting("name_highlight_enabled") === "1" ? "6px 8px" : "",
 			textAlign: textAlignment(setting("text_align")),
 			lineHeight: numberInRange(setting("line_height"), 125, 100, 200) / 100,
 			display: "-webkit-box",

@@ -23,6 +23,54 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('square card name band is optional, full width and inherited', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(_app(
+      _ScreenCatalogRepository(categoryLayout: 'visual_grid', gridColumns: 2, nameHighlightEnabled: false),
+      const CategoriesScreen(),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('category-name-highlight-1')), findsNothing);
+    final cardSize = tester.getSize(find.byKey(const Key('category-visual-card-1')));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(_app(
+      _ScreenCatalogRepository(categoryLayout: 'visual_grid', gridColumns: 2,
+        nameHighlightEnabled: true, navigationMode: 'separate_page'),
+      const CategoriesScreen(),
+    ));
+    await tester.pumpAndSettle();
+    final band = find.byKey(const Key('category-name-highlight-1'));
+    final card = find.byKey(const Key('category-visual-card-1'));
+    expect(tester.widget<ColoredBox>(band).color, const Color(0xffe0f2ed));
+    expect(tester.getSize(band).width, closeTo(tester.getSize(card).width, 1));
+    expect(tester.getBottomLeft(band).dy, closeTo(tester.getBottomLeft(card).dy, 1));
+    expect(tester.getSize(card), cardSize);
+    await tester.tap(find.text('Women').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('category-name-highlight-2')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final layout in ['default', 'circular_grid', 'compact_grid', 'sidebar',
+    'image_banner', 'top_tabs', 'split_rows', 'grouped_shelves', 'text_directory']) {
+    testWidgets('name highlight remains usable in $layout on a phone', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(_app(
+        _ScreenCatalogRepository(categoryLayout: layout, gridColumns: 2,
+          nameHighlightEnabled: true), const CategoriesScreen(),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byWidgetPredicate((widget) => widget is ColoredBox &&
+        widget.key.toString().contains('category-name-highlight-')), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('square cards fill two equal columns on a phone', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -446,9 +494,23 @@ Widget _app(CatalogRepository repository, Widget home) {
       // records. Do not require a compiled merchant design or a live CMS read.
       // Saved-design validation and platform binding have their own contracts.
       portableAppDesign58Provider.overrideWithValue(null),
-      cmsPageLayoutProvider.overrideWith(
-        (ref, page) async => CmsPageLayout.fallback(page),
-      ),
+      cmsPageLayoutProvider.overrideWith((ref, page) async {
+        final base = CmsPageLayout.fallback(page);
+        if (repository is! _ScreenCatalogRepository || repository.nameHighlightEnabled == null) return base;
+        // Exercise the saved general settings path, shared by all platforms,
+        // rather than assigning presentation only to a fixture's parent node.
+        return CmsPageLayout(page: page, header: base.header, footer: base.footer,
+          elements: base.elements, settings: {
+            'category_general': {
+              'category_layout': repository.categoryLayout,
+              'navigation_mode': repository.navigationMode,
+              'grid_columns': repository.gridColumns,
+              'card_gap': 12,
+              'name_highlight_enabled': repository.nameHighlightEnabled! ? '1' : '0',
+              'name_highlight_color': '#E0F2ED',
+            },
+          });
+      }),
     ],
     child: MaterialApp.router(
       locale: const Locale('en'),
@@ -473,12 +535,14 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.navigationMode = 'drilldown',
     this.gridColumns = 4,
     this.deepTree = false,
+    this.nameHighlightEnabled,
   });
 
   final String categoryLayout;
   final String navigationMode;
   final int gridColumns;
   final bool deepTree;
+  final bool? nameHighlightEnabled;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -537,6 +601,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
           imageTextGap: 24,
           fontSize: 20,
           fontColor: '#123456',
+          nameHighlightEnabled: nameHighlightEnabled ?? false,
+          nameHighlightColor: '#E0F2ED',
           fontWeight: 600,
           textAlign: 'center',
           lineHeight: 1.4,

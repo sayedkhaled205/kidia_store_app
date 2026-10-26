@@ -43,6 +43,8 @@ class CatalogCategory {
     this.imageTextGap = 10,
     this.fontSize = 16,
     this.fontColor = '#1F2933',
+    this.nameHighlightEnabled = false,
+    this.nameHighlightColor = '#EFF8F5',
     this.fontWeight = 800,
     this.textAlign = 'start',
     this.textMaxLines = 2,
@@ -90,6 +92,8 @@ class CatalogCategory {
   final double imageTextGap;
   final double fontSize;
   final String fontColor;
+  final bool nameHighlightEnabled;
+  final String nameHighlightColor;
   final int fontWeight;
   final String textAlign;
   final int textMaxLines;
@@ -138,6 +142,8 @@ class CatalogCategory {
       imageTextGap: presentation.imageTextGap,
       fontSize: presentation.fontSize,
       fontColor: presentation.fontColor,
+      nameHighlightEnabled: presentation.nameHighlightEnabled,
+      nameHighlightColor: presentation.nameHighlightColor,
       fontWeight: presentation.fontWeight,
       textAlign: presentation.textAlign,
       textMaxLines: presentation.textMaxLines,

@@ -155,6 +155,8 @@ final class MobiShop_Category_Page_Endpoint {
 				'image_text_gap'   => $general['image_text_gap'],
 				'font_size'        => $general['font_size'],
 				'font_color'       => $general['font_color'],
+				'name_highlight_enabled' => $general['name_highlight_enabled'],
+				'name_highlight_color' => $general['name_highlight_color'],
 				'font_weight'      => $general['font_weight'],
 				'text_align'       => $general['text_align'],
 				'text_max_lines'   => $general['text_max_lines'],
