@@ -1021,7 +1021,12 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    widget.settings.string('title', 'You may also like'),
+                    cmsFooterLabel(
+                      widget.settings.string('title', 'You may also like'),
+                      Localizations.localeOf(context).languageCode == 'ar'
+                          ? 'قد يعجبك أيضًا' : 'You may also like',
+                      const ['You may also like', 'قد يعجبك أيضًا'],
+                    ),
                     style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
                   ),
                 ),
@@ -1036,7 +1041,7 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                       key: const Key('related-products-retry'),
                       onPressed: _retry,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Retry'),
+                      label: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
                     ),
                   ),
                 )

@@ -422,7 +422,7 @@ class _CheckoutReady extends StatelessWidget {
             key: formKey,
             child: Column(
               children: [
-                if (controller.checkout?.savedAddresses.isNotEmpty == true)
+                if (controller.savedAddresses.isNotEmpty)
                   _SavedCheckoutAddresses92(controller: controller),
                 _CheckoutForm(
                   key: ValueKey(controller.addressSelectionRevision),
@@ -544,17 +544,26 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
               label: Text(ar ? 'عنوان جديد' : 'New address'),
             ),
           ]),
+          if (controller.selectedSavedAddressId != null && !controller.showBillingEditor)
+            Align(alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                key: const Key('checkout-edit-address'),
+                onPressed: controller.isSubmitting ? null : controller.editSavedAddress,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(ar ? 'تعديل العنوان' : 'Edit address'),
+              ),
+            ),
           const SizedBox(height: 8),
           SizedBox(
             height: 112,
             child: ListView.separated(
               key: const Key('checkout-saved-addresses'),
               scrollDirection: Axis.horizontal,
-              itemCount: controller.checkout!.savedAddresses.length,
+              itemCount: controller.savedAddresses.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final address = controller.checkout!.savedAddresses[index];
-                final selected = controller.matchesSavedAddress(address.values);
+                final address = controller.savedAddresses[index];
+                final selected = controller.selectedSavedAddressId == address.id;
                 return SizedBox(
                   width: 240,
                   child: OutlinedButton(
@@ -567,18 +576,19 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
                     ),
                     onPressed: controller.isSubmitting
                         ? null
-                        : () => controller.selectSavedAddress(address.values),
+                        : () => controller.selectSavedAddress(address.values, addressId: address.id),
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            address.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Row(children: [
+                            Expanded(child: Text(address.label,
+                              maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            if (selected) Icon(Icons.check_circle,
+                              key: ValueKey('checkout-address-selected-${address.id}'), size: 20),
+                          ]),
                           const SizedBox(height: 4),
                           Text(
                             [
@@ -629,6 +639,7 @@ class _CheckoutForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        if (controller.showBillingEditor)
         _CheckoutSection(
           title: copy.billingAddress,
           icon: Icons.receipt_long_outlined,
@@ -727,7 +738,7 @@ class _DynamicCheckoutForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        if (billing.isNotEmpty)
+        if (billing.isNotEmpty && controller.showBillingEditor)
           _CheckoutSection(
             title: copy.billingAddress,
             icon: Icons.receipt_long_outlined,

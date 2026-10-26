@@ -9,6 +9,7 @@ import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/domain/cms_footer_label.dart';
 import '../features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import '../features/home/presentation/providers/home_providers.dart';
+import '../features/catalog/presentation/providers/catalog_category_providers.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -546,6 +547,9 @@ class _MainShellState extends ConsumerState<MainShell>
     }
     if (index == 0 && !AppConfig.isCmsPreview) {
       ref.invalidate(homeLayoutProvider);
+    }
+    if (index == 1) {
+      ref.read(categoryEntryRevisionProvider.notifier).enter();
     }
     widget.navigationShell.goBranch(
       index,
