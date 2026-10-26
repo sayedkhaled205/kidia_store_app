@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.102
+Stable tag: 1.46.103
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,10 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.103 =
+* Revoke customer sessions reliably, serialize session changes, and reject unverified storage writes.
+* Preserve newer app builds when older status, cancellation or dispatch responses arrive late.
 
 = 1.46.102 =
 * Protect the public variation route with explicit publication and storefront visibility checks for the parent and its variations.

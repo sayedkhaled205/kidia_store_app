@@ -27,7 +27,7 @@ class _Repository implements CatalogRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-ProductGridBlock block(Object limit) =>
+ProductGridBlock block(Object limit, {String name = 'Seed', String price = '25'}) =>
     HomeBlockModel.fromJson({
           'id': 'any-customer-final-section',
           'type': 'product_grid',
@@ -41,9 +41,9 @@ ProductGridBlock block(Object limit) =>
             'items': [
               {
                 'id': 1,
-                'name': 'Seed',
+                'name': name,
                 'image_url': 'https://example.com/product.png',
-                'price': '25',
+                'price': price,
                 'currency_code': 'USD',
                 'currency_symbol': r'$',
               },
@@ -86,6 +86,7 @@ Future<void> _pumpFeed(
   WidgetTester tester,
   _Repository repository,
   ScrollController scroll,
+  {ProductGridBlock? seed}
 ) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -95,7 +96,7 @@ Future<void> _pumpFeed(
           body: SingleChildScrollView(
             controller: scroll,
             child: KidsHomeProductFeed(
-              block: block('all'),
+              block: seed ?? block('all'),
               scrollController: scroll,
               onAction: (_) {},
             ),
@@ -108,6 +109,26 @@ Future<void> _pumpFeed(
 }
 
 void main() {
+  testWidgets('refresh updates existing product details and preserves appended pages', (tester) async {
+    final repository = _Repository()
+      ..fetch = (query) async => page(query, query.page == 1 ? [1, 2] : [3], more: query.page == 1);
+    final scroll = ScrollController();
+    await _pumpFeed(tester, repository, scroll);
+    await tester.pumpAndSettle();
+    scroll.jumpTo(scroll.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    expect(repository.queries.map((query) => query.page), [1, 2]);
+    await _pumpFeed(tester, repository, scroll, seed: block('all', name: 'Updated product', price: '45'));
+    await tester.pump(const Duration(milliseconds: 100));
+    final items = tester.widget<ProductGridBlockWidget>(find.byType(ProductGridBlockWidget)).block.items;
+    expect(items.map((item) => item.id), [1, 2, 3]);
+    expect(items.first.name, 'Updated product');
+    expect(items.first.price, '45');
+    expect(repository.queries.length, 2);
+    await tester.pumpWidget(const SizedBox());
+    scroll.dispose();
+  });
+
   test('normalized All feed retains its validated catalog selection', () async {
     for (final mode in ['latest', 'category', 'on_sale', 'featured']) {
       final repository = _Repository()

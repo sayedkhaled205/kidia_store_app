@@ -52,6 +52,161 @@ async function settle() {
 	await new Promise((resolve) => setImmediate(resolve));
 }
 
+const readinessBridges = [
+  {
+    name: "generic",
+    asset: "flutter-preview-bridge.js",
+    editor: '<div class="mobishop-page-builder" data-page="catalog"><form class="mobishop-page-editor"><input name="layout[header][enabled]" value="1"></form></div>',
+    requestsPerRefresh: 1,
+    page: "catalog",
+  },
+  {
+    name: "Category",
+    asset: "flutter-category-preview-bridge.js",
+    editor: '<div class="mobishop-category-builder"><form><input name="category_general[grid_columns]" value="3"></form></div>',
+    requestsPerRefresh: 2,
+    page: "category",
+  },
+];
+
+function readinessFixture(bridge, setup) {
+  return runBridge(bridge.asset, bridge.editor + '<div><iframe id="mobishop-flutter-preview" src="https://store.example/preview/index.html"></iframe><div class="mobishop-legacy-preview-fallback" hidden></div></div>', setup);
+}
+
+function writePreviewDocument(frame, rendered = true, surface = "flutter-view") {
+  frame.contentDocument.open();
+  frame.contentDocument.write(rendered ? `<body><${surface}></${surface}></body>` : "<body></body>");
+  frame.contentDocument.close();
+}
+
+function reloadPreview(result, rendered = true) {
+  const oldDocument = result.frame.contentDocument;
+  result.frame.src = "https://store.example/preview/reloaded.html";
+  writePreviewDocument(result.frame, rendered);
+  assert.notEqual(result.frame.contentDocument, oldDocument);
+  result.frame.contentWindow.postMessage = (message, origin) => result.push({ message: JSON.parse(message), origin });
+}
+
+for (const bridge of readinessBridges) {
+  test(`${bridge.name} recovers a cached rendered iframe whose ready message was missed`, async (t) => {
+    let requests = 0;
+    const messages = readinessFixture(bridge, (window) => {
+      const frame = window.document.getElementById("mobishop-flutter-preview");
+      writePreviewDocument(frame, true, bridge.page === "category" ? "flt-glass-pane" : "flutter-view");
+      markFlutterReady({ window, frame });
+      const fetch = window.fetch;
+      window.fetch = (...args) => { requests++; return fetch(...args); };
+    });
+    t.after(() => messages.window.close());
+    await settle();
+    assert.equal(requests, bridge.requestsPerRefresh);
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].message.page, bridge.page);
+    assert.equal(messages[0].origin, "https://store.example");
+    assert.equal(messages.frame.getAttribute("aria-busy"), null);
+    const input = messages.window.document.querySelector("input");
+    input.value = "4";
+    input.dispatchEvent(new messages.window.Event("input", { bubbles: true }));
+    await settle();
+    assert.equal(messages.length, 2);
+    assert.equal(bridge.page === "category" ? messages[1].message.category.grid_columns : messages[1].message.layout.header.enabled, "4");
+  });
+
+  test(`${bridge.name} starts once for repeated readiness and a late same-document load`, async (t) => {
+    let requests = 0;
+    const messages = readinessFixture(bridge, (window) => {
+      const fetch = window.fetch;
+      window.fetch = (...args) => { requests++; return fetch(...args); };
+    });
+    t.after(() => messages.window.close());
+    await settle();
+    assert.equal(requests, 0, "A cold iframe still waits for Flutter.");
+    markFlutterReady(messages);
+    markFlutterReady(messages);
+    messages.frame.dispatchEvent(new messages.window.Event("load"));
+    await settle();
+    assert.equal(requests, bridge.requestsPerRefresh);
+    assert.equal(messages.length, 1);
+    markFlutterReady(messages);
+    await settle();
+    assert.equal(requests, bridge.requestsPerRefresh);
+  });
+
+  test(`${bridge.name} refreshes a new document once when ready precedes load`, async (t) => {
+    let requests = 0;
+    const messages = readinessFixture(bridge, (window) => {
+      const fetch = window.fetch;
+      window.fetch = (...args) => { requests++; return fetch(...args); };
+    });
+    t.after(() => messages.window.close());
+    markFlutterReady(messages);
+    await settle();
+    reloadPreview(messages);
+    markFlutterReady(messages);
+    messages.frame.dispatchEvent(new messages.window.Event("load"));
+    await settle();
+    assert.equal(requests, bridge.requestsPerRefresh * 2);
+    assert.equal(messages.length, 2);
+    markFlutterReady(messages);
+    await settle();
+    assert.equal(requests, bridge.requestsPerRefresh * 2);
+  });
+
+  test(`${bridge.name} discards an old document response even if fetch ignores abort`, async (t) => {
+    const pending = [];
+    const messages = readinessFixture(bridge, (window) => {
+      window.fetch = (url, options) => new Promise((resolve) => {
+        const request = JSON.parse(options.body);
+        pending.push({
+          signal: options.signal,
+          resolve: () => resolve({ ok: true, json: async () => String(url).includes("category-preview") ? request.general : request.layout }),
+        });
+      });
+    });
+    t.after(() => messages.window.close());
+    markFlutterReady(messages);
+    assert.equal(pending.length, bridge.requestsPerRefresh);
+    const oldRequests = pending.slice();
+    reloadPreview(messages, false);
+    messages.frame.dispatchEvent(new messages.window.Event("load"));
+    await settle();
+    assert.ok(oldRequests.every((request) => request.signal.aborted));
+    for (const request of oldRequests) request.resolve();
+    await settle();
+    assert.equal(messages.length, 0);
+    messages.window.document.querySelector("input").value = "4";
+    markFlutterReady(messages);
+    assert.equal(pending.length, bridge.requestsPerRefresh * 2);
+    for (const request of pending.slice(bridge.requestsPerRefresh)) request.resolve();
+    await settle();
+    assert.equal(messages.length, 1);
+    assert.equal(bridge.page === "category" ? messages[0].message.category.grid_columns : messages[0].message.layout.header.enabled, "4");
+  });
+
+  test(`${bridge.name} retains validated ready messages when iframe DOM is unavailable`, async (t) => {
+    const messages = readinessFixture(bridge, (window) => {
+      Object.defineProperty(window.document.getElementById("mobishop-flutter-preview"), "contentDocument", {
+        get() { throw new window.DOMException("Blocked cross-origin access", "SecurityError"); },
+      });
+    });
+    t.after(() => messages.window.close());
+    for (const invalid of [{ origin: "https://other.example", source: messages.frame.contentWindow }, { origin: "https://store.example", source: messages.window }]) {
+      messages.window.dispatchEvent(new messages.window.MessageEvent("message", {
+        data: JSON.stringify({ type: "mobishop-flutter-preview-ready" }), ...invalid,
+      }));
+    }
+    await settle();
+    assert.equal(messages.length, 0);
+    markFlutterReady(messages);
+    await settle();
+    assert.equal(messages.length, 1);
+    messages.frame.dispatchEvent(new messages.window.Event("load"));
+    markFlutterReady(messages);
+    await settle();
+    assert.equal(messages.length, 2, "Without DOM access, preserve the existing validated message flow.");
+  });
+}
+
 test("generic Flutter preview sends canonical state as soon as Flutter is ready", async () => {
   const messages = runBridge("flutter-preview-bridge.js", `
     <div class="mobishop-page-builder" data-page="catalog">

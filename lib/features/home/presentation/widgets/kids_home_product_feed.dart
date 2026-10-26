@@ -76,6 +76,10 @@ class _KidsHomeProductFeedState extends ConsumerState<KidsHomeProductFeed> {
         oldWidget.block.productIds.join(',') !=
             widget.block.productIds.join(',')) {
       _reset();
+    } else if (!identical(oldWidget.block.items, widget.block.items)) {
+      // Refresh product details without discarding pages the customer loaded.
+      final fresh = {for (final item in widget.block.items) item.id: item};
+      _items = [for (final item in _items) fresh[item.id] ?? item];
     }
   }
 

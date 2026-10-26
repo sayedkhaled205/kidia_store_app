@@ -38,6 +38,29 @@ import 'features/product/support/product_test_data.dart';
 import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  testWidgets('horizontal swipes keep navigation visible while vertical scrolling hides it', (tester) async {
+    final router = createAppRouter(initialLocation: '/categories/17');
+    await _pumpStartedApp(tester, router: router,
+      catalogLayout: _navigationLayout('catalog', height: 64, iconSize: 24, hideOnScroll: true));
+    final context = tester.element(find.byType(CatalogProductListScreen));
+    void notify(AxisDirection direction, double delta) {
+      ScrollUpdateNotification(metrics: FixedScrollMetrics(minScrollExtent: 0,
+        maxScrollExtent: 200, pixels: 50, viewportDimension: 100,
+        axisDirection: direction, devicePixelRatio: 1), context: context,
+        scrollDelta: delta).dispatch(context);
+    }
+    notify(AxisDirection.right, 20);
+    await tester.pump();
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsOneWidget);
+    notify(AxisDirection.down, 20);
+    await tester.pump();
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsNothing);
+    notify(AxisDirection.down, -20);
+    await tester.pump();
+    expect(find.byKey(const Key('cms-bottom-navigation')), findsOneWidget);
+    await _disposeApp(tester, router);
+  });
+
   testWidgets('disabled account route respects the shared availability gate', (
     tester,
   ) async {
@@ -423,6 +446,7 @@ Future<void> _pumpStartedApp(
   required GoRouter router,
   CmsPageLayout? homeLayout,
   CmsPageLayout? categoryLayout,
+  CmsPageLayout? catalogLayout,
   CmsPageLayout? wishlistLayout,
   CmsPageLayout? productLayout,
   CmsPageLayout? accountLayout,
@@ -453,6 +477,8 @@ Future<void> _pumpStartedApp(
           cmsPageLayoutProvider(
             'category',
           ).overrideWith((ref) async => categoryLayout),
+        if (catalogLayout != null)
+          cmsPageLayoutProvider('catalog').overrideWith((ref) async => catalogLayout),
         if (wishlistLayout != null)
           cmsPageLayoutProvider(
             'wishlist',
@@ -471,6 +497,7 @@ CmsPageLayout _navigationLayout(
   required double height,
   required double iconSize,
   bool enabled = true,
+  bool hideOnScroll = false,
   double iconLabelGap = 3,
   List<Map<String,dynamic>>? rows,
   String? style,
@@ -510,6 +537,7 @@ CmsPageLayout _navigationLayout(
         },
         'style': style ?? fallback.footer.string('style','navigation'),
         'height': height,
+        'hide_on_scroll': hideOnScroll,
         'icon_size': iconSize,
         'icon_label_gap': iconLabelGap,
         'home_label': 'Home',

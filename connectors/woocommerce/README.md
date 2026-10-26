@@ -4,6 +4,11 @@ This is the canonical source of **Mobi2App Connector for WooCommerce** distribut
 to new WooMobile stores. The `mobishop/` directory and `mobishop.zip` are the older
 CMS plugin; do not use those packages as replacements for this connector.
 
+Version 1.46.103 fixes customer logout and concurrent session mutations using
+per-user database locks and authoritative readback. It also prevents late build
+responses from overwriting or cancelling a newer build. Existing stores require
+the connector update; publishing its download does not update installed plugins.
+
 Version 1.46.101 adds optional category-name background highlighting to the shared
 category schema and response. Existing designs default to no highlight.
 

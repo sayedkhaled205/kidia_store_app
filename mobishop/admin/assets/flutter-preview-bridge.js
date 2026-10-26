@@ -9,6 +9,7 @@
 	var page = root.dataset.page || "catalog";
 	var config = window.mobishopFlutterPreview || {};
 	var ready = false;
+	var readyDocument = null;
 	var controller = null;
 	var requestNumber = 0;
 	var fallback = frame.parentElement && frame.parentElement.querySelector(".mobishop-legacy-preview-fallback");
@@ -31,6 +32,25 @@
 				if (fallback) { fallback.hidden = true; }
 			});
 		});
+	}
+
+	function frameDocument() {
+		try { return frame.contentDocument; } catch (_) { return null; }
+	}
+
+	function markReady() {
+		var currentDocument = frameDocument();
+		// Dart and the shell can both announce the same document before load.
+		if (ready && currentDocument && currentDocument === readyDocument) { return; }
+		ready = true;
+		readyDocument = currentDocument;
+		showFlutter();
+		refresh();
+	}
+
+	function recoverRenderedFrame() {
+		var currentDocument = frameDocument();
+		if (currentDocument && currentDocument.querySelector("flutter-view, flt-glass-pane")) { markReady(); }
 	}
 
 	function setPath(target, name, value) {
@@ -88,7 +108,16 @@
 		if (typeof message === "string") {
 			try { message = JSON.parse(message); } catch (_) { return; }
 		}
-		if (message && message.type === "mobishop-flutter-preview-ready") { ready = true; showFlutter(); refresh(); }
+		if (message && message.type === "mobishop-flutter-preview-ready") { markReady(); }
+	});
+	frame.addEventListener("load", function () {
+		var currentDocument = frameDocument();
+		if (!currentDocument || currentDocument === readyDocument) { return; }
+		ready = false;
+		requestNumber++;
+		if (controller) { controller.abort(); }
+		waitForFlutter();
+		recoverRenderedFrame();
 	});
 	form.addEventListener("input", refresh);
 	form.addEventListener("change", refresh);
@@ -103,4 +132,5 @@
 
 	// A cached Flutter shell can finish loading before this footer script runs.
 	waitForFlutter();
+	recoverRenderedFrame();
 }());
