@@ -15,5 +15,10 @@
     "repeated scroll down and up"
   ],
   "shared_runtime_source": true,
-  "merchant_settings_changed": false
+  "merchant_settings_changed": false,
+  "preview_interaction_tests_passed": 5,
+  "preview_assets_verified": 46,
+  "flutter_analysis": "No issues found",
+  "public_preview_runtime": "e635d76fcf91",
+  "activated": true
 }

@@ -1,0 +1,46 @@
+{
+  "runtime": "e635d76fcf91",
+  "same_icon_position": true,
+  "screenshots": [
+    {
+      "screenshot": "before-scroll.png",
+      "icon_bounds": [
+        317,
+        128,
+        331,
+        145
+      ],
+      "dark_pixel_mask_sha256": "eb248f9165a2af19a51d71975159d69e552a66acffff91e05e731e2dd137bbbf"
+    },
+    {
+      "screenshot": "partial-scroll.png",
+      "icon_bounds": [
+        317,
+        128,
+        331,
+        145
+      ],
+      "dark_pixel_mask_sha256": "eb248f9165a2af19a51d71975159d69e552a66acffff91e05e731e2dd137bbbf"
+    },
+    {
+      "screenshot": "collapsed-scroll.png",
+      "icon_bounds": [
+        317,
+        128,
+        331,
+        145
+      ],
+      "dark_pixel_mask_sha256": "960513ed01ac01357a83dd7bdaa254ef2945cf95fc7bf3c83f5d9b9496424720"
+    },
+    {
+      "screenshot": "restored-scroll.png",
+      "icon_bounds": [
+        317,
+        128,
+        331,
+        145
+      ],
+      "dark_pixel_mask_sha256": "eb248f9165a2af19a51d71975159d69e552a66acffff91e05e731e2dd137bbbf"
+    }
+  ]
+}
