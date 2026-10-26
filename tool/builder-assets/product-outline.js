@@ -39,7 +39,7 @@
         field.type = 'color'; field.name = name; field.value = state.brand;
         field.setAttribute('aria-label', 'Outline color');
         field.dataset.outlineBrandDefault = '1';
-        label.append(field); wrapper.append(label); anchor.after(wrapper);
+        wrapper.append(label, field); anchor.after(wrapper);
       } else wrapper = field.closest('[data-product-outline-field],.mobishop-page-field,.mobishop-builder-field');
       if (!wrapper) return;
       wrapper.dataset.productOutlineField = '1';

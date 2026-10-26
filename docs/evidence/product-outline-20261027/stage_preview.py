@@ -44,8 +44,10 @@ for name in ['publish-preview-runtime.py', 'repair-preview-contracts.py',
 schema = Path('/home/woomobile/woomobile-api/app/Services/SavedBuilderNativeDesign.php')
 expected_schema = '54f2c797179ba59d75d31d75094d01956dc6f27f4fc3181c83ee8d232708b19d'
 assert sha(schema.read_bytes()) == expected_schema, 'Live schema changed; reconcile first'
-assert not (work / 'schema-original.php').exists()
-(work / 'schema-original.php').write_bytes(schema.read_bytes())
+if (work / 'schema-original.php').exists():
+    assert (work / 'schema-original.php').read_bytes() == schema.read_bytes(), 'Schema backup mismatch'
+else:
+    (work / 'schema-original.php').write_bytes(schema.read_bytes())
 candidate = work / 'schema-candidate.php'
 subprocess.run([sys.executable, str(work / 'patch-product-outline-schema.py'), str(schema), str(candidate)], check=True)
 subprocess.run(['/usr/local/bin/php', '-l', str(candidate)], check=True)
