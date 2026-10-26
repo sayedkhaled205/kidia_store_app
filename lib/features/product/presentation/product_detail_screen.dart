@@ -1841,7 +1841,7 @@ class _PurchaseBar extends StatelessWidget {
         .toDouble();
     final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
     final double footerLabelSize = footer.number('label_size', 11).clamp(8, 20).toDouble();
-    final double footerIconLabelGap = footer.number('icon_label_gap', 3).clamp(0, 12).toDouble();
+    final double footerIconLabelGap = footer.number('icon_label_gap', 2).clamp(0, 12).toDouble();
     final footerLayout = footer.json('layout_json');
     final rawRows = footerLayout['rows'];
     final placements = <(String, double, int)>[];
@@ -1872,14 +1872,14 @@ class _PurchaseBar extends StatelessWidget {
     }
     final configuredButtonWidth = footer.number('button_width_percent',58).clamp(20,95).toDouble();
     final addPlacement = placements.where((p) => p.$1 == 'add_to_cart').firstOrNull;
-    final composerButtonWidth = addPlacement?.$2 ?? configuredButtonWidth;
-    final addToCartColumnWidth = composerButtonWidth > configuredButtonWidth ? composerButtonWidth : configuredButtonWidth;
-    final otherColumnsWidth = placements.where((p) => p.$3 == addPlacement?.$3 && p.$1 != 'add_to_cart')
-        .fold<double>(0,(total,p) => total+p.$2);
-    final otherColumnsScale = otherColumnsWidth <= 0 ? 1 : (100-addToCartColumnWidth).clamp(0,100)/otherColumnsWidth;
-    final effectivePlacements = placements.map((p) => (p.$1,
-      p.$1 == 'add_to_cart' ? addToCartColumnWidth : p.$3 == addPlacement?.$3 ? p.$2*otherColumnsScale : p.$2,
-      p.$3)).toList();
+    final actionRowWidth = placements.where((p) => p.$3 == addPlacement?.$3)
+        .fold<double>(0, (total, p) => total + p.$2);
+    final addToCartColumnWidth = addPlacement != null && actionRowWidth > 0
+        ? addPlacement.$2 / actionRowWidth * 100
+        : configuredButtonWidth;
+    // The composer owns column widths. Button sizing can only shrink inside
+    // its column, never steal space from neighbouring actions.
+    final effectivePlacements = placements;
     final buttonWidthFactor = (configuredButtonWidth/addToCartColumnWidth).clamp(0,1).toDouble();
 	final String buttonStyle = footer.string('button_style', 'filled');
 	final double configuredButtonHeight = footer
@@ -1888,7 +1888,7 @@ class _PurchaseBar extends StatelessWidget {
 	// A configured product action must never be silently squeezed back to the
 	// category footer height. Grow the product footer when the button is taller.
     final rowIds = placements.map((p) => p.$3).toSet();
-    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 8;
+    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 6;
     final minimumRowHeight = configuredButtonHeight > iconHeight ? configuredButtonHeight : iconHeight;
     final minimumFooterHeight = minimumRowHeight * rowIds.length;
     final footerHeight = configuredFooterHeight > minimumFooterHeight ? configuredFooterHeight : minimumFooterHeight;
@@ -1920,6 +1920,8 @@ class _PurchaseBar extends StatelessWidget {
 	    (hasCartConnection && product.isPurchasable && product.isInStock);
 	final bool showButtonIcon = footer.boolean('show_button_icon', true);
 	final ButtonStyle purchaseButtonStyle = FilledButton.styleFrom(
+	  padding: const EdgeInsets.symmetric(horizontal: 8),
+	  minimumSize: Size.zero,
 	  backgroundColor: purchaseButtonBackground,
 	  foregroundColor: buttonText,
 	  disabledBackgroundColor: purchaseButtonBackground.withValues(alpha: 0.42),
@@ -1931,12 +1933,14 @@ class _PurchaseBar extends StatelessWidget {
 	final VoidCallback? purchaseOnPressed = purchaseFlowAvailable
 	    ? controller.isAdding ? () {} : onPressed
 	    : null;
-	final Widget purchaseLabel = Text(
+	final Widget purchaseLabel = FittedBox(fit: BoxFit.scaleDown, child: Text(
 	  controller.isAdding
 	      ? 'جارٍ الإضافة…'
 	      : usesHostedOdooCart297 ? (copy.arabic ? 'متابعة في المتجر' : 'Continue on store')
           : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
-	);
+      maxLines: 1,
+      softWrap: false,
+	));
 	final footerItems = <(String, double, Widget, int)>[];
 	for (final (String item, double width, int row) in effectivePlacements) {
 	  final double effectiveWidth = width;
@@ -1946,7 +1950,9 @@ class _PurchaseBar extends StatelessWidget {
 	  } else if (item == 'like') {
 		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('like_label', ''), 'المفضلة') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
 	  } else if (item == 'add_to_cart') {
-		child = Align(
+		child = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Align(
 		  alignment: Alignment.center,
 		  child: FractionallySizedBox(
 		    widthFactor: buttonWidthFactor,
@@ -1971,6 +1977,7 @@ class _PurchaseBar extends StatelessWidget {
 		              child: purchaseLabel,
 		            ),
 		    ),
+		  ),
 		  ),
 		);
 	  }
@@ -1997,7 +2004,7 @@ class _PurchaseBar extends StatelessWidget {
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_bottom', 0).clamp(0, 80) +
-              footer.number('space_down', 0).clamp(0, 80) + 6,
+              footer.number('space_down', 0).clamp(0, 80) + 4,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

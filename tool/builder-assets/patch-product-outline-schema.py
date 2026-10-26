@@ -8,7 +8,7 @@ import re
 import sys
 
 def patch(source):
-    if '/* product-outline-schema-v1 */' in source:
+    if '/* product-outline-schema-v2 */' in source:
         return source
     for constant in ('FIELD_TYPES_JSON', 'HOME_FIELD_TYPES_JSON'):
         # Constants occupy one line; retain surrounding PHP source verbatim.
@@ -21,13 +21,17 @@ def patch(source):
             for key in ('product_grid', 'product_carousel', 'wishlist_grid'):
                 if key in group and 'card_style' in group[key]:
                     group[key]['card_outline_color'] = 'color'
+                    group[key]['card_outline_width'] = 'number'
                     changed += 1
         assert changed >= 2
         source = source[:match.start(2)] + json.dumps(value, separators=(',', ':'), ensure_ascii=False).replace("'", r"\u0027") + source[match.end(2):]
     for anchor in ("            $kind = $types[$key] ?? null;", "            $type = $types[$key] ?? null;"):
         assert source.count(anchor) == 1, anchor
-        source = source.replace(anchor, anchor + "\n            if ($key === 'card_outline_color') self::color($value, 'product outline color');", 1)
-    return source.replace('<?php', '<?php\n/* product-outline-schema-v1 */', 1)
+        color_check = "            if ($key === 'card_outline_color') self::color($value, 'product outline color');"
+        if color_check not in source[source.index(anchor):source.index(anchor)+350]:
+            source = source.replace(anchor, anchor + '\n' + color_check, 1)
+        source = source.replace(anchor, anchor + "\n            if ($key === 'card_outline_width') { $outlineWidth = self::number($value, 'product outline width'); if ($outlineWidth < 0 || $outlineWidth > 6) self::fail('Saved product outline width is out of range.'); }", 1)
+    return source.replace('<?php', '<?php\n/* product-outline-schema-v2 */', 1)
 
 if __name__ == '__main__':
     source, target = map(Path, sys.argv[1:3])

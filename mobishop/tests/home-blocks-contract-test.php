@@ -118,6 +118,10 @@ mobishop_home_assert( str_contains( $coupon_markup, 'mobishop-select-media' ), '
 mobishop_home_assert( str_contains( $coupon_markup, 'mobishop-media-preview' ), 'Coupon Banner images must render a clickable preview.' );
 
 foreach ( array( new MobiShop_Product_Carousel_Block(), new MobiShop_Product_Grid_Block() ) as $outline_block ) {
+	foreach ( array( 0, 0.5, 2.5, 6 ) as $width ) {
+		$width_settings = $outline_block->sanitize_settings( array_merge( $outline_block->get_default_settings(), array( 'card_outline_width' => $width ) ) );
+		mobishop_home_assert( (float) $width === (float) $outline_block->build_api_data( $width_settings )['card_outline_width'], 'Home API must preserve outline width.' );
+	}
 	mobishop_home_assert( '#347A89' === $outline_block->get_default_settings()['card_outline_color'], 'Home product outlines must default to merchant brand.' );
 	foreach ( array( '#DC713A', 'invalid' ) as $outline_value ) {
 		$outline_settings = $outline_block->sanitize_settings( array_merge( $outline_block->get_default_settings(), array( 'card_outline_color' => $outline_value ) ) );

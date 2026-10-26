@@ -461,6 +461,7 @@ class ProductCarouselBlock extends HomeBlock {
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
     this.cardOutlineColor,
+    this.cardOutlineWidth = 1,
   }) : super(type: HomeBlockType.productCarousel);
 
   final String? title;
@@ -484,6 +485,7 @@ class ProductCarouselBlock extends HomeBlock {
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
   final String? cardOutlineColor;
+  final double cardOutlineWidth;
 }
 
 class ProductGridBlock extends HomeBlock {
@@ -516,6 +518,7 @@ class ProductGridBlock extends HomeBlock {
     this.quickAddAppearance = const ProductQuickAddAppearance(),
 	this.wishlistAppearance = const ProductWishlistAppearance(),
     this.cardOutlineColor,
+    this.cardOutlineWidth = 1,
   }) : super(type: HomeBlockType.productGrid);
 
   final String? title;
@@ -543,6 +546,7 @@ class ProductGridBlock extends HomeBlock {
   final ProductQuickAddAppearance quickAddAppearance;
   final ProductWishlistAppearance wishlistAppearance;
   final String? cardOutlineColor;
+  final double cardOutlineWidth;
 }
 
 class HomeBundleItem {

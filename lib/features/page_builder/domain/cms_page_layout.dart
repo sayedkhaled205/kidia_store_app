@@ -184,7 +184,7 @@ class CmsPageLayout {
 		'side_spacing_percent': 0,
 		'icon_size': 24,
 		'label_size': 11,
-		'icon_label_gap': 3,
+		'icon_label_gap': page == 'product' ? 2 : 3,
 		'show_labels': true,
 		'active_color': '#1F6F61',
 		'inactive_color': '#6B7280',

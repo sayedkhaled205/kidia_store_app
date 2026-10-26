@@ -49,6 +49,25 @@
       wrapper.style.display = hidden ? 'none' : '';
       // Keep the color beside Card style even when the legacy section grouper moves fields.
       if (anchor.nextElementSibling !== wrapper) anchor.after(wrapper);
+      const widthName = style.name.replace('[card_style]', '[card_outline_width]');
+      let width = Array.from(card.querySelectorAll('input[name]')).find(input => input.name === widthName);
+      let widthWrapper;
+      if (!width) {
+        widthWrapper = root.ownerDocument.createElement('div');
+        widthWrapper.className = anchor.className || 'mobishop-page-field';
+        const label = root.ownerDocument.createElement('label');
+        label.textContent = 'Outline width';
+        width = root.ownerDocument.createElement('input');
+        width.type = 'number'; width.name = widthName; width.value = '1';
+        width.min = '0'; width.max = '6'; width.step = '0.5';
+        width.setAttribute('aria-label', 'Outline width');
+        widthWrapper.append(label, width);
+      } else widthWrapper = width.closest('[data-product-outline-width],.mobishop-page-field,.mobishop-builder-field');
+      if (!widthWrapper) return;
+      widthWrapper.dataset.productOutlineWidth = '1';
+      widthWrapper.hidden = hidden;
+      widthWrapper.style.display = hidden ? 'none' : '';
+      if (wrapper.nextElementSibling !== widthWrapper) wrapper.after(widthWrapper);
     });
   }
   scope.KidiaProductOutline = {prepare, refresh};

@@ -480,7 +480,7 @@ void main() {
       find.byKey(const Key('product-add-to-cart-size')),
     );
     expect(addToCartSize.height, 48);
-    expect(addToCartSize.width / footerSize.width, closeTo(0.60, 0.01));
+    expect(addToCartSize.width, closeTo(footerSize.width / 3 - 8, 0.1));
     final FilledButton addToCartButton = tester.widget<FilledButton>(
       find.byKey(const Key('add-to-cart-button')),
     );
@@ -525,6 +525,38 @@ void main() {
           .dy,
     );
   });
+
+  for (final locale in ['ar', 'en']) {
+    for (final width in [320.0, 390.0]) {
+      testWidgets('footer honors equal columns and inset at $width in $locale', (tester) async {
+        tester.view.physicalSize = Size(width, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(_testApp(ProductDetailScreen(
+          productId: simpleProduct.id, repository: ProductFakeCatalogRepository(),
+          onAddToCart: (_) async {},
+        ), locale: Locale(locale), productLayout: _liveStyleProductLayout(
+          layoutJson: {'rows': [{'columns': [
+            {'width': 33.33, 'items': ['share']},
+            {'width': 33.33, 'items': ['like']},
+            {'width': 33.34, 'items': ['add_to_cart']},
+          ]}]}, footerSettings: {'icon_label_gap': 2, 'show_button_icon': true},
+        )));
+        await tester.pumpAndSettle();
+        final share = tester.getRect(find.byKey(const Key('product-footer-column-share')));
+        final like = tester.getRect(find.byKey(const Key('product-footer-column-like')));
+        final buy = tester.getRect(find.byKey(const Key('product-footer-column-add_to_cart')));
+        final button = tester.getRect(find.byKey(const Key('product-add-to-cart-size')));
+        expect(share.width, closeTo(like.width, .1));
+        expect(share.width, closeTo(buy.width, .1));
+        expect(button.left - buy.left, closeTo(4, .1));
+        expect(buy.right - button.right, closeTo(4, .1));
+        expect(button.center.dy, closeTo(buy.center.dy, .1));
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
 
   testWidgets('product footer keeps two rows and an empty column without losing purchase action', (tester) async {
     _useTallSurface(tester);

@@ -45,12 +45,14 @@ foreach ( array( 'catalog', 'wishlist' ) as $outline_page ) {
 		if ( ! in_array( $outline_element['type'], array( 'product_grid', 'wishlist_grid', 'product_carousel' ), true ) ) { continue; }
 		mobishop_page_assert( '#347A89' === $outline_element['settings']['card_outline_color'], 'Product outlines must default to the merchant brand.' );
 		$outline_element['settings']['card_outline_color'] = '#DC713A';
+		$outline_element['settings']['card_outline_width'] = 2.5;
 	}
 	unset( $outline_element );
 	$store->save_layout( $outline_page, $outline_layout );
 	foreach ( $store->get_layout( $outline_page )['elements'] as $outline_element ) {
 		if ( isset( $outline_element['settings']['card_outline_color'] ) ) {
 			mobishop_page_assert( '#DC713A' === $outline_element['settings']['card_outline_color'], 'Custom outline must survive connector save and reload.' );
+			mobishop_page_assert( 2.5 === $outline_element['settings']['card_outline_width'], 'Fractional outline width must survive connector save and reload.' );
 		}
 	}
 	unset( $GLOBALS['mobishop_page_options'][ 'mobishop_page_layout_' . $outline_page ] );

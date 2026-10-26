@@ -170,11 +170,12 @@
 		var items = sampleProducts().slice(0, limit);
 		var style = value(card, "card_style", "outlined");
 		var gap = number(card, "gap", 12);
+		var outline = style === "outlined" ? "border:" + Math.max(0, Math.min(6, number(card, "card_outline_width", 1))) + "px solid " + color(card, "card_outline_color", "#2F806E") + ";" : "";
 		return '<div class="mobishop-app-products" style="--columns:' + columns + ';gap:' + gap + 'px">' + items.map(function (item) {
 			var image = item.image_url ? '<img src="' + escapeHtml(item.image_url) + '" alt="">' : '<span class="mobishop-app-product__fallback">K</span>';
 			var showQuickAdd = field(card, "show_quick_add") ? checked(card, "show_quick_add", true) : checked(card, "quick_add_enabled", true);
 			var copy = (checked(card, "show_name", true) ? '<strong>' + escapeHtml(item.name || "MobiShop product") + '</strong>' : "") + (checked(card, "show_rating", false) ? '<small class="mobishop-app-rating">★ 4.8</small>' : "") + (checked(card, "show_price", true) ? '<b>' + money(item) + '</b>' : "") + (checked(card, "show_regular_price", false) ? '<del>520 ج.م</del>' : "");
-			return '<article class="mobishop-app-product is-' + style + '" style="border-radius:' + number(card, "card_radius", 0) + 'px"><div class="mobishop-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", false) ? productWishlist(card) : "") + (showQuickAdd ? quickAdd(card) : "") + (checked(card, "show_badge", false) ? '<b class="mobishop-app-badge">SALE</b>' : "") + '</div>' + (copy ? '<div class="mobishop-app-product__copy">' + copy + '</div>' : "") + '</article>';
+			return '<article class="mobishop-app-product is-' + style + '" style="' + outline + 'border-radius:' + number(card, "card_radius", 0) + 'px"><div class="mobishop-app-product__image" style="aspect-ratio:' + number(card, "image_ratio", 1) + '">' + image + (checked(card, "show_wishlist", false) ? productWishlist(card) : "") + (showQuickAdd ? quickAdd(card) : "") + (checked(card, "show_badge", false) ? '<b class="mobishop-app-badge">SALE</b>' : "") + '</div>' + (copy ? '<div class="mobishop-app-product__copy">' + copy + '</div>' : "") + '</article>';
 		}).join("") + '</div>';
 	}
 

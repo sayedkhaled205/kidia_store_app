@@ -36,6 +36,7 @@ class CatalogProductCard extends StatelessWidget {
     );
     final String cardStyle =
         settings?.string('card_style', 'outlined') ?? 'outlined';
+    final double outlineWidth = settings?.number('card_outline_width', 1).clamp(0, 6).toDouble() ?? 1;
     final double cardRadius = settings == null
         ? 14
         : settings!.number('card_radius', 14).clamp(0, 40).toDouble();
@@ -248,9 +249,10 @@ class CatalogProductCard extends StatelessWidget {
             : Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
-          side: cardStyle == 'outlined'
+          side: cardStyle == 'outlined' && outlineWidth > 0
               ? BorderSide(
                   color: _quickAddColor(settings?.string('card_outline_color', '')) ?? colors.primary,
+                  width: outlineWidth,
                 )
               : BorderSide.none,
         ),

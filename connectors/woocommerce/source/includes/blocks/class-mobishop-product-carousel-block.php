@@ -46,6 +46,7 @@ final class MobiShop_Product_Carousel_Block extends MobiShop_Block {
 			'action_value'    => '',
 			'card_style'      => 'outlined',
 			'card_outline_color' => sanitize_hex_color( (string) ( class_exists( 'MobiShop_Setup_Wizard' ) ? ( new MobiShop_Setup_Wizard() )->identity()['primary_color'] ?? '' : '' ) ) ?: '#2F806E',
+			'card_outline_width' => 1,
 			'item_width'      => 168,
 			'image_ratio'     => 1,
 			'enable_image_swipe' => false,
@@ -209,6 +210,7 @@ final class MobiShop_Product_Carousel_Block extends MobiShop_Block {
 
 			'card_style' => in_array( $card_style, array( 'outlined', 'elevated', 'minimal', 'no_shadow' ), true ) ? $card_style : 'outlined',
 			'card_outline_color' => sanitize_hex_color( (string) ( $settings['card_outline_color'] ?? '' ) ) ?: $this->get_default_settings()['card_outline_color'],
+			'card_outline_width' => max( 0, min( 6, (float) ( $settings['card_outline_width'] ?? 1 ) ) ),
 			'item_width' => max( 110, min( 260, absint( $settings['item_width'] ?? 168 ) ) ),
 			'image_ratio' => max( 0.6, min( 1.8, (float) ( $settings['image_ratio'] ?? 1 ) ) ),
 			'enable_image_swipe' => ! empty( $settings['enable_image_swipe'] ),
@@ -322,6 +324,7 @@ final class MobiShop_Product_Carousel_Block extends MobiShop_Block {
 			'view_all_action' => $this->get_view_all_action( $settings ),
 			'card_style'      => $settings['card_style'],
 			'card_outline_color' => $settings['card_outline_color'],
+			'card_outline_width' => $settings['card_outline_width'],
 			'item_width'      => $settings['item_width'],
 			'image_ratio'     => $settings['image_ratio'],
 			'enable_image_swipe' => $settings['enable_image_swipe'],

@@ -8,7 +8,9 @@ class CatalogImage {
 
   final Uri source;
   final Uri? thumbnail;
-  Uri get cardSource => thumbnail ?? source;
+  // Store thumbnails can be only 150–300px, below a two-column phone card's
+  // physical resolution. Keep the supplied full image URL (including CDN args).
+  Uri get cardSource => source;
   final String name;
   final String alt;
 }

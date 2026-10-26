@@ -1185,7 +1185,7 @@
   }
   function footerMetrics(card, page) {
     var reference = previewConfig.footerSize || {},
-      useCard = page === "category";
+      useCard = page === "category" || page === "product";
     return {
       height: useCard
         ? number(card, "height", 76, 48, 100)
@@ -1196,7 +1196,7 @@
       labelSize: useCard
         ? number(card, "label_size", 11, 8, 20)
         : configNumber(reference.labelSize, 11, 8, 20),
-      gap: number(card, "icon_label_gap", 3, 0, 12),
+      gap: number(card, "icon_label_gap", page === "product" ? 2 : 3, 0, 12),
     };
   }
   function alphaColor(hex, alpha) {
@@ -1264,7 +1264,7 @@
       return (
         '<button class="mobishop-app-footer-add is-' +
         esc(buttonStyle) +
-        '" style="width:' +
+        '" style="flex:0 0 auto;max-width:calc(100% - 8px);margin-inline:4px;box-sizing:border-box;width:' +
         buttonWidth +
         "%;height:" +
         buttonHeight +

@@ -480,6 +480,7 @@ abstract final class HomeBlockModel {
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
       cardOutlineColor: _optionalSafeHexColor(data, 'card_outline_color'),
+      cardOutlineWidth: _boundedDouble(data, 'card_outline_width', fallback: 1, minimum: 0, maximum: 6),
     );
   }
 
@@ -542,6 +543,7 @@ abstract final class HomeBlockModel {
       quickAddAppearance: _parseQuickAddAppearance(data),
 	  wishlistAppearance: _parseWishlistAppearance(data),
       cardOutlineColor: _optionalSafeHexColor(data, 'card_outline_color'),
+      cardOutlineWidth: _boundedDouble(data, 'card_outline_width', fallback: 1, minimum: 0, maximum: 6),
     );
   }
 

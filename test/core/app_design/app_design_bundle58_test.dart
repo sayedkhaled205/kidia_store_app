@@ -613,7 +613,11 @@ void main() {
     test(
       'fresh price/stock/name reads retain exact design and block order',
       () async {
-        final bundle = _parse(appDesignFixture58());
+        final fixture = appDesignFixture58();
+        final data = appDesignMap58(appDesignBlock58(fixture, 'saved-products')['data']);
+        data['card_outline_color'] = '#347a89';
+        data['card_outline_width'] = 2.5;
+        final bundle = _parse(fixture);
         final repository = _Catalog();
         final first = await bundle.hydrateHome(repository, locale: 'ar');
         expect(first.blocks.map((block) => block.id), <String>[
@@ -625,6 +629,8 @@ void main() {
         expect(firstGrid.columns, 3);
         expect(firstGrid.cardStyle, 'minimal');
         expect(firstGrid.cardRadius, 7);
+        expect(firstGrid.cardOutlineColor, '#347a89');
+        expect(firstGrid.cardOutlineWidth, 2.5);
         expect(firstGrid.imageRatio, 0.82);
         expect(firstGrid.quickAddEnabled, isFalse);
         expect(firstGrid.imageSwipeEnabled, isTrue);
@@ -675,7 +681,7 @@ void main() {
     );
 
     test(
-      'home cards request thumbnails while product originals stay available',
+      'home cards use original images for high density screens',
       () async {
         final repository = _Catalog()
           ..products = [_product(71, withThumbnail: true)];
@@ -687,9 +693,9 @@ void main() {
             .single
             .items
             .single;
-        expect(card.imageUrl, '$appDesignOrigin58/images/live-71-300x300.png');
+        expect(card.imageUrl, '$appDesignOrigin58/images/live-71.png');
         expect(card.imageUrls, [
-          '$appDesignOrigin58/images/live-71-300x300.png',
+          '$appDesignOrigin58/images/live-71.png',
         ]);
         expect(
           repository.products.single.primaryImage!.source.toString(),

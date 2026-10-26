@@ -29,7 +29,7 @@ test('other styles hide the control without losing custom color', () => {
   }
   dom.window.KidiaProductOutline.prepare(root,{primary_color:'#abcdef'});
   assert.equal(field.value, '#dc713a');
-  assert.equal(root.querySelectorAll('input').length,1);
+  assert.equal(root.querySelectorAll('input').length,2);
   dom.window.close();
 });
 test('saved custom color hydrates and remains after default preparation', () => {
@@ -42,4 +42,20 @@ test('saved custom color hydrates and remains after default preparation', () => 
 test('does not add product controls to account summary', () => {
   const {dom,field} = setup('outlined','account_summary');
   assert.equal(field,null); dom.window.close();
+});
+test('outline width is saved, preserved and only shown for outlined cards', () => {
+  const {dom,root,select} = setup();
+  const width = root.querySelector('input[name$="[card_outline_width]"]');
+  assert.equal(width.value, '1');
+  assert.equal(width.min, '0'); assert.equal(width.max, '6'); assert.equal(width.step, '0.5');
+  width.value = '2.5';
+  for (const style of ['minimal','outlined','elevated','outlined']) {
+    select.value = style; select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));
+    assert.equal(width.closest('[data-product-outline-width]').hidden, style !== 'outlined');
+    assert.equal(new dom.window.FormData(root).get(width.name), '2.5');
+  }
+  dom.window.KidiaProductOutline.prepare(root, {primary_color:'#abcdef'});
+  assert.equal(root.querySelectorAll('input[name$="[card_outline_width]"]').length, 1);
+  assert.equal(width.value, '2.5');
+  dom.window.close();
 });

@@ -90,13 +90,18 @@ def repair_frame(source):
     return repair_product_outline_frame(helper + '\n' + source)
 
 def repair_product_outline_frame(source):
-    if '/* product-outline-field-v1 */' in source:
+    if '/* product-outline-field-v2 */' in source:
         return source
     helper = Path(__file__).with_name('product-outline.js').read_text(encoding='utf-8')
+    if '/* product-outline-field-v1 */' in source:
+        start = source.index('/* product-outline-field-v1 */')
+        closing = "})(typeof window === 'undefined' ? globalThis : window);"
+        end = source.index(closing, start) + len(closing)
+        return source[:start] + '/* product-outline-field-v2 */\n' + helper + source[end:]
     source = replace_once(source, '      root.innerHTML = normalizeReferenceHtml(html);',
         '      root.innerHTML = normalizeReferenceHtml(html);\n      KidiaProductOutline.prepare(root);')
     source = replace_once(source, '    const store = payload && payload.store ? payload.store : {};\n    if (screen === \'category-builder\')',
         '    const store = payload && payload.store ? payload.store : {};\n    KidiaProductOutline.prepare(root, payload.identity);\n    if (screen === \'category-builder\')')
     source = replace_once(source, '        KidiaApplicationSave.prepareHomeItems(rendered, savedBlock.settings || {})();',
         '        KidiaProductOutline.prepare(rendered, payload.identity);\n        KidiaApplicationSave.prepareHomeItems(rendered, savedBlock.settings || {})();')
-    return '/* product-outline-field-v1 */\n' + helper + '\n' + source
+    return '/* product-outline-field-v2 */\n' + helper + '\n' + source
