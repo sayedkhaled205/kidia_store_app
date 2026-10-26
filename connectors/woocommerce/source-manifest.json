@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.98",
+  "version": "1.46.99",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "e599fd630cb10f045a62eb47a629b8fba88af65694a2a8a3fece98a9c8d638b1",
-      "sha256": "e599fd630cb10f045a62eb47a629b8fba88af65694a2a8a3fece98a9c8d638b1"
+      "source_sha256": "f9c456df4725504f9d5e0c6e5b94e4e3fda7777f2d20d53d1b5f108c86d682e0",
+      "sha256": "f9c456df4725504f9d5e0c6e5b94e4e3fda7777f2d20d53d1b5f108c86d682e0"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2952,8 +2952,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "2a645c5748ce7b7dfc425f87b2cbc0f45a35bbc391dcd1fc99ee8193e2cafe82",
-      "sha256": "2a645c5748ce7b7dfc425f87b2cbc0f45a35bbc391dcd1fc99ee8193e2cafe82"
+      "source_sha256": "e076bb35e0413ee2f588c6202f9663647d35ae404753e26f09a79c5bb4dea36a",
+      "sha256": "e076bb35e0413ee2f588c6202f9663647d35ae404753e26f09a79c5bb4dea36a"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -2988,8 +2988,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "c9bfa6d81d295efc3ef9c33f833d0e9e2ecc267896dfd7cf34d480aa4d1c18e9",
-      "sha256": "c9bfa6d81d295efc3ef9c33f833d0e9e2ecc267896dfd7cf34d480aa4d1c18e9"
+      "source_sha256": "09b6f1228c5f627b3293dc071e0774a2b7b476358c8e374d7a744933be1cb055",
+      "sha256": "09b6f1228c5f627b3293dc071e0774a2b7b476358c8e374d7a744933be1cb055"
     }
   },
   "baseline_release": {
