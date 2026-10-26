@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_availability_refresh.dart';
 import 'package:flutter/gestures.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
@@ -122,7 +123,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final _ProductCopy copy = _ProductCopy.of(context);
-    return CmsPageLayoutLoader(
+    return ProductAvailabilityRefresh(
+      controller: _controller,
+      child: CmsPageLayoutLoader(
       page: 'product',
       builder: (BuildContext context, CmsPageLayout layout) => CmsPageScaffold(
         layout: layout,
@@ -158,6 +161,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 isLiked: _isWishlisted,
               )
             : null,
+      ),
       ),
     );
   }

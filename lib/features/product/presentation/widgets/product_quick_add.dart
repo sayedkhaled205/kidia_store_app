@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_availability_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,7 +163,9 @@ class _ProductQuickAddSheetState
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Material(
+    return ProductAvailabilityRefresh(
+      controller: _controller,
+      child: Material(
       key: const Key('product-quick-add-sheet'),
       color: colors.surface,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -194,6 +197,7 @@ class _ProductQuickAddSheetState
             return _content(context, _controller.product!);
           },
         ),
+      ),
       ),
     );
   }

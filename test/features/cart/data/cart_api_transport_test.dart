@@ -95,6 +95,8 @@ void main() {
       expect(captured?.uri.path, '/store/wp-json/wc/store/v1/cart/add-item');
       expect(captured?.method, 'POST');
       expect(captured?.headers['Cart-Token'], 'session-token');
+      expect(captured?.headers['X-MobiShop-Channel'], 'mobile');
+      expect(captured?.headers['Cache-Control'], contains('no-store'));
       expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
       expect(captured?.data, <String, dynamic>{'id': 42, 'quantity': 1});
       expect(response.header('cart-token'), 'rotated-token');

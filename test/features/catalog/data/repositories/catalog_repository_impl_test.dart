@@ -15,21 +15,18 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 void main() {
-  test(
-    'opening a recently listed product skips a duplicate read and expires after 20 seconds',
-    () async {
-      final source = _CountingSource();
-      var now = DateTime(2026, 10, 17);
-      final repository = CatalogRepositoryImpl(source, now: () => now);
-      addTearDown(repository.dispose);
-      final page = await repository.getProducts(CatalogProductQuery());
-      expect(await repository.getProduct(10), same(page.items.single));
-      expect(source.productCalls, 0);
-      now = now.add(const Duration(seconds: 21));
-      await repository.getProduct(10);
-      expect(source.productCalls, 1);
-    },
-  );
+  test('detail reads never reuse a listed or completed stock snapshot', () async {
+    final source = _CountingSource();
+    final repository = CatalogRepositoryImpl(source);
+    addTearDown(repository.dispose);
+    await repository.getProducts(CatalogProductQuery());
+    await repository.getProduct(10);
+    await repository.getProduct(10);
+    await repository.getVariations(10);
+    await repository.getVariations(10);
+    expect(source.productCalls, 2);
+    expect(source.variationCalls, 2);
+  });
 
   test('store changes invalidate cached product and variation data', () async {
     final changes = StreamController<int>.broadcast(sync: true);
@@ -41,13 +38,13 @@ void main() {
     await repository.getVariations(10);
     await repository.getProduct(10);
     await repository.getVariations(10);
-    expect(source.productCalls, 1);
-    expect(source.variationCalls, 1);
+    expect(source.productCalls, 2);
+    expect(source.variationCalls, 2);
     changes.add(1);
     await repository.getProduct(10);
     await repository.getVariations(10);
-    expect(source.productCalls, 2);
-    expect(source.variationCalls, 2);
+    expect(source.productCalls, 3);
+    expect(source.variationCalls, 3);
   });
 
   test(
