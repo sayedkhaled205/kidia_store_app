@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/native_payment_client92.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/checkout/application/checkout_payment_controller298.dart';
@@ -46,7 +46,7 @@ final checkoutPaymentController298Provider = Provider.autoDispose
         launch: (_) async {
           final opened = await native.present(
             orderId,
-            arabic: AppConfig.isRightToLeft,
+            arabic: ref.read(appLocaleProvider).languageCode == 'ar',
           );
           await controller.returnedToApp();
           return opened;

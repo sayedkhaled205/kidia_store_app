@@ -10,9 +10,11 @@ import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'app_language_tile.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -99,11 +101,12 @@ class AccountScreen extends ConsumerWidget {
                   isArabic: isArabic,
                   onSignIn: () => context.push('/auth'),
                   avatarSize: summarySettings.number('avatar_size', 66),
-                  guestTitle: summarySettings.string(
-                    'guest_title',
+                  guestTitle: cmsFooterLabel(
+                    summarySettings.string('guest_title', ''),
                     isArabic
                         ? 'تسجيل الدخول / إنشاء حساب'
                         : 'Sign in / Register',
+                    const ['Sign in / Register', 'تسجيل الدخول / إنشاء حساب'],
                   ),
                   showEmail: summarySettings.boolean('show_email', true),
                   cardStyle: summarySettings.string('card_style', 'elevated'),
@@ -149,6 +152,8 @@ class AccountScreen extends ConsumerWidget {
                         if (!flat && index < visibleActions.length - 1)
                           const Divider(),
                       ],
+                      if (!flat && visibleActions.isNotEmpty) const Divider(),
+                      const AppLanguageTile(),
                     ],
                   ),
                 ),

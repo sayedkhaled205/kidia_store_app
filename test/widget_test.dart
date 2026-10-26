@@ -9,6 +9,7 @@ import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
 import 'package:mobishop_store_app/app/app_startup_provider.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
 import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
@@ -412,6 +413,7 @@ Future<void> _pumpStartedApp(
       overrides: [
         appStartupProvider.overrideWith((ref) async {}),
         nativeAuthActionsProvider.overrideWithValue(IdleNativeAuthActions()),
+        appLocaleProvider.overrideWithValue(const Locale('ar')),
         applicationIdentity58Provider.overrideWithValue({
           'language': 'ar',
           'direction': 'rtl',

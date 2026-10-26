@@ -12,6 +12,7 @@ import 'package:mobishop_store_app/features/home/presentation/providers/home_pro
 import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 import '../config/app_config.dart';
+import '../localization/app_locale_provider.dart';
 import '../commerce/commerce_connection.dart';
 import '../push/push_notification_service.dart';
 import 'store_change_bus.dart';
@@ -53,8 +54,7 @@ final nativeStoreLiveUpdatesProvider = Provider<StoreLiveUpdates>((Ref ref) {
     if (domains.contains(StoreChangeDomain.catalog) ||
         domains.contains(StoreChangeDomain.stock)) {
       catalogBus.notifyCatalogChanged();
-      // Home watches the normalized Material locale, not a raw ar_EG define.
-      final home = homeLayoutProvider(_configuredHomeLocale());
+      final home = homeLayoutProvider(ref.read(appLocaleProvider).languageCode);
       if (ref.exists(home)) ref.invalidate(home);
       // Only already loaded carts are refreshed. Reads use the normal customer
       // platform transport; mutations remain guarded by the existing controller.
@@ -97,19 +97,6 @@ final nativeStoreLiveUpdatesProvider = Provider<StoreLiveUpdates>((Ref ref) {
   });
   return updates;
 });
-
-String _configuredHomeLocale() {
-  final parts = AppConfig.storeLocale
-      .trim()
-      .split(RegExp('[-_]'))
-      .where((part) => part.isNotEmpty)
-      .toList(growable: false);
-  if (parts.isEmpty) return 'en';
-  return Locale.fromSubtags(
-    languageCode: parts.first.toLowerCase(),
-    countryCode: parts.length > 1 ? parts[1].toUpperCase() : null,
-  ).toLanguageTag();
-}
 
 /// One persistent host above every route, including Checkout and Profile.
 class NativeLiveUpdatesHost extends ConsumerStatefulWidget {

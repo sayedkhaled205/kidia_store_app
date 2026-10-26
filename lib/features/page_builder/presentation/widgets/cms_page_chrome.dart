@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
@@ -1266,7 +1267,17 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _rawItem(BuildContext context, String item, Color color) {
     if (item == 'title') {
-      String title = _header.string('title', defaultTitle);
+      String title = cmsFooterLabel(
+        _header.string('title', defaultTitle),
+        defaultTitle,
+        const {
+          'account': ['Account', 'My account', 'حسابي'],
+          'category': ['Categories', 'الأقسام', 'التصنيفات'],
+          'catalog': ['Products', 'المنتجات'],
+          'wishlist': ['Wishlist', 'المفضلة'],
+          'product': ['Description', 'الوصف'],
+        }[layout.page] ?? const <String>[],
+      );
       final String transform = _header.string('title_transform', 'none');
       if (transform == 'uppercase') {
         title = title.toUpperCase();
@@ -1426,7 +1437,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _header.string('search_placeholder', 'Search products'),
+              cmsFooterLabel(
+                _header.string('search_placeholder', 'Search products'),
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'ابحث عن المنتجات'
+                    : 'Search products',
+                const ['Search products', 'ابحث عن المنتجات', 'البحث عن المنتجات'],
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

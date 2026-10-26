@@ -96,7 +96,7 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - name: Verify desktop preview gestures and idle selection
-        run: flutter test --dart-define=CMS_PREVIEW=true test/features/home/presentation/widgets/preview_interaction_test.dart
+        run: flutter test --dart-define=CMS_PREVIEW=true test/features/home/presentation/widgets/preview_interaction_test.dart test/app/app_locale_test.dart
       - name: Build embedded CMS Flutter Web preview
         run: bash tool/build_cms_flutter_preview.sh
       - name: Upload CMS Flutter Web preview

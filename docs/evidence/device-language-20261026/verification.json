@@ -1,0 +1,30 @@
+{
+  "feature": "Shared Arabic/English app language",
+  "date": "2026-10-26",
+  "automatic": "Primary phone language ar -> Arabic/RTL; every other primary language -> English/LTR, even if Arabic is secondary",
+  "manual": "Guest and signed-in Account language selector; Phone language, Arabic, English; persisted per app/store; serial writes preserve the last choice",
+  "legacy_designs": "Native locale/direction no longer pinned by old identity or STORE_LOCALE; the same approved Home design hydrates in either supported language",
+  "preview": "Editor identity remains a phone-language simulation; manual preview choices never write native preferences or merchant design",
+  "scope": "Shared builder app source for WooCommerce, Shopify and Odoo; no merchant IDs or store-specific conditions",
+  "tests": {
+    "full_flutter_suite": {"passed": 767, "skipped": 6, "failed": 0},
+    "targeted_regressions": {"passed": 104, "skipped": 5, "failed": 0},
+    "preview_language": {"passed": 2, "skipped_native_cases": 10, "failed": 0},
+    "primary_locales": ["ar_EG", "ar_SA", "en_US", "fr_FR", "de_DE", "ur_PK", "he_IL"],
+    "restart_manual_and_system": "pass",
+    "runtime_phone_language_change": "pass",
+    "rapid_persistence": "pass",
+    "shared_home_both_languages_all_three_platforms": "pass",
+    "stock_header_copy_and_custom_merchant_copy": "pass",
+    "static_analysis": "No issues found",
+    "release_web_build": "pass",
+    "javascript_syntax": "pass",
+    "ios_localization_manifest": "valid plist; en and ar declared"
+  },
+  "limitations": [
+    "Installed apps require a new build/update to receive runtime code changes.",
+    "Merchant product names, categories and custom copy remain as supplied by the store; no automatic translation is invented.",
+    "No physical iOS-device execution in this Windows environment."
+  ],
+  "ios_reference": "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundlelocalizations"
+}

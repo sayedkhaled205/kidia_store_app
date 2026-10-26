@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
+import '../core/localization/app_locale_provider.dart';
 import '../features/checkout/data/network/native_payment_client92.dart';
 import '../core/push/native_push_actions_host.dart';
 import '../core/app_design/application_identity_provider58.dart';
@@ -31,15 +32,8 @@ class MobiShopApp extends ConsumerWidget {
     final Map<String, dynamic>? identity = ref.watch(
       applicationIdentity58Provider,
     );
-    final Locale configuredLocale = _configuredStoreLocale(
-      identity?['language'] as String?,
-    );
-    final String direction = '${identity?['direction'] ?? ''}';
-    final bool rightToLeft = direction == 'rtl'
-        ? true
-        : direction == 'ltr'
-        ? false
-        : AppConfig.isRightToLeft;
+    final Locale configuredLocale = ref.watch(appLocaleProvider);
+    final bool rightToLeft = configuredLocale.languageCode == 'ar';
 
     return NativePaymentHost92(
       child: MaterialApp.router(
@@ -50,11 +44,7 @@ class MobiShopApp extends ConsumerWidget {
         title: identity?['app_name'] as String? ?? AppConfig.storeName,
         routerConfig: routerConfig,
         locale: configuredLocale,
-        supportedLocales: <Locale>[
-          configuredLocale,
-          if (configuredLocale.languageCode != 'ar') const Locale('ar'),
-          if (configuredLocale.languageCode != 'en') const Locale('en'),
-        ],
+        supportedLocales: supportedAppLocales,
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         // Flutter Web otherwise inherits the desktop browser platform. That
         // changes Material metrics and interaction defaults even though the
@@ -100,21 +90,4 @@ class MobiShopApp extends ConsumerWidget {
       ),
     );
   }
-}
-
-Locale _configuredStoreLocale([String? previewLocale]) {
-  final List<String> parts = (previewLocale ?? AppConfig.storeLocale)
-      .trim()
-      .split(RegExp('[-_]'))
-      .where((String part) => part.isNotEmpty)
-      .toList(growable: false);
-
-  if (parts.isEmpty) {
-    return const Locale('en');
-  }
-
-  return Locale.fromSubtags(
-    languageCode: parts.first.toLowerCase(),
-    countryCode: parts.length > 1 ? parts[1].toUpperCase() : null,
-  );
 }

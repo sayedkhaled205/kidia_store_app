@@ -106,7 +106,7 @@ Future<HomeLayout> hydrateSavedHome58(
   required String locale,
 }) async {
   final base = HomeLayoutModel.fromJson(saved);
-  if (locale != base.locale) {
+  if (locale != base.locale && !const {'ar', 'en'}.contains(locale)) {
     throw const FormatException(
       'APP_DESIGN_BUNDLE has no saved Home layout for this locale.',
     );
@@ -209,7 +209,9 @@ Future<HomeLayout> hydrateSavedHome58(
   return HomeLayout(
     version: base.version,
     page: base.page,
-    locale: base.locale,
+    // Layout, catalog queries and merchant copy remain the approved design;
+    // the interface language must not make an otherwise valid Home disappear.
+    locale: locale,
     updatedAt: base.updatedAt,
     blocks: blocks,
   );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../auth/presentation/providers/odoo_customer_providers51.dart';
+import '../app_language_tile.dart';
 import 'odoo_customer_chrome56.dart';
 import 'odoo_customer_data56.dart';
 
@@ -133,6 +134,8 @@ class OdooAccountScreen56 extends ConsumerWidget {
                         ? null
                         : () => context.push(signedIn ? entry.$1 : '/auth'),
                   ),
+                const Divider(height: 1),
+                const AppLanguageTile(),
               ],
             ),
           ),

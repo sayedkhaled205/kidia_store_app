@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
 import 'package:mobishop_store_app/core/app_design/app_design_providers58.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/features/home/presentation/providers/home_providers.dart';
@@ -56,7 +57,7 @@ final cmsPageLayoutProvider = FutureProvider.family<CmsPageLayout, String>((
     }
     final Map<String, dynamic> json = await ref
         .watch(cmsPageLayoutRemoteDataSourceProvider)
-        .fetch(page: page, locale: AppConfig.storeLocale);
+        .fetch(page: page, locale: ref.watch(appLocaleProvider).languageCode);
     return CmsPageLayout.fromJson(json);
   } finally {
     // Do not invalidate an initial/refresh request before its response arrives.

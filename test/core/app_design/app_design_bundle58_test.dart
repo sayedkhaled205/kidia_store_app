@@ -145,6 +145,40 @@ class _Catalog implements CatalogRepository {
 }
 
 void main() {
+  for (final platform in CommercePlatform.values) {
+    test('saved $platform Home works in both app languages', () async {
+      final fixture = appDesignFixture58()
+        ..['platform'] = platform == CommercePlatform.wooCommerce
+            ? 'woocommerce'
+            : platform.name;
+      final origin = platform == CommercePlatform.shopify
+          ? 'https://design-fixture.myshopify.com'
+          : appDesignOrigin58;
+      fixture['store_origin'] = origin;
+      final bundle = _parse(fixture, platform: platform, origin: origin);
+      final repository = _Catalog();
+      final arabic = await bundle.hydrateHome(repository, locale: 'ar');
+      final english = await bundle.hydrateHome(repository, locale: 'en');
+      expect(arabic.locale, 'ar');
+      expect(english.locale, 'en');
+      expect(
+        english.blocks.map((block) => block.id),
+        arabic.blocks.map((block) => block.id),
+      );
+      expect(
+        english.blocks.whereType<TextBlock>().first.title,
+        arabic.blocks.whereType<TextBlock>().first.title,
+      );
+      expect(
+        english.blocks.whereType<ProductGridBlock>().single.items,
+        isNotEmpty,
+      );
+      expect(
+        english.blocks.whereType<CategoryGridBlock>().single.items,
+        isNotEmpty,
+      );
+    });
+  }
   test('selector83 preserves newest, root and ordered category IDs', () async {
     final fixture = appDesignFixture58();
     appDesignBlock58(fixture, 'saved-products')['catalog_query'] = {
