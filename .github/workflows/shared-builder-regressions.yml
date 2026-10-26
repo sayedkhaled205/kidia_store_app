@@ -1,0 +1,56 @@
+name: Shared builder merchant regressions
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['lib/**', 'test/**', 'tool/**', 'web/**', 'codemagic.yaml', 'pubspec.*', 'package*.json', '.github/workflows/shared-builder-regressions.yml']
+  push:
+    branches: [main, 'agent/**', 'codex/unified-mobile-build']
+    paths: ['lib/**', 'test/**', 'tool/**', 'web/**', 'codemagic.yaml', 'pubspec.*', 'package*.json', '.github/workflows/shared-builder-regressions.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  merchants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [woocommerce, shopify, odoo]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check fixture isolation and public build inputs
+        run: |
+          python3 -m unittest discover -s tool -p test_verify_commerce_matrix.py
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+      - name: Compile and test two independent merchants
+        run: python3 tool/verify_commerce_matrix.py --platform '${{ matrix.platform }}'
+      - name: Check shared browser builder adapters
+        run: |
+          node tool/builder-assets/preview-auth-config.test.cjs
+          node tool/builder-assets/preview-commerce-config.test.cjs
+          node tool/builder-assets/preview-interactions.test.cjs
+          node tool/builder-assets/category-designer.test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: merchant-regressions-${{ matrix.platform }}
+          path: |
+            build/commerce-matrix.json
+            build/*.log
+          if-no-files-found: warn

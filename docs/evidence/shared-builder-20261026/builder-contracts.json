@@ -1,0 +1,44 @@
+[
+  {
+    "test": "tool/builder-assets/preview-auth-config.test.cjs",
+    "passed": true,
+    "output": "Preview configuration routing and availability checks passed.\n",
+    "error": ""
+  },
+  {
+    "test": "tool/builder-assets/preview-commerce-config.test.cjs",
+    "passed": true,
+    "output": "\u2714 fetches the connected store and exposes only public configuration (2.0153ms)\n\u2714 does not turn a failed or unsupported response into a free checkout (0.4776ms)\n\u2714 separate stores and disabled gateways are not mixed (0.3491ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 9.4964\n",
+    "error": ""
+  },
+  {
+    "test": "tool/builder-assets/preview-interactions.test.cjs",
+    "passed": true,
+    "output": "\u2714 selected home card reaches shared Flutter with its exact stable ID (57.9802ms)\n\u2714 blank card area selects; controls and existing header handler are not duplicated (17.7017ms)\n\u2714 cached inactive editor cannot move the current preview (14.2066ms)\n\u2714 card navigation returns from a mobile route before focusing; runtime is retained (307.0884ms)\n\u2714 other routes keep native wheel; keys only scroll Home outside fields (13.2776ms)\n\u2714 Home mouse wheel is delivered once before the engine, with line units normalized (12.6364ms)\n\u2714 preview shell does not swallow wheel events based on stale initial page (123.8836ms)\n\u2139 tests 7\n\u2139 suites 0\n\u2139 pass 7\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 550.238\n",
+    "error": ""
+  },
+  {
+    "test": "tool/builder-assets/category-designer.test.cjs",
+    "passed": true,
+    "output": "\u2714 captured QA categories cannot leak into another connected merchant (74.6485ms)\n\u2714 ten curated designs preserve merchant records and navigation preference (85.969ms)\n\u2714 invalid or circular parents and untrusted image URLs stay safe (6.0081ms)\n\u2714 catalog refresh recovers a failed first load and keeps saved names (17.3571ms)\n\u2714 updated catalog preserves unsaved names and never restores removed IDs (17.8636ms)\n\u2139 tests 5\n\u2139 suites 0\n\u2139 pass 5\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 206.8241\n",
+    "error": ""
+  },
+  {
+    "test": "-m unittest discover -s tool -p test_native_build_defines81.py",
+    "passed": true,
+    "output": "",
+    "error": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.181s\n\nOK\n"
+  },
+  {
+    "test": "-m unittest discover -s tool -p test_verify_commerce_matrix.py",
+    "passed": true,
+    "output": "",
+    "error": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n"
+  },
+  {
+    "test": "-m unittest discover -s tool -p test_build_woocommerce_connector.py",
+    "passed": true,
+    "output": "",
+    "error": "...............\n----------------------------------------------------------------------\nRan 15 tests in 5.470s\n\nOK\n"
+  }
+]

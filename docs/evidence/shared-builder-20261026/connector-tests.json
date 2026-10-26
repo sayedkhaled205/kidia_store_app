@@ -1,0 +1,494 @@
+{
+  "version": "1.46.100",
+  "source": "packaged ZIP",
+  "checks": [
+    {
+      "test": "syntax:mobi2app-connector.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-category-page-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-checkout-config-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-customer-account-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-customer-auth-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-customer-orders-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-embedded-checkout88.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-home-layout-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-native-checkout-safety50.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-native-customer-auth-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-native-payment92.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-native-qa-isolation51.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-page-layout-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-product-brand-bridge.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-product-variation-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-splash-screen-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-store-api-price-compatibility.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-store-changes-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:api\\class-website-auth-endpoint.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-activator.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-ai-analysis-job.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-ai-offer-engine.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-analytics.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-app-exporter.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-block-registry.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-bundle-recipes.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-category-page-store.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-checkout-fields-store.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-coupon-channel.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-deactivator.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-kids-home-preset.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-layout-store.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-license-manager.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-order-source98.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-page-layout-store.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-product-channel-visibility.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-push-service.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-recovery-campaigns.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-setup-wizard.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop-website-app-promotion.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-mobishop.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-native-checkout-bootstrap50.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\class-native-checkout-setup50.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:integrations\\kidia-address-book.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-app-header-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-banner-grid-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-brand-carousel-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-bundle-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-category-grid-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-countdown-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-coupon-banner-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-divider-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-hero-slider-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-image-banner-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-product-carousel-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-product-grid-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-promo-strip-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-quick-links-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-section-header-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-spacer-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-text-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\blocks\\class-mobishop-video-banner-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\bootstrap.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\class-central-commerce.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-builder-application-bridge.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-builder-application-commit.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-builder-form-state.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-builder-setup-identity.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-push-actions.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\kidia-push-admin-bridge.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\loader.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\store-data-view.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\store-data.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\central\\store-notifications.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\app-header.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\banner-grid.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\brand-carousel.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\bundle-collection.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\category-grid.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\countdown.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\coupon-banner.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\divider.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\hero-slider.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\image-banner.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\product-carousel.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\product-grid.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\promo-strip.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\quick-links.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\section-header.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\spacer.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\text-block.php",
+      "passed": true
+    },
+    {
+      "test": "syntax:includes\\schema\\video-banner.php",
+      "passed": true
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-auth-contract-test.php",
+      "passed": true,
+      "output": "Native customer auth: 300 contract/security checks passed.",
+      "error": "",
+      "runtime": "PHP 8.3 with OpenSSL enabled"
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-auth-legacy-gate-test.php",
+      "passed": true,
+      "output": "Customer auth endpoint contract test passed.\nNative auth legacy gate: 20 contract/security checks passed.",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/website-auth-contract-test.php",
+      "passed": true,
+      "output": "Customer auth endpoint contract test passed.\nConnector 1.46.75 website auth: 46 contract/security checks passed.",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-checkout-setup-contract-test.php",
+      "passed": true,
+      "output": "fresh_and_repeat OK\nreadonly_unprepared OK\nunauthorized_options OK\nunauthorized_commerce OK\nunlicensed OK\ndisabled OK\nold_unknown_key OK\nold_partial OK\nold_valid OK\nold_wrong_key OK\nresume_owned OK\nowned_active_partial OK\nwrong_engine OK\nbusy OK\ntransaction OK\nbad_record OK\nrotated_key OK\nold_woo OK\nroutes_unprepared OK\ncentral_permissions OK\nNATIVE_SETUP50_CONTRACT_OK 20 isolated cases; no external effects.",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-checkout-safety50-contract-test.php",
+      "passed": true,
+      "output": "PASS capability requires actual schema registration and exact runtime guard\nPASS unregistered source does not declare capability or install tables\nPASS schema explicitly registers namespace and required confirmed properties\nPASS normal website and different routes are untouched\nPASS unknown registration blocks before any core call\nPASS expired sessions and admin cookie conflicts cannot authorize checkout\nPASS HTTPS required for explicit customer auth\nPASS unsigned expired foreign-issuer and cross-buyer cart tokens denied\nPASS persisted guest session belonging to another buyer is denied\nPASS legitimate guest cart adoption binds permanently to first buyer\nPASS Woo 10.9.4 t_30 guest cart reaches guarded checkout without changing buyer scope\nPASS current Woo guest format still requires valid signed issuer expiry and persisted ownership\nPASS guest parser accepts only exact current and previously supported formats\nPASS confirmed contract rejects unsafe keys and tombstones malformed money before callback\nPASS canonical body sorts object keys but does not persist PII or tokens\nPASS same key with changed body conflicts even after successful order\nPASS unresolved attempt blocks different keys and different carts for same buyer\nPASS same-key in-flight reentrant call cannot execute callback twice\nPASS new API instance retains unresolved block and no missing-order expiry\nPASS exact integer money handles large values and insignificant decimal zeros\nPASS raise decrease currency and precision mismatch stop before stock or payment\nPASS generic early or late 400 and 500 never clear unresolved claims\nPASS verified external gateway handoff creates unpaid receipt once\nPASS pending handoff must preserve every durable ownership proof\nPASS draft and pending payment are not successful recovery\nPASS lost response recovers exact owned order but needs persisted empty cart before unlock\nPASS cross-customer recovery never reveals or matches another buyer attempt\nPASS ownership changed order or missing persisted marker fail closed\nPASS session revoked and final cart identity switched cannot proceed\nPASS association and persisted guard failures block payment and recovery\nPASS settlement failure after order keeps uncertainty without leaking result credentials\nPASS successful and rejected recovery and permission error are no-store\nPASS first draft marker does not rely on new-order action or throwing from save\nPASS explicit activation DDL has unique keys and fingerprint but no expiry or PII columns\nPASS concurrent recovery cannot unlock while original callback is still running\nPASS failed durable total-rejection settlement returns uncertainty not reconfirmation\nPASS auth-salt rotation and same-customer reauthentication preserve durable scope\nPASS orphan unresolved row blocks a new key even if buyer pointer is missing\nPASS missing durable callback-completion proof cannot unlock a created order\nPASS late order-processed amount change fails before payment without early-rejection reset\nPASS canonical origin and subdirectory changes cannot bypass old buyer/cart scopes\nPASS WP validation errors persist exact rejection and skip permission dispatch and order callback\nPASS before-callback interception always keeps WP_Error until callback-blocking boundary passed\nPASS after-callback flattener never manufactures proof from generic or altered late errors\nPASS nonvalidation late-looking errors unknown JSON invalid keys and wrong buyers never fabricate proof\nPASS rejection-winning race forbids later valid same key and permits only newly confirmed different key\nPASS claim-winning race never overwrites unknown same key or releases active other key\nPASS completed or rejected-before-payment existing keys cannot become no-dispatch proof\nPASS pre-dispatch storage failure and tampered proof fail closed without missing-row retry permission\nPASS pre-dispatch proof is exact buyer and key with no PII tokens or validation snapshot persisted\nPASS production storage capability verifies exact InnoDB PKs and immutable key fingerprint\nPASS production SQL claims preserve uniqueness buyer blockers and orphan blockers\nPASS production SQL failure rolls back before callback while uncertain commit stays durable\nPASS production SQL cart binding and final settlement require durable execution completion\nPASS production SQL pending settlement requires an existing guarded finished order\nPASS production stored session decoder rejects objects malformed PII containers and foreign buyers\nPASS production pre-dispatch tombstones serialize with checkout claims without adopting carts or clearing buyers\nPASS production pre-dispatch failed insert rolls back and uncertain commit gives no immediate proof\nPASS missing registered WP rejection boundary makes capability false without storage mutations\nLOCAL_NATIVE_CHECKOUT50_STUB_TESTS=59\nNOT_CERTIFIED=installed SQL concurrency, deployed hooks/schema, payment gateways, QA outbound isolation, Native checkout",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-checkout-safety50-contract-test.php --missing-installation-key",
+      "passed": true,
+      "output": "PASS missing immutable installation key fails capability closed",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/customer-orders-endpoint-contract-test.php",
+      "passed": true,
+      "output": "CUSTOMER_ORDERS_CONTRACT_OK history/cancel/read ownership, configured localized paths and unsafe payment URLs; no external effects.",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/merchant-payment-labels-contract-test.php",
+      "passed": true,
+      "output": "MERCHANT_PAYMENT_LABELS_CONTRACTS_PASSED",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/merchant-schema96-test.php",
+      "passed": true,
+      "output": "PASS billing default still allows another address\nPASS additive policy preserves installed v8 clients\nPASS merchant fields are never cached\nPASS billing-only hides another address\nPASS filter cannot reopen billing-only\nPASS shipping default allows address choice\nPASS merchant suppression filter respected\nPASS disabled shipping does not offer address choice\nPASS current merchant labels replace previous labels\nPASS merchant requirements and choices preserved\nPASS removed merchant fields are not resurrected\nPASS US reads its own base country\nPASS US reads its own field label\nPASS US preserves its allowed countries\nPASS US shows country choice only when needed\nPASS US applies its own shipping policy\nPASS US never inherits another country's states\nPASS GB reads its own base country\nPASS GB reads its own field label\nPASS GB preserves its allowed countries\nPASS GB shows country choice only when needed\nPASS GB applies its own shipping policy\nPASS GB never inherits another country's states\nPASS EG reads its own base country\nPASS EG reads its own field label\nPASS EG preserves its allowed countries\nPASS EG shows country choice only when needed\nPASS EG applies its own shipping policy\nPASS EG never inherits another country's states\nPASS saved addresses belong only to current buyer 7\nPASS saved addresses belong only to current buyer 8\nPASS saved addresses belong only to current buyer 0\nPASS saved addresses belong only to current buyer 7\nMERCHANT_SCHEMA96_CHECKS=33",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/address-book-adapter-contract-test.php",
+      "passed": true,
+      "output": "PASS: packaged address adapter (normal)",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/address-book-adapter-contract-test.php no-provider",
+      "passed": true,
+      "output": "PASS: packaged address adapter (no-provider)",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/address-book-adapter-contract-test.php legacy",
+      "passed": true,
+      "output": "PASS: packaged address adapter (legacy)",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/checkout-destination-contract-test.php",
+      "passed": true,
+      "output": "PASS international countries remain selectable\nPASS merchant-required postcode stays visible\nPASS merchant email field retained\nPASS destination state options come from WooCommerce\nPASS single-country store needs no country choice\nPASS merchant region overrides preserved",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/store-notifications-contract-test.php",
+      "passed": true,
+      "output": "PASS unprivileged route denied\nPASS callback independently denies unprivileged writes\nPASS invalid connection rejected before network\nPASS invalid connection rejected before network\nPASS invalid connection rejected before network\nPASS redirect cannot install credentials\nPASS fixed central origin and exact store\nPASS unready project cannot be announced ready\nPASS connection response never exposes token\nPASS verified connection persisted\nPASS different store cannot replace existing binding\nPASS path traversal rejected\nPASS invalid method rejected\nPASS copied database cannot reuse another origin binding\nPASS native config uses verified store transport\nPASS both existing Firebase entry points use store transport",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-website-payment-contract-test.php",
+      "passed": true,
+      "output": "PASS capability requires actual schema registration and exact runtime guard\nPASS unregistered source does not declare capability or install tables\nPASS schema explicitly registers namespace and required confirmed properties\nPASS normal website and different routes are untouched\nPASS unknown registration blocks before any core call\nPASS expired sessions and admin cookie conflicts cannot authorize checkout\nPASS HTTPS required for explicit customer auth\nPASS unsigned expired foreign-issuer and cross-buyer cart tokens denied\nPASS persisted guest session belonging to another buyer is denied\nPASS legitimate guest cart adoption binds permanently to first buyer\nPASS Woo 10.9.4 t_30 guest cart reaches guarded checkout without changing buyer scope\nPASS current Woo guest format still requires valid signed issuer expiry and persisted ownership\nPASS guest parser accepts only exact current and previously supported formats\nPASS confirmed contract rejects unsafe keys and tombstones malformed money before callback\nPASS canonical body sorts object keys but does not persist PII or tokens\nPASS same key with changed body conflicts even after successful order\nPASS unresolved attempt blocks different keys and different carts for same buyer\nPASS same-key in-flight reentrant call cannot execute callback twice\nPASS new API instance retains unresolved block and no missing-order expiry\nPASS exact integer money handles large values and insignificant decimal zeros\nPASS raise decrease currency and precision mismatch stop before stock or payment\nPASS generic early or late 400 and 500 never clear unresolved claims\nPASS verified external gateway handoff creates unpaid receipt once\nPASS pending handoff must preserve every durable ownership proof\nPASS draft and pending payment are not successful recovery\nPASS lost response recovers exact owned order but needs persisted empty cart before unlock\nPASS cross-customer recovery never reveals or matches another buyer attempt\nPASS ownership changed order or missing persisted marker fail closed\nPASS session revoked and final cart identity switched cannot proceed\nPASS association and persisted guard failures block payment and recovery\nPASS settlement failure after order keeps uncertainty without leaking result credentials\nPASS successful and rejected recovery and permission error are no-store\nPASS first draft marker does not rely on new-order action or throwing from save\nPASS explicit activation DDL has unique keys and fingerprint but no expiry or PII columns\nPASS concurrent recovery cannot unlock while original callback is still running\nPASS failed durable total-rejection settlement returns uncertainty not reconfirmation\nPASS auth-salt rotation and same-customer reauthentication preserve durable scope\nPASS orphan unresolved row blocks a new key even if buyer pointer is missing\nPASS missing durable callback-completion proof cannot unlock a created order\nPASS late order-processed amount change fails before payment without early-rejection reset\nPASS canonical origin and subdirectory changes cannot bypass old buyer/cart scopes\nPASS WP validation errors persist exact rejection and skip permission dispatch and order callback\nPASS before-callback interception always keeps WP_Error until callback-blocking boundary passed\nPASS after-callback flattener never manufactures proof from generic or altered late errors\nPASS nonvalidation late-looking errors unknown JSON invalid keys and wrong buyers never fabricate proof\nPASS rejection-winning race forbids later valid same key and permits only newly confirmed different key\nPASS claim-winning race never overwrites unknown same key or releases active other key\nPASS completed or rejected-before-payment existing keys cannot become no-dispatch proof\nPASS pre-dispatch storage failure and tampered proof fail closed without missing-row retry permission\nPASS pre-dispatch proof is exact buyer and key with no PII tokens or validation snapshot persisted\nPASS production storage capability verifies exact InnoDB PKs and immutable key fingerprint\nPASS production SQL claims preserve uniqueness buyer blockers and orphan blockers\nPASS production SQL failure rolls back before callback while uncertain commit stays durable\nPASS production SQL cart binding and final settlement require durable execution completion\nPASS production SQL pending settlement requires an existing guarded finished order\nPASS production stored session decoder rejects objects malformed PII containers and foreign buyers\nPASS production pre-dispatch tombstones serialize with checkout claims without adopting carts or clearing buyers\nPASS production pre-dispatch failed insert rolls back and uncertain commit gives no immediate proof\nPASS missing registered WP rejection boundary makes capability false without storage mutations\nLOCAL_NATIVE_CHECKOUT50_STUB_TESTS=59\nNOT_CERTIFIED=installed SQL concurrency, deployed hooks/schema, payment gateways, QA outbound isolation, Native checkout\nPASS website hand-off never calls hostile gateway and creates one unpaid order\nPASS added payment handlers fail closed including identical minimum priority\nPASS repeated payment context fails closed before any provider\nPASS exception after arming restores original and leaves retry locked\nPASS deferral rejects changed owner total method payment data or paid state\nPASS all built-in offline gateways retain native processing\nPASS explicit gateway payload is not converted into a website hand-off\nPASS zero-total checkout remains on the original free-order path\nPASS unmarked website request keeps its original gateway hook callable\nPASS originally absent payment hook is absent again after hand-off\nLOCAL_WEBSITE_PAYMENT_CONTRACTS=10\nPAYMENT_HOOK_RUNTIME=LOCAL_STUB_OR_PRELOADED",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/native-payment92-test.php",
+      "passed": true,
+      "output": "PASS exact captured provider payment is accepted\nPASS normal gateway order ID is retained for paid-card badge and filters\nPASS missing provider order ID is never replaced by a made-up receipt\nPASS receipt rejects unverified totalRefundedAmount\nPASS receipt rejects unverified totalCapturedAmount\nPASS receipt rejects unverified status\nPASS receipt rejects unverified merchantId\nPASS unsafe provider order identifier is rejected\nPASS reject mismatched merchantOrderId\nPASS reject mismatched merchantId\nPASS reject mismatched sessionId\nPASS reject mismatched status\nPASS reject mismatched method\nPASS reject mismatched totalCapturedAmount\nPASS reject mismatched totalRefundedAmount\nPASS wrong currency cannot settle order\nPASS 3DS success is not a charge\nPASS reconciliation envelope is not payment success\nPASS ambiguous duplicate provider records do not settle\nPASS one captured payment survives earlier uncharged authentication attempts\nPASS one captured payment survives earlier uncharged authentication attempts\nPASS one captured payment survives earlier uncharged authentication attempts\nPASS multiple uncharged authentication attempts remain unpaid\nPASS payer authentication without money does not hide a later exact capture\nPASS conflicting authentication currency requires review\nPASS retry cannot hide conflicting merchantId\nPASS retry cannot hide conflicting sessionId\nPASS retry cannot hide conflicting method\nPASS retry cannot hide conflicting status\nPASS retry cannot hide conflicting totalAuthorizedAmount\nPASS retry cannot hide conflicting totalCapturedAmount\nPASS retry cannot hide conflicting totalRefundedAmount\nPASS missing retry monetary evidence requires review\nPASS wrong-currency retry requires review\nPASS successful pay with zero aggregate cannot be ignored\nPASS duplicate successful monetary transactions require review\nPASS aggregate success cannot hide wrong transaction amount\nPASS search results are scoped to the exact order reference\nPASS reject invalid or inexact money\nPASS reject invalid or inexact money\nPASS reject invalid or inexact money\nPASS reject invalid or inexact money\nPASS reject invalid or inexact money\nPASS reject invalid or inexact money\nPASS signed identity accepted\nPASS tampered amount rejected\nPASS unsigned amount rejected\nPASS other merchant signature rejected\nPASS repeated taps reuse one durable provider session\nPASS mobile response contains no merchant credentials\nPASS unfinished guard cannot start payment\nPASS rejected order cannot start payment\nPASS other customer cannot create payment\nPASS changed total cannot reuse or duplicate payment\nPASS provider timeout leaves durable uncertainty and cannot replay\nPASS provider capture completes the native order\nPASS gateway receipt is present when normal Woo payment completion hooks run\nPASS settlement uses the verified transaction and disallows provider redirects\nPASS polling a paid order does not repeat settlement or provider lookup\nPASS mismatched provider receipt cannot add a badge or settle the order",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/order-source98-test.php",
+      "passed": true,
+      "output": "PASS ordinary website channel keeps its query\nPASS mobile filter uses explicit app metadata, including old Store API orders\nPASS mobile filter preserves warehouse and other source restrictions\nPASS mobile filter composes with status and card filter\nPASS legacy orders keep existing restrictions and source condition\nPASS product queries are not changed\nPASS unrecognized channel is not treated as app source",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/kids-branding301-contract-test.php",
+      "passed": true,
+      "output": "KIDS_BRANDING301_CONTRACTS_PASSED",
+      "error": ""
+    },
+    {
+      "test": "connectors/woocommerce/tests/kids-tail301-contract-test.php",
+      "passed": true,
+      "output": "KIDS_TAIL301_CONTRACTS_PASSED",
+      "error": ""
+    }
+  ],
+  "passed": true
+}

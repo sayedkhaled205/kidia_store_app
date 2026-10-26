@@ -19,6 +19,15 @@ COMMON = [
     "test/core/commerce/hosted_commerce_destination297_test.dart",
     "test/features/auth/presentation/website_auth_platform_gate_test.dart",
     "test/app/hosted_commerce_routes297_test.dart",
+    "test/core/app_design/category_overrides83_test.dart",
+    "test/core/app_design/app_design_bundle58_test.dart",
+    "test/features/home/data/models/home_layout_model_test.dart",
+    "test/features/wishlist/data/shared_preferences_wishlist_repository_test.dart",
+    "test/features/wishlist/application/wishlist_controller_test.dart",
+    "test/shared/widgets/product_wishlist_button_test.dart",
+    "test/features/product/presentation/product_detail_screen_test.dart",
+    "test/features/catalog/presentation/catalog_screens_test.dart",
+    "test/features/catalog/presentation/catalog_multi_select_test.dart",
 ]
 PLATFORM_TESTS = {
     "woocommerce": [
@@ -26,10 +35,16 @@ PLATFORM_TESTS = {
         "test/features/checkout/application/checkout_shipping_test.dart",
         "test/features/checkout/data/native_inline95_test.dart",
         "test/features/checkout/data/native_payment92_test.dart",
+        "test/features/checkout/presentation/checkout_screen_test.dart",
+        "test/features/auth/data/google_initialization_retry_test.dart",
+        "test/features/auth/data/auth_repository_impl_test.dart",
+        "test/features/cart/presentation/cart_controller_test.dart",
+        "test/features/orders/data/customer_orders_repository_impl_test.dart",
     ],
     "shopify": [
         "test/core/commerce/shopify_checkout_policy297_test.dart",
         "test/features/cart/presentation/shopify_checkout_handoff297_test.dart",
+        "test/features/cart/data/shopify_cart_recovery_test.dart",
     ],
     "odoo": [
         "test/features/account/presentation/odoo_account_help297_test.dart",

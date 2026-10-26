@@ -39,6 +39,12 @@ class ConnectorPackagingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'registration missing'):
             builder.verify_features(files, self.manifest)
 
+    def test_missing_saved_address_adapter_cannot_silently_ship(self):
+        files = dict(self.files)
+        del files['integrations/kidia-address-book.php']
+        with self.assertRaisesRegex(ValueError, 'Required connector module missing'):
+            builder.verify_features(files, self.manifest)
+
     def test_central_modules_must_ship_together(self):
         for missing in ['includes/central/bootstrap.php', 'includes/central/store-data.php', 'includes/central/kidia-push-admin-bridge.php', 'includes/central/kidia-builder-application-bridge.php']:
             with self.subTest(missing=missing):

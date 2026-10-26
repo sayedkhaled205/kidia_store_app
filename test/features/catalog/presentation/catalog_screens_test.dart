@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobishop_store_app/core/app_design/app_design_providers58.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
@@ -18,6 +19,8 @@ import 'package:mobishop_store_app/features/catalog/presentation/pages/catalog_p
 import 'package:mobishop_store_app/features/categories/presentation/categories_screen.dart';
 import 'package:mobishop_store_app/features/search/presentation/search_screen.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
   testWidgets('square cards fill two equal columns on a phone', (tester) async {
@@ -437,7 +440,16 @@ void main() {
 
 Widget _app(CatalogRepository repository, Widget home) {
   return ProviderScope(
-    overrides: [catalogRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      catalogRepositoryProvider.overrideWithValue(repository),
+      // These renderer fixtures carry presentation settings on their category
+      // records. Do not require a compiled merchant design or a live CMS read.
+      // Saved-design validation and platform binding have their own contracts.
+      portableAppDesign58Provider.overrideWithValue(null),
+      cmsPageLayoutProvider.overrideWith(
+        (ref, page) async => CmsPageLayout.fallback(page),
+      ),
+    ],
     child: MaterialApp.router(
       locale: const Locale('en'),
       routerConfig: GoRouter(

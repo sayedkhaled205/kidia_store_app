@@ -78,6 +78,7 @@ require_once MOBISHOP_PATH . 'api/class-home-layout-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-product-brand-bridge.php';
 require_once MOBISHOP_PATH . 'api/class-product-variation-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-checkout-config-endpoint.php';
+require_once MOBISHOP_PATH . 'integrations/kidia-address-book.php';
 require_once MOBISHOP_PATH . 'api/class-embedded-checkout88.php';
 require_once MOBISHOP_PATH . 'api/class-native-payment92.php';
 require_once MOBISHOP_PATH . 'api/class-customer-auth-endpoint.php';

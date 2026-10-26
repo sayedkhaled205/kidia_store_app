@@ -2,7 +2,7 @@
 import json
 import unittest
 
-from verify_commerce_matrix import SENTINEL, cases, command, summarize
+from verify_commerce_matrix import COMMON, PLATFORM_TESTS, SENTINEL, cases, command, summarize
 
 
 def transcript(*, skipped=False, success=True, done=True):
@@ -17,6 +17,14 @@ def transcript(*, skipped=False, success=True, done=True):
 
 
 class CommerceMatrixTests(unittest.TestCase):
+    def test_recent_shared_fixes_are_in_every_merchant_build(self):
+        for name in ('product_wishlist_button_test.dart', 'wishlist_controller_test.dart',
+                     'product_detail_screen_test.dart', 'catalog_screens_test.dart',
+                     'home_layout_model_test.dart', 'category_overrides83_test.dart'):
+            self.assertTrue(any(path.endswith(name) for path in COMMON), name)
+        self.assertTrue(any(path.endswith('shopify_cart_recovery_test.dart')
+                            for path in PLATFORM_TESTS['shopify']))
+
     def test_all_platforms_compile_two_distinct_merchants(self):
         for platform in ("woocommerce", "shopify", "odoo"):
             fixtures = list(cases(platform))
