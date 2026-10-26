@@ -17,7 +17,10 @@ final appStartupProvider = FutureProvider<void>((ref) async {
   AppConfig.validateStoreConnection();
   // Validate the approved saved design before the branding error wrapper.
   // This preserves its actionable configuration error before any remote reads.
-  ref.watch(portableAppDesign58Provider);
+  // Startup belongs to this launch, not to a published design revision. The
+  // screen providers keep watching the design; replaying startup here would
+  // unmount their state whenever a new release arrives.
+  ref.read(portableAppDesign58Provider);
   // The existing Retry button invalidates startup. Forward that explicit
   // action to branding too, rather than reusing its cached failed request.
   // Riverpod 3.3.2 provides this lifecycle specifically for forwarding manual
@@ -29,7 +32,7 @@ final appStartupProvider = FutureProvider<void>((ref) async {
     // Cap the provider wait as well as its HTTP request. A pending/retrying
     // dependency must never leave the application on the splash indefinitely.
     splash = await ref
-        .watch(splashConfigProvider.future)
+        .read(splashConfigProvider.future)
         .timeout(splashConfigFetchTimeout);
   } on AppConfigurationException {
     rethrow;

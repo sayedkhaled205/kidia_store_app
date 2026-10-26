@@ -32,12 +32,28 @@ class AppUiControls {
         case 'text':
           if (value is String &&
               value.runes.length <= (spec['max_length'] as int) &&
-              !value.contains(RegExp(r'[\x00-\x1f\x7f<>]'))) {
+              !value.contains(RegExp(r'[\x00-\x1f\x7f<>]')) &&
+              _validContact(value.trim(), spec['format'])) {
             result[entry.key] = value.trim();
           }
       }
     }
     return AppUiControls._(Map.unmodifiable(result));
+  }
+
+  static bool _validContact(String value, Object? format) {
+    if (value.isEmpty || format == null) return true;
+    return switch (format) {
+      'phone' =>
+        RegExp(r'^\+?[0-9][0-9 ()-]{5,30}[0-9]$').hasMatch(value) &&
+            RegExp(
+              r'^[0-9]{7,15}$',
+            ).hasMatch(value.replaceAll(RegExp(r'[^0-9]'), '')),
+      'email' => RegExp(
+        r'^[^\s@<>:/\\?#]+@[^\s@<>:/\\?#]+\.[^\s@<>:/\\?#]+$',
+      ).hasMatch(value),
+      _ => false,
+    };
   }
 
   dynamic _value(String key) =>

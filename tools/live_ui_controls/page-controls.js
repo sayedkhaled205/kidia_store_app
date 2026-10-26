@@ -1,7 +1,7 @@
 (function (scope) {
   'use strict';
   const pageKeys = (screen, schema) => Object.keys(schema).filter(key =>
-    screen === 'account-builder' ? /^(auth_|logout_)/.test(key) :
+    screen === 'account-builder' ? /^(auth_|logout_|support_)/.test(key) :
     screen === 'home-builder' ? key.startsWith('cart_pulse_') :
     screen === 'checkout-builder' ? key.startsWith('cart_') && !key.startsWith('cart_pulse_') : false);
   const valueOf = (data, key) => data.values[key] ?? data.schema[key].default;
@@ -80,6 +80,9 @@
       make(doc, 'div', 'حجم ونص زر تسجيل الخروج', logout, 'wm-page-controls-heading');
       logoutBody.prepend(logout);
       containers.auth = auth; containers.logout = logout;
+      const support = card(doc, 'بيانات خدمة العملاء');
+      support.dataset.wmControlsGroup = 'support';
+      auth.insertAdjacentElement('afterend', support); containers.support = support;
     } else if (screen === 'home-builder') {
       const body = form.querySelector('[data-chrome-part="header"] > .mobishop-page-card__body');
       if (!body) return null;
@@ -93,7 +96,7 @@
     }
     return containers;
   }
-  function group(key) { return key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
+  function group(key) { return key.startsWith('support_') ? 'support' : key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
   async function mount(frame) {
     const screen = frame.dataset.screen;
     if (!supported.has(screen)) return null;
@@ -120,6 +123,8 @@
         input.type = spec.type === 'boolean' ? 'checkbox' : spec.type;
         if (spec.type === 'number') { input.min = spec.min; input.max = spec.max; input.step = spec.step; input.required = true; }
         if (spec.type === 'text') { input.maxLength = spec.max_length; input.placeholder = 'النص الأصلي'; input.dir = key.endsWith('_en') ? 'ltr' : 'rtl'; }
+        if (spec.format === 'email') { input.type = 'email'; input.dir = 'ltr'; input.placeholder = 'support@example.com'; }
+        if (spec.format === 'phone') { input.type = 'tel'; input.dir = 'ltr'; input.placeholder = '+201234567890'; input.pattern = '\\+?[0-9][0-9 ()\\-]{5,30}[0-9]'; }
         const value = valueOf(data, key);
         if (spec.type === 'boolean') input.checked = value; else input.value = String(value);
         state.baseline[key] = value; state.inputs.set(key, input);

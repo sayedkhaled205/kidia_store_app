@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/config/app_config.dart';
+import '../../../../core/app_design/app_support_provider.dart';
 import 'odoo_customer_chrome56.dart';
 
 /// Public customer contacts do not instantiate a Woo cart/bearer transport.
-class OdooSupportScreen56 extends StatelessWidget {
+class OdooSupportScreen56 extends ConsumerWidget {
   const OdooSupportScreen56({super.key});
   @override
-  Widget build(BuildContext context) {
-    final phone = AppConfig.supportWhatsApp.replaceAll(RegExp(r'[^0-9]'), '');
-    final email = AppConfig.supportEmail.trim();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final support = ref.watch(appSupportProvider);
+    final phone = support.whatsapp.replaceAll(RegExp(r'[^0-9]'), '');
+    final email = support.email.trim();
     return Scaffold(
       appBar: AppBar(
         title: Text(odooCopy56(context, 'خدمة العملاء', 'Customer service')),
@@ -23,7 +25,7 @@ class OdooSupportScreen56 extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.chat_outlined),
                 title: Text(odooCopy56(context, 'واتساب', 'WhatsApp')),
-                subtitle: Text(AppConfig.supportWhatsApp),
+                subtitle: Text(support.whatsapp),
                 onTap: () => _open(context, Uri.https('wa.me', '/$phone')),
               ),
             ),

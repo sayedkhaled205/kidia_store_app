@@ -28,6 +28,15 @@ final class LiveAppUiControls
             };
             if (!$valid) throw ValidationException::withMessages(['controls.'.$key => 'Invalid appearance setting.']);
             $clean = is_string($value) ? trim($value) : $value;
+            if ($clean !== '' && isset($rule['format'])) {
+                $valid = match ($rule['format']) {
+                    'phone' => preg_match('/^\+?[0-9][0-9 ()-]{5,30}[0-9]$/D', $clean)
+                        && preg_match('/^[0-9]{7,15}$/D', preg_replace('/[^0-9]/', '', $clean)),
+                    'email' => preg_match('~^[^\s@<>:/\\\\?#]+@[^\s@<>:/\\\\?#]+\.[^\s@<>:/\\\\?#]+$~D', $clean),
+                    default => false,
+                };
+                if (!$valid) throw ValidationException::withMessages(['controls.'.$key => 'Invalid public contact.']);
+            }
             if ($rule['type'] === 'color') $clean = strtoupper($clean);
             // Defaults are implicit, keeping older stored designs byte-identical.
             if ($clean != $rule['default']) $result[$key] = $clean;

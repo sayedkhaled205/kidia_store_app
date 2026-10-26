@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/app_design/app_support_provider.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
@@ -27,34 +28,39 @@ class CustomerSupportScreen extends StatelessWidget {
   }
 }
 
-class _SupportContent extends StatelessWidget {
+class _SupportContent extends ConsumerWidget {
   const _SupportContent({required this.isArabic});
 
   final bool isArabic;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final support = ref.watch(appSupportProvider);
     final List<_SupportAction> actions = <_SupportAction>[
-      _SupportAction(
-        id: 'whatsapp',
-        icon: Icons.chat_outlined,
-        label: isArabic ? 'واتساب' : 'WhatsApp',
-        value: localEgyptianPhoneNumber(AppConfig.supportWhatsApp),
-        uri: _whatsappUri(AppConfig.supportWhatsApp),
-      ),
-      _SupportAction(
-        id: 'email',
-        icon: Icons.email_outlined,
-        label: isArabic ? 'البريد الإلكتروني' : 'Email',
-        value: AppConfig.supportEmail,
-        uri: Uri(
-          scheme: 'mailto',
-          path: AppConfig.supportEmail,
-          queryParameters: <String, String>{
-            'subject': isArabic ? 'خدمة عملاء MobiShop' : 'MobiShop customer service',
-          },
+      if (support.whatsapp.isNotEmpty)
+        _SupportAction(
+          id: 'whatsapp',
+          icon: Icons.chat_outlined,
+          label: isArabic ? 'واتساب' : 'WhatsApp',
+          value: localEgyptianPhoneNumber(support.whatsapp),
+          uri: _whatsappUri(support.whatsapp),
         ),
-      ),
+      if (support.email.isNotEmpty)
+        _SupportAction(
+          id: 'email',
+          icon: Icons.email_outlined,
+          label: isArabic ? 'البريد الإلكتروني' : 'Email',
+          value: support.email,
+          uri: Uri(
+            scheme: 'mailto',
+            path: support.email,
+            queryParameters: <String, String>{
+              'subject': isArabic
+                  ? 'خدمة عملاء MobiShop'
+                  : 'MobiShop customer service',
+            },
+          ),
+        ),
     ];
     return ListView(
       padding: const EdgeInsets.all(MobiShopSpacing.md),
@@ -76,9 +82,9 @@ class _SupportContent extends StatelessWidget {
               Text(
                 isArabic ? 'إحنا هنا علشان نساعدك' : 'We are here to help',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: MobiShopSpacing.xs),
               Text(

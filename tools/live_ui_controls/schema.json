@@ -245,5 +245,33 @@
     "type": "text",
     "default": "",
     "max_length": 60
+  },
+  "support_whatsapp_enabled": {
+    "group": "خدمة العملاء",
+    "label": "إظهار واتساب",
+    "type": "boolean",
+    "default": true
+  },
+  "support_whatsapp": {
+    "group": "خدمة العملاء",
+    "label": "رقم واتساب بكود الدولة",
+    "type": "text",
+    "format": "phone",
+    "default": "",
+    "max_length": 32
+  },
+  "support_email_enabled": {
+    "group": "خدمة العملاء",
+    "label": "إظهار البريد الإلكتروني",
+    "type": "boolean",
+    "default": true
+  },
+  "support_contact_email": {
+    "group": "خدمة العملاء",
+    "label": "بريد خدمة العملاء",
+    "type": "text",
+    "format": "email",
+    "default": "",
+    "max_length": 254
   }
 }

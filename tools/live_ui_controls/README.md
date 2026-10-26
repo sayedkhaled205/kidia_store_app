@@ -1,6 +1,6 @@
 # Published page UI controls
 
-The 32 fields in `schema.json` extend the existing live-design release. They are
+The 36 fields in `schema.json` extend the existing live-design release. They are
 stored in the authenticated Builder draft at `builder.ui_controls_v1`, and are
 only exposed publicly after the owner publishes a release. Saving is separate
 from publishing. Each save checks a digest under a store row lock so an old tab
@@ -13,12 +13,16 @@ the application binary is required once to introduce these new controls.
 
 Supported presentation: auth background, title size/color, margins, input
 radius/padding, continue-button height, logout dimensions, cart badge pulse,
-and localized auth/cart/logout copy. Original values remain the defaults;
+localized auth/cart/logout copy, and public support WhatsApp/email with explicit
+visibility switches. Empty contacts retain the compiled fallback; disabling a
+channel hides it. URI-looking email values are rejected on server and client.
+Original values remain the defaults;
 Google sign-in, OTP/account selection, prices, quantities and checkout rules
 are unchanged. There is no remote executable code or arbitrary route command.
 
-Server source is under `backend/`. Its schema copy must match `schema.json` and
-the Dart contract in `lib/core/app_design/app_ui_control_schema.dart`. Include
+Server source is under `backend/`. Run `python tool/generate_app_ui_controls.py`
+after changing `schema.json`; `--check` verifies its server and Dart copies in CI.
+Include
 `page-controls.js` after the Builder shell is loaded. The old modal asset is retired. Existing publication
 and rollback UI handles the resulting release exactly like other saved designs.
 
@@ -31,7 +35,7 @@ and rollback. The backend test rolls back all test changes.
 
 Controls now live in their existing editor pages rather than a toolbar dialog:
 
-- Account: sign-in card and existing Logout Button card (21 controls).
+- Account: sign-in, existing Logout Button and public support cards (25 controls).
 - Home: Fixed Header / cart counter animation (3 controls).
 - Checkout: cart text card (8 controls).
 
@@ -49,3 +53,20 @@ to the same field. A failure stops the page save and uses its existing error UI.
 Controls and page layout are separate requests; if the latter fails, retrying
 preserves the already saved controls. Saving still does not publish a release.
 No data migration or application rebuild is required for this editor relocation.
+
+## Checkout and Odoo coverage
+
+The saved `checkout_design` field is projected separately into
+`pages.home.settings.checkout_presentation_v1.design`, restricted to `classic`,
+`summary_first`, or `compact`. Native WooCommerce and Odoo checkout consume it.
+Shopify's official checkout retains Shopify's own presentation. Checkout fields,
+customer addresses, shipping prices and gateways are never copied to a public
+design: their current connector APIs remain authoritative.
+
+Odoo account consumes its saved CMS page chrome, content padding, summary/menu
+visibility and styling, avatar/email/guest text, logout controls, live app name
+and auth presentation. Odoo authentication and customer transports stay separate.
+Publishing no longer replays completed app startup. Existing safe-route update
+deferral, cache validation, store isolation and rollback behavior remain in place.
+
+See `docs/live-publication-coverage.md` for scope and native-version limits.

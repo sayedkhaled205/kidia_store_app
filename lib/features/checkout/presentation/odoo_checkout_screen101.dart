@@ -5,6 +5,8 @@ import '../../auth/presentation/providers/odoo_customer_providers51.dart';
 import '../../cart/data/odoo/odoo_cart85.dart';
 import '../../cart/presentation/providers/cart_state_providers.dart';
 import '../data/odoo/odoo_checkout101.dart';
+import '../domain/entities/checkout_presentation.dart';
+import 'checkout_presentation_provider.dart';
 
 final odooCheckout101Provider = FutureProvider.autoDispose<OdooCheckoutApi101>((
   ref,
@@ -41,6 +43,9 @@ class OdooCheckoutScreen101 extends ConsumerWidget {
       data: (api) => OdooCheckoutForm101(
         key: ObjectKey(api),
         api: api,
+        design:
+            ref.watch(checkoutPresentationProvider).value?.design ??
+            CheckoutDesign.classic,
         onCartChanged: () => ref.invalidate(cartControllerProvider),
       ),
       loading: () =>
@@ -63,9 +68,15 @@ String _label(BuildContext context, String ar, String en) =>
 
 /// Only native widgets. No HTML, URL launcher, payment claim or order creation.
 class OdooCheckoutForm101 extends StatefulWidget {
-  const OdooCheckoutForm101({super.key, required this.api, this.onCartChanged});
+  const OdooCheckoutForm101({
+    super.key,
+    required this.api,
+    this.onCartChanged,
+    this.design = CheckoutDesign.classic,
+  });
   final OdooCheckoutApi101 api;
   final VoidCallback? onCartChanged;
+  final CheckoutDesign design;
   @override
   State<OdooCheckoutForm101> createState() => _OdooCheckoutForm101State();
 }
@@ -236,6 +247,7 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
     final decoration = InputDecoration(
       labelText: field.label,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      isDense: widget.design == CheckoutDesign.compact,
     );
     final key = ValueKey('address-$_fieldsGeneration-${field.name}');
     if (field.kind == 'select') {
@@ -289,7 +301,9 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
       key: const Key('odoo-native-checkout'),
       appBar: AppBar(title: Text(_label(context, 'إتمام الطلب', 'Checkout'))),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(
+          widget.design == CheckoutDesign.compact ? 12 : 16,
+        ),
         children: [
           if (_busy) const LinearProgressIndicator(),
           if (form != null && shipping == null) ...[
@@ -312,7 +326,11 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
                 children: [
                   for (final field in form.fields)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(
+                        bottom: widget.design == CheckoutDesign.compact
+                            ? 8
+                            : 12,
+                      ),
                       child: _field(field),
                     ),
                 ],
@@ -341,6 +359,7 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
             ),
           ],
           if (shipping != null) ...[
+            if (widget.design == CheckoutDesign.summaryFirst) _total(shipping),
             TextButton(
               onPressed: _busy ? null : () => _load(),
               child: Text(_label(context, 'تعديل العنوان', 'Edit address')),
@@ -373,13 +392,7 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
                 ),
             ],
             const Divider(),
-            ListTile(
-              title: Text(_label(context, 'الإجمالي', 'Total')),
-              trailing: Text(
-                _money(shipping.cart.cart.totals.priceMinor, shipping.cart),
-                key: const Key('checkout-total'),
-              ),
-            ),
+            if (widget.design != CheckoutDesign.summaryFirst) _total(shipping),
             // Payment is deliberately unavailable until the merchant payment
             // adapter has passed verification. Never submit a website handoff.
             Text(
@@ -411,4 +424,12 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
       ),
     );
   }
+
+  Widget _total(OdooShipping101 shipping) => ListTile(
+    title: Text(_label(context, 'الإجمالي', 'Total')),
+    trailing: Text(
+      _money(shipping.cart.cart.totals.priceMinor, shipping.cart),
+      key: const Key('checkout-total'),
+    ),
+  );
 }

@@ -25,9 +25,15 @@ final class LiveAppDesign
             if (strlen($encoded) > 1400000) throw new \RuntimeException('Too large');
             $design = json_decode(base64_decode($encoded, true), true, 64, JSON_THROW_ON_ERROR);
             if (empty($design['home']['blocks'])) throw new \RuntimeException('Empty Home');
+            $checkout = self::checkoutPresentation($screens);
+            if ($checkout !== null) {
+                $design['pages']['home']['settings']['checkout_presentation_v1'] = $checkout;
+            }
             $controls = LiveAppUiControls::values($store);
             if ($controls) {
                 $design['pages']['home']['settings']['ui_controls_v1'] = $controls;
+            }
+            if ($controls || $checkout !== null) {
                 $encoded = base64_encode(json_encode($design, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR));
                 if (strlen($encoded) > 1400000) throw new \RuntimeException('Too large');
             }
@@ -35,6 +41,20 @@ final class LiveAppDesign
         } catch (\Throwable $error) {
             throw ValidationException::withMessages(['design' => 'Save all app pages with a valid Home layout before publishing.']);
         }
+    }
+
+    /** Only appearance: never publish checkout fields, addresses or gateways. */
+    public static function checkoutPresentation(array $screens): ?array
+    {
+        $result = null;
+        foreach (($screens['checkout-builder']['entries'] ?? []) as $entry) {
+            if (!is_array($entry) || ($entry[0] ?? null) !== 'checkout_design') continue;
+            if ($result !== null || !in_array($entry[1] ?? null, ['classic', 'summary_first', 'compact'], true)) {
+                throw new \RuntimeException('Invalid saved checkout presentation');
+            }
+            $result = ['design' => $entry[1]];
+        }
+        return $result;
     }
     public static function status(Store $store): array
     {

@@ -4,9 +4,9 @@ const {pageKeys, valueOf, mergeChanges} = require('./page-controls.js');
 const schema = JSON.parse(fs.readFileSync(require('node:path').join(__dirname, 'schema.json'), 'utf8'));
 const pages = ['account-builder', 'home-builder', 'checkout-builder'];
 const mapped = pages.flatMap(page => pageKeys(page, schema));
-assert.equal(mapped.length, 32);
-assert.equal(new Set(mapped).size, 32);
-assert.equal(pageKeys('account-builder', schema).length, 21);
+assert.equal(mapped.length, 36);
+assert.equal(new Set(mapped).size, 36);
+assert.equal(pageKeys('account-builder', schema).length, 25);
 assert.equal(pageKeys('home-builder', schema).length, 3);
 assert.equal(pageKeys('checkout-builder', schema).length, 8);
 assert.deepEqual(pageKeys('product-builder', schema), []);
@@ -18,4 +18,4 @@ assert.throws(() => mergeChanges(schema, baseline, {logout_height:40}, {logout_h
 assert.deepEqual(mergeChanges(schema, baseline, {logout_height:40}, {logout_height:40}), {logout_height:40});
 assert.deepEqual(mergeChanges(schema, {auth_title_en:'Welcome'}, {auth_title_en:''}, {auth_title_en:'Welcome',logout_height:42}), {auth_title_en:'',logout_height:42});
 assert.throws(() => mergeChanges(schema, {}, {unknown:1}, {}));
-console.log('PASS: all 32 controls mapped once; defaults, false values, page isolation, concurrent edits, same-value retry and text reset');
+console.log('PASS: all 36 controls mapped once; defaults, false values, page isolation, concurrent edits, same-value retry and text reset');

@@ -73,6 +73,11 @@ jobs:
           python3 tool/test_unified_workflow.py
       - name: Run Builder browser contract tests
         run: npm run test:builders
+      - name: Verify shared live publication controls
+        run: |
+          python3 tool/generate_app_ui_controls.py --check
+          node tools/live_ui_controls/page-controls.test.cjs
+          php tools/live_ui_controls/presentation-test.php
       - name: Check connected sign-in preview availability
         run: node tool/builder-assets/preview-auth-config.test.cjs
       - name: Check shared preview scrolling and element selection

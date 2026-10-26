@@ -12,7 +12,7 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_identity_provider.dart';
+import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'app_language_tile.dart';
 
@@ -49,9 +49,7 @@ class AccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = AppUiControlsScope.of(context);
-    final previewIdentity = AppConfig.isCmsPreview
-        ? ref.watch(previewIdentityProvider).asData?.value
-        : null;
+    final previewIdentity = ref.watch(applicationIdentity58Provider);
     final storeName =
         previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     final bool isArabic =
