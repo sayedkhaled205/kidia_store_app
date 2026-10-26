@@ -5,6 +5,7 @@ declare( strict_types=1 );
 define( 'ABSPATH', __DIR__ );
 
 $GLOBALS['mobishop_product_query'] = array();
+class MobiShop_Setup_Wizard { public function identity(): array { return array( 'primary_color' => '#347A89' ); } }
 
 class WP_Term {
 	public function __construct(
@@ -86,6 +87,7 @@ require dirname( __DIR__ ) . '/includes/class-mobishop-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-app-header-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-coupon-banner-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-product-carousel-block.php';
+require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-product-grid-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-brand-carousel-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-section-header-block.php';
 require dirname( __DIR__ ) . '/includes/blocks/class-mobishop-promo-strip-block.php';
@@ -115,6 +117,15 @@ $coupon_markup = (string) ob_get_clean();
 mobishop_home_assert( str_contains( $coupon_markup, 'mobishop-select-media' ), 'Coupon Banner images must use the WordPress media picker.' );
 mobishop_home_assert( str_contains( $coupon_markup, 'mobishop-media-preview' ), 'Coupon Banner images must render a clickable preview.' );
 
+foreach ( array( new MobiShop_Product_Carousel_Block(), new MobiShop_Product_Grid_Block() ) as $outline_block ) {
+	mobishop_home_assert( '#347A89' === $outline_block->get_default_settings()['card_outline_color'], 'Home product outlines must default to merchant brand.' );
+	foreach ( array( '#DC713A', 'invalid' ) as $outline_value ) {
+		$outline_settings = $outline_block->sanitize_settings( array_merge( $outline_block->get_default_settings(), array( 'card_outline_color' => $outline_value ) ) );
+		$outline_expected = 'invalid' === $outline_value ? '#347A89' : $outline_value;
+		mobishop_home_assert( $outline_expected === $outline_settings['card_outline_color'], 'Home outline color must be sanitized and retained.' );
+		mobishop_home_assert( $outline_expected === $outline_block->build_api_data( $outline_settings )['card_outline_color'], 'Home product API must export outline color.' );
+	}
+}
 $carousel = new MobiShop_Product_Carousel_Block();
 $carousel_api = $carousel->build_api_block(
 	array(

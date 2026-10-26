@@ -7,6 +7,7 @@ $GLOBALS['mobishop_page_options'] = array();
 $GLOBALS['mobishop_page_routes'] = array();
 
 class WP_REST_Server { public const READABLE = 'GET'; }
+class MobiShop_Setup_Wizard { public function identity(): array { return array( 'primary_color' => '#347A89' ); } }
 class WP_REST_Request {
 	public function __construct( private array $params ) {}
 	public function get_param( string $key ) { return $this->params[ $key ] ?? null; }
@@ -38,6 +39,22 @@ require dirname( __DIR__ ) . '/includes/class-mobishop-page-layout-store.php';
 require dirname( __DIR__ ) . '/api/class-page-layout-endpoint.php';
 
 $store = new MobiShop_Page_Layout_Store();
+foreach ( array( 'catalog', 'wishlist' ) as $outline_page ) {
+	$outline_layout = $store->get_layout( $outline_page );
+	foreach ( $outline_layout['elements'] as &$outline_element ) {
+		if ( ! in_array( $outline_element['type'], array( 'product_grid', 'wishlist_grid', 'product_carousel' ), true ) ) { continue; }
+		mobishop_page_assert( '#347A89' === $outline_element['settings']['card_outline_color'], 'Product outlines must default to the merchant brand.' );
+		$outline_element['settings']['card_outline_color'] = '#DC713A';
+	}
+	unset( $outline_element );
+	$store->save_layout( $outline_page, $outline_layout );
+	foreach ( $store->get_layout( $outline_page )['elements'] as $outline_element ) {
+		if ( isset( $outline_element['settings']['card_outline_color'] ) ) {
+			mobishop_page_assert( '#DC713A' === $outline_element['settings']['card_outline_color'], 'Custom outline must survive connector save and reload.' );
+		}
+	}
+	unset( $GLOBALS['mobishop_page_options'][ 'mobishop_page_layout_' . $outline_page ] );
+}
 $wishlist_default = $store->get_layout( 'wishlist' );
 mobishop_page_assert( true === $wishlist_default['enabled'], 'Every legacy or default application page must remain enabled.' );
 $disabled_wishlist = $wishlist_default;
