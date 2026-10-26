@@ -54,8 +54,9 @@ class SavedCheckoutAddress92 {
           final identity = jsonEncode({
             for (final key in keys) key: values[key]!.trim(),
           });
-          if (ids.contains(row.id) || addresses.contains(identity))
+          if (ids.contains(row.id) || addresses.contains(identity)) {
             return false;
+          }
           ids.add(row.id);
           addresses.add(identity);
           return true;
