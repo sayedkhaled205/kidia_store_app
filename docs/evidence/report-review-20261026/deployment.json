@@ -1,0 +1,20 @@
+{
+  "source_commit": "27970707944a3de5cc133e16d30aaf59af33e3e0",
+  "runtime": "869dab72341a",
+  "previous_runtime": "8e1360577aab",
+  "main_sha256": "ee808cc0132b5a87f828934359e536623327e8b801659d2b148afce081fa5d49",
+  "published_files_verified": 51,
+  "other_chat_page_controls": "assets/page-controls-6a1ecc9a4025.js",
+  "backup": "/home/woomobile/woomobile-api/public/preview-runtime-backup-869dab72341a",
+  "reviewed_and_activated": true,
+  "browser_checks": [
+    "Product layout visually matches before patch",
+    "Reviews tab removed when section off and restored when on",
+    "Home ALL PRODUCTS renders; selecting NEW ARRIVAL after it navigates again",
+    "Website categories render with existing design",
+    "Google sign-in button remains visible",
+    "Canonical page loads new runtime and preserves unrelated page controls"
+  ],
+  "website_configuration_saved_during_testing": false,
+  "native_installed_build_updated": false
+}
