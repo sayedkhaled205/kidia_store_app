@@ -25,11 +25,55 @@ final class MobiShop_App_Exporter {
 
 	/** @return array<string,mixed> */
 	public static function state(): array {
+		wp_cache_delete( self::STATE_OPTION, 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
 		$state = get_option( self::STATE_OPTION, array() );
 		return wp_parse_args(
 			is_array( $state ) ? $state : array(),
 			self::default_state()
 		);
+	}
+
+	/** Change only the exact state that started an operation, including absent/legacy options. */
+	private static function change_state( array $expected, ?array $next ): bool {
+		global $wpdb;
+		wp_cache_delete( self::STATE_OPTION, 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+		$raw = get_option( self::STATE_OPTION, false );
+		$current = wp_parse_args( is_array( $raw ) ? $raw : array(), self::default_state() );
+		if ( $current !== $expected ) {
+			return false;
+		}
+		if ( false === $raw ) {
+			if ( null === $next ) {
+				return true;
+			}
+			// add_option() can upsert after its existence check; never replace a concurrent claim.
+			$changed = $wpdb->query( $wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				self::STATE_OPTION, maybe_serialize( $next ), 'no'
+			) ) === 1;
+			wp_cache_delete( self::STATE_OPTION, 'options' );
+			wp_cache_delete( 'notoptions', 'options' );
+			return $changed;
+		}
+		if ( null !== $next && maybe_serialize( $raw ) === maybe_serialize( $next ) ) {
+			return true;
+		}
+		// The SQL condition closes the race between reading and writing the option.
+		if ( null === $next ) {
+			$changed = $wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name=%s AND BINARY option_value=BINARY %s",
+				self::STATE_OPTION, maybe_serialize( $raw )
+			) ) === 1;
+		} else {
+			$changed = $wpdb->query( $wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND BINARY option_value=BINARY %s",
+				maybe_serialize( $next ), self::STATE_OPTION, maybe_serialize( $raw )
+			) ) === 1;
+		}
+		wp_cache_delete( self::STATE_OPTION, 'options' );
+		return $changed;
 	}
 
 	public static function is_current(): bool {
@@ -168,7 +212,9 @@ final class MobiShop_App_Exporter {
 				'request_token' => $request_token,
 			)
 		);
-		update_option( self::STATE_OPTION, $state, false );
+		if ( ! self::change_state( $existing, $state ) ) {
+			return new WP_Error( 'build_already_active', __( 'The build changed. Refresh before starting another build.', 'mobi2app-connector' ) );
+		}
 
 		$scheduled = false;
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
@@ -191,7 +237,7 @@ final class MobiShop_App_Exporter {
 
 		if ( ! $scheduled ) {
 			$error = new WP_Error( 'build_queue_failed', __( 'The Android and iOS build could not be queued. Please try again.', 'mobi2app-connector' ) );
-			$this->save_build_error( $error->get_error_message() );
+			$this->save_build_error( $error->get_error_message(), $state );
 			return $error;
 		}
 
@@ -212,7 +258,13 @@ final class MobiShop_App_Exporter {
 			return;
 		}
 
-		$this->dispatch_build( $request_token );
+		$claimed = $state;
+		$claimed['status'] = 'building';
+		$claimed['started_at'] = time();
+		if ( ! self::change_state( $state, $claimed ) ) {
+			return;
+		}
+		$this->dispatch_build( $claimed );
 	}
 
 	/**
@@ -220,23 +272,26 @@ final class MobiShop_App_Exporter {
 	 *
 	 * @return array<string,mixed>|WP_Error
 	 */
-	private function dispatch_build( string $request_token ) {
+	private function dispatch_build( array $state ) {
 		$license = new MobiShop_License_Manager();
 		if ( ! $license->is_active() ) {
 			$error = new WP_Error( 'license_required', __( 'Activate the website license before building the application.', 'mobi2app-connector' ) );
-			$this->save_build_error( $error->get_error_message() );
+			$this->save_build_error( $error->get_error_message(), $state );
 			return $error;
 		}
 
 		$manifest = self::manifest();
 		$push_project = MobiShop_Push_Service::provision_project();
 		$provision_push = ! is_wp_error( $push_project );
+		if ( self::state() !== $state ) {
+			return new WP_Error( 'build_replaced', __( 'The application build changed before dispatch.', 'mobi2app-connector' ) );
+		}
 		$response = $license->build_service_request(
 			'',
 			'POST',
 			$this->build_request_payload( $manifest, $provision_push )
 		);
-		if ( $provision_push && is_wp_error( $response ) && $this->can_retry_without_push( $response ) ) {
+		if ( $provision_push && is_wp_error( $response ) && $this->can_retry_without_push( $response ) && self::state() === $state ) {
 			$response = $license->build_service_request(
 				'',
 				'POST',
@@ -244,23 +299,24 @@ final class MobiShop_App_Exporter {
 			);
 		}
 		if ( is_wp_error( $response ) ) {
-			$this->save_build_error( $response->get_error_message() );
+			$this->save_build_error( $response->get_error_message(), $state );
 			return $response;
 		}
 
-		$state = self::state();
-		if ( ! hash_equals( (string) $state['request_token'], $request_token ) ) {
+		if ( self::state() !== $state ) {
 			return new WP_Error( 'build_replaced', __( 'A newer application build has already started.', 'mobi2app-connector' ) );
 		}
 
 		$build = $this->normalize_build_response( $response, (string) $state['hash'], $state );
 		if ( '' === (string) $build['build_id'] ) {
 			$error = new WP_Error( 'invalid_build_response', __( 'The build service did not return a build ID.', 'mobi2app-connector' ) );
-			$this->save_build_error( $error->get_error_message() );
+			$this->save_build_error( $error->get_error_message(), $state );
 			return $error;
 		}
 
-		update_option( self::STATE_OPTION, $build, false );
+		if ( ! self::change_state( $state, $build ) ) {
+			return new WP_Error( 'build_state_changed', __( 'The build was accepted, but its status could not be saved. Refresh before starting another build.', 'mobi2app-connector' ) );
+		}
 		return $build;
 	}
 
@@ -278,7 +334,7 @@ final class MobiShop_App_Exporter {
 				&& absint( $state['started_at'] ) > 0
 				&& absint( $state['started_at'] ) < ( time() - self::START_TIMEOUT )
 			) {
-				$this->save_build_error( __( 'The Android and iOS build service did not start in time. Please try again.', 'mobi2app-connector' ) );
+				$this->save_build_error( __( 'The Android and iOS build service did not start in time. Please try again.', 'mobi2app-connector' ), $state );
 				return self::state();
 			}
 			return $state;
@@ -299,8 +355,7 @@ final class MobiShop_App_Exporter {
 		}
 
 		$build = $this->normalize_build_response( $response, (string) $state['hash'], $state );
-		update_option( self::STATE_OPTION, $build, false );
-		return $build;
+		return self::change_state( $state, $build ) ? $build : self::state();
 	}
 
 	public function handle_build_status(): void {
@@ -342,14 +397,16 @@ final class MobiShop_App_Exporter {
 				'request_token' => $request_token,
 			)
 		);
-		update_option( self::STATE_OPTION, $state, false );
+		if ( ! self::change_state( $existing, $state ) ) {
+			wp_send_json_error( array( 'message' => __( 'The build changed. Refresh before starting another build.', 'mobi2app-connector' ) ), 409 );
+		}
 
 		/*
 		 * The interactive card must confirm that the provider accepted the
 		 * request before returning success. This prevents a local "Queued"
 		 * state from being mistaken for a real Codemagic build.
 		 */
-		$result = $this->dispatch_build( $request_token );
+		$result = $this->dispatch_build( $state );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ), 502 );
 		}
@@ -369,8 +426,12 @@ final class MobiShop_App_Exporter {
 			wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'mobi2app-connector' ) ), 409 );
 		}
 		if ( 'ready' === (string) $state['status'] ) {
-			$state['dismissed_build_id'] = $current_build_id;
-			update_option( self::STATE_OPTION, $state, false );
+			$acknowledged = $state;
+			$acknowledged['dismissed_build_id'] = $current_build_id;
+			if ( ! self::change_state( $state, $acknowledged ) ) {
+				wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'mobi2app-connector' ) ), 409 );
+			}
+			$state = $acknowledged;
 			wp_send_json_success(
 				array_merge(
 					$this->browser_state( $state ),
@@ -390,7 +451,9 @@ final class MobiShop_App_Exporter {
 			}
 		}
 
-		delete_option( self::STATE_OPTION );
+		if ( ! self::change_state( $state, null ) ) {
+			wp_send_json_error( array( 'message' => __( 'This build changed before the action completed. Refresh and try again.', 'mobi2app-connector' ) ), 409 );
+		}
 		wp_send_json_success(
 			array_merge(
 				$this->browser_state( self::default_state() ),
@@ -554,16 +617,15 @@ final class MobiShop_App_Exporter {
 
 	private function mark_exported( string $file_name ): void {
 		$state = self::state();
-		update_option(
-			self::STATE_OPTION,
+		self::change_state(
+			$state,
 			array_merge(
 				$state,
 				array(
 				'exported_at' => time(),
 				'file_name'   => sanitize_file_name( $file_name ),
 				)
-			),
-			false
+			)
 		);
 	}
 
@@ -672,14 +734,14 @@ final class MobiShop_App_Exporter {
 		return $state;
 	}
 
-	private function save_build_error( string $message ): void {
-		$state                 = self::state();
+	private function save_build_error( string $message, array $expected ): void {
+		$state                 = $expected;
 		$state['status']       = 'failed';
 		$state['progress']     = 0;
 		$state['message']      = sanitize_text_field( $message );
 		$state['completed_at'] = time();
 		$state['download_url'] = '';
-		update_option( self::STATE_OPTION, $state, false );
+		self::change_state( $expected, $state );
 	}
 
 	/**

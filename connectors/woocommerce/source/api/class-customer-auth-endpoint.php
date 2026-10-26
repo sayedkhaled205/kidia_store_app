@@ -466,22 +466,28 @@ final class MobiShop_Customer_Auth_Endpoint {
 			return $context;
 		}
 
-		$revoke = function () use ( $context ): void {
-			$sessions = array_values(
-				array_filter(
-					$this->sessions_for( $context['user_id'] ),
-					static fn( array $session ): bool => ! hash_equals( $context['session_hash'], (string) $session['hash'] )
-				)
-			);
-			update_user_meta( $context['user_id'], self::SESSION_META_KEY, $sessions );
-		};
-		if ( class_exists( 'MobiShop_Push_Service' ) ) {
-			$result = MobiShop_Push_Service::unbind_session( $context['user_id'], $context['session_hash'], $revoke );
+		$result = $this->mutate_sessions(
+			$context['user_id'],
+			static function ( array $current ) use ( $context ): array {
+				return array_values(
+					array_filter(
+						$current,
+						static fn( array $session ): bool => ! hash_equals( $context['session_hash'], (string) $session['hash'] )
+					)
+				);
+			}
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		// Preserve optional integrations' callback contract after verified revocation.
+		// The bundled service currently has no per-session unbind capability.
+		if ( is_callable( array( 'MobiShop_Push_Service', 'unbind_session' ) ) ) {
+			$result = MobiShop_Push_Service::unbind_session( $context['user_id'], $context['session_hash'], static fn() => true );
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
-		} else {
-			$revoke();
 		}
 
 		return $this->no_store_response( array( 'success' => true ) );
@@ -571,21 +577,29 @@ final class MobiShop_Customer_Auth_Endpoint {
 			$user
 		);
 		$lifetime = max( HOUR_IN_SECONDS, min( 90 * DAY_IN_SECONDS, $lifetime ) );
-		$expires  = $now + $lifetime;
-		$sessions = $this->sessions_for( $user->ID );
-		$sessions = array_values(
-			array_filter(
-				$sessions,
-				static fn( array $session ): bool => (int) $session['expires'] > $now
-			)
-		);
-		$sessions = array_slice( $sessions, -( self::MAX_SESSIONS - 1 ) );
-		$sessions[] = array(
+		$expires     = $now + $lifetime;
+		$new_session = array(
 			'hash'    => $this->token_hash( $token ),
 			'created' => $now,
 			'expires' => $expires,
 		);
-		update_user_meta( $user->ID, self::SESSION_META_KEY, $sessions );
+		$result = $this->mutate_sessions(
+			$user->ID,
+			static function ( array $current ) use ( $now, $new_session ): array {
+				$pruned     = array_values(
+					array_filter(
+						$current,
+						static fn( array $session ): bool => (int) $session['expires'] > $now
+					)
+				);
+				$pruned     = array_slice( $pruned, -( self::MAX_SESSIONS - 1 ) );
+				$pruned[]   = $new_session;
+				return $pruned;
+			}
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 		if ( class_exists( 'MobiShop_Analytics' ) ) {
 			MobiShop_Analytics::mark_mobile_customer( $user->ID );
 		}
@@ -605,24 +619,19 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( ! preg_match( '/^' . self::TOKEN_PREFIX . '\.([1-9][0-9]*)\.([a-f0-9]{64})$/', $token, $matches ) ) {
 			return null;
 		}
-		$user_id  = (int) $matches[1];
-		$target   = $this->token_hash( $token );
-		$now      = time();
-		$sessions = $this->sessions_for( $user_id );
-		$valid    = array();
-		$matched  = false;
+		$user_id = (int) $matches[1];
+		$target  = $this->token_hash( $token );
+		$now     = time();
+		$matched = false;
 
-		foreach ( $sessions as $session ) {
+		foreach ( $this->sessions_for( $user_id ) as $session ) {
 			if ( (int) $session['expires'] <= $now ) {
 				continue;
 			}
-			$valid[] = $session;
 			if ( hash_equals( (string) $session['hash'], $target ) ) {
 				$matched = true;
+				break;
 			}
-		}
-		if ( count( $valid ) !== count( $sessions ) ) {
-			update_user_meta( $user_id, self::SESSION_META_KEY, array_values( $valid ) );
 		}
 		if ( ! $matched ) {
 			return null;
@@ -639,9 +648,13 @@ final class MobiShop_Customer_Auth_Endpoint {
 		return (bool) apply_filters( 'mobishop_auth_customer_ready', ! get_user_meta( $user->ID, 'kidia_phone_setup_required', true ), $user );
 	}
 
-	/** Return normalized, non-expired session metadata. */
+	/** Authenticate from authoritative metadata; stale caches cannot prove a session. */
 	private function sessions_for( int $user_id ): array {
-		$stored   = get_user_meta( $user_id, self::SESSION_META_KEY, true );
+		$sessions = $this->uncached_sessions( $user_id );
+		return is_wp_error( $sessions ) ? array() : $sessions;
+	}
+
+	private function normalize_sessions( $stored ): array {
 		$sessions = array();
 		if ( ! is_array( $stored ) ) {
 			return $sessions;
@@ -663,6 +676,88 @@ final class MobiShop_Customer_Auth_Endpoint {
 			);
 		}
 		return array_slice( $sessions, -self::MAX_SESSIONS );
+	}
+
+	/** Read the authoritative row without relying on the shared metadata cache. */
+	private function uncached_sessions( int $user_id ) {
+		global $wpdb;
+		$wpdb->last_error = '';
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = %s ORDER BY umeta_id ASC LIMIT 1",
+				$user_id,
+				self::SESSION_META_KEY
+			),
+			ARRAY_A
+		);
+		if ( ! is_array( $rows ) || '' !== $wpdb->last_error ) {
+			return $this->session_store_error();
+		}
+		return $this->normalize_sessions( $rows ? maybe_unserialize( $rows[0]['meta_value'] ) : array() );
+	}
+
+	/**
+	 * Serialize session reads/writes for one user behind a MySQL advisory lock so a
+	 * concurrent login, logout or token-lookup cleanup can never resurrect a session
+	 * another request already revoked, or drop one another request just issued.
+	 *
+	 * @param callable $mutator Receives the fresh, locked session list and returns the
+	 *                           list to persist.
+	 * @return array|WP_Error The persisted session list, or a WP_Error if the lock or
+	 *                        the write could not be obtained/verified.
+	 */
+	private function mutate_sessions( int $user_id, callable $mutator ) {
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
+			return $this->session_store_error();
+		}
+
+		$lock_name = $this->session_lock_name( $user_id );
+		$acquired  = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 3 ) );
+		if ( '1' !== $acquired ) {
+			return $this->session_store_error();
+		}
+
+		try {
+			// Unlocked readers can refill a shared cache with old data even after
+			// deletion. Neither mutation input nor verification may trust that cache.
+			wp_cache_delete( $user_id, 'user_meta' );
+			$current = $this->uncached_sessions( $user_id );
+			if ( is_wp_error( $current ) ) {
+				return $current;
+			}
+			$sessions = array_values( $mutator( $current ) );
+			if ( $sessions === $current ) {
+				return $sessions;
+			}
+
+			update_user_meta( $user_id, self::SESSION_META_KEY, $sessions );
+			// update_user_meta()/update_metadata() returns false both on failure and on a
+			// no-op write, so only a verified re-read can tell those apart.
+			wp_cache_delete( $user_id, 'user_meta' );
+			$verified = $this->uncached_sessions( $user_id );
+			if ( is_wp_error( $verified ) || $verified !== $sessions ) {
+				return $this->session_store_error();
+			}
+			return $sessions;
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		}
+	}
+
+	/** MySQL advisory lock names are capped at 64 characters. */
+	private function session_lock_name( int $user_id ): string {
+		global $wpdb;
+		$table = ( isset( $wpdb->usermeta ) && is_string( $wpdb->usermeta ) ) ? $wpdb->usermeta : 'usermeta';
+		return substr( 'mobishop_uml_' . md5( $table . '|' . self::SESSION_META_KEY . '|' . $user_id ), 0, 64 );
+	}
+
+	private function session_store_error(): WP_Error {
+		return new WP_Error(
+			'mobishop_auth_session_unavailable',
+			__( 'The customer session store is temporarily unavailable. Please try again.', 'mobi2app-connector' ),
+			array( 'status' => 503 )
+		);
 	}
 
 	/** Keep elevated WordPress accounts out of the customer token surface. */

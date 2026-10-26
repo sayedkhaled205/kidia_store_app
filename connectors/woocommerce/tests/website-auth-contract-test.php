@@ -12,17 +12,31 @@ function get_permalink( $id ) { return home_url('/login/'); }
 function wc_get_page_permalink( $page ) { return $GLOBALS['woo_account_url'] ?? home_url('/my-account/'); }
 function wc_get_page_id( $page ) { return $GLOBALS['woo_account_id'] ?? 20; }
 function maybe_serialize( $value ) { return serialize($value); }
-function wp_cache_delete( $key, $group ) {}
 function wp_schedule_single_event( $time, $hook, $args ) {}
 
 // Simulate compare-and-swap against a persistent option store, including races.
 $wpdb = new class {
     public $options = 'wp_options';
     public $race = false;
+    public $usermeta = 'wp_usermeta';
+    public $last_error = '';
     public function prepare($sql, ...$args) { return [$sql, $args]; }
+    public function get_var($query) {
+        [$sql,$args] = $query;
+        if (str_contains($sql, 'GET_LOCK')) return '1';
+        throw new RuntimeException('Unexpected read in website auth fixture');
+    }
+    public function get_results($query, $output) {
+        [$sql,$args] = $query;
+        if ($output !== ARRAY_A || $sql !== 'SELECT meta_value FROM wp_usermeta WHERE user_id = %d AND meta_key = %s ORDER BY umeta_id ASC LIMIT 1') {
+            throw new RuntimeException('Unexpected session read in website auth fixture');
+        }
+        return mobishop_session_db_rows((int)$args[0], $args[1]);
+    }
     public function query($query) {
         global $options;
         [$sql, $args] = $query;
+        if (str_contains($sql, 'RELEASE_LOCK')) return 1;
         if ($this->race) { $this->race=false; return 0; }
         if (str_starts_with($sql, 'DELETE')) {
             [$key,$old] = $args;

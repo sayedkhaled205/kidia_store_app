@@ -6,8 +6,10 @@ Fixtures use intercepted HTTP only; this never connects to a merchant or pays.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -114,6 +116,64 @@ def summarize(stdout, returncode):
             "platform_binding_executed": SENTINEL in passed}
 
 
+def stop_process_tree(process, log):
+    """Stop only this invocation's process tree without waiting on output pipes."""
+    if os.name == "nt":
+        # flutter.bat owns cmd.exe, which owns Dart and test worker descendants.
+        # Popen.kill() alone terminates only the wrapper on Windows.
+        if process.poll() is None:
+            try:
+                stopped = subprocess.run(
+                    ["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=log, stderr=subprocess.STDOUT, timeout=10,
+                    check=False,
+                )
+                if stopped.returncode:
+                    log.write(b"\nProcess-tree termination reported an error.\n")
+            except (OSError, subprocess.TimeoutExpired) as error:
+                log.write(f"\nProcess-tree termination failed: {error}\n".encode())
+    else:
+        # A new session gives this case its own process group, including workers.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+
+
+def run_case(argv, log_path, *, cwd=ROOT, timeout=240):
+    """Keep every case's output and enforce a bounded process-tree timeout."""
+    log_path = Path(log_path)
+    with log_path.open("wb") as log:
+        options = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+                   if os.name == "nt" else {"start_new_session": True})
+        # Never capture pipes here: grandchildren can inherit them and prevent
+        # communicate() from returning after the .bat wrapper is terminated.
+        process = subprocess.Popen(argv, cwd=cwd, stdout=log,
+                                   stderr=subprocess.STDOUT, **options)
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            log.write(f"\nMatrix case timed out after {timeout} seconds.\n".encode())
+            log.flush()
+            stop_process_tree(process, log)
+            return {"passed": False, "error": "test_timeout",
+                    "log": str(log_path), "failure_log": str(log_path)}
+        except BaseException:
+            stop_process_tree(process, log)
+            raise
+    result = summarize(log_path.read_text(encoding="utf-8", errors="replace"),
+                       process.returncode)
+    result["log"] = str(log_path)
+    if not result["passed"]:
+        result["failure_log"] = str(log_path)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=["all", *PLATFORM_TESTS], default="all")
@@ -130,16 +190,8 @@ def main():
     for platform in platforms:
         for case in cases(platform):
             print(f'Checking {case["name"]} ({case["locale"]}, {case["country"]})', flush=True)
-            try:
-                run = subprocess.run(command(flutter, case), cwd=ROOT, capture_output=True,
-                                     text=True, encoding="utf-8", errors="replace", timeout=240)
-                result = summarize(run.stdout, run.returncode)
-                if not result["passed"]:
-                    log = report.with_name(f'{case["name"]}.log')
-                    log.write_text(run.stdout + "\n" + run.stderr, encoding="utf-8")
-                    result["failure_log"] = str(log)
-            except subprocess.TimeoutExpired:
-                result = {"passed": False, "error": "test_timeout"}
+            log = report.with_name(f'{case["name"]}.log')
+            result = run_case(command(flutter, case), log)
             results.append({**case, **result})
             print(f'{case["name"]}: {"PASS" if result["passed"] else "FAIL"} '
                   f'({result.get("tests_passed", 0)} tests)', flush=True)

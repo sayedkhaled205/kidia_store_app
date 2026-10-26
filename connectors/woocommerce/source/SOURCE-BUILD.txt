@@ -1,4 +1,4 @@
-Mobi2App Connector for WooCommerce 1.46.102
+Mobi2App Connector for WooCommerce 1.46.103
 
 PHP and first-party JavaScript are distributed as readable source.
 There is no compiled application or visual builder in this connector.

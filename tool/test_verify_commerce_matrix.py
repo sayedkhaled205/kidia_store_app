@@ -1,8 +1,13 @@
 """The test gate must reject skipped, interrupted and empty platform runs."""
 import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import time
 import unittest
 
-from verify_commerce_matrix import COMMON, PLATFORM_TESTS, SENTINEL, cases, command, summarize
+from verify_commerce_matrix import COMMON, PLATFORM_TESTS, SENTINEL, cases, command, run_case, summarize
 
 
 def transcript(*, skipped=False, success=True, done=True):
@@ -59,6 +64,65 @@ class CommerceMatrixTests(unittest.TestCase):
                      "skipped": False, "result": "success"} | changes
             output = transcript() + "\n" + json.dumps(event)
             self.assertFalse(summarize(output, 0)["passed"])
+
+    def test_success_and_failure_always_keep_stdout_and_stderr(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for code in (0, 3):
+                with self.subTest(code=code):
+                    log = Path(directory) / f"case-{code}.log"
+                    script = (f"import sys; print({transcript()!r}); "
+                              f"print('diagnostic', file=sys.stderr); sys.exit({code})")
+                    result = run_case([sys.executable, "-c", script], log,
+                                      cwd=directory, timeout=5)
+                    self.assertEqual(result["passed"], code == 0)
+                    self.assertEqual(result["log"], str(log))
+                    self.assertEqual(result["platform_binding_executed"], True)
+                    self.assertIn(SENTINEL, log.read_text())
+                    self.assertIn("diagnostic", log.read_text())
+                    self.assertEqual("failure_log" in result, code != 0)
+
+    def test_timeout_stops_wrapper_and_inheriting_child_and_keeps_log(self):
+        # Real, short-lived Python fixtures only: never launch Flutter or touch
+        # another matrix invocation. On Windows exercise the .bat wrapper too.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            marker = root / "child-heartbeat.txt"
+            child = root / "child.py"
+            child.write_text(
+                "import pathlib, sys, time\n"
+                "marker = pathlib.Path(sys.argv[1])\n"
+                "for i in range(80):\n"
+                "    marker.write_text(str(i))\n"
+                "    print('child heartbeat', i, flush=True)\n"
+                "    time.sleep(0.1)\n", encoding="utf-8")
+            parent = root / "parent.py"
+            parent.write_text(
+                "import subprocess, sys, time\n"
+                "print('parent started', flush=True)\n"
+                "print('parent diagnostic', file=sys.stderr, flush=True)\n"
+                "subprocess.Popen([sys.executable, sys.argv[1], sys.argv[2]])\n"
+                "time.sleep(10)\n", encoding="utf-8")
+            argv = [sys.executable, str(parent), str(child), str(marker)]
+            if os.name == "nt":
+                batch = root / "fixture.bat"
+                batch.write_text("@" + " ".join(f'"{arg}"' for arg in argv) + "\n",
+                                 encoding="utf-8")
+                argv = [str(batch)]
+            log = root / "timeout.log"
+            started = time.monotonic()
+            result = run_case(argv, log, cwd=root, timeout=2)
+            self.assertLess(time.monotonic() - started, 8)
+            self.assertFalse(result["passed"])
+            self.assertEqual(result["error"], "test_timeout")
+            self.assertEqual(result["failure_log"], str(log))
+            self.assertIn("parent diagnostic", log.read_text())
+            self.assertIn("child heartbeat", log.read_text())
+            self.assertIn("timed out", log.read_text())
+            heartbeat = marker.read_text()
+            size = log.stat().st_size
+            time.sleep(0.3)
+            self.assertEqual(marker.read_text(), heartbeat, "Child survived tree termination")
+            self.assertEqual(log.stat().st_size, size, "A descendant still owns the log")
 
 
 if __name__ == "__main__":

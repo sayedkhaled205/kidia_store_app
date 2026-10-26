@@ -11,12 +11,20 @@ define( 'ABSPATH', __DIR__ );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'ARRAY_A', 'ARRAY_A' );
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 
 $GLOBALS['mobishop_routes']     = array();
 $GLOBALS['mobishop_transients'] = array();
-$GLOBALS['mobishop_user_meta']  = array();
+// Authoritative "database" rows, separate from the per-request/object cache below so
+// tests can show the lock + cache-invalidation path actually reads a fresh value.
+$GLOBALS['mobishop_user_meta_store'] = array();
+$GLOBALS['mobishop_user_meta_cache'] = array();
+$GLOBALS['mobishop_user_meta_write_calls'] = 0;
+$GLOBALS['mobishop_force_meta_write_failure'] = false;
+$GLOBALS['mobishop_held_locks'] = array();
+$GLOBALS['mobishop_lock_calls'] = array();
 $GLOBALS['mobishop_social_tracker'] = '';
 $GLOBALS['mobishop_users']      = array(
 	7 => array(
@@ -276,7 +284,14 @@ function wc_create_new_customer( string $email, string $username = '', string $p
 }
 
 function get_user_meta( int $user_id, string $key, bool $single = false ) {
-	$value = $GLOBALS['mobishop_user_meta'][ $user_id ][ $key ] ?? null;
+	if ( ! empty( $GLOBALS['mobishop_meta_read_failure'] ) ) {
+		$GLOBALS['wpdb']->last_error = 'Simulated database read failure';
+		return '';
+	}
+	if ( ! isset( $GLOBALS['mobishop_user_meta_cache'][ $user_id ] ) ) {
+		$GLOBALS['mobishop_user_meta_cache'][ $user_id ] = $GLOBALS['mobishop_user_meta_store'][ $user_id ] ?? array();
+	}
+	$value = $GLOBALS['mobishop_user_meta_cache'][ $user_id ][ $key ] ?? null;
 	if ( null === $value ) {
 		return $single ? '' : array();
 	}
@@ -284,9 +299,99 @@ function get_user_meta( int $user_id, string $key, bool $single = false ) {
 }
 
 function update_user_meta( int $user_id, string $key, $value ): bool {
-	$GLOBALS['mobishop_user_meta'][ $user_id ][ $key ] = $value;
+	$GLOBALS['mobishop_user_meta_write_calls']++;
+	if ( ! empty( $GLOBALS['mobishop_fail_verification_read'] ) ) {
+		$GLOBALS['mobishop_meta_read_failure'] = true;
+	}
+	if ( ! empty( $GLOBALS['mobishop_force_meta_write_failure'] ) ) {
+		return false;
+	}
+	$previous = $GLOBALS['mobishop_user_meta_store'][ $user_id ][ $key ] ?? null;
+	if ( $previous === $value ) {
+		return false; // WordPress treats an unchanged value as a no-op write.
+	}
+	$GLOBALS['mobishop_user_meta_store'][ $user_id ][ $key ] = $value;
+	$GLOBALS['mobishop_user_meta_cache'][ $user_id ][ $key ] = $value;
 	return true;
 }
+
+function wp_cache_delete( $key, string $group = '' ): bool {
+	if ( 'user_meta' === $group ) {
+		unset( $GLOBALS['mobishop_user_meta_cache'][ (int) $key ] );
+		if ( isset( $GLOBALS['mobishop_after_cache_delete'] ) ) {
+			$hook = $GLOBALS['mobishop_after_cache_delete'];
+			unset( $GLOBALS['mobishop_after_cache_delete'] );
+			$hook( (int) $key );
+		}
+	}
+	return true;
+}
+
+/** Simulates another process writing straight to the "database" row behind the cache. */
+function mobishop_simulate_external_meta_write( int $user_id, string $key, $value ): void {
+	$GLOBALS['mobishop_user_meta_store'][ $user_id ][ $key ] = $value;
+}
+
+function maybe_unserialize( $value ) {
+	$decoded = @unserialize( $value, array( 'allowed_classes' => false ) );
+	return false === $decoded && 'b:0;' !== $value ? $value : $decoded;
+}
+
+/** Database query results bypass the object cache, as real wpdb queries do. */
+function mobishop_session_db_rows( int $user_id, string $key ): ?array {
+	if ( ! empty( $GLOBALS['mobishop_meta_read_failure'] ) || ! empty( $GLOBALS['mobishop_session_db_read_failure'] ) ) {
+		$GLOBALS['wpdb']->last_error = 'Simulated database read failure';
+		return null;
+	}
+	$rows = $GLOBALS['mobishop_user_meta_store'][ $user_id ] ?? array();
+	return array_key_exists( $key, $rows )
+		? array( array( 'meta_value' => serialize( $rows[ $key ] ) ) )
+		: array();
+}
+
+class Mobishop_WPDB_Stub {
+	public string $usermeta = 'wp_usermeta';
+	public string $last_error = '';
+
+	public function prepare( string $query, ...$args ): string {
+		return vsprintf( str_replace( array( '%s', '%d' ), array( "'%s'", '%d' ), $query ), $args );
+	}
+
+	public function get_var( string $query ) {
+		if ( isset( $GLOBALS['mobishop_before_lock'] ) ) {
+			$hook = $GLOBALS['mobishop_before_lock'];
+			unset( $GLOBALS['mobishop_before_lock'] );
+			$hook();
+		}
+		if ( ! empty( $GLOBALS['mobishop_deny_lock'] ) ) return null;
+		if ( ! preg_match( '/GET_LOCK\(\'(.+?)\',\s*(\d+)\)/', $query, $matches ) ) {
+			return null;
+		}
+		$name = $matches[1];
+		$GLOBALS['mobishop_lock_calls'][] = $name;
+		if ( ! empty( $GLOBALS['mobishop_held_locks'][ $name ] ) ) {
+			return '0';
+		}
+		$GLOBALS['mobishop_held_locks'][ $name ] = true;
+		return '1';
+	}
+
+	public function get_results( string $query, $output ) {
+		if ( ARRAY_A !== $output || ! preg_match( "/^SELECT meta_value FROM wp_usermeta WHERE user_id = ([0-9]+) AND meta_key = '([^']+)' ORDER BY umeta_id ASC LIMIT 1$/", $query, $matches ) ) {
+			throw new RuntimeException( 'Unexpected session database read.' );
+		}
+		return mobishop_session_db_rows( (int) $matches[1], $matches[2] );
+	}
+
+	public function query( string $query ) {
+		if ( preg_match( '/RELEASE_LOCK\(\'(.+?)\'\)/', $query, $matches ) ) {
+			unset( $GLOBALS['mobishop_held_locks'][ $matches[1] ] );
+		}
+		return 1;
+	}
+}
+
+$GLOBALS['wpdb'] = new Mobishop_WPDB_Stub();
 
 function user_can( WP_User $user, string $capability ): bool {
 	unset( $user, $capability );
@@ -329,7 +434,7 @@ $login = $endpoint->login(
 mobishop_auth_assert( $login instanceof WP_REST_Response, 'Valid website credentials must create a mobile session.' );
 $token = (string) $login->data['token'];
 mobishop_auth_assert( 1 === preg_match( '/^kma1\.7\.[a-f0-9]{64}$/', $token ), 'Session token format must be opaque and strong.' );
-$stored_sessions = $GLOBALS['mobishop_user_meta'][7]['_mobishop_customer_sessions_v1'];
+$stored_sessions = $GLOBALS['mobishop_user_meta_store'][7]['_mobishop_customer_sessions_v1'];
 mobishop_auth_assert( false === str_contains( serialize( $stored_sessions ), $token ), 'Only the session hash may be stored.' );
 
 $elevated = $endpoint->login(

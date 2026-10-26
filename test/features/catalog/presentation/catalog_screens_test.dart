@@ -23,6 +23,22 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('cursor load more works without an exact page count', (tester) async {
+    final repository = _ScreenCatalogRepository(cursor: true);
+      await tester.pumpWidget(_app(repository, const CatalogProductListScreen(
+        request: CatalogProductListRequest(),
+      )));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Cursor item 1'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Load more'), 300);
+    await tester.tap(find.text('Load more'));
+    await tester.pumpAndSettle();
+    expect(repository.productQueries.map((query) => query.page), [1, 2]);
+    expect(find.text('Cursor item 2'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('square card name band is optional, full width and inherited', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -536,6 +552,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.gridColumns = 4,
     this.deepTree = false,
     this.nameHighlightEnabled,
+    this.cursor = false,
   });
 
   final String categoryLayout;
@@ -543,6 +560,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   final int gridColumns;
   final bool deepTree;
   final bool? nameHighlightEnabled;
+  final bool cursor;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -550,6 +568,16 @@ class _ScreenCatalogRepository implements CatalogRepository {
     CatalogProductQuery query,
   ) async {
     productQueries.add(query);
+    if (cursor) {
+      return CatalogPage<CatalogProduct>(
+        items: [CatalogProduct(id: query.page, name: 'Cursor item ${query.page}',
+          slug: 'cursor-${query.page}', type: 'simple', isInStock: true,
+          prices: const CatalogMoney(currencyCode: 'USD', currencySymbol: r'$',
+            currencyMinorUnit: 2, priceMinor: '1999'))],
+        page: query.page, perPage: query.perPage, totalItems: null,
+        totalPages: null, cursorPagination: true, cursorHasNextPage: query.page == 1,
+      );
+    }
     final List<CatalogProduct> products = <CatalogProduct>[
       const CatalogProduct(
         id: 10,

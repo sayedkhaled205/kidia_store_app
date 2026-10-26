@@ -198,6 +198,7 @@ class _MainShellState extends ConsumerState<MainShell>
       body: NotificationListener<ScrollUpdateNotification>(
         onNotification: (ScrollUpdateNotification notification) {
           if (!footer.boolean('hide_on_scroll', false) ||
+              notification.metrics.axis != Axis.vertical ||
               notification.scrollDelta == null) {
             return false;
           }

@@ -1084,17 +1084,21 @@ class _PaginationFooter extends StatelessWidget {
     if (!state.hasNextPage && mode != 'numbers') {
       return const SizedBox(height: 16);
     }
-    final int totalPages = state.totalPages ?? 0;
-    final int visiblePageCount = totalPages.clamp(1, 7).toInt();
-    final int latestStart = (totalPages - visiblePageCount + 1)
-        .clamp(1, totalPages)
-        .toInt();
-    final int pageStart = (state.page - (visiblePageCount ~/ 2))
-        .clamp(1, latestStart)
-        .toInt();
-    final int pageEnd = (pageStart + visiblePageCount - 1)
-        .clamp(pageStart, totalPages)
-        .toInt();
+    int pageStart = 1;
+    int pageEnd = 0;
+    if (mode == 'numbers' && (state.totalPages ?? 0) > 0) {
+      final int totalPages = state.totalPages!;
+      final int visiblePageCount = totalPages.clamp(1, 7).toInt();
+      final int latestStart = (totalPages - visiblePageCount + 1)
+          .clamp(1, totalPages)
+          .toInt();
+      pageStart = (state.page - (visiblePageCount ~/ 2))
+          .clamp(1, latestStart)
+          .toInt();
+      pageEnd = (pageStart + visiblePageCount - 1)
+          .clamp(pageStart, totalPages)
+          .toInt();
+    }
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16,
