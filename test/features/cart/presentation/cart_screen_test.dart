@@ -16,6 +16,17 @@ import 'package:mobishop_store_app/features/cart/presentation/providers/cart_pro
 import '../data/cart_test_fixture.dart';
 
 void main() {
+  testWidgets('shows server fee discounts without subtracting from total twice', (tester) async {
+    final json = cartJsonFixture(totalPrice: '5432');
+    ((json['items'] as List<dynamic>).single as Map<String, dynamic>)['images'] = <dynamic>[];
+    (json['totals'] as Map<String, dynamic>)['total_fees'] = '-600';
+    final repository = _WidgetCartRepository(current: CartModel.fromJson(json).toEntity());
+    await _pumpCart(tester, repository);
+    await tester.pumpAndSettle();
+    expect(find.text('-0.600 د.ك'), findsOneWidget);
+    expect(find.text('5.432 د.ك'), findsWidgets);
+    expect(repository.current.totals.priceMinor, '5432');
+  });
   testWidgets('compact family cart preserves quantities and checkout at phone width', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;

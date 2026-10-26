@@ -1337,6 +1337,11 @@ class _OrderSummary extends StatelessWidget {
               value:
                   '-${_formatMinor(cart.totals.discountMinor, cart.totals.currency)}',
             ),
+          if ((BigInt.tryParse(cart.totals.feesMinor) ?? BigInt.zero) != BigInt.zero)
+            _SummaryLine(
+              label: cart.totals.feesMinor.startsWith('-') ? copy.discount : copy.fees,
+              value: _formatMinor(cart.totals.feesMinor, cart.totals.currency),
+            ),
           _SummaryLine(
             label: copy.shipping,
             value:
@@ -1920,6 +1925,7 @@ class _CheckoutCopy {
       : 'Choose your preferred payment method.';
   String get summary => arabic ? 'ملخص الطلب' : 'Order summary';
   String get discount => arabic ? 'الخصم' : 'Discount';
+  String get fees => arabic ? 'الرسوم' : 'Fees';
   String get shipping => arabic ? 'الشحن' : 'Shipping';
   String get shippingPending => arabic ? 'لم يُحسب بعد' : 'Not calculated yet';
   String get shippingAddressNeeded => arabic

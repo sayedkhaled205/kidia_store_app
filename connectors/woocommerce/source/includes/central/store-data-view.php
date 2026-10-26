@@ -62,6 +62,10 @@ $date_labels = array(
 );
 $money = static fn( float $amount ): string => function_exists( 'wc_price' ) ? wc_price( $amount ) : number_format_i18n( $amount, 2 );
 $coupon_type_labels = function_exists( 'wc_get_coupon_types' ) ? wc_get_coupon_types() : array();
+$show_discount_rules = ! isset( $_GET['coupon_scope'] ) || 'rules' === $_GET['coupon_scope'];
+if ( $show_discount_rules ) { $manage_urls['discounts'] = admin_url( 'admin.php?page=woo_discount_rules' ); }
+// Coupons and dynamic rules have separate counts shown in their own views.
+unset( $counts['discounts'] );
 $event = static fn( string $name ): array => $analytics['events'][ $name ] ?? array( 'count' => 0, 'unique' => 0, 'value' => 0.0 );
 $rate = static fn( float $part, float $whole ): float => $whole > 0 ? round( 100 * $part / $whole, 1 ) : 0.0;
 $change = static function ( float $current, float $previous ): array {
@@ -245,6 +249,11 @@ $category_image = static function ( WP_Term $category ): string {
 			</div>
 
 		<?php elseif ( 'discounts' === $store_tab ) : ?>
+			<nav class="mobishop-discount-sources" aria-label="<?php esc_attr_e( 'Discount source', 'mobi2app-connector' ); ?>">
+				<a class="button <?php echo $show_discount_rules ? 'button-primary' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'coupon_scope', 'rules', $tab_url( 'discounts' ) ) ); ?>">Discount Rules</a>
+				<a class="button <?php echo ! $show_discount_rules ? 'button-primary' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'coupon_scope', 'all', $tab_url( 'discounts' ) ) ); ?>"><?php esc_html_e( 'WooCommerce coupons', 'mobi2app-connector' ); ?></a>
+			</nav>
+			<?php if ( $show_discount_rules ) : MobiShop_Discount_Rules_Summary::render(); else : ?>
 			<form class="mobishop-coupon-filters" method="get" data-mobishop-instant-filter="coupons">
 				<input type="hidden" name="page" value="mobishop-store-data"><input type="hidden" name="store_tab" value="discounts">
 				<input type="search" name="coupon_search" value="<?php echo esc_attr( $coupon_search ); ?>" placeholder="<?php esc_attr_e( 'Search coupon name or code', 'mobi2app-connector' ); ?>">
@@ -253,7 +262,7 @@ $category_image = static function ( WP_Term $category ): string {
 				<select name="coupon_scope"><option value="all"><?php esc_html_e( 'All scopes', 'mobi2app-connector' ); ?></option><option value="individual" <?php selected( $coupon_scope, 'individual' ); ?>><?php esc_html_e( 'Individual use only', 'mobi2app-connector' ); ?></option><option value="product" <?php selected( $coupon_scope, 'product' ); ?>><?php esc_html_e( 'Specific products', 'mobi2app-connector' ); ?></option><option value="category" <?php selected( $coupon_scope, 'category' ); ?>><?php esc_html_e( 'Specific categories', 'mobi2app-connector' ); ?></option></select>
 				<select name="coupon_channel"><option value="any"><?php esc_html_e( 'All channels', 'mobi2app-connector' ); ?></option><option value="all" <?php selected( $coupon_channel, 'all' ); ?>><?php esc_html_e( 'Website + Mobile App', 'mobi2app-connector' ); ?></option><option value="website" <?php selected( $coupon_channel, 'website' ); ?>><?php esc_html_e( 'Website only', 'mobi2app-connector' ); ?></option><option value="mobile" <?php selected( $coupon_channel, 'mobile' ); ?>><?php esc_html_e( 'Mobile App only', 'mobi2app-connector' ); ?></option></select>
 				<button class="button button-primary" type="submit" data-mobishop-instant-submit-fallback><?php esc_html_e( 'Filter', 'mobi2app-connector' ); ?></button>
-				<a class="button" href="<?php echo esc_url( $tab_url( 'discounts' ) ); ?>"><?php esc_html_e( 'Clear', 'mobi2app-connector' ); ?></a>
+				<a class="button" href="<?php echo esc_url( add_query_arg( 'coupon_scope', 'all', $tab_url( 'discounts' ) ) ); ?>"><?php esc_html_e( 'Clear', 'mobi2app-connector' ); ?></a>
 				<?php /* translators: Placeholder values are supplied at runtime. */ ?>
 				<span><?php echo esc_html( sprintf( _n( '%d coupon', '%d coupons', $coupon_total, 'mobi2app-connector' ), $coupon_total ) ); ?></span>
 			</form>
@@ -278,6 +287,7 @@ $category_image = static function ( WP_Term $category ): string {
 				<td><div class="mobishop-row-actions mobishop-coupon-actions"><a href="<?php echo esc_url( get_edit_post_link( $coupon_post->ID ) ); ?>"><?php esc_html_e( 'Edit', 'mobi2app-connector' ); ?></a><button type="button" data-copy-text="<?php echo esc_attr( $coupon->get_code() ); ?>"><?php esc_html_e( 'Copy code', 'mobi2app-connector' ); ?></button><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-mobishop-instant-action="coupon-channel"><input type="hidden" name="action" value="mobishop_set_coupon_channel"><input type="hidden" name="coupon_id" value="<?php echo esc_attr( (string) $coupon_post->ID ); ?>"><?php wp_nonce_field( 'mobishop_set_coupon_channel_' . $coupon_post->ID, 'mobishop_coupon_channel_nonce' ); ?><select name="coupon_channel" data-mobishop-saved-value="<?php echo esc_attr( $channel ); ?>" aria-label="<?php esc_attr_e( 'Coupon sales channel', 'mobi2app-connector' ); ?>"><?php foreach ( $channel_labels as $channel_key => $channel_label ) : ?><option value="<?php echo esc_attr( $channel_key ); ?>" <?php selected( $channel, $channel_key ); ?>><?php echo esc_html( $channel_label ); ?></option><?php endforeach; ?></select><button type="submit" data-mobishop-instant-submit-fallback><?php esc_html_e( 'Save channel', 'mobi2app-connector' ); ?></button></form></div></td></tr>
 			<?php endforeach; ?></tbody></table></div>
 			<?php if ( $coupon_pages > 1 ) : ?><nav class="mobishop-data-pagination"><?php echo wp_kses_post( paginate_links( array( 'base' => add_query_arg( 'coupon_page', '%#%' ), 'format' => '', 'current' => $coupon_page, 'total' => $coupon_pages ) ) ); ?></nav><?php endif; ?>
+			<?php endif; ?>
 
 		<?php elseif ( 'customers' === $store_tab ) : ?>
 			<div class="mobishop-data-summary"><div><small><?php esc_html_e( 'Customers in period', 'mobi2app-connector' ); ?></small><b><?php echo esc_html( (string) $customer_total ); ?></b></div><div><small><?php esc_html_e( 'Page', 'mobi2app-connector' ); ?></small><b><?php echo esc_html( $customer_page . ' / ' . $customer_pages ); ?></b></div></div>

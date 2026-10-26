@@ -126,7 +126,9 @@ final class MobiShop_Product_Variation_Endpoint {
 			);
 		}
 
-		return rest_ensure_response( array_values( $variations ) );
+		$response = rest_ensure_response( array_values( $variations ) );
+		$response->header( 'Cache-Control', 'no-store, private' );
+		return $response;
 	}
 
 	/**
@@ -195,17 +197,23 @@ final class MobiShop_Product_Variation_Endpoint {
 	private function get_prices( WC_Product_Variation $variation ): array {
 		$currency = get_woocommerce_currency();
 		$decimals = wc_get_price_decimals();
+		$display = static function ( $amount ) use ( $variation ) {
+			return '' === $amount || null === $amount || ! function_exists( 'wc_get_price_to_display' )
+				? $amount : wc_get_price_to_display( $variation, array( 'price' => (float) $amount ) );
+		};
 
-		return array(
+		$prices = array(
 			'currency_code'       => $currency,
 			'currency_symbol'     => get_woocommerce_currency_symbol( $currency ),
 			'currency_minor_unit' => $decimals,
 			'currency_prefix'     => '',
 			'currency_suffix'     => '',
-			'price'               => $this->to_minor_units( $variation->get_price(), $decimals ),
-			'regular_price'       => $this->to_minor_units( $variation->get_regular_price(), $decimals ),
-			'sale_price'          => $this->to_minor_units( $variation->get_sale_price(), $decimals ),
+			'price'               => $this->to_minor_units( $display( $variation->get_price() ), $decimals ),
+			'regular_price'       => $this->to_minor_units( $display( $variation->get_regular_price() ), $decimals ),
+			'sale_price'          => $this->to_minor_units( $display( $variation->get_sale_price() ), $decimals ),
 		);
+		return class_exists( 'MobiShop_Discount_Rules_Prices' )
+			? MobiShop_Discount_Rules_Prices::prices( $variation, $prices ) : $prices;
 	}
 
 	/** Convert a decimal WooCommerce amount into a safe integer string. */

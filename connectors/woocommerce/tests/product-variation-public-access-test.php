@@ -54,7 +54,12 @@ function get_woocommerce_currency() { return 'EGP'; }
 function get_woocommerce_currency_symbol( $currency ) { return $currency; }
 function wc_get_price_decimals() { return 2; }
 function wc_format_decimal( $value, $decimals ) { return number_format( (float) $value, $decimals, '.', '' ); }
-function rest_ensure_response( $value ) { return $value; }
+class TestRestResponse extends ArrayObject {
+	public array $headers = array();
+	function header( $name, $value ) { $this->headers[$name] = $value; }
+}
+function rest_ensure_response( $value ) { return new TestRestResponse( $value ); }
+function wc_get_price_to_display( $product, $args ) { return $args['price'] * ( $GLOBALS['tax_factor'] ?? 1 ); }
 function check( $condition, $message ) {
 	if ( ! $condition ) { throw new RuntimeException( $message ); }
 	++$GLOBALS['checks'];
@@ -118,6 +123,10 @@ $rows = $endpoint->get_variations( $request );
 check( 2 === count( $rows ) && false === $rows[1]['is_in_stock'], 'Keep stock flags when out-of-stock display is enabled.' );
 $GLOBALS['hide_stock'] = true;
 check( 1 === count( $endpoint->get_variations( $request ) ), 'Respect hidden out-of-stock child.' );
+$GLOBALS['tax_factor'] = 1.2;
+$rows = $endpoint->get_variations( $request );
+check( '12000' === $rows[0]['prices']['price'], 'Variation matches shop tax-inclusive display.' );
+check( 'no-store, private' === $rows->headers['Cache-Control'], 'Contextual variation response must not be cached.' );
 unset( $GLOBALS['products'][58] ); $deny( 'Missing product uses the same 404.' );
 $GLOBALS['products'][58] = new stdClass(); $deny( 'Non-variable product uses the same 404.' );
 echo 'PASS: ' . $GLOBALS['checks'] . " public variation access assertions.\n";

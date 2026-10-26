@@ -827,10 +827,11 @@ class _OrderSummary extends StatelessWidget {
                     ? formatCartMoney(totals.shippingMinor, totals.currency)
                     : copy.shippingAtCheckout,
               ),
-            if (cartMinorIsPositive(totals.feesMinor))
+            if ((BigInt.tryParse(totals.feesMinor) ?? BigInt.zero) != BigInt.zero)
               _SummaryRow(
-                label: copy.fees,
+                label: totals.feesMinor.startsWith('-') ? copy.discount : copy.fees,
                 value: formatCartMoney(totals.feesMinor, totals.currency),
+                emphasized: totals.feesMinor.startsWith('-'),
               ),
             if (cartMinorIsPositive(totals.taxMinor))
               _SummaryRow(

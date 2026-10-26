@@ -4,6 +4,11 @@ This is the canonical source of **Mobi2App Connector for WooCommerce** distribut
 to new WooMobile stores. The `mobishop/` directory and `mobishop.zip` are the older
 CMS plugin; do not use those packages as replacements for this connector.
 
+Version 1.46.105 adds FlyCart Discount Rules display-price integration and an
+authorized, read-only merchant rule summary alongside WooCommerce coupons.
+Cart discounts and automatic gifts remain calculated by the installed FlyCart
+engine through WooCommerce. No active rules are changed by the connector.
+
 Version 1.46.104 retains and exports the optional product-card outline color in
 catalog, wishlist and Home layouts. Its default is the merchant brand color.
 
