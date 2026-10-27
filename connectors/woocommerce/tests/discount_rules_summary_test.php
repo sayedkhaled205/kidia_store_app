@@ -156,6 +156,10 @@ class Test_Stub_WPDB {
 }
 
 $root = getenv( 'MOBISHOP_CONNECTOR_TEST_ROOT' ) ?: __DIR__ . '/../source';
+function add_action( ...$args ) {}
+function wp_json_encode( $value ) { return json_encode( $value ); }
+require $root . '/includes/class-mobishop-discount-channel.php';
+require $root . '/includes/central/class-discount-rules-admin.php';
 require $root . '/includes/central/class-discount-rules-summary.php';
 
 // ---- Minimal test runner ------------------------------------------------------
@@ -247,8 +251,8 @@ check( '4c page is clamped to max valid page', 1 === $result['page'] && 1 === $r
 check( '4d one normalized row returned', 1 === count( $result['rows'] ) );
 
 $select_query = $wpdb->queries[2];
-check( '4e select never uses SELECT *', false === strpos( $select_query, 'SELECT *' ) );
-check( '4f select excludes forbidden columns', ! preg_match( '/\b(filters|conditions|used_coupons|created_by|modified_by|apply_to)\b/', $select_query ) );
+check( '4e merchant revision is available', 64 === strlen( $result['rows'][0]['revision'] ) );
+check( '4f response excludes raw targeting columns', ! array_intersect( array_keys( $result['rows'][0] ), array( 'filters', 'conditions', 'used_coupons', 'created_by', 'modified_by', 'apply_to', 'additional' ) ) );
 check( '4g select includes deleted = 0', false !== strpos( $select_query, 'deleted = 0' ) );
 check( '4h select orders by priority ASC, id ASC', false !== strpos( $select_query, 'ORDER BY priority ASC, id ASC' ) );
 check( '4i search is escaped via prepare (quote is backslash-escaped)', false !== strpos( $select_query, "o\\'Reilly" ) );
@@ -377,7 +381,7 @@ MobiShop_Discount_Rules_Summary::query(
 	)
 );
 $select_query_p2 = $wpdb->queries[2];
-check( '8a page 2 uses offset 24 with per-page 24', false !== strpos( $select_query_p2, 'LIMIT 24 OFFSET 24' ) );
+check( '8a page 2 uses offset 20 with per-page 20', false !== strpos( $select_query_p2, 'LIMIT 20 OFFSET 20' ) );
 
 if ( ! function_exists( 'get_woocommerce_currency' ) ) { function get_woocommerce_currency() { return 'EGP'; } }
 foreach ( array( 'flat' => '20 EGP off per item', 'flat_in_subtotal' => '20 EGP off subtotal', 'fixed_price' => 'Final price: 20 EGP', 'percentage' => '20% off' ) as $kind => $label ) {

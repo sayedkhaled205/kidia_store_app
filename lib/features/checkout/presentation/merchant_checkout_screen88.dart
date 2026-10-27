@@ -118,6 +118,7 @@ class _MerchantCheckoutScreen88State
             options: Options(
               followRedirects: false,
               headers: {
+                'X-MobiShop-Channel': 'mobile',
                 'X-MobiShop-Session': session.token,
                 'Cart-Token': token,
                 'Accept': 'application/json',

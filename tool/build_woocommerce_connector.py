@@ -38,6 +38,8 @@ def verify_features(files: dict[str, bytes], manifest: dict) -> None:
         if private_material.search(data):
             raise ValueError(f'Private key or access-token pattern cannot ship: {name}')
     required = {
+        'includes/class-mobishop-discount-channel.php': ['advanced_woo_discount_rules_is_conditions_passed', 'advanced_woo_discount_rules_before_save_rule_column', 'GET_LOCK', 'RELEASE_LOCK'],
+        'includes/central/class-discount-rules-admin.php': ['manage_options', 'manage_woocommerce', 'FOR UPDATE', 'request_id', 'revision', 'lock_rule'],
         'api/class-discount-rules-prices.php': ['advanced_woo_discount_rules_get_product_discount_price', 'no-store, private', 'isFreeProduct'],
         'includes/central/class-discount-rules-summary.php': ['current_user_authorized', 'manage_options', 'manage_woocommerce', 'offer_summary'],
         'includes/class-mobishop-order-source98.php': ['_mobishop_order_source', 'hpos_query', 'legacy_query', 'filter-by-created-via'],

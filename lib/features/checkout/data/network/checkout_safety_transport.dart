@@ -96,6 +96,7 @@ class StoreApiCheckoutSafetyTransport implements CheckoutSafetyTransport {
           headers: <String, String>{
             'Accept': 'application/json',
             'Cache-Control': 'no-store',
+            'X-MobiShop-Channel': 'mobile',
             'X-MobiShop-Session': session,
             if (cart.isNotEmpty) 'Cart-Token': cart,
           },

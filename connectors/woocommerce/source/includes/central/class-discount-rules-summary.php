@@ -4,11 +4,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Read-only summary of FlyCart "Advanced Woo Discount Rules" rows for the
  * private merchant Discounts page. Never touches product pricing, never
- * writes to the rules table, and only reads a whitelisted set of columns.
+ * writes to the rules table, and exposes only normalized summary fields.
  */
 final class MobiShop_Discount_Rules_Summary {
 
-	private const PER_PAGE = 24;
+	private const PER_PAGE = 20;
 
 	/**
 	 * @return array{available:bool,rows:array,total:int,pages:int,page:int,error:bool}
@@ -78,7 +78,9 @@ final class MobiShop_Discount_Rules_Summary {
 
 		$rows = array();
 		if ( $total > 0 ) {
-			$columns = 'id,title,discount_type,enabled,priority,exclusive,date_from,date_to,usage_limits,used_limits,product_adjustments,cart_adjustments,bulk_adjustments,set_adjustments,buy_x_get_x_adjustments,buy_x_get_y_adjustments';
+			// Merchant-only raw rows stay server-side; the browser receives the
+			// summary and a revision hash, never customer targeting conditions.
+			$columns = '*';
 			$sql     = "SELECT {$columns} FROM {$table} WHERE {$where_sql} ORDER BY priority ASC, id ASC LIMIT %d OFFSET %d";
 			$query_args = array_merge( $args, array( self::PER_PAGE, $offset ) );
 			$results = $wpdb->get_results( $wpdb->prepare( $sql, $query_args ), ARRAY_A );
@@ -91,7 +93,11 @@ final class MobiShop_Discount_Rules_Summary {
 			$now = (int) current_time( 'timestamp' );
 			foreach ( (array) $results as $row ) {
 				if ( is_array( $row ) ) {
-					$rows[] = self::normalize_row( $row, $now );
+					$normalized = self::normalize_row( $row, $now );
+					$normalized['channel'] = MobiShop_Discount_Channel::scope( $row );
+					$normalized['enabled'] = (int) ( $row['enabled'] ?? 0 ) === 1;
+					$normalized['revision'] = MobiShop_Discount_Rules_Admin::revision( $row );
+					$rows[] = $normalized;
 				}
 			}
 		}
@@ -126,6 +132,7 @@ final class MobiShop_Discount_Rules_Summary {
 			echo '<p>' . esc_html__( 'Advanced Woo Discount Rules is not active, so no discount rules are available to show.', 'mobi2app-connector' ) . '</p></section>';
 			return;
 		}
+		echo '<button type="button" class="button button-primary" data-discount-action="create">' . esc_html__( 'Create offer', 'mobi2app-connector' ) . '</button>';
 
 		$search = self::filter_value( $filters, 'search', 'coupon_search' );
 		$type   = self::filter_value( $filters, 'type', 'coupon_type' );
@@ -157,12 +164,12 @@ final class MobiShop_Discount_Rules_Summary {
 		echo '<button class="button button-primary" type="submit">' . esc_html__( 'Filter', 'mobi2app-connector' ) . '</button>';
 		echo '<a class="button" href="' . esc_url( $manage_url ) . '">' . esc_html__( 'Manage rules', 'mobi2app-connector' ) . '</a>';
 		echo '</form>';
-		echo '<p>' . esc_html( sprintf( __( '%d rules', 'mobi2app-connector' ), $result['total'] ) ) . '</p>';
+		self::pagination( $result );
 
 		echo '<p class="mobishop-discount-rules-note">' . esc_html(
 			sprintf(
 				/* translators: %s is a timezone label such as UTC or Europe/London. */
-				__( 'Dates use the site timezone (%s). The website applies each offer when its conditions are met in the cart.', 'mobi2app-connector' ),
+				__( 'Dates use the store timezone (%s). Each offer applies only in its selected channels when its conditions are met.', 'mobi2app-connector' ),
 				$timezone_label
 			)
 		) . '</p>';
@@ -174,11 +181,12 @@ final class MobiShop_Discount_Rules_Summary {
 		echo '<th>' . esc_html__( 'Status', 'mobi2app-connector' ) . '</th>';
 		echo '<th>' . esc_html__( 'Dates', 'mobi2app-connector' ) . '</th>';
 		echo '<th>' . esc_html__( 'Usage', 'mobi2app-connector' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sales channels', 'mobi2app-connector' ) . '</th><th>' . esc_html__( 'Controls', 'mobi2app-connector' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
 		foreach ( $result['rows'] as $row ) {
 			$title = '' !== $row['title'] ? $row['title'] : __( '(untitled rule)', 'mobi2app-connector' );
-			echo '<tr><td><strong>' . esc_html( $title ) . '</strong>';
+			echo '<tr data-discount-id="' . esc_attr( $row['id'] ) . '" data-discount-revision="' . esc_attr( $row['revision'] ) . '" data-discount-channel="' . esc_attr( $row['channel'] ) . '" data-discount-enabled="' . ( $row['enabled'] ? '1' : '0' ) . '" data-discount-title="' . esc_attr( $title ) . '"><td><strong>' . esc_html( $title ) . '</strong>';
 			if ( $row['exclusive'] ) {
 				echo '<small class="mobishop-discount-rules-badge">' . esc_html__( 'Exclusive', 'mobi2app-connector' ) . '</small>';
 			}
@@ -188,13 +196,23 @@ final class MobiShop_Discount_Rules_Summary {
 			echo '<td><span class="mobishop-status">' . esc_html( self::status_label( $row['status'] ) ) . '</span></td>';
 			echo '<td class="mobishop-rule-dates"><span>' . esc_html( null === $row['date_from'] ? __( 'No start date', 'mobi2app-connector' ) : gmdate( 'Y-m-d H:i', $row['date_from'] ) ) . '</span><span>' . esc_html( null === $row['date_to'] ? __( 'No end date', 'mobi2app-connector' ) : gmdate( 'Y-m-d H:i', $row['date_to'] ) ) . '</span></td>';
 			echo '<td>' . esc_html( self::format_usage( $row['usage_limits'], $row['used_limits'] ) ) . '</td>';
+			$labels = array( 'all' => __( 'Website + Mobile', 'mobi2app-connector' ), 'website' => __( 'Website only', 'mobi2app-connector' ), 'mobile' => __( 'Mobile only', 'mobi2app-connector' ) );
+			echo '<td>' . esc_html( $labels[ $row['channel'] ] ) . '</td><td><button type="button" class="button" data-discount-action="edit">' . esc_html__( 'Control', 'mobi2app-connector' ) . '</button> <button type="button" class="button" data-discount-action="clone">' . esc_html__( 'Copy offer', 'mobi2app-connector' ) . '</button></td>';
 			echo '</tr>';
 		}
 		if ( ! $result['rows'] ) {
-			echo '<tr><td colspan="6">' . esc_html__( 'No rules match these filters.', 'mobi2app-connector' ) . '</td></tr>';
+			echo '<tr><td colspan="8">' . esc_html__( 'No rules match these filters.', 'mobi2app-connector' ) . '</td></tr>';
 		}
 
 		echo '</tbody></table></div>';
+		self::pagination( $result );
+		echo '</section>';
+	}
+
+	private static function pagination( array $result ): void {
+		$from = $result['total'] ? ( $result['page'] - 1 ) * self::PER_PAGE + 1 : 0;
+		$to = min( $result['total'], $result['page'] * self::PER_PAGE );
+		echo '<div class="mobishop-rules-pagination"><p>' . esc_html( sprintf( __( 'Showing %1$d–%2$d of %3$d offers · Page %4$d of %5$d', 'mobi2app-connector' ), $from, $to, $result['total'], $result['page'], $result['pages'] ) ) . '</p>';
 
 		if ( $result['pages'] > 1 && function_exists( 'paginate_links' ) && function_exists( 'add_query_arg' ) && function_exists( 'wp_kses_post' ) ) {
 			echo '<nav class="mobishop-data-pagination">' . wp_kses_post(
@@ -209,7 +227,7 @@ final class MobiShop_Discount_Rules_Summary {
 			) . '</nav>';
 		}
 
-		echo '</section>';
+		echo '</div>';
 	}
 
 	/**

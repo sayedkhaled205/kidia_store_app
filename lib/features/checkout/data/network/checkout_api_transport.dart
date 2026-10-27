@@ -374,6 +374,7 @@ class StoreApiCheckoutTransport
     }
     return <String, String>{
       ...base,
+      'X-MobiShop-Channel': 'mobile',
       if (token.isNotEmpty) 'X-MobiShop-Session': token,
     };
   }
