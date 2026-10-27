@@ -17,6 +17,9 @@ def replace(source, old, new):
 
 
 def frame_patch(source):
+    source = replace(source,
+        'JSON.stringify(options.serialize(pending.form))!==JSON.stringify(pending.draft.entries)',
+        'KidiaPublishEdits.fingerprint(options.serialize(pending.form))!==KidiaPublishEdits.fingerprint(pending.draft.entries)')
     source = replace(source, '  const applicationSave = KidiaApplicationSave.create({', '''  let publishSavedState = {};
   const publishEditor = KidiaPublishEdits.screens.has(screen) ? KidiaPublishEdits.editor({
     screen, form: () => root.querySelector('#mobishop-home-builder-form, form.mobishop-page-editor') || root.querySelector('form'),
