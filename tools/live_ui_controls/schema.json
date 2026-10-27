@@ -273,5 +273,146 @@
     "format": "email",
     "default": "",
     "max_length": 254
+  },
+  "cart_layout": {
+    "group": "تصميم السلة",
+    "label": "شكل السلة",
+    "type": "choice",
+    "default": "theme",
+    "options": {
+      "theme": "حسب الثيم",
+      "classic": "كلاسيكي",
+      "compact": "مختصر"
+    }
+  },
+  "cart_side_padding": {
+    "group": "تصميم السلة",
+    "label": "المسافة على جانبي السلة",
+    "type": "number",
+    "default": null,
+    "min": 8,
+    "max": 28,
+    "step": 1
+  },
+  "cart_item_gap": {
+    "group": "تصميم السلة",
+    "label": "المسافة بين المنتجات",
+    "type": "number",
+    "default": null,
+    "min": 4,
+    "max": 24,
+    "step": 1
+  },
+  "cart_item_image_width": {
+    "group": "تصميم السلة",
+    "label": "عرض صورة المنتج",
+    "type": "number",
+    "default": null,
+    "min": 64,
+    "max": 112,
+    "step": 1
+  },
+  "cart_item_image_height": {
+    "group": "تصميم السلة",
+    "label": "ارتفاع صورة المنتج",
+    "type": "number",
+    "default": null,
+    "min": 64,
+    "max": 160,
+    "step": 1
+  },
+  "cart_item_image_radius": {
+    "group": "تصميم السلة",
+    "label": "استدارة صورة المنتج",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "cart_item_name_size": {
+    "group": "تصميم السلة",
+    "label": "حجم اسم المنتج",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "cart_item_name_lines": {
+    "group": "تصميم السلة",
+    "label": "عدد سطور اسم المنتج",
+    "type": "number",
+    "default": null,
+    "min": 1,
+    "max": 3,
+    "step": 1
+  },
+  "cart_checkout_button_height": {
+    "group": "تصميم السلة",
+    "label": "ارتفاع زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "cart_checkout_button_radius": {
+    "group": "تصميم السلة",
+    "label": "استدارة زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 32,
+    "step": 1
+  },
+  "cart_checkout_button_font_size": {
+    "group": "تصميم السلة",
+    "label": "حجم خط زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 22,
+    "step": 1
+  },
+  "cart_coupon_display": {
+    "group": "تصميم السلة",
+    "label": "عرض قسم كود الخصم",
+    "type": "choice",
+    "default": "theme",
+    "options": {
+      "theme": "حسب الثيم",
+      "expanded": "مفتوح في البداية",
+      "collapsed": "مطوي في البداية"
+    }
+  },
+  "cart_summary_display": {
+    "group": "تصميم السلة",
+    "label": "عرض تفاصيل الإجمالي",
+    "type": "choice",
+    "default": "theme",
+    "options": {
+      "theme": "حسب الثيم",
+      "expanded": "مفتوح في البداية",
+      "collapsed": "مطوي في البداية"
+    }
+  },
+  "cart_empty_icon_size": {
+    "group": "تصميم السلة",
+    "label": "حجم أيقونة السلة الفارغة",
+    "type": "number",
+    "default": null,
+    "min": 40,
+    "max": 120,
+    "step": 1
+  },
+  "cart_empty_top_spacing": {
+    "group": "تصميم السلة",
+    "label": "المسافة أعلى السلة الفارغة",
+    "type": "number",
+    "default": null,
+    "min": 16,
+    "max": 80,
+    "step": 1
   }
 }

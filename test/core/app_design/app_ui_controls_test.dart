@@ -15,6 +15,26 @@ import 'app_design_fixture58.dart';
 
 void main() {
   test(
+    'cart choices and inherited sizes reject unsafe values independently',
+    () {
+      final controls = AppUiControls.fromJson({
+        'cart_layout': 'compact',
+        'cart_coupon_display': 'expanded',
+        'cart_summary_display': 'javascript:alert(1)',
+        'cart_item_image_radius': 0,
+        'cart_item_image_width': null,
+        'cart_item_image_height': 10000,
+        'cart_checkout_button_height': 60,
+      });
+      expect(controls.values, {
+        'cart_layout': 'compact',
+        'cart_coupon_display': 'expanded',
+        'cart_item_image_radius': 0,
+        'cart_checkout_button_height': 60,
+      });
+    },
+  );
+  test(
     'schema-1 release carries controls through the actual page provider',
     () async {
       final payload = appDesignFixture58();

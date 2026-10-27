@@ -5,11 +5,11 @@ const {JSDOM}=require('jsdom');
 const source=fs.readFileSync(require('node:path').join(__dirname,'page-controls.js'),'utf8');
 const schema=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'schema.json'),'utf8'));
 const {draftKey}=require('./page-controls.js');
-async function fixture(store, draft) {
-  const dom=new JSDOM('<main class="kidia-central-stage"><iframe data-screen="account-builder"></iframe></main>',{url:'https://builder.example/index.html?store='+store,runScripts:'outside-only'});
+async function fixture(store, draft, screen='account-builder') {
+  const dom=new JSDOM('<main class="kidia-central-stage"><iframe data-screen="'+screen+'"></iframe></main>',{url:'https://builder.example/index.html?store='+store,runScripts:'outside-only'});
   const w=dom.window, frame=w.document.querySelector('iframe'), doc=frame.contentDocument;
-  doc.body.innerHTML='<form class="mobishop-page-editor"><div class="mobishop-page-settings-card"></div><section data-element="logout_button"><div class="mobishop-page-card__body"></div></section></form>';
-  if(draft) w.sessionStorage.setItem(draftKey(store,'account-builder'),JSON.stringify(draft));
+  doc.body.innerHTML='<form class="mobishop-page-editor"><div class="mobishop-page-settings-card"></div><div class="mobishop-checkout-design-panel"></div><section data-element="logout_button"><div class="mobishop-page-card__body"></div></section></form>';
+  if(draft) w.sessionStorage.setItem(draftKey(store,screen),JSON.stringify(draft));
   let values={},writes=0,refreshes=0;
   w.fetch=async (url,options={})=>{
     if(url.includes('/context')) return {ok:true,headers:{get:()=> 'application/json'},json:async()=>({store,csrf_token:'local-fixture'})};
@@ -20,7 +20,7 @@ async function fixture(store, draft) {
   w.eval(source);
   for(let i=0;i<10 && !doc.querySelector('[data-wm-ui-control]');i++) await new Promise(resolve=>setImmediate(resolve));
   const input=key=>doc.querySelector('[data-wm-ui-control="'+key+'"]');
-  assert.ok(input('auth_title_en'));
+  assert.ok(input(screen==='checkout-builder'?'cart_layout':'auth_title_en'));
   const packet={page:'account',layouts:{home:{page:'home',settings:{existing:true}},account:{page:'account'}}};
   return {w,dom,frame,input,packet,writes:()=>writes,refreshes:()=>refreshes,values:()=>values};
 }
@@ -46,6 +46,37 @@ async function fixture(store, draft) {
   assert.equal(restored.w.sessionStorage.getItem(key),null);
   const other=await fixture('beta');
   assert.equal(other.input('auth_title_en').value,'');
-  for(const x of [f,restored,other]) x.dom.window.close();
+  const cart=await fixture('alpha',null,'checkout-builder');
+  const mobile=cart.w.document.createElement('iframe'); mobile.id='kidia-shared-flutter'; cart.w.document.body.append(mobile);
+  const navigations=[]; mobile.contentWindow.postMessage=(message,origin)=>navigations.push([JSON.parse(message),origin]);
+  for(const page of ['cart','checkout']) cart.frame.contentDocument.querySelector('[data-wm-preview-page="'+page+'"]').click();
+  assert.deepEqual(navigations, [
+    [{type:'mobishop-preview-navigate',page:'cart'},'https://builder.example'],
+    [{type:'mobishop-preview-navigate',page:'checkout'},'https://builder.example'],
+  ]);
+  assert.equal(cart.writes(),0,'Selecting cart preview must not save or publish');
+  assert.equal(cart.input('cart_layout').tagName,'SELECT');
+  assert.equal(cart.input('cart_layout').value,'theme');
+  assert.equal(cart.input('cart_item_image_radius').value,'');
+  await cart.w.MobiShopPageControls.save(cart.frame);
+  assert.equal(cart.writes(),0,'Inherited sizes must not become edits');
+  cart.input('cart_item_image_radius').value='0';
+  cart.input('cart_layout').value='compact';
+  cart.input('cart_layout').dispatchEvent(new cart.w.Event('change',{bubbles:true}));
+  const cartDraft=JSON.parse(cart.w.sessionStorage.getItem(draftKey('alpha','checkout-builder')));
+  const cartRestored=await fixture('alpha',cartDraft,'checkout-builder');
+  assert.equal(cartRestored.input('cart_item_image_radius').value,'0');
+  assert.equal(cartRestored.input('cart_layout').value,'compact');
+  await cartRestored.w.MobiShopPageControls.save(cartRestored.frame);
+  assert.equal(cartRestored.values().cart_item_image_radius,0);
+  assert.equal(cartRestored.values().cart_layout,'compact');
+  cartRestored.input('cart_layout').value='classic';
+  cartRestored.frame.contentDocument.querySelector('form').reset();
+  assert.equal(cartRestored.input('cart_layout').value,'compact','Reset restores the saved choice');
+  cartRestored.input('cart_item_image_radius').value='';
+  await cartRestored.w.MobiShopPageControls.save(cartRestored.frame);
+  assert.equal(cartRestored.values().cart_item_image_radius,null,'Clear restores inheritance, not zero');
+  assert.equal(cartRestored.input('cart_item_image_radius').value,'');
+  for(const x of [f,restored,other,cart,cartRestored]) x.dom.window.close();
   console.log('PASS live controls load, preview without writes, draft recovery, save cleanup, color normalization and merchant isolation');
 })().catch(error=>{console.error(error);process.exitCode=1;});

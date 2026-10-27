@@ -5,6 +5,12 @@
     screen === 'home-builder' ? key.startsWith('cart_pulse_') :
     screen === 'checkout-builder' ? key.startsWith('cart_') && !key.startsWith('cart_pulse_') : false);
   const valueOf = (data, key) => data.values[key] ?? data.schema[key].default;
+  function setSavedInput(input, spec, value) {
+    if (spec.type === 'boolean') { input.defaultChecked = input.checked = value; return; }
+    input.value = value === null ? '' : String(value);
+    if (spec.type === 'choice') for (const option of input.options) option.defaultSelected = option.value === value;
+    else input.defaultValue = input.value;
+  }
   function mergeChanges(schema, baseline, changed, latest) {
     const merged = {...latest};
     for (const [key, value] of Object.entries(changed)) {
@@ -24,7 +30,7 @@
     return {...packet, layouts: {...packet.layouts, home: layout},
       ...(packet.page === 'home' ? {layout} : {})};
   }
-  function inputValue(input, spec) { return spec.type === 'boolean' ? input.checked : spec.type === 'number' ? input.valueAsNumber : spec.type === 'color' ? input.value.toUpperCase() : input.value; }
+  function inputValue(input, spec) { return spec.type === 'boolean' ? input.checked : spec.type === 'number' ? (spec.default === null && input.value === '' ? null : input.valueAsNumber) : spec.type === 'color' ? input.value.toUpperCase() : input.value; }
   const draftKey = (store, screen) => 'mobishop-controls-draft-v1:' + store + ':' + screen;
   function draftChanges(schema, baseline, values) {
     return Object.fromEntries(Object.keys(values).filter(key => schema[key] && values[key] !== baseline[key]).map(key => [key, values[key]]));
@@ -95,7 +101,7 @@
     if (doc.getElementById('wm-page-controls-style')) return;
     const node = make(doc, 'style', '', doc.head);
     node.id = 'wm-page-controls-style';
-    node.textContent = '.wm-page-controls{margin:14px 0;direction:rtl;color:#20413d}.wm-page-controls-card{border:1px solid #c5dcd6;border-radius:14px;background:#fff;overflow:hidden}.wm-page-controls summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:16px;font-weight:700;padding:18px;list-style:none}.wm-page-controls summary::after{content:"⌄";font-size:22px;color:#277d6d}.wm-page-controls[open]>summary::after{transform:rotate(180deg)}.wm-page-controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px}.wm-page-controls label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:14px}.wm-page-controls input{box-sizing:border-box;width:100%;height:40px;border:1px solid #a8c7bf;border-radius:9px;padding:8px;background:#fff;color:#203d38;font-size:14px}.wm-page-controls input[type=color]{padding:4px}.wm-page-controls input[type=checkbox]{width:22px;height:22px;accent-color:#217b69}.wm-page-controls-note{margin:0;padding:0 16px 14px;font-size:12px;color:#627d76}.wm-page-controls-status:empty{display:none}.wm-page-controls-status{margin:10px 0;color:#a32922}.wm-page-controls-heading{font-size:15px;font-weight:700;padding:12px 16px 0}.wm-page-controls-error{padding:12px;border:1px solid #d9a79e;border-radius:8px;color:#a32922}@media(max-width:560px){.wm-page-controls-grid{grid-template-columns:1fr}}';
+    node.textContent = '.wm-page-controls{margin:14px 0;direction:rtl;color:#20413d}.wm-page-controls-card{border:1px solid #c5dcd6;border-radius:14px;background:#fff;overflow:hidden}.wm-page-controls summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:16px;font-weight:700;padding:18px;list-style:none}.wm-page-controls summary::after{content:"⌄";font-size:22px;color:#277d6d}.wm-page-controls[open]>summary::after{transform:rotate(180deg)}.wm-page-controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px}.wm-page-controls label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:14px}.wm-page-controls input,.wm-page-controls select{box-sizing:border-box;width:100%;height:40px;border:1px solid #a8c7bf;border-radius:9px;padding:8px;background:#fff;color:#203d38;font-size:14px}.wm-page-controls button[data-wm-preview-page]{min-height:40px;padding:8px 12px;border:1px solid #a8c7bf;border-radius:9px;background:#edf7f4;color:#217b69;font:inherit;cursor:pointer}.wm-page-controls input[type=color]{padding:4px}.wm-page-controls input[type=checkbox]{width:22px;height:22px;accent-color:#217b69}.wm-page-controls-note{margin:0;padding:0 16px 14px;font-size:12px;color:#627d76}.wm-page-controls-status:empty{display:none}.wm-page-controls-status{margin:10px 0;color:#a32922}.wm-page-controls-heading{font-size:15px;font-weight:700;padding:12px 16px 0}.wm-page-controls-error{padding:12px;border:1px solid #d9a79e;border-radius:8px;color:#a32922}@media(max-width:560px){.wm-page-controls-grid{grid-template-columns:1fr}}';
   }
   function card(doc, title) {
     const section = make(doc, 'details', '', null, 'wm-page-controls wm-page-controls-card');
@@ -129,6 +135,16 @@
       if (!design) return null;
       const cart = card(doc, 'السلة');
       cart.dataset.wmControlsGroup = 'cart'; design.insertAdjacentElement('afterend', cart); containers.cart = cart;
+      const previews = make(doc, 'div', '', cart, 'wm-page-controls-grid');
+      for (const [page, title] of [['cart', 'معاينة السلة'], ['checkout', 'معاينة إتمام الطلب']]) {
+        const button = make(doc, 'button', title, previews);
+        button.type = 'button';
+        button.dataset.wmPreviewPage = page;
+        button.addEventListener('click', () => {
+          const preview = document.getElementById('kidia-shared-flutter');
+          if (preview) preview.contentWindow.postMessage(JSON.stringify({type: 'mobishop-preview-navigate', page}), location.origin);
+        });
+      }
     }
     return containers;
   }
@@ -152,20 +168,22 @@
       for (const [key, parent] of Object.entries(containers)) grids[key] = make(doc, 'div', '', parent, 'wm-page-controls-grid');
       for (const key of pageKeys(screen, data.schema)) {
         const spec = data.schema[key], label = make(doc, 'label', spec.label, grids[group(key)]);
-        const input = make(doc, 'input', '', label);
+        const input = make(doc, spec.type === 'choice' ? 'select' : 'input', '', label);
         // Keep the existing page serializer intact; the same Save Page action
         // persists these versioned controls before committing the page layout.
         input.dataset.wmUiControl = key;
-        input.type = spec.type === 'boolean' ? 'checkbox' : spec.type;
-        if (spec.type === 'number') { input.min = spec.min; input.max = spec.max; input.step = spec.step; input.required = true; }
+        if (spec.type === 'choice') {
+          for (const [value, caption] of Object.entries(spec.options)) make(doc, 'option', caption, input).value = value;
+        } else input.type = spec.type === 'boolean' ? 'checkbox' : spec.type;
+        if (spec.type === 'number') { input.min = spec.min; input.max = spec.max; input.step = spec.step; input.required = spec.default !== null; if (spec.default === null) input.placeholder = 'حسب الثيم'; }
         if (spec.type === 'text') { input.maxLength = spec.max_length; input.placeholder = 'النص الأصلي'; input.dir = key.endsWith('_en') ? 'ltr' : 'rtl'; }
         if (spec.format === 'email') { input.type = 'email'; input.dir = 'ltr'; input.placeholder = 'support@example.com'; }
         if (spec.format === 'phone') { input.type = 'tel'; input.dir = 'ltr'; input.placeholder = '+201234567890'; input.pattern = '\\+?[0-9][0-9 ()\\-]{5,30}[0-9]'; }
         const value = valueOf(data, key);
-        if (spec.type === 'boolean') input.defaultChecked = input.checked = value; else input.defaultValue = input.value = String(value);
+        setSavedInput(input, spec, value);
         state.baseline[key] = value; state.inputs.set(key, input);
       }
-      for (const container of Object.values(containers)) make(doc, 'p', 'تُحفظ مع إعدادات الصفحة. النص الفارغ يستخدم النص الأصلي.', container, 'wm-page-controls-note');
+      for (const container of Object.values(containers)) make(doc, 'p', 'تُحفظ مع إعدادات الصفحة. النص الفارغ يستخدم النص الأصلي، والحجم الفارغ يتبع الثيم.', container, 'wm-page-controls-note');
       state.status = make(doc, 'p', '', Object.values(containers)[0], 'wm-page-controls-status');
       state.status.setAttribute('role', 'status');
       state.status.setAttribute('aria-live', 'polite');
@@ -175,8 +193,9 @@
           for (const [key, input] of state.inputs) {
             if (!Object.hasOwn(draft.changed, key) || !Object.hasOwn(draft.baseline, key)) continue;
             const spec = data.schema[key], value = draft.changed[key];
-            if (typeof value !== typeof valueOf(data, key)) continue;
-            if (spec.type === 'boolean') input.checked = value; else input.value = String(value);
+            if (spec.type === 'number' && spec.default === null ? value !== null && typeof value !== 'number' : typeof value !== typeof valueOf(data, key)) continue;
+            if (spec.type === 'choice' && !Object.hasOwn(spec.options, value)) continue;
+            if (spec.type === 'boolean') input.checked = value; else input.value = value === null ? '' : String(value);
             state.baseline[key] = draft.baseline[key];
           }
           state.status.textContent = 'تم استرجاع تعديلاتك غير المحفوظة.';
@@ -223,7 +242,7 @@
     for (const [key, input] of state.inputs) {
       const value = valueOf(result, key);
       state.baseline[key] = value;
-      if (result.schema[key].type === 'boolean') input.defaultChecked = input.checked = value; else input.defaultValue = input.value = String(value);
+      setSavedInput(input, result.schema[key], value);
     }
     state.data = result;
     previewData = result;

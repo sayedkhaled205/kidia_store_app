@@ -12,6 +12,7 @@ store/origin binding, digest checks, cache, foreground refresh and rollback.
 | Category designs and subcategory behavior, category title highlight | Published; category contents remain from the store |
 | Catalog, product/reviews, size chart, wishlist, account | Published page elements, settings and header/footer configuration supported by their renderers |
 | Auth/cart/logout presentation | 32 existing shared controls; auth protocol and permissions remain native/API-driven |
+| Cart appearance | 15 additional controls for existing layouts, padding, images, names, checkout button, coupon/summary expansion and empty state; blank values retain theme defaults |
 | Support contacts | Four new shared controls: public WhatsApp/email and independent enable switches |
 | Native checkout presentation | Three saved styles on WooCommerce/Odoo, now part of the shared release |
 | Shopify checkout | Official Shopify checkout presentation remains controlled by Shopify |

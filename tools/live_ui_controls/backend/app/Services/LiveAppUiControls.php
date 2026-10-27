@@ -17,12 +17,15 @@ final class LiveAppUiControls
         $schema = self::schema(); $result = [];
         foreach ($values as $key => $value) {
             $rule = $schema[$key] ?? null;
+            // An empty optional size inherits its existing theme/layout value.
+            if ($rule && $rule['default'] === null && $value === null) continue;
             // Laravel converts empty form strings to null before validation.
             if ($rule && $rule['type'] === 'text' && $value === null) $value = '';
             $valid = $rule && match ($rule['type']) {
                 'number' => (is_int($value) || is_float($value)) && is_finite((float)$value) && $value >= $rule['min'] && $value <= $rule['max'],
                 'boolean' => is_bool($value),
                 'color' => is_string($value) && preg_match('/^#[a-fA-F0-9]{6}$/D', $value),
+                'choice' => is_string($value) && array_key_exists($value, $rule['options']),
                 'text' => is_string($value) && mb_strlen($value) <= $rule['max_length'] && !preg_match('/[\x00-\x1f\x7f<>]/u', $value),
                 default => false,
             };
@@ -39,7 +42,7 @@ final class LiveAppUiControls
             }
             if ($rule['type'] === 'color') $clean = strtoupper($clean);
             // Defaults are implicit, keeping older stored designs byte-identical.
-            if ($clean != $rule['default']) $result[$key] = $clean;
+            if ($rule['default'] === null || $clean != $rule['default']) $result[$key] = $clean;
         }
         ksort($result);
         return $result;
