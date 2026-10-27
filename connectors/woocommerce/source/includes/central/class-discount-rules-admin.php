@@ -19,7 +19,7 @@ final class MobiShop_Discount_Rules_Admin {
 
     public static function revision( array $row ): string {
         // Purchases updating usage counters do not overwrite merchant settings.
-        unset( $row['used_limits'], $row['used_coupons'] );
+        unset( $row['used_limits'] );
         ksort( $row );
         return hash( 'sha256', wp_json_encode( $row ) );
     }
@@ -103,6 +103,7 @@ final class MobiShop_Discount_Rules_Admin {
         if ( in_array( $type, array( 'set', 'bxgx', 'bxgy', 'shipping' ), true ) && ! class_exists( '\WDRPro\App\Rules\BOGO' ) ) throw new InvalidArgumentException( 'This offer needs Discount Rules Pro on the store.' );
         $target = $input['target'] ?? '';
         if ( ! in_array( $target, array( 'all', 'products', 'categories' ), true ) ) throw new InvalidArgumentException( 'Choose the products for this offer.' );
+        if ( $type === 'shipping' && $target !== 'all' ) throw new InvalidArgumentException( 'Free shipping applies to the whole cart. Use the website editor for additional cart conditions.' );
         $ids = $target === 'all' ? array() : self::ids( $input['ids'] ?? array(), $target );
         $from = self::date( $input['date_from'] ?? '' );
         $to = self::date( $input['date_to'] ?? '' );
@@ -111,7 +112,7 @@ final class MobiShop_Discount_Rules_Admin {
         $post['filters'] = $target === 'all' ? array() : array( '1' => array( 'type' => $target === 'categories' ? 'product_category' : 'products', 'method' => 'in_list', 'value' => $ids ) );
         if ( in_array( $type, array( 'simple', 'cart', 'bulk', 'set' ), true ) ) {
             $kind = $type === 'set' ? 'fixed_set_price' : ( $input['discount_kind'] ?? '' );
-            if ( ! in_array( $kind, array( 'percentage', 'flat', 'fixed_set_price' ), true ) ) throw new InvalidArgumentException( 'Choose percentage or a fixed discount.' );
+            if ( $type !== 'set' && ! in_array( $kind, array( 'percentage', 'flat' ), true ) ) throw new InvalidArgumentException( 'Choose percentage or a fixed discount.' );
             $value = self::number( $input['value'] ?? '' );
             if ( $kind === 'percentage' && $value > 100 ) throw new InvalidArgumentException( 'Percentage must not exceed 100.' );
             if ( $type === 'cart' && $kind === 'flat' ) $kind = 'flat_in_subtotal';
@@ -152,6 +153,7 @@ final class MobiShop_Discount_Rules_Admin {
         if ( $operation !== 'update' ) {
             if ( ! is_string( $input['title'] ?? null ) || trim( $input['title'] ) === '' || mb_strlen( $input['title'] ) > 200 ) throw new InvalidArgumentException( 'Enter an offer name of up to 200 characters.' );
             $input['title'] = sanitize_text_field( $input['title'] );
+            if ( trim( $input['title'] ) === '' ) throw new InvalidArgumentException( 'Enter an offer name.' );
         }
         if ( $operation !== 'create' && ( ! is_int( $input['id'] ?? null ) || $input['id'] <= 0 || ! is_string( $input['revision'] ?? null ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input['revision'] ) ) ) throw new InvalidArgumentException( 'Reload this offer before saving.' );
         $post = $operation === 'create' ? self::creation( $input ) : null;
@@ -159,7 +161,7 @@ final class MobiShop_Discount_Rules_Admin {
         $table = $wpdb->prefix . 'wdr_rules';
         $option = 'mobishop_discount_request_' . hash( 'sha256', $key );
         $hash = hash( 'sha256', wp_json_encode( $input ) );
-        $wpdb->query( 'START TRANSACTION' );
+        if ( $wpdb->query( 'START TRANSACTION' ) === false ) throw new RuntimeException( 'Transaction unavailable.' );
         try {
             // Unique option_name serializes concurrent retries. No frontend data.
             $claimed = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name,option_value,autoload) VALUES (%s,%s,'off')", $option, wp_json_encode( array( 'hash' => $hash ) ) ) );
@@ -167,7 +169,7 @@ final class MobiShop_Discount_Rules_Admin {
             if ( $claimed === 0 ) {
                 $saved = json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name=%s FOR UPDATE", $option ) ), true );
                 if ( ! is_array( $saved ) || ! hash_equals( $saved['hash'] ?? '', $hash ) || ! isset( $saved['result'] ) ) throw new DomainException( 'This request changed. Reload the offer before saving.' );
-                $wpdb->query( 'COMMIT' );
+                if ( $wpdb->query( 'COMMIT' ) === false ) throw new RuntimeException( 'Commit failed.' );
                 return $saved['result'];
             }
             if ( $operation === 'create' ) {
@@ -177,7 +179,8 @@ final class MobiShop_Discount_Rules_Admin {
             } else {
                 $old = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id=%d AND deleted=0 FOR UPDATE", $input['id'] ), ARRAY_A );
                 if ( ! $old || ! hash_equals( self::revision( $old ), $input['revision'] ) ) throw new DomainException( 'This offer changed elsewhere. Refresh the list and reopen it.' );
-                $extra = json_decode( (string) ( $old['additional'] ?? '[]' ), true );
+                $metadata = $old['additional'] ?? '';
+                $extra = trim( $metadata ) === '' ? array() : json_decode( $metadata, true );
                 if ( ! is_array( $extra ) ) throw new DomainException( 'This offer needs repair in the website rule editor first.' );
                 $extra[ MobiShop_Discount_Channel::KEY ] = $input['channel'];
                 $changes = array( 'enabled' => $input['enabled'] ? 1 : 0, 'additional' => wp_json_encode( $extra ), 'modified_by' => get_current_user_id(), 'modified_on' => current_time( 'mysql' ) );
@@ -187,7 +190,7 @@ final class MobiShop_Discount_Rules_Admin {
                 } else {
                     // Copy every existing condition/adjustment without reconstructing it.
                     unset( $old['id'] );
-                    $row = array_merge( $old, $changes, array( 'title' => $input['title'], 'used_limits' => 0, 'used_coupons' => '[]', 'created_by' => get_current_user_id(), 'created_on' => current_time( 'mysql' ) ) );
+                    $row = array_merge( $old, $changes, array( 'title' => $input['title'], 'used_limits' => 0, 'created_by' => get_current_user_id(), 'created_on' => current_time( 'mysql' ) ) );
                     $row['priority'] = 1 + (int) $wpdb->get_var( "SELECT MAX(priority) FROM {$table}" );
                     if ( $wpdb->insert( $table, $row ) !== 1 ) throw new RuntimeException( 'Clone failed.' );
                     $id = (int) $wpdb->insert_id;

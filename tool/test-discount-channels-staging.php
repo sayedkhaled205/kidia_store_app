@@ -18,7 +18,11 @@ if ( ! in_array( $case, array('simple','zero','bulk','cart','set','bxgx','bxgy',
 $created = array();
 $results = array();
 global $wpdb;
-$wpdb->query('START TRANSACTION');
+foreach ([$wpdb->posts,$wpdb->postmeta] as $table) {
+    $engine=$wpdb->get_var($wpdb->prepare('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s',$table));
+    if(strtoupper((string)$engine)!=='INNODB') throw new RuntimeException('Transactional fixtures required');
+}
+if($wpdb->query('START TRANSACTION')===false) throw new RuntimeException('Cannot begin fixture transaction');
 try {
 	// Create disposable database fixtures directly to avoid product-save webhooks.
 	$make = static function($price) use ($wpdb, &$created) {
@@ -90,10 +94,11 @@ try {
 		}
 		$results[]=array('quantity'=>$quantity,'website'=>$total,'app_minor'=>$api_total,'gifts'=>$gifts);
 	}
-	print("DISCOUNT_QA ".json_encode(array('case'=>$case,'channel'=>$channel,'scope'=>$scope,'quote'=>$quote['price'],'checks'=>$results,'passed'=>true))."\n");
 } finally {
 	if ( WC()->session ) { remove_action('shutdown',array(WC()->session,'save_data'),20); }
-	$wpdb->query('ROLLBACK');
+	if($wpdb->query('ROLLBACK')===false) throw new RuntimeException('Fixture rollback failed');
 	foreach($created as $id) { clean_post_cache($id); wp_cache_delete($id,'post_meta'); }
-	print("DISCOUNT_QA_ROLLBACK ".json_encode(array('case'=>$case,'fixture_posts_remaining'=>(int)$wpdb->get_var('SELECT COUNT(*) FROM '.$wpdb->posts.' WHERE ID IN ('.implode(',',array_map('intval',$created?:array(0))).')')))."\n");
+	$remaining=(int)$wpdb->get_var('SELECT COUNT(*) FROM '.$wpdb->posts.' WHERE ID IN ('.implode(',',array_map('intval',$created?:array(0))).')');
+	if($remaining!==0) throw new RuntimeException('Fixture records remain');
 }
+print("DISCOUNT_QA ".json_encode(array('case'=>$case,'channel'=>$channel,'scope'=>$scope,'quote'=>$quote['price'],'checks'=>$results,'fixture_posts_remaining'=>0,'passed'=>true))."\n");

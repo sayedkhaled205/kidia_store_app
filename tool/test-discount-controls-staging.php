@@ -23,7 +23,11 @@ $assert=static function($ok,$message) use (&$checks) { ++$checks; if(!$ok) throw
 $admin=get_users(['role'=>'administrator','number'=>1,'fields'=>'ID']);
 if(!$admin) throw new RuntimeException('No staging administrator');
 wp_set_current_user((int)$admin[0]);
-$real->query('START TRANSACTION'); $wpdb=new Discount_QA_DB($real);
+foreach ([$real->prefix.'wdr_rules',$real->options,$real->posts,$real->postmeta] as $table) {
+    $engine=$real->get_var($real->prepare('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s',$table));
+    $assert(strtoupper((string)$engine)==='INNODB','Transactional table required');
+}
+$assert($real->query('START TRANSACTION')!==false,'Begin outer transaction'); $wpdb=new Discount_QA_DB($real);
 try {
     $now=current_time('mysql');
     $real->insert($real->posts,['post_author'=>0,'post_date'=>$now,'post_date_gmt'=>gmdate('Y-m-d H:i:s'),'post_modified'=>$now,'post_modified_gmt'=>gmdate('Y-m-d H:i:s'),'post_title'=>'WooMobile isolated controls fixture','post_name'=>'wm-controls-'.wp_generate_uuid4(),'post_status'=>'publish','post_type'=>'product','post_content'=>'','post_excerpt'=>'','comment_status'=>'closed','ping_status'=>'closed','to_ping'=>'','pinged'=>'','post_content_filtered'=>'']);
@@ -53,15 +57,29 @@ try {
         $input['request_id']=wp_generate_uuid4();
         try { $run($input); throw new RuntimeException('Stale revision accepted'); } catch(DomainException $expected) { ++$checks; }
     }
+    $real->update($table,['used_coupons'=>'["qa-coupon-condition"]','used_limits'=>5],['id'=>$id]);
     $old=$read($id);
     $copy=$run(['operation'=>'clone','request_id'=>wp_generate_uuid4(),'id'=>$id,'revision'=>MobiShop_Discount_Rules_Admin::revision($old),'title'=>$base['title'].' copy','channel'=>'website','enabled'=>false]); $created[]=$copy['id'];
     $assert($copy['id']!==$id && $read($id)===$old,'Clone leaves original unchanged');
     $assert($read($copy['id'])['filters']===$old['filters'],'Clone preserves targeting');
+    $assert($read($copy['id'])['used_coupons']===$old['used_coupons'] && (int)$read($copy['id'])['used_limits']===0,'Clone preserves coupon conditions and resets usage only');
+    foreach([null,''] as $metadata) {
+        $real->update($table,['additional'=>$metadata],['id'=>$copy['id']]);
+        $legacy=$read($copy['id']);
+        $saved=$run(['operation'=>'update','request_id'=>wp_generate_uuid4(),'id'=>$copy['id'],'revision'=>MobiShop_Discount_Rules_Admin::revision($legacy),'channel'=>'mobile','enabled'=>false]);
+        $assert($saved['channel']==='mobile','Legacy empty metadata accepted');
+    }
     $kept=MobiShop_Discount_Channel::preserve_channel(['additional'=>'{"condition_relationship":"or"}'],$id);
     $assert(json_decode($kept['additional'],true)['mobishop_channel']==='mobile','FlyCart editor retains channel');
     $assert(json_decode($kept['additional'],true)['condition_relationship']==='or','FlyCart editor retains own changes');
     $bad=$base; $bad['value']='101';
     try { $run($bad); throw new RuntimeException('Invalid percentage accepted'); } catch(InvalidArgumentException $expected) { ++$checks; }
+    foreach(['simple','cart','bulk'] as $type) {
+        $bad=$base; $bad['type']=$type; $bad['discount_kind']='fixed_set_price';
+        try { $run($bad); throw new RuntimeException('Invalid amount kind accepted'); } catch(InvalidArgumentException $expected) { ++$checks; }
+    }
+    $bad=$base; $bad['title']='<b></b>';
+    try { $run($bad); throw new RuntimeException('Empty sanitized title accepted'); } catch(InvalidArgumentException $expected) { ++$checks; }
     $bad=$base; $bad['date_from']='2026-02-30 12:00';
     try { $run($bad); throw new RuntimeException('Invalid date accepted'); } catch(InvalidArgumentException $expected) { ++$checks; }
     wp_set_current_user(0);
@@ -76,12 +94,14 @@ try {
     $b=MobiShop_Discount_Rules_Summary::query(['search'=>$search,'page'=>2]);
     $assert($a['total']===23 && $a['pages']===2 && count($a['rows'])===20 && count($b['rows'])===3,'23 offers paginated 20+3');
     $assert(count(array_unique(array_column(array_merge($a['rows'],$b['rows']),'id')))===23,'No missing or duplicated offers');
-    echo 'DISCOUNT_CONTROLS_QA '.json_encode(['checks'=>$checks,'passed'=>true,'types'=>7,'channels'=>3]).PHP_EOL;
 } finally {
-    $wpdb=$real; $real->query('ROLLBACK');
+    $wpdb=$real; $assert($real->query('ROLLBACK')!==false,'Rollback succeeded');
     foreach(array_unique($requests) as $key) wp_cache_delete($key,'options');
     if(isset($product)) { clean_post_cache($product); wp_cache_delete($product,'post_meta'); }
-    wp_cache_delete('alloptions','options'); wp_cache_delete('awdr_on_sale_product','options');
+    wp_cache_delete('alloptions','options'); wp_cache_delete('wdr_on_sale_list_attention_required','options');
     $remaining=$created ? (int)$real->get_var('SELECT COUNT(*) FROM '.$real->prefix.'wdr_rules WHERE id IN ('.implode(',',array_map('intval',$created)).')') : 0;
     echo 'DISCOUNT_CONTROLS_ROLLBACK '.json_encode(['fixture_rules_remaining'=>$remaining]).PHP_EOL;
+    $assert($remaining===0,'No fixture rules remain');
+    if(isset($product)) $assert(!$real->get_var($real->prepare("SELECT ID FROM {$real->posts} WHERE ID=%d",$product)),'No fixture product remains');
 }
+echo 'DISCOUNT_CONTROLS_QA '.json_encode(['checks'=>$checks,'passed'=>true,'types'=>7,'channels'=>3]).PHP_EOL;

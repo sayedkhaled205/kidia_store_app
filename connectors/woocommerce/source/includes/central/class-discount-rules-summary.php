@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Read-only summary of FlyCart "Advanced Woo Discount Rules" rows for the
  * private merchant Discounts page. Never touches product pricing, never
- * writes to the rules table, and only reads a whitelisted set of columns.
+ * writes to the rules table, and exposes only normalized summary fields.
  */
 final class MobiShop_Discount_Rules_Summary {
 

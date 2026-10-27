@@ -33,10 +33,10 @@ final class DiscountRulesController extends Controller
             $url = rtrim($store->site_url, '/') . '/wp-json/mobishop/v1/central/discount-rules';
             $upstream = $get ? $client->get($url, $input) : $client->post($url, $input);
             if (!$upstream->successful() || $upstream->json('ok') !== true) {
-                $status = in_array($upstream->status(), [409,422], true) ? $upstream->status() : 502;
                 // Only curated connector validation errors are returned. No upstream
                 // HTML, stack traces, credentials, or arbitrary plugin messages.
                 $known = in_array($upstream->json('code'), ['invalid_discount','discount_conflict','discount_unavailable'], true);
+                $status = $known && in_array($upstream->status(), [409,422], true) ? $upstream->status() : 502;
                 $message = $known ? $upstream->json('message') : 'The store could not confirm this action. Retry before creating another offer.';
                 return response()->json(['ok'=>false,'message'=>$message], $status, $headers);
             }
