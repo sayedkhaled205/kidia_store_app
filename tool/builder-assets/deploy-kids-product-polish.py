@@ -80,6 +80,8 @@ def patch_schema(source, fields):
 
 
 def patch_connector(source, repo):
+    newline = '\r\n' if '\r\n' in source else '\n'
+    source = source.replace('\r\n', '\n')
     path = 'mobishop/includes/class-mobishop-page-layout-store.php'
     before = subprocess.check_output(['git', '-c', 'safe.directory=' + str(repo), '-C', str(repo), 'show', '08559b4e20771c814c6840020c38d7e76026bec5:' + path]).decode()
     after = (repo / path).read_text()
@@ -95,7 +97,7 @@ def patch_connector(source, repo):
             continue
         assert source.count(old) == 1, 'Connector changed near product fields; inspect instead of overwriting'
         source = source.replace(old, new, 1)
-    return source
+    return source.replace('\n', newline)
 
 
 def main():
