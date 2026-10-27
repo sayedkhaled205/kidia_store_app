@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
-/// Draw attention once when the authoritative quantity increases, never on load.
+/// Draw attention with two pulses when the authoritative quantity increases, never on load.
 class CartCountPulse extends StatefulWidget {
   const CartCountPulse({required this.count, required this.child, super.key});
   final int count;
@@ -34,24 +34,26 @@ class _CartCountPulseState extends State<CartCountPulse>
         !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
     _peak = ui.number('cart_pulse_scale');
     _controller.duration = Duration(
-      milliseconds: ui.number('cart_pulse_duration').round(),
+      milliseconds: ui.number('cart_pulse_duration').round() * 2,
     );
     if (!_enabled) _controller.reset();
     _scale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1,
-          end: _peak,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 45,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: _peak,
-          end: 1,
-        ).chain(CurveTween(curve: Curves.easeInOut)),
-        weight: 55,
-      ),
+      for (var pulse = 0; pulse < 2; pulse++) ...[
+        TweenSequenceItem(
+          tween: Tween<double>(
+            begin: 1,
+            end: _peak,
+          ).chain(CurveTween(curve: Curves.easeOut)),
+          weight: 45,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(
+            begin: _peak,
+            end: 1,
+          ).chain(CurveTween(curve: Curves.easeInOut)),
+          weight: 55,
+        ),
+      ],
     ]).animate(_controller);
   }
 

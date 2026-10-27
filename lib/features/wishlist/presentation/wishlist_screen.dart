@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/wishlist/application/wishlist_controller.dart';
@@ -444,7 +445,7 @@ class _WishlistStatePage extends StatelessWidget {
         child: _WishlistRecommendations(
           key: ValueKey<String>(component.id),
           repository: catalogRepository,
-          settings: component,
+          settings: wishlistRecommendationAppearance(component, layout),
           horizontalPadding: cmsContentHorizontalPadding(
             layout,
             component: component,
@@ -530,7 +531,10 @@ class _WishlistMessage extends StatelessWidget {
               settings.string('title', ''),
               signIn ? copy.signInTitle : copy.emptyTitle,
               signIn
-                  ? const ['Sign in to view your wishlist', 'سجّل الدخول لعرض المفضلة']
+                  ? const [
+                      'Sign in to view your wishlist',
+                      'سجّل الدخول لعرض المفضلة',
+                    ]
                   : const ['Your wishlist is empty', 'المفضلة فارغة'],
             ),
             textAlign: TextAlign.center,
@@ -548,10 +552,15 @@ class _WishlistMessage extends StatelessWidget {
           if (settings.boolean('show_description', !signIn)) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              cmsFooterLabel(settings.string('description', ''), copy.emptyBody,
-                const ['Add items here by clicking the little heart!',
+              cmsFooterLabel(
+                settings.string('description', ''),
+                copy.emptyBody,
+                const [
+                  'Add items here by clicking the little heart!',
                   'Tap the heart on any product to save it here.',
-                  'اضغط على القلب بجوار أي منتج لحفظه هنا.']),
+                  'اضغط على القلب بجوار أي منتج لحفظه هنا.',
+                ],
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: settings
@@ -613,8 +622,13 @@ class _WishlistMessage extends StatelessWidget {
                   cmsFooterLabel(
                     settings.string('button_label', ''),
                     signIn ? copy.signIn : copy.continueShopping,
-                    signIn ? const ['Sign In', 'تسجيل الدخول']
-                        : const ['Go Shopping', 'Continue shopping', 'متابعة التسوق'],
+                    signIn
+                        ? const ['Sign In', 'تسجيل الدخول']
+                        : const [
+                            'Go Shopping',
+                            'Continue shopping',
+                            'متابعة التسوق',
+                          ],
                   ),
                 ),
               ),
@@ -693,9 +707,11 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            cmsFooterLabel(widget.settings.string('title', ''),
+            cmsFooterLabel(
+              widget.settings.string('title', ''),
               _WishlistCopy.of(context).recommendations,
-              const ['You may also like', 'قد يعجبك أيضًا']),
+              const ['You may also like', 'قد يعجبك أيضًا'],
+            ),
             style: TextStyle(
               fontSize: widget.settings
                   .number('title_size', 20)
@@ -815,6 +831,51 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
   }
 }
 
+/// Recommendations inherit missing card appearance from the saved-products
+/// grid; their own title, navigation and explicit overrides remain independent.
+CmsPageComponent wishlistRecommendationAppearance(
+  CmsPageComponent component,
+  CmsPageLayout layout,
+) {
+  final inherited = <String, dynamic>{};
+  var inheritedQuickAdd = true;
+  for (final grid in layout.elements.where((e) => e.type == 'wishlist_grid')) {
+    inheritedQuickAdd = grid.boolean('quick_add_enabled', true);
+    for (final entry in grid.settings.entries) {
+      if (RegExp(
+            r'^(card_|image_|content_|price_|quick_add_|product_wishlist_)',
+          ).hasMatch(entry.key) ||
+          const {
+            'show_name',
+            'show_price',
+            'show_regular_price',
+            'show_rating',
+            'show_badge',
+            'show_wishlist',
+            'enable_image_swipe',
+          }.contains(entry.key)) {
+        inherited[entry.key] = entry.value;
+      }
+    }
+    break;
+  }
+  return CmsPageComponent(
+    id: component.id,
+    type: component.type,
+    enabled: component.enabled,
+    settings: {
+      'show_name': false,
+      'show_rating': false,
+      'show_badge': false,
+      ...inherited,
+      ...component.settings,
+      'quick_add_enabled':
+          component.boolean('show_quick_add', true) &&
+          component.boolean('quick_add_enabled', inheritedQuickAdd),
+    },
+  );
+}
+
 class _WishlistRecommendationCard extends StatelessWidget {
   const _WishlistRecommendationCard({
     required this.product,
@@ -828,8 +889,6 @@ class _WishlistRecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String imageUrl = product.primaryImage?.source.toString() ?? '';
-    final List<String> imageUrls = _wishlistProductImageUrls(product);
     final String actionType = settings.string('action_type', 'product');
     final String? route = wishlistRecommendationRoute(settings, product.id);
     final Uri? url = wishlistRecommendationUrl(settings);
@@ -842,89 +901,10 @@ class _WishlistRecommendationCard extends StatelessWidget {
             launchUrl(url, mode: LaunchMode.externalApplication);
           }
         : null;
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color:
-          _wishlistHexColor(
-            settings.string('card_background_color', '#FFFFFF'),
-          ) ??
-          Theme.of(context).colorScheme.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          settings.number('card_radius', 0).clamp(0, 32).toDouble(),
-        ),
-      ),
-      child: InkWell(
-        onTap: configuredTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  imageUrl.isEmpty
-                      ? AppNetworkImageError(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerLow,
-                        )
-                      : ProductImageSwiper(
-                          imageUrls: imageUrls,
-                          enabled: settings.boolean(
-                            'enable_image_swipe',
-                            false,
-                          ),
-                          fit: BoxFit.cover,
-                          semanticLabel: product.name,
-                        ),
-                  if (settings.boolean('show_quick_add', true) &&
-                      product.isInStock)
-                    PositionedDirectional(
-                      end: 8,
-                      bottom: 8,
-                      child: ProductQuickAddButton(productId: product.id),
-                    ),
-                ],
-              ),
-            ),
-            if (settings.boolean('show_name', false)) ...<Widget>[
-              const SizedBox(height: 8),
-              Text(
-                product.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-            if (settings.boolean('show_price', true)) ...<Widget>[
-              const SizedBox(height: 8),
-              Text.rich(
-                TextSpan(
-                  text: 'From ',
-                  children: <InlineSpan>[
-                    TextSpan(
-                      text: product.prices.displayAmount(
-                        product.prices.priceMinor,
-                      ),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                ),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return CatalogProductCard(
+      product: product,
+      settings: settings,
+      onTap: configuredTap,
     );
   }
 }
@@ -1206,8 +1186,20 @@ class _WishlistProductCard extends StatelessWidget {
       elevation: cardStyle == 'elevated' ? null : 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(settings.number('card_radius', 16)),
-        side: cardStyle == 'outlined'
-            ? BorderSide(color: colors.outlineVariant)
+        side:
+            cardStyle == 'outlined' &&
+                settings.number('card_outline_width', 1) > 0
+            ? BorderSide(
+                color:
+                    _wishlistHexColor(
+                      settings.string('card_outline_color', ''),
+                    ) ??
+                    colors.primary,
+                width: settings
+                    .number('card_outline_width', 1)
+                    .clamp(0, 6)
+                    .toDouble(),
+              )
             : BorderSide.none,
       ),
       child: InkWell(
@@ -1632,7 +1624,8 @@ class _WishlistCopy {
       : 'Saved on this device for this store only.';
   String get loading => arabic ? 'جارٍ تحميل المفضلة…' : 'Loading wishlist…';
   String get emptyTitle => arabic ? 'المفضلة فارغة' : 'Your wishlist is empty';
-  String get signInTitle => arabic ? 'سجّل الدخول لعرض المفضلة' : 'Sign in to view your wishlist';
+  String get signInTitle =>
+      arabic ? 'سجّل الدخول لعرض المفضلة' : 'Sign in to view your wishlist';
   String get signIn => arabic ? 'تسجيل الدخول' : 'Sign In';
   String get recommendations => arabic ? 'قد يعجبك أيضًا' : 'You may also like';
   String get emptyBody => arabic
