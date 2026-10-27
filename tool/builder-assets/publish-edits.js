@@ -4,15 +4,34 @@
   const message = 'تعذر تأكيد حفظ التعديلات. حدّث البيلدر وراجع القيم المحفوظة قبل النشر.';
   const snapshot = value => JSON.stringify(value);
   const labels = {'splash':'Splash','home-builder':'Home','category-builder':'Categories','catalog-builder':'Catalog','product-builder':'Product','size-chart-builder':'Size chart','wishlist-builder':'Wishlist','account-builder':'Account','checkout-builder':'Checkout'};
+  function stable(value) {
+    if (Array.isArray(value)) return value.map(stable);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]));
+    return value;
+  }
+  function fingerprint(entries) {
+    const encoded = entries.some(pair => pair[0] === 'blocks_payload_encoding' && pair[1] === 'base64');
+    return snapshot(entries.map(([key, raw]) => {
+      let value = raw;
+      // Presentation grouping can reorder form fields / JSON keys after hydration.
+      // Preserve list order, but do not mistake that grouping for merchant edits.
+      if (key === 'blocks_payload' || key.endsWith('[layout_json]') || key.endsWith('[compact_layout_json]')) {
+        try {
+          const json = key === 'blocks_payload' && encoded ? new TextDecoder().decode(Uint8Array.from(atob(raw), char => char.charCodeAt(0))) : raw;
+          value = stable(JSON.parse(json));
+        } catch (_) { /* Invalid edits retain their raw value for validation. */ }
+      }
+      return [key, value];
+    }).sort((a, b) => a[0].localeCompare(b[0])));
+  }
   function sameSavedState(left, right) {
-    const entries = value => (value?.entries || []).map(pair => pair.slice()).sort((a, b) => a[0].localeCompare(b[0]));
-    return snapshot(entries(left)) === snapshot(entries(right));
+    return fingerprint(left?.entries || []) === fingerprint(right?.entries || []);
   }
 
   // A baseline is established only after hydration or an applied save receipt.
   function editor(options) {
     let baseline, pending = null, locked = false, uncertain = false;
-    const read = () => snapshot(options.serialize(options.form()));
+    const read = () => fingerprint(options.serialize(options.form()));
     function inspect() {
       if (uncertain || options.busy()) throw new Error(message);
       if (baseline === undefined) return {ready: false, dirty: false};
@@ -141,7 +160,7 @@
       },
     };
   }
-  const api = {screens, editor, coordinator, sameSavedState};
+  const api = {screens, editor, coordinator, sameSavedState, fingerprint};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else scope.KidiaPublishEdits = api;
 })(typeof window === 'undefined' ? globalThis : window);

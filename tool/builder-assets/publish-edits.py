@@ -17,9 +17,10 @@ def replace(source, old, new):
 
 
 def frame_patch(source):
-    source = replace(source, '  const applicationSave = KidiaApplicationSave.create({', '''  const publishEditor = KidiaPublishEdits.screens.has(screen) ? KidiaPublishEdits.editor({
+    source = replace(source, '  const applicationSave = KidiaApplicationSave.create({', '''  let publishSavedState = {};
+  const publishEditor = KidiaPublishEdits.screens.has(screen) ? KidiaPublishEdits.editor({
     screen, form: () => root.querySelector('#mobishop-home-builder-form, form.mobishop-page-editor') || root.querySelector('form'),
-    serialize, savedState: () => lastHydration.settings || {}, busy: () => applicationSave.busy || applicationSave.blocked,
+    serialize, savedState: () => publishSavedState, busy: () => applicationSave.busy || applicationSave.blocked,
     lock: busy => { root.inert = busy; }
   }) : null;
   if (publishEditor) window.MobiShopPublishEditor = publishEditor;
@@ -30,6 +31,8 @@ def frame_patch(source):
     source = replace(source, '      root.inert = busy;', '      root.inert = busy || Boolean(publishEditor?.locked);')
     source = replace(source, "  const appliedAIPushPrefills = new Set();\n  window.addEventListener('message', function (event) {", "  const appliedAIPushPrefills = new Set();\n  window.addEventListener('message', async function (event) {")
     source = replace(source, '        hydrate(event.data.payload || {});', '        await hydrate(event.data.payload || {});')
+    source = replace(source, "      lastHydration = event.data.payload || {}; hydrateActionChoices(lastHydration);", "      publishSavedState = JSON.parse(JSON.stringify(event.data.payload?.settings || {}));\n      lastHydration = event.data.payload || {}; hydrateActionChoices(lastHydration);")
+    source = replace(source, '    apply: async state => {', '    apply: async state => {\n      publishSavedState = JSON.parse(JSON.stringify(state));')
     source = replace(source, "        hydrateAbandonedCarts(event.data.payload || {});\n      }\n      scheduleFlutterPreview();", "        hydrateAbandonedCarts(event.data.payload || {});\n      }\n      publishEditor?.loaded();\n      scheduleFlutterPreview();")
     return source
 

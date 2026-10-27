@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {editor, coordinator, sameSavedState} = require('./publish-edits.js');
+const {editor, coordinator, sameSavedState, fingerprint} = require('./publish-edits.js');
 
 function fixture() {
   let store = 'a', pending = false, seq = 0;
@@ -130,4 +130,14 @@ test('Concurrent server edits differ from the loaded baseline; object metadata/o
   const before = {entries: [['b', '2'], ['a', '1']], loaded: true};
   assert.ok(sameSavedState(before, {entries: [['a', '1'], ['b', '2']]}));
   assert.ok(!sameSavedState(before, {entries: [['a', 'changed'], ['b', '2']]}));
+});
+
+test('Home grouping may reorder field and JSON keys without changing the design', () => {
+  const encode = value => Buffer.from(JSON.stringify(value), 'utf8').toString('base64');
+  const a = [['title', 'أهلًا'], ['blocks_payload_encoding','base64'], ['blocks_payload', encode([{id:'confirmed',settings:{title:'منتجات',columns:3}}])]];
+  const b = [['blocks_payload', encode([{settings:{columns:3,title:'منتجات'},id:'confirmed'}])], ['blocks_payload_encoding','base64'], ['title','أهلًا']];
+  assert.equal(fingerprint(a), fingerprint(b));
+  b[0][1] = encode([{settings:{columns:4,title:'منتجات'},id:'confirmed'}]);
+  assert.notEqual(fingerprint(a), fingerprint(b));
+  assert.notEqual(fingerprint([['layout[header][settings][layout_json]','[1,2]']]), fingerprint([['layout[header][settings][layout_json]','[2,1]']]));
 });
