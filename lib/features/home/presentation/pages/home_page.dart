@@ -115,7 +115,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           type: 'cart',
           icon: Icons.shopping_bag_outlined,
           tooltip: arabic ? 'السلة' : 'Cart',
-          onPressed: () => context.go('/cart'),
+          onPressed: () => context.push('/cart'),
         ),
         CmsPageHeaderAction(
           type: 'wishlist',
@@ -339,7 +339,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           unawaited(showCatalogSearch(context));
           return;
         }
-        context.go('/search?q=$encodedValue');
+        context.push('/search?q=$encodedValue');
         return;
 
       case 'cart':

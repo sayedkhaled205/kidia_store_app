@@ -25,6 +25,66 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('system back unwinds category levels before returning Home', (tester) async {
+    await tester.pumpWidget(_app(_ScreenCatalogRepository(
+      categoryLayout: 'visual_grid', gridColumns: 2,
+      navigationMode: 'separate_page', deepTree: true,
+    ), const CategoriesScreen(), shell: true));
+    await tester.pumpAndSettle();
+    final router = GoRouter.of(tester.element(find.byType(CategoriesScreen)));
+    await tester.tap(find.text('Women').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dresses').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Summer dresses'), findsOneWidget);
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Dresses'), findsOneWidget);
+    expect(find.text('Summer dresses'), findsNothing);
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Women'), findsOneWidget);
+    expect(find.text('Men'), findsOneWidget);
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Home screen'), findsOneWidget);
+    expect(await router.routerDelegate.popRoute(), isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('system back from root navigator respects category depth and dialogs', (tester) async {
+    await tester.pumpWidget(_app(_ScreenCatalogRepository(
+      categoryLayout: 'visual_grid', gridColumns: 2,
+      navigationMode: 'separate_page', deepTree: true,
+    ), const CategoriesScreen(), shell: true));
+    await tester.pumpAndSettle();
+    final context = tester.element(find.byType(CategoriesScreen));
+    final router = GoRouter.of(context);
+    final root = router.routerDelegate.navigatorKey.currentState!;
+    await tester.tap(find.text('Women').last);
+    await tester.pumpAndSettle();
+    showDialog<void>(context: context, builder: (_) => const AlertDialog(title: Text('Category dialog')));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Category dialog'), findsNothing);
+    expect(find.byKey(const Key('category-level-title')), findsOneWidget);
+    expect(await root.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Women'), findsOneWidget);
+    expect(find.text('Men'), findsOneWidget);
+    expect(find.text('Home screen'), findsNothing);
+    // A retained category branch must not consume back from Wishlist.
+    await tester.tap(find.text('Women'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('cms-bottom-nav-wishlist')));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Home screen'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('visual cards apply saved height and image spacing at every level', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
