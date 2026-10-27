@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/mobishop_colors.dart';
 import '../core/config/app_config.dart';
+import '../core/commerce/commerce_connection.dart';
+import '../features/auth/presentation/providers/native_auth_providers.dart';
 import '../core/analytics/mobile_analytics.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/domain/cms_footer_label.dart';
@@ -75,6 +79,20 @@ class _MainShellState extends ConsumerState<MainShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ref.read(mobileAnalyticsProvider).trackInBackground('app_open');
+    // Start the public login configuration after the first frame, while the
+    // customer browses. Opening sign-in then reuses the same in-flight/result.
+    if (!AppConfig.isCmsPreview &&
+        AppConfig.hasConfiguredStore &&
+        AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(nativeAuthConfigProvider.future)
+              .then<void>((_) {}, onError: (Object _, StackTrace _) {}),
+        );
+      });
+    }
     // Layout providers own completion-based 15-second polling. A second shell
     // timer would invalidate slow initial reads before the page can open.
   }
