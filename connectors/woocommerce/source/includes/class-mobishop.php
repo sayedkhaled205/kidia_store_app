@@ -30,6 +30,8 @@ require_once MOBISHOP_PATH . 'includes/class-mobishop-recovery-campaigns.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-push-service.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-app-exporter.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-coupon-channel.php';
+require_once MOBISHOP_PATH . 'includes/class-mobishop-discount-channel.php';
+MobiShop_Discount_Channel::register();
 require_once MOBISHOP_PATH . 'includes/class-mobishop-bundle-recipes.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-website-app-promotion.php';
 

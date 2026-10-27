@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
 import 'package:mobishop_store_app/features/checkout/data/network/checkout_api_transport.dart';
+import 'package:mobishop_store_app/features/checkout/data/network/checkout_safety_transport.dart';
 import 'package:mobishop_store_app/features/checkout/data/repositories/store_api_checkout_repository.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_address.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_field_definition.dart';
@@ -811,40 +812,97 @@ void main() {
     );
   });
 
-  test(
-    'attaches the signed-in customer session to checkout Store API requests',
-    () async {
-      RequestOptions? captured;
-      final Dio dio = Dio()
-        ..interceptors.add(
-          InterceptorsWrapper(
-            onRequest: (RequestOptions options, handler) {
-              captured = options;
-              handler.resolve(
-                Response<dynamic>(
-                  requestOptions: options,
-                  statusCode: 200,
-                  data: const <String, dynamic>{'fields': <dynamic>[]},
-                ),
-              );
-            },
-          ),
+  for (final signedIn in [false, true]) {
+    test(
+      'keeps checkout requests on the mobile channel (signed in: $signedIn)',
+      () async {
+        final requests = <RequestOptions>[];
+        final Dio dio = Dio()
+          ..interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (RequestOptions options, handler) {
+                requests.add(options);
+                handler.resolve(
+                  Response<dynamic>(
+                    requestOptions: options,
+                    statusCode: 200,
+                    data: const <String, dynamic>{'fields': <dynamic>[]},
+                  ),
+                );
+              },
+            ),
+          );
+        final StoreApiCheckoutTransport transport = StoreApiCheckoutTransport(
+          storeUri: Uri.parse('https://shop.example.com/store'),
+          dio: dio,
+          authTokenReader: signedIn ? () => 'customer-session' : null,
         );
-      final StoreApiCheckoutTransport transport = StoreApiCheckoutTransport(
-        storeUri: Uri.parse('https://shop.example.com'),
-        dio: dio,
-        authTokenReader: () => 'customer-session',
-      );
 
-      await transport.loadConfiguration();
+        await transport.loadConfiguration();
+        await transport.updateCustomer(
+          cartToken: 'cart-token',
+          body: const {
+            'billing_address': {'country': 'EG'},
+          },
+        );
+        await transport.selectShippingRate(
+          cartToken: 'cart-token',
+          packageId: 0,
+          rateId: 'flat_rate:1',
+        );
+        await transport.placeOrder(
+          cartToken: 'cart-token',
+          idempotencyKey: 'attempt-key',
+          body: const {'payment_method': 'cod'},
+        );
+        if (signedIn) {
+          final safety = StoreApiCheckoutSafetyTransport(
+            storeUri: Uri.parse('https://shop.example.com/store'),
+            authTokenReader: () => 'customer-session',
+            dio: dio,
+          );
+          await safety.loadCapabilities();
+          await safety.recoverAttempt(
+            idempotencyKey: 'attempt-key',
+            cartToken: 'cart-token',
+          );
+        }
 
-      expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
-      expect(
-        captured?.uri.path,
-        '/wp-json/mobishop/v1/customer/checkout/config',
-      );
-    },
-  );
+        expect(requests.map((request) => request.uri.path), [
+          '/store/wp-json/mobishop/v1/${signedIn ? 'customer/checkout/config' : 'checkout-config'}',
+          '/store/wp-json/wc/store/v1/cart/update-customer',
+          '/store/wp-json/wc/store/v1/cart/select-shipping-rate',
+          '/store/wp-json/wc/store/v1/checkout',
+          if (signedIn)
+            '/store/wp-json/mobishop/v1/native-checkout-capabilities',
+          if (signedIn)
+            '/store/wp-json/mobishop/v1/customer/checkout-attempts/attempt-key',
+        ]);
+        expect(requests.map((request) => request.method), [
+          'GET',
+          'POST',
+          'POST',
+          'POST',
+          if (signedIn) ...['GET', 'GET'],
+        ]);
+        for (final request in requests) {
+          expect(request.uri.origin, 'https://shop.example.com');
+          expect(request.followRedirects, false);
+          expect(request.headers['X-MobiShop-Channel'], 'mobile');
+          expect(
+            request.headers['X-MobiShop-Session'],
+            signedIn ? 'customer-session' : isNull,
+          );
+          if (request.method == 'POST' ||
+              request.uri.path.contains('/checkout-attempts/')) {
+            expect(request.headers['Cart-Token'], 'cart-token');
+          }
+        }
+        expect(requests[3].headers['Idempotency-Key'], 'attempt-key');
+        expect(requests[3].data, {'payment_method': 'cod'});
+      },
+    );
+  }
 
   test(
     'rejects unsafe header tokens before making a network request',

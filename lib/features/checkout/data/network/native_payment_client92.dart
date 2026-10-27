@@ -90,7 +90,11 @@ class NativePaymentClient92 {
       options: Options(
         method: prepare ? 'POST' : 'GET',
         followRedirects: false,
-        headers: {'Accept': 'application/json', 'X-MobiShop-Session': session},
+        headers: {
+          'Accept': 'application/json',
+          'X-MobiShop-Channel': 'mobile',
+          'X-MobiShop-Session': session,
+        },
       ),
     );
     if (token() != session ||

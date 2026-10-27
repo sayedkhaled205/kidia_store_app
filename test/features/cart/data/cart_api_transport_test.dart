@@ -20,6 +20,8 @@ void main() {
           InterceptorsWrapper(
             onRequest: (options, handler) {
               attempts++;
+              expect(options.headers['X-MobiShop-Channel'], 'mobile');
+              expect(options.headers['Cart-Token'], 'test-only');
               if (attempts == 1) {
                 handler.reject(
                   DioException(requestOptions: options, type: phase),
@@ -50,55 +52,80 @@ void main() {
           await operation;
           expect(attempts, 2);
         } else {
-          await expectLater(
-            operation,
-            throwsA(isA<StoreApiException>()),
-          );
+          await expectLater(operation, throwsA(isA<StoreApiException>()));
           expect(attempts, 1);
         }
       });
     }
 
-    test('keeps tokenized mutations on the configured store', () async {
-      RequestOptions? captured;
-      final Dio dio = Dio();
-      dio.interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (RequestOptions options, handler) {
-            captured = options;
-            handler.resolve(
-              Response<dynamic>(
-                requestOptions: options,
-                data: cartJsonFixture(),
-                statusCode: 200,
-                headers: Headers.fromMap(<String, List<String>>{
-                  'Cart-Token': <String>['rotated-token'],
-                }),
+    for (final signedIn in [false, true]) {
+      for (final method in CartApiMethod.values) {
+        test(
+          'keeps $method on the mobile channel (signed in: $signedIn)',
+          () async {
+            RequestOptions? captured;
+            final Dio dio = Dio();
+            dio.interceptors.add(
+              InterceptorsWrapper(
+                onRequest: (RequestOptions options, handler) {
+                  captured = options;
+                  handler.resolve(
+                    Response<dynamic>(
+                      requestOptions: options,
+                      data: cartJsonFixture(),
+                      statusCode: 200,
+                      headers: Headers.fromMap(<String, List<String>>{
+                        'Cart-Token': <String>['rotated-token'],
+                      }),
+                    ),
+                  );
+                },
               ),
             );
+            final StoreApiCartTransport transport = StoreApiCartTransport(
+              storeUri: Uri.parse('https://shop.example.com/store/'),
+              dio: dio,
+              authTokenReader: signedIn ? () => 'customer-session' : null,
+            );
+
+            final path = method == CartApiMethod.post
+                ? '/wp-json/wc/store/v1/cart/add-item'
+                : '/wp-json/wc/store/v1/cart';
+            final response = await transport.request(
+              method,
+              path,
+              body: method == CartApiMethod.post
+                  ? <String, dynamic>{'id': 42, 'quantity': 1}
+                  : null,
+              headers: const <String, String>{
+                'Cart-Token': 'session-token',
+                'X-MobiShop-Channel': 'website',
+              },
+            );
+
+            expect(captured?.uri.path, '/store$path');
+            expect(
+              captured?.method,
+              method == CartApiMethod.post ? 'POST' : 'GET',
+            );
+            expect(captured?.followRedirects, false);
+            expect(captured?.headers['X-MobiShop-Channel'], 'mobile');
+            expect(captured?.headers['Cart-Token'], 'session-token');
+            expect(
+              captured?.headers['X-MobiShop-Session'],
+              signedIn ? 'customer-session' : isNull,
+            );
+            expect(
+              captured?.data,
+              method == CartApiMethod.post
+                  ? <String, dynamic>{'id': 42, 'quantity': 1}
+                  : isNull,
+            );
+            expect(response.header('cart-token'), 'rotated-token');
           },
-        ),
-      );
-      final StoreApiCartTransport transport = StoreApiCartTransport(
-        storeUri: Uri.parse('https://shop.example.com/store/'),
-        dio: dio,
-        authTokenReader: () => 'customer-session',
-      );
-
-      final response = await transport.request(
-        CartApiMethod.post,
-        '/wp-json/wc/store/v1/cart/add-item',
-        body: <String, dynamic>{'id': 42, 'quantity': 1},
-        headers: const <String, String>{'Cart-Token': 'session-token'},
-      );
-
-      expect(captured?.uri.path, '/store/wp-json/wc/store/v1/cart/add-item');
-      expect(captured?.method, 'POST');
-      expect(captured?.headers['Cart-Token'], 'session-token');
-      expect(captured?.headers['X-MobiShop-Session'], 'customer-session');
-      expect(captured?.data, <String, dynamic>{'id': 42, 'quantity': 1});
-      expect(response.header('cart-token'), 'rotated-token');
-    });
+        );
+      }
+    }
 
     test('rejects absolute URLs and non-cart Store API paths', () async {
       final StoreApiCartTransport transport = StoreApiCartTransport(

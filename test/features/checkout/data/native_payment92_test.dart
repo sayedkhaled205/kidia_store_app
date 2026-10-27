@@ -85,6 +85,7 @@ void main() {
               onRequest: (r, h) {
                 requests.add(r);
                 expect(r.followRedirects, false);
+                expect(r.headers['X-MobiShop-Channel'], 'mobile');
                 expect(r.headers['X-MobiShop-Session'], 'buyer-token');
                 h.resolve(
                   Response(

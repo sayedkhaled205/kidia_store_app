@@ -45,6 +45,7 @@ void main() {
           '/store/wp-json/wc/store/v1/products',
         );
         expect(capturedRequest?.uri.queryParameters['page'], '2');
+        expect(capturedRequest?.headers['X-MobiShop-Channel'], 'mobile');
         expect(
           capturedRequest?.uri.queryParametersAll['stock_status[]'],
           <String>['instock', 'onbackorder'],
@@ -99,6 +100,7 @@ void main() {
 
       await client.get('/wp-json/mobishop/v1/products/12/variations');
 
+      expect(capturedRequest?.headers['X-MobiShop-Channel'], 'mobile');
       expect(
         capturedRequest?.uri.path,
         '/store/wp-json/mobishop/v1/products/12/variations',

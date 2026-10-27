@@ -131,6 +131,7 @@ final class MobiShop_Embedded_Checkout88 {
         if ( ! is_string( $path ) || ! self::allowed_path( $path, $scope['checkout_path'], $scope['home_path'], $_GET ) ) return 0;
         // This cookie cannot inherit an existing administrator's capabilities.
         $this->scope = $scope;
+        MobiShop_Discount_Channel::verified_embedded_checkout();
         return (int) $scope['user_id'];
     }
 
@@ -166,6 +167,7 @@ final class MobiShop_Embedded_Checkout88 {
         setcookie( self::COOKIE, $cookie, array( 'expires' => $record['expires'], 'path' => $record['home_path'], 'secure' => true, 'httponly' => true, 'samesite' => 'Lax' ) );
         // Resolve only this request; never issue a general WordPress login cookie.
         $this->scope = $record;
+        MobiShop_Discount_Channel::verified_embedded_checkout();
         $this->bootstrap = $record;
         wp_set_current_user( (int) $record['user_id'] );
         // Avoid migrating/deleting a different previous WebView user's cart.
