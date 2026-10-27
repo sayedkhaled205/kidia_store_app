@@ -235,7 +235,7 @@ final class MobiShop_Page_Layout_Store {
 			self::field( 'button_color', __( 'Button color', 'mobishop' ), 'color', '#1F2933' ),
 			self::field( 'button_text_color', __( 'Button text color', 'mobishop' ), 'color', '#FFFFFF' ),
 			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'mobishop' ), 'number', 58, array(), 20, 95 ),
-			self::field( 'button_height', __( 'Button height', 'mobishop' ), 'number', 52, array(), 36, 80 ),
+			self::field( 'button_height', __( 'Button height', 'mobishop' ), 'number', 52, array(), 36, 80, 0.01 ),
 			self::field( 'button_style', __( 'Button style', 'mobishop' ), 'select', 'filled', array( 'filled' => __( 'Filled', 'mobishop' ), 'outline' => __( 'Outline', 'mobishop' ), 'soft' => __( 'Soft', 'mobishop' ) ) ),
 			self::field( 'button_shape', __( 'Button shape', 'mobishop' ), 'select', 'custom', array( 'custom' => __( 'Custom radius', 'mobishop' ), 'rectangle' => __( 'Rectangle', 'mobishop' ), 'rounded' => __( 'Rounded', 'mobishop' ), 'pill' => __( 'Pill', 'mobishop' ) ) ),
 			self::field( 'button_radius', __( 'Button radius', 'mobishop' ), 'number', 28, array(), 0, 40 ),
@@ -317,6 +317,14 @@ final class MobiShop_Page_Layout_Store {
 			}
 		}
 		unset( $wishlist_grid_field );
+		$related_grid = $wishlist_grid;
+		$related_defaults = array( 'gap' => 2, 'image_ratio' => 0.75, 'show_regular_price' => true, 'show_badge' => true );
+		foreach ( $related_grid as &$related_field ) {
+			if ( array_key_exists( $related_field['key'], $related_defaults ) ) {
+				$related_field['default'] = $related_defaults[ $related_field['key'] ];
+			}
+		}
+		unset( $related_field );
 		$wishlist_message_fields = static function ( string $title, string $description, string $button_label, string $button_action ): array {
 			return array(
 				self::field( 'illustration_url', __( 'Illustration', 'mobishop' ), 'image', '' ),
@@ -399,7 +407,7 @@ final class MobiShop_Page_Layout_Store {
 				self::element( 'purchase_bar', __( 'Quantity', 'mobishop' ), 'dashicons-cart', array( self::field( 'show_quantity', __( 'Show quantity', 'mobishop' ), 'checkbox', false ) ) ),
 				self::element( 'description', __( 'Description and Details', 'mobishop' ), 'dashicons-text-page', array( self::field( 'accordion', __( 'Use compact accordion rows', 'mobishop' ), 'checkbox', true ), self::field( 'details_label', __( 'Details label', 'mobishop' ), 'text', __( 'Product Details', 'mobishop' ) ), self::field( 'show_description', __( 'Show description', 'mobishop' ), 'checkbox', true ), self::field( 'show_attributes', __( 'Show attributes', 'mobishop' ), 'checkbox', true ) ) ),
 				self::element( 'reviews', __( 'Reviews', 'mobishop' ), 'dashicons-star-filled', array( self::field( 'title', __( 'Reviews title', 'mobishop' ), 'text', __( 'Reviews', 'mobishop' ) ), self::field( 'show_summary', __( 'Show rating summary', 'mobishop' ), 'checkbox', true ), self::field( 'show_fit_summary', __( 'Show size and fit summary', 'mobishop' ), 'checkbox', true ), self::field( 'fit_small_percent', __( 'Small (%)', 'mobishop' ), 'number', 1, array(), 0, 100 ), self::field( 'fit_true_percent', __( 'True to size (%)', 'mobishop' ), 'number', 99, array(), 0, 100 ), self::field( 'fit_large_percent', __( 'Large (%)', 'mobishop' ), 'number', 0, array(), 0, 100 ) ) ),
-				self::element( 'related_products', __( 'Related Products', 'mobishop' ), 'dashicons-products', array( self::field( 'title', __( 'Section title', 'mobishop' ), 'text', __( 'You may also like', 'mobishop' ) ), self::field( 'columns', __( 'Columns', 'mobishop' ), 'number', 2, array(), 1, 3 ), self::field( 'gap', __( 'Gap', 'mobishop' ), 'number', 2, array(), 0, 24 ), self::field( 'image_ratio', __( 'Image ratio', 'mobishop' ), 'number', 0.75, array(), 0.6, 1.8, 0.05 ), self::field( 'enable_image_swipe', __( 'Swipe product images on the card', 'mobishop' ), 'checkbox', false ), self::field( 'show_price', __( 'Show price', 'mobishop' ), 'checkbox', true ), self::field( 'show_quick_add', __( 'Show quick add', 'mobishop' ), 'checkbox', true ) ) ),
+				self::element( 'related_products', __( 'Related Products', 'mobishop' ), 'dashicons-products', array_merge( array( self::field( 'title', __( 'Section title', 'mobishop' ), 'text', __( 'You may also like', 'mobishop' ) ) ), $related_grid, array( self::field( 'show_quick_add', __( 'Show quick add', 'mobishop' ), 'checkbox', true ) ) ) ),
 			),
 			'size_chart' => array(
 				self::element( 'size_chart_content', __( 'Size Chart', 'mobishop' ), 'dashicons-editor-table', array(

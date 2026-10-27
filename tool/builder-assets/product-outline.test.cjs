@@ -43,6 +43,15 @@ test('does not add product controls to account summary', () => {
   const {dom,field} = setup('outlined','account_summary');
   assert.equal(field,null); dom.window.close();
 });
+
+test('related products save outline controls through the normal form', () => {
+  const {dom,root,field} = setup('outlined','related_products');
+  assert.equal(field.value, '#347a89');
+  const width = root.querySelector('input[name$="[card_outline_width]"]');
+  width.value = '0.5';
+  assert.equal(new dom.window.FormData(root).get(width.name), '0.5');
+  dom.window.close();
+});
 test('outline width is saved, preserved and only shown for outlined cards', () => {
   const {dom,root,select} = setup();
   const width = root.querySelector('input[name$="[card_outline_width]"]');

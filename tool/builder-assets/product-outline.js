@@ -24,7 +24,7 @@
     root.querySelectorAll(selector).forEach(style => {
       const card = style.closest('[data-element],[data-type]');
       const type = card?.dataset.element || card?.dataset.type;
-      if (!['product_grid', 'product_carousel', 'wishlist_grid'].includes(type)) return;
+      if (!['product_grid', 'product_carousel', 'wishlist_grid', 'related_products'].includes(type)) return;
       const name = style.name.replace('[card_style]', '[card_outline_color]');
       let field = Array.from(card.querySelectorAll('input[name]')).find(input => input.name === name);
       const anchor = style.closest('.mobishop-page-field,.mobishop-builder-field') || style.closest('label');

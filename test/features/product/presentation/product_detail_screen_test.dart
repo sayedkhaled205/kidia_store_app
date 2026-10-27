@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
@@ -502,8 +503,8 @@ void main() {
     final SizedBox likeBox = tester.widget<SizedBox>(
       find.byKey(const Key('product-footer-icon-box-like')),
     );
-    expect(shareBox.width, 32);
-    expect(shareBox.height, 32);
+    expect(shareBox.width, 28);
+    expect(shareBox.height, 28);
     expect(likeBox.width, shareBox.width);
     expect(likeBox.height, shareBox.height);
     expect(
@@ -705,6 +706,8 @@ Widget _testApp(
     ],
     child: MaterialApp(
       locale: locale,
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(useMaterial3: true),
       home: home,
     ),
