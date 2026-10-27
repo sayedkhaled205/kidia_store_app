@@ -1063,13 +1063,13 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                         type: widget.settings.type,
                         enabled: true,
                         settings: <String, dynamic>{
-                          ...widget.settings.settings,
-                          'quick_add_enabled': widget.settings.boolean('show_quick_add', true),
                           'card_style': 'minimal',
                           'card_radius': 0,
                           'show_name': false,
                           'show_rating': false,
                           'show_badge': true,
+                          ...widget.settings.settings,
+                          'quick_add_enabled': widget.settings.boolean('show_quick_add', true) && widget.settings.boolean('quick_add_enabled', true),
                         },
                       ),
                       onTap: () => context.push('/product/${product.id}'),
@@ -1839,7 +1839,8 @@ class _PurchaseBar extends StatelessWidget {
         .number('icon_size', 24)
         .clamp(14, 40)
         .toDouble();
-    final double footerIconBoxSize = (footerIconSize + 8).clamp(32, 48).toDouble();
+    // Match the navigation footer's icon frame and label spacing.
+    final double footerIconBoxSize = (footerIconSize + 4).clamp(28, 48).toDouble();
     final double footerLabelSize = footer.number('label_size', 11).clamp(8, 20).toDouble();
     final double footerIconLabelGap = footer.number('icon_label_gap', 2).clamp(0, 12).toDouble();
     final footerLayout = footer.json('layout_json');
@@ -1888,7 +1889,7 @@ class _PurchaseBar extends StatelessWidget {
 	// A configured product action must never be silently squeezed back to the
 	// category footer height. Grow the product footer when the button is taller.
     final rowIds = placements.map((p) => p.$3).toSet();
-    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 6;
+    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 8;
     final minimumRowHeight = configuredButtonHeight > iconHeight ? configuredButtonHeight : iconHeight;
     final minimumFooterHeight = minimumRowHeight * rowIds.length;
     final footerHeight = configuredFooterHeight > minimumFooterHeight ? configuredFooterHeight : minimumFooterHeight;
@@ -1935,9 +1936,9 @@ class _PurchaseBar extends StatelessWidget {
 	    : null;
 	final Widget purchaseLabel = FittedBox(fit: BoxFit.scaleDown, child: Text(
 	  controller.isAdding
-	      ? 'جارٍ الإضافة…'
+	      ? copy.adding
 	      : usesHostedOdooCart297 ? (copy.arabic ? 'متابعة في المتجر' : 'Continue on store')
-          : _arabicFooterLabel(footer.string('add_to_cart_label', ''), 'أضف إلى السلة'),
+          : cmsFooterLabel(footer.string('add_to_cart_label', ''), copy.addToCart, const ['Add to bag', 'Add to cart', 'أضف إلى السلة']),
       maxLines: 1,
       softWrap: false,
 	));
@@ -1946,9 +1947,9 @@ class _PurchaseBar extends StatelessWidget {
 	  final double effectiveWidth = width;
 	  Widget? child;
 	  if (item == 'share') {
-		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('share_label', ''), 'مشاركة') : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
+		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? cmsFooterLabel(footer.string('share_label', ''), copy.share, const ['Share', 'مشاركة']) : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
 	  } else if (item == 'like') {
-		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? _arabicFooterLabel(footer.string('like_label', ''), 'المفضلة') : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
+		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? cmsFooterLabel(footer.string('like_label', ''), copy.arabic ? 'المفضلة' : 'Wishlist', const ['Like', 'Wishlist', 'المفضلة']) : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
 	  } else if (item == 'add_to_cart') {
 		child = Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -2004,7 +2005,7 @@ class _PurchaseBar extends StatelessWidget {
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_bottom', 0).clamp(0, 80) +
-              footer.number('space_down', 0).clamp(0, 80) + 4,
+              footer.number('space_down', 0).clamp(0, 80) + 6,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2598,17 +2599,4 @@ class _ProductCopy {
 
   String reviewCount(int count) =>
       arabic ? '($count مراجعة)' : '($count reviews)';
-}
-
-String _arabicFooterLabel(
-  String configured,
-  String arabicFallback,
-) {
-  final defaults = switch (arabicFallback) {
-    'أضف إلى السلة' => <String>['Add to bag', 'Add to cart'],
-    'مشاركة' => <String>['Share'],
-    'المفضلة' => <String>['Like', 'Wishlist'],
-    _ => <String>[],
-  };
-  return cmsFooterLabel(configured, arabicFallback, defaults);
 }

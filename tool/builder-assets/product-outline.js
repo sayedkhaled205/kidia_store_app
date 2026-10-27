@@ -24,7 +24,7 @@
     root.querySelectorAll(selector).forEach(style => {
       const card = style.closest('[data-element],[data-type]');
       const type = card?.dataset.element || card?.dataset.type;
-      if (!['product_grid', 'product_carousel', 'wishlist_grid'].includes(type)) return;
+      if (!['product_grid', 'product_carousel', 'wishlist_grid', 'related_products'].includes(type)) return;
       const name = style.name.replace('[card_style]', '[card_outline_color]');
       let field = Array.from(card.querySelectorAll('input[name]')).find(input => input.name === name);
       const anchor = style.closest('.mobishop-page-field,.mobishop-builder-field') || style.closest('label');
@@ -70,5 +70,10 @@
       if (wrapper.nextElementSibling !== widthWrapper) wrapper.after(widthWrapper);
     });
   }
-  scope.KidiaProductOutline = {prepare, refresh};
+  function savedEntries(entries) {
+    // Visual radio groups mirror the named select. Only that select is data.
+    const visualPosition = /^layout\[elements\]\[\d+\]\[settings\]\[(quick_add_position|product_wishlist_position)\]_visual$/;
+    return entries.filter(([name]) => !visualPosition.test(name));
+  }
+  scope.KidiaProductOutline = {prepare, refresh, savedEntries};
 })(typeof window === 'undefined' ? globalThis : window);

@@ -2,7 +2,10 @@
 
 `kids-appearance-20261027.json` is the reviewed, merchant-neutral Kids preset.
 It includes the compact header/footer, category presentation, unified product
-cards with a 0.5 outline, disabled reviews, and the 47px product action button.
+cards with a 0.5 outline, disabled reviews, and the 45.59px product action button (3% below 47px).
+Product recommendations use the catalog card appearance, including wishlist
+and outline. Product footer spacing matches category navigation; the collapsed
+home search uses a 51px header to align with the fixed cart action.
 Merchant identity and live catalog data are supplied by the existing Setup flow.
 
 To update a package, load the **currently active** theme snapshot and replace

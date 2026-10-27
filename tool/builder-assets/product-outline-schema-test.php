@@ -5,7 +5,7 @@ $page = $class->getMethod('castFields');
 $home = $class->getMethod('homeSettings');
 $schema = json_decode($class->getConstant('FIELD_TYPES_JSON'), true, 64, JSON_THROW_ON_ERROR);
 $checks = 0;
-foreach (['catalog' => 'product_grid', 'wishlist' => 'wishlist_grid'] as $name => $type) {
+foreach (['catalog' => 'product_grid', 'wishlist' => 'wishlist_grid', 'product' => 'related_products'] as $name => $type) {
     $result = $page->invoke(null, ['card_style' => 'outlined', 'card_outline_color' => '#347A89'], $schema['pages'][$name][$type], $name);
     if ($result['card_outline_color'] !== '#347A89') throw new RuntimeException('Outline dropped');
     $checks++;
