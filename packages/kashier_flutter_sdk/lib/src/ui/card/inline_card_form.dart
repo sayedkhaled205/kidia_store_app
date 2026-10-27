@@ -204,10 +204,15 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     String copy(String en, String arabic) => ar ? arabic : en;
-    InputDecoration decoration(String label, {IconData? icon}) =>
+    InputDecoration decoration(String label, {IconData? icon, String? hint}) =>
         InputDecoration(
           labelText: label,
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xff757575)),
+          hintTextDirection: TextDirection.ltr,
+          floatingLabelBehavior: hint == null
+              ? FloatingLabelBehavior.auto
+              : FloatingLabelBehavior.always,
           filled: true,
           fillColor: Colors.white,
           contentPadding:
@@ -223,6 +228,7 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
             required TextEditingController controller,
             required String label,
             required String? Function(String?) validator,
+            String? hint,
             List<TextInputFormatter>? formatters,
             bool secret = false,
             TextInputType keyboard = TextInputType.number,
@@ -242,7 +248,7 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
           inputFormatters: formatters,
           validator: validator,
           style: const TextStyle(fontSize: 16),
-          decoration: decoration(label, icon: icon),
+          decoration: decoration(label, icon: icon, hint: hint),
         );
     return Form(
       key: _formKey,
@@ -266,6 +272,7 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
             controller: _expiry,
             label:
                 copy('Expiration date (MM / YY)', 'تاريخ الانتهاء (MM / YY)'),
+            hint: 'MM / YY',
             formatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
               ExpiryFormatter()
