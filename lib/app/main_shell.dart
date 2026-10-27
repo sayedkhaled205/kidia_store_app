@@ -362,7 +362,9 @@ class _MainShellState extends ConsumerState<MainShell>
     if (!mounted ||
         widget.navigationShell.currentIndex != index ||
         index == 0 ||
-        ModalRoute.of(context)?.isCurrent == false) return;
+        ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
     _openBranch(ref, 0);
   }
 
