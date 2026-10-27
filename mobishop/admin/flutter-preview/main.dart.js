@@ -137140,7 +137140,7 @@ if(A.bc(n.h(r,"show_labels"),!0)){m=A.c1(c2,B.aU)
 m=m==null?b6:m.gd4()
 m=(m==null?B.ax:m).bh(0,g)*1.6+B.d.L(j.Y(0,"icon_label_gap",3),0,12)}else m=0
 a3=B.d.L(j.Y(0,"height",64),48,100)
-a4=(h+m+8)*a2
+a4=B.d.L(h+m+8,48,1/0)*a2
 a5=A.bBP(A.aw(n.h(r,"active_color"),"#1F6F61"),B.eK)
 a6=A.bBP(A.aw(n.h(r,"inactive_color"),"#6B7280"),B.dX)
 a7=A.bBP(A.aw(n.h(r,"background_color"),"#FFFFFF"),B.k)

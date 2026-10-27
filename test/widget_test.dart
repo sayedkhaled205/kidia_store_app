@@ -407,6 +407,22 @@ void main() {
     await _disposeApp(tester,router);
   });
 
+  testWidgets('compact footer keeps a 48 pixel target in every unlabelled row', (tester) async {
+    final router = createAppRouter();
+    await _pumpStartedApp(tester, router: router, homeLayout: _navigationLayout(
+      'home', height: 64, iconSize: 32, showLabels: false, rows: [
+        {'columns': [{'width': 100, 'items': ['home']}]},
+        {'columns': [{'width': 100, 'items': ['wishlist']}]},
+      ],
+    ));
+    for (final id in ['home', 'wishlist']) {
+      expect(tester.getSize(find.byKey(Key('cms-bottom-nav-$id'))).height,
+          greaterThanOrEqualTo(48));
+    }
+    expect(tester.takeException(), isNull);
+    await _disposeApp(tester, router);
+  });
+
   for (final item in ['search', 'cart', 'orders']) {
     testWidgets(
       'configured footer $item is visible and opens its existing route',
@@ -498,6 +514,7 @@ CmsPageLayout _navigationLayout(
   required double iconSize,
   bool enabled = true,
   bool hideOnScroll = false,
+  bool showLabels = true,
   double iconLabelGap = 3,
   List<Map<String,dynamic>>? rows,
   String? style,
@@ -538,6 +555,7 @@ CmsPageLayout _navigationLayout(
         'style': style ?? fallback.footer.string('style','navigation'),
         'height': height,
         'hide_on_scroll': hideOnScroll,
+        'show_labels': showLabels,
         'icon_size': iconSize,
         'icon_label_gap': iconLabelGap,
         'home_label': 'Home',

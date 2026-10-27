@@ -182,7 +182,8 @@ class _MainShellState extends ConsumerState<MainShell>
             : 0) +
         8;
     final footerHeight = footer.number('height', 64).clamp(48, 100).toDouble();
-    final requiredHeight = minimumRowHeight * rowCount;
+    final requiredHeight =
+        minimumRowHeight.clamp(48, double.infinity).toDouble() * rowCount;
     final Color activeColor = _cmsColor(
       footer.string('active_color', '#1F6F61'),
       MobiShopColors.primaryDark,

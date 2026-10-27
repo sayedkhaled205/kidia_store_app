@@ -11,7 +11,7 @@ import zipfile
 commit = sys.argv[1]
 assert re.fullmatch(r'[a-f0-9]{40}', commit)
 root = Path('/home/woomobile/woomobile-api/public/mobishop-builder-v26')
-work = Path('/root/header-category-polish-20261027')
+work = Path('/root/header-category-polish-final-20261027')
 work.mkdir(exist_ok=True, mode=0o700)
 sha = lambda data: hashlib.sha256(data).hexdigest()
 
@@ -25,7 +25,7 @@ index = (root / 'index.html').read_text()
 central = re.search(r'assets/(?:original|customize)-central[^"?\s]+\.js', index).group()
 source = (root / central).read_text()
 old_bundle = root / re.search(r'assets/flutter-preview-[\w-]+/', source).group()
-assert sha((old_bundle / 'main.dart.js').read_bytes()) == 'c2a6a3c2739cc84be66b251de90e08d22d7893b364feedddaec86a05ee0b329c', 'Live Flutter source changed since review'
+assert sha((old_bundle / 'main.dart.js').read_bytes()) == '2f35734adc902b3be7f69fb8e1be6b158672fba7004ec98aa42abbfd887e706d', 'Live Flutter source changed since review'
 archive = work / 'preview.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
     for name, expected in sorted(manifest.items()):
