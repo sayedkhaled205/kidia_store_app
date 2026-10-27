@@ -329,6 +329,7 @@ $config = native_data( $config_response, 'Config' );
 native_assert( ! str_contains( json_encode( $config ), 'must-not-leak' ), 'Configuration contains only public SDK values' );
 native_assert( str_contains( $config_response->headers['Cache-Control'] ?? '', 'no-store' ), 'Native configuration is not cached' );
 native_assert( $config['methods']['phone_otp'] && $config['methods']['google'], 'Configured native providers are available' );
+native_assert( $config['phone_country_code'] === '20', 'Local phone input uses the configured store dialing code' );
 $settings_snapshot = $GLOBALS['native_options']['mobishop_native_auth_settings'];
 $GLOBALS['native_options']['mobishop_native_auth_settings']['firebase']['ios'] = array( 'apiKey' => 'fixture-ios-api', 'appId' => '1:123:ios:fixture', 'projectId' => 'test-project', 'messagingSenderId' => '123', 'iosBundleId' => 'app.fixture.native' );
 $ios_pending = native_data( $endpoint->config( native_request( array( 'platform' => 'ios' ) ) ), 'Pending iOS phone configuration' );

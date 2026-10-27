@@ -64,6 +64,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$google = $google && function_exists( 'openssl_verify' );
 		return array(
 			'version' => 1, 'enabled' => $enabled,
+			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
 				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google,
 				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ) ),
