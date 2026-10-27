@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
+import 'package:mobishop_store_app/app/main_shell.dart';
 import 'package:mobishop_store_app/app/app_startup_provider.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
@@ -38,6 +39,78 @@ import 'features/product/support/product_test_data.dart';
 import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  for (final path in ['/categories', '/wishlist', '/account']) {
+    testWidgets('system back returns $path to Home before exiting', (tester) async {
+      final router = createAppRouter(initialLocation: path);
+      await _pumpStartedApp(tester, router: router);
+      expect(await router.routerDelegate.popRoute(), isTrue);
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(router.routeInformationProvider.value.uri.path, '/');
+      expect(await router.routerDelegate.popRoute(), isFalse);
+      await _disposeApp(tester, router);
+    });
+  }
+
+  testWidgets('system back preserves product, modal and cart navigation', (tester) async {
+    final router = createAppRouter(initialLocation: '/categories/17');
+    await _pumpStartedApp(tester, router: router);
+    router.push('/product/42');
+    await tester.pumpAndSettle();
+    final productContext = tester.element(find.byType(ProductDetailScreen));
+    showDialog<void>(context: productContext, builder: (_) => const AlertDialog(title: Text('Back test dialog')));
+    await tester.pumpAndSettle();
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Back test dialog'), findsNothing);
+    expect(find.byType(ProductDetailScreen), findsOneWidget);
+    router.push('/cart');
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.byType(ProductDetailScreen), findsOneWidget);
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, '/categories/17');
+    expect(await router.routerDelegate.popRoute(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, '/categories');
+    await _disposeApp(tester, router);
+  });
+
+  testWidgets('system back root event forwards to Home detail without bypassing guards', (tester) async {
+    final router = GoRouter(initialLocation: '/product/42', routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => MainShell(navigationShell: shell),
+        branches: [StatefulShellBranch(routes: [GoRoute(
+          path: '/', builder: (_, _) => const Scaffold(body: Text('Home')),
+          routes: [GoRoute(path: 'product/:id', builder: (_, _) => const Scaffold(body: Text('Product')))],
+        )])],
+      ),
+    ]);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [cmsPageLayoutProvider.overrideWith((ref, page) async => CmsPageLayout.fallback(page))],
+      child: MaterialApp.router(routerConfig: router),
+    ));
+    await tester.pumpAndSettle();
+    final detailContext = tester.element(find.text('Product'));
+    final branch = Navigator.of(detailContext);
+    final root = router.routerDelegate.navigatorKey.currentState!;
+    branch.push(MaterialPageRoute<void>(builder: (_) => const PopScope(
+      canPop: false, child: Scaffold(body: Text('Protected payment')),
+    )));
+    await tester.pumpAndSettle();
+    expect(await root.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(find.text('Protected payment'), findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.path, '/product/42');
+    branch.pop();
+    await tester.pumpAndSettle();
+    expect(await root.maybePop(), isTrue);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, '/');
+    await _disposeApp(tester, router);
+  });
+
   testWidgets('horizontal swipes keep navigation visible while vertical scrolling hides it', (tester) async {
     final router = createAppRouter(initialLocation: '/categories/17');
     await _pumpStartedApp(tester, router: router,

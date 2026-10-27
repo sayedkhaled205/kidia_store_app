@@ -79,7 +79,7 @@ class CategoriesScreen extends ConsumerWidget {
           type: 'cart',
           icon: Icons.shopping_bag_outlined,
           tooltip: copy.isArabic ? 'السلة' : 'Cart',
-          onPressed: () => context.go('/cart'),
+          onPressed: () => context.push('/cart'),
         ),
       ],
       body: SafeArea(
@@ -178,7 +178,12 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       'default' || 'image_banner' => _defaultList(visibleNodes),
       _ => _grid(layout, visibleNodes),
     };
-    return Transform.translate(
+    return PopScope<Object?>(
+      canPop: _categoryPath.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _categoryPath.isNotEmpty) _goBackOneLevel();
+      },
+      child: Transform.translate(
       key: const Key('category-section-layout-merge'),
       offset: Offset(0, _settings.marginBottom - _settings.marginTop),
       child: Padding(
@@ -207,10 +212,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                         child: IconButton(
                           key: const Key('category-back-to-roots'),
                           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                          onPressed: () => setState(() {
-                            _categoryPath.removeLast();
-                            _sidebarRootIndex = 0;
-                          }),
+                          onPressed: _goBackOneLevel,
                           icon: const BackButtonIcon(),
                         ),
                       )),
@@ -237,7 +239,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           ),
         ),
       ),
+      ),
     );
+  }
+
+  void _goBackOneLevel() {
+    setState(() {
+      _categoryPath.removeLast();
+      _sidebarRootIndex = 0;
+    });
   }
 
   Widget _defaultList(List<CatalogCategoryNode> nodes) {

@@ -196,7 +196,12 @@ class _MainShellState extends ConsumerState<MainShell>
       footer.string('background_color', '#FFFFFF'),
       MobiShopColors.surface,
     );
-    return Scaffold(
+    return PopScope<Object?>(
+      canPop: widget.navigationShell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _handleSystemBack();
+      },
+      child: Scaffold(
       body: NotificationListener<ScrollUpdateNotification>(
         onNotification: (ScrollUpdateNotification notification) {
           if (!footer.boolean('hide_on_scroll', false) ||
@@ -344,7 +349,21 @@ class _MainShellState extends ConsumerState<MainShell>
                 ),
               ),
             ),
+      ),
     );
+  }
+
+  Future<void> _handleSystemBack() async {
+    final shell = widget.navigationShell;
+    final index = shell.currentIndex;
+    final navigator = shell.route.branches[index].navigatorKey.currentState;
+    // Nested routes and their payment/form guards take priority over Home.
+    if (navigator != null && await navigator.maybePop()) return;
+    if (!mounted ||
+        widget.navigationShell.currentIndex != index ||
+        index == 0 ||
+        ModalRoute.of(context)?.isCurrent == false) return;
+    _openBranch(ref, 0);
   }
 
   Widget _footerGrid(
