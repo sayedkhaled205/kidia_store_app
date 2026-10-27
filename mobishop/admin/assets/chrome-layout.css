@@ -129,22 +129,22 @@
 	font-size:12px;
 }
 /* Compact cart settings: one grid for the icon picker and every saved field. */
-.mobishop-chrome-item-setting--header-cart {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart {
 	display:grid;
 	grid-template-columns:repeat(4,minmax(0,1fr));
 	gap:12px 16px;
 	align-items:end;
 }
-.mobishop-chrome-item-setting--header-cart[hidden] { display:none!important; }
-.mobishop-chrome-item-setting--header-cart::before { display:none; }
-.mobishop-chrome-item-setting--header-cart > h3 {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart[hidden] { display:none!important; }
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart::before { display:none; }
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart > h3 {
 	grid-column:1/-1;
 	grid-row:auto;
 	margin:0!important;
 	padding:0 0 10px!important;
 	text-align:right;
 }
-.mobishop-chrome-item-setting--header-cart > .mobishop-chrome-icon-choice {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart > .mobishop-chrome-icon-choice {
 	display:flex!important;
 	grid-column:span 2;
 	grid-row:auto;
@@ -156,8 +156,8 @@
 	border:0!important;
 }
 /* The field wrapper must not become a second grid inside one narrow column. */
-.mobishop-chrome-item-setting--header-cart > .mobishop-page-fields { display:contents!important; }
-.mobishop-chrome-item-setting--header-cart .mobishop-page-field {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart > .mobishop-page-fields { display:contents!important; }
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart .mobishop-page-field {
 	grid-column:auto!important;
 	grid-row:auto!important;
 	min-width:0;
@@ -167,13 +167,13 @@
 	padding:0!important;
 	border:0!important;
 }
-.mobishop-chrome-item-setting--header-cart .mobishop-page-field > label {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart .mobishop-page-field > label:not(.mobishop-page-toggle) {
 	min-height:32px;
 	margin:0!important;
 	font-size:13px!important;
 	line-height:16px!important;
 }
-.mobishop-chrome-item-setting--header-cart .mobishop-page-field :is(input:not([type=checkbox]):not([type=hidden]),select) {
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart .mobishop-page-field :is(input:not([type=checkbox]):not([type=hidden]),select) {
 	box-sizing:border-box;
 	width:100%!important;
 	min-width:0;
@@ -181,10 +181,10 @@
 	height:36px!important;
 	min-height:36px!important;
 }
-.mobishop-chrome-item-setting--header-cart .mobishop-page-toggle { min-height:36px; }
-.mobishop-chrome-item-setting--header-cart .mobishop-chrome-icon-option { width:42px; height:42px; min-width:42px; }
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart .mobishop-page-toggle { min-height:36px; }
+body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart .mobishop-chrome-icon-option { width:42px; height:42px; min-width:42px; }
 @media(max-width:620px) {
-	.mobishop-chrome-item-setting--header-cart { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+	body .mobishop-fixed-chrome-card[data-chrome-part="header"] .mobishop-chrome-item-setting--header-cart { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 }
 /* End compact cart settings. */
 
