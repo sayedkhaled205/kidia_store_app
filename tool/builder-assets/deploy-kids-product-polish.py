@@ -83,6 +83,9 @@ def patch_connector(source, repo):
     path = 'mobishop/includes/class-mobishop-page-layout-store.php'
     before = subprocess.check_output(['git', '-c', 'safe.directory=' + str(repo), '-C', str(repo), 'show', '08559b4e20771c814c6840020c38d7e76026bec5:' + path]).decode()
     after = (repo / path).read_text()
+    if "__( 'Related Products', 'mobi2app-connector' )" in source:
+        before = before.replace("'mobishop'", "'mobi2app-connector'")
+        after = after.replace("'mobishop'", "'mobi2app-connector'")
     a, b = before.splitlines(True), after.splitlines(True)
     # Apply only the reviewed source hunks, leaving unrelated live edits intact.
     for group in difflib.SequenceMatcher(None, a, b).get_grouped_opcodes(2):
@@ -106,11 +109,12 @@ def main():
     owner = (root / 'index.html').stat()
 
     def write(path, data, mode=0o644):
+        file_owner = path.stat() if path.exists() else owner
         path.parent.mkdir(parents=True, exist_ok=True)
         temp = path.with_name(path.name + '.kids-product-tmp')
         with temp.open('xb') as handle:
             handle.write(data)
-        os.chown(temp, owner.st_uid, owner.st_gid)
+        os.chown(temp, file_owner.st_uid, file_owner.st_gid)
         os.chmod(temp, mode)
         temp.replace(path)
 
@@ -153,8 +157,8 @@ def main():
     script = read(root / script_ref)
     preset_ref = re.search(r'assets/theme-snapshots[^"\x27?\s]+\.json', central)[0]
     presets = json.loads(read(root / preset_ref))
-    canonical = json.dumps(presets['kids_baby'], sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
-    assert digest(canonical) == '6e2cd04c0b62af7f037389d47a759a2e407b5edc889f36b95b9fdc7a4c8517e2', 'Kids preset changed since review'
+    reviewed = subprocess.check_output(['git', '-c', 'safe.directory=' + str(repo), '-C', str(repo), 'show', '08559b4e20771c814c6840020c38d7e76026bec5:tool/builder-assets/kids-appearance-20261027.json'])
+    assert presets['kids_baby'] == json.loads(reviewed), 'Kids preset changed since review'
     presets['kids_baby'] = json.loads(appearance)
     fields = related_fields(repo)
     template, added = patch_template(read(root / 'screens-v176/product.html'), fields)
