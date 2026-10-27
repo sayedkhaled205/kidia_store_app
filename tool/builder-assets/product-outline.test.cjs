@@ -52,6 +52,22 @@ test('related products save outline controls through the normal form', () => {
   assert.equal(new dom.window.FormData(root).get(width.name), '0.5');
   dom.window.close();
 });
+
+test('visual position radios do not enter saved application fields', () => {
+  const {dom} = setup('outlined', 'related_products');
+  const entries = [
+    ['layout[elements][7][settings][quick_add_position]', 'bottom_end'],
+    ['layout[elements][7][settings][quick_add_position]_visual', 'on'],
+    ['layout[elements][7][settings][product_wishlist_position]', 'top_end'],
+    ['layout[elements][7][settings][product_wishlist_position]_visual', 'on'],
+    ['layout[elements][7][settings][show_wishlist]', '1'],
+    ['layout[elements][7][settings][card_outline_width]', '0.5'],
+  ];
+  const result = dom.window.KidiaProductOutline.savedEntries(entries);
+  assert.deepEqual(Array.from(result), [entries[0], entries[2], entries[4], entries[5]]);
+  assert.equal(entries.length, 6);
+  dom.window.close();
+});
 test('outline width is saved, preserved and only shown for outlined cards', () => {
   const {dom,root,select} = setup();
   const width = root.querySelector('input[name$="[card_outline_width]"]');

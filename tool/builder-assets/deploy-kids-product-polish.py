@@ -79,6 +79,17 @@ def patch_schema(source, fields):
     return source[:match.start(2)] + json.dumps(schema, separators=(',', ':'), ensure_ascii=False).replace("'", r'\u0027') + source[match.end(2):]
 
 
+def patch_form_serialization(script):
+    start = script.index('function serialize(form)')
+    end = script.index('function serializeSetup(form)', start)
+    section = script[start:end]
+    if 'KidiaProductOutline.savedEntries(entries)' in section:
+        return script
+    assert section.count('return entries;') == 1
+    section = section.replace('return entries;', 'return window.KidiaProductOutline.savedEntries(entries);')
+    return script[:start] + section + script[end:]
+
+
 def patch_connector(source, repo):
     newline = '\r\n' if '\r\n' in source else '\n'
     source = source.replace('\r\n', '\n')
@@ -198,6 +209,7 @@ def main():
     ending = "})(typeof window === 'undefined' ? globalThis : window);"
     end = script.index(ending, start) + len(ending)
     script = script[:start] + (repo / 'tool/builder-assets/product-outline.js').read_text().strip() + script[end:]
+    script = patch_form_serialization(script)
     fetch = "'screens-v176/' + (files[screen] || 'home')"
     assert script.count(fetch) == 1
     script = script.replace(fetch, "'screens-v176/' + (screen === 'product-builder' ? '" + new_template + "' : (files[screen] || 'home'))")

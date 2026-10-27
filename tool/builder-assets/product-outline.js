@@ -70,5 +70,10 @@
       if (wrapper.nextElementSibling !== widthWrapper) wrapper.after(widthWrapper);
     });
   }
-  scope.KidiaProductOutline = {prepare, refresh};
+  function savedEntries(entries) {
+    // Visual radio groups mirror the named select. Only that select is data.
+    const visualPosition = /^layout\[elements\]\[\d+\]\[settings\]\[(quick_add_position|product_wishlist_position)\]_visual$/;
+    return entries.filter(([name]) => !visualPosition.test(name));
+  }
+  scope.KidiaProductOutline = {prepare, refresh, savedEntries};
 })(typeof window === 'undefined' ? globalThis : window);
